@@ -16,7 +16,7 @@ using Unitful
 export 
         @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
         GEO_units, SI_units, NO_units, AbstractGeoUnits, Nondimensionalize,
-        km, m, cm, Mtrs, yr, s, MPa, Pa, Pas, K, C
+        km, m, cm, Mtrs, yr, s, MPa, Pa, Pas, K, C, kg, mol
     
 
 include("Units.jl")

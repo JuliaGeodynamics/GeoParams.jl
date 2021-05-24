@@ -26,15 +26,17 @@ const cm    = u"cm"
 const Myrs  = u"Myrs"
 const yr    = u"yr"
 const s     = u"s"
+const kg    = u"kg"
 const Pa    = u"Pa"
 const MPa   = u"MPa"
 const Pas   = u"Pa*s"
 const K     = u"K"
 const C     = u"°C"
+const mol   = u"mol"  
 
 
 export 
-    km, m, cm, Mtrs, yr, s, MPa, Pa, Pas, K, C, 
+    km, m, cm, Mtrs, yr, s, MPa, Pa, Pas, K, C, kg, mol, 
     GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, Nondimensionalize
 
 """
@@ -62,11 +64,21 @@ struct NONE<: AbstractUnitType end
     viscosity       =   1
 
     # primary characteristic units
-    K               =   1;              # temperature in SI units for material parameter scaling
-    s               =   1;              # time in SI units for material parameter scaling
-    m               =   1;              # length in SI units for material parameter scaling
-    Pa              =   1;              # stress in SI units 
-    kg              =   Pa*m^2/(m/s^2)  # compute mass from pascal
+    K               =   1;                      # temperature in SI units for material parameter scaling
+    s               =   1;                      # time in SI units for material parameter scaling
+    m               =   1;                      # length in SI units for material parameter scaling
+    Pa              =   1;                      # stress in SI units 
+    kg              =   upreferred(Pa*m*s^2)    # compute mass from pascal. Note: this may result in very large values
+    
+    # Main SI units (used later for nondimensionalization)
+    Length          =   m
+    Mass            =   kg
+    Time            =   s    
+    Temperature     =   K
+    Amount          =   1mol
+    # Not defined, as they are not common in geodynamics:
+    #Current
+    #Luminosity
     
     # Derived units
     N               =   kg*m/s^2        # Newton
@@ -176,7 +188,7 @@ end
         
 
 """
-function NO_units(;length=1000, temperature=1000, stress=10, viscosity=1e20)
+function NO_units(;length=1, temperature=1, stress=1, viscosity=1)
     
     if unit(temperature)!=NoUnits;  error("temperature should not have units")    end
     if unit(length)!=NoUnits;       error("length should not have units")    end
@@ -215,8 +227,20 @@ end
 
 """
 function Nondimensionalize(param, g::GeoUnits{TYPE}) where {TYPE}
-    # to be finished; idea is to automatically determine the units of param, and use the same units     
 
+    if unit(param)!=NoUnits
+        dim         =   Unitful.dimension(param);                   # Basic SI units
+        char_val    =   1.0;
+        foreach((typeof(dim).parameters[1])) do y
+            val = upreferred(getproperty(g, Unitful.name(y)))       # Retrieve the characteristic value from structure g
+            pow = Float64(y.power)                                  # power by which it should be multiplied   
+            char_val *= val^pow                                     # multiply characteristic value
+        end
+        param_ND = upreferred(param)/char_val
+    else
+        param_ND = param # The parameter has no units, so there is no way to determine how to nondimensionize it 
+    end
+    return param_ND
 end
 
 # Define a view for the GEO_Units structure
