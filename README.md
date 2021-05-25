@@ -1,4 +1,7 @@
 # GeoParams.jl
+
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliageodynamics.github.io/GeoParams.jl/dev/)
+
 Typical geodynamic simulations involve a large number of material parameters that have units that are often inconvenient to be directly used in numerical models
 This package has two main features that help with this:
 - Create a nondimensionalization object, which can be used to transfer dimensional to non-dimensional parameters (usually better for numerical solvers)
