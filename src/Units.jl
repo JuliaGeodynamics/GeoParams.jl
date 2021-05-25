@@ -38,7 +38,7 @@ const mol   = u"mol"
 
 export 
     km, m, cm, Mtrs, yr, s, MPa, Pa, Pas, K, C, kg, mol, 
-    GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, Nondimensionalize, superscript
+    GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, Nondimensionalize, superscript, upreferred
 
 """
 AbstractGeoUnits
@@ -91,6 +91,7 @@ struct NONE<: AbstractUnitType end
     density         =   kg/m^3
     acceleration    =   m/s^2
     force           =   kg*m/s^2
+    strainrate      =   1/s
     
     # Helpful
     SecYear         =   3600*24*365.25
@@ -100,19 +101,36 @@ struct NONE<: AbstractUnitType end
 end
 
 """
-    Specify the characteristic values using GEO units (more convenient for geodynamic simulations)
-    This is as SI units, but has length in km, time in Myrs, temperature in C, stress in MPa
-    
-    Usage:
-        CharUnits = GEO_units(length=1000km, temperature=1000C, stress=10MPa, viscosity=1e20Pas)
-    
-    CharUnits contains the units that can be used to nondimensionalize or dimensionalize all parameters    
-    in the simulations. It contains all basic SI units
+    GEO_units(;length=1000km, temperature=1000C, stress=10MPa, viscosity=1e20Pas)
 
-    Examples:
-        CharUnits.Pa  - Characteristic value in units of Pascal
-        CharUnits.s   - Characteristic value in units of seconds
-        
+Creates a non-dimensionalization object using GEO units.
+
+GEO units implies that upon dimensionalization, `time` will be in `Myrs`, `length` in `km`, stress in `MPa`, etc.
+which is more convenient for typical geodynamic simulations than SI units
+The characteristic values given as input can be in arbitrary units (`km` or `m`), provided the unit is specified.
+
+# Examples:
+```julia-repl
+julia> CharUnits = GEO_units()
+Employing GeoParams.Units.GEO units 
+Characteristic values: 
+         length:      1000 km
+         time:        0.3169 Myrs
+         stress:      10 MPa
+         temperature: 1000.0 °C
+julia> CharUnits.velocity
+1.0e-7 m s⁻¹
+```
+If we instead have a crustal-scale simulation, it is likely more appropriate to use a different characteristic `length`:
+```julia-repl
+julia> CharUnits = GEO_units(length=10km)
+Employing GeoParams.Units.GEO units 
+Characteristic values: 
+         length:      10 km
+         time:        0.3169 Myrs
+         stress:      10 MPa
+         temperature: 1000.0 °C
+```
 """
 function GEO_units(;length=1000km, temperature=1000C, stress=10MPa, viscosity=1e20Pas)
     
@@ -138,19 +156,24 @@ end
 
 
 """
-    Specify the characteristic values using SI units 
-    
-    Usage:
-        CharUnits = SI_units(length=1000m, temperature=1000K, stress=10Pa, viscosity=1e20)
-    
-    CharUnits contains the units that can be used to nondimensionalize or dimensionalize all parameters    
-    in the simulations. It contains all basic SI units.
+    CharUnits = SI_units(length=1000m, temperature=1000K, stress=10Pa, viscosity=1e20)
 
-    Examples:
-        CharUnits.Pa  - Units of Pascal
-        CharUnits.s   - Units of seconds
-        
+Specify the characteristic values using SI units 
 
+# Examples:
+```julia-repl
+julia> CharUnits = SI_units(length=1000m)
+Employing GeoParams.Units.SI units 
+Characteristic values: 
+         length:      1000 m
+         time:        1.0e19 s
+         stress:      10 Pa
+         temperature: 1000.0 K
+```
+Note that the same can be achieved if the input is given in `km`:
+```julia-repl
+julia> CharUnits = SI_units(length=1km)
+```
 """
 function SI_units(;length=1000m, temperature=1000K, stress=10Pa, viscosity=1e20Pas)
     
@@ -175,19 +198,20 @@ function SI_units(;length=1000m, temperature=1000K, stress=10Pa, viscosity=1e20P
 end
 
 """
-    In case we employ nondimension al units throughout
-    
-    Usage:
-        CharUnits = NO_units(length=1000km, temperature=1000C, stress=10MPa, viscosity=1e20Pas)
-    
-    CharUnits contains the units that can be used to nondimensionalize or dimensionalize all parameters    
-    in the simulations. It contains all basic SI units
+    CharUnits = NO_units(length=1, temperature=1, stress=1, viscosity=1)
+   
+Specify the characteristic values in non-dimensional units
 
-    Examples:
-        CharUnits.Pa  - Units of Pascal
-        CharUnits.s   - Units of seconds
-        
-
+# Examples:
+```julia-repl
+julia> CharUnits = NO_units()
+Employing GeoParams.Units.SI units 
+Characteristic values: 
+         length:      1
+         time:        1.0 
+         stress:      1
+         temperature: 1.0
+```
 """
 function NO_units(;length=1, temperature=1, stress=1, viscosity=1)
     
@@ -207,24 +231,38 @@ function NO_units(;length=1, temperature=1, stress=1, viscosity=1)
 end
 
 """
-    This nondimensionalizes a parameter using the characteristic values 
-    listed in the GeoUnits structure
+    Nondimensionalize(param, CharUnits::GeoUnits{TYPE})
 
-    Usage:
-        param_ND = Nondimensionalize(param, g::GeoUnits{TYPE}) where {TYPE}
+Nondimensionalizes `param` using the characteristic values specified in `CharUnits`
 
-    Input:
-        param       -   a (dimensional) parameter 
-        g           -   the dimensionalization structure 
+# Example 1
+```jldoctest
+julia> CharUnits =   GEO_units();
+julia> v         =   3cm/yr
+10 cm yr⁻¹ 
+julia> v_ND      =   Nondimensionalize(v, CharUnits) 
+0.031688087814028945
+```
+# Example 2
+In geodynamics one sometimes encounters more funky units
+```jldoctest
+julia> CharUnits =   GEO_units();
+julia> A         =   6.3e-2MPa^-3.05*s^-1
+0.063 MPa⁻³·⁰⁵ s⁻¹
+julia> A_ND      =   Nondimensionalize(A, CharUnits) 
+7.068716262102384e14
+```
 
-    Output:
-        param_ND    -   the nondimensional parameter    
-
-
-    Example:
-        CharUnits   =   GEO_units();
-        v           =   100m/s 
-        v_ND        =   Nondimensionalize(v, CharUnits) 
+In case you are interested to see how the units of `A` look like in different units, use this function from the [Unitful](https://github.com/PainterQubits/Unitful.jl) package:
+```jldoctest
+julia> uconvert(u"Pa^-3.05*s^-1",A) 
+3.157479571851836e-20 Pa⁻³·⁰⁵
+```
+and to see it decomposed in the basic `SI` units of length, mass and time:
+```jldoctest
+julia> upreferred(A)
+3.1574795718518295e-20 m³·⁰⁵ s⁵·¹ kg⁻³·⁰⁵
+```
 
 """
 function Nondimensionalize(param, g::GeoUnits{TYPE}) where {TYPE}
@@ -284,8 +322,11 @@ function superscript_mac(number::Float64)
     ind         =   findfirst(isequal('.'), str)    
     if ~isempty(ind)  && abs(dec)>0
         st        = [super_str;'\uB7']              # dot
-        y         = parse(Int,str[ind+1:end]);
-        st        = [st; superscriptnumber(y)]
+        for id=ind+1:length(str)
+            y         = parse(Int,str[id]);
+            st        = [st; superscriptnumber(y)]
+        end
+
         super_str = join(st)                        # add decimal part
     end
 
