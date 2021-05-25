@@ -1,7 +1,8 @@
 # GeoParams.jl
 
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliageodynamics.github.io/GeoParams.jl/dev/)
-[![Build Status](https://juliageodynamics.github.io/GeoParams.jl/workflows/CI/badge.svg)](https://juliageodynamics.github.io/GeoParams.jl/actions)
+[![Build Status](https://github.com/JuliaGeodynamics/GeoParams.jl/workflows/CI/badge.svg)](https://github.com/JuliaGeodynamics/GeoParams.jl/actions)
+
 
 Typical geodynamic simulations involve a large number of material parameters that have units that are often inconvenient to be directly used in numerical models
 This package has two main features that help with this:
@@ -17,7 +18,7 @@ This can be done by specifying characteristic values for `length`, `stress`, `te
 
 As you learned in physics, the common approach to do this is by using `SI` units. Yet, as meters and seconds are not so convenient in geodynamics, where we usually deal with lengthscales on the orders of kilometers and timescales in millions of years, we also provide the `geo` object, which allows to give input parameters in more convenient units.
 
-```julia-repl
+```julia
 julia> using GeoParams
 julia> CharDim = GEO_units(length=1000km, temperature=1000C, stress=10MPa, viscosity=1e20Pas)
 Employing GeoParams.Units.GEO units 
@@ -38,13 +39,13 @@ Once a `CharDim` structure is created, you can use the derived parameters, for e
 1.0e-13 s⁻¹
 ```
 You can also non-dimensionalize parameters:
-```julia-repl
+```julia
 julia> A    =   6.3e-2MPa^-3.05*s^-1
 0.063 MPa⁻³·⁰⁵ s⁻¹
 julia> A_ND =   Nondimensionalize(A, CharDim);
 ```
 or convert them to different units:
-```julia-repl
+```julia
 julia> uconvert(Pa^-3.05*s^-1, A)
 3.157479571851836e-20 Pa⁻³·⁰⁵ s⁻¹
 ```
