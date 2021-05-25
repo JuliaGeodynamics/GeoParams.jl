@@ -15,14 +15,14 @@ As you learned in physics, the common approach to do this is by using `SI` units
 
 ```julia
 julia> using GeoParams
-julia> GeoUnit = GeoUnits(type="geo",length=1000,temperature=1000,viscosity=1e20, stress=1)
+julia> CharDim = GEO_units(length=1000km, temperature=1000C, stress=10MPa, viscosity=1e20Pas)
 ```
 You can use 3 `types`:
-  1. *geo* units: Units of length in the code are expected to be in kilometers, time is in million of years (Myrs) and stresses are in MPa (1e6 Pa). This is the default.
+  1. *GEO* units: Units of length in the code are expected to be in kilometers, time is in million of years (Myrs) and stresses are in MPa (1e6 Pa). This is the default.
   2. *SI* units: all values are in SI units (meters, Pascal, seconds)
-  3. *none*: all input parameters are in nondimensional units
+  3. *NO*: all input parameters are in nondimensional units
 
-Once a `GeoUnit` structure is created, you can use the derived parameters  
+Once a `CharDim` structure is created, you can use the derived parameters.   
 
 ### 2. Material parameters  
 All geodynamic simulations require specifying material parameters, such as (nonlinear) viscous constitutive relationships or an equation of state for density. These parameters are usually specified per `phase`. Here, we provide a framework that simplifies doing that. Thanks to the flexibility of julia, we can actually directly embed the function that does the computations in the structure itself, which makes it straightforward to extend it and add new creep laws (which can directly be used in the solvers).  

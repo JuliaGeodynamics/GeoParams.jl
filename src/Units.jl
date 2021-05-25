@@ -55,7 +55,6 @@ struct NONE<: AbstractUnitType end
 
 #abstract type GeoUnits{TYPE} <: AbstractGeoUnits{TYPE} end
 
-
 @with_kw_noshow struct GeoUnits{TYPE} 
     # Selectable input parameters
     temperature     =   1               #   Characteristic temperature  [C or K]
@@ -204,6 +203,7 @@ Specify the characteristic values in non-dimensional units
 
 # Examples:
 ```julia-repl
+julia> using GeoParams;
 julia> CharUnits = NO_units()
 Employing GeoParams.Units.SI units 
 Characteristic values: 
@@ -236,7 +236,8 @@ end
 Nondimensionalizes `param` using the characteristic values specified in `CharUnits`
 
 # Example 1
-```jldoctest
+```julia-repl
+julia> using GeoParams;
 julia> CharUnits =   GEO_units();
 julia> v         =   3cm/yr
 10 cm yr⁻¹ 
@@ -245,7 +246,7 @@ julia> v_ND      =   Nondimensionalize(v, CharUnits)
 ```
 # Example 2
 In geodynamics one sometimes encounters more funky units
-```jldoctest
+```julia-repl
 julia> CharUnits =   GEO_units();
 julia> A         =   6.3e-2MPa^-3.05*s^-1
 0.063 MPa⁻³·⁰⁵ s⁻¹
@@ -254,16 +255,15 @@ julia> A_ND      =   Nondimensionalize(A, CharUnits)
 ```
 
 In case you are interested to see how the units of `A` look like in different units, use this function from the [Unitful](https://github.com/PainterQubits/Unitful.jl) package:
-```jldoctest
+```julia-repl
 julia> uconvert(u"Pa^-3.05*s^-1",A) 
 3.157479571851836e-20 Pa⁻³·⁰⁵
 ```
 and to see it decomposed in the basic `SI` units of length, mass and time:
-```jldoctest
+```julia-repl
 julia> upreferred(A)
 3.1574795718518295e-20 m³·⁰⁵ s⁵·¹ kg⁻³·⁰⁵
 ```
-
 """
 function Nondimensionalize(param, g::GeoUnits{TYPE}) where {TYPE}
 
