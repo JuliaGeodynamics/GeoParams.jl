@@ -15,14 +15,12 @@ using Unitful
 
 export 
         @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
-        GEO_units, SI_units, NO_units, AbstractGeoUnits, Nondimensionalize,
+        GEO_units, SI_units, NO_units, AbstractGeoUnits, Nondimensionalize, superscript,
         km, m, cm, Mtrs, yr, s, MPa, Pa, Pas, K, C, kg, mol
     
-
-include("Units.jl")
+# note that this throws a "Method definition warning regarding superscript"; that is expected & safe 
+#  as we add a nicer way to create output of superscripts. I have been unable to suppress this warning
+include("Units.jl")     
 using .Units
-
-
-export MyType, foo
 
 end # module

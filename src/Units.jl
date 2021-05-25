@@ -3,6 +3,7 @@
 """
 module Units
 using Unitful
+import Unitful: superscript
 using Parameters
 
 import Base.show
@@ -37,7 +38,7 @@ const mol   = u"mol"
 
 export 
     km, m, cm, Mtrs, yr, s, MPa, Pa, Pas, K, C, kg, mol, 
-    GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, Nondimensionalize
+    GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, Nondimensionalize, superscript
 
 """
 AbstractGeoUnits
@@ -251,6 +252,60 @@ function show(io::IO, g::GeoUnits{TYPE})  where {TYPE}
               "         time:        $(round(ustrip(g.time),digits=4)) $(unit(g.time))\n",
               "         stress:      $(g.stress)\n",
               "         temperature: $(Float64(g.temperature))\n")
+end
+
+
+# This replaces the viewer of the Unitful package
+"""
+    superscript(i::Rational)
+Prints exponents. 
+
+Note that we redefine this method (from Unitful) here, as we regularly deal with exponents 
+such as Pa^-4.2, which are not so nicely displayed in the Unitful package
+"""
+function superscript(i::Rational)
+    val = Float64(i);   # the numerical value of the exponent
+    v = get(ENV, "UNITFUL_FANCY_EXPONENTS", Sys.isapple() ? "true" : "false")
+    t = tryparse(Bool, lowercase(v))
+    k = (t === nothing) ? false : t
+    if k
+         return superscript_mac(Float64(i.num/i.den))
+    else
+        i.den == 1 ? "^" * string(val) : "^" * replace(string(val), "//" => "/")
+    end
+end
+
+function superscript_mac(number::Float64)
+    # this transfers the float number to a superscript string, which can be used for visualization on mac 
+    x           =   trunc(Int,number)               # retrieve the part before the decimal point
+    dec         =   number-x                        # decimal part
+    super_str   =   superscriptnumber(x)            # transfer to superscript string
+    str         =   string(number);
+    ind         =   findfirst(isequal('.'), str)    
+    if ~isempty(ind)  && abs(dec)>0
+        st        = [super_str;'\uB7']              # dot
+        y         = parse(Int,str[ind+1:end]);
+        st        = [st; superscriptnumber(y)]
+        super_str = join(st)                        # add decimal part
+    end
+
+    return super_str
+end
+
+function superscriptnumber(i::Int)
+    if i < 0
+        c = [Char(0x207B)]
+    else
+        c = []
+    end
+    for d in reverse(digits(abs(i)))
+        if d == 0 push!(c, Char(0x2070)) end
+        if d == 1 push!(c, Char(0x00B9)) end
+        if d == 2 push!(c, Char(0x00B2)) end
+        if d == 3 push!(c, Char(0x00B3)) end
+        if d > 3 push!(c, Char(0x2070+d)) end
+    end
+    return join(c)
 end
 
 

@@ -33,8 +33,7 @@ CharUnits   =   GEO_units(viscosity=1e23, length=100km, stress=0.00371MPa);
 @test Nondimensionalize(A,CharUnits)  ≈ 1.40403327e16 
 
 A = (1.58*10^(-25))*Pa^(-4.2)*s^(-1)        # calcite
-@test Nondimensionalize(A,CharUnits_GEO)  ≈ 1.5800000000000024e-13
-
+@test Nondimensionalize(A,CharUnits_GEO)  ≈ 3.968780561785161e16
 
 R=8.314u"J/mol/K"
 @test Nondimensionalize(R,CharUnits_SI)  ≈ 8.314e-7
