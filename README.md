@@ -1,6 +1,7 @@
 # GeoParams.jl
 
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliageodynamics.github.io/GeoParams.jl/dev/)
+[![Build Status](https://juliageodynamics.github.io/GeoParams.jl/workflows/CI/badge.svg)](https://juliageodynamics.github.io/GeoParams.jl/actions)
 
 Typical geodynamic simulations involve a large number of material parameters that have units that are often inconvenient to be directly used in numerical models
 This package has two main features that help with this:
@@ -16,17 +17,37 @@ This can be done by specifying characteristic values for `length`, `stress`, `te
 
 As you learned in physics, the common approach to do this is by using `SI` units. Yet, as meters and seconds are not so convenient in geodynamics, where we usually deal with lengthscales on the orders of kilometers and timescales in millions of years, we also provide the `geo` object, which allows to give input parameters in more convenient units.
 
-```julia
+```julia-repl
 julia> using GeoParams
 julia> CharDim = GEO_units(length=1000km, temperature=1000C, stress=10MPa, viscosity=1e20Pas)
+Employing GeoParams.Units.GEO units 
+Characteristic values: 
+         length:      1000 km
+         time:        0.3169 Myrs
+         stress:      10 MPa
+         temperature: 1000.0 °C
 ```
 You can use 3 `types`:
   1. *GEO* units: Units of length in the code are expected to be in kilometers, time is in million of years (Myrs) and stresses are in MPa (1e6 Pa). This is the default.
   2. *SI* units: all values are in SI units (meters, Pascal, seconds)
   3. *NO*: all input parameters are in nondimensional units
 
-Once a `CharDim` structure is created, you can use the derived parameters.   
-
+Once a `CharDim` structure is created, you can use the derived parameters, for example:
+```julia-repl
+>julia CharDim.strainrate
+1.0e-13 s⁻¹
+```
+You can also non-dimensionalize parameters:
+```julia-repl
+julia> A    =   6.3e-2MPa^-3.05*s^-1
+0.063 MPa⁻³·⁰⁵ s⁻¹
+julia> A_ND =   Nondimensionalize(A, CharDim);
+```
+or convert them to different units:
+```julia-repl
+julia> uconvert(Pa^-3.05*s^-1, A)
+3.157479571851836e-20 Pa⁻³·⁰⁵ s⁻¹
+```
 ### 2. Material parameters  
 All geodynamic simulations require specifying material parameters, such as (nonlinear) viscous constitutive relationships or an equation of state for density. These parameters are usually specified per `phase`. Here, we provide a framework that simplifies doing that. Thanks to the flexibility of julia, we can actually directly embed the function that does the computations in the structure itself, which makes it straightforward to extend it and add new creep laws (which can directly be used in the solvers).  
 
@@ -62,6 +83,9 @@ pkg> test GeoParams
 ```
 
 ### 5. Dependencies
+We rely on:
+- [Unitful.jl](https://github.com/PainterQubits/Unitful.jl) to deal with SI units
+- [Parameters.jl](https://github.com/mauro3/Parameters.jl) to have structures that are easier to modify
 
 ### 6. Contributing
 Help with developing this package is highly appreciated. You can contribute for example by adding new creep laws or by adding new constitutive relationships. If you invest a bit of time now, it will save others in the community a lot of time! 
