@@ -15,3 +15,6 @@ makedocs(
     ],
 )
 
+deploydocs(
+    repo = "github.com/JuliaGeodynamics/GeoParams.jl.git",
+)
