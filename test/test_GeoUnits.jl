@@ -37,3 +37,7 @@ A = (1.58*10^(-25))*Pa^(-4.2)*s^(-1)        # calcite
 
 R=8.314u"J/mol/K"
 @test Nondimensionalize(R,CharUnits_SI)  ≈ 8.314e-7
+
+# test Dimensionalize
+v_ND      =   Nondimensionalize(3cm/yr, CharUnits_GEO); 
+@test Dimensionalize(v_ND, cm/yr, CharUnits_GEO) == 3.0cm/yr

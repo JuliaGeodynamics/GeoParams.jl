@@ -20,7 +20,7 @@ We also implement some typically used creep law parameters, together with tools 
 * [6. Contributing](#6-contributing)
 * [7. Funding](#7-funding)
 
-### 1. Nondimensionalization 4
+### 1. Nondimensionalization 
 Typical geodynamic simulations involve dimensions on the order of 10's-1000's of kilometers, and viscosities on the order of ~1e20 Pas. If such values are directly employed in numerical solvers, they may result in roundoff errors. It is therefore common practice to nondimensionalize the input parameters by dividing them by typical values such that the result gives numbers that are closer to one.
 This can be done by specifying characteristic values for `length`, `stress`, `temperature` and `viscosity`. From these `basic` units all other physical units are derived and input parameters can thus be nondimensionalized accordingly (and dimensionalized again when plotting or saving output). 
 

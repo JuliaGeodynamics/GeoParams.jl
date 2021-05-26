@@ -15,7 +15,8 @@ using Unitful
 
 export 
         @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
-        GEO_units, SI_units, NO_units, AbstractGeoUnits, Nondimensionalize, superscript, upreferred,
+        GEO_units, SI_units, NO_units, AbstractGeoUnits, 
+        Nondimensionalize, Dimensionalize, superscript, upreferred, 
         km, m, cm, Mtrs, yr, s, MPa, Pa, Pas, K, C, kg, mol
     
 # note that this throws a "Method definition warning regarding superscript"; that is expected & safe 

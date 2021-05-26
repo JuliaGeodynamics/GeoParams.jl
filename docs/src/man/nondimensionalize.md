@@ -23,4 +23,5 @@ NO_units
 Once characteristic values have been defined, you can use them to non-dimensionalize or dimensionalize any parameter.
 ```@docs
 Nondimensionalize
+Dimensionalize
 ```

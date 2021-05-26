@@ -38,7 +38,8 @@ const mol   = u"mol"
 
 export 
     km, m, cm, Mtrs, yr, s, MPa, Pa, Pas, K, C, kg, mol, 
-    GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, Nondimensionalize, superscript, upreferred
+    GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
+    Nondimensionalize, Dimensionalize, superscript, upreferred
 
 """
 AbstractGeoUnits
@@ -54,7 +55,11 @@ struct SI  <: AbstractUnitType end
 struct NONE<: AbstractUnitType end
 
 #abstract type GeoUnits{TYPE} <: AbstractGeoUnits{TYPE} end
+"""
+    GeoUnits
 
+    Structure that holds parameters used for non-dimensionalization
+"""
 @with_kw_noshow struct GeoUnits{TYPE} 
     # Selectable input parameters
     temperature     =   1               #   Characteristic temperature  [C or K]
@@ -281,6 +286,37 @@ function Nondimensionalize(param, g::GeoUnits{TYPE}) where {TYPE}
     end
     return param_ND
 end
+
+
+"""
+    Dimensionalize(param, param_dim::Unitful.FreeUnits, CharUnits::GeoUnits{TYPE})
+
+Dimensionalizes `param` into the dimensions `param_dim` using the characteristic values specified in `CharUnits`.  
+
+# Example
+```julia-repl
+julia> CharUnits =   GEO_units();
+julia> v_ND      =   Nondimensionalize(3cm/yr, CharUnits) 
+0.031688087814028945
+julia> v_dim     =   Dimensionalize(v_ND, cm/yr, CharUnits) 
+3.0 cm yr⁻¹
+```
+
+"""
+function Dimensionalize(param_ND, param_dim::Unitful.FreeUnits, g::GeoUnits{TYPE}) where {TYPE}
+
+    dim         =   Unitful.dimension(param_dim);                   # Basic SI units
+    char_val    =   1.0;
+    foreach((typeof(dim).parameters[1])) do y
+        val = upreferred(getproperty(g, Unitful.name(y)))       # Retrieve the characteristic value from structure g
+        pow = Float64(y.power)                                  # power by which it should be multiplied   
+        char_val *= val^pow                                     # multiply characteristic value
+    end
+    param = uconvert(param_dim, param_ND*char_val)
+  
+    return param
+end
+
 
 # Define a view for the GEO_Units structure
 function show(io::IO, g::GeoUnits{TYPE})  where {TYPE}
