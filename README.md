@@ -3,7 +3,6 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliageodynamics.github.io/GeoParams.jl/dev/)
 [![Build Status](https://github.com/JuliaGeodynamics/GeoParams.jl/workflows/CI/badge.svg)](https://github.com/JuliaGeodynamics/GeoParams.jl/actions)
 
-
 Typical geodynamic simulations involve a large number of material parameters that have units that are often inconvenient to be directly used in numerical models
 This package has two main features that help with this:
 - Create a nondimensionalization object, which can be used to transfer dimensional to non-dimensional parameters (usually better for numerical solvers)
@@ -12,7 +11,17 @@ This package has two main features that help with this:
 The material parameter object is designed to be extensible and can be passed on to the solvers, such that new creep laws or features can be readily added. 
 We also implement some typically used creep law parameters, together with tools to plot them versus and compare our results with those of published papers (to minimize mistakes).  
 
+### Contents
+* [1. Nondimensionalization](#1-nondimensionalization) 
+* [2. Material parameters](#2-material-parameters)
+* [3. Plotting and output](#3-plotting-and-output)
+* [4. Installation](#4-installation)
+* [5. Dependencies](#5-dependencies)
+* [6. Contributing](#6-contributing)
+* [7. Funding](#7-funding)
+
 ### 1. Nondimensionalization 
+
 Typical geodynamic simulations involve dimensions on the order of 10's-1000's of kilometers, and viscosities on the order of ~1e20 Pas. If such values are directly employed in numerical solvers, they may result in roundoff errors. It is therefore common practice to nondimensionalize the input parameters by dividing them by typical values such that the result gives numbers that are closer to one.
 This can be done by specifying characteristic values for `length`, `stress`, `temperature` and `viscosity`. From these `basic` units all other physical units are derived and input parameters can thus be nondimensionalized accordingly (and dimensionalized again when plotting or saving output). 
 
@@ -34,8 +43,8 @@ You can use 3 `types`:
   3. *NO*: all input parameters are in nondimensional units
 
 Once a `CharDim` structure is created, you can use the derived parameters, for example:
-```julia-repl
->julia CharDim.strainrate
+```julia
+julia> CharDim.strainrate
 1.0e-13 s⁻¹
 ```
 You can also non-dimensionalize parameters:
@@ -72,7 +81,7 @@ A few simple functions are provided to plot creep laws.
 to be developed
 
 
-### 4. Installation and usage
+### 4. Installation
 You can install this package by specifying 
 ```julia
 julia> ]
@@ -91,3 +100,7 @@ We rely on:
 ### 6. Contributing
 Help with developing this package is highly appreciated. You can contribute for example by adding new creep laws or by adding new constitutive relationships. If you invest a bit of time now, it will save others in the community a lot of time! 
 The simplest way to do this is by cloning the repository, and creating a new branch for your feature. Once you are happy with what you added (and after you added a test to ensure that it will keep working with future changes), create a pull request and we will evaluate & merge it.
+
+
+### 7. Funding
+The initial development of this package was supported by the European Research Council (ERC CoG #771143).
