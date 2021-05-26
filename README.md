@@ -20,8 +20,7 @@ We also implement some typically used creep law parameters, together with tools 
 * [6. Contributing](#6-contributing)
 * [7. Funding](#7-funding)
 
-### 1. Nondimensionalization 
-
+### 1. Nondimensionalization 4
 Typical geodynamic simulations involve dimensions on the order of 10's-1000's of kilometers, and viscosities on the order of ~1e20 Pas. If such values are directly employed in numerical solvers, they may result in roundoff errors. It is therefore common practice to nondimensionalize the input parameters by dividing them by typical values such that the result gives numbers that are closer to one.
 This can be done by specifying characteristic values for `length`, `stress`, `temperature` and `viscosity`. From these `basic` units all other physical units are derived and input parameters can thus be nondimensionalized accordingly (and dimensionalized again when plotting or saving output). 
 
@@ -59,9 +58,11 @@ julia> uconvert(Pa^-3.05*s^-1, A)
 3.157479571851836e-20 Pa⁻³·⁰⁵ s⁻¹
 ```
 ### 2. Material parameters  
-All geodynamic simulations require specifying material parameters, such as (nonlinear) viscous constitutive relationships or an equation of state for density. These parameters are usually specified per `phase`. Here, we provide a framework that simplifies doing that. Thanks to the flexibility of julia, we can actually directly embed the function that does the computations in the structure itself, which makes it straightforward to extend it and add new creep laws (which can directly be used in the solvers).  
+- WORK IN PROGRESS 
+  
+All geodynamic simulations require specifying material parameters, such as (nonlinear) viscous constitutive relationships or an equation of state. These parameters are usually specified per `phase`. Here, we provide a framework that simplifies doing that. Thanks to the flexibility of julia, we can actually directly embed the function that does the computations in the structure itself, which makes it straightforward to extend it and add new creep laws (which can directly be used in the solvers).  
 
-Some examples of this is used:
+Some examples of where this is used:
 #### 2.1 Constant density, constant linear viscosity
 to be added
 
@@ -70,10 +71,11 @@ to be added
 
 
 ### 3. Plotting and output
+- WORK IN PROGRESS
 
-A typical geodynamic simulation involves a lot of parameters. Creating data tables for scientific publications that describe all parameters employed is usually done by hand (and no-one really likes doing that). In our experience a lot of errors happen while doing this, either because the units are mixed up (some creep laws have weird units like MPa^{-n}). To help with this, we provide number of functions that 
-  1)  Simplify creating plots in the same manner as in many publications, such that they can be directly compared to the original results. You can also create publication-ready figures.
-  2)  Provide tools to automatically generate data tables from the input parameters. This saves time and minimizes errors.
+A typical geodynamic simulation involves a lot of parameters. Creating data tables for scientific publications that describe all parameters employed is usually done by hand (and no-one really likes doing that). In our experience a lot of errors happen while doing this, either because the units are mixed up (some creep laws have weird units like MPa^{-n}), or because some parameters are forgotten. To help with this, we provide number of functions that 
+  1)  Simplify creating plots in the same manner as in many publications that report the laboratory experiments used to create the creep laws. In that way, they can be directly compared to the original results. You can also create publication-ready figures.
+  2)  Provide tools to automatically generate data tables from the input parameters. This saves time and minimizes errors. 
 #### 3.1 Plotting creep laws 
 A few simple functions are provided to plot creep laws.
 
@@ -103,4 +105,4 @@ The simplest way to do this is by cloning the repository, and creating a new bra
 
 
 ### 7. Funding
-The initial development of this package was supported by the European Research Council (ERC CoG #771143).
+The development of this package was supported by the European Research Council (ERC CoG #771143).
