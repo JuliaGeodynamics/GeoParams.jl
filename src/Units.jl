@@ -8,12 +8,10 @@ using Parameters
 
 import Base.show
 
-# Define a few additional units that are useful in geodynamics 
+# Define additional units that are useful in geodynamics 
 @unit    Myrs  "Myrs"   MillionYears    1000000u"yr"    false
 
-
 function __init__()
-    #merge!(Unitful.basefactors, localunits)
     Unitful.register(Units)
 end
 
@@ -38,8 +36,9 @@ const mol   = u"mol"
 
 export 
     km, m, cm, Mtrs, yr, s, MPa, Pa, Pas, K, C, kg, mol, 
-    GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
-    Nondimensionalize, Dimensionalize, superscript, upreferred
+    GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
+    Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
+    superscript, upreferred
 
 """
 AbstractGeoUnits
@@ -54,7 +53,51 @@ struct GEO <: AbstractUnitType end
 struct SI  <: AbstractUnitType end
 struct NONE<: AbstractUnitType end
 
-#abstract type GeoUnits{TYPE} <: AbstractGeoUnits{TYPE} end
+"""
+    Structure that holds a GeoUnit parameter and their dimensions
+
+    Having that is useful, as non-dimensionalization removes the units from a number
+    and we thus no longer know how to transfer it back to the correct units.
+
+"""
+mutable struct GeoUnit 
+    val                 # the actual value ()
+    unit :: Unitful.FreeUnits
+end
+
+
+GeoUnit(v::Unitful.Quantity)            =   GeoUnit(v, unit(v))     # store the units 
+GeoUnit(v::Number)                      =   GeoUnit(v, NoUnits)     # in case we just have a number with no units
+GeoUnit(v::Array)                       =   GeoUnit(v, NoUnits)     # in case we just have a number with no units
+GeoUnit(v::Array{Unitful.Quantity})     =   GeoUnit(v, unit.(v))    # in case we just have a number with no units
+
+Base.convert(::Type{Float64}, v::GeoUnit) = v.val
+
+# define a few basic routines so we can easily operate with GeoUnits
+Base.show(io::IO, x::GeoUnit)  = println(x.val)
+
+
+Base.:*(x::GeoUnit, y::Number)  = x.val*y
+Base.:+(x::GeoUnit, y::Number)  = x.val+y
+Base.:/(x::GeoUnit, y::Number)  = x.val/y
+Base.:-(x::GeoUnit, y::Number)  = x.val-y
+
+Base.:*(x::GeoUnit, y::Unitful.Quantity)  = GeoUnit(x.val*y, x.unit)
+Base.:+(x::GeoUnit, y::Unitful.Quantity)  = GeoUnit(x.val+y, x.unit)
+Base.:/(x::GeoUnit, y::Unitful.Quantity)  = GeoUnit(x.val/y, x.unit)
+Base.:-(x::GeoUnit, y::Unitful.Quantity)  = GeoUnit(x.val-y, x.unit)
+
+Base.:*(x::GeoUnit, y::Array)   = GeoUnit(x.val*y, x.unit)
+Base.:/(x::GeoUnit, y::Array)   = GeoUnit(x.val/y, x.unit)
+Base.:+(x::GeoUnit, y::Array)   = GeoUnit(x.val+y, x.unit)
+Base.:-(x::GeoUnit, y::Array)   = GeoUnit(x.val-y, x.unit)
+
+Base.getindex(x::GeoUnit, i::Int64, j::Int64) = x.val[i,j]
+Base.getindex(x::GeoUnit, i::Int64) = x.val[i]
+
+Base.setindex!(x::GeoUnit, v::Any, i::Int64, j::Int64) = x.val[i,j] = v
+Base.setindex!(x::GeoUnit, v::Any, i::Int64) = x.val[i] = v
+
 """
     GeoUnits
 
@@ -81,6 +124,9 @@ struct NONE<: AbstractUnitType end
     Time            =   s    
     Temperature     =   K
     Amount          =   1mol
+    Second          =   s
+    
+
     # Not defined, as they are not common in geodynamics:
     #Current
     #Luminosity
@@ -245,9 +291,9 @@ Nondimensionalizes `param` using the characteristic values specified in `CharUni
 julia> using GeoParams;
 julia> CharUnits =   GEO_units();
 julia> v         =   3cm/yr
-10 cm yr⁻¹ 
+3 cm yr⁻¹ 
 julia> v_ND      =   Nondimensionalize(v, CharUnits) 
-0.031688087814028945
+0.009506426344208684
 ```
 # Example 2
 In geodynamics one sometimes encounters more funky units
@@ -280,13 +326,51 @@ function Nondimensionalize(param, g::GeoUnits{TYPE}) where {TYPE}
             pow = Float64(y.power)                                  # power by which it should be multiplied   
             char_val *= val^pow                                     # multiply characteristic value
         end
-        param_ND = upreferred(param)/char_val
+        param_ND = upreferred.(param)/char_val
     else
         param_ND = param # The parameter has no units, so there is no way to determine how to nondimensionize it 
     end
     return param_ND
 end
 
+"""
+    Nondimensionalize!(param::GeoUnit, CharUnits::GeoUnits{TYPE})
+
+Nondimensionalizes `param` (given as GeoUnit) using the characteristic values specified in `CharUnits` in-place
+
+# Example 1
+```julia-repl
+julia> using GeoParams;
+julia> CharUnits =   GEO_units();
+julia> v         =   GeoUnit(3cm/yr)
+3 cm yr⁻¹ 
+julia> Nondimensionalize!(v, CharUnits) 
+0.009506426344208684
+```
+# Example 2
+```julia-repl
+julia> CharUnits =   GEO_units();
+julia> A         =   GeoUnit(6.3e-2MPa^-3.05*s^-1)
+0.063 MPa⁻³·⁰⁵ s⁻¹
+julia> A_ND      =   Nondimensionalize(A, CharUnits) 
+7.068716262102384e14
+```
+"""
+function Nondimensionalize!(param::GeoUnit, g::GeoUnits{TYPE}) where {TYPE}
+
+    if unit.(param.val)!=NoUnits
+        dim         =   Unitful.dimension(param.val[1]);                   # Basic SI units
+        char_val    =   1.0;
+        foreach((typeof(dim).parameters[1])) do y
+            val = upreferred(getproperty(g, Unitful.name(y)))       # Retrieve the characteristic value from structure g
+            pow = Float64(y.power)                                  # power by which it should be multiplied   
+            char_val *= val^pow                                     # multiply characteristic value
+        end
+        param.val = upreferred.(param.val)/char_val;
+    else
+        param = param # The parameter has no units, so there is no way to determine how to nondimensionize it 
+    end
+end
 
 """
     Dimensionalize(param, param_dim::Unitful.FreeUnits, CharUnits::GeoUnits{TYPE})
@@ -312,11 +396,38 @@ function Dimensionalize(param_ND, param_dim::Unitful.FreeUnits, g::GeoUnits{TYPE
         pow = Float64(y.power)                                  # power by which it should be multiplied   
         char_val *= val^pow                                     # multiply characteristic value
     end
-    param = uconvert(param_dim, param_ND*char_val)
+    param = uconvert.(param_dim, param_ND*char_val)
   
     return param
 end
 
+"""
+    Dimensionalize!(param::GeoUnit, CharUnits::GeoUnits{TYPE})
+
+Dimensionalizes `param` again to the values that it used to have using the characteristic values specified in `CharUnits`.  
+
+# Example
+```julia-repl
+julia> CharUnits =   GEO_units();
+julia> x = GeoUnit(3cm/yr)
+julia> Nondimensionalize!(x, CharUnits)
+julia> Dimensionalize!(x, CharUnits) 
+3.0 cm yr⁻¹
+```
+
+"""
+function Dimensionalize!(param::GeoUnit, g::GeoUnits{TYPE}) where {TYPE}
+    
+    dim         =   Unitful.dimension(param.unit);                   # Basic SI units
+    char_val    =   1.0;
+    foreach((typeof(dim).parameters[1])) do y
+        val = upreferred(getproperty(g, Unitful.name(y)))       # Retrieve the characteristic value from structure g
+        pow = Float64(y.power)                                  # power by which it should be multiplied   
+        char_val *= val^pow                                     # multiply characteristic value
+    end
+    param.val = uconvert.(param.unit, param.val*char_val)
+  
+end
 
 # Define a view for the GEO_Units structure
 function show(io::IO, g::GeoUnits{TYPE})  where {TYPE}
