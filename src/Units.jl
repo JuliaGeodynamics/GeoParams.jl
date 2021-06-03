@@ -381,7 +381,7 @@ function Nondimensionalize!(param::GeoUnit, g::GeoUnits{TYPE}) where {TYPE}
     end
 end
 
-# Nondimensionalize the material structures  
+# Nondimensionalize the material structure 
 function Nondimensionalize!(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE} 
 
     for param in fieldnames(typeof(MatParam))
@@ -450,6 +450,19 @@ function Dimensionalize!(param::GeoUnit, g::GeoUnits{TYPE}) where {TYPE}
     end
     param.val = uconvert.(param.unit, param.val*char_val)
   
+end
+
+# Dimensionalize the materials struct again
+function Dimensionalize!(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE} 
+
+    for param in fieldnames(typeof(MatParam))
+        if typeof(getfield(MatParam, param))==GeoUnit
+            z=getfield(MatParam, param)
+            Dimensionalize!(z, g)
+            setfield!(MatParam, param, z)
+        end
+    end
+    
 end
 
 # Define a view for the GEO_Units structure
