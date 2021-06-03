@@ -31,7 +31,7 @@ Structure that holds all material parameters for a given phase
     EnergySourceTerms   =   nothing             #       Source terms in energy conservation equation
 end
 
-# Link the various definitions
+# Link the modules with various definitions:
 include("./CreepLaw/CreepLaw.jl")
 
 
