@@ -12,6 +12,7 @@ module CreepLaw
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam
+import Base.show
 
 abstract type AbstractCreepLaw <: AbstractMaterialParam end
 
@@ -48,6 +49,11 @@ function CreepLaw_TauII(EpsII, s::LinearViscous)
     
     return TauII = 2.0*eta*EpsII;
 end
+
+# Print info 
+function show(io::IO, g::LinearViscous)  
+    print(io, "Linear viscosity: η=$(g.eta.val)")  
+end
 #-------------------------------------------------------------------------
 
 # Powerlaw viscous rheology ----------------------------------------------
@@ -64,8 +70,13 @@ where ``\\eta`` is the effective viscosity [Pa*s].
 """
 @with_kw_noshow mutable struct PowerlawViscous <: AbstractCreepLaw
     η0::GeoUnit     =  1e18Pa*s            # reference viscosity 
-    n::GeoUnit      =  2.0*NoUnit          # powerlaw exponent
+    n::GeoUnit      =  2.0*NoUnits         # powerlaw exponent
     ε0::GeoUnit     =  1e-15*1/s;          # reference strainrate
+end
+
+# Print info 
+function show(io::IO, g::PowerlawViscous)  
+    print(io, "Powerlaw viscosity: η0=$(g.η0.val), n=$(g.n.val), ε0=$(g.ε0.val) ")
 end
 #-------------------------------------------------------------------------
 

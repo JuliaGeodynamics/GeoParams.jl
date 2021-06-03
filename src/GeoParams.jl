@@ -34,12 +34,12 @@ using .Units
 # Define Material Parameter structure
 include("MaterialParameters.jl")
 using  .MaterialParameters
-export MaterialParams
+export MaterialParams, SetMaterialParams
 
 # Creep laws
 using  .MaterialParameters.CreepLaw
 export  CreepLaw_EpsII, CreepLaw_TauII,
-        LinearViscous
+        LinearViscous, PowerlawViscous
 
 
 end # module
