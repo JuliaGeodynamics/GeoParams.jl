@@ -482,7 +482,7 @@ end
 Prints exponents. 
 
 Note that we redefine this method (from Unitful) here, as we regularly deal with exponents 
-such as Pa^-4.2, which are not so nicely displayed in the Unitful package
+such as Pa^-4.2, which are otherwise not so nicely displayed in the Unitful package
 """
 function superscript(i::Rational)
     val = Float64(i);   # the numerical value of the exponent

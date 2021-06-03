@@ -10,6 +10,8 @@ We also implement some typically used creep law parameters, together with tools 
 __precompile__()
 module GeoParams
 
+
+
 using Parameters        # helps setting default parameters in structures
 using Unitful
 
@@ -18,12 +20,8 @@ export
         GeoUnit, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
         Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
         superscript, upreferred, 
-        km, m, cm, Mtrs, yr, s, MPa, Pa, Pas, K, C, kg, mol,
-        
-        MaterialParams,
-        CreepLaw_EpsII, CreepLaw_TauII
-    
-
+        km, m, cm, Mtrs, yr, s, MPa, Pa, Pas, K, C, kg, mol
+   
 #         
 abstract type AbstractMaterialParam end
         
@@ -33,7 +31,15 @@ abstract type AbstractMaterialParam end
 include("Units.jl")     
 using .Units
 
+# Define Material Parameter structure
 include("MaterialParameters.jl")
-using .MaterialParameters
+using  .MaterialParameters
+export MaterialParams
+
+# Creep laws
+using  .MaterialParameters.CreepLaw
+export  CreepLaw_EpsII, CreepLaw_TauII,
+        LinearViscous
+
 
 end # module
