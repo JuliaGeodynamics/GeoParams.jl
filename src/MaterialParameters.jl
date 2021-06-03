@@ -45,7 +45,16 @@ end
 
 Sets material parameters for a given phase. 
 
-if `CharDim` is specified the input parameters are non-dimensionalized     
+if `CharDim` is specified the input parameters are non-dimensionalized   
+    
+# Examples
+
+Define two viscous creep laws & non-dimensionalize
+```julia-repl
+julia> Phase = SetMaterialParams(Name="Viscous Matrix",
+                CreepLaws= (PowerlawViscous(), LinearViscous(eta=1e21Pa*s)),
+                CharDim=CharUnits_GEO);
+```
 
 """
 function SetMaterialParams(; Name::String="", 
@@ -75,7 +84,40 @@ function SetMaterialParams(; Name::String="",
 end
 
 
-# Nondimensionalize the material structure 
+# Helper that prints info about each of the material parameters
+#  for this to look nice, you need to define a Base.show 
+function Print_MaterialParam(io::IO, name::Symbol, Data)
+    if ~isnothing(Data) 
+        if typeof(Data[1]) <: AbstractMaterialParam
+            print(io, "     |-- $(name):")
+            for i=1:length(Data)
+                if i==1
+                    print(io, " $(Data[1]) \n")
+                else
+                    print(io, "     |              $(Data[i]) \n")
+                end
+            end
+        end
+    end
+end
+
+function Base.show(io::IO, phase::MaterialParams)
+    println(io, "Phase: $(phase.Name)")
+    println(io, "     | ")
+    
+    for param in fieldnames(typeof(phase))
+        Print_MaterialParam(io, param, getfield(phase, param))
+    end
+    
+end
+
+
+
+"""
+    Nondimensionalize!(phase_mat::MaterialParams, g::GeoUnits{TYPE})
+
+Nondimensionalizes all fields within the Material Parameters structure that contain material parameters
+"""
 function Nondimensionalize!(phase_mat::MaterialParams, g::GeoUnits{TYPE}) where {TYPE} 
 
     for param in fieldnames(typeof(phase_mat))
@@ -90,6 +132,25 @@ function Nondimensionalize!(phase_mat::MaterialParams, g::GeoUnits{TYPE}) where 
     end
 end
 
+"""
+    Dimensionalize!(phase_mat::MaterialParams, g::GeoUnits{TYPE})
+
+Dimensionalizes all fields within the Material Parameters structure that contain material parameters
+"""
+
+function Dimensionalize!(phase_mat::MaterialParams, g::GeoUnits{TYPE}) where {TYPE} 
+
+    for param in fieldnames(typeof(phase_mat))
+        fld = getfield(phase_mat, param)
+        if ~isnothing(fld)
+            for i=1:length(fld)
+                if typeof(fld[i]) <: AbstractMaterialParam
+                    Units.Dimensionalize!(fld[i],g)
+                end
+            end
+        end
+    end
+end
 
 # Link the modules with various definitions:
 include("./CreepLaw/CreepLaw.jl")
