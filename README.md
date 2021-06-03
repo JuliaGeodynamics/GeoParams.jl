@@ -98,7 +98,7 @@ pkg> test GeoParams
 We rely on:
 - [Unitful.jl](https://github.com/PainterQubits/Unitful.jl) to deal with SI units
 - [Parameters.jl](https://github.com/mauro3/Parameters.jl) to have structures that are easier to modify
-
+- [LaTeXStrings.jl](https://github.com/stevengj/LaTeXStrings.jl) to be able to add equations to the structures that describe the employed material laws
 ### 6. Contributing
 Help with developing this package is highly appreciated. You can contribute for example by adding new creep laws or by adding new constitutive relationships. If you invest a bit of time now, it will save others in the community a lot of time! 
 The simplest way to do this is by cloning the repository, and creating a new branch for your feature. Once you are happy with what you added (and after you added a test to ensure that it will keep working with future changes), create a pull request and we will evaluate & merge it.

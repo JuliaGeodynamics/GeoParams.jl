@@ -19,8 +19,15 @@ export
         Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
         superscript, upreferred, 
         km, m, cm, Mtrs, yr, s, MPa, Pa, Pas, K, C, kg, mol,
-        MaterialParams
+        
+        MaterialParams,
+        CreepLaw_EpsII, CreepLaw_TauII
     
+
+#         
+abstract type AbstractMaterialParam end
+        
+        
 # note that this throws a "Method definition warning regarding superscript"; that is expected & safe 
 #  as we add a nicer way to create output of superscripts. I have been unable to suppress this warning
 include("Units.jl")     

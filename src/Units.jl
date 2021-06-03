@@ -7,6 +7,7 @@ import Unitful: superscript
 using Parameters
 
 import Base.show
+using GeoParams: AbstractMaterialParam
 
 # Define additional units that are useful in geodynamics 
 @unit    Myrs  "Myrs"   MillionYears    1000000u"yr"    false
@@ -71,7 +72,10 @@ GeoUnit(v::Number)                      =   GeoUnit(v, NoUnits)     # in case we
 GeoUnit(v::Array)                       =   GeoUnit(v, NoUnits)     # in case we just have a number with no units
 GeoUnit(v::Array{Unitful.Quantity})     =   GeoUnit(v, unit.(v))    # in case we just have a number with no units
 
-Base.convert(::Type{Float64}, v::GeoUnit) = v.val
+
+Base.convert(::Type{Float64}, v::GeoUnit)   = v.val
+Base.convert(::Type{GeoUnit}, v::Quantity)  = GeoUnit(v) 
+Base.convert(::Type{GeoUnit}, v::Number)    = GeoUnit(v, NoUnits) 
 
 # define a few basic routines so we can easily operate with GeoUnits
 Base.show(io::IO, x::GeoUnit)  = println(x.val)
@@ -82,10 +86,15 @@ Base.:+(x::GeoUnit, y::Number)  = x.val+y
 Base.:/(x::GeoUnit, y::Number)  = x.val/y
 Base.:-(x::GeoUnit, y::Number)  = x.val-y
 
-Base.:*(x::GeoUnit, y::Unitful.Quantity)  = GeoUnit(x.val*y, x.unit)
-Base.:+(x::GeoUnit, y::Unitful.Quantity)  = GeoUnit(x.val+y, x.unit)
-Base.:/(x::GeoUnit, y::Unitful.Quantity)  = GeoUnit(x.val/y, x.unit)
-Base.:-(x::GeoUnit, y::Unitful.Quantity)  = GeoUnit(x.val-y, x.unit)
+Base.:*(x::Number, y::GeoUnit)  = y.val*x
+Base.:+(x::Number, y::GeoUnit)  = y.val+x
+Base.:/(x::Number, y::GeoUnit)  = x/y.val
+Base.:-(x::Number, y::GeoUnit)  = x-y.val
+
+Base.:*(x::GeoUnit, y::Quantity)  = GeoUnit(x.val*y, x.unit)
+Base.:+(x::GeoUnit, y::Quantity)  = GeoUnit(x.val+y, x.unit)
+Base.:/(x::GeoUnit, y::Quantity)  = GeoUnit(x.val/y, x.unit)
+Base.:-(x::GeoUnit, y::Quantity)  = GeoUnit(x.val-y, x.unit)
 
 Base.:*(x::GeoUnit, y::Array)   = GeoUnit(x.val*y, x.unit)
 Base.:/(x::GeoUnit, y::Array)   = GeoUnit(x.val/y, x.unit)
@@ -371,6 +380,20 @@ function Nondimensionalize!(param::GeoUnit, g::GeoUnits{TYPE}) where {TYPE}
         param = param # The parameter has no units, so there is no way to determine how to nondimensionize it 
     end
 end
+
+# Nondimensionalize the material structures  
+function Nondimensionalize!(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE} 
+
+    for param in fieldnames(typeof(MatParam))
+        if typeof(getfield(MatParam, param))==GeoUnit
+            z=getfield(MatParam, param)
+            Nondimensionalize!(z, g)
+            setfield!(MatParam, param, z)
+        end
+    end
+    
+end
+    
 
 """
     Dimensionalize(param, param_dim::Unitful.FreeUnits, CharUnits::GeoUnits{TYPE})
