@@ -12,8 +12,8 @@ Phase = SetMaterialParams(Name="test1", Phase=22,
                 Density  = ConstantDensity(),
                 CharDim  = CharUnits_GEO);
 
-@test   Phase.Density[1].ρ.val==2.9e-16
-@test   Phase.Gravity[1].g*1.0==1.1000000000000002e19
+@test   Phase.Density[1].ρ.val ≈ 2.9e-16
+@test   Phase.Gravity[1].g*1.0 ≈ 1.1000000000000002e19 
 @test   Phase.CreepLaws[1].η0*1.0==0.1
 @test   Phase.CreepLaws[2].η*1.0==100.0
 
