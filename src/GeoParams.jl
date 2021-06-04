@@ -41,5 +41,15 @@ using  .MaterialParameters.CreepLaw
 export  CreepLaw_EpsII, CreepLaw_TauII,
         LinearViscous, PowerlawViscous
 
+# Density
+using  .MaterialParameters.Density
+export  ComputeDensity,                                # computational routines
+        ConstantDensity,                        
+        PT_Density
+
+# Gravitational Acceleration
+using  .MaterialParameters.GravitationalAcceleration
+export  ComputeGravity,                                # computational routines
+        ConstantGravity
 
 end # module

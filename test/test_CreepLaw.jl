@@ -7,14 +7,14 @@ using GeoParams
 CharUnits_GEO   =   GEO_units(viscosity=1e19, length=1000km);
                 
 # Define a linear viscous creep law
-x1      =   LinearViscous(eta=1e18Pa*s)
-@test x1.eta.val == 1e18Pa*s
+x1      =   LinearViscous(η=1e18Pa*s)
+@test x1.η.val == 1e18Pa*s
 
-x1_ND   =   LinearViscous(eta=1e18Pa*s)
+x1_ND   =   LinearViscous(η=1e18Pa*s)
 Nondimensionalize!(x1_ND,CharUnits_GEO)                 # check that we can nondimensionalize all entries within the struct
-@test x1_ND.eta*1.0==0.1                            
+@test x1_ND.η*1.0==0.1                            
 Dimensionalize!(x1_ND,CharUnits_GEO)                    # check that we can dimensionalize it again
-@test x1_ND.eta.val==1e18Pa*s
+@test x1_ND.η.val==1e18Pa*s
 Nondimensionalize!(x1_ND,CharUnits_GEO)       
 
 # perform a computation with the viscous creep laws 

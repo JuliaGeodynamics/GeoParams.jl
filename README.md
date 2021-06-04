@@ -58,13 +58,33 @@ julia> uconvert(Pa^-3.05*s^-1, A)
 3.157479571851836e-20 Pa⁻³·⁰⁵ s⁻¹
 ```
 ### 2. Material parameters  
-- WORK IN PROGRESS 
   
 All geodynamic simulations require specifying material parameters, such as (nonlinear) viscous constitutive relationships or an equation of state. These parameters are usually specified per `phase`. Here, we provide a framework that simplifies doing that. Thanks to the flexibility of julia, we can actually directly embed the function that does the computations in the structure itself, which makes it straightforward to extend it and add new creep laws (which can directly be used in the solvers).  
 
 Some examples of where this is used:
 #### 2.1 Constant density, constant linear viscosity
-to be added
+```julia
+julia> Phase = SetMaterialParams(Name="Viscous Matrix", Phase=2,
+                              Density   = ConstantDensity(),
+                              CreepLaws = LinearViscous(η=1e23Pa*s))
+Phase 2 : Viscous Matrix
+        | 
+        |-- Density           : Constant density: ρ=2900 kg m⁻³ 
+        |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻² 
+        |-- CreepLaws         : Linear viscosity: η=1.0e23 Pa s 
+```
+The same but with non-dimensionalization of all parameters:
+```julia
+julia> CharDim = GEO_units(length=1000km, temperature=1000C, stress=10MPa, viscosity=1e20Pas);
+julia> Phase = SetMaterialParams(Name="Viscous Matrix", Phase=2, 
+                              Density   = ConstantDensity(),
+                              CreepLaws = LinearViscous(η=1e23Pa*s), CharDim=CharDim)
+Phase 2 : Viscous Matrix
+        | 
+        |-- Density           : Constant density: ρ=2.8999999999999996e-18 
+        |-- Gravity           : Gravitational acceleration: g=9.81e20 
+        |-- CreepLaws         : Linear viscosity: η=999.9999999999998
+```
 
 #### 2.2 Nonlinear creep laws
 to be added

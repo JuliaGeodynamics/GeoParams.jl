@@ -22,7 +22,7 @@ export  CreepLaw_EpsII, CreepLaw_TauII,         # calculation routines
 
 # Linear viscous rheology ------------------------------------------------
 """
-    LinearViscous(eta=1e20Pa*s)
+    LinearViscous(η=1e20Pa*s)
     
 Defines a linear viscous creeplaw 
 
@@ -34,25 +34,25 @@ where ``\\eta`` is the effective viscosity [Pa*s].
 """
 @with_kw_noshow mutable struct LinearViscous <: AbstractCreepLaw
     equation::LaTeXString   =   L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"     
-    eta::GeoUnit            =   1e20Pa*s                # viscosity
+    η::GeoUnit            =   1e20Pa*s                # viscosity
 end
 
 # Calculation routines for linear viscous rheologies
 function CreepLaw_EpsII(TauII, s::LinearViscous)
-    @unpack eta   = s
+    @unpack η   = s
     
-    return EpsII = TauII/(2.0*eta);
+    return EpsII = TauII/(2.0*η);
 end
 
 function CreepLaw_TauII(EpsII, s::LinearViscous)
-    @unpack eta   = s
+    @unpack η   = s
     
-    return TauII = 2.0*eta*EpsII;
+    return TauII = 2.0*η*EpsII;
 end
 
 # Print info 
 function show(io::IO, g::LinearViscous)  
-    print(io, "Linear viscosity: η=$(g.eta.val)")  
+    print(io, "Linear viscosity: η=$(g.η.val)")  
 end
 #-------------------------------------------------------------------------
 
@@ -89,6 +89,11 @@ end
 Returns the strainrate invariant ``\\dot{\\varepsilon}_{II}`` for a given deviatoric stress 
 invariant ``\\tau_{II}`` for any of the viscous creep laws implemented.
 
+
+```math  
+    \\varepsilon_{II}   = f( \\tau_{II} ) 
+```
+
 """
 CreepLaw_EpsII
 
@@ -97,6 +102,10 @@ CreepLaw_EpsII
 
 Returns the deviatoric stress invariant ``\\tau_{II}`` for a given strain rate  
 invariant ``\\dot{\\varepsilon}_{II}`` for any of the viscous creep laws implemented.
+
+```math  
+    \\tau_{II}  = f( \\varepsilon_{II} ) 
+```
 
 """
 CreepLaw_TauII
