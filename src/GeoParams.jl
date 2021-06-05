@@ -23,11 +23,12 @@ export
         km, m, cm, Myrs, yr, s, MPa, Pa, Pas, K, C, kg, mol
    
 #         
-abstract type AbstractMaterialParam end
-        
+abstract type AbstractMaterialParam end           # structure that holds material parmeters (density, elasticity, viscosity)          
+abstract type AbstractMaterialParamsStruct end    # will hold all info for a phase       
         
 # note that this throws a "Method definition warning regarding superscript"; that is expected & safe 
-#  as we add a nicer way to create output of superscripts. I have been unable to suppress this warning
+#  as we add a nicer way to create output of superscripts. I have been unable to get rid of this warning,
+#  as I am indeed redefining a method originally defined in Unitful
 include("Units.jl")     
 using .Units
 

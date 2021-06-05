@@ -7,7 +7,7 @@ import Unitful: superscript
 using Parameters
 
 import Base.show
-using GeoParams: AbstractMaterialParam
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 
 # Define additional units that are useful in geodynamics 
 @unit    Myrs  "Myrs"   MillionYears    1000000u"yr"    false
@@ -394,6 +394,25 @@ function Nondimensionalize!(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) 
     
 end
     
+"""
+    Nondimensionalize!(phase_mat::MaterialParams, g::GeoUnits{TYPE})
+
+Nondimensionalizes all fields within the Material Parameters structure that contain material parameters
+"""
+function Nondimensionalize!(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TYPE}) where {TYPE} 
+
+    for param in fieldnames(typeof(phase_mat))
+        fld = getfield(phase_mat, param)
+        if ~isnothing(fld)
+            for i=1:length(fld)
+                if typeof(fld[i]) <: AbstractMaterialParam
+                    Units.Nondimensionalize!(fld[i],g)
+                end
+            end
+        end
+    end
+    phase_mat.Nondimensional = true
+end
 
 """
     Dimensionalize(param, param_dim::Unitful.FreeUnits, CharUnits::GeoUnits{TYPE})
@@ -463,6 +482,27 @@ function Dimensionalize!(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) whe
         end
     end
     
+end
+
+"""
+    Dimensionalize!(phase_mat::MaterialParams, g::GeoUnits{TYPE})
+
+Dimensionalizes all fields within the Material Parameters structure that contain material parameters
+"""
+function Dimensionalize!(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TYPE}) where {TYPE} 
+
+    for param in fieldnames(typeof(phase_mat))
+        fld = getfield(phase_mat, param)
+        if ~isnothing(fld)
+            for i=1:length(fld)
+                if typeof(fld[i]) <: AbstractMaterialParam
+                    Units.Dimensionalize!(fld[i],g)
+                end
+            end
+        end
+    end
+    phase_mat.Nondimensional = false
+
 end
 
 # Define a view for the GEO_Units structure

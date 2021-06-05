@@ -9,7 +9,7 @@ using Parameters
 using ..Units
 
 import Base.show, Base.convert
-using GeoParams: AbstractMaterialParam
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 
 export 
     MaterialParams, SetMaterialParams    
@@ -27,10 +27,11 @@ include("./GravitationalAcceleration/GravitationalAcceleration.jl")
 Structure that holds all material parameters for a given phase
 
 """
- @with_kw_noshow mutable struct MaterialParams
+ @with_kw_noshow mutable struct MaterialParams <: AbstractMaterialParamsStruct
     # 
     Name::String         =   ""                  #       Description/name of the phase
     Phase::Int64         =   1;                  #       Number of the phase (optional)
+    Nondimensional::Bool =   false;              #       Are all fields non-dimensionalized or not?
     Density              =   nothing             #       Density equation of state
     Gravity              =   nothing             #       Gravitational acceleration (set automatically)
     CreepLaws            =   nothing             #       Creep laws
@@ -63,29 +64,31 @@ Note that if `Density` is specified, we also set `Gravity` even if not explicitl
 Define two viscous creep laws & constant density:
 ```julia-repl
 julia> Phase = SetMaterialParams(Name="Viscous Matrix",
-                Density   = ConstantDensity(),
-                CreepLaws = (PowerlawViscous(), LinearViscous(η=1e21Pa*s)))
+                       Density   = ConstantDensity(),
+                       CreepLaws = (PowerlawViscous(), LinearViscous(η=1e21Pa*s)))
 Phase 1 : Viscous Matrix
+        | [dimensional units]
         | 
         |-- Density           : Constant density: ρ=2900 kg m⁻³ 
-        |-- Gravity           : Acceleration    : g=9.81 m s⁻² 
+        |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻² 
         |-- CreepLaws         : Powerlaw viscosity: η0=1.0e18 Pa s, n=2.0, ε0=1.0e-15 s⁻¹  
-        |                       Linear viscosity: η=1.0e21 Pa s  
+        |                       Linear viscosity: η=1.0e21 Pa s
 ```
 
 Define two viscous creep laws & P/T dependent density and nondimensionalize
 ```julia-repl
 julia> CharUnits_GEO   =   GEO_units(viscosity=1e19, length=1000km);
 julia> Phase = SetMaterialParams(Name="Viscous Matrix", Phase=33,
-                       Density   = PT_Density(),
-                       CreepLaws = (PowerlawViscous(n=3), LinearViscous(η=1e23Pa*s)),
-                       CharDim   = CharUnits_GEO)
+                              Density   = PT_Density(),
+                              CreepLaws = (PowerlawViscous(n=3), LinearViscous(η=1e23Pa*s)),
+                              CharDim   = CharUnits_GEO)
 Phase 33: Viscous Matrix
+        | [non-dimensional units]
         | 
         |-- Density           : P/T-dependent density: ρ0=2.9e-16, α=0.038194500000000006, β=0.01, T0=0.21454659702313156, P0=0.0 
         |-- Gravity           : Gravitational acceleration: g=9.810000000000002e18 
         |-- CreepLaws         : Powerlaw viscosity: η0=0.1, n=3, ε0=0.001  
-        |                       Linear viscosity: η=10000.0  
+        |                       Linear viscosity: η=10000.0 
 ```
 
 
@@ -108,7 +111,7 @@ function SetMaterialParams(; Name::String="", Phase=1,
 
 
         # define struct for phase, while also specifying the maximum number of definitions for every field   
-        phase = MaterialParams(Name, Phase,
+        phase = MaterialParams(Name, Phase, false,
                                      ConvField(Density,             :Density,           maxAllowedFields=1),     
                                      ConvField(Gravity,             :Gravity,           maxAllowedFields=1),       
                                      ConvField(CreepLaws,           :Creeplaws),       
@@ -170,7 +173,14 @@ end
 # Specify how the printing of the MaterialParam structure is done
 function Base.show(io::IO, phase::MaterialParams)
     println(io, "Phase $(rpad(phase.Phase,2)): $(phase.Name)")
-    println(io, "        | ")
+    if phase.Nondimensional
+        println(io,"        | [non-dimensional units]")
+    else
+        println(io,"        | [dimensional units]")
+
+    end
+    println(io,"        | ")
+        
     
     for param in fieldnames(typeof(phase))
         Print_MaterialParam(io, param, getfield(phase, param))
@@ -178,44 +188,6 @@ function Base.show(io::IO, phase::MaterialParams)
     
 end
 
-## This should ideally be moved to Units.jl, such that it is also available to the user
-"""
-    Nondimensionalize!(phase_mat::MaterialParams, g::GeoUnits{TYPE})
-
-Nondimensionalizes all fields within the Material Parameters structure that contain material parameters
-"""
-function Nondimensionalize!(phase_mat::MaterialParams, g::GeoUnits{TYPE}) where {TYPE} 
-
-    for param in fieldnames(typeof(phase_mat))
-        fld = getfield(phase_mat, param)
-        if ~isnothing(fld)
-            for i=1:length(fld)
-                if typeof(fld[i]) <: AbstractMaterialParam
-                    Units.Nondimensionalize!(fld[i],g)
-                end
-            end
-        end
-    end
-end
-
-"""
-    Dimensionalize!(phase_mat::MaterialParams, g::GeoUnits{TYPE})
-
-Dimensionalizes all fields within the Material Parameters structure that contain material parameters
-"""
-function Dimensionalize!(phase_mat::MaterialParams, g::GeoUnits{TYPE}) where {TYPE} 
-
-    for param in fieldnames(typeof(phase_mat))
-        fld = getfield(phase_mat, param)
-        if ~isnothing(fld)
-            for i=1:length(fld)
-                if typeof(fld[i]) <: AbstractMaterialParam
-                    Units.Dimensionalize!(fld[i],g)
-                end
-            end
-        end
-    end
-end
 
 
 
