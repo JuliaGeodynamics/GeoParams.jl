@@ -42,20 +42,20 @@ Structure that holds all material parameters for a given phase
 end
 
 """
-    SetMaterialParams(; Name::String="", 
-                        Density=nothing, 
-                        Gravity=nothing,
-                        CreepLaws=nothing, 
-                        Elasticity=nothing, 
-                        Plasticity=nothing, 
-                        Conductivity=nothing, 
-                        HeatCapacity=nothing, 
-                        EnergySourceTerms=nothing, 
-                        CharDim::GeoUnits=nothing)
+    SetMaterialParams(; Name::String="", Phase::Int64=1,
+                        Density             =   nothing, 
+                        Gravity             =   nothing,
+                        CreepLaws           =   nothing, 
+                        Elasticity          =   nothing, 
+                        Plasticity          =   nothing, 
+                        Conductivity        =   nothing, 
+                        HeatCapacity        =   nothing, 
+                        EnergySourceTerms   =   nothing, 
+                        CharDim::GeoUnits   =   nothing)
 
 Sets material parameters for a given phase. 
 
-If `CharDim` is specified the input parameters are non-dimensionalized  
+If `CharDim` is specified the input parameters are non-dimensionalized.  
 Note that if `Density` is specified, we also set `Gravity` even if not explicitly listed
     
 # Examples

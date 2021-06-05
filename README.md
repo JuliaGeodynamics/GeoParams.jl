@@ -29,7 +29,7 @@ As you learned in physics, the common approach to do this is by using `SI` units
 ```julia
 julia> using GeoParams
 julia> CharDim = GEO_units(length=1000km, temperature=1000C, stress=10MPa, viscosity=1e20Pas)
-Employing GeoParams.Units.GEO units 
+Employing GEO units 
 Characteristic values: 
          length:      1000 km
          time:        0.3169 Myrs
@@ -37,9 +37,9 @@ Characteristic values:
          temperature: 1000.0 °C
 ```
 You can use 3 `types`:
-  1. *GEO* units: Units of length in the code are expected to be in kilometers, time is in million of years (Myrs) and stresses are in MPa (1e6 Pa). This is the default.
+  1. *GEO* units: Units of length in the code are expected to be in kilometers, time is in million of years (Myrs) and stresses are in MPa (1e6 Pa). 
   2. *SI* units: all values are in SI units (meters, Pascal, seconds)
-  3. *NO*: all input parameters are in nondimensional units
+  3. *NONE*: all input parameters are in nondimensional units
 
 Once a `CharDim` structure is created, you can use the derived parameters, for example:
 ```julia

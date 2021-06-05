@@ -31,7 +31,7 @@ end
 function ComputeGravity(s::ConstantGravity)
     @unpack g   = s
     
-    return g
+    return g*1.0   # multiply with 1.0, to return Float64
 end
 
 # Print info 

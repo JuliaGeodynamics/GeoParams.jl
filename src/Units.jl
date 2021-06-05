@@ -39,7 +39,7 @@ export
     km, m, cm, Mtrs, yr, s, MPa, Pa, Pas, K, C, kg, mol, 
     GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
     Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
-    superscript, upreferred
+    superscript, upreferred, GEO, SI, NONE
 
 """
 AbstractGeoUnits
@@ -171,7 +171,7 @@ The characteristic values given as input can be in arbitrary units (`km` or `m`)
 # Examples:
 ```julia-repl
 julia> CharUnits = GEO_units()
-Employing GeoParams.Units.GEO units 
+Employing GEO units 
 Characteristic values: 
          length:      1000 km
          time:        0.3169 Myrs
@@ -183,7 +183,7 @@ julia> CharUnits.velocity
 If we instead have a crustal-scale simulation, it is likely more appropriate to use a different characteristic `length`:
 ```julia-repl
 julia> CharUnits = GEO_units(length=10km)
-Employing GeoParams.Units.GEO units 
+Employing GEO units 
 Characteristic values: 
          length:      10 km
          time:        0.3169 Myrs
@@ -222,7 +222,7 @@ Specify the characteristic values using SI units
 # Examples:
 ```julia-repl
 julia> CharUnits = SI_units(length=1000m)
-Employing GeoParams.Units.SI units 
+Employing SI units 
 Characteristic values: 
          length:      1000 m
          time:        1.0e19 s
@@ -265,7 +265,7 @@ Specify the characteristic values in non-dimensional units
 ```julia-repl
 julia> using GeoParams;
 julia> CharUnits = NO_units()
-Employing GeoParams.Units.SI units 
+Employing NONE units 
 Characteristic values: 
          length:      1
          time:        1.0 

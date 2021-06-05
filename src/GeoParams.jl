@@ -19,8 +19,8 @@ export
         @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
         GeoUnit, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
         Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
-        superscript, upreferred, 
-        km, m, cm, Mtrs, yr, s, MPa, Pa, Pas, K, C, kg, mol
+        superscript, upreferred, GEO, SI, NONE, 
+        km, m, cm, Myrs, yr, s, MPa, Pa, Pas, K, C, kg, mol
    
 #         
 abstract type AbstractMaterialParam end
