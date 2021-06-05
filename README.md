@@ -101,8 +101,11 @@ A typical geodynamic simulation involves a lot of parameters. Creating data tabl
 #### 3.1 Plotting creep laws 
 A few simple functions are provided to plot creep laws.
 
-#### 3.2 Creating data tables
-to be developed
+#### 3.2 Automatically create data tables
+to be developed - 
+
+When writing scientific papers that describes numerical modelling results, it is usually necessary to include tables that lists all model parameters employed. Doing this is error-prone and usually not a very interesting job to do. 
+That is why we provide routines that fully automatizes this process.
 
 
 ### 4. Installation

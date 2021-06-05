@@ -381,7 +381,12 @@ function Nondimensionalize!(param::GeoUnit, g::GeoUnits{TYPE}) where {TYPE}
     end
 end
 
-# Nondimensionalize the material structure 
+"""
+    Nondimensionalize!(MatParam::AbstractMaterialParam, CharUnits::GeoUnits{TYPE})
+
+Non-dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
+
+"""
 function Nondimensionalize!(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE} 
 
     for param in fieldnames(typeof(MatParam))
@@ -471,7 +476,12 @@ function Dimensionalize!(param::GeoUnit, g::GeoUnits{TYPE}) where {TYPE}
   
 end
 
-# Dimensionalize the materials struct again
+"""
+    Dimensionalize!(MatParam::AbstractMaterialParam, CharUnits::GeoUnits{TYPE})
+
+Dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
+
+"""
 function Dimensionalize!(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE} 
 
     for param in fieldnames(typeof(MatParam))
