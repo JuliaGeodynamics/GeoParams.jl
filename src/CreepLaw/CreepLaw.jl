@@ -9,6 +9,7 @@ module CreepLaw
 # In case you want to add new creep laws, have a look at how the ones
 # here are implemented. Please add tests as well!
 
+using Base: Float64
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam
@@ -17,8 +18,28 @@ import Base.show
 abstract type AbstractCreepLaw <: AbstractMaterialParam end
 
 export  CreepLaw_EpsII, CreepLaw_TauII,         # calculation routines
+        CreepLawParams,                         # holds additional parameters required for calculations
         LinearViscous, 
         PowerlawViscous
+
+"""
+ Struct that holds parameters required for creep law calculations (such as P,T, grain size etc.)
+
+You can assign the struct as
+ ``` 
+ CreepLawParams(P=0.0, T=0.0, d=1.0) 
+ ```   
+where you can also pass vectors or arrays as values
+
+Note that this can be extended if needed, w/out interfering with existing structs 
+
+"""
+@with_kw struct CreepLawParams     
+    P  =   0.0      # pressure
+    T  =   0.0      # temperature
+    d  =   1.0      # grainsize
+end
+
 
 # Linear viscous rheology ------------------------------------------------
 """
@@ -38,13 +59,13 @@ where ``\\eta`` is the effective viscosity [Pa*s].
 end
 
 # Calculation routines for linear viscous rheologies
-function CreepLaw_EpsII(TauII, s::LinearViscous)
+function CreepLaw_EpsII(TauII, s::LinearViscous, p::CreepLawParams)
     @unpack η   = s
     
     return EpsII = TauII/(2.0*η);
 end
 
-function CreepLaw_TauII(EpsII, s::LinearViscous)
+function CreepLaw_TauII(EpsII, s::LinearViscous, p::CreepLawParams)
     @unpack η   = s
     
     return TauII = 2.0*η*EpsII;
@@ -58,7 +79,7 @@ end
 
 # Powerlaw viscous rheology ----------------------------------------------
 """
-    PowerlawViscous(eta=1e20Pa*s, )
+    PowerlawViscous(η0=1e18Pa*s, n=2.0NoUnits, ε0=1e-15/s)
     
 Defines a simple power law viscous creeplaw 
 
@@ -81,14 +102,14 @@ end
 #-------------------------------------------------------------------------
 
 
-
 # Help info for the calculation routines
 """
-    CreepLaw_EpsII(TauII, s:<AbstractCreepLaw)
+    CreepLaw_EpsII(TauII, s:<AbstractCreepLaw, p::CreepLawParams)
 
 Returns the strainrate invariant ``\\dot{\\varepsilon}_{II}`` for a given deviatoric stress 
 invariant ``\\tau_{II}`` for any of the viscous creep laws implemented.
-
+``p`` is a struct that can hold various parameters (such as ``P``, ``T``) that the creep law
+may need for the calculations 
 
 ```math  
     \\varepsilon_{II}   = f( \\tau_{II} ) 
@@ -98,10 +119,12 @@ invariant ``\\tau_{II}`` for any of the viscous creep laws implemented.
 CreepLaw_EpsII
 
 """
-    CreepLaw_TauII(EpsII, s:<AbstractCreepLaw)
+    CreepLaw_TauII(EpsII, s:<AbstractCreepLaw, p::CreepLawParams)
 
 Returns the deviatoric stress invariant ``\\tau_{II}`` for a given strain rate  
 invariant ``\\dot{\\varepsilon}_{II}`` for any of the viscous creep laws implemented.
+``p`` is a struct that can hold various parameters (such as ``P``, ``T``) that the creep law
+may need for the calculations 
 
 ```math  
     \\tau_{II}  = f( \\varepsilon_{II} ) 

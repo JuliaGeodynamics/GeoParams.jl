@@ -19,7 +19,7 @@ export  ComputeDensity,         # calculation routines
 
 # Constant Density -------------------------------------------------------
 """
-    ConstantDensity(ρ=2900kg/m3)
+    ConstantDensity(ρ=2900kg/m^3)
     
 Set a constant density:
 ```math  
@@ -47,7 +47,7 @@ end
 
 # Pressure & Temperature dependent density -------------------------------
 """
-    PT_Density(ρ0=2900kg/m3, α=3e-5/K, β=1e-9/Pa, T0=0C, P=0MPa)
+    PT_Density(ρ0=2900kg/m^3, α=3e-5/K, β=1e-9/Pa, T0=0C, P=0MPa)
     
 Set a pressure and temperature-dependent density:
 ```math  
