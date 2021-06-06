@@ -87,6 +87,34 @@ Phase 2 : Viscous Matrix
         |-- Gravity           : Gravitational acceleration: g=9.81e20 
         |-- CreepLaws         : Linear viscosity: η=999.9999999999998 
 ```
+You can define an array with phase information like this:
+
+```julia
+julia> CharDim      = GEO_units(length=1000km, temperature=1000C, stress=10MPa, viscosity=1e20Pas);
+julia> MatParam     = Array{MaterialParams, 1}(undef, 2);
+julia> MatParam[1]  = SetMaterialParams(Name="Viscous Matrix", Phase=1, 
+                                     Density   = ConstantDensity(),
+                                     CreepLaws = LinearViscous(η=1e23Pa*s), CharDim=CharDim);
+julia> MatParam[2]  = SetMaterialParams(Name="Viscous Sinker", Phase=2, 
+                                     Density   = PT_Density(),
+                                     CreepLaws = LinearViscous(η=1e21Pa*s), CharDim=CharDim);
+julia> MatParam
+2-element Vector{MaterialParams}:
+ Phase 1 : Viscous Matrix
+        | [non-dimensional units]
+        | 
+        |-- Density           : Constant density: ρ=2.8999999999999996e-18 
+        |-- Gravity           : Gravitational acceleration: g=9.81e20 
+        |-- CreepLaws         : Linear viscosity: η=999.9999999999998 
+
+ Phase 2 : Viscous Sinker
+        | [non-dimensional units]
+        | 
+        |-- Density           : P/T-dependent density: ρ0=2.8999999999999996e-18, α=0.038194500000000006, β=0.01, T0=0.21454659702313156, P0=0.0 
+        |-- Gravity           : Gravitational acceleration: g=9.81e20 
+        |-- CreepLaws         : Linear viscosity: η=9.999999999999998                                 
+```
+
 
 #### 2.2 Nonlinear creep laws
 to be added

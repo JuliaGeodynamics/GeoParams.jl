@@ -91,6 +91,36 @@ Phase 33: Viscous Matrix
         |                       Linear viscosity: η=10000.0 
 ```
 
+You can also create an array that holds several parameters:
+```julia-repl
+julia> MatParam        =   Array{MaterialParams, 1}(undef, 2);
+julia> Phase           =   1;
+julia> MatParam[Phase] =   SetMaterialParams(Name="Upper Crust", Phase=Phase,
+                            CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
+                            Density  = ConstantDensity(ρ=2900kg/m^3));
+julia> Phase           =   2;
+julia> MatParam[Phase] =   SetMaterialParams(Name="Lower Crust", Phase=Phase,
+                            CreepLaws= (PowerlawViscous(n=5), LinearViscous(η=1e21Pa*s)),
+                            Density  = PT_Density(ρ0=3000kg/m^3));
+julia> MatParam
+2-element Vector{MaterialParams}:
+ Phase 1 : Upper Crust
+    | [dimensional units]
+    | 
+    |-- Density           : Constant density: ρ=2900 kg m⁻³ 
+    |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻² 
+    |-- CreepLaws         : Powerlaw viscosity: η0=1.0e18 Pa s, n=2.0, ε0=1.0e-15 s⁻¹  
+    |                       Linear viscosity: η=1.0e23 Pa s 
+                            
+ Phase 2 : Lower Crust
+    | [dimensional units]
+    | 
+    |-- Density           : P/T-dependent density: ρ0=3000 kg m⁻³, α=3.0e-5 K⁻¹, β=1.0e-9 Pa⁻¹, T0=0 °C, P0=0 MPa 
+    |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻² 
+    |-- CreepLaws         : Powerlaw viscosity: η0=1.0e18 Pa s, n=5, ε0=1.0e-15 s⁻¹  
+    |                       Linear viscosity: η=1.0e21 Pa s 
+```
+
 
 """
 function SetMaterialParams(; Name::String="", Phase=1,

@@ -6,19 +6,42 @@ using GeoParams
 CharUnits_GEO   =   GEO_units(viscosity=1e19, length=1000km);
 
 # Define a struct for a first phase
-Phase = SetMaterialParams(Name="test1", Phase=22,
+Phase1 = SetMaterialParams(Name="test1", Phase=22,
                 CreepLaws= (PowerlawViscous(), LinearViscous(η=1e21Pa*s)),
                 Gravity  = ConstantGravity(g=11m/s^2),
                 Density  = ConstantDensity(),
                 CharDim  = CharUnits_GEO);
 
-@test   Phase.Density[1].ρ.val ≈ 2.9e-16
-@test   Phase.Gravity[1].g*1.0 ≈ 1.1000000000000002e19 
-@test   Phase.CreepLaws[1].η0*1.0==0.1
-@test   Phase.CreepLaws[2].η*1.0==100.0
+@test   Phase1.Density[1].ρ.val ≈ 2.9e-16
+@test   Phase1.Gravity[1].g*1.0 ≈ 1.1000000000000002e19 
+@test   Phase1.CreepLaws[1].η0*1.0==0.1
+@test   Phase1.CreepLaws[2].η*1.0==100.0
 
-Phase1 = SetMaterialParams(Name="test1",
+Phase2 = SetMaterialParams(Name="test1",Phase=2,
                 CreepLaws= (LinearViscous(), LinearViscous(η=1e21Pa*s)),
                 Density  = ConstantDensity());
 
-#GeoParams.MaterialParameters.Dimensionalize!(Phase, CharUnits_GEO)
+# Non-dimensionalize all values:
+Nondimensionalize!(Phase2, CharUnits_GEO)
+@test Phase2.CreepLaws[2].η.val==100.0
+@test Phase2.Density[1].ρ.val==2.9e-16
+
+# Dimensionalize all values again:
+Dimensionalize!(Phase2, CharUnits_GEO)
+@test Phase2.Density[1].ρ.val==2900kg/m^3
+@test Phase2.CreepLaws[2].η.val==1e21Pa*s
+
+# Create array with several phases
+MatParam        =   Array{MaterialParams, 1}(undef, 2);
+Phase           =   1;
+MatParam[Phase] =   SetMaterialParams(Name="Upper Crust", Phase=Phase,
+                        CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
+                        Density  = ConstantDensity(ρ=2900kg/m^3));
+Phase           =   2;
+MatParam[Phase] =   SetMaterialParams(Name="Lower Crust", Phase=Phase,
+                        CreepLaws= (PowerlawViscous(n=5), LinearViscous(η=1e21Pa*s)),
+                        Density  = PT_Density(ρ0=3000kg/m^3));
+
+
+@test MatParam[2].Density[1].α.val == 3.0e-5/K
+@test MatParam[2].CreepLaws[1].n.val == 5.0
