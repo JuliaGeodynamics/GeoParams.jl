@@ -11,7 +11,9 @@ x1      =   LinearViscous(η=1e18Pa*s)
 @test x1.η.val == 1e18Pa*s
 
 x1_ND   =   LinearViscous(η=1e18Pa*s)
+@test  isDimensional(x1_ND)==true 
 Nondimensionalize!(x1_ND,CharUnits_GEO)                 # check that we can nondimensionalize all entries within the struct
+@test  isDimensional(x1_ND)==false 
 @test x1_ND.η*1.0==0.1                            
 Dimensionalize!(x1_ND,CharUnits_GEO)                    # check that we can dimensionalize it again
 @test x1_ND.η.val==1e18Pa*s
@@ -20,14 +22,14 @@ Nondimensionalize!(x1_ND,CharUnits_GEO)
 # perform a computation with the viscous creep laws 
 
 # Given stress
-@test CreepLaw_EpsII(1e6Pa, x1, CreepLawParams())==5e-13/s                # dimensional input       
-@test CreepLaw_EpsII(1e0, x1_ND, CreepLawParams())==5.0                   # non-dimensional
-@test CreepLaw_EpsII([1e0; 2.0], x1_ND, CreepLawParams())==[5.0; 10.0]    # vector input
+@test ComputeCreepLaw_EpsII(1e6Pa, x1, CreepLawParams())==5e-13/s                # dimensional input       
+@test ComputeCreepLaw_EpsII(1e0, x1_ND, CreepLawParams())==5.0                   # non-dimensional
+@test ComputeCreepLaw_EpsII([1e0; 2.0], x1_ND, CreepLawParams())==[5.0; 10.0]    # vector input
 
 # Given strainrate 
-@test CreepLaw_TauII(1e-13/s, x1, CreepLawParams())==1e18*2*1e-13Pa       # dimensional input       
-@test CreepLaw_TauII(1e0, x1_ND, CreepLawParams())==0.2                   # non-dimensional
-@test CreepLaw_TauII([1e0; 2.0], x1_ND, CreepLawParams())==[0.2; 0.4]     # vector input
+@test ComputeCreepLaw_TauII(1e-13/s, x1, CreepLawParams())==1e18*2*1e-13Pa       # dimensional input       
+@test ComputeCreepLaw_TauII(1e0, x1_ND, CreepLawParams())==0.2                   # non-dimensional
+@test ComputeCreepLaw_TauII([1e0; 2.0], x1_ND, CreepLawParams())==[0.2; 0.4]     # vector input
 # -------------------------------------------------------------------
 
 

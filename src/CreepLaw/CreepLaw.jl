@@ -17,8 +17,8 @@ import Base.show
 
 abstract type AbstractCreepLaw <: AbstractMaterialParam end
 
-export  CreepLaw_EpsII, CreepLaw_TauII,         # calculation routines
-        CreepLawParams,                         # holds additional parameters required for calculations
+export  ComputeCreepLaw_EpsII, ComputeCreepLaw_TauII,       # calculation routines
+        CreepLawParams,                                     # holds additional parameters required for calculations
         LinearViscous, 
         PowerlawViscous
 
@@ -26,13 +26,12 @@ export  CreepLaw_EpsII, CreepLaw_TauII,         # calculation routines
  Struct that holds parameters required for creep law calculations (such as P,T, grain size etc.)
 
 You can assign the struct as
- ``` 
- CreepLawParams(P=0.0, T=0.0, d=1.0) 
- ```   
-where you can also pass vectors or arrays as values
+```julia-repl
+ p = CreepLawParams(P=0.0, T=0.0, d=1.0) 
+```  
+where you can also pass vectors or arrays as values.
 
-Note that this can be extended if needed, w/out interfering with existing structs 
-
+Note that, if needed, this can be extended, w/out interfering with existing calculation  
 """
 @with_kw struct CreepLawParams     
     P  =   0.0      # pressure
@@ -49,9 +48,14 @@ Defines a linear viscous creeplaw
 
 The (isotopic) linear viscous rheology is given by  
 ```math  
+    \\tau_{ij} = 2 \\eta \\dot{\\varepsilon}_{ij} 
+```
+or
+```math  
     \\dot{\\varepsilon}_{ij}  = {\\tau_{ij}  \\over 2 \\eta }
 ```
-where ``\\eta`` is the effective viscosity [Pa*s].
+
+where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\\dot{\\varepsilon}_0``[1/s], and ``n`` the power law exponent []. 
 """
 @with_kw_noshow mutable struct LinearViscous <: AbstractCreepLaw
     equation::LaTeXString   =   L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"     
@@ -59,13 +63,13 @@ where ``\\eta`` is the effective viscosity [Pa*s].
 end
 
 # Calculation routines for linear viscous rheologies
-function CreepLaw_EpsII(TauII, s::LinearViscous, p::CreepLawParams)
+function ComputeCreepLaw_EpsII(TauII, s::LinearViscous, p::CreepLawParams)
     @unpack η   = s
     
     return EpsII = TauII/(2.0*η);
 end
 
-function CreepLaw_TauII(EpsII, s::LinearViscous, p::CreepLawParams)
+function ComputeCreepLaw_TauII(EpsII, s::LinearViscous, p::CreepLawParams)
     @unpack η   = s
     
     return TauII = 2.0*η*EpsII;
@@ -81,11 +85,10 @@ end
 """
     PowerlawViscous(η0=1e18Pa*s, n=2.0NoUnits, ε0=1e-15/s)
     
-Defines a simple power law viscous creeplaw 
+Defines a power law viscous creeplaw as: 
 
-The (isotopic) linear viscous rheology is given by  
 ```math  
-    {\\tau_{ij}  = \\η_0 ( \\varepsilon_{II} \\over \\varepsilon_{II} ) 
+    \\tau_{ij}^n  = 2 \\eta_0 \\left( \\dot{\\varepsilon}_{ij} \\over \\dot{\\varepsilon}_0 \\right)
 ```
 where ``\\eta`` is the effective viscosity [Pa*s].
 """
@@ -104,7 +107,7 @@ end
 
 # Help info for the calculation routines
 """
-    CreepLaw_EpsII(TauII, s:<AbstractCreepLaw, p::CreepLawParams)
+    ComputeCreepLaw_EpsII(TauII, s:<AbstractCreepLaw, p::CreepLawParams)
 
 Returns the strainrate invariant ``\\dot{\\varepsilon}_{II}`` for a given deviatoric stress 
 invariant ``\\tau_{II}`` for any of the viscous creep laws implemented.
@@ -112,14 +115,14 @@ invariant ``\\tau_{II}`` for any of the viscous creep laws implemented.
 may need for the calculations 
 
 ```math  
-    \\varepsilon_{II}   = f( \\tau_{II} ) 
+    \\dot{\\varepsilon}_{II}   = f( \\tau_{II} ) 
 ```
 
 """
-CreepLaw_EpsII
+ComputeCreepLaw_EpsII
 
 """
-    CreepLaw_TauII(EpsII, s:<AbstractCreepLaw, p::CreepLawParams)
+    ComputeCreepLaw_TauII(EpsII, s:<AbstractCreepLaw, p::CreepLawParams)
 
 Returns the deviatoric stress invariant ``\\tau_{II}`` for a given strain rate  
 invariant ``\\dot{\\varepsilon}_{II}`` for any of the viscous creep laws implemented.
@@ -127,11 +130,11 @@ invariant ``\\dot{\\varepsilon}_{II}`` for any of the viscous creep laws impleme
 may need for the calculations 
 
 ```math  
-    \\tau_{II}  = f( \\varepsilon_{II} ) 
+    \\tau_{II}  = f( \\dot{\\varepsilon}_{II} ) 
 ```
 
 """
-CreepLaw_TauII
+ComputeCreepLaw_TauII
 
 
 end

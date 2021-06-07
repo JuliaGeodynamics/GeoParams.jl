@@ -19,7 +19,7 @@ export
         @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
         GeoUnit, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
         Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
-        superscript, upreferred, GEO, SI, NONE, 
+        superscript, upreferred, GEO, SI, NONE, isDimensional, 
         km, m, cm, Myrs, yr, s, MPa, Pa, Pas, K, C, kg, mol
    
 #         
@@ -39,7 +39,7 @@ export MaterialParams, SetMaterialParams
 
 # Creep laws
 using  .MaterialParameters.CreepLaw
-export  CreepLaw_EpsII, CreepLaw_TauII, CreepLawParams,
+export  ComputeCreepLaw_EpsII, ComputeCreepLaw_TauII, CreepLawParams,
         LinearViscous, PowerlawViscous
 
 # Density
@@ -52,5 +52,11 @@ export  ComputeDensity,                                # computational routines
 using  .MaterialParameters.GravitationalAcceleration
 export  ComputeGravity,                                # computational routines
         ConstantGravity
+
+
+# Add plotting routines
+include("Plotting.jl")
+using  .Plotting
+export  PlotStressStrainrate_CreepLaw
 
 end # module

@@ -12,6 +12,7 @@ makedocs(
             "Nondimensionalization" =>  "man/nondimensionalize.md",
             "Material Parameters" =>  "man/materialparameters.md",
         ],
+        "Plotting"  => "man/plotting.md",
         "List of functions"  => "man/listfunctions.md",
         "Contributing" => "man/contributing.md",
     ],
