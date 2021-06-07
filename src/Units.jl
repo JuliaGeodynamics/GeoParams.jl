@@ -39,7 +39,7 @@ export
     km, m, cm, Mtrs, yr, s, MPa, Pa, Pas, K, C, kg, mol, 
     GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
     Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
-    superscript, upreferred, GEO, SI, NONE
+    superscript, upreferred, GEO, SI, NONE, isDimensional
 
 """
 AbstractGeoUnits
@@ -493,6 +493,25 @@ function Dimensionalize!(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) whe
     end
     
 end
+
+"""
+    isDimensional(MatParam::AbstractMaterialParam)
+
+`true` if MatParam is in dimensional units.    
+"""
+function isDimensional(MatParam::AbstractMaterialParam)
+    isDim = false;
+    for param in fieldnames(typeof(MatParam))
+        if typeof(getfield(MatParam, param))==GeoUnit
+            z=getfield(MatParam, param)
+            if unit(z.val)!=NoUnits
+                isDim=true;
+            end
+        end
+    end
+    return isDim
+end
+
 
 """
     Dimensionalize!(phase_mat::MaterialParams, g::GeoUnits{TYPE})
