@@ -1,6 +1,9 @@
 # Tests the GeoUnits
 using Test
 using GeoParams
+
+@testset "Units" begin
+
 # test creating structures
 CharUnits_GEO   =   GEO_units(viscosity=1e19, length=1000km);
 @test CharUnits_GEO.length  ==  1000km
@@ -73,3 +76,4 @@ Dimensionalize!(z,CharUnits_GEO)
 # test setting a new value 
 z[2,1]=3km
 @test z[2,1] == 3.0km
+end

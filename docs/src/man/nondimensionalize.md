@@ -22,4 +22,5 @@ Nondimensionalize!
 Dimensionalize!
 Nondimensionalize
 Dimensionalize
+isDimensional
 ```

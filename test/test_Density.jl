@@ -1,6 +1,6 @@
 using Test
 using GeoParams
-
+@testset "Density.jl" begin
 
 # This tests the MaterialParameters structure
 CharUnits_GEO   =   GEO_units(viscosity=1e19, length=1000km);
@@ -24,3 +24,6 @@ Nondimensionalize!(x2,CharUnits_GEO)
 # Compute with density
 @test ComputeDensity(1.0,1.0, x2) ≈ 2.8419999999999996e-16
 @test ComputeDensity(1.0,1.0, x1) ≈ 2.9e-16
+
+
+end

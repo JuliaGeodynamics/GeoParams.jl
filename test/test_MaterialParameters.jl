@@ -1,6 +1,7 @@
 using Test
 using GeoParams
 
+@testset "MaterialParameters" begin
 
 # This tests the MaterialParameters structure
 CharUnits_GEO   =   GEO_units(viscosity=1e19, length=1000km);
@@ -45,3 +46,5 @@ MatParam[Phase] =   SetMaterialParams(Name="Lower Crust", Phase=Phase,
 
 @test MatParam[2].Density[1].α.val == 3.0e-5/K
 @test MatParam[2].CreepLaws[1].n.val == 5.0
+
+end

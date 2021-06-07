@@ -1,7 +1,7 @@
 using Test
 using GeoParams
 
-
+@testset "CreepLaw" begin
 
 # This tests the MaterialParameters structure
 CharUnits_GEO   =   GEO_units(viscosity=1e19, length=1000km);
@@ -43,3 +43,6 @@ Nondimensionalize!(x2,CharUnits_GEO)
 
 
 # -------------------------------------------------------------------
+
+
+end
