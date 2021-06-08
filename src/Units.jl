@@ -69,13 +69,19 @@ end
 
 GeoUnit(v::Unitful.Quantity)            =   GeoUnit(v, unit(v))     # store the units 
 GeoUnit(v::Number)                      =   GeoUnit(v, NoUnits)     # in case we just have a number with no units
-GeoUnit(v::Array)                       =   GeoUnit(v, NoUnits)     # in case we just have a number with no units
-GeoUnit(v::Array{Unitful.Quantity})     =   GeoUnit(v, unit.(v))    # in case we just have a number with no units
+GeoUnit(v::Array)                       =   GeoUnit(v, NoUnits)     # array, no units
+GeoUnit(v::Array{Unitful.Quantity})     =   GeoUnit(v, unit.(v))    # with units
+GeoUnit(v::StepRange) =   GeoUnit(v, unit.(v))    # with units
 
 
-Base.convert(::Type{Float64}, v::GeoUnit)   = v.val
-Base.convert(::Type{GeoUnit}, v::Quantity)  = GeoUnit(v) 
-Base.convert(::Type{GeoUnit}, v::Number)    = GeoUnit(v, NoUnits) 
+Base.convert(::Type{Float64}, v::GeoUnit)       =   v.val
+Base.convert(::Type{GeoUnit}, v::Quantity)      =   GeoUnit(v) 
+Base.convert(::Type{GeoUnit}, v::Number)        =   GeoUnit(v, NoUnits) 
+Base.convert(::Type{GeoUnit}, v::Vector)        =   GeoUnit(v, unit.(v)) 
+Base.convert(::Type{GeoUnit}, v::StepRangeLen)  =   GeoUnit(v, unit(v[1])) 
+
+
+StepRangeLen
 
 # define a few basic routines so we can easily operate with GeoUnits
 Base.show(io::IO, x::GeoUnit)  = println(x.val)
