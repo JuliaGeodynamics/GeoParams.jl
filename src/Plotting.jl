@@ -3,7 +3,6 @@
 """
 
 module Plotting
-using Plots             # note that this is not installed as a dependency 
 using LaTeXStrings
 using Unitful
 using Parameters
