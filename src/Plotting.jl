@@ -3,7 +3,8 @@
 """
 
 module Plotting
-using Plots, LaTeXStrings
+using Plots             # note that this is not installed as a dependency 
+using LaTeXStrings
 using Unitful
 using Parameters
 using ..Units
@@ -20,7 +21,9 @@ export
 """
     PlotStressStrainrate_CreepLaw(x::AbstractCreepLaw; p::CreepLawParams=nothing, Strainrate=(1e-18,1e-12), CreatePlot::Bool=false)
 
-Plots deviatoric stress versus deviatoric strain rate for a single creeplaw.
+Plots deviatoric stress versus deviatoric strain rate for a single creeplaw. 
+    Note: if you want to create plots or use the `CreatePlot=true` option you need to install the `Plots.jl` package in julia
+    which is not added as a dependency here (as it is a rather large dependency).
 
 # Example 1    
 ```julia-repl
@@ -37,6 +40,7 @@ Note that `ustrip` removes the units of the arrays, as many of the plotting pack
 
 You could also have done:
 ```julia-repl
+julia> using Plots;
 julia> Tau_II, Eps_II, pl = PlotStressStrainrate_CreepLaw(x,CreatePlot=true);
 ```
 which will generate the following plot
@@ -67,10 +71,14 @@ function PlotStressStrainrate_CreepLaw(x::AbstractCreepLaw; p=nothing, Strainrat
     Tau_II = GeoUnit(Tau_II/1e6);
 
     if CreatePlot
-        pl = plot(ustrip(Eps_II), ustrip(Tau_II), 
-            xaxis=:log, xlabel=L"\textrm{deviatoric strain rate  } \dot{\varepsilon}_{II} \textrm{    [1/s]}", 
-            yaxis=:log, ylabel=L"\textrm{deviatoric stress  }\tau_{II} \textrm{    [MPa]}",
-            legend=false,show = true)
+        try 
+            pl = plot(ustrip(Eps_II), ustrip(Tau_II), 
+                xaxis=:log, xlabel=L"\textrm{deviatoric strain rate  } \dot{\varepsilon}_{II} \textrm{    [1/s]}", 
+                yaxis=:log, ylabel=L"\textrm{deviatoric stress  }\tau_{II} \textrm{    [MPa]}",
+                legend=false,show = true)
+        catch
+            error("It seems that you did not install, or did not load Plots.jl. For plotting, please add that with `add Plots` in the package manager and type `using Plots` before running this.")
+        end
 
         return Tau_II, Eps_II, pl
     else
