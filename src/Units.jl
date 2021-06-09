@@ -81,11 +81,10 @@ Base.convert(::Type{GeoUnit}, v::Vector)        =   GeoUnit(v, unit.(v))
 Base.convert(::Type{GeoUnit}, v::StepRangeLen)  =   GeoUnit(v, unit(v[1])) 
 
 
-StepRangeLen
-
 # define a few basic routines so we can easily operate with GeoUnits
-Base.show(io::IO, x::GeoUnit)  = println(x.val)
-
+Base.show(io::IO, x::GeoUnit)   = println(x.val)
+Base.length(v::GeoUnit)         = length(v.val)
+Base.size(v::GeoUnit)           = size(v.val)
 
 Base.:*(x::GeoUnit, y::Number)  = x.val*y
 Base.:+(x::GeoUnit, y::Number)  = x.val+y
