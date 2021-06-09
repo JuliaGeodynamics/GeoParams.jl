@@ -105,9 +105,11 @@ Base.:/(x::GeoUnit, y::Array)   = GeoUnit(x.val/y, x.unit)
 Base.:+(x::GeoUnit, y::Array)   = GeoUnit(x.val+y, x.unit)
 Base.:-(x::GeoUnit, y::Array)   = GeoUnit(x.val-y, x.unit)
 
+Base.getindex(x::GeoUnit, i::Int64, j::Int64, k::Int64) = x.val[i,j,k]
 Base.getindex(x::GeoUnit, i::Int64, j::Int64) = x.val[i,j]
 Base.getindex(x::GeoUnit, i::Int64) = x.val[i]
 
+Base.setindex!(x::GeoUnit, v::Any, i::Int64, j::Int64, k::Int64) = x.val[i,j,k] = v
 Base.setindex!(x::GeoUnit, v::Any, i::Int64, j::Int64) = x.val[i,j] = v
 Base.setindex!(x::GeoUnit, v::Any, i::Int64) = x.val[i] = v
 
