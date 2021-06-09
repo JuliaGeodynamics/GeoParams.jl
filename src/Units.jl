@@ -77,6 +77,7 @@ Base.convert(::Type{Float64}, v::GeoUnit)       =   v.val
 Base.convert(::Type{GeoUnit}, v::Quantity)      =   GeoUnit(v) 
 Base.convert(::Type{GeoUnit}, v::Number)        =   GeoUnit(v, NoUnits) 
 Base.convert(::Type{GeoUnit}, v::Vector)        =   GeoUnit(v, unit.(v)) 
+Base.convert(::Type{GeoUnit}, v::Array)         =   GeoUnit(v, unit(v[1])) 
 Base.convert(::Type{GeoUnit}, v::StepRangeLen)  =   GeoUnit(v, unit(v[1])) 
 
 # define a few basic routines so we can easily operate with GeoUnits
