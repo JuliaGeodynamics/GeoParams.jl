@@ -37,7 +37,7 @@ const mol   = u"mol"
 
 
 export 
-    km, m, cm, Mtrs, yr, s, MPa, Pa, Pas, K, C, kg, mol, 
+    km, m, cm, mm, Myrs, yr, s, MPa, Pa, Pas, K, C, kg, mol, 
     GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
     Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
     superscript, upreferred, GEO, SI, NONE, isDimensional

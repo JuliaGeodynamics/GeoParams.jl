@@ -20,7 +20,7 @@ export
         GeoUnit, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
         Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
         superscript, upreferred, GEO, SI, NONE, isDimensional, 
-        km, m, cm, Myrs, yr, s, MPa, Pa, Pas, K, C, kg, mol
+        km, m, cm, mm, Myrs, yr, s, MPa, Pa, Pas, K, C, kg, mol
    
 #         
 abstract type AbstractMaterialParam end           # structure that holds material parmeters (density, elasticity, viscosity)          
