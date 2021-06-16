@@ -22,14 +22,14 @@ Nondimensionalize!(x1_ND,CharUnits_GEO)
 # perform a computation with the viscous creep laws 
 
 # Given stress
-@test ComputeCreepLaw_EpsII(1e6Pa, x1, CreepLawParams())==5e-13/s                # dimensional input       
-@test ComputeCreepLaw_EpsII(1e0, x1_ND, CreepLawParams())==5.0                   # non-dimensional
-@test ComputeCreepLaw_EpsII([1e0; 2.0], x1_ND, CreepLawParams())==[5.0; 10.0]    # vector input
+@test ComputeCreepLaw_EpsII(1e6Pa, x1, CreepLawVariables())==5e-13/s                # dimensional input       
+@test ComputeCreepLaw_EpsII(1e0, x1_ND, CreepLawVariables())==5.0                   # non-dimensional
+@test ComputeCreepLaw_EpsII([1e0; 2.0], x1_ND, CreepLawVariables())==[5.0; 10.0]    # vector input
 
 # Given strainrate 
-@test ComputeCreepLaw_TauII(1e-13/s, x1, CreepLawParams())==1e18*2*1e-13Pa       # dimensional input       
-@test ComputeCreepLaw_TauII(1e0, x1_ND, CreepLawParams())==0.2                   # non-dimensional
-@test ComputeCreepLaw_TauII([1e0; 2.0], x1_ND, CreepLawParams())==[0.2; 0.4]     # vector input
+@test ComputeCreepLaw_TauII(1e-13/s, x1, CreepLawVariables())==1e18*2*1e-13Pa       # dimensional input       
+@test ComputeCreepLaw_TauII(1e0, x1_ND, CreepLawVariables())==0.2                   # non-dimensional
+@test ComputeCreepLaw_TauII([1e0; 2.0], x1_ND, CreepLawVariables())==[0.2; 0.4]     # vector input
 # -------------------------------------------------------------------
 
 
