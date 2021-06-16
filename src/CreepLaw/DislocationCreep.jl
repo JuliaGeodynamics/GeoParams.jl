@@ -21,11 +21,18 @@ The (isotropic) dislocation creep law, as used by experimtalists, is given by
      \\dot{\\gamma} = A \\sigma_\\mathrm{d}^n f_\\mathrm{H2O}^r \\exp(-\\frac{E+PV}{RT})
 ```
 
-where ``n`` is the power law exponent, ``r`` is the exponent of fugacity dependence, ``A`` is a pre-exponential factor [MPa^(n+r)] (if manually defined, n and r must be either pre-defined or substituted),  
+where ``n`` is the power law exponent,  
+``r`` is the exponent of fugacity dependence, 
+``A`` is a pre-exponential factor [MPa^(n+r)] (if manually defined, n and r must be either pre-defined or substituted),  
 ``E`` is the activation energy [kJ/mol], ``V`` is the activation volume [m^3/mol]. ``\\dot{\\gamma}`` is the ordinary strain rate [1/s], 
 and ``\\sigma_\\mathrm{d}`` is the differential stress which are converted into second invariants using the apparatus type that can be
 either "AxialCompression", "SimpleShear" or "Unknown".
 If the flow law paramters are given as a function of second invariants, choose apparatus = "Unknown"
+
+```julia-repl 
+julia> x2      =   DislocationCreep(n=3)
+DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3 mol^-1, Apparatus=AxialCompression
+```
 """
 @with_kw_noshow mutable struct DislocationCreep <: AbstractCreepLaw
     equation::LaTeXString   =   L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}" 
