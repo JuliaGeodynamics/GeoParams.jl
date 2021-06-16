@@ -10,7 +10,7 @@ using ..Units
 using ..MaterialParameters
 
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
-using .MaterialParameters.CreepLaw: CreepLawParams, ComputeCreepLaw_TauII, AbstractCreepLaw
+using .MaterialParameters.CreepLaw: CreepLawVariables, ComputeCreepLaw_TauII, AbstractCreepLaw
 
 
 export 

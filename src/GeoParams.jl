@@ -20,7 +20,7 @@ export
         GeoUnit, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
         Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
         superscript, upreferred, GEO, SI, NONE, isDimensional, 
-        km, m, cm, mm, Myrs, yr, s, MPa, Pa, Pas, K, C, kg, mol
+        km, m, cm, mm, Myrs, yr, s, MPa, Pa, Pas, K, C, kg, mol, J, kJ
    
 #         
 abstract type AbstractMaterialParam end           # structure that holds material parmeters (density, elasticity, viscosity)          
@@ -39,8 +39,8 @@ export MaterialParams, SetMaterialParams
 
 # Creep laws
 using  .MaterialParameters.CreepLaw
-export  ComputeCreepLaw_EpsII, ComputeCreepLaw_TauII, CreepLawParams,
-        LinearViscous, PowerlawViscous
+export  ComputeCreepLaw_EpsII, ComputeCreepLaw_TauII, CreepLawVariables,
+        LinearViscous, PowerlawViscous, DislocationCreep
 
 # Density
 using  .MaterialParameters.Density

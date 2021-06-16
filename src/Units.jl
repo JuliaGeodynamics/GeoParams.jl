@@ -34,10 +34,13 @@ const Pas   = u"Pa*s"
 const K     = u"K"
 const C     = u"°C"
 const mol   = u"mol"  
+const kJ    = u"kJ"
+const J     = u"J"
+
 
 
 export 
-    km, m, cm, mm, Myrs, yr, s, MPa, Pa, Pas, K, C, kg, mol, 
+    km, m, cm, mm, Myrs, yr, s, MPa, Pa, Pas, K, C, kg, mol, J, kJ, 
     GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
     Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
     superscript, upreferred, GEO, SI, NONE, isDimensional
