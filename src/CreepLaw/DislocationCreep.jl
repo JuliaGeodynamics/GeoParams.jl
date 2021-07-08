@@ -46,42 +46,47 @@ DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3
 end
 
 # Calculation routines for linear viscous rheologies
-function ComputeCreepLaw_EpsII(EpsII, s::DislocationCreep, p::CreepLawVariables)
-    @unpack n           = s
-    @unpack r           = s
-    @unpack A           = s
-    @unpack E           = s
-    @unpack V           = s
-    @unpack Apparatus   = s
+# All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
+function ComputeCreepLaw_EpsII(TauII, a::DislocationCreep, p::CreepLawVariables)
+    @show TauII
+    @unpack n           = a
+    @unpack r           = a
+    @unpack A           = a
+    @unpack E           = a
+    @unpack V           = a
+    @unpack R           = a
+    @unpack Apparatus   = a
     @unpack P           = p
     @unpack T           = p
     @unpack f           = p
-    if Appartus == "AxialCompression"
-        FT = sqrt(3.0)               # relation between differential stress recorded by apparatus and TauII
-        FE = 2.0/sqrt(3.0)           # relation between gamma recorded by apparatus and EpsII
+    if Apparatus == "AxialCompression"
+        FT = sqrt(3.0)NoUnits               # relation between differential stress recorded by apparatus and TauII
+        FE = 2.0/sqrt(3.0)NoUnits            # relation between gamma recorded by apparatus and EpsII
     elseif Apparatus == "SimpleShear"
-        FT = 2.0                     # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
-        FE = 2.0
+        FT = 2.0NoUnits                      # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
+        FE = 2.0NoUnits 
     elseif Apparatus == "Unknown"
-        FT = 1.0
-        FE = 1.0
+        FT = 1.0NoUnits 
+        FE = 1.0NoUnits 
     end
-    return EpsII = A*(TauII*FT)^n*f^r*exp(-(E+P*V)/(R*T))/FE;
+    @show E.val,P.val
+    EpsII::GeoUnit = A.val*(TauII.val*FT)^n.val*f.val^r.val*exp(-(E.val+P.val*V.val)/(R.val*T.val))/FE; 
+    return EpsII
 end
 
 # EpsII .= A.*(TauII.*FT).^n.*f.^r.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
-
-function ComputeCreepLaw_TauII(TauII, s::DislocationCreep, p::CreepLawVariables)
-    @unpack n           = s
-    @unpack r           = s
-    @unpack A           = s
-    @unpack E           = s
-    @unpack V           = s
-    @unpack Apparatus   = s
+# All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
+function ComputeCreepLaw_TauII(EpsII, a::DislocationCreep, p::CreepLawVariables)
+    @unpack n           = a
+    @unpack r           = a
+    @unpack A           = a
+    @unpack E           = a
+    @unpack V           = a
+    @unpack Apparatus   = a
     @unpack P           = p
     @unpack T           = p
     @unpack f           = p
-    if Appartus == "AxialCompression"
+    if Apparatus == "AxialCompression"
         FT = sqrt(3.0)               # relation between differential stress recorded by apparatus and TauII
         FE = 2.0/sqrt(3.0)           # relation between gamma recorded by apparatus and EpsII
     elseif Apparatus == "SimpleShear"
@@ -91,7 +96,7 @@ function ComputeCreepLaw_TauII(TauII, s::DislocationCreep, p::CreepLawVariables)
         FT = 1.0
         FE = 1.0
     end
-    return TauII = (A*EpsII*FE)^(-1/n)*f^(-r/n)*exp((E+P*V)/(n*R*T))/FT;
+    return TauII = (A.val*EpsII.val*FE)^(-1/n.val)*f.val^(-r.val/n.val)*exp((E.val+P.val*V.val)/(n.val*R.val*T.val))/FT;
 end
 
 

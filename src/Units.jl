@@ -336,8 +336,9 @@ julia> upreferred(A)
 ```
 """
 function Nondimensionalize(param, g::GeoUnits{TYPE}) where {TYPE}
-
-    if unit(param)!=NoUnits
+    if typeof(param) == String
+        param_ND = param # The parameter is a string, cannot be nondimensionalized
+    elseif unit(param)!=NoUnits
         dim         =   Unitful.dimension(param);                   # Basic SI units
         char_val    =   1.0;
         foreach((typeof(dim).parameters[1])) do y
@@ -375,9 +376,10 @@ julia> A_ND      =   Nondimensionalize(A, CharUnits)
 7.068716262102384e14
 ```
 """
-function Nondimensionalize!(param::GeoUnit, g::GeoUnits{TYPE}) where {TYPE}
-
-    if unit.(param.val)!=NoUnits
+function Nondimensionalize!(param, g::GeoUnits{TYPE}) where {TYPE}
+    if typeof(param) == String
+        param_ND = param # The parameter is a string, cannot be nondimensionalized
+    elseif unit.(param.val)!=NoUnits
         dim         =   Unitful.dimension(param.val[1]);                   # Basic SI units
         char_val    =   1.0;
         foreach((typeof(dim).parameters[1])) do y

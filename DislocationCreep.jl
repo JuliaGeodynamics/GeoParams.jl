@@ -43,18 +43,27 @@ If the flow law paramters are given as a function of second invariants, choose a
     E::GeoUnit        = 476.0kJ/mol        # activation energy
     V::GeoUnit        = 6e-6m^3/mol        # activation volume
     R::GeoUnit        = 8.314J/mol/K       # Universal gas constant
-    apparatus::string = "AxialCompression" # type of experimental apparatus, either AxialCompression, SimpleShear or Unknown
+    Apparatus::string = "AxialCompression" # type of experimental apparatus, either AxialCompression, SimpleShear or Unknown
 end
 
 # Calculation routines for linear viscous rheologies
-function ComputeCreepLaw_EpsII(EpsII, s::DislocationCreep, p::CreepLawParams)
-    @unpack n           = s
-    @unpack r           = s
-    @unpack A           = s
-    @unpack E           = s
-    @unpack V           = s
-    @unpack Apparatus   = s
-    if Appartus == "AxialCompression"
+function ComputeCreepLaw_EpsII(EpsII, a::DislocationCreep, p::CreepLawVariables, CharDim)
+    @unpack n           = a
+    @unpack r           = a
+    @unpack A           = a
+    @unpack E           = a
+    @unpack V           = a
+    @unpack Apparatus   = a
+    if typeof(CharDim) <: GeoUnits
+        n =   Nondimensionalize!(n, CharDim);
+        r =   Nondimensionalize!(r, CharDim);
+        A =   Nondimensionalize!(A, CharDim);
+        E =   Nondimensionalize!(E, CharDim);
+        V =   Nondimensionalize!(V, CharDim);
+    else
+        error("CharDim should be of type GeoUnits")
+    end
+    if Apparatus == "AxialCompression"
         FT = sqrt(3.0)               # relation between differential stress recorded by apparatus and TauII
         FE = 2.0/sqrt(3.0)           # relation between gamma recorded by apparatus and EpsII
     elseif Apparatus == "SimpleShear"
@@ -69,14 +78,24 @@ end
 
 # EpsII .= A.*(TauII.*FT).^n.*f.^r.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
 
-function ComputeCreepLaw_TauII(TauII, s::DislocationCreep, p::CreepLawParams)
-    @unpack n           = s
-    @unpack r           = s
-    @unpack A           = s
-    @unpack E           = s
-    @unpack V           = s
-    @unpack Apparatus   = s
-    if Appartus == "AxialCompression"
+function ComputeCreepLaw_TauII(TauII, a::DislocationCreep, p::CreepLawVariables, CharDim)
+    @unpack n           = a
+    @unpack r           = a
+    @unpack A           = a
+    @unpack E           = a
+    @unpack V           = a
+    @unpack Apparatus   = a
+    if typeof(CharDim) <: GeoUnits
+        n =   Nondimensionalize!(n, CharDim);
+        r =   Nondimensionalize!(r, CharDim);
+        A =   Nondimensionalize!(A, CharDim);
+        E =   Nondimensionalize!(E, CharDim);
+        V =   Nondimensionalize!(V, CharDim);
+    else
+        error("CharDim should be of type GeoUnits")
+    end
+    @unpack Apparatus   = a
+    if Apparatus == "AxialCompression"
         FT = sqrt(3.0)               # relation between differential stress recorded by apparatus and TauII
         FE = 2.0/sqrt(3.0)           # relation between gamma recorded by apparatus and EpsII
     elseif Apparatus == "SimpleShear"
