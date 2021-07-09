@@ -26,8 +26,8 @@ where ``n`` is the power law exponent,
 ``A`` is a pre-exponential factor [MPa^(n+r)] (if manually defined, n and r must be either pre-defined or substituted),  
 ``E`` is the activation energy [kJ/mol], ``V`` is the activation volume [m^3/mol]. ``\\dot{\\gamma}`` is the ordinary strain rate [1/s], 
 and ``\\sigma_\\mathrm{d}`` is the differential stress which are converted into second invariants using the apparatus type that can be
-either "AxialCompression", "SimpleShear" or "Unknown".
-If the flow law paramters are given as a function of second invariants, choose apparatus = "Unknown"
+either "AxialCompression", "SimpleShear" or "Invariant".
+If the flow law paramters are already given as a function of second invariants, choose apparatus = "Invariant"
 
 ```julia-repl 
 julia> x2      =   DislocationCreep(n=3)
@@ -42,7 +42,7 @@ DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3
     E::GeoUnit        = 476.0kJ/mol        # activation energy
     V::GeoUnit        = 6e-6m^3/mol        # activation volume
     R::GeoUnit        = 8.314J/mol/K       # Universal gas constant
-    Apparatus         = "AxialCompression" # type of experimental apparatus, either AxialCompression, SimpleShear or Unknown
+    Apparatus         = "AxialCompression" # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
 end
 
 # Calculation routines for linear viscous rheologies
@@ -65,7 +65,7 @@ function ComputeCreepLaw_EpsII(TauII, a::DislocationCreep, p::CreepLawVariables)
     elseif Apparatus == "SimpleShear"
         FT = 2.0NoUnits                      # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
         FE = 2.0NoUnits 
-    elseif Apparatus == "Unknown"
+    elseif Apparatus == "Invariant"
         FT = 1.0NoUnits 
         FE = 1.0NoUnits 
     end
@@ -91,7 +91,7 @@ function ComputeCreepLaw_TauII(EpsII, a::DislocationCreep, p::CreepLawVariables)
     elseif Apparatus == "SimpleShear"
         FT = 2.0                     # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
         FE = 2.0
-    elseif Apparatus == "Unknown"
+    elseif Apparatus == "Invariant"
         FT = 1.0
         FE = 1.0
     end
