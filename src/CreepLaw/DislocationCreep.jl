@@ -69,9 +69,7 @@ function ComputeCreepLaw_EpsII(TauII, a::DislocationCreep, p::CreepLawVariables)
         FT = 1.0NoUnits 
         FE = 1.0NoUnits 
     end
-    @show E.val,P.val
-    EpsII::GeoUnit = A.val*(TauII.val*FT)^n.val*f.val^r.val*exp(-(E.val+P.val*V.val)/(R.val*T.val))/FE; 
-    return EpsII
+    return A.val*(TauII.val*FT)^n.val*f.val^r.val*exp(-(E.val+P.val*V.val)/(R.val*T.val))/FE; 
 end
 
 # EpsII .= A.*(TauII.*FT).^n.*f.^r.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
@@ -82,6 +80,7 @@ function ComputeCreepLaw_TauII(EpsII, a::DislocationCreep, p::CreepLawVariables)
     @unpack A           = a
     @unpack E           = a
     @unpack V           = a
+    @unpack R           = a
     @unpack Apparatus   = a
     @unpack P           = p
     @unpack T           = p
@@ -96,7 +95,7 @@ function ComputeCreepLaw_TauII(EpsII, a::DislocationCreep, p::CreepLawVariables)
         FT = 1.0
         FE = 1.0
     end
-    return TauII = (A.val*EpsII.val*FE)^(-1/n.val)*f.val^(-r.val/n.val)*exp((E.val+P.val*V.val)/(n.val*R.val*T.val))/FT;
+    return A.val^(-1/n.val)*(EpsII.val*FE)^(1/n.val)*f.val^(-r.val/n.val)*exp((E.val+P.val*V.val)/(n.val*R.val*T.val))/FT;
 end
 
 
