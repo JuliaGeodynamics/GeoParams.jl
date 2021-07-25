@@ -35,7 +35,7 @@ DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3
 ```
 """
 @with_kw_noshow mutable struct DislocationCreep <: AbstractCreepLaw
-    equation::LaTeXString   =   L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}" 
+    equation::LaTeXString   =   L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}" # TO BE UPDATED
     n::GeoUnit        = 1.0NoUnits         # power-law exponent
     r::GeoUnit        = 0.0NoUnits         # exponent of water-fugacity dependence
     A::GeoUnit        = 1.5MPa^(-n-r)/s    # pre-exponential factor
@@ -43,12 +43,12 @@ DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3
     V::GeoUnit        = 6e-6m^3/mol        # activation volume
     R::GeoUnit        = 8.314J/mol/K       # Universal gas constant
     Apparatus         = "AxialCompression" # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
+    Remarks::String   = ""                 # Some remarks you want to add about this creep law implementation
 end
 
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
 function ComputeCreepLaw_EpsII(TauII, a::DislocationCreep, p::CreepLawVariables)
-    @show TauII
     @unpack n           = a
     @unpack r           = a
     @unpack A           = a
@@ -105,4 +105,37 @@ function show(io::IO, g::DislocationCreep)
 end
 #-------------------------------------------------------------------------
 
-# add routine SetDislocationCreep, to look up flow law params for any hard coded flow laws
+# Add pre-defined creep laws 
+SetDislocationCreep = Dict([
+
+# Olivine rheology - TO BE VERIFIED
+("Dry Olivine | Hirth & Kohlstedt (2003)", 
+# after Hirth, G. & Kohlstedt (2003), D. Rheology of the upper mantle and the mantle wedge: A view from the experimentalists.
+# Inside the subduction Factory 83?105. Table 1, "dry dislocation" parameters
+    DislocationCreep(
+        n = 3.05NoUnits,
+        A = 1.1e5MPa^(-3.05)/s, 
+        E = 530kJ/mol,
+        V = 15e-6m^3/mol,
+        Apparatus =   "SimpleShear",
+        r = 0NoUnits
+    )
+)
+
+# Olivine rheology - TO BE VERIFIED
+("Wet Olivine | Hirth & Kohlstedt (2003)", 
+    # After Hirth, G. & Kohlstedt (2003), D. Rheology of the upper mantle and the mantle wedge: A view from the experimentalists.
+    #   Inside the subduction Factory 83?105. Table 1, "wet dislocation" parameters
+    #  Note that this assumes C_OH=1000
+    DislocationCreep(
+        n = 3.5NoUnits,
+        A = 90MPa^(-3.5)/s, 
+        E = 480kJ/mol,
+        V = 11e-6m^3/mol,
+        r   = 1.2NoUnits,
+        Apparatus =   "SimpleShear"
+    )
+)
+
+
+]); # end of setting pre-defined creep laws
