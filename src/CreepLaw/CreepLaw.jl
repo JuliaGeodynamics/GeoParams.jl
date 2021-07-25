@@ -13,6 +13,7 @@ using Base: Float64
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam
+using BibTeX
 import Base.show
 
 abstract type AbstractCreepLaw <: AbstractMaterialParam end

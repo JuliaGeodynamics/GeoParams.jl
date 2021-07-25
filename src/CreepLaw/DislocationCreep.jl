@@ -43,7 +43,8 @@ DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3
     V::GeoUnit        = 6e-6m^3/mol        # activation volume
     R::GeoUnit        = 8.314J/mol/K       # Universal gas constant
     Apparatus         = "AxialCompression" # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
-    Remarks::String   = ""                 # Some remarks you want to add about this creep law implementation
+    Comment::String   = ""                 # Some remarks you want to add about this creep law implementation
+    BibTex_Reference  = ""                 # BibTeX reference
 end
 
 # Calculation routines for linear viscous rheologies
@@ -106,9 +107,14 @@ end
 #-------------------------------------------------------------------------
 
 # Add pre-defined creep laws 
+"""
+    SetDislocationCreep["Name of Dislocation Creep"]
+
+This is a dictionary with pre-defined creep laws    
+"""
 SetDislocationCreep = Dict([
 
-# Olivine rheology - TO BE VERIFIED
+# Olivine rheology 
 ("Dry Olivine | Hirth & Kohlstedt (2003)", 
 # after Hirth, G. & Kohlstedt (2003), D. Rheology of the upper mantle and the mantle wedge: A view from the experimentalists.
 # Inside the subduction Factory 83?105. Table 1, "dry dislocation" parameters
@@ -118,11 +124,31 @@ SetDislocationCreep = Dict([
         E = 530kJ/mol,
         V = 15e-6m^3/mol,
         Apparatus =   "SimpleShear",
-        r = 0NoUnits
+        r = 0NoUnits,
+        Comment = "Still to be verified with the original publication",
+        BibTex_Reference = parse_bibtex("""
+        @incollection{eiler_rheology_2003,
+        address = {Washington, D. C.},
+        title = {Rheology of the upper mantle and the mantle wedge: {A} view from the experimentalists},
+        volume = {138},
+        isbn = {978-0-87590-997-4},
+        shorttitle = {Rheology of the upper mantle and the mantle wedge},
+        url = {http://www.agu.org/books/gm/v138/138GM06/138GM06.shtml},
+        language = {en},
+        urldate = {2019-10-09},
+        booktitle = {Geophysical {Monograph} {Series}},
+        publisher = {American Geophysical Union},
+        author = {Hirth, Greg and Kohlstedt, David},
+        editor = {Eiler, John},
+        year = {2003},
+        doi = {10.1029/138GM06},
+        pages = {83--105},
+        }
+        """)
     )
 )
 
-# Olivine rheology - TO BE VERIFIED
+# Olivine rheology 
 ("Wet Olivine | Hirth & Kohlstedt (2003)", 
     # After Hirth, G. & Kohlstedt (2003), D. Rheology of the upper mantle and the mantle wedge: A view from the experimentalists.
     #   Inside the subduction Factory 83?105. Table 1, "wet dislocation" parameters
@@ -133,9 +159,32 @@ SetDislocationCreep = Dict([
         E = 480kJ/mol,
         V = 11e-6m^3/mol,
         r   = 1.2NoUnits,
-        Apparatus =   "SimpleShear"
+        Apparatus =   "SimpleShear",
+        Comment = "Still to be verified with the original publication",
+        BibTex_Reference = parse_bibtex("""
+            @incollection{HirthKohlstedt_OlivineRheology_2003,
+            address = {Washington, D. C.},
+            title = {Rheology of the upper mantle and the mantle wedge: {A} view from the experimentalists},
+            volume = {138},
+            isbn = {978-0-87590-997-4},
+            shorttitle = {Rheology of the upper mantle and the mantle wedge},
+            url = {http://www.agu.org/books/gm/v138/138GM06/138GM06.shtml},
+            language = {en},
+            urldate = {2019-10-09},
+            booktitle = {Geophysical {Monograph} {Series}},
+            publisher = {American Geophysical Union},
+            author = {Hirth, Greg and Kohlstedt, David},
+            editor = {Eiler, John},
+            year = {2003},
+            doi = {10.1029/138GM06},
+            pages = {83--105},
+            }
+            """);
     )
 )
+
+
+
 
 
 ]); # end of setting pre-defined creep laws

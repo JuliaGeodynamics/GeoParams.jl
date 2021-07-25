@@ -10,10 +10,9 @@ We also implement some typically used creep law parameters, together with tools 
 __precompile__()
 module GeoParams
 
-
-
 using Parameters        # helps setting default parameters in structures
-using Unitful
+using Unitful           # Units
+using BibTeX            # references of creep laws
 
 export 
         @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
@@ -40,7 +39,8 @@ export MaterialParams, SetMaterialParams
 # Creep laws
 using  .MaterialParameters.CreepLaw
 export  ComputeCreepLaw_EpsII, ComputeCreepLaw_TauII, CreepLawVariables,
-        LinearViscous, PowerlawViscous, DislocationCreep, SetDislocationCreep
+        LinearViscous, PowerlawViscous, 
+        DislocationCreep, SetDislocationCreep
 
 # Density
 using  .MaterialParameters.Density
