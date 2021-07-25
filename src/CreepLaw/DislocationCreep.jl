@@ -127,23 +127,23 @@ SetDislocationCreep = Dict([
         r = 0NoUnits,
         Comment = "Still to be verified with the original publication",
         BibTex_Reference = parse_bibtex("""
-        @incollection{eiler_rheology_2003,
-        address = {Washington, D. C.},
-        title = {Rheology of the upper mantle and the mantle wedge: {A} view from the experimentalists},
-        volume = {138},
-        isbn = {978-0-87590-997-4},
-        shorttitle = {Rheology of the upper mantle and the mantle wedge},
-        url = {http://www.agu.org/books/gm/v138/138GM06/138GM06.shtml},
-        language = {en},
-        urldate = {2019-10-09},
-        booktitle = {Geophysical {Monograph} {Series}},
-        publisher = {American Geophysical Union},
-        author = {Hirth, Greg and Kohlstedt, David},
-        editor = {Eiler, John},
-        year = {2003},
-        doi = {10.1029/138GM06},
-        pages = {83--105},
-        }
+            @incollection{eiler_rheology_2003,
+            address = {Washington, D. C.},
+            title = {Rheology of the upper mantle and the mantle wedge: {A} view from the experimentalists},
+            volume = {138},
+            isbn = {978-0-87590-997-4},
+            shorttitle = {Rheology of the upper mantle and the mantle wedge},
+            url = {http://www.agu.org/books/gm/v138/138GM06/138GM06.shtml},
+            language = {en},
+            urldate = {2019-10-09},
+            booktitle = {Geophysical {Monograph} {Series}},
+            publisher = {American Geophysical Union},
+            author = {Hirth, Greg and Kohlstedt, David},
+            editor = {Eiler, John},
+            year = {2003},
+            doi = {10.1029/138GM06},
+            pages = {83--105},
+            }
         """)
     )
 )
@@ -179,11 +179,9 @@ SetDislocationCreep = Dict([
             doi = {10.1029/138GM06},
             pages = {83--105},
             }
-            """);
+        """);
     )
 )
-
-
 
 
 

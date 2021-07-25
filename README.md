@@ -117,8 +117,27 @@ julia> MatParam
 
 
 #### 2.2 Nonlinear creep laws
-to be added
-
+You can add pre-defined non-linear creep laws as:
+```julia
+julia> Phase = SetMaterialParams(Name="Viscous Matrix", Phase=2, 
+                                            Density   = ConstantDensity(),
+                                            CreepLaws = (SetDislocationCreep["Wet Olivine | Hirth & Kohlstedt (2003)"],
+                                                        LinearViscous(η=1e23Pa*s)) )
+Phase 2 : Viscous Matrix
+        | [dimensional units]
+        | 
+        |-- Density           : Constant density: ρ=2900 kg m⁻³ 
+        |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻² 
+        |-- CreepLaws         : DislocationCreep: n=3.5, r=1.2, A=90 MPa⁻³·⁵ s⁻¹, E=480 kJ mol⁻¹, V=1.1e-5 m³ mol⁻¹, Apparatus=SimpleShear 
+        |                       Linear viscosity: η=1.0e23 Pa s 
+```
+Note that the dictionary `SetDislocationCreep` has all pre-defined creep laws, so for an overview type:
+```julia
+julia> SetDislocationCreep
+Dict{String, DislocationCreep} with 2 entries:
+  "Dry Olivine | Hirth & Kohlstedt (2003)" => DislocationCreep: n=3.05, r=0, A=110000.0 MPa⁻³·⁰⁵ s⁻¹, E…
+  "Wet Olivine | Hirth & Kohlstedt (2003)" => DislocationCreep: n=3.5, r=1.2, A=90 MPa⁻³·⁵ s⁻¹, E=480 k…
+```
 
 ### 3. Plotting and output
 - WORK IN PROGRESS

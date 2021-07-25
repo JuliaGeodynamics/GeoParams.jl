@@ -51,7 +51,6 @@ julia> plot(pl, title="Linear viscosity", linecolor=:red)
 ```
 See the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package for more options.
 
-
 """
 function PlotStressStrainrate_CreepLaw(x::AbstractCreepLaw; p=nothing, Strainrate=(1e-18/s,1e-12/s), CreatePlot::Bool=false)
 
