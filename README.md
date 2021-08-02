@@ -11,6 +11,8 @@ This package has two main features that help with this:
 The material parameter object is designed to be extensible and can be passed on to the solvers, such that new creep laws or features can be readily added. 
 We also implement some typically used creep law parameters, together with tools to plot them versus and compare our results with those of published papers (to minimize mistakes).  
 
+NOTE: As of now (version 0.1.3), the package remains under development and the API is not yet fully fixed (even though we did add it to the Julia registry already, mainly in order to add `GeophysicalModelGenerator.jl` ). Therefore feel free to look at it, but we do not suggest to incorporate it into your code (yet). Comments/ideas/suggestions are highly apprecciated!
+
 ### Contents
 * [1. Nondimensionalization](#1-nondimensionalization) 
 * [2. Material parameters](#2-material-parameters)
@@ -159,7 +161,7 @@ That is why we provide routines that fully automatizes this process.
 You can install this package by specifying 
 ```julia
 julia> ]
-pkg> add https://github.com/JuliaGeodynamics/GeoParams.jl
+pkg> add GeoParams
 ```
 and test whether it works with
 ```
