@@ -9,7 +9,7 @@ module CreepLaw
 # In case you want to add new creep laws, have a look at how the ones
 # here are implemented. Please add tests as well!
 
-using Base: Float64
+using Base: Float64, String
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam
@@ -46,7 +46,7 @@ If the flow law paramters are given as a function of second invariants, choose a
     Apparatus::string = "AxialCompression" # type of experimental apparatus, either AxialCompression, SimpleShear or Unknown
 end
 
-# Calculation routines for linear viscous rheologies
+# Calculation routines for dislocation creep rheologies
 function ComputeCreepLaw_EpsII(EpsII, a::DislocationCreep, p::CreepLawVariables, CharDim)
     @unpack n           = a
     @unpack r           = a
@@ -116,6 +116,28 @@ end
 #-------------------------------------------------------------------------
 
 # add routine SetDislocationCreep, to look up flow law params for any hard coded flow laws
+function SetDislocationCreep(CreepLawName::String)
+
+AvailableCreepLaws = [  "Dry Olivine Hirth and Kohlstedt 2003",
+                        "Wet Olivine Hirth and Kohlstedt 2003"
+                     ]
+
+
+if      CreepLawName == "Dry Olivine Hirth and Kohlstedt 2003"
+   A = 1e8MPa 
+   n = 3.04
+
+elseif  CreepLawName == "Wet Olivine Hirth and Kohlstedt 2003"
+   
+
+
+else
+    error("Unknown dislocation creep law")
+end
+
+
+
+DislocationCreep()
 
 
 end
