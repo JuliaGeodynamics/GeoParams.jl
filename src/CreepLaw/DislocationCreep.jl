@@ -160,7 +160,7 @@ SetDislocationCreep = Dict([
         V = 11e-6m^3/mol,
         r   = 1.2NoUnits,
         Apparatus =   "AxialCompression",
-        Comment = "Still to be verified with the original publication",
+        Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
         BibTex_Reference = parse_bibtex("""
             @incollection{HirthKohlstedt_OlivineRheology_2003,
             address = {Washington, D. C.},
