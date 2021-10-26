@@ -20,6 +20,7 @@ include("./CreepLaw/CreepLaw.jl")
 include("./Density/Density.jl")
 include("./GravitationalAcceleration/GravitationalAcceleration.jl")
 include("./Energy/HeatCapacity.jl")
+include("./Energy/Conductivity.jl")
 
 
 """

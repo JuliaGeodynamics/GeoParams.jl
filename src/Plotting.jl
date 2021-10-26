@@ -13,11 +13,12 @@ using Plots
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 using .MaterialParameters.CreepLaw: CreepLawVariables, ComputeCreepLaw_TauII, AbstractCreepLaw
 using .MaterialParameters.HeatCapacity: AbstractHeatCapacity, ComputeHeatCapacity
-
+using .MaterialParameters.Conductivity: AbstractConductivity, ComputeConductivity
 
 export 
     PlotStressStrainrate_CreepLaw,
-    PlotHeatCapacity 
+    PlotHeatCapacity,
+    PlotConductivity 
 
 
 """
@@ -108,7 +109,7 @@ julia> T,Cp,plt = PlotHeatCapacity(cp)
 you can now save the figure to disk with:
 ```
 julia> using Plots
-julia> savefig(plt,"Tdependent_conductivity.png")
+julia> savefig(plt,"Tdependent_heatcapacity.png")
 ```
 
 """
@@ -135,6 +136,51 @@ function PlotHeatCapacity(cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=
     return T,Cp, plt
 end
 
+
+"""
+    T,Kk,plt = PlotConductivity(cp::AbstractConductivity; T=nothing, plt=nothing, lbl=nothing)
+
+Creates a plot of temperature `T` vs. thermal conductivity, as specified in `k` (which can be temperature-dependent).
+
+# Optional parameters
+- `T`: temperature range
+- `plt`: a previously generated plotting object
+- `lbl`: label of the curve
+
+# Example
+```
+julia> k = T_Conductivity_Whittacker()
+julia> T,KK,plt = PlotConductivity(k)
+```
+you can now save the figure to disk with:
+```
+julia> using Plots
+julia> savefig(plt,"Tdependent_conductivity.png")
+```
+
+"""
+function PlotConductivity(k::AbstractConductivity; T=nothing, plt=nothing, lbl=nothing)
+
+    if isnothing(T)
+        T = (273:10:1250)*K
+    end
+
+    Cond       =   ComputeConductivity(T,k)
+    if length(Cond) == 1
+        Cond = ones(size(T))*Cond
+    end
+
+    if isnothing(plt)
+        plt = plot(ustrip(T), ustrip(Cond), label=lbl)
+    else
+        plt = plot!(ustrip(T), ustrip(Cond), label=lbl)
+    end   
+    plot!(plt,   xlabel="Temperature [$(unit(T[1]))]",
+                 ylabel="Thermal conductivity [$(unit(Cond[1]))]")
+    gui(plt)
+
+    return T,Cond, plt
+end
 
 
 end

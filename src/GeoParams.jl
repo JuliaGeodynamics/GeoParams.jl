@@ -19,7 +19,7 @@ export
         GeoUnit, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
         Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
         superscript, upreferred, GEO, SI, NONE, isDimensional, Value, Unit, 
-        km, m, cm, mm, Myrs, yr, s, MPa, Pa, Pas, K, C, kg, mol, J, kJ
+        km, m, cm, mm, Myrs, yr, s, MPa, Pa, Pas, K, C, g, kg, mol, J, kJ, Watt
    
 #         
 abstract type AbstractMaterialParam end           # structure that holds material parmeters (density, elasticity, viscosity)          
@@ -57,13 +57,17 @@ export  ComputeGravity,                                # computational routines
 using .MaterialParameters.HeatCapacity
 export  ComputeHeatCapacity,                           # computational routines
         ConstantHeatCapacity,
-        T_HeatCapacity_Whittacker,
-        Plot_HeatCapacity             
+        T_HeatCapacity_Whittacker
 
-
+using .MaterialParameters.Conductivity
+export  ComputeConductivity,                           # computational routines
+        ConstantConductivity,
+        T_Conductivity_Whittacker
+  
+        
 # Add plotting routines
 include("Plotting.jl")
 using  .Plotting
-export  PlotStressStrainrate_CreepLaw, PlotHeatCapacity
+export  PlotStressStrainrate_CreepLaw, PlotHeatCapacity, PlotConductivity
 
 end # module

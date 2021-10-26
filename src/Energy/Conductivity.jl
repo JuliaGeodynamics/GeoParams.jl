@@ -49,14 +49,22 @@ end
 """
     T_Conductivity_Whittacker()
     
-Sets a temperature-dependent conductivity following the parameterization of Whittacker et al. (2009), Nature. 
+Sets a temperature-dependent conductivity following the parameterization of *Whittacker et al. (2009), Nature.* 
 Their parameterization is originally given for the thermal diffusivity, together with a parameterization for thermal conductivity, which allows us 
 ```math  
     Cp = a + b T - c/T^2 
+```
+```math  
     \\kappa = d/T - e, if T<=846K
+```
+```math  
     \\kappa = f - g*T, if T>846K
+```
+```math    
     \\rho = 2700 kg/m3
-    k = \\kappa*Cp*\\rho
+```
+```math
+    k = \\kappa Cp \\rho
 ```
 
 where ``Cp`` is the heat capacity [``J/mol/K``], and ``a,b,c`` are parameters that dependent on the temperature `T`:
@@ -80,20 +88,21 @@ where ``Cp`` is the heat capacity [``J/mol/K``], and ``a,b,c`` are parameters th
     b1::GeoUnit             =   0.0323J/mol/K^2             # linear term for high T    (T>  846 K)
     c0::GeoUnit             =   5e6J/mol*K                  # quadratic term for low T  (T<= 846 K)
     c1::GeoUnit             =   47.9e-6J/mol*K              # quadratic term for high T (T>  846 K)
+    molmass::GeoUnit        =   0.22178kg/mol               # average molar mass 
     Tcutoff::GeoUnit        =   846K                        # cutoff temperature
-    rho::GeoUnit              =   2700kg/m^3                  # Density they use for an average crust
-    d::GeoUnit              =   576.3m^2/s*K                # diffusivity parameterization
-    e::GeoUnit              =   0.062m^2/s                  # diffusivity parameterization
-    f::GeoUnit              =   0.732m^2/s                  # diffusivity parameterization
-    g::GeoUnit              =   0.000135m^2/s/K             # diffusivity parameterization
+    rho::GeoUnit            =   2700kg/m^3                  # Density they use for an average crust
+    d::GeoUnit              =   576.3*1e-6m^2/s*K               # diffusivity parameterization
+    e::GeoUnit              =   0.062*1e-6m^2/s                 # diffusivity parameterization
+    f::GeoUnit              =   0.732*1e-6m^2/s                 # diffusivity parameterization
+    g::GeoUnit              =   0.000135*1e-6m^2/s/K            # diffusivity parameterization
 end
 
 # Calculation routine
 function ComputeConductivity(P,T, s::T_Conductivity_Whittacker)
-    @unpack a0,a1,b0,b1,c0,c1,Tcutoff,rho,d,e,f,g   = s
+    @unpack a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g   = s
     
-    k  = zeros(size(T))*Watt/m/K
     ρ  = Value(rho)
+    k  = zeros(size(T))*   Value(a0)/Value(molmass)*ρ*Value(e)
     
     for i in eachindex(T)
         if T[i] <= Value(Tcutoff)
@@ -104,8 +113,8 @@ function ComputeConductivity(P,T, s::T_Conductivity_Whittacker)
             κ     = Value(f) - Value(g)*T[i]
         end
        
-        cp = a + b*T[i] - c/T[i]^2 # conductivity
-
+        cp = (a + b*T[i] - c/T[i]^2)/molmass # conductivity
+        
         k[i] = κ*ρ*cp       # compute conductivity from diffusivity
 
     end

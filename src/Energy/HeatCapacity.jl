@@ -61,7 +61,7 @@ where ``Cp`` is the heat capacity [``J/kg/K``], and ``a,b,c`` are parameters tha
 - b = 0.0323J/mol/K^2   if T> 846 K
 - c = 5e6J/mol*K        if T<= 846 K
 - c = 47.9e-6J/mol*K    if T> 846 K
-- m 
+- molmass =   0.22178kg/mol 
 
 Note that this is slightly different than the equation in the manuscript, as Cp is in J/kg/K (rather than ``J/mol/K`` as in eq.3/4 of the paper)
 """
@@ -74,15 +74,15 @@ Note that this is slightly different than the equation in the manuscript, as Cp 
     b1::GeoUnit             =   0.0323J/mol/K^2             # linear term for high T    (T>  846 K)
     c0::GeoUnit             =   5e6J/mol*K                  # quadratic term for low T  (T<= 846 K)
     c1::GeoUnit             =   47.9e-6J/mol*K              # quadratic term for high T (T>  846 K)
-    m::GeoUnit              =   0.22178kg/mol               # average molar mass 
+    molmass::GeoUnit        =   0.22178kg/mol               # average molar mass 
     Tcutoff::GeoUnit        =   846K                        # cutoff temperature
 end
 
 # Calculation routine
 function ComputeHeatCapacity(P,T, s::T_HeatCapacity_Whittacker)
-    @unpack a0,a1,b0,b1,c0,c1, m, Tcutoff   = s
+    @unpack a0,a1,b0,b1,c0,c1, molmass, Tcutoff   = s
     
-    cp = zeros(size(T)).*Value(a0)./Value(m)
+    cp = zeros(size(T)).*Value(a0)./Value(molmass)
 
     for i in eachindex(T)
         if T[i] <= Value(Tcutoff)
@@ -91,7 +91,7 @@ function ComputeHeatCapacity(P,T, s::T_HeatCapacity_Whittacker)
             a,b,c = Value(a1),Value(b1),Value(c1)
         end
        
-        cp[i] = (a + b*T[i] - c/T[i]^2)/m 
+        cp[i] = (a + b*T[i] - c/T[i]^2)/molmass 
     end
 
     return cp
@@ -99,8 +99,8 @@ end
 
 # Print info 
 function show(io::IO, g::T_HeatCapacity_Whittacker)  
-    print(io, "T-dependent heat capacity: cp/$(g.m.val)=$(g.a0.val) + $(g.b0.val)*T - $(g.c0.val)/T^2 (for T<=$(g.Tcutoff.val)); ");
-    print(io, " cp/$(g.m.val)=$(g.a1.val) + $(g.b1.val)*T - $(g.c1.val)/T^2 (for T>$(g.Tcutoff.val)) \n");
+    print(io, "T-dependent heat capacity: cp/$(g.molmass.val)=$(g.a0.val) + $(g.b0.val)*T - $(g.c0.val)/T^2 (for T<=$(g.Tcutoff.val)); ");
+    print(io, " cp/$(g.molmass.val)=$(g.a1.val) + $(g.b1.val)*T - $(g.c1.val)/T^2 (for T>$(g.Tcutoff.val)) \n");
 end
 #-------------------------------------------------------------------------
 

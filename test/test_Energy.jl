@@ -40,6 +40,32 @@ Cp_nd    =   ComputeHeatCapacity(T_nd,cp2_nd)
 
 # Constant 
 
+# Constant conductivity
+cond      =   ConstantConductivity()
+@test Value(cond.k) == 3.0Watt/K/m
+
+Nondimensionalize!(cond,CharUnits_GEO)
+@test  Value(cond.k) ≈ 3.8194500000000007
+
+@test ComputeConductivity(100.0, cond) ≈ 3.8194500000000007 # compute
+
+# Temperature-dependent conductivity
+# dimensional
+T        =   (250:100:1250)*K;
+cond2    =   T_Conductivity_Whittacker()
+k        =   ComputeConductivity(T,cond2)
+@test sum(k) ≈ 27.503366436682285Watt/K/m
+
+# nondimensional
+cond2_nd =   T_Conductivity_Whittacker()
+Nondimensionalize!(cond2_nd,CharUnits_GEO)
+T_nd     =   Float64.(T/CharUnits_GEO.Temperature)
+k_nd     =   ComputeConductivity(T_nd,cond2_nd)
+@test sum(k_nd) ≈ 35.01591097886205
+
+# Dimensionalize again and double-check the results
+@test ustrip(sum(abs.(k_nd*CharUnits_GEO.conductivity - k))) < 1e-11
+
 
 # -----------------------
 

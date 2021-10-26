@@ -40,6 +40,7 @@ To evaluate density within a user routine, use this:
 ```@docs
 GeoParams.MaterialParameters.Density.ComputeDensity
 ```
+Note that density values are usually not used in itself in the governing PDE's, but usually in combination with other parameters, such as $\rho g$ or $\rho c_p$. the non-dimensional value of $\rho$ may thus have very large or small values, but multiplied with the other values one often obtains numbers that are closer to one.
 
 # Gravitational acceleration 
 Gravitational acceleration is defined as 
@@ -63,5 +64,15 @@ GeoParams.MaterialParameters.HeatCapacity.ComputeHeatCapacity
 ```
 
 
+# Conductivity
+Thermal conductivity is defined as 
+```@docs
+GeoParams.MaterialParameters.Conductivity.ConstantConductivity
+GeoParams.MaterialParameters.Conductivity.T_Conductivity_Whittacker
+```
+To compute, use this:
+```@docs
+GeoParams.MaterialParameters.Conductivity.ComputeConductivity
+```
 
 
