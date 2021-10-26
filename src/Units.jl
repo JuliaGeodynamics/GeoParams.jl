@@ -28,6 +28,7 @@ const Myrs  = u"Myrs"
 const yr    = u"yr"
 const s     = u"s"
 const kg    = u"kg"
+const g     = u"g"
 const Pa    = u"Pa"
 const MPa   = u"MPa"
 const Pas   = u"Pa*s"
@@ -36,11 +37,11 @@ const C     = u"°C"
 const mol   = u"mol"  
 const kJ    = u"kJ"
 const J     = u"J"
-
+const Watt   = u"W"
 
 
 export 
-    km, m, cm, mm, Myrs, yr, s, MPa, Pa, Pas, K, C, kg, mol, J, kJ, 
+    km, m, cm, mm, Myrs, yr, s, MPa, Pa, Pas, K, C, g, kg, mol, J, kJ, Watt, 
     GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
     Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
     superscript, upreferred, GEO, SI, NONE, isDimensional, Value, Unit
@@ -179,7 +180,7 @@ Base.setindex!(x::GeoUnit, v::Any, i::Int64) = x.val[i] = v
     acceleration    =   m/s^2
     force           =   kg*m/s^2
     strainrate      =   1/s
-    heatcapacity    =   J/1mol/K 
+    heatcapacity    =   J/kg/K 
     conductivity    =   W/m/K
     
     # Helpful
