@@ -8,13 +8,16 @@ using Unitful
 using Parameters
 using ..Units
 using ..MaterialParameters
+using Plots
 
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 using .MaterialParameters.CreepLaw: CreepLawVariables, ComputeCreepLaw_TauII, AbstractCreepLaw
+using .MaterialParameters.HeatCapacity: AbstractHeatCapacity, ComputeHeatCapacity
 
 
 export 
-    PlotStressStrainrate_CreepLaw 
+    PlotStressStrainrate_CreepLaw,
+    PlotHeatCapacity 
 
 
 """
@@ -85,6 +88,53 @@ function PlotStressStrainrate_CreepLaw(x::AbstractCreepLaw; p=nothing, Strainrat
 
     
 end
+
+
+"""
+    T,Cp,plt = PlotHeatCapacity(cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=nothing)
+
+Creates a plot of temperature `T` vs. heat capacity, as specified in cp (which can be temperature-dependent).
+
+# Optional parameters
+- T: temperature range
+- plt: a previously generated plotting object
+- lbl: label of the curve
+
+# Example
+```
+julia> cp = T_HeatCapacity_Whittacker()
+julia> T,Cp,plt = PlotHeatCapacity(cp)
+```
+you can now save the figure to disk with:
+```
+julia> using Plots
+julia> savefig(plt,"Tdependent_conductivity.png")
+```
+
+"""
+function PlotHeatCapacity(cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=nothing)
+
+    if isnothing(T)
+        T = (273:10:1250)*K
+    end
+
+    Cp       =   ComputeHeatCapacity(T,cp)
+    if length(Cp) == 1
+        Cp = ones(size(T))*Cp
+    end
+
+    if isnothing(plt)
+        plt = plot(ustrip(T), ustrip(Cp), label=lbl)
+    else
+        plt = plot!(ustrip(T), ustrip(Cp), label=lbl)
+    end   
+    plot!(plt,   xlabel="Temperature [$(unit(T[1]))]",
+                 ylabel="Cp [$(unit(Cp[1]))]")
+    gui(plt)
+
+    return T,Cp, plt
+end
+
 
 
 end

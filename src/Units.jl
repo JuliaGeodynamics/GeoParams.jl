@@ -43,7 +43,7 @@ export
     km, m, cm, mm, Myrs, yr, s, MPa, Pa, Pas, K, C, kg, mol, J, kJ, 
     GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
     Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
-    superscript, upreferred, GEO, SI, NONE, isDimensional
+    superscript, upreferred, GEO, SI, NONE, isDimensional, Value, Unit
 
 """
 AbstractGeoUnits
@@ -76,6 +76,8 @@ GeoUnit(v::Number)                      =   GeoUnit(v, NoUnits)     # in case we
 GeoUnit(v::Array)                       =   GeoUnit(v, NoUnits)     # array, no units
 GeoUnit(v::Array{Unitful.Quantity})     =   GeoUnit(v, unit.(v))    # with units
 GeoUnit(v::StepRange)                   =   GeoUnit(v, unit.(v))    # with units
+Value(v::GeoUnit)                       =   v.val                   # get value of GeoUnit
+Unit(v::GeoUnit)                        =   v.unit                  # extract unit
 
 Base.convert(::Type{Float64}, v::GeoUnit)       =   v.val
 Base.convert(::Type{GeoUnit}, v::Quantity)      =   GeoUnit(v) 
@@ -83,16 +85,22 @@ Base.convert(::Type{GeoUnit}, v::Number)        =   GeoUnit(v, NoUnits)
 Base.convert(::Type{GeoUnit}, v::Vector)        =   GeoUnit(v, unit(v[1])) 
 Base.convert(::Type{GeoUnit}, v::Array)         =   GeoUnit(v, unit(v[1])) 
 Base.convert(::Type{GeoUnit}, v::StepRangeLen)  =   GeoUnit(v, unit(v[1])) 
+Base.convert(::Type{GeoUnit}, v::StepRange)     =   GeoUnit(v, unit(v[1])) 
 
 # define a few basic routines so we can easily operate with GeoUnits
 Base.show(io::IO, x::GeoUnit)   =   println(x.val)
 Base.length(v::GeoUnit)         =   length(v.val)
 Base.size(v::GeoUnit)           =   size(v.val)
 
-Base.:*(x::GeoUnit, y::Number)  =   x.val*y
+Base.:*(x::GeoUnit, y::Number)  = x.val*y
 Base.:+(x::GeoUnit, y::Number)  = x.val+y
 Base.:/(x::GeoUnit, y::Number)  = x.val/y
 Base.:-(x::GeoUnit, y::Number)  = x.val-y
+
+Base.:*(x::GeoUnit, y::GeoUnit) = x.val*y.val
+Base.:+(x::GeoUnit, y::GeoUnit) = x.val+y.val
+Base.:/(x::GeoUnit, y::GeoUnit) = x.val/y.val
+Base.:-(x::GeoUnit, y::GeoUnit) = x.val-y.val
 
 Base.:*(x::Number, y::GeoUnit)  = y.val*x
 Base.:+(x::Number, y::GeoUnit)  = y.val+x
@@ -108,6 +116,16 @@ Base.:*(x::GeoUnit, y::Array)   = GeoUnit(x.val*y, x.unit)
 Base.:/(x::GeoUnit, y::Array)   = GeoUnit(x.val/y, x.unit)
 Base.:+(x::GeoUnit, y::Array)   = GeoUnit(x.val+y, x.unit)
 Base.:-(x::GeoUnit, y::Array)   = GeoUnit(x.val-y, x.unit)
+
+Base.:*(x::GeoUnit, y::Vector)   = GeoUnit(x.val*y, x.unit)
+Base.:/(x::GeoUnit, y::Vector)   = GeoUnit(x.val/y, x.unit)
+Base.:+(x::GeoUnit, y::Vector)   = GeoUnit(x.val+y, x.unit)
+Base.:-(x::GeoUnit, y::Vector)   = GeoUnit(x.val-y, x.unit)
+
+Base.:*(x::GeoUnit, y::StepRange)   = GeoUnit(x.val*y, x.unit)
+Base.:/(x::GeoUnit, y::StepRange)   = GeoUnit(x.val/y, x.unit)
+Base.:+(x::GeoUnit, y::StepRange)   = GeoUnit(x.val+y, x.unit)
+Base.:-(x::GeoUnit, y::StepRange)   = GeoUnit(x.val-y, x.unit)
 
 Base.getindex(x::GeoUnit, i::Int64, j::Int64, k::Int64) = x.val[i,j,k]
 Base.getindex(x::GeoUnit, i::Int64, j::Int64) = x.val[i,j]
@@ -161,6 +179,8 @@ Base.setindex!(x::GeoUnit, v::Any, i::Int64) = x.val[i] = v
     acceleration    =   m/s^2
     force           =   kg*m/s^2
     strainrate      =   1/s
+    heatcapacity    =   J/1mol/K 
+    conductivity    =   W/m/K
     
     # Helpful
     SecYear         =   3600*24*365.25

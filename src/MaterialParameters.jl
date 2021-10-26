@@ -19,6 +19,7 @@ export
 include("./CreepLaw/CreepLaw.jl")
 include("./Density/Density.jl")
 include("./GravitationalAcceleration/GravitationalAcceleration.jl")
+include("./Energy/HeatCapacity.jl")
 
 
 """
@@ -38,8 +39,8 @@ Structure that holds all material parameters for a given phase
     Elasticity           =   nothing             #       Elastic parameters
     Plasticity           =   nothing             #       Plasticity
     Conductivity         =   nothing             #       Parameters related to the energy equation 
-    HeatCapacity         =   nothing             #        
-    EnergySourceTerms    =   nothing             #       Source terms in energy conservation equation
+    HeatCapacity         =   nothing             #       Heat capacity 
+    EnergySourceTerms    =   nothing             #       Source terms in energy conservation equation (such as radioactive heat)
 end
 
 """

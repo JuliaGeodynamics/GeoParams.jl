@@ -6,4 +6,5 @@ We provide a number of plotting routines that simplify the implementation of the
 
 ```@docs
 PlotStressStrainrate_CreepLaw
+PlotHeatCapacity
 ```
