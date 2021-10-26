@@ -14,7 +14,9 @@ abstract type AbstractConductivity <: AbstractMaterialParam end
 
 export  ComputeConductivity,                # calculation routines
         ConstantConductivity,               # constant
-        T_Conductivity_Whittacker           # T-dependent heat capacity
+        T_Conductivity_Whittacker,          # T-dependent heat capacity
+        TP_Conductivity,                    # TP dependent conductivity
+        Set_TP_Conductivity                 # Routine to set pre-defined parameters
 
 # Constant Conductivity -------------------------------------------------------
 """
@@ -80,7 +82,7 @@ where ``Cp`` is the heat capacity [``J/mol/K``], and ``a,b,c`` are parameters th
 - g = 0.000135m^2/s/K 
 """
 @with_kw_noshow mutable struct T_Conductivity_Whittacker <: AbstractConductivity
-    # Note: the resulting curve was visually compared with Fig. 2 of the paper
+    # Note: the resulting curve of k was visually compared with Fig. 2 of the paper
     equation::LaTeXString   =   L"k = f(T) "     
     a0::GeoUnit             =   199.5J/mol/K                # prefactor for low T       (T<= 846 K)
     a1::GeoUnit             =   229.32J/mol/K               # prefactor for high T      (T>  846 K)
@@ -91,10 +93,10 @@ where ``Cp`` is the heat capacity [``J/mol/K``], and ``a,b,c`` are parameters th
     molmass::GeoUnit        =   0.22178kg/mol               # average molar mass 
     Tcutoff::GeoUnit        =   846K                        # cutoff temperature
     rho::GeoUnit            =   2700kg/m^3                  # Density they use for an average crust
-    d::GeoUnit              =   576.3*1e-6m^2/s*K               # diffusivity parameterization
-    e::GeoUnit              =   0.062*1e-6m^2/s                 # diffusivity parameterization
-    f::GeoUnit              =   0.732*1e-6m^2/s                 # diffusivity parameterization
-    g::GeoUnit              =   0.000135*1e-6m^2/s/K            # diffusivity parameterization
+    d::GeoUnit              =   576.3*1e-6m^2/s*K           # diffusivity parameterization
+    e::GeoUnit              =   0.062*1e-6m^2/s             # diffusivity parameterization
+    f::GeoUnit              =   0.732*1e-6m^2/s             # diffusivity parameterization
+    g::GeoUnit              =   0.000135*1e-6m^2/s/K        # diffusivity parameterization
 end
 
 # Calculation routine
@@ -102,7 +104,7 @@ function ComputeConductivity(P,T, s::T_Conductivity_Whittacker)
     @unpack a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g   = s
     
     ρ  = Value(rho)
-    k  = zeros(size(T))*   Value(a0)/Value(molmass)*ρ*Value(e)
+    k  = zeros(size(T))*   Value(a0)/Value(molmass)*ρ*Value(e)  # the last multiplication ensures the correct units even for non-dimensional cases
     
     for i in eachindex(T)
         if T[i] <= Value(Tcutoff)
@@ -128,6 +130,105 @@ function show(io::IO, g::T_Conductivity_Whittacker)
 end
 #-------------------------------------------------------------------------
 
+# Temperature (& Pressure) dependent conductivity -------------------------------
+"""
+    TP_Conductivity()
+    
+Sets a temperature (and pressure)-dependent conductivity parameterization as described in Gerya, Numerical Geodynamics (2nd edition, Table 21.2).
+The general for  
+
+```math  
+    k = \\left( a_k +  {b_k \\over {T + c_k}} \\right) (1 + d_k P) 
+```
+
+where ``k`` is the conductivity [``W/K/m``], and ``a_k,b_k,c_k,d_k`` are parameters that dependent on the temperature `T` and pressure `P`:
+- ``a_k`` = 1.18Watt/K/m    
+- ``b_k`` = 474Watt/m 
+- ``c_k`` = 77K       
+- ``d_k`` = 0/MPa       
+"""
+@with_kw_noshow mutable struct TP_Conductivity <: AbstractConductivity
+    equation::LaTeXString   =   L"k = \left(a_k + {b_k/{T + c_k}} \right)*(1 + d_k*P) "     
+    a::GeoUnit              =   1.18Watt/K/m        # empirical fitting term
+    b::GeoUnit              =   474Watt/m           # empirical fitting term
+    c::GeoUnit              =   77K                 # empirical fitting term
+    d::GeoUnit              =   0/MPa               # empirical fitting term
+    Comment::String         =   ""                  # Some remarks you want to add about this creep law implementation
+    BibTex_Reference        =   ""                  # BibTeX reference
+end
+
+
+"""
+    Set_TP_Conductivity["Name of temperature(-pressure) dependent conductivity"]
+    
+This is a dictionary with pre-defined laws:
+- "UpperCrust"    
+- "LowerCrust"
+- "OceanicCrust"
+- "Mantle"
+
+# Example
+```julia 
+julia> k=Set_TP_Conductivity["Mantle"]
+T/P dependent conductivity: k = (0.73 W K⁻¹ m⁻¹ + 1293 W m⁻¹/(T + 77 K))*(1 + 4.0e-5 MPa⁻¹*P)  
+```
+
+"""
+Set_TP_Conductivity = Dict([
+    ("UpperCrust", 
+        TP_Conductivity( a=0.64Watt/K/m, b=807Watt/m, c=77K, d=0/MPa, 
+            Comment="Sediment/upper crust T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!")
+    )
+    
+    ("LowerCrust", 
+        TP_Conductivity( a=1.18Watt/K/m, b=474Watt/m, c=77K, d=0/MPa, 
+            Comment="Lower crust T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!")
+    )
+
+    ("OceanicCrust", 
+        TP_Conductivity( a=1.18Watt/K/m, b=474Watt/m, c=77K, d=0/MPa, 
+            Comment="Oceanic crust T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!")
+    )
+    
+    ("Mantle", 
+        TP_Conductivity( a=0.73Watt/K/m, b=1293Watt/m, c=77K, d=0.00004/MPa, 
+            Comment="Mantle T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!")
+    )
+
+])
+
+
+# Calculation routine
+function ComputeConductivity(P,T, s::TP_Conductivity)
+    @unpack a,b,c,d   = s
+    
+    a_k, b_k = Value(a), Value(b)
+    c_k, d_k = Value(c), Value(d)
+
+    k  = zeros(size(T))*   a_k  # the last multiplication ensures the correct units even for non-dimensional cases
+    
+    if ustrip(d_k)==0
+        for i in eachindex(T)
+            k[i] = a_k + b_k/(T[i] + c_k)
+        end
+    else
+        for i in eachindex(T)
+            k[i] = (a_k + b_k/(T[i] + c_k))*(1 + d_k*P[i])
+        end
+    end
+
+    return k
+end
+
+# Print info 
+function show(io::IO, g::TP_Conductivity)  
+    if ustrip(Value(g.d))==0
+        print(io, "T/P dependent conductivity: k = $(g.a.val) + $(g.b.val)/(T + $(g.c.val))  \n");
+    else
+        print(io, "T/P dependent conductivity: k = ($(g.a.val) + $(g.b.val)/(T + $(g.c.val)))*(1 + $(g.d.val)*P)  \n");
+    end
+end
+#-------------------------------------------------------------------------
 
 
 # Help info for the calculation routines
@@ -139,6 +240,7 @@ Returns the thermal conductivity `k` at any temperature `T` and pressure `P` usi
 Currently available:
 - ConstantConductivity
 - T\\_Conductivity_Whittacker
+- TP\\_Conductivity
 
 # Example 
 Using dimensional units

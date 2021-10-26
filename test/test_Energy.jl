@@ -67,6 +67,11 @@ k_nd     =   ComputeConductivity(T_nd,cond2_nd)
 @test ustrip(sum(abs.(k_nd*CharUnits_GEO.conductivity - k))) < 1e-11
 
 
+# TP-dependent conductivity
+cond3    =   TP_Conductivity()
+
+
+
 # -----------------------
 
 end

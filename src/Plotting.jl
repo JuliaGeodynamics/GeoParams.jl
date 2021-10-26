@@ -159,13 +159,16 @@ julia> savefig(plt,"Tdependent_conductivity.png")
 ```
 
 """
-function PlotConductivity(k::AbstractConductivity; T=nothing, plt=nothing, lbl=nothing)
+function PlotConductivity(k::AbstractConductivity; T=nothing, P=nothing, plt=nothing, lbl=nothing)
 
     if isnothing(T)
         T = (273:10:1250)*K
     end
+    if isnothing(P)
+        P = 1e6Pa*ones(size(T))
+    end
 
-    Cond       =   ComputeConductivity(T,k)
+    Cond       =   ComputeConductivity(P,T,k)
     if length(Cond) == 1
         Cond = ones(size(T))*Cond
     end

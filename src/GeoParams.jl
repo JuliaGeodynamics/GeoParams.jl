@@ -62,7 +62,9 @@ export  ComputeHeatCapacity,                           # computational routines
 using .MaterialParameters.Conductivity
 export  ComputeConductivity,                           # computational routines
         ConstantConductivity,
-        T_Conductivity_Whittacker
+        T_Conductivity_Whittacker,
+        TP_Conductivity,
+        Set_TP_Conductivity
   
         
 # Add plotting routines
