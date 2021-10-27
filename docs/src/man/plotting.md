@@ -1,7 +1,6 @@
 # Plotting
 
-We provide a number of plotting routines that simplify the implementation of the material parameters
-
+We provide a number of plotting routines. Note that these plotting routines only become available once the `Plots` package is loaded.
 ### Plot CreepLaws 
 
 ```@docs

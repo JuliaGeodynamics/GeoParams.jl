@@ -13,6 +13,7 @@ module GeoParams
 using Parameters        # helps setting default parameters in structures
 using Unitful           # Units
 using BibTeX            # references of creep laws
+using Requires          # To only add plotting routines if Plots is loaded
 
 export 
         @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
@@ -85,11 +86,12 @@ export  ComputeMeltingParam, ComputeMeltingParam!,       # calculation routines
         MeltingParam_Caricchi                          
 
 # Add plotting routines
-include("Plotting.jl")
-using  .Plotting
-export  PlotStressStrainrate_CreepLaw, 
-        PlotHeatCapacity, 
-        PlotConductivity, 
-        PlotMeltFraction
+function __init__()
+        @require Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80" begin
+                print("Adding plotting routines of GeoParam")
+                @eval include("./Plotting.jl")
+        end
+end
+
 
 end # module

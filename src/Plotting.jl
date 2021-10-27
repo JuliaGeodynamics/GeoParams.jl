@@ -2,14 +2,13 @@
     This provides a few plotting routines, for example, for CreepLaws
 """
 
-module Plotting
 using LaTeXStrings
 using Unitful
 using Parameters
 using ..Units
 using ..MaterialParameters
 using ..MeltingParam
-using Plots
+using .Plots
 
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 using .MaterialParameters.CreepLaw: CreepLawVariables, ComputeCreepLaw_TauII, AbstractCreepLaw
@@ -213,7 +212,8 @@ julia> savefig(plt,"MeltFraction.png")
 
 """
 function PlotMeltFraction(p::AbstractMeltingParam; T=nothing, P=nothing, plt=nothing, lbl=nothing)
-
+    Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+    
     if isnothing(T)
         T = (500:10:1500)*K
     end
@@ -232,9 +232,9 @@ function PlotMeltFraction(p::AbstractMeltingParam; T=nothing, P=nothing, plt=not
     end
 
     if isnothing(plt)
-        plt = plot(T_C, ustrip(phi), label=lbl)
+       plt = plot(T_C, ustrip(phi), label=lbl)
     else
-        plt = plot!(T_C, ustrip(phi), label=lbl)
+       plt = plot!(T_C, ustrip(phi), label=lbl)
     end   
     plot!(plt,   xlabel="Temperature [C]",
                  ylabel="Melt Fraction \\Phi")
@@ -243,6 +243,6 @@ function PlotMeltFraction(p::AbstractMeltingParam; T=nothing, P=nothing, plt=not
     return T,phi, plt
 end
 
-end
+
 
 
