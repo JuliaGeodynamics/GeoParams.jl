@@ -26,14 +26,14 @@ where ``Q_L`` is the latent heat [``kJ/kg``].
 """
 @with_kw_noshow mutable struct ConstantLatentHeat <: AbstractLatentHeat
     equation::LaTeXString   =   L"Q_L = cst"     
-    Ql::GeoUnit             =   400kJ/kg                # Latent heat
+    Q_L::GeoUnit             =   400kJ/kg                # Latent heat
 end
 
 # Calculation routine
 function ComputeLatentHeat(s::ConstantLatentHeat)
-    @unpack Ql   = s
+    @unpack Q_L   = s
     
-    return Ql*1.0
+    return Q_L*1.0
 end
 
 # Print info 
