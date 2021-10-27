@@ -212,6 +212,10 @@ function ComputeConductivity(P,T, s::TP_Conductivity)
             k[i] = a_k + b_k/(T[i] + c_k)
         end
     else
+        if size(T) != size(P)
+            error("Size of P and T arrays should be the same") 
+        end
+
         for i in eachindex(T)
             k[i] = (a_k + b_k/(T[i] + c_k))*(1 + d_k*P[i])
         end

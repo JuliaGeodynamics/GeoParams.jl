@@ -78,3 +78,21 @@ GeoParams.MaterialParameters.Conductivity.ComputeConductivity
 ```
 
 
+# Latent heat
+Latent heat (of crystallisation) is defined as 
+```@docs
+GeoParams.MaterialParameters.LatentHeat.ConstantLatentHeat
+```
+To compute, use this:
+```@docs
+GeoParams.MaterialParameters.LatentHeat.ComputeLatentHeat
+```
+# Radioactive heat
+Radioactive heat sources are defined as 
+```@docs
+GeoParams.MaterialParameters.RadioactiveHeat.ConstantRadioactiveHeat
+```
+To compute, use this:
+```@docs
+GeoParams.MaterialParameters.RadioactiveHeat.ComputeRadioactiveHeat
+```

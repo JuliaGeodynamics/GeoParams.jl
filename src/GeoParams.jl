@@ -53,20 +53,28 @@ using  .MaterialParameters.GravitationalAcceleration
 export  ComputeGravity,                                # computational routines
         ConstantGravity
 
-# Energy parameters: Heat Capacity, Thermal conductivity,          
+# Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat         
 using .MaterialParameters.HeatCapacity
-export  ComputeHeatCapacity,                           # computational routines
+export  ComputeHeatCapacity,                          
         ConstantHeatCapacity,
         T_HeatCapacity_Whittacker
 
 using .MaterialParameters.Conductivity
-export  ComputeConductivity,                           # computational routines
+export  ComputeConductivity,                           
         ConstantConductivity,
         T_Conductivity_Whittacker,
         TP_Conductivity,
         Set_TP_Conductivity
-  
+
+using .MaterialParameters.LatentHeat
+export  ComputeLatentHeat,                           
+        ConstantLatentHeat
         
+using .MaterialParameters.RadioactiveHeat        
+export  ComputeRadioactiveHeat,                 
+        ConstantRadioactiveHeat                  
+
+
 # Add plotting routines
 include("Plotting.jl")
 using  .Plotting

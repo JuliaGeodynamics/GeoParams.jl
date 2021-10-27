@@ -21,6 +21,8 @@ include("./Density/Density.jl")
 include("./GravitationalAcceleration/GravitationalAcceleration.jl")
 include("./Energy/HeatCapacity.jl")
 include("./Energy/Conductivity.jl")
+include("./Energy/LatentHeat.jl")
+include("./Energy/RadioactiveHeat.jl")
 
 
 """

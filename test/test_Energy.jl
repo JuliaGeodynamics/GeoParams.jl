@@ -66,12 +66,47 @@ k_nd     =   ComputeConductivity(T_nd,cond2_nd)
 # Dimensionalize again and double-check the results
 @test ustrip(sum(abs.(k_nd*CharUnits_GEO.conductivity - k))) < 1e-11
 
+# TP-dependent conductivity for different predefines cases
+P       = 1e6Pa*ones(size(T))
+List    = ["LowerCrust"   "Mantle"        "OceanicCrust"  "UpperCrust"]
+Sol_kT  = [20.55712932736763 28.700405819019323 20.55712932736763 19.940302462417037]*Watt/K/m
+for i=1:length(List)
+    k_TP    =   Set_TP_Conductivity[List[i]]
+    k       =   ComputeConductivity(P,T,k_TP)
+    @test sum(k) ≈ Sol_kT[i]
 
-# TP-dependent conductivity
-cond3    =   TP_Conductivity()
+    Nondimensionalize!(k_TP,CharUnits_GEO)
+    T_nd     =   Float64.(T/CharUnits_GEO.Temperature)
+    P_nd     =   Float64.(P/CharUnits_GEO.stress)
+    k_nd     =   ComputeConductivity(P_nd,T_nd,k_TP)
 
+    @test ustrip(sum(abs.(k_nd*CharUnits_GEO.conductivity - k))) < 1e-11
+
+end
 
 
 # -----------------------
+
+
+# Latent heat -----------
+a = ConstantLatentHeat()
+Q_L = ComputeLatentHeat(a)
+@test Q_L == 400kJ/kg
+
+Nondimensionalize!(a,CharUnits_GEO)
+Q_L = ComputeLatentHeat(a)
+@test Q_L == 4e21
+# -----------------------
+
+# Radioacive heat -------
+a = ConstantRadioactiveHeat()
+H_r = ComputeRadioactiveHeat(a)
+@test H_r == 1.0e-6Watt/m^3
+
+Nondimensionalize!(a,CharUnits_GEO)
+H_r = ComputeRadioactiveHeat(a)
+@test H_r == 0.1
+# -----------------------
+
 
 end
