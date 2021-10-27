@@ -19,7 +19,7 @@ export
         GeoUnit, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
         Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
         superscript, upreferred, GEO, SI, NONE, isDimensional, Value, Unit, 
-        km, m, cm, mm, Myrs, yr, s, MPa, Pa, Pas, K, C, g, kg, mol, J, kJ, Watt
+        km, m, cm, mm, Myrs, yr, s, MPa, Pa, Pas, K, C, g, kg, mol, J, kJ, Watt, μW
    
 #         
 abstract type AbstractMaterialParam end           # structure that holds material parmeters (density, elasticity, viscosity)          
@@ -74,10 +74,22 @@ using .MaterialParameters.RadioactiveHeat
 export  ComputeRadioactiveHeat,                 
         ConstantRadioactiveHeat                  
 
+using .MaterialParameters.Shearheating        
+export  ComputeShearheating, ComputeShearheating!,               
+        ConstantShearheating              
+
+# Add melting parameterizations
+include("./MeltFraction/MeltingParameterization.jl")
+using .MeltingParam
+export  ComputeMeltingParam, ComputeMeltingParam!       # calculation routines
+        MeltingParam_Caricchi                          
 
 # Add plotting routines
 include("Plotting.jl")
 using  .Plotting
-export  PlotStressStrainrate_CreepLaw, PlotHeatCapacity, PlotConductivity
+export  PlotStressStrainrate_CreepLaw, 
+        PlotHeatCapacity, 
+        PlotConductivity, 
+        PlotMeltFraction
 
 end # module

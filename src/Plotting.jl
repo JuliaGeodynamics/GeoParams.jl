@@ -8,17 +8,20 @@ using Unitful
 using Parameters
 using ..Units
 using ..MaterialParameters
+using ..MeltingParam
 using Plots
 
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 using .MaterialParameters.CreepLaw: CreepLawVariables, ComputeCreepLaw_TauII, AbstractCreepLaw
 using .MaterialParameters.HeatCapacity: AbstractHeatCapacity, ComputeHeatCapacity
 using .MaterialParameters.Conductivity: AbstractConductivity, ComputeConductivity
+using .MeltingParam: AbstractMeltingParam, ComputeMeltingParam
 
 export 
     PlotStressStrainrate_CreepLaw,
     PlotHeatCapacity,
-    PlotConductivity 
+    PlotConductivity,
+    PlotMeltFraction 
 
 
 """
@@ -185,6 +188,60 @@ function PlotConductivity(k::AbstractConductivity; T=nothing, P=nothing, plt=not
     return T,Cond, plt
 end
 
+"""
+    T,phi,plt = PlotMeltFraction(p::AbstractMeltingParam; T=nothing, plt=nothing, lbl=nothing)
+
+Creates a plot of temperature `T` vs. melt fraction, as specified in `p`. 
+The 1D curve can be evaluated at a specific pressure `P` which can be given as a scalar or as an array of the same size as `T`
+
+# Optional parameters
+- `T`: temperature range
+- `P`: pressure 
+- `plt`: a previously generated plotting object
+- `lbl`: label of the curve
+
+# Example
+```
+julia> p        =  MeltingParam_Caricchi()
+julia> T,phi,plt = PlotMeltFraction(p)
+```
+you can now save the figure to disk with:
+```
+julia> using Plots
+julia> savefig(plt,"MeltFraction.png")
+```
+
+"""
+function PlotMeltFraction(p::AbstractMeltingParam; T=nothing, P=nothing, plt=nothing, lbl=nothing)
+
+    if isnothing(T)
+        T = (500:10:1500)*K
+    end
+    T_C = ustrip(T) .- 273.15
+
+    if isnothing(P) 
+        P = 1e6Pa*ones(size(T))
+    end
+    if length(P) == 1
+        P = P*ones(size(T))
+    end
+
+    phi       =   ComputeMeltingParam(P,T,p)
+    if length(phi) == 1
+        phi = ones(size(T))*phi
+    end
+
+    if isnothing(plt)
+        plt = plot(T_C, ustrip(phi), label=lbl)
+    else
+        plt = plot!(T_C, ustrip(phi), label=lbl)
+    end   
+    plot!(plt,   xlabel="Temperature [C]",
+                 ylabel="Melt Fraction \\Phi")
+    gui(plt)
+
+    return T,phi, plt
+end
 
 end
 

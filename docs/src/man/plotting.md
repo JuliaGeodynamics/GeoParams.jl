@@ -8,4 +8,5 @@ We provide a number of plotting routines that simplify the implementation of the
 PlotStressStrainrate_CreepLaw
 PlotHeatCapacity
 PlotConductivity
+PlotMeltFraction
 ```
