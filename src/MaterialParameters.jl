@@ -14,7 +14,6 @@ using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 export 
     MaterialParams, SetMaterialParams    
 
-
 # Link the modules with various definitions:
 include("./CreepLaw/CreepLaw.jl")
 include("./Density/Density.jl")
@@ -23,7 +22,7 @@ include("./Energy/HeatCapacity.jl")
 include("./Energy/Conductivity.jl")
 include("./Energy/LatentHeat.jl")
 include("./Energy/RadioactiveHeat.jl")
-
+include("./Energy/Shearheating.jl")
 
 """
     MaterialParams

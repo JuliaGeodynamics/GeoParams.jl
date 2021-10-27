@@ -75,10 +75,11 @@ for i=1:length(List)
     k       =   ComputeConductivity(P,T,k_TP)
     @test sum(k) ≈ Sol_kT[i]
 
-    Nondimensionalize!(k_TP,CharUnits_GEO)
+    k_TP_nd  =  deepcopy(k_TP)
+    Nondimensionalize!(k_TP_nd,CharUnits_GEO)
     T_nd     =   Float64.(T/CharUnits_GEO.Temperature)
     P_nd     =   Float64.(P/CharUnits_GEO.stress)
-    k_nd     =   ComputeConductivity(P_nd,T_nd,k_TP)
+    k_nd     =   ComputeConductivity(P_nd,T_nd,k_TP_nd)
 
     @test ustrip(sum(abs.(k_nd*CharUnits_GEO.conductivity - k))) < 1e-11
 
@@ -109,4 +110,49 @@ H_r = ComputeRadioactiveHeat(a)
 # -----------------------
 
 
+# Shear heating -------
+Χ       = ConstantShearheating(1.0)
+ 
+# Define parameters as vectors
+τ       = [1 2 3 4]*1e6*Pa     
+ε       = [1 0.1 0.1 1]*1/s   
+ε_el    = [0.01 0.01 0.01 0.01]*1/s   
+
+τ_2D       = [1 2; 3 4]*1e6*Pa     
+ε_2D       = [1 0.1; 0.1 1]*1/s   
+ε_el_2D    = [0.01 0.01; 0.01 0.01]*1/s   
+
+# With elasticity
+H_s1 = ComputeShearheating(τ,   ε,    ε_el,     Χ)
+H_s2 = ComputeShearheating(τ_2D,ε_2D, ε_el_2D,  Χ)
+@test H_s1 ≈ 5.4e6Pa/s
+@test H_s2 ≈ 5.4e6Pa/s
+
+# No elasticity
+H_s3 = ComputeShearheating(τ,   ε,     Χ)
+H_s4 = ComputeShearheating(τ_2D,ε_2D,  Χ)
+@test H_s3 ≈ 5.5e6Pa/s
+@test H_s4 ≈ 5.5e6Pa/s
+
+# Now in non-dimensional units
+τ       = [1 2 3 4]     
+ε       = [1 0.1 0.1 1]  
+ε_el    = [0.01 0.01 0.01 0.01]   
+
+τ_2D       = [1 2; 3 4]     
+ε_2D       = [1 0.1; 0.1 1]   
+ε_el_2D    = [0.01 0.01; 0.01 0.01]  
+Nondimensionalize!(Χ,CharUnits_GEO)
+
+H_s1 = ComputeShearheating(τ,   ε,    ε_el,     Χ)
+H_s2 = ComputeShearheating(τ_2D,ε_2D, ε_el_2D,  Χ)
+H_s3 = ComputeShearheating(τ,   ε,     Χ)
+H_s4 = ComputeShearheating(τ_2D,ε_2D,  Χ)
+@test H_s1 ≈ 5.4
+@test H_s2 ≈ 5.4
+@test H_s3 ≈ 5.5
+@test H_s4 ≈ 5.5
+# -----------------------
+
 end
+

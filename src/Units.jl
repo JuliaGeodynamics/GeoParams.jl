@@ -37,11 +37,12 @@ const C     = u"°C"
 const mol   = u"mol"  
 const kJ    = u"kJ"
 const J     = u"J"
-const Watt   = u"W"
+const Watt  = u"W"
+const μW    = u"μW"
 
 
 export 
-    km, m, cm, mm, Myrs, yr, s, MPa, Pa, Pas, K, C, g, kg, mol, J, kJ, Watt, 
+    km, m, cm, mm, Myrs, yr, s, MPa, Pa, Pas, K, C, g, kg, mol, J, kJ, Watt, μW, 
     GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
     Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
     superscript, upreferred, GEO, SI, NONE, isDimensional, Value, Unit
