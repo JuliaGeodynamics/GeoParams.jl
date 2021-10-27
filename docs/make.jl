@@ -13,6 +13,7 @@ makedocs(
             "Material Parameters" =>  "man/materialparameters.md",
         ],
         "Plotting"  => "man/plotting.md",
+        "Partial Melting"  => "man/melting.md",
         "List of functions"  => "man/listfunctions.md",
         "Contributing" => "man/contributing.md",
     ],
