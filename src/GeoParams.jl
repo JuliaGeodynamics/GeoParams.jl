@@ -81,7 +81,7 @@ export  ComputeShearheating, ComputeShearheating!,
 # Add melting parameterizations
 include("./MeltFraction/MeltingParameterization.jl")
 using .MeltingParam
-export  ComputeMeltingParam, ComputeMeltingParam!       # calculation routines
+export  ComputeMeltingParam, ComputeMeltingParam!,       # calculation routines
         MeltingParam_Caricchi                          
 
 # Add plotting routines
