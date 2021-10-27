@@ -95,13 +95,13 @@ Q_L = ComputeLatentHeat(a)
 
 Nondimensionalize!(a,CharUnits_GEO)
 Q_L = ComputeLatentHeat(a)
-@test Q_L == 4e21
+@test Q_L ≈ 4e21
 # -----------------------
 
 # Radioacive heat -------
 a = ConstantRadioactiveHeat()
 H_r = ComputeRadioactiveHeat(a)
-@test H_r == 1.0e-6Watt/m^3
+@test H_r ≈ 1.0e-6Watt/m^3
 
 Nondimensionalize!(a,CharUnits_GEO)
 H_r = ComputeRadioactiveHeat(a)
