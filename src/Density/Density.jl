@@ -35,8 +35,11 @@ end
 # Calculation routine
 function ComputeDensity(P,T, s::ConstantDensity)
     @unpack ρ   = s
-    
-    return ρ*1.0
+    if length(T)>1
+        return Value(ρ).*ones(size(T))
+    else
+        return ρ*1.0
+    end
 end
 
 # Print info 

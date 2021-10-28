@@ -38,7 +38,7 @@ function ComputeConductivity(P, T, s::ConstantConductivity)
     @unpack k   = s
 
     if length(T)>1
-        return k.*ones(size(T))
+        return Value(k).*ones(size(T))
     else
         return Value(k)
     end
