@@ -86,6 +86,10 @@ for i=1:length(List)
 end
 
 
+T = [200 300; 400 500]*K
+k1        =   ComputeConductivity(T,cond2)
+
+
 # -----------------------
 
 
@@ -99,7 +103,7 @@ Q_L = ComputeLatentHeat(a)
 @test Q_L ≈ 4e21
 # -----------------------
 
-# Radioacive heat -------
+# Radioactive heat ------
 a = ConstantRadioactiveHeat()
 H_r = ComputeRadioactiveHeat(a)
 @test H_r ≈ 1.0e-6Watt/m^3

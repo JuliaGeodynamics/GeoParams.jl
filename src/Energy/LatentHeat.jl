@@ -33,7 +33,7 @@ end
 function ComputeLatentHeat(s::ConstantLatentHeat)
     @unpack Q_L   = s
     
-    return Q_L*1.0
+    return Q_L
 end
 
 # Print info 
