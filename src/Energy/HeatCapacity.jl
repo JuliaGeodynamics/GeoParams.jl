@@ -37,7 +37,7 @@ function ComputeHeatCapacity(P, T, s::ConstantHeatCapacity)
     if length(T)>1
         return cp*ones(size(T))
     else
-        return cp
+        return Value(cp)
     end
 
 end

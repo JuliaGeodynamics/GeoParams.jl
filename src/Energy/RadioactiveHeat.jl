@@ -33,7 +33,7 @@ end
 function ComputeRadioactiveHeat(s::ConstantRadioactiveHeat)
     @unpack H_r   = s
    
-    return H_r
+    return Value(H_r)
 end
 
 # Print info 
