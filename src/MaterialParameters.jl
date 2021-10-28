@@ -43,6 +43,7 @@ Structure that holds all material parameters for a given phase
     Conductivity         =   nothing             #       Parameters related to the energy equation 
     HeatCapacity         =   nothing             #       Heat capacity 
     EnergySourceTerms    =   nothing             #       Source terms in energy conservation equation (such as radioactive heat)
+    Melting              =   nothing             #       Melting model
 end
 
 """
@@ -55,6 +56,7 @@ end
                         Conductivity        =   nothing, 
                         HeatCapacity        =   nothing, 
                         EnergySourceTerms   =   nothing, 
+                        Melting             =   nothing,
                         CharDim::GeoUnits   =   nothing)
 
 Sets material parameters for a given phase. 
@@ -135,6 +137,7 @@ function SetMaterialParams(; Name::String="", Phase=1,
             Conductivity        =   nothing, 
             HeatCapacity        =   nothing, 
             EnergySourceTerms   =   nothing, 
+            Melting             =   nothing,
             CharDim             =   nothing)
 
         # In case density is defined and gravity not, set gravity to default value
@@ -152,7 +155,9 @@ function SetMaterialParams(; Name::String="", Phase=1,
                                      ConvField(Plasticity,          :Plasticity),  
                                      ConvField(Conductivity,        :Conductivity,      maxAllowedFields=1),    
                                      ConvField(HeatCapacity,        :HeatCapacity,      maxAllowedFields=1), 
-                                     ConvField(EnergySourceTerms,   :EnergySourceTerms) )
+                                     ConvField(EnergySourceTerms,   :EnergySourceTerms), 
+                                     ConvField(Melting,             :Melting,           maxAllowedFields=1)) 
+                                     
 
         # [optionally] non-dimensionalize the struct
         if ~isnothing(CharDim) 
