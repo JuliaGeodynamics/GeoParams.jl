@@ -579,61 +579,46 @@ function show(io::IO, g::GeoUnits{TYPE})  where {TYPE}
 end
 
 
-# This replaces the viewer of the Unitful package
-"""
-    superscript(i::Rational)
-Prints exponents. 
 
-Note that we redefine this method (from Unitful) here, as we regularly deal with exponents 
-such as Pa^-4.2, which are otherwise not so nicely displayed in the Unitful package
-"""
-function superscript(i::Rational)
-    val = Float64(i);   # the numerical value of the exponent
-    v = get(ENV, "UNITFUL_FANCY_EXPONENTS", Sys.isapple() ? "true" : "false")
-    t = tryparse(Bool, lowercase(v))
-    k = (t === nothing) ? false : t
-    if k
-         return superscript_mac(Float64(i.num/i.den))
+# This replaces the viewer of the Unitful package, such that the printing of units is done as floats (better)
+function Unitful.superscript(i::Rational{Int64}; io=nothing) 
+    string(superscript(float(i)))
+    if io === nothing
+        iocontext_value = nothing
     else
-        i.den == 1 ? "^" * string(val) : "^" * replace(string(val), "//" => "/")
+        iocontext_value = get(io, :fancy_exponent, nothing)
     end
-end
-
-function superscript_mac(number::Float64)
-    # this transfers the float number to a superscript string, which can be used for visualization on mac 
-    x           =   trunc(Int,number)               # retrieve the part before the decimal point
-    dec         =   number-x                        # decimal part
-    super_str   =   superscriptnumber(x)            # transfer to superscript string
-    str         =   string(number);
-    ind         =   findfirst(isequal('.'), str)    
-    if ~isempty(ind)  && abs(dec)>0
-        st        = [super_str;'\uB7']              # dot
-        for id=ind+1:length(str)
-            y         = parse(Int,str[id]);
-            st        = [st; superscriptnumber(y)]
-        end
-
-        super_str = join(st)                        # add decimal part
-    end
-
-    return super_str
-end
-
-function superscriptnumber(i::Int)
-    if i < 0
-        c = [Char(0x207B)]
+    if iocontext_value isa Bool
+        fancy_exponent = iocontext_value
     else
-        c = []
+        v = get(ENV, "UNITFUL_FANCY_EXPONENTS", Sys.isapple() ? "true" : "false")
+        t = tryparse(Bool, lowercase(v))
+        fancy_exponent = (t === nothing) ? false : t
     end
-    for d in reverse(digits(abs(i)))
-        if d == 0 push!(c, Char(0x2070)) end
-        if d == 1 push!(c, Char(0x00B9)) end
-        if d == 2 push!(c, Char(0x00B2)) end
-        if d == 3 push!(c, Char(0x00B3)) end
-        if d > 3 push!(c, Char(0x2070+d)) end
+    if fancy_exponent
+        return superscript(float(i)) 
+    else
+        return  "^" * string(float(i)) 
     end
-    return join(c)
+
 end
+
+Unitful.superscript(i::Float64) = map(repr(i)) do c
+    c == '-' ? '\u207b' :
+    c == '1' ? '\u00b9' :
+    c == '2' ? '\u00b2' :
+    c == '3' ? '\u00b3' :
+    c == '4' ? '\u2074' :
+    c == '5' ? '\u2075' :
+    c == '6' ? '\u2076' :
+    c == '7' ? '\u2077' :
+    c == '8' ? '\u2078' :
+    c == '9' ? '\u2079' :
+    c == '0' ? '\u2070' :
+    c == '.' ? '\u0387' :
+    error("unexpected character")
+end
+
 
 
 end
