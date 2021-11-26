@@ -40,8 +40,10 @@ export MaterialParams, SetMaterialParams
 # Creep laws
 using  .MaterialParameters.CreepLaw
 export  ComputeCreepLaw_EpsII, ComputeCreepLaw_TauII, CreepLawVariables,
+	ComputeDiffCreepLaw_EpsII, ComputeDiffCreepLaw_TauII,
         LinearViscous, PowerlawViscous, 
-        DislocationCreep, SetDislocationCreep
+        DislocationCreep, SetDislocationCreep,
+	DiffusionCreep, SetDiffusionCreep
 
 # Density
 using  .MaterialParameters.Density
