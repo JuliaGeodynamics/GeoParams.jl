@@ -53,7 +53,7 @@ function ComputeDiffCreepLaw_EpsII(TauII, a::DiffusionCreep, p::CreepLawVariable
         FT = 1.0NoUnits
         FE = 1.0NoUnits
     end
-    return A.val*(σ.val*FT)^n.val*d.val^p.val*f.val^r.val*exp(-(E.val+P.val*V.val)/(R.val*T.val))/FE
+    return A.val*(TauII.val*FT)^n.val*d.val^p.val*f.val^r.val*exp(-(E.val+P.val*V.val)/(R.val*T.val))/FE
 end
 
 function ComputeDiffCreepLaw_TauII(EpsII, a::DiffusionCreep, p::CreepLawVariables)
