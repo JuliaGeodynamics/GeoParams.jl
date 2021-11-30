@@ -30,7 +30,7 @@ end
 
 
 
-function ComputeDiffCreepLaw_EpsII(TauII, a::DiffusionCreep, p::CreepLawVariables)
+function ComputeCreepLaw_EpsII(TauII, a::DiffusionCreep, p::CreepLawVariables)
     @unpack n         = a
     @unpack r         = a
     @unpack p         = a
@@ -56,7 +56,7 @@ function ComputeDiffCreepLaw_EpsII(TauII, a::DiffusionCreep, p::CreepLawVariable
     return A.val*(TauII.val*FT)^n.val*d.val^p.val*f.val^r.val*exp(-(E.val+P.val*V.val)/(R.val*T.val))/FE
 end
 
-function ComputeDiffCreepLaw_TauII(EpsII, a::DiffusionCreep, p::CreepLawVariables)
+function ComputeCreepLaw_TauII(EpsII, a::DiffusionCreep, p::CreepLawVariables)
     @unpack n = a
     @unpack r = a
     @unpack p = a
