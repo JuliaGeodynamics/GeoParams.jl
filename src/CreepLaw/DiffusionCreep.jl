@@ -65,10 +65,10 @@ function ComputeDiffCreepLaw_TauII(EpsII, a::DiffusionCreep, p::CreepLawVariable
     @unpack V = a
     @unpack R = a
     @unpack Apparatus = a
-    @unpack P = a
-    @unpack T = a
-    @unpack d = a
-    @unpack f = a
+    @unpack P = p
+    @unpack T = p
+    @unpack d = p
+    @unpack f = p
     if Apparatus == "AxialCompression"
         FT = sqrt(3.0)NoUnits               # relation between differential stress recorded by apparatus and TauII
         FE = 2.0/sqrt(3.0)NoUnits           # relation between gamma recorded by apparatus and EpsII
