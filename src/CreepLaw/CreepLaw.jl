@@ -44,6 +44,7 @@ Note that, if needed, this can be extended, w/out interfering with existing calc
     f::GeoUnit  =   0.0MPa     # water-fugacity         
 end
 include("DislocationCreep.jl")
+include("DiffusionCreep.jl")
 # Linear viscous rheology ------------------------------------------------
 """
     LinearViscous(η=1e20Pa*s)
