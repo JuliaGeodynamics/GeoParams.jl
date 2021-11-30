@@ -84,7 +84,7 @@ end
 
 
 # Print info 
-function show(io::IO, g::DislocationCreep)  
+function show(io::IO, g::DiffusionCreep)  
     print(io, "DiffusionCreep: n=$(g.n.val), r=$(g.r.val), p=$(g.p.val), A=$(g.A.val), E=$(g.E.val), V=$(g.V.val), Apparatus=$(g.Apparatus)" )  
 end
 
