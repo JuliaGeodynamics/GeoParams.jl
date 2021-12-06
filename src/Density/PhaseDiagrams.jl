@@ -19,16 +19,39 @@ struct PhaseDiagram_LookupTable
     rockVp      ::  Any
     rockVs      ::  Any
     rockVpVs    ::  Any
+    meltVp      ::  Any
+    meltVs      ::  Any
+    meltVpVs    ::  Any
+    Vp          ::  Any
+    Vs          ::  Any
+    VpVs        ::  Any
 end
 
 
 """
     PD_Data = Read_LaMEM_Perple_X_Diagram(fname::String)
 
-
-Reads a precomputed phase diagram in the LaMEM/Perple\\_X format (which is a phase diagram computed using Perple\\_X, but formatted in a manner that is readable using LaMEM).
+Reads a precomputed phase diagram in the `LaMEM/Perple_X` format (which is a phase diagram computed using `Perple_X`, but formatted in a manner that is readable using LaMEM).
 The data is stored in the `PhaseDiagram_LookupTable` structure.
 
+Example
+===
+```julia
+julia> PD_Data = Read_LaMEM_Perple_X_Diagram("./test_data/Peridotite.in")
+PerpleX_LaMEM Phase Diagram Lookup Table: 
+   File    :   ./test_data/Peridotite.in
+   T       :   293.0 - 1573.000039
+   P       :   1.0e7 - 2.9999999944e9
+   fields  :   meltRho
+               meltFrac
+               rockRho
+               Rho
+               rockVp
+               rockVs
+               rockVpVs
+julia> PD_Data.Rho(1500,1e7)
+3042.836820256982
+```
 """
 function Read_LaMEM_Perple_X_Diagram(fname::String)
     
@@ -66,35 +89,66 @@ function Read_LaMEM_Perple_X_Diagram(fname::String)
     P_Pa            =   1e5*reshape(data[:,5], siz);    # in Pa
 
     # Create interpolation objects
-    intp_meltRho    =   LinearInterpolation((Tvec, Pvec), meltRho,      extrapolation_bc = Line()); 
-    intp_meltFrac   =   LinearInterpolation((Tvec, Pvec), meltFrac,     extrapolation_bc = Line()); 
-    intp_rockRho    =   LinearInterpolation((Tvec, Pvec), rockRho,      extrapolation_bc = Line()); 
-    intp_totalRho   =   LinearInterpolation((Tvec, Pvec), totalRho,     extrapolation_bc = Line()); 
+    intp_meltRho    =   LinearInterpolation((Tvec, Pvec), meltRho,      extrapolation_bc = Flat()); 
+    intp_meltFrac   =   LinearInterpolation((Tvec, Pvec), meltFrac,     extrapolation_bc = Flat()); 
+    intp_rockRho    =   LinearInterpolation((Tvec, Pvec), rockRho,      extrapolation_bc = Flat()); 
+    intp_totalRho   =   LinearInterpolation((Tvec, Pvec), totalRho,     extrapolation_bc = Flat()); 
     
     # optional data
     if size(data,2)>=6
         rockVp          =   reshape(data[:,6], siz);    # in km/s
-        intp_rockVp     =   LinearInterpolation((Tvec, Pvec), rockVp,  extrapolation_bc = Line()); 
+        intp_rockVp     =   LinearInterpolation((Tvec, Pvec), rockVp,  extrapolation_bc = Flat()); 
     else
         intp_rockVp     =   nothing
     end
     if size(data,2)>=7
         rockVs          =   reshape(data[:,7], siz);    # in km/s
-        intp_rockVs     =   LinearInterpolation((Tvec, Pvec), rockVs,  extrapolation_bc = Line()); 
+        intp_rockVs     =   LinearInterpolation((Tvec, Pvec), rockVs,  extrapolation_bc = Flat()); 
     else
         intp_rockVs     =   nothing
     end
     if size(data,2)>=8
         rockVpVs        =   reshape(data[:,8], siz);    # ratio []
-        intp_rockVpVs   =   LinearInterpolation((Tvec, Pvec), rockVpVs,  extrapolation_bc = Line()); 
+        intp_rockVpVs   =   LinearInterpolation((Tvec, Pvec), rockVpVs,  extrapolation_bc = Flat()); 
     else
         intp_rockVpVs   =   nothing
+    end
+
+    if size(data,2)>=9
+        meltVp          =   reshape(data[:,9], siz);    # in km/s
+        intp_meltVp     =   LinearInterpolation((Tvec, Pvec), meltVp,  extrapolation_bc = Flat()); 
+        totalVp         =       rockVp.*(1.0 .- meltFrac) + meltVp.*meltFrac;
+        intp_totalVp    =   LinearInterpolation((Tvec, Pvec), totalVp,  extrapolation_bc = Flat()); 
+    else
+        intp_meltVp     =   nothing
+        intp_totalVp    =   nothing
+    end
+    if size(data,2)>=10
+        meltVs          =   reshape(data[:,10], siz);    # in km/s
+        intp_meltVs     =   LinearInterpolation((Tvec, Pvec), meltVs,  extrapolation_bc = Flat()); 
+        totalVs         =       rockVs.*(1.0 .- meltFrac) + meltVs.*meltFrac;
+        intp_totalVs    =   LinearInterpolation((Tvec, Pvec), totalVs,  extrapolation_bc = Flat()); 
+    else
+        intp_meltVs     =   nothing
+        intp_totalVs    =   nothing
+    end
+    if size(data,2)>=11
+        meltVpVs        =   reshape(data[:,11], siz);    # ratio []
+        intp_meltVpVs   =   LinearInterpolation((Tvec, Pvec), meltVpVs,  extrapolation_bc = Flat()); 
+        totalVpVs       =       rockVpVs.*(1.0 .- meltFrac) + meltVpVs.*meltFrac;
+        intp_totalVpVs  =   LinearInterpolation((Tvec, Pvec), totalVpVs,  extrapolation_bc = Flat()); 
+
+    else
+        intp_meltVpVs   =   nothing
+        intp_totalVpVs  =   nothing
     end
 
     # Store in phase diagram structure
     PD_data = PhaseDiagram_LookupTable("PerpleX_LaMEM", header_text, fname, 
                                 intp_meltRho,   intp_meltFrac,  intp_rockRho,   intp_totalRho,
-                                intp_rockVp,    intp_rockVp,    intp_rockVpVs)
+                                intp_rockVp,    intp_rockVs,    intp_rockVpVs,
+                                intp_meltVp,    intp_meltVs,    intp_meltVpVs,
+                                intp_totalVp,   intp_totalVs,   intp_totalVpVs )
 
     return PD_data
 end
@@ -115,9 +169,9 @@ function show(io::IO, d::PhaseDiagram_LookupTable)
     for i=4:length(lst)
         if !isnothing(getfield(d,lst[i]))
             if i==4
-                println(io, "   fields  :   $(lst[i])")  
+                println(io, "   fields  :   :$(lst[i])")  
             else
-                println(io, "               $(lst[i])")  
+                println(io, "               :$(lst[i])")  
             end
         end
     end
