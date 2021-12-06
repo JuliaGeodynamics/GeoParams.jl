@@ -11,6 +11,8 @@ using ..Units
 using GeoParams: AbstractMaterialParam
 import Base.show
 
+include("PhaseDiagrams.jl")
+
 abstract type AbstractDensity <: AbstractMaterialParam end
 
 export  ComputeDensity,         # calculation routines

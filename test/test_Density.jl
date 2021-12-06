@@ -25,5 +25,12 @@ Nondimensionalize!(x2,CharUnits_GEO)
 @test ComputeDensity(1.0,1.0, x2) ≈ 2.8419999999999996e-16
 @test ComputeDensity(1.0,1.0, x1) ≈ 2.9e-16
 
+# Read Phase diagram interpolation object
+fname   =   "./test_data/Peridotite.in"
+PD_data =   Read_LaMEM_Perple_X_Diagram(fname);
+@test PD_data.meltFrac(1500,1e7) ≈ 0.24368492372485706
+@test PD_data.Rho(1500,1e7) ≈ 3042.836820256982
+@test PD_data.meltRho(1500,1e7) ≈ 2662.227167592414
+@test PD_data.rockRho(1500,1e7) ≈ 3165.467673917775
 
 end

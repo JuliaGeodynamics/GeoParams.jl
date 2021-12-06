@@ -47,7 +47,9 @@ export  ComputeCreepLaw_EpsII, ComputeCreepLaw_TauII, CreepLawVariables,
 using  .MaterialParameters.Density
 export  ComputeDensity,                                # computational routines
         ConstantDensity,                        
-        PT_Density
+        PT_Density,
+        PhaseDiagram_LookupTable, Read_LaMEM_Perple_X_Diagram
+
 
 # Gravitational Acceleration
 using  .MaterialParameters.GravitationalAcceleration
@@ -85,7 +87,7 @@ using .MeltingParam
 export  ComputeMeltingParam, ComputeMeltingParam!,       # calculation routines
         MeltingParam_Caricchi                          
 
-# Add plotting routines
+# Add plotting routines - only activated if the "Plots.jl" package is loaded 
 function __init__()
         @require Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80" begin
                 print("Adding plotting routines of GeoParam")
