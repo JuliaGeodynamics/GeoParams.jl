@@ -33,4 +33,8 @@ PD_data =   Read_LaMEM_Perple_X_Diagram(fname);
 @test PD_data.meltRho(1500,1e7) ≈ 2662.227167592414
 @test PD_data.rockRho(1500,1e7) ≈ 3165.467673917775
 
+
+@test ComputeDensity(1e7, 1500, PD_data) ≈ 3042.836820256982
+
+
 end

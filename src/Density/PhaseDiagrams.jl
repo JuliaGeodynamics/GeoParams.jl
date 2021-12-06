@@ -123,3 +123,12 @@ function show(io::IO, d::PhaseDiagram_LookupTable)
     end
     
 end
+
+
+# Calculation routine
+function ComputeDensity(P,T, s::PhaseDiagram_LookupTable)
+   
+    ρ = s.Rho.(T,P)
+
+    return ρ
+end
