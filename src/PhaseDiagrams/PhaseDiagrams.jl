@@ -43,6 +43,7 @@ If the `CharDim` object is specified, the values of all diagrams will be non-dim
 
 # Example
 ===
+
 ```julia
 julia> PD_Data = Read_LaMEM_Perple_X_Diagram("./test_data/Peridotite.in")
 PerpleX_LaMEM Phase Diagram Lookup Table: 
@@ -75,6 +76,7 @@ The units of the fields are automatically evaluated, and employed to non-dimensi
 
 # Algorithm
 ===
+
 Internally, we employ linear interpolation, as provided by the [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl) package.
 Values outside the range of the diagram are set to the boundary of the diagram. The interpolation object is directly encoded in the `PhaseDiagram_LookupTable`` object.  
 
