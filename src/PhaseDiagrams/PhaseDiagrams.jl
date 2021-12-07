@@ -79,7 +79,6 @@ Internally, we employ linear interpolation, as provided by the [Interpolations.j
 Values outside the range of the diagram are set to the boundary of the diagram. The interpolation object is directly encoded in the `PhaseDiagram_LookupTable`` object.  
 
 """
-
 function Read_LaMEM_Perple_X_Diagram(fname::String; CharDim = nothing)
     
     # Read header: 

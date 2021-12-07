@@ -9,7 +9,7 @@ A popular way to compute phase diagrams (pseudosections) for a given (fixed) che
 Within GeoParams, we can import this diagram (provided it is formatted in the same manner as `LaMEM` expects `Perple_X` input to be).
 
 ```@docs
-GeoParams.MaterialParameters.PhaseDiagrams.PhaseDiagram_LookupTable
-GeoParams.MaterialParameters.PhaseDiagrams.Read_LaMEM_Perple_X_Diagram
+GeoParams.PhaseDiagrams.PhaseDiagram_LookupTable
+GeoParams.PhaseDiagrams.Read_LaMEM_Perple_X_Diagram
 ```
 
