@@ -13,7 +13,7 @@ GeoParams.MeltingParam.ComputeMeltingParam
 
 Also note that phase diagrams can be imported:
 ```@docs
-GeoParams.Density.Read_LaMEM_Perple_X_Diagram
+GeoParams.MaterialParameters.PhaseDiagrams.Read_LaMEM_Perple_X_Diagram
 ```
 
 

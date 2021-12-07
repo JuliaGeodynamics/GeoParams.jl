@@ -8,10 +8,10 @@ module Density
 
 using Parameters, LaTeXStrings, Unitful
 using ..Units
+using ..PhaseDiagrams
 using GeoParams: AbstractMaterialParam
 import Base.show
 
-include("PhaseDiagrams.jl")
 
 abstract type AbstractDensity <: AbstractMaterialParam end
 
@@ -86,6 +86,19 @@ function show(io::IO, g::PT_Density)
 end
 #-------------------------------------------------------------------------
 
+
+
+#-------------------------------------------------------------------------
+# Phase diagrams
+"""
+    ComputeDensity(P,T, s::PhaseDiagram_LookupTable)
+
+Interpolates density as a function of `T,P`   
+"""
+function ComputeDensity(P,T, s::PhaseDiagram_LookupTable)
+    return s.Rho.(T,P)
+end
+#-------------------------------------------------------------------------
 
 
 # Help info for the calculation routines

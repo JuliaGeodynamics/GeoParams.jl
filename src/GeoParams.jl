@@ -37,6 +37,10 @@ include("MaterialParameters.jl")
 using  .MaterialParameters
 export MaterialParams, SetMaterialParams
 
+# Phase Diagrams
+using  .MaterialParameters.PhaseDiagrams
+export PhaseDiagram_LookupTable, Read_LaMEM_Perple_X_Diagram
+
 # Creep laws
 using  .MaterialParameters.CreepLaw
 export  ComputeCreepLaw_EpsII, ComputeCreepLaw_TauII, CreepLawVariables,

@@ -1,8 +1,14 @@
+module PhaseDiagrams
+
 # This contains routines to read phase diagrams from disk 
+
+using ..Units
+using Unitful
 using DelimitedFiles, Interpolations
 import Base.show
 
-export PhaseDiagram_LookupTable, Read_LaMEM_Perple_X_Diagram
+export  PhaseDiagram_LookupTable, Read_LaMEM_Perple_X_Diagram,
+        ComputeDensity
 
 """
     Contains data of a Phase Diagram that is regularly spaced in P & T
@@ -172,16 +178,6 @@ function show(io::IO, d::PhaseDiagram_LookupTable)
     
 end
 
-"""
-    ComputeDensity(P,T, s::PhaseDiagram_LookupTable)
-
-Interpolates density as a function of `T,P`   
-"""
-function ComputeDensity(P,T, s::PhaseDiagram_LookupTable)
-    return s.Rho.(T,P)
-end
-
-
 # Internal routine that creates an interpolation object from a collumn of the data
 function CreateInterpolationObject_PhaseDiagram(data_vec::Vector{Float64}, Tvec, Pvec, siz::Tuple{Int64, Int64}, units, CharDim)
 
@@ -240,4 +236,8 @@ function ComputeTotalField_withMeltFraction(totalData::Symbol, meltData::Symbol,
     end
     
     return Struct_Fields
+end
+
+
+
 end
