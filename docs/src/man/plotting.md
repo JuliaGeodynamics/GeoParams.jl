@@ -4,9 +4,9 @@ We provide a number of plotting routines. Note that these plotting routines only
 ### Plot CreepLaws 
 
 ```@docs
-PlotStressStrainrate_CreepLaw
-PlotHeatCapacity
-PlotConductivity
-PlotMeltFraction
-PlotPhaseDiagram
+GeoParams.PlotStressStrainrate_CreepLaw
+GeoParams.PlotHeatCapacity
+GeoParams.PlotConductivity
+GeoParams.PlotMeltFraction
+GeoParams.PlotPhaseDiagram
 ```

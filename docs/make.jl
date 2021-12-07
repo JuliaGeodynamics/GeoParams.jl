@@ -1,4 +1,4 @@
-using Documenter, GeoParams
+using Documenter, GeoParams, Plots
 
 @info "Making documentation..."
 makedocs(
