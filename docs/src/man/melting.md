@@ -11,10 +11,6 @@ To compute the melt fraction at given `T` and `P`, use:
 GeoParams.MeltingParam.ComputeMeltingParam
 ```
 
-Also note that phase diagrams can be imported:
-```@docs
-GeoParams.MaterialParameters.PhaseDiagrams.Read_LaMEM_Perple_X_Diagram
-```
-
+Also note that phase diagrams can be imported using `Read_LaMEM_Perple_X_Diagram`.
 
 
