@@ -275,9 +275,11 @@ Perple_X/LaMEM Phase Diagram Lookup Table:
                :Vs
                :VpVs
 julia> PlotPhaseDiagram(PD_data1,:meltRho)
+```
+We can also use custom pressure/temperature ranges and specify in which units we want the axes to be:
+```julia
 julia> PlotPhaseDiagram(PD_data1,:Rho, Tvec=(100:10:1000).*C, Pvec=(1:1:30).*kbar)
 ```
-The second 
 
 """
 function PlotPhaseDiagram(p::PhaseDiagram_LookupTable, fieldname::Symbol; Tvec=nothing, Pvec=nothing)
