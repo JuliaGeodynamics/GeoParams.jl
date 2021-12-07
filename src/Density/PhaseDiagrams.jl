@@ -6,7 +6,6 @@ export PhaseDiagram_LookupTable, Read_LaMEM_Perple_X_Diagram
 
 """
     Contains data of a Phase Diagram that is regularly spaced in P & T
-
 """
 struct PhaseDiagram_LookupTable
     Type        ::  String
@@ -34,9 +33,9 @@ end
 Reads a precomputed phase diagram in the `LaMEM/Perple_X` format (which is a phase diagram computed using `Perple_X`, but formatted in a manner that is readable using LaMEM).
 The data is stored in the `PhaseDiagram_LookupTable` structure.
 
-If the `CharDim` object is specified, the values of all diagrams will be non-dimensionalized before creating the interpolation objects
+If the `CharDim` object is specified, the values of all diagrams will be non-dimensionalized.
 
-Example
+# Example
 ===
 ```julia
 julia> PD_Data = Read_LaMEM_Perple_X_Diagram("./test_data/Peridotite.in")
@@ -51,10 +50,30 @@ PerpleX_LaMEM Phase Diagram Lookup Table:
                rockVp
                rockVs
                rockVpVs
+```
+Once imported, the properties on the diagram can be interpolated in a simple manner:
+```
 julia> PD_Data.Rho(1500,1e7)
 3042.836820256982
 ```
+This also works for vectors or arrays:
+```julia
+julia> T = [1500 1800; 1233 1300]
+julia> P = [1e8 1e9; 1e7 1e7]
+julia> rho = PD_Data.Rho.(T,P)
+```
+(Note the dot `.` in front of the bracket while evaluating arrays).
+
+The fields that are available depend on what is listed in the diagram file. 
+The units of the fields are automatically evaluated, and employed to non-dimensionalize the parameters if `CharDim` is specified. 
+
+# Algorithm
+===
+Internally, we employ linear interpolation, as provided by the [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl) package.
+Values outside the range of the diagram are set to the boundary of the diagram. The interpolation object is directly encoded in the `PhaseDiagram_LookupTable`` object.  
+
 """
+
 function Read_LaMEM_Perple_X_Diagram(fname::String; CharDim = nothing)
     
     # Read header: 
@@ -153,7 +172,11 @@ function show(io::IO, d::PhaseDiagram_LookupTable)
     
 end
 
-# Calculation routine for density
+"""
+    ComputeDensity(P,T, s::PhaseDiagram_LookupTable)
+
+Interpolates density as a function of `T,P`   
+"""
 function ComputeDensity(P,T, s::PhaseDiagram_LookupTable)
     return s.Rho.(T,P)
 end
@@ -194,14 +217,15 @@ function ComputeTotalField_withMeltFraction(totalData::Symbol, meltData::Symbol,
     ind_meltFrac  = findall(Struct_Fieldnames .== meltFrac )
 
     # extract arrays from interpolation objects
-    if  (length(ind_totalData)>0) & (length(ind_meltData)>0) & (length(ind_solidData)>0) & (length(ind_meltFrac)>0) &
+    if  (length(ind_totalData)>0) & (length(ind_meltData)>0) & 
+        (length(ind_solidData)>0) & (length(ind_meltFrac)>0) &
         !(isnothing(Struct_Fields[ind_meltFrac ])) & 
         !(isnothing(Struct_Fields[ind_solidData])) &
         !(isnothing(Struct_Fields[ind_meltData ]))
 
         ϕ = Struct_Fields[ind_meltFrac[1] ].itp.coefs      # melt fraction
         S = Struct_Fields[ind_solidData[1]].itp.coefs      # solid property
-        M = Struct_Fields[ind_meltData[1] ].itp.coefs       # melt property
+        M = Struct_Fields[ind_meltData[1] ].itp.coefs      # melt property
         
         # Compute average
         Result      =   (1.0 .- ϕ).*S .+ ϕ.*M 

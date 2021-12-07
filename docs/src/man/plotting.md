@@ -8,4 +8,5 @@ PlotStressStrainrate_CreepLaw
 PlotHeatCapacity
 PlotConductivity
 PlotMeltFraction
+PlotPhaseDiagram
 ```

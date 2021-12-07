@@ -14,6 +14,7 @@ makedocs(
         ],
         "Plotting"  => "man/plotting.md",
         "Partial Melting"  => "man/melting.md",
+        "Phase Diagrams" => "man/phasediagrams.md",
         "List of functions"  => "man/listfunctions.md",
         "Contributing" => "man/contributing.md",
     ],

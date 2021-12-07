@@ -251,6 +251,33 @@ end
     PlotPhaseDiagram(p::PhaseDiagram_LookupTable; fieldname::Symbol, Tvec=nothing, Pvec=nothing)
 
     Plots a phase diagram as a function of `T` (x-axis) and `P` (y-axis).
+    We either use the default ranges of the diagram, or you can specify the temperature and pressure ranges (while specifying units)
+
+Example
+=======
+```julia
+julia> PD_data =  Read_LaMEM_Perple_X_Diagram("Peridotite.in")
+Perple_X/LaMEM Phase Diagram Lookup Table: 
+   File    :   Peridotite.in
+   T       :   293.0 - 1573.000039
+   P       :   1.0e7 - 2.9999999944e9
+   fields  :   :meltRho
+               :meltFrac
+               :rockRho
+               :Rho
+               :rockVp
+               :rockVs
+               :rockVpVs
+               :meltVp
+               :meltVs
+               :meltVpVs
+               :Vp
+               :Vs
+               :VpVs
+julia> PlotPhaseDiagram(PD_data1,:meltRho)
+julia> PlotPhaseDiagram(PD_data1,:Rho, Tvec=(100:10:1000).*C, Pvec=(1:1:30).*kbar)
+```
+The second 
 
 """
 function PlotPhaseDiagram(p::PhaseDiagram_LookupTable, fieldname::Symbol; Tvec=nothing, Pvec=nothing)
