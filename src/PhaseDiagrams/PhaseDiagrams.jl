@@ -6,6 +6,7 @@ using ..Units
 using Unitful
 using DelimitedFiles, Interpolations
 import Base.show
+using GeoParams: AbstractMaterialParam
 
 export  PhaseDiagram_LookupTable, Read_LaMEM_Perple_X_Diagram,
         ComputeDensity
@@ -13,7 +14,7 @@ export  PhaseDiagram_LookupTable, Read_LaMEM_Perple_X_Diagram,
 """
     Contains data of a Phase Diagram that is regularly spaced in P & T
 """
-struct PhaseDiagram_LookupTable
+struct PhaseDiagram_LookupTable <: AbstractMaterialParam
     Type        ::  String
     HeaderText  ::  Any
     Name        ::  String
@@ -161,18 +162,18 @@ function show(io::IO, d::PhaseDiagram_LookupTable)
     P = d.rockRho.itp.knots[2]
 
     println(io, "$(d.Type) Phase Diagram Lookup Table: ")  
-    println(io, "   File    :   $(d.Name)")  
-    println(io, "   T       :   $(minimum(T)) - $(maximum(T))")  
-    println(io, "   P       :   $(minimum(P)) - $(maximum(P))")  
+    println(io, "             File    :   $(d.Name)")  
+    println(io, "             T       :   $(minimum(T)) - $(maximum(T))")  
+    println(io, "             P       :   $(minimum(P)) - $(maximum(P))")  
     
    
     lst = fieldnames(typeof(d))
     for i=4:length(lst)
         if !isnothing(getfield(d,lst[i]))
             if i==4
-                println(io, "   fields  :   :$(lst[i])")  
+                println(io, "             fields  :   :$(lst[i])")  
             else
-                println(io, "               :$(lst[i])")  
+                println(io, "                         :$(lst[i])")  
             end
         end
     end
