@@ -31,6 +31,7 @@ const kg    = u"kg"
 const g     = u"g"
 const Pa    = u"Pa"
 const MPa   = u"MPa"
+const kbar  = u"kbar"
 const Pas   = u"Pa*s"
 const K     = u"K"
 const C     = u"°C"
@@ -42,7 +43,7 @@ const μW    = u"μW"
 
 
 export 
-    km, m, cm, mm, Myrs, yr, s, MPa, Pa, Pas, K, C, g, kg, mol, J, kJ, Watt, μW, 
+    km, m, cm, mm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW, 
     GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
     Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
     superscript, upreferred, GEO, SI, NONE, isDimensional, Value, Unit
@@ -375,6 +376,23 @@ function Nondimensionalize(param, g::GeoUnits{TYPE}) where {TYPE}
     return param_ND
 end
 
+
+function Nondimensionalize(param::Array, g::GeoUnits{TYPE}) where {TYPE}
+    if unit(param[1])!=NoUnits
+        dim         =   Unitful.dimension.(param);                   # Basic SI units
+        char_val    =   1.0;
+        foreach((typeof(dim[1]).parameters[1])) do y
+            val = upreferred(getproperty(g, Unitful.name(y)))       # Retrieve the characteristic value from structure g
+            pow = Float64(y.power)                                  # power by which it should be multiplied   
+            char_val *= val^pow                                     # multiply characteristic value
+        end
+        param_ND = upreferred.(param)/char_val
+    else
+        param_ND = param # The parameter has no units, so there is no way to determine how to nondimensionize it 
+    end
+    return param_ND
+end
+
 """
     Nondimensionalize!(param::GeoUnit, CharUnits::GeoUnits{TYPE})
 
@@ -398,10 +416,8 @@ julia> A_ND      =   Nondimensionalize(A, CharUnits)
 7.068716262102384e14
 ```
 """
-function Nondimensionalize!(param, g::GeoUnits{TYPE}) where {TYPE}
-    if typeof(param) == String
-        param_ND = param # The parameter is a string, cannot be nondimensionalized
-    elseif unit.(param.val)!=NoUnits
+function Nondimensionalize!(param::GeoUnit, g::GeoUnits{TYPE}) where {TYPE}
+    if unit.(param.val)!=NoUnits
         dim         =   Unitful.dimension(param.val[1]);                   # Basic SI units
         char_val    =   1.0;
         foreach((typeof(dim).parameters[1])) do y
@@ -413,6 +429,29 @@ function Nondimensionalize!(param, g::GeoUnits{TYPE}) where {TYPE}
     else
         param = param # The parameter has no units, so there is no way to determine how to nondimensionize it 
     end
+end
+
+
+function Nondimensionalize!(param::String, g::GeoUnits{TYPE}) where {TYPE}
+    param_ND = param
+    return nothing
+end
+
+function Nondimensionalize!(param::Array, g::GeoUnits{TYPE}) where {TYPE}
+  
+    if unit.(param[1])!=NoUnits
+        dim         =   Unitful.dimension(param[1]);                   # Basic SI units
+        char_val    =   1.0;
+        foreach((typeof(dim).parameters[1])) do y
+            val = upreferred(getproperty(g, Unitful.name(y)))       # Retrieve the characteristic value from structure g
+            pow = Float64(y.power)                                  # power by which it should be multiplied   
+            char_val *= val^pow                                     # multiply characteristic value
+        end
+        param = upreferred.(param)/char_val;
+    else
+        param = param # The parameter has no units, so there is no way to determine how to nondimensionize it 
+    end
+
 end
 
 """

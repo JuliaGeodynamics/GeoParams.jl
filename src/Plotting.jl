@@ -20,7 +20,8 @@ export
     PlotStressStrainrate_CreepLaw,
     PlotHeatCapacity,
     PlotConductivity,
-    PlotMeltFraction 
+    PlotMeltFraction,
+    PlotPhaseDiagram 
 
 
 """
@@ -246,3 +247,35 @@ end
 
 
 
+"""
+    PlotPhaseDiagram(p::PhaseDiagram_LookupTable; fieldname::Symbol, Tvec=nothing, Pvec=nothing)
+
+    Plots a phase diagram as a function of `T` (x-axis) and `P` (y-axis).
+
+"""
+function PlotPhaseDiagram(p::PhaseDiagram_LookupTable, fieldname::Symbol; Tvec=nothing, Pvec=nothing)
+
+    data = getfield( p, fieldname)
+    if isnothing(Tvec)
+        Tvec_K  =   data.itp.knots[1]
+        Tvec    =   Tvec_K;
+    else
+        Tvec_K  =   Float64.(uconvert.(K,Tvec))
+    end
+    if isnothing(Pvec)
+        Pvec_Pa =   data.itp.knots[2]
+        Pvec    =   Pvec_Pa
+    else
+        Pvec_Pa =   Float64.(uconvert.(Pa,Pvec))
+    end
+
+
+    data_scalar = data(ustrip.(Tvec_K), ustrip.(Pvec_Pa) )
+
+
+    heatmap(ustrip.(Tvec), ustrip.(Pvec), data_scalar', 
+                title  = string(fieldname),
+                xlabel = "T [$(unit(Tvec[1]))]",
+                ylabel = "P [$(unit(Pvec[1]))]")
+    
+end

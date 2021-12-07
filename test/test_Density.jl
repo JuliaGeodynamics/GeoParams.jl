@@ -36,5 +36,17 @@ PD_data =   Read_LaMEM_Perple_X_Diagram(fname);
 
 @test ComputeDensity(1e7, 1500, PD_data) ≈ 3042.836820256982
 
+# Do the same but non-dimensionalize the result
+CharDim  =  GEO_units();
+PD_data1 =  Read_LaMEM_Perple_X_Diagram(fname, CharDim=CharDim);
+
+rho_ND   =  PD_data1.Rho(Nondimensionalize(1500K,CharDim),Nondimensionalize(1e8*Pa,CharDim)) 
+Vp_ND    =  PD_data1.Vp(Nondimensionalize(1500K,CharDim),Nondimensionalize(1e8*Pa,CharDim)) 
+Vs_ND    =  PD_data1.Vs(Nondimensionalize(1500K,CharDim),Nondimensionalize(1e8*Pa,CharDim)) 
+
+# redimensionalize and check with value from original structure that did not use non-dimensionalization 
+@test   ustrip(Dimensionalize(rho_ND,kg/m^3,CharDim)) ≈ PD_data.Rho(1500,1e8) 
+@test   ustrip(Dimensionalize(Vp_ND, km/s,  CharDim)) ≈ PD_data.Vp(1500,1e8) 
+@test   ustrip(Dimensionalize(Vs_ND, km/s,  CharDim)) ≈ PD_data.Vs(1500,1e8) 
 
 end

@@ -29,10 +29,12 @@ end
 
 
 """
-    PD_Data = Read_LaMEM_Perple_X_Diagram(fname::String)
+    PD_Data = Read_LaMEM_Perple_X_Diagram(fname::String; CharDim = nothing)
 
 Reads a precomputed phase diagram in the `LaMEM/Perple_X` format (which is a phase diagram computed using `Perple_X`, but formatted in a manner that is readable using LaMEM).
 The data is stored in the `PhaseDiagram_LookupTable` structure.
+
+If the `CharDim` object is specified, the values of all diagrams will be non-dimensionalized before creating the interpolation objects
 
 Example
 ===
@@ -53,102 +55,75 @@ julia> PD_Data.Rho(1500,1e7)
 3042.836820256982
 ```
 """
-function Read_LaMEM_Perple_X_Diagram(fname::String)
+function Read_LaMEM_Perple_X_Diagram(fname::String; CharDim = nothing)
     
     # Read header: 
     #  the first 50 lines are comments (freely useable), followed by data 
-
     n           = 55
     header      = open(readlines, `head -n $(n) $(fname)`)
-    header_text = header[1:50]
+    header_text = header[1:49]
 
-    T0      =   parse(Float64,header[50])       # in K
-    dT      =   parse(Float64,header[51])
+    # Parse the names of the collumns in the data file 
+    fields      = split(header[49],"[")[2:end]      # this line should contain the names and units of the collumns in the file 
+    
+    # Throw error message if fields are not specified
+    if length(fields)==0
+        error("Line 49 in the phase diagram file should contain the names of the collums")
+    end
+
+    fields_keys  = Vector{Union{Missing, Symbol}}(missing, length(fields))
+    fields_units = Vector{Union{Missing, Any}   }(missing, length(fields))
+    for i=1:length(fields)
+        # error catch
+        if length(split(fields[i],","))!= 3
+            error("Error parsing collumn: $(fields[i]). Should have 3 fields (name, symbol, units)")
+        end
+
+        fields_keys[i]  = Symbol(split(fields[i],",")[1])
+        unit_string     = split(split(fields[i],",")[3],"]")[1]
+        fields_units[i] = uparse(unit_string)
+    end
+
+    # Determine the range 
+    T0      =   parse(Float64,header[50])*u"K"      # in K
+    dT      =   parse(Float64,header[51])*u"K"
     numT    =   parse(Int64,  header[52])
 
-    P0      =   parse(Float64,header[53])*1e5   # in Pa (file gives it in bar)
-    dP      =   parse(Float64,header[54])*1e5
+    P0      =   parse(Float64,header[53])*u"bar"    # in bar (will be convert to Pa later)
+    dP      =   parse(Float64,header[54])*u"bar"
     numP    =   parse(Int64,  header[55])
     
-    Tvec    =   T0:dT:(T0+dT*(numT-1))          # 1D vector
-    Pvec    =   P0:dP:(P0+dP*(numP-1))
+    Tvec    =   T0:dT:(T0+dT*(numT-1))              # 1D vector
+    Pvec    =   P0:dP:(P0+dP*(numP-1))   
     
     # In the LaMEM/Perple_X file format, the first 50 lines are comments
-    data = readdlm(fname,skipstart=55,header=false);        # read numerical data
+    data    =   readdlm(fname,skipstart=55,header=false);        # read numerical data
 
-    # Shape to 2D:
+    # Shape of 2D arrays:
     siz      =   (numP, numT)
+
+    # Initialize fields in the order they are defined in the PhaseDiagram_LookupTable structure 
+    Struct_Fieldnames = fieldnames(PhaseDiagram_LookupTable)[4:end] # fieldnames from structure
     
-    # Data that ishould always be present
-    meltRho         =       reshape(data[:,1], siz);    # in kg/m3
-    meltFrac        =       reshape(data[:,2], siz);    # in wt-%
-    rockRho         =       reshape(data[:,3], siz);    # in kg/m3
-    totalRho        =       rockRho.*(1.0 .- meltFrac) + meltRho.*meltFrac;
+    # Process all fields that are present in the phase diagram (and non-dimensionalize if requested)
+    Struct_Fields     =  Vector{Union{Nothing, Interpolations.Extrapolation}}(nothing, length(Struct_Fieldnames))
 
-    T_K             =       reshape(data[:,4], siz);    # in K  
-    P_Pa            =   1e5*reshape(data[:,5], siz);    # in Pa
+    # Loop through all fields and create an interpolation object for each (which is optionally non-dimensionalized)
+    for (i, field) in enumerate(fields_keys)
+        ind = findall(Struct_Fieldnames.==field)
+        if length(ind)>0
+            Struct_Fields[ind[1]]   = CreateInterpolationObject_PhaseDiagram(data[:,i], Tvec, Pvec, siz, fields_units[i], CharDim)
+        end
+    end
 
-    # Create interpolation objects
-    intp_meltRho    =   LinearInterpolation((Tvec, Pvec), meltRho,      extrapolation_bc = Flat()); 
-    intp_meltFrac   =   LinearInterpolation((Tvec, Pvec), meltFrac,     extrapolation_bc = Flat()); 
-    intp_rockRho    =   LinearInterpolation((Tvec, Pvec), rockRho,      extrapolation_bc = Flat()); 
-    intp_totalRho   =   LinearInterpolation((Tvec, Pvec), totalRho,     extrapolation_bc = Flat()); 
+    # Some fields have melt and solid part; we can reconstruct the total part as an arithmetic average:
+    Struct_Fields = ComputeTotalField_withMeltFraction(:Rho, :meltRho, :rockRho, :meltFrac, Struct_Fields, Struct_Fieldnames) 
+    Struct_Fields = ComputeTotalField_withMeltFraction(:Vp,  :meltVp,  :rockVp,  :meltFrac, Struct_Fields, Struct_Fieldnames) 
+    Struct_Fields = ComputeTotalField_withMeltFraction(:Vs,  :meltVs,  :rockVs,  :meltFrac, Struct_Fields, Struct_Fieldnames) 
+    Struct_Fields = ComputeTotalField_withMeltFraction(:VpVs,:meltVpVs,:rockVpVs,:meltFrac, Struct_Fields, Struct_Fieldnames) 
     
-    # optional data
-    if size(data,2)>=6
-        rockVp          =   reshape(data[:,6], siz);    # in km/s
-        intp_rockVp     =   LinearInterpolation((Tvec, Pvec), rockVp,  extrapolation_bc = Flat()); 
-    else
-        intp_rockVp     =   nothing
-    end
-    if size(data,2)>=7
-        rockVs          =   reshape(data[:,7], siz);    # in km/s
-        intp_rockVs     =   LinearInterpolation((Tvec, Pvec), rockVs,  extrapolation_bc = Flat()); 
-    else
-        intp_rockVs     =   nothing
-    end
-    if size(data,2)>=8
-        rockVpVs        =   reshape(data[:,8], siz);    # ratio []
-        intp_rockVpVs   =   LinearInterpolation((Tvec, Pvec), rockVpVs,  extrapolation_bc = Flat()); 
-    else
-        intp_rockVpVs   =   nothing
-    end
-
-    if size(data,2)>=9
-        meltVp          =   reshape(data[:,9], siz);    # in km/s
-        intp_meltVp     =   LinearInterpolation((Tvec, Pvec), meltVp,  extrapolation_bc = Flat()); 
-        totalVp         =       rockVp.*(1.0 .- meltFrac) + meltVp.*meltFrac;
-        intp_totalVp    =   LinearInterpolation((Tvec, Pvec), totalVp,  extrapolation_bc = Flat()); 
-    else
-        intp_meltVp     =   nothing
-        intp_totalVp    =   nothing
-    end
-    if size(data,2)>=10
-        meltVs          =   reshape(data[:,10], siz);    # in km/s
-        intp_meltVs     =   LinearInterpolation((Tvec, Pvec), meltVs,  extrapolation_bc = Flat()); 
-        totalVs         =       rockVs.*(1.0 .- meltFrac) + meltVs.*meltFrac;
-        intp_totalVs    =   LinearInterpolation((Tvec, Pvec), totalVs,  extrapolation_bc = Flat()); 
-    else
-        intp_meltVs     =   nothing
-        intp_totalVs    =   nothing
-    end
-    if size(data,2)>=11
-        meltVpVs        =   reshape(data[:,11], siz);    # ratio []
-        intp_meltVpVs   =   LinearInterpolation((Tvec, Pvec), meltVpVs,  extrapolation_bc = Flat()); 
-        totalVpVs       =       rockVpVs.*(1.0 .- meltFrac) + meltVpVs.*meltFrac;
-        intp_totalVpVs  =   LinearInterpolation((Tvec, Pvec), totalVpVs,  extrapolation_bc = Flat()); 
-
-    else
-        intp_meltVpVs   =   nothing
-        intp_totalVpVs  =   nothing
-    end
-
     # Store in phase diagram structure
-    PD_data = PhaseDiagram_LookupTable("PerpleX_LaMEM", header_text, fname, 
-                                intp_meltRho,   intp_meltFrac,  intp_rockRho,   intp_totalRho,
-                                intp_rockVp,    intp_rockVs,    intp_rockVpVs,
-                                intp_meltVp,    intp_meltVs,    intp_meltVpVs,
-                                intp_totalVp,   intp_totalVs,   intp_totalVpVs )
+    PD_data = PhaseDiagram_LookupTable("Perple_X/LaMEM", header_text, fname, Struct_Fields... )
 
     return PD_data
 end
@@ -156,8 +131,8 @@ end
 
 # Print info 
 function show(io::IO, d::PhaseDiagram_LookupTable)  
-    T = d.rockRho.itp.ranges[1]
-    P = d.rockRho.itp.ranges[2]
+    T = d.rockRho.itp.knots[1]
+    P = d.rockRho.itp.knots[2]
 
     println(io, "$(d.Type) Phase Diagram Lookup Table: ")  
     println(io, "   File    :   $(d.Name)")  
@@ -178,11 +153,67 @@ function show(io::IO, d::PhaseDiagram_LookupTable)
     
 end
 
-
-# Calculation routine
+# Calculation routine for density
 function ComputeDensity(P,T, s::PhaseDiagram_LookupTable)
-   
-    ρ = s.Rho.(T,P)
+    return s.Rho.(T,P)
+end
 
-    return ρ
+
+# Internal routine that creates an interpolation object from a collumn of the data
+function CreateInterpolationObject_PhaseDiagram(data_vec::Vector{Float64}, Tvec, Pvec, siz::Tuple{Int64, Int64}, units, CharDim)
+
+    data_units  =   reshape(data_vec, siz)*units;      # Create 2D array 
+
+    # Convert to Pa & K
+    Pvec_Pa     =   Float64.(uconvert.(u"Pa", Pvec))
+    Tvec_K      =   Float64.(uconvert.(u"K",  Tvec))
+    
+    # Optional: nondimensionalize values as well as T and P
+    if CharDim==nothing
+        Pvec = ustrip.(Pvec_Pa);
+        Tvec = ustrip.(Tvec_K);
+        data = ustrip.(data_units);
+    else
+        Pvec = Nondimensionalize(Pvec_Pa, CharDim)
+        Tvec = Nondimensionalize(Tvec_K, CharDim)
+        data = Nondimensionalize(data_units, CharDim)
+    end
+
+    # Create interpolation object
+    intp_data    =   LinearInterpolation((Tvec, Pvec), data,      extrapolation_bc = Flat()); 
+
+    return intp_data
+end
+
+# Internal routine, which combines solid & melt properties with melt fraction
+function ComputeTotalField_withMeltFraction(totalData::Symbol, meltData::Symbol, solidData::Symbol, meltFrac::Symbol, Struct_Fields, Struct_Fieldnames) 
+
+    ind_totalData = findall(Struct_Fieldnames .== totalData)
+    ind_meltData  = findall(Struct_Fieldnames .== meltData )
+    ind_solidData = findall(Struct_Fieldnames .== solidData)    
+    ind_meltFrac  = findall(Struct_Fieldnames .== meltFrac )
+
+    # extract arrays from interpolation objects
+    if  (length(ind_totalData)>0) & (length(ind_meltData)>0) & (length(ind_solidData)>0) & (length(ind_meltFrac)>0) &
+        !(isnothing(Struct_Fields[ind_meltFrac ])) & 
+        !(isnothing(Struct_Fields[ind_solidData])) &
+        !(isnothing(Struct_Fields[ind_meltData ]))
+
+        ϕ = Struct_Fields[ind_meltFrac[1] ].itp.coefs      # melt fraction
+        S = Struct_Fields[ind_solidData[1]].itp.coefs      # solid property
+        M = Struct_Fields[ind_meltData[1] ].itp.coefs       # melt property
+        
+        # Compute average
+        Result      =   (1.0 .- ϕ).*S .+ ϕ.*M 
+        
+        # Create interpolation object of average
+        Tvec        =   Struct_Fields[ind_meltFrac[1] ].itp.knots[1]       # temperature data
+        Pvec        =   Struct_Fields[ind_meltFrac[1] ].itp.knots[2]       # pressure data
+        intp_Result =   LinearInterpolation((Tvec, Pvec), Result,  extrapolation_bc = Flat()); 
+        
+        # assign
+        Struct_Fields[ind_totalData[1]] = intp_Result
+    end
+    
+    return Struct_Fields
 end
