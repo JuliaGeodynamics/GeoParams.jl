@@ -249,9 +249,9 @@ end
 """
     plt, data, Tvec, Pvec = PlotPhaseDiagram(p::PhaseDiagram_LookupTable; fieldname::Symbol, Tvec=nothing, Pvec=nothing)
 
-    Plots a phase diagram as a function of `T` (x-axis) and `P` (y-axis).
-    We either use the default ranges of the diagram, or you can specify the temperature and pressure ranges (while specifying units).
-    The return arguments are the plotting object `plt` (so you can miodify properties) as well as the data that is being plotted
+Plots a phase diagram as a function of `T` (x-axis) and `P` (y-axis).
+We either use the default ranges of the diagram, or you can specify the temperature and pressure ranges (while specifying units).
+The return arguments are the plotting object `plt` (so you can modify properties) as well as the data that is being plotted
 
 Example
 =======
