@@ -30,5 +30,35 @@ Phi_anal    =   1.0 .- Phi_solid
 @test sum(phi_dim1 - Phi_anal)   < 1e-12
 @test sum(phi_nd - Phi_anal)    < 1e-12
 
+
+
+
+
+# Test computation of density for the whole computational domain, using arrays 
+MatParam    =   Array{MaterialParams, 1}(undef, 3);
+MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=1,
+                        Melting  = PerpleX_LaMEM_Diagram("test_data/Peridotite.in"));
+
+MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
+                        Melting   = MeltingParam_Caricchi());
+
+# No melting parameterization for this phase
+MatParam[3] =   SetMaterialParams(Name="UpperCrust", Phase=3,
+                        Density   = PT_Density());
+
+# test computing material properties
+n = 100;
+Phases              = ones(Int64,n,n,n);
+Phases[:,:,20:end] .= 2
+Phases[:,:,80:end] .= 3
+
+ϕ = zeros(size(Phases))
+T =  ones(size(Phases))*1500
+P =  ones(size(Phases))*10
+
+ComputeMeltingParam!(ϕ, Phases, P,T, MatParam)
+@test sum(ϕ)/n^3 ≈ 0.6463001302812086
+
+
 end
 

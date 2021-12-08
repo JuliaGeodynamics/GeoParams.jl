@@ -5,7 +5,7 @@ module MeltingParam
 
 using Parameters, LaTeXStrings, Unitful
 using ..Units
-using GeoParams: AbstractMaterialParam, PhaseDiagram_LookupTable
+using GeoParams: AbstractMaterialParam, PhaseDiagram_LookupTable, AbstractMaterialParamsStruct
 import Base.show
 
 abstract type AbstractMeltingParam <: AbstractMaterialParam end
@@ -55,6 +55,30 @@ function ComputeMeltingParam!(ϕ, P,T, p::MeltingParam_Caricchi)
     return nothing
 end
 
+function ComputeMeltingParam!(ϕ::Array{Float64}, P::Array{Float64},T::Array{Float64}, p::MeltingParam_Caricchi)
+    @unpack a,b,c   = p
+    a = ustrip(Value(a))
+    b = ustrip(Value(b))
+    c = ustrip(Value(c))
+
+    θ       =   (a .- (T .- c))./b
+    ϕ      .=   1.0./(1.0 .+ exp.(θ))
+
+    return nothing
+end
+
+function ComputeMeltingParam!(ϕ::SubArray{Float64}, P::SubArray{Float64},T::SubArray{Float64}, p::MeltingParam_Caricchi)
+    @unpack a,b,c   = p
+    a = ustrip(Value(a))
+    b = ustrip(Value(b))
+    c = ustrip(Value(c))
+
+    θ       =   (a .- (T .- c))./b
+    ϕ      .=   1.0./(1.0 .+ exp.(θ))
+
+    return nothing
+end
+
 # Print info 
 function show(io::IO, g::MeltingParam_Caricchi)  
     print(io, "Caricchi et al. melting parameterization")  
@@ -72,34 +96,56 @@ function ComputeMeltingParam(P,T, p::PhaseDiagram_LookupTable)
 end
 
 """
-    ComputeMeltingParam!(ϕ, P,T, p::AbstractPhaseDiagramsStruct)
+    ComputeMeltingParam!(ϕ::Array{Float64}, P::Array{Float64},T:Array{Float64}, p::PhaseDiagram_LookupTable)
 
-Inplace computation of melt fraction in case we use a phase diagram lookup table. The table should have the collum `:meltFrac` specified.
+In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the collum `:meltFrac` specified.
 """
-function ComputeMeltingParam!(ϕ, P,T, p::PhaseDiagram_LookupTable)
-    ϕ    .=   p.meltFrac.(T,P)
+function ComputeMeltingParam!(ϕ::Array{Float64}, P::Array{Float64},T::Array{Float64}, p::PhaseDiagram_LookupTable)
+    ϕ[:]    =   p.meltFrac.(T,P)
+
+    return nothing
+end
+
+"""
+    ComputeMeltingParam!(ϕ::SubArray{Float64}, P::SubArray{Float64},T::SubArray{Float64}, p::PhaseDiagram_LookupTable)
+
+In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the collum `:meltFrac` specified.
+"""
+function ComputeMeltingParam!(ϕ::SubArray{Float64}, P::SubArray{Float64},T::SubArray{Float64}, p::PhaseDiagram_LookupTable)
+    ϕ[:]    =   p.meltFrac.(T,P)
 
     return nothing
 end
 
 
 
-# Help info for the calculation routines
 """
-    ϕ  = ComputeMeltingParam(P,T, s:<MeltingParam_Caricchi)
+    ComputeMeltingParam!(ϕ::Array{Float64}, Phases::Array{Int64}, P::Array{Float64},T::Array{Float64}, MatParam::Array{<:AbstractMaterialParamsStruct})
 
-Returns the melt fraction `ϕ`, for a given melting parameterization as a function of `T`,`P`
-
+In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 """
-ComputeMeltingParam()
+function ComputeMeltingParam!(ϕ::Array{Float64, N}, Phases::Array{Int64, N}, P::Array{Float64, N},T::Array{Float64, N}, MatParam::Array{<:AbstractMaterialParamsStruct, 1}) where N
 
-"""
-     ComputeMeltingParam!(ϕ, P,T, s:<MeltingParam_Caricchi)
 
-In-place routine that computes melt fraction `ϕ`, for a given melting parameterization as a function of `T`,`P`
+    for i = 1:length(MatParam)
 
-"""
-ComputeMeltingParam!()
+        if !isnothing(MatParam[i].Melting)
+            
+            # Create views into arrays (so we don't have to allocate)
+            ind = Phases .== i;
+            ϕ_local   =   view(ϕ, ind )
+            P_local   =   view(P  , ind )
+            T_local   =   view(T  , ind )
+
+            ComputeMeltingParam!(ϕ_local, P_local, T_local, MatParam[i].Melting[1] ) 
+        end
+
+    end
+
+    return nothing
+end
+
+
 
 
 

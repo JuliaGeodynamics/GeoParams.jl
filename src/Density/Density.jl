@@ -211,17 +211,17 @@ julia> julia> @time ComputeDensity!(rho, Phases, P,T, MatParam)
 """
 function ComputeDensity!(rho::Array{Float64, N}, Phases::Array{Int64, N}, P::Array{Float64, N},T::Array{Float64, N}, MatParam::Array{<:AbstractMaterialParamsStruct, 1}) where N
 
-    iPhases = unique(Phases)
+    for i = 1:length(MatParam)
 
-    for i in iPhases
+        if !isnothing(MatParam[i].Density)
+            # Create views into arrays (so we don't have to allocate)
+            ind = Phases .== i;
+            rho_local   =   view(rho, ind )
+            P_local     =   view(P  , ind )
+            T_local     =   view(T  , ind )
 
-        # Create views into arrays (so we don't have to allocate)
-        ind = Phases .== i;
-        rho_local   =   view(rho, ind )
-        P_local     =   view(P  , ind )
-        T_local     =   view(T  , ind )
-
-        ComputeDensity!(rho_local, P_local, T_local, MatParam[i].Density[1] ) 
+            ComputeDensity!(rho_local, P_local, T_local, MatParam[i].Density[1] ) 
+        end
         
     end
 
