@@ -167,9 +167,47 @@ end
 #-------------------------------------------------------------------------
 
 """
+    ComputeDensity!(rho::Array{Float64}, Phases::Array{Int64}, P::Array{Float64},T::Array{Float64}, MatParam::Array{<:AbstractMaterialParamsStruct})
 
-In-place computation of density for the whole domain, in case we provide a vector with phase properties `MatParam` as well as `P` and `T` arrays
+In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 
+# Example
+```julia
+julia> MatParam    =   Array{MaterialParams, 1}(undef, 2);
+julia> MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=1,
+                        CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
+                        Density   = PerpleX_LaMEM_Diagram("test_data/Peridotite.in"));
+julia> MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
+                        CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
+                        Density   = ConstantDensity(ρ=2900kg/m^3));
+julia> Phases = ones(Int64,400,400);
+julia> Phases[:,20:end] .= 2
+julia> rho     = zeros(size(Phases))
+julia> T       =  ones(size(Phases))
+julia> P       =  ones(size(Phases))*10
+julia> ComputeDensity!(rho, Phases, P,T, MatParam)
+julia> rho
+400×400 Matrix{Float64}:
+ 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+    ⋮                                            ⋮     ⋱                     ⋮                            
+ 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+```
+The routine is made to minimize allocations:
+```julia
+julia> julia> @time ComputeDensity!(rho, Phases, P,T, MatParam)
+0.003121 seconds (49 allocations: 3.769 MiB)
+``` 
 """
 function ComputeDensity!(rho::Array{Float64, N}, Phases::Array{Int64, N}, P::Array{Float64, N},T::Array{Float64, N}, MatParam::Array{<:AbstractMaterialParamsStruct, 1}) where N
 
@@ -190,16 +228,17 @@ function ComputeDensity!(rho::Array{Float64, N}, Phases::Array{Int64, N}, P::Arr
 end
 
 
+#=
 # Help info for the calculation routines
 """
-ComputeDensity(P,T, s:<AbstractDensity)
+    ComputeDensity(P,T, s:<AbstractDensity)
 
 Returns the density ``ρ`` at a given pressure and temperature using any 
 of the density EoS implemented.
 
 """
 ComputeDensity
-
+=#
 
 
 end
