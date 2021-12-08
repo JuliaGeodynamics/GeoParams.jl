@@ -45,21 +45,16 @@ The data is stored in the `PhaseDiagram_LookupTable` structure.
 If the `CharDim` object is specified, the values of all diagrams will be non-dimensionalized.
 
 # Example
-===
 
 ```julia
 julia> PD_Data = PerpleX_LaMEM_Diagram("./test_data/Peridotite.in")
-PerpleX_LaMEM Phase Diagram Lookup Table: 
-   File    :   ./test_data/Peridotite.in
-   T       :   293.0 - 1573.000039
-   P       :   1.0e7 - 2.9999999944e9
-   fields  :   meltRho
-               meltFrac
-               rockRho
-               Rho
-               rockVp
-               rockVs
-               rockVpVs
+Perple_X/LaMEM Phase Diagram Lookup Table: 
+                      File    :   ./test_data/Peridotite.in
+                      T       :   293.0 - 1573.000039
+                      P       :   1.0e7 - 2.9999999944e9
+                      fields  :   :meltRho, :meltRho, :meltFrac, :rockRho, :Rho, :rockVp
+                                  :rockVs, :rockVpVs, :meltVp, :meltVs, :meltVpVs
+                                  :Vp, :Vs, :VpVs
 ```
 Once imported, the properties on the diagram can be interpolated in a simple manner:
 ```
@@ -78,7 +73,6 @@ The fields that are available depend on what is listed in the diagram file.
 The units of the fields are automatically evaluated, and employed to non-dimensionalize the parameters if `CharDim` is specified. 
 
 # Algorithm
-===
 
 Internally, we employ linear interpolation, as provided by the [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl) package.
 Values outside the range of the diagram are set to the boundary of the diagram. The interpolation object is directly encoded in the `PhaseDiagram_LookupTable`` object.  
