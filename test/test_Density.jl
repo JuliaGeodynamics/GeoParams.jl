@@ -27,7 +27,7 @@ Nondimensionalize!(x2,CharUnits_GEO)
 
 # Read Phase diagram interpolation object
 fname   =   "./test_data/Peridotite.in"
-PD_data =   Read_LaMEM_Perple_X_Diagram(fname);
+PD_data =   PerpleX_LaMEM_Diagram(fname);
 @test PD_data.meltFrac(1500,1e7) ≈ 0.24368492372485706
 @test PD_data.Rho(1500,1e7) ≈ 3042.836820256982
 @test PD_data.meltRho(1500,1e7) ≈ 2662.227167592414
@@ -38,7 +38,7 @@ PD_data =   Read_LaMEM_Perple_X_Diagram(fname);
 
 # Do the same but non-dimensionalize the result
 CharDim  =  GEO_units();
-PD_data1 =  Read_LaMEM_Perple_X_Diagram(fname, CharDim=CharDim);
+PD_data1 =  PerpleX_LaMEM_Diagram(fname, CharDim=CharDim);
 
 rho_ND   =  PD_data1.Rho(Nondimensionalize(1500K,CharDim),Nondimensionalize(1e8*Pa,CharDim)) 
 Vp_ND    =  PD_data1.Vp(Nondimensionalize(1500K,CharDim),Nondimensionalize(1e8*Pa,CharDim)) 

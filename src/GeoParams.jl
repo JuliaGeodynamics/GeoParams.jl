@@ -23,9 +23,12 @@ export
         km, m, cm, mm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW
    
 #         
-abstract type AbstractMaterialParam end           # structure that holds material parmeters (density, elasticity, viscosity)          
-abstract type AbstractMaterialParamsStruct end    # will hold all info for a phase       
-        
+abstract type AbstractMaterialParam end                                    # structure that holds material parmeters (density, elasticity, viscosity)          
+abstract type AbstractMaterialParamsStruct end                             # will hold all info for a phase       
+abstract type AbstractPhaseDiagramsStruct <:  AbstractMaterialParam end    # will hold all info for phase diagrams 
+function PerpleX_LaMEM_Diagram end          # necessary as we already use this function in Units, but only define it later in PhaseDiagrams
+
+
 # note that this throws a "Method definition warning regarding superscript"; that is expected & safe 
 #  as we add a nicer way to create output of superscripts. I have been unable to get rid of this warning,
 #  as I am indeed redefining a method originally defined in Unitful
@@ -39,7 +42,7 @@ export MaterialParams, SetMaterialParams
 
 # Phase Diagrams
 using  .MaterialParameters.PhaseDiagrams
-export PhaseDiagram_LookupTable, Read_LaMEM_Perple_X_Diagram
+export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
 
 # Creep laws
 using  .MaterialParameters.CreepLaw

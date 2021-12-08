@@ -7,7 +7,8 @@ import Unitful: superscript
 using Parameters
 
 import Base.show
-using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct, PerpleX_LaMEM_Diagram
+
 
 # Define additional units that are useful in geodynamics 
 @unit    Myrs  "Myrs"   MillionYears    1000000u"yr"    false
@@ -461,7 +462,6 @@ Non-dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
 
 """
 function Nondimensionalize!(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE} 
-
     for param in fieldnames(typeof(MatParam))
         if typeof(getfield(MatParam, param))==GeoUnit
             z=getfield(MatParam, param)
@@ -469,7 +469,6 @@ function Nondimensionalize!(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) 
             setfield!(MatParam, param, z)
         end
     end
-    
 end
     
 """
@@ -482,9 +481,18 @@ function Nondimensionalize!(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits
     for param in fieldnames(typeof(phase_mat))
         fld = getfield(phase_mat, param)
         if ~isnothing(fld)
-            for i=1:length(fld)
-                if typeof(fld[i]) <: AbstractMaterialParam
-                    Units.Nondimensionalize!(fld[i],g)
+            if typeof(fld[1]) <: AbstractPhaseDiagramsStruct
+                
+                # in case we employ a phase diagram 
+                temp = PerpleX_LaMEM_Diagram(fld[1].Name, CharDim = g)
+                
+                setfield!(phase_mat, param, (temp,))
+            else
+                # otherwise non-dimensionalize 
+                for i=1:length(fld)
+                    if typeof(fld[i]) <: AbstractMaterialParam
+                        Units.Nondimensionalize!(fld[i],g)
+                    end
                 end
             end
         end

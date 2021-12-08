@@ -6,15 +6,16 @@ using ..Units
 using Unitful
 using DelimitedFiles, Interpolations
 import Base.show
-using GeoParams: AbstractMaterialParam
+using GeoParams: AbstractMaterialParam, AbstractPhaseDiagramsStruct
+import GeoParams.PerpleX_LaMEM_Diagram
 
-export  PhaseDiagram_LookupTable, Read_LaMEM_Perple_X_Diagram,
+export  PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram,
         ComputeDensity
 
 """
     Contains data of a Phase Diagram that is regularly spaced in P & T
 """
-struct PhaseDiagram_LookupTable <: AbstractMaterialParam
+struct PhaseDiagram_LookupTable <: AbstractPhaseDiagramsStruct
     Type        ::  String
     HeaderText  ::  Any
     Name        ::  String
@@ -36,7 +37,7 @@ end
 
 
 """
-    PD_Data = Read_LaMEM_Perple_X_Diagram(fname::String; CharDim = nothing)
+    PD_Data = PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing)
 
 Reads a precomputed phase diagram in the `LaMEM/Perple_X` format (which is a phase diagram computed using `Perple_X`, but formatted in a manner that is readable using LaMEM).
 The data is stored in the `PhaseDiagram_LookupTable` structure.
@@ -47,7 +48,7 @@ If the `CharDim` object is specified, the values of all diagrams will be non-dim
 ===
 
 ```julia
-julia> PD_Data = Read_LaMEM_Perple_X_Diagram("./test_data/Peridotite.in")
+julia> PD_Data = PerpleX_LaMEM_Diagram("./test_data/Peridotite.in")
 PerpleX_LaMEM Phase Diagram Lookup Table: 
    File    :   ./test_data/Peridotite.in
    T       :   293.0 - 1573.000039
@@ -83,7 +84,7 @@ Internally, we employ linear interpolation, as provided by the [Interpolations.j
 Values outside the range of the diagram are set to the boundary of the diagram. The interpolation object is directly encoded in the `PhaseDiagram_LookupTable`` object.  
 
 """
-function Read_LaMEM_Perple_X_Diagram(fname::String; CharDim = nothing)
+function PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing)
     
     # Read header: 
     #  the first 50 lines are comments (freely useable), followed by data 
