@@ -28,6 +28,8 @@ abstract type AbstractMaterialParamsStruct end                             # wil
 abstract type AbstractPhaseDiagramsStruct <:  AbstractMaterialParam end    # will hold all info for phase diagrams 
 function PerpleX_LaMEM_Diagram end          # necessary as we already use this function in Units, but only define it later in PhaseDiagrams
 
+export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
+
 
 # note that this throws a "Method definition warning regarding superscript"; that is expected & safe 
 #  as we add a nicer way to create output of superscripts. I have been unable to get rid of this warning,
@@ -53,6 +55,7 @@ export  ComputeCreepLaw_EpsII, ComputeCreepLaw_TauII, CreepLawVariables,
 # Density
 using  .MaterialParameters.Density
 export  ComputeDensity,                                # computational routines
+        ComputeDensity!,  
         ConstantDensity,                        
         PT_Density,
         PhaseDiagram_LookupTable, Read_LaMEM_Perple_X_Diagram

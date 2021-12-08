@@ -121,6 +121,11 @@ Base.:/(x::GeoUnit, y::Array)   = GeoUnit(x.val/y, x.unit)
 Base.:+(x::GeoUnit, y::Array)   = GeoUnit(x.val+y, x.unit)
 Base.:-(x::GeoUnit, y::Array)   = GeoUnit(x.val-y, x.unit)
 
+Base.:*(x::Array, y::GeoUnit)   = GeoUnit(x*y.val, y.unit)
+Base.:/(x::Array, y::GeoUnit)   = GeoUnit(x/y.val, y.unit)
+Base.:+(x::Array, y::GeoUnit)   = GeoUnit(x +y.val, y.unit)
+Base.:-(x::Array, y::GeoUnit)   = GeoUnit(x -y.val, y.unit)
+
 Base.:*(x::GeoUnit, y::Vector)   = GeoUnit(x.val*y, x.unit)
 Base.:/(x::GeoUnit, y::Vector)   = GeoUnit(x.val/y, x.unit)
 Base.:+(x::GeoUnit, y::Vector)   = GeoUnit(x.val+y, x.unit)

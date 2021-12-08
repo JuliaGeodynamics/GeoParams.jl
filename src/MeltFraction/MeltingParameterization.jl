@@ -5,7 +5,7 @@ module MeltingParam
 
 using Parameters, LaTeXStrings, Unitful
 using ..Units
-using GeoParams: AbstractMaterialParam
+using GeoParams: AbstractMaterialParam, PhaseDiagram_LookupTable
 import Base.show
 
 abstract type AbstractMeltingParam <: AbstractMaterialParam end
@@ -60,6 +60,28 @@ function show(io::IO, g::MeltingParam_Caricchi)
     print(io, "Caricchi et al. melting parameterization")  
 end
 #-------------------------------------------------------------------------
+
+
+"""
+    ComputeMeltingParam(P,T, p::AbstractPhaseDiagramsStruct)
+
+Computes melt fraction in case we use a phase diagram lookup table. The table should have the collum `:meltFrac` specified.
+"""
+function ComputeMeltingParam(P,T, p::PhaseDiagram_LookupTable)
+   return p.meltFrac.(T,P)
+end
+
+"""
+    ComputeMeltingParam!(ϕ, P,T, p::AbstractPhaseDiagramsStruct)
+
+Inplace computation of melt fraction in case we use a phase diagram lookup table. The table should have the collum `:meltFrac` specified.
+"""
+function ComputeMeltingParam!(ϕ, P,T, p::PhaseDiagram_LookupTable)
+    ϕ    .=   p.meltFrac.(T,P)
+
+    return nothing
+end
+
 
 
 # Help info for the calculation routines

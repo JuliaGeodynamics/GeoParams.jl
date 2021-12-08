@@ -49,4 +49,33 @@ Vs_ND    =  PD_data1.Vs(Nondimensionalize(1500K,CharDim),Nondimensionalize(1e8*P
 @test   ustrip(Dimensionalize(Vp_ND, km/s,  CharDim)) ≈ PD_data.Vp(1500,1e8) 
 @test   ustrip(Dimensionalize(Vs_ND, km/s,  CharDim)) ≈ PD_data.Vs(1500,1e8) 
 
+
+
+# Test computation of density for the whole computational domain, using arrays 
+MatParam    =   Array{MaterialParams, 1}(undef, 3);
+MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=1,
+                        CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
+                        Density   = PerpleX_LaMEM_Diagram("test_data/Peridotite.in"));
+
+MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
+                        CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
+                        Density   = ConstantDensity(ρ=2900kg/m^3));
+
+MatParam[3] =   SetMaterialParams(Name="UpperCrust", Phase=3,
+                        CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
+                        Density   = PT_Density());
+
+# test computing material properties
+Phases              = ones(Int64,400,400);
+Phases[:,20:end] .= 2
+Phases[:,300:end] .= 3
+
+rho     = zeros(size(Phases))
+T       =  ones(size(Phases))
+P       =  ones(size(Phases))*10
+
+ComputeDensity!(rho, Phases, P,T, MatParam)
+@test sum(rho)/400^2 ≈ 2920.6148898225
+
+
 end
