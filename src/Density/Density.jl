@@ -178,12 +178,13 @@ function ComputeDensity!(rho::Array{Float64, N}, Phases::Array{Int64, N}, P::Arr
     for i in iPhases
 
         # Create views into arrays (so we don't have to allocate)
-        ind         =   findall(Phases .== i)
+        ind = Phases .== i;
         rho_local   =   view(rho, ind )
         P_local     =   view(P  , ind )
         T_local     =   view(T  , ind )
 
         ComputeDensity!(rho_local, P_local, T_local, MatParam[i].Density[1] ) 
+        
     end
 
 end
