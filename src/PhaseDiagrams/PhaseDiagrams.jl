@@ -31,6 +31,7 @@ struct PhaseDiagram_LookupTable <: AbstractMaterialParam
     Vp          ::  Any
     Vs          ::  Any
     VpVs        ::  Any
+    cpxFrac     ::  Any
 end
 
 
@@ -162,21 +163,29 @@ function show(io::IO, d::PhaseDiagram_LookupTable)
     P = d.rockRho.itp.knots[2]
 
     println(io, "$(d.Type) Phase Diagram Lookup Table: ")  
-    println(io, "             File    :   $(d.Name)")  
-    println(io, "             T       :   $(minimum(T)) - $(maximum(T))")  
-    println(io, "             P       :   $(minimum(P)) - $(maximum(P))")  
+    println(io, "                      File    :   $(d.Name)")  
+    println(io, "                      T       :   $(minimum(T)) - $(maximum(T))")  
+    println(io, "                      P       :   $(minimum(P)) - $(maximum(P))")  
     
    
     lst = fieldnames(typeof(d))
+    str=""
     for i=4:length(lst)
+        
         if !isnothing(getfield(d,lst[i]))
             if i==4
-                println(io, "             fields  :   :$(lst[i])")  
-            else
-                println(io, "                         :$(lst[i])")  
+                str = "                      fields  :   :$(lst[i]),"
+            end
+            str = str*" :$(lst[i]),"
+            if mod( (i-3),5)==0
+                str = str[1:end-1]
+                println(io, str) 
+                str = "                                 "
             end
         end
     end
+    str = str[1:end-1]
+    println(io, str) 
     
 end
 

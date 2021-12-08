@@ -213,7 +213,6 @@ julia> savefig(plt,"MeltFraction.png")
 
 """
 function PlotMeltFraction(p::AbstractMeltingParam; T=nothing, P=nothing, plt=nothing, lbl=nothing)
-    Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
     
     if isnothing(T)
         T = (500:10:1500)*K
@@ -248,43 +247,37 @@ end
 
 
 """
-    PlotPhaseDiagram(p::PhaseDiagram_LookupTable; fieldname::Symbol, Tvec=nothing, Pvec=nothing)
+    plt, data, Tvec, Pvec = PlotPhaseDiagram(p::PhaseDiagram_LookupTable; fieldname::Symbol, Tvec=nothing, Pvec=nothing)
 
     Plots a phase diagram as a function of `T` (x-axis) and `P` (y-axis).
-    We either use the default ranges of the diagram, or you can specify the temperature and pressure ranges (while specifying units)
+    We either use the default ranges of the diagram, or you can specify the temperature and pressure ranges (while specifying units).
+    The return arguments are the plotting object `plt` (so you can miodify properties) as well as the data that is being plotted
 
 Example
 =======
 ```julia
 julia> PD_data =  Read_LaMEM_Perple_X_Diagram("Peridotite.in")
 Perple_X/LaMEM Phase Diagram Lookup Table: 
-   File    :   Peridotite.in
-   T       :   293.0 - 1573.000039
-   P       :   1.0e7 - 2.9999999944e9
-   fields  :   :meltRho
-               :meltFrac
-               :rockRho
-               :Rho
-               :rockVp
-               :rockVs
-               :rockVpVs
-               :meltVp
-               :meltVs
-               :meltVpVs
-               :Vp
-               :Vs
-               :VpVs
-julia> PlotPhaseDiagram(PD_data1,:meltRho)
+                      File    :   Peridotite.in
+                      T       :   293.0 - 1573.000039
+                      P       :   1.0e7 - 2.9999999944e9
+                      fields  :   :meltRho, :meltRho, :meltFrac, :rockRho, :Rho, :rockVp
+                                  :rockVs, :rockVpVs, :meltVp, :meltVs, :meltVpVs
+                                  :Vp, :Vs, :VpVs, :cpxFrac
+julia> PlotPhaseDiagram(PD_data,:meltFrac, Tvec=(100:1:1400).*C, Pvec=(.1:.1:30).*kbar )
 ```
-We can also use custom pressure/temperature ranges and specify in which units we want the axes to be:
+This will generate the following plot
+![subet2](./assets/img/PhaseDiagram.png)
+
+You can also use the default pressure/temperature ranges in the diagrams:
 ```julia
-julia> PlotPhaseDiagram(PD_data1,:Rho, Tvec=(100:10:1000).*C, Pvec=(1:1:30).*kbar)
+julia> PlotPhaseDiagram(PD_data,:Rho)
 ```
 
 """
-function PlotPhaseDiagram(p::PhaseDiagram_LookupTable, fieldname::Symbol; Tvec=nothing, Pvec=nothing)
+function PlotPhaseDiagram(p::PhaseDiagram_LookupTable, fieldn::Symbol; Tvec=nothing, Pvec=nothing)
 
-    data = getfield( p, fieldname)
+    data = getfield( p, fieldn)
     if isnothing(Tvec)
         Tvec_K  =   data.itp.knots[1]
         Tvec    =   Tvec_K;
@@ -302,9 +295,12 @@ function PlotPhaseDiagram(p::PhaseDiagram_LookupTable, fieldname::Symbol; Tvec=n
     data_scalar = data(ustrip.(Tvec_K), ustrip.(Pvec_Pa) )
 
 
-    heatmap(ustrip.(Tvec), ustrip.(Pvec), data_scalar', 
-                title  = string(fieldname),
+    plt = heatmap(ustrip.(Tvec), ustrip.(Pvec), data_scalar', 
+                title  = string(fieldn),
                 xlabel = "T [$(unit(Tvec[1]))]",
-                ylabel = "P [$(unit(Pvec[1]))]")
-    
+                ylabel = "P [$(unit(Pvec[1]))]", c=:batlow)
+
+    display(plt)
+
+    return  plt, data_scalar, Tvec, Pvec  
 end
