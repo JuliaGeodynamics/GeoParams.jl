@@ -60,5 +60,17 @@ ComputeMeltingParam!(ϕ, Phases, P,T, MatParam)
 @test sum(ϕ)/n^3 ≈ 0.6463001302812086
 
 
+# test computing material properties when we have PhaseRatios, instead of Phase numbers
+PhaseRatio  = zeros(n,n,n,3);
+for i in CartesianIndices(Phases)
+    iz = Phases[i]
+    I = CartesianIndex(i,iz)
+    PhaseRatio[I] = 1.0  
+end
+
+ComputeMeltingParam!(ϕ, PhaseRatio, P,T, MatParam)
+@test sum(ϕ)/n^3 ≈ 0.6463001302812086
+
+
 end
 

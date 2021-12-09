@@ -77,5 +77,15 @@ P       =  ones(size(Phases))*10
 ComputeDensity!(rho, Phases, P,T, MatParam)
 @test sum(rho)/400^2 ≈ 2920.6148898225
 
+# test computing material properties when we have PhaseRatios, instead of Phase numbers
+PhaseRatio  = zeros(400,400,3);
+for i in CartesianIndices(Phases)
+    iz = Phases[i]
+    I = CartesianIndex(i,iz)
+    PhaseRatio[I] = 1.0  
+end
+
+ComputeDensity!(rho, PhaseRatio, P,T, MatParam)
+@test sum(rho)/400^2 ≈ 2920.6148898225
 
 end

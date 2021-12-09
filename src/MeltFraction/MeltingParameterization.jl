@@ -146,6 +146,29 @@ function ComputeMeltingParam!(ϕ::Array{<:AbstractFloat, N}, Phases::Array{<:Int
 end
 
 
+"""
+    ComputeMeltingParam!(ϕ::Array{Float64}, Phases::Array{Float64}, P::Array{Float64},T::Array{Float64}, MatParam::Array{<:AbstractMaterialParamsStruct})
+
+In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
+"""
+function ComputeMeltingParam!(ϕ::Array{<:AbstractFloat, N}, PhaseRatios::Array{<:AbstractFloat, M}, P::Array{<:AbstractFloat, N},T::Array{<:AbstractFloat, N}, MatParam::Array{<:AbstractMaterialParamsStruct, 1}) where {N,M}
+
+    ϕ .= 0.0
+    for i = 1:length(MatParam)
+        
+        ϕ_local  = zeros(size(ϕ))
+        Fraction    = selectdim(PhaseRatios,M,i);
+        if (maximum(Fraction)>0.0) & (!isnothing(MatParam[i].Melting))
+
+            ComputeMeltingParam!(ϕ_local, P, T, MatParam[i].Melting[1] ) 
+
+            ϕ .= ϕ .+ ϕ_local.*Fraction
+        end
+
+    end
+
+    return nothing
+end
 
 
 

@@ -125,6 +125,20 @@ function ComputeDensity!(ρ::SubArray{<:AbstractFloat},P::SubArray{<:AbstractFlo
     return nothing
 end
 
+
+function ComputeDensity!(ρ::Array{<:AbstractFloat},P::Array{<:AbstractFloat},T::Array{<:AbstractFloat}, s::PT_Density)
+    @unpack ρ0,α,β,P0, T0   = s
+    ρ0 = ustrip(Value(ρ0))
+    α  = ustrip(Value(α))
+    β  = ustrip(Value(β))
+    P0 = ustrip(Value(P0))
+    T0 = ustrip(Value(T0))
+    
+    ρ  .= ρ0*(1.0 .- α*( T .- T0) + β*(P .- P0) )
+
+    return nothing
+end
+
 # Print info 
 function show(io::IO, g::PT_Density)  
     print(io, "P/T-dependent density: ρ0=$(g.ρ0.val), α=$(g.α.val), β=$(g.β.val), T0=$(g.T0.val), P0=$(g.P0.val)")  
@@ -170,6 +184,7 @@ end
     ComputeDensity!(rho::Array{Float64}, Phases::Array{Int64}, P::Array{Float64},T::Array{Float64}, MatParam::Array{<:AbstractMaterialParamsStruct})
 
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
+This assumes that the `Phase` of every point is specified as an Integer in the `Phases` array.
 
 # Example
 ```julia
@@ -221,6 +236,31 @@ function ComputeDensity!(rho::Array{<:AbstractFloat, N}, Phases::Array{<:Integer
             T_local     =   view(T  , ind )
 
             ComputeDensity!(rho_local, P_local, T_local, MatParam[i].Density[1] ) 
+        end
+        
+    end
+
+end
+
+"""
+    ComputeDensity!(rho::Array{Float64}, PhaseRatios::Array{<:AbstractFloat, N+1}, P::Array{Float64},T::Array{Float64}, MatParam::Array{<:AbstractMaterialParamsStruct})
+
+In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
+This assumes that the `PhaseRatio` of every point is specified as an Integer in the `Phases` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
+
+"""
+function ComputeDensity!(rho::Array{<:AbstractFloat, N}, PhaseRatios::Array{<:AbstractFloat, M}, P::Array{<:AbstractFloat, N},T::Array{<:AbstractFloat, N}, MatParam::Array{<:AbstractMaterialParamsStruct, 1}) where {N,M}
+
+    rho .= 0.0;
+    for i = 1:length(MatParam)
+        
+        rho_local   = zeros(size(rho))
+        Fraction    = selectdim(PhaseRatios,M,i);
+        if (maximum(Fraction)>0.0) & (!isnothing(MatParam[i].Density))
+
+            ComputeDensity!(rho_local, P, T, MatParam[i].Density[1] ) 
+
+            rho .= rho .+rho_local.*Fraction
         end
         
     end
