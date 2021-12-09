@@ -55,7 +55,7 @@ function ComputeMeltingParam!(ϕ, P,T, p::MeltingParam_Caricchi)
     return nothing
 end
 
-function ComputeMeltingParam!(ϕ::Array{Float64}, P::Array{Float64},T::Array{Float64}, p::MeltingParam_Caricchi)
+function ComputeMeltingParam!(ϕ::Array{<:AbstractFloat}, P::Array{<:AbstractFloat},T::Array{<:AbstractFloat}, p::MeltingParam_Caricchi)
     @unpack a,b,c   = p
     a = ustrip(Value(a))
     b = ustrip(Value(b))
@@ -67,7 +67,7 @@ function ComputeMeltingParam!(ϕ::Array{Float64}, P::Array{Float64},T::Array{Flo
     return nothing
 end
 
-function ComputeMeltingParam!(ϕ::SubArray{Float64}, P::SubArray{Float64},T::SubArray{Float64}, p::MeltingParam_Caricchi)
+function ComputeMeltingParam!(ϕ::SubArray{<:AbstractFloat}, P::SubArray{<:AbstractFloat},T::SubArray{<:AbstractFloat}, p::MeltingParam_Caricchi)
     @unpack a,b,c   = p
     a = ustrip(Value(a))
     b = ustrip(Value(b))
@@ -100,7 +100,7 @@ end
 
 In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the collum `:meltFrac` specified.
 """
-function ComputeMeltingParam!(ϕ::Array{Float64}, P::Array{Float64},T::Array{Float64}, p::PhaseDiagram_LookupTable)
+function ComputeMeltingParam!(ϕ::Array{<:AbstractFloat}, P::Array{<:AbstractFloat},T::Array{<:AbstractFloat}, p::PhaseDiagram_LookupTable)
     ϕ[:]    =   p.meltFrac.(T,P)
 
     return nothing
@@ -111,7 +111,7 @@ end
 
 In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the collum `:meltFrac` specified.
 """
-function ComputeMeltingParam!(ϕ::SubArray{Float64}, P::SubArray{Float64},T::SubArray{Float64}, p::PhaseDiagram_LookupTable)
+function ComputeMeltingParam!(ϕ::SubArray{<:AbstractFloat}, P::SubArray{<:AbstractFloat},T::SubArray{<:AbstractFloat}, p::PhaseDiagram_LookupTable)
     ϕ[:]    =   p.meltFrac.(T,P)
 
     return nothing
@@ -124,13 +124,13 @@ end
 
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 """
-function ComputeMeltingParam!(ϕ::Array{Float64, N}, Phases::Array{Int64, N}, P::Array{Float64, N},T::Array{Float64, N}, MatParam::Array{<:AbstractMaterialParamsStruct, 1}) where N
+function ComputeMeltingParam!(ϕ::Array{<:AbstractFloat, N}, Phases::Array{<:Integer, N}, P::Array{<:AbstractFloat, N},T::Array{<:AbstractFloat, N}, MatParam::Array{<:AbstractMaterialParamsStruct, 1}) where N
 
 
     for i = 1:length(MatParam)
 
         if !isnothing(MatParam[i].Melting)
-            
+
             # Create views into arrays (so we don't have to allocate)
             ind = Phases .== i;
             ϕ_local   =   view(ϕ, ind )

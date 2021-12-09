@@ -53,7 +53,7 @@ function ComputeDensity!(ρ,P,T, s::ConstantDensity)
 end
 =#
 
-function ComputeDensity!(rho::Array{Float64},P::Array{Float64},T::Array{Float64}, s::ConstantDensity)
+function ComputeDensity!(rho::Array{<:AbstractFloat},P::Array{<:AbstractFloat},T::Array{<:AbstractFloat}, s::ConstantDensity)
     @unpack ρ   = s
     
     rho .= ustrip(ρ.val)
@@ -112,7 +112,7 @@ function ComputeDensity!(ρ, P,T, s::PT_Density)
     return ρ
 end
 
-function ComputeDensity!(ρ::SubArray{Float64},P::SubArray{Float64},T::SubArray{Float64}, s::PT_Density)
+function ComputeDensity!(ρ::SubArray{<:AbstractFloat},P::SubArray{<:AbstractFloat},T::SubArray{<:AbstractFloat}, s::PT_Density)
     @unpack ρ0,α,β,P0, T0   = s
     ρ0 = ustrip(Value(ρ0))
     α  = ustrip(Value(α))
@@ -149,7 +149,7 @@ end
 
 In-place computation of density as a function of `T,P`, in case we are using a lookup table.    
 """
-function ComputeDensity!(rho::Array{Float64}, P::Array{Float64},T::Array{Float64}, s::PhaseDiagram_LookupTable)
+function ComputeDensity!(rho::Array{<:AbstractFloat}, P::Array{<:AbstractFloat},T::Array{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
     rho[:] = s.Rho.(T,P)
     return nothing
 end
@@ -159,7 +159,7 @@ end
 
 In-place computation of density as a function of `T,P`, in case we are using a lookup table.    
 """
-function ComputeDensity!(rho::SubArray{Float64}, P::SubArray{Float64},T::SubArray{Float64}, s::PhaseDiagram_LookupTable)
+function ComputeDensity!(rho::SubArray{<:AbstractFloat}, P::SubArray{<:AbstractFloat},T::SubArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
     rho[:] = s.Rho.(T,P)
     return nothing
 end
@@ -207,9 +207,9 @@ The routine is made to minimize allocations:
 ```julia
 julia> julia> @time ComputeDensity!(rho, Phases, P,T, MatParam)
 0.003121 seconds (49 allocations: 3.769 MiB)
-``` 
+```
 """
-function ComputeDensity!(rho::Array{Float64, N}, Phases::Array{Int64, N}, P::Array{Float64, N},T::Array{Float64, N}, MatParam::Array{<:AbstractMaterialParamsStruct, 1}) where N
+function ComputeDensity!(rho::Array{<:AbstractFloat, N}, Phases::Array{<:Integer, N}, P::Array{<:AbstractFloat, N},T::Array{<:AbstractFloat, N}, MatParam::Array{<:AbstractMaterialParamsStruct, 1}) where N
 
     for i = 1:length(MatParam)
 
