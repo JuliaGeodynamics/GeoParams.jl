@@ -55,19 +55,7 @@ function ComputeMeltingParam!(ϕ, P,T, p::MeltingParam_Caricchi)
     return nothing
 end
 
-function ComputeMeltingParam!(ϕ::Array{<:AbstractFloat}, P::Array{<:AbstractFloat},T::Array{<:AbstractFloat}, p::MeltingParam_Caricchi)
-    @unpack a,b,c   = p
-    a = ustrip(Value(a))
-    b = ustrip(Value(b))
-    c = ustrip(Value(c))
-
-    θ       =   (a .- (T .- c))./b
-    ϕ      .=   1.0./(1.0 .+ exp.(θ))
-
-    return nothing
-end
-
-function ComputeMeltingParam!(ϕ::SubArray{<:AbstractFloat}, P::SubArray{<:AbstractFloat},T::SubArray{<:AbstractFloat}, p::MeltingParam_Caricchi)
+function ComputeMeltingParam!(ϕ::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, p::MeltingParam_Caricchi)
     @unpack a,b,c   = p
     a = ustrip(Value(a))
     b = ustrip(Value(b))
@@ -96,35 +84,23 @@ function ComputeMeltingParam(P,T, p::PhaseDiagram_LookupTable)
 end
 
 """
-    ComputeMeltingParam!(ϕ::Array{Float64}, P::Array{Float64},T:Array{Float64}, p::PhaseDiagram_LookupTable)
+    ComputeMeltingParam!(ϕ::AbstractArray{Float64}, P::AbstractArray{Float64},T:AbstractArray{Float64}, p::PhaseDiagram_LookupTable)
 
 In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the collum `:meltFrac` specified.
 """
-function ComputeMeltingParam!(ϕ::Array{<:AbstractFloat}, P::Array{<:AbstractFloat},T::Array{<:AbstractFloat}, p::PhaseDiagram_LookupTable)
-    ϕ[:]    =   p.meltFrac.(T,P)
-
-    return nothing
-end
-
-"""
-    ComputeMeltingParam!(ϕ::SubArray{Float64}, P::SubArray{Float64},T::SubArray{Float64}, p::PhaseDiagram_LookupTable)
-
-In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the collum `:meltFrac` specified.
-"""
-function ComputeMeltingParam!(ϕ::SubArray{<:AbstractFloat}, P::SubArray{<:AbstractFloat},T::SubArray{<:AbstractFloat}, p::PhaseDiagram_LookupTable)
+function ComputeMeltingParam!(ϕ::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, p::PhaseDiagram_LookupTable)
     ϕ[:]    =   p.meltFrac.(T,P)
 
     return nothing
 end
 
 
-
 """
-    ComputeMeltingParam!(ϕ::Array{Float64}, Phases::Array{Int64}, P::Array{Float64},T::Array{Float64}, MatParam::Array{<:AbstractMaterialParamsStruct})
+    ComputeMeltingParam!(ϕ::AbstractArray{Float64}, Phases::AbstractArray{Int64}, P::AbstractArray{Float64},T::AbstractArray{Float64}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
 
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 """
-function ComputeMeltingParam!(ϕ::Array{<:AbstractFloat, N}, Phases::Array{<:Integer, N}, P::Array{<:AbstractFloat, N},T::Array{<:AbstractFloat, N}, MatParam::Array{<:AbstractMaterialParamsStruct, 1}) where N
+function ComputeMeltingParam!(ϕ::AbstractArray{<:AbstractFloat, N}, Phases::AbstractArray{<:Integer, N}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where N
 
 
     for i = 1:length(MatParam)
@@ -147,11 +123,11 @@ end
 
 
 """
-    ComputeMeltingParam!(ϕ::Array{Float64}, Phases::Array{Float64}, P::Array{Float64},T::Array{Float64}, MatParam::Array{<:AbstractMaterialParamsStruct})
+    ComputeMeltingParam!(ϕ::AbstractArray{Float64}, Phases::AbstractArray{Float64}, P::AbstractArray{Float64},T::AbstractArray{Float64}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
 
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 """
-function ComputeMeltingParam!(ϕ::Array{<:AbstractFloat, N}, PhaseRatios::Array{<:AbstractFloat, M}, P::Array{<:AbstractFloat, N},T::Array{<:AbstractFloat, N}, MatParam::Array{<:AbstractMaterialParamsStruct, 1}) where {N,M}
+function ComputeMeltingParam!(ϕ::AbstractArray{<:AbstractFloat, N}, PhaseRatios::AbstractArray{<:AbstractFloat, M}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where {N,M}
 
     ϕ .= 0.0
     for i = 1:length(MatParam)
