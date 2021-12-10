@@ -46,10 +46,10 @@ function ComputeDensity(P,T, s::ConstantDensity)
     end
 end
 
-function ComputeDensity!(rho::AbstractArray{<:AbstractFloat},P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::ConstantDensity)
+function ComputeDensity!(rho::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::ConstantDensity) where N
     @unpack ρ   = s
     
-    rho .= ustrip(ρ.val)
+    rho .= NumValue(ρ)
     
     return nothing
 end
@@ -100,11 +100,11 @@ end
 
 function ComputeDensity!(ρ::AbstractArray{<:AbstractFloat},P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PT_Density)
     @unpack ρ0,α,β,P0, T0   = s
-    ρ0 = ustrip(Value(ρ0))
-    α  = ustrip(Value(α))
-    β  = ustrip(Value(β))
-    P0 = ustrip(Value(P0))
-    T0 = ustrip(Value(T0))
+    ρ0 = NumValue(ρ0)
+    α  = NumValue(α)
+    β  = NumValue(β)
+    P0 = NumValue(P0)
+    T0 = NumValue(T0)
     
     ρ  .= ρ0*(1.0 .- α*( T .- T0) + β*(P .- P0) )
 
@@ -131,7 +131,7 @@ function ComputeDensity(P,T, s::PhaseDiagram_LookupTable)
 end
 
 """
-    ComputeDensity!(rho::AbstractArray{Float64}, P::AbstractArray{Float64},T::AbstractArray{Float64}, s::PhaseDiagram_LookupTable)
+    ComputeDensity!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
 
 In-place computation of density as a function of `T,P`, in case we are using a lookup table.    
 """
@@ -143,7 +143,7 @@ end
 #-------------------------------------------------------------------------
 
 """
-    ComputeDensity!(rho::AbstractArray{Float64}, Phases::AbstractArray{Int64}, P::AbstractArray{Float64},T::AbstractArray{Float64}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
+    ComputeDensity!(rho::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
 
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `Phase` of every point is specified as an Integer in the `Phases` array.
@@ -205,13 +205,14 @@ function ComputeDensity!(rho::AbstractArray{<:AbstractFloat, N}, Phases::Abstrac
 end
 
 """
-    ComputeDensity!(rho::AbstractArray{Float64}, PhaseRatios::AbstractArray{<:AbstractFloat, N+1}, P::AbstractArray{Float64},T::AbstractArray{Float64}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
+    ComputeDensity!(rho::AbstractArray{<:AbstractFloat,N}, PhaseRatios::AbstractArray{<:AbstractFloat, M}, P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
 
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 
 """
 function ComputeDensity!(rho::AbstractArray{<:AbstractFloat, N}, PhaseRatios::AbstractArray{<:AbstractFloat, M}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where {N,M}
+    
     if M!=(N+1)
         error("The PhaseRatios array should have one dimension more than the other arrays")
     end
@@ -225,7 +226,7 @@ function ComputeDensity!(rho::AbstractArray{<:AbstractFloat, N}, PhaseRatios::Ab
 
             ComputeDensity!(rho_local, P, T, MatParam[i].Density[1] ) 
 
-            rho .= rho .+rho_local.*Fraction
+            rho .= rho .+ rho_local.*Fraction
         end
         
     end

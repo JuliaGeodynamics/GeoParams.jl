@@ -47,7 +47,7 @@ export
     km, m, cm, mm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW, 
     GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
     Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
-    superscript, upreferred, GEO, SI, NONE, isDimensional, Value, Unit
+    superscript, upreferred, GEO, SI, NONE, isDimensional, Value, NumValue, Unit
 
 """
 AbstractGeoUnits
@@ -81,6 +81,7 @@ GeoUnit(v::Array)                       =   GeoUnit(v, NoUnits)     # array, no 
 GeoUnit(v::Array{Unitful.Quantity})     =   GeoUnit(v, unit.(v))    # with units
 GeoUnit(v::StepRange)                   =   GeoUnit(v, unit.(v))    # with units
 Value(v::GeoUnit)                       =   v.val                   # get value of GeoUnit
+NumValue(v::GeoUnit)                    =   ustrip(v.val)           # numeric value, with no units
 Unit(v::GeoUnit)                        =   v.unit                  # extract unit
 
 Base.convert(::Type{Float64}, v::GeoUnit)       =   v.val
