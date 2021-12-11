@@ -84,7 +84,7 @@ function ComputeMeltingParam(P,T, p::PhaseDiagram_LookupTable)
 end
 
 """
-    ComputeMeltingParam!(ϕ::AbstractArray{Float64}, P::AbstractArray{Float64},T:AbstractArray{Float64}, p::PhaseDiagram_LookupTable)
+    ComputeMeltingParam!(ϕ::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T:AbstractArray{<:AbstractFloat}, p::PhaseDiagram_LookupTable)
 
 In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the collum `:meltFrac` specified.
 """
@@ -96,7 +96,7 @@ end
 
 
 """
-    ComputeMeltingParam!(ϕ::AbstractArray{Float64}, Phases::AbstractArray{Int64}, P::AbstractArray{Float64},T::AbstractArray{Float64}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
+    ComputeMeltingParam!(ϕ::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
 
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 """
@@ -123,7 +123,7 @@ end
 
 
 """
-    ComputeMeltingParam!(ϕ::AbstractArray{Float64}, Phases::AbstractArray{Float64}, P::AbstractArray{Float64},T::AbstractArray{Float64}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
+    ComputeMeltingParam!(ϕ::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
 
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 """

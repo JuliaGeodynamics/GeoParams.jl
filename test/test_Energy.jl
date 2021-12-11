@@ -34,6 +34,60 @@ Cp_nd    =   ComputeHeatCapacity(T_nd,cp2_nd)
 # Dimensionalize again and double-check the results
 @test ustrip(sum(abs.(Cp_nd*CharUnits_GEO.heatcapacity - Cp))) < 1e-11
 
+# Test with arrays
+T_array     =  ustrip.(T)*ones(10)'
+Cp_array    =  zeros(size(T_array))
+P_array     =  zeros(size(T_array))
+ComputeHeatCapacity!(Cp_array, P_array, T_array,cp1)
+@test Cp_array[1] ≈ 1.3368075000000002e22
+
+T_array     =  ustrip.(T)*ones(10)'
+Cp_array    =  zeros(size(T_array))
+P_array     =  zeros(size(T_array))
+ComputeHeatCapacity!(Cp_array, P_array, T_array,cp2)
+@test sum(Cp_array[:,1]) ≈ 11667.035717418683
+
+T_array     =  ustrip.(T)*ones(10)'
+Cp_array    =  zeros(size(T_array))
+P_array     =  zeros(size(T_array))
+ComputeHeatCapacity!(Cp_array, T_array,cp2)
+@test sum(Cp_array[:,1]) ≈ 11667.035717418683
+
+
+# Check that it works if we give a phase array
+MatParam    =   Array{MaterialParams, 1}(undef, 2);
+MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=1,
+                    HeatCapacity  = ConstantHeatCapacity());
+
+MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
+                    HeatCapacity  = T_HeatCapacity_Whittacker());
+
+# test computing material properties
+n = 100;
+Phases              = ones(Int64,n,n,n);
+Phases[:,:,20:end] .= 2
+
+Cp = zeros(size(Phases))
+T  =  ones(size(Phases))*1500
+P  =  zeros(size(Phases))
+
+ComputeHeatCapacity!(Cp, Phases, P, T, MatParam)       # computation routine w/out P (not used in most heat capacity formulations)
+@test sum(Cp[1,1,:]) ≈ 121399.0486067196
+
+ComputeHeatCapacity!(Cp, Phases, T, MatParam)       # computation routine w/out P (not used in most heat capacity formulations)
+@test sum(Cp[1,1,:]) ≈ 121399.0486067196
+
+# test if we provide phase ratios
+PhaseRatio  = zeros(n,n,n,3);
+for i in CartesianIndices(Phases)
+    iz = Phases[i]
+    I = CartesianIndex(i,iz)
+    PhaseRatio[I] = 1.0  
+end
+ComputeHeatCapacity!(Cp, PhaseRatio, P, T, MatParam)
+@test sum(Cp[1,1,:]) ≈ 121399.0486067196
+
+
 # -----------------------
 
 # Conductivity ----------
