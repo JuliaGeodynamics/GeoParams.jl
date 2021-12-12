@@ -158,7 +158,7 @@ function ComputeConductivity!(k::AbstractArray{<:AbstractFloat,N},P::AbstractArr
 
     ind         =   (T .<= Tcutoff)
     T_local     =   view(T, ind )
-    k[ind]      =   (s.a0 .+ b0*T_local - c0./T_local.^2)/molmass .* (d./T_local .- e) .* ρ
+    k[ind]      =   (a0 .+ b0*T_local - c0./T_local.^2)/molmass .* (d./T_local .- e) .* ρ
 
     ind         =   (T .> Tcutoff)
     T_local     =   view(T, ind )
