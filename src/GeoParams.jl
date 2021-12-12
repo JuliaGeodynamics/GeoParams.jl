@@ -74,7 +74,8 @@ export  ComputeHeatCapacity,
         T_HeatCapacity_Whittacker
 
 using .MaterialParameters.Conductivity
-export  ComputeConductivity,                           
+export  ComputeConductivity,
+        ComputeConductivity!,
         ConstantConductivity,
         T_Conductivity_Whittacker,
         TP_Conductivity,
