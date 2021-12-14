@@ -183,6 +183,62 @@ SetDislocationCreep = Dict([
     )
 )
 
+# Diabase rheology
+("Diabase | Caristan (1982)", 
+    #  After Caristan (1982), 'The transition from high temperature creep to fracture in Maryland diabase.'
+    #  and, Bremond (1999),
+    #  'Hydrothermalism and diapirism in the Archean: gravitational instability constraints'
+    #  Bremond (1999), page 5 in text
+    DislocationCreep(
+        n = 3.05NoUnits,
+        A = 6.0e-2MPa^(-3.05)/s, 
+        E = 276kJ/mol,
+        V = 0m^3/mol,
+        r   = 0NoUnits,
+        Apparatus =   "AxialCompression",
+        Comment = "Values checked (Bremond (1999)), plots are not reproduced (NM).",
+        BibTex_Reference = parse_bibtex("""
+             @article{caristan1982transition,
+             title={The transition from high temperature creep to fracture in Maryland diabase},
+             author={Caristan, Y},
+             journal={Journal of Geophysical Research: Solid Earth},
+             volume={87},
+             number={B8},
+             pages={6781--6790},
+             year={1982},
+             publisher={Wiley Online Library}
+             }
+        """);
+    )
+)
 
+# Tumut Pond Serpentinite rheology
+("Tumut Pond Serpentinite | Raleigh and Paterson (1965)", 
+    #  After Raleigh and Paterson (1965), 'Experimental deformation of serpentinite and its tectonic implications'
+    #  and, Bremond (1999),
+    #  'Hydrothermalism and diapirism in the Archean: gravitational instability constraints'
+    #  Bremond (1999), page 5 in text
+    DislocationCreep(
+        n = 2.8NoUnits,
+        A = 6.3e-7MPa^(-2.8)/s, 
+        E = 66kJ/mol,
+        V = 0m^3/mol,
+        r   = 0NoUnits,
+        Apparatus =   "AxialCompression",
+        Comment = "Values checked (Bremond (1999)), plots are not reproduced (NM).",
+        BibTex_Reference = parse_bibtex("""
+             @article{raleigh1965experimental,
+             title={Experimental deformation of serpentinite and its tectonic implications},
+             author={Raleigh, CB and Paterson, MS},
+             journal={Journal of Geophysical Research},
+             volume={70},
+             number={16},
+             pages={3965--3985},
+             year={1965},
+             publisher={Wiley Online Library}
+             }
+        """);
+    )
+)
 
 ]); # end of setting pre-defined creep laws
