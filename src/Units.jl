@@ -41,10 +41,10 @@ const kJ    = u"kJ"
 const J     = u"J"
 const Watt  = u"W"
 const μW    = u"μW"
-
+const μm    = u"μm"
 
 export 
-    km, m, cm, mm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW, 
+    km, m, cm, mm, μm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW, 
     GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
     Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
     superscript, upreferred, GEO, SI, NONE, isDimensional, Value, NumValue, Unit
