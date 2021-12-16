@@ -238,7 +238,7 @@ function ComputeHeatCapacity!(Cp::AbstractArray{<:AbstractFloat, N}, Phases::Abs
         
         if !isnothing(MatParam[i].HeatCapacity)
             # Create views into arrays (so we don't have to allocate)
-            ind = Phases .== i;
+            ind = Phases .== MatParam[i].Phase;
             cp_local    =   view(Cp, ind )
             P_local     =   view(P , ind )
             T_local     =   view(T , ind )

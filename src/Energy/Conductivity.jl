@@ -347,7 +347,7 @@ function ComputeConductivity!(K::AbstractArray{T, N}, Phases::AbstractArray{<:In
         
         if !isnothing(MatParam[i].Conductivity)
             # Create views into arrays (so we don't have to allocate)
-            ind = Phases .== i;
+            ind = Phases .== MatParam[i].Phase;
             K_local     =   view(K   , ind )
             P_local     =   view(P   , ind )
             T_local     =   view(Temp, ind )

@@ -53,22 +53,22 @@ Vs_ND    =  PD_data1.Vs(Nondimensionalize(1500K,CharDim),Nondimensionalize(1e8*P
 
 # Test computation of density for the whole computational domain, using arrays 
 MatParam    =   Array{MaterialParams, 1}(undef, 3);
-MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=1,
+MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=0,
                         CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
                         Density   = PerpleX_LaMEM_Diagram("test_data/Peridotite.in"));
 
-MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
+MatParam[2] =   SetMaterialParams(Name="Crust", Phase=1,
                         CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
                         Density   = ConstantDensity(ρ=2900kg/m^3));
 
-MatParam[3] =   SetMaterialParams(Name="UpperCrust", Phase=3,
+MatParam[3] =   SetMaterialParams(Name="UpperCrust", Phase=2,
                         CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
                         Density   = PT_Density());
 
 # test computing material properties
-Phases              = ones(Int64,400,400);
-Phases[:,20:end] .= 2
-Phases[:,300:end] .= 3
+Phases              = ones(Int64,400,400)*0;
+Phases[:,20:end] .= 1
+Phases[:,300:end] .= 2
 
 rho     = zeros(size(Phases))
 T       =  ones(size(Phases))
@@ -78,10 +78,10 @@ ComputeDensity!(rho, Phases, P,T, MatParam)
 @test sum(rho)/400^2 ≈ 2920.6148898225
 
 # test computing material properties when we have PhaseRatios, instead of Phase numbers
-PhaseRatio  = zeros(400,400,3);
+PhaseRatio  = zeros(size(Phases)...,length(MatParam));
 for i in CartesianIndices(Phases)
     iz = Phases[i]
-    I = CartesianIndex(i,iz)
+    I = CartesianIndex(i,iz+1)
     PhaseRatio[I] = 1.0  
 end
 

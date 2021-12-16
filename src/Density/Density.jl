@@ -192,7 +192,7 @@ function ComputeDensity!(rho::AbstractArray{<:AbstractFloat, N}, Phases::Abstrac
 
         if !isnothing(MatParam[i].Density)
             # Create views into arrays (so we don't have to allocate)
-            ind = Phases .== i;
+            ind = Phases .== MatParam[i].Phase
             rho_local   =   view(rho, ind )
             P_local     =   view(P  , ind )
             T_local     =   view(T  , ind )
