@@ -19,10 +19,10 @@ struct PhaseDiagram_LookupTable <: AbstractPhaseDiagramsStruct
     Type        ::  String
     HeaderText  ::  Any
     Name        ::  String
-    meltRho     ::  Interpolations.Extrapolation
-    meltFrac    ::  Interpolations.Extrapolation
-    rockRho     ::  Interpolations.Extrapolation
-    Rho         ::  Interpolations.Extrapolation
+    rockRho     ::  Any
+    meltRho     ::  Any
+    meltFrac    ::  Any
+    Rho         ::  Any
     rockVp      ::  Any
     rockVs      ::  Any
     rockVpVs    ::  Any
@@ -225,20 +225,22 @@ function ComputeTotalField_withMeltFraction(totalData::Symbol, meltData::Symbol,
         !(isnothing(Struct_Fields[ind_solidData])) &
         !(isnothing(Struct_Fields[ind_meltData ]))
 
-        ϕ = Struct_Fields[ind_meltFrac[1] ].itp.coefs      # melt fraction
-        S = Struct_Fields[ind_solidData[1]].itp.coefs      # solid property
-        M = Struct_Fields[ind_meltData[1] ].itp.coefs      # melt property
-        
-        # Compute average
-        Result      =   (1.0 .- ϕ).*S .+ ϕ.*M 
-        
-        # Create interpolation object of average
-        Tvec        =   Struct_Fields[ind_meltFrac[1] ].itp.knots[1]       # temperature data
-        Pvec        =   Struct_Fields[ind_meltFrac[1] ].itp.knots[2]       # pressure data
-        intp_Result =   LinearInterpolation((Tvec, Pvec), Result,  extrapolation_bc = Flat()); 
-        
-        # assign
-        Struct_Fields[ind_totalData[1]] = intp_Result
+        if Struct_Fields[ind_meltFrac[1]]!=nothing
+            ϕ = Struct_Fields[ind_meltFrac[1] ].itp.coefs      # melt fraction
+            S = Struct_Fields[ind_solidData[1]].itp.coefs      # solid property
+            M = Struct_Fields[ind_meltData[1] ].itp.coefs      # melt property
+            
+            # Compute average
+            Result      =   (1.0 .- ϕ).*S .+ ϕ.*M 
+            
+            # Create interpolation object of average
+            Tvec        =   Struct_Fields[ind_meltFrac[1] ].itp.knots[1]       # temperature data
+            Pvec        =   Struct_Fields[ind_meltFrac[1] ].itp.knots[2]       # pressure data
+            intp_Result =   LinearInterpolation((Tvec, Pvec), Result,  extrapolation_bc = Flat()); 
+            
+            # assign
+            Struct_Fields[ind_totalData[1]] = intp_Result
+        end
     end
     
     return Struct_Fields
