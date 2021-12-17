@@ -240,7 +240,15 @@ function ComputeTotalField_withMeltFraction(totalData::Symbol, meltData::Symbol,
             
             # assign
             Struct_Fields[ind_totalData[1]] = intp_Result
+        else
+            # use solid fraction
+            S = Struct_Fields[ind_solidData[1]]      # solid property
+            
+            # assign
+            Struct_Fields[ind_totalData[1]] = S
+        
         end
+
     end
     
     return Struct_Fields
