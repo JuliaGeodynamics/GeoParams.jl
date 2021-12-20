@@ -93,11 +93,19 @@ using .MaterialParameters.Shearheating
 export  ComputeShearheating, ComputeShearheating!,               
         ConstantShearheating              
 
+# Seismic velocities
+using .MaterialParameters.SeismicVelocity
+export  ComputePwaveVelocity,  ComputeSwaveVelocity,   
+        ComputePwaveVelocity!, ComputeSwaveVelocity!,   
+        ConstantSeismicVelocity                        
+
+
 # Add melting parameterizations
 include("./MeltFraction/MeltingParameterization.jl")
 using .MeltingParam
 export  ComputeMeltingParam, ComputeMeltingParam!,       # calculation routines
         MeltingParam_Caricchi                          
+
 
 # Add plotting routines - only activated if the "Plots.jl" package is loaded 
 function __init__()

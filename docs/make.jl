@@ -21,6 +21,7 @@ makedocs(
             "Gravity" =>  "man/gravity.md",
             "Partial Melting"  => "man/melting.md",
             "Phase Diagrams" => "man/phasediagrams.md",
+            "Seismic Velocity" => "man/seismicvelocity.md",
         ],
         "Plotting"  => "man/plotting.md",
         "List of functions"  => "man/listfunctions.md",
