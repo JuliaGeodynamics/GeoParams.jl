@@ -1,10 +1,11 @@
 # Density 
+# Methods
 The density equation of state can be specified in a number of ways
 ```@docs
 GeoParams.MaterialParameters.Density.ConstantDensity
 GeoParams.MaterialParameters.Density.PT_Density
 ```
-
+# Computational routines
 To evaluate density within a user routine, use this:
 ```@docs
 GeoParams.MaterialParameters.Density.ComputeDensity
