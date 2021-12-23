@@ -118,7 +118,7 @@ Dimensionalize!(z,CharUnits_GEO)
 z[2,1]=3
 @test z[2,1] == 3.0
 
-# Conversion
+# Conversion to different units
 @test convert(GeoUnit,Float64(10.1)).val==10.1
 @test convert(GeoUnit,10.1:.1:20).val == 10.1:.1:20
 @test convert(GeoUnit, 10km/s).unit==km/s

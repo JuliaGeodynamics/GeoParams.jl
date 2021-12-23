@@ -112,7 +112,6 @@ Base.convert(::Type{GeoUnit},  v::Number)           =   GeoUnit(v)
 Base.convert(::Type{GeoUnit},  v::Quantity)         =   GeoUnit(v) 
 Base.convert(::Type{GeoUnit},  v::AbstractArray)    =   GeoUnit(ustrip.(v), unit(v[1]), true) 
 
-
 function Base.show(io::IO, x::GeoUnit{T,D,U})  where {T,D,U} # output
     if  x.dimensional
         println("GeoUnit{dimensional}:")
