@@ -9,7 +9,7 @@ CharUnits_GEO   =   GEO_units(viscosity=1e19, length=1000km);
 # Define a struct for a first phase
 Phase1 = SetMaterialParams(Name="test1", Phase=22,
                 CreepLaws= (PowerlawViscous(), LinearViscous(η=1e21Pa*s)),
-                Gravity  = ConstantGravity(g=11m/s^2),
+                Gravity  = ConstantGravity(g=11.0m/s^2),
                 Density  = ConstantDensity(),
                 CharDim  = CharUnits_GEO);
 
@@ -29,8 +29,8 @@ Nondimensionalize!(Phase2, CharUnits_GEO)
 
 # Dimensionalize all values again:
 Dimensionalize!(Phase2, CharUnits_GEO)
-@test Phase2.Density[1].ρ.val ≈ 2900kg/m^3
-@test Phase2.CreepLaws[2].η.val ≈ 1e21Pa*s
+@test Phase2.Density[1].ρ.val ≈ 2900
+@test Phase2.CreepLaws[2].η.val ≈ 1e21
 
 # Create array with several phases
 MatParam        =   Array{MaterialParams, 1}(undef, 2);
@@ -44,7 +44,7 @@ MatParam[Phase] =   SetMaterialParams(Name="Lower Crust", Phase=Phase,
                         Density  = PT_Density(ρ0=3000kg/m^3));
 
 
-@test MatParam[2].Density[1].α.val ≈  3.0e-5/K
+@test MatParam[2].Density[1].α.val ≈  3.0e-5
 @test MatParam[2].CreepLaws[1].n.val == 5.0
 
 # test adding phase Diagrams

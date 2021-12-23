@@ -233,9 +233,6 @@ function Base.show(io::IO, phase::MaterialParams)
     
 end
 
-
-
-
 end
 
 

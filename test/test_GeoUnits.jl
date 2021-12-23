@@ -110,7 +110,6 @@ Dimensionalize!(z,CharUnits_GEO)
 @test z.val==[100 1000 11; 10 2 1]          # transform back
 @test z.dimensional==true          
 
-
 # test extracting a value from a GeoUnit array
 @test z[2,2] == 2.0
 
@@ -124,5 +123,28 @@ z[2,1]=3
 @test convert(GeoUnit, 10km/s).unit==km/s
 @test Base.convert(Float64,  GeoUnit(10.2)) == 10.2
 @test Base.convert(Float64,  GeoUnit([10.2 11.2])) == [10.2 11.2]
+
+
+# test various calculations (using arrays with and without units)
+#T       =   273K:10K:500K        # using units
+T       =   400.0K
+T_nd    =   10:10:200            # no units  
+α       =   GeoUnit(3e-5/K)
+T₀      =   GeoUnit(293K)
+ρ₀      =   GeoUnit(3300kg/m^3)
+
+ρ = ρ₀*GeoUnit(1.0 .- α*(T-T₀))  # The second expression is turned into a GeoUnit, so ρ should be GeoUnits
+
+
+
+# FEW DEBUGGING AND TESTS, mostly to determine the speed
+function f!(r,x,y)
+    r=x*y
+end
+# with which we can access values
+A = GeoUnit1(10.1);
+B = GeoUnit1(12.1);
+
+
 
 end

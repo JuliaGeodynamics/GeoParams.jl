@@ -61,9 +61,10 @@ or
 
 where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\\dot{\\varepsilon}_0``[1/s], and ``n`` the power law exponent []. 
 """
-@with_kw_noshow mutable struct LinearViscous <: AbstractCreepLaw
-    equation::LaTeXString   =   L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"     
-    η::GeoUnit            =   1e20Pa*s                # viscosity
+@with_kw_noshow mutable struct LinearViscous{T} <: AbstractCreepLaw where T
+   # equation::LaTeXString   =   L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"     
+    η::GeoUnit          =   1e20Pa*s                # viscosity
+    η_val::T            =   1.0
 end
 
 # Calculation routines for linear viscous rheologies

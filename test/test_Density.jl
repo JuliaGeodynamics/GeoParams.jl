@@ -7,15 +7,15 @@ CharUnits_GEO   =   GEO_units(viscosity=1e19, length=1000km);
                 
 # Define a linear viscous creep law
 x1      =   ConstantDensity(ρ=2900kg/m^3)
-@test x1.ρ.val == 2900kg/m^3
+@test x1.ρ.val == 2900
 
 Nondimensionalize!(x1,CharUnits_GEO)
 @test x1.ρ.val ≈ 2.9e-16
 
 
 x2      =   PT_Density()
-@test x2.α.val==3e-5/K
-@test x2.ρ0.val==2900kg/m^3
+@test x2.α.val==3e-5
+@test x2.ρ0.val==2900
 
 Nondimensionalize!(x2,CharUnits_GEO)
 @test x2.T0.val≈0.21454659702313156

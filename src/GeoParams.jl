@@ -21,6 +21,8 @@ export
         Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
         superscript, upreferred, GEO, SI, NONE, isDimensional, Value, NumValue, Unit, UnitValue, isdimensional,
         km, m, cm, mm, μm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW
+
+export AbstractGeoUnit1,   GeoUnit1  
    
 #         
 abstract type AbstractMaterialParam end                                    # structure that holds material parmeters (density, elasticity, viscosity)          
@@ -37,7 +39,6 @@ export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagram
 include("Units.jl")     
 using .Units
 
-#=
 # Define Material Parameter structure
 include("MaterialParameters.jl")
 using  .MaterialParameters
@@ -47,12 +48,6 @@ export MaterialParams, SetMaterialParams
 using  .MaterialParameters.PhaseDiagrams
 export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
 
-# Creep laws
-using  .MaterialParameters.CreepLaw
-export  ComputeCreepLaw_EpsII, ComputeCreepLaw_TauII, CreepLawVariables,
-        LinearViscous, PowerlawViscous, 
-        DislocationCreep, SetDislocationCreep
-
 # Density
 using  .MaterialParameters.Density
 export  ComputeDensity,                                # computational routines
@@ -61,11 +56,17 @@ export  ComputeDensity,                                # computational routines
         PT_Density,
         PhaseDiagram_LookupTable, Read_LaMEM_Perple_X_Diagram
 
+# Creep laws
+using  .MaterialParameters.CreepLaw
+export  ComputeCreepLaw_EpsII, ComputeCreepLaw_TauII, CreepLawVariables,
+        LinearViscous, PowerlawViscous, 
+        DislocationCreep, SetDislocationCreep
 
 # Gravitational Acceleration
 using  .MaterialParameters.GravitationalAcceleration
 export  ComputeGravity,                                # computational routines
         ConstantGravity
+
 
 # Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat         
 using .MaterialParameters.HeatCapacity
@@ -117,6 +118,6 @@ function __init__()
 end
 
 
-=#
+
 
 end # module

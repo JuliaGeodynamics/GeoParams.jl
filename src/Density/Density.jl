@@ -33,7 +33,7 @@ where ``\\rho`` is the density [``kg/m^3``].
 """
 @with_kw_noshow mutable struct ConstantDensity <: AbstractDensity
     equation::LaTeXString   =   L"\rho = cst"     
-    ρ::GeoUnit              =   2900kg/m^3                # density
+    ρ::GeoUnit              =   2900.0kg/m^3                # density
 end
 
 # Calculation routines
@@ -74,11 +74,11 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference temperature ``T_0`` a
 """
 @with_kw_noshow mutable struct PT_Density <: AbstractDensity
     equation::LaTeXString   =   L"\rho = \rho_0(1.0-\alpha (T-T_0) + \beta (P-P_0)"     
-    ρ0::GeoUnit             =   2900kg/m^3                  # density
+    ρ0::GeoUnit             =   2900.0kg/m^3                # density
     α::GeoUnit              =   3e-5/K                      # T-dependence of density
     β::GeoUnit              =   1e-9/Pa                     # P-dependence of density
-    T0::GeoUnit             =   0C                          # Reference temperature
-    P0::GeoUnit             =   0MPa                        # Reference pressure
+    T0::GeoUnit             =   0.0C                        # Reference temperature
+    P0::GeoUnit             =   0.0MPa                      # Reference pressure
 end
 
 # Calculation routine
