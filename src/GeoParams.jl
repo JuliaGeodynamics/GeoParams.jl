@@ -19,7 +19,7 @@ export
         @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
         GeoUnit, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
         Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
-        superscript, upreferred, GEO, SI, NONE, isDimensional, Value, NumValue, Unit, 
+        superscript, upreferred, GEO, SI, NONE, isDimensional, Value, NumValue, Unit, UnitValue, isdimensional,
         km, m, cm, mm, μm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW
    
 #         
@@ -37,6 +37,7 @@ export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagram
 include("Units.jl")     
 using .Units
 
+#=
 # Define Material Parameter structure
 include("MaterialParameters.jl")
 using  .MaterialParameters
@@ -115,5 +116,7 @@ function __init__()
         end
 end
 
+
+=#
 
 end # module
