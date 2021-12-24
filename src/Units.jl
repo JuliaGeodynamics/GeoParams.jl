@@ -71,13 +71,19 @@ struct NONE<: AbstractUnitType end
 abstract type AbstractGeoUnit1{T,D} <: Number end
 
 # The GeoUnit1 encodes dimensional info in the type info
-struct GeoUnit1{T,D,U} 
+struct GeoUnit1{T,D,U}
     val::T
 end
 GeoUnit1(val) = GeoUnit1{   typeof(ustrip.(val)),
                             isa(val[1], Unitful.Quantity), 
                             unit(val[1])
                             }( ustrip.(val) )
+
+# Define methods to deal with cases when the input has integers 
+GeoUnit1(val::Union{Int64, AbstractArray{Int64}}) = GeoUnit1(Float64.(val))
+GeoUnit1(val::Union{Int32, AbstractArray{Int32}}) = GeoUnit1(Float32.(val))
+GeoUnit1(val::Union{Quantity{Int64}, AbstractArray{<:Quantity{<:Int64}}}) = GeoUnit1(Float64.(val))
+GeoUnit1(val::Union{Quantity{Int32}, AbstractArray{<:Quantity{<:Int32}}}) = GeoUnit1(Float32.(val))
 
 # =====
 
@@ -488,7 +494,6 @@ function Nondimensionalize(param::GeoUnit, g::GeoUnits{TYPE}) where {TYPE}
 
 end
 
-
 function Nondimensionalize(param::Array, g::GeoUnits{TYPE}) where {TYPE}
     if  param[1] !=NoUnits
         dim         =   Unitful.dimension.(param);                   # Basic SI units
@@ -507,22 +512,21 @@ end
 
 ## Debugging; testing alternative way to define a GeoUnit and nondimensionalize it
 
-function Nondimensionalize(param::GeoUnit1{T,D,U}, g::GeoUnits{TYPE}) where {T,D,U,TYPE}
-    if D    # in case it is dimensional
-        dim         =   Unitful.dimension(U);                   # Basic SI units
-        char_val    =   1.0;
-        foreach((typeof(dim).parameters[1])) do y
-            val = upreferred(getproperty(g, Unitful.name(y)))       # Retrieve the characteristic value from structure g
-            pow = Float64(y.power)                                  # power by which it should be multiplied   
-            char_val *= val^pow                                     # multiply characteristic value
-        end
-        val_ND = upreferred.(param.val*U)/char_val
-        param_ND = GeoUnit1{T,false,U}(val_ND)                      # store new value, but keep original dimensions
-    else
-        param_ND = param # The parameter has no units, so there is no way to determine how to nondimensionize it 
+function Nondimensionalize(param::GeoUnit1{T,true,U}, g::GeoUnits{TYPE}) where {T,U,TYPE}
+    dim         =   Unitful.dimension(U);                   # Basic SI units
+    char_val    =   1.0;
+    foreach((typeof(dim).parameters[1])) do y
+        val = upreferred(getproperty(g, Unitful.name(y)))       # Retrieve the characteristic value from structure g
+        pow = Float64(y.power)                                  # power by which it should be multiplied   
+        char_val *= val^pow                                     # multiply characteristic value
     end
+    val_ND = upreferred.(param.val*U)/char_val
+    param_ND = GeoUnit1{T,false,U}(val_ND)                      # store new value, but keep original dimensions
     return param_ND
 end
+
+# in case the parameter is already non-dimensional:
+Nondimensionalize(param::GeoUnit1{T,false,U}, g::GeoUnits{TYPE}) where {T,U,TYPE} = param 
 
 ## 
 
@@ -573,6 +577,10 @@ function Nondimensionalize!(param::String, g::GeoUnits{TYPE}) where {TYPE}
     return nothing
 end
 
+function Nondimensionalize(param::String, g::GeoUnits{TYPE}) where {TYPE}
+    return param
+end
+
 function Nondimensionalize!(param::Array, g::GeoUnits{TYPE}) where {TYPE}
   
     if (param.unit != NoUnits) & isdimensional(param)
@@ -600,8 +608,8 @@ function Nondimensionalize!(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) 
     for param in fieldnames(typeof(MatParam))
         if isa(getfield(MatParam, param), GeoUnit)
             z=getfield(MatParam, param)
-            Nondimensionalize!(z, g)
-            setfield!(MatParam, param, z)
+            z_ND = Nondimensionalize(z, g)
+            setfield!(MatParam, param, z_ND)
         end
     end
 end
@@ -652,7 +660,7 @@ julia> v_dim     =   Dimensionalize(v_ND, cm/yr, CharUnits)
 """
 function Dimensionalize(param_ND, param_dim::Unitful.FreeUnits, g::GeoUnits{TYPE}) where {TYPE}
 
-    dim         =   Unitful.dimension(U);                   # Basic SI units
+    dim         =   Unitful.dimension(param_dim);                   # Basic SI units
     char_val    =   1.0;
     foreach((typeof(dim).parameters[1])) do y
         val = upreferred(getproperty(g, Unitful.name(y)))       # Retrieve the characteristic value from structure g
@@ -682,6 +690,8 @@ function Dimensionalize(param_ND::GeoUnit1{T,D,U}, g::GeoUnits{TYPE}) where {T,D
         param = GeoUnit1{T,true,U}(ustrip.(val))                      # store new value, but keep original dimensions
 
         return param
+    else
+        return param_ND
     end
 end
 

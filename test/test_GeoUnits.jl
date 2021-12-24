@@ -133,18 +133,50 @@ T_nd    =   10:10:200            # no units
 T₀      =   GeoUnit(293K)
 ρ₀      =   GeoUnit(3300kg/m^3)
 
-ρ = ρ₀*GeoUnit(1.0 .- α*(T-T₀))  # The second expression is turned into a GeoUnit, so ρ should be GeoUnits
+ρ = ρ₀*(1.0 .- α*(T-T₀))  # The second expression is turned into a GeoUnit, so ρ should be GeoUnits
 
 
 
 # FEW DEBUGGING AND TESTS, mostly to determine the speed
-function f!(r,x,y)
+using BenchmarkTools
+function f(x,y)
     r=x*y
 end
 # with which we can access values
 A = GeoUnit1(10.1);
 B = GeoUnit1(12.1);
 
+struct ConDensity
+    ρ::Float64
+end
 
+struct ConDensity1
+    test::String
+    ρ::GeoUnit1
+end
+
+struct ConDensity2 <: AbstractMaterialParam
+    test::String
+    ρ::GeoUnit 
+end
+
+mutable struct ConDensity4 <: AbstractMaterialParam
+    test::String
+    ρ::GeoUnit 
+end
+
+rho=ConDensity(3300.1)
+rho1=ConDensity1("t",GeoUnit1(3300.1kg/m^3))
+rho2=ConDensity2("t",3300.1kg/m^3)
+rho4=ConDensity4("t",3300.1kg/m^3)
+
+b = 20.1
+c = 10.1;
+r = 0.0
+#@show @btime f($b,$c)
+
+#@btime f($rho.ρ,$b)
+
+#64f(rho2.ρ, c)
 
 end
