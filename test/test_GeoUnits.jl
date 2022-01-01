@@ -7,33 +7,33 @@ using GeoParams
 # test GeoUnits
 a = GeoUnit(100km);
 @test a.val==100
-@test a.unit==km
-@test a.dimensional==true
+@test Unit(a)==km
+@test isdimensional(a)==true
 
 b = GeoUnit(100);
 @test b.val==100
-@test b.unit==NoUnits
-@test b.dimensional==false
+@test Unit(b)==NoUnits
+@test isdimensional(b)==false
 
 a = GeoUnit(100km:10km:200km);
 @test a.val==100:10:200
-@test a.unit==km
-@test a.dimensional==true
+@test Unit(a)==km
+@test isdimensional(a)==true
 
 b = GeoUnit(100:10:200);
 @test b.val==100:10:200
-@test b.unit==NoUnits
-@test b.dimensional==false
+@test Unit(b)==NoUnits
+@test isdimensional(b)==false
 
 a = GeoUnit([100km 200km; 300km 400km]);
 @test a.val==[100 200; 300 400]
-@test a.unit==km
-@test a.dimensional==true
+@test Unit(a)==km
+@test isdimensional(a)==true
 
 b = GeoUnit([100.0 200; 300 400]);
 @test b.val==[100.0 200.0; 300.0 400.0]
-@test b.unit==NoUnits
-@test b.dimensional==false
+@test Unit(b)==NoUnits
+@test isdimensional(b)==false
 
 # test creating structures
 CharUnits_GEO   =   GEO_units(viscosity=1e19, length=1000km);
@@ -74,18 +74,17 @@ A = (1.58*10^(-25))*Pa^(-4.2)*s^(-1)        # calcite
 R=8.314u"J/mol/K"
 @test Nondimensionalize(R,CharUnits_SI)  ≈ 8.314e-7
 
-# test Dimensionalize
+# test Dimensionalize in case we provide a number and units
 v_ND      =   Nondimensionalize(3cm/yr, CharUnits_GEO); 
 @test Dimensionalize(v_ND, cm/yr, CharUnits_GEO) == 3.0cm/yr
 
 # Test the GeoUnit struct
 x=GeoUnit(8.1cm/yr)
 @test  x.val==8.1
-Nondimensionalize!(x,CharUnits_GEO)
-@test  x.val≈ 0.002566735112936345 rtol=1e-8        # Nondimensionalize a single value
-Dimensionalize!(x,CharUnits_GEO)
-@test  x.val==8.1                              # Dimensionalize again
-
+x_ND  = Nondimensionalize(x,CharUnits_GEO)
+@test  x_ND ≈ 0.002566735112936345 rtol=1e-8        # Nondimensionalize a single value
+x_dim = Dimensionalize(x,CharUnits_GEO)
+@test  x_dim.val == 8.1                              # Dimensionalize again
 
 y   =   x+2cm/yr
 @test  y.val==10.1                            # errors
@@ -98,31 +97,31 @@ yy=xx/(1cm/yr);                                         # transfer to no-unt
 z=GeoUnit([100.0km 1000km 11km; 10km 2km 1km]);       # array
 @test z/1km*1.0 == [100.0 1000.0 11.0; 10.0 2.0 1.0]    # The division by 1km transfer it to a GeoUnit structure with no units; the multiplying with a float creates a float array
 
-zz = GeoUnit([1:10]km)
+zz = GeoUnit((1:10)km)
 
 
 # Test non-dimensionalisation if z is an array
-Nondimensionalize!(z,CharUnits_GEO)
-@test z.val==[0.1   1.0    0.011; 0.01  0.002  0.001]
-@test z.dimensional==false          
+z_ND = Nondimensionalize(z,CharUnits_GEO)
+@test z_ND.val==[0.1   1.0    0.011; 0.01  0.002  0.001]
+@test isdimensional(z_ND)==false          
 
-Dimensionalize!(z,CharUnits_GEO)
-@test z.val==[100 1000 11; 10 2 1]          # transform back
-@test z.dimensional==true          
+z_D = Dimensionalize(z_ND,CharUnits_GEO)
+@test z_D.val==[100 1000 11; 10 2 1]          # transform back
+@test isdimensional(z_D)==true           
 
 # test extracting a value from a GeoUnit array
-@test z[2,2] == 2.0
+@test NumValue(z_D[2,2]) == 2.0
 
 # test setting a new value 
-z[2,1]=3
-@test z[2,1] == 3.0
+z_D[2,1]=3
+@test z_D[2,1].val == 3.0
 
 # Conversion to different units
 @test convert(GeoUnit,Float64(10.1)).val==10.1
 @test convert(GeoUnit,10.1:.1:20).val == 10.1:.1:20
-@test convert(GeoUnit, 10km/s).unit==km/s
-@test Base.convert(Float64,  GeoUnit(10.2)) == 10.2
-@test Base.convert(Float64,  GeoUnit([10.2 11.2])) == [10.2 11.2]
+@test Unit(convert(GeoUnit, 10km/s))==km/s
+@test convert(Float64,  GeoUnit(10.2)) == 10.2
+@test convert(Float64,  GeoUnit([10.2 11.2])) == [10.2 11.2]
 
 
 # test various calculations (using arrays with and without units)
@@ -143,8 +142,8 @@ function f(x,y)
     r=x*y
 end
 # with which we can access values
-A = GeoUnit1(10.1);
-B = GeoUnit1(12.1);
+A = GeoUnit(10.1);
+B = GeoUnit(12.1);
 
 struct ConDensity
     ρ::Float64
@@ -152,7 +151,7 @@ end
 
 struct ConDensity1
     test::String
-    ρ::GeoUnit1
+    ρ::GeoUnit
 end
 
 struct ConDensity2 <: AbstractMaterialParam
@@ -166,7 +165,7 @@ mutable struct ConDensity4 <: AbstractMaterialParam
 end
 
 rho=ConDensity(3300.1)
-rho1=ConDensity1("t",GeoUnit1(3300.1kg/m^3))
+rho1=ConDensity1("t",GeoUnit(3300.1kg/m^3))
 rho2=ConDensity2("t",3300.1kg/m^3)
 rho4=ConDensity4("t",3300.1kg/m^3)
 
