@@ -5,6 +5,7 @@ module Units
 using Unitful
 import Unitful: superscript
 using Parameters
+using Setfield # allows modifying fields in immutable struct
 
 import Base.show, Base.isapprox, Base.isequal
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct, PerpleX_LaMEM_Diagram
@@ -66,11 +67,7 @@ struct SI  <: AbstractUnitType end
 struct NONE<: AbstractUnitType end
 
 
-# ====
-# DEBUGGING, TO BE REMOVED
-#abstract type AbstractGeoUnit{T,D} <: Number end
-
-# The GeoUnit1 encodes dimensional info in the type info
+# The GeoUnit struct encodes dimensional info in the type info
 """
     Structure that holds a GeoUnit parameter, and encodes the units and whether it is dimensional or not in the name.
 
@@ -79,13 +76,17 @@ struct NONE<: AbstractUnitType end
 
 
 """
-struct GeoUnit{T,U,D}
+struct GeoUnit{T,U}
     val::T
+    isdimensional::Bool
 end
-GeoUnit(val) = GeoUnit{   typeof(ustrip.(val)),
-                          unit(val[1]),
-                          isa(val[1], Union{Unitful.FreeUnits, Unitful.Quantity})
-                            }( ustrip.(val) )
+
+GeoUnit(val) = GeoUnit{typeof(ustrip.(val)), unit(val[1])}(  ustrip.(val),
+                           isa(val[1], Union{Unitful.FreeUnits, Unitful.Quantity} ) )
+
+convert(t::Type{GeoUnit{T,U}}, x::GeoUnit)  where {T,U} =  (t(x.val,x.isdimensional), unit(x.val[1]))
+convert(t::Type{GeoUnit{T,U}}, x::Quantity) where {T,U} =  GeoUnit{T,unit(x)}(ustrip(x), true)
+
 
 # Define methods to deal with cases when the input has integers 
 GeoUnit(val::Union{Int64, AbstractArray{Int64}}) = GeoUnit(Float64.(val))
@@ -93,13 +94,17 @@ GeoUnit(val::Union{Int32, AbstractArray{Int32}}) = GeoUnit(Float32.(val))
 GeoUnit(val::Union{Quantity{Int64}, AbstractArray{<:Quantity{<:Int64}}}) = GeoUnit(Float64.(val))
 GeoUnit(val::Union{Quantity{Int32}, AbstractArray{<:Quantity{<:Int32}}}) = GeoUnit(Float32.(val))
 
-
 # helper functions
-Unit(v::GeoUnit{T,U,D}) where {T,U,D} = U
-isdimensional(v::GeoUnit{T,U,D})  where {T,U,D}  =   D                       # is it a nondimensional number or not?
-NumValue(v::GeoUnit)                             =   v.val                   # numeric value, with no units
-UnitValue(v::GeoUnit{T,U,true})   where {T,U}    =   v.val*U                 # returns value with units
-UnitValue(v::GeoUnit{T,U,false})  where {T,U}    =   v.val                   # returns value
+Unit(v::GeoUnit{T,U}) where {T,U} = U
+isdimensional(v::GeoUnit{T,U})  where {T,U}  =   v.isdimensional         # is it a nondimensional number or not?
+NumValue(v::GeoUnit)                         =   v.val                   # numeric value, with no units
+function UnitValue(v::GeoUnit{T,U})   where {T,U}
+    if v.isdimensional
+        return v.val*U                 # returns value with units
+    else
+        return v.val
+    end
+end
 
 Base.isapprox(x::GeoUnit, y::Number; kwargs...) = Base.isapprox(x.val, y; kwargs...)
 Base.isequal(x::GeoUnit,  y::Number) = Base.isequal(x.val, y)
@@ -167,14 +172,20 @@ Base.convert(::Type{GeoUnit},  v::AbstractArray)    =   GeoUnit(v)
 Base.convert(::Type{GeoUnit},  v::AbstractArray{Int32}) =   GeoUnit(ustrip.(Float32.(v))*unit(v[1])) 
 Base.convert(::Type{GeoUnit},  v::AbstractArray{Int64}) =   GeoUnit(ustrip.(Float64.(v))*unit(v[1])) 
 
-function Base.show(io::IO, x::GeoUnit{T,U,D})  where {T,U,D} # output
+Base.convert(::Type{GeoUnit{T,U}},  v::Quantity{T,A,B})  where {T,U,A,B}    =   GeoUnit(v) 
+Base.convert(::Type{GeoUnit{T,U}},  v::Quantity)  where {T,U}    =   GeoUnit(v, ) 
+
+
+
+Base.promote_rule(::Type{GeoUnit}, ::Type{Quantity}) = GeoUnit
+
+function Base.show(io::IO, x::GeoUnit{T,U})  where {T,U} # output
     val = x.val
-    if D
-        println("GeoUnit{dimensional, $U}:")
+    if x.isdimensional == true
+        println("GeoUnit{dimensional, $U}, ")
     else    
-        println("GeoUnit{nondimensional, $U}:")
+        println("GeoUnit{nondimensional, $U}, ")
     end
-    print(" ")
     show(io, MIME("text/plain"), val)
 end
 
@@ -194,11 +205,11 @@ Base.:/(x::Number, y::GeoUnit)  = x/y.val
 Base.:-(x::Number, y::GeoUnit)  = x-y.val
 
 # Multiplying a GeoUnit with another one, returns a GeoUnit
-Base.:+(x::GeoUnit{T1,U1,D1}, y::GeoUnit{T2,U2,D2}) where {T1,T2,U1,U2,D1,D2} = GeoUnit(x.val*U1 + y.val*U2) 
-Base.:/(x::GeoUnit{T1,U1,D1}, y::GeoUnit{T2,U2,D2}) where {T1,T2,U1,U2,D1,D2} = GeoUnit(x.val*U1 / y.val*U2) 
-Base.:*(x::GeoUnit{T1,U1,D1}, y::GeoUnit{T2,U2,D2}) where {T1,T2,U1,U2,D1,D2} = GeoUnit(x.val*U1 * y.val*U2) 
-Base.:-(x::GeoUnit{T1,U1,D1}, y::GeoUnit{T2,U2,D2}) where {T1,T2,U1,U2,D1,D2} = GeoUnit(x.val*U1 - y.val*U2) 
-Base.:^(x::GeoUnit{T1,U1,D1}, y::GeoUnit{T2,U2,D2}) where {T1,T2,U1,U2,D1,D2} = GeoUnit(x.val*U1^(y.val*U2)) 
+Base.:+(x::GeoUnit{T1,U1}, y::GeoUnit{T2,U2}) where {T1,T2,U1,U2} = GeoUnit(x.val*U1 + y.val*U2) 
+Base.:/(x::GeoUnit{T1,U1}, y::GeoUnit{T2,U2}) where {T1,T2,U1,U2} = GeoUnit( (x.val*U1) / (y.val*U2) ) 
+Base.:*(x::GeoUnit{T1,U1}, y::GeoUnit{T2,U2}) where {T1,T2,U1,U2} = GeoUnit(x.val*U1 * y.val*U2)  
+Base.:-(x::GeoUnit{T1,U1}, y::GeoUnit{T2,U2}) where {T1,T2,U1,U2} = GeoUnit(x.val*U1 - y.val*U2) 
+Base.:^(x::GeoUnit{T1,U1}, y::GeoUnit{T2,U2}) where {T1,T2,U1,U2} = GeoUnit(x.val*U1^(y.val*U2)) 
 
 Base.:*(x::GeoUnit, y::Quantity)   = UnitValue(x).*y
 Base.:/(x::GeoUnit, y::Quantity)   = UnitValue(x)./y
@@ -211,16 +222,15 @@ Base.:+(x::Quantity, y::GeoUnit)   = x .+ UnitValue(y)
 Base.:-(x::Quantity, y::GeoUnit)   = x .- UnitValue(y) 
 
 # If we multiply a GeoUnit with an abstract array, we only return values, not units (use GeoUnits for that)
-Base.:*(x::GeoUnit, y::AbstractArray)   = UnitValue(x).*y
-Base.:/(x::GeoUnit, y::AbstractArray)   = UnitValue(x)./y
-Base.:+(x::GeoUnit, y::AbstractArray)   = UnitValue(x).+y
-Base.:-(x::GeoUnit, y::AbstractArray)   = UnitValue(x).-y
+Base.:*(x::GeoUnit, y::AbstractArray)   = NumValue(x).*y 
+Base.:/(x::GeoUnit, y::AbstractArray)   = NumValue(x) ./y 
+Base.:+(x::GeoUnit, y::AbstractArray)   = NumValue(x) .+ y 
+Base.:-(x::GeoUnit, y::AbstractArray)   = NumValue(x) .-y
 
-Base.:*(y::AbstractArray, x::GeoUnit)   = UnitValue(x).*y
-Base.:/(y::AbstractArray, x::GeoUnit)   = y./UnitValue(x)./y
-Base.:+(y::AbstractArray, x::GeoUnit)   = UnitValue(x) .+ y
-Base.:-(y::AbstractArray, x::GeoUnit)   = y .- UnitValue(x)
-
+Base.:*(y::AbstractArray, x::GeoUnit)   = NumValue(x).*y
+Base.:/(y::AbstractArray, x::GeoUnit)   = y./NumValue(x)
+Base.:+(y::AbstractArray, x::GeoUnit)   = NumValue(x) .+ y
+Base.:-(y::AbstractArray, x::GeoUnit)   = y .- NumValue(x)
 
 
 #=
@@ -252,13 +262,13 @@ Base.:+(x::Array, y::GeoUnit)   = GeoUnit(x +y.val, y.unit)
 Base.:-(x::Array, y::GeoUnit)   = GeoUnit(x -y.val, y.unit)
 =#
 
-Base.getindex(x::GeoUnit{T,U,D}, i::Int64, j::Int64, k::Int64) where {T,U,D} = GeoUnit(x.val[i,j,k]*U)
-Base.getindex(x::GeoUnit{T,U,D}, i::Int64, j::Int64) where {T,U,D} = GeoUnit(x.val[i,j]*U)
-Base.getindex(x::GeoUnit{T,U,D}, i::Int64) where {T,U,D} = GeoUnit(x.val[i]*U)
+Base.getindex(x::GeoUnit{T,U}, i::Int64, j::Int64, k::Int64) where {T,U} = GeoUnit(x.val[i,j,k]*U)
+Base.getindex(x::GeoUnit{T,U}, i::Int64, j::Int64) where {T,U} = GeoUnit(x.val[i,j]*U)
+Base.getindex(x::GeoUnit{T,U}, i::Int64) where {T,U} = GeoUnit(x.val[i]*U)
 
-Base.setindex!(x::GeoUnit{T,U,D}, v::Any, i::Int64, j::Int64, k::Int64)  where {T,U,D} = x.val[i,j,k] = v
-Base.setindex!(x::GeoUnit{T,U,D}, v::Any, i::Int64, j::Int64)  where {T,U,D} = x.val[i,j] = v
-Base.setindex!(x::GeoUnit{T,U,D}, v::Any, i::Int64) where {T,U,D}  = x.val[i] = v
+Base.setindex!(x::GeoUnit{T,U}, v::Any, i::Int64, j::Int64, k::Int64)  where {T,U} = x.val[i,j,k] = v
+Base.setindex!(x::GeoUnit{T,U}, v::Any, i::Int64, j::Int64)  where {T,U} = x.val[i,j] = v
+Base.setindex!(x::GeoUnit{T,U}, v::Any, i::Int64) where {T,U}  = x.val[i] = v
 
 """
     GeoUnits
@@ -480,21 +490,26 @@ julia> upreferred(A)
 3.1574795718518295e-20 m³·⁰⁵ s⁵·¹ kg⁻³·⁰⁵
 ```
 """
-function Nondimensionalize(param::GeoUnit{T,U,true}, g::GeoUnits{TYPE}) where {T,U,TYPE}
-    dim         =   Unitful.dimension(U);                   # Basic SI units
-    char_val    =   1.0;
-    foreach((typeof(dim).parameters[1])) do y
-        val = upreferred(getproperty(g, Unitful.name(y)))       # Retrieve the characteristic value from structure g
-        pow = Float64(y.power)                                  # power by which it should be multiplied   
-        char_val *= val^pow                                     # multiply characteristic value
+function Nondimensionalize(param::GeoUnit{T,U}, g::GeoUnits{TYPE}) where {T,U,TYPE}
+    if param.isdimensional
+        dim         =   Unitful.dimension(U);                   # Basic SI units
+        char_val    =   1.0;
+        foreach((typeof(dim).parameters[1])) do y
+            val = upreferred(getproperty(g, Unitful.name(y)))       # Retrieve the characteristic value from structure g
+            pow = Float64(y.power)                                  # power by which it should be multiplied   
+            char_val *= val^pow                                     # multiply characteristic value
+        end
+        val_ND = upreferred.(param.val*U)/char_val
+        param_ND = GeoUnit{T,U}(val_ND, false)                      # store new value, but keep original dimensions
+    else
+        param_ND = param;
     end
-    val_ND = upreferred.(param.val*U)/char_val
-    param_ND = GeoUnit{T,U,false}(val_ND)                      # store new value, but keep original dimensions
     return param_ND
 end
 
 # in case the parameter is already non-dimensional:
-Nondimensionalize(param::GeoUnit{T,U,false}, g::GeoUnits{TYPE}) where {T,U,TYPE} = param 
+#Nondimensionalize(param::GeoUnit{T,U,false}, g::GeoUnits{TYPE}) where {T,U,TYPE} = param 
+Nondimensionalize(param::String, g::GeoUnits{TYPE}) where {TYPE} = param 
 
 # in case it is a uniful quantity
 function Nondimensionalize(param::Union{Unitful.Quantity, AbstractArray{<:Quantity}}, g::GeoUnits{TYPE}) where {T,U,TYPE} 
@@ -599,7 +614,6 @@ function Nondimensionalize!(param::GeoUnit{T,U,true}, g::GeoUnits{TYPE}) where {
         end
         param.val = upreferred.(param.val*U)/char_val;
 end
-=#
 
 
 function Nondimensionalize!(param::String, g::GeoUnits{TYPE}) where {TYPE}
@@ -610,6 +624,7 @@ end
 function Nondimensionalize(param::String, g::GeoUnits{TYPE}) where {TYPE}
     return param
 end
+=#
 
 #=
 # TO BE FIXED OR REMOVED!
@@ -632,19 +647,25 @@ end
 =#
 
 """
-    Nondimensionalize!(MatParam::AbstractMaterialParam, CharUnits::GeoUnits{TYPE})
+    MatParam_ND = Nondimensionalize(MatParam::AbstractMaterialParam, CharUnits::GeoUnits{TYPE})
 
 Non-dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
 
 """
-function Nondimensionalize!(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE} 
+function Nondimensionalize(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE} 
     for param in fieldnames(typeof(MatParam))
         if isa(getfield(MatParam, param), GeoUnit)
             z=getfield(MatParam, param)
-            z_ND = Nondimensionalize(z, g)
-            setfield!(MatParam, param, z_ND)
+            
+            # non-dimensionalize:
+            z = Nondimensionalize(z, g)  
+            
+            # Replace field (using Setfield package):
+            MatParam = set(MatParam, Setfield.PropertyLens{param}(), z)
+        
         end
     end
+    return MatParam 
 end
     
 """
@@ -691,8 +712,8 @@ julia> v_dim     =   Dimensionalize(v_ND, cm/yr, CharUnits)
 ```
 
 """
-function Dimensionalize(param_ND::GeoUnit{T,U,D}, g::GeoUnits{TYPE}) where {T,U,D,TYPE}
-    if D==false
+function Dimensionalize(param_ND::GeoUnit{T,U}, g::GeoUnits{TYPE}) where {T,U,TYPE}
+    if isdimensional(param_ND)==false
         dim         =   Unitful.dimension(U);                   # Basic SI units
         char_val    =   1.0;
         foreach((typeof(dim).parameters[1])) do y
@@ -701,7 +722,7 @@ function Dimensionalize(param_ND::GeoUnit{T,U,D}, g::GeoUnits{TYPE}) where {T,U,
             char_val *= val^pow                                     # multiply characteristic value
         end
         val = uconvert.(U, param_ND.val*char_val)
-        param = GeoUnit{T,U,true}(ustrip.(val))                      # store new value, but keep original dimensions
+        param = GeoUnit{T,U}(ustrip.(val), true)                      # store new value, but keep original dimensions
 
         return param
     else
@@ -733,6 +754,7 @@ end
 
 ## 
 
+#=
 """
     Dimensionalize!(param::GeoUnit, CharUnits::GeoUnits{TYPE})
 
@@ -821,6 +843,7 @@ function Dimensionalize!(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TY
     phase_mat.Nondimensional = false
 
 end
+=#
 
 # Define a view for the GEO_Units structure
 function show(io::IO, g::GeoUnits{TYPE})  where {TYPE}

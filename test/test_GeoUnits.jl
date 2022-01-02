@@ -1,6 +1,7 @@
 # Tests the GeoUnits
 using Test
 using GeoParams
+#using Parameters
 
 @testset "Units" begin
 
@@ -126,56 +127,237 @@ z_D[2,1]=3
 
 # test various calculations (using arrays with and without units)
 #T       =   273K:10K:500K        # using units
-T       =   400.0K
+T       =   400.0K               # Unitful quanity
 T_nd    =   10:10:200            # no units  
 α       =   GeoUnit(3e-5/K)
 T₀      =   GeoUnit(293K)
 ρ₀      =   GeoUnit(3300kg/m^3)
 
-ρ = ρ₀*(1.0 .- α*(T-T₀))  # The second expression is turned into a GeoUnit, so ρ should be GeoUnits
+T_geo   =   GeoUnit(400K)
+T_f = 400
 
+# Calculations with two GeoUnits
+t = T_geo+T₀
+@test isa(t, GeoUnit)    # addition
+@test Unit(t) == K
+@test t ≈ 693.0
+
+t = T_geo-T₀
+@test isa(t, GeoUnit)    # subtraction
+@test t ≈ 107
+@test Unit(t) == K
+
+t = T_geo*T₀
+@test isa(t, GeoUnit)    # multiplication
+@test t ≈ 117200.0
+@test Unit(t) == K^2
+
+t = T_geo/T₀
+@test isa(t, GeoUnit)    # division
+@test t ≈ 1.3651877133105803
+@test Unit(t) == NoUnits
+
+# Case in which one of them is a Unitful quantity 
+t = T+T₀
+@test isa(t, Quantity)    # addition
+@test t==693K
+
+t = T-T₀
+@test isa(t, Quantity)    # subtraction
+@test t ≈ 107K
+
+t = T*T₀
+@test isa(t, Quantity)    # multiplication
+@test t ≈ 117200.0K^2
+
+t = T/T₀
+@test isa(t, Float64)    # division
+@test t ≈ 1.3651877133105803
+
+# case in which one of them is a Float
+t = T_f+T₀
+@test isa(t, Float64)    # addition
+@test t==693
+
+t = T_f-T₀
+@test isa(t, Float64)    # subtraction
+@test t ≈ 107
+
+t = T_f*T₀
+@test isa(t, Float64)    # multiplication
+@test t ≈ 117200.0
+
+t = T_f/T₀
+@test isa(t, Float64)    # division
+@test t ≈ 1.3651877133105803
+
+
+# case in which one of them is a Float
+t = T_nd+T₀
+@test isa(t, AbstractArray)    # addition
+@test t==303.0:10.0:493.0
+
+t = T_nd-T₀
+@test isa(t, AbstractArray)    # subtraction
+@test t == -283.0:10.0:-93.0
+
+t = T_nd*T₀
+@test isa(t, AbstractArray)    # multiplication
+@test t == 2930.0:2930.0:58600.0
+
+t = T_nd/T₀
+@test isa(t, AbstractArray)    # division
+@test t ≈ 0.034129692832764506:0.034129692832764506:0.6825938566552902
+
+
+ρ = ρ₀*(1.0 .- α*(T-T₀))  # The second expression is turned into a GeoUnit, so ρ should be GeoUnits
+@test ρ ≈ 3289.4069999999997
+
+ρ = ρ₀*(1.0 .- α*(T_nd-T₀))  # The second expression is turned into a GeoUnit, so ρ should be GeoUnits
+@test ρ ≈ 3328.017:-0.99:3309.207
+
+
+# test conversion:
+b = convert(typeof(GeoUnit{Float64, kg/m^3}), 3300.1kg/m^3)
 
 
 # FEW DEBUGGING AND TESTS, mostly to determine the speed
-using BenchmarkTools
 function f(x,y)
-    r=x*y
+    r=0
+    for i=1:1000
+        r+= x*y
+    end
+    return r
 end
-# with which we can access values
-A = GeoUnit(10.1);
-B = GeoUnit(12.1);
 
+
+
+
+# Different structures
 struct ConDensity
     ρ::Float64
 end
 
-struct ConDensity1
+# Define struct with types and dimensions
+struct ConDensity1{T,U1,U2} <: AbstractMaterialParam  # no allocations
     test::String
-    ρ::GeoUnit
+    ρ::GeoUnit{T,U1}
+    v::GeoUnit{T,U2}
 end
 
 struct ConDensity2 <: AbstractMaterialParam
     test::String
     ρ::GeoUnit 
+    v::GeoUnit
 end
 
-mutable struct ConDensity4 <: AbstractMaterialParam
+mutable struct ConDensity3 <: AbstractMaterialParam
     test::String
     ρ::GeoUnit 
 end
 
-rho=ConDensity(3300.1)
-rho1=ConDensity1("t",GeoUnit(3300.1kg/m^3))
-rho2=ConDensity2("t",3300.1kg/m^3)
-rho4=ConDensity4("t",3300.1kg/m^3)
+mutable struct ConDensity4{T,U1,U2} <: AbstractMaterialParam  # no allocations
+    test::String
+    ρ::GeoUnit{T,U1}
+    v::GeoUnit{T,U2}
+end
+
+using Parameters
+# use keywords
+@with_kw struct ConDensity5 <: AbstractMaterialParam
+    test::String =""
+    ρ::GeoUnit = GeoUnit(3300.1kg/m^3)
+    v::GeoUnit = GeoUnit(100/s)
+end
+
+Base.@kwdef struct ConDensity6 <: AbstractMaterialParam
+    test::String = ""
+    ρ::GeoUnit = GeoUnit(3300.1kg/m^3)
+    v::GeoUnit = GeoUnit(100/s)
+end
+
+Base.@kwdef struct ConDensity6b{T} <: AbstractMaterialParam
+    test::String = ""
+    ρ::GeoUnit{T,kg/m^3} = 3300.1kg/m^3
+    v::GeoUnit{T,s^-1} = 100/s
+end
+
+Base.@kwdef struct ConDensity6g <: AbstractMaterialParam
+    test::String = ""
+    ρ::GeoUnit = 3300.1kg/m^3
+    v::GeoUnit = 100/s
+end
+
+Base.@kwdef struct ConDensity7{T} <: AbstractMaterialParam
+    test::String =""
+    ρ::GeoUnit{T,kg/m^3} = GeoUnit(3300.1kg/m^3)
+    v::GeoUnit{T,s^-1}   = GeoUnit(100/s)
+end
+
+# This seems to work:
+Base.@kwdef struct ConDensity8 <: AbstractMaterialParam
+    test::String =""
+    ρ::GeoUnit{Float64,kg/m^3} = 3300.1kg/m^3
+    v::GeoUnit{Float64,s^-1}   = 100/s
+end
+
+# This works too:
+Base.@kwdef struct ConDensity9{T} <: AbstractMaterialParam
+    test::String =""
+    ρ::GeoUnit{T,kg/m^3} = 3300.1kg/m^3
+    v::GeoUnit{T,s^-1}   = 100/s
+end
+ConDensity9(t,a...) = ConDensity9{typeof(ustrip(a[1].val))}(t,a...)
+
+
+rho  = ConDensity(3300.1)
+rho1 = ConDensity1("t",GeoUnit(3300.1kg/m^3), GeoUnit(100/s))
+rho2 = ConDensity2("t",3300.1kg/m^3, GeoUnit(100km/s))
+rho3 = ConDensity3("t",3300.1kg/m^3)
+rho4 = ConDensity4("t",GeoUnit(3300.1kg/m^3), GeoUnit(100/s))
+rho5 = ConDensity5(test="t")
+rho6 = ConDensity6("t",GeoUnit(3300.1kg/m^3), GeoUnit(100/s))
+rho7 = ConDensity7()
+rho8 = ConDensity8()
+rho9 = ConDensity9{Float64}()
+rho9 = ConDensity9()
+
+
+
+
+
+# test automatic nondimensionalization of a MaterialsParam struct:
+CD = GEO_units()
+rho2_ND = Nondimensionalize(rho2, CD)
+@test rho2_ND.ρ ≈ 3.3000999999999995e-18
+@test rho2_ND.v ≈ 9.999999999999999e11
+
+
 
 b = 20.1
 c = 10.1;
 r = 0.0
-#@show @btime f($b,$c)
+using BenchmarkTools
 
-#@btime f($rho.ρ,$b)
+# Simple function to test speed
+function f!(r,x,y)
+    for i=1:1000
+        r += x.ρ * y
+    end
+    r 
+end
 
-#64f(rho2.ρ, c)
+# testing speed (# of allocs)
+r = 0.0
+@btime f!($r, $rho,  $c)    # 1 allocations
+@btime f!($r, $rho1, $c)    # 1 allocation
+@btime f!($r, $rho2, $c)    # 3001 allocations
+@btime f!($r, $rho3, $c)    # 3001 allocations
+@btime f!($r, $rho4, $c)    # 1 allocation
+@btime f!($r, $rho5, $c)    # 3001 allocation
+@btime f!($r, $rho6, $c)    # 1 allocation (so also with keywords, it is crucial to indicate the type)
+@btime f!($r, $rho7, $c)    # 1 allocation (shows that we need to encode the units)
+@btime f!($r, $rho8, $c)    # 1 allocation (shows that we need to encode the units)
+@btime f!($r, $rho9, $c)    # 1 allocation (shows that we need to encode the units)
 
 end
