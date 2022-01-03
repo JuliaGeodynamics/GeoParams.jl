@@ -214,19 +214,19 @@ t = T_nd/T₀
 # case in which one of them is an array with Quantities
 t = T_vec+T₀
 @test isa(t, AbstractArray)    # addition
-@test t==303.0:10.0:493.0
+@test t==(566.0:10.0:786.0)K
 
-t = T_nd-T₀
+t = T_vec-T₀
 @test isa(t, AbstractArray)    # subtraction
-@test t == -283.0:10.0:-93.0
+@test t == (-20.0:10.0:200.0)K
 
-t = T_nd*T₀
+t = T_vec*T₀
 @test isa(t, AbstractArray)    # multiplication
-@test t == 2930.0:2930.0:58600.0
+@test t == (79989.0:2930.0:144449.0)*K^2
 
-t = T_nd/T₀
+t = T_vec/T₀
 @test isa(t, AbstractArray)    # division
-@test t ≈ 0.034129692832764506:0.034129692832764506:0.6825938566552902
+@test t ≈ 0.931740614334471:0.034129692832764506:1.68259385665529
 
 
 ρ = ρ₀*(1.0 .- α*(T-T₀))  # The second expression is turned into a GeoUnit, so ρ should be GeoUnits

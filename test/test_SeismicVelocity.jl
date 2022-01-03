@@ -10,7 +10,7 @@ x1      =   ConstantSeismicVelocity(Vp=8.05km/s, Vs=3.5km/s)
 @test  Value(x1.Vp)==8.05km/s
 @test  Value(x1.Vs)==3.5km/s
 
-Nondimensionalize!(x1,CharUnits_GEO)
+x1 = Nondimensionalize(x1,CharUnits_GEO)
 @test NumValue(x1.Vp) ≈ 8.050000000000001e9
 @test NumValue(x1.Vs) ≈ 3.5e9
 
