@@ -478,7 +478,7 @@ end
 
 Nondimensionalizes all fields within the Material Parameters structure that contain material parameters
 """
-function Nondimensionalize!(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TYPE}) where {TYPE} 
+function Nondimensionalize(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TYPE}) where {TYPE} 
 
     for param in fieldnames(typeof(phase_mat))
         fld = getfield(phase_mat, param)
@@ -488,19 +488,25 @@ function Nondimensionalize!(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits
                 # in case we employ a phase diagram 
                 temp = PerpleX_LaMEM_Diagram(fld[1].Name, CharDim = g)
                 fld_new = (temp,)
-                setfield!(phase_mat, param, fld_new)
+                #setfield!(phase_mat, param, fld_new)
+                phase_mat = set(phase_mat, Setfield.PropertyLens{param}(), fld_new)
+        
             else
                 # otherwise non-dimensionalize all fields and create a new tuple
                 id = findall(isa.(fld,AbstractMaterialParam))
                 if length(id)>0
                     # Create a new tuple with non-dimensionalized fields:
                     fld_new = ntuple(i -> Units.Nondimensionalize(fld[id[i]],g), length(id) )
-                    setfield!(phase_mat, param, fld_new)        # to be changed for immutable struct
+#                    setfield!(phase_mat, param, fld_new)        # to be changed for immutable struct
+                    phase_mat = set(phase_mat, Setfield.PropertyLens{param}(), fld_new)
+
                 end
             end
         end
     end
-    phase_mat.Nondimensional = true
+    # phase_mat.Nondimensional = true
+    phase_mat = set(phase_mat, Setfield.PropertyLens{:Nondimensional}(), true)
+    return phase_mat
 end
 
 """
@@ -573,11 +579,11 @@ end
 
 
 """
-    Dimensionalize!(phase_mat::MaterialParams, g::GeoUnits{TYPE})
+    Dimensionalize(phase_mat::MaterialParams, g::GeoUnits{TYPE})
 
 Dimensionalizes all fields within the Material Parameters structure that contain material parameters
 """
-function Dimensionalize!(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TYPE}) where {TYPE} 
+function Dimensionalize(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TYPE}) where {TYPE} 
 
     for param in fieldnames(typeof(phase_mat))
         fld = getfield(phase_mat, param)
@@ -588,12 +594,15 @@ function Dimensionalize!(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TY
                 fld_new = ntuple(i -> Units.Dimensionalize(fld[id[i]],g), length(id) )
               
 
-                setfield!(phase_mat, param, fld_new)        # to be changed for immutable struct
-               # phase_mat = set(phase_mat, Setfield.PropertyLens{param}(), fld_new)
+               # setfield!(phase_mat, param, fld_new)        # to be changed for immutable struct
+                phase_mat = set(phase_mat, Setfield.PropertyLens{param}(), fld_new)
             end
         end
     end
-    phase_mat.Nondimensional = false
+    #phase_mat.Nondimensional = false
+    phase_mat = set(phase_mat, Setfield.PropertyLens{:Nondimensional}(), false)
+    
+    return phase_mat
 end
 
 """

@@ -23,12 +23,12 @@ Phase2 = SetMaterialParams(Name="test1",Phase=2,
                 Density  = ConstantDensity());
 
 # Non-dimensionalize all values:
-Nondimensionalize!(Phase2, CharUnits_GEO)
+Phase2 = Nondimensionalize(Phase2, CharUnits_GEO)
 @test Phase2.CreepLaws[2].η.val ≈ 100.0
 @test Phase2.Density[1].ρ.val ≈ 2.9e-16
 
 # Dimensionalize all values again:
-Dimensionalize!(Phase2, CharUnits_GEO)
+Phase2 = Dimensionalize(Phase2, CharUnits_GEO)
 @test Phase2.Density[1].ρ.val ≈ 2900
 @test Phase2.CreepLaws[2].η.val ≈ 1e21
 

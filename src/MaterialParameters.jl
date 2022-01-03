@@ -32,7 +32,7 @@ include("./SeismicVelocity/SeismicVelocity.jl")
 Structure that holds all material parameters for a given phase
 
 """
- @with_kw_noshow mutable struct MaterialParams{ Vdensity <: Tuple, 
+ @with_kw_noshow struct MaterialParams{ Vdensity <: Tuple, 
                                                 Vgravity <: Tuple,
                                                 Vcreep   <: Tuple,
                                                 Velastic <: Tuple,
@@ -178,7 +178,7 @@ function SetMaterialParams(; Name::String="", Phase=1,
         # [optionally] non-dimensionalize the struct
         if ~isnothing(CharDim) 
             if typeof(CharDim) <: GeoUnits
-                Nondimensionalize!(phase, CharDim)
+                phase = Nondimensionalize(phase, CharDim)
             else
                 error("CharDim should be of type GeoUnits")
             end
