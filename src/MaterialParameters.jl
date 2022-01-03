@@ -32,21 +32,30 @@ include("./SeismicVelocity/SeismicVelocity.jl")
 Structure that holds all material parameters for a given phase
 
 """
- @with_kw_noshow mutable struct MaterialParams <: AbstractMaterialParamsStruct
+ @with_kw_noshow mutable struct MaterialParams{ Vdensity <: Tuple, 
+                                                Vgravity <: Tuple,
+                                                Vcreep   <: Tuple,
+                                                Velastic <: Tuple,
+                                                Vplastic <: Tuple,
+                                                Vcond    <: Tuple,
+                                                Vheatc   <: Tuple,
+                                                Vensource<: Tuple,
+                                                Vmelting <: Tuple,
+                                                Vseismvel<: Tuple } <: AbstractMaterialParamsStruct
     # 
-    Name::String         =   ""                  #       Description/name of the phase
-    Phase::Int64         =   1;                  #       Number of the phase (optional)
-    Nondimensional::Bool =   false;              #       Are all fields non-dimensionalized or not?
-    Density              =   nothing             #       Density equation of state
-    Gravity              =   nothing             #       Gravitational acceleration (set automatically)
-    CreepLaws            =   nothing             #       Creep laws
-    Elasticity           =   nothing             #       Elastic parameters
-    Plasticity           =   nothing             #       Plasticity
-    Conductivity         =   nothing             #       Parameters related to the energy equation 
-    HeatCapacity         =   nothing             #       Heat capacity 
-    EnergySourceTerms    =   nothing             #       Source terms in energy conservation equation (such as radioactive heat)
-    Melting              =   nothing             #       Melting model
-    SeismicVelocity      =   nothing             #       Seismic velocity
+    Name::String                 =   ""             #       Description/name of the phase
+    Phase::Int64                 =   1;             #       Number of the phase (optional)
+    Nondimensional::Bool         =   false;         #       Are all fields non-dimensionalized or not?
+    Density::Vdensity            =   ()             #       Density equation of state
+    Gravity::Vgravity            =   ()             #       Gravitational acceleration (set automatically)
+    CreepLaws::Vcreep            =   ()             #       Creep laws
+    Elasticity::Velastic         =   ()             #       Elastic parameters
+    Plasticity::Vplastic         =   ()             #       Plasticity
+    Conductivity::Vcond          =   ()             #       Parameters related to the energy equation 
+    HeatCapacity::Vheatc         =   ()             #       Heat capacity 
+    EnergySourceTerms::Vensource =   ()             #       Source terms in energy conservation equation (such as radioactive heat)
+    Melting::Vmelting            =   ()             #       Melting model
+    SeismicVelocity::Vseismvel   =   ()             #       Seismic velocity
 end
 
 """
@@ -193,6 +202,8 @@ function ConvField(field, fieldname::Symbol; maxAllowedFields=1e6)
                 error("Maximum $(maxAllowedFields) field allowed for: $fieldname")
             end
         end
+    else
+        field = ()  # empty tuple
     end
     return field
 end
@@ -200,7 +211,7 @@ end
 # Helper that prints info about each of the material parameters
 #  for this to look nice, you need to define a Base.show 
 function Print_MaterialParam(io::IO, name::Symbol, Data)
-    if ~isnothing(Data) 
+    if length(Data)>0 
         if typeof(Data[1]) <: AbstractMaterialParam
             print(io, "        |-- $(rpad(name,18)):")
             for i=1:length(Data)

@@ -14,12 +14,13 @@ using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 import Base.show
 
 
-abstract type AbstractDensity <: AbstractMaterialParam end
+abstract type AbstractDensity{T} <: AbstractMaterialParam end
 
 export  ComputeDensity,         # calculation routines
         ComputeDensity!,        # in place calculation
         ConstantDensity,        # constant
-        PT_Density              # P & T dependent density
+        PT_Density,             # P & T dependent density
+        AbstractDensity 
 
 # Constant Density -------------------------------------------------------
 """
@@ -31,9 +32,9 @@ Set a constant density:
 ```
 where ``\\rho`` is the density [``kg/m^3``].
 """
-@with_kw_noshow struct ConstantDensity{T <: AbstractFloat} <: AbstractDensity
+@with_kw_noshow struct ConstantDensity{T} <: AbstractDensity{T} 
     equation::LaTeXString   =   L"\rho = cst"     
-    ρ::GeoUnit{T}           =   2900.0kg/m^3                # density
+    ρ::GeoUnit{T}           =   GeoUnit(2900.0kg/m^3)                # density
 end
 ConstantDensity(a...) = ConstantDensity{Float64}(a...) 
 
@@ -73,7 +74,7 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference temperature ``T_0`` a
 ``\\alpha`` is the temperature dependence of density and ``\\beta`` the pressure dependence.
 
 """
-@with_kw_noshow struct PT_Density{T<:AbstractFloat} <: AbstractDensity
+@with_kw_noshow struct PT_Density{T} <: AbstractDensity{T}
     equation::LaTeXString   =   L"\rho = \rho_0(1.0-\alpha (T-T_0) + \beta (P-P_0)"     
     ρ0::GeoUnit{T}          =   2900.0kg/m^3                # density
     α::GeoUnit{T}           =   3e-5/K                      # T-dependence of density

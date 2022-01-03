@@ -326,6 +326,15 @@ function f!(r,x,y)
     r 
 end
 
+function g!(r,x,y)
+    for i=1:1000
+        r += x.Density[1].ρ * y          # compute
+    end
+    r 
+end
+
+Phase1 = SetMaterialParams(Name="test1", Phase=22, Density  = ConDensity9())
+
 #=
 # testing speed (# of allocs)
 r = 0.0

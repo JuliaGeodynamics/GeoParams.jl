@@ -85,4 +85,96 @@ end
 ComputeDensity!(rho, PhaseRatio, P,T, MatParam)
 @test sum(rho)/400^2 ≈ 2920.6148898225
 
+
+
+# test speed of assigning density 
+rho1 = ConstantDensity();
+
+function f!(r,x,y)
+    for i=1:1000
+        r += x.ρ * y          # compute
+    end
+    r 
+end
+
+function g!(r,x,y)
+    for i=1:1000
+        r += x.Density[1].ρ * y          # compute
+    end
+    r 
+end
+
+function h!(r::Float64,x,y::Float64)
+    ρ = x.Density.ρ
+    for i=1:1000
+        r += ρ * y          # compute
+    end
+    r 
+end
+
+function h1!(r::Float64,x,y::Float64)
+    ρ = x.Density.ρ0
+    for i=1:1000
+        r += ρ * y          # compute
+    end
+    r 
+end
+
+c = 10.1;
+r = 0.0
+
+
+# This is the way this was originally implemented 
+Base.@kwdef mutable struct TestMat1
+    Density = nothing 
+end
+
+Base.@kwdef struct TestMat2{T}
+    Density =  Vector{AbstractDensity{T}}(undef, 1); 
+end
+
+Base.@kwdef struct TestMat3{T}
+    Density::AbstractDensity{T}
+end
+
+struct TestMat3a{T}
+    Density::AbstractDensity{T}
+end
+
+struct TestMat4{T}
+    Density::ConstantDensity{T}
+end
+
+struct TestMat5{T}
+    Density::PT_Density{T}
+end
+
+# By explicitly defining Desnity as a tuple, we gain speed
+Base.@kwdef struct TestMat6{V <: Tuple}
+    Density::V = ()
+end
+
+# This is closer to how it may be implemented (we have to use different tuples) 
+Base.@kwdef struct TestMat9{V1<:Tuple, V2<:Tuple}
+    Density::V1 = ()
+    Conductity::V2 = ()
+end
+
+test1 = TestMat1((ConstantDensity(),))
+test2 = TestMat2{Float64}((ConstantDensity(),))
+test3 = TestMat3{Float64}(ConstantDensity{Float64}())
+
+test9 = TestMat9(Density = (ConstantDensity(), ConstantDensity()) )
+
+
+#=
+using BenchmarkTools
+@btime f!($r, $rho1, $c) # 1 allocation (as expected)
+
+@btime f!($r, $(test1.Density[1]), $c)      # 1 allocation (but non-typical usage)
+@btime g!($r, $test1, $c)       # typical usage: 6001 allocations
+
+@btime g!($r, $test2, $c)       # typical usage: 6001 allocations
+=#
+
 end

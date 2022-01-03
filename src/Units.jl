@@ -94,6 +94,7 @@ GeoUnit{T}(val) where {T,U}   = GeoUnit{T}( T.(ustrip.(val)), unit(val[1]),
 #Base.convert(t::Type{GeoUnit{T,U}}, x::Quantity)     where {T,U} =  GeoUnit{T,unit(x)}(T(ustrip(x)), true)
 #Base.convert(t::Type{GeoUnit{T,U}}, x::GeoUnit{T})  where {T,U}   =  x
 Base.convert(t::Type{GeoUnit{T}}, x::Quantity)  where {T} = GeoUnit(T.(x))
+Base.convert(t::Type{GeoUnit{T}}, x::T)  where {T} = GeoUnit(x)
 
 
 
@@ -602,19 +603,20 @@ function Nondimensionalize!(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits
 
     for param in fieldnames(typeof(phase_mat))
         fld = getfield(phase_mat, param)
-        if ~isnothing(fld)
+        if length(fld)>0
             if typeof(fld[1]) <: AbstractPhaseDiagramsStruct
                 
                 # in case we employ a phase diagram 
                 temp = PerpleX_LaMEM_Diagram(fld[1].Name, CharDim = g)
-                
-                setfield!(phase_mat, param, (temp,))
+                fld_new = (temp,)
+                setfield!(phase_mat, param, fld_new)
             else
-                # otherwise non-dimensionalize 
-                for i=1:length(fld)
-                    if typeof(fld[i]) <: AbstractMaterialParam
-                        Units.Nondimensionalize!(fld[i],g)
-                    end
+                # otherwise non-dimensionalize all fields and create a new tuple
+                id = findall(isa.(fld,AbstractMaterialParam))
+                if length(id)>0
+                    # Create a new tuple with non-dimensionalized fields:
+                    fld_new = ntuple(i -> Units.Nondimensionalize(fld[id[i]],g), length(id) )
+                    setfield!(phase_mat, param, fld_new)        # to be changed for immutable struct
                 end
             end
         end
@@ -668,8 +670,52 @@ function Dimensionalize(param_ND, param_dim::Unitful.FreeUnits, g::GeoUnits{TYPE
   
     return param
 end
-#=
-=#
+
+"""
+    Dimensionalize!(MatParam::AbstractMaterialParam, CharUnits::GeoUnits{TYPE})
+
+Dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
+
+"""
+function Dimensionalize(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE} 
+
+    for param in fieldnames(typeof(MatParam))
+        if isa(getfield(MatParam, param), GeoUnit)
+            z=getfield(MatParam, param)
+            z_dim = Dimensionalize(z, g)
+
+            # Replace field (using Setfield package):
+            MatParam = set(MatParam, Setfield.PropertyLens{param}(), z_dim)
+
+        end
+    end
+    return MatParam
+end
+
+
+"""
+    Dimensionalize!(phase_mat::MaterialParams, g::GeoUnits{TYPE})
+
+Dimensionalizes all fields within the Material Parameters structure that contain material parameters
+"""
+function Dimensionalize!(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TYPE}) where {TYPE} 
+
+    for param in fieldnames(typeof(phase_mat))
+        fld = getfield(phase_mat, param)
+        if length(fld)>0
+            id = findall(isa.(fld,AbstractMaterialParam))
+            if length(id)>0
+                # Create a new tuple with non-dimensionalized fields:
+                fld_new = ntuple(i -> Units.Dimensionalize(fld[id[i]],g), length(id) )
+              
+
+                setfield!(phase_mat, param, fld_new)        # to be changed for immutable struct
+               # phase_mat = set(phase_mat, Setfield.PropertyLens{param}(), fld_new)
+            end
+        end
+    end
+    phase_mat.Nondimensional = false
+end
 
 
 ## Debugging
@@ -711,23 +757,11 @@ function Dimensionalize!(param::GeoUnit, g::GeoUnits{TYPE}) where {TYPE}
   
 end
 
-"""
-    Dimensionalize!(MatParam::AbstractMaterialParam, CharUnits::GeoUnits{TYPE})
 
-Dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
 
-"""
-function Dimensionalize!(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE} 
 
-    for param in fieldnames(typeof(MatParam))
-        if isa(getfield(MatParam, param), GeoUnit)
-            z=getfield(MatParam, param)
-            Dimensionalize!(z, g)
-            setfield!(MatParam, param, z)
-        end
-    end
-    
-end
+
+=#
 
 """
     isDimensional(MatParam::AbstractMaterialParam)
@@ -737,38 +771,15 @@ end
 function isDimensional(MatParam::AbstractMaterialParam)
     isDim = false;
     for param in fieldnames(typeof(MatParam))
-        if typeof(getfield(MatParam, param))==GeoUnit
+        if isa(getfield(MatParam, param), GeoUnit)
             z=getfield(MatParam, param)
-            if z.unit!=NoUnits
+            if z.isdimensional==true
                 isDim=true;
             end
         end
     end
     return isDim
 end
-
-
-"""
-    Dimensionalize!(phase_mat::MaterialParams, g::GeoUnits{TYPE})
-
-Dimensionalizes all fields within the Material Parameters structure that contain material parameters
-"""
-function Dimensionalize!(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TYPE}) where {TYPE} 
-
-    for param in fieldnames(typeof(phase_mat))
-        fld = getfield(phase_mat, param)
-        if ~isnothing(fld)
-            for i=1:length(fld)
-                if typeof(fld[i]) <: AbstractMaterialParam
-                    Units.Dimensionalize!(fld[i],g)
-                end
-            end
-        end
-    end
-    phase_mat.Nondimensional = false
-
-end
-=#
 
 # Define a view for the GEO_Units structure
 function show(io::IO, g::GeoUnits{TYPE})  where {TYPE}
