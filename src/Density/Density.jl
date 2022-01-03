@@ -31,10 +31,11 @@ Set a constant density:
 ```
 where ``\\rho`` is the density [``kg/m^3``].
 """
-@with_kw_noshow mutable struct ConstantDensity <: AbstractDensity
+@with_kw_noshow struct ConstantDensity{T <: AbstractFloat} <: AbstractDensity
     equation::LaTeXString   =   L"\rho = cst"     
-    ρ::GeoUnit              =   2900.0kg/m^3                # density
+    ρ::GeoUnit{T}           =   2900.0kg/m^3                # density
 end
+ConstantDensity(a...) = ConstantDensity{Float64}(a...) 
 
 # Calculation routines
 function ComputeDensity(P,T, s::ConstantDensity)
@@ -72,14 +73,15 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference temperature ``T_0`` a
 ``\\alpha`` is the temperature dependence of density and ``\\beta`` the pressure dependence.
 
 """
-@with_kw_noshow mutable struct PT_Density <: AbstractDensity
+@with_kw_noshow struct PT_Density{T<:AbstractFloat} <: AbstractDensity
     equation::LaTeXString   =   L"\rho = \rho_0(1.0-\alpha (T-T_0) + \beta (P-P_0)"     
-    ρ0::GeoUnit             =   2900.0kg/m^3                # density
-    α::GeoUnit              =   3e-5/K                      # T-dependence of density
-    β::GeoUnit              =   1e-9/Pa                     # P-dependence of density
-    T0::GeoUnit             =   0.0C                        # Reference temperature
-    P0::GeoUnit             =   0.0MPa                      # Reference pressure
+    ρ0::GeoUnit{T}          =   2900.0kg/m^3                # density
+    α::GeoUnit{T}           =   3e-5/K                      # T-dependence of density
+    β::GeoUnit{T}           =   1e-9/Pa                     # P-dependence of density
+    T0::GeoUnit{T}          =   0.0C                        # Reference temperature
+    P0::GeoUnit{T}          =   0.0MPa                      # Reference pressure
 end
+PT_Density(a...) = PT_Density{Float64}(a...) 
 
 # Calculation routine
 function ComputeDensity(P,T, s::PT_Density)

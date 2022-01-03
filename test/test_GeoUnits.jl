@@ -57,6 +57,8 @@ CharUnits_NO   =   NO_units();
 @test Nondimensionalize(10cm/yr,CharUnits_GEO) ≈ 0.0031688087814028945   rtol=1e-10
 @test Nondimensionalize(10cm/yr,CharUnits_SI) ≈ 3.168808781402895e7   rtol=1e-10
 
+@test Nondimensionalize([10 1; 20 30.0],CharUnits_GEO) == [10 1; 20 30.0]
+
 A = 10MPa*s^(-1)   # should give 1e12 in ND units
 @test Nondimensionalize(A,CharUnits_GEO)  ≈ 1e12 
 
@@ -218,89 +220,80 @@ t = T_nd/T₀
 
 
 # test conversion:
-b = convert(GeoUnit{Float64, kg/m^3}, 3300kg/m^3)
+b = convert(GeoUnit{Float64}, 3300kg/m^3)
 @test b.val == 3300.0
 
-c = convert(GeoUnit, 3300.0kg/m^3)
+c = convert(GeoUnit{Float32}, 3300.0kg/m^3)
 @test c.val == 3300.0f0
 
 
 # The way we define different structures heavily affects the number of allocs 
 # that are done while computing with parameters defined within the struct 
-struct ConDensity
+struct ConDensity   # 1 allocation
     ρ::Float64
 end
 
 # Define struct with types and dimensions
-struct ConDensity1{T,U1,U2} <: AbstractMaterialParam  # no allocations
+struct ConDensity1{T} <: AbstractMaterialParam  # 1 allocation
     test::String
-    ρ::GeoUnit{T,U1}
-    v::GeoUnit{T,U2}
+    ρ::GeoUnit{T}
+    v::GeoUnit{T}
 end
 
-struct ConDensity2 <: AbstractMaterialParam
+struct ConDensity2 <: AbstractMaterialParam # 3001 allocation
     test::String
     ρ::GeoUnit 
     v::GeoUnit
 end
 
-mutable struct ConDensity3 <: AbstractMaterialParam
+# No type info
+mutable struct ConDensity3 <: AbstractMaterialParam  # 3001 allocation
     test::String
     ρ::GeoUnit 
 end
 
-mutable struct ConDensity4{T,U1,U2} <: AbstractMaterialParam  # no allocations
+# add type info in name, but no default values
+mutable struct ConDensity4{T <: AbstractFloat} <: AbstractMaterialParam  # 1 allocation
     test::String
-    ρ::GeoUnit{T,U1}
-    v::GeoUnit{T,U2}
+    ρ::GeoUnit{T}
+    v::GeoUnit{T}
 end
 
-# use keywords
-Base.@kwdef struct ConDensity5 <: AbstractMaterialParam
+# use keywords, but no info about type
+Base.@kwdef struct ConDensity5 <: AbstractMaterialParam # 3001 allocation
     test::String =""
     ρ::GeoUnit = GeoUnit(3300.1kg/m^3)
     v::GeoUnit = GeoUnit(100/s)
 end
 
-Base.@kwdef struct ConDensity6 <: AbstractMaterialParam
+# This is slow
+Base.@kwdef struct ConDensity6 <: AbstractMaterialParam # 3001 allocation
     test::String = ""
     ρ::GeoUnit = GeoUnit(3300.1kg/m^3)
     v::GeoUnit = GeoUnit(100/s)
 end
 
-Base.@kwdef struct ConDensity6b{T} <: AbstractMaterialParam
-    test::String = ""
-    ρ::GeoUnit{T,kg/m^3} = 3300.1kg/m^3
-    v::GeoUnit{T,s^-1} = 100/s
+# Here, we indicate the type:
+Base.@kwdef struct ConDensity7{T} <: AbstractMaterialParam # 1 allocation
+    test::String =""
+    ρ::GeoUnit{T} = GeoUnit(3300.1kg/m^3)
+    v::GeoUnit{T}   = GeoUnit(100/s)
 end
 
-Base.@kwdef struct ConDensity6g <: AbstractMaterialParam
-    test::String = ""
+# This seems to work, but has 3001 allocations
+Base.@kwdef struct ConDensity8 <: AbstractMaterialParam # 3001 allocation
+    test::String =""
     ρ::GeoUnit = 3300.1kg/m^3
-    v::GeoUnit = 100/s
+    v::GeoUnit   = 100/s
 end
 
-Base.@kwdef struct ConDensity7{T} <: AbstractMaterialParam
-    test::String =""
-    ρ::GeoUnit{T,kg/m^3} = GeoUnit(3300.1kg/m^3)
-    v::GeoUnit{T,s^-1}   = GeoUnit(100/s)
-end
-
-# This seems to work:
-Base.@kwdef struct ConDensity8 <: AbstractMaterialParam
-    test::String =""
-    ρ::GeoUnit{Float64,kg/m^3} = 3300.1kg/m^3
-    v::GeoUnit{Float64,s^-1}   = 100/s
-end
-
-# This works too, but requires more allocations:
-Base.@kwdef struct ConDensity9{T} <: AbstractMaterialParam
+# This works with 1 allocation, and is the preferred way to use it within GeoParams
+Base.@kwdef struct ConDensity9{T <: AbstractFloat} <: AbstractMaterialParam # 1 allocation
     test::String =""
     ρ::GeoUnit{T} = 3300.1kg/m^3
-    v::GeoUnit{T}   = 100.0/s
+    v::GeoUnit{T} = 100.0m/s
 end
-ConDensity9(t...) = ConDensity9{Float64}(t...)
-
+ConDensity9(a...) = ConDensity9{Float64}(a...)  # in case we do not give a type
 
 rho  = ConDensity(3300.1)
 rho1 = ConDensity1("t",GeoUnit(3300.1kg/m^3), GeoUnit(100/s))
@@ -311,8 +304,8 @@ rho5 = ConDensity5(test="t")
 rho6 = ConDensity6("t",GeoUnit(3300.1kg/m^3), GeoUnit(100/s))
 rho7 = ConDensity7()
 rho8 = ConDensity8()
-rho9 = ConDensity9{Float64}()
-rho9 = ConDensity9()
+rho9 = ConDensity9(ρ=2800kg/m^3)
+rho9_ND = Nondimensionalize(rho9, GEO_units())
 
 
 # test automatic nondimensionalization of a MaterialsParam struct:
@@ -321,12 +314,9 @@ rho2_ND = Nondimensionalize(rho2, CD)
 @test rho2_ND.ρ ≈ 3.3000999999999995e-18
 @test rho2_ND.v ≈ 9.999999999999999e11
 
-
-
 b = 20.1
 c = 10.1;
 r = 0.0
-#using BenchmarkTools
 
 # Simple function to test speed
 function f!(r,x,y)
@@ -335,13 +325,6 @@ function f!(r,x,y)
     end
     r 
 end
-
-# Test memory allocations
-stats = @timed f!(r, rho,  c)                          # 1 allocations
-stats = @timed f!(r, rho, c)
-@show stats
-@test stats.gcstats.poolalloc == 1  
-
 
 #=
 # testing speed (# of allocs)
@@ -352,10 +335,11 @@ r = 0.0
 @btime f!($r, $rho3, $c)    # 3001 allocations
 @btime f!($r, $rho4, $c)    # 1 allocation
 @btime f!($r, $rho5, $c)    # 3001 allocation
-@btime f!($r, $rho6, $c)    # 1 allocation (so also with keywords, it is crucial to indicate the type)
+@btime f!($r, $rho6, $c)    # 3001 allocation (so also with keywords, it is crucial to indicate the type)
 @btime f!($r, $rho7, $c)    # 1 allocation (shows that we need to encode the units)
-@btime f!($r, $rho8, $c)    # 1 allocation (shows that we need to encode the units)
+@btime f!($r, $rho8, $c)    # 3001 allocation 
 @btime f!($r, $rho9, $c)    # 1 allocation (shows that we need to encode the units)
+@btime f!($r, $rho9_ND, $c) 
 =#
 
 end
