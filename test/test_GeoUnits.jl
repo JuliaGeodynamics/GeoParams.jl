@@ -128,7 +128,7 @@ z_D[2,1]=3
 
 
 # test various calculations (using arrays with and without units)
-#T       =   273K:10K:500K        # using units
+T_vec   =   273K:10K:500K        # using units
 T       =   400.0K               # Unitful quanity
 T_nd    =   10:10:200            # no units  
 α       =   GeoUnit(3e-5/K)
@@ -194,8 +194,25 @@ t = T_f/T₀
 @test t ≈ 1.3651877133105803
 
 
-# case in which one of them is a Float
+# case in which one of them is an array with Floats
 t = T_nd+T₀
+@test isa(t, AbstractArray)    # addition
+@test t==303.0:10.0:493.0
+
+t = T_nd-T₀
+@test isa(t, AbstractArray)    # subtraction
+@test t == -283.0:10.0:-93.0
+
+t = T_nd*T₀
+@test isa(t, AbstractArray)    # multiplication
+@test t == 2930.0:2930.0:58600.0
+
+t = T_nd/T₀
+@test isa(t, AbstractArray)    # division
+@test t ≈ 0.034129692832764506:0.034129692832764506:0.6825938566552902
+
+# case in which one of them is an array with Quantities
+t = T_vec+T₀
 @test isa(t, AbstractArray)    # addition
 @test t==303.0:10.0:493.0
 

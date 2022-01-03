@@ -188,6 +188,16 @@ Base.:/(y::AbstractArray, x::GeoUnit)   = y./NumValue(x)
 Base.:+(y::AbstractArray, x::GeoUnit)   = NumValue(x) .+ y
 Base.:-(y::AbstractArray, x::GeoUnit)   = y .- NumValue(x)
 
+Base.:*(x::GeoUnit, y::AbstractArray{<:Quantity})   = Value(x).*y 
+Base.:/(x::GeoUnit, y::AbstractArray{<:Quantity})   = Value(x) ./y 
+Base.:+(x::GeoUnit, y::AbstractArray{<:Quantity})   = Value(x) .+ y 
+Base.:-(x::GeoUnit, y::AbstractArray{<:Quantity})   = Value(x) .-y
+
+Base.:*(y::AbstractArray{<:Quantity}, x::GeoUnit)   = Value(x)*y
+Base.:/(y::AbstractArray{<:Quantity}, x::GeoUnit)   = y/Value(x)
+Base.:+(y::AbstractArray{<:Quantity}, x::GeoUnit)   = Value(x) .+ y
+Base.:-(y::AbstractArray{<:Quantity}, x::GeoUnit)   = y .- Value(x)
+
 Base.getindex(x::GeoUnit{T}, i::Int64, j::Int64, k::Int64) where {T,U} = GeoUnit(x.val[i,j,k]*x.unit)
 Base.getindex(x::GeoUnit{T}, i::Int64, j::Int64) where {T,U} = GeoUnit(x.val[i,j]*x.unit)
 Base.getindex(x::GeoUnit{T}, i::Int64) where {T,U} = GeoUnit(x.val[i]*x.unit)

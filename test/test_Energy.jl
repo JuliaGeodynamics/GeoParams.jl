@@ -114,7 +114,7 @@ k        =   ComputeConductivity(T,cond2)
 # nondimensional
 cond2_nd =   T_Conductivity_Whittacker()
 cond2_nd =   Nondimensionalize(cond2_nd,CharUnits_GEO)
-T_nd     =   Float64.(ustrip(T/CharUnits_GEO.Temperature))
+T_nd     =   Float64.(ustrip.(T/CharUnits_GEO.Temperature))
 k_nd     =   ComputeConductivity(T_nd,cond2_nd)
 @test sum(k_nd) ≈ 35.01591097886205
 

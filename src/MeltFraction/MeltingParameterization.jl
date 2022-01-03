@@ -8,7 +8,7 @@ using ..Units
 using GeoParams: AbstractMaterialParam, PhaseDiagram_LookupTable, AbstractMaterialParamsStruct
 import Base.show
 
-abstract type AbstractMeltingParam <: AbstractMaterialParam end
+abstract type AbstractMeltingParam{T} <: AbstractMaterialParam end
 
 export  ComputeMeltingParam, ComputeMeltingParam!,   # calculation routines
         MeltingParam_Caricchi                        # constant
@@ -29,18 +29,19 @@ Implements the T-dependent melting parameterisation used by Caricchi et al
 Note that T is in Kelvin.
 
 """
-@with_kw_noshow mutable struct MeltingParam_Caricchi <: AbstractMeltingParam
+@with_kw_noshow struct MeltingParam_Caricchi{T} <: AbstractMeltingParam{T}
     equation::LaTeXString   =   L"\phi = {1 \over 1 + \exp( {800-T[^oC] \over 23})}"     
-    a::GeoUnit              =   800.0K              
-    b::GeoUnit              =   23.0K
-    c::GeoUnit              =   273.15K # shift from C to K
+    a::GeoUnit{T}              =   800.0K              
+    b::GeoUnit{T}              =   23.0K
+    c::GeoUnit{T}              =   273.15K # shift from C to K
 end
+MeltingParam_Caricchi(a...) = MeltingParam_Caricchi{Float64}(a...)
 
 # Calculation routine
 function ComputeMeltingParam(P,T, p::MeltingParam_Caricchi)
-    @unpack a,b,c   = p
+    a,b,c   = p.a, p.b, p.c
 
-    θ       =   (Value(a) .- (T .- Value(c)))./Value(b)
+    θ       =   (a - (T - c))/b
     ϕ       =   1.0./(1.0 .+ exp.(θ))
 
     return ϕ
@@ -105,7 +106,7 @@ function ComputeMeltingParam!(ϕ::AbstractArray{<:AbstractFloat, N}, Phases::Abs
 
     for i = 1:length(MatParam)
 
-        if !isnothing(MatParam[i].Melting)
+        if length(MatParam[i].Melting)>0
 
             # Create views into arrays (so we don't have to allocate)
             ind = Phases .== MatParam[i].Phase;
@@ -134,7 +135,7 @@ function ComputeMeltingParam!(ϕ::AbstractArray{<:AbstractFloat, N}, PhaseRatios
         
         ϕ_local  = zeros(size(ϕ))
         Fraction    = selectdim(PhaseRatios,M,i);
-        if (maximum(Fraction)>0.0) & (!isnothing(MatParam[i].Melting))
+        if (maximum(Fraction)>0.0) & (length(MatParam[i].Melting)>0)
 
             ComputeMeltingParam!(ϕ_local, P, T, MatParam[i].Melting[1] ) 
 
