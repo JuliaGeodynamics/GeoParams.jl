@@ -218,22 +218,15 @@ t = T_nd/T₀
 
 
 # test conversion:
-b = convert(typeof(GeoUnit{Float64, kg/m^3}), 3300.1kg/m^3)
+b = convert(GeoUnit{Float64, kg/m^3}, 3300kg/m^3)
+@test b.val == 3300.0
+
+c = convert(GeoUnit, 3300.0kg/m^3)
+@test c.val == 3300.0f0
 
 
-# FEW DEBUGGING AND TESTS, mostly to determine the speed
-function f(x,y)
-    r=0
-    for i=1:1000
-        r+= x*y
-    end
-    return r
-end
-
-
-
-
-# Different structures
+# The way we define different structures heavily affects the number of allocs 
+# that are done while computing with parameters defined within the struct 
 struct ConDensity
     ρ::Float64
 end
@@ -262,9 +255,8 @@ mutable struct ConDensity4{T,U1,U2} <: AbstractMaterialParam  # no allocations
     v::GeoUnit{T,U2}
 end
 
-using Parameters
 # use keywords
-@with_kw struct ConDensity5 <: AbstractMaterialParam
+Base.@kwdef struct ConDensity5 <: AbstractMaterialParam
     test::String =""
     ρ::GeoUnit = GeoUnit(3300.1kg/m^3)
     v::GeoUnit = GeoUnit(100/s)
@@ -301,13 +293,13 @@ Base.@kwdef struct ConDensity8 <: AbstractMaterialParam
     v::GeoUnit{Float64,s^-1}   = 100/s
 end
 
-# This works too:
+# This works too, but requires more allocations:
 Base.@kwdef struct ConDensity9{T} <: AbstractMaterialParam
     test::String =""
-    ρ::GeoUnit{T,kg/m^3} = 3300.1kg/m^3
-    v::GeoUnit{T,s^-1}   = 100/s
+    ρ::GeoUnit{T} = 3300.1kg/m^3
+    v::GeoUnit{T}   = 100.0/s
 end
-ConDensity9(t,a...) = ConDensity9{typeof(ustrip(a[1].val))}(t,a...)
+ConDensity9(t...) = ConDensity9{Float64}(t...)
 
 
 rho  = ConDensity(3300.1)
@@ -323,9 +315,6 @@ rho9 = ConDensity9{Float64}()
 rho9 = ConDensity9()
 
 
-
-
-
 # test automatic nondimensionalization of a MaterialsParam struct:
 CD = GEO_units()
 rho2_ND = Nondimensionalize(rho2, CD)
@@ -337,16 +326,24 @@ rho2_ND = Nondimensionalize(rho2, CD)
 b = 20.1
 c = 10.1;
 r = 0.0
-using BenchmarkTools
+#using BenchmarkTools
 
 # Simple function to test speed
 function f!(r,x,y)
     for i=1:1000
-        r += x.ρ * y
+        r += x.ρ * y          # compute
     end
     r 
 end
 
+# Test memory allocations
+stats = @timed f!(r, rho,  c)                          # 1 allocations
+stats = @timed f!(r, rho, c)
+@show stats
+@test stats.gcstats.poolalloc == 1  
+
+
+#=
 # testing speed (# of allocs)
 r = 0.0
 @btime f!($r, $rho,  $c)    # 1 allocations
@@ -359,5 +356,6 @@ r = 0.0
 @btime f!($r, $rho7, $c)    # 1 allocation (shows that we need to encode the units)
 @btime f!($r, $rho8, $c)    # 1 allocation (shows that we need to encode the units)
 @btime f!($r, $rho9, $c)    # 1 allocation (shows that we need to encode the units)
+=#
 
 end

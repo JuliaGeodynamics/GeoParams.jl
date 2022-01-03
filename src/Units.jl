@@ -7,7 +7,7 @@ import Unitful: superscript
 using Parameters
 using Setfield # allows modifying fields in immutable struct
 
-import Base.show, Base.isapprox, Base.isequal
+import Base.show, Base.isapprox, Base.isequal, Base.convert
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct, PerpleX_LaMEM_Diagram
 
 
@@ -81,11 +81,19 @@ struct GeoUnit{T,U}
     isdimensional::Bool
 end
 
+# Different ways of specifying the GeoUnit:
 GeoUnit(val) = GeoUnit{typeof(ustrip.(val)), unit(val[1])}(  ustrip.(val),
                            isa(val[1], Union{Unitful.FreeUnits, Unitful.Quantity} ) )
 
-convert(t::Type{GeoUnit{T,U}}, x::GeoUnit)  where {T,U} =  (t(x.val,x.isdimensional), unit(x.val[1]))
-convert(t::Type{GeoUnit{T,U}}, x::Quantity) where {T,U} =  GeoUnit{T,unit(x)}(ustrip(x), true)
+GeoUnit{T}(val) where {T,U}   = GeoUnit{T,unit.(val)}( T.(val) )
+GeoUnit{T,U}(val) where {T,U} = GeoUnit{T,U}(T.(ustrip.(val)), isa(val[1], Union{Unitful.FreeUnits, Unitful.Quantity} ) )
+
+
+Base.convert(t::Type{GeoUnit{T,U}}, x::GeoUnit)      where {T,U} =  (t(x.val,x.isdimensional), unit(x.val[1]))
+Base.convert(t::Type{GeoUnit{T,U}}, x::Quantity)     where {T,U} =  GeoUnit{T,unit(x)}(T(ustrip(x)), true)
+Base.convert(t::Type{GeoUnit{T,U}}, x::GeoUnit{T})  where {T,U}   =  x
+Base.convert(t::Type{GeoUnit{T}}, x::Quantity)  where {T} = GeoUnit(T.(x))
+
 
 
 # Define methods to deal with cases when the input has integers 
@@ -171,11 +179,6 @@ Base.convert(::Type{GeoUnit},  v::Quantity)         =   GeoUnit(v)
 Base.convert(::Type{GeoUnit},  v::AbstractArray)    =   GeoUnit(v) 
 Base.convert(::Type{GeoUnit},  v::AbstractArray{Int32}) =   GeoUnit(ustrip.(Float32.(v))*unit(v[1])) 
 Base.convert(::Type{GeoUnit},  v::AbstractArray{Int64}) =   GeoUnit(ustrip.(Float64.(v))*unit(v[1])) 
-
-Base.convert(::Type{GeoUnit{T,U}},  v::Quantity{T,A,B})  where {T,U,A,B}    =   GeoUnit(v) 
-Base.convert(::Type{GeoUnit{T,U}},  v::Quantity)  where {T,U}    =   GeoUnit(v, ) 
-
-
 
 Base.promote_rule(::Type{GeoUnit}, ::Type{Quantity}) = GeoUnit
 
