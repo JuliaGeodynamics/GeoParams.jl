@@ -8,7 +8,7 @@ using ..Units
 using GeoParams: AbstractMaterialParam
 import Base.show
 
-abstract type AbstractRadioactiveHeat <: AbstractMaterialParam end
+abstract type AbstractRadioactiveHeat{T} <: AbstractMaterialParam end
 
 export  ComputeRadioactiveHeat,                  # calculation routines
         ConstantRadioactiveHeat                  # constant
@@ -24,16 +24,17 @@ Set a constant radioactive heat:
 ```
 where ``H_r`` is the radioactive heat source [``Watt/m^3``].
 """
-@with_kw_noshow mutable struct ConstantRadioactiveHeat <: AbstractRadioactiveHeat
+@with_kw_noshow struct ConstantRadioactiveHeat{T} <: AbstractRadioactiveHeat{T}
     equation::LaTeXString   =   L"H_r = cst"     
-    H_r::GeoUnit            =   1e-6Watt/m^3             
+    H_r::GeoUnit{T}         =   1e-6Watt/m^3             
 end
+ConstantRadioactiveHeat(a...) = ConstantRadioactiveHeat{Float64}(a...)
 
 # Calculation routine
 function ComputeRadioactiveHeat(s::ConstantRadioactiveHeat)
     @unpack H_r   = s
    
-    return Value(H_r)
+    return NumValue(H_r)
 end
 
 # Print info 

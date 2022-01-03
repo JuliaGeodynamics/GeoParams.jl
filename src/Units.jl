@@ -108,6 +108,8 @@ GeoUnit(val::Union{Quantity{Int32}, AbstractArray{<:Quantity{<:Int32}}}) = GeoUn
 Unit(v::GeoUnit{T}) where {T} = v.unit
 isdimensional(v::GeoUnit{T})  where {T}     =   v.isdimensional         # is it a nondimensional number or not?
 NumValue(v::GeoUnit)                        =   v.val                   # numeric value, with no units
+Value(v::GeoUnit)                           =   v.val*v.unit            # value, with units
+
 function UnitValue(v::GeoUnit{T}) where {T,U}
     if v.isdimensional
         return v.val*v.unit             # returns value with units

@@ -10,7 +10,7 @@ using ..Units
 using GeoParams: AbstractMaterialParam
 import Base.show
 
-abstract type AbstractShearheating <: AbstractMaterialParam end
+abstract type AbstractShearheating{T} <: AbstractMaterialParam end
 
 export  ComputeShearheating, ComputeShearheating!,  # calculation routines
         ConstantShearheating                        # constant
@@ -31,10 +31,11 @@ H_s = \\Chi \\cdot \\tau_{ij}(\\dot{\\varepsilon}_{ij} - \\dot{\\varepsilon}^{el
 ```
 
 """
-@with_kw_noshow mutable struct ConstantShearheating <: AbstractShearheating
+@with_kw_noshow struct ConstantShearheating{T} <: AbstractShearheating{T}
     equation::LaTeXString   =   L"\H_s = \Chi \tau_{ij}(\dot{\varepsilon}_{ij} - \dot{\varepsilon}^{el}_{ij})"     
-    Χ::GeoUnit              =   0NoUnits               
+    Χ::GeoUnit{T}              =   0NoUnits               
 end
+ConstantShearheating(a...) = ConstantShearheating{Float64}(a...)
 
 ConstantShearheating(x::Number) = ConstantShearheating(Χ = x*NoUnits)   # allow 
 
@@ -43,9 +44,9 @@ function ComputeShearheating!(H_s, τ, ε, ε_el, s::ConstantShearheating)
     @unpack Χ   = s
 
     if isnothing(ε_el)
-        H_s = Value(Χ)*sum( τ .* ε  )
+        H_s = NumValue(Χ)*sum( τ .* ε  )
     else
-        H_s = Value(Χ)*sum( τ .* (ε .- ε_el) )
+        H_s = NumValue(Χ)*sum( τ .* (ε .- ε_el) )
     end
 
 end
@@ -55,9 +56,9 @@ function ComputeShearheating(τ, ε, ε_el, s::ConstantShearheating)
     @unpack Χ   = s
     
     if isnothing(ε_el)
-        H_s = Value(Χ)*sum( τ .* ε  )
+        H_s = NumValue(Χ)*sum( τ .* ε  )
     else
-        H_s = Value(Χ)*sum( τ .* (ε .- ε_el) )
+        H_s = NumValue(Χ)*sum( τ .* (ε .- ε_el) )
     end
 
     return H_s

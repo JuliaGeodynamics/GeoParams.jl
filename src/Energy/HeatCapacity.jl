@@ -10,7 +10,7 @@ using ..Units
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 import Base.show
 
-abstract type AbstractHeatCapacity <: AbstractMaterialParam end
+abstract type AbstractHeatCapacity{T} <: AbstractMaterialParam end
 
 export  ComputeHeatCapacity,                # calculation routines
         ComputeHeatCapacity!,               # in-place routine
@@ -27,18 +27,19 @@ Set a constant heat capacity:
 ```
 where ``cp`` is the thermal heat capacity [``J/kg/K``].
 """
-@with_kw_noshow mutable struct ConstantHeatCapacity <: AbstractHeatCapacity
+@with_kw_noshow struct ConstantHeatCapacity{T} <: AbstractHeatCapacity{T}
     equation::LaTeXString   =   L"cp = cst"     
-    cp::GeoUnit             =   1050J/kg/K                # heat capacity
+    cp::GeoUnit{T}          =   1050J/kg/K                # heat capacity
 end
+ConstantHeatCapacity(a...) = ConstantHeatCapacity{Float64}(a...)
 
 # Calculation routine
 function ComputeHeatCapacity(P, T, s::ConstantHeatCapacity)
     @unpack cp   = s
     if length(T)>1
-        return Value(cp)*ones(size(T))
+        return NumValue(cp)*ones(size(T))
     else
-        return Value(cp)
+        return NumValue(cp)
     end
 
 end
@@ -47,9 +48,9 @@ end
 function ComputeHeatCapacity!(P, T, s::ConstantHeatCapacity)
     @unpack cp   = s
     if length(T)>1
-        return Value(cp)*ones(size(T))
+        return NumValue(cp)*ones(size(T))
     else
-        return Value(cp)
+        return NumValue(cp)
     end
 
 end
@@ -89,30 +90,31 @@ where ``Cp`` is the heat capacity [``J/kg/K``], and ``a,b,c`` are parameters tha
 
 Note that this is slightly different than the equation in the manuscript, as Cp is in J/kg/K (rather than ``J/mol/K`` as in eq.3/4 of the paper)
 """
-@with_kw_noshow mutable struct T_HeatCapacity_Whittacker <: AbstractHeatCapacity
+@with_kw_noshow struct T_HeatCapacity_Whittacker{T} <: AbstractHeatCapacity{T}
     # Note: the resulting curve was visually compared with Fig. 2 of the paper
-    equation::LaTeXString   =   L"cp = (a + b*T - c/T^2)/m"     
-    a0::GeoUnit             =   199.5J/mol/K                # prefactor for low T       (T<= 846 K)
-    a1::GeoUnit             =   229.32J/mol/K               # prefactor for high T      (T>  846 K)
-    b0::GeoUnit             =   0.0857J/mol/K^2             # linear term for low T     (T<= 846 K)
-    b1::GeoUnit             =   0.0323J/mol/K^2             # linear term for high T    (T>  846 K)
-    c0::GeoUnit             =   5e6J/mol*K                  # quadratic term for low T  (T<= 846 K)
-    c1::GeoUnit             =   47.9e-6J/mol*K              # quadratic term for high T (T>  846 K)
-    molmass::GeoUnit        =   0.22178kg/mol               # average molar mass 
-    Tcutoff::GeoUnit        =   846K                        # cutoff temperature
+    equation::LaTeXString      =   L"cp = (a + b*T - c/T^2)/m"     
+    a0::GeoUnit{T}             =   199.5J/mol/K                # prefactor for low T       (T<= 846 K)
+    a1::GeoUnit{T}             =   229.32J/mol/K               # prefactor for high T      (T>  846 K)
+    b0::GeoUnit{T}             =   0.0857J/mol/K^2             # linear term for low T     (T<= 846 K)
+    b1::GeoUnit{T}             =   0.0323J/mol/K^2             # linear term for high T    (T>  846 K)
+    c0::GeoUnit{T}             =   5e6J/mol*K                  # quadratic term for low T  (T<= 846 K)
+    c1::GeoUnit{T}             =   47.9e-6J/mol*K              # quadratic term for high T (T>  846 K)
+    molmass::GeoUnit{T}        =   0.22178kg/mol               # average molar mass 
+    Tcutoff::GeoUnit{T}        =   846K                        # cutoff temperature
 end
+T_HeatCapacity_Whittacker(a...) = T_HeatCapacity_Whittacker{Float64}(a...)
 
 # Calculation routine
 function ComputeHeatCapacity(P,T, s::T_HeatCapacity_Whittacker)
     @unpack a0,a1,b0,b1,c0,c1, molmass, Tcutoff   = s
     
-    cp = zeros(size(T)).*Value(a0)./Value(molmass)
+    cp = zeros(size(T)).*NumValue(a0)./NumValue(molmass)
 
     for i in eachindex(T)
-        if T[i] <= Value(Tcutoff)
-            a,b,c = Value(a0),Value(b0),Value(c0)
+        if T[i] <= NumValue(Tcutoff)
+            a,b,c = NumValue(a0),NumValue(b0),NumValue(c0)
         else
-            a,b,c = Value(a1),Value(b1),Value(c1)
+            a,b,c = NumValue(a1),NumValue(b1),NumValue(c1)
         end
        
         cp[i] = (a + b*T[i] - c/T[i]^2)/molmass 

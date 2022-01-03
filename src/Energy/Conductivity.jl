@@ -10,7 +10,7 @@ using ..Units
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 import Base.show
 
-abstract type AbstractConductivity <: AbstractMaterialParam end
+abstract type AbstractConductivity{T} <: AbstractMaterialParam end
 
 export  ComputeConductivity,                # calculation routines
         ComputeConductivity!,
@@ -29,19 +29,20 @@ Set a constant conductivity
 ```
 where ``k`` is the thermal conductivity [``W/m/K``].
 """
-@with_kw_noshow mutable struct ConstantConductivity <: AbstractConductivity
+@with_kw_noshow struct ConstantConductivity{T} <: AbstractConductivity{T}
     equation::LaTeXString   =   L"k = cst"     
-    k::GeoUnit              =   3.0Watt/m/K               
+    k::GeoUnit{T}           =   3.0Watt/m/K               
 end
+ConstantConductivity(a...) = ConstantConductivity{Float64}(a...)
 
 # Calculation routine
 function ComputeConductivity(P, T, s::ConstantConductivity)
     @unpack k   = s
 
     if length(T)>1
-        return Value(k).*ones(size(T))
+        return NumValue(k).*ones(size(T))
     else
-        return Value(k)
+        return NumValue(k)
     end
 end
 
@@ -53,7 +54,7 @@ In-place routine to compute constant conductivity
 function ComputeConductivity!(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::ConstantConductivity) where N
     @unpack k   = s
     
-    k_array .= ustrip(Value(k))
+    k_array .= NumValue(k)
     
     return nothing
 end
@@ -99,38 +100,39 @@ where ``Cp`` is the heat capacity [``J/mol/K``], and ``a,b,c`` are parameters th
 - f = 0.732m^2/s        
 - g = 0.000135m^2/s/K 
 """
-@with_kw_noshow mutable struct T_Conductivity_Whittacker <: AbstractConductivity
+@with_kw_noshow struct T_Conductivity_Whittacker{T} <: AbstractConductivity{T}
     # Note: the resulting curve of k was visually compared with Fig. 2 of the paper
     equation::LaTeXString   =   L"k = f(T) "     
-    a0::GeoUnit             =   199.5J/mol/K                # prefactor for low T       (T<= 846 K)
-    a1::GeoUnit             =   229.32J/mol/K               # prefactor for high T      (T>  846 K)
-    b0::GeoUnit             =   0.0857J/mol/K^2             # linear term for low T     (T<= 846 K)
-    b1::GeoUnit             =   0.0323J/mol/K^2             # linear term for high T    (T>  846 K)
-    c0::GeoUnit             =   5e6J/mol*K                  # quadratic term for low T  (T<= 846 K)
-    c1::GeoUnit             =   47.9e-6J/mol*K              # quadratic term for high T (T>  846 K)
-    molmass::GeoUnit        =   0.22178kg/mol               # average molar mass 
-    Tcutoff::GeoUnit        =   846K                        # cutoff temperature
-    rho::GeoUnit            =   2700kg/m^3                  # Density they use for an average crust
-    d::GeoUnit              =   576.3*1e-6m^2/s*K           # diffusivity parameterization
-    e::GeoUnit              =   0.062*1e-6m^2/s             # diffusivity parameterization
-    f::GeoUnit              =   0.732*1e-6m^2/s             # diffusivity parameterization
-    g::GeoUnit              =   0.000135*1e-6m^2/s/K        # diffusivity parameterization
+    a0::GeoUnit{T}             =   199.5J/mol/K                # prefactor for low T       (T<= 846 K)
+    a1::GeoUnit{T}             =   229.32J/mol/K               # prefactor for high T      (T>  846 K)
+    b0::GeoUnit{T}             =   0.0857J/mol/K^2             # linear term for low T     (T<= 846 K)
+    b1::GeoUnit{T}             =   0.0323J/mol/K^2             # linear term for high T    (T>  846 K)
+    c0::GeoUnit{T}             =   5e6J/mol*K                  # quadratic term for low T  (T<= 846 K)
+    c1::GeoUnit{T}             =   47.9e-6J/mol*K              # quadratic term for high T (T>  846 K)
+    molmass::GeoUnit{T}        =   0.22178kg/mol               # average molar mass 
+    Tcutoff::GeoUnit{T}        =   846.0K                      # cutoff temperature
+    rho::GeoUnit{T}            =   2700kg/m^3                  # Density they use for an average crust
+    d::GeoUnit{T}              =   576.3*1e-6m^2/s*K           # diffusivity parameterization
+    e::GeoUnit{T}              =   0.062*1e-6m^2/s             # diffusivity parameterization
+    f::GeoUnit{T}              =   0.732*1e-6m^2/s             # diffusivity parameterization
+    g::GeoUnit{T}              =   0.000135*1e-6m^2/s/K        # diffusivity parameterization
 end
+T_Conductivity_Whittacker(a...) = T_Conductivity_Whittacker{Float64}(a...)
 
 # Calculation routine
 function ComputeConductivity(P,T, s::T_Conductivity_Whittacker)
     @unpack a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g   = s
     
-    ρ  = Value(rho)
-    k  = zeros(size(T))*   Value(a0)/Value(molmass)*ρ*Value(e)  # the last multiplication ensures the correct units even for non-dimensional cases
+    ρ  = NumValue(rho)
+    k  = zeros(size(T))*   NumValue(a0)/NumValue(molmass)*ρ*NumValue(e)  # the last multiplication ensures the correct units even for non-dimensional cases
     
     for i in eachindex(T)
-        if T[i] <= Value(Tcutoff)
-            a,b,c = Value(a0),Value(b0),Value(c0)
-            κ     = Value(d)/T[i] - Value(e)  
+        if T[i] <= NumValue(Tcutoff)
+            a,b,c = NumValue(a0),NumValue(b0),NumValue(c0)
+            κ     = NumValue(d)/T[i] - NumValue(e)  
         else
-            a,b,c = Value(a1),Value(b1),Value(c1)
-            κ     = Value(f) - Value(g)*T[i]
+            a,b,c = NumValue(a1),NumValue(b1),NumValue(c1)
+            κ     = NumValue(f) - NumValue(g)*T[i]
         end
        
         cp = (a + b*T[i] - c/T[i]^2)/molmass # conductivity
@@ -190,15 +192,16 @@ where ``k`` is the conductivity [``W/K/m``], and ``a_k,b_k,c_k,d_k`` are paramet
 - ``c_k`` = 77K       
 - ``d_k`` = 0/MPa       
 """
-@with_kw_noshow mutable struct TP_Conductivity <: AbstractConductivity
+@with_kw_noshow struct TP_Conductivity{T} <: AbstractConductivity{T}
     equation::LaTeXString   =   L"k = \left(a_k + {b_k/{T + c_k}} \right)*(1 + d_k*P) "     
-    a::GeoUnit              =   1.18Watt/K/m        # empirical fitting term
-    b::GeoUnit              =   474Watt/m           # empirical fitting term
-    c::GeoUnit              =   77K                 # empirical fitting term
-    d::GeoUnit              =   0/MPa               # empirical fitting term
+    a::GeoUnit{T}           =   1.18Watt/K/m        # empirical fitting term
+    b::GeoUnit{T}           =   474Watt/m           # empirical fitting term
+    c::GeoUnit{T}           =   77K                 # empirical fitting term
+    d::GeoUnit{T}           =   0/MPa               # empirical fitting term
     Comment::String         =   ""                  # Some remarks you want to add about this creep law implementation
     BibTex_Reference        =   ""                  # BibTeX reference
 end
+TP_Conductivity(a...) = TP_Conductivity{Float64}(a...)
 
 
 """
@@ -245,8 +248,8 @@ Set_TP_Conductivity = Dict([
 function ComputeConductivity(P,T, s::TP_Conductivity)
     @unpack a,b,c,d   = s
     
-    a_k, b_k = Value(a), Value(b)
-    c_k, d_k = Value(c), Value(d)
+    a_k, b_k = NumValue(a), NumValue(b)
+    c_k, d_k = NumValue(c), NumValue(d)
 
     k  = zeros(size(T))*   a_k  # the last multiplication ensures the correct units even for non-dimensional cases
     

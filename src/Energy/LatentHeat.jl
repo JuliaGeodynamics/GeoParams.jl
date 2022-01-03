@@ -8,7 +8,7 @@ using ..Units
 using GeoParams: AbstractMaterialParam
 import Base.show
 
-abstract type AbstractLatentHeat <: AbstractMaterialParam end
+abstract type AbstractLatentHeat{T} <: AbstractMaterialParam end
 
 export  ComputeLatentHeat,                  # calculation routines
         ConstantLatentHeat                  # constant
@@ -24,16 +24,17 @@ Set a constant latent heat:
 ```
 where ``Q_L`` is the latent heat [``kJ/kg``].
 """
-@with_kw_noshow mutable struct ConstantLatentHeat <: AbstractLatentHeat
+@with_kw_noshow struct ConstantLatentHeat{T} <: AbstractLatentHeat{T}
     equation::LaTeXString   =   L"Q_L = cst"     
-    Q_L::GeoUnit             =   400kJ/kg                # Latent heat
+    Q_L::GeoUnit{T}         =   400kJ/kg                # Latent heat
 end
+ConstantLatentHeat(a...) = ConstantLatentHeat{Float64}(a...)
 
 # Calculation routine
 function ComputeLatentHeat(s::ConstantLatentHeat)
     @unpack Q_L   = s
     
-    return Value(Q_L)
+    return NumValue(Q_L)
 end
 
 # Print info 
