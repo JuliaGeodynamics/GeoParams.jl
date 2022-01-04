@@ -190,27 +190,35 @@ julia> rho
 ```
 The routine is made to minimize allocations:
 ```julia
-julia> julia> @time compute_density!(rho, Phases, P,T, MatParam)
-0.003121 seconds (49 allocations: 3.769 MiB)
+julia> using BenchmarkTools
+julia> @btime compute_density!(\$rho, \$Phases, \$P, \$T, \$MatParam)
+ 1.300 ms (44 allocations: 3.77 MiB)
 ```
 """
-function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, Phases::AbstractArray{<:Integer, N}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where N
+function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, Phases::AbstractArray{<:Integer, N}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where {N,_T}
 
     for i = 1:length(MatParam)
 
-        if !isnothing(MatParam[i].Density)
+        if !isempty(MatParam[i].Density)
             # Create views into arrays (so we don't have to allocate)
             ind = Phases .== MatParam[i].Phase
             rho_local   =   view(rho, ind )
             P_local     =   view(P  , ind )
             T_local     =   view(T  , ind )
 
-            compute_density!(rho_local, P_local, T_local, MatParam[i].Density[1] ) 
+           # density::Union{AbstractDensity{_T},PhaseDiagram_LookupTable}     =   MatParam[i].Density[1]
+            density    =   MatParam[i].Density[1]
+           
+            #@time compute_density!(rho_local, P_local, T_local, dens ) 
+            compute_density!(rho_local, P_local, T_local, density ) 
+           
         end
         
     end
 
 end
+
+
 
 """
     compute_density!(rho::AbstractArray{<:AbstractFloat,N}, PhaseRatios::AbstractArray{<:AbstractFloat, M}, P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
@@ -224,17 +232,23 @@ function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, PhaseRatios::A
     if M!=(N+1)
         error("The PhaseRatios array should have one dimension more than the other arrays")
     end
-
-    rho .= 0.0;
+    
+    rho1        =  zeros(size(rho))
+    rho         .=  0.0;
     for i = 1:length(MatParam)
-        
-        rho_local   = zeros(size(rho))
+
         Fraction    = selectdim(PhaseRatios,M,i);
-        if (maximum(Fraction)>0.0) & (!isnothing(MatParam[i].Density))
+        if (!isempty(MatParam[i].Density))
 
-            compute_density!(rho_local, P, T, MatParam[i].Density[1] ) 
+            ind         =   Fraction .> 0.0
+            rho_local   =   view(rho1, ind )
+            P_local     =   view(P   , ind )
+            T_local     =   view(T   , ind )
 
-            rho .= rho .+ rho_local.*Fraction
+            density = MatParam[i].Density[1]
+            compute_density!(rho_local, P_local, T_local, density ) 
+
+            rho[ind] .+= rho_local.*Fraction[ind]
         end
         
     end

@@ -67,13 +67,14 @@ Phases              = ones(Int64,400,400)*0;
 Phases[:,20:end] .= 1
 Phases[:,300:end] .= 2
 
+#Phases .= 2;
+
 rho     = zeros(size(Phases))
 T       =  ones(size(Phases))
 P       =  ones(size(Phases))*10
 
 compute_density!(rho, Phases, P,T, MatParam)   # 82 allocations
 @test sum(rho)/400^2 ≈ 2920.6148898225
-
 
 
 # test computing material properties when we have PhaseRatios, instead of Phase numbers

@@ -360,7 +360,7 @@ function g!(r,x,y)
     r 
 end
 
-Phase1 = SetMaterialParams(Name="test1", Phase=22, Density  = ConDensity9())
+#Phase1 = SetMaterialParams(Name="test1", Phase=22, Density  = ConDensity9())
 
 #=
 # testing speed (# of allocs)
