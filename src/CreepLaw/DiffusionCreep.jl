@@ -23,7 +23,7 @@ Apparatus defines the appartus type that shall be recreated (Axial Compression, 
     E::GeoUnit            = 500kJ/mol          # activation energy
     V::GeoUnit            = 6e-6m^3/mol        # activation volume
     R::GeoUnit            = 8.314J/mol/K       # universal gas constant
-    dChar::GeoUnit        = 1.0e-6m              # characteristic grain size 
+    dChar::GeoUnit        = 1.0e-6NoUnits      # characteristic grain size 
     Apparatus             = "AxialCompression" # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
     Comment::String       = ""                 # comment when implementing new creep laws
     BibTex_Reference      = ""                 # BibTex reference
