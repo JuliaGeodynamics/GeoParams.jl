@@ -243,6 +243,16 @@ b = convert(GeoUnit{Float64}, 3300kg/m^3)
 c = convert(GeoUnit{Float32}, 3300.0kg/m^3)
 @test c.val == 3300.0f0
 
+# test broadcasting with float and unit arrays
+ar   = [1.0 2;  4 5]            # Float array
+ar1  = [1.0km 2km;  4km 5km]    # Unit array
+test = GeoUnit(10km)
+
+@test ar .+ test == [11.0 12.0; 14.0 15.0]
+@test test .- ar == [9.0 8.0; 6.0 5.0]
+@test test .* ar1 == [10.0km^2 20.0km^2; 40.0km^2 50.0km^2]
+@test ar ./ ar1 == [1/km 1/km ; 1/km 1/km ]
+
 
 # The way we define different structures heavily affects the number of allocs 
 # that are done while computing with parameters defined within the struct 

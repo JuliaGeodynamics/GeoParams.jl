@@ -50,8 +50,8 @@ export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
 
 # Density
 using  .MaterialParameters.Density
-export  ComputeDensity,                                # computational routines
-        ComputeDensity!,  
+export  compute_density,                                # computational routines
+        compute_density!,  
         ConstantDensity,                        
         PT_Density,
         PhaseDiagram_LookupTable, Read_LaMEM_Perple_X_Diagram,

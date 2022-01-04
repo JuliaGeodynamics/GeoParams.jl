@@ -31,9 +31,6 @@ Phi_anal    =   1.0 .- Phi_solid
 @test sum(phi_nd - Phi_anal)    < 1e-12
 
 
-
-
-
 # Test computation of density for the whole computational domain, using arrays 
 MatParam    =   Array{MaterialParams, 1}(undef, 3);
 MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=1,

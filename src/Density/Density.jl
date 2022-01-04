@@ -16,8 +16,8 @@ import Base.show
 
 abstract type AbstractDensity{T} <: AbstractMaterialParam end
 
-export  ComputeDensity,         # calculation routines
-        ComputeDensity!,        # in place calculation
+export  compute_density,        # calculation routines
+        compute_density!,       # in place calculation
         ConstantDensity,        # constant
         PT_Density,             # P & T dependent density
         AbstractDensity 
@@ -39,7 +39,7 @@ end
 ConstantDensity(a...) = ConstantDensity{Float64}(a...) 
 
 # Calculation routines
-function ComputeDensity(P,T, s::ConstantDensity)
+function compute_density(P,T, s::ConstantDensity)
     @unpack ρ   = s
     if length(T)>1
         return Value(ρ).*ones(size(T))
@@ -48,7 +48,7 @@ function ComputeDensity(P,T, s::ConstantDensity)
     end
 end
 
-function ComputeDensity!(rho::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::ConstantDensity) where N
+function compute_density!(rho::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::ConstantDensity) where N
     @unpack ρ   = s
     
     rho .= NumValue(ρ)
@@ -85,7 +85,7 @@ end
 PT_Density(a...) = PT_Density{Float64}(a...) 
 
 # Calculation routine
-function ComputeDensity(P,T, s::PT_Density)
+function compute_density(P,T, s::PT_Density)
     @unpack ρ0,α,β,P0, T0   = s
     
     ρ = ρ0*(1.0 - α*(T - T0) + β*(P - P0) )
@@ -93,24 +93,20 @@ function ComputeDensity(P,T, s::PT_Density)
     return ρ
 end
 
-function ComputeDensity!(ρ, P,T, s::PT_Density)
+function compute_density!(ρ, P,T, s::PT_Density)
     @unpack ρ0,α,β,P0, T0   = s
-
+    
     ρ[:] = ρ0*(1.0 - α*(T-T0) + β*(P-P0) )
 
     return ρ
 end
 
-function ComputeDensity!(ρ::AbstractArray{<:AbstractFloat},P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PT_Density)
-    @unpack ρ0,α,β,P0, T0   = s
-    ρ0 = NumValue(ρ0)
-    α  = NumValue(α)
-    β  = NumValue(β)
-    P0 = NumValue(P0)
-    T0 = NumValue(T0)
-    
-    ρ  .= ρ0*(1.0 .- α*( T .- T0) + β*(P .- P0) )
+function compute_density!(ρ::AbstractArray{<:AbstractFloat},P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PT_Density{_T})  where _T
+    @unpack_val ρ0,α,β,P0, T0   = s     # only values are required as we have floats as input
 
+    # use the dot to avoid allocations
+    @.  ρ  = ρ0*(1.0 - α*(T - T0) +  β*(P - P0))
+    
     return nothing
 end
 
@@ -125,20 +121,20 @@ end
 #-------------------------------------------------------------------------
 # Phase diagrams
 """
-    ComputeDensity(P,T, s::PhaseDiagram_LookupTable)
+    compute_density(P,T, s::PhaseDiagram_LookupTable)
 
 Interpolates density as a function of `T,P`   
 """
-function ComputeDensity(P,T, s::PhaseDiagram_LookupTable)
+function compute_density(P,T, s::PhaseDiagram_LookupTable)
     return s.Rho.(T,P)
 end
 
 """
-    ComputeDensity!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
+    compute_density!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
 
 In-place computation of density as a function of `T,P`, in case we are using a lookup table.    
 """
-function ComputeDensity!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
+function compute_density!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
     rho[:] = s.Rho.(T,P)
     return nothing
 end
@@ -146,7 +142,7 @@ end
 #-------------------------------------------------------------------------
 
 """
-    ComputeDensity!(rho::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
+    compute_density!(rho::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
 
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `Phase` of every point is specified as an Integer in the `Phases` array.
@@ -165,7 +161,7 @@ julia> Phases[:,20:end] .= 2
 julia> rho     = zeros(size(Phases))
 julia> T       =  ones(size(Phases))
 julia> P       =  ones(size(Phases))*10
-julia> ComputeDensity!(rho, Phases, P,T, MatParam)
+julia> compute_density!(rho, Phases, P,T, MatParam)
 julia> rho
 400×400 Matrix{Float64}:
  3334.46  3334.46  3334.46  3334.46  3334.46  3334.46  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
@@ -185,11 +181,11 @@ julia> rho
 ```
 The routine is made to minimize allocations:
 ```julia
-julia> julia> @time ComputeDensity!(rho, Phases, P,T, MatParam)
+julia> julia> @time compute_density!(rho, Phases, P,T, MatParam)
 0.003121 seconds (49 allocations: 3.769 MiB)
 ```
 """
-function ComputeDensity!(rho::AbstractArray{<:AbstractFloat, N}, Phases::AbstractArray{<:Integer, N}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where N
+function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, Phases::AbstractArray{<:Integer, N}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where N
 
     for i = 1:length(MatParam)
 
@@ -200,7 +196,7 @@ function ComputeDensity!(rho::AbstractArray{<:AbstractFloat, N}, Phases::Abstrac
             P_local     =   view(P  , ind )
             T_local     =   view(T  , ind )
 
-            ComputeDensity!(rho_local, P_local, T_local, MatParam[i].Density[1] ) 
+            compute_density!(rho_local, P_local, T_local, MatParam[i].Density[1] ) 
         end
         
     end
@@ -208,13 +204,13 @@ function ComputeDensity!(rho::AbstractArray{<:AbstractFloat, N}, Phases::Abstrac
 end
 
 """
-    ComputeDensity!(rho::AbstractArray{<:AbstractFloat,N}, PhaseRatios::AbstractArray{<:AbstractFloat, M}, P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
+    compute_density!(rho::AbstractArray{<:AbstractFloat,N}, PhaseRatios::AbstractArray{<:AbstractFloat, M}, P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
 
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 
 """
-function ComputeDensity!(rho::AbstractArray{<:AbstractFloat, N}, PhaseRatios::AbstractArray{<:AbstractFloat, M}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where {N,M}
+function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, PhaseRatios::AbstractArray{<:AbstractFloat, M}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where {N,M}
     
     if M!=(N+1)
         error("The PhaseRatios array should have one dimension more than the other arrays")
@@ -227,7 +223,7 @@ function ComputeDensity!(rho::AbstractArray{<:AbstractFloat, N}, PhaseRatios::Ab
         Fraction    = selectdim(PhaseRatios,M,i);
         if (maximum(Fraction)>0.0) & (!isnothing(MatParam[i].Density))
 
-            ComputeDensity!(rho_local, P, T, MatParam[i].Density[1] ) 
+            compute_density!(rho_local, P, T, MatParam[i].Density[1] ) 
 
             rho .= rho .+ rho_local.*Fraction
         end

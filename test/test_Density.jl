@@ -20,8 +20,8 @@ x2 = Nondimensionalize(x2,CharUnits_GEO)
 @test x2.T0.val≈0.21454659702313156
 
 # Compute with density
-@test ComputeDensity(1.0,1.0, x2) ≈ 2.8419999999999996e-16
-@test ComputeDensity(1.0,1.0, x1) ≈ 2.9e-16
+@test compute_density(1.0,1.0, x2) ≈ 2.8419999999999996e-16
+@test compute_density(1.0,1.0, x1) ≈ 2.9e-16
 
 # Read Phase diagram interpolation object
 fname   =   "./test_data/Peridotite.in"
@@ -32,7 +32,7 @@ PD_data =   PerpleX_LaMEM_Diagram(fname);
 @test PD_data.rockRho(1500,1e7) ≈ 3165.467673917775
 
 
-@test ComputeDensity(1e7, 1500, PD_data) ≈ 3042.836820256982
+@test compute_density(1e7, 1500, PD_data) ≈ 3042.836820256982
 
 # Do the same but non-dimensionalize the result
 CharDim  =  GEO_units();
@@ -71,8 +71,10 @@ rho     = zeros(size(Phases))
 T       =  ones(size(Phases))
 P       =  ones(size(Phases))*10
 
-ComputeDensity!(rho, Phases, P,T, MatParam)
+compute_density!(rho, Phases, P,T, MatParam)   # 82 allocations
 @test sum(rho)/400^2 ≈ 2920.6148898225
+
+
 
 # test computing material properties when we have PhaseRatios, instead of Phase numbers
 PhaseRatio  = zeros(size(Phases)...,length(MatParam));
@@ -82,9 +84,8 @@ for i in CartesianIndices(Phases)
     PhaseRatio[I] = 1.0  
 end
 
-ComputeDensity!(rho, PhaseRatio, P,T, MatParam)
+compute_density!(rho, PhaseRatio, P,T, MatParam)
 @test sum(rho)/400^2 ≈ 2920.6148898225
-
 
 
 # test speed of assigning density 
@@ -137,24 +138,12 @@ Base.@kwdef struct TestMat3{T}
     Density::AbstractDensity{T}
 end
 
-struct TestMat3a{T}
-    Density::AbstractDensity{T}
-end
-
-struct TestMat4{T}
-    Density::ConstantDensity{T}
-end
-
-struct TestMat5{T}
-    Density::PT_Density{T}
-end
-
-# By explicitly defining Desnity as a tuple, we gain speed
+# By explicitly defining Density as a tuple, we gain speed
 Base.@kwdef struct TestMat6{V <: Tuple}
     Density::V = ()
 end
 
-# This is closer to how it may be implemented (we have to use different tuples) 
+# This is how it is implemented (we have to use different tuples for type stability) 
 Base.@kwdef struct TestMat9{V1<:Tuple, V2<:Tuple}
     Density::V1 = ()
     Conductity::V2 = ()
@@ -163,9 +152,8 @@ end
 test1 = TestMat1((ConstantDensity(),))
 test2 = TestMat2{Float64}((ConstantDensity(),))
 test3 = TestMat3{Float64}(ConstantDensity{Float64}())
-
+test6 = TestMat6((ConstantDensity{Float64}(),))
 test9 = TestMat9(Density = (ConstantDensity(), ConstantDensity()) )
-
 
 #=
 using BenchmarkTools
@@ -173,8 +161,14 @@ using BenchmarkTools
 
 @btime f!($r, $(test1.Density[1]), $c)      # 1 allocation (but non-typical usage)
 @btime g!($r, $test1, $c)       # typical usage: 6001 allocations
-
 @btime g!($r, $test2, $c)       # typical usage: 6001 allocations
+
+@btime g!($r, $test6, $c)       # typical usage: 1 allocations
+@btime g!($r, $test9, $c)       # typical usage: 1 allocations [as implemented]
 =#
+
+
+# Test 
+
 
 end
