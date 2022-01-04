@@ -5,14 +5,11 @@ module Density
 # If you want to add a new method here, feel free to do so. 
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
-
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using ..PhaseDiagrams
-#using ..MaterialParameters
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 import Base.show
-
 
 abstract type AbstractDensity{T} <: AbstractMaterialParam end
 
@@ -34,25 +31,29 @@ where ``\\rho`` is the density [``kg/m^3``].
 """
 @with_kw_noshow struct ConstantDensity{T} <: AbstractDensity{T} 
     equation::LaTeXString   =   L"\rho = cst"     
-    ρ::GeoUnit{T}           =   GeoUnit(2900.0kg/m^3)                # density
+    ρ::GeoUnit{T}           =   2900.0kg/m^3                # density
 end
 ConstantDensity(a...) = ConstantDensity{Float64}(a...) 
 
 # Calculation routines
-function compute_density(P,T, s::ConstantDensity)
-    @unpack ρ   = s
-    if length(T)>1
-        return Value(ρ).*ones(size(T))
-    else
-        return ρ*1.0
-    end
+function compute_density(P::Quantity,T::Quantity, s::ConstantDensity{_T}) where _T
+    @unpack_units ρ   = s
+    return ρ
 end
 
-function compute_density!(rho::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::ConstantDensity) where N
-    @unpack ρ   = s
-    
-    rho .= NumValue(ρ)
-    
+function compute_density(P::Number,T::Number, s::ConstantDensity{_T}) where _T
+    @unpack_val ρ   = s
+    return ρ
+end
+
+function compute_density(P::AbstractArray,T::AbstractArray, s::ConstantDensity{_T}) where _T
+    @unpack_val ρ   = s
+    return ρ*ones(size(T))
+end
+
+function compute_density!(rho::AbstractArray,P::AbstractArray,T::AbstractArray, s::ConstantDensity{_T}) where _T
+    @unpack_val ρ   = s
+    rho .= ρ
     return nothing
 end
 
@@ -84,16 +85,26 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference temperature ``T_0`` a
 end
 PT_Density(a...) = PT_Density{Float64}(a...) 
 
-# Calculation routine
-function compute_density(P,T, s::PT_Density)
-    @unpack ρ0,α,β,P0, T0   = s
+# Calculation routine in case units are provided
+function compute_density(P::Quantity,T::Quantity, s::PT_Density{_T}) where _T
+    @unpack_units ρ0,α,β,P0, T0   = s
     
     ρ = ρ0*(1.0 - α*(T - T0) + β*(P - P0) )
 
     return ρ
 end
 
-function compute_density!(ρ, P,T, s::PT_Density)
+# All other numbers 
+function compute_density(P::Number,T::Number, s::PT_Density{_T}) where _T
+    @unpack_val ρ0,α,β,P0, T0   = s
+    
+    ρ = ρ0*(1.0 - α*(T - T0) + β*(P - P0) )
+
+    return ρ
+end
+
+# in-place calculation 
+function compute_density!(ρ::Number, P::Number,T::Number, s::PT_Density{_T}) where _T
     @unpack ρ0,α,β,P0, T0   = s
     
     ρ[:] = ρ0*(1.0 - α*(T-T0) + β*(P-P0) )
@@ -101,7 +112,7 @@ function compute_density!(ρ, P,T, s::PT_Density)
     return ρ
 end
 
-function compute_density!(ρ::AbstractArray{<:AbstractFloat},P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PT_Density{_T})  where _T
+function compute_density!(ρ::AbstractArray,P::AbstractArray,T::AbstractArray, s::PT_Density{_T})  where _T
     @unpack_val ρ0,α,β,P0, T0   = s     # only values are required as we have floats as input
 
     # use the dot to avoid allocations
@@ -115,8 +126,6 @@ function show(io::IO, g::PT_Density)
     print(io, "P/T-dependent density: ρ0=$(g.ρ0.val), α=$(g.α.val), β=$(g.β.val), T0=$(g.T0.val), P0=$(g.P0.val)")  
 end
 #-------------------------------------------------------------------------
-
-
 
 #-------------------------------------------------------------------------
 # Phase diagrams
