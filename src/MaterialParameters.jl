@@ -15,6 +15,7 @@ export
     MaterialParams, SetMaterialParams    
 
 # Link the modules with various definitions:
+include("./PhaseDiagrams/PhaseDiagrams.jl")
 include("./CreepLaw/CreepLaw.jl")
 include("./Density/Density.jl")
 include("./GravitationalAcceleration/GravitationalAcceleration.jl")
@@ -23,6 +24,7 @@ include("./Energy/Conductivity.jl")
 include("./Energy/LatentHeat.jl")
 include("./Energy/RadioactiveHeat.jl")
 include("./Energy/Shearheating.jl")
+include("./SeismicVelocity/SeismicVelocity.jl")
 
 """
     MaterialParams
@@ -44,6 +46,7 @@ Structure that holds all material parameters for a given phase
     HeatCapacity         =   nothing             #       Heat capacity 
     EnergySourceTerms    =   nothing             #       Source terms in energy conservation equation (such as radioactive heat)
     Melting              =   nothing             #       Melting model
+    SeismicVelocity      =   nothing             #       Seismic velocity
 end
 
 """
@@ -57,6 +60,7 @@ end
                         HeatCapacity        =   nothing, 
                         EnergySourceTerms   =   nothing, 
                         Melting             =   nothing,
+                        SeismicVelocity     =   nothing,
                         CharDim::GeoUnits   =   nothing)
 
 Sets material parameters for a given phase. 
@@ -138,6 +142,7 @@ function SetMaterialParams(; Name::String="", Phase=1,
             HeatCapacity        =   nothing, 
             EnergySourceTerms   =   nothing, 
             Melting             =   nothing,
+            SeismicVelocity     =   nothing,
             CharDim             =   nothing)
 
         # In case density is defined and gravity not, set gravity to default value
@@ -156,7 +161,9 @@ function SetMaterialParams(; Name::String="", Phase=1,
                                      ConvField(Conductivity,        :Conductivity,      maxAllowedFields=1),    
                                      ConvField(HeatCapacity,        :HeatCapacity,      maxAllowedFields=1), 
                                      ConvField(EnergySourceTerms,   :EnergySourceTerms), 
-                                     ConvField(Melting,             :Melting,           maxAllowedFields=1)) 
+                                     ConvField(Melting,             :Melting,           maxAllowedFields=1),
+                                     ConvField(SeismicVelocity,     :SeismicVelocity,   maxAllowedFields=1)
+                                     ) 
                                      
 
         # [optionally] non-dimensionalize the struct

@@ -47,4 +47,13 @@ MatParam[Phase] =   SetMaterialParams(Name="Lower Crust", Phase=Phase,
 @test MatParam[2].Density[1].α.val ≈  3.0e-5/K
 @test MatParam[2].CreepLaws[1].n.val == 5.0
 
+# test adding phase Diagrams
+MatParam        =   Array{MaterialParams, 1}(undef, 1);
+Phase           =   1;
+MatParam[Phase] =   SetMaterialParams(Name="Mantle", Phase=Phase,
+                        CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
+                        Density   = PerpleX_LaMEM_Diagram("test_data/Peridotite.in"), CharDim=GEO_units());
+
+@test MatParam[1].Density[1].Rho(1,10) ≈ 3.1688441499707393e-18
+
 end

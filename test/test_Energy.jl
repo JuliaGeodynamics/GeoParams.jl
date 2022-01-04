@@ -34,6 +34,60 @@ Cp_nd    =   ComputeHeatCapacity(T_nd,cp2_nd)
 # Dimensionalize again and double-check the results
 @test ustrip(sum(abs.(Cp_nd*CharUnits_GEO.heatcapacity - Cp))) < 1e-11
 
+# Test with arrays
+T_array     =  ustrip.(T)*ones(10)'
+Cp_array    =  zeros(size(T_array))
+P_array     =  zeros(size(T_array))
+ComputeHeatCapacity!(Cp_array, P_array, T_array,cp1)
+@test Cp_array[1] ≈ 1.3368075000000002e22
+
+T_array     =  ustrip.(T)*ones(10)'
+Cp_array    =  zeros(size(T_array))
+P_array     =  zeros(size(T_array))
+ComputeHeatCapacity!(Cp_array, P_array, T_array,cp2)
+@test sum(Cp_array[:,1]) ≈ 11667.035717418683
+
+T_array     =  ustrip.(T)*ones(10)'
+Cp_array    =  zeros(size(T_array))
+P_array     =  zeros(size(T_array))
+ComputeHeatCapacity!(Cp_array, T_array,cp2)
+@test sum(Cp_array[:,1]) ≈ 11667.035717418683
+
+
+# Check that it works if we give a phase array
+MatParam    =   Array{MaterialParams, 1}(undef, 2);
+MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=1,
+                    HeatCapacity  = ConstantHeatCapacity());
+
+MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
+                    HeatCapacity  = T_HeatCapacity_Whittacker());
+
+# test computing material properties
+n = 100;
+Phases              = ones(Int64,n,n,n);
+Phases[:,:,20:end] .= 2
+
+Cp = zeros(size(Phases))
+T  =  ones(size(Phases))*1500
+P  =  zeros(size(Phases))
+
+ComputeHeatCapacity!(Cp, Phases, P, T, MatParam)       # computation routine w/out P (not used in most heat capacity formulations)
+@test sum(Cp[1,1,:]) ≈ 121399.0486067196
+
+ComputeHeatCapacity!(Cp, Phases, T, MatParam)       # computation routine w/out P (not used in most heat capacity formulations)
+@test sum(Cp[1,1,:]) ≈ 121399.0486067196
+
+# test if we provide phase ratios
+PhaseRatio  = zeros(n,n,n,3);
+for i in CartesianIndices(Phases)
+    iz = Phases[i]
+    I = CartesianIndex(i,iz)
+    PhaseRatio[I] = 1.0  
+end
+ComputeHeatCapacity!(Cp, PhaseRatio, P, T, MatParam)
+@test sum(Cp[1,1,:]) ≈ 121399.0486067196
+
+
 # -----------------------
 
 # Conductivity ----------
@@ -66,7 +120,62 @@ k_nd     =   ComputeConductivity(T_nd,cond2_nd)
 # Dimensionalize again and double-check the results
 @test ustrip(sum(abs.(k_nd*CharUnits_GEO.conductivity - k))) < 1e-11
 
+# Check if we use arrays
+T_array     =  ustrip.(T)*ones(100)'
+k_array     =  copy(T_array)
+P_array     =  copy(T_array)
+
+ComputeConductivity!(k_array,P_array,T_array, cond)
+@test k_array[1] ≈ 3.8194500000000007
+
+ComputeConductivity!(k_array,P_array,T_array, cond2)
+@test sum(k_array) ≈ 2750.3366436682285
+
+k_TP    =   Set_TP_Conductivity["LowerCrust"]
+ComputeConductivity!(k_array, P_array, T_array, k_TP)
+@test sum(k_array) ≈ 2055.7129327367625
+
+# Check that it works if we give a phase array
+MatParam    =   Array{MaterialParams, 1}(undef, 3);
+MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=1,
+                    Conductivity  = ConstantConductivity());
+
+MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
+                    Conductivity  = T_Conductivity_Whittacker());
+
+MatParam[3] =   SetMaterialParams(Name="MantleLithosphere", Phase=3,
+                    Conductivity  = Set_TP_Conductivity["Mantle"]);
+
+# test computing material properties
+n = 100;
+Phases              = ones(Int64,n,n,n);
+Phases[:,:,20:end] .= 2
+Phases[:,:,60:end] .= 3
+
+PhaseRatio  = zeros(n,n,n,3);
+for i in CartesianIndices(Phases)
+    iz = Phases[i]
+    I = CartesianIndex(i,iz)
+    PhaseRatio[I] = 1.0  
+end
+
+k   =  zeros(size(Phases))
+T   =  ones(size(Phases))*1500
+P   =  zeros(size(Phases))
+
+ComputeConductivity!(k, Phases, P, T, MatParam) 
+@test sum(k) ≈ 1.9216938849389635e6
+
+ComputeConductivity!(k, PhaseRatio, P, T, MatParam) 
+@test sum(k) ≈ 1.9216938849389635e6
+
+#
+
+
+######
+
 # TP-dependent conductivity for different predefines cases
+T       =   (250:100:1250)*K;
 P       = 1e6Pa*ones(size(T))
 List    = ["LowerCrust"   "Mantle"        "OceanicCrust"  "UpperCrust"]
 Sol_kT  = [20.55712932736763 28.700405819019323 20.55712932736763 19.940302462417037]*Watt/K/m

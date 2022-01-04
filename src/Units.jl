@@ -7,7 +7,8 @@ import Unitful: superscript
 using Parameters
 
 import Base.show
-using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct, PerpleX_LaMEM_Diagram
+
 
 # Define additional units that are useful in geodynamics 
 @unit    Myrs  "Myrs"   MillionYears    1000000u"yr"    false
@@ -31,6 +32,7 @@ const kg    = u"kg"
 const g     = u"g"
 const Pa    = u"Pa"
 const MPa   = u"MPa"
+const kbar  = u"kbar"
 const Pas   = u"Pa*s"
 const K     = u"K"
 const C     = u"°C"
@@ -39,13 +41,13 @@ const kJ    = u"kJ"
 const J     = u"J"
 const Watt  = u"W"
 const μW    = u"μW"
-
+const μm    = u"μm"
 
 export 
-    km, m, cm, mm, Myrs, yr, s, MPa, Pa, Pas, K, C, g, kg, mol, J, kJ, Watt, μW, 
+    km, m, cm, mm, μm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW, 
     GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
     Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
-    superscript, upreferred, GEO, SI, NONE, isDimensional, Value, Unit
+    superscript, upreferred, GEO, SI, NONE, isDimensional, Value, NumValue, Unit
 
 """
 AbstractGeoUnits
@@ -79,6 +81,7 @@ GeoUnit(v::Array)                       =   GeoUnit(v, NoUnits)     # array, no 
 GeoUnit(v::Array{Unitful.Quantity})     =   GeoUnit(v, unit.(v))    # with units
 GeoUnit(v::StepRange)                   =   GeoUnit(v, unit.(v))    # with units
 Value(v::GeoUnit)                       =   v.val                   # get value of GeoUnit
+NumValue(v::GeoUnit)                    =   ustrip(v.val)           # numeric value, with no units
 Unit(v::GeoUnit)                        =   v.unit                  # extract unit
 
 Base.convert(::Type{Float64}, v::GeoUnit)       =   v.val
@@ -118,6 +121,11 @@ Base.:*(x::GeoUnit, y::Array)   = GeoUnit(x.val*y, x.unit)
 Base.:/(x::GeoUnit, y::Array)   = GeoUnit(x.val/y, x.unit)
 Base.:+(x::GeoUnit, y::Array)   = GeoUnit(x.val+y, x.unit)
 Base.:-(x::GeoUnit, y::Array)   = GeoUnit(x.val-y, x.unit)
+
+Base.:*(x::Array, y::GeoUnit)   = GeoUnit(x*y.val, y.unit)
+Base.:/(x::Array, y::GeoUnit)   = GeoUnit(x/y.val, y.unit)
+Base.:+(x::Array, y::GeoUnit)   = GeoUnit(x +y.val, y.unit)
+Base.:-(x::Array, y::GeoUnit)   = GeoUnit(x -y.val, y.unit)
 
 Base.:*(x::GeoUnit, y::Vector)   = GeoUnit(x.val*y, x.unit)
 Base.:/(x::GeoUnit, y::Vector)   = GeoUnit(x.val/y, x.unit)
@@ -375,6 +383,23 @@ function Nondimensionalize(param, g::GeoUnits{TYPE}) where {TYPE}
     return param_ND
 end
 
+
+function Nondimensionalize(param::Array, g::GeoUnits{TYPE}) where {TYPE}
+    if unit(param[1])!=NoUnits
+        dim         =   Unitful.dimension.(param);                   # Basic SI units
+        char_val    =   1.0;
+        foreach((typeof(dim[1]).parameters[1])) do y
+            val = upreferred(getproperty(g, Unitful.name(y)))       # Retrieve the characteristic value from structure g
+            pow = Float64(y.power)                                  # power by which it should be multiplied   
+            char_val *= val^pow                                     # multiply characteristic value
+        end
+        param_ND = upreferred.(param)/char_val
+    else
+        param_ND = param # The parameter has no units, so there is no way to determine how to nondimensionize it 
+    end
+    return param_ND
+end
+
 """
     Nondimensionalize!(param::GeoUnit, CharUnits::GeoUnits{TYPE})
 
@@ -398,10 +423,8 @@ julia> A_ND      =   Nondimensionalize(A, CharUnits)
 7.068716262102384e14
 ```
 """
-function Nondimensionalize!(param, g::GeoUnits{TYPE}) where {TYPE}
-    if typeof(param) == String
-        param_ND = param # The parameter is a string, cannot be nondimensionalized
-    elseif unit.(param.val)!=NoUnits
+function Nondimensionalize!(param::GeoUnit, g::GeoUnits{TYPE}) where {TYPE}
+    if unit.(param.val)!=NoUnits
         dim         =   Unitful.dimension(param.val[1]);                   # Basic SI units
         char_val    =   1.0;
         foreach((typeof(dim).parameters[1])) do y
@@ -415,6 +438,29 @@ function Nondimensionalize!(param, g::GeoUnits{TYPE}) where {TYPE}
     end
 end
 
+
+function Nondimensionalize!(param::String, g::GeoUnits{TYPE}) where {TYPE}
+    param_ND = param
+    return nothing
+end
+
+function Nondimensionalize!(param::Array, g::GeoUnits{TYPE}) where {TYPE}
+  
+    if unit.(param[1])!=NoUnits
+        dim         =   Unitful.dimension(param[1]);                   # Basic SI units
+        char_val    =   1.0;
+        foreach((typeof(dim).parameters[1])) do y
+            val = upreferred(getproperty(g, Unitful.name(y)))       # Retrieve the characteristic value from structure g
+            pow = Float64(y.power)                                  # power by which it should be multiplied   
+            char_val *= val^pow                                     # multiply characteristic value
+        end
+        param = upreferred.(param)/char_val;
+    else
+        param = param # The parameter has no units, so there is no way to determine how to nondimensionize it 
+    end
+
+end
+
 """
     Nondimensionalize!(MatParam::AbstractMaterialParam, CharUnits::GeoUnits{TYPE})
 
@@ -422,7 +468,6 @@ Non-dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
 
 """
 function Nondimensionalize!(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE} 
-
     for param in fieldnames(typeof(MatParam))
         if typeof(getfield(MatParam, param))==GeoUnit
             z=getfield(MatParam, param)
@@ -430,7 +475,6 @@ function Nondimensionalize!(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) 
             setfield!(MatParam, param, z)
         end
     end
-    
 end
     
 """
@@ -443,9 +487,18 @@ function Nondimensionalize!(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits
     for param in fieldnames(typeof(phase_mat))
         fld = getfield(phase_mat, param)
         if ~isnothing(fld)
-            for i=1:length(fld)
-                if typeof(fld[i]) <: AbstractMaterialParam
-                    Units.Nondimensionalize!(fld[i],g)
+            if typeof(fld[1]) <: AbstractPhaseDiagramsStruct
+                
+                # in case we employ a phase diagram 
+                temp = PerpleX_LaMEM_Diagram(fld[1].Name, CharDim = g)
+                
+                setfield!(phase_mat, param, (temp,))
+            else
+                # otherwise non-dimensionalize 
+                for i=1:length(fld)
+                    if typeof(fld[i]) <: AbstractMaterialParam
+                        Units.Nondimensionalize!(fld[i],g)
+                    end
                 end
             end
         end
@@ -579,61 +632,46 @@ function show(io::IO, g::GeoUnits{TYPE})  where {TYPE}
 end
 
 
-# This replaces the viewer of the Unitful package
-"""
-    superscript(i::Rational)
-Prints exponents. 
 
-Note that we redefine this method (from Unitful) here, as we regularly deal with exponents 
-such as Pa^-4.2, which are otherwise not so nicely displayed in the Unitful package
-"""
-function superscript(i::Rational)
-    val = Float64(i);   # the numerical value of the exponent
-    v = get(ENV, "UNITFUL_FANCY_EXPONENTS", Sys.isapple() ? "true" : "false")
-    t = tryparse(Bool, lowercase(v))
-    k = (t === nothing) ? false : t
-    if k
-         return superscript_mac(Float64(i.num/i.den))
+# This replaces the viewer of the Unitful package, such that the printing of units is done as floats (better)
+function Unitful.superscript(i::Rational{Int64}; io=nothing) 
+    string(superscript(float(i)))
+    if io === nothing
+        iocontext_value = nothing
     else
-        i.den == 1 ? "^" * string(val) : "^" * replace(string(val), "//" => "/")
+        iocontext_value = get(io, :fancy_exponent, nothing)
     end
-end
-
-function superscript_mac(number::Float64)
-    # this transfers the float number to a superscript string, which can be used for visualization on mac 
-    x           =   trunc(Int,number)               # retrieve the part before the decimal point
-    dec         =   number-x                        # decimal part
-    super_str   =   superscriptnumber(x)            # transfer to superscript string
-    str         =   string(number);
-    ind         =   findfirst(isequal('.'), str)    
-    if ~isempty(ind)  && abs(dec)>0
-        st        = [super_str;'\uB7']              # dot
-        for id=ind+1:length(str)
-            y         = parse(Int,str[id]);
-            st        = [st; superscriptnumber(y)]
-        end
-
-        super_str = join(st)                        # add decimal part
-    end
-
-    return super_str
-end
-
-function superscriptnumber(i::Int)
-    if i < 0
-        c = [Char(0x207B)]
+    if iocontext_value isa Bool
+        fancy_exponent = iocontext_value
     else
-        c = []
+        v = get(ENV, "UNITFUL_FANCY_EXPONENTS", Sys.isapple() ? "true" : "false")
+        t = tryparse(Bool, lowercase(v))
+        fancy_exponent = (t === nothing) ? false : t
     end
-    for d in reverse(digits(abs(i)))
-        if d == 0 push!(c, Char(0x2070)) end
-        if d == 1 push!(c, Char(0x00B9)) end
-        if d == 2 push!(c, Char(0x00B2)) end
-        if d == 3 push!(c, Char(0x00B3)) end
-        if d > 3 push!(c, Char(0x2070+d)) end
+    if fancy_exponent
+        return superscript(float(i)) 
+    else
+        return  "^" * string(float(i)) 
     end
-    return join(c)
+
 end
+
+Unitful.superscript(i::Float64) = map(repr(i)) do c
+    c == '-' ? '\u207b' :
+    c == '1' ? '\u00b9' :
+    c == '2' ? '\u00b2' :
+    c == '3' ? '\u00b3' :
+    c == '4' ? '\u2074' :
+    c == '5' ? '\u2075' :
+    c == '6' ? '\u2076' :
+    c == '7' ? '\u2077' :
+    c == '8' ? '\u2078' :
+    c == '9' ? '\u2079' :
+    c == '0' ? '\u2070' :
+    c == '.' ? '\u0387' :
+    error("unexpected character")
+end
+
 
 
 end

@@ -7,12 +7,13 @@ module Conductivity
 
 using Parameters, LaTeXStrings, Unitful
 using ..Units
-using GeoParams: AbstractMaterialParam
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 import Base.show
 
 abstract type AbstractConductivity <: AbstractMaterialParam end
 
 export  ComputeConductivity,                # calculation routines
+        ComputeConductivity!,
         ConstantConductivity,               # constant
         T_Conductivity_Whittacker,          # T-dependent heat capacity
         TP_Conductivity,                    # TP dependent conductivity
@@ -42,6 +43,19 @@ function ComputeConductivity(P, T, s::ConstantConductivity)
     else
         return Value(k)
     end
+end
+
+"""
+    ComputeConductivity(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::ConstantConductivity) where N
+
+In-place routine to compute constant conductivity    
+"""
+function ComputeConductivity!(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::ConstantConductivity) where N
+    @unpack k   = s
+    
+    k_array .= ustrip(Value(k))
+    
+    return nothing
 end
 
 # Print info 
@@ -126,6 +140,31 @@ function ComputeConductivity(P,T, s::T_Conductivity_Whittacker)
     end
 
     return k
+end
+
+"""
+    ComputeConductivity(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::T_Conductivity_Whittacker) where N
+
+In-place routine to compute temperature-dependent conductivity    
+"""
+function ComputeConductivity!(k::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::T_Conductivity_Whittacker) where N
+    @unpack a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g   = s
+    a0,b0,c0    =   NumValue(a0),NumValue(b0),NumValue(c0)
+    a1,b1,c1    =   NumValue(a1),NumValue(b1),NumValue(c1)
+    ρ           =   NumValue(rho)
+    d,e,f,g     =   NumValue(d),NumValue(e),NumValue(f), NumValue(g)
+    Tcutoff     =   NumValue(Tcutoff)
+    molmass     =   NumValue(molmass)
+
+    ind         =   (T .<= Tcutoff)
+    T_local     =   view(T, ind )
+    k[ind]      =   (a0 .+ b0*T_local - c0./T_local.^2)/molmass .* (d./T_local .- e) .* ρ
+
+    ind         =   (T .> Tcutoff)
+    T_local     =   view(T, ind )
+    k[ind]      =   (a1 .+ b1*T_local - c1./T_local.^2)/molmass  .* (f .- g.*T_local ) .* ρ
+    
+    return nothing
 end
 
 # Print info 
@@ -228,6 +267,23 @@ function ComputeConductivity(P,T, s::TP_Conductivity)
     return k
 end
 
+# Calculation routine
+function ComputeConductivity!(K::AbstractArray{T, N}, P::AbstractArray{T, N},Temp::AbstractArray{T, N}, s::TP_Conductivity) where{T<:AbstractFloat, N}
+    @unpack a,b,c,d   = s
+    
+    a_k, b_k = NumValue(a), NumValue(b)
+    c_k, d_k = NumValue(c), NumValue(d)
+
+    if d_k==0
+        K[:] = a_k .+ b_k./(Temp .+ c_k)
+    else
+        K[:] = (a_k .+ b_k./(Temp .+ c_k)).*(1.0 .+ d_k.*P)
+    end
+
+    return nothing
+end
+
+
 # Print info 
 function show(io::IO, g::TP_Conductivity)  
     if ustrip(Value(g.d))==0
@@ -276,6 +332,62 @@ ComputeConductivity(T::Any, s::AbstractConductivity) =  ComputeConductivity(0,T,
 Returns conductivity if we are sure that we will only employ constant values throughout the simulation
 """
 ComputeConductivity(s::ConstantConductivity) =  ComputeConductivity(0,0, s)
+
+
+"""
+    ComputeConductivity!(K::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},Temp::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
+
+In-place computation of conductivity `K` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `Temp` arrays.
+This assumes that the `Phase` of every point is specified as an Integer in the `Phases` array.
+
+"""
+function ComputeConductivity!(K::AbstractArray{T, N}, Phases::AbstractArray{<:Integer, N}, P::AbstractArray{T, N},Temp::AbstractArray{T, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where {T<:AbstractFloat,N}
+
+    for i = 1:length(MatParam)
+        
+        if !isnothing(MatParam[i].Conductivity)
+            # Create views into arrays (so we don't have to allocate)
+            ind = Phases .== MatParam[i].Phase;
+            K_local     =   view(K   , ind )
+            P_local     =   view(P   , ind )
+            T_local     =   view(Temp, ind )
+
+            ComputeConductivity!(K_local, P_local, T_local, MatParam[i].Conductivity[1] ) 
+        end
+        
+    end
+
+end
+
+
+"""
+    ComputeConductivity!(k::AbstractArray{T,N}, PhaseRatios::AbstractArray{T, M}, P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
+
+In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
+This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
+
+"""
+function ComputeConductivity!(k::AbstractArray{T, N}, PhaseRatios::AbstractArray{T, M}, P::AbstractArray{T, N},Temp::AbstractArray{T, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where {T<:AbstractFloat, N,M}
+    
+    if M!=(N+1)
+        error("The PhaseRatios array should have one dimension more than the other arrays")
+    end
+
+    k .= 0.0;
+    k_local     = zeros(size(k))
+    for i = 1:length(MatParam)
+        k_local .= 0.0
+        Fraction    = selectdim(PhaseRatios,M,i);
+        if (maximum(Fraction)>0.0) & (!isnothing(MatParam[i].Conductivity))
+
+            ComputeConductivity!(k_local, P, Temp, MatParam[i].Conductivity[1] ) 
+
+            k .= k .+ k_local.*Fraction
+        end
+        
+    end
+
+end
 
 
 end

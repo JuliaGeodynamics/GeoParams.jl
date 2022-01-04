@@ -19,13 +19,18 @@ export
         @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
         GeoUnit, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
         Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
-        superscript, upreferred, GEO, SI, NONE, isDimensional, Value, Unit, 
-        km, m, cm, mm, Myrs, yr, s, MPa, Pa, Pas, K, C, g, kg, mol, J, kJ, Watt, μW
+        superscript, upreferred, GEO, SI, NONE, isDimensional, Value, NumValue, Unit, 
+        km, m, cm, mm, μm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW
    
 #         
-abstract type AbstractMaterialParam end           # structure that holds material parmeters (density, elasticity, viscosity)          
-abstract type AbstractMaterialParamsStruct end    # will hold all info for a phase       
-        
+abstract type AbstractMaterialParam end                                    # structure that holds material parmeters (density, elasticity, viscosity)          
+abstract type AbstractMaterialParamsStruct end                             # will hold all info for a phase       
+abstract type AbstractPhaseDiagramsStruct <:  AbstractMaterialParam end    # will hold all info for phase diagrams 
+function PerpleX_LaMEM_Diagram end          # necessary as we already use this function in Units, but only define it later in PhaseDiagrams
+
+export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
+
+
 # note that this throws a "Method definition warning regarding superscript"; that is expected & safe 
 #  as we add a nicer way to create output of superscripts. I have been unable to get rid of this warning,
 #  as I am indeed redefining a method originally defined in Unitful
@@ -37,6 +42,10 @@ include("MaterialParameters.jl")
 using  .MaterialParameters
 export MaterialParams, SetMaterialParams
 
+# Phase Diagrams
+using  .MaterialParameters.PhaseDiagrams
+export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
+
 # Creep laws
 using  .MaterialParameters.CreepLaw
 export  ComputeCreepLaw_EpsII, ComputeCreepLaw_TauII, CreepLawVariables,
@@ -47,8 +56,11 @@ export  ComputeCreepLaw_EpsII, ComputeCreepLaw_TauII, CreepLawVariables,
 # Density
 using  .MaterialParameters.Density
 export  ComputeDensity,                                # computational routines
+        ComputeDensity!,  
         ConstantDensity,                        
-        PT_Density
+        PT_Density,
+        PhaseDiagram_LookupTable, Read_LaMEM_Perple_X_Diagram
+
 
 # Gravitational Acceleration
 using  .MaterialParameters.GravitationalAcceleration
@@ -57,12 +69,14 @@ export  ComputeGravity,                                # computational routines
 
 # Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat         
 using .MaterialParameters.HeatCapacity
-export  ComputeHeatCapacity,                          
+export  ComputeHeatCapacity,  
+        ComputeHeatCapacity!,                           
         ConstantHeatCapacity,
         T_HeatCapacity_Whittacker
 
 using .MaterialParameters.Conductivity
-export  ComputeConductivity,                           
+export  ComputeConductivity,
+        ComputeConductivity!,
         ConstantConductivity,
         T_Conductivity_Whittacker,
         TP_Conductivity,
@@ -80,13 +94,21 @@ using .MaterialParameters.Shearheating
 export  ComputeShearheating, ComputeShearheating!,               
         ConstantShearheating              
 
+# Seismic velocities
+using .MaterialParameters.SeismicVelocity
+export  ComputePwaveVelocity,  ComputeSwaveVelocity,   
+        ComputePwaveVelocity!, ComputeSwaveVelocity!,   
+        ConstantSeismicVelocity                        
+
+
 # Add melting parameterizations
 include("./MeltFraction/MeltingParameterization.jl")
 using .MeltingParam
 export  ComputeMeltingParam, ComputeMeltingParam!,       # calculation routines
         MeltingParam_Caricchi                          
 
-# Add plotting routines
+
+# Add plotting routines - only activated if the "Plots.jl" package is loaded 
 function __init__()
         @require Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80" begin
                 print("Adding plotting routines of GeoParam")

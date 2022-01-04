@@ -1,4 +1,4 @@
-using Documenter, GeoParams
+using Documenter, GeoParams, Plots
 
 @info "Making documentation..."
 makedocs(
@@ -11,9 +11,19 @@ makedocs(
         "User Guide" => Any[
             "Nondimensionalization" =>  "man/nondimensionalize.md",
             "Material Parameters" =>  "man/materialparameters.md",
+            "Density" =>  "man/density.md",
+            "Creep laws" =>  "man/creeplaws.md",
+            "Heat Capacity" =>  "man/heatcapacity.md",
+            "Conductivity" =>  "man/conductivity.md",
+            "Latent heat" =>  "man/latentheat.md",
+            "Radioactive heat" =>  "man/radioactiveheating.md",
+            "Shear heating" =>  "man/shearheating.md",
+            "Gravity" =>  "man/gravity.md",
+            "Partial Melting"  => "man/melting.md",
+            "Phase Diagrams" => "man/phasediagrams.md",
+            "Seismic Velocity" => "man/seismicvelocity.md",
         ],
         "Plotting"  => "man/plotting.md",
-        "Partial Melting"  => "man/melting.md",
         "List of functions"  => "man/listfunctions.md",
         "Contributing" => "man/contributing.md",
     ],
