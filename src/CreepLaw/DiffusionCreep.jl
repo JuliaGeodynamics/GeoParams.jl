@@ -19,7 +19,7 @@ Apparatus defines the appartus type that shall be recreated (Axial Compression, 
     n::GeoUnit            = 1.0NoUnits         # power-law exponent
     r::GeoUnit            = 0.0NoUnits         # exponent of water-fugacity
     p::GeoUnit            = -3.0NoUnits         # grain size exponent
-    A::GeoUnit            = 1.5MPa^(-n-r)*s^(-1)*(1e-6m)^(-p)    # material specific rheological parameter
+    A::GeoUnit            = 1.5MPa^(-n-r)*s^(-1)*m^(-p)    # material specific rheological parameter
     E::GeoUnit            = 500kJ/mol          # activation energy
     V::GeoUnit            = 6e-6m^3/mol        # activation volume
     R::GeoUnit            = 8.314J/mol/K       # universal gas constant
