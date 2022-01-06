@@ -17,7 +17,16 @@ export  compute_density,        # calculation routines
         compute_density!,       # in place calculation
         ConstantDensity,        # constant
         PT_Density,             # P & T dependent density
+        No_Density,             # nothing defined
         AbstractDensity 
+
+
+# Define default struct in case nothing is defined
+struct No_Density{_T} <: AbstractDensity{_T} end
+No_Density() = No_Density{Float64}();
+compute_density!(rho::Number,P::Number,T::Number, s::No_Density{_T}) where {_T} = zero(_T)
+compute_density(P::Number,T::Number, s::No_Density{_T}) where {_T} = zero(_T)
+
 
 # Constant Density -------------------------------------------------------
 """
@@ -29,9 +38,9 @@ Set a constant density:
 ```
 where ``\\rho`` is the density [``kg/m^3``].
 """
-@with_kw_noshow struct ConstantDensity{T} <: AbstractDensity{T} 
+@with_kw_noshow struct ConstantDensity{_T} <: AbstractDensity{_T} 
     equation::LaTeXString   =   L"\rho = cst"     
-    ρ::GeoUnit{T}           =   2900.0kg/m^3                # density
+    ρ::GeoUnit{_T}          =   2900.0kg/m^3                # density
 end
 ConstantDensity(a...) = ConstantDensity{Float64}(a...) 
 
@@ -49,6 +58,18 @@ end
 function compute_density(P::AbstractArray,T::AbstractArray, s::ConstantDensity{_T}) where _T
     @unpack_val ρ   = s
     return ρ*ones(size(T))
+end
+
+function compute_density!(rho::Number,P::Number,T::Number, s::ConstantDensity{_T}) where _T
+    @unpack_val ρ   = s
+    #rho = ρ
+    return ρ
+end
+
+function compute_density!(rho::Vector,P::Number,T::Number, s::ConstantDensity{_T}) where _T
+    @unpack_val ρ   = s
+    rho[:] .= ρ
+    return nothing
 end
 
 function compute_density!(rho::AbstractArray,P::AbstractArray,T::AbstractArray, s::ConstantDensity{_T}) where _T
@@ -75,13 +96,13 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference temperature ``T_0`` a
 ``\\alpha`` is the temperature dependence of density and ``\\beta`` the pressure dependence.
 
 """
-@with_kw_noshow struct PT_Density{T} <: AbstractDensity{T}
-    equation::LaTeXString   =   L"\rho = \rho_0(1.0-\alpha (T-T_0) + \beta (P-P_0)"     
-    ρ0::GeoUnit{T}          =   2900.0kg/m^3                # density
-    α::GeoUnit{T}           =   3e-5/K                      # T-dependence of density
-    β::GeoUnit{T}           =   1e-9/Pa                     # P-dependence of density
-    T0::GeoUnit{T}          =   0.0C                        # Reference temperature
-    P0::GeoUnit{T}          =   0.0MPa                      # Reference pressure
+@with_kw_noshow struct PT_Density{_T} <: AbstractDensity{_T}
+    equation::LaTeXString    =   L"\rho = \rho_0(1.0-\alpha (T-T_0) + \beta (P-P_0)"     
+    ρ0::GeoUnit{_T}          =   2900.0kg/m^3                # density
+    α::GeoUnit{_T}           =   3e-5/K                      # T-dependence of density
+    β::GeoUnit{_T}           =   1e-9/Pa                     # P-dependence of density
+    T0::GeoUnit{_T}          =   0.0C                        # Reference temperature
+    P0::GeoUnit{_T}          =   0.0MPa                      # Reference pressure
 end
 PT_Density(a...) = PT_Density{Float64}(a...) 
 
@@ -110,6 +131,14 @@ function compute_density!(ρ::Number, P::Number,T::Number, s::PT_Density{_T}) wh
     ρ[:] = ρ0*(1.0 - α*(T-T0) + β*(P-P0) )
 
     return ρ
+end
+
+function compute_density!(ρ::AbstractArray, P::Number,T::Number, s::PT_Density{_T}) where _T
+    @unpack ρ0,α,β,P0, T0   = s
+    
+    ρ .= ρ0*(1.0 - α*(T-T0) + β*(P-P0) )
+
+    return nothing
 end
 
 function compute_density!(ρ::AbstractArray,P::AbstractArray,T::AbstractArray, s::PT_Density{_T})  where _T
@@ -254,6 +283,29 @@ function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, PhaseRatios::A
     end
 
 end
+
+
+function compute_density(P::Number,T::Number, s::Vector{AbstractDensity{_T}}) where {_T}
+    #ρ = zeros(length(s))
+    ρ = map(x->compute_density(P,T,x), s)
+end
+
+function compute_density!(ρ::Vector{_T},P::Number,T::Number, s::Vector{AbstractDensity{_T}}) where {_T}
+
+    #println("test")
+  #  @show s, ρ
+    # compute density in a non-allocating manner in case that density is given as a tuyple  
+    #result =  map(x->compute_density(P,T,x), s)
+    ρ .= map(x->compute_density(P,T,x), s)
+    #ρ = result
+  #  @show ρ, result
+    # Note that we can use mapreduce if we want to do calculations with the result (such as sum the contributions)
+    #  for this to work in-placeaa, ρ must be a vector
+    #ρ .= mapreduce(x->compute_density(P,T,x), +, s)
+
+    return 
+end
+
 
 
 

@@ -76,7 +76,6 @@ P       =  ones(size(Phases))*10
 compute_density!(rho, Phases, P,T, MatParam)   # 82 allocations
 @test sum(rho)/400^2 ≈ 2920.6148898225
 
-
 # test computing material properties when we have PhaseRatios, instead of Phase numbers
 PhaseRatio  = zeros(size(Phases)...,length(MatParam));
 for i in CartesianIndices(Phases)
@@ -87,7 +86,6 @@ end
 
 compute_density!(rho, PhaseRatio, P,T, MatParam)
 @test sum(rho)/400^2 ≈ 2920.6148898225
-
 
 # test speed of assigning density 
 rho1 = ConstantDensity();
@@ -144,8 +142,13 @@ Base.@kwdef struct TestMat6{V <: Tuple}
     Density::V = ()
 end
 
-# This is how it is implemented (we have to use different tuples for type stability) 
 Base.@kwdef struct TestMat9{V1<:Tuple, V2<:Tuple}
+    Density::V1 = ()
+    Conductity::V2 = ()
+end
+
+# This is how it is implemented (we have to use different tuples for type stability) 
+Base.@kwdef struct TestMat9cc{Float64, V1<:Tuple, V2<:Tuple}  
     Density::V1 = ()
     Conductity::V2 = ()
 end
@@ -154,7 +157,14 @@ test1 = TestMat1((ConstantDensity(),))
 test2 = TestMat2{Float64}((ConstantDensity(),))
 test3 = TestMat3{Float64}(ConstantDensity{Float64}())
 test6 = TestMat6((ConstantDensity{Float64}(),))
-test9 = TestMat9(Density = (ConstantDensity(), ConstantDensity()) )
+test9 = TestMat9(Density = (ConstantDensity{Float64}(), ) )
+#test9b = TestMat9(Density = (ConstantDensity{Float64}(), ConstantDensity{Float64}()) )
+
+#test9 = TestMat9cc(Density = (ConstantDensity{Float64}()) )
+#test9b = TestMat9k(Density = (ConstantDensity{Float64}(), ConstantDensity{Float64}()) )
+
+#test9 = TestMat9cc(Density = [ConstantDensity{Float64}()] )
+
 
 #=
 using BenchmarkTools
@@ -169,7 +179,43 @@ using BenchmarkTools
 =#
 
 
-# Test 
+## testing summing up the fractions in a pointwise manner
+
+# Mimic the way we store material properties
+N = 5
+MatProp = Vector{TestMat9}(undef,N)
+for i=1:N
+    MatProp[i] = test9
+end
+Frac = ones(N)/N
+
+#using StructArrays
+#MatStructArr = StructArray(MatProp)
+
+
+# test different ways to compute the density without allocating
+den  = ConstantDensity()
+den1 = PT_Density()
+
+
+# Generate a 2D array with density types:
+bb=Array{AbstractDensity{Float64},2}(undef,5,2)
+[bb[i] = den for i in eachindex(bb)]
+bb[end] = den1
+bb[3]   = No_Density()
+
+P,T     = 10.0,11.0
+rho     = zeros(size(bb))
+
+
+# This statement has 0 allocations and compute the result for all densities simultaneously:
+#
+# Yet, it has the disadvantage 
+rho .= compute_density.(P, T, bb)
+
+#using BenchmarkTools
+#@btime $rho .= compute_density.($P, $T, $bb)
+
 
 
 end

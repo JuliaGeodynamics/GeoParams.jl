@@ -38,6 +38,7 @@ export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagram
 #  as I am indeed redefining a method originally defined in Unitful
 include("Units.jl")     
 using .Units
+export @unpack_units, @unpack_val
 
 # Define Material Parameter structure
 include("MaterialParameters.jl")
@@ -52,6 +53,7 @@ export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
 using  .MaterialParameters.Density
 export  compute_density,                                # computational routines
         compute_density!,  
+        No_Density,
         ConstantDensity,                        
         PT_Density,
         PhaseDiagram_LookupTable, Read_LaMEM_Perple_X_Diagram,
