@@ -205,16 +205,99 @@ bb[end] = den1
 bb[3]   = No_Density()
 
 P,T     = 10.0,11.0
-rho     = zeros(size(bb))
+rho_bb  = zeros(size(bb))
 
 
 # This statement has 0 allocations and compute the result for all densities simultaneously:
 #
 # Yet, it has the disadvantage 
-rho .= compute_density.(P, T, bb)
+#rho_bb .= compute_density.(P, T, bb)
 
 #using BenchmarkTools
-#@btime $rho .= compute_density.($P, $T, $bb)
+#@btime $rho_bb .= compute_density.($P, $T, $bb)
+#  31.946 ns (0 allocations: 0 bytes)
+
+# Next, lets try a vector of Vectors
+den  = ConstantDensity()
+den1 = PT_Density()
+aa=Vector{Vector{AbstractDensity{Float64}}}(undef,5)
+[aa[i] = [den,den1] for i=1:5]
+aa[end] = [den1, No_Density()]
+
+P,T     = 10.0,11.0
+
+rho_aa=Vector{Vector{Float64}}(undef,5)
+[rho_aa[i] = [0.,0.]  for i=1:5]
+
+# For some reason this sometimes allocates and sometimes not, which puzzles me:
+compute_density!(rho_aa, P, T, aa)
+@btime compute_density!($rho_aa, $P, $T, $aa)
+# 71.674 ns (0 allocations: 0 bytes)
+# yet, if I restart and recompile this it gives:
+#138.251 ns (5 allocations: 160 bytes)
+
+
+#= no allocations:
+julia> @code_warntype compute_density!(rho_aa, P, T, aa)
+Variables
+  #self#::Core.Const(GeoParams.MaterialParameters.Density.compute_density!)
+  ρ::Vector{Vector{Float64}}
+  P::Float64
+  T::Float64
+  s::Vector{Vector{AbstractDensity{Float64}}}
+
+Body::Nothing
+1 ─ %1 = Base.broadcasted(GeoParams.MaterialParameters.Density.compute_density!, ρ, P, T, s)::Base.Broadcast.Broadcasted{Base.Broadcast.DefaultArrayStyle{1}, Nothing, typeof(compute_density!), Tuple{Vector{Vector{Float64}}, Float64, Float64, Vector{Vector{AbstractDensity{Float64}}}}}
+│        Base.materialize!(ρ, %1)
+└──      return nothing
+=#
+
+#= with 5 allocations: 
+julia> @code_warntype compute_density!(rho_aa, P, T, aa)
+Variables
+  #self#::Core.Const(GeoParams.MaterialParameters.Density.compute_density!)
+  ρ::Vector{Vector{Float64}}
+  P::Float64
+  T::Float64
+  s::Vector{Vector{AbstractDensity{Float64}}}
+
+Body::Nothing
+1 ─ %1 = Base.broadcasted(GeoParams.MaterialParameters.Density.compute_density!, ρ, P, T, s)::Base.Broadcast.Broadcasted{Base.Broadcast.DefaultArrayStyle{1}, Nothing, typeof(compute_density!), Tuple{Vector{Vector{Float64}}, Float64, Float64, Vector{Vector{AbstractDensity{Float64}}}}}
+│        Base.materialize!(ρ, %1)
+└──      return nothing
+=#
+
+# Next, lets try a vector of Tuples
+den  = ConstantDensity()
+den1 = PT_Density()
+P,T     = 10.0,11.0
+
+cc=Vector{NTuple{2,AbstractDensity{Float64}}}(undef,5)
+#cc = @SVector [SA[den,den1] for i=1:5]
+[cc[i] = (den,den1) for i=1:5]
+cc[end] = (den1, No_Density())
+
+
+rho_cc=Vector{NTuple{2,Float64}}(undef,5)
+[rho_cc[i] = (0.,0.)  for i=1:5]
+
+
+#=
+cc=Vector{NTuple{1,AbstractDensity{Float64}}}(undef,5)
+[cc[i] = (den,) for i=1:5]
+cc[end] = (den1,)
+
+rho_cc=Vector{NTuple{1,Float64}}(undef,5)
+[rho_cc[i] = (0.,)  for i=1:5]
+=#
+
+
+# Static arrays:
+using StaticArrays
+cc = @SVector [SA[den,den1] for i=1:5]
+rho_cc = @SVector [SA[0.,0.] for i=1:5]
+
+compute_density!(rho_cc, P, T, cc)
 
 
 

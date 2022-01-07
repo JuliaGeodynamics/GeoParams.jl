@@ -66,7 +66,7 @@ function compute_density!(rho::Number,P::Number,T::Number, s::ConstantDensity{_T
     return ρ
 end
 
-function compute_density!(rho::Vector,P::Number,T::Number, s::ConstantDensity{_T}) where _T
+function compute_density!(rho::AbstractArray,P::Number,T::Number, s::ConstantDensity{_T}) where _T
     @unpack_val ρ   = s
     rho[:] .= ρ
     return nothing
@@ -285,28 +285,58 @@ function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, PhaseRatios::A
 end
 
 
-function compute_density(P::Number,T::Number, s::Vector{AbstractDensity{_T}}) where {_T}
-    #ρ = zeros(length(s))
-    ρ = map(x->compute_density(P,T,x), s)
+#function compute_density(P::Number,T::Number, s::Vector{AbstractDensity{_T}}) where {_T}
+#    return compute_density.(P,T,s)
+#end
+
+#function compute_density!(ρ::Vector{_T}, P::Number,T::Number, s::Vector{AbstractDensity{_T}}) where {_T}
+#    ρ .= compute_density.(P,T,s)
+#end
+
+
+@noinline function compute_density!(ρ::AbstractVector{_T},P::Number,T::Number, s::AbstractVector{AbstractDensity{_T}}) where {_T}
+    @show s
+    ρ .= compute_density.(P,T,s)
+    #map!(x -> compute_density(P,T,x), ρ, s)
+
+    return   
 end
 
-function compute_density!(ρ::Vector{_T},P::Number,T::Number, s::Vector{AbstractDensity{_T}}) where {_T}
+#multiple dis
+function compute_density!(ρ::AbstractVector{AbstractVector{_T}},P::Number,T::Number, s::AbstractVector{AbstractVector{AbstractDensity{_T}}}) where {_T}
 
-    #println("test")
-  #  @show s, ρ
-    # compute density in a non-allocating manner in case that density is given as a tuyple  
-    #result =  map(x->compute_density(P,T,x), s)
-    ρ .= map(x->compute_density(P,T,x), s)
-    #ρ = result
-  #  @show ρ, result
-    # Note that we can use mapreduce if we want to do calculations with the result (such as sum the contributions)
-    #  for this to work in-placeaa, ρ must be a vector
-    #ρ .= mapreduce(x->compute_density(P,T,x), +, s)
+    #ρ = compute_density.(P,T,s)
+
+#    map(x -> compute_density!(ρ, P,T,x), ρ,   s)
 
     return 
 end
 
+function compute_density!(P::Number,T::Number, s::NTuple{N,AbstractDensity{_T}}) where {N,_T}
+   # @show N, s Base.Iterators.Flatten(s)
+  #  ss = [0.0, 0.0];
+  #  for (i, ss) in enumerate(s)
+     #  [compute_density(P,T,ss) for ss in s]
+        #ρ[i] = compute_density(P,T,ss)
+        k = compute_density.(P,T,s)
+        #@show ρ
 
+      #  ρ = copy.(r)
+
+   # end
+ #   @show ss
+    return sum(k)
+end
+
+
+# this works but allocates
+function compute_density!(ρ::AbstractVector{NTuple{N,_T}},P::Number,T::Number, s::AbstractVector{NTuple{N,AbstractDensity{_T}}}) where {N,_T}
+    #@show s
+
+    map!(x->compute_density.(P,T,x), ρ, s)
+
+    return 
+end
 
 
 end
