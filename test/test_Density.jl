@@ -67,14 +67,14 @@ Phases              = ones(Int64,400,400)*0;
 Phases[:,20:end] .= 1
 Phases[:,300:end] .= 2
 
+#Phases .= 2;
+
 rho     = zeros(size(Phases))
 T       =  ones(size(Phases))
 P       =  ones(size(Phases))*10
 
 compute_density!(rho, Phases, P,T, MatParam)   # 82 allocations
 @test sum(rho)/400^2 ≈ 2920.6148898225
-
-
 
 # test computing material properties when we have PhaseRatios, instead of Phase numbers
 PhaseRatio  = zeros(size(Phases)...,length(MatParam));
@@ -86,7 +86,6 @@ end
 
 compute_density!(rho, PhaseRatio, P,T, MatParam)
 @test sum(rho)/400^2 ≈ 2920.6148898225
-
 
 # test speed of assigning density 
 rho1 = ConstantDensity();
@@ -143,8 +142,13 @@ Base.@kwdef struct TestMat6{V <: Tuple}
     Density::V = ()
 end
 
-# This is how it is implemented (we have to use different tuples for type stability) 
 Base.@kwdef struct TestMat9{V1<:Tuple, V2<:Tuple}
+    Density::V1 = ()
+    Conductity::V2 = ()
+end
+
+# This is how it is implemented (we have to use different tuples for type stability) 
+Base.@kwdef struct TestMat9cc{Float64, V1<:Tuple, V2<:Tuple}  
     Density::V1 = ()
     Conductity::V2 = ()
 end
@@ -153,22 +157,187 @@ test1 = TestMat1((ConstantDensity(),))
 test2 = TestMat2{Float64}((ConstantDensity(),))
 test3 = TestMat3{Float64}(ConstantDensity{Float64}())
 test6 = TestMat6((ConstantDensity{Float64}(),))
-test9 = TestMat9(Density = (ConstantDensity(), ConstantDensity()) )
+test9 = TestMat9(Density = (ConstantDensity{Float64}(), ) )
+#test9b = TestMat9(Density = (ConstantDensity{Float64}(), ConstantDensity{Float64}()) )
+
+#test9 = TestMat9cc(Density = (ConstantDensity{Float64}()) )
+#test9b = TestMat9k(Density = (ConstantDensity{Float64}(), ConstantDensity{Float64}()) )
+
+#test9 = TestMat9cc(Density = [ConstantDensity{Float64}()] )
+
 
 #=
 using BenchmarkTools
 @btime f!($r, $rho1, $c) # 1 allocation (as expected)
-
 @btime f!($r, $(test1.Density[1]), $c)      # 1 allocation (but non-typical usage)
 @btime g!($r, $test1, $c)       # typical usage: 6001 allocations
 @btime g!($r, $test2, $c)       # typical usage: 6001 allocations
-
 @btime g!($r, $test6, $c)       # typical usage: 1 allocations
 @btime g!($r, $test9, $c)       # typical usage: 1 allocations [as implemented]
 =#
 
 
-# Test 
+## testing summing up the fractions in a pointwise manner
 
+# Mimic the way we store material properties
+N = 5
+MatProp = Vector{TestMat9}(undef,N)
+for i=1:N
+    MatProp[i] = test9
+end
+Frac = ones(N)/N
+
+#using StructArrays
+#MatStructArr = StructArray(MatProp)
+
+
+# test different ways to compute the density without allocating
+den  = ConstantDensity()
+den1 = PT_Density()
+
+
+# Generate a 2D array with density types:
+bb=Array{AbstractDensity{Float64},2}(undef,5,2)
+[bb[i] = den for i in eachindex(bb)]
+bb[end] = den1
+bb[3]   = No_Density()
+
+P,T     = 10.0,11.0
+rho_bb  = zeros(size(bb))
+
+
+# This statement has 0 allocations and compute the result for all densities simultaneously:
+#
+# Yet, it has the disadvantage 
+#rho_bb .= compute_density.(P, T, bb)
+
+#using BenchmarkTools
+#@btime $rho_bb .= compute_density.($P, $T, $bb)
+#  31.946 ns (0 allocations: 0 bytes)
+
+# Next, lets try a vector of Vectors
+den  = ConstantDensity()
+den1 = PT_Density()
+aa=Vector{Vector{AbstractDensity{Float64}}}(undef,5)
+[aa[i] = [den,den1] for i=1:5]
+aa[end] = [den1, No_Density()]
+
+P,T     = 10.0,11.0
+
+rho_aa=Vector{Vector{Float64}}(undef,5)
+[rho_aa[i] = [0.,0.]  for i=1:5]
+
+# For some reason this sometimes allocates and sometimes not, which puzzles me:
+#compute_density!(rho_aa, P, T, aa)
+#@btime compute_density!($rho_aa, $P, $T, $aa)
+# 71.674 ns (0 allocations: 0 bytes)
+# yet, if I restart and recompile this it gives:
+#138.251 ns (5 allocations: 160 bytes)
+
+
+#= no allocations:
+julia> @code_warntype compute_density!(rho_aa, P, T, aa)
+Variables
+  #self#::Core.Const(GeoParams.MaterialParameters.Density.compute_density!)
+  ρ::Vector{Vector{Float64}}
+  P::Float64
+  T::Float64
+  s::Vector{Vector{AbstractDensity{Float64}}}
+Body::Nothing
+1 ─ %1 = Base.broadcasted(GeoParams.MaterialParameters.Density.compute_density!, ρ, P, T, s)::Base.Broadcast.Broadcasted{Base.Broadcast.DefaultArrayStyle{1}, Nothing, typeof(compute_density!), Tuple{Vector{Vector{Float64}}, Float64, Float64, Vector{Vector{AbstractDensity{Float64}}}}}
+│        Base.materialize!(ρ, %1)
+└──      return nothing
+=#
+
+#= with 5 allocations: 
+julia> @code_warntype compute_density!(rho_aa, P, T, aa)
+Variables
+  #self#::Core.Const(GeoParams.MaterialParameters.Density.compute_density!)
+  ρ::Vector{Vector{Float64}}
+  P::Float64
+  T::Float64
+  s::Vector{Vector{AbstractDensity{Float64}}}
+Body::Nothing
+1 ─ %1 = Base.broadcasted(GeoParams.MaterialParameters.Density.compute_density!, ρ, P, T, s)::Base.Broadcast.Broadcasted{Base.Broadcast.DefaultArrayStyle{1}, Nothing, typeof(compute_density!), Tuple{Vector{Vector{Float64}}, Float64, Float64, Vector{Vector{AbstractDensity{Float64}}}}}
+│        Base.materialize!(ρ, %1)
+└──      return nothing
+=#
+
+# Next, lets try a vector of Tuples
+den  = ConstantDensity()
+den1 = PT_Density()
+P,T     = 10.0,11.0
+
+cc=Vector{NTuple{2,AbstractDensity{Float64}}}(undef,5)
+#cc = @SVector [SA[den,den1] for i=1:5]
+[cc[i] = (den,den1) for i=1:5]
+cc[end] = (den1, No_Density())
+
+
+rho_cc=Vector{NTuple{2,Float64}}(undef,5)
+[rho_cc[i] = (0.,0.)  for i=1:5]
+
+
+#=
+cc=Vector{NTuple{1,AbstractDensity{Float64}}}(undef,5)
+[cc[i] = (den,) for i=1:5]
+cc[end] = (den1,)
+rho_cc=Vector{NTuple{1,Float64}}(undef,5)
+[rho_cc[i] = (0.,)  for i=1:5]
+=#
+
+
+# Static arrays:
+using StaticArrays
+cc = @SVector [SA[den,den1] for i=1:5]
+rho_cc = @SVector [SA[0.,0.] for i=1:5]
+
+compute_density!(rho_cc, P, T, cc)
+
+
+
+#------------------------------------------------------------#
+rho = zeros(100)
+P,T = 9.,10.
+s = [PT_Density() for i in 1:100]
+
+#No allocations
+#@btime compute_density!($rho, $P, $T, $s)
+
+
+#The same with a tuple 
+rho = zeros(100)
+s_tup = ntuple(x->PT_Density(), Val(100))
+
+#Still no allocations  
+#@btime compute_density!($rho, $P, $T, $s_tup)
+
+#------------------------------------------------------------#
+den = ConstantDensity()
+den1 = PT_Density()
+den2 = No_Density()
+
+rho_ss = Vector{Vector{Float64}}(undef,15)
+[rho_ss[i] = [0.,0.,0.]  for i=1:15]
+
+ss = Vector{Vector{AbstractDensity{Float64}}}(undef,15)
+[ss[i] = [den,den1,den] for i in 1:14]
+ss[end] = [den2,den2,den2]
+
+P,T = 1.,2.
+
+#This is not allocating 
+#@btime compute_density!($rho_ss, $P, $T, $ss)
+
+
+rho_tup=Vector{NTuple{3,Float64}}(undef,15)
+[rho_tup[i] = (0.,0.,0.) for i=1:15]
+
+ss_tup = Vector{NTuple{3,AbstractDensity{Float64}}}(undef,15)
+[ss_tup[i] = (den,den,den) for i=1:14]
+ss_tup[end] = (den1, den2, den2)
+
+#This allocates
+#@btime compute_density!($rho_tup, $P, $T, $ss_tup)
 
 end

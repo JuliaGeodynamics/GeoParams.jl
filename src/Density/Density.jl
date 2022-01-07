@@ -17,7 +17,16 @@ export  compute_density,        # calculation routines
         compute_density!,       # in place calculation
         ConstantDensity,        # constant
         PT_Density,             # P & T dependent density
+        No_Density,
         AbstractDensity 
+
+
+# Define default struct in case nothing is defined
+struct No_Density{_T} <: AbstractDensity{_T} end
+No_Density() = No_Density{Float64}();
+compute_density!(rho::Number,P::Number,T::Number, s::No_Density{_T}) where {_T} = zero(_T)
+compute_density(P::Number,T::Number, s::No_Density{_T}) where {_T} = zero(_T)
+
 
 # Constant Density -------------------------------------------------------
 """
@@ -29,9 +38,9 @@ Set a constant density:
 ```
 where ``\\rho`` is the density [``kg/m^3``].
 """
-@with_kw_noshow struct ConstantDensity{T} <: AbstractDensity{T} 
+@with_kw_noshow struct ConstantDensity{_T} <: AbstractDensity{_T} 
     equation::LaTeXString   =   L"\rho = cst"     
-    ρ::GeoUnit{T}           =   2900.0kg/m^3                # density
+    ρ::GeoUnit{_T}          =   2900.0kg/m^3                # density
 end
 ConstantDensity(a...) = ConstantDensity{Float64}(a...) 
 
@@ -49,6 +58,18 @@ end
 function compute_density(P::AbstractArray,T::AbstractArray, s::ConstantDensity{_T}) where _T
     @unpack_val ρ   = s
     return ρ*ones(size(T))
+end
+
+function compute_density!(rho::Number,P::Number,T::Number, s::ConstantDensity{_T}) where _T
+    @unpack_val ρ   = s
+    #rho = ρ
+    return ρ
+end
+
+function compute_density!(rho::AbstractArray,P::Number,T::Number, s::ConstantDensity{_T}) where _T
+    @unpack_val ρ   = s
+    rho[:] .= ρ
+    return nothing
 end
 
 function compute_density!(rho::AbstractArray,P::AbstractArray,T::AbstractArray, s::ConstantDensity{_T}) where _T
@@ -75,13 +96,13 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference temperature ``T_0`` a
 ``\\alpha`` is the temperature dependence of density and ``\\beta`` the pressure dependence.
 
 """
-@with_kw_noshow struct PT_Density{T} <: AbstractDensity{T}
-    equation::LaTeXString   =   L"\rho = \rho_0(1.0-\alpha (T-T_0) + \beta (P-P_0)"     
-    ρ0::GeoUnit{T}          =   2900.0kg/m^3                # density
-    α::GeoUnit{T}           =   3e-5/K                      # T-dependence of density
-    β::GeoUnit{T}           =   1e-9/Pa                     # P-dependence of density
-    T0::GeoUnit{T}          =   0.0C                        # Reference temperature
-    P0::GeoUnit{T}          =   0.0MPa                      # Reference pressure
+@with_kw_noshow struct PT_Density{_T} <: AbstractDensity{_T}
+    equation::LaTeXString    =   L"\rho = \rho_0(1.0-\alpha (T-T_0) + \beta (P-P_0)"     
+    ρ0::GeoUnit{_T}          =   2900.0kg/m^3                # density
+    α::GeoUnit{_T}           =   3e-5/K                      # T-dependence of density
+    β::GeoUnit{_T}           =   1e-9/Pa                     # P-dependence of density
+    T0::GeoUnit{_T}          =   0.0C                        # Reference temperature
+    P0::GeoUnit{_T}          =   0.0MPa                      # Reference pressure
 end
 PT_Density(a...) = PT_Density{Float64}(a...) 
 
@@ -103,13 +124,23 @@ function compute_density(P::Number,T::Number, s::PT_Density{_T}) where _T
     return ρ
 end
 
-# in-place calculation 
+# in-place calculation (ρ is immutable)
+
 function compute_density!(ρ::Number, P::Number,T::Number, s::PT_Density{_T}) where _T
     @unpack ρ0,α,β,P0, T0   = s
     
-    ρ[:] = ρ0*(1.0 - α*(T-T0) + β*(P-P0) )
+    #ρ[:] = ρ0*(1.0 - α*(T-T0) + β*(P-P0) )
 
-    return ρ
+    return ρ0*(1.0 - α*(T-T0) + β*(P-P0) )
+end
+
+
+function compute_density!(ρ::AbstractArray, P::Number,T::Number, s::PT_Density{_T}) where _T
+    @unpack ρ0,α,β,P0, T0   = s
+    
+    ρ .= ρ0*(1.0 - α*(T-T0) + β*(P-P0) )
+
+    return nothing
 end
 
 function compute_density!(ρ::AbstractArray,P::AbstractArray,T::AbstractArray, s::PT_Density{_T})  where _T
@@ -190,27 +221,35 @@ julia> rho
 ```
 The routine is made to minimize allocations:
 ```julia
-julia> julia> @time compute_density!(rho, Phases, P,T, MatParam)
-0.003121 seconds (49 allocations: 3.769 MiB)
+julia> using BenchmarkTools
+julia> @btime compute_density!(\$rho, \$Phases, \$P, \$T, \$MatParam)
+ 1.300 ms (44 allocations: 3.77 MiB)
 ```
 """
-function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, Phases::AbstractArray{<:Integer, N}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where N
+function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, Phases::AbstractArray{<:Integer, N}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where {N,_T}
 
     for i = 1:length(MatParam)
 
-        if !isnothing(MatParam[i].Density)
+        if !isempty(MatParam[i].Density)
             # Create views into arrays (so we don't have to allocate)
             ind = Phases .== MatParam[i].Phase
             rho_local   =   view(rho, ind )
             P_local     =   view(P  , ind )
             T_local     =   view(T  , ind )
 
-            compute_density!(rho_local, P_local, T_local, MatParam[i].Density[1] ) 
+           # density::Union{AbstractDensity{_T},PhaseDiagram_LookupTable}     =   MatParam[i].Density[1]
+            density    =   MatParam[i].Density[1]
+           
+            #@time compute_density!(rho_local, P_local, T_local, dens ) 
+            compute_density!(rho_local, P_local, T_local, density ) 
+           
         end
         
     end
 
 end
+
+
 
 """
     compute_density!(rho::AbstractArray{<:AbstractFloat,N}, PhaseRatios::AbstractArray{<:AbstractFloat, M}, P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
@@ -224,23 +263,111 @@ function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, PhaseRatios::A
     if M!=(N+1)
         error("The PhaseRatios array should have one dimension more than the other arrays")
     end
-
-    rho .= 0.0;
+    
+    rho1        =  zeros(size(rho))
+    rho         .=  0.0;
     for i = 1:length(MatParam)
-        
-        rho_local   = zeros(size(rho))
+
         Fraction    = selectdim(PhaseRatios,M,i);
-        if (maximum(Fraction)>0.0) & (!isnothing(MatParam[i].Density))
+        if (!isempty(MatParam[i].Density))
 
-            compute_density!(rho_local, P, T, MatParam[i].Density[1] ) 
+            ind         =   Fraction .> 0.0
+            rho_local   =   view(rho1, ind )
+            P_local     =   view(P   , ind )
+            T_local     =   view(T   , ind )
 
-            rho .= rho .+ rho_local.*Fraction
+            density = MatParam[i].Density[1]
+            compute_density!(rho_local, P_local, T_local, density ) 
+
+            rho[ind] .+= rho_local.*Fraction[ind]
         end
         
     end
 
 end
 
+#-------------------------------------------------------------------------------------------#
+
+#=
+function compute_density(P::Number,T::Number, s::Vector{<:AbstractDensity{_T}}) where {_T}
+    return compute_density.(P,T,s)
+end
+
+function compute_density(P::Number, T::Number, s::NTuple{N, <:AbstractDensity{_T}}) where {N, _T}
+    return compute_density.(P,T,s)
+end
+=#
+
+function compute_density!(ρ::Vector{_T}, P::Number,T::Number, s::Vector{<:AbstractDensity{_T}}) where {_T}
+    ρ .= compute_density.(P,T,s)
+end
+
+function compute_density!(ρ::Vector{_T}, P::Number, T::Number, s::NTuple{N, AbstractDensity{_T}}) where {N, _T}
+    ρ .= compute_density.(P,T,s)
+end
+
+function compute_density(ρ::NTuple{N,_T}, P::Number, T::Number, s::NTuple{N, AbstractDensity{_T}}) where {N, _T}
+    compute_density!.(ρ,P,T,s)
+end
+
+
+#no allocations
+function compute_density!(ρ::Vector{Vector{_T}}, P::Number, T::Number, s::Vector{Vector{AbstractDensity{_T}}}) where {_T}
+    ρ .= compute_density!.(ρ,P,T,s)
+end
+
+#allocates
+function compute_density!(rho::Vector{NTuple{N,_T}}, P::Number, T::Number, s::Vector{NTuple{N, AbstractDensity{_T}}}) where {N,_T}
+    rho .= compute_density.(rho,P,T,s)
+end
+
+
+#=
+@noinline function compute_density!(ρ::AbstractVector{_T},P::Number,T::Number, s::AbstractVector{AbstractDensity{_T}}) where {_T}
+    @show s
+    ρ .= compute_density.(P,T,s)
+    #map!(x -> compute_density(P,T,x), ρ, s)
+
+    return   
+end
+
+
+#multiple dis
+function compute_density!(ρ::AbstractVector{AbstractVector{_T}},P::Number,T::Number, s::AbstractVector{AbstractVector{AbstractDensity{_T}}}) where {_T}
+
+    #ρ .= compute_density.(P,T,s)
+
+    #map(x -> compute_density!(ρ, P,T,x), ρ,   s)
+
+    return 
+end
+
+function compute_density!(P::Number,T::Number, s::NTuple{N,AbstractDensity{_T}}) where {N,_T}
+   # @show N, s Base.Iterators.Flatten(s)
+  #  ss = [0.0, 0.0];
+  #  for (i, ss) in enumerate(s)
+     #  [compute_density(P,T,ss) for ss in s]
+        #ρ[i] = compute_density(P,T,ss)
+        k = compute_density.(P,T,s)
+        #@show ρ
+
+      #  ρ = copy.(r)
+
+   # end
+ #   @show ss
+    return sum(k)
+end
+
+
+# this works but allocates
+function compute_density!(ρ::AbstractVector{NTuple{N,_T}},P::Number,T::Number, s::AbstractVector{NTuple{N,AbstractDensity{_T}}}) where {N,_T}
+    #@show s
+
+    map!(x->compute_density.(P,T,x), ρ, s)
+
+    return 
+end
+=#
 
 
 end
