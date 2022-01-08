@@ -4,6 +4,7 @@ authors = ["Boris Kaus <kaus@uni-mainz.de>"]
 version = "0.1.8"
 
 [deps]
+AbstractTensors = "a8e43f4a-99b7-5565-8bf1-0165161caaea"
 BibTeX = "7b0aa2c9-049f-5cec-894a-2b6b781bb25e"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
@@ -19,9 +20,9 @@ BibTeX = "0.1.0"
 Interpolations = "0.13"
 LaTeXStrings = "1.2.1"
 Parameters = "0.12.0"
-UnPack = "1.0"
 Requires = "1.0 - 1.1"
 Setfield = "0.8 - 0.8"
+UnPack = "1.0"
 Unitful = "1.8 - 1.10"
 julia = "1.3,1.6"
 

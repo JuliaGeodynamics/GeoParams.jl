@@ -56,7 +56,8 @@ export  compute_density,                                # computational routines
         ConstantDensity,                        
         PT_Density,
         PhaseDiagram_LookupTable, Read_LaMEM_Perple_X_Diagram,
-        AbstractDensity
+        AbstractDensity,
+        Values
 
 # Creep laws
 using  .MaterialParameters.CreepLaw

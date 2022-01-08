@@ -297,22 +297,22 @@ compute_density!(rho_cc, P, T, cc)
 
 
 #------------------------------------------------------------#
+#Using a vector
 rho = zeros(100)
 P,T = 9.,10.
 s = [PT_Density() for i in 1:100]
 
-#No allocations
-#@btime compute_density!($rho, $P, $T, $s)
+#@btime compute_density!($rho, $P, $T, $s) -> No allocations
 
 
 #The same with a tuple 
 rho = zeros(100)
 s_tup = ntuple(x->PT_Density(), Val(100))
-
-#Still no allocations  
-#@btime compute_density!($rho, $P, $T, $s_tup)
+  
+#@btime compute_density!($rho, $P, $T, $s_tup) -> Still no allocations (usually slower)
 
 #------------------------------------------------------------#
+#Now using vector of vectors and vector of tuples
 den = ConstantDensity()
 den1 = PT_Density()
 den2 = No_Density()
@@ -326,8 +326,7 @@ ss[end] = [den2,den2,den2]
 
 P,T = 1.,2.
 
-#This is not allocating 
-#@btime compute_density!($rho_ss, $P, $T, $ss)
+#@btime compute_density!($rho_ss, $P, $T, $ss) -> This sometimes allocates
 
 
 rho_tup=Vector{NTuple{3,Float64}}(undef,15)
@@ -337,7 +336,23 @@ ss_tup = Vector{NTuple{3,AbstractDensity{Float64}}}(undef,15)
 [ss_tup[i] = (den,den,den) for i=1:14]
 ss_tup[end] = (den1, den2, den2)
 
-#This allocates
-#@btime compute_density!($rho_tup, $P, $T, $ss_tup)
+#@btime compute_density!($rho_tup, $P, $T, $ss_tup) -> Allocates and slower than vector o vectors
 
+
+#using AbstractTensors
+den = PT_Density()
+den1 = No_Density()
+P,T = 1.,1.
+rho = zeros(100)
+tup = ntuple(x->PT_Density(), Val(100))
+s = Values(tup)
+#@btime compute_density!($rho,$P,$T,$s) -> No allocations
+
+
+#now with Values{N,Values{M,AbstractDensity}}
+rho_ss = Vector{Vector{Float64}}(undef,15)
+[rho_ss = [0.,0.,0.]  for i=1:15]
+ss_val = Values(ntuple(x->Values(ntuple(i->PT_Density(), Val(3))), Val(15)))
+
+#@btime compute_density!($rho_ss,$P,$T,$ss_val) -> No allocations?
 end

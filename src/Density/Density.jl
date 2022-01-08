@@ -5,7 +5,7 @@ module Density
 # If you want to add a new method here, feel free to do so. 
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
-using Parameters, LaTeXStrings, Unitful
+using Parameters, LaTeXStrings, Unitful, AbstractTensors
 using ..Units
 using ..PhaseDiagrams
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
@@ -18,6 +18,7 @@ export  compute_density,        # calculation routines
         ConstantDensity,        # constant
         PT_Density,             # P & T dependent density
         No_Density,
+        Values,
         AbstractDensity 
 
 
@@ -320,6 +321,16 @@ end
 function compute_density!(rho::Vector{NTuple{N,_T}}, P::Number, T::Number, s::Vector{NTuple{N, AbstractDensity{_T}}}) where {N,_T}
     rho .= compute_density.(rho,P,T,s)
 end
+
+#with AbstractTensors
+function compute_density!(rho::Vector{_T},P::Number,T::Number,s::Values{N,<:AbstractDensity{_T}}) where {N,_T}
+    rho .= compute_density.(P,T,s)
+end
+
+function compute_density!(rho::Vector{Vector{_T}}, P::Number, T::Number, s::Values{N,<:Values{M, <:AbstractDensity{_T}}}) where {N,M,_T}
+    rho .= compute_density!.(rho,P,T,s)
+end
+
 
 
 #=

@@ -1,5 +1,16 @@
 # This file is machine-generated - editing it directly is not advised
 
+[[AbstractLattices]]
+git-tree-sha1 = "f35684b7349da49fcc8a9e520e30e45dbb077166"
+uuid = "398f06c4-4d28-53ec-89ca-5b2656b7603d"
+version = "0.2.1"
+
+[[AbstractTensors]]
+deps = ["AbstractLattices", "LinearAlgebra", "Random"]
+git-tree-sha1 = "2e2dc50d12a8a0c0a0aba63a4d76aeebfcf710de"
+uuid = "a8e43f4a-99b7-5565-8bf1-0165161caaea"
+version = "0.6.7"
+
 [[Adapt]]
 deps = ["LinearAlgebra"]
 git-tree-sha1 = "84918055d15b3114ede17ac6a7182f68870c16f7"
