@@ -282,12 +282,6 @@ rho_cc=Vector{NTuple{2,Float64}}(undef,5)
 [rho_cc[i] = (0.,0.)  for i=1:5]
 
 
-#=
-cc=Vector{NTuple{1,AbstractDensity{Float64}}}(undef,5)
-[cc[i] = (den,) for i=1:5]
-cc[end] = (den1,)
-
-
 
 
 #---------------------------------------------------------------------------------------------------------------#

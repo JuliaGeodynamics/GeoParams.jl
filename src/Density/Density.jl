@@ -142,13 +142,6 @@ function compute_density!(ρ::AbstractArray, P::Number,T::Number, s::PT_Density{
     return nothing
 end
 
-function compute_density!(ρ::AbstractArray, P::Number,T::Number, s::PT_Density{_T}) where _T
-    @unpack ρ0,α,β,P0, T0   = s
-    
-    ρ .= ρ0*(1.0 - α*(T-T0) + β*(P-P0) )
-
-    return nothing
-end
 
 function compute_density!(ρ::AbstractArray,P::AbstractArray,T::AbstractArray, s::PT_Density{_T})  where _T
     @unpack_val ρ0,α,β,P0, T0   = s     # only values are required as we have floats as input
