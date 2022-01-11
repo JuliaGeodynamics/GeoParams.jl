@@ -17,21 +17,8 @@ export  compute_density,        # calculation routines
         compute_density!,       # in place calculation
         ConstantDensity,        # constant
         PT_Density,             # P & T dependent density
-<<<<<<< HEAD
-        No_Density,
-        AbstractDensity
-
-
-# Define default struct in case nothing is defined
-struct No_Density{_T} <: AbstractDensity{_T} end
-No_Density() = No_Density{Float64}();
-compute_density!(rho::Number,P::Number,T::Number, s::No_Density{_T}) where {_T} = zero(_T)
-compute_density(P::Number,T::Number, s::No_Density{_T}) where {_T} = zero(_T)
-
-=======
         No_Density,             # nothing defined
         AbstractDensity 
->>>>>>> origin/boris_refactorGeoUnit
 
 
 # Define default struct in case nothing is defined
@@ -73,10 +60,6 @@ function compute_density(P::AbstractArray,T::AbstractArray, s::ConstantDensity{_
     return ρ*ones(size(T))
 end
 
-<<<<<<< HEAD
-#rho can't take new value
-=======
->>>>>>> origin/boris_refactorGeoUnit
 function compute_density!(rho::Number,P::Number,T::Number, s::ConstantDensity{_T}) where _T
     @unpack_val ρ   = s
     #rho = ρ
@@ -373,63 +356,4 @@ function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, PhaseRatios::A
 
 end
 
-<<<<<<< HEAD
 end
-=======
-
-#function compute_density(P::Number,T::Number, s::Vector{AbstractDensity{_T}}) where {_T}
-#    return compute_density.(P,T,s)
-#end
-
-#function compute_density!(ρ::Vector{_T}, P::Number,T::Number, s::Vector{AbstractDensity{_T}}) where {_T}
-#    ρ .= compute_density.(P,T,s)
-#end
-
-
-@noinline function compute_density!(ρ::AbstractVector{_T},P::Number,T::Number, s::AbstractVector{AbstractDensity{_T}}) where {_T}
-    @show s
-    ρ .= compute_density.(P,T,s)
-    #map!(x -> compute_density(P,T,x), ρ, s)
-
-    return   
-end
-
-#multiple dis
-function compute_density!(ρ::AbstractVector{AbstractVector{_T}},P::Number,T::Number, s::AbstractVector{AbstractVector{AbstractDensity{_T}}}) where {_T}
-
-    #ρ = compute_density.(P,T,s)
-
-#    map(x -> compute_density!(ρ, P,T,x), ρ,   s)
-
-    return 
-end
-
-function compute_density!(P::Number,T::Number, s::NTuple{N,AbstractDensity{_T}}) where {N,_T}
-   # @show N, s Base.Iterators.Flatten(s)
-  #  ss = [0.0, 0.0];
-  #  for (i, ss) in enumerate(s)
-     #  [compute_density(P,T,ss) for ss in s]
-        #ρ[i] = compute_density(P,T,ss)
-        k = compute_density.(P,T,s)
-        #@show ρ
-
-      #  ρ = copy.(r)
-
-   # end
- #   @show ss
-    return sum(k)
-end
-
-
-# this works but allocates
-function compute_density!(ρ::AbstractVector{NTuple{N,_T}},P::Number,T::Number, s::AbstractVector{NTuple{N,AbstractDensity{_T}}}) where {N,_T}
-    #@show s
-
-    map!(x->compute_density.(P,T,x), ρ, s)
-
-    return 
-end
-
-
-end
->>>>>>> origin/boris_refactorGeoUnit

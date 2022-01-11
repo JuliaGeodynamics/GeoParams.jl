@@ -243,10 +243,6 @@ Variables
   P::Float64
   T::Float64
   s::Vector{Vector{AbstractDensity{Float64}}}
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/boris_refactorGeoUnit
 Body::Nothing
 1 ─ %1 = Base.broadcasted(GeoParams.MaterialParameters.Density.compute_density!, ρ, P, T, s)::Base.Broadcast.Broadcasted{Base.Broadcast.DefaultArrayStyle{1}, Nothing, typeof(compute_density!), Tuple{Vector{Vector{Float64}}, Float64, Float64, Vector{Vector{AbstractDensity{Float64}}}}}
 │        Base.materialize!(ρ, %1)
@@ -290,22 +286,7 @@ rho_cc=Vector{NTuple{2,Float64}}(undef,5)
 cc=Vector{NTuple{1,AbstractDensity{Float64}}}(undef,5)
 [cc[i] = (den,) for i=1:5]
 cc[end] = (den1,)
-<<<<<<< HEAD
-=======
 
->>>>>>> origin/boris_refactorGeoUnit
-rho_cc=Vector{NTuple{1,Float64}}(undef,5)
-[rho_cc[i] = (0.,)  for i=1:5]
-=#
-
-
-<<<<<<< HEAD
-# Static arrays:
-using StaticArrays
-cc = @SVector [SA[den,den1] for i=1:5]
-rho_cc = @SVector [SA[0.,0.] for i=1:5]
-
-compute_density!(rho_cc, P, T, cc)
 
 
 
@@ -386,8 +367,6 @@ mm_tup = ntuple(x->Mat_tup, Val(10))
 =#
 
 #@btime compute_density!($rho_tup, $P, $T, $mm_tup) -> 25.502 ns (0 allocations: 0 bytes) !!
-=======
->>>>>>> origin/boris_refactorGeoUnit
 
 
 end
