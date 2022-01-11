@@ -240,11 +240,18 @@ function Base.show(io::IO, phase::MaterialParams)
     end
     println(io,"        | ")
         
-    
     for param in fieldnames(typeof(phase))
         Print_MaterialParam(io, param, getfield(phase, param))
     end
     
+end
+
+# Slightly nicer printout in case we have a tuple with material parameters 
+function Base.show(io::IO, phase_tuple::NTuple{N,MaterialParams}) where N
+    for i=1:N
+        Base.show(io, phase_tuple[i])
+    end
+    return
 end
 
 end
