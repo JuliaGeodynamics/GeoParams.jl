@@ -38,6 +38,7 @@ export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagram
 #  as I am indeed redefining a method originally defined in Unitful
 include("Units.jl")     
 using .Units
+export @unpack_units, @unpack_val
 
 # Define Material Parameter structure
 include("MaterialParameters.jl")

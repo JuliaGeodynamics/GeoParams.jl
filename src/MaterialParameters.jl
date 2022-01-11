@@ -9,7 +9,8 @@ using Parameters
 using ..Units
 
 import Base.show, Base.convert
-using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
+
 
 export 
     MaterialParams, SetMaterialParams    
@@ -26,22 +27,24 @@ include("./Energy/RadioactiveHeat.jl")
 include("./Energy/Shearheating.jl")
 include("./SeismicVelocity/SeismicVelocity.jl")
 
+using .Density: AbstractDensity
+
 """
     MaterialParams
     
 Structure that holds all material parameters for a given phase
 
 """
- @with_kw_noshow struct MaterialParams{ Vdensity <: Tuple, 
-                                                Vgravity <: Tuple,
-                                                Vcreep   <: Tuple,
-                                                Velastic <: Tuple,
-                                                Vplastic <: Tuple,
-                                                Vcond    <: Tuple,
-                                                Vheatc   <: Tuple,
-                                                Vensource<: Tuple,
-                                                Vmelting <: Tuple,
-                                                Vseismvel<: Tuple } <: AbstractMaterialParamsStruct
+ @with_kw_noshow struct MaterialParams{ Vdensity  <: Tuple, 
+                                        Vgravity  <: Tuple,
+                                        Vcreep    <: Tuple,
+                                        Velastic  <: Tuple,
+                                        Vplastic  <: Tuple,
+                                        Vcond     <: Tuple,
+                                        Vheatc    <: Tuple,
+                                        Vensource <: Tuple,
+                                        Vmelting  <: Tuple,
+                                        Vseismvel <: Tuple } <: AbstractMaterialParamsStruct
     # 
     Name::String                 =   ""             #       Description/name of the phase
     Phase::Int64                 =   1;             #       Number of the phase (optional)
