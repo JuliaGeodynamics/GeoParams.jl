@@ -183,6 +183,35 @@ SetDislocationCreep = Dict([
     )
 )
 
+# Quartz Diorite rheology
+("Quartz Diorite | Hansen & Carter (1982)", 
+    #  After Hansen (1982), 'Semibrittle creep of selected crustal rocks at 1000 MPa.' and, Hansen & Carter (1982),
+    #  'Flow properties of continental lithosphere.'
+    #  Hansen (1982), Fig. 53, page 184 in PDF viewer and table 18, page 224
+    #  Carter & Tsenn (1986), table 4, page 18 in PDF viewer
+    DislocationCreep(
+        n = 2.25NoUnits,
+        A = 3.5e-2MPa^(-2.25)/s, 
+        E = 212kJ/mol,
+        V = 0m^3/mol,
+        r   = 0NoUnits,
+        Apparatus =   "AxialCompression",
+        Comment = "Verified with the original publication Hansen(1982)(NM). Values checked, plots are not reproduced (NM).",
+        BibTex_Reference = parse_bibtex("""
+             @article{carter1982stress,
+             title={Stress magnitudes in natural rock salt},
+             author={Carter, Neville L and Hansen, Francis D and Senseny, Paul E},
+             journal={Journal of Geophysical Research: Solid Earth},
+             volume={87},
+             number={B11},
+             pages={9289--9300},
+             year={1982},
+             publisher={Wiley Online Library}
+             }
+        """);
+    )
+)
+                
 # Diabase rheology
 ("Diabase | Caristan (1982)", 
     #  After Caristan (1982), 'The transition from high temperature creep to fracture in Maryland diabase.'
