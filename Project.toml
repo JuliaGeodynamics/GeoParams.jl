@@ -4,7 +4,6 @@ authors = ["Boris Kaus <kaus@uni-mainz.de>"]
 version = "0.1.8"
 
 [deps]
-AbstractTensors = "a8e43f4a-99b7-5565-8bf1-0165161caaea"
 BibTeX = "7b0aa2c9-049f-5cec-894a-2b6b781bb25e"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"

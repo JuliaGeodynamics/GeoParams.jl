@@ -5,7 +5,7 @@ module Density
 # If you want to add a new method here, feel free to do so. 
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
-using Parameters, LaTeXStrings, Unitful, AbstractTensors
+using Parameters, LaTeXStrings, Unitful
 using ..Units
 using ..PhaseDiagrams
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
@@ -18,8 +18,7 @@ export  compute_density,        # calculation routines
         ConstantDensity,        # constant
         PT_Density,             # P & T dependent density
         No_Density,
-        Values,
-        AbstractDensity 
+        AbstractDensity
 
 
 # Define default struct in case nothing is defined
@@ -183,7 +182,7 @@ end
 #-------------------------------------------------------------------------
 
 """
-    compute_density!(rho::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
+    compute_density!(rho::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractAbstractMaterialParamsStructStruct})
 
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `Phase` of every point is specified as an Integer in the `Phases` array.
@@ -195,7 +194,7 @@ julia> MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=1,
                         CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
                         Density   = PerpleX_LaMEM_Diagram("test_data/Peridotite.in"));
 julia> MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
-                        CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
+                        CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pas)),
                         Density   = ConstantDensity(ρ=2900kg/m^3));
 julia> Phases = ones(Int64,400,400);
 julia> Phases[:,20:end] .= 2
@@ -288,41 +287,118 @@ function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, PhaseRatios::A
 end
 
 #-------------------------------------------------------------------------------------------#
+#using AbstractMaterialParamsStruct
 
-#=
-function compute_density(P::Number,T::Number, s::Vector{<:AbstractDensity{_T}}) where {_T}
-    return compute_density.(P,T,s)
+
+function compute_density(P::Number, T::Number, s::AbstractMaterialParamsStruct)
+    return compute_density(P,T,s.Density[1])
 end
 
-function compute_density(P::Number, T::Number, s::NTuple{N, <:AbstractDensity{_T}}) where {N, _T}
-    return compute_density.(P,T,s)
+function compute_density!(rho::Number, P::Number, T::Number, s::AbstractMaterialParamsStruct)
+    #return compute_density(P,T,s.Density[1])
+    return compute_density!(rho,P,T,s.Density[1])
 end
-=#
+
+function compute_density!(rho::Vector{_T}, P::Number, T::Number, MatParam::Vector{AbstractMaterialParamsStruct}) where _T
+    #rho .= compute_density!.(rho,P,T,MatParam)
+    rho .= map(x->compute_density(P,T,x), MatParam)
+end
+
+
+#works??
+function compute_density!(rho::Vector{_T}, P::Number, T::Number, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where {N,_T}
+    #rho .= compute_density!.(rho,P,T,MatParam)
+    rho .= map(x->compute_density(P,T,x), MatParam)
+end
+
+
+#Vectors of Tuples
+function compute_density(P::Number, T::Number, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where N
+    #compute_density.(P,T,MatParam)
+    map(x->compute_density(P,T,x), MatParam)
+end
+
+function compute_density!(rho::Vector{Vector{_T}}, P::Number, T::Number, MatParam::Vector{NTuple{N, AbstractMaterialParamsStruct}}) where {N,_T}
+    rho .= compute_density!.(rho,P,T,MatParam)
+end
+
+function compute_density!(rho::Vector{NTuple{N,_T}}, P::Number, T::Number, MatParam::Vector{NTuple{N, AbstractMaterialParamsStruct}}) where {N,_T}
+    rho .= map(x->compute_density(P,T,x), MatParam)
+end
+
+#No allocations!
+function compute_density!(rho::Vector{NTuple{M,_T}}, P::Number, T::Number, MatParam::NTuple{N, NTuple{M, AbstractMaterialParamsStruct}}) where {N,M,_T}
+    rho .= map(x->compute_density(P,T,x), MatParam)
+end
+
+
+
+
+#-----------------------------------------------------------------------------------------------------------------#
+
+#AbstractDensity
+
+#Vectors
 
 function compute_density!(ρ::Vector{_T}, P::Number,T::Number, s::Vector{<:AbstractDensity{_T}}) where {_T}
     ρ .= compute_density.(P,T,s)
+    #ρ .= map(x->compute_density(P,T,x),s)
 end
 
+function compute_density!(ρ::Vector{Vector{_T}}, P::Number, T::Number, s::Vector{Vector{AbstractDensity{_T}}}) where {_T}
+    ρ .= compute_density!.(ρ,P,T,s)
+    #ρ .= map(x->compute_density.(P,T,x), s)
+end
+
+function compute_density(P::Number,T::Number, s::Vector{<:AbstractDensity{_T}}) where {_T}
+    compute_density.(P,T,s)
+end
+
+function compute_density(P::Number, T::Number, s::Vector{Vector{AbstractDensity{_T}}}) where {_T}
+    compute_density.(P,T,s)
+end
+
+
+#Tuples
 function compute_density!(ρ::Vector{_T}, P::Number, T::Number, s::NTuple{N, AbstractDensity{_T}}) where {N, _T}
-    ρ .= compute_density.(P,T,s)
+    #ρ .= compute_density.(P,T,s)
+    ρ .=  map(x->compute_density(P,T,x), s)
+end
+
+function compute_density(P::Number, T::Number, s::NTuple{N, AbstractDensity{_T}}) where {N, _T}
+    #ρ .= compute_density.(P,T,s)
+    map(x->compute_density(P,T,x), s)
+end
+
+function compute_density!(rho::Vector{Vector{_T}}, P::Number, T::Number, s::Vector{NTuple{N, AbstractDensity{_T}}}) where {N,_T}
+    rho .= compute_density!.(rho,P,T,s)
 end
 
 function compute_density(ρ::NTuple{N,_T}, P::Number, T::Number, s::NTuple{N, AbstractDensity{_T}}) where {N, _T}
     compute_density!.(ρ,P,T,s)
 end
 
-
-#no allocations
-function compute_density!(ρ::Vector{Vector{_T}}, P::Number, T::Number, s::Vector{Vector{AbstractDensity{_T}}}) where {_T}
-    ρ .= compute_density!.(ρ,P,T,s)
-end
-
-#allocates
 function compute_density!(rho::Vector{NTuple{N,_T}}, P::Number, T::Number, s::Vector{NTuple{N, AbstractDensity{_T}}}) where {N,_T}
-    rho .= compute_density.(rho,P,T,s)
+    #rho .= compute_density.(rho,P,T,s)
+    rho .= map(x->compute_density(P,T,x), s)
 end
 
+
+#Works!!
+function compute_density!(rho::Vector{NTuple{M,_T}}, P::Number, T::Number, s::NTuple{N, NTuple{M, AbstractDensity{_T}}}) where {N,M,_T}
+    #rho .= compute_density!.(rho,P,T,s)
+    rho .= map(x->compute_density(P,T,x),s)
+end
+
+
+
+
+
+
+#=
 #with AbstractTensors
+
+
 function compute_density!(rho::Vector{_T},P::Number,T::Number,s::Values{N,<:AbstractDensity{_T}}) where {N,_T}
     rho .= compute_density.(P,T,s)
 end
@@ -332,8 +408,17 @@ function compute_density!(rho::Vector{Vector{_T}}, P::Number, T::Number, s::Valu
 end
 
 
+#with StaticArrays
 
-#=
+function compute_density!(rho::Vector{_T},P::Number,T::Number,s::SVector{N,<:AbstractDensity{_T}}) where {N,_T}
+    rho .= compute_density.(P,T,s)
+end
+
+function compute_density!(rho::Vector{Vector{_T}}, P::Number, T::Number, s::SVector{N,SVector{M, AbstractDensity{_T}}}) where {N,M,_T}
+    rho .= compute_density!.(rho,P,T,s)
+end
+
+
 @noinline function compute_density!(ρ::AbstractVector{_T},P::Number,T::Number, s::AbstractVector{AbstractDensity{_T}}) where {_T}
     @show s
     ρ .= compute_density.(P,T,s)
