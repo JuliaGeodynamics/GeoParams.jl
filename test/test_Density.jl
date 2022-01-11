@@ -300,57 +300,50 @@ compute_density!(rho_cc, P, T, cc)
 #Structures involving AbstractDensity
 
 #Using a vector
+den = ConstantDensity()
+den1 = PT_Density()
+den2 = No_Density()
+
 rho = zeros(100)
 P,T = 9.,10.
-s = [PT_Density() for i in 1:100]
+s = Vector{AbstractDensity{Float64}}(undef, 100)
+[s[i] = den for i in 1:70]
+[s[i] = den1 for i in 71:98]
+[s[i] = den2 for i in 98:100]
 
-#@btime compute_density!($rho, $P, $T, $s) -> No allocations (132.506 ns (0 allocations: 0 bytes))
+#@btime compute_density!($rho, $P, $T, $s) -> 210.909 ns (0 allocations: 0 bytes)
 
 #The same with a tuple 
-s_tup = ntuple(x->PT_Density(), Val(100))
+s_tup = Tuple(s)
   
-#@btime compute_density!($rho, $P, $T, $s_tup) -> Still no allocations (195.721 ns (0 allocations: 0 bytes))
+#@btime compute_density!($rho, $P, $T, $s_tup) -> Allocates! (36.600 μs (197 allocations: 569.58 KiB))
 
 
-#Now using vector of vectors and vector of tuples 
+#Now using Tuple of Tuples
 den = ConstantDensity()
 den1 = PT_Density()
 den2 = No_Density()
 P,T = 1.,2.
 
-#Vector
-rho_ss = Vector{Vector{Float64}}(undef,15)
-[rho_ss[i] = [0.,0.,0.]  for i=1:15]
-
-ss = Vector{Vector{AbstractDensity{Float64}}}(undef,15)
-[ss[i] = [den,den1,den] for i in 1:14]
-ss[end] = [den2,den2,den2]
-
-#@btime compute_density!($rho_ss, $P, $T, $ss) -> This sometimes allocates, (690.066 ns (16 allocations: 768 bytes))
-
-#Tuple
-rho_ss=Vector{Vector{Float64}}(undef,15)
-[rho_ss[i] = [0.,0.,0.]  for i=1:15]
-
 rho_tup = Vector{NTuple{3,Float64}}(undef,15)
 [rho_tup[i] = (0.,0.,0.) for i = 1:15]
 
+#constructing it as ss_vectup allows to change ss_vectup[end] easily
 ss_vectup = Vector{NTuple{3,AbstractDensity{Float64}}}(undef,15)
-[ss_vectup[i] = (den,den1,den) for i=1:14]
+[ss_vectup[i] = (den,den,den) for i=1:14]
 ss_vectup[end] = (den1, den2, den2)
 ss_tup = Tuple(ss_vectup)
 
-#@btime compute_density!($rho_ss, $P, $T, $ss_vectup)-> 902.500 ns (34 allocations: 1.03 KiB)
 #@btime compute_density!($rho_tup, $P, $T, $ss_tup) -> 35.650 ns (0 allocations: 0 bytes) works!!
 
 
 #---------------------------------------------------------------------------------------------------------#
 
-#Structures involving MaterialParams
+#Now using MaterialParams instead
 P,T = 1.,1.
 rho = zeros(3)
 
-MatParam = Vector{MaterialParams}(undef, 3)
+MatParam = Vector{AbstractMaterialParamsStruct}(undef, 3)
 MatParam[1] = SetMaterialParams(Name="Crust", Phase=1,
                             CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pas)),
                             Density   = ConstantDensity(ρ=2900kg/m^3))
@@ -363,80 +356,23 @@ MatParam[3] = SetMaterialParams(Name="Lower Crust", Phase=3,
 
 Mat_tup = Tuple(MatParam)
 
-#@btime compute_density!($rho,$P,$T,$MatParam)
-#@btime compute_density!($rho,$P,$T,$Mat_tup)
 
-#now using Vector of Tuples 
-rho_mm = Vector{Vector{Float64}}(undef, 10)
-[rho_mm[i] = [.0,.0,.0] for i in 1:10]
+#@btime compute_density!($rho,$P,$T,$Mat_tup) -> 4.800 ns (0 allocations: 0 bytes)
 
+
+#now using Tuple of Tuples 
 rho_tup = Vector{NTuple{3,Float64}}(undef, 10)
 [rho_tup[i] = (0.,0.,0.) for i in 1:10]
 
-mm = Vector{NTuple{3,MaterialParams}}(undef, 10)
-[mm[i] = Mat_tup for i = 1:10]
-mm_tup = Tuple(mm)
+mm_tup = ntuple(x->Mat_tup, Val(10))
 
-#@btime compute_density!($rho_mm, $P, $T, $mm) -> 564.571 ns (21 allocations: 368 bytes)
-#@btime compute_density!($rho_tup, $P, $T, $mm) -> 934.615 ns (25 allocations: 1.05 KiB)
+#= alternative way to construct mm_tup:
+        mm = Vector{NTuple{3,MaterialParams}}(undef, 10)
+        [mm[i] = Mat_tup for i = 1:10]
+        mm_tup = Tuple(mm) #converts to Tuple of Tuples
+=#
+
 #@btime compute_density!($rho_tup, $P, $T, $mm_tup) -> 25.502 ns (0 allocations: 0 bytes) !!
 
-
-
-
-
-
-
-#=
-#using AbstractTensors
-den = PT_Density()
-den1 = ConstantDensity()
-den2 =  No_Density()
-P,T = 1.,1.
-rho = zeros(100)
-
-tup = ntuple(x->PT_Density(), Val(100))
-s = Values(tup)
-#@btime compute_density!($rho,$P,$T,$s) -> 117.538 ns (0 allocations: 0 bytes) 
-
-#now with Values of Values
-rho_ss = Vector{Vector{Float64}}(undef,15)
-[rho_ss[i] = [0.,0.,0.]  for i=1:15]
-
-#= Can construct as:
-        s_val = Values(den, den1, den)
-        ss_val = Values(ntuple(x->s_val, Val(15)))
-    
-    Or even do:
-        s_end = Values(den2, den2, den2)
-        ss = Vector{Values{3,AbstractDensity{Float64}}}(undef,15)
-        [ss[i] = s_val for i=1:14]
-        ss[end] = s_end
-        ss_tup = Tuple(ss)
-        ss_val = Values(ss_tup)
-=#
-
-#@btime compute_density!($rho_ss,$P,$T,$ss_val) -> 1.390 μs (42 allocations: 4.59 KiB)
-
-
-
-#using StaticArrays
-den = PT_Density()
-den1 = No_Density()
-P,T = 1.,1.
-rho = zeros(100)
-s = SVector{100}([den for i in 1:100])
-#@btime compute_density!($rho,$P,$T,$s) ->  116.975 ns (0 allocations: 0 bytes)
-
-#now using SVector of SVector
-rho_ss = Vector{Vector{Float64}}(undef,15)
-[rho_ss[i] = [0.,0.,0.]  for i=1:15]
-ss_vec = SVector{15}([SVector{3}([ss[i][j] for j in 1:3]) for i in 1:15]) #@SVector[@SVector[...] for i in 1:15]
-
-#@btime compute_density!($rho_ss,$P,$T,$ss_vec) -> 1.310 μs (43 allocations: 3.44 KiB)
-
-
-
-=#
 
 end
