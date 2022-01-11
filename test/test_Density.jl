@@ -230,8 +230,8 @@ rho_aa=Vector{Vector{Float64}}(undef,5)
 [rho_aa[i] = [0.,0.]  for i=1:5]
 
 # For some reason this sometimes allocates and sometimes not, which puzzles me:
-compute_density!(rho_aa, P, T, aa)
-@btime compute_density!($rho_aa, $P, $T, $aa)
+#compute_density!(rho_aa, P, T, aa)
+#@btime compute_density!($rho_aa, $P, $T, $aa)
 # 71.674 ns (0 allocations: 0 bytes)
 # yet, if I restart and recompile this it gives:
 #138.251 ns (5 allocations: 160 bytes)
@@ -291,13 +291,6 @@ rho_cc=Vector{NTuple{1,Float64}}(undef,5)
 [rho_cc[i] = (0.,)  for i=1:5]
 =#
 
-
-# Static arrays:
-using StaticArrays
-cc = @SVector [SA[den,den1] for i=1:5]
-rho_cc = @SVector [SA[0.,0.] for i=1:5]
-
-compute_density!(rho_cc, P, T, cc)
 
 
 
