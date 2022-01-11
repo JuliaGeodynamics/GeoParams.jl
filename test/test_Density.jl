@@ -169,11 +169,9 @@ test9 = TestMat9(Density = (ConstantDensity{Float64}(), ) )
 #=
 using BenchmarkTools
 @btime f!($r, $rho1, $c) # 1 allocation (as expected)
-
 @btime f!($r, $(test1.Density[1]), $c)      # 1 allocation (but non-typical usage)
 @btime g!($r, $test1, $c)       # typical usage: 6001 allocations
 @btime g!($r, $test2, $c)       # typical usage: 6001 allocations
-
 @btime g!($r, $test6, $c)       # typical usage: 1 allocations
 @btime g!($r, $test9, $c)       # typical usage: 1 allocations [as implemented]
 =#
@@ -245,7 +243,6 @@ Variables
   P::Float64
   T::Float64
   s::Vector{Vector{AbstractDensity{Float64}}}
-
 Body::Nothing
 1 ─ %1 = Base.broadcasted(GeoParams.MaterialParameters.Density.compute_density!, ρ, P, T, s)::Base.Broadcast.Broadcasted{Base.Broadcast.DefaultArrayStyle{1}, Nothing, typeof(compute_density!), Tuple{Vector{Vector{Float64}}, Float64, Float64, Vector{Vector{AbstractDensity{Float64}}}}}
 │        Base.materialize!(ρ, %1)
@@ -260,7 +257,6 @@ Variables
   P::Float64
   T::Float64
   s::Vector{Vector{AbstractDensity{Float64}}}
-
 Body::Nothing
 1 ─ %1 = Base.broadcasted(GeoParams.MaterialParameters.Density.compute_density!, ρ, P, T, s)::Base.Broadcast.Broadcasted{Base.Broadcast.DefaultArrayStyle{1}, Nothing, typeof(compute_density!), Tuple{Vector{Vector{Float64}}, Float64, Float64, Vector{Vector{AbstractDensity{Float64}}}}}
 │        Base.materialize!(ρ, %1)
@@ -282,16 +278,85 @@ rho_cc=Vector{NTuple{2,Float64}}(undef,5)
 [rho_cc[i] = (0.,0.)  for i=1:5]
 
 
-#=
-cc=Vector{NTuple{1,AbstractDensity{Float64}}}(undef,5)
-[cc[i] = (den,) for i=1:5]
-cc[end] = (den1,)
 
-rho_cc=Vector{NTuple{1,Float64}}(undef,5)
-[rho_cc[i] = (0.,)  for i=1:5]
+
+#---------------------------------------------------------------------------------------------------------------#
+#Structures involving AbstractDensity
+
+#Using a vector
+den = ConstantDensity()
+den1 = PT_Density()
+den2 = No_Density()
+
+rho = zeros(100)
+P,T = 9.,10.
+svec = Vector{AbstractDensity{Float64}}(undef, 100)
+[svec[i] = den for i in 1:70]
+[svec[i] = den1 for i in 71:98]
+[svec[i] = den2 for i in 98:100]
+
+#@btime compute_density!($rho, $P, $T, $s) -> 210.909 ns (0 allocations: 0 bytes)
+
+#The same with a tuple 
+s_tup = Tuple(svec)
+  
+#@btime compute_density!($rho, $P, $T, $s_tup) -> Allocates! (36.600 μs (197 allocations: 569.58 KiB))
+
+
+#Now using Tuple of Tuples
+den = ConstantDensity()
+den1 = PT_Density()
+den2 = No_Density()
+P,T = 1.,2.
+
+rho_tup = Vector{NTuple{3,Float64}}(undef,15)
+[rho_tup[i] = (0.,0.,0.) for i = 1:15]
+
+#constructing it as ss_vectup allows to change ss_vectup[end] easily
+ss_vectup = Vector{NTuple{3,AbstractDensity{Float64}}}(undef,15)
+[ss_vectup[i] = (den,den,den) for i=1:14]
+ss_vectup[end] = (den1, den2, den2)
+ss_tup = Tuple(ss_vectup)
+
+#@btime compute_density!($rho_tup, $P, $T, $ss_tup) -> 35.650 ns (0 allocations: 0 bytes) works!!
+
+
+#---------------------------------------------------------------------------------------------------------#
+
+#Now using MaterialParams instead
+P,T = 1.,1.
+rho = zeros(3)
+
+MatParam = Vector{AbstractMaterialParamsStruct}(undef, 3)
+MatParam[1] = SetMaterialParams(Name="Crust", Phase=1,
+                            CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pas)),
+                            Density   = ConstantDensity(ρ=2900kg/m^3))
+MatParam[2] = SetMaterialParams(Name="Lower Crust", Phase=2,
+                            CreepLaws= (PowerlawViscous(n=5.), LinearViscous(η=1e21Pas)),
+                            Density  = PT_Density(ρ0=3000kg/m^3))
+MatParam[3] = SetMaterialParams(Name="Lower Crust", Phase=3,
+                            CreepLaws= (PowerlawViscous(n=1.), LinearViscous(η=1e21Pas)),
+                            Density  = No_Density())
+
+Mat_tup = Tuple(MatParam)
+
+
+#@btime compute_density!($rho,$P,$T,$Mat_tup) -> 4.800 ns (0 allocations: 0 bytes)
+
+
+#now using Tuple of Tuples 
+rho_tup = Vector{NTuple{3,Float64}}(undef, 10)
+[rho_tup[i] = (0.,0.,0.) for i in 1:10]
+
+mm_tup = ntuple(x->Mat_tup, Val(10))
+
+#= alternative way to construct mm_tup:
+        mm = Vector{NTuple{3,MaterialParams}}(undef, 10)
+        [mm[i] = Mat_tup for i = 1:10]
+        mm_tup = Tuple(mm) #converts to Tuple of Tuples
 =#
 
-
+#@btime compute_density!($rho_tup, $P, $T, $mm_tup) -> 25.502 ns (0 allocations: 0 bytes) !!
 
 
 end
