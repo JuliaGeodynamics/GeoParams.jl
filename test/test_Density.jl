@@ -257,10 +257,6 @@ Variables
   P::Float64
   T::Float64
   s::Vector{Vector{AbstractDensity{Float64}}}
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/boris_refactorGeoUnit
 Body::Nothing
 1 ─ %1 = Base.broadcasted(GeoParams.MaterialParameters.Density.compute_density!, ρ, P, T, s)::Base.Broadcast.Broadcasted{Base.Broadcast.DefaultArrayStyle{1}, Nothing, typeof(compute_density!), Tuple{Vector{Vector{Float64}}, Float64, Float64, Vector{Vector{AbstractDensity{Float64}}}}}
 │        Base.materialize!(ρ, %1)
@@ -294,15 +290,15 @@ den2 = No_Density()
 
 rho = zeros(100)
 P,T = 9.,10.
-s = Vector{AbstractDensity{Float64}}(undef, 100)
-[s[i] = den for i in 1:70]
-[s[i] = den1 for i in 71:98]
-[s[i] = den2 for i in 98:100]
+svec = Vector{AbstractDensity{Float64}}(undef, 100)
+[svec[i] = den for i in 1:70]
+[svec[i] = den1 for i in 71:98]
+[svec[i] = den2 for i in 98:100]
 
 #@btime compute_density!($rho, $P, $T, $s) -> 210.909 ns (0 allocations: 0 bytes)
 
 #The same with a tuple 
-s_tup = Tuple(s)
+s_tup = Tuple(svec)
   
 #@btime compute_density!($rho, $P, $T, $s_tup) -> Allocates! (36.600 μs (197 allocations: 569.58 KiB))
 
