@@ -270,4 +270,108 @@ SetDislocationCreep = Dict([
     )
 )
 
+# Maryland strong diabase rheology
+("Maryland strong diabse | Mackwell et al. (1998)", 
+    #  After Mackwell et al. (1998), 'High-temperatur deformation of dry diabase with application to tectonics on Venus'
+    #  Mackwell et al. (1998), page 980, equation in text
+    DislocationCreep(
+        n = 4.7NoUnits,
+        A = 8MPa^(-4.7)/s, 
+        E = 485kJ/mol,
+        V = 0m^3/mol,
+        r = 0NoUnits,
+        Apparatus = "AxialCompression",
+        Comment = "Values checked (Mackwell et al. (1998))(NM), plots are not reproduced (NM).",
+        BibTex_Reference = parse_bibtex("""
+            @article{mackwell1998high,
+            title={High-temperature deformation of dry diabase with application to tectonics on Venus},
+            author={Mackwell, SJ and Zimmerman, ME and Kohlstedt, DL},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={103},
+            number={B1},
+            pages={975--984},
+            year={1998},
+            publisher={Wiley Online Library}
+            }
+        """);
+    )
+)       
+
+# Mafic Granulite rheology
+("Mafic Granulite | Ranalli (1995)", 
+    #  After Li, Gerya and Burg (2010), table 2
+    #  Ranalli (1995), 'Rheology of the Earth' (Book), page 334, table 10.3
+    DislocationCreep(
+        n = 4.2NoUnits,
+        A = 1.4e-4MPa^(-4.2)/s, 
+        E = 445kJ/mol,
+        V = 0m^3/mol,
+        r = 0NoUnits,
+        Apparatus = "AxialCompression",
+        Comment = "Values checked (Ranalli (1995))(NM), plots are not reproduced (NM).",
+        BibTex_Reference = parse_bibtex("""
+            @book{ranalli1995rheology,
+            title={Rheology of the Earth},
+            author={Ranalli, Giorgio},
+            year={1995},
+            publisher={Springer Science \& Business Media}
+            }
+        """);
+    )
+)
+
+# Wet Quartzite rheology
+("Wet Quartzite | Ueda et al. (2008)", 
+    #  Ueda et al. (2008), table 1
+    DislocationCreep(
+        n = 2.3NoUnits,
+        A = 1e-3.5MPa^(-2.3)/s, 
+        E = 154kJ/mol,
+        V = 0m^3/mol,
+        r = 0NoUnits,
+        Apparatus = "AxialCompression",
+        Comment = "Values checked (Ueda et al. (2008))(NM), plots are not reproduced (NM).",
+        BibTex_Reference = parse_bibtex("""
+            @article{ueda2008subduction,
+            title={Subduction initiation by thermal--chemical plumes: numerical studies},
+            author={Ueda, Kosuke and Gerya, Taras and Sobolev, Stephan V},
+            journal={Physics of the Earth and Planetary Interiors},
+            volume={171},
+            number={1-4},
+            pages={296--312},
+            year={2008},
+            publisher={Elsevier}
+            }
+        """);
+    )
+)
+
+# Granite rheology
+("Granite | Huismans et al. (2001)", 
+    #  Huismans et al. (2001), table 2
+    #  referring to Carter and Tsenn (1987), table 4, Westerly Granite (dry)
+    #  referring to Hansen and Carter (1983), not accessable
+    DislocationCreep(
+        n = 3.3NoUnits,
+        A = 3.16e-32MPa^(-3.3)/s, 
+        E = 186.5kJ/mol,
+        V = 0m^3/mol,
+        r = 0NoUnits,
+        Apparatus = "AxialCompression",
+        Comment = "Values checked (Carter and Tsenn (1987))(NM), plots are not reproduced (NM).",
+        BibTex_Reference = parse_bibtex("""
+            @article{huismans2001transition,
+            title={Transition from passive to active rifting: Relative importance of asthenospheric doming and passive extension of the lithosphere},
+            author={Huismans, Ritske S and Podladchikov, Yuri Y and Cloetingh, Sierd},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={106},
+            number={B6},
+            pages={11271--11291},
+            year={2001},
+            publisher={Wiley Online Library}
+            }
+        """);
+    )
+)
+
 ]); # end of setting pre-defined creep laws
