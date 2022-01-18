@@ -263,27 +263,11 @@ Body::Nothing
 └──      return nothing
 =#
 
-# Next, lets try a vector of Tuples
-den  = ConstantDensity()
-den1 = PT_Density()
-P,T     = 10.0,11.0
-
-cc=Vector{NTuple{2,AbstractDensity{Float64}}}(undef,5)
-#cc = @SVector [SA[den,den1] for i=1:5]
-[cc[i] = (den,den1) for i=1:5]
-cc[end] = (den1, No_Density())
-
-
-rho_cc=Vector{NTuple{2,Float64}}(undef,5)
-[rho_cc[i] = (0.,0.)  for i=1:5]
-
-
-
 
 #---------------------------------------------------------------------------------------------------------------#
-#Structures involving AbstractDensity
+# Structures involving AbstractDensity
 
-#Using a vector
+# Using a vector
 den = ConstantDensity()
 den1 = PT_Density()
 den2 = No_Density()
@@ -297,13 +281,13 @@ svec = Vector{AbstractDensity{Float64}}(undef, 100)
 
 #@btime compute_density!($rho, $P, $T, $s) -> 210.909 ns (0 allocations: 0 bytes)
 
-#The same with a tuple 
+# The same with a tuple 
 s_tup = Tuple(svec)
   
 #@btime compute_density!($rho, $P, $T, $s_tup) -> Allocates! (36.600 μs (197 allocations: 569.58 KiB))
 
 
-#Now using Tuple of Tuples
+# Now using Tuple of Tuples
 den = ConstantDensity()
 den1 = PT_Density()
 den2 = No_Density()
@@ -319,11 +303,9 @@ ss_vectup[end] = (den1, den2, den2)
 ss_tup = Tuple(ss_vectup)
 
 #@btime compute_density!($rho_tup, $P, $T, $ss_tup) -> 35.650 ns (0 allocations: 0 bytes) works!!
-
-
 #---------------------------------------------------------------------------------------------------------#
 
-#Now using MaterialParams instead
+# Now using MaterialParams instead
 P,T = 1.,1.
 rho = zeros(3)
 
@@ -335,16 +317,21 @@ MatParam[2] = SetMaterialParams(Name="Lower Crust", Phase=2,
                             CreepLaws= (PowerlawViscous(n=5.), LinearViscous(η=1e21Pas)),
                             Density  = PT_Density(ρ0=3000kg/m^3))
 MatParam[3] = SetMaterialParams(Name="Lower Crust", Phase=3,
-                            CreepLaws= (PowerlawViscous(n=1.), LinearViscous(η=1e21Pas)),
+                            CreepLaws= LinearViscous(η=1e21Pas),
                             Density  = No_Density())
 
 Mat_tup = Tuple(MatParam)
 
-
 #@btime compute_density!($rho,$P,$T,$Mat_tup) -> 4.800 ns (0 allocations: 0 bytes)
 
 
-#now using Tuple of Tuples 
+# Convert Tuple of Tuples of different sizes to Tuples of same size filling with No_Density
+cc = ntuple(i->MatParam[i].CreepLaws, Val(length(MatParam))) #this has different sizes
+k = max_length(cc)
+cc_new = fill_tup(cc, k) # makes inner tuples all of length k
+
+
+# now using Tuple of Tuples 
 rho_tup = Vector{NTuple{3,Float64}}(undef, 10)
 [rho_tup[i] = (0.,0.,0.) for i in 1:10]
 

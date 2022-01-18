@@ -18,7 +18,9 @@ export  compute_density,        # calculation routines
         ConstantDensity,        # constant
         PT_Density,             # P & T dependent density
         No_Density,             # nothing defined
-        AbstractDensity 
+        AbstractDensity,
+        fill_tup,
+        max_length
 
 
 # Define default struct in case nothing is defined
@@ -26,7 +28,6 @@ struct No_Density{_T} <: AbstractDensity{_T} end
 No_Density() = No_Density{Float64}();
 compute_density!(rho::Number,P::Number,T::Number, s::No_Density{_T}) where {_T} = zero(_T)
 compute_density(P::Number,T::Number, s::No_Density{_T}) where {_T} = zero(_T)
-
 
 # Constant Density -------------------------------------------------------
 """
@@ -161,22 +162,22 @@ end
 
 #-----------------------------------------------------------------------------------------------------------------#
 
-#AbstractDensity
+# AbstractDensity
 
-#Vector
+# Vector
 function compute_density!(ρ::Vector{_T}, P::Number,T::Number, s::Vector{AbstractDensity{_T}}) where {_T}
     ρ .= compute_density.(P,T,s)
 end
 
 
-#Tuple (this method allocates)
+# Tuple (this method allocates)
 function compute_density!(ρ::Vector{_T}, P::Number, T::Number, s::NTuple{N, AbstractDensity{_T}}) where {N, _T}
     ρ .= compute_density.(P,T,s) 
     #ρ .=  map(x->compute_density(P,T,x), s)
 end
 
 
-#Tuple of Tuples
+# Tuple of Tuples
 function compute_density(P::Number, T::Number, s::NTuple{N, AbstractDensity{_T}}) where {N, _T}
     #ρ .= compute_density.(P,T,s)
     map(x->compute_density(P,T,x), s)
@@ -193,7 +194,7 @@ end
 
 
 #------------------------------------------------------------------------------------------------------------------#
-#using AbstractMaterialParamsStruct
+# using AbstractMaterialParamsStruct
 
 
 function compute_density(P::Number, T::Number, s::AbstractMaterialParamsStruct)
@@ -204,7 +205,7 @@ function compute_density!(rho::Number, P::Number, T::Number, s::AbstractMaterial
     return compute_density!(rho,P,T,s.Density[1])
 end
 
-#with Tuple
+# with Tuple
 function compute_density!(rho::Vector{_T}, P::Number, T::Number, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where {N,_T}
     rho .= map(x->compute_density(P,T,x), MatParam)
 end
@@ -220,6 +221,37 @@ function compute_density!(rho::Vector{NTuple{M,_T}}, P::Number, T::Number, MatPa
     rho .= map(x->compute_density(P,T,x), MatParam)
 end
 
+#-------------------------------------------------------------------------------------------------------------
+
+#automatically fill tuples with No_Density given a length n
+function fill_tup(v::NTuple{N,Tuple{Vararg{AbstractMaterialParam}}}, n) where N
+    ntuple(i->ntuple(j-> j <= length(v[i]) ? v[i][j] : No_Density(), Val(n)),Val(N))
+end
+
+#find max element in a tuple
+function find_max(t::NTuple{N,T}) where {N,T}
+    max = t[1]
+    @inbounds for i in 2:N
+        if t[i] > max
+            max = t[i]
+        end
+    end
+    max
+end
+
+#find inner tuple of maximum length
+function max_length(t::NTuple{N, Tuple}) where N
+    find_max(ntuple(x->length(t[x]), Val(N)))
+end
+
+#=
+function make_tup!(s::Vector{AbstractMaterialParamsStruct}, v::Vector{AbstractMaterialParamsStruct})
+    n = length(v)
+    s[1:n] = @view v[:]
+    replace!(x->No_Params(), @view s[n+1:end])
+    Tuple(s)
+end
+=#
 
 #-------------------------------------------------------------------------
 # Phase diagrams
