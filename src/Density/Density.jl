@@ -19,7 +19,7 @@ export  compute_density,        # calculation routines
         PT_Density,             # P & T dependent density
         No_Density,             # nothing defined
         AbstractDensity,
-        fill_tup,
+        fill_tup,       # to be moved
         max_length
 
 
@@ -157,7 +157,31 @@ end
 function show(io::IO, g::PT_Density)  
     print(io, "P/T-dependent density: ρ0=$(g.ρ0.val), α=$(g.α.val), β=$(g.β.val), T0=$(g.T0.val), P0=$(g.P0.val)")  
 end
+#-------------------------------------------------------------------------
 
+
+#-------------------------------------------------------------------------
+# Phase diagrams
+"""
+    compute_density(P,T, s::PhaseDiagram_LookupTable)
+
+Interpolates density as a function of `T,P` from a lookup table  
+"""
+function compute_density(P,T, s::PhaseDiagram_LookupTable)
+    return s.Rho(T,P)
+end
+
+"""
+    compute_density!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
+
+In-place computation of density as a function of `T,P`, in case we are using a lookup table.    
+"""
+function compute_density!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
+    rho[:] = s.Rho.(T,P)
+    return nothing
+end
+
+#-------------------------------------------------------------------------
 
 
 #-----------------------------------------------------------------------------------------------------------------#
@@ -210,7 +234,6 @@ function compute_density!(rho::Vector{_T}, P::Number, T::Number, MatParam::NTupl
     rho .= map(x->compute_density(P,T,x), MatParam)
 end
 
-
 function compute_density(P::Number, T::Number, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where N
     #compute_density.(P,T,MatParam)
     map(x->compute_density(P,T,x), MatParam)
@@ -223,12 +246,13 @@ end
 
 #-------------------------------------------------------------------------------------------------------------
 
-#automatically fill tuples with No_Density given a length n
+
+# Automatically fill tuples with No_Density given a length n
 function fill_tup(v::NTuple{N,Tuple{Vararg{AbstractMaterialParam}}}, n) where N
     ntuple(i->ntuple(j-> j <= length(v[i]) ? v[i][j] : No_Density(), Val(n)),Val(N))
 end
 
-#find max element in a tuple
+# Find max element in a tuple
 function find_max(t::NTuple{N,T}) where {N,T}
     max = t[1]
     @inbounds for i in 2:N
@@ -239,42 +263,11 @@ function find_max(t::NTuple{N,T}) where {N,T}
     max
 end
 
-#find inner tuple of maximum length
+# Find inner tuple of maximum length
 function max_length(t::NTuple{N, Tuple}) where N
     find_max(ntuple(x->length(t[x]), Val(N)))
 end
 
-#=
-function make_tup!(s::Vector{AbstractMaterialParamsStruct}, v::Vector{AbstractMaterialParamsStruct})
-    n = length(v)
-    s[1:n] = @view v[:]
-    replace!(x->No_Params(), @view s[n+1:end])
-    Tuple(s)
-end
-=#
-
-#-------------------------------------------------------------------------
-# Phase diagrams
-"""
-    compute_density(P,T, s::PhaseDiagram_LookupTable)
-
-Interpolates density as a function of `T,P`   
-"""
-function compute_density(P,T, s::PhaseDiagram_LookupTable)
-    return s.Rho.(T,P)
-end
-
-"""
-    compute_density!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
-
-In-place computation of density as a function of `T,P`, in case we are using a lookup table.    
-"""
-function compute_density!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
-    rho[:] = s.Rho.(T,P)
-    return nothing
-end
-
-#-------------------------------------------------------------------------
 
 """
     compute_density!(rho::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractAbstractMaterialParamsStructStruct})
@@ -284,13 +277,15 @@ This assumes that the `Phase` of every point is specified as an Integer in the `
 
 # Example
 ```julia
-julia> MatParam    =   Array{MaterialParams, 1}(undef, 2);
-julia> MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=1,
+julia> MatParam = (SetMaterialParams(Name="Mantle", Phase=1,
                         CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
-                        Density   = PerpleX_LaMEM_Diagram("test_data/Peridotite.in"));
-julia> MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
+                        Density   = PT_Density()
+                        ),
+                    SetMaterialParams(Name="Crust", Phase=2,
                         CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pas)),
-                        Density   = ConstantDensity(ρ=2900kg/m^3));
+                        Density   = ConstantDensity(ρ=2900kg/m^3))
+                        );
+
 julia> Phases = ones(Int64,400,400);
 julia> Phases[:,20:end] .= 2
 julia> rho     = zeros(size(Phases))
@@ -299,28 +294,71 @@ julia> P       =  ones(size(Phases))*10
 julia> compute_density!(rho, Phases, P,T, MatParam)
 julia> rho
 400×400 Matrix{Float64}:
- 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
-    ⋮                                            ⋮     ⋱                     ⋮                            
- 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 3334.46  3334.46  3334.46  3334.46  3334.46  3334.46     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+    ⋮                                            ⋮                                         ⋱     ⋮                                       ⋮                            
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
 ```
 The routine is made to minimize allocations:
 ```julia
 julia> using BenchmarkTools
 julia> @btime compute_density!(\$rho, \$Phases, \$P, \$T, \$MatParam)
- 1.300 ms (44 allocations: 3.77 MiB)
+    1.358 ms (28 allocations: 1.27 MiB)
 ```
 """
+function compute_density!(rho::AbstractArray{_T, ndim}, Phases::AbstractArray{<:Integer, ndim}, P::AbstractArray{_T, ndim},T::AbstractArray{_T, ndim}, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where {ndim,N,_T}
+    # This is the general way to implement this.
+    #  Remarks:
+    #       1) It allocates a lot when used with a phase diagram
+    #       2) We still have to check if this works with the way ParallelStencil operates
+    
+    # The phases in MatParam may be ordered differently (or start with zero)
+    Phase_ind = copy(Phases);
+    Phase_vec = [MatParam[i].Phase for i=1:N]
+    for i=1:N
+        Phase_ind[Phases.==Phase_vec[i]] .= i
+    end
+
+    rho_local = zeros(_T,N)
+    for i in eachindex(Phase_ind)
+        phase   =   Phase_ind[i]
+        
+        # This does not allocate but computes density for all phases simultaneously. 
+        #  That is a bit of an overkill, but alternative approaches appear to allocate  
+        compute_density!(rho_local,P[i],T[i], MatParam)     
+        rho[i]  =   rho_local[phase]
+    end   
+
+    return
+end
+
+
+# OBSOLETE?
+#=
 function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, Phases::AbstractArray{<:Integer, N}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where {N,_T}
 
     for i = 1:length(MatParam)
@@ -343,16 +381,59 @@ function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, Phases::Abstra
     end
 
 end
-
-
+=#
 
 """
-    compute_density!(rho::AbstractArray{<:AbstractFloat,N}, PhaseRatios::AbstractArray{<:AbstractFloat, M}, P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
-
+    compute_density!(rho::AbstractArray{_T, N}, PhaseRatios::AbstractArray{_T, M}, P::AbstractArray{_T, N},T::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}) where {_T, N,M, K}
+   
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 
 """
+function compute_density!(rho::AbstractArray{_T, N}, PhaseRatios::AbstractArray{_T, M}, P::AbstractArray{_T, N},T::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}) where {_T, N,M, K}
+    if M!=(N+1)
+        error("The PhaseRatios array should have one dimension more than the other arrays")
+    end
+    
+    rho_vec = zeros(_T,K)
+    frac    = zeros(_T,M)
+    for i in CartesianIndices(P)
+        
+        # hmm, I'm sure this can be generalized somehow..
+        if N==1
+            frac   =   view(PhaseRatios, i[1], : )
+        elseif N==2
+            frac   =   view(PhaseRatios, i[1], i[2], : )
+        elseif N==3
+            frac   =   view(PhaseRatios, i[1], i[2], i[3],  : )
+        end
+
+        # compute point-wise density:
+        rho[i] = compute_density!(rho_vec, frac, P[i], T[i], MatParam ) 
+
+    end
+
+    return 
+end
+
+
+function compute_density!(rho_vec::AbstractArray{_T, 1}, PhaseRatios::AbstractArray{_T, 1}, P::_T,T::_T, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where {_T, N}
+
+    compute_density!(rho_vec, P, T, MatParam ) 
+
+    # Sum & multiply density with fraction
+    rho = zero(_T)
+    @inbounds for j=1:N             # @inbounds to not allocate
+        rho += PhaseRatios[j]*rho_vec[j]
+    end
+
+    return rho 
+end
+
+
+
+#=
+# OLD function (which actually works better in case of phase diagrams as it can do computations at omce)
 function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, PhaseRatios::AbstractArray{<:AbstractFloat, M}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where {N,M}
     
     if M!=(N+1)
@@ -380,5 +461,11 @@ function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, PhaseRatios::A
     end
 
 end
+=#
+
+
+
+
+
 
 end

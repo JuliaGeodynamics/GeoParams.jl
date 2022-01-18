@@ -49,7 +49,9 @@ Vs_ND    =  PD_data1.Vs(Nondimensionalize(1500K,CharDim),Nondimensionalize(1e8*P
 
 
 # Test computation of density for the whole computational domain, using arrays 
-MatParam    =   Array{MaterialParams, 1}(undef, 3);
+
+MatParam    =   Vector{AbstractMaterialParamsStruct}(undef, 3)
+
 MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=0,
                         CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
                         Density   = PerpleX_LaMEM_Diagram("test_data/Peridotite.in"));
@@ -62,19 +64,40 @@ MatParam[3] =   SetMaterialParams(Name="UpperCrust", Phase=2,
                         CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
                         Density   = PT_Density());
 
+Mat_tup = Tuple(MatParam);  # create a tuple to avoid allocations
+
+
+MatParam1 = Vector{AbstractMaterialParamsStruct}(undef, 3)
+MatParam1[1] = SetMaterialParams(Name="Crust", Phase=0,
+                            CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pas)),
+                            Density   = ConstantDensity(ρ=2900kg/m^3))
+MatParam1[2] = SetMaterialParams(Name="Lower Crust", Phase=1,
+                            CreepLaws= (PowerlawViscous(n=5.), LinearViscous(η=1e21Pas)),
+                            Density  = PT_Density(ρ0=3000kg/m^3))
+MatParam1[3] = SetMaterialParams(Name="Lower Crust", Phase=2,
+                            CreepLaws= LinearViscous(η=1e21Pas),
+                            Density  = ConstantDensity())
+
+Mat_tup1 = Tuple(MatParam1)
+
 # test computing material properties
 Phases              = ones(Int64,400,400)*0;
-Phases[:,20:end] .= 1
-Phases[:,300:end] .= 2
+Phases[:,20:end]   .= 1
+Phases[:,300:end]  .= 2
 
 #Phases .= 2;
-
 rho     = zeros(size(Phases))
 T       =  ones(size(Phases))
 P       =  ones(size(Phases))*10
 
-compute_density!(rho, Phases, P,T, MatParam)   # 82 allocations
+# Test computing density when Mat_tup1 is provided as a tuple
+compute_density!(rho, Phases, P,T, Mat_tup1)   #    1.286 ms (34 allocations: 2.51 MiB)
+@test sum(rho)/400^2 ≈ 2969.9370209999984
+
+# If we employ a phase diagram many allocations occur:
+compute_density!(rho, Phases, P,T, Mat_tup)   #      97.057 ms (1280034 allocations: 29.37 MiB)     - the allocations are from the phase diagram
 @test sum(rho)/400^2 ≈ 2920.6148898225
+
 
 # test computing material properties when we have PhaseRatios, instead of Phase numbers
 PhaseRatio  = zeros(size(Phases)...,length(MatParam));
@@ -84,9 +107,16 @@ for i in CartesianIndices(Phases)
     PhaseRatio[I] = 1.0  
 end
 
-compute_density!(rho, PhaseRatio, P,T, MatParam)
-@test sum(rho)/400^2 ≈ 2920.6148898225
+compute_density!(rho, PhaseRatio, P,T, Mat_tup1)
+@test sum(rho)/400^2 ≈ 2969.9370209999984
 
+#@btime compute_density!($rho, $PhaseRatio, $P, $T, $Mat_tup1)
+#    923.119 μs (2 allocations: 224 bytes)
+
+@test sum(rho)/400^2 ≈ 2969.9370209999984
+
+
+#=
 # test speed of assigning density 
 rho1 = ConstantDensity();
 
@@ -227,41 +257,7 @@ P,T     = 10.0,11.0
 rho_aa=Vector{Vector{Float64}}(undef,5)
 [rho_aa[i] = [0.,0.]  for i=1:5]
 
-# For some reason this sometimes allocates and sometimes not, which puzzles me:
-#compute_density!(rho_aa, P, T, aa)
-#@btime compute_density!($rho_aa, $P, $T, $aa)
-# 71.674 ns (0 allocations: 0 bytes)
-# yet, if I restart and recompile this it gives:
-#138.251 ns (5 allocations: 160 bytes)
 
-
-#= no allocations:
-julia> @code_warntype compute_density!(rho_aa, P, T, aa)
-Variables
-  #self#::Core.Const(GeoParams.MaterialParameters.Density.compute_density!)
-  ρ::Vector{Vector{Float64}}
-  P::Float64
-  T::Float64
-  s::Vector{Vector{AbstractDensity{Float64}}}
-Body::Nothing
-1 ─ %1 = Base.broadcasted(GeoParams.MaterialParameters.Density.compute_density!, ρ, P, T, s)::Base.Broadcast.Broadcasted{Base.Broadcast.DefaultArrayStyle{1}, Nothing, typeof(compute_density!), Tuple{Vector{Vector{Float64}}, Float64, Float64, Vector{Vector{AbstractDensity{Float64}}}}}
-│        Base.materialize!(ρ, %1)
-└──      return nothing
-=#
-
-#= with 5 allocations: 
-julia> @code_warntype compute_density!(rho_aa, P, T, aa)
-Variables
-  #self#::Core.Const(GeoParams.MaterialParameters.Density.compute_density!)
-  ρ::Vector{Vector{Float64}}
-  P::Float64
-  T::Float64
-  s::Vector{Vector{AbstractDensity{Float64}}}
-Body::Nothing
-1 ─ %1 = Base.broadcasted(GeoParams.MaterialParameters.Density.compute_density!, ρ, P, T, s)::Base.Broadcast.Broadcasted{Base.Broadcast.DefaultArrayStyle{1}, Nothing, typeof(compute_density!), Tuple{Vector{Vector{Float64}}, Float64, Float64, Vector{Vector{AbstractDensity{Float64}}}}}
-│        Base.materialize!(ρ, %1)
-└──      return nothing
-=#
 
 
 #---------------------------------------------------------------------------------------------------------------#
@@ -326,9 +322,9 @@ Mat_tup = Tuple(MatParam)
 
 
 # Convert Tuple of Tuples of different sizes to Tuples of same size filling with No_Density
-cc = ntuple(i->MatParam[i].CreepLaws, Val(length(MatParam))) #this has different sizes
-k = max_length(cc)
-cc_new = fill_tup(cc, k) # makes inner tuples all of length k
+cc      = ntuple(i->MatParam[i].CreepLaws, Val(length(MatParam))) #this has different sizes
+k       = max_length(cc)
+cc_new  = fill_tup(cc, k) # makes inner tuples all of length k
 
 
 # now using Tuple of Tuples 
@@ -344,6 +340,6 @@ mm_tup = ntuple(x->Mat_tup, Val(10))
 =#
 
 #@btime compute_density!($rho_tup, $P, $T, $mm_tup) -> 25.502 ns (0 allocations: 0 bytes) !!
-
+=#
 
 end
