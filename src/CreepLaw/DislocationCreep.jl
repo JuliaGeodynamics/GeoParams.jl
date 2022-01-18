@@ -298,23 +298,28 @@ SetDislocationCreep = Dict([
 )       
 
 # Mafic Granulite rheology
-("Mafic Granulite | Ranalli (1995)", 
+("Mafic Granulite | Wilks and Carter (1990)", 
     #  After Li, Gerya and Burg (2010), table 2
-    #  Ranalli (1995), 'Rheology of the Earth' (Book), page 334, table 10.3
+    #  referring to Ranalli (1995), 'Rheology of the Earth' (Book), page 334, table 10.3
+    #  referring to Wilks and Carter (1990), 'Rheology of some continental lower crustal rocks', Fig. 6, Pikwitonei Granulite
     DislocationCreep(
         n = 4.2NoUnits,
-        A = 1.4e-4MPa^(-4.2)/s, 
+        A = 1.4e4MPa^(-4.2)/s, 
         E = 445kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
         Apparatus = "AxialCompression",
-        Comment = "Values checked (Ranalli (1995))(NM), plots are not reproduced (NM).",
+        Comment = "Values checked (Wilks and Carter (1990))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
-            @book{ranalli1995rheology,
-            title={Rheology of the Earth},
-            author={Ranalli, Giorgio},
-            year={1995},
-            publisher={Springer Science \& Business Media}
+            @article{wilks1990rheology,
+            title={Rheology of some continental lower crustal rocks},
+            author={Wilks, Kenneth R and Carter, Neville L},
+            journal={Tectonophysics},
+            volume={182},
+            number={1-2},
+            pages={57--77},
+            year={1990},
+            publisher={Elsevier}
             }
         """);
     )
@@ -347,31 +352,166 @@ SetDislocationCreep = Dict([
 )
 
 # Granite rheology
-("Granite | Huismans et al. (2001)", 
+("Granite | Carter and Tsenn (1987)", 
     #  Huismans et al. (2001), table 2
-    #  referring to Carter and Tsenn (1987), table 4, Westerly Granite (dry)
-    #  referring to Hansen and Carter (1983), not accessable
+    #  referring to Carter and Tsenn (1987), 'Flow properties of continental lithosphere', table 4, Westerly Granite (dry)
+    #  referring to Hansen and Carter (1983), 'Semibrittle Creep Of Dry And Wet Westerly Granite At 1000 MPa', not accessable
     DislocationCreep(
         n = 3.3NoUnits,
-        A = 3.16e-32MPa^(-3.3)/s, 
+        A = 1.0e-5.7MPa^(-3.3)/s,
         E = 186.5kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
         Apparatus = "AxialCompression",
         Comment = "Values checked (Carter and Tsenn (1987))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
-            @article{huismans2001transition,
-            title={Transition from passive to active rifting: Relative importance of asthenospheric doming and passive extension of the lithosphere},
-            author={Huismans, Ritske S and Podladchikov, Yuri Y and Cloetingh, Sierd},
+            @article{carter1987flow,
+            title={Flow properties of continental lithosphere},
+            author={Carter, Neville L and Tsenn, Michael C},
+            journal={Tectonophysics},
+            volume={136},
+            number={1-2},
+            pages={27--63},
+            year={1987},
+            publisher={Elsevier}
+            }
+        """);
+    )
+)
+
+# Plagioclase An75 rheology
+("Plagioclase An75 | Ji and Zhao (1993)", 
+    #  Ranalli (1995), page 334, table 10.3
+    #  referring to Ji and Zhao (1993), 'Flow laws of multiphase rocks calculated from experimental data on the constituent phases', table 2 , plagioclase (Ab25An75)
+    #  referring to Shelton and Tullis (1981), 'Experimental flow laws for crustal rocks', not accessable
+    DislocationCreep(
+        n = 3.2NoUnits,
+        A = 3.27e-4MPa^(-3.2)/s, 
+        E = 238kJ/mol,
+        V = 0m^3/mol,
+        r = 0NoUnits,
+        Apparatus = "AxialCompression",
+        Comment = "Values checked (Ji and Zhao (1993))(NM), plots are not reproduced (NM).",
+        BibTex_Reference = parse_bibtex("""
+            @article{ji1993flow,
+            title={Flow laws of multiphase rocks calculated from experimental data on the constituent phases},
+            author={Ji, Shaocheng and Zhao, Pinglao},
+            journal={Earth and Planetary Science Letters},
+            volume={117},
+            number={1-2},
+            pages={181--187},
+            year={1993},
+            publisher={Elsevier}
+            }
+        """);
+    )
+)
+
+# Dry Anorthite rheology
+("Dry Anorthite | Rybecki and Dresen (2000)", 
+    #  Rybecki and Dresen (2000), table 2 + table 3
+    DislocationCreep(
+        n = 3.0NoUnits,
+        A = 1.0e-12.7MPa^(-3.0)/s, 
+        E = 648kJ/mol,
+        V = 0m^3/mol,
+        r = 0NoUnits,
+        Apparatus = "AxialCompression",
+        Comment = "Values checked (Rybecki and Dresen (2000))(NM), plots are not reproduced (NM).",
+        BibTex_Reference = parse_bibtex("""
+            @article{rybacki2000dislocation,
+            title={Dislocation and diffusion creep of synthetic anorthite aggregates},
+            author={Rybacki, Erik and Dresen, Georg},
             journal={Journal of Geophysical Research: Solid Earth},
-            volume={106},
-            number={B6},
-            pages={11271--11291},
-            year={2001},
+            volume={105},
+            number={B11},
+            pages={26017--26036},
+            year={2000},
             publisher={Wiley Online Library}
             }
         """);
     )
 )
+
+# Wet Anorthite rheology
+("Wet Anorthite | Rybecki and Dresen (2000)", 
+    #  Rybecki and Dresen (2000), table 2 + table 3
+    DislocationCreep(
+        n = 3.0NoUnits,
+        A = 1.0e-2.6MPa^(-3.0)/s, 
+        E = 356kJ/mol,
+        V = 0m^3/mol,
+        r = 0NoUnits,
+        Apparatus = "AxialCompression",
+        Comment = "Values checked (Rybecki and Dresen (2000))(NM), plots are not reproduced (NM).",
+        BibTex_Reference = parse_bibtex("""
+            @article{rybacki2000dislocation,
+            title={Dislocation and diffusion creep of synthetic anorthite aggregates},
+            author={Rybacki, Erik and Dresen, Georg},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={105},
+            number={B11},
+            pages={26017--26036},
+            year={2000},
+            publisher={Wiley Online Library}
+            }
+        """);
+    )
+)
+
+# Wet Olivine rheology
+("Wet Olivine | Hirth and Kohlstedt (2003)", 
+    #  Hirth and Kohlstedt (2003), table 1, no constant C_OH
+    DislocationCreep(
+        n = 3.5NoUnits,
+        A = 1600.0MPa^(-3.5)/s, 
+        E = 520kJ/mol,
+        V = 11.0e-6m^3/mol,
+        r = 1.2NoUnits,
+        Apparatus = "AxialCompression",
+        Comment = "Values checked (Hirth and Kohlstedt (2003))(NM), plots are not reproduced (NM).",
+        BibTex_Reference = parse_bibtex("""
+            @article{hirth2003rheology,
+            title={Rheology of the upper mantle and the mantle wedge: A view from the experimentalists},
+            author={Hirth, Greg and Kohlstedf, D},
+            journal={Geophysical monograph-american geophysical union},
+            volume={138},
+            pages={83--106},
+            year={2003},
+            publisher={AGU AMERICAN GEOPHYSICAL UNION}
+            }
+        """);
+    )
+)
+                
+# Wet Quarzite rheology
+("Wet Quarzite | Kirby (1983)", 
+    #  Li, Gerya and Burg (2010), table 2
+    #  Ranalli (1995), 'Rheology of the Earth' (Book)
+    #  referring to Kirby (1983), table 2, first quartzite (wet)
+    #  referring to Koch et al. (1981), unpublished manuscript...
+    DislocationCreep(
+        n = 2.3NoUnits,
+        A = 3.2e-4MPa^(-2.3)/s, 
+        E = 154kJ/mol,
+        V = 0m^3/mol,
+        r = 0NoUnits,
+        Apparatus = "AxialCompression",
+        Comment = "Values checked (Kirby (1983))(NM), plots are not reproduced (NM).",
+        BibTex_Reference = parse_bibtex("""
+            @article{kirby1983rheology,
+            title={Rheology of the lithosphere},
+            author={Kirby, Stephen H},
+            journal={Reviews of Geophysics},
+            volume={21},
+            number={6},
+            pages={1458--1487},
+            year={1983},
+            publisher={Wiley Online Library}
+            }
+        """);
+    )
+)
+
 
 ]); # end of setting pre-defined creep laws
