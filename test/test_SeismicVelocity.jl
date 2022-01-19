@@ -10,7 +10,7 @@ x1      =   ConstantSeismicVelocity(Vp=8.05km/s, Vs=3.5km/s)
 @test  Value(x1.Vp)==8.05km/s
 @test  Value(x1.Vs)==3.5km/s
 
-x1 = Nondimensionalize(x1,CharUnits_GEO)
+x1 = nondimensionalize(x1,CharUnits_GEO)
 @test NumValue(x1.Vp) ≈ 8.050000000000001e9
 @test NumValue(x1.Vs) ≈ 3.5e9
 
@@ -31,14 +31,14 @@ PD_data =   PerpleX_LaMEM_Diagram(fname);
 CharDim  =  GEO_units();
 PD_data1 =  PerpleX_LaMEM_Diagram(fname, CharDim=CharDim);
 
-rho_ND   =  PD_data1.Rho(Nondimensionalize(1500K,CharDim),Nondimensionalize(1e8*Pa,CharDim)) 
-Vp_ND    =  PD_data1.Vp(Nondimensionalize(1500K,CharDim),Nondimensionalize(1e8*Pa,CharDim)) 
-Vs_ND    =  PD_data1.Vs(Nondimensionalize(1500K,CharDim),Nondimensionalize(1e8*Pa,CharDim)) 
+rho_ND   =  PD_data1.Rho(nondimensionalize(1500K,CharDim), nondimensionalize(1e8*Pa,CharDim)) 
+Vp_ND    =  PD_data1.Vp(nondimensionalize(1500K,CharDim),  nondimensionalize(1e8*Pa,CharDim)) 
+Vs_ND    =  PD_data1.Vs(nondimensionalize(1500K,CharDim),  nondimensionalize(1e8*Pa,CharDim)) 
 
 # redimensionalize and check with value from original structure that did not use non-dimensionalization 
-@test   ustrip(Dimensionalize(rho_ND,kg/m^3,CharDim)) ≈ PD_data.Rho(1500,1e8) 
-@test   ustrip(Dimensionalize(Vp_ND, km/s,  CharDim)) ≈ PD_data.Vp(1500,1e8) 
-@test   ustrip(Dimensionalize(Vs_ND, km/s,  CharDim)) ≈ PD_data.Vs(1500,1e8) 
+@test   ustrip(dimensionalize(rho_ND,kg/m^3,CharDim)) ≈ PD_data.Rho(1500,1e8) 
+@test   ustrip(dimensionalize(Vp_ND, km/s,  CharDim)) ≈ PD_data.Vp(1500,1e8) 
+@test   ustrip(dimensionalize(Vs_ND, km/s,  CharDim)) ≈ PD_data.Vs(1500,1e8) 
 
 
 

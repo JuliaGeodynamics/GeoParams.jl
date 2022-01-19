@@ -18,7 +18,7 @@ ComputeMeltingParam!(phi_dim1, 0,T, p) # in-place routine
 
 
 p_nd     =  p
-p_nd     =  Nondimensionalize(p_nd, CharUnits_GEO)
+p_nd     =  nondimensionalize(p_nd, CharUnits_GEO)
 phi_nd   =  ComputeMeltingParam(0,T_nd, p_nd)
 
 # Do this computation manually, using the actual expression of Caricchi

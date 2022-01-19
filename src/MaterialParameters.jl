@@ -181,7 +181,7 @@ function SetMaterialParams(; Name::String="", Phase=1,
         # [optionally] non-dimensionalize the struct
         if ~isnothing(CharDim) 
             if typeof(CharDim) <: GeoUnits
-                phase = Nondimensionalize(phase, CharDim)
+                phase = nondimensionalize(phase, CharDim)
             else
                 error("CharDim should be of type GeoUnits")
             end

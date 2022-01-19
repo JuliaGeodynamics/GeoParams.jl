@@ -12,12 +12,12 @@ x1      =   LinearViscous(η=1e18Pa*s)
 
 x1_ND   =   LinearViscous(η=1e18Pa*s)
 @test  isDimensional(x1_ND)==true 
-x1_ND = Nondimensionalize(x1_ND,CharUnits_GEO)                 # check that we can nondimensionalize all entries within the struct
+x1_ND = nondimensionalize(x1_ND,CharUnits_GEO)                 # check that we can nondimensionalize all entries within the struct
 @test  isDimensional(x1_ND)==false 
 @test x1_ND.η*1.0==0.1                            
-x1_ND = Dimensionalize(x1_ND,CharUnits_GEO)                    # check that we can dimensionalize it again
+x1_ND = dimensionalize(x1_ND,CharUnits_GEO)                    # check that we can dimensionalize it again
 @test x1_ND.η.val==1e18
-x1_ND = Nondimensionalize(x1_ND,CharUnits_GEO)       
+x1_ND = nondimensionalize(x1_ND,CharUnits_GEO)       
 
 # perform a computation with the viscous creep laws 
 
@@ -35,7 +35,7 @@ x1_ND = Nondimensionalize(x1_ND,CharUnits_GEO)
 # -------------------------------------------------------------------
 # Define powerlaw viscous rheology
 x2  =   PowerlawViscous()
-x2 = Nondimensionalize(x2,CharUnits_GEO)
+x2 = nondimensionalize(x2,CharUnits_GEO)
 @test x2.ε0.val ==0.001                                 # powerlaw 
 
 # perform computations

@@ -47,7 +47,7 @@ const μm    = u"μm"
 export 
     km, m, cm, mm, μm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW, 
     GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
-    nondimensionalize, Nondimensionalize!, dimensionalize, Dimensionalize!,
+    nondimensionalize, dimensionalize, Dimensionalize!,
     superscript, upreferred, GEO, SI, NONE, isDimensional, Value, NumValue, Unit, UnitValue,
     isdimensional, 
     compute_units
@@ -108,6 +108,7 @@ isdimensional(v::GeoUnit{T,U})  where {T,U}     =   v.isdimensional             
 isdimensional(v::Number)                        =   false                           # nope
 NumValue(v::GeoUnit)                            =   v.val                           # numeric value, with no units
 NumValue(v::Number)                             =   v                               # numeric value
+NumValue(v::AbstractArray)                      =   v                               # numeric value
 Value(v::GeoUnit)                               =   Unitful.Quantity.(v.val,v.unit)  # value, with units
 
 function UnitValue(v::GeoUnit{T,U}) where {T,U}
@@ -133,8 +134,9 @@ Base.convert(::Type{GeoUnit},  v::AbstractArray)    =   GeoUnit(v)
 Base.convert(::Type{GeoUnit},  v::AbstractArray{Int32}) =   GeoUnit(ustrip.(Float32.(v))*unit(v[1])) 
 Base.convert(::Type{GeoUnit},  v::AbstractArray{Int64}) =   GeoUnit(ustrip.(Float64.(v))*unit(v[1])) 
 
-Base.convert(::Type{GeoUnit{T}},  v::Quantity)    where T     =   GeoUnit(T.(v)) 
-Base.convert(::Type{GeoUnit},      v::Quantity) =   GeoUnit(v)
+Base.convert(::Type{GeoUnit{T}},  v::Quantity)      where T     =   GeoUnit(T.(v)) 
+Base.convert(::Type{GeoUnit{T}},  v::Number)        where T     =   GeoUnit(T(v)) 
+Base.convert(::Type{GeoUnit{T}},  v::AbstractArray) where T     =   GeoUnit(T.(v)) 
 
 #Base.convert(::Type{GeoUnit{T,U}},  v::T)    where {T,U}    =   GeoUnit{T,typeof(unit(v[1]))}(v) 
 
@@ -535,7 +537,7 @@ function nondimensionalize(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) w
 end
     
 """
-    nondimensionalize!(phase_mat::MaterialParams, g::GeoUnits{TYPE})
+    nondimensionalize(phase_mat::MaterialParams, g::GeoUnits{TYPE})
 
 nondimensionalizes all fields within the Material Parameters structure that contain material parameters
 """
@@ -566,7 +568,7 @@ function nondimensionalize(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{
         end
     end
     # phase_mat.Nondimensional = true
-    phase_mat = set(phase_mat, Setfield.PropertyLens{:nondimensional}(), true)
+    phase_mat = set(phase_mat, Setfield.PropertyLens{:Nondimensional}(), true)
     return phase_mat
 end
 
@@ -609,7 +611,7 @@ end
 
 
 """
-    Dimensionalize!(MatParam::AbstractMaterialParam, CharUnits::GeoUnits{TYPE})
+    dimensionalize(MatParam::AbstractMaterialParam, CharUnits::GeoUnits{TYPE})
 
 Dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
 
@@ -619,11 +621,10 @@ function dimensionalize(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) wher
     for param in fieldnames(typeof(MatParam))
         if isa(getfield(MatParam, param), GeoUnit)
             z       =   getfield(MatParam, param)
-            z_dim   =   Dimensionalize(z, g)
+            z_dim   =   dimensionalize(z, g)
 
             # Replace field (using Setfield package):
             MatParam =  set(MatParam, Setfield.PropertyLens{param}(), z_dim)
-
         end
     end
     return MatParam
@@ -635,7 +636,7 @@ end
 
 Dimensionalizes all fields within the Material Parameters structure that contain material parameters
 """
-function Dimensionalize(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TYPE}) where {TYPE} 
+function dimensionalize(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TYPE}) where {TYPE} 
 
     for param in fieldnames(typeof(phase_mat))
         fld = getfield(phase_mat, param)
@@ -643,15 +644,12 @@ function Dimensionalize(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TYP
             id = findall(isa.(fld,AbstractMaterialParam))
             if length(id)>0
                 # Create a new tuple with non-dimensionalized fields:
-                fld_new = ntuple(i -> Units.Dimensionalize(fld[id[i]],g), length(id) )
-              
+                fld_new     = ntuple(i -> Units.dimensionalize(fld[id[i]],g), length(id) )
 
-               # setfield!(phase_mat, param, fld_new)        # to be changed for immutable struct
-                phase_mat = set(phase_mat, Setfield.PropertyLens{param}(), fld_new)
+                phase_mat   = set(phase_mat, Setfield.PropertyLens{param}(), fld_new)
             end
         end
     end
-    #phase_mat.Nondimensional = false
     phase_mat = set(phase_mat, Setfield.PropertyLens{:Nondimensional}(), false)
     
     return phase_mat

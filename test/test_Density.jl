@@ -9,14 +9,14 @@ CharUnits_GEO   =   GEO_units(viscosity=1e19, length=1000km);
 x1      =   ConstantDensity(ρ=2900kg/m^3)
 @test x1.ρ.val == 2900
 
-x1 = Nondimensionalize(x1,CharUnits_GEO)
+x1 = nondimensionalize(x1,CharUnits_GEO)
 @test x1.ρ.val ≈ 2.9e-16
 
 x2      =   PT_Density()
 @test x2.α.val==3e-5
 @test x2.ρ0.val==2900
 
-x2 = Nondimensionalize(x2,CharUnits_GEO)
+x2 = nondimensionalize(x2,CharUnits_GEO)
 @test x2.T0.val≈0.21454659702313156
 
 # Compute with density
@@ -38,14 +38,14 @@ PD_data =   PerpleX_LaMEM_Diagram(fname);
 CharDim  =  GEO_units();
 PD_data1 =  PerpleX_LaMEM_Diagram(fname, CharDim=CharDim);
 
-rho_ND   =  PD_data1.Rho(Nondimensionalize(1500K,CharDim),Nondimensionalize(1e8*Pa,CharDim)) 
-Vp_ND    =  PD_data1.Vp(Nondimensionalize(1500K,CharDim),Nondimensionalize(1e8*Pa,CharDim)) 
-Vs_ND    =  PD_data1.Vs(Nondimensionalize(1500K,CharDim),Nondimensionalize(1e8*Pa,CharDim)) 
+rho_ND   =  PD_data1.Rho(nondimensionalize(1500K,CharDim), nondimensionalize(1e8*Pa,CharDim)) 
+Vp_ND    =  PD_data1.Vp(nondimensionalize(1500K,CharDim),  nondimensionalize(1e8*Pa,CharDim)) 
+Vs_ND    =  PD_data1.Vs(nondimensionalize(1500K,CharDim),  nondimensionalize(1e8*Pa,CharDim)) 
 
 # redimensionalize and check with value from original structure that did not use non-dimensionalization 
-@test   ustrip(Dimensionalize(rho_ND,kg/m^3,CharDim)) ≈ PD_data.Rho(1500,1e8) 
-@test   ustrip(Dimensionalize(Vp_ND, km/s,  CharDim)) ≈ PD_data.Vp(1500,1e8) 
-@test   ustrip(Dimensionalize(Vs_ND, km/s,  CharDim)) ≈ PD_data.Vs(1500,1e8) 
+@test   ustrip(dimensionalize(rho_ND,kg/m^3,CharDim)) ≈ PD_data.Rho(1500,1e8) 
+@test   ustrip(dimensionalize(Vp_ND, km/s,  CharDim)) ≈ PD_data.Vp(1500,1e8) 
+@test   ustrip(dimensionalize(Vs_ND, km/s,  CharDim)) ≈ PD_data.Vs(1500,1e8) 
 
 
 # Test computation of density for the whole computational domain, using arrays 

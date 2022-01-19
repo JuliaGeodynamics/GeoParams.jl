@@ -18,7 +18,7 @@ using Requires          # To only add plotting routines if Plots is loaded
 export 
         @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
         GeoUnit, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
-        nondimensionalize, Nondimensionalize!, dimensionalize, Dimensionalize!,
+        nondimensionalize, dimensionalize, Dimensionalize!,
         superscript, upreferred, GEO, SI, NONE, isDimensional, Value, NumValue, Unit, UnitValue, isdimensional,
         km, m, cm, mm, μm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW, Quantity
 

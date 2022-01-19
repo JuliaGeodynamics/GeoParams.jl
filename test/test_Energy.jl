@@ -11,7 +11,7 @@ CharUnits_GEO   =   GEO_units(viscosity=1e19, length=10km);
 cp1      =   ConstantHeatCapacity()
 @test cp1.cp.val == 1050.0
 
-cp1 = Nondimensionalize(cp1,CharUnits_GEO)
+cp1 = nondimensionalize(cp1,CharUnits_GEO)
 @test cp1.cp.val ≈ 1.3368075000000002e22
 
 @test ComputeHeatCapacity(100.0, cp1) ≈ 1.3368075000000002e22  # compute
@@ -26,7 +26,7 @@ Cp       =   ComputeHeatCapacity(T,cp2)
 
 # nondimensional
 cp2_nd   =   T_HeatCapacity_Whittacker()
-cp2_nd = Nondimensionalize(cp2_nd,CharUnits_GEO)
+cp2_nd   =   nondimensionalize(cp2_nd,CharUnits_GEO)
 T_nd     =   Float64.(T*K/CharUnits_GEO.Temperature)
 Cp_nd    =   ComputeHeatCapacity(T_nd,cp2_nd)
 @test sum(Cp_nd) ≈ 1.4853886523631602e23
@@ -99,7 +99,7 @@ cond      =   ConstantConductivity()
 @test NumValue(cond.k) == 3.0
 @test cond.k.unit==u"W"/K/m
 
-cond = Nondimensionalize(cond,CharUnits_GEO)
+cond = nondimensionalize(cond,CharUnits_GEO)
 @test  NumValue(cond.k) ≈ 3.8194500000000007
 
 @test ComputeConductivity(100.0, cond) ≈ 3.8194500000000007 # compute
@@ -113,7 +113,7 @@ k        =   ComputeConductivity(T,cond2)
 
 # nondimensional
 cond2_nd =   T_Conductivity_Whittacker()
-cond2_nd =   Nondimensionalize(cond2_nd,CharUnits_GEO)
+cond2_nd =   nondimensionalize(cond2_nd,CharUnits_GEO)
 T_nd     =   Float64.(ustrip.(T/CharUnits_GEO.Temperature))
 k_nd     =   ComputeConductivity(T_nd,cond2_nd)
 @test sum(k_nd) ≈ 35.01591097886205
@@ -185,8 +185,8 @@ for i=1:length(List)
     k       =   ComputeConductivity(P,T,k_TP)           # note that P must be in MPa
     @test sum(k) ≈ Sol_kT[i]
 
-    k_TP_nd  =  deepcopy(k_TP)
-    k_TP_nd  =   Nondimensionalize(k_TP_nd,CharUnits_GEO)
+    k_TP_nd  =   deepcopy(k_TP)
+    k_TP_nd  =   nondimensionalize(k_TP_nd,CharUnits_GEO)
     T_nd     =   Float64.(ustrip.(T/CharUnits_GEO.Temperature))
     P_nd     =   Float64.(ustrip(P/CharUnits_GEO.stress))
     k_nd     =   ComputeConductivity(P_nd,T_nd,k_TP_nd)
@@ -208,7 +208,7 @@ a = ConstantLatentHeat()
 Q_L = ComputeLatentHeat(a)
 @test Q_L == 400
 
-a = Nondimensionalize(a,CharUnits_GEO)
+a   = nondimensionalize(a,CharUnits_GEO)
 Q_L = ComputeLatentHeat(a)
 @test Q_L ≈ 4e21
 # -----------------------
@@ -218,7 +218,7 @@ a = ConstantRadioactiveHeat()
 H_r = ComputeRadioactiveHeat(a)
 @test H_r ≈ 1.0e-6
 
-a = Nondimensionalize(a,CharUnits_GEO)
+a = nondimensionalize(a,CharUnits_GEO)
 H_r = ComputeRadioactiveHeat(a)
 @test H_r == 0.1
 # -----------------------
@@ -256,7 +256,7 @@ H_s4 = ComputeShearheating(τ_2D,ε_2D,  Χ)
 τ_2D       = [1 2; 3 4]     
 ε_2D       = [1 0.1; 0.1 1]   
 ε_el_2D    = [0.01 0.01; 0.01 0.01]  
-Χ = Nondimensionalize(Χ,CharUnits_GEO)
+Χ = nondimensionalize(Χ,CharUnits_GEO)
 
 H_s1 = ComputeShearheating(τ,   ε,    ε_el,     Χ)
 H_s2 = ComputeShearheating(τ_2D,ε_2D, ε_el_2D,  Χ)

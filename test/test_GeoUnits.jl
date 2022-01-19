@@ -128,6 +128,7 @@ z_D[2,1]=3
 @test convert(Float64,  GeoUnit([10.2 11.2])) == [10.2 11.2]
 
 
+
 # test various calculations (using arrays with and without units)
 T_vec   =   273K:10K:500K        # using units
 T       =   400.0K               # Unitful quanity
@@ -243,6 +244,17 @@ b = convert(GeoUnit{Float64}, 3300kg/m^3)
 
 c = convert(GeoUnit{Float32}, 3300.0kg/m^3)
 @test c.val == 3300.0f0
+
+d = convert(GeoUnit{Float32},100)
+@test d.val == 100.0f0
+
+d = convert(GeoUnit{Float64},100)
+@test d.val == 100.0
+
+d = convert(GeoUnit{Float64},[100 200])
+@test d.val == [100.0 200.0]
+
+
 
 # test broadcasting with float and unit arrays
 ar   = [1.0 2;  4 5]            # Float array
