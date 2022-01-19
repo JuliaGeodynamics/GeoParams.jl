@@ -79,14 +79,14 @@ R=8.314u"J/mol/K"
 
 # test Dimensionalize in case we provide a number and units
 v_ND      =   nondimensionalize(3cm/yr, CharUnits_GEO); 
-@test Dimensionalize(v_ND, cm/yr, CharUnits_GEO) == 3.0cm/yr
+@test dimensionalize(v_ND, cm/yr, CharUnits_GEO) == 3.0cm/yr
 
 # Test the GeoUnit struct
 x=GeoUnit(8.1cm/yr)
 @test  x.val==8.1
 x_ND  = nondimensionalize(x,CharUnits_GEO)
 @test  x_ND ≈ 0.002566735112936345 rtol=1e-8        # nondimensionalize a single value
-x_dim = Dimensionalize(x,CharUnits_GEO)
+x_dim = dimensionalize(x,CharUnits_GEO)
 @test  x_dim.val == 8.1                              # Dimensionalize again
 
 y   =   x+2cm/yr
@@ -109,7 +109,7 @@ z_ND = nondimensionalize(z,CharUnits_GEO)
 @test z_ND.val==[0.1   1.0    0.011; 0.01  0.002  0.001]
 @test isdimensional(z_ND)==false          
 
-z_D = Dimensionalize(z_ND,CharUnits_GEO)
+z_D = dimensionalize(z_ND,CharUnits_GEO)
 @test z_D.val==[100 1000 11; 10 2 1]          # transform back
 @test isdimensional(z_D)==true           
 

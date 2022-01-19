@@ -47,7 +47,7 @@ const μm    = u"μm"
 export 
     km, m, cm, mm, μm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW, 
     GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
-    nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
+    nondimensionalize, Nondimensionalize!, dimensionalize, Dimensionalize!,
     superscript, upreferred, GEO, SI, NONE, isDimensional, Value, NumValue, Unit, UnitValue,
     isdimensional, 
     compute_units
@@ -132,6 +132,9 @@ Base.convert(::Type{GeoUnit},  v::Quantity)         =   GeoUnit(v)
 Base.convert(::Type{GeoUnit},  v::AbstractArray)    =   GeoUnit(v) 
 Base.convert(::Type{GeoUnit},  v::AbstractArray{Int32}) =   GeoUnit(ustrip.(Float32.(v))*unit(v[1])) 
 Base.convert(::Type{GeoUnit},  v::AbstractArray{Int64}) =   GeoUnit(ustrip.(Float64.(v))*unit(v[1])) 
+
+Base.convert(::Type{GeoUnit{T}},  v::Quantity)    where T     =   GeoUnit(T.(v)) 
+Base.convert(::Type{GeoUnit},      v::Quantity) =   GeoUnit(v)
 
 #Base.convert(::Type{GeoUnit{T,U}},  v::T)    where {T,U}    =   GeoUnit{T,typeof(unit(v[1]))}(v) 
 
@@ -568,7 +571,7 @@ function nondimensionalize(phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{
 end
 
 """
-    Dimensionalize(param, param_dim::Unitful.FreeUnits, CharUnits::GeoUnits{TYPE})
+    dimensionalize(param, param_dim::Unitful.FreeUnits, CharUnits::GeoUnits{TYPE})
 
 Dimensionalizes `param` into the dimensions `param_dim` using the characteristic values specified in `CharUnits`.  
 
@@ -577,22 +580,25 @@ Dimensionalizes `param` into the dimensions `param_dim` using the characteristic
 julia> CharUnits =   GEO_units();
 julia> v_ND      =   nondimensionalize(3cm/yr, CharUnits) 
 0.031688087814028945
-julia> v_dim     =   Dimensionalize(v_ND, cm/yr, CharUnits) 
+julia> v_dim     =   dimensionalize(v_ND, cm/yr, CharUnits) 
 3.0 cm yr⁻¹
 ```
 
 """
-function Dimensionalize(param_ND::GeoUnit{T,U}, g::GeoUnits{TYPE}) where {T,U,TYPE}
+function dimensionalize(param_ND, param_dim::Unitful.FreeUnits, g::GeoUnits{TYPE}) where {TYPE}
+
+    char_val    =   compute_units(GeoUnit(1.0*param_dim), g);         # Determine characteristic units
+    param       =   uconvert.(param_dim, param_ND*char_val)
+  
+    return param
+end
+
+function dimensionalize(param_ND::GeoUnit{T,U}, g::GeoUnits{TYPE}) where {T,U,TYPE}
+    
     if isdimensional(param_ND)==false
-        dim         =   Unitful.dimension(param_ND.unit);                   # Basic SI units
-        char_val    =   1.0;
-        foreach((typeof(dim).parameters[1])) do y
-            val = upreferred(getproperty(g, Unitful.name(y)))       # Retrieve the characteristic value from structure g
-            pow = Float64(y.power)                                  # power by which it should be multiplied   
-            char_val *= val^pow                                     # multiply characteristic value
-        end
-        val = uconvert.(param_ND.unit, param_ND.val*char_val)
-        param = GeoUnit(ustrip.(val), param_ND.unit, true)     # store new value, but keep original dimensions
+        char_val    = compute_units(param_ND, g);                       # Determine characteristic units
+        val         = uconvert.(param_ND.unit, param_ND.val*char_val)   # dimensionalize
+        param       = GeoUnit{T,U}(ustrip.(val), param_ND.unit, true)   # store new value, but keep original dimensions
 
         return param
     else
@@ -600,19 +606,7 @@ function Dimensionalize(param_ND::GeoUnit{T,U}, g::GeoUnits{TYPE}) where {T,U,TY
     end
 end
 
-function Dimensionalize(param_ND, param_dim::Unitful.FreeUnits, g::GeoUnits{TYPE}) where {TYPE}
 
-    dim         =   Unitful.dimension(param_dim);               # Basic SI units
-    char_val    =   1.0;
-    foreach((typeof(dim).parameters[1])) do y
-        val = upreferred(getproperty(g, Unitful.name(y)))       # Retrieve the characteristic value from structure g
-        pow = Float64(y.power)                                  # power by which it should be multiplied   
-        char_val *= val^pow                                     # multiply characteristic value
-    end
-    param = uconvert.(param_dim, param_ND*char_val)
-  
-    return param
-end
 
 """
     Dimensionalize!(MatParam::AbstractMaterialParam, CharUnits::GeoUnits{TYPE})
@@ -620,15 +614,15 @@ end
 Dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
 
 """
-function Dimensionalize(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE} 
+function dimensionalize(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE} 
 
     for param in fieldnames(typeof(MatParam))
         if isa(getfield(MatParam, param), GeoUnit)
-            z=getfield(MatParam, param)
-            z_dim = Dimensionalize(z, g)
+            z       =   getfield(MatParam, param)
+            z_dim   =   Dimensionalize(z, g)
 
             # Replace field (using Setfield package):
-            MatParam = set(MatParam, Setfield.PropertyLens{param}(), z_dim)
+            MatParam =  set(MatParam, Setfield.PropertyLens{param}(), z_dim)
 
         end
     end
