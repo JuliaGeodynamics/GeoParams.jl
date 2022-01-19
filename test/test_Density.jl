@@ -50,7 +50,7 @@ Vs_ND    =  PD_data1.Vs(nondimensionalize(1500K,CharDim),  nondimensionalize(1e8
 
 # Test computation of density for the whole computational domain, using arrays 
 
-MatParam    =   Vector{AbstractMaterialParamsStruct}(undef, 3)
+MatParam    =   Vector{AbstractMaterialParamsStruct}(undef, 4)
 
 MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=0,
                         CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
@@ -63,11 +63,14 @@ MatParam[2] =   SetMaterialParams(Name="Crust", Phase=1,
 MatParam[3] =   SetMaterialParams(Name="UpperCrust", Phase=2,
                         CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
                         Density   = PT_Density());
+MatParam[4] =   SetMaterialParams(Name="UpperCrust", Phase=3,
+                        CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
+                        Density   = Compressible_Density());
 
 Mat_tup = Tuple(MatParam);  # create a tuple to avoid allocations
 
 
-MatParam1 = Vector{AbstractMaterialParamsStruct}(undef, 3)
+MatParam1 = Vector{AbstractMaterialParamsStruct}(undef, 4)
 MatParam1[1] = SetMaterialParams(Name="Crust", Phase=0,
                             CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pas)),
                             Density   = ConstantDensity(ρ=2900kg/m^3))
@@ -77,13 +80,16 @@ MatParam1[2] = SetMaterialParams(Name="Lower Crust", Phase=1,
 MatParam1[3] = SetMaterialParams(Name="Lower Crust", Phase=2,
                             CreepLaws= LinearViscous(η=1e21Pas),
                             Density  = ConstantDensity())
-
+MatParam1[4] = SetMaterialParams(Name="Lower Crust", Phase=3,
+                            CreepLaws= LinearViscous(η=1e21Pas),
+                            Density  = Compressible_Density())
 Mat_tup1 = Tuple(MatParam1)
 
 # test computing material properties
 Phases              = ones(Int64,400,400)*0;
 Phases[:,20:end]   .= 1
-Phases[:,300:end]  .= 2
+Phases[:,200:end]  .= 2
+Phases[:,300:end]  .= 3
 
 #Phases .= 2;
 rho     = zeros(size(Phases))
@@ -92,11 +98,11 @@ P       =  ones(size(Phases))*10
 
 # Test computing density when Mat_tup1 is provided as a tuple
 compute_density!(rho, Phases, P,T, Mat_tup1)   #    1.286 ms (34 allocations: 2.51 MiB)
-@test sum(rho)/400^2 ≈ 2969.9370209999984
+@test sum(rho)/400^2 ≈ 2944.959520822499
 
 # If we employ a phase diagram many allocations occur:
 compute_density!(rho, Phases, P,T, Mat_tup)   #      97.057 ms (1280034 allocations: 29.37 MiB)     - the allocations are from the phase diagram
-@test sum(rho)/400^2 ≈ 2920.6148898225
+@test sum(rho)/400^2 ≈ 2920.6151145725003
 
 
 # test computing material properties when we have PhaseRatios, instead of Phase numbers
@@ -108,12 +114,12 @@ for i in CartesianIndices(Phases)
 end
 
 compute_density!(rho, PhaseRatio, P,T, Mat_tup1)
-@test sum(rho)/400^2 ≈ 2969.9370209999984
+@test sum(rho)/400^2 ≈ 2944.959520822499
 
 #@btime compute_density!($rho, $PhaseRatio, $P, $T, $Mat_tup1)
 #    923.119 μs (2 allocations: 224 bytes)
 
-@test sum(rho)/400^2 ≈ 2969.9370209999984
+@test sum(rho)/400^2 ≈ 2944.959520822499
 
 
 #=

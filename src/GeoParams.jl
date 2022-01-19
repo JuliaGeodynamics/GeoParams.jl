@@ -18,7 +18,7 @@ using Requires          # To only add plotting routines if Plots is loaded
 export 
         @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
         GeoUnit, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
-        nondimensionalize, dimensionalize, Dimensionalize!,
+        nondimensionalize, dimensionalize,
         superscript, upreferred, GEO, SI, NONE, isDimensional, Value, NumValue, Unit, UnitValue, isdimensional,
         km, m, cm, mm, μm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW, Quantity
 
@@ -57,6 +57,7 @@ export  compute_density,                                # computational routines
         No_Density,
         ConstantDensity,                        
         PT_Density,
+        Compressible_Density, 
         PhaseDiagram_LookupTable, Read_LaMEM_Perple_X_Diagram,
         AbstractDensity,
         fill_tup,

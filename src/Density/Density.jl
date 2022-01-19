@@ -17,6 +17,7 @@ export  compute_density,        # calculation routines
         compute_density!,       # in place calculation
         ConstantDensity,        # constant
         PT_Density,             # P & T dependent density
+        Compressible_Density,   # Compressible density 
         No_Density,             # nothing defined
         AbstractDensity,
         fill_tup,       # to be moved
@@ -156,6 +157,48 @@ end
 # Print info 
 function show(io::IO, g::PT_Density)  
     print(io, "P/T-dependent density: ρ0=$(g.ρ0.val), α=$(g.α.val), β=$(g.β.val), T0=$(g.T0.val), P0=$(g.P0.val)")  
+end
+#-------------------------------------------------------------------------
+
+
+# Pressure-dependent density -------------------------------
+"""
+    Compressible_Density(ρ0=2900kg/m^3, β=1e-9/Pa, P₀=0MPa)
+    
+Set a pressure-dependent density:
+```math  
+    \\rho  = \\rho_0 \\exp(β*(P - P\\_0))  
+```
+where ``\\rho_0`` is the density [``kg/m^3``] at reference pressure ``P_0`` and ``\\beta`` the pressure dependence.
+
+"""
+@with_kw_noshow struct Compressible_Density{_T} <: AbstractDensity{_T}
+    equation::LaTeXString    =   L"\rho = \rho_0\exp(\beta*(P-P_0))"     
+    ρ0::GeoUnit{_T}          =   2900.0kg/m^3                # density
+    β::GeoUnit{_T}           =   1e-9/Pa                     # P-dependence of density
+    P0::GeoUnit{_T}          =   0.0MPa                      # Reference pressure
+end
+Compressible_Density(a...) = Compressible_Density{Float64}(a...) 
+
+
+function compute_density(P::Number,T::Number, s::Compressible_Density{_T}) where _T
+    @unpack_val ρ0,β,P0   = s
+    
+    ρ = ρ0*exp(β*(P - P0) )
+
+    return ρ
+end
+
+function compute_density!(ρ::Number, P::Number,T::Number, s::Compressible_Density{_T}) where _T
+    @unpack ρ0,β,P0   = s
+
+    return ρ0*exp( β*(P-P0) )
+end
+
+
+# Print info 
+function show(io::IO, g::Compressible_Density)  
+    print(io, "Compressible density: ρ0=$(g.ρ0.val), β=$(g.β.val), P0=$(g.P0.val)")  
 end
 #-------------------------------------------------------------------------
 
