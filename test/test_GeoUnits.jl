@@ -54,38 +54,38 @@ CharUnits_NO   =   NO_units();
 @test CharUnits_NO.Pa       ==  1
 
 # test nondimensionization of various parameters
-@test Nondimensionalize(10cm/yr,CharUnits_GEO) ≈ 0.0031688087814028945   rtol=1e-10
-@test Nondimensionalize(10cm/yr,CharUnits_SI) ≈ 3.168808781402895e7   rtol=1e-10
+@test nondimensionalize(10cm/yr,CharUnits_GEO) ≈ 0.0031688087814028945   rtol=1e-10
+@test nondimensionalize(10cm/yr,CharUnits_SI) ≈ 3.168808781402895e7   rtol=1e-10
 
-@test Nondimensionalize([10 1; 20 30.0],CharUnits_GEO) == [10 1; 20 30.0]
+@test nondimensionalize([10 1; 20 30.0],CharUnits_GEO) == [10 1; 20 30.0]
 
 A = 10MPa*s^(-1)   # should give 1e12 in ND units
-@test Nondimensionalize(A,CharUnits_GEO)  ≈ 1e12 
+@test nondimensionalize(A,CharUnits_GEO)  ≈ 1e12 
 
 B = GeoUnit(10MPa*s^(-1))   
-@test Nondimensionalize(B,CharUnits_GEO)  ≈ 1e12 
+@test nondimensionalize(B,CharUnits_GEO)  ≈ 1e12 
 
 A = 10Pa^1.2*s^(-1)   
-@test Nondimensionalize(A,CharUnits_GEO)  ≈ 39810.71705534975 
+@test nondimensionalize(A,CharUnits_GEO)  ≈ 39810.71705534975 
 
 CharUnits   =   GEO_units(viscosity=1e23, length=100km, stress=0.00371MPa);
-@test Nondimensionalize(A,CharUnits)  ≈ 1.40403327e16 
+@test nondimensionalize(A,CharUnits)  ≈ 1.40403327e16 
 
 A = (1.58*10^(-25))*Pa^(-4.2)*s^(-1)        # calcite
-@test Nondimensionalize(A,CharUnits_GEO)  ≈ 3.968780561785161e16
+@test nondimensionalize(A,CharUnits_GEO)  ≈ 3.968780561785161e16
 
 R=8.314u"J/mol/K"
-@test Nondimensionalize(R,CharUnits_SI)  ≈ 8.314e-7
+@test nondimensionalize(R,CharUnits_SI)  ≈ 8.314e-7
 
 # test Dimensionalize in case we provide a number and units
-v_ND      =   Nondimensionalize(3cm/yr, CharUnits_GEO); 
+v_ND      =   nondimensionalize(3cm/yr, CharUnits_GEO); 
 @test Dimensionalize(v_ND, cm/yr, CharUnits_GEO) == 3.0cm/yr
 
 # Test the GeoUnit struct
 x=GeoUnit(8.1cm/yr)
 @test  x.val==8.1
-x_ND  = Nondimensionalize(x,CharUnits_GEO)
-@test  x_ND ≈ 0.002566735112936345 rtol=1e-8        # Nondimensionalize a single value
+x_ND  = nondimensionalize(x,CharUnits_GEO)
+@test  x_ND ≈ 0.002566735112936345 rtol=1e-8        # nondimensionalize a single value
 x_dim = Dimensionalize(x,CharUnits_GEO)
 @test  x_dim.val == 8.1                              # Dimensionalize again
 
@@ -98,13 +98,14 @@ yy=xx/(1cm/yr);                                         # transfer to no-unt
 
 
 z=GeoUnit([100.0km 1000km 11km; 10km 2km 1km]);       # array
-@test z/1km*1.0 == [100.0 1000.0 11.0; 10.0 2.0 1.0]    # The division by 1km transfer it to a GeoUnit structure with no units; the multiplying with a float creates a float array
+@test z/1km == [100.0 1000.0 11.0; 10.0 2.0 1.0]    # The division by 1km transfer it to a GeoUnit structure with no units; the multiplying with a float creates a float array
 
 zz = GeoUnit((1:10)km)
+@test zz/1km == 1:10
 
 
 # Test non-dimensionalisation if z is an array
-z_ND = Nondimensionalize(z,CharUnits_GEO)
+z_ND = nondimensionalize(z,CharUnits_GEO)
 @test z_ND.val==[0.1   1.0    0.011; 0.01  0.002  0.001]
 @test isdimensional(z_ND)==false          
 
@@ -332,12 +333,12 @@ rho6 = ConDensity6("t",GeoUnit(3300.1kg/m^3), GeoUnit(100/s))
 rho7 = ConDensity7()
 rho8 = ConDensity8()
 rho9 = ConDensity9(ρ=2800kg/m^3)
-rho9_ND = Nondimensionalize(rho9, GEO_units())
+rho9_ND = nondimensionalize(rho9, GEO_units())
 
 
 # test automatic nondimensionalization of a MaterialsParam struct:
 CD = GEO_units()
-rho2_ND = Nondimensionalize(rho2, CD)
+rho2_ND = nondimensionalize(rho2, CD)
 @test rho2_ND.ρ ≈ 3.3000999999999995e-18
 @test rho2_ND.v ≈ 9.999999999999999e11
 

@@ -194,10 +194,10 @@ where ``k`` is the conductivity [``W/K/m``], and ``a_k,b_k,c_k,d_k`` are paramet
 """
 @with_kw_noshow struct TP_Conductivity{T} <: AbstractConductivity{T}
     equation::LaTeXString   =   L"k = \left(a_k + {b_k/{T + c_k}} \right)*(1 + d_k*P) "     
-    a::GeoUnit{T}           =   1.18Watt/K/m        # empirical fitting term
-    b::GeoUnit{T}           =   474Watt/m           # empirical fitting term
-    c::GeoUnit{T}           =   77K                 # empirical fitting term
-    d::GeoUnit{T}           =   0/MPa               # empirical fitting term
+    a::GeoUnit              =   1.18Watt/K/m        # empirical fitting term
+    b::GeoUnit              =   474.0Watt/m         # empirical fitting term
+    c::GeoUnit              =   77.0K               # empirical fitting term
+    d::GeoUnit              =   0.0/MPa             # empirical fitting term
     Comment::String         =   ""                  # Some remarks you want to add about this creep law implementation
     BibTex_Reference        =   ""                  # BibTeX reference
 end

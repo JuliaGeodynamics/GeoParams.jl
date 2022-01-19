@@ -36,12 +36,12 @@ DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3
 """
 @with_kw_noshow struct DislocationCreep{T} <: AbstractCreepLaw{T}
     equation::LaTeXString   =   L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}" # TO BE UPDATED
-    n::GeoUnit{T}           = 1.0NoUnits         # power-law exponent
-    r::GeoUnit{T}           = 0.0NoUnits         # exponent of water-fugacity dependence
-    A::GeoUnit{T}           = 1.5MPa^(-n-r)/s    # pre-exponential factor
-    E::GeoUnit{T}           = 476.0kJ/mol        # activation energy
-    V::GeoUnit{T}           = 6e-6m^3/mol        # activation volume
-    R::GeoUnit{T}           = 8.314J/mol/K       # Universal gas constant
+    n::GeoUnit              = 1.0NoUnits         # power-law exponent
+    r::GeoUnit              = 0.0NoUnits         # exponent of water-fugacity dependence
+    A::GeoUnit              = 1.5MPa^(-n-r)/s    # pre-exponential factor
+    E::GeoUnit              = 476.0kJ/mol        # activation energy
+    V::GeoUnit              = 6e-6m^3/mol        # activation volume
+    R::GeoUnit              = 8.314J/mol/K       # Universal gas constant
     Apparatus::String       = "AxialCompression" # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
     Comment::String         = ""                 # Some remarks you want to add about this creep law implementation
     BibTex_Reference        = ""                 # BibTeX reference

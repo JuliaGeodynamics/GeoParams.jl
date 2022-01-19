@@ -18,7 +18,7 @@ using Requires          # To only add plotting routines if Plots is loaded
 export 
         @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
         GeoUnit, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
-        Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
+        nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
         superscript, upreferred, GEO, SI, NONE, isDimensional, Value, NumValue, Unit, UnitValue, isdimensional,
         km, m, cm, mm, μm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW, Quantity
 
@@ -39,6 +39,7 @@ export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagram
 include("Units.jl")     
 using .Units
 export @unpack_units, @unpack_val
+export compute_units
 
 # Define Material Parameter structure
 include("MaterialParameters.jl")

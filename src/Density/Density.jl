@@ -180,7 +180,6 @@ function compute_density!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{
     rho[:] = s.Rho.(T,P)
     return nothing
 end
-
 #-------------------------------------------------------------------------
 
 
@@ -189,32 +188,31 @@ end
 # AbstractDensity
 
 # Vector
-function compute_density!(ρ::Vector{_T}, P::Number,T::Number, s::Vector{AbstractDensity{_T}}) where {_T}
-    ρ .= compute_density.(P,T,s)
-end
+#function compute_density!(ρ::Vector{_T}, P::Number,T::Number, s::Vector{AbstractDensity{_T}}) where {_T}
+#    ρ .= compute_density.(P,T,s)
+#end
 
 
 # Tuple (this method allocates)
-function compute_density!(ρ::Vector{_T}, P::Number, T::Number, s::NTuple{N, AbstractDensity{_T}}) where {N, _T}
-    ρ .= compute_density.(P,T,s) 
-    #ρ .=  map(x->compute_density(P,T,x), s)
-end
+#function compute_density!(ρ::Vector{_T}, P::Number, T::Number, s::NTuple{N, AbstractDensity{_T}}) where {N, _T}
+#    ρ .= compute_density.(P,T,s) 
+#    #ρ .=  map(x->compute_density(P,T,x), s)
+#end
 
 
 # Tuple of Tuples
-function compute_density(P::Number, T::Number, s::NTuple{N, AbstractDensity{_T}}) where {N, _T}
-    #ρ .= compute_density.(P,T,s)
-    map(x->compute_density(P,T,x), s)
-end
+#function compute_density(P::Number, T::Number, s::NTuple{N, AbstractDensity{_T}}) where {N, _T}
+#    map(x->compute_density(P,T,x), s)
+#end
 
-function compute_density(ρ::NTuple{N,_T}, P::Number, T::Number, s::NTuple{N, AbstractDensity{_T}}) where {N, _T}
-    compute_density!.(ρ,P,T,s)
-end
+#function compute_density(ρ::NTuple{N,_T}, P::Number, T::Number, s::NTuple{N, AbstractDensity{_T}}) where {N, _T}
+#    compute_density!.(ρ,P,T,s)
+#end
 
-function compute_density!(rho::Vector{NTuple{M,_T}}, P::Number, T::Number, s::NTuple{N, NTuple{M, AbstractDensity{_T}}}) where {N,M,_T}
-    #rho .= compute_density!.(rho,P,T,s)
-    rho .= map(x->compute_density(P,T,x),s)
-end
+#function compute_density!(rho::Vector{NTuple{M,_T}}, P::Number, T::Number, s::NTuple{N, NTuple{M, AbstractDensity{_T}}}) where {N,M,_T}
+#    #rho .= compute_density!.(rho,P,T,s)
+#    rho .= map(x->compute_density(P,T,x),s)
+#end
 
 
 #------------------------------------------------------------------------------------------------------------------#
@@ -225,24 +223,23 @@ function compute_density(P::Number, T::Number, s::AbstractMaterialParamsStruct)
     return compute_density(P,T,s.Density[1])
 end
 
-function compute_density!(rho::Number, P::Number, T::Number, s::AbstractMaterialParamsStruct)
-    return compute_density!(rho,P,T,s.Density[1])
-end
+#function compute_density!(rho::Number, P::Number, T::Number, s::AbstractMaterialParamsStruct)
+#    return compute_density!(rho,P,T,s.Density[1])
+#end
 
 # with Tuple
 function compute_density!(rho::Vector{_T}, P::Number, T::Number, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where {N,_T}
     rho .= map(x->compute_density(P,T,x), MatParam)
 end
 
-function compute_density(P::Number, T::Number, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where N
-    #compute_density.(P,T,MatParam)
-    map(x->compute_density(P,T,x), MatParam)
-end
+#function compute_density(P::Number, T::Number, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where N
+#    map(x->compute_density(P,T,x), MatParam)
+#end
 
 #now with Tuple of Tuples
-function compute_density!(rho::Vector{NTuple{M,_T}}, P::Number, T::Number, MatParam::NTuple{N, NTuple{M, AbstractMaterialParamsStruct}}) where {N,M,_T}
-    rho .= map(x->compute_density(P,T,x), MatParam)
-end
+#function compute_density!(rho::Vector{NTuple{M,_T}}, P::Number, T::Number, MatParam::NTuple{N, NTuple{M, AbstractMaterialParamsStruct}}) where {N,M,_T}
+#    rho .= map(x->compute_density(P,T,x), MatParam)
+#end
 
 #-------------------------------------------------------------------------------------------------------------
 
