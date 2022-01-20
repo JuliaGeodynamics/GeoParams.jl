@@ -30,18 +30,24 @@ T   = 1.0
 
 x   = ConstantDensity()
 num_alloc = @allocated compute_density!(rho, P, T, x)
+num_alloc = @allocated compute_density!(rho, P, T, x)
+@show num_alloc
 @test num_alloc == 0
 
 # This does NOT allocate if I test this with @btime;
 #   yet it does while running the test here
 x   = PT_Density()
 num_alloc = @allocated compute_density!(rho, P, T, x)
+num_alloc = @allocated compute_density!(rho, P, T, x)
+@show num_alloc
 @test num_alloc <= 1748185
 
 # This does NOT allocate if I test this with @btime;
 #   yet it does while running the test here
 x   = Compressible_Density()
 num_alloc = @allocated compute_density!(rho, P, T, x)
+num_alloc = @allocated compute_density!(rho, P, T, x)
+@show num_alloc
 @test num_alloc <=4378656
 
 # Read Phase diagram interpolation object
