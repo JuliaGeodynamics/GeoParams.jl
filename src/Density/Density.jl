@@ -40,11 +40,11 @@ Set a constant density:
 ```
 where ``\\rho`` is the density [``kg/m^3``].
 """
-@with_kw_noshow struct ConstantDensity{_T} <: AbstractDensity{_T} 
+@with_kw_noshow struct ConstantDensity{_T,U}   <: AbstractDensity{_T}
     equation::LaTeXString   =   L"\rho = cst"     
-    ρ::GeoUnit{_T}          =   2900.0kg/m^3                # density
+    ρ::GeoUnit{_T,U}        =   2900.0kg/m^3                # density
 end
-ConstantDensity(a...) = ConstantDensity{Float64}(a...) 
+ConstantDensity(eq,args...) = ConstantDensity(eq, convert.(GeoUnit,args)...) 
 
 # Calculation routines
 function compute_density(P::Quantity,T::Quantity, s::ConstantDensity{_T}) where _T
@@ -68,7 +68,7 @@ function compute_density!(rho::Number,P::Number,T::Number, s::ConstantDensity{_T
     return ρ
 end
 
-function compute_density!(rho::AbstractArray,P::Number,T::Number, s::ConstantDensity{_T}) where _T
+function compute_density!(rho::AbstractArray{_T},P::_T,T::_T, s::ConstantDensity{_T}) where _T
     @unpack_val ρ   = s
     rho[:] .= ρ
     return nothing
@@ -98,15 +98,15 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference temperature ``T_0`` a
 ``\\alpha`` is the temperature dependence of density and ``\\beta`` the pressure dependence.
 
 """
-@with_kw_noshow struct PT_Density{_T} <: AbstractDensity{_T}
+@with_kw_noshow struct PT_Density{_T,U1,U2,U3,U4,U5} <: AbstractDensity{_T}
     equation::LaTeXString    =   L"\rho = \rho_0(1.0-\alpha (T-T_0) + \beta (P-P_0)"     
-    ρ0::GeoUnit{_T}          =   2900.0kg/m^3                # density
-    α::GeoUnit{_T}           =   3e-5/K                      # T-dependence of density
-    β::GeoUnit{_T}           =   1e-9/Pa                     # P-dependence of density
-    T0::GeoUnit{_T}          =   0.0C                        # Reference temperature
-    P0::GeoUnit{_T}          =   0.0MPa                      # Reference pressure
+    ρ0 ::GeoUnit{_T,U1}      =   2900.0kg/m^3                # density
+    α  ::GeoUnit{_T,U2}      =   3e-5/K                      # T-dependence of density
+    β  ::GeoUnit{_T,U3}      =   1e-9/Pa                     # P-dependence of density
+    T0 ::GeoUnit{_T,U4}      =   0.0C                        # Reference temperature
+    P0 ::GeoUnit{_T,U5}      =   0.0MPa                      # Reference pressure
 end
-PT_Density(a...) = PT_Density{Float64}(a...) 
+PT_Density(eq,args...) = PT_Density(eq, convert.(GeoUnit,args)...) 
 
 # Calculation routine in case units are provided
 function compute_density(P::Quantity,T::Quantity, s::PT_Density{_T}) where _T
@@ -172,14 +172,13 @@ Set a pressure-dependent density:
 where ``\\rho_0`` is the density [``kg/m^3``] at reference pressure ``P_0`` and ``\\beta`` the pressure dependence.
 
 """
-@with_kw_noshow struct Compressible_Density{_T} <: AbstractDensity{_T}
-    equation::LaTeXString    =   L"\rho = \rho_0\exp(\beta*(P-P_0))"     
-    ρ0::GeoUnit{_T}          =   2900.0kg/m^3                # density
-    β::GeoUnit{_T}           =   1e-9/Pa                     # P-dependence of density
-    P0::GeoUnit{_T}          =   0.0MPa                      # Reference pressure
+@with_kw_noshow struct Compressible_Density{_T,U1,U2,U3} <: AbstractDensity{_T}
+    equation::LaTeXString  =   L"\rho = \rho_0\exp(\beta*(P-P_0))"     
+    ρ0::GeoUnit{_T,U1}     =   2900.0kg/m^3                # density
+    β ::GeoUnit{_T,U2}     =   1e-9/Pa                     # P-dependence of density
+    P0::GeoUnit{_T,U3}     =   0.0MPa                      # Reference pressure
 end
-Compressible_Density(a...) = Compressible_Density{Float64}(a...) 
-
+Compressible_Density(eq,args...) = Compressible_Density(eq, convert.(GeoUnit,args)...) 
 
 function compute_density(P::Number,T::Number, s::Compressible_Density{_T}) where _T
     @unpack_val ρ0,β,P0   = s
@@ -195,6 +194,13 @@ function compute_density!(ρ::Number, P::Number,T::Number, s::Compressible_Densi
     return ρ0*exp( β*(P-P0) )
 end
 
+function compute_density!(ρ::AbstractArray, P::Number,T::Number, s::Compressible_Density{_T}) where _T
+    @unpack ρ0,β,P0   = s
+    
+    ρ .= ρ0*exp( β*(P-P0) )
+
+    return nothing
+end
 
 # Print info 
 function show(io::IO, g::Compressible_Density)  

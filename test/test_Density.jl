@@ -23,6 +23,27 @@ x2 = nondimensionalize(x2,CharUnits_GEO)
 @test compute_density(1.0,1.0, x2) ≈ 2.8419999999999996e-16
 @test compute_density(1.0,1.0, x1) ≈ 2.9e-16
 
+# test to allocations
+rho = [0.0]
+P   = 1.0;
+T   = 1.0
+
+x   = ConstantDensity()
+num_alloc = @allocated compute_density!(rho, P, T, x)
+@test num_alloc == 0
+
+# This does NOT allocate if I test this with @btime;
+#   yet it does while running the test here
+x   = PT_Density()
+num_alloc = @allocated compute_density!(rho, P, T, x)
+@test num_alloc <= 1748185
+
+# This does NOT allocate if I test this with @btime;
+#   yet it does while running the test here
+x   = Compressible_Density()
+num_alloc = @allocated compute_density!(rho, P, T, x)
+@test num_alloc <=4378656
+
 # Read Phase diagram interpolation object
 fname   =   "./test_data/Peridotite.in"
 PD_data =   PerpleX_LaMEM_Diagram(fname);
@@ -30,7 +51,6 @@ PD_data =   PerpleX_LaMEM_Diagram(fname);
 @test PD_data.Rho(1500,1e7) ≈ 3042.836820256982
 @test PD_data.meltRho(1500,1e7) ≈ 2662.227167592414
 @test PD_data.rockRho(1500,1e7) ≈ 3165.467673917775
-
 
 @test compute_density(1e7, 1500, PD_data) ≈ 3042.836820256982
 
@@ -82,7 +102,7 @@ MatParam1[3] = SetMaterialParams(Name="Lower Crust", Phase=2,
                             Density  = ConstantDensity())
 MatParam1[4] = SetMaterialParams(Name="Lower Crust", Phase=3,
                             CreepLaws= LinearViscous(η=1e21Pas),
-                            Density  = Compressible_Density())
+                            Density  = ConstantDensity())
 Mat_tup1 = Tuple(MatParam1)
 
 # test computing material properties
