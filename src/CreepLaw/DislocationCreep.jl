@@ -513,5 +513,59 @@ SetDislocationCreep = Dict([
     )
 )
 
+# Wet Upper Mantle Olivine rheology
+("Wet Upper Mantle Olivine | Schmalholz, Kaus, Burg (2009)", 
+    #  Schmalholz, Kaus, Burg (2009), table 1
+    #  referring to Afonso and Ranalli (2004), table 1, wet peridotite
+    #  referring to Chopra and Paterson papers, but values dont fit the Afonso and Ranalli (2004) ones
+    DislocationCreep(
+        n = 4.0NoUnits,
+        A = 2.0e3MPa^(-4.0)/s, 
+        E = 471kJ/mol,
+        V = 0.0m^3/mol,
+        r = 0.0NoUnits,
+        Apparatus = "AxialCompression",
+        Comment = "Values checked (Afonso and Ranalli (2004))(NM), plots are not reproduced (NM).",
+        BibTex_Reference = parse_bibtex("""
+            @article{afonso2004crustal,
+            title={Crustal and mantle strengths in continental lithosphere: is the jelly sandwich model obsolete?},
+            author={Afonso, Juan Carlos and Ranalli, Giorgio},
+            journal={Tectonophysics},
+            volume={394},
+            number={3-4},
+            pages={221--232},
+            year={2004},
+            publisher={Elsevier}
+            }
+        """);
+    )
+)
+
+# Granite rheology
+("Granite | Tirel et al. (2008)", 
+    #  Tirel et al. (2008), table 1
+    #  referring to Kirby and Kronenberg (1987), table 3
+    #  different values for n and A in Kirby and Kronenberg (1987) compared with Tirel et al. (2008)
+    DislocationCreep(
+        n = 3.2NoUnits,
+        A = 1.25e-9MPa^(-3.2)/s, 
+        E = 123kJ/mol,
+        V = 0.0m^3/mol,
+        r = 0.0NoUnits,
+        Apparatus = "AxialCompression",
+        Comment = "Values checked (Tirel et al. (2008))(NM), plots are not reproduced (NM).",
+        BibTex_Reference = parse_bibtex("""
+            @article{tirel2008dynamics,
+            title={Dynamics and structural development of metamorphic core complexes},
+            author={Tirel, C{\'e}line and Brun, Jean-Pierre and Burov, Evgueni},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={113},
+            number={B4},
+            year={2008},
+            publisher={Wiley Online Library}
+            }
+        """);
+    )
+)
 
 ]); # end of setting pre-defined creep laws
