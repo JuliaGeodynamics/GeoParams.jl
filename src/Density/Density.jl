@@ -281,6 +281,10 @@ function compute_density!(rho::Vector{_T}, P::Number, T::Number, MatParam::NTupl
     rho .= map(x->compute_density(P,T,x), MatParam)
 end
 
+function compute_density(P::Number, T::Number, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where {N}
+    map(x->compute_density(P,T,x), MatParam)
+end
+
 #function compute_density(P::Number, T::Number, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where N
 #    map(x->compute_density(P,T,x), MatParam)
 #end
@@ -376,6 +380,8 @@ julia> @btime compute_density!(\$rho, \$Phases, \$P, \$T, \$MatParam)
     1.358 ms (28 allocations: 1.27 MiB)
 ```
 """
+
+#= Many allocations
 function compute_density!(rho::AbstractArray{_T, ndim}, Phases::AbstractArray{<:Integer, ndim}, P::AbstractArray{_T, ndim},T::AbstractArray{_T, ndim}, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where {ndim,N,_T}
     # This is the general way to implement this.
     #  Remarks:
@@ -383,12 +389,13 @@ function compute_density!(rho::AbstractArray{_T, ndim}, Phases::AbstractArray{<:
     #       2) We still have to check if this works with the way ParallelStencil operates
     
     # The phases in MatParam may be ordered differently (or start with zero)
-    Phase_ind = copy(Phases);
+    
     Phase_vec = [MatParam[i].Phase for i=1:N]
+    Phase_ind = copy(Phases);
     for i=1:N
         Phase_ind[Phases.==Phase_vec[i]] .= i
     end
-
+    
     rho_local = zeros(_T,N)
     for i in eachindex(Phase_ind)
         phase   =   Phase_ind[i]
@@ -398,10 +405,33 @@ function compute_density!(rho::AbstractArray{_T, ndim}, Phases::AbstractArray{<:
         compute_density!(rho_local,P[i],T[i], MatParam)     
         rho[i]  =   rho_local[phase]
     end   
-
     return
 end
+=#
 
+#2 allocations that come from creating Phase_ind
+function compute_density!(rho::AbstractArray{_T, ndim}, Phases::AbstractArray{<:Integer, ndim}, P::AbstractArray{_T, ndim},T::AbstractArray{_T, ndim}, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where {ndim,N,_T}
+    
+    Phase_tup = ntuple(i->MatParam[i].Phase, Val(N))
+    Phase_ind = Array{Int64}(undef, size(Phases))
+
+    map!(x->find_ind(Phase_tup,x), Phase_ind, Phases) #stores Phases indexes in Phase_ind
+
+    @inbounds for i in eachindex(Phase_ind)
+        phase = Phase_ind[i]
+        rho_tup = compute_density(P[i], T[i], MatParam)
+        rho[i] = rho_tup[phase]
+    end
+end
+
+function find_ind(x::NTuple{N,Int64}, k::Int64) where N
+    @inbounds for i in 1:N
+        if x[i] == k
+            return i
+        end
+    end
+    return 0
+end
 
 # OBSOLETE?
 #=
@@ -440,10 +470,8 @@ function compute_density!(rho::AbstractArray{_T, N}, PhaseRatios::AbstractArray{
     if M!=(N+1)
         error("The PhaseRatios array should have one dimension more than the other arrays")
     end
-    
-    rho_vec = zeros(_T,K)
-    frac    = zeros(_T,M)
-    for i in CartesianIndices(P)
+
+    @inbounds for i in CartesianIndices(P)
         
         # hmm, I'm sure this can be generalized somehow..
         if N==1
@@ -455,8 +483,7 @@ function compute_density!(rho::AbstractArray{_T, N}, PhaseRatios::AbstractArray{
         end
 
         # compute point-wise density:
-        rho[i] = compute_density!(rho_vec, frac, P[i], T[i], MatParam ) 
-
+        rho[i] = compute_density(frac, P[i], T[i], MatParam ) 
     end
 
     return 
@@ -466,7 +493,7 @@ end
 function compute_density!(rho_vec::AbstractArray{_T, 1}, PhaseRatios::AbstractArray{_T, 1}, P::_T,T::_T, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where {_T, N}
 
     compute_density!(rho_vec, P, T, MatParam ) 
-
+    
     # Sum & multiply density with fraction
     rho = zero(_T)
     @inbounds for j=1:N             # @inbounds to not allocate
@@ -476,6 +503,18 @@ function compute_density!(rho_vec::AbstractArray{_T, 1}, PhaseRatios::AbstractAr
     return rho 
 end
 
+function compute_density(PhaseRatios::AbstractArray{_T, 1}, P::_T,T::_T, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where {_T, N}
+
+    dens_tup = compute_density(P,T,MatParam)
+    
+    # Sum & multiply density with fraction
+    rho = zero(_T)
+    @inbounds for j=1:N             # @inbounds to not allocate
+        rho += PhaseRatios[j]*dens_tup[j]
+    end
+
+    return rho 
+end
 
 
 #=
@@ -508,10 +547,6 @@ function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, PhaseRatios::A
 
 end
 =#
-
-
-
-
 
 
 end
