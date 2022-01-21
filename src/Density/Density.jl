@@ -411,14 +411,10 @@ end
 
 #2 allocations that come from creating Phase_ind
 function compute_density!(rho::AbstractArray{_T, ndim}, Phases::AbstractArray{<:Integer, ndim}, P::AbstractArray{_T, ndim},T::AbstractArray{_T, ndim}, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where {ndim,N,_T}
-    
     Phase_tup = ntuple(i->MatParam[i].Phase, Val(N))
-    Phase_ind = Array{Int64}(undef, size(Phases))
-
-    map!(x->find_ind(Phase_tup,x), Phase_ind, Phases) #stores Phases indexes in Phase_ind
-
+    
     @inbounds for i in eachindex(Phase_ind)
-        phase = Phase_ind[i]
+        phase = find_ind(Phase_tup, Phase[i])
         rho_tup = compute_density(P[i], T[i], MatParam)
         rho[i] = rho_tup[phase]
     end
