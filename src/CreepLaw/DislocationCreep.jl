@@ -514,7 +514,7 @@ SetDislocationCreep = Dict([
 )
 
 # Wet Upper Mantle Olivine rheology
-("Wet Upper Mantle Olivine | Schmalholz, Kaus, Burg (2009)", 
+("Wet Upper Mantle Olivine | Afonso and Ranalli (2004)", 
     #  Schmalholz, Kaus, Burg (2009), table 1
     #  referring to Afonso and Ranalli (2004), table 1, wet peridotite
     #  referring to Chopra and Paterson papers, but values dont fit the Afonso and Ranalli (2004) ones
