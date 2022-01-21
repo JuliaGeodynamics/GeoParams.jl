@@ -61,7 +61,7 @@ See the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package for more opti
 """
 function PlotStressStrainrate_CreepLaw(x::AbstractCreepLaw; p=nothing, Strainrate=(1e-18/s,1e-12/s), CreatePlot::Bool=false)
 
-    if isnothing(p); p = CreepLawVariables();  end
+    if isnothing(p); p = CreepLawParams();  end
 
     if isDimensional(x)==false
        error("The struct with Creep Law parameters: $(typeof(x)) should be in dimensional units for plotting. You can use Dimensionalize! to do that.")
