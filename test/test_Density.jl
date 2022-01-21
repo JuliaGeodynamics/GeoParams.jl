@@ -58,24 +58,23 @@ PD_data =   PerpleX_LaMEM_Diagram(fname);
 @test PD_data.meltRho(1500,1e7) ≈ 2662.227167592414
 @test PD_data.rockRho(1500,1e7) ≈ 3165.467673917775
 
-@test compute_density(1e7, 1500, PD_data) ≈ 3042.836820256982
+@test compute_density(1e7, 1500.0, PD_data) ≈ 3042.836820256982
 
 # Do the same but non-dimensionalize the result
 CharDim  =  GEO_units();
 PD_data1 =  PerpleX_LaMEM_Diagram(fname, CharDim=CharDim);
 
-rho_ND   =  PD_data1.Rho(nondimensionalize(1500K,CharDim), nondimensionalize(1e8*Pa,CharDim)) 
-Vp_ND    =  PD_data1.Vp(nondimensionalize(1500K,CharDim),  nondimensionalize(1e8*Pa,CharDim)) 
-Vs_ND    =  PD_data1.Vs(nondimensionalize(1500K,CharDim),  nondimensionalize(1e8*Pa,CharDim)) 
+rho_ND   =  PD_data1.Rho(nondimensionalize(1500.0K,CharDim), nondimensionalize(1e8*Pa,CharDim)) 
+Vp_ND    =  PD_data1.Vp( nondimensionalize(1500.0K,CharDim), nondimensionalize(1e8*Pa,CharDim)) 
+Vs_ND    =  PD_data1.Vs( nondimensionalize(1500.0K,CharDim), nondimensionalize(1e8*Pa,CharDim)) 
 
 # redimensionalize and check with value from original structure that did not use non-dimensionalization 
-@test   ustrip(dimensionalize(rho_ND,kg/m^3,CharDim)) ≈ PD_data.Rho(1500,1e8) 
-@test   ustrip(dimensionalize(Vp_ND, km/s,  CharDim)) ≈ PD_data.Vp(1500,1e8) 
-@test   ustrip(dimensionalize(Vs_ND, km/s,  CharDim)) ≈ PD_data.Vs(1500,1e8) 
+@test   ustrip(dimensionalize(rho_ND,kg/m^3,CharDim)) ≈ PD_data.Rho(1500.0,1e8) 
+@test   ustrip(dimensionalize(Vp_ND, km/s,  CharDim)) ≈ PD_data.Vp( 1500.0,1e8) 
+@test   ustrip(dimensionalize(Vs_ND, km/s,  CharDim)) ≈ PD_data.Vs( 1500.0,1e8) 
 
 
 # Test computation of density for the whole computational domain, using arrays 
-
 MatParam    =   Vector{AbstractMaterialParamsStruct}(undef, 4)
 
 MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=0,
@@ -123,16 +122,17 @@ T       =  ones(size(Phases))
 P       =  ones(size(Phases))*10
 
 # Test computing density when Mat_tup1 is provided as a tuple
-compute_density!(rho, Phases, P,T, Mat_tup1)   #    1.286 ms (34 allocations: 2.51 MiB)
+compute_density!(rho, Phases, P,T, Mat_tup1) 
+num_alloc = @allocated compute_density!(rho, Phases, P,T, Mat_tup1)   #      287.416 μs (0 allocations: 0 bytes)
 @test sum(rho)/400^2 ≈ 2944.959520822499
+@test num_alloc == 0
 
 # If we employ a phase diagram many allocations occur:
-compute_density!(rho, Phases, P,T, Mat_tup)   #      97.057 ms (1280034 allocations: 29.37 MiB)     - the allocations are from the phase diagram
+compute_density!(rho, Phases, P,T, Mat_tup)   #        37.189 ms (1439489 allocations: 26.85 MiB)     - the allocations are from the phase diagram
 @test sum(rho)/400^2 ≈ 2920.6151145725003
 
-
 # test computing material properties when we have PhaseRatios, instead of Phase numbers
-PhaseRatio  = zeros(size(Phases)...,length(MatParam));
+PhaseRatio  = zeros(size(Phases)...,length(Mat_tup1));
 for i in CartesianIndices(Phases)
     iz = Phases[i]
     I = CartesianIndex(i,iz+1)
@@ -140,238 +140,8 @@ for i in CartesianIndices(Phases)
 end
 
 compute_density!(rho, PhaseRatio, P,T, Mat_tup1)
+num_alloc = @allocated compute_density!(rho, PhaseRatio, P,T, Mat_tup1) #   136.776 μs (0 allocations: 0 bytes)
 @test sum(rho)/400^2 ≈ 2944.959520822499
-
-#@btime compute_density!($rho, $PhaseRatio, $P, $T, $Mat_tup1)
-#    923.119 μs (2 allocations: 224 bytes)
-
-@test sum(rho)/400^2 ≈ 2944.959520822499
-
-
-#=
-# test speed of assigning density 
-rho1 = ConstantDensity();
-
-function f!(r,x,y)
-    for i=1:1000
-        r += x.ρ * y          # compute
-    end
-    r 
-end
-
-function g!(r,x,y)
-    for i=1:1000
-        r += x.Density[1].ρ * y          # compute
-    end
-    r 
-end
-
-function h!(r::Float64,x,y::Float64)
-    ρ = x.Density.ρ
-    for i=1:1000
-        r += ρ * y          # compute
-    end
-    r 
-end
-
-function h1!(r::Float64,x,y::Float64)
-    ρ = x.Density.ρ0
-    for i=1:1000
-        r += ρ * y          # compute
-    end
-    r 
-end
-
-c = 10.1;
-r = 0.0
-
-
-# This is the way this was originally implemented 
-Base.@kwdef mutable struct TestMat1
-    Density = nothing 
-end
-
-Base.@kwdef struct TestMat2{T}
-    Density =  Vector{AbstractDensity{T}}(undef, 1); 
-end
-
-Base.@kwdef struct TestMat3{T}
-    Density::AbstractDensity{T}
-end
-
-# By explicitly defining Density as a tuple, we gain speed
-Base.@kwdef struct TestMat6{V <: Tuple}
-    Density::V = ()
-end
-
-Base.@kwdef struct TestMat9{V1<:Tuple, V2<:Tuple}
-    Density::V1 = ()
-    Conductity::V2 = ()
-end
-
-# This is how it is implemented (we have to use different tuples for type stability) 
-Base.@kwdef struct TestMat9cc{Float64, V1<:Tuple, V2<:Tuple}  
-    Density::V1 = ()
-    Conductity::V2 = ()
-end
-
-test1 = TestMat1((ConstantDensity(),))
-test2 = TestMat2{Float64}((ConstantDensity(),))
-test3 = TestMat3{Float64}(ConstantDensity{Float64}())
-test6 = TestMat6((ConstantDensity{Float64}(),))
-test9 = TestMat9(Density = (ConstantDensity{Float64}(), ) )
-#test9b = TestMat9(Density = (ConstantDensity{Float64}(), ConstantDensity{Float64}()) )
-
-#test9 = TestMat9cc(Density = (ConstantDensity{Float64}()) )
-#test9b = TestMat9k(Density = (ConstantDensity{Float64}(), ConstantDensity{Float64}()) )
-
-#test9 = TestMat9cc(Density = [ConstantDensity{Float64}()] )
-
-
-#=
-using BenchmarkTools
-@btime f!($r, $rho1, $c) # 1 allocation (as expected)
-@btime f!($r, $(test1.Density[1]), $c)      # 1 allocation (but non-typical usage)
-@btime g!($r, $test1, $c)       # typical usage: 6001 allocations
-@btime g!($r, $test2, $c)       # typical usage: 6001 allocations
-@btime g!($r, $test6, $c)       # typical usage: 1 allocations
-@btime g!($r, $test9, $c)       # typical usage: 1 allocations [as implemented]
-=#
-
-
-## testing summing up the fractions in a pointwise manner
-
-# Mimic the way we store material properties
-N = 5
-MatProp = Vector{TestMat9}(undef,N)
-for i=1:N
-    MatProp[i] = test9
-end
-Frac = ones(N)/N
-
-#using StructArrays
-#MatStructArr = StructArray(MatProp)
-
-
-# test different ways to compute the density without allocating
-den  = ConstantDensity()
-den1 = PT_Density()
-
-
-# Generate a 2D array with density types:
-bb=Array{AbstractDensity{Float64},2}(undef,5,2)
-[bb[i] = den for i in eachindex(bb)]
-bb[end] = den1
-bb[3]   = No_Density()
-
-P,T     = 10.0,11.0
-rho_bb  = zeros(size(bb))
-
-
-# This statement has 0 allocations and compute the result for all densities simultaneously:
-#
-# Yet, it has the disadvantage 
-#rho_bb .= compute_density.(P, T, bb)
-
-#using BenchmarkTools
-#@btime $rho_bb .= compute_density.($P, $T, $bb)
-#  31.946 ns (0 allocations: 0 bytes)
-
-# Next, lets try a vector of Vectors
-den  = ConstantDensity()
-den1 = PT_Density()
-aa=Vector{Vector{AbstractDensity{Float64}}}(undef,5)
-[aa[i] = [den,den1] for i=1:5]
-aa[end] = [den1, No_Density()]
-
-P,T     = 10.0,11.0
-
-rho_aa=Vector{Vector{Float64}}(undef,5)
-[rho_aa[i] = [0.,0.]  for i=1:5]
-
-
-
-
-#---------------------------------------------------------------------------------------------------------------#
-# Structures involving AbstractDensity
-
-# Using a vector
-den = ConstantDensity()
-den1 = PT_Density()
-den2 = No_Density()
-
-rho = zeros(100)
-P,T = 9.,10.
-svec = Vector{AbstractDensity{Float64}}(undef, 100)
-[svec[i] = den for i in 1:70]
-[svec[i] = den1 for i in 71:98]
-[svec[i] = den2 for i in 98:100]
-
-#@btime compute_density!($rho, $P, $T, $s) -> 210.909 ns (0 allocations: 0 bytes)
-
-# The same with a tuple 
-s_tup = Tuple(svec)
-  
-#@btime compute_density!($rho, $P, $T, $s_tup) -> Allocates! (36.600 μs (197 allocations: 569.58 KiB))
-
-
-# Now using Tuple of Tuples
-den = ConstantDensity()
-den1 = PT_Density()
-den2 = No_Density()
-P,T = 1.,2.
-
-rho_tup = Vector{NTuple{3,Float64}}(undef,15)
-[rho_tup[i] = (0.,0.,0.) for i = 1:15]
-
-#constructing it as ss_vectup allows to change ss_vectup[end] easily
-ss_vectup = Vector{NTuple{3,AbstractDensity{Float64}}}(undef,15)
-[ss_vectup[i] = (den,den,den) for i=1:14]
-ss_vectup[end] = (den1, den2, den2)
-ss_tup = Tuple(ss_vectup)
-
-#@btime compute_density!($rho_tup, $P, $T, $ss_tup) -> 35.650 ns (0 allocations: 0 bytes) works!!
-#---------------------------------------------------------------------------------------------------------#
-
-# Now using MaterialParams instead
-P,T = 1.,1.
-rho = zeros(3)
-
-MatParam = Vector{AbstractMaterialParamsStruct}(undef, 3)
-MatParam[1] = SetMaterialParams(Name="Crust", Phase=1,
-                            CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pas)),
-                            Density   = ConstantDensity(ρ=2900kg/m^3))
-MatParam[2] = SetMaterialParams(Name="Lower Crust", Phase=2,
-                            CreepLaws= (PowerlawViscous(n=5.), LinearViscous(η=1e21Pas)),
-                            Density  = PT_Density(ρ0=3000kg/m^3))
-MatParam[3] = SetMaterialParams(Name="Lower Crust", Phase=3,
-                            CreepLaws= LinearViscous(η=1e21Pas),
-                            Density  = No_Density())
-
-Mat_tup = Tuple(MatParam)
-
-#@btime compute_density!($rho,$P,$T,$Mat_tup) -> 4.800 ns (0 allocations: 0 bytes)
-
-
-# Convert Tuple of Tuples of different sizes to Tuples of same size filling with No_Density
-cc      = ntuple(i->MatParam[i].CreepLaws, Val(length(MatParam))) #this has different sizes
-k       = max_length(cc)
-cc_new  = fill_tup(cc, k) # makes inner tuples all of length k
-
-
-# now using Tuple of Tuples 
-rho_tup = Vector{NTuple{3,Float64}}(undef, 10)
-[rho_tup[i] = (0.,0.,0.) for i in 1:10]
-
-mm_tup = ntuple(x->Mat_tup, Val(10))
-
-#= alternative way to construct mm_tup:
-        mm = Vector{NTuple{3,MaterialParams}}(undef, 10)
-        [mm[i] = Mat_tup for i = 1:10]
-        mm_tup = Tuple(mm) #converts to Tuple of Tuples
-=#
-
-#@btime compute_density!($rho_tup, $P, $T, $mm_tup) -> 25.502 ns (0 allocations: 0 bytes) !!
-=#
+@test num_alloc == 0    
 
 end

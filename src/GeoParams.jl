@@ -44,7 +44,7 @@ export compute_units
 # Define Material Parameter structure
 include("MaterialParameters.jl")
 using  .MaterialParameters
-export MaterialParams, SetMaterialParams
+export MaterialParams, SetMaterialParams, No_MaterialParam  
 
 # Phase Diagrams
 using  .MaterialParameters.PhaseDiagrams

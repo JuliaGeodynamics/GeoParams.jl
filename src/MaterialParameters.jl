@@ -11,9 +11,12 @@ using ..Units
 import Base.show, Base.convert
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
 
+# Define an "empty" Material parameter structure
+struct No_MaterialParam{_T} <: AbstractMaterialParam end
+No_MaterialParam() = No_MaterialParam{Float64}();
 
 export 
-    MaterialParams, SetMaterialParams    
+    MaterialParams, SetMaterialParams, No_MaterialParam    
 
 # Link the modules with various definitions:
 include("./PhaseDiagrams/PhaseDiagrams.jl")
@@ -191,7 +194,6 @@ function SetMaterialParams(; Name::String="", Phase=1,
         return phase
 end
 
-
 # Helper function that converts a field to a Tuple, provided it is not nothing
 # This also checks for the maximum allowed number of definitions 
 # (some rheological phases may allow for an arbitrary combination per phase; others like density EoS not) 
@@ -252,6 +254,11 @@ function Base.show(io::IO, phase_tuple::NTuple{N,MaterialParams}) where N
         Base.show(io, phase_tuple[i])
     end
     return
+end
+
+# Automatically fill tuples with No_MaterialParam given a length n
+function fill_tup(v::NTuple{N,Tuple{Vararg{AbstractMaterialParam}}}, n) where N
+    ntuple(i->ntuple(j-> j <= length(v[i]) ? v[i][j] : No_MaterialParam(), Val(n)),Val(N))
 end
 
 end

@@ -14,6 +14,8 @@ x1      =   DislocationCreep()
 x2      =   DislocationCreep(n=3)
 @test x2.A.val == 1.5MPa^-3*s^-1
 
+
+
 # perform a computation with the dislocation creep laws 
     # Calculate EpsII, using a set of pre-defined values
 CharDim = GEO_units()
@@ -33,6 +35,7 @@ Phase   = SetMaterialParams(Name="Viscous Matrix", Phase=2,
                                      CreepLaws = DislocationCreep(n=3NoUnits, r=1NoUnits), CharDim = CharDim)
 EpsII.val = ComputeCreepLaw_EpsII(TauII,Phase.CreepLaws[1],p)
 @test EpsII.val  ≈ 2.1263214994323903e-11 rtol = 1e-8
+
     # Check that once inverted, we get back the TauII that we used to calculate EpsII
 NewTau = ComputeCreepLaw_TauII(EpsII,Phase.CreepLaws[1],p)
 @test NewTau ≈ TauII.val 
