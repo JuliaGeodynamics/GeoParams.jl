@@ -413,8 +413,8 @@ end
 function compute_density!(rho::AbstractArray{_T, ndim}, Phases::AbstractArray{<:Integer, ndim}, P::AbstractArray{_T, ndim},T::AbstractArray{_T, ndim}, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where {ndim,N,_T}
     Phase_tup = ntuple(i->MatParam[i].Phase, Val(N))
     
-    @inbounds for i in eachindex(Phase_ind)
-        phase = find_ind(Phase_tup, Phase[i])
+    @inbounds for i in eachindex(Phases)
+        phase = find_ind(Phase_tup, Phases[i])
         rho_tup = compute_density(P[i], T[i], MatParam)
         rho[i] = rho_tup[phase]
     end
