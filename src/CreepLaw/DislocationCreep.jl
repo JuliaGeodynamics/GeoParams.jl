@@ -330,7 +330,7 @@ SetDislocationCreep = Dict([
     #  Ueda et al. (2008), table 1
     DislocationCreep(
         n = 2.3NoUnits,
-        A = 1e-3.5MPa^(-2.3)/s, 
+        A = 1*exp10(-3.5)MPa^(-2.3)/s, 
         E = 154kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
@@ -358,7 +358,7 @@ SetDislocationCreep = Dict([
     #  referring to Hansen and Carter (1983), 'Semibrittle Creep Of Dry And Wet Westerly Granite At 1000 MPa', not accessable
     DislocationCreep(
         n = 3.3NoUnits,
-        A = 1.0e-5.7MPa^(-3.3)/s,
+        A = 1.0*exp10(-5.7)MPa^(-3.3)/s,
         E = 186.5kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
@@ -412,7 +412,7 @@ SetDislocationCreep = Dict([
     #  Rybecki and Dresen (2000), table 2 + table 3
     DislocationCreep(
         n = 3.0NoUnits,
-        A = 1.0e-12.7MPa^(-3.0)/s, 
+        A = 1.0*exp10(-12.7)MPa^(-3.0)/s, 
         E = 648kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
@@ -438,7 +438,7 @@ SetDislocationCreep = Dict([
     #  Rybecki and Dresen (2000), table 2 + table 3
     DislocationCreep(
         n = 3.0NoUnits,
-        A = 1.0e-2.6MPa^(-3.0)/s, 
+        A = 1.0*exp10(-2.6)MPa^(-3.0)/s, 
         E = 356kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
