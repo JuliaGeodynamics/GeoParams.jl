@@ -100,7 +100,8 @@ yy=xx/(1cm/yr);                                         # transfer to no-unt
 z=GeoUnit([100.0km 1000km 11km; 10km 2km 1km]);       # array
 @test z/1km == [100.0 1000.0 11.0; 10.0 2.0 1.0]    # The division by 1km transfer it to a GeoUnit structure with no units; the multiplying with a float creates a float array
 
-zz = GeoUnit((1:10)*km)
+x = 1:10
+zz = GeoUnit(x*km)
 @test zz/1km == 1:10
 
 # Test non-dimensionalisation if z is an array
