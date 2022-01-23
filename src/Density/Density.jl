@@ -341,7 +341,13 @@ function compute_density!(rho::AbstractArray{_T, N}, MatParam::NTuple{K,Abstract
 
     Tval = zero(_T)
     Pval = zero(_T)
-    @inbounds for I in CartesianIndices(P)
+    if compute_P
+        Rindex = CartesianIndices(P)
+    else
+        Rindex = CartesianIndices(T)
+    end     
+    
+    @inbounds for I in Rindex
         frac    = view(PhaseRatios, Tuple(I)..., 1:K)    # fraction of each phase @ point I 
         
         # Extract relevant value if requested 

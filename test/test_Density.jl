@@ -152,5 +152,10 @@ num_alloc = @allocated compute_density!(rho, Mat_tup1, PhaseRatio, P,T) #   136.
 compute_density!(rho, Mat_tup1, PhaseRatio, P)
 @test sum(rho)/400^2 ≈ 2945.000013499999
 
+# In case we only want to compute with T, do this:
+#  NOTE that in this example the results are actually wrong (as some functions require P as well)
+compute_density!(rho, Mat_tup, PhaseRatio, nothing, T)
+@test sum(rho)/400^2 ≈ 2920.6151
+
 
 end
