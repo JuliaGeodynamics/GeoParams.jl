@@ -122,13 +122,13 @@ T       =  ones(size(Phases))
 P       =  ones(size(Phases))*10
 
 # Test computing density when Mat_tup1 is provided as a tuple
-compute_density!(rho, Mat_tup1, Phases, P=P,T=T) 
-num_alloc = @allocated compute_density!(rho, Mat_tup1, Phases, P=P,T=T)   #      287.416 μs (0 allocations: 0 bytes)
+compute_density!(rho, Mat_tup1, Phases, P,T) 
+num_alloc = @allocated compute_density!(rho, Mat_tup1, Phases, P,T)   #      287.416 μs (0 allocations: 0 bytes)
 @test sum(rho)/400^2 ≈ 2945.000013499999
-@test num_alloc == 32
+@test num_alloc == 0
 
 # If we employ a phase diagram many allocations occur:
-compute_density!(rho, Mat_tup, Phases, P=P,T=T)   #        37.189 ms (1439489 allocations: 26.85 MiB)     - the allocations are from the phase diagram
+compute_density!(rho, Mat_tup, Phases, P,T)   #        37.189 ms (1439489 allocations: 26.85 MiB)     - the allocations are from the phase diagram
 @test sum(rho)/400^2 ≈ 2920.6151145725003
 
 # test computing material properties when we have PhaseRatios, instead of Phase numbers
@@ -139,17 +139,17 @@ for i in CartesianIndices(Phases)
     PhaseRatio[I] = 1.0  
 end
 
-compute_density!(rho, Mat_tup1, PhaseRatio, P=P,T=T)
-num_alloc = @allocated compute_density!(rho, Mat_tup1, PhaseRatio, P=P,T=T) #   136.776 μs (0 allocations: 0 bytes)
+compute_density!(rho, Mat_tup1, PhaseRatio, P, T)
+num_alloc = @allocated compute_density!(rho, Mat_tup1, PhaseRatio, P,T) #   136.776 μs (0 allocations: 0 bytes)
 # using BenchmarkTools
 # @btime compute_density!($rho, $Mat_tup1, $PhaseRatio, P=$P,T=$T)
 @test sum(rho)/400^2 ≈ 2945.000013499999
-@test num_alloc == 32           # for some reason this does indicate allocations but @btime does not
+@test num_alloc == 0           # for some reason this does indicate allocations but @btime does not
 
 # Test calling the routine with only pressure as input. 
 # This is ok for Mat_tup1, as it only has constant & P-dependent densities.
 # Note, however, that if you have P & T dependent densities and do this it will use 0 as defualt value for T 
-compute_density!(rho, Mat_tup1, PhaseRatio, P=P)
+compute_density!(rho, Mat_tup1, PhaseRatio, P)
 @test sum(rho)/400^2 ≈ 2945.000013499999
 
 

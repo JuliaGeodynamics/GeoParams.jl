@@ -259,7 +259,7 @@ julia> Phases[:,20:end] .= 2
 julia> rho     = zeros(size(Phases))
 julia> T       =  ones(size(Phases))
 julia> P       =  ones(size(Phases))*10
-julia> compute_density!(rho, MatParam, Phases, P=P,T=T)
+julia> compute_density!(rho, MatParam, Phases, P, T)
 julia> rho
 400×400 Matrix{Float64}:
 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
@@ -298,7 +298,7 @@ julia> @btime compute_density!(\$rho, \$MatParam, \$Phases, P=\$P, T=\$T)
     203.468 μs (0 allocations: 0 bytes)
 ```
 """
-function compute_density!(rho::AbstractArray{_T, ndim}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phases::AbstractArray{_I, ndim}; P=nothing, T=nothing) where {ndim,N,_T,_I<:Integer}
+function compute_density!(rho::AbstractArray{_T, ndim}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phases::AbstractArray{_I, ndim}, P=nothing, T=nothing) where {ndim,N,_T,_I<:Integer}
     
     Phase_tup = ntuple(i->MatParam[i].Phase, Val(N))
 
@@ -324,13 +324,13 @@ end
 
 
 """
-    compute_density!(rho::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}, PhaseRatios::AbstractArray{_T, M}; P=nothing, T=nothing)
+    compute_density!(rho::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}, PhaseRatios::AbstractArray{_T, M}, P=nothing, T=nothing)
 
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 
 """
-function compute_density!(rho::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}, PhaseRatios::AbstractArray{_T, M}; P=nothing, T=nothing) where {_T<:AbstractFloat, N,M, K}
+function compute_density!(rho::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}, PhaseRatios::AbstractArray{_T, M}, P=nothing, T=nothing) where {_T<:AbstractFloat, N,M, K}
     if M!=(N+1)
         error("The PhaseRatios array should have one dimension more than the other arrays")
     end
@@ -347,7 +347,7 @@ function compute_density!(rho::AbstractArray{_T, N}, MatParam::NTuple{K,Abstract
         # Extract relevant value if requested 
         if compute_T; Tval = T[I]; end
         if compute_P; Pval = P[I]; end
-        
+
         # compute point-wise density:
         rho[I] = compute_density_times_frac(frac,MatParam, Pval, Tval) 
    
