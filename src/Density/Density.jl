@@ -24,8 +24,8 @@ export  compute_density,        # calculation routines
         AbstractDensity
 
 # Define "empty" computational routines in case nothing is defined
-compute_density!(rho::_T,P::_T,T::_T, s::No_MaterialParam{_T}) where {_T} = zero(_T)
-compute_density(P::_T,T::_T, s::No_MaterialParam{_T}) where {_T} = zero(_T)
+compute_density!(rho::_T,s::No_MaterialParam{_T}; P::_T=zero(_T),T::_T=zero(_T)) where {_T} = zero(_T)
+compute_density(s::No_MaterialParam{_T}; P::_T=zero(_T),T::_T=zero(_T)) where {_T} = zero(_T)
 
 # Constant Density -------------------------------------------------------
 """
@@ -44,17 +44,17 @@ end
 ConstantDensity(eq,args...) = ConstantDensity(eq, convert.(GeoUnit,args)...) 
 
 # Calculation routines
-function compute_density(P::Quantity,T::Quantity, s::ConstantDensity{_T}) where _T
+function compute_density(s::ConstantDensity{_T}, P::Quantity,T::Quantity) where _T
     @unpack_units ρ   = s
     return ρ
 end
 
-function compute_density(P::_T,T::_T, s::ConstantDensity{_T}) where _T
+function compute_density(s::ConstantDensity{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
     @unpack_val ρ   = s
     return ρ
 end
 
-function compute_density!(rho::AbstractArray{_T},P::_T,T::_T, s::ConstantDensity{_T}) where _T
+function compute_density!(rho::AbstractArray{_T}, s::ConstantDensity{_T},P::_T=zero(_T),T::_T=zero(_T)) where _T
     @unpack_val ρ   = s
     rho[:] .= ρ
     return nothing
@@ -62,7 +62,7 @@ end
 
 # Print info 
 function show(io::IO, g::ConstantDensity)  
-    print(io, "Constant density: ρ=$(Value(g.ρ))")  
+    print(io, "Constant density: ρ=$(UnitValue(g.ρ))")  
 end
 #-------------------------------------------------------------------------
 
@@ -89,7 +89,7 @@ end
 PT_Density(eq,args...) = PT_Density(eq, convert.(GeoUnit,args)...) 
 
 # Calculation routine in case units are provided
-function compute_density(P::Quantity,T::Quantity, s::PT_Density{_T}) where _T
+function compute_density(s::PT_Density{_T},P::Quantity,T::Quantity) where _T
     @unpack_units ρ0,α,β,P0, T0   = s
     
     ρ = ρ0*(1.0 - α*(T - T0) + β*(P - P0) )
@@ -98,7 +98,7 @@ function compute_density(P::Quantity,T::Quantity, s::PT_Density{_T}) where _T
 end
 
 # All other numbers 
-function compute_density(P::_T,T::_T, s::PT_Density{_T}) where _T
+function compute_density(s::PT_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
     @unpack_val ρ0,α,β,P0, T0   = s
     
     ρ = ρ0*(1.0 - α*(T - T0) + β*(P - P0) )
@@ -106,7 +106,7 @@ function compute_density(P::_T,T::_T, s::PT_Density{_T}) where _T
     return ρ
 end
 
-function compute_density!(ρ::AbstractArray, P::_T,T::_T, s::PT_Density{_T}) where _T
+function compute_density!(ρ::AbstractArray, s::PT_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
     @unpack ρ0,α,β,P0, T0   = s
     
     ρ .= ρ0*(1.0 - α*(T-T0) + β*(P-P0) )
@@ -116,7 +116,7 @@ end
 
 # Print info 
 function show(io::IO, g::PT_Density)  
-    print(io, "P/T-dependent density: ρ0=$(Value(g.ρ0)), α=$(Value(g.α)), β=$(Value(g.β)), T0=$(Value(g.T0)), P0=$(Value(g.P0))")  
+    print(io, "P/T-dependent density: ρ0=$(UnitValue(g.ρ0)), α=$(UnitValue(g.α)), β=$(UnitValue(g.β)), T0=$(UnitValue(g.T0)), P0=$(UnitValue(g.P0))")  
 end
 #-------------------------------------------------------------------------
 
@@ -140,7 +140,7 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference pressure ``P_0`` and 
 end
 Compressible_Density(eq,args...) = Compressible_Density(eq, convert.(GeoUnit,args)...) 
 
-function compute_density(P::_T,T::_T, s::Compressible_Density{_T}) where _T
+function compute_density(s::Compressible_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
     @unpack_val ρ0,β,P0   = s
     
     ρ = ρ0*exp(β*(P - P0) )
@@ -148,7 +148,7 @@ function compute_density(P::_T,T::_T, s::Compressible_Density{_T}) where _T
     return ρ
 end
 
-function compute_density(P::Quantity,T::Quantity, s::Compressible_Density{_T}) where _T
+function compute_density(s::Compressible_Density{_T}, P::Quantity, T::Quantity) where _T
     @unpack ρ0,β,P0   = s
     
     ρ = ρ0*exp(β*(P - P0) )
@@ -156,13 +156,13 @@ function compute_density(P::Quantity,T::Quantity, s::Compressible_Density{_T}) w
     return ρ
 end
 
-function compute_density!(ρ::_T, P::_T,T::_T, s::Compressible_Density{_T}) where _T
+function compute_density!(ρ::_T, s::Compressible_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
     @unpack ρ0,β,P0   = s
 
     return ρ0*exp( β*(P-P0) )
 end
 
-function compute_density!(ρ::AbstractArray, P::_T,T::_T, s::Compressible_Density{_T}) where _T
+function compute_density!(ρ::AbstractArray, s::Compressible_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
     @unpack ρ0,β,P0   = s
     
     ρ .= ρ0*exp( β*(P-P0) )
@@ -172,7 +172,7 @@ end
 
 # Print info 
 function show(io::IO, g::Compressible_Density)  
-    print(io, "Compressible density: ρ0=$(Value(g.ρ0)), β=$(Value(g.β)), P0=$(Value(g.P0))")  
+    print(io, "Compressible density: ρ0=$(UnitValue(g.ρ0)), β=$(UnitValue(g.β)), P0=$(UnitValue(g.P0))")  
 end
 #-------------------------------------------------------------------------
 
@@ -184,7 +184,7 @@ end
 
 Interpolates density as a function of `T,P` from a lookup table  
 """
-function compute_density(P::_T, T::_T, s::PhaseDiagram_LookupTable) where _T
+function compute_density(s::PhaseDiagram_LookupTable, P::_T=zero(_T),T::_T=zero(_T)) where _T
     return s.Rho(T,P)
 end
 
@@ -193,7 +193,7 @@ end
 
 In-place computation of density as a function of `T,P`, in case we are using a lookup table.    
 """
-function compute_density!(rho::AbstractArray{_T}, P::AbstractArray{_T},T::AbstractArray{_T}, s::PhaseDiagram_LookupTable) where _T
+function compute_density!(rho::AbstractArray{_T}, s::PhaseDiagram_LookupTable, P::AbstractArray{_T}=[zero(_T)],T::AbstractArray{_T}=[zero(_T)]) where _T
     rho[:] = s.Rho.(T,P)
     return nothing
 end
@@ -205,19 +205,19 @@ end
 # Computational routines needed for computations with the MaterialParams structure 
 
 # with tuple & vector - apply for all phases in MatParam
-function compute_density!(rho::Vector{_T}, P::_T, T::_T, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where {N,_T}
-    rho .= map(x->compute_density(P,T,x), MatParam)
+function compute_density!(rho::Vector{_T}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, P::_T=zero(_T),T::_T=zero(_T)) where {N,_T}
+    rho .= map(x->compute_density(x,P,T), MatParam)
 end
 
 # each individual calcuation 
-function compute_density(P::_T, T::_T, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where {N,_T}
-    map(x->compute_density(P,T,x), MatParam)
+function compute_density(MatParam::NTuple{N,AbstractMaterialParamsStruct}, P::_T=zero(_T),T::_T=zero(_T)) where {N,_T}
+    map(x->compute_density(x,P,T), MatParam)
 end
 
 # Perform the calculations above
-# This assumes that density always has a single parameter. If that is 
-function compute_density(P::_T, T::_T, s::AbstractMaterialParamsStruct) where {_T}
-    return compute_density(P,T,s.Density[1])
+# This assumes that density always has a single parameter. If that is not the case, we will have to extend this (to be done)
+function compute_density(s::AbstractMaterialParamsStruct, P::_T=zero(_T),T::_T=zero(_T)) where {_T}
+    return compute_density(s.Density[1], P,T)
 end
 
 # these routines may come handy when we have >1 field for Density
@@ -238,8 +238,8 @@ end
 
 
 """
-    compute_density!(rho::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractAbstractMaterialParamsStructStruct})
-
+    compute_density!(rho::AbstractArray{_T, ndim}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phases::AbstractArray{_I, ndim}; P=nothing, T=nothing) where {ndim,N,_T,_I<:Integer}
+    
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `Phase` of every point is specified as an Integer in the `Phases` array.
 
@@ -259,7 +259,7 @@ julia> Phases[:,20:end] .= 2
 julia> rho     = zeros(size(Phases))
 julia> T       =  ones(size(Phases))
 julia> P       =  ones(size(Phases))*10
-julia> compute_density!(rho, Phases, P,T, MatParam)
+julia> compute_density!(rho, MatParam, Phases, P=P,T=T)
 julia> rho
 400×400 Matrix{Float64}:
 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
@@ -294,50 +294,72 @@ julia> rho
 The routine is made to minimize allocations:
 ```julia
 julia> using BenchmarkTools
-julia> @btime compute_density!(\$rho, \$Phases, \$P, \$T, \$MatParam)
+julia> @btime compute_density!(\$rho, \$MatParam, \$Phases, P=\$P, T=\$T)
     203.468 μs (0 allocations: 0 bytes)
 ```
 """
-function compute_density!(rho::AbstractArray{_T, ndim}, Phases::AbstractArray{_I, ndim}, P::AbstractArray{_T, ndim},T::AbstractArray{_T, ndim}, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where {ndim,N,_T,_I<:Integer}
+function compute_density!(rho::AbstractArray{_T, ndim}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phases::AbstractArray{_I, ndim}; P=nothing, T=nothing) where {ndim,N,_T,_I<:Integer}
     
     Phase_tup = ntuple(i->MatParam[i].Phase, Val(N))
-    
-    @inbounds for i in eachindex(Phases)
-        phase   = find_ind(Phase_tup, Phases[i])
 
+    # check if we compute with P/T or use default values    
+    isnothing(T) ? compute_T = false : compute_T = true
+    isnothing(P) ? compute_P = false : compute_P = true
+    
+    Tval = zero(_T)
+    Pval = zero(_T)
+
+    @inbounds for I in eachindex(Phases)
+        phase   = find_ind(Phase_tup, Phases[I])
+
+        # Extract relevant value if requested 
+        if compute_T; Tval = T[I]; end
+        if compute_P; Pval = P[I]; end
+       
         # this computes density for ALL phases, which is a bit of an overkill as we only need density for a single phase
-        rho_tup = compute_density(P[i], T[i], MatParam)    
-        rho[i]  = rho_tup[phase]
+        rho_tup = compute_density(MatParam, Pval, Tval)    
+        rho[I]  = rho_tup[phase]
     end
 end
 
 
 """
-    compute_density!(rho::AbstractArray{_T, N}, PhaseRatios::AbstractArray{_T, M}, P::AbstractArray{_T, N},T::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}) where {_T, N,M, K}
-   
+    compute_density!(rho::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}, PhaseRatios::AbstractArray{_T, M}; P=nothing, T=nothing)
+
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 
 """
-function compute_density!(rho::AbstractArray{_T, N}, PhaseRatios::AbstractArray{_T, M}, P::AbstractArray{_T, N},T::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}) where {_T, N,M, K}
+function compute_density!(rho::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}, PhaseRatios::AbstractArray{_T, M}; P=nothing, T=nothing) where {_T<:AbstractFloat, N,M, K}
     if M!=(N+1)
         error("The PhaseRatios array should have one dimension more than the other arrays")
     end
 
+    # check if we compute with P/T or use default values    
+    isnothing(T) ? compute_T = false : compute_T = true
+    isnothing(P) ? compute_P = false : compute_P = true
+
+    Tval = zero(_T)
+    Pval = zero(_T)
     @inbounds for I in CartesianIndices(P)
-        frac    = view(PhaseRatios, Tuple(I)..., 1:K)    # fraction of each phase @ point I
-     
+        frac    = view(PhaseRatios, Tuple(I)..., 1:K)    # fraction of each phase @ point I 
+        
+        # Extract relevant value if requested 
+        if compute_T; Tval = T[I]; end
+        if compute_P; Pval = P[I]; end
+        
         # compute point-wise density:
-        rho[I] = compute_density_times_frac(frac, P[I], T[I], MatParam ) 
+        rho[I] = compute_density_times_frac(frac,MatParam, Pval, Tval) 
+   
     end
 
     return 
 end
 
 # Multiplies density with the fraction of a phase
-function compute_density_times_frac(PhaseRatios::AbstractArray{_T, 1}, P::_T,T::_T, MatParam::NTuple{N,AbstractMaterialParamsStruct}) where {_T, N}
+function compute_density_times_frac(PhaseRatios::AbstractArray{_T, 1}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, P::_T, T::_T) where {_T, N}
 
-    value_tup = compute_density(P,T,MatParam)
+    value_tup = compute_density(MatParam, P, T)
     
     # Sum & multiply density with fraction
     val = zero(_T)
