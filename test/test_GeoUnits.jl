@@ -101,7 +101,7 @@ z=GeoUnit([100.0km 1000km 11km; 10km 2km 1km]);       # array
 @test z/1km == [100.0 1000.0 11.0; 10.0 2.0 1.0]    # The division by 1km transfer it to a GeoUnit structure with no units; the multiplying with a float creates a float array
 
 x = 1:10
-zz = GeoUnit(x*km)
+zz = GeoUnit(x[:]*km)
 @test zz/1km == 1:10
 
 # Test non-dimensionalisation if z is an array
@@ -122,7 +122,7 @@ z_D[2,1]=3
 
 # Conversion to different units
 @test convert(GeoUnit,Float64(10.1)).val==10.1
-@test convert(GeoUnit,10.1:.1:20).val == 10.1:.1:20
+@test convert(GeoUnit,Vector(10.1:.1:20)).val == 10.1:.1:20
 @test Unit(convert(GeoUnit, 10km/s))==km/s
 @test convert(Float64,  GeoUnit(10.2)) == 10.2
 @test convert(Float64,  GeoUnit([10.2 11.2])) == [10.2 11.2]
