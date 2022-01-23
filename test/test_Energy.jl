@@ -106,7 +106,7 @@ cond = nondimensionalize(cond,CharUnits_GEO)
 
 # Temperature-dependent conductivity
 # dimensional
-T        =   (250:100:1250);
+T        =   Vector(250:100:1250);
 cond2    =   T_Conductivity_Whittacker()
 k        =   ComputeConductivity(T,cond2)
 @test sum(k) ≈ 27.503366436682285
@@ -176,7 +176,7 @@ ComputeConductivity!(k, PhaseRatio, P, T, MatParam)
 ######
 
 # TP-dependent conductivity for different predefines cases
-T       =   (250:100:1250);
+T       =   Vector(250:100:1250);
 P       = 1e6*ones(size(T))/ustrip(uconvert(Pa,1MPa))  # must be in MPa!
 List    = ["LowerCrust"   "Mantle"        "OceanicCrust"  "UpperCrust"]
 Sol_kT  = [20.55712932736763 28.700405819019323 20.55712932736763 19.940302462417037]
