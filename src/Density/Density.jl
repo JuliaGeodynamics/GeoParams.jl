@@ -38,10 +38,12 @@ Set a constant density:
 where ``\\rho`` is the density [``kg/m^3``].
 """
 @with_kw_noshow struct ConstantDensity{_T,U}   <: AbstractDensity{_T}
-    equation::LaTeXString   =   L"\rho = cst"     
+    #   equation::LaTeXString   =   L"\rho = cst" 
     ρ::GeoUnit{_T,U}        =   2900.0kg/m^3                # density
 end
-ConstantDensity(eq,args...) = ConstantDensity(eq, convert.(GeoUnit,args)...) 
+#ConstantDensity(eq,args...) = ConstantDensity(eq, convert.(GeoUnit,args)...) 
+ConstantDensity(args...) = ConstantDensity(convert.(GeoUnit,args)...) 
+
 
 # Calculation routines
 function compute_density(s::ConstantDensity{_T}, P::Quantity,T::Quantity) where _T
@@ -79,14 +81,15 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference temperature ``T_0`` a
 
 """
 @with_kw_noshow struct PT_Density{_T,U1,U2,U3,U4,U5} <: AbstractDensity{_T}
-    equation::LaTeXString    =   L"\rho = \rho_0(1.0-\alpha (T-T_0) + \beta (P-P_0)"     
+   # equation::LaTeXString    =   L"\rho = \rho_0(1.0-\alpha (T-T_0) + \beta (P-P_0)"     
     ρ0 ::GeoUnit{_T,U1}      =   2900.0kg/m^3                # density
     α  ::GeoUnit{_T,U2}      =   3e-5/K                      # T-dependence of density
     β  ::GeoUnit{_T,U3}      =   1e-9/Pa                     # P-dependence of density
     T0 ::GeoUnit{_T,U4}      =   0.0C                        # Reference temperature
     P0 ::GeoUnit{_T,U5}      =   0.0MPa                      # Reference pressure
 end
-PT_Density(eq,args...) = PT_Density(eq, convert.(GeoUnit,args)...) 
+#PT_Density(eq,args...) = PT_Density(eq, convert.(GeoUnit,args)...) 
+PT_Density(args...) = PT_Density(convert.(GeoUnit,args)...) 
 
 # Calculation routine in case units are provided
 function compute_density(s::PT_Density{_T},P::Quantity,T::Quantity) where _T
@@ -133,12 +136,13 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference pressure ``P_0`` and 
 
 """
 @with_kw_noshow struct Compressible_Density{_T,U1,U2,U3} <: AbstractDensity{_T}
-    equation::LaTeXString  =   L"\rho = \rho_0\exp(\beta*(P-P_0))"     
+  #  equation::LaTeXString  =   L"\rho = \rho_0\exp(\beta*(P-P_0))"     
     ρ0::GeoUnit{_T,U1}     =   2900.0kg/m^3                # density
     β ::GeoUnit{_T,U2}     =   1e-9/Pa                     # P-dependence of density
     P0::GeoUnit{_T,U3}     =   0.0MPa                      # Reference pressure
 end
-Compressible_Density(eq,args...) = Compressible_Density(eq, convert.(GeoUnit,args)...) 
+#Compressible_Density(eq,args...) = Compressible_Density(eq, convert.(GeoUnit,args)...) 
+Compressible_Density(args...) = Compressible_Density(convert.(GeoUnit,args)...) 
 
 function compute_density(s::Compressible_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
     @unpack_val ρ0,β,P0   = s

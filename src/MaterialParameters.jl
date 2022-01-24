@@ -38,7 +38,8 @@ using .Density: AbstractDensity
 Structure that holds all material parameters for a given phase
 
 """
- @with_kw_noshow struct MaterialParams{ Vdensity  <: Tuple, 
+ @with_kw_noshow struct MaterialParams{ N,
+                                        Vdensity  <: Tuple, 
                                         Vgravity  <: Tuple,
                                         Vcreep    <: Tuple,
                                         Velastic  <: Tuple,
@@ -48,8 +49,7 @@ Structure that holds all material parameters for a given phase
                                         Vensource <: Tuple,
                                         Vmelting  <: Tuple,
                                         Vseismvel <: Tuple } <: AbstractMaterialParamsStruct
-    # 
-    Name::String                 =   ""             #       Description/name of the phase
+    Name::NTuple{N,Char}                            #       The name is encoded as a NTuple{Char} (to make it isbits and the whole MaterialParams isbits as well; required to use this on the GPU)
     Phase::Int64                 =   1;             #       Number of the phase (optional)
     Nondimensional::Bool         =   false;         #       Are all fields non-dimensionalized or not?
     Density::Vdensity            =   ()             #       Density equation of state
@@ -147,7 +147,9 @@ julia> MatParam
 
 
 """
-function SetMaterialParams(; Name::String="", Phase=1,
+function SetMaterialParams(; 
+            Name::String        =   "",         # this makes the struct !isbits(); as that sucks for portability 
+            Phase               =   1,
             Density             =   nothing, 
             Gravity             =   nothing,
             CreepLaws           =   nothing, 
@@ -167,6 +169,7 @@ function SetMaterialParams(; Name::String="", Phase=1,
 
 
         # define struct for phase, while also specifying the maximum number of definitions for every field   
+        #=
         phase = MaterialParams(Name, Phase, false,
                                      ConvField(Density,             :Density,           maxAllowedFields=1),     
                                      ConvField(Gravity,             :Gravity,           maxAllowedFields=1),       
@@ -179,7 +182,21 @@ function SetMaterialParams(; Name::String="", Phase=1,
                                      ConvField(Melting,             :Melting,           maxAllowedFields=1),
                                      ConvField(SeismicVelocity,     :SeismicVelocity,   maxAllowedFields=1)
                                      ) 
-                                     
+        =#                        
+        phase = MaterialParams(NTuple{length(Name), Char}(collect.(Name)),  
+                                     Phase, 
+                                     false,
+                                     ConvField(Density,             :Density,           maxAllowedFields=1),     
+                                     ConvField(Gravity,             :Gravity,           maxAllowedFields=1),       
+                                     ConvField(CreepLaws,           :Creeplaws),       
+                                     ConvField(Elasticity,          :Elasticity,        maxAllowedFields=1), 
+                                     ConvField(Plasticity,          :Plasticity),  
+                                     ConvField(Conductivity,        :Conductivity,      maxAllowedFields=1),    
+                                     ConvField(HeatCapacity,        :HeatCapacity,      maxAllowedFields=1), 
+                                     ConvField(EnergySourceTerms,   :EnergySourceTerms), 
+                                     ConvField(Melting,             :Melting,           maxAllowedFields=1),
+                                     ConvField(SeismicVelocity,     :SeismicVelocity,   maxAllowedFields=1)
+                                     ) 
 
         # [optionally] non-dimensionalize the struct
         if ~isnothing(CharDim) 
@@ -233,7 +250,7 @@ end
 
 # Specify how the printing of the MaterialParam structure is done
 function Base.show(io::IO, phase::MaterialParams)
-    println(io, "Phase $(rpad(phase.Phase,2)): $(phase.Name)")
+    println(io, "Phase $(rpad(phase.Phase,2)): $(String(collect(phase.Name)))")
     if phase.Nondimensional
         println(io,"        | [non-dimensional units]")
     else
