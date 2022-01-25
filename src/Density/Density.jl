@@ -5,12 +5,12 @@ module Density
 # If you want to add a new method here, feel free to do so. 
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
-using Parameters, LaTeXStrings, Unitful
+using Parameters, Unitful, LaTeXStrings
 using ..Units
 using ..PhaseDiagrams
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
-using ..MaterialParameters: No_MaterialParam
-import Base.show
+using ..MaterialParameters: No_MaterialParam, MaterialParamsInfo
+import Base.show, GeoParams.param_info
 
 include("../Utils.jl")
 
@@ -18,11 +18,12 @@ abstract type AbstractDensity{T} <: AbstractMaterialParam end
 
 export  compute_density,        # calculation routines
         compute_density!,       # in place calculation
+        param_info,             # info about the parameters
+        AbstractDensity,        
         ConstantDensity,        # constant
         PT_Density,             # P & T dependent density
-        Compressible_Density,   # Compressible density 
-        AbstractDensity
-
+        Compressible_Density    # Compressible density 
+       
 # Define "empty" computational routines in case nothing is defined
 compute_density!(rho::_T,s::No_MaterialParam{_T}; P::_T=zero(_T),T::_T=zero(_T)) where {_T} = zero(_T)
 compute_density(s::No_MaterialParam{_T}; P::_T=zero(_T),T::_T=zero(_T)) where {_T} = zero(_T)
@@ -38,12 +39,13 @@ Set a constant density:
 where ``\\rho`` is the density [``kg/m^3``].
 """
 @with_kw_noshow struct ConstantDensity{_T,U}   <: AbstractDensity{_T}
-    #   equation::LaTeXString   =   L"\rho = cst" 
     ρ::GeoUnit{_T,U}        =   2900.0kg/m^3                # density
 end
-#ConstantDensity(eq,args...) = ConstantDensity(eq, convert.(GeoUnit,args)...) 
 ConstantDensity(args...) = ConstantDensity(convert.(GeoUnit,args)...) 
 
+function param_info(s::ConstantDensity) # info about the struct
+    return MaterialParamsInfo(Equation = L"\rho = cst")
+end
 
 # Calculation routines
 function compute_density(s::ConstantDensity{_T}, P::Quantity,T::Quantity) where _T
@@ -81,15 +83,17 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference temperature ``T_0`` a
 
 """
 @with_kw_noshow struct PT_Density{_T,U1,U2,U3,U4,U5} <: AbstractDensity{_T}
-   # equation::LaTeXString    =   L"\rho = \rho_0(1.0-\alpha (T-T_0) + \beta (P-P_0)"     
     ρ0 ::GeoUnit{_T,U1}      =   2900.0kg/m^3                # density
     α  ::GeoUnit{_T,U2}      =   3e-5/K                      # T-dependence of density
     β  ::GeoUnit{_T,U3}      =   1e-9/Pa                     # P-dependence of density
     T0 ::GeoUnit{_T,U4}      =   0.0C                        # Reference temperature
     P0 ::GeoUnit{_T,U5}      =   0.0MPa                      # Reference pressure
 end
-#PT_Density(eq,args...) = PT_Density(eq, convert.(GeoUnit,args)...) 
 PT_Density(args...) = PT_Density(convert.(GeoUnit,args)...) 
+
+function param_info(s::PT_Density)  # info
+    return MaterialParamsInfo(Equation = L"\rho = \rho_0(1.0-\alpha (T-T_0) + \beta (P-P_0)" )
+end
 
 # Calculation routine in case units are provided
 function compute_density(s::PT_Density{_T},P::Quantity,T::Quantity) where _T
@@ -136,13 +140,15 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference pressure ``P_0`` and 
 
 """
 @with_kw_noshow struct Compressible_Density{_T,U1,U2,U3} <: AbstractDensity{_T}
-  #  equation::LaTeXString  =   L"\rho = \rho_0\exp(\beta*(P-P_0))"     
     ρ0::GeoUnit{_T,U1}     =   2900.0kg/m^3                # density
     β ::GeoUnit{_T,U2}     =   1e-9/Pa                     # P-dependence of density
     P0::GeoUnit{_T,U3}     =   0.0MPa                      # Reference pressure
 end
-#Compressible_Density(eq,args...) = Compressible_Density(eq, convert.(GeoUnit,args)...) 
 Compressible_Density(args...) = Compressible_Density(convert.(GeoUnit,args)...) 
+
+function param_info(s::Compressible_Density) # info about the struct
+    return MaterialParamsInfo(Equation = L"\rho = \rho_0\exp(\beta*(P-P_0))"     )
+end
 
 function compute_density(s::Compressible_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
     @unpack_val ρ0,β,P0   = s
@@ -183,6 +189,10 @@ end
 
 #-------------------------------------------------------------------------
 # Phase diagrams
+function param_info(s::PhaseDiagram_LookupTable) # info about the struct
+    return MaterialParamsInfo(Equation = L"\rho = f_{PhaseDiagram}(T,P))" )
+end
+
 """
     compute_density(P,T, s::PhaseDiagram_LookupTable)
 

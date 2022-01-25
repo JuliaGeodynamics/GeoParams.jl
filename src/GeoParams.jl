@@ -28,8 +28,8 @@ export AbstractGeoUnit1,   GeoUnit1
 abstract type AbstractMaterialParam end                                    # structure that holds material parmeters (density, elasticity, viscosity)          
 abstract type AbstractMaterialParamsStruct end                             # will hold all info for a phase       
 abstract type AbstractPhaseDiagramsStruct <:  AbstractMaterialParam end    # will hold all info for phase diagrams 
-function PerpleX_LaMEM_Diagram end          # necessary as we already use this function in Units, but only define it later in PhaseDiagrams
-
+function PerpleX_LaMEM_Diagram end                                         # necessary as we already use this function in Units, but only define it later in PhaseDiagrams
+function param_info end
 export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
 
 
@@ -44,7 +44,7 @@ export compute_units
 # Define Material Parameter structure
 include("MaterialParameters.jl")
 using  .MaterialParameters
-export MaterialParams, SetMaterialParams, No_MaterialParam  
+export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo  
 
 # Phase Diagrams
 using  .MaterialParameters.PhaseDiagrams
@@ -54,15 +54,15 @@ export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
 using  .MaterialParameters.Density
 export  compute_density,                                # computational routines
         compute_density!,  
+        param_info,
+        AbstractDensity,
         No_Density,
         ConstantDensity,                        
         PT_Density,
         Compressible_Density, 
-        PhaseDiagram_LookupTable, Read_LaMEM_Perple_X_Diagram,
-        AbstractDensity,
-        fill_tup,
-        max_length
-
+        PhaseDiagram_LookupTable, 
+        Read_LaMEM_Perple_X_Diagram
+        
 # Creep laws
 using  .MaterialParameters.CreepLaw
 export  ComputeCreepLaw_EpsII, ComputeCreepLaw_TauII, CreepLawVariables,
@@ -112,7 +112,7 @@ export  ComputePwaveVelocity,  ComputeSwaveVelocity,
 # Add melting parameterizations
 include("./MeltFraction/MeltingParameterization.jl")
 using .MeltingParam
-export  ComputeMeltingParam, ComputeMeltingParam!,       # calculation routines
+export  compute_meltfraction, compute_meltfraction!,       # calculation routines
         MeltingParam_Caricchi                          
 
 

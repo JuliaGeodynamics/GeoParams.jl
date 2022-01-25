@@ -6,12 +6,15 @@ module MeltingParam
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam, PhaseDiagram_LookupTable, AbstractMaterialParamsStruct
-import Base.show
+import Base.show, GeoParams.param_info
+using ..MaterialParameters: MaterialParamsInfo
 
 abstract type AbstractMeltingParam{T} <: AbstractMaterialParam end
 
-export  ComputeMeltingParam, ComputeMeltingParam!,   # calculation routines
-        MeltingParam_Caricchi                        # constant
+export  compute_meltfraction, 
+        compute_meltfraction!,    # calculation routines
+        param_info,
+        MeltingParam_Caricchi     # constant
         
 
 # Constant  -------------------------------------------------------
@@ -29,16 +32,19 @@ Implements the T-dependent melting parameterisation used by Caricchi et al
 Note that T is in Kelvin.
 
 """
-@with_kw_noshow struct MeltingParam_Caricchi{T} <: AbstractMeltingParam{T}
-    equation::LaTeXString   =   L"\phi = {1 \over 1 + \exp( {800-T[^oC] \over 23})}"     
-    a::GeoUnit{T}              =   800.0K              
-    b::GeoUnit{T}              =   23.0K
-    c::GeoUnit{T}              =   273.15K # shift from C to K
+@with_kw_noshow struct MeltingParam_Caricchi{T,U} <: AbstractMeltingParam{T}
+    a::GeoUnit{T,U}              =   800.0K              
+    b::GeoUnit{T,U}              =   23.0K
+    c::GeoUnit{T,U}              =   273.15K # shift from C to K
 end
-MeltingParam_Caricchi(a...) = MeltingParam_Caricchi{Float64}(a...)
+MeltingParam_Caricchi(args...) = MeltingParam_Caricchi(convert.(GeoUnit,args)...)
+
+function param_info(s::MeltingParam_Caricchi) # info about the struct
+    return MaterialParamsInfo(Equation =  L"\phi = {1 \over {1 + \exp( {800-T[^oC] \over 23})}}")
+end
 
 # Calculation routine
-function ComputeMeltingParam(P,T, p::MeltingParam_Caricchi)
+function compute_meltfraction(p::MeltingParam_Caricchi{_T}, P::Quantity, T::Quantity) where _T
     a,b,c   = p.a, p.b, p.c
 
     θ       =   (a - (T - c))/b
@@ -47,21 +53,18 @@ function ComputeMeltingParam(P,T, p::MeltingParam_Caricchi)
     return ϕ
 end
 
-function ComputeMeltingParam!(ϕ, P,T, p::MeltingParam_Caricchi)
-    @unpack a,b,c   = p
+function compute_meltfraction!(ϕ, p::MeltingParam_Caricchi{_T}, P::_T, T::_T ) where _T
+    @unpack_val a,b,c   = p
 
-    θ       =   (Value(a) .- (T .- Value(c)))./Value(b)
-    ϕ      .=   1.0./(1.0 .+ exp.(θ))
+    θ       =   (a - (T - c))/b
+    ϕ       =   1.0/(1.0 + exp(θ))
 
     return nothing
 end
 
-function ComputeMeltingParam!(ϕ::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, p::MeltingParam_Caricchi)
-    @unpack a,b,c   = p
-    a = ustrip(Value(a))
-    b = ustrip(Value(b))
-    c = ustrip(Value(c))
-
+function compute_meltfraction!(ϕ::AbstractArray{_T}, p::MeltingParam_Caricchi{_T}, P::AbstractArray{_T},T::AbstractArray{_T}) where _T
+    @unpack_val a,b,c   = p
+    
     θ       =   (a .- (T .- c))./b
     ϕ      .=   1.0./(1.0 .+ exp.(θ))
 
@@ -80,7 +83,7 @@ end
 
 Computes melt fraction in case we use a phase diagram lookup table. The table should have the collum `:meltFrac` specified.
 """
-function ComputeMeltingParam(P,T, p::PhaseDiagram_LookupTable)
+function compute_meltfraction(p::PhaseDiagram_LookupTable, P::_T,T::_T) where _T
    return p.meltFrac.(T,P)
 end
 
@@ -89,7 +92,7 @@ end
 
 In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the collum `:meltFrac` specified.
 """
-function ComputeMeltingParam!(ϕ::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, p::PhaseDiagram_LookupTable)
+function compute_meltfraction!(ϕ::AbstractArray{_T}, p::PhaseDiagram_LookupTable, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
     ϕ[:]    =   p.meltFrac.(T,P)
 
     return nothing
@@ -101,8 +104,7 @@ end
 
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 """
-function ComputeMeltingParam!(ϕ::AbstractArray{<:AbstractFloat, N}, Phases::AbstractArray{<:Integer, N}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where N
-
+function compute_meltfraction!(ϕ::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}, Phases::AbstractArray{<:Integer, N}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}) where N
 
     for i = 1:length(MatParam)
 
@@ -114,7 +116,7 @@ function ComputeMeltingParam!(ϕ::AbstractArray{<:AbstractFloat, N}, Phases::Abs
             P_local   =   view(P  , ind )
             T_local   =   view(T  , ind )
 
-            ComputeMeltingParam!(ϕ_local, P_local, T_local, MatParam[i].Melting[1] ) 
+            compute_meltfraction!(ϕ_local, MatParam[i].Melting[1], P_local, T_local) 
         end
 
     end
@@ -128,7 +130,7 @@ end
 
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 """
-function ComputeMeltingParam!(ϕ::AbstractArray{<:AbstractFloat, N}, PhaseRatios::AbstractArray{<:AbstractFloat, M}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where {N,M}
+function compute_meltfraction!(ϕ::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}, PhaseRatios::AbstractArray{<:AbstractFloat, M}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}) where {N,M}
 
     ϕ .= 0.0
     for i = 1:length(MatParam)
@@ -137,7 +139,7 @@ function ComputeMeltingParam!(ϕ::AbstractArray{<:AbstractFloat, N}, PhaseRatios
         Fraction    = selectdim(PhaseRatios,M,i);
         if (maximum(Fraction)>0.0) & (length(MatParam[i].Melting)>0)
 
-            ComputeMeltingParam!(ϕ_local, P, T, MatParam[i].Melting[1] ) 
+            compute_meltfraction!(ϕ_local, MatParam[i].Melting[1] , P, T) 
 
             ϕ .= ϕ .+ ϕ_local.*Fraction
         end

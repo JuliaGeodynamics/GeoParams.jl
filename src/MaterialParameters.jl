@@ -5,7 +5,7 @@
 module MaterialParameters
 using Unitful: Energy
 using Unitful
-using Parameters
+using Parameters, LaTeXStrings, BibTeX
 using ..Units
 
 import Base.show, Base.convert
@@ -16,7 +16,23 @@ struct No_MaterialParam{_T} <: AbstractMaterialParam end
 No_MaterialParam() = No_MaterialParam{Float64}();
 
 export 
-    MaterialParams, SetMaterialParams, No_MaterialParam    
+    MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo    
+
+
+"""
+    MaterialParamsInfo
+
+Structure that holds information (Equation, Comment, BibTex_Reference) about a given material parameter, which
+can be used to create parameter tables, documentation etc.
+
+Usually used in combination with `param_info(the_parameter_of_interest)`
+
+"""
+@with_kw_noshow struct MaterialParamsInfo
+    Equation::LaTeXString   =   L"" 
+    Comment::String         =   ""
+    BibTex_Reference::Tuple{String, Dict{String, Dict{String, String}}}= ("",Dict(""=>Dict(""=>"")))
+end
 
 # Link the modules with various definitions:
 include("./PhaseDiagrams/PhaseDiagrams.jl")
