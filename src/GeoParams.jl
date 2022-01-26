@@ -77,8 +77,8 @@ export  ComputeGravity,                                # computational routines
 
 # Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat         
 using .MaterialParameters.HeatCapacity
-export  ComputeHeatCapacity,  
-        ComputeHeatCapacity!,                           
+export  compute_heatcapacity,  
+        compute_heatcapacity!,                           
         ConstantHeatCapacity,
         T_HeatCapacity_Whittacker
 
@@ -99,7 +99,7 @@ export  ComputeRadioactiveHeat,
         ConstantRadioactiveHeat                  
 
 using .MaterialParameters.Shearheating        
-export  ComputeShearheating, ComputeShearheating!,               
+export  compute_shearheating!, compute_shearheating,               
         ConstantShearheating              
 
 # Seismic velocities

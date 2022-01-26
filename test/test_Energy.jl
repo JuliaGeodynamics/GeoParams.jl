@@ -8,49 +8,49 @@ CharUnits_GEO   =   GEO_units(viscosity=1e19, length=10km);
 # Heat capacity ---------
 
 # Constant heat capacity
-cp1      =   ConstantHeatCapacity()
+cp1      =  ConstantHeatCapacity()
+info     =  param_info(cp1)
 @test cp1.cp.val == 1050.0
 
-cp1 = nondimensionalize(cp1,CharUnits_GEO)
+cp1     = nondimensionalize(cp1,CharUnits_GEO)
 @test cp1.cp.val ≈ 1.3368075000000002e22
-
-@test ComputeHeatCapacity(100.0, cp1) ≈ 1.3368075000000002e22  # compute
-
+@test compute_heatcapacity(cp1, 10.0, 100.0) ≈ 1.3368075000000002e22  # compute
 
 # Temperature-dependent heat capacity
 # dimensional
-T        =   250:100:1250;
+T        =   250.0:100:1250;
 cp2      =   T_HeatCapacity_Whittacker()
-Cp       =   ComputeHeatCapacity(T,cp2)
+Cp       =   similar(T)
+compute_heatcapacity!(Cp,cp2, T)
 @test sum(Cp) ≈ 11667.035717418683
 
 # nondimensional
 cp2_nd   =   T_HeatCapacity_Whittacker()
 cp2_nd   =   nondimensionalize(cp2_nd,CharUnits_GEO)
 T_nd     =   Float64.(T*K/CharUnits_GEO.Temperature)
-Cp_nd    =   ComputeHeatCapacity(T_nd,cp2_nd)
+Cp_nd    =   similar(T)
+compute_heatcapacity!(Cp_nd, cp2_nd,T_nd)
 @test sum(Cp_nd) ≈ 1.4853886523631602e23
 
 # Dimensionalize again and double-check the results
 @test sum(abs.(ustrip.(Cp_nd*CharUnits_GEO.heatcapacity) - Cp)) < 1e-11
 
 # Test with arrays
-T_array     =  ustrip.(T)*ones(10)'
-Cp_array    =  zeros(size(T_array))
-P_array     =  zeros(size(T_array))
-ComputeHeatCapacity!(Cp_array, P_array, T_array,cp1)
+T_array     =  T*ones(10)'
+Cp_array    =  similar(T_array)
+P_array     =  similar(T_array)
+compute_heatcapacity!(Cp_array, cp1, T_array, P_array)
 @test Cp_array[1] ≈ 1.3368075000000002e22
 
-T_array     =  ustrip.(T)*ones(10)'
-Cp_array    =  zeros(size(T_array))
-P_array     =  zeros(size(T_array))
-ComputeHeatCapacity!(Cp_array, P_array, T_array,cp2)
+Cp_array    =  similar(T_array)
+P_array     =  similar(T_array)
+compute_heatcapacity!(Cp_array, cp2, T_array, P_array)
 @test sum(Cp_array[:,1]) ≈ 11667.035717418683
 
-T_array     =  ustrip.(T)*ones(10)'
+T_array     =  T*ones(10)'
 Cp_array    =  zeros(size(T_array))
 P_array     =  zeros(size(T_array))
-ComputeHeatCapacity!(Cp_array, T_array,cp2)
+compute_heatcapacity!(Cp_array, cp2, T_array)
 @test sum(Cp_array[:,1]) ≈ 11667.035717418683
 
 
@@ -71,10 +71,10 @@ Cp = zeros(size(Phases))
 T  =  ones(size(Phases))*1500
 P  =  zeros(size(Phases))
 
-ComputeHeatCapacity!(Cp, Phases, P, T, MatParam)       # computation routine w/out P (not used in most heat capacity formulations)
+compute_heatcapacity!(Cp, MatParam, Phases, T, P)       # computation routine w/out P (not used in most heat capacity formulations)
 @test sum(Cp[1,1,:]) ≈ 121399.0486067196
 
-ComputeHeatCapacity!(Cp, Phases, T, MatParam)       # computation routine w/out P (not used in most heat capacity formulations)
+compute_heatcapacity!(Cp, MatParam, Phases, T)       # computation routine w/out P (not used in most heat capacity formulations)
 @test sum(Cp[1,1,:]) ≈ 121399.0486067196
 
 # test if we provide phase ratios
@@ -84,7 +84,7 @@ for i in CartesianIndices(Phases)
     I = CartesianIndex(i,iz)
     PhaseRatio[I] = 1.0  
 end
-ComputeHeatCapacity!(Cp, PhaseRatio, P, T, MatParam)
+compute_heatcapacity!(Cp, MatParam, PhaseRatio, T, P)
 @test sum(Cp[1,1,:]) ≈ 121399.0486067196
 
 
@@ -237,14 +237,14 @@ H_r = ComputeRadioactiveHeat(a)
 ε_el_2D    = [0.01 0.01; 0.01 0.01]   
 
 # With elasticity
-H_s1 = ComputeShearheating(τ,   ε,    ε_el,     Χ)
-H_s2 = ComputeShearheating(τ_2D,ε_2D, ε_el_2D,  Χ)
+H_s1 = compute_shearheating(Χ, τ,   ε,    ε_el   )
+H_s2 = compute_shearheating(Χ, τ_2D,ε_2D, ε_el_2D)
 @test H_s1 ≈ 5.4e6
 @test H_s2 ≈ 5.4e6
 
 # No elasticity
-H_s3 = ComputeShearheating(τ,   ε,     Χ)
-H_s4 = ComputeShearheating(τ_2D,ε_2D,  Χ)
+H_s3 = compute_shearheating(Χ, τ,   ε   )
+H_s4 = compute_shearheating(Χ, τ_2D,ε_2D)
 @test H_s3 ≈ 5.5e6
 @test H_s4 ≈ 5.5e6
 
@@ -256,12 +256,13 @@ H_s4 = ComputeShearheating(τ_2D,ε_2D,  Χ)
 τ_2D       = [1 2; 3 4]     
 ε_2D       = [1 0.1; 0.1 1]   
 ε_el_2D    = [0.01 0.01; 0.01 0.01]  
-Χ = nondimensionalize(Χ,CharUnits_GEO)
+Χ       = nondimensionalize(Χ,CharUnits_GEO)
+info    = param_info(Χ)
 
-H_s1 = ComputeShearheating(τ,   ε,    ε_el,     Χ)
-H_s2 = ComputeShearheating(τ_2D,ε_2D, ε_el_2D,  Χ)
-H_s3 = ComputeShearheating(τ,   ε,     Χ)
-H_s4 = ComputeShearheating(τ_2D,ε_2D,  Χ)
+H_s1 = compute_shearheating(Χ, τ,   ε,    ε_el,  )
+H_s2 = compute_shearheating(Χ, τ_2D,ε_2D, ε_el_2D)
+H_s3 = compute_shearheating(Χ, τ,   ε)
+H_s4 = compute_shearheating(Χ, τ_2D,ε_2D)
 @test H_s1 ≈ 5.4
 @test H_s2 ≈ 5.4
 @test H_s3 ≈ 5.5
