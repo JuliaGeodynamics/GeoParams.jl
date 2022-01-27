@@ -163,12 +163,14 @@ end
 
 Computes T-dependent heat capacity in-place      
 """
+#=
 function compute_heatcapacity!(cp_array::AbstractArray{_T,N},s::T_HeatCapacity_Whittacker{_T}, T::AbstractArray{_T,N},P::AbstractArray{_T,N}) where {_T,N}
 
     compute_heatcapacity(s, cp_array,T)
 
     return nothing
 end
+=#
 
 # Print info 
 function show(io::IO, g::T_HeatCapacity_Whittacker)  
@@ -232,7 +234,7 @@ compute_heatcapacity(T::Any, s::AbstractHeatCapacity) =  compute_heatcapacity(s,
 
 Returns heat capacity if we are sure that we will only employ constant heat capacity in the simulation
 """
-compute_heatcapacity(s::ConstantHeatCapacity) =  compute_heatcapacity(0,0, s)
+#compute_heatcapacity(s::ConstantHeatCapacity) =  compute_heatcapacity(0,0, s)
 
 
 """

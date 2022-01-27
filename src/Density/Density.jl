@@ -13,6 +13,7 @@ using ..MaterialParameters: No_MaterialParam, MaterialParamsInfo
 import Base.show, GeoParams.param_info
 
 include("../Utils.jl")
+include("../Computations.jl")
 
 abstract type AbstractDensity{T} <: AbstractMaterialParam end
 
@@ -23,7 +24,7 @@ export  compute_density,        # calculation routines
         ConstantDensity,        # constant
         PT_Density,             # P & T dependent density
         Compressible_Density    # Compressible density 
-       
+
 # Define "empty" computational routines in case nothing is defined
 compute_density!(rho::_T,s::No_MaterialParam{_T}; P::_T=zero(_T),T::_T=zero(_T)) where {_T} = zero(_T)
 compute_density(s::No_MaterialParam{_T}; P::_T=zero(_T),T::_T=zero(_T)) where {_T} = zero(_T)
@@ -218,6 +219,7 @@ end
 #------------------------------------------------------------------------------------------------------------------#
 # Computational routines needed for computations with the MaterialParams structure 
 
+#=
 # with tuple & vector - apply for all phases in MatParam
 function compute_density!(rho::Vector{_T}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, P::_T=zero(_T),T::_T=zero(_T)) where {N,_T}
     rho .= map(x->compute_density(x,P,T), MatParam)
@@ -227,12 +229,14 @@ end
 function compute_density(MatParam::NTuple{N,AbstractMaterialParamsStruct}, P::_T=zero(_T),T::_T=zero(_T)) where {N,_T}
     map(x->compute_density(x,P,T), MatParam)
 end
+=#
 
 # Perform the calculations above
 # This assumes that density always has a single parameter. If that is not the case, we will have to extend this (to be done)
 function compute_density(s::AbstractMaterialParamsStruct, P::_T=zero(_T),T::_T=zero(_T)) where {_T}
     return compute_density(s.Density[1], P,T)
 end
+
 
 # these routines may come handy when we have >1 field for Density
 #function compute_density!(rho::Number, P::Number, T::Number, s::AbstractMaterialParamsStruct)
@@ -312,10 +316,19 @@ julia> @btime compute_density!(\$rho, \$MatParam, \$Phases, P=\$P, T=\$T)
     203.468 μs (0 allocations: 0 bytes)
 ```
 """
+
+#Generalized functions to compute_density
+compute_density!(args...) = compute_param!(compute_density,args...)
+compute_density(args...) = compute_param(compute_density, args...)
+
+end
+
+
+#=
 function compute_density!(rho::AbstractArray{_T, ndim}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phases::AbstractArray{_I, ndim}, P=nothing, T=nothing) where {ndim,N,_T,_I<:Integer}
     
     Phase_tup = ntuple(i->MatParam[i].Phase, Val(N))
-
+    
     # check if we compute with P/T or use default values    
     isnothing(T) ? compute_T = false : compute_T = true
     isnothing(P) ? compute_P = false : compute_P = true
@@ -334,7 +347,10 @@ function compute_density!(rho::AbstractArray{_T, ndim}, MatParam::NTuple{N,Abstr
         rho_tup = compute_density(MatParam, Pval, Tval)    
         rho[I]  = rho_tup[phase]
     end
+    #map!((Phases,P,T)->compute_density(MatParam,P,T)[find_ind(Phase_tup,Phases)],rho,Phases,P,T)
 end
+
+
 
 
 """
@@ -344,7 +360,13 @@ In-place computation of density `rho` for the whole domain and all phases, in ca
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 
 """
+
+
+
 function compute_density!(rho::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}, PhaseRatios::AbstractArray{_T, M}, P=nothing, T=nothing) where {_T<:AbstractFloat, N,M, K}
+    compute_param!(compute_density,rho,MatParam,PhaseRatios,P,T)
+    
+    #=
     if M!=(N+1)
         error("The PhaseRatios array should have one dimension more than the other arrays")
     end
@@ -374,6 +396,7 @@ function compute_density!(rho::AbstractArray{_T, N}, MatParam::NTuple{K,Abstract
     end
 
     return 
+    =#
 end
 
 # Multiplies density with the fraction of a phase
@@ -390,13 +413,10 @@ function compute_density_times_frac(PhaseRatios::AbstractArray{_T, 1}, MatParam:
     return val 
 end
 
-end
-
-
 
 # OBSOLETE routines; I leave them in for now (commented), in case we want to reuse pieces of that @ a later stage.
 # much of what we have above is more efficient (apart when using the Phase Diagram lookup tables)
-#=
+
 # OLD function (which actually works better in case of phase diagrams as it can do computations at omce)
 function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, PhaseRatios::AbstractArray{<:AbstractFloat, M}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where {N,M}
     
@@ -424,7 +444,7 @@ function compute_density!(rho::AbstractArray{<:AbstractFloat, N}, PhaseRatios::A
         
     end
 
-end
+
 
 
 # OBSOLETE?
