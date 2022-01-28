@@ -40,7 +40,6 @@ function compute_param!(fn::F, rho::AbstractArray{_T, ndim}, MatParam::NTuple{N,
         rho_tup = fn(MatParam, Pval, Tval)    
         rho[I]  = rho_tup[phase]
     end
-    #map!((Phases,P,T)->compute_density(MatParam,P,T)[find_ind(Phase_tup,Phases)],rho,Phases,P,T)
 end
 
 
@@ -90,6 +89,3 @@ function compute_param_times_frac(fn::F, PhaseRatios::AbstractArray{_T, 1}, MatP
 
     return val 
 end
-
-
-

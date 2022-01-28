@@ -159,3 +159,24 @@ compute_density!(rho, Mat_tup, PhaseRatio, nothing, T)
 
 
 end
+
+#= Testing more than one density per field (change ln:205 in MaterialParameters.jl)
+MatParam = Vector{AbstractMaterialParamsStruct}(undef, 4)
+MatParam[1] = SetMaterialParams(Name="Crust", Phase=0,
+                            CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pas)),
+                            Density   = (PT_Density(), ConstantDensity()))
+MatParam[2] = SetMaterialParams(Name="Lower Crust", Phase=1,
+                            CreepLaws= (PowerlawViscous(n=5.), LinearViscous(η=1e21Pas)),
+                            Density  = (Compressible_Density(ρ0=3000kg/m^3), ConstantDensity()))
+MatParam[3] = SetMaterialParams(Name="Lower Crust", Phase=2,
+                            CreepLaws= LinearViscous(η=1e21Pas),
+                            Density  = (ConstantDensity(), PT_Density(), Compressible_Density(ρ0=3000kg/m^3)))
+MatParam[4] = SetMaterialParams(Name="Lower Crust", Phase=3,
+                            CreepLaws= LinearViscous(η=1e21Pas),
+                            Density  = (ConstantDensity(), PT_Density()))
+
+Mat_tup = Tuple(MatParam)
+
+P,T = 1.,1.
+@btime compute_density($Mat_tup, $P, $T)
+=#
