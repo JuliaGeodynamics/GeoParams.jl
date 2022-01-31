@@ -219,16 +219,11 @@ end
 #function compute_density!(rho::Vector{_T}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, P::_T=zero(_T),T::_T=zero(_T)) where {N,_T}
 #    rho .= map(x->compute_density(x,P,T), MatParam)
 #end
-compute_density!(rho::Vector{_T}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, 
-                 P::_T=zero(_T),T::_T=zero(_T)) where {N,_T} = compute_param!(compute_density,rho,MatParam,P,T)
-
 
 # each individual calcuation 
 #function compute_density(MatParam::NTuple{N,AbstractMaterialParamsStruct}, P::_T=zero(_T),T::_T=zero(_T)) where {N,_T}
 #    map(x->compute_density(x,P,T), MatParam)
 #end
-compute_density(MatParam::NTuple{N,AbstractMaterialParamsStruct}, 
-                P::_T=zero(_T),T::_T=zero(_T)) where {N,_T} = compute_param(compute_density,MatParam,P,T)
 
 # Perform the calculations above
 # This assumes that density always has a single parameter. If that is not the case, we will have to extend this (to be done)
@@ -333,8 +328,6 @@ function compute_density!(rho::AbstractArray{_T, ndim}, MatParam::NTuple{N,Abstr
     end
 end
 =#
-compute_density!(rho::AbstractArray{_T, ndim}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phases::AbstractArray{_I, ndim}, 
-                 P=nothing, T=nothing) where {ndim,N,_T,_I<:Integer} = compute_param!(compute_density,rho,MatParam,Phases,P,T)
 
 """
     compute_density!(rho::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}, PhaseRatios::AbstractArray{_T, M}, P=nothing, T=nothing)
@@ -388,11 +381,12 @@ function compute_density_times_frac(PhaseRatios::AbstractArray{_T, 1}, MatParam:
     return val 
 end
 =#
-compute_density!(rho::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}, PhaseRatios::AbstractArray{_T, M}, 
-                 P=nothing, T=nothing) where {_T<:AbstractFloat, N,M, K} = compute_param!(compute_density,rho,MatParam,PhaseRatios,P,T)
+
+#Multiple dispatch to rest of routines found in Computations.jl
+compute_density!(args...) = compute_param!(compute_density,args...)
+compute_density(args...) = compute_param(compute_density,args...)
 
 end
-
 
 
 # OBSOLETE routines; I leave them in for now (commented), in case we want to reuse pieces of that @ a later stage.

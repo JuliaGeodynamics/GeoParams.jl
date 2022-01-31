@@ -83,19 +83,19 @@ export  compute_heatcapacity,
         T_HeatCapacity_Whittacker
 
 using .MaterialParameters.Conductivity
-export  ComputeConductivity,
-        ComputeConductivity!,
+export  compute_conductivity,
+        compute_conductivity!,
         ConstantConductivity,
         T_Conductivity_Whittacker,
         TP_Conductivity,
         Set_TP_Conductivity
 
 using .MaterialParameters.LatentHeat
-export  ComputeLatentHeat,                           
+export  compute_latent_heat,                           
         ConstantLatentHeat
         
 using .MaterialParameters.RadioactiveHeat        
-export  ComputeRadioactiveHeat,                 
+export  compute_radioactive_heat,                 
         ConstantRadioactiveHeat                  
 
 using .MaterialParameters.Shearheating        
@@ -104,8 +104,8 @@ export  compute_shearheating!, compute_shearheating,
 
 # Seismic velocities
 using .MaterialParameters.SeismicVelocity
-export  ComputePwaveVelocity,  ComputeSwaveVelocity,   
-        ComputePwaveVelocity!, ComputeSwaveVelocity!,   
+export  compute_pwave_velocity,  compute_swave_velocity,   
+        compute_pwave_velocity!, compute_swave_velocity!,   
         ConstantSeismicVelocity                        
 
 

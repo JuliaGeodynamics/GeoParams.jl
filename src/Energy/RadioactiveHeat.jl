@@ -6,11 +6,13 @@ module RadioactiveHeat
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam
-import Base.show
+using ..MaterialParameters: MaterialParamsInfo
+import Base.show, GeoParams.param_info
 
 abstract type AbstractRadioactiveHeat{T} <: AbstractMaterialParam end
 
-export  ComputeRadioactiveHeat,                  # calculation routines
+export  compute_radioactive_heat,                  # calculation routines
+        param_info,
         ConstantRadioactiveHeat                  # constant
         
 
@@ -24,14 +26,17 @@ Set a constant radioactive heat:
 ```
 where ``H_r`` is the radioactive heat source [``Watt/m^3``].
 """
-@with_kw_noshow struct ConstantRadioactiveHeat{T} <: AbstractRadioactiveHeat{T}
-    equation::LaTeXString   =   L"H_r = cst"     
-    H_r::GeoUnit{T}         =   1e-6Watt/m^3             
+@with_kw_noshow struct ConstantRadioactiveHeat{T,U} <: AbstractRadioactiveHeat{T}   
+    H_r::GeoUnit{T,U}         =   1e-6Watt/m^3             
 end
-ConstantRadioactiveHeat(a...) = ConstantRadioactiveHeat{Float64}(a...)
+ConstantRadioactiveHeat(a...) = ConstantRadioactiveHeat(convert.(GeoUnit,a)...)
+
+function param_info(s::ConstantRadioactiveHeat) # info about the struct
+    return MaterialParamsInfo(Equation = L"H_r = cst")
+end
 
 # Calculation routine
-function ComputeRadioactiveHeat(s::ConstantRadioactiveHeat)
+function compute_radioactive_heat(s::ConstantRadioactiveHeat)
     @unpack H_r   = s
    
     return NumValue(H_r)
@@ -46,12 +51,12 @@ end
 
 # Help info for the calculation routines
 """
-    H_r = ComputeRadioactiveHeat(s:<AbstractRadioactiveHeat)
+    H_r = compute_radioactive_heat(s:<AbstractRadioactiveHeat)
 
 Returns the radioactive heat `H_r`
 
 """
-ComputeRadioactiveHeat()
+compute_radioactive_heat()
 
 
 

@@ -14,7 +14,8 @@ using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam
 using BibTeX
-import Base.show
+using ..MaterialParameters: MaterialParamsInfo
+import Base.show, GeoParams.param_info
 
 abstract type AbstractCreepLaw{T} <: AbstractMaterialParam end
 
@@ -22,7 +23,7 @@ export  ComputeCreepLaw_EpsII, ComputeCreepLaw_TauII,       # calculation routin
         CreepLawVariables,                                     # holds additional parameters required for calculations
         LinearViscous, 
         PowerlawViscous
-
+        param_info
 
 
 # NOTE: we will likely have to remove this, in favor of multiple dispatch options
@@ -62,12 +63,15 @@ or
 
 where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\\dot{\\varepsilon}_0``[1/s], and ``n`` the power law exponent []. 
 """
-@with_kw_noshow struct LinearViscous{T} <: AbstractCreepLaw{T}
-   # equation::LaTeXString   =   L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"     
-    η::GeoUnit{T}       =   1e20Pa*s                # viscosity
+@with_kw_noshow struct LinearViscous{T,U} <: AbstractCreepLaw{T}    
+    η::GeoUnit{T,U}       =   1e20Pa*s                # viscosity
     η_val::T            =   1.0
 end
-LinearViscous(a...) = LinearViscous{Float64}(a...)
+LinearViscous(args...) = LinearViscous(convert(GeoUnit,args[1]), args[2])
+
+function param_info(s::LinearViscous) # info about the struct
+    return MaterialParamsInfo(Equation = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}")
+end
 
 # Calculation routines for linear viscous rheologies
 function ComputeCreepLaw_EpsII(TauII, s::LinearViscous, p::CreepLawVariables)
@@ -99,12 +103,12 @@ Defines a power law viscous creeplaw as:
 ```
 where ``\\eta`` is the effective viscosity [Pa*s].
 """
-@with_kw_noshow mutable struct PowerlawViscous{T} <: AbstractCreepLaw{T}
-    η0::GeoUnit{T}     =  1e18Pa*s            # reference viscosity 
-    n::GeoUnit{T}      =  2.0*NoUnits         # powerlaw exponent
-    ε0::GeoUnit{T}     =  1e-15*1/s;          # reference strainrate
+@with_kw_noshow struct PowerlawViscous{T,U1,U2,U3} <: AbstractCreepLaw{T}
+    η0::GeoUnit{T,U1}     =  1e18Pa*s            # reference viscosity 
+    n::GeoUnit{T,U2}      =  2.0*NoUnits         # powerlaw exponent
+    ε0::GeoUnit{T,U3}     =  1e-15*1/s;          # reference strainrate
 end
-PowerlawViscous(a...) = PowerlawViscous{Float64}(a...)
+PowerlawViscous(a...) = PowerlawViscous(convert.(GeoUnit,a)...)
 
 # Print info 
 function show(io::IO, g::PowerlawViscous)  

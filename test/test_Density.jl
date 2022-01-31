@@ -2,6 +2,16 @@ using Test
 using GeoParams
 @testset "Density.jl" begin
 
+#Make sure that structs are isbits
+x = ConstantDensity()
+@test isbits(x)
+
+x = PT_Density()
+@test isbits(x)
+
+x = Compressible_Density()
+@test isbits(x)
+
 # This tests the MaterialParameters structure
 CharUnits_GEO   =   GEO_units(viscosity=1e19, length=1000km);
                 
@@ -157,6 +167,9 @@ compute_density!(rho, Mat_tup1, PhaseRatio, P)
 compute_density!(rho, Mat_tup, PhaseRatio, nothing, T)
 @test sum(rho)/400^2 ≈ 2920.6151
 
+#Test computation of density given a single phase and P,T as scalars
+Phase, P, T = 0, 1., 1.
+@test compute_density(Mat_tup1, Phase, P, T) == 2900.0
 
 end
 

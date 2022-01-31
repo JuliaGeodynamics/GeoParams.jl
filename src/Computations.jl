@@ -18,6 +18,12 @@ end
 #---------------------------------------------------------------------------------------------------------------------------#
 #Computational routines for Phases
 
+#performs computation given a single Phase
+function compute_param(fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Int64, P::_T=zero(_T),T::_T=zero(_T)) where {F,N,_T}
+    Phase_tup = ntuple(i->MatParam[i].Phase, Val(N))
+    ind = find_ind(Phase_tup, Phase)
+    return fn(MatParam, P, T)[ind]
+end
 
 function compute_param!(fn::F, rho::AbstractArray{_T, ndim}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phases::AbstractArray{_I, ndim}, P=nothing, T=nothing) where {F,ndim,N,_T,_I<:Integer}
     Phase_tup = ntuple(i->MatParam[i].Phase, Val(N))

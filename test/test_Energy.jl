@@ -10,6 +10,7 @@ CharUnits_GEO   =   GEO_units(viscosity=1e19, length=10km);
 # Constant heat capacity
 cp1      =  ConstantHeatCapacity()
 info     =  param_info(cp1)
+@test isbits(cp1)
 @test cp1.cp.val == 1050.0
 
 cp1     = nondimensionalize(cp1,CharUnits_GEO)
@@ -21,6 +22,7 @@ cp1     = nondimensionalize(cp1,CharUnits_GEO)
 T        =   250.0:100:1250;
 cp2      =   T_HeatCapacity_Whittacker()
 Cp       =   similar(T)
+@test isbits(cp2)
 compute_heatcapacity!(Cp,cp2, T)
 @test sum(Cp) ≈ 11667.035717418683
 
@@ -96,26 +98,28 @@ compute_heatcapacity!(Cp, MatParam, PhaseRatio, T, P)
 
 # Constant conductivity
 cond      =   ConstantConductivity()
+@test isbits(cond)
 @test NumValue(cond.k) == 3.0
 @test cond.k.unit==u"W"/K/m
 
 cond = nondimensionalize(cond,CharUnits_GEO)
 @test  NumValue(cond.k) ≈ 3.8194500000000007
 
-@test ComputeConductivity(100.0, cond) ≈ 3.8194500000000007 # compute
+@test compute_conductivity(100.0, cond) ≈ 3.8194500000000007 # compute
 
 # Temperature-dependent conductivity
 # dimensional
 T        =   Vector(250:100:1250);
 cond2    =   T_Conductivity_Whittacker()
-k        =   ComputeConductivity(T,cond2)
+k        =   compute_conductivity(T,cond2)
+@test isbits(cond2)
 @test sum(k) ≈ 27.503366436682285
 
 # nondimensional
 cond2_nd =   T_Conductivity_Whittacker()
 cond2_nd =   nondimensionalize(cond2_nd,CharUnits_GEO)
 T_nd     =   Float64.(ustrip.(T/CharUnits_GEO.Temperature))
-k_nd     =   ComputeConductivity(T_nd,cond2_nd)
+k_nd     =   compute_conductivity(T_nd,cond2_nd)
 @test sum(k_nd) ≈ 35.01591097886205
 
 # Dimensionalize again and double-check the results
@@ -126,14 +130,15 @@ T_array     =  ustrip.(T)*ones(100)'
 k_array     =  copy(T_array)
 P_array     =  copy(T_array)
 
-ComputeConductivity!(k_array,P_array,T_array, cond)
+compute_conductivity!(k_array,P_array,T_array, cond)
 @test k_array[1] ≈ 3.8194500000000007
 
-ComputeConductivity!(k_array,P_array,T_array, cond2)
+compute_conductivity!(k_array,P_array,T_array, cond2)
 @test sum(k_array) ≈ 2750.3366436682285
 
-k_TP    =   Set_TP_Conductivity["LowerCrust"]
-ComputeConductivity!(k_array, P_array, T_array, k_TP)
+#k_TP    =   Set_TP_Conductivity["LowerCrust"]
+k_TP    =   Set_TP_Conductivity["LowerCrust"][1]
+compute_conductivity!(k_array, P_array, T_array, k_TP)
 @test sum(k_array) ≈ 2055.7129327367625
 
 # Check that it works if we give a phase array
@@ -145,7 +150,8 @@ MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
                     Conductivity  = T_Conductivity_Whittacker());
 
 MatParam[3] =   SetMaterialParams(Name="MantleLithosphere", Phase=3,
-                    Conductivity  = Set_TP_Conductivity["Mantle"]);
+                    #Conductivity  = Set_TP_Conductivity["Mantle"]);
+                    Conductivity = Set_TP_Conductivity["Mantle"][1]);
 
 # test computing material properties
 n = 100;
@@ -164,10 +170,10 @@ k   =  zeros(size(Phases))
 T   =  ones(size(Phases))*1500
 P   =  zeros(size(Phases))
 
-ComputeConductivity!(k, Phases, P, T, MatParam) 
+compute_conductivity!(k, Phases, P, T, MatParam) 
 @test sum(k) ≈ 1.9216938849389635e6
 
-ComputeConductivity!(k, PhaseRatio, P, T, MatParam) 
+compute_conductivity!(k, PhaseRatio, P, T, MatParam) 
 @test sum(k) ≈ 1.9216938849389635e6
 
 #
@@ -181,15 +187,16 @@ P       = 1e6*ones(size(T))/ustrip(uconvert(Pa,1MPa))  # must be in MPa!
 List    = ["LowerCrust"   "Mantle"        "OceanicCrust"  "UpperCrust"]
 Sol_kT  = [20.55712932736763 28.700405819019323 20.55712932736763 19.940302462417037]
 for i=1:length(List)
-    k_TP    =   Set_TP_Conductivity[List[i]]
-    k       =   ComputeConductivity(P,T,k_TP)           # note that P must be in MPa
+    #k_TP    =   Set_TP_Conductivity[List[i]]
+    k_TP    =   Set_TP_Conductivity[List[i]][1]
+    k       =   compute_conductivity(P,T,k_TP)           # note that P must be in MPa
     @test sum(k) ≈ Sol_kT[i]
 
     k_TP_nd  =   deepcopy(k_TP)
     k_TP_nd  =   nondimensionalize(k_TP_nd,CharUnits_GEO)
     T_nd     =   Float64.(ustrip.(T/CharUnits_GEO.Temperature))
     P_nd     =   Float64.(ustrip(P/CharUnits_GEO.stress))
-    k_nd     =   ComputeConductivity(P_nd,T_nd,k_TP_nd)
+    k_nd     =   compute_conductivity(P_nd,T_nd,k_TP_nd)
 
     @test ustrip(sum(abs.(ustrip.(k_nd*CharUnits_GEO.conductivity) - k))) < 1e-11
 
@@ -197,7 +204,7 @@ end
 
 
 T = [200 300; 400 500]
-k1        =   ComputeConductivity(T,cond2)
+k1        =   compute_conductivity(T,cond2)
 
 
 # -----------------------
@@ -205,27 +212,30 @@ k1        =   ComputeConductivity(T,cond2)
 
 # Latent heat -----------
 a = ConstantLatentHeat()
-Q_L = ComputeLatentHeat(a)
+Q_L = compute_latent_heat(a)
+@test isbits(a)
 @test Q_L == 400
 
 a   = nondimensionalize(a,CharUnits_GEO)
-Q_L = ComputeLatentHeat(a)
+Q_L = compute_latent_heat(a)
 @test Q_L ≈ 4e21
 # -----------------------
 
 # Radioactive heat ------
 a = ConstantRadioactiveHeat()
-H_r = ComputeRadioactiveHeat(a)
+H_r = compute_radioactive_heat(a)
+@test isbits(a)
 @test H_r ≈ 1.0e-6
 
 a = nondimensionalize(a,CharUnits_GEO)
-H_r = ComputeRadioactiveHeat(a)
+H_r = compute_radioactive_heat(a)
 @test H_r == 0.1
 # -----------------------
 
 
 # Shear heating -------
 Χ       = ConstantShearheating(1.0)
+@test isbits(Χ)
  
 # Define parameters as vectors
 τ       = [1 2 3 4]*1e6    

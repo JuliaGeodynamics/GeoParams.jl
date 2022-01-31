@@ -2,6 +2,10 @@ using Test
 using GeoParams
 @testset "MeltingParam.jl" begin
 
+#Make sure structure is isbits
+x = MeltingParam_Caricchi()
+@test isbits(x)
+
 # This tests the various melting parameterizations
 CharUnits_GEO   =   GEO_units(viscosity=1e19, length=10km);
        
