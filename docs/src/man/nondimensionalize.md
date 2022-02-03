@@ -10,17 +10,21 @@ A dimensional parameter can be transformed into a non-dimensional one with `Nond
 Characteristic values can be defined in 3 ways.
 
 ```@docs
+GeoParams.Units
+AbstractGeoUnit
+GeoUnit
+GeoUnits
 GEO_units
 SI_units
 NO_units
+@unpack_val
+@unpack_units
 ```
 
 # (Non)-dimensionalize parameters
 Once characteristic values have been defined, you can use them to non-dimensionalize or dimensionalize any parameter.
 ```@docs
-Nondimensionalize!
-Dimensionalize!
-Nondimensionalize
-Dimensionalize
+nondimensionalize
+dimensionalize
 isDimensional
 ```

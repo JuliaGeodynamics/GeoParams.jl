@@ -105,7 +105,7 @@ where ``Cp`` is the heat capacity [``J/mol/K``], and ``a,b,c`` are parameters th
 - f = 0.732m^2/s        
 - g = 0.000135m^2/s/K 
 """
-@with_kw_noshow struct T_Conductivity_Whittacker{T,U1,U2,U3,U4,U5,U6,U7,U8,U9,U10} <: AbstractConductivity{T} 
+@with_kw_noshow struct T_Conductivity_Whittacker{T,U1,U2,U3,U4,U5,U6,U7,U8,U9} <: AbstractConductivity{T} 
     # Note: the resulting curve of k was visually compared with Fig. 2 of the paper  
     a0::GeoUnit{T,U1}             =   199.5J/mol/K                # prefactor for low T       (T<= 846 K)
     a1::GeoUnit{T,U1}             =   229.32J/mol/K               # prefactor for high T      (T>  846 K)
@@ -118,8 +118,8 @@ where ``Cp`` is the heat capacity [``J/mol/K``], and ``a,b,c`` are parameters th
     rho::GeoUnit{T,U6}            =   2700kg/m^3                  # Density they use for an average crust
     d::GeoUnit{T,U7}              =   576.3*1e-6m^2/s*K           # diffusivity parameterization
     e::GeoUnit{T,U8}              =   0.062*1e-6m^2/s             # diffusivity parameterization
-    f::GeoUnit{T,U9}              =   0.732*1e-6m^2/s             # diffusivity parameterization
-    g::GeoUnit{T,U10}              =   0.000135*1e-6m^2/s/K        # diffusivity parameterization
+    f::GeoUnit{T,U8}              =   0.732*1e-6m^2/s             # diffusivity parameterization
+    g::GeoUnit{T,U9}              =   0.000135*1e-6m^2/s/K        # diffusivity parameterization
 end
 T_Conductivity_Whittacker(args...) = T_Conductivity_Whittacker(convert.(GeoUnit,args)...)
 
@@ -153,7 +153,7 @@ function compute_conductivity(P,T, s::T_Conductivity_Whittacker)
 end
 
 """
-    compute_conductivity(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::T_Conductivity_Whittacker) where N
+    compute_conductivity!(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::T_Conductivity_Whittacker) where N
 
 In-place routine to compute temperature-dependent conductivity    
 """
@@ -200,16 +200,22 @@ where ``k`` is the conductivity [``W/K/m``], and ``a_k,b_k,c_k,d_k`` are paramet
 - ``c_k`` = 77K       
 - ``d_k`` = 0/MPa       
 """
-@with_kw_noshow struct TP_Conductivity{T,U1,U2,U3,U4} <: AbstractConductivity{T}  
+@with_kw_noshow struct TP_Conductivity{N,T,U1,U2,U3,U4} <: AbstractConductivity{T} 
+    Name::NTuple{N,Char}          =   ""                  # The name is encoded as a NTuple{Char} to make it isbits
     a::GeoUnit{T,U1}              =   1.18Watt/K/m        # empirical fitting term
     b::GeoUnit{T,U2}              =   474.0Watt/m         # empirical fitting term
     c::GeoUnit{T,U3}              =   77.0K               # empirical fitting term
     d::GeoUnit{T,U4}              =   0.0/MPa             # empirical fitting term
 end
-TP_Conductivity(args...) = TP_Conductivity(convert.(GeoUnit,args)...)
+TP_Conductivity(args...) = TP_Conductivity(NTuple{length(args[1]), Char}(collect.(args[1])), convert.(GeoUnit,args[2:end])...)
 
 function param_info(s::TP_Conductivity)
-    return MaterialParamsInfo(Equation = L"k = \left(a_k + {b_k/{T + c_k}} \right)*(1 + d_k*P) " )
+    name = String(collect(s.Name))
+    eq = L"k = \left(a_k + {b_k/{T + c_k}} \right)*(1 + d_k*P) "
+    if name == "" 
+        return MaterialParamsInfo(Equation = eq)
+    end
+    return MaterialParamsInfo(Equation = eq, Comment = TP_Conductivity_info[name][2].Comment)
 end
 
 """
@@ -228,54 +234,30 @@ T/P dependent conductivity: k = (0.73 W K⁻¹ m⁻¹ + 1293 W m⁻¹/(T + 77 K)
 ```
 
 """
-#=
-Set_TP_Conductivity = Dict([
-    ("UpperCrust", 
-        TP_Conductivity( a=0.64Watt/K/m, b=807Watt/m, c=77K, d=0/MPa, 
-            Comment="Sediment/upper crust T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!")
-    )
-    
-    ("LowerCrust", 
-        TP_Conductivity( a=1.18Watt/K/m, b=474Watt/m, c=77K, d=0/MPa, 
-            Comment="Lower crust T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!")
-    )
+Set_TP_Conductivity(name::String) = TP_Conductivity_info[name][1]
 
-    ("OceanicCrust", 
-        TP_Conductivity( a=1.18Watt/K/m, b=474Watt/m, c=77K, d=0/MPa, 
-            Comment="Oceanic crust T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!")
-    )
-    
-    ("Mantle", 
-        TP_Conductivity( a=0.73Watt/K/m, b=1293Watt/m, c=77K, d=0.00004/MPa, 
-            Comment="Mantle T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!")
-    )
-
-])
-=#
-#is this ok?
-Set_TP_Conductivity = Dict([
+TP_Conductivity_info = Dict([
     ("UpperCrust", 
-        (TP_Conductivity( a=0.64Watt/K/m, b=807Watt/m, c=77K, d=0/MPa),
+        (TP_Conductivity(Name="UpperCrust", a=0.64Watt/K/m, b=807Watt/m, c=77K, d=0/MPa),
         MaterialParamsInfo(Comment="Sediment/upper crust T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!"))
     )
     
     ("LowerCrust", 
-        (TP_Conductivity( a=1.18Watt/K/m, b=474Watt/m, c=77K, d=0/MPa), 
+        (TP_Conductivity(Name="LowerCrust", a=1.18Watt/K/m, b=474Watt/m, c=77K, d=0/MPa), 
         MaterialParamsInfo(Comment="Lower crust T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!"))
     )
 
     ("OceanicCrust", 
-        (TP_Conductivity( a=1.18Watt/K/m, b=474Watt/m, c=77K, d=0/MPa), 
+        (TP_Conductivity(Name="OceanicCrust", a=1.18Watt/K/m, b=474Watt/m, c=77K, d=0/MPa), 
         MaterialParamsInfo(Comment="Oceanic crust T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!"))
     )
     
     ("Mantle", 
-        (TP_Conductivity( a=0.73Watt/K/m, b=1293Watt/m, c=77K, d=0.00004/MPa),
+        (TP_Conductivity(Name="Mantle", a=0.73Watt/K/m, b=1293Watt/m, c=77K, d=0.00004/MPa),
         MaterialParamsInfo(Comment="Mantle T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!"))
     )
 
 ])
-
 
 # Calculation routine
 function compute_conductivity(P,T, s::TP_Conductivity)
@@ -323,9 +305,9 @@ end
 # Print info 
 function show(io::IO, g::TP_Conductivity)  
     if ustrip(Value(g.d))==0
-        print(io, "T/P dependent conductivity: k = $(g.a.val) + $(g.b.val)/(T + $(g.c.val))  \n");
+        print(io, "T/P dependent conductivity: Name = $(String(collect(g.Name))), k = $(g.a.val) + $(g.b.val)/(T + $(g.c.val))  \n");
     else
-        print(io, "T/P dependent conductivity: k = ($(g.a.val) + $(g.b.val)/(T + $(g.c.val)))*(1 + $(g.d.val)*P)  \n");
+        print(io, "T/P dependent conductivity: Name = $(String(collect(g.Name))), k = ($(g.a.val) + $(g.b.val)/(T + $(g.c.val)))*(1 + $(g.d.val)*P)  \n");
     end
 end
 #-------------------------------------------------------------------------

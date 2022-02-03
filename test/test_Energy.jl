@@ -136,8 +136,7 @@ compute_conductivity!(k_array,P_array,T_array, cond)
 compute_conductivity!(k_array,P_array,T_array, cond2)
 @test sum(k_array) ≈ 2750.3366436682285
 
-#k_TP    =   Set_TP_Conductivity["LowerCrust"]
-k_TP    =   Set_TP_Conductivity["LowerCrust"][1]
+k_TP    =   Set_TP_Conductivity("LowerCrust")
 compute_conductivity!(k_array, P_array, T_array, k_TP)
 @test sum(k_array) ≈ 2055.7129327367625
 
@@ -150,8 +149,7 @@ MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
                     Conductivity  = T_Conductivity_Whittacker());
 
 MatParam[3] =   SetMaterialParams(Name="MantleLithosphere", Phase=3,
-                    #Conductivity  = Set_TP_Conductivity["Mantle"]);
-                    Conductivity = Set_TP_Conductivity["Mantle"][1]);
+                    Conductivity = Set_TP_Conductivity("Mantle"));
 
 # test computing material properties
 n = 100;
@@ -187,8 +185,7 @@ P       = 1e6*ones(size(T))/ustrip(uconvert(Pa,1MPa))  # must be in MPa!
 List    = ["LowerCrust"   "Mantle"        "OceanicCrust"  "UpperCrust"]
 Sol_kT  = [20.55712932736763 28.700405819019323 20.55712932736763 19.940302462417037]
 for i=1:length(List)
-    #k_TP    =   Set_TP_Conductivity[List[i]]
-    k_TP    =   Set_TP_Conductivity[List[i]][1]
+    k_TP    =   Set_TP_Conductivity(List[i])
     k       =   compute_conductivity(P,T,k_TP)           # note that P must be in MPa
     @test sum(k) ≈ Sol_kT[i]
 

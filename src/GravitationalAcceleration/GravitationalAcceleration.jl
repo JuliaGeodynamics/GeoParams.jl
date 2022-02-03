@@ -10,7 +10,7 @@ using ..MaterialParameters: MaterialParamsInfo
 
 abstract type AbstractGravity{_T} <: AbstractMaterialParam end
 
-export  ComputeGravity,        # calculation routines
+export  compute_gravity,        # calculation routines
         ConstantGravity,        # constant
         param_info
 
@@ -33,7 +33,7 @@ function param_info(s::ConstantGravity) # info about the struct
 end
 
 # Calculation routine
-function ComputeGravity(s::ConstantGravity{_T}) where _T
+function compute_gravity(s::ConstantGravity{_T}) where _T
     @unpack g   = s
     
     return g*1.0   # multiply with 1.0, to return Float64
@@ -50,12 +50,12 @@ end
 
 # Help info for the calculation routines
 """
-ComputeGravity(s:<AbstractGravity)
+compute_gravity(s:<AbstractGravity)
 
 Returns the gravitational acceleration 
 
 """
-ComputeGravity
+compute_gravity
 
 
 

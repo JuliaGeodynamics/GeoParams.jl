@@ -17,7 +17,7 @@ using Requires          # To only add plotting routines if Plots is loaded
 
 export 
         @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
-        GeoUnit, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
+        GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnit, 
         nondimensionalize, dimensionalize,
         superscript, upreferred, GEO, SI, NONE, isDimensional, Value, NumValue, Unit, UnitValue, isdimensional,
         km, m, cm, mm, μm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW, Quantity
@@ -65,13 +65,13 @@ export  compute_density,                                # computational routines
         
 # Creep laws
 using  .MaterialParameters.CreepLaw
-export  ComputeCreepLaw_EpsII, ComputeCreepLaw_TauII, CreepLawVariables,
+export  computeCreepLaw_EpsII, computeCreepLaw_TauII, CreepLawVariables,
         LinearViscous, PowerlawViscous, 
         DislocationCreep, SetDislocationCreep
 
 # Gravitational Acceleration
 using  .MaterialParameters.GravitationalAcceleration
-export  ComputeGravity,                                # computational routines
+export  compute_gravity,                                # computational routines
         ConstantGravity
 
 

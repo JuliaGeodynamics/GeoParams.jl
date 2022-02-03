@@ -208,24 +208,11 @@ function compute_density!(rho::AbstractArray{_T}, s::PhaseDiagram_LookupTable, P
     rho[:] = s.Rho.(T,P)
     return nothing
 end
-#-------------------------------------------------------------------------
-
 
 
 #------------------------------------------------------------------------------------------------------------------#
 # Computational routines needed for computations with the MaterialParams structure 
 
-# with tuple & vector - apply for all phases in MatParam
-#function compute_density!(rho::Vector{_T}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, P::_T=zero(_T),T::_T=zero(_T)) where {N,_T}
-#    rho .= map(x->compute_density(x,P,T), MatParam)
-#end
-
-# each individual calcuation 
-#function compute_density(MatParam::NTuple{N,AbstractMaterialParamsStruct}, P::_T=zero(_T),T::_T=zero(_T)) where {N,_T}
-#    map(x->compute_density(x,P,T), MatParam)
-#end
-
-# Perform the calculations above
 # This assumes that density always has a single parameter. If that is not the case, we will have to extend this (to be done)
 function compute_density(s::AbstractMaterialParamsStruct, P::_T=zero(_T),T::_T=zero(_T)) where {_T}
     return compute_density(s.Density[1], P,T)
@@ -242,7 +229,6 @@ end
 #end
 
 #-------------------------------------------------------------------------------------------------------------
-
 
 """
     compute_density!(rho::AbstractArray{_T, ndim}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phases::AbstractArray{_I, ndim}; P=nothing, T=nothing) where {ndim,N,_T,_I<:Integer}
@@ -302,7 +288,17 @@ julia> using BenchmarkTools
 julia> @btime compute_density!(\$rho, \$MatParam, \$Phases, P=\$P, T=\$T)
     203.468 μs (0 allocations: 0 bytes)
 ```
+_____________________________________________________________________________________________________________________________   
+    
+    compute_density!(rho::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}, PhaseRatios::AbstractArray{_T, M}, P=nothing, T=nothing)
+
+In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
+This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 """
+compute_density!(args...) = compute_param!(compute_density,args...) #Multiple dispatch to rest of routines found in Computations.jl
+compute_density(args...) = compute_param(compute_density,args...)
+
+
 #=
 function compute_density!(rho::AbstractArray{_T, ndim}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phases::AbstractArray{_I, ndim}, P=nothing, T=nothing) where {ndim,N,_T,_I<:Integer}
     
@@ -327,14 +323,8 @@ function compute_density!(rho::AbstractArray{_T, ndim}, MatParam::NTuple{N,Abstr
         rho[I]  = rho_tup[phase]
     end
 end
-=#
 
-"""
-    compute_density!(rho::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}, PhaseRatios::AbstractArray{_T, M}, P=nothing, T=nothing)
-In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
-This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
-"""
-#=
+
 function compute_density!(rho::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}, PhaseRatios::AbstractArray{_T, M}, P=nothing, T=nothing) where {_T<:AbstractFloat, N,M, K}
     if M!=(N+1)
         error("The PhaseRatios array should have one dimension more than the other arrays")
@@ -381,10 +371,6 @@ function compute_density_times_frac(PhaseRatios::AbstractArray{_T, 1}, MatParam:
     return val 
 end
 =#
-
-#Multiple dispatch to rest of routines found in Computations.jl
-compute_density!(args...) = compute_param!(compute_density,args...)
-compute_density(args...) = compute_param(compute_density,args...)
 
 end
 

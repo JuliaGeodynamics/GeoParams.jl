@@ -32,13 +32,6 @@ Set a constant seismic P and S-wave velocity:
 ```
 where ``V_p, V_s`` are the P-wave and S-wave velocities [``km/s``].
 """
-#=
-@with_kw_noshow mutable struct ConstantSeismicVelocity <: AbstractSeismicVelocity
-    equation::LaTeXString   =   L"v_p = cst \\ v_s = cst"     
-    Vp::GeoUnit             =  8.1km/s               # P-wave velocity
-    Vs::GeoUnit             =  4.5km/s               # S-wave velocity
-end
-=#
 @with_kw_noshow struct ConstantSeismicVelocity{T,U} <: AbstractSeismicVelocity{T}   
     Vp::GeoUnit{T,U}             =  8.1km/s               # P-wave velocity
     Vs::GeoUnit{T,U}             =  4.5km/s               # S-wave velocity

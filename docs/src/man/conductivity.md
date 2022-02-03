@@ -11,5 +11,6 @@ GeoParams.MaterialParameters.Conductivity.Set_TP_Conductivity
 # Computational routines
 To compute, use this:
 ```@docs
-GeoParams.MaterialParameters.Conductivity.ComputeConductivity
+GeoParams.MaterialParameters.Conductivity.compute_conductivity
+GeoParams.MaterialParameters.Conductivity.compute_conductivity!
 ```

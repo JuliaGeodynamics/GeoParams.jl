@@ -9,5 +9,6 @@ GeoParams.MaterialParameters.HeatCapacity.T_HeatCapacity_Whittacker
 # Computational routines
 To compute, use this:
 ```@docs
-GeoParams.MaterialParameters.HeatCapacity.ComputeHeatCapacity
+GeoParams.MaterialParameters.HeatCapacity.compute_heatcapacity
+GeoParams.MaterialParameters.HeatCapacity.compute_heatcapacity!
 ```

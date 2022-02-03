@@ -46,7 +46,7 @@ const μm    = u"μm"
 
 export 
     km, m, cm, mm, μm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW, 
-    GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
+    GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnit, 
     nondimensionalize, dimensionalize,
     superscript, upreferred, GEO, SI, NONE, isDimensional, Value, NumValue, Unit, UnitValue,
     isdimensional, 
@@ -55,7 +55,7 @@ export
 include("unpack.jl")    # adds macros for unpacking GeoUnit variables with or w/out units
 
 """
-AbstractGeoUnits
+AbstractGeoUnit
 
 Abstract supertype for geo units.
 """

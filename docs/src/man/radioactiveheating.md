@@ -9,5 +9,5 @@ GeoParams.MaterialParameters.RadioactiveHeat.ConstantRadioactiveHeat
 # Computational routines
 To compute, use this:
 ```@docs
-GeoParams.MaterialParameters.RadioactiveHeat.ComputeRadioactiveHeat
+GeoParams.MaterialParameters.RadioactiveHeat.compute_radioactive_heat
 ```
