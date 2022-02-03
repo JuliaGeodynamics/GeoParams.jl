@@ -7,9 +7,13 @@
 # In case you want to add new creep laws, have a look at how the ones
 # here are implemented. Please add tests as well!
 
+using ..MaterialParameters: MaterialParamsInfo
+import GeoParams.param_info
+
 export  DislocationCreep,
         SetDislocationCreep
 
+const AxialCompression, SimpleShear, Invariant = 1,2,3
 # Dislocation Creep ------------------------------------------------
 """
     DislocationCreep(n = 1.0NoUnits, r = 0.00.0NoUnits, A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = "AxialCompression" )
@@ -34,22 +38,31 @@ julia> x2      =   DislocationCreep(n=3)
 DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3 mol^-1, Apparatus=AxialCompression
 ```
 """
-@with_kw_noshow mutable struct DislocationCreep <: AbstractCreepLaw
-    equation::LaTeXString   =   L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}" # TO BE UPDATED
-    n::GeoUnit        = 1.0NoUnits         # power-law exponent
-    r::GeoUnit        = 0.0NoUnits         # exponent of water-fugacity dependence
-    A::GeoUnit        = 1.5MPa^(-n-r)/s    # pre-exponential factor
-    E::GeoUnit        = 476.0kJ/mol        # activation energy
-    V::GeoUnit        = 6e-6m^3/mol        # activation volume
-    R::GeoUnit        = 8.314J/mol/K       # Universal gas constant
-    Apparatus         = "AxialCompression" # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
-    Comment::String   = ""                 # Some remarks you want to add about this creep law implementation
-    BibTex_Reference  = ""                 # BibTeX reference
+@with_kw_noshow struct DislocationCreep{N,T,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
+    Name::NTuple{N,Char}          =   ""               # The name is encoded as a NTuple{Char} to make it isbits    
+    n::GeoUnit{T,U1}              = 1.0NoUnits         # power-law exponent
+    r::GeoUnit{T,U1}              = 0.0NoUnits         # exponent of water-fugacity dependence
+    A::GeoUnit{T,U2}              = 1.5MPa^(-n-r)/s    # pre-exponential factor
+    E::GeoUnit{T,U3}              = 476.0kJ/mol        # activation energy
+    V::GeoUnit{T,U4}              = 6e-6m^3/mol        # activation volume
+    R::GeoUnit{T,U5}              = 8.314J/mol/K       # Universal gas constant
+    Apparatus::Int64              = AxialCompression   # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
+end
+DislocationCreep(args...) = DislocationCreep(NTuple{length(args[1]), Char}(collect.(args[1])), convert.(GeoUnit,args[2:end-1])..., args[end])
+
+function param_info(s::DislocationCreep)
+    name = String(collect(s.Name))
+    eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"
+    if name == "" 
+        return MaterialParamsInfo(Equation=eq)
+    end
+    inf = DislocationCreep_info[name][2]
+    return MaterialParamsInfo(Equation=eq, Comment=inf.Comment, BibTex_Reference=inf.BibTex_Reference)
 end
 
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
-function ComputeCreepLaw_EpsII(TauII, a::DislocationCreep, p::CreepLawVariables)
+function computeCreepLaw_EpsII(TauII, a::DislocationCreep, p::CreepLawVariables)
     @unpack n           = a
     @unpack r           = a
     @unpack A           = a
@@ -60,13 +73,13 @@ function ComputeCreepLaw_EpsII(TauII, a::DislocationCreep, p::CreepLawVariables)
     @unpack P           = p
     @unpack T           = p
     @unpack f           = p
-    if Apparatus == "AxialCompression"
+    if Apparatus == AxialCompression
         FT = sqrt(3.0)NoUnits               # relation between differential stress recorded by apparatus and TauII
         FE = 2.0/sqrt(3.0)NoUnits            # relation between gamma recorded by apparatus and EpsII
-    elseif Apparatus == "SimpleShear"
+    elseif Apparatus == SimpleShear
         FT = 2.0NoUnits                      # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
         FE = 2.0NoUnits 
-    elseif Apparatus == "Invariant"
+    elseif Apparatus == Invariant
         FT = 1.0NoUnits 
         FE = 1.0NoUnits 
     end
@@ -75,7 +88,7 @@ end
 
 # EpsII .= A.*(TauII.*FT).^n.*f.^r.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
 # All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
-function ComputeCreepLaw_TauII(EpsII, a::DislocationCreep, p::CreepLawVariables)
+function computeCreepLaw_TauII(EpsII, a::DislocationCreep, p::CreepLawVariables)
     @unpack n           = a
     @unpack r           = a
     @unpack A           = a
@@ -86,13 +99,13 @@ function ComputeCreepLaw_TauII(EpsII, a::DislocationCreep, p::CreepLawVariables)
     @unpack P           = p
     @unpack T           = p
     @unpack f           = p
-    if Apparatus == "AxialCompression"
+    if Apparatus == AxialCompression
         FT = sqrt(3.0)               # relation between differential stress recorded by apparatus and TauII
         FE = 2.0/sqrt(3.0)           # relation between gamma recorded by apparatus and EpsII
-    elseif Apparatus == "SimpleShear"
+    elseif Apparatus == SimpleShear
         FT = 2.0                     # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
         FE = 2.0
-    elseif Apparatus == "Invariant"
+    elseif Apparatus == Invariant
         FT = 1.0
         FE = 1.0
     end
@@ -102,7 +115,7 @@ end
 
 # Print info 
 function show(io::IO, g::DislocationCreep)  
-    print(io, "DislocationCreep: n=$(g.n.val), r=$(g.r.val), A=$(g.A.val), E=$(g.E.val), V=$(g.V.val), Apparatus=$(g.Apparatus)" )  
+    print(io, "DislocationCreep: Name = $(String(collect(g.Name))), n=$(g.n.val), r=$(g.r.val), A=$(g.A.val), E=$(g.E.val), V=$(g.V.val), Apparatus=$(g.Apparatus)" )  
 end
 #-------------------------------------------------------------------------
 
@@ -112,20 +125,23 @@ end
 
 This is a dictionary with pre-defined creep laws    
 """
-SetDislocationCreep = Dict([
+SetDislocationCreep(name::String) = DislocationCreep_info[name][1]
+
+DislocationCreep_info = Dict([
 
 # Olivine rheology 
 ("Dry Olivine | Hirth & Kohlstedt (2003)", 
 # after Hirth, G. & Kohlstedt (2003), D. Rheology of the upper mantle and the mantle wedge: A view from the experimentalists.
 # Inside the subduction Factory 83?105. Table 1, "dry dislocation" parameters
-    DislocationCreep(
+    (DislocationCreep(
+        Name = "Dry Olivine | Hirth & Kohlstedt (2003)",
         n = 3.5NoUnits,
         A = 1.1e5MPa^(-3.5)/s, 
-        E = 530kJ/mol,
+        E = 530.0kJ/mol,
         V = 15e-6m^3/mol,
-        Apparatus =   "AxialCompression",
-        r = 0NoUnits,
-        Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
+        Apparatus = AxialCompression,
+        r = 0.0NoUnits),
+    MaterialParamsInfo(Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
         BibTex_Reference = parse_bibtex("""
             @incollection{eiler_rheology_2003,
             address = {Washington, D. C.},
@@ -144,7 +160,7 @@ SetDislocationCreep = Dict([
             doi = {10.1029/138GM06},
             pages = {83--105},
             }
-        """)
+        """))
     )
 )
 
@@ -153,14 +169,15 @@ SetDislocationCreep = Dict([
     # After Hirth, G. & Kohlstedt (2003), D. Rheology of the upper mantle and the mantle wedge: A view from the experimentalists.
     #   Inside the subduction Factory 83?105. Table 1, "wet dislocation" parameters
     #  Note that this assumes C_OH=1000
-    DislocationCreep(
+    (DislocationCreep(
+        Name = "Wet Olivine | Hirth & Kohlstedt (2003)",
         n = 3.5NoUnits,
         A = 90MPa^(-3.5)/s, 
         E = 480kJ/mol,
         V = 11e-6m^3/mol,
         r   = 1.2NoUnits,
-        Apparatus =   "AxialCompression",
-        Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
+        Apparatus = AxialCompression),
+    MaterialParamsInfo(Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
         BibTex_Reference = parse_bibtex("""
             @incollection{HirthKohlstedt_OlivineRheology_2003,
             address = {Washington, D. C.},
@@ -179,7 +196,7 @@ SetDislocationCreep = Dict([
             doi = {10.1029/138GM06},
             pages = {83--105},
             }
-        """);
+        """))
     )
 )
 

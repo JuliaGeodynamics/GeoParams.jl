@@ -8,12 +8,14 @@ module Conductivity
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
-import Base.show
+using ..MaterialParameters: MaterialParamsInfo
+import Base.show, GeoParams.param_info
 
-abstract type AbstractConductivity <: AbstractMaterialParam end
+abstract type AbstractConductivity{T} <: AbstractMaterialParam end
 
-export  ComputeConductivity,                # calculation routines
-        ComputeConductivity!,
+export  compute_conductivity,                # calculation routines
+        compute_conductivity!,
+        param_info,
         ConstantConductivity,               # constant
         T_Conductivity_Whittacker,          # T-dependent heat capacity
         TP_Conductivity,                    # TP dependent conductivity
@@ -29,31 +31,35 @@ Set a constant conductivity
 ```
 where ``k`` is the thermal conductivity [``W/m/K``].
 """
-@with_kw_noshow mutable struct ConstantConductivity <: AbstractConductivity
-    equation::LaTeXString   =   L"k = cst"     
-    k::GeoUnit              =   3.0Watt/m/K               
+@with_kw_noshow struct ConstantConductivity{T,U} <: AbstractConductivity{T}
+    k::GeoUnit{T,U}           =   3.0Watt/m/K               
+end
+ConstantConductivity(args...) = ConstantConductivity(convert.(GeoUnit,args)...)
+
+function param_info(s::ConstantConductivity) # info about the struct
+    return MaterialParamsInfo(Equation = L"k = cst")
 end
 
 # Calculation routine
-function ComputeConductivity(P, T, s::ConstantConductivity)
+function compute_conductivity(P, T, s::ConstantConductivity)
     @unpack k   = s
 
     if length(T)>1
-        return Value(k).*ones(size(T))
+        return NumValue(k).*ones(size(T))
     else
-        return Value(k)
+        return NumValue(k)
     end
 end
 
 """
-    ComputeConductivity(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::ConstantConductivity) where N
+    compute_conductivity(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::ConstantConductivity) where N
 
 In-place routine to compute constant conductivity    
 """
-function ComputeConductivity!(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::ConstantConductivity) where N
+function compute_conductivity!(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::ConstantConductivity) where N
     @unpack k   = s
     
-    k_array .= ustrip(Value(k))
+    k_array .= NumValue(k)
     
     return nothing
 end
@@ -99,38 +105,42 @@ where ``Cp`` is the heat capacity [``J/mol/K``], and ``a,b,c`` are parameters th
 - f = 0.732m^2/s        
 - g = 0.000135m^2/s/K 
 """
-@with_kw_noshow mutable struct T_Conductivity_Whittacker <: AbstractConductivity
-    # Note: the resulting curve of k was visually compared with Fig. 2 of the paper
-    equation::LaTeXString   =   L"k = f(T) "     
-    a0::GeoUnit             =   199.5J/mol/K                # prefactor for low T       (T<= 846 K)
-    a1::GeoUnit             =   229.32J/mol/K               # prefactor for high T      (T>  846 K)
-    b0::GeoUnit             =   0.0857J/mol/K^2             # linear term for low T     (T<= 846 K)
-    b1::GeoUnit             =   0.0323J/mol/K^2             # linear term for high T    (T>  846 K)
-    c0::GeoUnit             =   5e6J/mol*K                  # quadratic term for low T  (T<= 846 K)
-    c1::GeoUnit             =   47.9e-6J/mol*K              # quadratic term for high T (T>  846 K)
-    molmass::GeoUnit        =   0.22178kg/mol               # average molar mass 
-    Tcutoff::GeoUnit        =   846K                        # cutoff temperature
-    rho::GeoUnit            =   2700kg/m^3                  # Density they use for an average crust
-    d::GeoUnit              =   576.3*1e-6m^2/s*K           # diffusivity parameterization
-    e::GeoUnit              =   0.062*1e-6m^2/s             # diffusivity parameterization
-    f::GeoUnit              =   0.732*1e-6m^2/s             # diffusivity parameterization
-    g::GeoUnit              =   0.000135*1e-6m^2/s/K        # diffusivity parameterization
+@with_kw_noshow struct T_Conductivity_Whittacker{T,U1,U2,U3,U4,U5,U6,U7,U8,U9} <: AbstractConductivity{T} 
+    # Note: the resulting curve of k was visually compared with Fig. 2 of the paper  
+    a0::GeoUnit{T,U1}             =   199.5J/mol/K                # prefactor for low T       (T<= 846 K)
+    a1::GeoUnit{T,U1}             =   229.32J/mol/K               # prefactor for high T      (T>  846 K)
+    b0::GeoUnit{T,U2}             =   0.0857J/mol/K^2             # linear term for low T     (T<= 846 K)
+    b1::GeoUnit{T,U2}             =   0.0323J/mol/K^2             # linear term for high T    (T>  846 K)
+    c0::GeoUnit{T,U3}             =   5e6J/mol*K                  # quadratic term for low T  (T<= 846 K)
+    c1::GeoUnit{T,U3}             =   47.9e-6J/mol*K              # quadratic term for high T (T>  846 K)
+    molmass::GeoUnit{T,U4}        =   0.22178kg/mol               # average molar mass 
+    Tcutoff::GeoUnit{T,U5}        =   846.0K                      # cutoff temperature
+    rho::GeoUnit{T,U6}            =   2700kg/m^3                  # Density they use for an average crust
+    d::GeoUnit{T,U7}              =   576.3*1e-6m^2/s*K           # diffusivity parameterization
+    e::GeoUnit{T,U8}              =   0.062*1e-6m^2/s             # diffusivity parameterization
+    f::GeoUnit{T,U8}              =   0.732*1e-6m^2/s             # diffusivity parameterization
+    g::GeoUnit{T,U9}              =   0.000135*1e-6m^2/s/K        # diffusivity parameterization
+end
+T_Conductivity_Whittacker(args...) = T_Conductivity_Whittacker(convert.(GeoUnit,args)...)
+
+function param_info(s::T_Conductivity_Whittacker) # info about the struct
+    return MaterialParamsInfo(Equation = L"k = f(T) ")
 end
 
 # Calculation routine
-function ComputeConductivity(P,T, s::T_Conductivity_Whittacker)
+function compute_conductivity(P,T, s::T_Conductivity_Whittacker)
     @unpack a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g   = s
     
-    ρ  = Value(rho)
-    k  = zeros(size(T))*   Value(a0)/Value(molmass)*ρ*Value(e)  # the last multiplication ensures the correct units even for non-dimensional cases
+    ρ  = NumValue(rho)
+    k  = zeros(size(T))*   NumValue(a0)/NumValue(molmass)*ρ*NumValue(e)  # the last multiplication ensures the correct units even for non-dimensional cases
     
     for i in eachindex(T)
-        if T[i] <= Value(Tcutoff)
-            a,b,c = Value(a0),Value(b0),Value(c0)
-            κ     = Value(d)/T[i] - Value(e)  
+        if T[i] <= NumValue(Tcutoff)
+            a,b,c = NumValue(a0),NumValue(b0),NumValue(c0)
+            κ     = NumValue(d)/T[i] - NumValue(e)  
         else
-            a,b,c = Value(a1),Value(b1),Value(c1)
-            κ     = Value(f) - Value(g)*T[i]
+            a,b,c = NumValue(a1),NumValue(b1),NumValue(c1)
+            κ     = NumValue(f) - NumValue(g)*T[i]
         end
        
         cp = (a + b*T[i] - c/T[i]^2)/molmass # conductivity
@@ -143,11 +153,11 @@ function ComputeConductivity(P,T, s::T_Conductivity_Whittacker)
 end
 
 """
-    ComputeConductivity(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::T_Conductivity_Whittacker) where N
+    compute_conductivity!(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::T_Conductivity_Whittacker) where N
 
 In-place routine to compute temperature-dependent conductivity    
 """
-function ComputeConductivity!(k::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::T_Conductivity_Whittacker) where N
+function compute_conductivity!(k::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::T_Conductivity_Whittacker) where N
     @unpack a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g   = s
     a0,b0,c0    =   NumValue(a0),NumValue(b0),NumValue(c0)
     a1,b1,c1    =   NumValue(a1),NumValue(b1),NumValue(c1)
@@ -168,7 +178,7 @@ function ComputeConductivity!(k::AbstractArray{<:AbstractFloat,N},P::AbstractArr
 end
 
 # Print info 
-function show(io::IO, g::T_Conductivity_Whittacker)  
+function show(io::IO, g::T_Conductivity_Whittacker) #info about the struct
     print(io, "T-dependent conductivity following Whittacker et al. (2009) for average crust). \n");
 end
 #-------------------------------------------------------------------------
@@ -190,16 +200,23 @@ where ``k`` is the conductivity [``W/K/m``], and ``a_k,b_k,c_k,d_k`` are paramet
 - ``c_k`` = 77K       
 - ``d_k`` = 0/MPa       
 """
-@with_kw_noshow mutable struct TP_Conductivity <: AbstractConductivity
-    equation::LaTeXString   =   L"k = \left(a_k + {b_k/{T + c_k}} \right)*(1 + d_k*P) "     
-    a::GeoUnit              =   1.18Watt/K/m        # empirical fitting term
-    b::GeoUnit              =   474Watt/m           # empirical fitting term
-    c::GeoUnit              =   77K                 # empirical fitting term
-    d::GeoUnit              =   0/MPa               # empirical fitting term
-    Comment::String         =   ""                  # Some remarks you want to add about this creep law implementation
-    BibTex_Reference        =   ""                  # BibTeX reference
+@with_kw_noshow struct TP_Conductivity{N,T,U1,U2,U3,U4} <: AbstractConductivity{T} 
+    Name::NTuple{N,Char}          =   ""                  # The name is encoded as a NTuple{Char} to make it isbits
+    a::GeoUnit{T,U1}              =   1.18Watt/K/m        # empirical fitting term
+    b::GeoUnit{T,U2}              =   474.0Watt/m         # empirical fitting term
+    c::GeoUnit{T,U3}              =   77.0K               # empirical fitting term
+    d::GeoUnit{T,U4}              =   0.0/MPa             # empirical fitting term
 end
+TP_Conductivity(args...) = TP_Conductivity(NTuple{length(args[1]), Char}(collect.(args[1])), convert.(GeoUnit,args[2:end])...)
 
+function param_info(s::TP_Conductivity)
+    name = String(collect(s.Name))
+    eq = L"k = \left(a_k + {b_k/{T + c_k}} \right)*(1 + d_k*P) "
+    if name == "" 
+        return MaterialParamsInfo(Equation = eq)
+    end
+    return MaterialParamsInfo(Equation = eq, Comment = TP_Conductivity_info[name][2].Comment)
+end
 
 """
     Set_TP_Conductivity["Name of temperature(-pressure) dependent conductivity"]
@@ -217,36 +234,37 @@ T/P dependent conductivity: k = (0.73 W K⁻¹ m⁻¹ + 1293 W m⁻¹/(T + 77 K)
 ```
 
 """
-Set_TP_Conductivity = Dict([
+Set_TP_Conductivity(name::String) = TP_Conductivity_info[name][1]
+
+TP_Conductivity_info = Dict([
     ("UpperCrust", 
-        TP_Conductivity( a=0.64Watt/K/m, b=807Watt/m, c=77K, d=0/MPa, 
-            Comment="Sediment/upper crust T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!")
+        (TP_Conductivity(Name="UpperCrust", a=0.64Watt/K/m, b=807Watt/m, c=77K, d=0/MPa),
+        MaterialParamsInfo(Comment="Sediment/upper crust T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!"))
     )
     
     ("LowerCrust", 
-        TP_Conductivity( a=1.18Watt/K/m, b=474Watt/m, c=77K, d=0/MPa, 
-            Comment="Lower crust T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!")
+        (TP_Conductivity(Name="LowerCrust", a=1.18Watt/K/m, b=474Watt/m, c=77K, d=0/MPa), 
+        MaterialParamsInfo(Comment="Lower crust T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!"))
     )
 
     ("OceanicCrust", 
-        TP_Conductivity( a=1.18Watt/K/m, b=474Watt/m, c=77K, d=0/MPa, 
-            Comment="Oceanic crust T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!")
+        (TP_Conductivity(Name="OceanicCrust", a=1.18Watt/K/m, b=474Watt/m, c=77K, d=0/MPa), 
+        MaterialParamsInfo(Comment="Oceanic crust T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!"))
     )
     
     ("Mantle", 
-        TP_Conductivity( a=0.73Watt/K/m, b=1293Watt/m, c=77K, d=0.00004/MPa, 
-            Comment="Mantle T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!")
+        (TP_Conductivity(Name="Mantle", a=0.73Watt/K/m, b=1293Watt/m, c=77K, d=0.00004/MPa),
+        MaterialParamsInfo(Comment="Mantle T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!"))
     )
 
 ])
 
-
 # Calculation routine
-function ComputeConductivity(P,T, s::TP_Conductivity)
+function compute_conductivity(P,T, s::TP_Conductivity)
     @unpack a,b,c,d   = s
     
-    a_k, b_k = Value(a), Value(b)
-    c_k, d_k = Value(c), Value(d)
+    a_k, b_k = NumValue(a), NumValue(b)
+    c_k, d_k = NumValue(c), NumValue(d)
 
     k  = zeros(size(T))*   a_k  # the last multiplication ensures the correct units even for non-dimensional cases
     
@@ -268,7 +286,7 @@ function ComputeConductivity(P,T, s::TP_Conductivity)
 end
 
 # Calculation routine
-function ComputeConductivity!(K::AbstractArray{T, N}, P::AbstractArray{T, N},Temp::AbstractArray{T, N}, s::TP_Conductivity) where{T<:AbstractFloat, N}
+function compute_conductivity!(K::AbstractArray{T, N}, P::AbstractArray{T, N},Temp::AbstractArray{T, N}, s::TP_Conductivity) where{T<:AbstractFloat, N}
     @unpack a,b,c,d   = s
     
     a_k, b_k = NumValue(a), NumValue(b)
@@ -287,9 +305,9 @@ end
 # Print info 
 function show(io::IO, g::TP_Conductivity)  
     if ustrip(Value(g.d))==0
-        print(io, "T/P dependent conductivity: k = $(g.a.val) + $(g.b.val)/(T + $(g.c.val))  \n");
+        print(io, "T/P dependent conductivity: Name = $(String(collect(g.Name))), k = $(g.a.val) + $(g.b.val)/(T + $(g.c.val))  \n");
     else
-        print(io, "T/P dependent conductivity: k = ($(g.a.val) + $(g.b.val)/(T + $(g.c.val)))*(1 + $(g.d.val)*P)  \n");
+        print(io, "T/P dependent conductivity: Name = $(String(collect(g.Name))), k = ($(g.a.val) + $(g.b.val)/(T + $(g.c.val)))*(1 + $(g.d.val)*P)  \n");
     end
 end
 #-------------------------------------------------------------------------
@@ -297,7 +315,7 @@ end
 
 # Help info for the calculation routines
 """
-    k = ComputeConductivity(P, T, s:<AbstractConductivity)
+    k = compute_conductivity(P, T, s:<AbstractConductivity)
 
 Returns the thermal conductivity `k` at any temperature `T` and pressure `P` using any of the parameterizations implemented.
 
@@ -316,32 +334,32 @@ julia> Cp = ComputeHeatCapacity(0,T,cp)
 
 
 """
-ComputeConductivity()
+compute_conductivity()
 
 
 """
-    k = ComputeConductivity(T::Any, s::AbstractConductivity)
+    k = compute_conductivity(T::Any, s::AbstractConductivity)
 
 Computes conductivity if only temperature (and not pressure) is specified
 """
-ComputeConductivity(T::Any, s::AbstractConductivity) =  ComputeConductivity(0,T, s)
+compute_conductivity(T::Any, s::AbstractConductivity) =  compute_conductivity(0,T, s)
 
 """
-    k = ComputeConductivity(s::ConstantConductivity)
+    k = compute_conductivity(s::ConstantConductivity)
 
 Returns conductivity if we are sure that we will only employ constant values throughout the simulation
 """
-ComputeConductivity(s::ConstantConductivity) =  ComputeConductivity(0,0, s)
+compute_conductivity(s::ConstantConductivity) =  compute_conductivity(0,0, s)
 
 
 """
-    ComputeConductivity!(K::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},Temp::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
+    compute_conductivity!(K::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},Temp::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
 
 In-place computation of conductivity `K` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `Temp` arrays.
 This assumes that the `Phase` of every point is specified as an Integer in the `Phases` array.
 
 """
-function ComputeConductivity!(K::AbstractArray{T, N}, Phases::AbstractArray{<:Integer, N}, P::AbstractArray{T, N},Temp::AbstractArray{T, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where {T<:AbstractFloat,N}
+function compute_conductivity!(K::AbstractArray{T, N}, Phases::AbstractArray{<:Integer, N}, P::AbstractArray{T, N},Temp::AbstractArray{T, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where {T<:AbstractFloat,N}
 
     for i = 1:length(MatParam)
         
@@ -352,7 +370,7 @@ function ComputeConductivity!(K::AbstractArray{T, N}, Phases::AbstractArray{<:In
             P_local     =   view(P   , ind )
             T_local     =   view(Temp, ind )
 
-            ComputeConductivity!(K_local, P_local, T_local, MatParam[i].Conductivity[1] ) 
+            compute_conductivity!(K_local, P_local, T_local, MatParam[i].Conductivity[1] ) 
         end
         
     end
@@ -361,13 +379,13 @@ end
 
 
 """
-    ComputeConductivity!(k::AbstractArray{T,N}, PhaseRatios::AbstractArray{T, M}, P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
+    compute_conductivity!(k::AbstractArray{T,N}, PhaseRatios::AbstractArray{T, M}, P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
 
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 
 """
-function ComputeConductivity!(k::AbstractArray{T, N}, PhaseRatios::AbstractArray{T, M}, P::AbstractArray{T, N},Temp::AbstractArray{T, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where {T<:AbstractFloat, N,M}
+function compute_conductivity!(k::AbstractArray{T, N}, PhaseRatios::AbstractArray{T, M}, P::AbstractArray{T, N},Temp::AbstractArray{T, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where {T<:AbstractFloat, N,M}
     
     if M!=(N+1)
         error("The PhaseRatios array should have one dimension more than the other arrays")
@@ -380,7 +398,7 @@ function ComputeConductivity!(k::AbstractArray{T, N}, PhaseRatios::AbstractArray
         Fraction    = selectdim(PhaseRatios,M,i);
         if (maximum(Fraction)>0.0) & (!isnothing(MatParam[i].Conductivity))
 
-            ComputeConductivity!(k_local, P, Temp, MatParam[i].Conductivity[1] ) 
+            compute_conductivity!(k_local, P, Temp, MatParam[i].Conductivity[1] ) 
 
             k .= k .+ k_local.*Fraction
         end

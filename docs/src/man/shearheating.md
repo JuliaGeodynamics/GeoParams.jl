@@ -9,6 +9,6 @@ GeoParams.MaterialParameters.Shearheating.ConstantShearheating
 # Computational routines
 To compute, use this:
 ```@docs
-GeoParams.MaterialParameters.Shearheating.ComputeShearheating
-GeoParams.MaterialParameters.Shearheating.ComputeShearheating!
+GeoParams.MaterialParameters.Shearheating.compute_shearheating
+GeoParams.MaterialParameters.Shearheating.compute_shearheating!
 ```
