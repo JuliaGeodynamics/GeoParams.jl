@@ -118,15 +118,15 @@ DislocationCreep_info = Dict([
 ("Dry Olivine | Hirth & Kohlstedt (2003)", 
 # after Hirth, G. & Kohlstedt (2003), D. Rheology of the upper mantle and the mantle wedge: A view from the experimentalists.
 # Inside the subduction Factory 83?105. Table 1, "dry dislocation" parameters
-    DislocationCreep(
+    (DislocationCreep(
         Name = "Dry Olivine | Hirth & Kohlstedt (2003)",
         n = 3.5NoUnits,
         A = 1.1e5MPa^(-3.5)/s, 
-        E = 530kJ/mol,
+        E = 530.0kJ/mol,
         V = 15e-6m^3/mol,
-        r = 0NoUnits,
         Apparatus = AxialCompression,
-        MaterialParamsInfo(Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
+        r = 0.0NoUnits),
+    MaterialParamsInfo(Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
         BibTex_Reference = parse_bibtex("""
             @incollection{eiler_rheology_2003,
             address = {Washington, D. C.},
@@ -154,15 +154,15 @@ DislocationCreep_info = Dict([
     # After Hirth, G. & Kohlstedt (2003), D. Rheology of the upper mantle and the mantle wedge: A view from the experimentalists.
     #   Inside the subduction Factory 83?105. Table 1, "wet dislocation" parameters
     #  Note that this assumes C_OH=1000
-    DislocationCreep(
+    (DislocationCreep(
         Name = "Wet Olivine | Hirth & Kohlstedt (2003)",
         n = 3.5NoUnits,
         A = 90MPa^(-3.5)/s, 
         E = 480kJ/mol,
         V = 11e-6m^3/mol,
         r   = 1.2NoUnits,
-        Apparatus =   AxialCompression,
-        MaterialParamsInfo(Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
+        Apparatus = AxialCompression),
+    MaterialParamsInfo(Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
         BibTex_Reference = parse_bibtex("""
             @incollection{HirthKohlstedt_OlivineRheology_2003,
             address = {Washington, D. C.},

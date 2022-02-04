@@ -9,5 +9,5 @@ GeoParams.MaterialParameters.GravitationalAcceleration.ConstantGravity
 # Computational routines
 To compute, use this:
 ```@docs
-GeoParams.MaterialParameters.GravitationalAcceleration.ComputeGravity
+GeoParams.MaterialParameters.GravitationalAcceleration.compute_gravity
 ```

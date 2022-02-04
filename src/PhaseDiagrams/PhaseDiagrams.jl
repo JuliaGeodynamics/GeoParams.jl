@@ -199,9 +199,9 @@ function CreateInterpolationObject_PhaseDiagram(data_vec::Vector{Float64}, Tvec,
         Tvec = ustrip.(Tvec_K);
         data = ustrip.(data_units);
     else
-        Pvec = Nondimensionalize(Pvec_Pa, CharDim)
-        Tvec = Nondimensionalize(Tvec_K, CharDim)
-        data = Nondimensionalize(data_units, CharDim)
+        Pvec = nondimensionalize(Pvec_Pa, CharDim)
+        Tvec = nondimensionalize(Tvec_K, CharDim)
+        data = nondimensionalize(data_units, CharDim)
     end
 
     # Create interpolation object

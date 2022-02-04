@@ -17,17 +17,19 @@ using Requires          # To only add plotting routines if Plots is loaded
 
 export 
         @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
-        GeoUnit, GEO_units, SI_units, NO_units, AbstractGeoUnits, 
-        Nondimensionalize, Nondimensionalize!, Dimensionalize, Dimensionalize!,
-        superscript, upreferred, GEO, SI, NONE, isDimensional, Value, NumValue, Unit, 
-        km, m, cm, mm, μm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW
+        GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnit, 
+        nondimensionalize, dimensionalize,
+        superscript, upreferred, GEO, SI, NONE, isDimensional, Value, NumValue, Unit, UnitValue, isdimensional,
+        km, m, cm, mm, μm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW, Quantity
+
+export AbstractGeoUnit1,   GeoUnit1  
    
 #         
 abstract type AbstractMaterialParam end                                    # structure that holds material parmeters (density, elasticity, viscosity)          
 abstract type AbstractMaterialParamsStruct end                             # will hold all info for a phase       
 abstract type AbstractPhaseDiagramsStruct <:  AbstractMaterialParam end    # will hold all info for phase diagrams 
-function PerpleX_LaMEM_Diagram end          # necessary as we already use this function in Units, but only define it later in PhaseDiagrams
-
+function PerpleX_LaMEM_Diagram end                                         # necessary as we already use this function in Units, but only define it later in PhaseDiagrams
+function param_info end
 export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
 
 
@@ -36,75 +38,82 @@ export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagram
 #  as I am indeed redefining a method originally defined in Unitful
 include("Units.jl")     
 using .Units
+export @unpack_units, @unpack_val
+export compute_units
 
 # Define Material Parameter structure
 include("MaterialParameters.jl")
 using  .MaterialParameters
-export MaterialParams, SetMaterialParams
+export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo  
 
 # Phase Diagrams
 using  .MaterialParameters.PhaseDiagrams
 export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
 
-# Creep laws
-using  .MaterialParameters.CreepLaw
-export  ComputeCreepLaw_EpsII, ComputeCreepLaw_TauII, CreepLawVariables,
-        LinearViscous, PowerlawViscous, 
-        DislocationCreep, SetDislocationCreep,
-	DiffusionCreep, SetDiffusionCreep
-
 # Density
 using  .MaterialParameters.Density
-export  ComputeDensity,                                # computational routines
-        ComputeDensity!,  
+export  compute_density,                                # computational routines
+        compute_density!,  
+        param_info,
+        AbstractDensity,
+        No_Density,
         ConstantDensity,                        
         PT_Density,
-        PhaseDiagram_LookupTable, Read_LaMEM_Perple_X_Diagram
-
+        Compressible_Density, 
+        PhaseDiagram_LookupTable, 
+        Read_LaMEM_Perple_X_Diagram
+        
+# Creep laws
+using  .MaterialParameters.CreepLaw
+export  computeCreepLaw_EpsII, computeCreepLaw_TauII, CreepLawVariables,
+        LinearViscous, PowerlawViscous, 
+        DislocationCreep, SetDislocationCreep,
+        DiffusionCreep, SetDiffusionCreep
 
 # Gravitational Acceleration
 using  .MaterialParameters.GravitationalAcceleration
-export  ComputeGravity,                                # computational routines
+export  compute_gravity,                                # computational routines
         ConstantGravity
+
 
 # Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat         
 using .MaterialParameters.HeatCapacity
-export  ComputeHeatCapacity,  
-        ComputeHeatCapacity!,                           
+export  compute_heatcapacity,  
+        compute_heatcapacity!,                           
         ConstantHeatCapacity,
         T_HeatCapacity_Whittacker
 
 using .MaterialParameters.Conductivity
-export  ComputeConductivity,
-        ComputeConductivity!,
+export  compute_conductivity,
+        compute_conductivity!,
         ConstantConductivity,
         T_Conductivity_Whittacker,
         TP_Conductivity,
         Set_TP_Conductivity
 
 using .MaterialParameters.LatentHeat
-export  ComputeLatentHeat,                           
+export  compute_latent_heat,                           
         ConstantLatentHeat
         
 using .MaterialParameters.RadioactiveHeat        
-export  ComputeRadioactiveHeat,                 
+export  compute_radioactive_heat,                 
         ConstantRadioactiveHeat                  
 
 using .MaterialParameters.Shearheating        
-export  ComputeShearheating, ComputeShearheating!,               
+export  compute_shearheating!, compute_shearheating,               
         ConstantShearheating              
 
 # Seismic velocities
 using .MaterialParameters.SeismicVelocity
-export  ComputePwaveVelocity,  ComputeSwaveVelocity,   
-        ComputePwaveVelocity!, ComputeSwaveVelocity!,   
+export  compute_pwave_velocity,  compute_swave_velocity,   
+        compute_pwave_velocity!, compute_swave_velocity!,   
         ConstantSeismicVelocity                        
 
 
 # Add melting parameterizations
 include("./MeltFraction/MeltingParameterization.jl")
 using .MeltingParam
-export  ComputeMeltingParam, ComputeMeltingParam!,       # calculation routines
+export  compute_meltfraction, compute_meltfraction!,       # calculation routines
         MeltingParam_Caricchi                          
 
 
@@ -115,6 +124,8 @@ function __init__()
                 @eval include("./Plotting.jl")
         end
 end
+
+
 
 
 end # module

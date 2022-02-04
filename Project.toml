@@ -1,7 +1,7 @@
 name = "GeoParams"
 uuid = "e018b62d-d9de-4a26-8697-af89c310ae38"
 authors = ["Boris Kaus <kaus@uni-mainz.de>"]
-version = "0.1.8"
+version = "0.2.0"
 
 [deps]
 BibTeX = "7b0aa2c9-049f-5cec-894a-2b6b781bb25e"
@@ -10,6 +10,8 @@ Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
+Setfield = "efcf1570-3423-57d1-acb7-fd33fddbac46"
+UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
@@ -18,7 +20,9 @@ Interpolations = "0.13"
 LaTeXStrings = "1.2.1"
 Parameters = "0.12.0"
 Requires = "1.0 - 1.1"
-Unitful = "1.8 - 1.9"
+Setfield = "0.8 - 0.8"
+UnPack = "1.0"
+Unitful = "1.8 - 1.10"
 julia = "1.3,1.6"
 
 [extras]

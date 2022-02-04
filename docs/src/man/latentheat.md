@@ -8,5 +8,5 @@ GeoParams.MaterialParameters.LatentHeat.ConstantLatentHeat
 # Computational routines
 To compute, use this:
 ```@docs
-GeoParams.MaterialParameters.LatentHeat.ComputeLatentHeat
+GeoParams.MaterialParameters.LatentHeat.compute_latent_heat
 ```
