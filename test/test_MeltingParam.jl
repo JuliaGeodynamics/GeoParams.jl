@@ -2,36 +2,38 @@ using Test
 using GeoParams
 @testset "MeltingParam.jl" begin
 
+#Make sure structure is isbits
+x = MeltingParam_Caricchi()
+@test isbits(x)
+
 # This tests the various melting parameterizations
 CharUnits_GEO   =   GEO_units(viscosity=1e19, length=10km);
        
 
-T   =   (250:100:1250)*K .+ 273.15K
-T_nd= Float64.(T/CharUnits_GEO.Temperature)
+T       =   Vector(250:100:1250)*K .+ 273.15K
+T_nd    =   Float64.(T/CharUnits_GEO.Temperature)
 
 # Caricchi parameterization [in ND numbers, which is anyways the typical use case]
 p        =  MeltingParam_Caricchi()
-phi_dim  =  ComputeMeltingParam(0,T, p)
+phi_dim  =  zeros(size(T))
+compute_meltfraction!(phi_dim, p, zeros(size(T)), ustrip.(T))
+
 phi_dim1  = zeros(size(phi_dim))
-
-ComputeMeltingParam!(phi_dim1, 0,T, p) # in-place routine
-
+compute_meltfraction!(phi_dim1, p, zeros(size(T)), ustrip.(T)) # in-place routine
 
 p_nd     =  p
-Nondimensionalize!(p_nd, CharUnits_GEO)
-phi_nd   =  ComputeMeltingParam(0,T_nd, p_nd)
+p_nd     =  nondimensionalize(p_nd, CharUnits_GEO)
+phi_nd   = zeros(size(T))
+compute_meltfraction!(phi_nd, p_nd, zeros(size(T_nd)),T_nd)
 
 # Do this computation manually, using the actual expression of Caricchi
-T_C         =   250:100:1250    # in celcius
+T_C         =   Vector(250:100:1250)    # in celcius
 Phi_solid   =   1.0 .- 1.0./(1.0 .+ exp.((800.0 .- T_C)./23.0)); 
 Phi_anal    =   1.0 .- Phi_solid
 
 @test sum(phi_dim  - Phi_anal)   < 1e-12
 @test sum(phi_dim1 - Phi_anal)   < 1e-12
 @test sum(phi_nd - Phi_anal)    < 1e-12
-
-
-
 
 
 # Test computation of density for the whole computational domain, using arrays 
@@ -56,7 +58,7 @@ Phases[:,:,80:end] .= 3
 T =  ones(size(Phases))*1500
 P =  ones(size(Phases))*10
 
-ComputeMeltingParam!(ϕ, Phases, P,T, MatParam)
+compute_meltfraction!(ϕ, MatParam, Phases, P,T)
 @test sum(ϕ)/n^3 ≈ 0.6463001302812086
 
 
@@ -68,7 +70,7 @@ for i in CartesianIndices(Phases)
     PhaseRatio[I] = 1.0  
 end
 
-ComputeMeltingParam!(ϕ, PhaseRatio, P,T, MatParam)
+compute_meltfraction!(ϕ, MatParam, PhaseRatio, P,T)
 @test sum(ϕ)/n^3 ≈ 0.6463001302812086
 
 

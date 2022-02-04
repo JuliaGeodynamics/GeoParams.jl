@@ -14,18 +14,19 @@ using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam
 using BibTeX
-import Base.show
+using ..MaterialParameters: MaterialParamsInfo
+import Base.show, GeoParams.param_info
 
-abstract type AbstractCreepLaw <: AbstractMaterialParam end
+abstract type AbstractCreepLaw{T} <: AbstractMaterialParam end
 
-export  ComputeCreepLaw_EpsII, ComputeCreepLaw_TauII,       # calculation routines
+export  computeCreepLaw_EpsII, computeCreepLaw_TauII,       # calculation routines
         CreepLawVariables,                                     # holds additional parameters required for calculations
         LinearViscous, 
         PowerlawViscous
+        param_info
 
 
-
-
+# NOTE: we will likely have to remove this, in favor of multiple dispatch options
 """
  Struct that holds parameters required for creep law calculations (such as P,T, grain size etc.)
 
@@ -43,6 +44,7 @@ Note that, if needed, this can be extended, w/out interfering with existing calc
     d::GeoUnit  =   1.0cm      # grainsize
     f::GeoUnit  =   0.0MPa     # water-fugacity         
 end
+
 include("DislocationCreep.jl")
 include("DiffusionCreep.jl")
 # Linear viscous rheology ------------------------------------------------
@@ -62,22 +64,27 @@ or
 
 where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\\dot{\\varepsilon}_0``[1/s], and ``n`` the power law exponent []. 
 """
-@with_kw_noshow mutable struct LinearViscous <: AbstractCreepLaw
-    equation::LaTeXString   =   L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"     
-    η::GeoUnit            =   1e20Pa*s                # viscosity
+@with_kw_noshow struct LinearViscous{T,U} <: AbstractCreepLaw{T}    
+    η::GeoUnit{T,U}       =   1e20Pa*s                # viscosity
+    η_val::T            =   1.0
+end
+LinearViscous(args...) = LinearViscous(convert(GeoUnit,args[1]), args[2])
+
+function param_info(s::LinearViscous) # info about the struct
+    return MaterialParamsInfo(Equation = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}")
 end
 
 # Calculation routines for linear viscous rheologies
-function ComputeCreepLaw_EpsII(TauII, s::LinearViscous, p::CreepLawVariables)
+function computeCreepLaw_EpsII(TauII, s::LinearViscous, p::CreepLawVariables)
     @unpack η   = s
     
-    return EpsII = TauII/(2.0*η);
+    return EpsII = (TauII/η)*0.5;
 end
 
-function ComputeCreepLaw_TauII(EpsII, s::LinearViscous, p::CreepLawVariables)
+function computeCreepLaw_TauII(EpsII, s::LinearViscous, p::CreepLawVariables)
     @unpack η   = s
     
-    return TauII = 2.0*η*EpsII;
+    return TauII = 2.0*(η*EpsII);
 end
 
 # Print info 
@@ -97,11 +104,12 @@ Defines a power law viscous creeplaw as:
 ```
 where ``\\eta`` is the effective viscosity [Pa*s].
 """
-@with_kw_noshow mutable struct PowerlawViscous <: AbstractCreepLaw
-    η0::GeoUnit     =  1e18Pa*s            # reference viscosity 
-    n::GeoUnit      =  2.0*NoUnits         # powerlaw exponent
-    ε0::GeoUnit     =  1e-15*1/s;          # reference strainrate
+@with_kw_noshow struct PowerlawViscous{T,U1,U2,U3} <: AbstractCreepLaw{T}
+    η0::GeoUnit{T,U1}     =  1e18Pa*s            # reference viscosity 
+    n::GeoUnit{T,U2}      =  2.0*NoUnits         # powerlaw exponent
+    ε0::GeoUnit{T,U3}     =  1e-15*1/s;          # reference strainrate
 end
+PowerlawViscous(a...) = PowerlawViscous(convert.(GeoUnit,a)...)
 
 # Print info 
 function show(io::IO, g::PowerlawViscous)  
@@ -112,7 +120,7 @@ end
 
 # Help info for the calculation routines
 """
-    ComputeCreepLaw_EpsII(TauII, s:<AbstractCreepLaw, p::CreepLawVariables)
+    computeCreepLaw_EpsII(TauII, s:<AbstractCreepLaw, p::CreepLawVariables)
 
 Returns the strainrate invariant ``\\dot{\\varepsilon}_{II}`` for a given deviatoric stress 
 invariant ``\\tau_{II}`` for any of the viscous creep laws implemented.
@@ -124,10 +132,10 @@ may need for the calculations
 ```
 
 """
-ComputeCreepLaw_EpsII
+computeCreepLaw_EpsII
 
 """
-    ComputeCreepLaw_TauII(EpsII, s:<AbstractCreepLaw, p::CreepLawVariables)
+    computeCreepLaw_TauII(EpsII, s:<AbstractCreepLaw, p::CreepLawVariables)
 
 Returns the deviatoric stress invariant ``\\tau_{II}`` for a given strain rate  
 invariant ``\\dot{\\varepsilon}_{II}`` for any of the viscous creep laws implemented.
@@ -139,7 +147,7 @@ may need for the calculations
 ```
 
 """
-ComputeCreepLaw_TauII
+computeCreepLaw_TauII
 
 
 end

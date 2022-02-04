@@ -6,11 +6,13 @@ module LatentHeat
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam
-import Base.show
+using ..MaterialParameters: MaterialParamsInfo
+import Base.show, GeoParams.param_info
 
-abstract type AbstractLatentHeat <: AbstractMaterialParam end
+abstract type AbstractLatentHeat{T} <: AbstractMaterialParam end
 
-export  ComputeLatentHeat,                  # calculation routines
+export  compute_latent_heat,                  # calculation routines
+        param_info,
         ConstantLatentHeat                  # constant
         
 
@@ -24,16 +26,20 @@ Set a constant latent heat:
 ```
 where ``Q_L`` is the latent heat [``kJ/kg``].
 """
-@with_kw_noshow mutable struct ConstantLatentHeat <: AbstractLatentHeat
-    equation::LaTeXString   =   L"Q_L = cst"     
-    Q_L::GeoUnit             =   400kJ/kg                # Latent heat
+@with_kw_noshow struct ConstantLatentHeat{T,U} <: AbstractLatentHeat{T} 
+    Q_L::GeoUnit{T,U}         =   400kJ/kg                # Latent heat
+end
+ConstantLatentHeat(a...) = ConstantLatentHeat(convert.(GeoUnit,a)...)
+
+function param_info(s::ConstantLatentHeat) # info about the struct
+    return MaterialParamsInfo(Equation = L"Q_L = cst")
 end
 
 # Calculation routine
-function ComputeLatentHeat(s::ConstantLatentHeat)
+function compute_latent_heat(s::ConstantLatentHeat)
     @unpack Q_L   = s
     
-    return Value(Q_L)
+    return NumValue(Q_L)
 end
 
 # Print info 
@@ -45,12 +51,12 @@ end
 
 # Help info for the calculation routines
 """
-    Ql = ComputeLatentHeat(s:<AbstractLatentHeat)
+    Ql = compute_latent_heat(s:<AbstractLatentHeat)
 
 Returns the latent heat `Q_L`
 
 """
-ComputeLatentHeat()
+compute_latent_heat()
 
 
 

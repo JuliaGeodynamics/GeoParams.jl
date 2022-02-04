@@ -11,10 +11,10 @@ using ..MeltingParam
 using .Plots
 
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
-using .MaterialParameters.CreepLaw: CreepLawVariables, ComputeCreepLaw_TauII, AbstractCreepLaw
-using .MaterialParameters.HeatCapacity: AbstractHeatCapacity, ComputeHeatCapacity
-using .MaterialParameters.Conductivity: AbstractConductivity, ComputeConductivity
-using .MeltingParam: AbstractMeltingParam, ComputeMeltingParam
+using .MaterialParameters.CreepLaw: CreepLawVariables, computeCreepLaw_TauII, AbstractCreepLaw
+using .MaterialParameters.HeatCapacity: AbstractHeatCapacity, compute_heatcapacity
+using .MaterialParameters.Conductivity: AbstractConductivity, compute_conductivity
+using .MeltingParam: AbstractMeltingParam, compute_meltfraction
 
 export 
     PlotStressStrainrate_CreepLaw,
@@ -69,7 +69,7 @@ function PlotStressStrainrate_CreepLaw(x::AbstractCreepLaw; p=nothing, Strainrat
 
     # Define strainrate 
     Eps_II = range(ustrip(Strainrate[1])/s, stop=ustrip(Strainrate[2])/s, length=101)/s
-    Tau_II = ComputeCreepLaw_TauII(Eps_II, x, p)                  # deviatoric stress
+    Tau_II = computeCreepLaw_TauII(Eps_II, x, p)                  # deviatoric stress
 
     # Transfer to GeoUnits
     Eps_II = GeoUnit(Eps_II);
@@ -122,7 +122,7 @@ function PlotHeatCapacity(cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=
         T = (273:10:1250)*K
     end
 
-    Cp       =   ComputeHeatCapacity(T,cp)
+    Cp       =   compute_heatcapacity(T,cp)
     if length(Cp) == 1
         Cp = ones(size(T))*Cp
     end
@@ -171,7 +171,7 @@ function PlotConductivity(k::AbstractConductivity; T=nothing, P=nothing, plt=not
         P = 1e6Pa*ones(size(T))
     end
 
-    Cond       =   ComputeConductivity(P,T,k)
+    Cond       =   compute_conductivity(P,T,k)
     if length(Cond) == 1
         Cond = ones(size(T))*Cond
     end
@@ -226,7 +226,7 @@ function PlotMeltFraction(p::AbstractMeltingParam; T=nothing, P=nothing, plt=not
         P = P*ones(size(T))
     end
 
-    phi       =   ComputeMeltingParam(P,T,p)
+    phi       =   compute_meltfraction(P,T,p)
     if length(phi) == 1
         phi = ones(size(T))*phi
     end
