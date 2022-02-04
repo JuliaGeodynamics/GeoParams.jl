@@ -20,18 +20,16 @@ R is the universal gas constant
 Apparatus defines the appartus type that shall be recreated (Axial Compression, Simple Shear, Invariant)
 =#
 
-@with_kw_noshow mutable struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{t}
+@with_kw_noshow mutable struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     Name::NTuple{N,Char}        = ""
     n::GeoUnit{T,U1}            = 1.0NoUnits         # power-law exponent
     r::GeoUnit{T,U1}            = 0.0NoUnits         # exponent of water-fugacity
     p::GeoUnit{T,U1}            = -3.0NoUnits         # grain size exponent
-    A::GeoUnit{T,U1}            = 1.5MPa^(-n-r)*s^(-1)*m^(-p)    # material specific rheological parameter
-    E::GeoUnit{T,U1}            = 500kJ/mol          # activation energy
-    V::GeoUnit{T,U1}            = 6e-6m^3/mol        # activation volume
-    R::GeoUnit{T,U1}            = 8.314J/mol/K       # universal gas constant
+    A::GeoUnit{T,U2}            = 1.5MPa^(-n-r)*s^(-1)*m^(-p)    # material specific rheological parameter
+    E::GeoUnit{T,U3}            = 500kJ/mol          # activation energy
+    V::GeoUnit{T,U4}            = 6e-6m^3/mol        # activation volume
+    R::GeoUnit{T,U5}            = 8.314J/mol/K       # universal gas constant
     Apparatus::Int32            = AxialCompression # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
-    Comment::String       = ""                 # comment when implementing new creep laws
-    BibTex_Reference      = ""                 # BibTex reference
 end
 
 
