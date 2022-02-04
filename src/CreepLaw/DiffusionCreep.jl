@@ -38,7 +38,6 @@ function ComputeCreepLaw_EpsII(TauII, a::DiffusionCreep, b::CreepLawVariables)
     @unpack E         = a
     @unpack V         = a
     @unpack R         = a
-    @unpack dChar     = a
     @unpack Apparatus = a
     @unpack P         = b
     @unpack T         = b
@@ -86,7 +85,7 @@ end
 
 # Print info 
 function show(io::IO, g::DiffusionCreep)  
-    print(io, "DiffusionCreep: n=$(g.n.val), r=$(g.r.val), p=$(g.p.val), A=$(g.A.val), E=$(g.E.val), V=$(g.V.val), dChar=$(g.dChar.val), Apparatus=$(g.Apparatus)" )  
+    print(io, "DiffusionCreep: n=$(g.n.val), r=$(g.r.val), p=$(g.p.val), A=$(g.A.val), E=$(g.E.val), V=$(g.V.val), Apparatus=$(g.Apparatus)" )  
 end
 
 # predefined diffusion creep laws are to be added in the dictionary as it is done for dislocation creep laws (see 'DislocationCreep.jl')!
