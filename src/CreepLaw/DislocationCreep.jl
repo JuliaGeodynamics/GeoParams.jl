@@ -20,7 +20,7 @@ const AxialCompression, SimpleShear, Invariant = 1,2,3
 
 # Dislocation Creep ------------------------------------------------
 """
-    DislocationCreep(n = 1.0NoUnits, r = 0.00.0NoUnits, A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = "AxialCompression" )
+    DislocationCreep(n = 1.0NoUnits, r = 0.00.0NoUnits, A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
     
 Defines the flow law parameter of a dislocation creep law 
 The (isotropic) dislocation creep law, as used by experimtalists, is given by  
@@ -32,7 +32,7 @@ where ``n`` is the power law exponent,
 ``A`` is a pre-exponential factor [MPa^(n+r)] (if manually defined, n and r must be either pre-defined or substituted),  
 ``E`` is the activation energy [kJ/mol], ``V`` is the activation volume [m^3/mol]. ``\\dot{\\gamma}`` is the ordinary strain rate [1/s], 
 and ``\\sigma_\\mathrm{d}`` is the differential stress which are converted into second invariants using the apparatus type that can be
-either "AxialCompression", "SimpleShear" or "Invariant".
+either AxialCompression, SimpleShear or Invariant.
 If the flow law paramters are already given as a function of second invariants, choose apparatus = "Invariant"
 ```julia-repl 
 julia> x2      =   DislocationCreep(n=3)
@@ -119,13 +119,14 @@ DislocationCreep_info = Dict([
 # after Hirth, G. & Kohlstedt (2003), D. Rheology of the upper mantle and the mantle wedge: A view from the experimentalists.
 # Inside the subduction Factory 83?105. Table 1, "dry dislocation" parameters
     DislocationCreep(
+        Name = "Dry Olivine | Hirth & Kohlstedt (2003)",
         n = 3.5NoUnits,
         A = 1.1e5MPa^(-3.5)/s, 
         E = 530kJ/mol,
         V = 15e-6m^3/mol,
-        Apparatus =   "AxialCompression",
         r = 0NoUnits,
-        Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
+        Apparatus = AxialCompression,
+        MaterialParamsInfo(Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
         BibTex_Reference = parse_bibtex("""
             @incollection{eiler_rheology_2003,
             address = {Washington, D. C.},
@@ -144,7 +145,7 @@ DislocationCreep_info = Dict([
             doi = {10.1029/138GM06},
             pages = {83--105},
             }
-        """)
+        """))
     )
 )
 
@@ -154,13 +155,14 @@ DislocationCreep_info = Dict([
     #   Inside the subduction Factory 83?105. Table 1, "wet dislocation" parameters
     #  Note that this assumes C_OH=1000
     DislocationCreep(
+        Name = "Wet Olivine | Hirth & Kohlstedt (2003)",
         n = 3.5NoUnits,
         A = 90MPa^(-3.5)/s, 
         E = 480kJ/mol,
         V = 11e-6m^3/mol,
         r   = 1.2NoUnits,
-        Apparatus =   "AxialCompression",
-        Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
+        Apparatus =   AxialCompression,
+        MaterialParamsInfo(Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
         BibTex_Reference = parse_bibtex("""
             @incollection{HirthKohlstedt_OlivineRheology_2003,
             address = {Washington, D. C.},
@@ -179,7 +181,7 @@ DislocationCreep_info = Dict([
             doi = {10.1029/138GM06},
             pages = {83--105},
             }
-        """);
+        """))
     )
 )
 
@@ -195,8 +197,8 @@ DislocationCreep_info = Dict([
         E = 212kJ/mol,
         V = 0m^3/mol,
         r   = 0NoUnits,
-        Apparatus =   "AxialCompression",
-        Comment = "Verified with the original publication Hansen(1982)(NM). Values checked, plots are not reproduced (NM).",
+        Apparatus =   AxialCompression,
+        MaterialParamsInfo(Comment = "Verified with the original publication Hansen(1982)(NM). Values checked, plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
              @article{carter1982stress,
              title={Stress magnitudes in natural rock salt},
@@ -208,7 +210,7 @@ DislocationCreep_info = Dict([
              year={1982},
              publisher={Wiley Online Library}
              }
-        """);
+        """))
     )
 )
                 
@@ -224,8 +226,8 @@ DislocationCreep_info = Dict([
         E = 276kJ/mol,
         V = 0m^3/mol,
         r   = 0NoUnits,
-        Apparatus =   "AxialCompression",
-        Comment = "Values checked (Bremond (1999)), plots are not reproduced (NM).",
+        Apparatus =   AxialCompression,
+        MaterialParamsInfo(Comment = "Values checked (Bremond (1999)), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
              @article{caristan1982transition,
              title={The transition from high temperature creep to fracture in Maryland diabase},
@@ -237,7 +239,7 @@ DislocationCreep_info = Dict([
              year={1982},
              publisher={Wiley Online Library}
              }
-        """);
+        """))
     )
 )
 
@@ -253,8 +255,8 @@ DislocationCreep_info = Dict([
         E = 66kJ/mol,
         V = 0m^3/mol,
         r   = 0NoUnits,
-        Apparatus =   "AxialCompression",
-        Comment = "Values checked (Bremond (1999)), plots are not reproduced (NM).",
+        Apparatus =   AxialCompression,
+        MaterialParamsInfo(Comment = "Values checked (Bremond (1999)), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
              @article{raleigh1965experimental,
              title={Experimental deformation of serpentinite and its tectonic implications},
@@ -266,7 +268,7 @@ DislocationCreep_info = Dict([
              year={1965},
              publisher={Wiley Online Library}
              }
-        """);
+        """))
     )
 )
 
@@ -280,8 +282,8 @@ DislocationCreep_info = Dict([
         E = 485kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
-        Apparatus = "AxialCompression",
-        Comment = "Values checked (Mackwell et al. (1998))(NM), plots are not reproduced (NM).",
+        Apparatus = AxialCompression,
+        MaterialParamsInfo(Comment = "Values checked (Mackwell et al. (1998))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{mackwell1998high,
             title={High-temperature deformation of dry diabase with application to tectonics on Venus},
@@ -293,7 +295,7 @@ DislocationCreep_info = Dict([
             year={1998},
             publisher={Wiley Online Library}
             }
-        """);
+        """))
     )
 )       
 
@@ -308,8 +310,8 @@ DislocationCreep_info = Dict([
         E = 445kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
-        Apparatus = "AxialCompression",
-        Comment = "Values checked (Wilks and Carter (1990))(NM), plots are not reproduced (NM).",
+        Apparatus = AxialCompression,
+        MaterialParamsInfo(Comment = "Values checked (Wilks and Carter (1990))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{wilks1990rheology,
             title={Rheology of some continental lower crustal rocks},
@@ -321,7 +323,7 @@ DislocationCreep_info = Dict([
             year={1990},
             publisher={Elsevier}
             }
-        """);
+        """))
     )
 )
 
@@ -334,8 +336,8 @@ DislocationCreep_info = Dict([
         E = 154kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
-        Apparatus = "AxialCompression",
-        Comment = "Values checked (Ueda et al. (2008))(NM), plots are not reproduced (NM).",
+        Apparatus = AxialCompression,
+        MaterialParamsInfo(Comment = "Values checked (Ueda et al. (2008))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{ueda2008subduction,
             title={Subduction initiation by thermal--chemical plumes: numerical studies},
@@ -347,7 +349,7 @@ DislocationCreep_info = Dict([
             year={2008},
             publisher={Elsevier}
             }
-        """);
+        """))
     )
 )
 
@@ -362,8 +364,8 @@ DislocationCreep_info = Dict([
         E = 186.5kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
-        Apparatus = "AxialCompression",
-        Comment = "Values checked (Carter and Tsenn (1987))(NM), plots are not reproduced (NM).",
+        Apparatus = AxialCompression,
+        MaterialParamsInfo(Comment = "Values checked (Carter and Tsenn (1987))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{carter1987flow,
             title={Flow properties of continental lithosphere},
@@ -375,7 +377,7 @@ DislocationCreep_info = Dict([
             year={1987},
             publisher={Elsevier}
             }
-        """);
+        """))
     )
 )
 
@@ -390,8 +392,8 @@ DislocationCreep_info = Dict([
         E = 238kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
-        Apparatus = "AxialCompression",
-        Comment = "Values checked (Ji and Zhao (1993))(NM), plots are not reproduced (NM).",
+        Apparatus = AxialCompression,
+        MaterialParamsInfo(Comment = "Values checked (Ji and Zhao (1993))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{ji1993flow,
             title={Flow laws of multiphase rocks calculated from experimental data on the constituent phases},
@@ -403,7 +405,7 @@ DislocationCreep_info = Dict([
             year={1993},
             publisher={Elsevier}
             }
-        """);
+        """))
     )
 )
 
@@ -416,8 +418,8 @@ DislocationCreep_info = Dict([
         E = 648kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
-        Apparatus = "AxialCompression",
-        Comment = "Values checked (Rybecki and Dresen (2000))(NM), plots are not reproduced (NM).",
+        Apparatus = AxialCompression,
+        MaterialParamsInfo(Comment = "Values checked (Rybecki and Dresen (2000))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{rybacki2000dislocation,
             title={Dislocation and diffusion creep of synthetic anorthite aggregates},
@@ -429,7 +431,7 @@ DislocationCreep_info = Dict([
             year={2000},
             publisher={Wiley Online Library}
             }
-        """);
+        """))
     )
 )
 
@@ -442,8 +444,8 @@ DislocationCreep_info = Dict([
         E = 356kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
-        Apparatus = "AxialCompression",
-        Comment = "Values checked (Rybecki and Dresen (2000))(NM), plots are not reproduced (NM).",
+        Apparatus = AxialCompression,
+        MaterialParamsInfo(Comment = "Values checked (Rybecki and Dresen (2000))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{rybacki2000dislocation,
             title={Dislocation and diffusion creep of synthetic anorthite aggregates},
@@ -455,7 +457,7 @@ DislocationCreep_info = Dict([
             year={2000},
             publisher={Wiley Online Library}
             }
-        """);
+        """))
     )
 )
 
@@ -468,8 +470,8 @@ DislocationCreep_info = Dict([
         E = 520kJ/mol,
         V = 11.0e-6m^3/mol,
         r = 1.2NoUnits,
-        Apparatus = "AxialCompression",
-        Comment = "Values checked (Hirth and Kohlstedt (2003))(NM), plots are not reproduced (NM).",
+        Apparatus = AxialCompression,
+        MaterialParamsInfo(Comment = "Values checked (Hirth and Kohlstedt (2003))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{hirth2003rheology,
             title={Rheology of the upper mantle and the mantle wedge: A view from the experimentalists},
@@ -480,7 +482,7 @@ DislocationCreep_info = Dict([
             year={2003},
             publisher={AGU AMERICAN GEOPHYSICAL UNION}
             }
-        """);
+        """))
     )
 )
                 
@@ -496,8 +498,8 @@ DislocationCreep_info = Dict([
         E = 154kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
-        Apparatus = "AxialCompression",
-        Comment = "Values checked (Kirby (1983))(NM), plots are not reproduced (NM).",
+        Apparatus = AxialCompression,
+        MaterialParamsInfo(Comment = "Values checked (Kirby (1983))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{kirby1983rheology,
             title={Rheology of the lithosphere},
@@ -509,7 +511,7 @@ DislocationCreep_info = Dict([
             year={1983},
             publisher={Wiley Online Library}
             }
-        """);
+        """))
     )
 )
 
@@ -524,8 +526,8 @@ DislocationCreep_info = Dict([
         E = 471kJ/mol,
         V = 0.0m^3/mol,
         r = 0.0NoUnits,
-        Apparatus = "AxialCompression",
-        Comment = "Values checked (Afonso and Ranalli (2004))(NM), plots are not reproduced (NM).",
+        Apparatus = AxialCompression,
+        MaterialParamsInfo(Comment = "Values checked (Afonso and Ranalli (2004))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{afonso2004crustal,
             title={Crustal and mantle strengths in continental lithosphere: is the jelly sandwich model obsolete?},
@@ -537,7 +539,7 @@ DislocationCreep_info = Dict([
             year={2004},
             publisher={Elsevier}
             }
-        """);
+        """))
     )
 )
 
@@ -552,8 +554,8 @@ DislocationCreep_info = Dict([
         E = 123kJ/mol,
         V = 0.0m^3/mol,
         r = 0.0NoUnits,
-        Apparatus = "AxialCompression",
-        Comment = "Values checked (Tirel et al. (2008))(NM), plots are not reproduced (NM).",
+        Apparatus = AxialCompression,
+        MaterialParamsInfo(Comment = "Values checked (Tirel et al. (2008))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{tirel2008dynamics,
             title={Dynamics and structural development of metamorphic core complexes},
@@ -564,7 +566,7 @@ DislocationCreep_info = Dict([
             year={2008},
             publisher={Wiley Online Library}
             }
-        """);
+        """))
     )
 )
 
