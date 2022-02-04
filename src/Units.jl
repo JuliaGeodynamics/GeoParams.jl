@@ -158,81 +158,31 @@ Base.length(v::GeoUnit)         =   length(v.val)
 Base.size(v::GeoUnit)           =   size(v.val)
 Base.getindex(A::GeoUnit{T,U}, inds::Vararg{Int,N}) where {T,U,N} = A.val[inds...]
 
-# Multiply with numnber
-Base.:*(x::GeoUnit, y::Number)  =   x.val*y
-Base.:+(x::GeoUnit, y::Number)  =   x.val+y
-Base.:/(x::GeoUnit, y::Number)  =   x.val/y
-Base.:-(x::GeoUnit, y::Number)  =   x.val-y
-
-Base.:*(x::Number, y::GeoUnit)  = y.val*x
-Base.:+(x::Number, y::GeoUnit)  = y.val+x
-Base.:/(x::Number, y::GeoUnit)  = x/y.val
-Base.:-(x::Number, y::GeoUnit)  = x-y.val
-
-# Multiplying a GeoUnit with another one, returns a GeoUnit
-Base.:+(x::GeoUnit{T1,U1}, y::GeoUnit{T2,U2}) where {T1,T2,U1,U2} = GeoUnit(Value(x) + Value(y)) 
-Base.:/(x::GeoUnit{T1,U1}, y::GeoUnit{T2,U2}) where {T1,T2,U1,U2} = GeoUnit(Value(x) / Value(y)) 
-Base.:*(x::GeoUnit{T1,U1}, y::GeoUnit{T2,U2}) where {T1,T2,U1,U2} = GeoUnit(Value(x) * Value(y))  
-Base.:-(x::GeoUnit{T1,U1}, y::GeoUnit{T2,U2}) where {T1,T2,U1,U2} = GeoUnit(Value(x) - Value(y)) 
-Base.:^(x::GeoUnit{T1,U1}, y::GeoUnit{T2,U2}) where {T1,T2,U1,U2} = GeoUnit(Value(x) ^ Value(y)) 
-
-Base.:*(x::GeoUnit, y::Quantity)   = UnitValue(x).*y
-Base.:/(x::GeoUnit, y::Quantity)   = UnitValue(x)./y
-Base.:+(x::GeoUnit, y::Quantity)   = UnitValue(x) .+ y
-Base.:-(x::GeoUnit, y::Quantity)   = UnitValue(x) .- y
-
-Base.:*(x::Quantity, y::GeoUnit)   = x.*UnitValue(y)
-Base.:/(x::Quantity, y::GeoUnit)   = x./UnitValue(y)
-Base.:+(x::Quantity, y::GeoUnit)   = x .+ UnitValue(y)
-Base.:-(x::Quantity, y::GeoUnit)   = x .- UnitValue(y) 
-
-# If we multiply a GeoUnit with an abstract array, we only return values, not units (use GeoUnits for that)
-Base.:*(x::GeoUnit, y::AbstractArray)   = NumValue(x) .* y
-Base.:/(x::GeoUnit, y::AbstractArray)   = broadcast(/,NumValue(x), y) 
-Base.:+(x::GeoUnit, y::AbstractArray)   = broadcast(+,NumValue(x), y) 
-Base.:-(x::GeoUnit, y::AbstractArray)   = broadcast(-,NumValue(x), y) 
-
-Base.:*(y::AbstractArray, x::GeoUnit)   = broadcast(*,y, NumValue(x)) 
-Base.:/(y::AbstractArray, x::GeoUnit)   = broadcast(/,y, NumValue(x)) 
-Base.:+(y::AbstractArray, x::GeoUnit)   = broadcast(+,y, NumValue(x)) 
-Base.:-(y::AbstractArray, x::GeoUnit)   = broadcast(-,y, NumValue(x)) 
-
-Base.:*(x::GeoUnit, y::AbstractArray{<:Quantity})   = broadcast(*,Value(x), y) 
-Base.:/(x::GeoUnit, y::AbstractArray{<:Quantity})   = broadcast(/,Value(x), y) 
-Base.:+(x::GeoUnit, y::AbstractArray{<:Quantity})   = broadcast(+,Value(x), y) 
-Base.:-(x::GeoUnit, y::AbstractArray{<:Quantity})   = broadcast(-,Value(x), y) 
-
-Base.:*(y::AbstractArray{<:Quantity}, x::GeoUnit)   = broadcast(*,y, Value(x)) 
-Base.:/(y::AbstractArray{<:Quantity}, x::GeoUnit)   = broadcast(/,y, Value(x)) 
-Base.:+(y::AbstractArray{<:Quantity}, x::GeoUnit)   = broadcast(+,y, Value(x)) 
-Base.:-(y::AbstractArray{<:Quantity}, x::GeoUnit)   = broadcast(-,y, Value(x)) 
-
-#for op in (+, *, -, ^,/)
+for op in (:*, :+, :/, :-)
+    eval(quote
+        # Basic scalar operations
+        Base.$op(x::GeoUnit, y::Number) = $op(x.val, y)
+        Base.$op(x::Number, y::GeoUnit) = $op(x,y.val)
+        # # Multiplying a GeoUnit with another one, returns a GeoUnit 
+        Base.$op(x::GeoUnit, y::GeoUnit) = GeoUnit($op(Value(x),Value(y)))
+        Base.$op(x::GeoUnit, y::Quantity) = broadcast($op, UnitValue(x), y)
+        Base.$op(x::Quantity, y::GeoUnit) = broadcast($op, x, UnitValue(y))
+        # If we multiply a GeoUnit with an abstract array, we only return values, not units (use GeoUnits for that)
+        Base.$op(x::GeoUnit, y::AbstractArray) = broadcast($op, NumValue(x), y) 
+        Base.$op(x::AbstractArray, y::GeoUnit) = broadcast($op, x, NumValue(y)) 
+        Base.$op(x::GeoUnit, y::AbstractArray{<:Quantity}) = broadcast($op, Value(x), y) 
+        Base.$op(x::AbstractArray{<:Quantity}, y::GeoUnit) = broadcast($op, x, Value(y)) 
+        Base.broadcasted(::typeof($op), A::GeoUnit, B::AbstractArray) = broadcast($op, NumValue(A), B)
+        Base.broadcasted(::typeof($op), A::AbstractArray, B::GeoUnit) = broadcast($op, A, NumValue(B))
+        Base.broadcasted(::typeof($op), A::GeoUnit, B::AbstractArray{<:Quantity}) = broadcast($op, Value(A), B)
+        Base.broadcasted(::typeof($op), B::AbstractArray{<:Quantity}, A::GeoUnit) = broadcast($op, A, Value(B))
+    end)
+end
  
-# Broadcasting
-Base.broadcasted(::typeof(+), A::GeoUnit,       B::AbstractArray)           = broadcast(+, NumValue(A), B)
-Base.broadcasted(::typeof(*), A::GeoUnit,       B::AbstractArray)           = broadcast(*, NumValue(A), B)
-Base.broadcasted(::typeof(-), A::GeoUnit,       B::AbstractArray)           = broadcast(-, NumValue(A), B)
-Base.broadcasted(::typeof(/), A::GeoUnit,       B::AbstractArray)           = broadcast(/, NumValue(A), B)
+# exponentials
 Base.broadcasted(::typeof(^), A::GeoUnit,       B::AbstractArray)           = broadcast(^, NumValue(A), B)
-
-    
-Base.broadcasted(::typeof(+), A::AbstractArray, B::GeoUnit)                 = broadcast(+, A, NumValue(B))
-Base.broadcasted(::typeof(*), A::AbstractArray, B::GeoUnit)                 = broadcast(*, A, NumValue(B))
-Base.broadcasted(::typeof(-), A::AbstractArray, B::GeoUnit)                 = broadcast(-, A, NumValue(B))
-Base.broadcasted(::typeof(/), A::AbstractArray, B::GeoUnit)                 = broadcast(/, A, NumValue(B))
 Base.broadcasted(::typeof(^), A::AbstractArray, B::GeoUnit)                 = broadcast(^, A, NumValue(B))
-    
-Base.broadcasted(::typeof(+), A::GeoUnit,    B::AbstractArray{<:Quantity})  = broadcast(+, Value(A), B)
-Base.broadcasted(::typeof(*), A::GeoUnit,    B::AbstractArray{<:Quantity})  = broadcast(*, Value(A), B)
-Base.broadcasted(::typeof(-), A::GeoUnit,    B::AbstractArray{<:Quantity})  = broadcast(-, Value(A), B)
-Base.broadcasted(::typeof(/), A::GeoUnit,    B::AbstractArray{<:Quantity})  = broadcast(/, Value(A), B)
 Base.broadcasted(::typeof(^), A::GeoUnit,    B::AbstractArray{<:Quantity})  = broadcast(^, Value(A), B)
-    
-Base.broadcasted(::typeof(+), A::AbstractArray{<:Quantity}, B::GeoUnit)     = broadcast(+, A, Value(B))
-Base.broadcasted(::typeof(*), A::AbstractArray{<:Quantity}, B::GeoUnit)     = broadcast(*, A, Value(B))
-Base.broadcasted(::typeof(-), A::AbstractArray{<:Quantity}, B::GeoUnit)     = broadcast(-, A, Value(B))
-Base.broadcasted(::typeof(/), A::AbstractArray{<:Quantity}, B::GeoUnit)     = broadcast(/, A, Value(B))
 Base.broadcasted(::typeof(^), A::AbstractArray{<:Quantity}, B::GeoUnit)     = broadcast(^, A, Value(B))
 
 Base.getindex(x::GeoUnit, i::Int64, j::Int64, k::Int64) = GeoUnit(x.val[i,j,k]*x.unit)
