@@ -4,7 +4,7 @@ using GeoParams
 @testset "DiffusionCreepLaws" begin
 
 # This tests the MaterialParameters structure
-CharUnits_GEO   =   GEO_units(viscosity=1e19, length=1000km);
+CharUnits_GEO   =   GEO_units(viscosity=1Pa*s, length=1m);
                 
 # Define a linear viscous creep law ---------------------------------
 x1      =   DiffusionCreep()
@@ -17,7 +17,7 @@ x2      =   DiffusionCreep(n=3, p=-3.0)
 
 # perform a computation with the dislocation creep laws 
     # Calculate EpsII, using a set of pre-defined values
-CharDim = GEO_units()
+CharDim = GEO_units(length=1000km, viscosity=1e19Pa*s, stress=100MPa, temperature=1000C)
 EpsII   = GeoUnit(1.0s^-1.0)
         Nondimensionalize!(EpsII,CharDim)
 TauII   = GeoUnit(0.3MPa)
@@ -31,16 +31,16 @@ f       = GeoUnit(1000NoUnits)
 d       = GeoUnit(10mm)
         Nondimensionalize!(d,CharDim)
 c       = CreepLawVariables(P=P,T=T,f=f,d=d)
-Phase   = SetMaterialParams(Name="Viscous Matrix", Phase=2,
+Phase   = SetMaterialParams(Name="Viscous Matrix", Phase=1,
                                      Density   = ConstantDensity(),
-                                     CreepLaws = DiffusionCreep(n=1.0NoUnits, r=1.0NoUnits, p=-3.0NoUnits, A=1.0e-12MPa^(-1.0)*s^(-1.0)*m^(3.0), E=335000.0J/mol, dChar=1.0e-3NoUnits, V=4.0e-6m^(3.0)/mol, Apparatus="Invariant"), CharDim = CharDim)
+                                     CreepLaws = DiffusionCreep(n=1.0NoUnits, r=1.0NoUnits, p=-3.0NoUnits, A=1.0e6MPa^(-1.0)*s^(-1.0)*µm^(3.0), E=335000.0J/mol, V=4.0e-6m^(3.0)/mol, Apparatus="Invariant"), CharDim = CharDim)
 EpsII.val = ComputeCreepLaw_EpsII(TauII,Phase.CreepLaws[1],c)
-@show EpsII.val
-@test EpsII.val  ≈ 7.823165072337786e-15 rtol = 1e-8
+# Tested value is Dimensional so need to non-dimensionalize it back to compare
+@test EpsII.val  ≈ Nondimensionalize(7.823165072337786e-15s^(-1.0), CharDim) rtol = 1e-12
     # Check that once inverted, we get back the TauII that we used to calculate EpsII
 NewTau = ComputeCreepLaw_TauII(EpsII,Phase.CreepLaws[1],c)
 #@show NewTau
-@test NewTau ≈ TauII.val 
+@test NewTau ≈ TauII.val
 
 
 # Given stress
@@ -52,5 +52,3 @@ NewTau = ComputeCreepLaw_TauII(EpsII,Phase.CreepLaws[1],c)
 
 
 end
-
-#
