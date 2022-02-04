@@ -23,7 +23,6 @@ Apparatus defines the appartus type that shall be recreated (Axial Compression, 
     E::GeoUnit            = 500kJ/mol          # activation energy
     V::GeoUnit            = 6e-6m^3/mol        # activation volume
     R::GeoUnit            = 8.314J/mol/K       # universal gas constant
-    dChar::GeoUnit        = 1.0NoUnits         # characteristic grain size 
     Apparatus             = "AxialCompression" # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
     Comment::String       = ""                 # comment when implementing new creep laws
     BibTex_Reference      = ""                 # BibTex reference
@@ -55,7 +54,7 @@ function ComputeCreepLaw_EpsII(TauII, a::DiffusionCreep, b::CreepLawVariables)
         FT = 1.0NoUnits
         FE = 1.0NoUnits
     end
-    return A.val*(TauII.val*FT)^n.val*(d.val/dChar.val)^p.val*f.val^r.val*exp(-(E.val+P.val*V.val)/(R.val*T.val))/FE
+    return A.val*(TauII.val*FT)^n.val*(d.val)^p.val*f.val^r.val*exp(-(E.val+P.val*V.val)/(R.val*T.val))/FE
 end
 
 function ComputeCreepLaw_TauII(EpsII, a::DiffusionCreep, b::CreepLawVariables)
@@ -66,7 +65,6 @@ function ComputeCreepLaw_TauII(EpsII, a::DiffusionCreep, b::CreepLawVariables)
     @unpack E = a
     @unpack V = a
     @unpack R = a
-    @unpack dChar = a
     @unpack Apparatus = a
     @unpack P = b
     @unpack T = b
@@ -82,7 +80,7 @@ function ComputeCreepLaw_TauII(EpsII, a::DiffusionCreep, b::CreepLawVariables)
         FT = 1.0NoUnits
         FE = 1.0NoUnits
     end
-    return A.val^(-1/n.val)*(EpsII.val*FE)^(1/n.val)*(d.val/dChar.val)^(-p.val/n.val)*f.val^(-r.val/n.val)*exp((E.val+P.val*V.val)/(n.val*R.val*T.val))/FT;
+    return A.val^(-1/n.val)*(EpsII.val*FE)^(1/n.val)*(d.val)^(-p.val/n.val)*f.val^(-r.val/n.val)*exp((E.val+P.val*V.val)/(n.val*R.val*T.val))/FT;
 end
 
 
