@@ -14,6 +14,10 @@ export  DislocationCreep,
         SetDislocationCreep
 
 const AxialCompression, SimpleShear, Invariant = 1,2,3
+
+
+
+
 # Dislocation Creep ------------------------------------------------
 """
     DislocationCreep(n = 1.0NoUnits, r = 0.00.0NoUnits, A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = "AxialCompression" )
@@ -38,15 +42,15 @@ julia> x2      =   DislocationCreep(n=3)
 DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3 mol^-1, Apparatus=AxialCompression
 ```
 """
-@with_kw_noshow struct DislocationCreep{N,T,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-    Name::NTuple{N,Char}          =   ""               # The name is encoded as a NTuple{Char} to make it isbits    
-    n::GeoUnit{T,U1}              = 1.0NoUnits         # power-law exponent
-    r::GeoUnit{T,U1}              = 0.0NoUnits         # exponent of water-fugacity dependence
-    A::GeoUnit{T,U2}              = 1.5MPa^(-n-r)/s    # pre-exponential factor
-    E::GeoUnit{T,U3}              = 476.0kJ/mol        # activation energy
-    V::GeoUnit{T,U4}              = 6e-6m^3/mol        # activation volume
-    R::GeoUnit{T,U5}              = 8.314J/mol/K       # Universal gas constant
-    Apparatus::Int64              = AxialCompression   # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
+@with_kw_noshow struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
+    Name::NTuple{N,Char}    =   ""               # The name is encoded as a NTuple{Char} to make it isbits    
+    n::GeoUnit{T,U1}        = 1.0NoUnits         # power-law exponent
+    r::GeoUnit{T,U1}        = 0.0NoUnits         # exponent of water-fugacity dependence
+    A::GeoUnit{T,U2}        = 1.5MPa^(-n-r)/s    # pre-exponential factor
+    E::GeoUnit{T,U3}        = 476.0kJ/mol        # activation energy
+    V::GeoUnit{T,U4}        = 6e-6m^3/mol        # activation volume
+    R::GeoUnit{T,U5}        = 8.314J/mol/K       # Universal gas constant
+    Apparatus::Int32        = AxialCompression   # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
 end
 DislocationCreep(args...) = DislocationCreep(NTuple{length(args[1]), Char}(collect.(args[1])), convert.(GeoUnit,args[2:end-1])..., args[end])
 
@@ -63,61 +67,46 @@ end
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
 function computeCreepLaw_EpsII(TauII, a::DislocationCreep, p::CreepLawVariables)
-    @unpack n           = a
-    @unpack r           = a
-    @unpack A           = a
-    @unpack E           = a
-    @unpack V           = a
-    @unpack R           = a
-    @unpack Apparatus   = a
-    @unpack P           = p
-    @unpack T           = p
-    @unpack f           = p
-    if Apparatus == AxialCompression
-        FT = sqrt(3.0)NoUnits               # relation between differential stress recorded by apparatus and TauII
-        FE = 2.0/sqrt(3.0)NoUnits            # relation between gamma recorded by apparatus and EpsII
-    elseif Apparatus == SimpleShear
-        FT = 2.0NoUnits                      # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
-        FE = 2.0NoUnits 
-    elseif Apparatus == Invariant
-        FT = 1.0NoUnits 
-        FE = 1.0NoUnits 
-    end
-    return A.val*(TauII.val*FT)^n.val*f.val^r.val*exp(-(E.val+P.val*V.val)/(R.val*T.val))/FE; 
+    @unpack_val n,r,A,E,V,R = a
+    @unpack_val P,T,f       = p
+    
+    FT, FE = CorrectionFactor(a);    
+   
+    return A*(TauII*FT)^n*f^r*exp(-(E + P*V)/(R*T))/FE; 
 end
 
 # EpsII .= A.*(TauII.*FT).^n.*f.^r.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
-# All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
+# All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
 function computeCreepLaw_TauII(EpsII, a::DislocationCreep, p::CreepLawVariables)
-    @unpack n           = a
-    @unpack r           = a
-    @unpack A           = a
-    @unpack E           = a
-    @unpack V           = a
-    @unpack R           = a
-    @unpack Apparatus   = a
-    @unpack P           = p
-    @unpack T           = p
-    @unpack f           = p
-    if Apparatus == AxialCompression
-        FT = sqrt(3.0)               # relation between differential stress recorded by apparatus and TauII
-        FE = 2.0/sqrt(3.0)           # relation between gamma recorded by apparatus and EpsII
-    elseif Apparatus == SimpleShear
-        FT = 2.0                     # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
-        FE = 2.0
-    elseif Apparatus == Invariant
-        FT = 1.0
-        FE = 1.0
-    end
-    return A.val^(-1/n.val)*(EpsII.val*FE)^(1/n.val)*f.val^(-r.val/n.val)*exp((E.val+P.val*V.val)/(n.val*R.val*T.val))/FT;
-end
+    @unpack_val n,r,A,E,V,R = a
+    @unpack_val P,T,f       = p
 
+    FT, FE = CorrectionFactor(a);    
+
+    return A^(-1/n)*(EpsII*FE)^(1/n)*f^(-r/n)*exp((E + P*V)/(n * R*T))/FT;
+end
 
 # Print info 
 function show(io::IO, g::DislocationCreep)  
     print(io, "DislocationCreep: Name = $(String(collect(g.Name))), n=$(g.n.val), r=$(g.r.val), A=$(g.A.val), E=$(g.E.val), V=$(g.V.val), Apparatus=$(g.Apparatus)" )  
 end
 #-------------------------------------------------------------------------
+
+# This computes correction factors to go from experimental data to tensor format
+# A nice discussion 
+function CorrectionFactor(a::DislocationCreep{_T}) where {_T}
+
+    FT = one(_T) 
+    FE = one(_T)
+    if a.Apparatus == AxialCompression
+        FT = sqrt(one(_T)*3)               # relation between differential stress recorded by apparatus and TauII
+        FE = one(_T)*2/sqrt(one(_T)*3)     # relation between gamma recorded by apparatus and EpsII
+    elseif a.Apparatus == SimpleShear
+        FT = one(_T)*2                     # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
+        FE = one(_T)*2 
+    end
+    return FT,FE
+end
 
 # Add pre-defined creep laws 
 """
