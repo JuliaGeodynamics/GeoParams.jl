@@ -38,12 +38,13 @@ where you can also pass vectors or arrays as values.
 
 Note that, if needed, this can be extended, w/out interfering with existing calculation  
 """
-@with_kw struct CreepLawVariables     
-    P::GeoUnit  =   100.0MPa   # pressure
-    T::GeoUnit  =   500.0C     # temperature
-    d::GeoUnit  =   1.0cm      # grainsize
-    f::GeoUnit  =   0.0MPa     # water-fugacity         
+@with_kw struct CreepLawVariables{_T,U1,U2,U3,U4}     
+    P::GeoUnit{_T,U1}  =   100.0MPa   # pressure
+    T::GeoUnit{_T,U2}  =   500.0C     # temperature
+    d::GeoUnit{_T,U3}  =   1.0cm      # grainsize
+    f::GeoUnit{_T,U4}  =   0.0MPa     # water-fugacity         
 end
+CreepLawVariables(args...) = CreepLawVariables(convert.(GeoUnit,args)...)
 
 include("DislocationCreep.jl")
 # Linear viscous rheology ------------------------------------------------
