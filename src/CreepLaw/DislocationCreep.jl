@@ -192,6 +192,7 @@ DislocationCreep_info = Dict([
     #  Hansen (1982), Fig. 53, page 184 in PDF viewer and table 18, page 224
     #  Carter & Tsenn (1986), table 4, page 18 in PDF viewer
     DislocationCreep(
+        Name = "Quartz Diorite | Hansen & Carter (1982)",
         n = 2.25NoUnits,
         A = 3.5e-2MPa^(-2.25)/s, 
         E = 212kJ/mol,
@@ -221,6 +222,7 @@ DislocationCreep_info = Dict([
     #  'Hydrothermalism and diapirism in the Archean: gravitational instability constraints'
     #  Bremond (1999), page 5 in text
     DislocationCreep(
+        Name = "Diabase | Caristan (1982)",
         n = 3.05NoUnits,
         A = 6.0e-2MPa^(-3.05)/s, 
         E = 276kJ/mol,
@@ -250,6 +252,7 @@ DislocationCreep_info = Dict([
     #  'Hydrothermalism and diapirism in the Archean: gravitational instability constraints'
     #  Bremond (1999), page 5 in text
     DislocationCreep(
+        Name = "Tumut Pond Serpentinite | Raleigh and Paterson (1965)",
         n = 2.8NoUnits,
         A = 6.3e-7MPa^(-2.8)/s, 
         E = 66kJ/mol,
@@ -277,6 +280,7 @@ DislocationCreep_info = Dict([
     #  After Mackwell et al. (1998), 'High-temperatur deformation of dry diabase with application to tectonics on Venus'
     #  Mackwell et al. (1998), page 980, equation in text
     DislocationCreep(
+        Name = "Maryland strong diabse | Mackwell et al. (1998)",
         n = 4.7NoUnits,
         A = 8MPa^(-4.7)/s, 
         E = 485kJ/mol,
@@ -305,6 +309,7 @@ DislocationCreep_info = Dict([
     #  referring to Ranalli (1995), 'Rheology of the Earth' (Book), page 334, table 10.3
     #  referring to Wilks and Carter (1990), 'Rheology of some continental lower crustal rocks', Fig. 6, Pikwitonei Granulite
     DislocationCreep(
+        Name = "Mafic Granulite | Wilks and Carter (1990)",
         n = 4.2NoUnits,
         A = 1.4e4MPa^(-4.2)/s, 
         E = 445kJ/mol,
@@ -331,6 +336,7 @@ DislocationCreep_info = Dict([
 ("Wet Quartzite | Ueda et al. (2008)", 
     #  Ueda et al. (2008), table 1
     DislocationCreep(
+        Name = "Wet Quartzite | Ueda et al. (2008)",
         n = 2.3NoUnits,
         A = 1*exp10(-3.5)MPa^(-2.3)/s, 
         E = 154kJ/mol,
@@ -359,6 +365,7 @@ DislocationCreep_info = Dict([
     #  referring to Carter and Tsenn (1987), 'Flow properties of continental lithosphere', table 4, Westerly Granite (dry)
     #  referring to Hansen and Carter (1983), 'Semibrittle Creep Of Dry And Wet Westerly Granite At 1000 MPa', not accessable
     DislocationCreep(
+        Name = "Granite | Carter and Tsenn (1987)",
         n = 3.3NoUnits,
         A = 1.0*exp10(-5.7)MPa^(-3.3)/s,
         E = 186.5kJ/mol,
@@ -387,6 +394,7 @@ DislocationCreep_info = Dict([
     #  referring to Ji and Zhao (1993), 'Flow laws of multiphase rocks calculated from experimental data on the constituent phases', table 2 , plagioclase (Ab25An75)
     #  referring to Shelton and Tullis (1981), 'Experimental flow laws for crustal rocks', not accessable
     DislocationCreep(
+        Name = "Plagioclase An75 | Ji and Zhao (1993)",
         n = 3.2NoUnits,
         A = 3.27e-4MPa^(-3.2)/s, 
         E = 238kJ/mol,
@@ -413,6 +421,7 @@ DislocationCreep_info = Dict([
 ("Dry Anorthite | Rybecki and Dresen (2000)", 
     #  Rybecki and Dresen (2000), table 2 + table 3
     DislocationCreep(
+        Name = "Dry Anorthite | Rybecki and Dresen (2000)",
         n = 3.0NoUnits,
         A = 1.0*exp10(-12.7)MPa^(-3.0)/s, 
         E = 648kJ/mol,
@@ -439,6 +448,7 @@ DislocationCreep_info = Dict([
 ("Wet Anorthite | Rybecki and Dresen (2000)", 
     #  Rybecki and Dresen (2000), table 2 + table 3
     DislocationCreep(
+        Name = "Wet Anorthite | Rybecki and Dresen (2000)",
         n = 3.0NoUnits,
         A = 1.0*exp10(-2.6)MPa^(-3.0)/s, 
         E = 356kJ/mol,
@@ -465,6 +475,7 @@ DislocationCreep_info = Dict([
 ("Wet Olivine | Hirth and Kohlstedt (2003)", 
     #  Hirth and Kohlstedt (2003), table 1, no constant C_OH
     DislocationCreep(
+        Name = "Wet Olivine | Hirth and Kohlstedt (2003)",
         n = 3.5NoUnits,
         A = 1600.0MPa^(-3.5)/s, 
         E = 520kJ/mol,
@@ -493,6 +504,7 @@ DislocationCreep_info = Dict([
     #  referring to Kirby (1983), table 2, first quartzite (wet)
     #  referring to Koch et al. (1981), unpublished manuscript...
     DislocationCreep(
+        Name = "Wet Quarzite | Kirby (1983)",
         n = 2.3NoUnits,
         A = 3.2e-4MPa^(-2.3)/s, 
         E = 154kJ/mol,
@@ -521,6 +533,7 @@ DislocationCreep_info = Dict([
     #  referring to Afonso and Ranalli (2004), table 1, wet peridotite
     #  referring to Chopra and Paterson papers, but values dont fit the Afonso and Ranalli (2004) ones
     DislocationCreep(
+        Name = "Wet Upper Mantle Olivine | Afonso and Ranalli (2004)",
         n = 4.0NoUnits,
         A = 2.0e3MPa^(-4.0)/s, 
         E = 471kJ/mol,
@@ -549,6 +562,7 @@ DislocationCreep_info = Dict([
     #  referring to Kirby and Kronenberg (1987), table 3
     #  different values for n and A in Kirby and Kronenberg (1987) compared with Tirel et al. (2008)
     DislocationCreep(
+        Name = "Granite | Tirel et al. (2008)",
         n = 3.2NoUnits,
         A = 1.25e-9MPa^(-3.2)/s, 
         E = 123kJ/mol,
