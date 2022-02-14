@@ -34,9 +34,9 @@ end
 
 # Calculation routine
 function compute_gravity(s::ConstantGravity{_T}) where _T
-    @unpack g   = s
+    @unpack_val g   = s
     
-    return g*1.0   # multiply with 1.0, to return Float64
+    return g
 end
 
 # Print info 

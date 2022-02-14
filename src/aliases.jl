@@ -46,13 +46,18 @@ function create_module(caller::Module, modulename::Symbol, kwargs_expr::Expr...)
                 param! = Symbol(param, "!")
                 fname = Symbol("compute_" * String(key))
                 fname! = Symbol("compute_" * String(key) * "!")
-                #Exports
+
+                # Exports
                 push!(exports, param)
-                push!(exports, param!) 
-                #Aliases
+                # Aliases
                 push!(aliases, quote $param(args...) = GeoParams.$fname(args...) end)
-                push!(aliases, quote $param!(args...) = GeoParams.$fname!(args...) end)
+                # Only in case compute_...! method exists set alias for it as well
+                if isdefined(GeoParams, fname!)
+                        push!(exports, param!)
+                        push!(aliases, quote $param!(args...) = GeoParams.$fname!(args...) end)
+                end
         end
+        
         module_expr = :(module $modulename # NOTE: there cannot be any newline before 'module $modulename' or it will create a begin end block and the module creation will fail.
         import GeoParams
         export $(exports...)
