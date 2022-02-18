@@ -23,7 +23,7 @@ T        =   250.0:100:1250;
 cp2      =   T_HeatCapacity_Whittacker()
 Cp       =   similar(T)
 @test isbits(cp2)
-compute_heatcapacity!(Cp,cp2, T)
+compute_heatcapacity!(Cp, cp2, T)
 @test sum(Cp) ≈ 11667.035717418683
 
 # nondimensional
@@ -31,7 +31,7 @@ cp2_nd   =   T_HeatCapacity_Whittacker()
 cp2_nd   =   nondimensionalize(cp2_nd,CharUnits_GEO)
 T_nd     =   Float64.(T*K/CharUnits_GEO.Temperature)
 Cp_nd    =   similar(T)
-compute_heatcapacity!(Cp_nd, cp2_nd,T_nd)
+compute_heatcapacity!(Cp_nd, cp2_nd, T_nd)
 @test sum(Cp_nd) ≈ 1.4853886523631602e23
 
 # Dimensionalize again and double-check the results
@@ -41,12 +41,12 @@ compute_heatcapacity!(Cp_nd, cp2_nd,T_nd)
 T_array     =  T*ones(10)'
 Cp_array    =  similar(T_array)
 P_array     =  similar(T_array)
-compute_heatcapacity!(Cp_array, cp1, T_array, P_array)
+compute_heatcapacity!(Cp_array, cp1, P_array, T_array)
 @test Cp_array[1] ≈ 1.3368075000000002e22
 
 Cp_array    =  similar(T_array)
 P_array     =  similar(T_array)
-compute_heatcapacity!(Cp_array, cp2, T_array, P_array)
+compute_heatcapacity!(Cp_array, cp2, P_array, T_array)
 @test sum(Cp_array[:,1]) ≈ 11667.035717418683
 
 T_array     =  T*ones(10)'
@@ -64,6 +64,8 @@ MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=1,
 MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
                     HeatCapacity  = T_HeatCapacity_Whittacker());
 
+Mat_tup = Tuple(MatParam)
+
 # test computing material properties
 n = 100;
 Phases              = ones(Int64,n,n,n);
@@ -73,10 +75,12 @@ Cp = zeros(size(Phases))
 T  =  ones(size(Phases))*1500
 P  =  zeros(size(Phases))
 
-compute_heatcapacity!(Cp, MatParam, Phases, T, P)       # computation routine w/out P (not used in most heat capacity formulations)
+compute_heatcapacity!(Cp, Mat_tup, Phases, P, T)    # computation routine w/out P (not used in most heat capacity formulations)     
+num_alloc = @allocated compute_heatcapacity!(Cp, Mat_tup, Phases, P, T)
 @test sum(Cp[1,1,:]) ≈ 121399.0486067196
+@test num_alloc == 0
 
-compute_heatcapacity!(Cp, MatParam, Phases, T)       # computation routine w/out P (not used in most heat capacity formulations)
+compute_heatcapacity!(Cp, Mat_tup, Phases, T)       # computation routine w/out P (not used in most heat capacity formulations)
 @test sum(Cp[1,1,:]) ≈ 121399.0486067196
 
 # test if we provide phase ratios
@@ -86,8 +90,10 @@ for i in CartesianIndices(Phases)
     I = CartesianIndex(i,iz)
     PhaseRatio[I] = 1.0  
 end
-compute_heatcapacity!(Cp, MatParam, PhaseRatio, T, P)
+compute_heatcapacity!(Cp, Mat_tup, PhaseRatio, P, T)
+num_alloc = @allocated compute_heatcapacity!(Cp, Mat_tup, PhaseRatio, P, T)
 @test sum(Cp[1,1,:]) ≈ 121399.0486067196
+@test num_alloc == 0
 
 
 # -----------------------
@@ -105,13 +111,13 @@ cond      =   ConstantConductivity()
 cond = nondimensionalize(cond,CharUnits_GEO)
 @test  NumValue(cond.k) ≈ 3.8194500000000007
 
-@test compute_conductivity(100.0, cond) ≈ 3.8194500000000007 # compute
+@test compute_conductivity(cond, 100.0) ≈ 3.8194500000000007 # compute
 
 # Temperature-dependent conductivity
 # dimensional
-T        =   Vector(250:100:1250);
+T        =   Vector{Float64}(250:100:1250);
 cond2    =   T_Conductivity_Whittacker()
-k        =   compute_conductivity(T,cond2)
+k        =   compute_conductivity(cond2, T)
 @test isbits(cond2)
 @test sum(k) ≈ 27.503366436682285
 
@@ -119,7 +125,7 @@ k        =   compute_conductivity(T,cond2)
 cond2_nd =   T_Conductivity_Whittacker()
 cond2_nd =   nondimensionalize(cond2_nd,CharUnits_GEO)
 T_nd     =   Float64.(ustrip.(T/CharUnits_GEO.Temperature))
-k_nd     =   compute_conductivity(T_nd,cond2_nd)
+k_nd     =   compute_conductivity(cond2_nd, T_nd)
 @test sum(k_nd) ≈ 35.01591097886205
 
 # Dimensionalize again and double-check the results
@@ -130,14 +136,14 @@ T_array     =  ustrip.(T)*ones(100)'
 k_array     =  copy(T_array)
 P_array     =  copy(T_array)
 
-compute_conductivity!(k_array,P_array,T_array, cond)
+compute_conductivity!(k_array,cond,P_array,T_array)
 @test k_array[1] ≈ 3.8194500000000007
 
-compute_conductivity!(k_array,P_array,T_array, cond2)
+compute_conductivity!(k_array,cond2,P_array,T_array) 
 @test sum(k_array) ≈ 2750.3366436682285
 
 k_TP    =   Set_TP_Conductivity("LowerCrust")
-compute_conductivity!(k_array, P_array, T_array, k_TP)
+compute_conductivity!(k_array, k_TP, P_array, T_array) 
 @test sum(k_array) ≈ 2055.7129327367625
 
 # Check that it works if we give a phase array
@@ -151,6 +157,7 @@ MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
 MatParam[3] =   SetMaterialParams(Name="MantleLithosphere", Phase=3,
                     Conductivity = Set_TP_Conductivity("Mantle"));
 
+Mat_tup = Tuple(MatParam)
 # test computing material properties
 n = 100;
 Phases              = ones(Int64,n,n,n);
@@ -168,11 +175,16 @@ k   =  zeros(size(Phases))
 T   =  ones(size(Phases))*1500
 P   =  zeros(size(Phases))
 
-compute_conductivity!(k, Phases, P, T, MatParam) 
+compute_conductivity!(k, Mat_tup, Phases, P, T) 
+num_alloc = @allocated compute_conductivity!(k, Mat_tup, Phases, P, T) 
+@test sum(k) ≈ 1.9216938849389635e6
+@test num_alloc == 0
+
+compute_conductivity!(k, Mat_tup, PhaseRatio, P, T) 
+num_alloc = @allocated compute_conductivity!(k, Mat_tup, PhaseRatio, P, T) 
+@test num_alloc == 0
 @test sum(k) ≈ 1.9216938849389635e6
 
-compute_conductivity!(k, PhaseRatio, P, T, MatParam) 
-@test sum(k) ≈ 1.9216938849389635e6
 
 #
 
@@ -180,28 +192,28 @@ compute_conductivity!(k, PhaseRatio, P, T, MatParam)
 ######
 
 # TP-dependent conductivity for different predefines cases
-T       =   Vector(250:100:1250);
+T       =   Vector{Float64}(250:100:1250);
 P       = 1e6*ones(size(T))/ustrip(uconvert(Pa,1MPa))  # must be in MPa!
 List    = ["LowerCrust"   "Mantle"        "OceanicCrust"  "UpperCrust"]
 Sol_kT  = [20.55712932736763 28.700405819019323 20.55712932736763 19.940302462417037]
 for i=1:length(List)
     k_TP    =   Set_TP_Conductivity(List[i])
-    k       =   compute_conductivity(P,T,k_TP)           # note that P must be in MPa
+    k       =   compute_conductivity(k_TP,P,T)           # note that P must be in MPa
     @test sum(k) ≈ Sol_kT[i]
 
     k_TP_nd  =   deepcopy(k_TP)
     k_TP_nd  =   nondimensionalize(k_TP_nd,CharUnits_GEO)
     T_nd     =   Float64.(ustrip.(T/CharUnits_GEO.Temperature))
     P_nd     =   Float64.(ustrip(P/CharUnits_GEO.stress))
-    k_nd     =   compute_conductivity(P_nd,T_nd,k_TP_nd)
+    k_nd     =   compute_conductivity(k_TP_nd,P_nd,T_nd)
 
     @test ustrip(sum(abs.(ustrip.(k_nd*CharUnits_GEO.conductivity) - k))) < 1e-11
 
 end
 
 
-T = [200 300; 400 500]
-k1        =   compute_conductivity(T,cond2)
+T = [200. 300.; 400. 500.]
+k1        =   compute_conductivity(cond2,T)
 
 
 # -----------------------

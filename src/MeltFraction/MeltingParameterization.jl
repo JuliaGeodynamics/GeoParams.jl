@@ -16,6 +16,8 @@ export  compute_meltfraction,
         param_info,
         MeltingParam_Caricchi     # constant
         
+include("../Utils.jl")
+include("../Computations.jl")
 
 # Constant  -------------------------------------------------------
 """
@@ -45,7 +47,7 @@ end
 
 # Calculation routine
 function compute_meltfraction(p::MeltingParam_Caricchi{_T}, P::Quantity, T::Quantity) where _T
-    a,b,c   = p.a, p.b, p.c
+    @unpack_units a,b,c   = p
 
     θ       =   (a - (T - c))/b
     ϕ       =   1.0./(1.0 .+ exp.(θ))
@@ -53,20 +55,19 @@ function compute_meltfraction(p::MeltingParam_Caricchi{_T}, P::Quantity, T::Quan
     return ϕ
 end
 
-function compute_meltfraction!(ϕ, p::MeltingParam_Caricchi{_T}, P::_T, T::_T ) where _T
+
+function compute_meltfraction(p::MeltingParam_Caricchi{_T}, P::_T, T::_T ) where _T
     @unpack_val a,b,c   = p
 
     θ       =   (a - (T - c))/b
-    ϕ       =   1.0/(1.0 + exp(θ))
-
-    return nothing
+    return 1.0/(1.0 + exp(θ))
 end
 
-function compute_meltfraction!(ϕ::AbstractArray{_T}, p::MeltingParam_Caricchi{_T}, P::AbstractArray{_T},T::AbstractArray{_T}) where _T
+
+function compute_meltfraction!(ϕ::AbstractArray{_T}, p::MeltingParam_Caricchi{_T}, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
     @unpack_val a,b,c   = p
     
-    θ       =   (a .- (T .- c))./b
-    ϕ      .=   1.0./(1.0 .+ exp.(θ))
+    @. ϕ = 1.0/(1.0 + exp((a-(T-c))/b)) 
 
     return nothing
 end
@@ -98,12 +99,23 @@ function compute_meltfraction!(ϕ::AbstractArray{_T}, p::PhaseDiagram_LookupTabl
     return nothing
 end
 
+# Computational routines needed for computations with the MaterialParams structure 
+function compute_meltfraction(s::AbstractMaterialParamsStruct, P::_T=zero(_T),T::_T=zero(_T)) where {_T}
+    if isempty(s.Melting) #in case there is a phase with no melting parametrization
+        return zero(_T)
+    end
+    return compute_meltfraction(s.Melting[1], P,T)
+end
 
 """
     ComputeMeltingParam!(ϕ::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
 
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 """
+compute_meltfraction(args...) = compute_param(compute_meltfraction, args...)
+compute_meltfraction!(args...) = compute_param!(compute_meltfraction, args...)
+
+#=
 function compute_meltfraction!(ϕ::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}, Phases::AbstractArray{<:Integer, N}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}) where N
 
     for i = 1:length(MatParam)
@@ -148,7 +160,7 @@ function compute_meltfraction!(ϕ::AbstractArray{<:AbstractFloat, N}, MatParam::
 
     return nothing
 end
-
+=#
 
 
 end
