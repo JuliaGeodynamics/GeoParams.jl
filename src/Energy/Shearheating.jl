@@ -43,26 +43,26 @@ function param_info(s::ConstantShearheating) # info about the struct
     return MaterialParamsInfo(Equation =  L"\H_s = \Chi \tau_{ij}(\dot{\varepsilon}_{ij} - \dot{\varepsilon}^{el}_{ij})")
 end
 
-# In-place routine
+# In-place routine (H_s can't take new value)
 function compute_shearheating!(H_s, s::ConstantShearheating{_T}, τ, ε, ε_el) where _T
-    @unpack Χ   = s
+    @unpack_val Χ   = s
 
     if isnothing(ε_el)
-        H_s = NumValue(Χ)*sum( τ .* ε  )
+        H_s = Χ*sum( τ .* ε  )
     else
-        H_s = NumValue(Χ)*sum( τ .* (ε .- ε_el) )
+        H_s = Χ*sum( τ .* (ε .- ε_el) )
     end
 
 end
 
 # Calculation routine
 function compute_shearheating(s::ConstantShearheating{_T}, τ, ε, ε_el) where _T
-    @unpack Χ   = s
+    @unpack_val Χ   = s
     
     if isnothing(ε_el)
-        H_s = NumValue(Χ)*sum( τ .* ε  )
+        H_s = Χ*sum( τ .* ε  )
     else
-        H_s = NumValue(Χ)*sum( τ .* (ε .- ε_el) )
+        H_s = Χ*sum( τ .* (ε .- ε_el) )
     end
 
     return H_s

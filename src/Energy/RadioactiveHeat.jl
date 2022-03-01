@@ -37,9 +37,9 @@ end
 
 # Calculation routine
 function compute_radioactive_heat(s::ConstantRadioactiveHeat)
-    @unpack H_r   = s
+    @unpack_val H_r   = s
    
-    return NumValue(H_r)
+    return H_r
 end
 
 # Print info 

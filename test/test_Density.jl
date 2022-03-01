@@ -2,6 +2,9 @@ using Test
 using GeoParams
 @testset "Density.jl" begin
 
+#Set alias for density function    
+@use GeoParamsAliases density=ρ    
+
 #Make sure that structs are isbits
 x = ConstantDensity()
 @test isbits(x)
@@ -42,6 +45,11 @@ x   = ConstantDensity()
 num_alloc = @allocated compute_density!(rho, x, P, T)
 num_alloc = @allocated compute_density!(rho, x, P, T)
 @show num_alloc
+@test num_alloc == 0
+
+#Test allocations using ρ alias
+num_alloc = @allocated ρ!(rho, x, P, T)
+num_alloc = @allocated ρ!(rho, x, P, T)
 @test num_alloc == 0
 
 # This does NOT allocate if I test this with @btime;
@@ -134,6 +142,13 @@ P       =  ones(size(Phases))*10
 # Test computing density when Mat_tup1 is provided as a tuple
 compute_density!(rho, Mat_tup1, Phases, P,T) 
 num_alloc = @allocated compute_density!(rho, Mat_tup1, Phases, P,T)   #      287.416 μs (0 allocations: 0 bytes)
+@test sum(rho)/400^2 ≈ 2945.000013499999
+@test num_alloc == 0
+
+#Same test using function alias
+rho     = zeros(size(Phases))
+ρ!(rho, Mat_tup1, Phases, P,T) 
+num_alloc = @allocated compute_density!(rho, Mat_tup1, Phases, P,T)
 @test sum(rho)/400^2 ≈ 2945.000013499999
 @test num_alloc == 0
 
