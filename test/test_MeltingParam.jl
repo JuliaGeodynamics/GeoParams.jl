@@ -48,6 +48,8 @@ MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
 MatParam[3] =   SetMaterialParams(Name="UpperCrust", Phase=3,
                         Density   = PT_Density());
 
+Mat_tup = Tuple(MatParam)
+
 # test computing material properties
 n = 100;
 Phases              = ones(Int64,n,n,n);
@@ -58,7 +60,8 @@ Phases[:,:,80:end] .= 3
 T =  ones(size(Phases))*1500
 P =  ones(size(Phases))*10
 
-compute_meltfraction!(ϕ, MatParam, Phases, P,T)
+compute_meltfraction!(ϕ, Mat_tup, Phases, P,T) #allocations coming from computing meltfraction using PhaseDiagram_LookupTable
+
 @test sum(ϕ)/n^3 ≈ 0.6463001302812086
 
 
@@ -70,7 +73,7 @@ for i in CartesianIndices(Phases)
     PhaseRatio[I] = 1.0  
 end
 
-compute_meltfraction!(ϕ, MatParam, PhaseRatio, P,T)
+compute_meltfraction!(ϕ, Mat_tup, PhaseRatio, P,T)
 @test sum(ϕ)/n^3 ≈ 0.6463001302812086
 
 
