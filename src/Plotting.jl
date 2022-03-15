@@ -305,32 +305,3 @@ function PlotPhaseDiagram(p::PhaseDiagram_LookupTable, fieldn::Symbol; Tvec=noth
     return  plt, data_scalar, Tvec, Pvec  
 end
             
-
-""" Test for Christmas Tree Diagram """
-            
-function PlotChristmasTree(c::AbstractCreepLaw, v::CreepLawVariables, T=(283:30:1333)*K, z=(0:35)*km, EpsII=(1e-18s^(-1.0), 1e-12s^(-1.0)), PlotOpt::Bool=false)
-    if isDimensional(c)==false
-        error("The struct with Creep Law parameters: $(typeof(c)) should be in dimensional units for plotting. You can use Dimensionalize! to do that.")
-    end
-
-    if isDimensional(v)==false
-        error("The struct with Creep Law variables: $(typeof(v)) should be in dimensional units for plotting. You can use Dimensionalize! to do that.")
-    end
-
-    EpsII = range(ustrip(EpsII[1])/s, stop=ustrip(EpsII[2])/s, length=36)
-    TauII = computeCreepLaw(EpsII,c,v)                                                      #deviatoric stress
-
-    EpsII = GeoUnit(EpsII)
-    TauII = GeoUnit(TauII)
-
-    if PlotOpt
-        try
-            plot(ustrip(T), ustrip(z), yflip=true, xmirror=true, lab="geotherm", ylabel="depth [km]", xlabel="temperature [°C]")
-            p = plot!(ustrip(TauII), ustrip(z), yflip=true, xmirror=true, lab="Dev. stress", ylabel="depth [km]", xlabel="temperature [°C], stress [MPa]")
-            return p
-        catch
-            error("It seems that you did not install, or did not load Plots.jl. For plotting, please add that with `add Plots` in the package manager and type `using Plots` before running this.")
-        end
-
-    end
-end
