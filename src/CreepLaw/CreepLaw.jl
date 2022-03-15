@@ -39,14 +39,14 @@ where you can also pass vectors or arrays as values.
 Note that, if needed, this can be extended, w/out interfering with existing calculation  
 """
 @with_kw struct CreepLawVariables     
-    P::GeoUnit  =   100.0MPa   # pressure
-    T::GeoUnit  =   500.0C     # temperature
-    d::GeoUnit  =   1.0cm      # grainsize
-    f::GeoUnit  =   0.0MPa     # water-fugacity         
+    P::GeoUnit{_T,U1}  =   100.0MPa   # pressure
+    T::GeoUnit{_T,U2}  =   500.0C     # temperature
+    d::GeoUnit{_T,U3}  =   1.0cm      # grainsize
+    f::GeoUnit{_T,U4}  =   0.0MPa     # water-fugacity         
 end
+CreepLawVariables(args...) = CreepLawVariables(convert.(GeoUnit,args)...)
 
 include("DislocationCreep.jl")
-include("DiffusionCreep.jl")
 # Linear viscous rheology ------------------------------------------------
 """
     LinearViscous(η=1e20Pa*s)
@@ -66,7 +66,7 @@ where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\
 """
 @with_kw_noshow struct LinearViscous{T,U} <: AbstractCreepLaw{T}    
     η::GeoUnit{T,U}       =   1e20Pa*s                # viscosity
-    η_val::T            =   1.0
+    η_val::T              =   1.0
 end
 LinearViscous(args...) = LinearViscous(convert(GeoUnit,args[1]), args[2])
 
