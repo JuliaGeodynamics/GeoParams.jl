@@ -70,6 +70,14 @@ function computeCreepLaw_EpsII(TauII, a::DislocationCreep, p::CreepLawVariables)
     @unpack_val n,r,A,E,V,R = a
     @unpack_val P,T,f       = p
     
+    FT, FE = CorrectionFactor(a)
+   
+    return A*(TauII*FT)^n*f^r*exp(-(E + P*V)/(R*T))/FE
+end
+
+function computeCreepLaw_EpsII(TauII, a::DislocationCreep, P::_R, T::_R, f::_R) where _R<:Real
+    @unpack_val n,r,A,E,V,R = a
+    
     FT, FE = CorrectionFactor(a);    
    
     return A*(TauII*FT)^n*f^r*exp(-(E + P*V)/(R*T))/FE; 
@@ -81,10 +89,22 @@ function computeCreepLaw_TauII(EpsII, a::DislocationCreep, p::CreepLawVariables)
     @unpack_val n,r,A,E,V,R = a
     @unpack_val P,T,f       = p
 
-    FT, FE = CorrectionFactor(a);    
+    FT, FE = CorrectionFactor(a)    
 
     return A^(-1/n)*(EpsII*FE)^(1/n)*f^(-r/n)*exp((E + P*V)/(n * R*T))/FT;
 end
+
+
+# EpsII .= A.*(TauII.*FT).^n.*f.^r.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
+# All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
+function computeCreepLaw_TauII(EpsII, a::DislocationCreep, P::_R, T::_R, f::_R) where _R<:Real
+    @unpack_val n,r,A,E,V,R = a
+
+    FT, FE = CorrectionFactor(a);    
+
+    return A^(-1/n)*(EpsII*FE)^(1/n)*f^(-r/n)*exp((E + P*V)/(n * R*T))/FT
+end
+
 
 # Print info 
 function show(io::IO, g::DislocationCreep)  
