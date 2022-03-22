@@ -64,11 +64,23 @@ or
 
 where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\\dot{\\varepsilon}_0``[1/s], and ``n`` the power law exponent []. 
 """
-@with_kw_noshow struct LinearViscous{T,U} <: AbstractCreepLaw{T}    
+@with_kw_noshow struct LinearViscous{T,U} <: AbstractCreepLaw{T}
     η::GeoUnit{T,U}     =   1e20Pa*s                # viscosity
     η_val::T            =   1.0
 end
 LinearViscous(args...) = LinearViscous(convert(GeoUnit,args[1]), args[2])
+
+(η::LinearViscous)(args...) = η.η.val
+
+function (η::NTuple{N, LinearViscous})(I::Int64, args...) where N 
+    @assert I ≤ N  
+    return η[I]()
+end
+
+function (η::AbstractVector{LinearViscous{T1,T2}})(I::Int64, args...) where {T1,T2}
+    @assert I ≤ length(η)
+    return η[I]()
+end
 
 function param_info(s::LinearViscous) # info about the struct
     return MaterialParamsInfo(Equation = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}")
@@ -110,6 +122,27 @@ where ``\\eta`` is the effective viscosity [Pa*s].
     ε0::GeoUnit{T,U3}     =  1e-15*1/s;          # reference strainrate
 end
 PowerlawViscous(a...) = PowerlawViscous(convert.(GeoUnit,a)...)
+
+function (η::PowerlawViscous)(εII) 
+    # unpack
+    η0 = η.η0.val
+    ε0 = η.ε0.val
+    n = η.n.val
+    # stress
+    τII = η0 * (εII/ε0)
+    # return viscosity
+    return τII^n/εII
+end
+
+function (η::NTuple{N, PowerlawViscous})(I::Int64, εII) where N 
+    @assert I ≤ N  
+    return η[I](εII)
+end
+
+function (η::AbstractVector{PowerlawViscous})(I::Int64, εII)
+    @assert I ≤ length(η)
+    return η[I](εII)
+end
 
 # Print info 
 function show(io::IO, g::PowerlawViscous)  
