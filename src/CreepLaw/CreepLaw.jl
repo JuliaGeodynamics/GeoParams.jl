@@ -139,7 +139,7 @@ function (η::NTuple{N, PowerlawViscous})(I::Int64, εII) where N
     return η[I](εII)
 end
 
-function (η::AbstractVector{PowerlawViscous})(I::Int64, εII)
+function (η::AbstractVector{PowerlawViscous{T,U1,U2,U3}})(I::Int64, εII) where {T,U1,U2,U3}
     @assert I ≤ length(η)
     return η[I](εII)
 end
