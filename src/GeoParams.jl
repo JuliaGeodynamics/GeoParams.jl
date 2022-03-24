@@ -80,13 +80,13 @@ using .MaterialParameters.HeatCapacity
 export compute_heatcapacity,
         compute_heatcapacity!,
         ConstantHeatCapacity,
-        T_HeatCapacity_Whittacker
+        T_HeatCapacity_Whittington
 
 using .MaterialParameters.Conductivity
 export compute_conductivity,
         compute_conductivity!,
         ConstantConductivity,
-        T_Conductivity_Whittacker,
+        T_Conductivity_Whittington,
         TP_Conductivity,
         Set_TP_Conductivity
 

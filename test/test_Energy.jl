@@ -20,14 +20,14 @@ cp1     = nondimensionalize(cp1,CharUnits_GEO)
 # Temperature-dependent heat capacity
 # dimensional
 T        =   250.0:100:1250;
-cp2      =   T_HeatCapacity_Whittacker()
+cp2      =   T_HeatCapacity_Whittington()
 Cp       =   similar(T)
 @test isbits(cp2)
 compute_heatcapacity!(Cp, cp2, T)
 @test sum(Cp) ≈ 11667.035717418683
 
 # nondimensional
-cp2_nd   =   T_HeatCapacity_Whittacker()
+cp2_nd   =   T_HeatCapacity_Whittington()
 cp2_nd   =   nondimensionalize(cp2_nd,CharUnits_GEO)
 T_nd     =   Float64.(T*K/CharUnits_GEO.Temperature)
 Cp_nd    =   similar(T)
@@ -62,7 +62,7 @@ MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=1,
                     HeatCapacity  = ConstantHeatCapacity());
 
 MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
-                    HeatCapacity  = T_HeatCapacity_Whittacker());
+                    HeatCapacity  = T_HeatCapacity_Whittington());
 
 Mat_tup = Tuple(MatParam)
 
@@ -116,13 +116,13 @@ cond = nondimensionalize(cond,CharUnits_GEO)
 # Temperature-dependent conductivity
 # dimensional
 T        =   Vector{Float64}(250:100:1250);
-cond2    =   T_Conductivity_Whittacker()
+cond2    =   T_Conductivity_Whittington()
 k        =   compute_conductivity(cond2, T)
 @test isbits(cond2)
 @test sum(k) ≈ 27.503366436682285
 
 # nondimensional
-cond2_nd =   T_Conductivity_Whittacker()
+cond2_nd =   T_Conductivity_Whittington()
 cond2_nd =   nondimensionalize(cond2_nd,CharUnits_GEO)
 T_nd     =   Float64.(ustrip.(T/CharUnits_GEO.Temperature))
 k_nd     =   compute_conductivity(cond2_nd, T_nd)
@@ -152,7 +152,7 @@ MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=1,
                     Conductivity  = ConstantConductivity());
 
 MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
-                    Conductivity  = T_Conductivity_Whittacker());
+                    Conductivity  = T_Conductivity_Whittington());
 
 MatParam[3] =   SetMaterialParams(Name="MantleLithosphere", Phase=3,
                     Conductivity = Set_TP_Conductivity("Mantle"));

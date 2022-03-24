@@ -16,7 +16,7 @@ abstract type AbstractHeatCapacity{T} <: AbstractMaterialParam end
 export  compute_heatcapacity,               # calculation routines
         compute_heatcapacity!,              # in-place routine
         ConstantHeatCapacity,               # constant
-        T_HeatCapacity_Whittacker,          # T-dependent heat capacity
+        T_HeatCapacity_Whittington,          # T-dependent heat capacity
         param_info
 
 include("../Utils.jl")
@@ -73,9 +73,9 @@ end
 
 # Temperature dependent heat capacity -------------------------------
 """
-    T_HeatCapacity_Whittacker()
+    T_HeatCapacity_Whittington()
     
-Sets a temperature-dependent heat capacity following the parameterization of Whittacker et al. (2009), Nature:
+Sets a temperature-dependent heat capacity following the parameterization of Whittington et al. (2009), Nature:
 ```math  
     Cp = (a + b T - c/T^2)/m 
 ```
@@ -91,7 +91,7 @@ where ``Cp`` is the heat capacity [``J/kg/K``], and ``a,b,c`` are parameters tha
 
 Note that this is slightly different than the equation in the manuscript, as Cp is in J/kg/K (rather than ``J/mol/K`` as in eq.3/4 of the paper)
 """
-@with_kw_noshow struct T_HeatCapacity_Whittacker{T,U1,U2,U3,U4,U5} <: AbstractHeatCapacity{T}
+@with_kw_noshow struct T_HeatCapacity_Whittington{T,U1,U2,U3,U4,U5} <: AbstractHeatCapacity{T}
     # Note: the resulting curve was visually compared with Fig. 2 of the paper
     a0::GeoUnit{T,U1}          =   199.5J/mol/K                # prefactor for low T       (T<= 846 K)
     a1::GeoUnit{T,U1}          =   229.32J/mol/K               # prefactor for high T      (T>  846 K)
@@ -102,14 +102,14 @@ Note that this is slightly different than the equation in the manuscript, as Cp 
     molmass::GeoUnit{T,U4}     =   0.22178kg/mol               # average molar mass 
     Tcutoff::GeoUnit{T,U5}     =   846K                        # cutoff temperature
 end
-T_HeatCapacity_Whittacker(args...) = T_HeatCapacity_Whittacker(convert.(GeoUnit,args)...)
+T_HeatCapacity_Whittington(args...) = T_HeatCapacity_Whittington(convert.(GeoUnit,args)...)
 
-function param_info(s::T_HeatCapacity_Whittacker) # info about the struct
+function param_info(s::T_HeatCapacity_Whittington) # info about the struct
     return MaterialParamsInfo(Equation =   L"c_p = (a + b*T - c/T^2)/m")
 end
 
 # Calculation routine
-function compute_heatcapacity(s::T_HeatCapacity_Whittacker{_T}, P::_T=zero(_T), T::_T=zero(_T)) where _T
+function compute_heatcapacity(s::T_HeatCapacity_Whittington{_T}, P::_T=zero(_T), T::_T=zero(_T)) where _T
     @unpack_val a0,a1,b0,b1,c0,c1, molmass, Tcutoff   = s
     
     cp = a0/molmass
@@ -125,7 +125,7 @@ function compute_heatcapacity(s::T_HeatCapacity_Whittacker{_T}, P::_T=zero(_T), 
     return cp
 end
 
-function compute_heatcapacity(s::T_HeatCapacity_Whittacker{_T}, P::Quantity, T::Quantity) where _T
+function compute_heatcapacity(s::T_HeatCapacity_Whittington{_T}, P::Quantity, T::Quantity) where _T
     @unpack_units a0,a1,b0,b1,c0,c1, molmass, Tcutoff   = s
     
     cp = a0/molmass
@@ -142,11 +142,11 @@ function compute_heatcapacity(s::T_HeatCapacity_Whittacker{_T}, P::Quantity, T::
 end
 
 """
-    compute_heatcapacity!(cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittacker{_T}, T::_T=zero(_T), P::_T=zero(_T)) where {_T,N}
+    compute_heatcapacity!(cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}, T::_T=zero(_T), P::_T=zero(_T)) where {_T,N}
  
 Computes T-dependent heat capacity in-place    
 """
-function compute_heatcapacity!(cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittacker{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T, N}) where {_T,N}
+function compute_heatcapacity!(cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T, N}) where {_T,N}
     @unpack_val a0,a1,b0,b1,c0,c1, molmass, Tcutoff   = s
    
     @inbounds for i in eachindex(T)
@@ -160,12 +160,12 @@ function compute_heatcapacity!(cp_array::AbstractArray{_T, N},s::T_HeatCapacity_
 end
 
 """
-    compute_heatcapacity!(cp_array::AbstractArray{_T,N},s::T_HeatCapacity_Whittacker{_T}, T::AbstractArray{_T,N},P::AbstractArray{_T,N}) where {_T,N}
+    compute_heatcapacity!(cp_array::AbstractArray{_T,N},s::T_HeatCapacity_Whittington{_T}, T::AbstractArray{_T,N},P::AbstractArray{_T,N}) where {_T,N}
 
 Computes T-dependent heat capacity in-place      
 """
 #=
-function compute_heatcapacity!(cp_array::AbstractArray{_T,N},s::T_HeatCapacity_Whittacker{_T}, T::AbstractArray{_T,N},P::AbstractArray{_T,N}) where {_T,N}
+function compute_heatcapacity!(cp_array::AbstractArray{_T,N},s::T_HeatCapacity_Whittington{_T}, T::AbstractArray{_T,N},P::AbstractArray{_T,N}) where {_T,N}
 
     compute_heatcapacity(s, cp_array,T)
 
@@ -174,9 +174,10 @@ end
 =#
 
 # Print info 
-function show(io::IO, g::T_HeatCapacity_Whittacker)  
-    print(io, "T-dependent heat capacity: cp/$(UnitValue(g.molmass))=$(UnitValue(g.a0)) + $(UnitValue(g.b0))*T - $(UnitValue(g.c0))/T^2 (for T<=$(UnitValue(g.Tcutoff))); ");
-    print(io, " cp/$(UnitValue(g.molmass))=$(UnitValue(g.a1)) + $(UnitValue(g.b1))*T - $(UnitValue(g.c1))/T^2 (for T>$(UnitValue(g.Tcutoff))) \n");
+function show(io::IO, g::T_HeatCapacity_Whittington)  
+#    print(io, "T-dependent heat capacity: cp/$(UnitValue(g.molmass))=$(UnitValue(g.a0)) + $(UnitValue(g.b0))*T - $(UnitValue(g.c0))/T^2 (for T<=$(UnitValue(g.Tcutoff))); ");
+#    print(io, " cp/$(UnitValue(g.molmass))=$(UnitValue(g.a1)) + $(UnitValue(g.b1))*T - $(UnitValue(g.c1))/T^2 (for T>$(UnitValue(g.Tcutoff))) \n");
+    print(io, "T-dependent heat capacity following Whittington et al. (2009) for average crust). \n");
 end
 #-------------------------------------------------------------------------
 
@@ -196,13 +197,13 @@ Returns the heat capacity `Cp` at any temperature `T` and pressure `P` using any
 
 Currently available:
 - ConstantHeatCapacity
-- T\\_HeatCapacity_Whittacker
+- T\\_HeatCapacity_Whittington
 
 # Example 
 Using dimensional units
 ```julia
 julia> T  = (250:100:1250)*K;
-julia> cp = T_HeatCapacity_Whittacker()
+julia> cp = T_HeatCapacity_Whittington()
 julia> Cp = ComputeHeatCapacity(0,T,cp)
 11-element Vector{Unitful.Quantity{Float64, 𝐋² 𝚯⁻¹ 𝐓⁻², Unitful.FreeUnits{(kg⁻¹, J, K⁻¹), 𝐋² 𝚯⁻¹ 𝐓⁻², nothing}}}:
   635.4269997294616 J kg⁻¹ K⁻¹

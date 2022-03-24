@@ -17,7 +17,7 @@ export  compute_conductivity,                # calculation routines
         compute_conductivity!,
         param_info,
         ConstantConductivity,               # constant
-        T_Conductivity_Whittacker,          # T-dependent heat capacity
+        T_Conductivity_Whittington,          # T-dependent heat capacity
         TP_Conductivity,                    # TP dependent conductivity
         Set_TP_Conductivity                 # Routine to set pre-defined parameters
 
@@ -79,10 +79,10 @@ end
 
 # Temperature dependent conductivity -------------------------------
 """
-    T_Conductivity_Whittacker()
+    T_Conductivity_Whittington()
     
-Sets a temperature-dependent conductivity following the parameterization of *Whittacker et al. (2009), Nature.* 
-Their parameterization is originally given for the thermal diffusivity, together with a parameterization for thermal conductivity, which allows us 
+Sets a temperature-dependent conductivity following the parameterization of *Whittington, A.G., Hofmeister, A.M., Nabelek, P.I., 2009. Temperature-dependent thermal diffusivity of the Earth’s crust and implications for magmatism. Nature 458, 319–321. https://doi.org/10.1038/nature07818.* 
+Their parameterization is originally given for the thermal diffusivity, together with a parameterization for thermal conductivity, which allows us to compute 
 ```math  
     Cp = a + b T - c/T^2 
 ```
@@ -111,7 +111,7 @@ where ``Cp`` is the heat capacity [``J/mol/K``], and ``a,b,c`` are parameters th
 - f = 0.732m^2/s        
 - g = 0.000135m^2/s/K 
 """
-@with_kw_noshow struct T_Conductivity_Whittacker{T,U1,U2,U3,U4,U5,U6,U7,U8,U9} <: AbstractConductivity{T} 
+@with_kw_noshow struct T_Conductivity_Whittington{T,U1,U2,U3,U4,U5,U6,U7,U8,U9} <: AbstractConductivity{T} 
     # Note: the resulting curve of k was visually compared with Fig. 2 of the paper  
     a0::GeoUnit{T,U1}             =   199.5J/mol/K                # prefactor for low T       (T<= 846 K)
     a1::GeoUnit{T,U1}             =   229.32J/mol/K               # prefactor for high T      (T>  846 K)
@@ -127,14 +127,14 @@ where ``Cp`` is the heat capacity [``J/mol/K``], and ``a,b,c`` are parameters th
     f::GeoUnit{T,U8}              =   0.732*1e-6m^2/s             # diffusivity parameterization
     g::GeoUnit{T,U9}              =   0.000135*1e-6m^2/s/K        # diffusivity parameterization
 end
-T_Conductivity_Whittacker(args...) = T_Conductivity_Whittacker(convert.(GeoUnit,args)...)
+T_Conductivity_Whittington(args...) = T_Conductivity_Whittington(convert.(GeoUnit,args)...)
 
-function param_info(s::T_Conductivity_Whittacker) # info about the struct
+function param_info(s::T_Conductivity_Whittington) # info about the struct
     return MaterialParamsInfo(Equation = L"k = f(T) ")
 end
 
 # Calculation routine
-function compute_conductivity(s::T_Conductivity_Whittacker{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
+function compute_conductivity(s::T_Conductivity_Whittington{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
     @unpack_val a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g   = s
     if T <= Tcutoff
         return (a0 + b0*T - c0/T^2)/molmass * (d/T - e) * rho
@@ -143,7 +143,7 @@ function compute_conductivity(s::T_Conductivity_Whittacker{_T}, P::_T=zero(_T),T
     end
 end
 
-function compute_conductivity(s::T_Conductivity_Whittacker{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T,N}) where {_T,N}
+function compute_conductivity(s::T_Conductivity_Whittington{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T,N}) where {_T,N}
     @unpack_val a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g   = s
 
     k = Array{_T}(undef,size(T))    #creating an array makes 1 allocation
@@ -167,11 +167,11 @@ function compute_conductivity(s::T_Conductivity_Whittacker{_T}, P::AbstractArray
 end
 
 """
-    compute_conductivity!(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::T_Conductivity_Whittacker) where N
+    compute_conductivity!(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::T_Conductivity_Whittington) where N
 
 In-place routine to compute temperature-dependent conductivity    
 """
-function compute_conductivity!(k::AbstractArray{_T,N}, s::T_Conductivity_Whittacker{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T,N}) where {_T,N}
+function compute_conductivity!(k::AbstractArray{_T,N}, s::T_Conductivity_Whittington{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T,N}) where {_T,N}
     @unpack_val a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g   = s
 
     @inbounds for i in eachindex(T)
@@ -186,8 +186,8 @@ end
 
 
 # Print info 
-function show(io::IO, g::T_Conductivity_Whittacker) #info about the struct
-    print(io, "T-dependent conductivity following Whittacker et al. (2009) for average crust). \n");
+function show(io::IO, g::T_Conductivity_Whittington) #info about the struct
+    print(io, "T-dependent conductivity following Whittington et al. (2009) for average crust). \n");
 end
 #-------------------------------------------------------------------------
 
@@ -334,14 +334,14 @@ Returns the thermal conductivity `k` at any temperature `T` and pressure `P` usi
 
 Currently available:
 - ConstantConductivity
-- T\\_Conductivity_Whittacker
+- T\\_Conductivity_Whittington
 - TP\\_Conductivity
 
 # Example 
 Using dimensional units
 ```julia
 julia> T  = (250:100:1250)*K;
-julia> cp = T_HeatCapacity_Whittacker()
+julia> cp = T_HeatCapacity_Whittington()
 julia> Cp = ComputeHeatCapacity(0,T,cp)
 ```
 
