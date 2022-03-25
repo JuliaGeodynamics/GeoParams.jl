@@ -35,7 +35,7 @@ end
 
 Compute the effective viscosity of a `AbstractViscosity`
 """
-@generated function compute_viscosity(η::T, args) where T <: AbstractViscosity
+@inline @generated function compute_viscosity(η::T, args) where T <: AbstractViscosity
     functors = fieldnames(T)[2:end]
     nf = length(functors)
     if nf > 1

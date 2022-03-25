@@ -55,7 +55,7 @@ end
 DislocationCreep(args...) = DislocationCreep(NTuple{length(args[1]), Char}(collect.(args[1])), convert.(GeoUnit,args[2:end-1])..., args[end])
 
 # Compute dislocation creep viscosity
-function (η::DislocationCreep)(EpsII::Real, P::Real, T::Real, f::Real) 
+@inline function (η::DislocationCreep)(EpsII::Real, P::Real, T::Real, f::Real) 
     return 0.5*EpsII*(1/computeCreepLaw_TauII(EpsII, η, P, T, f))
 end
 

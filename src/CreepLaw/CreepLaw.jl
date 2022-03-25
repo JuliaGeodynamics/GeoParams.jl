@@ -71,7 +71,7 @@ where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\
 end
 LinearViscous(args...) = LinearViscous(convert(GeoUnit,args[1]), args[2])
 
-(η::LinearViscous)(args...) = η.η.val
+@inline (η::LinearViscous)(args...) = η.η.val
 
 function (η::NTuple{N, LinearViscous})(I::Int64, args...) where N 
     @assert I ≤ N  
@@ -124,7 +124,7 @@ where ``\\eta`` is the effective viscosity [Pa*s].
 end
 PowerlawViscous(a...) = PowerlawViscous(convert.(GeoUnit,a)...)
 
-function (η::PowerlawViscous)(εII) 
+@inline function (η::PowerlawViscous)(εII) 
     # unpack
     η0 = η.η0.val
     ε0 = η.ε0.val
@@ -157,7 +157,7 @@ end
 end
 Elasticity(G) = Elasticity(convert(GeoUnit,G))
 
-(η::Elasticity)(dt) = η.G*dt
+@inline (η::Elasticity)(dt) = η.G*dt
 #-------------------------------------------------------------------------
 
 include("Viscosity.jl")
