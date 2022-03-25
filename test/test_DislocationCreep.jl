@@ -46,10 +46,10 @@ using GeoParams
     @test NewTau ≈ TauII.val
     @test NewTau == computeCreepLaw_TauII(εII, Phase.CreepLaws[1], P.val, T.val, f.val)
 
-    # Given stress
-    #@test computeCreepLaw_EpsII(1e6Pa, x1, CreepLawParams())==5e-13/s                # dimensional input       
+  
 
     # Given strainrate 
     #@test computeCreepLaw_EpsII(1e-13/s, x1, CreepLawParams())==1e18*2*1e-13Pa       # dimensional input       
     # -------------------------------------------------------------------
+
 end

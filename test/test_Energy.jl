@@ -66,6 +66,8 @@ MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
 
 Mat_tup = Tuple(MatParam)
 
+Mat_tup = Tuple(MatParam)
+
 # test computing material properties
 n = 100;
 Phases              = ones(Int64,n,n,n);

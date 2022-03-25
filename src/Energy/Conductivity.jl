@@ -69,7 +69,6 @@ function compute_conductivity!(k_array::AbstractArray{_T,N}, s::ConstantConducti
     
     return nothing
 end
-
 # Print info 
 function show(io::IO, g::ConstantConductivity)  
     print(io, "Constant conductivity: k=$(g.k.val)")  
