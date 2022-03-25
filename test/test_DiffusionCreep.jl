@@ -16,31 +16,27 @@ x2      =   DiffusionCreep(n=3, p=-3.0)
 @test Value(x2.A) == 1.5MPa^-3.0*s^-1*m^(3.0)
 
 # perform a computation with the dislocation creep laws 
-    # Calculate EpsII, using a set of pre-defined values
+# Calculate EpsII, using a set of pre-defined values
 CharDim = GEO_units(length=1000km, viscosity=1e19Pa*s, stress=100MPa, temperature=1000C)
 EpsII   = GeoUnit(1.0s^-1.0)
-EpsII_nd= nondimensionalize(EpsII,CharDim)
 TauII   = GeoUnit(0.3MPa)
-TauII_nd= nondimensionalize(TauII,CharDim)
 P       = GeoUnit(1.0e9Pa)
-P_nd    = nondimensionalize(P,CharDim)
 T       = GeoUnit(1400C)
-T_nd    = nondimensionalize(T,CharDim)
 f       = GeoUnit(1000NoUnits)
-f_nd    = nondimensionalize(f,CharDim)
-d       = GeoUnit(10mm)
-d_nd    = nondimensionalize(d,CharDim)
-c       = CreepLawVariables(P=P,T=T,f=f,d=d)
-#Phase   = SetMaterialParams(Name="Viscous Matrix", Phase=1,
-#                                     Density   = ConstantDensity(),
-#                                     CreepLaws = DiffusionCreep(n=1.0NoUnits, r=1.0NoUnits, p=-3.0NoUnits, A=1.0e6MPa^(-1.0)*s^(-1.0)*µm^(3.0), E=335000.0J/mol, V=4.0e-6m^(3.0)/mol, Apparatus="Invariant"), CharDim = CharDim)
-#EpsII.val = ComputeCreepLaw_EpsII(TauII,Phase.CreepLaws[1],c)
+d       = GeoUnit(10000µm)
+c       = CreepLawVariables(P=nondimensionalize(P,CharDim),T=nondimensionalize(T,CharDim),f=nondimensionalize(f,CharDim),d=nondimensionalize(d,CharDim))
+Phase   = SetMaterialParams(Name="Viscous Matrix", Phase=1,
+                                        Density   = ConstantDensity(),
+                                        CreepLaws = DiffusionCreep(n=1.0NoUnits, r=1.0NoUnits, p=-3.0NoUnits, A=1.0e6MPa^(-1.0)*s^(-1.0)*µm^(3.0), E=335000.0J/mol, V=4.0e-6m^(3.0)/mol, Apparatus=3), CharDim = CharDim)
+
+EpsII = computeCreepLaw_EpsII(nondimensionalize(TauII, CharDim),Phase.CreepLaws[1],c)
 # Tested value is Dimensional so need to non-dimensionalize it back to compare
-#@test EpsII.val  ≈ nondimensionalize(7.823165072337786e-15s^(-1.0), CharDim) rtol = 1e-12
-    # Check that once inverted, we get back the TauII that we used to calculate EpsII
-#NewTau = ComputeCreepLaw_TauII(EpsII,Phase.CreepLaws[1],c)
-#@show NewTau
-#@test NewTau ≈ TauII.val
+@test EpsII ≈ nondimensionalize(7.823165072337786e-15s^(-1.0), CharDim) rtol = 1e-12
+
+
+# Check that once inverted, we get back the TauII that we used to calculate EpsII
+NewTau = computeCreepLaw_TauII(EpsII,Phase.CreepLaws[1],c)
+@test NewTau ≈ nondimensionalize(0.3MPa, CharDim) rtol = 1e-12
 
 
 # Given stress
