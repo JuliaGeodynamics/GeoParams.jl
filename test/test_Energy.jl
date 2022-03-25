@@ -133,6 +133,27 @@ k_nd     =   compute_conductivity(cond2_nd, T_nd)
 # Dimensionalize again and double-check the results
 @test sum(abs.(ustrip.(k_nd*CharUnits_GEO.conductivity) - k)) < 1e-11
 
+
+
+# Temperature-dependent parameterised conductivity
+# dimensional
+T        =   Vector{Float64}(250:100:1250);
+cond2    =   T_Conductivity_Whittington_parameterised()
+k        =   compute_conductivity(cond2, T)
+@test isbits(cond2)
+@test sum(k) ≈ 27.553653387829254
+
+# nondimensional
+cond2_nd =   T_Conductivity_Whittington_parameterised()
+cond2_nd =   nondimensionalize(cond2_nd,CharUnits_GEO)
+T_nd     =   Float64.(ustrip.(T/CharUnits_GEO.Temperature))
+k_nd     =   compute_conductivity(cond2_nd, T_nd)
+@test sum(k_nd) ≈ 35.079933810714806
+
+# Dimensionalize again and double-check the results
+@test sum(abs.(ustrip.(k_nd*CharUnits_GEO.conductivity) - k)) < 1e-11
+
+
 # Check if we use arrays
 T_array     =  ustrip.(T)*ones(100)'
 k_array     =  copy(T_array)
@@ -142,7 +163,7 @@ compute_conductivity!(k_array,cond,P_array,T_array)
 @test k_array[1] ≈ 3.8194500000000007
 
 compute_conductivity!(k_array,cond2,P_array,T_array) 
-@test sum(k_array) ≈ 2750.3366436682285
+@test sum(k_array) ≈ 2755.3653387829254
 
 k_TP    =   Set_TP_Conductivity("LowerCrust")
 compute_conductivity!(k_array, k_TP, P_array, T_array) 

@@ -13,13 +13,14 @@ import Base.show, GeoParams.param_info
 
 abstract type AbstractConductivity{T} <: AbstractMaterialParam end
 
-export  compute_conductivity,                # calculation routines
+export  compute_conductivity,                       # calculation routines
         compute_conductivity!,
         param_info,
-        ConstantConductivity,               # constant
-        T_Conductivity_Whittington,          # T-dependent heat capacity
-        TP_Conductivity,                    # TP dependent conductivity
-        Set_TP_Conductivity                 # Routine to set pre-defined parameters
+        ConstantConductivity,                       # constant
+        T_Conductivity_Whittington,                 # T-dependent heat capacity
+        T_Conductivity_Whittington_parameterised,   # parameterised T-dependent heat capacity
+        TP_Conductivity,                            # TP dependent conductivity
+        Set_TP_Conductivity                         # Routine to set pre-defined parameters
 
 include("../Computations.jl")
 include("../Utils.jl")
@@ -186,9 +187,84 @@ end
 
 # Print info 
 function show(io::IO, g::T_Conductivity_Whittington) #info about the struct
-    print(io, "T-dependent conductivity following Whittington et al. (2009) for average crust). \n");
+    print(io, "T-dependent conductivity following the original Whittington et al. (2009) formulation for average crust). \n");
 end
 #-------------------------------------------------------------------------
+
+# Temperature dependent conductivity -------------------------------
+"""
+    T_Conductivity_Whittington_parameterised()
+    
+Sets a temperature-dependent conductivity following the parameterization of *Whittington, A.G., Hofmeister, A.M., Nabelek, P.I., 2009. Temperature-dependent thermal diffusivity of the Earth’s crust and implications for magmatism. Nature 458, 319–321. https://doi.org/10.1038/nature07818.* 
+Their parameterization is originally given for the thermal diffusivity, together with a parameterization for thermal conductivity, which allows us to compute 
+```math
+    k [W/m/K] = -2e-09*(T[K]-273.15)^3 + 6e-06*(T[K]-273.15)^2 - 0.0062*(T[K]-273.15) + 4
+```
+
+where ``T[K]`` temperature in Kelvin (or the nondimensional equivalent of it)
+
+"""
+@with_kw_noshow struct T_Conductivity_Whittington_parameterised{T,U1,U2,U3,U4,U5} <: AbstractConductivity{T} 
+    # Note: the resulting curve of k was visually compared with Fig. 2 of the paper  
+    a::GeoUnit{T,U1}             =  -2e-09Watt/m/K^4                # 
+    b::GeoUnit{T,U2}             =     6e-06Watt/m/K^3              # 
+    c::GeoUnit{T,U3}             =   -0.0062Watt/m/K^2              # 
+    d::GeoUnit{T,U4}             =         4Watt/m/K                # 
+    Ts::GeoUnit{T,U5}            =   273.15*K                    # Temperature shift [C->K]
+end
+T_Conductivity_Whittington_parameterised(args...) = T_Conductivity_Whittington_parameterised(convert.(GeoUnit,args)...)
+
+function param_info(s::T_Conductivity_Whittington_parameterised) # info about the struct
+    return MaterialParamsInfo(Equation = L"k = a*(T[K]-Ts)^3 + b*(T[K]-Ts)^2  + c*(T[K]-Ts) + d, Ts=273.15")
+end
+
+# Calculation routine
+function compute_conductivity(s::T_Conductivity_Whittington_parameterised{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
+    @unpack_val a,b,c,d,Ts   = s
+    T_C  = T - Ts
+    return a*T_C^3 + b*T_C^2 + c*T_C + d
+end
+
+function compute_conductivity(s::T_Conductivity_Whittington_parameterised{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T,N}) where {_T,N}
+    @unpack_val a,b,c,d,Ts   = s
+
+    k = Array{_T}(undef,size(T))    #creating an array makes 1 allocation
+
+    @inbounds for i in eachindex(T)
+        # Note: in general, we operate with SI units or the non-dimensional equivalent of that
+        # This parameterisation was develoed 
+
+        T_C  = T[i] - Ts
+        k[i] = a*T_C^3 + b*T_C^2 + c*T_C + d
+
+    end
+
+    return k
+end
+
+"""
+    compute_conductivity!(k::AbstractArray{_T,N}, s::T_Conductivity_Whittington_parameterised{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T,N})
+
+In-place routine to compute temperature-dependent conductivity    
+"""
+function compute_conductivity!(k::AbstractArray{_T,N}, s::T_Conductivity_Whittington_parameterised{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T,N}) where {_T,N}
+    @unpack_val a,b,c,d,Ts   = s
+
+    @inbounds for i in eachindex(T)
+        T_C  = T[i] - Ts
+        k[i] = a*T_C^3 + b*T_C^2 + c*T_C + d
+    end
+    return nothing
+end
+
+
+# Print info 
+function show(io::IO, g::T_Conductivity_Whittington_parameterised) #info about the struct
+    print(io, "T-dependent conductivity parameterized from Whittington et al. (2009): k=$(NumValue(g.a))*(T-Ts)^3 + $(NumValue(g.b))*(T-Ts)^2 + $(NumValue(g.c))*(T-Ts) + $(NumValue(g.d)) with T in K and Ts=$(Value(g.Ts))\n");
+end
+#-------------------------------------------------------------------------
+
+
 
 # Temperature (& Pressure) dependent conductivity -------------------------------
 """

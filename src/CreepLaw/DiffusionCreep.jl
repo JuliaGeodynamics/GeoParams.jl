@@ -47,7 +47,7 @@ end
 
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
-function computeCreepLaw_EpsII(TauII, a::DislocationCreep, c::CreepLawVariables)
+function computeCreepLaw_EpsII(TauII, a::DiffusionCreep, c::CreepLawVariables)
     @unpack_val n,r,p,A,E,V,R = a
     @unpack_val P,T,f,d       = c
     

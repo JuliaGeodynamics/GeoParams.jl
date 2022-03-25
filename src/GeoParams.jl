@@ -88,6 +88,7 @@ export compute_conductivity,
         compute_conductivity!,
         ConstantConductivity,
         T_Conductivity_Whittington,
+        T_Conductivity_Whittington_parameterised,
         TP_Conductivity,
         Set_TP_Conductivity
 
