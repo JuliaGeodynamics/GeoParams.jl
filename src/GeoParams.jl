@@ -67,7 +67,8 @@ export compute_density,                                # computational routines
 using .MaterialParameters.CreepLaw
 export computeCreepLaw_EpsII, computeCreepLaw_TauII, CreepLawVariables,
         LinearViscous, PowerlawViscous,
-        DislocationCreep, SetDislocationCreep
+        DislocationCreep, SetDislocationCreep,
+        AbstractViscosity, Elasticity, custom_creep_law!, compute_viscosity
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration

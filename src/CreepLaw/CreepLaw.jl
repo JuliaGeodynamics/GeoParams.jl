@@ -25,6 +25,7 @@ export  computeCreepLaw_EpsII, computeCreepLaw_TauII,       # calculation routin
         PowerlawViscous
         param_info
 
+export AbstractViscosity, Elasticity, custom_creep_law!, compute_viscosity
 
 # NOTE: we will likely have to remove this, in favor of multiple dispatch options
 """
@@ -64,11 +65,23 @@ or
 
 where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\\dot{\\varepsilon}_0``[1/s], and ``n`` the power law exponent []. 
 """
-@with_kw_noshow struct LinearViscous{T,U} <: AbstractCreepLaw{T}    
+@with_kw_noshow struct LinearViscous{T,U} <: AbstractCreepLaw{T}
     η::GeoUnit{T,U}     =   1e20Pa*s                # viscosity
     η_val::T            =   1.0
 end
 LinearViscous(args...) = LinearViscous(convert(GeoUnit,args[1]), args[2])
+
+(η::LinearViscous)(args...) = η.η.val
+
+function (η::NTuple{N, LinearViscous})(I::Int64, args...) where N 
+    @assert I ≤ N  
+    return η[I]()
+end
+
+function (η::AbstractVector{LinearViscous{T1,T2}})(I::Int64, args...) where {T1,T2}
+    @assert I ≤ length(η)
+    return η[I]()
+end
 
 function param_info(s::LinearViscous) # info about the struct
     return MaterialParamsInfo(Equation = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}")
@@ -111,12 +124,43 @@ where ``\\eta`` is the effective viscosity [Pa*s].
 end
 PowerlawViscous(a...) = PowerlawViscous(convert.(GeoUnit,a)...)
 
+function (η::PowerlawViscous)(εII) 
+    # unpack
+    η0 = η.η0.val
+    ε0 = η.ε0.val
+    n = η.n.val
+    # stress
+    τII = η0 * (εII/ε0)
+    # return viscosity
+    return τII^n/εII
+end
+
+function (η::NTuple{N, PowerlawViscous})(I::Int64, εII) where N 
+    @assert I ≤ N  
+    return η[I](εII)
+end
+
+function (η::AbstractVector{PowerlawViscous{T,U1,U2,U3}})(I::Int64, εII) where {T,U1,U2,U3}
+    @assert I ≤ length(η)
+    return η[I](εII)
+end
+
 # Print info 
 function show(io::IO, g::PowerlawViscous)  
     print(io, "Powerlaw viscosity: η0=$(g.η0.val), n=$(g.n.val), ε0=$(g.ε0.val) ")
 end
 #-------------------------------------------------------------------------
 
+# Elastic component in the effective viscosity ---------------------------
+@with_kw_noshow struct Elasticity{T,U} <: AbstractCreepLaw{T}
+    G::GeoUnit{T, U} = 70MPa # Shear modulus
+end
+Elasticity(G) = Elasticity(convert(GeoUnit,G))
+
+(η::Elasticity)(dt) = η.G*dt
+#-------------------------------------------------------------------------
+
+include("Viscosity.jl")
 
 # Help info for the calculation routines
 """

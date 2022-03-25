@@ -54,6 +54,21 @@ DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3
 end
 DislocationCreep(args...) = DislocationCreep(NTuple{length(args[1]), Char}(collect.(args[1])), convert.(GeoUnit,args[2:end-1])..., args[end])
 
+# Compute dislocation creep viscosity
+function (η::DislocationCreep)(EpsII::Real, P::Real, T::Real, f::Real) 
+    return 0.5*EpsII*(1/computeCreepLaw_TauII(EpsII, η, P, T, f))
+end
+
+function (η::NTuple{N, DislocationCreep})(I::Int64, args...) where N 
+    @assert I ≤ N
+    return η[I](args...)
+end
+
+function (η::AbstractVector{DislocationCreep{T,N,U1,U2,U3,U4,U5}})(I::Int64, args...) where {T,N,U1,U2,U3,U4,U5}
+    @assert I ≤ length(η)
+    return η[I](args...)
+end
+
 function param_info(s::DislocationCreep)
     name = String(collect(s.Name))
     eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"
@@ -114,16 +129,15 @@ end
 
 # This computes correction factors to go from experimental data to tensor format
 # A nice discussion 
-function CorrectionFactor(a::DislocationCreep{_T}) where {_T}
-
-    FT = one(_T) 
-    FE = one(_T)
+function CorrectionFactor(a::DislocationCreep)
     if a.Apparatus == AxialCompression
-        FT = sqrt(one(_T)*3)               # relation between differential stress recorded by apparatus and TauII
-        FE = one(_T)*2/sqrt(one(_T)*3)     # relation between gamma recorded by apparatus and EpsII
+        FT = sqrt(3)    # relation between differential stress recorded by apparatus and TauII
+        FE = 2/sqrt(3)  # relation between gamma recorded by apparatus and EpsII
     elseif a.Apparatus == SimpleShear
-        FT = one(_T)*2                     # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
-        FE = one(_T)*2 
+        # it is assumed that the flow law parameters were derived as a function of differential stress, 
+        # not the shear stress. Must be modidified if it is not the case
+        FT = 2.0 
+        FE = 2.0 
     end
     return FT,FE
 end
