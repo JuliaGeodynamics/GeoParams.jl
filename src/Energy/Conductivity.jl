@@ -199,14 +199,15 @@ Sets a temperature-dependent conductivity that is  parameterization after *Whitt
 
 The original parameterization involves quite a few parameters; this is a polynomial fit that is roughly valid from 0-1000C
 ```math
-    k [W/m/K] = -2 \cdot 10^{-9}(T-Ts)^3 + 6 \cdot 10^{-6}(T-Ts)^2 - 0.0062(T-Ts) + 4
+    k [W/m/K] = -2 10^{-9} (T-Ts)^3 + 6 10^{-6} (T-Ts)^2 - 0.0062 (T-Ts) + 4
 ```
 ```math
     Ts = 273.15 K
 ```
-
-where ``T[K]`` is the temperature in Kelvin (or the nondimensional equivalent of it).
+where `T[K]` is the temperature in Kelvin (or the nondimensional equivalent of it).
 """
+
+
 @with_kw_noshow struct T_Conductivity_Whittington_parameterised{T,U1,U2,U3,U4,U5} <: AbstractConductivity{T} 
     # Note: the resulting curve of k was visually compared with Fig. 2 of the paper  
     a::GeoUnit{T,U1}             =  -2e-09Watt/m/K^4                # 
