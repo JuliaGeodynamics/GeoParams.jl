@@ -29,3 +29,13 @@ end
 function max_length_tuple(t::NTuple{N, Tuple}) where N
     find_max(ntuple(x->length(t[x]), Val(N)))
 end
+
+# apply getindex to any kind of NTuple
+function tupleindex(args::NTuple{N, Any}, I...) where N
+    return tuple(
+        (unsafeindex(argi, I...) for argi in args)...
+    )
+end
+
+unsafeindex(args::NTuple{N, Array}, I...) where N = getindex.(args, I...)
+unsafeindex(args::Number, I...) = args
