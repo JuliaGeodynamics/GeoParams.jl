@@ -25,6 +25,7 @@ export  computeCreepLaw_EpsII, computeCreepLaw_TauII,       # calculation routin
         PowerlawViscous
         param_info
 
+export AbstractViscosity, Elasticity, custom_creep_law!, compute_viscosity
 
 # NOTE: we will likely have to remove this, in favor of multiple dispatch options
 """
@@ -150,6 +151,16 @@ function show(io::IO, g::PowerlawViscous)
 end
 #-------------------------------------------------------------------------
 
+# Elastic component in the effective viscosity ---------------------------
+@with_kw_noshow struct Elasticity{T,U} <: AbstractCreepLaw{T}
+    G::GeoUnit{T, U} = 70MPa # Shear modulus
+end
+Elasticity(G) = Elasticity(convert(GeoUnit,G))
+
+(η::Elasticity)(dt) = η.G*dt
+#-------------------------------------------------------------------------
+
+include("Viscosity.jl")
 
 # Help info for the calculation routines
 """
