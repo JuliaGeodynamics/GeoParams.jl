@@ -195,14 +195,17 @@ end
 """
     T_Conductivity_Whittington_parameterised()
     
-Sets a temperature-dependent conductivity following the parameterization of *Whittington, A.G., Hofmeister, A.M., Nabelek, P.I., 2009. Temperature-dependent thermal diffusivity of the Earth’s crust and implications for magmatism. Nature 458, 319–321. https://doi.org/10.1038/nature07818.* 
-Their parameterization is originally given for the thermal diffusivity, together with a parameterization for thermal conductivity, which allows us to compute 
+Sets a temperature-dependent conductivity that is  parameterization after *Whittington, et al.  2009* 
+
+The original parameterization involves quite a few parameters; this is a polynomial fit that is roughly valid from 0-1000C
 ```math
-    k [W/m/K] = -2e-09*(T[K]-273.15)^3 + 6e-06*(T[K]-273.15)^2 - 0.0062*(T[K]-273.15) + 4
+    k [W/m/K] = -2 \cdot 10^{-9}(T-Ts)^3 + 6 \cdot 10^{-6}(T-Ts)^2 - 0.0062(T-Ts) + 4
+```
+```math
+    Ts = 273.15 K
 ```
 
-where ``T[K]`` temperature in Kelvin (or the nondimensional equivalent of it)
-
+where ``T[K]`` is the temperature in Kelvin (or the nondimensional equivalent of it).
 """
 @with_kw_noshow struct T_Conductivity_Whittington_parameterised{T,U1,U2,U3,U4,U5} <: AbstractConductivity{T} 
     # Note: the resulting curve of k was visually compared with Fig. 2 of the paper  
