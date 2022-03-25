@@ -51,3 +51,21 @@ Compute the effective viscosity of a `AbstractViscosity`
         return :(η.$(fieldnames(T)[2])(args...))
     end
 end
+
+# case for several material phases that are identified with an integer
+@inline @generated function compute_viscosity(η::T, phase::Integer, args) where T <: AbstractViscosity
+    functors = fieldnames(T)[2:end]
+    nf = length(functors)
+    if nf > 1
+        ex = 0.0
+        for i in 1:nf
+            functor = functors[i]
+            ex = :(1/(getindex(η.$(functor), phase)(args[$i]...)) + $ex)
+        end
+        
+        return :(1/$(ex))
+    else
+        
+        return :(getindex(η.$(fieldnames(T)[2]), phase)(args...))
+    end
+end
