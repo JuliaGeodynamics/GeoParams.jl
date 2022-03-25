@@ -48,6 +48,8 @@ end
 CreepLawVariables(args...) = CreepLawVariables(convert.(GeoUnit,args)...)
 
 include("DislocationCreep.jl")
+include("DiffusionCreep.jl")
+
 # Linear viscous rheology ------------------------------------------------
 """
     LinearViscous(η=1e20Pa*s)

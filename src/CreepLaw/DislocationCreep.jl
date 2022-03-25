@@ -182,7 +182,7 @@ DislocationCreep_info = Dict([
         V = 11e-6m^3/mol,
         r   = 1.2NoUnits,
         Apparatus = AxialCompression),
-    MaterialParamsInfo(Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
+        MaterialParamsInfo(Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
         BibTex_Reference = parse_bibtex("""
             @incollection{HirthKohlstedt_OlivineRheology_2003,
             address = {Washington, D. C.},
@@ -211,14 +211,14 @@ DislocationCreep_info = Dict([
     #  'Flow properties of continental lithosphere.'
     #  Hansen (1982), Fig. 53, page 184 in PDF viewer and table 18, page 224
     #  Carter & Tsenn (1986), table 4, page 18 in PDF viewer
-    DislocationCreep(
+    (DislocationCreep(
         Name = "Quartz Diorite | Hansen & Carter (1982)",
         n = 2.25NoUnits,
         A = 3.5e-2MPa^(-2.25)/s, 
         E = 212kJ/mol,
         V = 0m^3/mol,
         r   = 0NoUnits,
-        Apparatus =   AxialCompression,
+        Apparatus =   AxialCompression),
         MaterialParamsInfo(Comment = "Verified with the original publication Hansen(1982)(NM). Values checked, plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
              @article{carter1982stress,
@@ -241,14 +241,14 @@ DislocationCreep_info = Dict([
     #  and, Bremond (1999),
     #  'Hydrothermalism and diapirism in the Archean: gravitational instability constraints'
     #  Bremond (1999), page 5 in text
-    DislocationCreep(
+    (DislocationCreep(
         Name = "Diabase | Caristan (1982)",
         n = 3.05NoUnits,
         A = 6.0e-2MPa^(-3.05)/s, 
         E = 276kJ/mol,
         V = 0m^3/mol,
         r   = 0NoUnits,
-        Apparatus =   AxialCompression,
+        Apparatus =   AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Bremond (1999)), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
              @article{caristan1982transition,
@@ -271,14 +271,14 @@ DislocationCreep_info = Dict([
     #  and, Bremond (1999),
     #  'Hydrothermalism and diapirism in the Archean: gravitational instability constraints'
     #  Bremond (1999), page 5 in text
-    DislocationCreep(
+    (DislocationCreep(
         Name = "Tumut Pond Serpentinite | Raleigh and Paterson (1965)",
         n = 2.8NoUnits,
         A = 6.3e-7MPa^(-2.8)/s, 
         E = 66kJ/mol,
         V = 0m^3/mol,
         r   = 0NoUnits,
-        Apparatus =   AxialCompression,
+        Apparatus =   AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Bremond (1999)), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
              @article{raleigh1965experimental,
@@ -299,14 +299,14 @@ DislocationCreep_info = Dict([
 ("Maryland strong diabse | Mackwell et al. (1998)", 
     #  After Mackwell et al. (1998), 'High-temperatur deformation of dry diabase with application to tectonics on Venus'
     #  Mackwell et al. (1998), page 980, equation in text
-    DislocationCreep(
+    (DislocationCreep(
         Name = "Maryland strong diabse | Mackwell et al. (1998)",
         n = 4.7NoUnits,
         A = 8MPa^(-4.7)/s, 
         E = 485kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
-        Apparatus = AxialCompression,
+        Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Mackwell et al. (1998))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{mackwell1998high,
@@ -328,14 +328,14 @@ DislocationCreep_info = Dict([
     #  After Li, Gerya and Burg (2010), table 2
     #  referring to Ranalli (1995), 'Rheology of the Earth' (Book), page 334, table 10.3
     #  referring to Wilks and Carter (1990), 'Rheology of some continental lower crustal rocks', Fig. 6, Pikwitonei Granulite
-    DislocationCreep(
+    (DislocationCreep(
         Name = "Mafic Granulite | Wilks and Carter (1990)",
         n = 4.2NoUnits,
         A = 1.4e4MPa^(-4.2)/s, 
         E = 445kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
-        Apparatus = AxialCompression,
+        Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Wilks and Carter (1990))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{wilks1990rheology,
@@ -355,14 +355,14 @@ DislocationCreep_info = Dict([
 # Wet Quartzite rheology
 ("Wet Quartzite | Ueda et al. (2008)", 
     #  Ueda et al. (2008), table 1
-    DislocationCreep(
+    (DislocationCreep(
         Name = "Wet Quartzite | Ueda et al. (2008)",
         n = 2.3NoUnits,
         A = 1*exp10(-3.5)MPa^(-2.3)/s, 
         E = 154kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
-        Apparatus = AxialCompression,
+        Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Ueda et al. (2008))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{ueda2008subduction,
@@ -384,14 +384,14 @@ DislocationCreep_info = Dict([
     #  Huismans et al. (2001), table 2
     #  referring to Carter and Tsenn (1987), 'Flow properties of continental lithosphere', table 4, Westerly Granite (dry)
     #  referring to Hansen and Carter (1983), 'Semibrittle Creep Of Dry And Wet Westerly Granite At 1000 MPa', not accessable
-    DislocationCreep(
+    (DislocationCreep(
         Name = "Granite | Carter and Tsenn (1987)",
         n = 3.3NoUnits,
         A = 1.0*exp10(-5.7)MPa^(-3.3)/s,
         E = 186.5kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
-        Apparatus = AxialCompression,
+        Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Carter and Tsenn (1987))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{carter1987flow,
@@ -413,14 +413,14 @@ DislocationCreep_info = Dict([
     #  Ranalli (1995), page 334, table 10.3
     #  referring to Ji and Zhao (1993), 'Flow laws of multiphase rocks calculated from experimental data on the constituent phases', table 2 , plagioclase (Ab25An75)
     #  referring to Shelton and Tullis (1981), 'Experimental flow laws for crustal rocks', not accessable
-    DislocationCreep(
+   (DislocationCreep(
         Name = "Plagioclase An75 | Ji and Zhao (1993)",
         n = 3.2NoUnits,
         A = 3.27e-4MPa^(-3.2)/s, 
         E = 238kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
-        Apparatus = AxialCompression,
+        Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Ji and Zhao (1993))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{ji1993flow,
@@ -440,14 +440,14 @@ DislocationCreep_info = Dict([
 # Dry Anorthite rheology
 ("Dry Anorthite | Rybecki and Dresen (2000)", 
     #  Rybecki and Dresen (2000), table 2 + table 3
-    DislocationCreep(
+    (DislocationCreep(
         Name = "Dry Anorthite | Rybecki and Dresen (2000)",
         n = 3.0NoUnits,
         A = 1.0*exp10(-12.7)MPa^(-3.0)/s, 
         E = 648kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
-        Apparatus = AxialCompression,
+        Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Rybecki and Dresen (2000))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{rybacki2000dislocation,
@@ -467,14 +467,14 @@ DislocationCreep_info = Dict([
 # Wet Anorthite rheology
 ("Wet Anorthite | Rybecki and Dresen (2000)", 
     #  Rybecki and Dresen (2000), table 2 + table 3
-    DislocationCreep(
+    (DislocationCreep(
         Name = "Wet Anorthite | Rybecki and Dresen (2000)",
         n = 3.0NoUnits,
         A = 1.0*exp10(-2.6)MPa^(-3.0)/s, 
         E = 356kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
-        Apparatus = AxialCompression,
+        Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Rybecki and Dresen (2000))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{rybacki2000dislocation,
@@ -494,14 +494,14 @@ DislocationCreep_info = Dict([
 # Wet Olivine rheology
 ("Wet Olivine | Hirth and Kohlstedt (2003)", 
     #  Hirth and Kohlstedt (2003), table 1, no constant C_OH
-    DislocationCreep(
+    (DislocationCreep(
         Name = "Wet Olivine | Hirth and Kohlstedt (2003)",
         n = 3.5NoUnits,
         A = 1600.0MPa^(-3.5)/s, 
         E = 520kJ/mol,
         V = 11.0e-6m^3/mol,
         r = 1.2NoUnits,
-        Apparatus = AxialCompression,
+        Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Hirth and Kohlstedt (2003))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{hirth2003rheology,
@@ -523,14 +523,14 @@ DislocationCreep_info = Dict([
     #  Ranalli (1995), 'Rheology of the Earth' (Book)
     #  referring to Kirby (1983), table 2, first quartzite (wet)
     #  referring to Koch et al. (1981), unpublished manuscript...
-    DislocationCreep(
+    (DislocationCreep(
         Name = "Wet Quarzite | Kirby (1983)",
         n = 2.3NoUnits,
         A = 3.2e-4MPa^(-2.3)/s, 
         E = 154kJ/mol,
         V = 0m^3/mol,
         r = 0NoUnits,
-        Apparatus = AxialCompression,
+        Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Kirby (1983))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{kirby1983rheology,
@@ -552,14 +552,14 @@ DislocationCreep_info = Dict([
     #  Schmalholz, Kaus, Burg (2009), table 1
     #  referring to Afonso and Ranalli (2004), table 1, wet peridotite
     #  referring to Chopra and Paterson papers, but values dont fit the Afonso and Ranalli (2004) ones
-    DislocationCreep(
+    (DislocationCreep(
         Name = "Wet Upper Mantle Olivine | Afonso and Ranalli (2004)",
         n = 4.0NoUnits,
         A = 2.0e3MPa^(-4.0)/s, 
         E = 471kJ/mol,
         V = 0.0m^3/mol,
         r = 0.0NoUnits,
-        Apparatus = AxialCompression,
+        Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Afonso and Ranalli (2004))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{afonso2004crustal,
@@ -581,14 +581,14 @@ DislocationCreep_info = Dict([
     #  Tirel et al. (2008), table 1
     #  referring to Kirby and Kronenberg (1987), table 3
     #  different values for n and A in Kirby and Kronenberg (1987) compared with Tirel et al. (2008)
-    DislocationCreep(
+    (DislocationCreep(
         Name = "Granite | Tirel et al. (2008)",
         n = 3.2NoUnits,
         A = 1.25e-9MPa^(-3.2)/s, 
         E = 123kJ/mol,
         V = 0.0m^3/mol,
         r = 0.0NoUnits,
-        Apparatus = AxialCompression,
+        Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Tirel et al. (2008))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{tirel2008dynamics,

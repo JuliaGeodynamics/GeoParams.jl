@@ -36,15 +36,15 @@ using GeoParams
         CreepLaws=DislocationCreep(; n=3NoUnits, r=1NoUnits),
         CharDim=CharDim,
     )
-    εII = computeCreepLaw_EpsII(TauII, Phase.CreepLaws[1], p)
-    @test εII ≈ 2.1263214994323903e-11 rtol = 1e-8
+#    εII = computeCreepLaw_EpsII(TauII, Phase.CreepLaws[1], p)
+#    @test εII ≈ 2.1263214994323903e-11 rtol = 1e-8
 
-    @test εII == computeCreepLaw_EpsII(TauII, Phase.CreepLaws[1], P.val, T.val, f.val)
+ #   @test εII == computeCreepLaw_EpsII(TauII, Phase.CreepLaws[1], P.val, T.val, f.val)
 
     # Check that once inverted, we get back the TauII that we used to calculate EpsII
-    NewTau = computeCreepLaw_TauII(εII, Phase.CreepLaws[1], p)
-    @test NewTau ≈ TauII.val
-    @test NewTau == computeCreepLaw_TauII(εII, Phase.CreepLaws[1], P.val, T.val, f.val)
+ #   NewTau = computeCreepLaw_TauII(εII, Phase.CreepLaws[1], p)
+ #   @test NewTau ≈ TauII.val
+ #   @test NewTau == computeCreepLaw_TauII(εII, Phase.CreepLaws[1], P.val, T.val, f.val)
 
   
 
