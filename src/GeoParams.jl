@@ -115,13 +115,13 @@ export compute_pwave_velocity, compute_swave_velocity,
 include("./MeltFraction/MeltingParameterization.jl")
 using .MeltingParam
 export compute_meltfraction, compute_meltfraction!,       # calculation routines
-        MeltingParam_Caricchi
+        MeltingParam_Caricchi, MeltingParam_4thOrder, MeltingParam_5thOrder
 
 
 # Add plotting routines - only activated if the "Plots.jl" package is loaded 
 function __init__()
         @require Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80" begin
-                print("Adding plotting routines of GeoParam")
+                print("Adding plotting routines of GeoParams")
                 @eval include("./Plotting.jl")
         end
 end

@@ -14,12 +14,14 @@ abstract type AbstractMeltingParam{T} <: AbstractMaterialParam end
 export  compute_meltfraction, 
         compute_meltfraction!,    # calculation routines
         param_info,
-        MeltingParam_Caricchi     # constant
+        MeltingParam_Caricchi,    # constant
+        MeltingParam_4thOrder,
+        MeltingParam_5thOrder
         
 include("../Utils.jl")
 include("../Computations.jl")
 
-# Constant  -------------------------------------------------------
+# Caricchi  -------------------------------------------------------
 """
     MeltingParam_Caricchi()
     
@@ -78,6 +80,167 @@ function show(io::IO, g::MeltingParam_Caricchi)
 end
 #-------------------------------------------------------------------------
 
+
+# MeltingParam_5thOrder  -------------------------------------------------------
+"""
+    MeltingParam_5thOrder(a,b,c,d,e,f,T_s,T_l)
+    
+Uses a 5th order polynomial to describe the melt fraction `phi` between solidus temperature `T_s` and liquidus temperature `T_l`
+```math  
+    \\phi = a T^5 + b T^4 + c T^3 + d T^2 + e T + f  if T_s ≤ T ≤ T_l
+```
+```math  
+    \\phi = 1  if T>T_l
+```
+```math  
+    \\phi = 0  if T<T_s
+```
+Temperature `T` is in Kelvin.
+
+The default values are for a composite liquid-line-of-descent:
+- the upper part is for Andesite from Blatter and Carmichael (2001)
+- the lower part is extrapolated to the granitic minimum using the Marxer & Ulmer LLD for Andesite
+
+"""
+@with_kw_noshow struct MeltingParam_5thOrder{T,U,U1,U2,U3,U4,U5,U6} <: AbstractMeltingParam{T}
+
+    a::GeoUnit{T,U1}    =   2.083291971482524e-12/K^5              
+    b::GeoUnit{T,U2}    =  -1.239502833666574e-08/K^4
+    c::GeoUnit{T,U3}    =   2.938887604687626e-05/K^3 
+    d::GeoUnit{T,U4}    =  -0.034711533077108/K^2 
+    e::GeoUnit{T,U5}    =   20.425403874539178/K 
+    f::GeoUnit{T,U6}    =   -4.790664658179178e+03*NoUnits 
+    T_s::GeoUnit{T,U}   =   963.15K
+    T_l::GeoUnit{T,U}   =   1388.2K 
+end
+MeltingParam_5thOrder(args...) = MeltingParam_5thOrder(convert.(GeoUnit,args)...)
+
+function param_info(s::MeltingParam_5thOrder) # info about the struct
+    return MaterialParamsInfo(Equation =  L"\phi = aT^5 + bT^4 + cT^3 + dT^2 + eT + f")
+end
+
+# Calculation routine
+function compute_meltfraction(p::MeltingParam_5thOrder{_T}, P::Quantity, T::Quantity) where _T
+    @unpack_units a,b,c,d,e,f,T_s,T_l   = p
+
+    ϕ   =   a*T^5 + b*T^4 + c*T^3 + d*T^2 + e*T + f
+    if T<T_s
+        ϕ = 0.
+    elseif  T>T_l
+        ϕ = 1.
+    end
+
+    return ϕ
+end
+
+
+function compute_meltfraction(p::MeltingParam_5thOrder{_T}, P::_T, T::_T ) where _T
+    @unpack_val a,b,c,d,e,f,T_s,T_l   = p
+
+    ϕ   =   a*T^5 + b*T^4 + c*T^3 + d*T^2 + e*T + f
+    if T<T_s
+        ϕ = 0.
+    elseif  T>T_l
+        ϕ = 1.
+    end
+    return  ϕ
+
+end
+
+function compute_meltfraction!(ϕ::AbstractArray{_T}, p::MeltingParam_5thOrder{_T}, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
+    @unpack_val a,b,c,d,e,f,T_s,T_l   = p
+
+    @. ϕ   =   a*T^5 + b*T^4 + c*T^3 + d*T^2 + e*T + f
+    
+    ϕ[T.<T_s] .= 0.
+    ϕ[T.>T_l] .= 1.
+
+    return nothing
+end
+
+# Print info 
+function show(io::IO, g::MeltingParam_5thOrder)  
+    print(io, "5th order polynomial melting curve: phi = $(NumValue(g.a)) T^5 + $(NumValue(g.b))T^4 + $(NumValue(g.c))T^3 + $(NumValue(g.d))T^2 + $(NumValue(g.e))T + $(NumValue(g.f))  $(Value(g.T_s)) ≤ T ≤ $(Value(g.T_l))")  
+end
+#-------------------------------------------------------------------------
+
+# MeltingParam_4thOrder  -------------------------------------------------------
+"""
+    MeltingParam_4thOrder(b,c,d,e,f,T_s,T_l)
+    
+Uses a 4th order polynomial to describe the melt fraction `phi` between solidus temperature `T_s` and liquidus temperature `T_l`
+```math  
+    \\phi = b T^4 + c T^3 + d T^2 + e T + f  if T_s ≤ T ≤ T_l
+```
+```math  
+    \\phi = 1  if T>T_l
+```
+```math  
+    \\phi = 0  if T<T_s
+```
+Temperature `T` is in Kelvin.
+
+The default values are for Tonalite experiments from Marxer and Ulmer (2019)
+"""
+@with_kw_noshow struct MeltingParam_4thOrder{T,U,U2,U3,U4,U5,U6} <: AbstractMeltingParam{T}
+    b::GeoUnit{T,U2}    =  -7.594512597174117e-10/K^4
+    c::GeoUnit{T,U3}    =   3.469192091489447e-06/K^3 
+    d::GeoUnit{T,U4}    =  -0.005923529809260/K^2 
+    e::GeoUnit{T,U5}    =   4.482855645604745/K 
+    f::GeoUnit{T,U6}    =   -1.268730161921053e+03*NoUnits 
+    T_s::GeoUnit{T,U}   =   963.15K
+    T_l::GeoUnit{T,U}   =   1270.15K
+end
+MeltingParam_4thOrder(args...) = MeltingParam_4thOrder(convert.(GeoUnit,args)...)
+
+function param_info(s::MeltingParam_4thOrder) # info about the struct
+    return MaterialParamsInfo(Equation =  L"\phi = bT^4 + cT^3 + dT^2 + eT + f")
+end
+
+# Calculation routine
+function compute_meltfraction(p::MeltingParam_4thOrder{_T}, P::Quantity, T::Quantity) where _T
+    @unpack_units b,c,d,e,f,T_s,T_l   = p
+
+    ϕ   =   b*T^4 + c*T^3 + d*T^2 + e*T + f
+    if T<T_s
+        ϕ = 0.
+    elseif  T>T_l
+        ϕ = 1.
+    end
+
+    return ϕ
+end
+
+
+function compute_meltfraction(p::MeltingParam_4thOrder{_T}, P::_T, T::_T ) where _T
+    @unpack_val b,c,d,e,f,T_s,T_l   = p
+
+    ϕ   =    b*T^4 + c*T^3 + d*T^2 + e*T + f
+    if T<T_s
+        ϕ = 0.
+    elseif  T>T_l
+        ϕ = 1.
+    end
+    return  ϕ
+
+end
+
+function compute_meltfraction!(ϕ::AbstractArray{_T}, p::MeltingParam_4thOrder{_T}, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
+    @unpack_val b,c,d,e,f,T_s,T_l   = p
+
+    @. ϕ   =    b*T^4 + c*T^3 + d*T^2 + e*T + f
+    
+    ϕ[T.<T_s] .= 0.
+    ϕ[T.>T_l] .= 1.
+
+    return nothing
+end
+
+# Print info 
+function show(io::IO, g::MeltingParam_4thOrder)  
+    print(io, "4th order polynomial melting curve: phi = $(NumValue(g.b))T^4 + $(NumValue(g.c))T^3 + $(NumValue(g.d))T^2 + $(NumValue(g.e))T + $(NumValue(g.f))  $(Value(g.T_s)) ≤ T ≤ $(Value(g.T_l))")  
+end
+#-------------------------------------------------------------------------
 
 """
     ComputeMeltingParam(P,T, p::AbstractPhaseDiagramsStruct)

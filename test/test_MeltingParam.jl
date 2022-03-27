@@ -1,5 +1,5 @@
 using Test
-using GeoParams
+using GeoParams, LinearAlgebra
 @testset "MeltingParam.jl" begin
 
 #Make sure structure is isbits
@@ -35,8 +35,76 @@ Phi_anal    =   1.0 .- Phi_solid
 @test sum(phi_dim1 - Phi_anal)   < 1e-12
 @test sum(phi_nd - Phi_anal)    < 1e-12
 
+#------------------------------
+# 5th order polynomial
+p        =  MeltingParam_5thOrder();
+compute_meltfraction!(phi_dim, p, zeros(size(T)), ustrip.(T))
+@test sum(phi_dim) ≈ 4.708427909521561
 
-# Test computation of density for the whole computational domain, using arrays 
+# experimental data to create the fit
+data = [
+1115 100;
+1050 90;
+969 85;
+932 80;
+907 70;
+880 60;
+850 54;
+825 51.7;
+800 52.9;
+775 46.3;
+750 44.9;
+725 29.9;
+700 14.9;
+690 0
+] ;
+
+data[:,2] = data[:,2]/100;
+Tdata = data[:,1] .+ 273.15;
+phi = zeros(size(Tdata))
+compute_meltfraction!(phi, p, zeros(size(Tdata)), ustrip.(Tdata))
+
+@test norm(data[:,2]-phi) ≈ 0.07151515017819135
+#------------------------------
+
+
+
+#------------------------------
+# 4th order polynomial
+p        =  MeltingParam_4thOrder();
+compute_meltfraction!(phi_dim, p, zeros(size(T)), ustrip.(T))
+@test sum(phi_dim) ≈ 4.853749635538406
+
+# experimental data to create the fit
+data = [
+1000 100;
+990 100;
+975 93;
+950 89.2;
+925 76.3;
+900 69.6;
+875 59;
+850 54;
+825 51.7;
+800 52.9;
+775 46.3;
+750 44.9;
+725 29.9;
+700 14.9;
+690 0] ;
+
+data[:,2] = data[:,2]/100;
+Tdata = data[:,1] .+ 273.15;
+phi = zeros(size(Tdata))
+compute_meltfraction!(phi, p, zeros(size(Tdata)), ustrip.(Tdata))
+
+@test norm(data[:,2]-phi) ≈ 0.0678052542705406
+#------------------------------
+
+
+
+
+# Test computation of melt parameterization for the whole computational domain, using arrays 
 MatParam    =   Array{MaterialParams, 1}(undef, 3);
 MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=1,
                         Melting  = PerpleX_LaMEM_Diagram("test_data/Peridotite.in"));

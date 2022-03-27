@@ -215,7 +215,7 @@ julia> savefig(plt,"MeltFraction.png")
 function PlotMeltFraction(p::AbstractMeltingParam; T=nothing, P=nothing, plt=nothing, lbl=nothing)
     
     if isnothing(T)
-        T = (500:10:1500)*K
+        T = (500.:10:1500.)*K
     end
     T_C = ustrip(T) .- 273.15
 
@@ -226,11 +226,10 @@ function PlotMeltFraction(p::AbstractMeltingParam; T=nothing, P=nothing, plt=not
         P = P*ones(size(T))
     end
 
-    phi       =   compute_meltfraction(P,T,p)
-    if length(phi) == 1
-        phi = ones(size(T))*phi
-    end
+    phi = ones(size(T))
+    compute_meltfraction!(phi, p, ustrip.(P), ustrip.(Vector(T)))
 
+    
     if isnothing(plt)
        plt = plot(T_C, ustrip(phi), label=lbl)
     else
