@@ -106,7 +106,7 @@ compute_meltfraction!(phi, p, zeros(size(Tdata)), ustrip.(Tdata))
 # Quadratic parameterisation
 p        =  MeltingParam_Quadratic();
 compute_meltfraction!(phi_dim, p, zeros(size(T)), ustrip.(T))
-@test sum(phi_dim) ≈ 4.853749635538406
+@test sum(phi_dim) ≈ 5.0894901144641
 #------------------------------
 
 
