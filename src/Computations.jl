@@ -6,8 +6,8 @@ using Parameters, Unitful
 # Computational routines needed for computations with the MaterialParams structure 
 
 # with tuple & vector - apply for all phases in MatParam
-function compute_param!(fn::F, rho::Vector{_T}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, P::_T=zero(_T),T::_T=zero(_T)) where {F,N,_T}
-    rho .= map(x->fn(x,P,T), MatParam)
+function compute_param!(fn::F, val::Vector{_T}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, P::_T=zero(_T),T::_T=zero(_T)) where {F,N,_T}
+    val .= map(x->fn(x,P,T), MatParam)
 end
 
 # each individual calcuation 
@@ -17,6 +17,8 @@ end
 
 #---------------------------------------------------------------------------------------------------------------------------#
 #Computational routines for Phases
+# NOTE: this currently only works if P, T are given as input parameters.
+#   We should generalize this for an arbitrary number of parameters 
 
 #performs computation given a single Phase
 function compute_param(fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Int64, P::_T=zero(_T),T::_T=zero(_T)) where {F,N,_T}
@@ -42,14 +44,12 @@ function compute_param!(fn::F, rho::AbstractArray{_T, ndim}, MatParam::NTuple{N,
         if compute_T; Tval = T[I]; end
         if compute_P; Pval = P[I]; end
        
-        # this computes density for ALL phases, which is a bit of an overkill as we only need density for a single phase
+        # this computes properties for ALL phases, which is a bit of an overkill as we only need density for a single phase
         rho_tup = fn(MatParam, Pval, Tval)    
         rho[I]  = rho_tup[phase]
     end
 end
 
-
-#Phase PhaseRatios
 
 function compute_param!(fn::F, rho::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}, PhaseRatios::AbstractArray{_T, M}, P=nothing, T=nothing) where {F,_T<:AbstractFloat, N,M, K}
     if M!=(N+1)

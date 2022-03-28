@@ -20,6 +20,7 @@ makedocs(
             "Shear heating" =>  "man/shearheating.md",
             "Gravity" =>  "man/gravity.md",
             "Partial Melting"  => "man/melting.md",
+            "Zircon Saturation"  => "man/zirconsaturation.md",
             "Phase Diagrams" => "man/phasediagrams.md",
             "Seismic Velocity" => "man/seismicvelocity.md",
         ],

@@ -104,12 +104,16 @@ using .MaterialParameters.Shearheating
 export compute_shearheating!, compute_shearheating,
         ConstantShearheating
 
+# Add zircon saturation parameterizations
+using   .MaterialParameters.ZirconSaturation
+export  compute_zirconsaturation, compute_zirconsaturation!,       # calculation routines
+        Tierney
+
 # Seismic velocities
 using .MaterialParameters.SeismicVelocity
 export compute_pwave_velocity, compute_swave_velocity,
         compute_pwave_velocity!, compute_swave_velocity!,
         ConstantSeismicVelocity
-
 
 # Add melting parameterizations
 include("./MeltFraction/MeltingParameterization.jl")

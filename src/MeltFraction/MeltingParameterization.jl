@@ -98,8 +98,8 @@ Uses a 5th order polynomial to describe the melt fraction `phi` between solidus 
 Temperature `T` is in Kelvin.
 
 The default values are for a composite liquid-line-of-descent:
-- the upper part is for Andesite from Blatter and Carmichael (2001)
-- the lower part is extrapolated to the granitic minimum using the Marxer & Ulmer LLD for Andesite
+- the upper part is for Andesite from: (Blatter, D. L. & Carmichael, I. S. (2001) Hydrous phase equilibria of a Mexican highsilica andesite: a candidate for a mantle origin? Geochim. Cosmochim. Acta 65, 4043–4065
+- the lower part is extrapolated to the granitic minimum using the Marxer & Ulmer LLD for Andesite (Marxer, F. & Ulmer, P. (2019) Crystallisation and zircon saturation of calc-alkaline tonalite from the Adamello Batholith at upper crustal conditions: an experimental study. *Contributions Mineral. Petrol.* 174, 84)
 
 """
 @with_kw_noshow struct MeltingParam_5thOrder{T,U,U1,U2,U3,U4,U5,U6} <: AbstractMeltingParam{T}
@@ -180,7 +180,9 @@ Uses a 4th order polynomial to describe the melt fraction `phi` between solidus 
 ```
 Temperature `T` is in Kelvin.
 
-The default values are for Tonalite experiments from Marxer and Ulmer (2019)
+The default values are for Tonalite experiments from Marxer and Ulmer (2019):
+- Marxer, F. & Ulmer, P. (2019) Crystallisation and zircon saturation of calc-alkaline tonalite from the Adamello Batholith at upper crustal conditions: an experimental study. *Contributions Mineral. Petrol.* 174, 84
+
 """
 @with_kw_noshow struct MeltingParam_4thOrder{T,U,U2,U3,U4,U5,U6} <: AbstractMeltingParam{T}
     b::GeoUnit{T,U2}    =  -7.594512597174117e-10/K^4

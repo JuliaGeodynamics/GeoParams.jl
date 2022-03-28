@@ -189,7 +189,6 @@ end
 
 #-------------------------------------------------------------------------
 
-
 # Help info for the calculation routines
 """
     Cp = compute_heatcapacity(s:<AbstractHeatCapacity, P, T)

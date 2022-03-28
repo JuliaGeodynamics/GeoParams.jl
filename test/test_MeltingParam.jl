@@ -105,7 +105,7 @@ compute_meltfraction!(phi, p, zeros(size(Tdata)), ustrip.(Tdata))
 
 
 # Test computation of melt parameterization for the whole computational domain, using arrays 
-MatParam    =   Array{MaterialParams, 1}(undef, 3);
+MatParam    =   Array{MaterialParams, 1}(undef, 4);
 MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=1,
                         Melting  = PerpleX_LaMEM_Diagram("test_data/Peridotite.in"));
 
@@ -114,6 +114,11 @@ MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
 
 # No melting parameterization for this phase
 MatParam[3] =   SetMaterialParams(Name="UpperCrust", Phase=3,
+                        Melting   = MeltingParam_5thOrder(),
+                        Density   = PT_Density());
+
+# No melting parameterization for this phase
+MatParam[4] =   SetMaterialParams(Name="LowerCrust", Phase=4,
                         Density   = PT_Density());
 
 Mat_tup = Tuple(MatParam)
@@ -123,6 +128,7 @@ n = 100;
 Phases              = ones(Int64,n,n,n);
 Phases[:,:,20:end] .= 2
 Phases[:,:,80:end] .= 3
+Phases[:,:,90:end] .= 4
 
 ϕ = zeros(size(Phases))
 T =  ones(size(Phases))*1500
@@ -130,11 +136,11 @@ P =  ones(size(Phases))*10
 
 compute_meltfraction!(ϕ, Mat_tup, Phases, P,T) #allocations coming from computing meltfraction using PhaseDiagram_LookupTable
 
-@test sum(ϕ)/n^3 ≈ 0.6463001302812086
+@test sum(ϕ)/n^3 ≈ 0.7463001302812086
 
 
 # test computing material properties when we have PhaseRatios, instead of Phase numbers
-PhaseRatio  = zeros(n,n,n,3);
+PhaseRatio  = zeros(n,n,n,4);
 for i in CartesianIndices(Phases)
     iz = Phases[i]
     I = CartesianIndex(i,iz)
@@ -142,7 +148,7 @@ for i in CartesianIndices(Phases)
 end
 
 compute_meltfraction!(ϕ, Mat_tup, PhaseRatio, P,T)
-@test sum(ϕ)/n^3 ≈ 0.6463001302812086
+@test sum(ϕ)/n^3 ≈ 0.7463001302812086
 
 
 end

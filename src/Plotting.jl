@@ -229,7 +229,6 @@ function PlotMeltFraction(p::AbstractMeltingParam; T=nothing, P=nothing, plt=not
     phi = ones(size(T))
     compute_meltfraction!(phi, p, ustrip.(P), ustrip.(Vector(T)))
 
-    
     if isnothing(plt)
        plt = plot(T_C, ustrip(phi), label=lbl)
     else

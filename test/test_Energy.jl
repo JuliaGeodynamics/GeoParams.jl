@@ -261,7 +261,7 @@ H_r = compute_radioactive_heat(a)
 
 a = nondimensionalize(a,CharUnits_GEO)
 H_r = compute_radioactive_heat(a)
-@test H_r == 0.1
+@test H_r ≈ 0.1
 # -----------------------
 
 
