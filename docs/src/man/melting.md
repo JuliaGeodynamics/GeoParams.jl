@@ -7,6 +7,7 @@ A number of melting parameterisations are implemented, which can be set with:
 GeoParams.MeltingParam.MeltingParam_Caricchi
 GeoParams.MeltingParam.MeltingParam_5thOrder
 GeoParams.MeltingParam.MeltingParam_4thOrder
+GeoParams.MeltingParam.MeltingParam_Quadratic
 ```
 # Computational routines
 To compute the melt fraction at given `T` and `P`, use:

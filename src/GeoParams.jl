@@ -119,7 +119,8 @@ export compute_pwave_velocity, compute_swave_velocity,
 include("./MeltFraction/MeltingParameterization.jl")
 using .MeltingParam
 export compute_meltfraction, compute_meltfraction!,       # calculation routines
-        MeltingParam_Caricchi, MeltingParam_4thOrder, MeltingParam_5thOrder
+        MeltingParam_Caricchi, MeltingParam_4thOrder, 
+        MeltingParam_5thOrder, MeltingParam_Quadratic
 
 
 # Add plotting routines - only activated if the "Plots.jl" package is loaded 

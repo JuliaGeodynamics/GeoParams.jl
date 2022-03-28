@@ -14,9 +14,10 @@ abstract type AbstractMeltingParam{T} <: AbstractMaterialParam end
 export  compute_meltfraction, 
         compute_meltfraction!,    # calculation routines
         param_info,
-        MeltingParam_Caricchi,    # constant
+        MeltingParam_Caricchi,    
         MeltingParam_4thOrder,
-        MeltingParam_5thOrder
+        MeltingParam_5thOrder,
+        MeltingParam_Quadratic
         
 include("../Utils.jl")
 include("../Computations.jl")
@@ -87,13 +88,13 @@ end
     
 Uses a 5th order polynomial to describe the melt fraction `phi` between solidus temperature `T_s` and liquidus temperature `T_l`
 ```math  
-    \\phi = a T^5 + b T^4 + c T^3 + d T^2 + e T + f  if T_s ≤ T ≤ T_l
+    \\phi = a T^5 + b T^4 + c T^3 + d T^2 + e T + f  \\textrm{ if } T_s ≤ T ≤ T_l
 ```
 ```math  
-    \\phi = 1  if T>T_l
+    \\phi = 1  \\textrm{ if } T>T_l
 ```
 ```math  
-    \\phi = 0  if T<T_s
+    \\phi = 0  \\textrm{ if } T<T_s
 ```
 Temperature `T` is in Kelvin.
 
@@ -170,13 +171,13 @@ end
     
 Uses a 4th order polynomial to describe the melt fraction `phi` between solidus temperature `T_s` and liquidus temperature `T_l`
 ```math  
-    \\phi = b T^4 + c T^3 + d T^2 + e T + f  if T_s ≤ T ≤ T_l
+    \\phi = b T^4 + c T^3 + d T^2 + e T + f  \\textrm{ if } T_s ≤ T ≤ T_l
 ```
 ```math  
-    \\phi = 1  if T>T_l
+    \\phi = 1 \\textrm{ if } T>T_l
 ```
 ```math  
-    \\phi = 0  if T<T_s
+    \\phi = 0  \\textrm{ if } T<T_s
 ```
 Temperature `T` is in Kelvin.
 
@@ -243,6 +244,77 @@ function show(io::IO, g::MeltingParam_4thOrder)
     print(io, "4th order polynomial melting curve: phi = $(NumValue(g.b))T^4 + $(NumValue(g.c))T^3 + $(NumValue(g.d))T^2 + $(NumValue(g.e))T + $(NumValue(g.f))  $(Value(g.T_s)) ≤ T ≤ $(Value(g.T_l))")  
 end
 #-------------------------------------------------------------------------
+
+# MeltingParam_Quadratic  -------------------------------------------------------
+"""
+    MeltingParam_Quadratic(T_s,T_l)
+    
+Quadratic melt fraction parameterisation where melt fraction ``\\phi`` depends only on solidus (``T_s``) and liquidus (``T_l``) temperature:
+```math  
+    \\phi = 1.0 - \\left( {T_l - T} \\over {T_l - T_s} \\right)^2
+```
+```math  
+    \\phi = 1.0 \\textrm{ if } T>T_l 
+```
+```math  
+    \\phi = 0.0 \\textrm{ if } T<T_s 
+```
+Temperature `T` is in Kelvin.
+This was used, among others, in Tierney et al. (2016) Geology
+
+"""
+@with_kw_noshow struct MeltingParam_Quadratic{T,U} <: AbstractMeltingParam{T}
+    T_s::GeoUnit{T,U}   =   963.15K
+    T_l::GeoUnit{T,U}   =   1273.15K
+end
+MeltingParam_Quadratic(args...) = MeltingParam_Quadratic(convert.(GeoUnit,args)...)
+
+function param_info(s::MeltingParam_Quadratic) # info about the struct
+    return MaterialParamsInfo(Equation =  L"\phi = 1.0 - ((T_l - T)/(T_l - T_s))^2")
+end
+
+# Calculation routine
+function compute_meltfraction(p::MeltingParam_Quadratic{_T}, P::Quantity, T::Quantity) where _T
+    @unpack_units T_s,T_l   = p
+
+    ϕ   =    1.0 -  ((T_l - T)/(T_l - T_s))^2
+    if T>T_l
+        ϕ = 1.0
+    elseif T<T_s
+        ϕ = 0.0
+    end
+    return ϕ
+end
+
+function compute_meltfraction(p::MeltingParam_Quadratic{_T}, P::_T, T::_T ) where _T
+    @unpack_val T_s,T_l   = p
+
+    ϕ   =    1.0 -  ((T_l - T)/(T_l - T_s))^2
+    if T>T_l
+        ϕ = 1.0
+    elseif T<T_s
+        ϕ = 0.0
+    end
+    return  ϕ
+
+end
+
+function compute_meltfraction!(ϕ::AbstractArray{_T}, p::MeltingParam_Quadratic{_T}, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
+    @unpack_val T_s,T_l   = p
+
+    @. ϕ   =   1.0 -  ((T_l - T)/(T_l - T_s))^2
+    ϕ[T.<T_s] .= 0.
+    ϕ[T.>T_l] .= 1.
+
+    return nothing
+end
+
+# Print info 
+function show(io::IO, g::MeltingParam_Quadratic)  
+    print(io, "Quadratic melting curve:  ϕ = 1.0 - ((Tₗ-T)/(Tₗ-Tₛ))² with Tₛ=$(Value(g.T_s)), Tₗ=$(Value(g.T_l)) ")  
+end
+#-------------------------------------------------------------------------
+
 
 """
     ComputeMeltingParam(P,T, p::AbstractPhaseDiagramsStruct)
