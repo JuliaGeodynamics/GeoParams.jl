@@ -87,16 +87,16 @@ Their parameterization is originally given for the thermal diffusivity, together
     Cp = a + b T - c/T^2 
 ```
 ```math  
-    \\kappa = d/T - e, if T<=846K
+    \\kappa = d/T - e \\textrm{ if } T<=846K
 ```
 ```math  
-    \\kappa = f - g*T, if T>846K
+    \\kappa = f - g*T \\textrm{ if } T>846K
 ```
 ```math    
-    \\rho = 2700 kg/m3
+    \\rho = 2700 kg/m^3
 ```
 ```math
-    k = \\kappa Cp \\rho
+    k = \\kappa \\rho Cp
 ```
 
 where ``Cp`` is the heat capacity [``J/mol/K``], and ``a,b,c`` are parameters that dependent on the temperature `T`:
@@ -197,7 +197,7 @@ end
     
 Sets a temperature-dependent conductivity that is  parameterization after *Whittington, et al.  2009* 
 
-The original parameterization involves quite a few parameters; this is a polynomial fit that is roughly valid from 0-1000C
+The original parameterization involves quite a few parameters; this is a polynomial fit that is roughly valid from 0-1000Celcius
 ```math
     k [W/m/K] = -2 10^{-9} (T-Ts)^3 + 6 10^{-6} (T-Ts)^2 - 0.0062 (T-Ts) + 4
 ```
@@ -206,8 +206,6 @@ The original parameterization involves quite a few parameters; this is a polynom
 ```
 where `T[K]` is the temperature in Kelvin (or the nondimensional equivalent of it).
 """
-
-
 @with_kw_noshow struct T_Conductivity_Whittington_parameterised{T,U1,U2,U3,U4,U5} <: AbstractConductivity{T} 
     # Note: the resulting curve of k was visually compared with Fig. 2 of the paper  
     a::GeoUnit{T,U1}             =  -2e-09Watt/m/K^4                # 
@@ -267,7 +265,6 @@ function show(io::IO, g::T_Conductivity_Whittington_parameterised) #info about t
     print(io, "T-dependent conductivity parameterized from Whittington et al. (2009): k=$(NumValue(g.a))*(T-Ts)^3 + $(NumValue(g.b))*(T-Ts)^2 + $(NumValue(g.c))*(T-Ts) + $(NumValue(g.d)) with T in K and Ts=$(Value(g.Ts))\n");
 end
 #-------------------------------------------------------------------------
-
 
 
 # Temperature (& Pressure) dependent conductivity -------------------------------

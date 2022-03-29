@@ -111,16 +111,17 @@ export  compute_zirconsaturation, compute_zirconsaturation!,       # calculation
 
 # Seismic velocities
 using .MaterialParameters.SeismicVelocity
-export compute_pwave_velocity, compute_swave_velocity,
-        compute_pwave_velocity!, compute_swave_velocity!,
+export compute_pwave_velocity,          compute_swave_velocity,
+        compute_pwave_velocity!,        compute_swave_velocity!,
         ConstantSeismicVelocity
 
 # Add melting parameterizations
 include("./MeltFraction/MeltingParameterization.jl")
 using .MeltingParam
-export compute_meltfraction, compute_meltfraction!,       # calculation routines
-        MeltingParam_Caricchi, MeltingParam_4thOrder, 
-        MeltingParam_5thOrder, MeltingParam_Quadratic
+export  compute_meltfraction,   compute_meltfraction!,       # calculation routines
+        compute_dϕdT,           compute_dϕdT!,
+        MeltingParam_Caricchi,  MeltingParam_4thOrder, 
+        MeltingParam_5thOrder,  MeltingParam_Quadratic
 
 
 # Add plotting routines - only activated if the "Plots.jl" package is loaded 

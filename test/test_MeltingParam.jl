@@ -16,7 +16,7 @@ T_nd    =   Float64.(T/CharUnits_GEO.Temperature)
 # Caricchi parameterization [in ND numbers, which is anyways the typical use case]
 p        =  MeltingParam_Caricchi()
 phi_dim  =  zeros(size(T))
-compute_meltfraction!(phi_dim, p, zeros(size(T)), ustrip.(T))
+compute_meltfraction!(phi_dim,  p, zeros(size(T)), ustrip.(T))
 
 phi_dim1  = zeros(size(phi_dim))
 compute_meltfraction!(phi_dim1, p, zeros(size(T)), ustrip.(T)) # in-place routine
@@ -34,6 +34,12 @@ Phi_anal    =   1.0 .- Phi_solid
 @test sum(phi_dim  - Phi_anal)   < 1e-12
 @test sum(phi_dim1 - Phi_anal)   < 1e-12
 @test sum(phi_nd - Phi_anal)    < 1e-12
+
+# test derivative vs T
+dϕdT_dim =  zeros(size(T))
+compute_dϕdT!(dϕdT_dim, p, zeros(size(T)), ustrip.(T))
+@test sum(dϕdT_dim) ≈ 0.008102237679214096
+
 
 #------------------------------
 # 5th order polynomial
@@ -65,6 +71,12 @@ phi = zeros(size(Tdata))
 compute_meltfraction!(phi, p, zeros(size(Tdata)), ustrip.(Tdata))
 
 @test norm(data[:,2]-phi) ≈ 0.07151515017819135
+
+# test derivative vs T
+dϕdT_dim =  zeros(size(T))
+compute_dϕdT!(dϕdT_dim, p, zeros(size(T)), ustrip.(T))
+@test sum(dϕdT_dim) ≈ 0.006484458453421382
+
 #------------------------------
 
 
@@ -99,6 +111,12 @@ phi = zeros(size(Tdata))
 compute_meltfraction!(phi, p, zeros(size(Tdata)), ustrip.(Tdata))
 
 @test norm(data[:,2]-phi) ≈ 0.0678052542705406
+
+# test derivative vs T
+dϕdT_dim =  zeros(size(T))
+compute_dϕdT!(dϕdT_dim, p, zeros(size(T)), ustrip.(T))
+@test sum(dϕdT_dim) ≈ 0.00830985782591842
+
 #------------------------------
 
 
@@ -107,6 +125,10 @@ compute_meltfraction!(phi, p, zeros(size(Tdata)), ustrip.(Tdata))
 p        =  MeltingParam_Quadratic();
 compute_meltfraction!(phi_dim, p, zeros(size(T)), ustrip.(T))
 @test sum(phi_dim) ≈ 5.0894901144641
+
+dϕdT_dim =  zeros(size(T))
+compute_dϕdT!(dϕdT_dim, p, zeros(size(T)), ustrip.(T))
+@test sum(dϕdT_dim) ≈ 0.009365244536940681
 #------------------------------
 
 
@@ -137,12 +159,15 @@ Phases[:,:,80:end] .= 3
 Phases[:,:,90:end] .= 4
 
 ϕ = zeros(size(Phases))
+dϕdT = zeros(size(Phases))
 T =  ones(size(Phases))*1500
 P =  ones(size(Phases))*10
 
 compute_meltfraction!(ϕ, Mat_tup, Phases, P,T) #allocations coming from computing meltfraction using PhaseDiagram_LookupTable
-
 @test sum(ϕ)/n^3 ≈ 0.7463001302812086
+
+compute_dϕdT!(dϕdT, Mat_tup, Phases, P,T) 
+@test sum(dϕdT)/n^3 ≈ 0.000176112129245805
 
 
 # test computing material properties when we have PhaseRatios, instead of Phase numbers
@@ -156,6 +181,8 @@ end
 compute_meltfraction!(ϕ, Mat_tup, PhaseRatio, P,T)
 @test sum(ϕ)/n^3 ≈ 0.7463001302812086
 
+compute_dϕdT!(dϕdT, Mat_tup, PhaseRatio, P,T) 
+@test sum(dϕdT)/n^3 ≈ 0.000176112129245805
 
 end
 
