@@ -30,6 +30,21 @@ function custom_creep_law!(laws; name=:Viscosity)
     )
 end
 
+Base.getindex(η::AbstractViscosity, I::Integer...) = η.val[I...]
+
+for op in (:+, :-, :/, :*)
+    @eval begin
+        Base.$(op)(η::AbstractViscosity, A::AbstractArray) = Broadcast(Base.$(op), η.val, A)
+        Base.$(op)(A::AbstractArray, η::AbstractViscosity) = Broadcast(Base.$(op), A, η.val)
+    end
+end
+
+for op in (:extrema, :minimum, :maximum, :unique, :length, :size, :eachindex)
+    @eval begin
+        Base.$(op)(η::AbstractViscosity) = Base.$(op)(η.val)
+    end
+end
+
 """
     compute_viscosity(η::T, args::NTuple{nargs,Tuple}) where {T <: AbstractViscosity, nargs}
 
