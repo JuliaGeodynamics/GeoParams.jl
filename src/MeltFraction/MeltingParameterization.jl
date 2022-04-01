@@ -481,7 +481,7 @@ end
 In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
 The derivative is computed by finite differencing.
 """
-function compute_meltfraction!(dϕdT::AbstractArray{_T}, p::PhaseDiagram_LookupTable, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
+function compute_dϕdT!(dϕdT::AbstractArray{_T}, p::PhaseDiagram_LookupTable, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
     
     dT = (maximum(T) - minimum(T))/2.0*1e-6 + 1e-6   # 1e-6 of the average T value
     ϕ1 = p.meltFrac.(T .+ dT ,P)
