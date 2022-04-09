@@ -135,5 +135,8 @@ end
 #Set functions aliases using @use
 include("aliases.jl")
 
+# export ntuple_idx()
+include("Utils.jl")
+export ntuple_idx
 
 end # module
