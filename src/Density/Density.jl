@@ -39,31 +39,37 @@ Set a constant density:
 ```
 where ``\\rho`` is the density [``kg/m^3``].
 """
-@with_kw_noshow struct ConstantDensity{_T,U}   <: AbstractDensity{_T}
-    ρ::GeoUnit{_T,U}        =   2900.0kg/m^3                # density
+@with_kw_noshow struct ConstantDensity{_T,U} <: AbstractDensity{_T}
+    ρ::GeoUnit{_T,U} = 2900.0kg/m^3 # density
 end
 ConstantDensity(args...) = ConstantDensity(convert.(GeoUnit,args)...) 
 
+(ρ::ConstantDensity)(; args...) =  ρ.ρ.val
+(ρ::ConstantDensity)(args) =  ρ(; args...)
+compute_density(s::ConstantDensity{_T}, args) where _T = s(; args...)
+compute_density(s::ConstantDensity{_T}) where _T = s()
+
+# This assumes that density always has a single parameter. If that is not the case, we will have to extend this (to be done)
 function param_info(s::ConstantDensity) # info about the struct
     return MaterialParamsInfo(Equation = L"\rho = cst")
 end
 
 # Calculation routines
-function compute_density(s::ConstantDensity{_T}, P::Quantity,T::Quantity) where _T
-    @unpack_units ρ   = s
-    return ρ
-end
+# function compute_density(s::ConstantDensity{_T}; kwargs...) where _T
+#     # function compute_density(s::ConstantDensity{_T}, P::Quantity,T::Quantity) where _T
+#     # @unpack_units ρ   = s
+#     return s.ρ.val
+# end
 
-function compute_density(s::ConstantDensity{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
-    @unpack_val ρ   = s
-    return ρ
-end
+# compute_density(s::ConstantDensity{_T}, kwargs...) where _T = compute_density(s; kwargs)
 
-function compute_density!(rho::AbstractArray{_T}, s::ConstantDensity{_T},P::_T=zero(_T),T::_T=zero(_T)) where _T
+function compute_density!(rho::AbstractArray{_T}, s::ConstantDensity{_T}; kwargs...) where _T
     @unpack_val ρ   = s
     rho[:] .= ρ
     return nothing
 end
+
+compute_density!(rho::AbstractArray{_T}, s::ConstantDensity{_T}, args) where _T = compute_density!(rho, s; args...) 
 
 # Print info 
 function show(io::IO, g::ConstantDensity)  
@@ -96,30 +102,25 @@ function param_info(s::PT_Density)  # info
 end
 
 # Calculation routine in case units are provided
-function compute_density(s::PT_Density{_T},P::Quantity,T::Quantity) where _T
-    @unpack_units ρ0,α,β,P0, T0   = s
-    
-    ρ = ρ0*(1.0 - α*(T - T0) + β*(P - P0) )
-
-    return ρ
+function (ρ::PT_Density)(; P::Number, T::Number, kwargs...)
+    @unpack_val ρ0, α, β, P0, T0 = ρ
+    return ρ0*(1.0 - α*(T - T0) + β*(P - P0) )
 end
 
-# All other numbers 
-function compute_density(s::PT_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
-    @unpack_val ρ0,α,β,P0, T0   = s
-    
-    ρ = ρ0*(1.0 - α*(T - T0) + β*(P - P0) )
+(ρ::PT_Density)(args) = ρ(; args...)
 
-    return ρ
-end
+compute_density(s::PT_Density{_T}, args) where _T = s(args)
+compute_density(s::PT_Density{_T}, P, T) where _T = s(P=P, T=T)
 
-function compute_density!(ρ::AbstractArray, s::PT_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
+function compute_density!(ρ::AbstractArray, s::PT_Density{_T}; P::_T, T::_T, kwargs...) where _T
     @unpack ρ0,α,β,P0, T0   = s
     
     ρ .= ρ0*(1.0 - α*(T-T0) + β*(P-P0) )
 
     return nothing
 end
+
+compute_density!(ρ::AbstractArray, s::PT_Density{_T}, args) where _T = compute_density!(ρ, s; args...) 
 
 # Print info 
 function show(io::IO, g::PT_Density)  
@@ -149,35 +150,56 @@ function param_info(s::Compressible_Density) # info about the struct
     return MaterialParamsInfo(Equation = L"\rho = \rho_0\exp(\beta*(P-P_0))"     )
 end
 
-function compute_density(s::Compressible_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
-    @unpack_val ρ0,β,P0   = s
-    
-    ρ = ρ0*exp(β*(P - P0) )
-
-    return ρ
+function (s::Compressible_Density{_T})(; P::_T=zero(_T), kwargs...) where _T
+    @unpack_val ρ0, β, P0   = s
+    return ρ0*exp(β*(P - P0) )
 end
 
-function compute_density(s::Compressible_Density{_T}, P::Quantity, T::Quantity) where _T
-    @unpack ρ0,β,P0   = s
+(s::Compressible_Density{_T})(args) where _T = s(; args...)
+compute_density(s::Compressible_Density{_T}, args) where _T = s(; args...)
+
+# function compute_density(s::Compressible_Density{_T}; P::_T, kwargs...) where _T
+#     # function compute_density(s::Compressible_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
+#     @unpack_val ρ0, β, P0 = s
     
-    ρ = ρ0*exp(β*(P - P0) )
+#     ρ = ρ0*exp(β*(P - P0) )
 
-    return ρ
-end
+#     return ρ
+# end
 
-function compute_density!(ρ::_T, s::Compressible_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
+# compute_density(s::Compressible_Density{_T}, P::_T, kwargs...) where _T = s(; P, kwargs)
+# compute_density(s::Compressible_Density{_T}, args::NamedTuple, kwargs...) where _T = s(; args...)
+
+# function compute_density(s::Compressible_Density{_T}; P::Quantity, kwargs...) where _T
+#     # function compute_density(s::Compressible_Density{_T}, P::Quantity, T::Quantity) where _T
+#     @unpack ρ0,β,P0   = s
+    
+#     ρ = ρ0*exp(β*(P - P0) )
+
+#     return ρ
+# end
+
+# compute_density(s::Compressible_Density{_T}, P::Quantity, kwargs) where _T = compute_density(s; P, kwargs...)
+
+function compute_density!(ρ::_T, s::Compressible_Density{_T}; P::_T, kwargs...) where _T
+    # function compute_density!(ρ::_T, s::Compressible_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
     @unpack ρ0,β,P0   = s
 
     return ρ0*exp( β*(P-P0) )
 end
 
-function compute_density!(ρ::AbstractArray, s::Compressible_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
+compute_density!(ρ::_T, s::Compressible_Density{_T}, P::_T, kwargs...) where _T = compute_density!(ρ, s; P, kwargs)
+
+function compute_density!(ρ::AbstractArray, s::Compressible_Density{_T}; P::_T, kwargs...) where _T
+    # function compute_density!(ρ::AbstractArray, s::Compressible_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
     @unpack ρ0,β,P0   = s
     
-    ρ .= ρ0*exp( β*(P-P0) )
+    ρ .= ρ0*exp(β*(P-P0))
 
     return nothing
 end
+
+compute_density!(ρ::AbstractArray, s::Compressible_Density{_T}, args) where _T = compute_density!(ρ, s; args...)
 
 # Print info 
 function show(io::IO, g::Compressible_Density)  
@@ -196,26 +218,39 @@ end
     compute_density(P,T, s::PhaseDiagram_LookupTable)
 Interpolates density as a function of `T,P` from a lookup table  
 """
-function compute_density(s::PhaseDiagram_LookupTable, P::_T=zero(_T),T::_T=zero(_T)) where _T
-    return s.Rho(T,P)
+function (s::PhaseDiagram_LookupTable)(; P, T, kwargs...)
+    fn = s.Rho
+    return fn(T,P)
 end
+(s::PhaseDiagram_LookupTable)(args) = s(; args...)
+compute_density(s::PhaseDiagram_LookupTable, args) = s(; args...)
+compute_density(s::PhaseDiagram_LookupTable; P, T) = s(; P=P, T=T)
+
+# function compute_density(s::PhaseDiagram_LookupTable; P::_T=zero(_T),T::_T=zero(_T), kwargs...) where _T
+#     return s.Rho(T,P)
+# end
+
 
 """
     compute_density!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
 In-place computation of density as a function of `T,P`, in case we are using a lookup table.    
 """
-function compute_density!(rho::AbstractArray{_T}, s::PhaseDiagram_LookupTable, P::AbstractArray{_T}=[zero(_T)],T::AbstractArray{_T}=[zero(_T)]) where _T
+function compute_density!(rho::AbstractArray{_T}, s::PhaseDiagram_LookupTable; P::AbstractArray{_T}=[zero(_T)],T::AbstractArray{_T}=[zero(_T)], kwargs...) where _T
     rho[:] = s.Rho.(T,P)
     return nothing
 end
 
+compute_density!(rho::AbstractArray, s::PhaseDiagram_LookupTable, args) = compute_density!(rho, s, args...)
 
 #------------------------------------------------------------------------------------------------------------------#
 # Computational routines needed for computations with the MaterialParams structure 
 
 # This assumes that density always has a single parameter. If that is not the case, we will have to extend this (to be done)
-function compute_density(s::AbstractMaterialParamsStruct, P::_T=zero(_T),T::_T=zero(_T)) where {_T}
-    return compute_density(s.Density[1], P,T)
+# function compute_density(s::AbstractMaterialParamsStruct, args...) where {_T}
+#     return compute_density(s.Density[1], args...)
+# end
+function compute_density(s::AbstractMaterialParamsStruct, args)
+    return s.Density[1](args)
 end
 
 # these routines may come handy when we have >1 field for Density
@@ -295,9 +330,8 @@ ________________________________________________________________________________
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 """
-compute_density!(args...) = compute_param!(compute_density,args...) #Multiple dispatch to rest of routines found in Computations.jl
-compute_density(args...) = compute_param(compute_density,args...)
-
+compute_density!(args...) = compute_param!(compute_density, args...) #Multiple dispatch to rest of routines found in Computations.jl
+compute_density(args...) = compute_param(compute_density, args...)
 
 #=
 function compute_density!(rho::AbstractArray{_T, ndim}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phases::AbstractArray{_I, ndim}, P=nothing, T=nothing) where {ndim,N,_T,_I<:Integer}
