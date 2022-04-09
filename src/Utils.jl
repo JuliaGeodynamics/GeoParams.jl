@@ -29,3 +29,10 @@ end
 function max_length_tuple(t::NTuple{N, Tuple}) where N
     find_max(ntuple(x->length(t[x]), Val(N)))
 end
+
+# broadcast getindex() to NamedTuples
+function ntuple_idx(args::NamedTuple, I::Integer...)
+    k = keys(args)
+    v = getindex.(values(args), Tuple(I)...)
+    return (; zip(k, v)...)
+end
