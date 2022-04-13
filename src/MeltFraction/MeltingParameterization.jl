@@ -19,7 +19,9 @@ export  compute_meltfraction,
         MeltingParam_Caricchi,    
         MeltingParam_4thOrder,
         MeltingParam_5thOrder,
-        MeltingParam_Quadratic
+        MeltingParam_Quadratic,
+        MeltingParam_Assimilation
+        
         
 include("../Utils.jl")
 include("../Computations.jl")
@@ -434,6 +436,157 @@ end
 
 # Print info 
 function show(io::IO, g::MeltingParam_Quadratic)  
+    print(io, "Quadratic melting curve:  ϕ = 1.0 - ((Tₗ-T)/(Tₗ-Tₛ))² with Tₛ=$(Value(g.T_s)), Tₗ=$(Value(g.T_l)) ")  
+end
+#-------------------------------------------------------------------------
+
+
+# MeltingParam_Assimilation  -------------------------------------------------------
+"""
+    MeltingParam_Assimilation(T_s,T_l,a)
+    
+Melt fraction parameterisation that takes the assimilation of crustal host rocks into account, as used by Tierney et al. (2016) based upon a parameterisation of Spera and Bohrson (2001)
+
+Here, the fraction of molten and assimilated host rocks ``\\phi`` depends on the solidus (``T_s``) and liquidus (``T_l``) temperatures of the rocks, as well as on a parameter ``a=0.005``
+```math  
+    X = \\left( {T - T_s} \\over {T_l - T_s} \\right)
+```
+```math  
+    \\phi = a \\cdot \\left( \\exp^{2ln(100)X} - 1.0 \\right) \\textrm{ if } X ≤ 0.5
+```
+```math  
+    \\phi = 1- a \\cdot \\exp^{2ln(100)(1-X)}  \\textrm{ if } X > 0.5
+```
+```math  
+    \\phi = 1.0 \\textrm{ if } T>T_l 
+```
+```math  
+    \\phi = 0.0 \\textrm{ if } T<T_s 
+```
+Temperature `T` is in Kelvin.
+
+This was used, among others, in Tierney et al. (2016), who employed as default parameters:
+```math  
+   T_s=973.15, T_l=1173.15, a=0.005
+```
+
+References
+==========
+- Spera, F.J., and Bohrson, W.A., 2001, Energy-Constrained Open-System Magmatic Processes I: General Model and Energy-Constrained Assimilation and Fractional Crystallization (EC- AFC) Formulation: Journal of Petrology, v. 42, p. 999–1018.
+- Tierney, C.R., Schmitt, A.K., Lovera, O.M., de Silva, S.L., 2016. Voluminous plutonism during volcanic quiescence revealed by thermochemical modeling of zircon. Geology 44, 683–686. https://doi.org/10.1130/G37968.1
+
+"""
+@with_kw_noshow struct MeltingParam_Assimilation{T,U,U1} <: AbstractMeltingParam{T}
+    T_s::GeoUnit{T,U}   =   973.15K
+    T_l::GeoUnit{T,U}   =   1173.15K
+    a::GeoUnit{T,U1}    =   0.005NoUnits
+end
+MeltingParam_Assimilation(args...) = MeltingParam_Assimilation(convert.(GeoUnit,args)...)
+
+function param_info(s::MeltingParam_Assimilation) # info about the struct
+    return MaterialParamsInfo(Equation =  L"\phi = f(T_S,T_l,a) taking crustal assimilation into account.")
+end
+
+# Calculation routines
+function compute_meltfraction(p::MeltingParam_Assimilation{_T}, P::Quantity, T::Quantity) where _T
+    @unpack_units T_s,T_l,a   = p
+
+    X = (T - T_s)/(T_l - T_s)
+
+    if X <= 0.5
+        ϕ   =    a * (exp(2*log(100)*X) - 1.0 )
+    else
+        ϕ   =    1.0 - a * exp(2*log(100)*(1-X) )
+    end
+   
+    if T>T_l
+        ϕ = 1.0
+    elseif T<T_s
+        ϕ = 0.0
+    end
+    return ϕ
+end
+
+function compute_meltfraction(p::MeltingParam_Assimilation{_T}, P::_T, T::_T ) where _T
+    @unpack_val T_s,T_l,a   = p
+
+    X = (T - T_s)/(T_l - T_s)
+    if X <= 0.5
+        ϕ   =    a * (exp(2*log(100)*X) - 1.0 )
+    else
+        ϕ   =    1.0 - a * exp(2*log(100)*(1-X)) 
+    end
+
+    if T>T_l
+        ϕ = 1.0
+    elseif T<T_s
+        ϕ = 0.0
+    end
+    return  ϕ
+
+end
+
+function compute_meltfraction!(ϕ::AbstractArray{_T}, p::MeltingParam_Assimilation{_T}, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
+    @unpack_val T_s,T_l,a   = p
+    
+    X = zeros(_T,size(T))
+    @. X = (T - T_s)/(T_l - T_s)
+    @. ϕ = a * (exp(2*log(100)*X) - 1.0 )
+    
+    ϕ[X .> 0.5] .=  1.0 .- a .* exp.( 2.0*log(100).*(1.0 .- X[X.>0.5] )) 
+
+    ϕ[T.<T_s] .= 0.
+    ϕ[T.>T_l] .= 1.
+
+    return nothing
+end
+
+function compute_dϕdT(p::MeltingParam_Assimilation{_T}, P::Quantity, T::Quantity) where _T
+    @unpack_units T_s,T_l,a   = p
+
+    X      =   (T - T_s)/(T_l - T_s)
+    dϕdT   =   (9.210340371976184*a*exp((9.210340371976184*T - 9.210340371976184*T_s) / (T_l - T_s))) / (T_l - T_s)
+    if X>0.5
+        dϕdT   = (9.210340371976184*a*exp(9.210340371976184 + (9.210340371976184*T_s - 9.210340371976184*T) / (T_l - T_s))) / (T_l - T_s)
+    end
+
+    if T>T_l || T<T_s
+        dϕdT = 0.0
+    end
+    return dϕdT
+end
+
+function compute_dϕdT(p::MeltingParam_Assimilation{_T}, P::_T, T::_T ) where _T
+    @unpack_val T_s,T_l,a   = p
+
+    X      =   (T - T_s)/(T_l - T_s)
+    dϕdT   =   (9.210340371976184*a*exp((9.210340371976184*T - 9.210340371976184*T_s) / (T_l - T_s))) / (T_l - T_s)
+    if X>0.5
+        dϕdT   = (9.210340371976184*a*exp(9.210340371976184 + (9.210340371976184*T_s - 9.210340371976184*T) / (T_l - T_s))) / (T_l - T_s)
+    end
+
+    if T>T_l || T<T_s
+        dϕdT = 0.0
+    end
+    return  dϕdT
+end
+
+function compute_dϕdT!(dϕdT::AbstractArray{_T}, p::MeltingParam_Assimilation{_T}, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
+    @unpack_val T_s,T_l,a   = p
+    
+    X         = ones(_T,size(T))
+    @. X      =   (T .- T_s)./(T_l .- T_s)
+    @. dϕdT   =   (9.210340371976184*a*exp((9.210340371976184*T - 9.210340371976184*T_s) / (T_l - T_s))) / (T_l - T_s)
+
+    dϕdT[X.>0.5]  = (9.210340371976184.*a.*exp.(9.210340371976184 .+ (9.210340371976184.*T_s .- 9.210340371976184.*T[X.>0.5]) ./ (T_l - T_s))) ./ (T_l - T_s)
+    dϕdT[T.<T_s] .= 0.
+    dϕdT[T.>T_l] .= 0.
+
+    return nothing
+end
+
+# Print info 
+function show(io::IO, g::MeltingParam_Assimilation)  
     print(io, "Quadratic melting curve:  ϕ = 1.0 - ((Tₗ-T)/(Tₗ-Tₛ))² with Tₛ=$(Value(g.T_s)), Tₗ=$(Value(g.T_l)) ")  
 end
 #-------------------------------------------------------------------------

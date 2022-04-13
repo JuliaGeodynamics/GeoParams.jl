@@ -131,6 +131,17 @@ compute_dϕdT!(dϕdT_dim, p, zeros(size(T)), ustrip.(T))
 @test sum(dϕdT_dim) ≈ 0.009365244536940681
 #------------------------------
 
+#------------------------------
+# Assimilation parameterisation
+p        =  MeltingParam_Assimilation();
+compute_meltfraction!(phi_dim, p, zeros(size(T)), ustrip.(T))
+@test sum(phi_dim) ≈ 4.995
+
+dϕdT_dim =  zeros(size(T))
+compute_dϕdT!(dϕdT_dim, p, zeros(size(T)), ustrip.(T))
+@test sum(abs.(dϕdT_dim)) ≈0.004605170185988078
+#------------------------------
+
 
 # Test computation of melt parameterization for the whole computational domain, using arrays 
 MatParam    =   Array{MaterialParams, 1}(undef, 4);
