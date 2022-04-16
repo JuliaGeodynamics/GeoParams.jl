@@ -1,4 +1,4 @@
-module ZirconSaturation
+module ZirconAges
 
 # If you want to add a new method here, feel free to do so. 
 # Remember to also export the function name in GeoParams.jl (in addition to here)

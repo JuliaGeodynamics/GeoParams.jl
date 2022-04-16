@@ -105,7 +105,7 @@ export compute_shearheating!, compute_shearheating,
         ConstantShearheating
 
 # Add zircon saturation parameterizations
-using   .MaterialParameters.ZirconSaturation
+using   .MaterialParameters.ZirconAges
 export  compute_zirconsaturation, compute_zirconsaturation!,       # calculation routines
         Tierney
 

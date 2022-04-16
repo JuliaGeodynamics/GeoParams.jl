@@ -1,6 +1,6 @@
 using Test
 using GeoParams, LinearAlgebra
-@testset "ZirconSaturation.jl" begin
+@testset "ZirconAge.jl" begin
 
 #Make sure structure is isbits
 x = Tierney()
