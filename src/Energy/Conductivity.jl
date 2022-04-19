@@ -45,31 +45,39 @@ function param_info(s::ConstantConductivity) # info about the struct
 end
 
 # Calculation routine
-function compute_conductivity(s::ConstantConductivity{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
+function (s::ConstantConductivity{_T})(;kwargs...) where _T
     @unpack_val k = s
 
     return k
 end
 
-function compute_conductivity(s::ConstantConductivity{_T}, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
+# (s::ConstantConductivity{_T})(args) where _T = s(;args...)
+compute_conductivity(s::ConstantConductivity{_T}; kwargs...) where _T = s()
+
+function (s::ConstantConductivity{_T})(I::Integer...) where _T
     @unpack_val k = s
 
-    return k.*ones(size(T))
+    return fill(k, I...)
 end
-    
+
+compute_conductivity(s::ConstantConductivity{_T}, I::Integer...) where _T = s(I...)
 
 """
     compute_conductivity(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::ConstantConductivity) where N
 
 In-place routine to compute constant conductivity    
 """
-function compute_conductivity!(k_array::AbstractArray{_T,N}, s::ConstantConductivity{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T,N}) where {_T,N}
+# function compute_conductivity!(k_array::AbstractArray{_T,N}, s::ConstantConductivity{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T,N}) where {_T,N}
+function compute_conductivity!(k_array::AbstractArray{_T,N}, s::ConstantConductivity{_T}; kwargs...) where {_T,N}
     @unpack_val k   = s
-    
-    k_array .= k
-    
+    Threads.@threads for i in eachindex(k_array)
+        @inbounds k_array[i] = k
+    end
     return nothing
 end
+
+# compute_conductivity!(k_array::AbstractArray{_T,N}, s::ConstantConductivity{_T}, args) where {_T,N} = compute_conductivity!(k_array, s; args...)
+
 # Print info 
 function show(io::IO, g::ConstantConductivity)  
     print(io, "Constant conductivity: k=$(g.k.val)")  
@@ -129,12 +137,12 @@ where ``Cp`` is the heat capacity [``J/mol/K``], and ``a,b,c`` are parameters th
 end
 T_Conductivity_Whittington(args...) = T_Conductivity_Whittington(convert.(GeoUnit,args)...)
 
-function param_info(s::T_Conductivity_Whittington) # info about the struct
+function param_info(s::T_Conductivity_Whittington) # info about the structwhere {_T,N}
     return MaterialParamsInfo(Equation = L"k = f(T) ")
 end
 
 # Calculation routine
-function compute_conductivity(s::T_Conductivity_Whittington{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
+function (s::T_Conductivity_Whittington{_T})(; T::_T=zero(_T), kwargs...) where _T
     @unpack_val a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g   = s
     if T <= Tcutoff
         return (a0 + b0*T - c0/T^2)/molmass * (d/T - e) * rho
@@ -143,11 +151,15 @@ function compute_conductivity(s::T_Conductivity_Whittington{_T}, P::_T=zero(_T),
     end
 end
 
-function compute_conductivity(s::T_Conductivity_Whittington{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T,N}) where {_T,N}
+# (s::T_Conductivity_Whittington{_T})(args) where _T = s(;args...)
+# compute_conductivity(s::T_Conductivity_Whittington{_T}, args) where _T s(; args)
+compute_conductivity(s::T_Conductivity_Whittington{_T}; T::_T=zero(_T)) where _T = s(; T=T)
+
+function (s::T_Conductivity_Whittington{_T})(T::AbstractArray{_T,N}; kwargs...) where {_T,N}
     @unpack_val a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g   = s
 
-    k = Array{_T}(undef,size(T))    #creating an array makes 1 allocation
-
+    k = similar(T)   #creating an array makes 1 allocation
+    inv_molmass = 1/molmass # multiplication is considerably faster than division
     @inbounds for i in eachindex(T)
         if T[i] <= Tcutoff
             a,b,c = a0,b0,c0
@@ -156,29 +168,30 @@ function compute_conductivity(s::T_Conductivity_Whittington{_T}, P::AbstractArra
             a,b,c = a1,b1,c1
             κ     = f - g*T[i]
         end
-       
-        cp = (a + b*T[i] - c/T[i]^2)/molmass # conductivity
-        
+        cp = (a + b*T[i] - c/T[i]^2)*inv_molmass # conductivity
         k[i] = κ*rho*cp       # compute conductivity from diffusivity
-
     end
 
     return k
 end
+
+(s::T_Conductivity_Whittington{_T})(T::AbstractArray{_T,N}, args...) where {_T,N} = s(T; args...)
+compute_conductivity(s::T_Conductivity_Whittington{_T}, T::AbstractArray{_T,N}, args...) where {_T,N} = s(T; args...)
 
 """
     compute_conductivity!(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::T_Conductivity_Whittington) where N
 
 In-place routine to compute temperature-dependent conductivity    
 """
-function compute_conductivity!(k::AbstractArray{_T,N}, s::T_Conductivity_Whittington{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T,N}) where {_T,N}
+function compute_conductivity!(k::AbstractArray{_T,N}, s::T_Conductivity_Whittington{_T}; T::AbstractArray{_T,N}, kwargs...) where {_T,N}
     @unpack_val a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g   = s
 
+    inv_molmass = 1/molmass # multiplication is considerably faster than division
     @inbounds for i in eachindex(T)
         if T[i] <= Tcutoff
-            k[i] = (a0 + b0*T[i] - c0/T[i]^2)/molmass * (d/T[i] - e) * rho
+            k[i] = (a0 + b0*T[i] - c0/T[i]^2)/inv_molmass * (d/T[i] - e) * rho
         else
-            k[i] = (a1 + b1*T[i] - c1/T[i]^2)/molmass * (f - g*T[i]) * rho
+            k[i] = (a1 + b1*T[i] - c1/T[i]^2)/inv_molmass * (f - g*T[i]) * rho
         end
     end
     return nothing
@@ -221,16 +234,16 @@ function param_info(s::T_Conductivity_Whittington_parameterised) # info about th
 end
 
 # Calculation routine
-function compute_conductivity(s::T_Conductivity_Whittington_parameterised{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
+function (s::T_Conductivity_Whittington_parameterised{_T})(; T::_T=zero(_T), kwargs...) where _T
     @unpack_val a,b,c,d,Ts   = s
     T_C  = T - Ts
     return a*T_C^3 + b*T_C^2 + c*T_C + d
 end
 
-function compute_conductivity(s::T_Conductivity_Whittington_parameterised{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T,N}) where {_T,N}
+function (s::T_Conductivity_Whittington_parameterised{_T})(T::AbstractArray{_T,N}; kwargs...) where {_T,N}
     @unpack_val a,b,c,d,Ts   = s
 
-    k = Array{_T}(undef,size(T))    #creating an array makes 1 allocation
+    k = similar(T)   #creating an array makes 1 allocation
 
     @inbounds for i in eachindex(T)
         # Note: in general, we operate with SI units or the non-dimensional equivalent of that
@@ -244,12 +257,15 @@ function compute_conductivity(s::T_Conductivity_Whittington_parameterised{_T}, P
     return k
 end
 
+(s::T_Conductivity_Whittington_parameterised)(T::AbstractArray, args) = s(T; args...)
+compute_conductivity(s::T_Conductivity_Whittington_parameterised, T::AbstractArray, args)   = s(T, args...)
+
 """
     compute_conductivity!(k::AbstractArray{_T,N}, s::T_Conductivity_Whittington_parameterised{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T,N})
 
 In-place routine to compute temperature-dependent conductivity    
 """
-function compute_conductivity!(k::AbstractArray{_T,N}, s::T_Conductivity_Whittington_parameterised{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T,N}) where {_T,N}
+function compute_conductivity!(k::AbstractArray{_T,N}, s::T_Conductivity_Whittington_parameterised{_T}; T::AbstractArray{_T,N}, kwargs...) where {_T,N}
     @unpack_val a,b,c,d,Ts   = s
 
     @inbounds for i in eachindex(T)
@@ -258,7 +274,6 @@ function compute_conductivity!(k::AbstractArray{_T,N}, s::T_Conductivity_Whittin
     end
     return nothing
 end
-
 
 # Print info 
 function show(io::IO, g::T_Conductivity_Whittington_parameterised) #info about the struct
@@ -343,9 +358,8 @@ TP_Conductivity_info = Dict([
 
 ])
 
-
 # Calculation routine
-function compute_conductivity(s::TP_Conductivity{_T}, P::_T=zero(_T), T::_T=zero(_T)) where _T 
+function (s::TP_Conductivity{_T})(; P::_T=zero(_T), T::_T=zero(_T), kwargs...) where _T 
     @unpack_val a,b,c,d   = s
 
     if ustrip(d)==0
@@ -355,10 +369,10 @@ function compute_conductivity(s::TP_Conductivity{_T}, P::_T=zero(_T), T::_T=zero
     end
 end
 
-function compute_conductivity(s::TP_Conductivity{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T,N}) where {_T,N} 
+function (s::TP_Conductivity{_T})(P::AbstractArray{_T,N}, T::AbstractArray{_T,N}; kwargs...) where {_T,N} 
     @unpack_val a,b,c,d   = s
 
-    k = Array{_T}(undef,size(T))
+    k = similar(T)
 
     @inbounds if ustrip(d)==0
         for i in eachindex(T)
@@ -377,19 +391,32 @@ function compute_conductivity(s::TP_Conductivity{_T}, P::AbstractArray{_T,N}, T:
     return k
 end
 
+(s::TP_Conductivity)(P::AbstractArray, T::AbstractArray) = s(P, T)
+compute_conductivity(s::TP_Conductivity, P::AbstractArray, T::AbstractArray) = s(P, T)
+
 # Calculation routine
-function compute_conductivity!(K::AbstractArray{_T, N}, s::TP_Conductivity{_T}, P::AbstractArray{_T, N}, Temp::AbstractArray{_T, N}) where{_T, N}
+function compute_conductivity!(K::AbstractArray{_T, N}, s::TP_Conductivity{_T}; P::AbstractArray{_T, N}, T::AbstractArray{_T, N}, kwargs...) where{_T, N}
     @unpack_val a,b,c,d   = s
 
-    if d==0
-        K .= a .+ b./(Temp .+ c)
-    else
-        K .= (a .+ b./(Temp .+ c)).*(1.0 .+ d.*P)
+    Threads.@threads for i in eachindex(T)
+        @inbounds if d==0
+            K[i] = a + b/(T[i] + c)
+        else
+            K[i] = (a + b/(T[i] + c))*(one(_T) + d*P[i])
+        end
     end
 
     return nothing
 end
 
+# add methods programatically
+for myType in (:T_Conductivity_Whittington_parameterised, :T_Conductivity_Whittington, :ConstantConductivity, :TP_Conductivity)
+    @eval begin
+        (s::$(myType))(args)= s(; args...)
+        compute_conductivity(s::$(myType), args) = s(args)
+        compute_conductivity!(k::AbstractArray{_T,N}, s::$(myType){_T}, args) where {_T,N} = compute_conductivity!(k, s; args...)
+    end
+end
 
 # Print info 
 function show(io::IO, g::TP_Conductivity)  
@@ -431,7 +458,7 @@ compute_conductivity()
 
 Computes conductivity if only temperature (and not pressure) is specified
 """
-compute_conductivity(s::AbstractConductivity, T::AbstractArray{_T}) where _T =  compute_conductivity(s,similar(T),T)
+# compute_conductivity(s::AbstractConductivity, T::AbstractArray{_T}) where _T =  compute_conductivity(s,similar(T),T)
 
 """
     k = compute_conductivity(s::ConstantConductivity)
@@ -441,8 +468,8 @@ Returns conductivity if we are sure that we will only employ constant values thr
 #compute_conductivity(s::ConstantConductivity) =  compute_conductivity(s,0,0)
 
 # Computational routines needed for computations with the MaterialParams structure 
-function compute_conductivity(s::AbstractMaterialParamsStruct, P::_T=zero(_T),T::_T=zero(_T)) where {_T}
-    return compute_conductivity(s.Conductivity[1], P, T)
+function compute_conductivity(s::AbstractMaterialParamsStruct, args) 
+    return s.Conductivity[1](args)
 end
 
 """
