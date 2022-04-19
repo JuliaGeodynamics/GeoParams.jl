@@ -31,6 +31,9 @@ end
 	Tcal_step::Float64 		= 1.0		# temperature step to caclulate zircon fraction (resolution of Zircon saturation curve discretization)
 	max_x_zr::Float64 		= 0.001		# max fraction zircons at solidus
 	zircon_number::Int64    = 100.0		# number of required zircons 
+	time_zr_growth::Float64 = 0.7e6		# Minimum time within T saturation range (This is what the method used in the R script, boils down too)
+	# -> remain in the Zr saturation zone more than 1/3 of the time the Tt path with the longest time in the saturation zone
+	
 end
 
 """
@@ -107,7 +110,7 @@ This routine was developed based on an R-routine provided as electronic suppleme
 """
 function compute_zircons_Ttpath(time_years::AbstractArray{Float64,1}, Tt_paths_Temp::AbstractArray{Float64,2}; ZirconData::ZirconAgeData = ZirconAgeData())
 
-	@unpack Tmin, Tsat, Tsol = ZirconData
+	@unpack Tmin, Tsat, Tsol, time_zr_growth = ZirconData
 	
 	Tt_paths_Temp1 = copy(Tt_paths_Temp)
 	
@@ -214,7 +217,7 @@ function compute_zircons_Ttpath(time_years_vecs::Vector{Vector}, Tt_paths_Temp_v
 	end
 
 	# call main routine
-	prob, ages_eruptible, number_zircons, T_av_time, T_sd_time = compute_zircons_Ttpath(time_years, Tt_paths_Temp)
+	prob, ages_eruptible, number_zircons, T_av_time, T_sd_time = compute_zircons_Ttpath(time_years, Tt_paths_Temp, ZirconData=ZirconData)
 
 	# return, including time_years
 	return time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time 
@@ -258,16 +261,35 @@ end
 
 
 """
+	time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average, time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time = compute_zircon_age_PDF(time_years_vecs::Vector{Vector}, Tt_paths_Temp_vecs::Vector{Vector}; ZirconData::ZirconAgeData = ZirconAgeData(), bandwidth=bandwidth, n_analyses=300)
+
+This computes the PDF (probability density function) with zircon age data from Vectors with Tt-paths	
+
+"""
+function compute_zircon_age_PDF(time_years_vecs::Vector{Vector}, Tt_paths_Temp_vecs::Vector{Vector}; ZirconData::ZirconAgeData = ZirconAgeData(), bandwidth=1e5, n_analyses=300)
+
+	# Compute the probability that a zircon of certain age is sampled:
+	time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time = compute_zircons_Ttpath(time_years_vecs, Tt_paths_Temp_vecs, ZirconData=ZirconData);
+
+	# Use this to compute PDF curves: 
+	time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average  = zircon_age_PDF(ages_eruptible, number_zircons, bandwidth=bandwidth, n_analyses=n_analyses)
+
+	return time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average, time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time
+
+end
+
+
+"""
 	plt = Plot_ZirconAge_PDF(time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average)
 
 Creates a plot of the Zircon Age probability density function from the parameters in a simulation
 """
 function Plot_ZirconAge_PDF(time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average)
 
-	plt = Plots.plot(time_Ma[1], PDF_zircons[1], color=:gray,linewidth=0.1, 
-				xlabel="Time [Ma]", ylabel="probability []", legend=:none)
+	plt = Plots.plot(time_Ma[1], PDF_zircons[1], color=:lightgray,linewidth=0.1, 
+				xlabel="Time [Ma]", ylabel="probability []", title = "Zircon age probability distribution", legend=:none)
 	for i in 2:length(PDF_zircons)
-		plt = Plots.plot!(time_Ma[i], PDF_zircons[i], color=:gray,linewidth=0.1)
+		plt = Plots.plot!(time_Ma[i], PDF_zircons[i], color=:lightgray,linewidth=0.1)
 	end
 	Plots.plot!(time_Ma_average, PDF_zircon_average, color=:black,linewidth=2.)
 	
@@ -275,7 +297,6 @@ function Plot_ZirconAge_PDF(time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_av
 
 	return plt
 end
-
 
 # declare constant variables
 s2y 			= 365.0*24.0*3600.0 							# second to year
@@ -298,7 +319,7 @@ time_years 		= 	Tt_paths[:,1]./s2y							# time fron seconds to years
 Tt_paths_Temp 	= 	Tt_paths[:,2:end]	
 	
 # first: test case in which we provide the Tt-path as matrix 
-prob, ages_eruptible, number_zircons, T_av_time, T_sd_time = compute_zircons_Ttpath(time_years, Tt_paths_Temp)
+prob, ages_eruptible, number_zircons, T_av_time, T_sd_time = compute_zircons_Ttpath(time_years, Tt_paths_Temp, ZirconData=ZirconData)
 time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average  = zircon_age_PDF(ages_eruptible, number_zircons, bandwidth=1e5, n_analyses=n_analyses)
 
 # add tests to check that results are consistent
@@ -329,7 +350,21 @@ time_years1, prob1, ages_eruptible1, number_zircons1, T_av_time1, T_sd_time1  = 
 @test sum(number_zircons1)==5.411985e6
 @test  prob1[100] ≈ 5.5432526143365145e-6
 
+
+# Do the same but with a single routine that also returns the PDF's 
+# Note that given the randomness, you'll always get different results
+time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average, time_years, 
+	prob2, ages_eruptible, number_zircons2, T_av_time, T_sd_time = compute_zircon_age_PDF(time_years_vecs, Tt_paths_Temp_vecs)
+
+@test sum(number_zircons2[:,200]) == 40479.0
+@test sum(number_zircons2)==5.411985e6
+@test  prob2[100] ≈ 5.5432526143365145e-6
+
+	
+# plotting routine:
 Plot_ZirconAge_PDF(time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average)
+
+
 
 
 # Plot Zircon age probability distribution
