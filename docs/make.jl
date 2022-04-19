@@ -1,4 +1,5 @@
 using Documenter, GeoParams, Plots
+push!(LOAD_PATH,"../src/")
 
 @info "Making documentation..."
 makedocs(
@@ -20,7 +21,7 @@ makedocs(
             "Shear heating" =>  "man/shearheating.md",
             "Gravity" =>  "man/gravity.md",
             "Partial Melting"  => "man/melting.md",
-            "Zircon Saturation"  => "man/zirconsaturation.md",
+            "Zircon Ages"  => "man/zirconages.md",
             "Phase Diagrams" => "man/phasediagrams.md",
             "Seismic Velocity" => "man/seismicvelocity.md",
         ],
