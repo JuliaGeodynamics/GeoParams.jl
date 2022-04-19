@@ -56,14 +56,14 @@ using GeoParams
   @test num_alloc == 0
 
   #Test allocations using ρ alias
-  num_alloc = @allocated ρ!(rho, x, args)
+  ρ!(rho, x, args)
   num_alloc = @allocated ρ!(rho, x, args)
   @test num_alloc == 0
 
   # This does NOT allocate if I test this with @btime;
   #   yet it does while running the test here
   x   = PT_Density()
-  num_alloc = @allocated compute_density!(rho, x, args)
+  compute_density!(rho, x, args)
   num_alloc = @allocated compute_density!(rho, x, args)
   @show num_alloc
   @test num_alloc ≤ 32
@@ -71,7 +71,7 @@ using GeoParams
   # This does NOT allocate if I test this with @btime;
   #   yet it does while running the test here
   x   = Compressible_Density()
-  num_alloc = @allocated compute_density!(rho, x, args)
+  compute_density!(rho, x, args)
   num_alloc = @allocated compute_density!(rho, x, args)
   @show num_alloc
   @test num_alloc ≤32

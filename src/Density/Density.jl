@@ -161,7 +161,7 @@ compute_density!(ρ::_T, s::Compressible_Density{_T}, P::_T, kwargs...) where _T
 
 function compute_density!(ρ::AbstractArray, s::Compressible_Density{_T}; P::_T, kwargs...) where _T
     @unpack ρ0,β,P0   = s
-    Threads.@threads for i in eachindex(P)
+    for i in eachindex(P)
         @inbounds ρ[i] = ρ0*exp(β*(P[i]-P0))
     end
     return nothing
