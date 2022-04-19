@@ -98,7 +98,8 @@ export compute_latent_heat,
 
 using .MaterialParameters.RadioactiveHeat
 export compute_radioactive_heat,
-        ConstantRadioactiveHeat
+        ConstantRadioactiveHeat,
+        ExpDepthDependentRadioactiveHeat
 
 using .MaterialParameters.Shearheating
 export compute_shearheating!, compute_shearheating,

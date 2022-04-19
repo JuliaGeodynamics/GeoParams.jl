@@ -13,7 +13,8 @@ abstract type AbstractRadioactiveHeat{T} <: AbstractMaterialParam end
 
 export  compute_radioactive_heat,                  # calculation routines
         param_info,
-        ConstantRadioactiveHeat                  # constant
+        ConstantRadioactiveHeat,                  # constant
+        ExpDepthDependentRadioactiveHeat
         
 
 # Constant  -------------------------------------------------------
@@ -45,6 +46,65 @@ end
 # Print info 
 function show(io::IO, g::ConstantRadioactiveHeat)  
     print(io, "Constant radioactive heat: H_r=$(g.H_r.val)")  
+end
+#-------------------------------------------------------------------------
+
+# Exponential Depth-dependent  -------------------------------------------------------
+"""
+    ExpDepthDependent(H_0=1e-6Watt/m^3, h_r=10e3m, z_0=0m)
+    
+Sets an exponential depth-dependent radioactive 
+```math  
+    H_r  = H_0 \\exp \\left( {- {(z - z_0) \\over h_r}} \\right)
+```
+where ``H_0`` is the radioactive heat source [``Watt/m^3``] at ``z=z_0`` which decays with depth over a characteristic distance ``h_r``.
+"""
+@with_kw_noshow struct ExpDepthDependentRadioactiveHeat{T,U,U1} <: AbstractRadioactiveHeat{T}   
+    H_0::GeoUnit{T,U}         =   1e-6Watt/m^3             
+    h_r::GeoUnit{T,U1}        =   10e3m             
+    z_0::GeoUnit{T,U1}        =   0m             
+end
+ExpDepthDependentRadioactiveHeat(a...) = ExpDepthDependentRadioactiveHeat(convert.(GeoUnit,a)...)
+
+function param_info(s::ExpDepthDependentRadioactiveHeat) # info about the struct
+    return MaterialParamsInfo(Equation = L"H_r = H_0 \\exp(-(z-z_0)/h_r)")
+end
+
+# Calculation routines
+function compute_radioactive_heat(s::ExpDepthDependentRadioactiveHeat, z::Quantity)
+    @unpack_units H_0, z_0, h_r   = s
+    
+    H_r = H_0*exp(-(z-z_0)/h_r);
+
+    return H_r
+end
+
+function compute_radioactive_heat(s::ExpDepthDependentRadioactiveHeat, z::Number)
+    @unpack_val H_0, z_0, h_r   = s
+    
+    H_r = H_0*exp(-(z-z_0)/h_r);
+
+    return H_r
+end
+
+# Calculation routine
+function compute_radioactive_heat!(Hr_array::AbstractArray{_T}, s::ExpDepthDependentRadioactiveHeat{_T}, z::_T=zero(_T)) where _T
+    @unpack_val H_0, z_0, h_r   = s
+        
+    Hr_array .= H_0.*exp(-(z .- z_0)./h_r);
+    return nothing
+end
+
+function compute_radioactive_heat!(Hr_array::AbstractArray{_T,N}, s::ExpDepthDependentRadioactiveHeat{_T}, z::AbstractArray{_T,N}) where {N,_T}
+    @unpack_val H_0, z_0, h_r   = s
+        
+    Hr_array .= H_0.*exp(-(z .- z_0)./h_r);
+    return nothing
+end
+
+# Print info 
+function show(io::IO, g::ExpDepthDependentRadioactiveHeat)  
+    print(io, "Exponential depth-dependent radioactive heat: H_r=$(g.H_0.val) exp(-(z-$(g.z_0.val))/$(g.h_r.val))")  
 end
 #-------------------------------------------------------------------------
 
