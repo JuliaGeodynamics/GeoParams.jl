@@ -44,8 +44,6 @@ include("./Energy/Conductivity.jl")
 include("./Energy/LatentHeat.jl")
 include("./Energy/RadioactiveHeat.jl")
 include("./Energy/Shearheating.jl")
-#include("./MeltFraction/MeltingParameterization.jl")
-include("./ZirconAge/ZirconAges.jl")
 include("./SeismicVelocity/SeismicVelocity.jl")
 
 using .Density: AbstractDensity
@@ -66,7 +64,6 @@ Structure that holds all material parameters for a given phase
                                         Vheatc    <: Tuple,
                                         Vensource <: Tuple,
                                         Vmelting  <: Tuple,
-                                        Vzircon   <: Tuple,
                                         Vseismvel <: Tuple } <: AbstractMaterialParamsStruct
     Name::NTuple{N,Char}                            #       The name is encoded as a NTuple{Char} (to make it isbits and the whole MaterialParams isbits as well; required to use this on the GPU)
     Phase::Int64                 =   1;             #       Number of the phase (optional)
@@ -80,7 +77,6 @@ Structure that holds all material parameters for a given phase
     HeatCapacity::Vheatc         =   ()             #       Heat capacity 
     EnergySourceTerms::Vensource =   ()             #       Source terms in energy conservation equation (such as radioactive heat)
     Melting::Vmelting            =   ()             #       Melting model
-    ZirconSaturation::Vzircon    =   ()             #       Zircon saturation
     SeismicVelocity::Vseismvel   =   ()             #       Seismic velocity
 end
 
@@ -95,7 +91,6 @@ end
                         HeatCapacity        =   nothing, 
                         EnergySourceTerms   =   nothing, 
                         Melting             =   nothing,
-                        ZirconSaturation    =   nothing,
                         SeismicVelocity     =   nothing,
                         CharDim::GeoUnits   =   nothing)
 
@@ -180,7 +175,6 @@ function SetMaterialParams(;
             HeatCapacity        =   nothing, 
             EnergySourceTerms   =   nothing, 
             Melting             =   nothing,
-            ZirconSaturation    =   nothing,
             SeismicVelocity     =   nothing,
             CharDim             =   nothing)
 
@@ -202,7 +196,6 @@ function SetMaterialParams(;
                                      ConvField(HeatCapacity,        :HeatCapacity,      maxAllowedFields=1), 
                                      ConvField(EnergySourceTerms,   :EnergySourceTerms), 
                                      ConvField(Melting,             :Melting,           maxAllowedFields=1),
-                                     ConvField(ZirconSaturation,    :ZirconSaturation,  maxAllowedFields=1),
                                      ConvField(SeismicVelocity,     :SeismicVelocity,   maxAllowedFields=1)
                                      ) 
 

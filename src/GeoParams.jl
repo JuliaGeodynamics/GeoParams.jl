@@ -105,9 +105,10 @@ export compute_shearheating!, compute_shearheating,
         ConstantShearheating
 
 # Add zircon saturation parameterizations
-using   .MaterialParameters.ZirconAges
-export  compute_zirconsaturation, compute_zirconsaturation!,       # calculation routines
-        Tierney
+include("./ZirconAge/ZirconAges.jl")
+using   .ZirconAges
+export  ZirconAgeData, 
+        compute_zircon_age_PDF,  compute_zircons_Ttpath, zircon_age_PDF 
 
 # Seismic velocities
 using .MaterialParameters.SeismicVelocity
