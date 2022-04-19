@@ -82,7 +82,7 @@ using GeoParams
     compute_heatcapacity!(Cp, Mat_tup, Phases, args)    # computation routine w/out P (not used in most heat capacity formulations)     
     num_alloc = @allocated compute_heatcapacity!(Cp, Mat_tup, Phases, args)
     @test sum(Cp[1,1,:]) ≈ 121399.0486067196
-    @test num_alloc == 0
+    @test num_alloc <= 32
 
     # test if we provide phase ratios
     PhaseRatio  = zeros(n,n,n,3);
@@ -94,7 +94,7 @@ using GeoParams
     compute_heatcapacity!(Cp, Mat_tup, PhaseRatio, args)
     num_alloc = @allocated compute_heatcapacity!(Cp, Mat_tup, PhaseRatio, args)
     @test sum(Cp[1,1,:]) ≈ 121399.0486067196
-    @test num_alloc == 0
+    @test num_alloc <= 32
 
 
     # -----------------------
@@ -208,11 +208,11 @@ using GeoParams
     compute_conductivity!(k, Mat_tup, Phases, args) 
     num_alloc = @allocated compute_conductivity!(k, Mat_tup, Phases, args) 
     @test sum(k) ≈ 1.9216938849389635e6
-    @test num_alloc == 0
+    @test num_alloc <= 32
 
     compute_conductivity!(k, Mat_tup, PhaseRatio, args) 
     num_alloc = @allocated compute_conductivity!(k, Mat_tup, PhaseRatio, args) 
-    @test num_alloc == 0
+    @test num_alloc <= 32
     @test sum(k) ≈ 1.9216938849389635e6
 
 
