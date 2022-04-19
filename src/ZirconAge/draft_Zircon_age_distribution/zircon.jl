@@ -108,37 +108,40 @@ This routine was developed based on an R-routine provided as electronic suppleme
 function compute_zircons_Ttpath(time_years::AbstractArray{Float64,1}, Tt_paths_Temp::AbstractArray{Float64,2}; ZirconData::ZirconAgeData = ZirconAgeData())
 
 	@unpack Tmin, Tsat, Tsol = ZirconData
+	
+	Tt_paths_Temp1 = copy(Tt_paths_Temp)
+	
 
 	Δt 				=	diff(time_years)[1]							# timestep [yrs]
 	time_er_min 	= 	maximum(time_years)							# backward count
 
 	# find all the Tt paths that go through the zircon saturation range & are at the end of the path still below Tsat (otherwise Zr are not yet crystallized)
-	ID_col_er 		= findall( (maximum(Tt_paths_Temp,dims=1).>Tmin) .& (Tt_paths_Temp[end,:]' .< Tsat))
-	n_zr			= zero(Tt_paths_Temp)
-	compute_number_zircons!(n_zr, Tt_paths_Temp, ZirconData)		# computes the number of zircons for every path
+	ID_col_er 		= findall( (maximum(Tt_paths_Temp1,dims=1).>Tmin) .& (Tt_paths_Temp1[end,:]' .< Tsat))
+	n_zr			= zero(Tt_paths_Temp1)
+	compute_number_zircons!(n_zr, Tt_paths_Temp1, ZirconData)		# computes the number of zircons for every path
 
 	# find the number of timesteps for every path, during which the temperature is > Tmin and < Tsat
 	length_trace 	= Vector{Float64}(undef,length(ID_col_er))
 	for i in 1:length(ID_col_er)
-		length_trace[i]    = length( findall( (Tt_paths_Temp[:,ID_col_er[i][2]] .> Tmin) .& (Tt_paths_Temp[:,ID_col_er[i][2]] .< Tsat)) )
+		length_trace[i]    = length( findall( (Tt_paths_Temp1[:,ID_col_er[i][2]] .> Tmin) .& (Tt_paths_Temp1[:,ID_col_er[i][2]] .< Tsat)) )
 	end
 	
 	# the next several lines can likely be achieved in a more elegant way...
 	id				= findall( length_trace .== maximum(length_trace)) 
 	ID_col_lgst_tr 	= ID_col_er[ id[1] ][2]
 	
-	id 				= findall( Tt_paths_Temp[:,ID_col_lgst_tr] .< Tsat) 
-	VALID_min_time 	= findmin( Tt_paths_Temp[id,ID_col_lgst_tr]) 
+	id 				= findall( Tt_paths_Temp1[:,ID_col_lgst_tr] .< Tsat) 
+	VALID_min_time 	= findmin( Tt_paths_Temp1[id,ID_col_lgst_tr]) 
 	ID_min_time		= VALID_min_time[2]
 	
 	max_age_spread	= maximum(length_trace)*Δt					# This is defined among all selected paths
 	
-	T_av_time_1 	= replace!(Tt_paths_Temp, 0.0 => NaN)
+	T_av_time_1 	= replace!(Tt_paths_Temp1, 0.0 => NaN)
 	T_av_time 		= zeros(size(T_av_time_1,1))
 	T_sd_time 		= zeros(size(T_av_time_1,1))
 	
 	# get the average temperature of the Tt paths and the standard deviation
-	for i in 1:size(Tt_paths_Temp,1)
+	for i in 1:size(Tt_paths_Temp1,1)
 		T_av_time[i]	= mean(filter(!isnan, T_av_time_1[i,:]))
 		T_sd_time[i]	= std(filter( !isnan, T_av_time_1[i,:]))
 	end
@@ -158,23 +161,23 @@ function compute_zircons_Ttpath(time_years::AbstractArray{Float64,1}, Tt_paths_T
 	T_av_time_slct 	= Vector{Float64}(undef,length(int_zr_sat)-1) .= 0.0
 	
 	for i in 1:(size(int_zr_sat,1)-1)
-		id2				= ID_col_er_1[ findall( (Tt_paths_Temp[int_zr_sat[i],ID_col_er_1[:]] .> Tmin) .& (Tt_paths_Temp[int_zr_sat[i],ID_col_er_1[:]] .< Tsat)) ]
+		id2				= ID_col_er_1[ findall( (Tt_paths_Temp1[int_zr_sat[i],ID_col_er_1[:]] .> Tmin) .& (Tt_paths_Temp1[int_zr_sat[i],ID_col_er_1[:]] .< Tsat)) ]
 		if isempty(id2) == true
 			T_av_time_slct[i] = NaN
 		else
-			T_av_time_slct[i] = median(filter(!isnan, Tt_paths_Temp[int_zr_sat[i],id2]))
+			T_av_time_slct[i] = median(filter(!isnan, Tt_paths_Temp1[int_zr_sat[i],id2]))
 		end
 	end
 	
-	replace!(Tt_paths_Temp, NaN => 0.0)
+	replace!(Tt_paths_Temp1, NaN => 0.0)
 	ID_col_er			= getindex.(ID_col_er, [2])
 	for i in 1:length(ID_col_er)
-		k 				= maximum(findall( (Tt_paths_Temp[:,ID_col_er[i]]) .== 0.0 ))
-		Tt_paths_Temp[1:k,ID_col_er[i]] .= 0.0
+		k 				= maximum(findall( (Tt_paths_Temp1[:,ID_col_er[i]]) .== 0.0 ))
+		Tt_paths_Temp1[1:k,ID_col_er[i]] .= 0.0
 	end
 
-	zr_select			= zero(Tt_paths_Temp)
-	zr_select[Tt_paths_Temp .> 0.0] .= 1.0	
+	zr_select			= zero(Tt_paths_Temp1)
+	zr_select[Tt_paths_Temp1 .> 0.0] .= 1.0	
 	n_zrc2_0			= zr_select.*n_zr						# filters out those Tt path that are still >Tsat @ the end 
 	number_zircons      = n_zrc2_0[:,ID_col_er_1];
 	n_measurable_ages 	= sum(number_zircons, dims=2)	
@@ -186,6 +189,36 @@ function compute_zircons_Ttpath(time_years::AbstractArray{Float64,1}, Tt_paths_T
 	prob 				= prob[:,1]
 
 	return prob, ages_eruptible, number_zircons, T_av_time, T_sd_time
+end
+
+
+"""
+	time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time  = compute_zircons_Ttpath(time_years::Vector{Vector{Float64}}, Tt_paths_Temp::Vector{Vector{Float64}}; ZirconData::ZirconAgeData = ZirconAgeData())
+
+This accepts Vector{Vector} as input for time and temperature of each Tt-path. Here, the length of the vector can be variable between different points.
+
+Internally, we interpolate this into a 2D matrix and a longer vector that includes all paths and a single vector with times 
+
+"""
+function compute_zircons_Ttpath(time_years_vecs::Vector{Vector}, Tt_paths_Temp_vecs::Vector{Vector}; ZirconData::ZirconAgeData = ZirconAgeData())
+
+	# Create a single vector with the time values:
+	time_years = unique(reduce(vcat,unique(time_years_vecs))); 
+
+	# Add the vectors to an array with T values
+	Tt_paths_Temp = zeros(Float64,length(time_years), length(Tt_paths_Temp_vecs))
+	for i in eachindex(Tt_paths_Temp_vecs)
+		istart = findall(time_years .== time_years_vecs[i][1])
+		iend   = findall(time_years .== time_years_vecs[i][end])
+		Tt_paths_Temp[istart[1]:iend[1], i] .= Tt_paths_Temp_vecs[i]
+	end
+
+	# call main routine
+	prob, ages_eruptible, number_zircons, T_av_time, T_sd_time = compute_zircons_Ttpath(time_years, Tt_paths_Temp)
+
+	# return, including time_years
+	return time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time 
+
 end
 
 """
@@ -225,6 +258,7 @@ end
 
 
 """
+	plt = Plot_ZirconAge_PDF(time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average)
 
 Creates a plot of the Zircon Age probability density function from the parameters in a simulation
 """
@@ -239,7 +273,7 @@ function Plot_ZirconAge_PDF(time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_av
 	
 	display(plt)
 
-	nothing
+	return plt
 end
 
 
@@ -272,6 +306,28 @@ time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average  = zircon_age_PDF(ages
 @test sum(number_zircons)==5.411985e6
 @test  prob[100] ≈ 5.5432526143365145e-6
 
+# A second way to generate the input is having Vector{Vector} for both time and Tt-path. 
+time_years_vecs = Vector{Vector}(undef,size(Tt_paths_Temp,2));
+Tt_paths_Temp_vecs		= Vector{Vector}(undef,size(Tt_paths_Temp,2));
+for i=1:size(Tt_paths_Temp,2)
+	if i<400
+		time_years_vecs[i] 		= time_years
+		Tt_paths_Temp_vecs[i] 	= Tt_paths_Temp[:,i]
+	else
+		# slightly adjust the size of the vectors
+		time_years_vecs[i] 		= time_years[3:end]
+		Tt_paths_Temp_vecs[i] 	= Tt_paths_Temp[3:end,i]
+	end
+
+end
+
+# the calling routine is the same, but we get one additional output vector:
+time_years1, prob1, ages_eruptible1, number_zircons1, T_av_time1, T_sd_time1  = compute_zircons_Ttpath(time_years_vecs, Tt_paths_Temp_vecs)
+
+# add tests to check that results are consistent
+@test sum(number_zircons1[:,200]) == 40479.0
+@test sum(number_zircons1)==5.411985e6
+@test  prob1[100] ≈ 5.5432526143365145e-6
 
 Plot_ZirconAge_PDF(time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average)
 
