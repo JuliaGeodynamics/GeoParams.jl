@@ -3,13 +3,12 @@
 
 # 15/04/2022
 
-using CSV
-using DataFrames
+
+using DelimitedFiles
 using Loess
 using Statistics
-using StatsBase													
-using KernelDensity
-using CairoMakie
+using StatsBase, KernelDensity, Loess
+using Plots
 using Test
 using Parameters
 
@@ -17,7 +16,7 @@ using Parameters
 
 	Declare function to calculate zircon fraction as function of a temperature profile
 """
-function zircon_fraction(T, max_x_zr) 
+function zircon_fraction(T::AbstractArray{_T}, max_x_zr::_T) 	where _T
 	A = (1.62.-1.8*(10^4)*exp.((-10^4)./(T .+ 273.15))).*max_x_zr 
 	A[A .<= 0.0] .= 0.0
 
@@ -41,19 +40,16 @@ function loess_fit_zircon_sat(ZirconData::ZirconAgeData)
 	@unpack Tsol, Tcal_step, Tcal_max, Tsat, max_x_zr, zircon_number, Tmin = ZirconData								
 
 	# Get cumulative Zircon fraction (after Tierney et al., 2016; Geology)
-	T 				= collect(Float64, Tsol:Tcal_step:Tcal_max)
-	m_steps 		= length(T)
+	T 				= range(Tsol, stop = Tcal_max, step = Tcal_step  )
+	Tfit 			= range(Tsol, stop = Tsat, 	   length = length(T))
 
-	Tfit 			= range(Tsol, stop = Tsat, length = m_steps)
+	x_zircon 		= zircon_fraction(T,max_x_zr)			# compute zircon fraction 
+	n_zircon 		= zero(x_zircon)						# number of zircons
 
-	n_zircon 		= Vector{Float64}(undef,m_steps)				# number of zircon
+	n_zircon[2:end] = -diff(x_zircon)						# differentiate zircon fraction
+	n_zircon[1] 	= n_zircon[2]							# set first value
 
-	x_zircon 		= zircon_fraction(T,max_x_zr)
-
-	n_zircon[2:length(x_zircon)] = -diff(x_zircon)					# differentiate zircon fraction
-	n_zircon[1] 	= n_zircon[2]									# set first value
-
-	n_zircon		= ceil.(((n_zircon*zircon_number)/maximum(n_zircon)).-minimum(floor.((n_zircon*zircon_number)/maximum(n_zircon))))
+	n_zircon		= ceil.(( (n_zircon*zircon_number)/maximum(n_zircon)).-minimum(floor.((n_zircon*zircon_number)/maximum(n_zircon))))
 
 	# fit n_zircon_N with loess regression
 	n_zircon_N_fit 	= loess(Tfit, n_zircon, span=1.0)
@@ -61,35 +57,67 @@ function loess_fit_zircon_sat(ZirconData::ZirconAgeData)
 	return n_zircon_N_fit
 end
 
+"""
 
-
-function compute_zirconsaturation(time_years, Tt_paths, ZirconData::ZirconAgeData)
-
-	@unpack Tmin, Tsat = ZirconData
-
-	#time_step		= time_years[2]-time_years[1]				# timestep in years (might be good to generate an array for this in case timestep is not a constant)
-	Δt 				=	diff(time_years)[1]
-
-	# get zircon number / zircon saturation temperature loess fit
-	n_zircon_N_fit  = loess_fit_zircon_sat(ZirconData)
+This employs a loess fit function to compute the number of zircons for each of the Tt paths
+"""
+function  compute_number_zircons!(n_zr::AbstractArray{_T,N}, Tt_paths_Temp::AbstractArray{_T,N}, ZirconData::ZirconAgeData) where {_T,N}
+	@unpack Tmin, Tsat, Tsol = ZirconData
 	
-	time_er_min 	= maximum(time_years)							# backward count
+	n_zircon_N_fit  = 	loess_fit_zircon_sat(ZirconData)			# loess fit through zircon saturation
 	
-	# In the end here they only remove the last entry...
-	@show size(time_years), Δt, size(Tt_paths), time_er_min
-	ID_row_er 		= findall( time_years .== maximum(time_years[time_years .< time_er_min]) )
-	@show ID_row_er
+	for i in 1:size(Tt_paths_Temp,2)
+		for j in 1:size(Tt_paths_Temp,1)
+			T = Tt_paths_Temp[j,i]
+			if (T > Tsol) & (T < Tsat)
+				# The following line takes a lot of time, because Loess is not type-stable. 
+				# There is an open PR in the package that may fix it
+				dat::_T      = Loess.predict(n_zircon_N_fit, T)		
+				n_zr[j,i]    = floor(dat)
+			else
+				n_zr[j,i]    = 0.0
+			end
+		end
+	end
 
-	# Here the matrix is reduced to only contain the temperature informations
-	Tt_paths_Temp 	= Tt_paths[1:ID_row_er[1],2:size(Tt_paths,2)]	
-	
-	# find all the Tt paths that go through the zircon saturation range
-	ID_col_er 		= findall( (Tt_paths_Temp[ID_row_er,:] .> Tmin) .& (Tt_paths_Temp[ID_row_er,:] .< Tsat))
-	@show size(ID_col_er)
-	@test sum(Tt_paths_Temp) == 2.4995483211e8
-	@test sum(ID_col_er)[2] == 111995
-	
-	# find the number of timesteps during which the temperature is > Tmin and < Tsat
+	nothing
+end
+
+"""
+	prob, ages_eruptible, number_zircons, T_av_time, T_sd_time  compute_zircons_Ttpath(time_years::AbstractArray{Float64,1}, Tt_paths_Temp::AbstractArray{Float64,2}; ZirconData::ZirconAgeData)
+
+This computes the number of zircons produced from a series of temperature-time path's. 
+The Tt-paths are stored in a 2D matrix `Tt_paths_Temp` with rows being the temperature at time `time_years`.
+
+Input:
+====
+- `time_years` : vector of length `nt` with the time in years (since the beginning of the simulation) of the points provided
+- `Tt_paths_Temp` : array of size `(nt,npaths)`` with the temperature of every path.
+
+Output:
+- `prob` : a vector that gives the relative probability that a zircon with a given age exists
+- `ages_eruptible` : age of eruptble magma
+- `number_zircons` : 2D array of size `(nt,)`
+- `T_av_time`: vector of size `nt` that contains the average T of the paths
+- `T_sd_time`: vector of size `nt` that contains the standard deviation of the T of the paths
+
+This routine was developed based on an R-routine provided as electronic supplement in the paper:
+- Weber, G., Caricchi, L., Arce, J.L., Schmitt, A.K., 2020. Determining the current size and state of subvolcanic magma reservoirs. Nat Commun 11, 5477. https://doi.org/10.1038/s41467-020-19084-2
+
+"""
+function compute_zircons_Ttpath(time_years::AbstractArray{Float64,1}, Tt_paths_Temp::AbstractArray{Float64,2}; ZirconData::ZirconAgeData = ZirconAgeData())
+
+	@unpack Tmin, Tsat, Tsol = ZirconData
+
+	Δt 				=	diff(time_years)[1]							# timestep [yrs]
+	time_er_min 	= 	maximum(time_years)							# backward count
+
+	# find all the Tt paths that go through the zircon saturation range & are at the end of the path still below Tsat (otherwise Zr are not yet crystallized)
+	ID_col_er 		= findall( (maximum(Tt_paths_Temp,dims=1).>Tmin) .& (Tt_paths_Temp[end,:]' .< Tsat))
+	n_zr			= zero(Tt_paths_Temp)
+	compute_number_zircons!(n_zr, Tt_paths_Temp, ZirconData)		# computes the number of zircons for every path
+
+	# find the number of timesteps for every path, during which the temperature is > Tmin and < Tsat
 	length_trace 	= Vector{Float64}(undef,length(ID_col_er))
 	for i in 1:length(ID_col_er)
 		length_trace[i]    = length( findall( (Tt_paths_Temp[:,ID_col_er[i][2]] .> Tmin) .& (Tt_paths_Temp[:,ID_col_er[i][2]] .< Tsat)) )
@@ -100,40 +128,27 @@ function compute_zirconsaturation(time_years, Tt_paths, ZirconData::ZirconAgeDat
 	ID_col_lgst_tr 	= ID_col_er[ id[1] ][2]
 	
 	id 				= findall( Tt_paths_Temp[:,ID_col_lgst_tr] .< Tsat) 
-	VALID_min_time 	= findmin(Tt_paths_Temp[id,ID_col_lgst_tr]) 
+	VALID_min_time 	= findmin( Tt_paths_Temp[id,ID_col_lgst_tr]) 
 	ID_min_time		= VALID_min_time[2]
 	
 	max_age_spread	= maximum(length_trace)*Δt					# This is defined among all selected paths
-	n_zr			= similar(Tt_paths_Temp, Float64) .= 0.0
-	
-	# Had to use 'for' loops because Loess prediction model do not work outside regression bounds
-	# This part calculates the number of zircon generated at each timestep
-	for i in 1:size(Tt_paths_Temp,2)
-		for j in 1:size(Tt_paths_Temp,1)
-			if (Tt_paths_Temp[j,i] > Tsol) .& (Tt_paths_Temp[j,i] < Tsat)
-				n_zr[j,i]    = floor.(Loess.predict(n_zircon_N_fit, Tt_paths_Temp[j,i]))
-			else
-				n_zr[j,i]    = 0.0
-			end
-		end
-	end
 	
 	T_av_time_1 	= replace!(Tt_paths_Temp, 0.0 => NaN)
-	T_av_time 		= Vector{Float64}(undef,size(T_av_time_1,1)) .= 0.0
-	sd_time 		= Vector{Float64}(undef,size(T_av_time_1,1)) .= 0.0
+	T_av_time 		= zeros(size(T_av_time_1,1))
+	T_sd_time 		= zeros(size(T_av_time_1,1))
 	
 	# get the average temperature of the Tt paths and the standard deviation
 	for i in 1:size(Tt_paths_Temp,1)
-		T_av_time[i]= mean(filter(!isnan, T_av_time_1[i,:]))
-		sd_time[i] 	= std(filter( !isnan, T_av_time_1[i,:]))
+		T_av_time[i]	= mean(filter(!isnan, T_av_time_1[i,:]))
+		T_sd_time[i]	= std(filter( !isnan, T_av_time_1[i,:]))
 	end
-	
-	
+
 	# I clarified the R function because the minimum step length to grow a zircon is simply a ratio of the maximum trace between Tmin and Tsol
 	# This makes sense as we only deal with fractions here. Because no mass is provided the real zircon size cannot possibly be determined
 	min_step_n		= floor( (time_zr_growth/max_age_spread)*(max_age_spread/Δt) )
 	
-	# find the Tt paths that have a number of timestep in the saturation range greater than the defined min_step_n
+	# find the Tt paths that have a number of timesteps in the saturation range greater than the defined min_step_n ()
+	# this is to mimic that it takes some time to grow zircons
 	id				= findall( length_trace .> min_step_n) 
 	ID_col_er_1		= getindex.(ID_col_er[id], [2])
 	
@@ -158,34 +173,79 @@ function compute_zirconsaturation(time_years, Tt_paths, ZirconData::ZirconAgeDat
 		Tt_paths_Temp[1:k,ID_col_er[i]] .= 0.0
 	end
 
-	zr_select			= similar(Tt_paths_Temp, Float64) .= 0.0
+	zr_select			= zero(Tt_paths_Temp)
 	zr_select[Tt_paths_Temp .> 0.0] .= 1.0	
-	n_zrc2_0			= zr_select.*n_zr
-	n_measurable_ages 	= sum(n_zrc2_0[:,ID_col_er_1], dims=2)
-	sz 					= size(n_zrc2_0[:,ID_col_er_1],1)
+	n_zrc2_0			= zr_select.*n_zr						# filters out those Tt path that are still >Tsat @ the end 
+	number_zircons      = n_zrc2_0[:,ID_col_er_1];
+	n_measurable_ages 	= sum(number_zircons, dims=2)	
+	sz 					= size(number_zircons,1)
 	ages_eruptible		= collect(Float64,  1.0:Δt:sz*Δt)
 	
-	return Tt_paths_Temp, n_measurable_ages, ages_eruptible, n_zr, ID_col_er_1, n_zrc2_0, T_av_time
+	# probability that a certain zircon is sampled, dependens on how many of a given age ara available:
+	prob 				= n_measurable_ages/sum(n_measurable_ages)
+	prob 				= prob[:,1]
+
+	return prob, ages_eruptible, number_zircons, T_av_time, T_sd_time
 end
 
-# output
-saveplot 		= 1
+"""
+	zircon_age_PDF(ages_eruptible::AbstractArray{Float64,1}, number_zircons::AbstractArray{Float64,2}, bandwidth=1e5, n_analyses=300)
+
+Compute probability density functions for zircon age path's describes in `number_zircons` with age `ages_eruptible` (both computed ).
+`bandwidth` is the smoothening window of the resulting curves (in years), whereas `n_analyses` are the number of analyses done. 	
+
+"""
+function zircon_age_PDF(ages_eruptible::AbstractArray{Float64,1}, number_zircons::AbstractArray{Float64,2}; bandwidth=1e5, n_analyses=300)
+
+	# compute PDF for each of the zircon Tt-paths:
+	PDF_zircons = []
+	time_Ma = [];
+	for i in 1:size(number_zircons,2)
+		n_meas 			 = number_zircons[:,i]
+		px	  			 = n_meas/sum(n_meas)		# probability to have a certain age
+		
+		# random numbers selected according to the probability
+		smp				 = sample( (maximum(ages_eruptible) .- ages_eruptible)/1e6, Weights(px), n_analyses, replace=true)
+		y 				 = kde(smp, bandwidth=bandwidth/1e6)
+
+		# store data
+		push!(PDF_zircons, 	y.density)
+		push!(time_Ma, 		y.x)
+	end
+
+	n_measurable_ages   = sum(number_zircons, dims=2)
+	pxAv	  			= n_measurable_ages[:,1]./sum(n_measurable_ages[:,1])
+	smpAv				= sample( (maximum(ages_eruptible) .- ages_eruptible)/1e6, Weights(pxAv), n_analyses, replace=true)
+	yAv 				= kde(smpAv, bandwidth=bandwidth/1e6)
+	time_Ma_average     = Vector(yAv.x);
+	PDF_zircon_average  = Vector(yAv.density);
+	
+	return time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average
+end
+
+
+"""
+
+Creates a plot of the Zircon Age probability density function from the parameters in a simulation
+"""
+function Plot_ZirconAge_PDF(time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average)
+
+	plt = Plots.plot(time_Ma[1], PDF_zircons[1], color=:gray,linewidth=0.1, 
+				xlabel="Time [Ma]", ylabel="probability []", legend=:none)
+	for i in 2:length(PDF_zircons)
+		plt = Plots.plot!(time_Ma[i], PDF_zircons[i], color=:gray,linewidth=0.1)
+	end
+	Plots.plot!(time_Ma_average, PDF_zircon_average, color=:black,linewidth=2.)
+	
+	display(plt)
+
+	nothing
+end
+
 
 # declare constant variables
 s2y 			= 365.0*24.0*3600.0 							# second to year
-
-#=
-# Zircons informations
-Tsat 			= 825.0 										# Maximum zircon saturation temperature [C]
-Tmin 			= 690.0 										# [C] Minimum zircon saturation Temperature [C]
-Tsol 			= 690.0 										# [C] Solidus temperature [C]
-Tcal_max		= 800.0											# max temperature to calculate zircon fraction
-Tcal_step 		= 1.0											# temperature step to caclulate zircon fraction (resolution of Zircon saturation curve discretization)
-max_x_zr 		= 0.001 										# max fraction zircons at solidus
-zircon_number	= 100.0											# number of wanted zircons 
-=#
-
-ZirconData  = ZirconAgeData();		# default data
+ZirconData  	= ZirconAgeData();		# default data
 
 # Clarified way to define the zircon growth as a minimum time within T saturation range (This is what the method used in the R script, boils down too)
 # -> remain in the Zr saturation zone more than 1/3 of the time the Tt path with the longest time in the saturation zone
@@ -193,184 +253,48 @@ time_zr_growth 	= 0.7e6											# ref should be 0.7
 
 # Parameters for Zircon statistical analysis
 n_analyses		= 300											# number of synthetic zircon analyses
-n				= 100											# number of repetitions
-n_samples		= 80											# number of sampled Tt paths
-
 
 # read input file (this step should be skipped, when using tracers)		
-filename 		= "Tt15_st_Bl_rad5_0.0126.txt"					# path to input file 
-Tt_paths		= Matrix(CSV.read(filename, DataFrame, header=0, copycols=true))
-n_paths			= size(Tt_paths,2)-1							# -1 ro remove first column that corresponds to the time
-time_years 		= Tt_paths[:,1]./s2y							# time fron seconds to years
+filename 		= 	"Tt15_st_Bl_rad5_0.0126.txt"				# path to input file 
+Tt_paths		=	readdlm(filename,',')
+n_paths			= 	size(Tt_paths,2)-1							# -1 ro remove first column that corresponds to the time
+time_years 		= 	Tt_paths[:,1]./s2y							# time fron seconds to years
 
-#=
-#@unpack Tmin, Tsat = ZirconData
+# Here a matrix is constructed that only contains the temperature information:
+Tt_paths_Temp 	= 	Tt_paths[:,2:end]	
+	
+# first: test case in which we provide the Tt-path as matrix 
+prob, ages_eruptible, number_zircons, T_av_time, T_sd_time = compute_zircons_Ttpath(time_years, Tt_paths_Temp)
+time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average  = zircon_age_PDF(ages_eruptible, number_zircons, bandwidth=1e5, n_analyses=n_analyses)
 
-time_step		= (Tt_paths[2,1]-Tt_paths[1,1])/s2y				# timestep in years (might be good to generate an array for this in case timestep is not a constant)
-
-
-# get zircon number / zircon saturation temperature loess fit
-n_zircon_N_fit = loess_fit_zircon_sat(ZirconData)
-
-
-time_er_min 	= maximum(time_years)							# backward count
-
-# In the end here they only remove the last entry...
-ID_row_er 		= findall( time_years .== maximum(time_years[time_years .< time_er_min]) )
-
-# Here the matrix is reduced to only contain the temperature informations
-Tt_paths_Temp 	= Tt_paths[1:ID_row_er[1],2:size(Tt_paths,2)]	
-
-# find all the Tt paths that go through the zircon saturation range
-ID_col_er 		= findall( (Tt_paths_Temp[ID_row_er,:] .> Tmin) .& (Tt_paths_Temp[ID_row_er,:] .< Tsat))
-
-@test sum(Tt_paths_Temp) == 2.4995483211e8
-@test sum(ID_col_er) == 111995
-
-# find the number of timesteps during which the temperature is > Tmin and < Tsat
-length_trace 	= Vector{Float64}(undef,length(ID_col_er))
-for i in 1:length(ID_col_er)
-	length_trace[i]    = length( findall( (Tt_paths_Temp[:,ID_col_er[i][2]] .> Tmin) .& (Tt_paths_Temp[:,ID_col_er[i][2]] .< Tsat)) )
-end
-
-# the next several lines can likely be achieved in a more elegant way...
-id				= findall( length_trace .== maximum(length_trace)) 
-ID_col_lgst_tr 	= ID_col_er[ id[1] ][2]
-
-id 				= findall( Tt_paths_Temp[:,ID_col_lgst_tr] .< Tsat) 
-VALID_min_time 	= findmin(Tt_paths_Temp[id,ID_col_lgst_tr]) 
-ID_min_time		= VALID_min_time[2]
-
-max_age_spread	= maximum(length_trace)*time_step				# This is defined among all selected paths
-n_zr			= similar(Tt_paths_Temp, Float64) .= 0.0
-
-# Had to use 'for' loops because Loess prediction model do not work outside regression bounds
-# This part calculates the number of zircon generated at each timestep
-for i in 1:size(Tt_paths_Temp,2)
-	for j in 1:size(Tt_paths_Temp,1)
-		if (Tt_paths_Temp[j,i] > Tsol) .& (Tt_paths_Temp[j,i] < Tsat)
-			n_zr[j,i]    = floor.(Loess.predict(n_zircon_N_fit, Tt_paths_Temp[j,i]))
-		else
-			n_zr[j,i]    = 0.0
-		end
-	end
-end
+# add tests to check that results are consistent
+@test sum(number_zircons[:,200]) == 40479.0
+@test sum(number_zircons)==5.411985e6
+@test  prob[100] ≈ 5.5432526143365145e-6
 
 
-
-T_av_time_1 	= replace!(Tt_paths_Temp, 0.0 => NaN)
-T_av_time 		= Vector{Float64}(undef,size(T_av_time_1,1)) .= 0.0
-sd_time 		= Vector{Float64}(undef,size(T_av_time_1,1)) .= 0.0
-
-# get the average temperature of the Tt paths and the standard deviation
-for i in 1:size(Tt_paths_Temp,1)
-	T_av_time[i]= mean(filter(!isnan, T_av_time_1[i,:]))
-	sd_time[i] 	= std(filter( !isnan, T_av_time_1[i,:]))
-end
+Plot_ZirconAge_PDF(time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average)
 
 
-# I clarified the R function because the minimum step length to grow a zircon is simply a ratio of the maximum trace between Tmin and Tsol
-# This makes sense as we only deal with fractions here. Because no mass is provided the real zircon size cannot possibly be determined
-min_step_n		= floor( (time_zr_growth/max_age_spread)*(max_age_spread/time_step) )
+# Plot Zircon age probability distribution
+#=	
+	# these are the ploting routines using Makie, which is currently not a dependency of GeoParams (but may become one @ some stage)
 
-# find the Tt paths that have a number of timestep in the saturation range greater than the defined min_step_n
-id				= findall( length_trace .> min_step_n) 
-ID_col_er_1		= getindex.(ID_col_er[id], [2])
-
-int_zr_sat		= collect(Float64,  ID_min_time:1.0:(time_er_min/time_step)-min_step_n)
-int_zr_sat		= floor.(Int64,int_zr_sat)
-
-T_av_time_slct 	= Vector{Float64}(undef,length(int_zr_sat)-1) .= 0.0
-
-for i in 1:(size(int_zr_sat,1)-1)
-	id2				= ID_col_er_1[ findall( (Tt_paths_Temp[int_zr_sat[i],ID_col_er_1[:]] .> Tmin) .& (Tt_paths_Temp[int_zr_sat[i],ID_col_er_1[:]] .< Tsat)) ]
-	if isempty(id2) == true
-		T_av_time_slct[i] = NaN
-	else
-		T_av_time_slct[i] = median(filter(!isnan, Tt_paths_Temp[int_zr_sat[i],id2]))
-	end
-end
-
-replace!(Tt_paths_Temp, NaN => 0.0)
-ID_col_er			= getindex.(ID_col_er, [2])
-for i in 1:length(ID_col_er)
-	k 				= maximum(findall( (Tt_paths_Temp[:,ID_col_er[i]]) .== 0.0 ))
-	Tt_paths_Temp[1:k,ID_col_er[i]] .= 0.0
-end
-
-
-zr_select			= similar(Tt_paths_Temp, Float64) .= 0.0
-zr_select[Tt_paths_Temp .> 0.0] .= 1.0	
-n_zrc2_0			= zr_select.*n_zr
-n_measurable_ages 	= sum(n_zrc2_0[:,ID_col_er_1], dims=2)
-sz 					= size(n_zrc2_0[:,ID_col_er_1],1)
-ages_eruptible		= collect(Float64,  1.0:time_step:sz*time_step)
-age_resampled       = Matrix{Float64}(undef,n_analyses,n) .= 0.0
-=#
-
-
-Tt_paths_Temp, n_measurable_ages, ages_eruptible, n_zr, ID_col_er_1,n_zrc2_0,T_av_time 		= compute_zirconsaturation(time_years, Tt_paths, ZirconData)
-
-prob = n_measurable_ages/sum(n_measurable_ages)
-prob = prob[:,1]
-
-
-age_resampled       = Matrix{Float64}(undef,n_analyses,n) .= 0.0
-for i in 1:n
-	age_resampled[:,i] = sample(ages_eruptible, Weights(prob), n_analyses, replace=true)
-end
-
-# calculate standard deviation of the age span
-sd_age_resampled	= Vector{Float64}(undef,n) .= 0.0
-
-for i in 1:n
-	sd_age_resampled[i] = std(age_resampled[:,i])
-end
-
-lower_bound 		= (mean(sd_age_resampled*2)-2.0*std(sd_age_resampled*2))/1000.0
-upper_bound 		= (mean(sd_age_resampled*2)+2.0*std(sd_age_resampled*2))/1000.0
-mean_sd_resampled 	= (mean(sd_age_resampled*2.0))/1000.
-Sigma_age_span 		= (mean_sd_resampled,lower_bound,upper_bound)
-
-
-# add tests to check that results remain consistent
-@test sum(n_zr[:,200]) == 28117.0
-@test  mean(Tt_paths_Temp) == 487.0858188593903
-#@test  mean(age_resampled) == 996532.3057680113
-
-#=
-@test Sigma_age_span[1] ≈ 635.4927816736695
-@test Sigma_age_span[2] ≈ 604.8156882669368
-@test Sigma_age_span[3] ≈ 672.7800193854439
-@test sum(age_resampled) ≈ 2.990029563628869e10
-=#
-
-
-
-# Plot Zircon age propability distribution
-if saveplot == 1
 	f = Figure()
-	Axis(f[1, 1], xlabel = "Age [Myr]", ylabel = "Kernel density [?]", title = "Zircon age propability distribution")
-	for i in 1:length(ID_col_er_1)
-		n_meas 			= n_zrc2_0[:,ID_col_er_1[i]]
-		px	  			= n_meas/sum(n_meas)
-		smp				= sample( (maximum(ages_eruptible) .- ages_eruptible)./1e6, Weights(px), n_analyses, replace=true)
-		y 				= kde(smp, bandwidth=1e5/1e6)
-		CairoMakie.plot!(y, color="gray66",linewidth=0.25)
+	Axis(f[1, 1], xlabel = "Age [Myr]", ylabel = "Kernel density [ ]", title = "Zircon age probability distribution")
+	for i in 1:length(PDF_zircons)
+		CairoMakie.lines!(time_Ma[i]/1e6, PDF_zircons[i], color="gray66",linewidth=0.25)
 	end
-
-	pxAv	  			= n_measurable_ages[:,1]./sum(n_measurable_ages[:,1])
-	smpAv				= sample( (maximum(ages_eruptible) .- ages_eruptible)./1e6, Weights(pxAv), n_analyses, replace=true)
-	yAv 				= kde(smpAv, bandwidth=1e5/1e6)
-	CairoMakie.plot!(yAv, color="grey0",linewidth=2.)
+	CairoMakie.lines!(time_Ma_average/1e6, PDF_zircon_average, color="grey0",linewidth=2.)
 	CairoMakie.xlims!(-1e5/1e6,1.5e6/1e6)
-	f
-	save("Zircon_propability_plot_800kyrs.png",f)
+	save("Zircon_probability_plot_800kyrs.png",f)
 
 	# plot evolution of the average temperature since the onset of magma injection
 	f = Figure()
-	Axis(f[1, 1], xlabel = "Temperature [°C]", ylabel = "Time [Myr]", title = "Evolution of the average temperature of the magmatic system")
-	CairoMakie.lines!(time_years[1:length(time_years)-1]./1e6, T_av_time, color="grey0",linewidth=0.5)
+	Axis(f[1, 1], ylabel = "Temperature [°C]", xlabel = "Time [Myr]", title = "Evolution of the average temperature of the magmatic system")
+	CairoMakie.lines!(time_years./1e6, T_av_time, color="grey0",linewidth=0.5)
 	f
 	save("Average_T.png",f)
-end
+=#
+
+
