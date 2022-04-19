@@ -55,14 +55,6 @@ function param_info(s::ConstantDensity) # info about the struct
 end
 
 # Calculation routines
-# function compute_density(s::ConstantDensity{_T}; kwargs...) where _T
-#     # function compute_density(s::ConstantDensity{_T}, P::Quantity,T::Quantity) where _T
-#     # @unpack_units ρ   = s
-#     return s.ρ.val
-# end
-
-# compute_density(s::ConstantDensity{_T}, kwargs...) where _T = compute_density(s; kwargs)
-
 function compute_density!(rho::AbstractArray{_T}, s::ConstantDensity{_T}; kwargs...) where _T
     @unpack_val ρ   = s
     rho[:] .= ρ
@@ -110,7 +102,7 @@ end
 (ρ::PT_Density)(args) = ρ(; args...)
 
 compute_density(s::PT_Density{_T}, args) where _T = s(args)
-compute_density(s::PT_Density{_T}, P, T) where _T = s(P=P, T=T)
+compute_density(s::PT_Density{_T}, P::AbstractArray, T::AbstractArray) where _T = s(P=P, T=T)
 
 function compute_density!(ρ::AbstractArray, s::PT_Density{_T}; P::_T, T::_T, kwargs...) where _T
     @unpack ρ0,α,β,P0, T0   = s
@@ -158,29 +150,6 @@ end
 (s::Compressible_Density{_T})(args) where _T = s(; args...)
 compute_density(s::Compressible_Density{_T}, args) where _T = s(; args...)
 
-# function compute_density(s::Compressible_Density{_T}; P::_T, kwargs...) where _T
-#     # function compute_density(s::Compressible_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
-#     @unpack_val ρ0, β, P0 = s
-    
-#     ρ = ρ0*exp(β*(P - P0) )
-
-#     return ρ
-# end
-
-# compute_density(s::Compressible_Density{_T}, P::_T, kwargs...) where _T = s(; P, kwargs)
-# compute_density(s::Compressible_Density{_T}, args::NamedTuple, kwargs...) where _T = s(; args...)
-
-# function compute_density(s::Compressible_Density{_T}; P::Quantity, kwargs...) where _T
-#     # function compute_density(s::Compressible_Density{_T}, P::Quantity, T::Quantity) where _T
-#     @unpack ρ0,β,P0   = s
-    
-#     ρ = ρ0*exp(β*(P - P0) )
-
-#     return ρ
-# end
-
-# compute_density(s::Compressible_Density{_T}, P::Quantity, kwargs) where _T = compute_density(s; P, kwargs...)
-
 function compute_density!(ρ::_T, s::Compressible_Density{_T}; P::_T, kwargs...) where _T
     # function compute_density!(ρ::_T, s::Compressible_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
     @unpack ρ0,β,P0   = s
@@ -191,11 +160,10 @@ end
 compute_density!(ρ::_T, s::Compressible_Density{_T}, P::_T, kwargs...) where _T = compute_density!(ρ, s; P, kwargs)
 
 function compute_density!(ρ::AbstractArray, s::Compressible_Density{_T}; P::_T, kwargs...) where _T
-    # function compute_density!(ρ::AbstractArray, s::Compressible_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
     @unpack ρ0,β,P0   = s
-    
-    ρ .= ρ0*exp(β*(P-P0))
-
+    Threads.@threads for i in eachindex(P)
+        @inbounds ρ[i] = ρ0*exp(β*(P[i]-P0))
+    end
     return nothing
 end
 
@@ -225,11 +193,6 @@ end
 (s::PhaseDiagram_LookupTable)(args) = s(; args...)
 compute_density(s::PhaseDiagram_LookupTable, args) = s(; args...)
 compute_density(s::PhaseDiagram_LookupTable; P, T) = s(; P=P, T=T)
-
-# function compute_density(s::PhaseDiagram_LookupTable; P::_T=zero(_T),T::_T=zero(_T), kwargs...) where _T
-#     return s.Rho(T,P)
-# end
-
 
 """
     compute_density!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
