@@ -97,7 +97,7 @@ export compute_latent_heat,
         ConstantLatentHeat
 
 using .MaterialParameters.RadioactiveHeat
-export compute_radioactive_heat,
+export compute_radioactive_heat,compute_radioactive_heat!,
         ConstantRadioactiveHeat,
         ExpDepthDependentRadioactiveHeat
 

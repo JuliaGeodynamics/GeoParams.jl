@@ -12,6 +12,7 @@ import Base.show, GeoParams.param_info
 abstract type AbstractRadioactiveHeat{T} <: AbstractMaterialParam end
 
 export  compute_radioactive_heat,                  # calculation routines
+        compute_radioactive_heat!,
         param_info,
         ConstantRadioactiveHeat,                  # constant
         ExpDepthDependentRadioactiveHeat
@@ -91,14 +92,15 @@ end
 function compute_radioactive_heat!(Hr_array::AbstractArray{_T}, s::ExpDepthDependentRadioactiveHeat{_T}, z::_T=zero(_T)) where _T
     @unpack_val H_0, z_0, h_r   = s
         
-    Hr_array .= H_0.*exp(-(z .- z_0)./h_r);
+    @. Hr_array = H_0*exp(-(z - z_0)/h_r);
     return nothing
 end
 
 function compute_radioactive_heat!(Hr_array::AbstractArray{_T,N}, s::ExpDepthDependentRadioactiveHeat{_T}, z::AbstractArray{_T,N}) where {N,_T}
     @unpack_val H_0, z_0, h_r   = s
         
-    Hr_array .= H_0.*exp(-(z .- z_0)./h_r);
+    @. Hr_array = H_0*exp(-(z - z_0)/h_r);
+    
     return nothing
 end
 
@@ -118,6 +120,13 @@ Returns the radioactive heat `H_r`
 """
 compute_radioactive_heat()
 
+"""
+    compute_radioactive_heat!(H_r, s:<AbstractRadioactiveHeat, z)
+
+In-place computation of radioactive heat `H_r`
+
+"""
+compute_radioactive_heat!()
 
 
 end

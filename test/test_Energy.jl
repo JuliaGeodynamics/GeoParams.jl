@@ -269,6 +269,14 @@ H_r = compute_radioactive_heat(a,z)
 @test isbits(a)
 @test H_r ≈3.678794411714423e-7
 
+
+Nx,Nz = 101,101
+z   = ones(Nx,Nz)*10e3;
+Hr=zero(z)
+compute_radioactive_heat!(Hr,a,z)
+
+@test  sum(H_r) ≈ 3.678794411714423e-7
+
 # -----------------------
 
 
