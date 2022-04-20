@@ -449,7 +449,7 @@ function param_info(s::MeltingParam_Assimilation) # info about the struct
 end
 
 # Calculation routines
-function compute_meltfraction(p::MeltingParam_Assimilation{_T}, P::Quantity, T::Quantity) where _T
+function (p::MeltingParam_Assimilation)(; T::Real, kwargs...)
     @unpack_units T_s,T_l,a   = p
 
     X = (T - T_s)/(T_l - T_s)
@@ -468,41 +468,24 @@ function compute_meltfraction(p::MeltingParam_Assimilation{_T}, P::Quantity, T::
     return ϕ
 end
 
-function compute_meltfraction(p::MeltingParam_Assimilation{_T}, P::_T, T::_T ) where _T
+function compute_meltfraction!(
+    ϕ::AbstractArray, p::MeltingParam_Assimilation; T::AbstractArray, kwargs...
+)
     @unpack_val T_s,T_l,a   = p
-
-    X = (T - T_s)/(T_l - T_s)
-    if X <= 0.5
-        ϕ   =    a * (exp(2*log(100)*X) - 1.0 )
-    else
-        ϕ   =    1.0 - a * exp(2*log(100)*(1-X)) 
-    end
-
-    if T>T_l
-        ϕ = 1.0
-    elseif T<T_s
-        ϕ = 0.0
-    end
-    return  ϕ
-
-end
-
-function compute_meltfraction!(ϕ::AbstractArray{_T}, p::MeltingParam_Assimilation{_T}, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
-    @unpack_val T_s,T_l,a   = p
-    
-    X = zeros(_T,size(T))
+        
+    X =   zero(T)
     @. X = (T - T_s)/(T_l - T_s)
     @. ϕ = a * (exp(2*log(100)*X) - 1.0 )
-    
-    ϕ[X .> 0.5] .=  1.0 .- a .* exp.( 2.0*log(100).*(1.0 .- X[X.>0.5] )) 
 
-    ϕ[T.<T_s] .= 0.
-    ϕ[T.>T_l] .= 1.
+    @views ϕ[X .> 0.5] .=  1.0 .- a .* exp.( 2.0*log(100).*(1.0 .- X[X.>0.5] )) 
+
+    @views ϕ[T.<T_s] .= 0.
+    @views ϕ[T.>T_l] .= 1.
 
     return nothing
 end
 
-function compute_dϕdT(p::MeltingParam_Assimilation{_T}, P::Quantity, T::Quantity) where _T
+function compute_dϕdT(p::MeltingParam_Assimilation; T::Real, kwargs...)
     @unpack_units T_s,T_l,a   = p
 
     X      =   (T - T_s)/(T_l - T_s)
@@ -517,39 +500,30 @@ function compute_dϕdT(p::MeltingParam_Assimilation{_T}, P::Quantity, T::Quantit
     return dϕdT
 end
 
-function compute_dϕdT(p::MeltingParam_Assimilation{_T}, P::_T, T::_T ) where _T
+function compute_dϕdT!(
+    dϕdT::AbstractArray, p::MeltingParam_Assimilation; T::AbstractArray, kwargs...
+)
     @unpack_val T_s,T_l,a   = p
-
-    X      =   (T - T_s)/(T_l - T_s)
-    dϕdT   =   (9.210340371976184*a*exp((9.210340371976184*T - 9.210340371976184*T_s) / (T_l - T_s))) / (T_l - T_s)
-    if X>0.5
-        dϕdT   = (9.210340371976184*a*exp(9.210340371976184 + (9.210340371976184*T_s - 9.210340371976184*T) / (T_l - T_s))) / (T_l - T_s)
-    end
-
-    if T>T_l || T<T_s
-        dϕdT = 0.0
-    end
-    return  dϕdT
-end
-
-function compute_dϕdT!(dϕdT::AbstractArray{_T}, p::MeltingParam_Assimilation{_T}, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
-    @unpack_val T_s,T_l,a   = p
-    
-    X         = ones(_T,size(T))
+        
+    X         =    zero(T)
     @. X      =   (T .- T_s)./(T_l .- T_s)
     @. dϕdT   =   (9.210340371976184*a*exp((9.210340371976184*T - 9.210340371976184*T_s) / (T_l - T_s))) / (T_l - T_s)
 
-    dϕdT[X.>0.5]  = (9.210340371976184.*a.*exp.(9.210340371976184 .+ (9.210340371976184.*T_s .- 9.210340371976184.*T[X.>0.5]) ./ (T_l - T_s))) ./ (T_l - T_s)
-    dϕdT[T.<T_s] .= 0.
-    dϕdT[T.>T_l] .= 0.
+    @views dϕdT[X.>0.5]  = (9.210340371976184.*a.*exp.(9.210340371976184 .+ (9.210340371976184.*T_s .- 9.210340371976184.*T[X.>0.5]) ./ (T_l - T_s))) ./ (T_l - T_s)
+    @views dϕdT[T.<T_s] .= 0.
+    @views dϕdT[T.>T_l] .= 0.
 
     return nothing
 end
 
 # Print info 
-function show(io::IO, g::MeltingParam_Assimilation)  
-    print(io, "Quadratic melting curve:  ϕ = 1.0 - ((Tₗ-T)/(Tₗ-Tₛ))² with Tₛ=$(Value(g.T_s)), Tₗ=$(Value(g.T_l)) ")  
+function show(io::IO, g::MeltingParam_Assimilation)
+    return print(
+        io,
+        "Quadratic melting assimilation parameterisation after Spera & Bohrson (2001)",
+    )
 end
+
 #-------------------------------------------------------------------------
 
 
@@ -631,6 +605,7 @@ for myType in (
     :MeltingParam_5thOrder,
     :MeltingParam_4thOrder,
     :MeltingParam_Quadratic,
+    :MeltingParam_Assimilation,
 )
     @eval begin
         (p::$(myType))(args) = p(; args...)
