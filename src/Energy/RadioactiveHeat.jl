@@ -17,7 +17,9 @@ export  compute_radioactive_heat,                  # calculation routines
         ConstantRadioactiveHeat,                  # constant
         ExpDepthDependentRadioactiveHeat
         
-
+include("../Computations.jl")
+include("../Utils.jl")
+        
 # Constant  -------------------------------------------------------
 """
     ConstantRadioactiveHeat(H_r=1e-6Watt/m^3)
@@ -120,6 +122,10 @@ function show(io::IO, g::ExpDepthDependentRadioactiveHeat)
 end
 #-------------------------------------------------------------------------
 
+# Computational routines needed for computations with the MaterialParams structure 
+function compute_radioactive_heat(s::AbstractMaterialParamsStruct, args) 
+    return s.RadioactiveHeat[1](args)
+end
 
 # Help info for the calculation routines
 """
@@ -128,7 +134,7 @@ end
 Returns the radioactive heat `H_r`
 
 """
-compute_radioactive_heat()
+#compute_radioactive_heat()
 
 """
     compute_radioactive_heat!(H_r, s:<AbstractRadioactiveHeat, z)
@@ -136,7 +142,7 @@ compute_radioactive_heat()
 In-place computation of radioactive heat `H_r`
 
 """
-compute_radioactive_heat!()
+#compute_radioactive_heat!()
 
 # add methods programatically
 for myType in ( :ExpDepthDependentRadioactiveHeat, 
@@ -147,6 +153,9 @@ compute_radioactive_heat(s::$(myType), args) = s(args)
 compute_radioactive_heat!(H::AbstractArray{_T,N}, s::$(myType){_T}, args) where {_T,N} = compute_radioactive_heat!(H, s; args...)
 end
 end
+
+compute_radioactive_heat(args...) = compute_param(compute_radioactive_heat, args...)
+compute_radioactive_heat!(args...) = compute_param!(compute_radioactive_heat, args...)
 
 
 end
