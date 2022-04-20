@@ -260,7 +260,11 @@ end
 
 # Calculation routines
 function (p::MeltingParam_4thOrder)(; T::Real, kwargs...)
-    @unpack_units b, c, d, e, f, T_s, T_l = p
+    if T isa Quantity
+        @unpack_units b, c, d, e, f, T_s, T_l = p
+    else
+        @unpack_val  b, c, d, e, f, T_s, T_l = p
+    end
 
     ϕ = b * T^4 + c * T^3 + d * T^2 + e * T + f
     if T < T_s
@@ -275,7 +279,11 @@ end
 function compute_meltfraction!(
     ϕ::AbstractArray, p::MeltingParam_4thOrder; T::AbstractArray, kwargs...
 )
-    @unpack_val b, c, d, e, f, T_s, T_l = p
+    if T isa Quantity
+        @unpack_units b, c, d, e, f, T_s, T_l = p
+    else
+        @unpack_val b, c, d, e, f, T_s, T_l = p
+    end
 
     @. ϕ = b * T^4 + c * T^3 + d * T^2 + e * T + f
 
@@ -286,7 +294,11 @@ function compute_meltfraction!(
 end
 
 function compute_dϕdT(p::MeltingParam_4thOrder; T::Real, kwargs...)
-    @unpack_val b, c, d, e, T_s, T_l = p
+    if T isa Quantity
+        @unpack_units  b, c, d, e, T_s, T_l = p
+    else
+        @unpack_val b, c, d, e, T_s, T_l = p
+    end
 
     dϕdT = 4 * b * T^3 + 3 * c * T^2 + 2 * d * T + e
     if T < T_s || T > T_l
@@ -298,7 +310,11 @@ end
 function compute_dϕdT!(
     dϕdT::AbstractArray, p::MeltingParam_4thOrder; T::AbstractArray, kwargs...
 )
-    @unpack_val b, c, d, e, T_s, T_l = p
+    if T isa Quantity
+        @unpack_units b, c, d, e, T_s, T_l = p
+    else
+        @unpack_val b, c, d, e, T_s, T_l = p
+    end
 
     @. dϕdT = 4 * b * T^3 + 3 * c * T^2 + 2 * d * T + e
 
@@ -347,7 +363,11 @@ end
 
 # Calculation routines
 function (p::MeltingParam_Quadratic)(; T::Real, kwargs...)
-    @unpack_units T_s, T_l = p
+    if T isa Quantity
+        @unpack_units T_s, T_l = p
+    else
+        @unpack_val T_s, T_l = p
+    end
 
     ϕ = 1.0 - ((T_l - T) / (T_l - T_s))^2
     if T > T_l
@@ -361,7 +381,11 @@ end
 function compute_meltfraction!(
     ϕ::AbstractArray, p::MeltingParam_Quadratic; T::AbstractArray, kwargs...
 )
-    @unpack_val T_s, T_l = p
+    if T isa Quantity
+        @unpack_units T_s, T_l = p
+    else
+        @unpack_val T_s, T_l = p
+    end
 
     @. ϕ = 1.0 - ((T_l - T) / (T_l - T_s))^2
     @views ϕ[T .< T_s] .= 0.0
@@ -371,7 +395,11 @@ function compute_meltfraction!(
 end
 
 function compute_dϕdT(p::MeltingParam_Quadratic; T::Real, kwargs...)
-    @unpack_units T_s, T_l = p
+    if T isa Quantity
+        @unpack_units T_s, T_l = p
+    else
+        @unpack_val T_s, T_l = p
+    end
 
     dϕdT = (2T_l - 2T) / ((T_l - T_s)^2)
     if T > T_l || T < T_s
@@ -383,7 +411,11 @@ end
 function compute_dϕdT!(
     dϕdT::AbstractArray, p::MeltingParam_Quadratic; T::AbstractArray, kwargs...
 )
-    @unpack_val T_s, T_l = p
+    if T isa Quantity
+        @unpack_units T_s, T_l = p
+    else
+        @unpack_val T_s, T_l = p
+    end
 
     @. dϕdT = (2T_l - 2T) / ((T_l - T_s)^2)
     @views dϕdT[T .< T_s] .= 0.0
@@ -450,7 +482,11 @@ end
 
 # Calculation routines
 function (p::MeltingParam_Assimilation)(; T::Real, kwargs...)
-    @unpack_units T_s,T_l,a   = p
+    if T isa Quantity
+        @unpack_units T_s,T_l,a   = p
+    else
+        @unpack_val T_s,T_l,a   = p
+    end
 
     X = (T - T_s)/(T_l - T_s)
 
@@ -471,8 +507,12 @@ end
 function compute_meltfraction!(
     ϕ::AbstractArray, p::MeltingParam_Assimilation; T::AbstractArray, kwargs...
 )
-    @unpack_val T_s,T_l,a   = p
-        
+    if T isa Quantity
+        @unpack_units T_s,T_l,a   = p
+    else
+        @unpack_val T_s,T_l,a   = p
+    end       
+
     X =   zero(T)
     @. X = (T - T_s)/(T_l - T_s)
     @. ϕ = a * (exp(2*log(100)*X) - 1.0 )
@@ -486,8 +526,12 @@ function compute_meltfraction!(
 end
 
 function compute_dϕdT(p::MeltingParam_Assimilation; T::Real, kwargs...)
-    @unpack_units T_s,T_l,a   = p
-
+    if T isa Quantity
+        @unpack_units T_s,T_l,a   = p
+    else
+        @unpack_val T_s,T_l,a   = p
+    end       
+    
     X      =   (T - T_s)/(T_l - T_s)
     dϕdT   =   (9.210340371976184*a*exp((9.210340371976184*T - 9.210340371976184*T_s) / (T_l - T_s))) / (T_l - T_s)
     if X>0.5
@@ -503,8 +547,12 @@ end
 function compute_dϕdT!(
     dϕdT::AbstractArray, p::MeltingParam_Assimilation; T::AbstractArray, kwargs...
 )
-    @unpack_val T_s,T_l,a   = p
-        
+    if T isa Quantity
+        @unpack_units T_s,T_l,a   = p
+    else
+        @unpack_val T_s,T_l,a   = p
+    end       
+            
     X         =    zero(T)
     @. X      =   (T .- T_s)./(T_l .- T_s)
     @. dϕdT   =   (9.210340371976184*a*exp((9.210340371976184*T - 9.210340371976184*T_s) / (T_l - T_s))) / (T_l - T_s)

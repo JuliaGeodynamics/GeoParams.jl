@@ -219,7 +219,6 @@ Computes heat capacity if only temperature (and not pressure) is specified
 
 Returns heat capacity if we are sure that we will only employ constant heat capacity in the simulation
 """
-#compute_heatcapacity(s::ConstantHeatCapacity) =  compute_heatcapacity(0,0, s)
 
 # Computational routines needed for computations with the MaterialParams structure 
 function compute_heatcapacity(s::AbstractMaterialParamsStruct, args)
@@ -248,69 +247,5 @@ function compute_heatcapacity!(Cp::AbstractArray{_T, ndim}, MatParam::NTuple{N,A
     compute_param!(compute_heatcapacity,Cp,MatParam,Phases,nothing,T)
 end
 
-#= these routines are now computed above
-function compute_heatcapacity!(Cp::AbstractArray{_T, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}, Phases::AbstractArray{_I, N}, T::AbstractArray{_T, N},P::AbstractArray{_T, N}) where {_T,_I<:Integer,N}
-
-    for i = 1:length(MatParam)
-        
-        if !isnothing(MatParam[i].HeatCapacity)
-            # Create views into arrays (so we don't have to allocate)
-            ind = Phases .== MatParam[i].Phase;
-            cp_local    =   view(Cp, ind )
-            P_local     =   view(P , ind )
-            T_local     =   view(T , ind )
-
-            compute_heatcapacity!(cp_local, MatParam[i].HeatCapacity[1] , T_local, P_local) 
-        end
-        
-    end
-
-end
-
-"""
-    compute_heatcapacity!(Cp::AbstractArray{_T, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}, Phases::AbstractArray{<:Integer, N}, T::AbstractArray{_T, N})
-
-In-place computation of heat capacity `Cp` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
-This assumes that the `Phase` of every point is specified as an Integer in the `Phases` array.
-
-"""
-function compute_heatcapacity!(Cp::AbstractArray{_T, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}, Phases::AbstractArray{<:Integer, N}, T::AbstractArray{_T, N}) where {_T,_I<:Integer,N}
-
-    for i = 1:length(MatParam)
-        if !isnothing(MatParam[i].HeatCapacity)
-            # Create views into arrays (so we don't have to allocate)
-            ind = Phases .== i;
-            cp_local    =   view(Cp, ind )
-            T_local     =   view(T , ind )
-
-            compute_heatcapacity!(cp_local, MatParam[i].HeatCapacity[1], T_local) 
-        end
-        
-    end
-
-end
-
-function compute_heatcapacity!(Cp::AbstractArray{_T, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}, PhaseRatios::AbstractArray{_T, M}, P::AbstractArray{_T, N},T::AbstractArray{_T, N}) where {_T,N,M}
-    
-    if M!=(N+1)
-        error("The PhaseRatios array should have one dimension more than the other arrays")
-    end
-
-    Cp .= 0.0;
-    for i = 1:length(MatParam)
-        
-        Cp_local   = zeros(size(Cp))
-        Fraction    = selectdim(PhaseRatios,M,i);
-        if (maximum(Fraction)>0.0) & (!isnothing(MatParam[i].HeatCapacity))
-
-            compute_heatcapacity!(Cp_local, MatParam[i].HeatCapacity[1], P, T) 
-
-            Cp .= Cp .+ Cp_local.*Fraction
-        end
-        
-    end
-
-end
-=#
 
 end
