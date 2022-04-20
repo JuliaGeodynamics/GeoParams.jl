@@ -285,12 +285,11 @@ using GeoParams
 
     # Check that it works if we give a phase array
     Mat_tup    =  ( SetMaterialParams(Name="Mantle", Phase=1,
-                        RadioactiveHeat  = ConstantRadioactiveHeat()),
-                    SetMaterialParams(Name="Crust", Phase=2,
-                        RadioactiveHeat  = ExpDepthDependentRadioactiveHeat()),
-                    SetMaterialParams(Name="MantleLithosphere", Phase=3,
-                        RadioactiveHeat  = ConstantRadioactiveHeat())
-                    )
+                    RadioactiveHeat  = ConstantRadioactiveHeat()),
+                SetMaterialParams(Name="Crust", Phase=2,
+                    RadioactiveHeat  = ExpDepthDependentRadioactiveHeat()),
+                SetMaterialParams(Name="MantleLithosphere", Phase=3)
+                )
 
     # test computing material properties
     n = 100;
@@ -310,15 +309,15 @@ using GeoParams
     args= (z=z,)
        
     compute_radioactive_heat!(Hr, Mat_tup, Phases, args) 
-    @test  minimum(Hr)  ≈ 3.678794411714423e-7
+    @test  minimum(Hr)  ≈ 0.0
     @test  maximum(Hr)  ≈ 1e-6
-    
+    @test  Hr[50,50,50] ≈ 3.678794411714423e-7
     
     num_alloc = @allocated compute_radioactive_heat!(Hr, Mat_tup, Phases, args)  
     @test num_alloc <= 32   # in the commandline this gives 0; while running the script not always
    
     compute_radioactive_heat!(Hr, Mat_tup, PhaseRatio, args)
-    @test sum(Hr)≈ 0.7471517764685762
+    @test sum(Hr)≈ 0.33715177646857664
     
     # -----------------------
 
