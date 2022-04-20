@@ -55,13 +55,14 @@ function param_info(s::ConstantDensity) # info about the struct
 end
 
 # Calculation routines
-function compute_density!(rho::AbstractArray{_T}, s::ConstantDensity{_T}; kwargs...) where _T
-    @unpack_val ρ   = s
+function compute_density!(rho::AbstractArray, s::ConstantDensity; kwargs...)
+    @unpack_val ρ = s
+    
     rho[:] .= ρ
     return nothing
 end
 
-compute_density!(rho::AbstractArray{_T}, s::ConstantDensity{_T}, args) where _T = compute_density!(rho, s; args...) 
+compute_density!(rho::AbstractArray, s::ConstantDensity, args) = compute_density!(rho, s; args...) 
 
 # Print info 
 function show(io::IO, g::ConstantDensity)  
@@ -95,19 +96,30 @@ end
 
 # Calculation routine in case units are provided
 function (ρ::PT_Density)(; P::Number, T::Number, kwargs...)
-    @unpack_val ρ0, α, β, P0, T0 = ρ
+    if T isa Quantity
+        @unpack_units ρ0, α, β, P0, T0 = ρ
+    else
+        @unpack_val ρ0, α, β, P0, T0 = ρ
+    end
+
     return ρ0*(1.0 - α*(T - T0) + β*(P - P0) )
 end
 
 (ρ::PT_Density)(args) = ρ(; args...)
 
-compute_density(s::PT_Density{_T}, args) where _T = s(args)
-compute_density(s::PT_Density{_T}, P::AbstractArray, T::AbstractArray) where _T = s(P=P, T=T)
+compute_density(s::PT_Density, args) = s(args)
+compute_density(s::PT_Density, P::AbstractArray, T::AbstractArray) = s(P=P, T=T)
 
-function compute_density!(ρ::AbstractArray, s::PT_Density{_T}; P::_T, T::_T, kwargs...) where _T
-    @unpack ρ0,α,β,P0, T0   = s
-    
-    ρ .= ρ0*(1.0 - α*(T-T0) + β*(P-P0) )
+function compute_density!(ρ::AbstractArray, s::PT_Density; P, T, kwargs...) 
+    if T isa Quantity
+        @unpack_units ρ0, α, β, P0, T0 = s
+    else
+        @unpack_val ρ0, α, β, P0, T0 = s
+    end
+
+    for i in eachindex(P)
+        @inbounds ρ[i] = ρ0*(1.0 - α*(T[i]-T0) + β*(P[i]-P0) )
+    end
 
     return nothing
 end
@@ -143,16 +155,24 @@ function param_info(s::Compressible_Density) # info about the struct
 end
 
 function (s::Compressible_Density{_T})(; P::_T=zero(_T), kwargs...) where _T
-    @unpack_val ρ0, β, P0   = s
+    if P isa Quantity
+        @unpack_units ρ0, β, P0 = s
+    else
+        @unpack_val ρ0, β, P0 = s
+    end
+
     return ρ0*exp(β*(P - P0) )
 end
 
-(s::Compressible_Density{_T})(args) where _T = s(; args...)
-compute_density(s::Compressible_Density{_T}, args) where _T = s(; args...)
+(s::Compressible_Density)(args) = s(; args...)
+compute_density(s::Compressible_Density, args) = s(; args...)
 
 function compute_density!(ρ::_T, s::Compressible_Density{_T}; P::_T, kwargs...) where _T
-    # function compute_density!(ρ::_T, s::Compressible_Density{_T}, P::_T=zero(_T),T::_T=zero(_T)) where _T
-    @unpack ρ0,β,P0   = s
+    if T isa Quantity
+        @unpack_units ρ0, β, P0 = s
+    else
+        @unpack_val ρ0, β, P0 = s
+    end
 
     return ρ0*exp( β*(P-P0) )
 end
@@ -160,7 +180,12 @@ end
 compute_density!(ρ::_T, s::Compressible_Density{_T}, P::_T, kwargs...) where _T = compute_density!(ρ, s; P, kwargs)
 
 function compute_density!(ρ::AbstractArray, s::Compressible_Density{_T}; P::_T, kwargs...) where _T
-    @unpack ρ0,β,P0   = s
+    if P isa Quantity
+        @unpack_units ρ0, β, P0 = s
+    else
+        @unpack_val ρ0, β, P0 = s
+    end
+    
     for i in eachindex(P)
         @inbounds ρ[i] = ρ0*exp(β*(P[i]-P0))
     end
@@ -186,13 +211,11 @@ end
     compute_density(P,T, s::PhaseDiagram_LookupTable)
 Interpolates density as a function of `T,P` from a lookup table  
 """
-function (s::PhaseDiagram_LookupTable)(; P, T, kwargs...)
+function compute_density(s::PhaseDiagram_LookupTable; P, T, kwargs...)
     fn = s.Rho
     return fn(T,P)
 end
-(s::PhaseDiagram_LookupTable)(args) = s(; args...)
-compute_density(s::PhaseDiagram_LookupTable, args) = s(; args...)
-compute_density(s::PhaseDiagram_LookupTable; P, T) = s(; P=P, T=T)
+compute_density(s::PhaseDiagram_LookupTable, args) = compute_density(s; args...)
 
 """
     compute_density!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
@@ -213,18 +236,9 @@ compute_density!(rho::AbstractArray, s::PhaseDiagram_LookupTable, args) = comput
 #     return compute_density(s.Density[1], args...)
 # end
 function compute_density(s::AbstractMaterialParamsStruct, args)
-    return s.Density[1](args)
+    # return s.Density[1](args)
+    return compute_density(s.Density[1], args)
 end
-
-# these routines may come handy when we have >1 field for Density
-#function compute_density(s::NTuple{N,AbstractDensity{_T}}, P::_T=zero(_T), T::_T=zero(_T)) where {N,_T}
-#    compute_density.(s,P,T)
-#end
-
-#now with Tuple of Tuples
-#function compute_density!(rho::Vector{NTuple{M,_T}}, P::Number, T::Number, MatParam::NTuple{N, NTuple{M, AbstractMaterialParamsStruct}}) where {N,M,_T}
-#    rho .= map(x->compute_density(P,T,x), MatParam)
-#end
 
 #-------------------------------------------------------------------------------------------------------------
 

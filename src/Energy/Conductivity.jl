@@ -69,8 +69,8 @@ In-place routine to compute constant conductivity
 """
 # function compute_conductivity!(k_array::AbstractArray{_T,N}, s::ConstantConductivity{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T,N}) where {_T,N}
 function compute_conductivity!(k_array::AbstractArray{_T,N}, s::ConstantConductivity{_T}; kwargs...) where {_T,N}
-    @unpack_val k   = s
-    Threads.@threads for i in eachindex(k_array)
+    @unpack_val k = s
+    for i in eachindex(k_array)
         @inbounds k_array[i] = k
     end
     return nothing
@@ -143,20 +143,27 @@ end
 
 # Calculation routine
 function (s::T_Conductivity_Whittington{_T})(; T::_T=zero(_T), kwargs...) where _T
-    @unpack_val a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g   = s
-    if T <= Tcutoff
+    if T isa Quantity
+        @unpack_units a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g = s
+    else
+        @unpack_val  a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g = s
+    end
+
+    if T ≤ Tcutoff
         return (a0 + b0*T - c0/T^2)/molmass * (d/T - e) * rho
     else
         return (a1 + b1*T - c1/T^2)/molmass * (f - g*T) * rho
     end
 end
 
-# (s::T_Conductivity_Whittington{_T})(args) where _T = s(;args...)
-# compute_conductivity(s::T_Conductivity_Whittington{_T}, args) where _T s(; args)
 compute_conductivity(s::T_Conductivity_Whittington{_T}; T::_T=zero(_T)) where _T = s(; T=T)
 
-function (s::T_Conductivity_Whittington{_T})(T::AbstractArray{_T,N}; kwargs...) where {_T,N}
-    @unpack_val a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g   = s
+function (s::T_Conductivity_Whittington)(T::AbstractArray; kwargs...)
+    if T isa Quantity
+        @unpack_units a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g = s
+    else
+        @unpack_val  a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g = s
+    end
 
     k = similar(T)   #creating an array makes 1 allocation
     inv_molmass = 1/molmass # multiplication is considerably faster than division
@@ -175,8 +182,8 @@ function (s::T_Conductivity_Whittington{_T})(T::AbstractArray{_T,N}; kwargs...) 
     return k
 end
 
-(s::T_Conductivity_Whittington{_T})(T::AbstractArray{_T,N}, args...) where {_T,N} = s(T; args...)
-compute_conductivity(s::T_Conductivity_Whittington{_T}, T::AbstractArray{_T,N}, args...) where {_T,N} = s(T; args...)
+(s::T_Conductivity_Whittington)(T::AbstractArray, args...) = s(T; args...)
+compute_conductivity(s::T_Conductivity_Whittington, T::AbstractArray, args...) = s(T; args...)
 
 """
     compute_conductivity!(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::T_Conductivity_Whittington) where N
@@ -184,7 +191,11 @@ compute_conductivity(s::T_Conductivity_Whittington{_T}, T::AbstractArray{_T,N}, 
 In-place routine to compute temperature-dependent conductivity    
 """
 function compute_conductivity!(k::AbstractArray{_T,N}, s::T_Conductivity_Whittington{_T}; T::AbstractArray{_T,N}, kwargs...) where {_T,N}
-    @unpack_val a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g   = s
+    if T isa Quantity
+        @unpack_units a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g = s
+    else
+        @unpack_val  a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g = s
+    end
 
     inv_molmass = 1/molmass # multiplication is considerably faster than division
     @inbounds for i in eachindex(T)
@@ -235,23 +246,30 @@ end
 
 # Calculation routine
 function (s::T_Conductivity_Whittington_parameterised{_T})(; T::_T=zero(_T), kwargs...) where _T
-    @unpack_val a,b,c,d,Ts   = s
+    if T isa Quantity
+        @unpack_units a,b,c,d,Ts = s
+    else
+        @unpack_val  a,b,c,d,Ts = s
+    end
+
     T_C  = T - Ts
     return a*T_C^3 + b*T_C^2 + c*T_C + d
 end
 
-function (s::T_Conductivity_Whittington_parameterised{_T})(T::AbstractArray{_T,N}; kwargs...) where {_T,N}
-    @unpack_val a,b,c,d,Ts   = s
+function (s::T_Conductivity_Whittington_parameterised)(T::AbstractArray; kwargs...)
+    if T isa Quantity
+        @unpack_units a,b,c,d,Ts = s
+    else
+        @unpack_val  a,b,c,d,Ts = s
+    end
 
-    k = similar(T)   #creating an array makes 1 allocation
+    k = similar(T)   # creating an array makes 1 allocation
 
     @inbounds for i in eachindex(T)
         # Note: in general, we operate with SI units or the non-dimensional equivalent of that
-        # This parameterisation was develoed 
-
+        # This parameterisation was developed 
         T_C  = T[i] - Ts
         k[i] = a*T_C^3 + b*T_C^2 + c*T_C + d
-
     end
 
     return k
@@ -266,7 +284,11 @@ compute_conductivity(s::T_Conductivity_Whittington_parameterised, T::AbstractArr
 In-place routine to compute temperature-dependent conductivity    
 """
 function compute_conductivity!(k::AbstractArray{_T,N}, s::T_Conductivity_Whittington_parameterised{_T}; T::AbstractArray{_T,N}, kwargs...) where {_T,N}
-    @unpack_val a,b,c,d,Ts   = s
+    if T isa Quantity
+        @unpack_units a,b,c,d,Ts = s
+    else
+        @unpack_val  a,b,c,d,Ts = s
+    end
 
     @inbounds for i in eachindex(T)
         T_C  = T[i] - Ts
@@ -360,7 +382,11 @@ TP_Conductivity_info = Dict([
 
 # Calculation routine
 function (s::TP_Conductivity{_T})(; P::_T=zero(_T), T::_T=zero(_T), kwargs...) where _T 
-    @unpack_val a,b,c,d   = s
+    if T isa Quantity
+        @unpack_units a,b,c,d = s
+    else
+        @unpack_val  a,b,c,d = s
+    end
 
     if ustrip(d)==0
         return a + b/(T + c)
@@ -370,7 +396,11 @@ function (s::TP_Conductivity{_T})(; P::_T=zero(_T), T::_T=zero(_T), kwargs...) w
 end
 
 function (s::TP_Conductivity{_T})(P::AbstractArray{_T,N}, T::AbstractArray{_T,N}; kwargs...) where {_T,N} 
-    @unpack_val a,b,c,d   = s
+    if T isa Quantity
+        @unpack_units a,b,c,d = s
+    else
+        @unpack_val  a,b,c,d = s
+    end
 
     k = similar(T)
 
@@ -396,9 +426,13 @@ compute_conductivity(s::TP_Conductivity, P::AbstractArray, T::AbstractArray) = s
 
 # Calculation routine
 function compute_conductivity!(K::AbstractArray{_T, N}, s::TP_Conductivity{_T}; P::AbstractArray{_T, N}, T::AbstractArray{_T, N}, kwargs...) where{_T, N}
-    @unpack_val a,b,c,d   = s
+    if T isa Quantity
+        @unpack_units a,b,c,d = s
+    else
+        @unpack_val  a,b,c,d = s
+    end
 
-    Threads.@threads for i in eachindex(T)
+    for i in eachindex(T)
         @inbounds if d==0
             K[i] = a + b/(T[i] + c)
         else
@@ -414,7 +448,7 @@ for myType in (:T_Conductivity_Whittington_parameterised, :T_Conductivity_Whitti
     @eval begin
         (s::$(myType))(args)= s(; args...)
         compute_conductivity(s::$(myType), args) = s(args)
-        compute_conductivity!(k::AbstractArray{_T,N}, s::$(myType){_T}, args) where {_T,N} = compute_conductivity!(k, s; args...)
+        compute_conductivity!(k::AbstractArray, s::$(myType), args) = compute_conductivity!(k, s; args...)
     end
 end
 
