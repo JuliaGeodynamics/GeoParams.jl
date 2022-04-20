@@ -97,17 +97,19 @@ export compute_latent_heat,
         ConstantLatentHeat
 
 using .MaterialParameters.RadioactiveHeat
-export compute_radioactive_heat,
-        ConstantRadioactiveHeat
+export compute_radioactive_heat,compute_radioactive_heat!,
+        ConstantRadioactiveHeat,
+        ExpDepthDependentRadioactiveHeat
 
 using .MaterialParameters.Shearheating
 export compute_shearheating!, compute_shearheating,
         ConstantShearheating
 
 # Add zircon saturation parameterizations
-using   .MaterialParameters.ZirconSaturation
-export  compute_zirconsaturation, compute_zirconsaturation!,       # calculation routines
-        Tierney
+include("./ZirconAge/ZirconAges.jl")
+using   .ZirconAges
+export  ZirconAgeData, 
+        compute_zircon_age_PDF,  compute_zircons_Ttpath, zircon_age_PDF 
 
 # Seismic velocities
 using .MaterialParameters.SeismicVelocity
@@ -121,7 +123,8 @@ using .MeltingParam
 export  compute_meltfraction,   compute_meltfraction!,       # calculation routines
         compute_dϕdT,           compute_dϕdT!,
         MeltingParam_Caricchi,  MeltingParam_4thOrder, 
-        MeltingParam_5thOrder,  MeltingParam_Quadratic
+        MeltingParam_5thOrder,  MeltingParam_Quadratic,
+        MeltingParam_Assimilation
 
 
 # Add plotting routines - only activated if the "Plots.jl" package is loaded 

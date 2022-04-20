@@ -21,7 +21,8 @@ export
     PlotHeatCapacity,
     PlotConductivity,
     PlotMeltFraction,
-    PlotPhaseDiagram 
+    PlotPhaseDiagram,
+    Plot_ZirconAge_PDF 
 
 
 """
@@ -303,3 +304,23 @@ function PlotPhaseDiagram(p::PhaseDiagram_LookupTable, fieldn::Symbol; Tvec=noth
     return  plt, data_scalar, Tvec, Pvec  
 end
             
+
+
+"""
+	plt = Plot_ZirconAge_PDF(time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average)
+
+Creates a plot of the Zircon Age probability density function from the parameters in a simulation
+"""
+function Plot_ZirconAge_PDF(time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average)
+
+	plt = Plots.plot(time_Ma[1], PDF_zircons[1], color=:lightgray,linewidth=0.1, 
+				xlabel="Time [Ma]", ylabel="probability []", title = "Zircon age probability distribution", legend=:none)
+	for i in 2:length(PDF_zircons)
+		plt = Plots.plot!(time_Ma[i], PDF_zircons[i], color=:lightgray,linewidth=0.1)
+	end
+	Plots.plot!(time_Ma_average, PDF_zircon_average, color=:black,linewidth=2.)
+	
+	display(plt)
+
+	return plt
+end

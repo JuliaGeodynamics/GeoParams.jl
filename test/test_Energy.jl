@@ -271,6 +271,25 @@ using GeoParams
     @test H_r ≈ 0.1
     # -----------------------
 
+a = nondimensionalize(a,CharUnits_GEO)
+H_r = compute_radioactive_heat(a)
+@test H_r ≈ 0.1
+
+a = ExpDepthDependentRadioactiveHeat()
+z = 10e3
+H_r = compute_radioactive_heat(a,z)
+@test isbits(a)
+@test H_r ≈3.678794411714423e-7
+
+
+Nx,Nz = 101,101
+z   = ones(Nx,Nz)*10e3;
+Hr=zero(z)
+compute_radioactive_heat!(Hr,a,z)
+
+@test  sum(H_r) ≈ 3.678794411714423e-7
+
+# -----------------------
 
     # Shear heating -------
     Χ       = ConstantShearheating(1.0)

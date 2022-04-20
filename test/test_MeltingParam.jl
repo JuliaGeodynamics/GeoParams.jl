@@ -136,6 +136,16 @@ using GeoParams
     @test sum(dϕdT_dim) ≈ 0.009365244536940681
     #------------------------------
 
+    #------------------------------
+    # Assimilation parameterisation
+    p        =  MeltingParam_Assimilation();
+    compute_meltfraction!(phi_dim, p, args)
+    @test sum(phi_dim) ≈ 4.995
+    dϕdT_dim =  zeros(size(T))
+    compute_dϕdT!(dϕdT_dim, p, args)
+    @test sum(abs.(dϕdT_dim)) ≈0.004605170185988078
+    #------------------------------
+
     # Test computation of melt parameterization for the whole computational domain, using arrays 
     MatParam = Vector{MaterialParams}(undef, 4)
     MatParam[1] = SetMaterialParams(;
