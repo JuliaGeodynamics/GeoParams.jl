@@ -31,17 +31,25 @@ where ``H_r`` is the radioactive heat source [``Watt/m^3``].
 @with_kw_noshow struct ConstantRadioactiveHeat{T,U} <: AbstractRadioactiveHeat{T}   
     H_r::GeoUnit{T,U}         =   1e-6Watt/m^3             
 end
-ConstantRadioactiveHeat(a...) = ConstantRadioactiveHeat(convert.(GeoUnit,a)...)
+ConstantRadioactiveHeat(args...) = ConstantRadioactiveHeat(convert.(GeoUnit,args)...)
 
 function param_info(s::ConstantRadioactiveHeat) # info about the struct
     return MaterialParamsInfo(Equation = L"H_r = cst")
 end
 
 # Calculation routine
-function compute_radioactive_heat(s::ConstantRadioactiveHeat)
+function (s::ConstantRadioactiveHeat{_T})(;kwargs...) where _T
     @unpack_val H_r   = s
    
     return H_r
+end
+
+compute_radioactive_heat(s::ConstantRadioactiveHeat{_T}; kwargs...) where _T = s()
+
+function (s::ConstantRadioactiveHeat{_T})(I::Integer...) where _T
+    @unpack_val k = s
+
+    return fill(k, I...)
 end
 
 # Print info 
@@ -65,42 +73,44 @@ where ``H_0`` is the radioactive heat source [``Watt/m^3``] at ``z=z_0`` which d
     h_r::GeoUnit{T,U1}        =   10e3m             
     z_0::GeoUnit{T,U1}        =   0m             
 end
-ExpDepthDependentRadioactiveHeat(a...) = ExpDepthDependentRadioactiveHeat(convert.(GeoUnit,a)...)
+ExpDepthDependentRadioactiveHeat(args...) = ExpDepthDependentRadioactiveHeat(convert.(GeoUnit,args)...)
 
 function param_info(s::ExpDepthDependentRadioactiveHeat) # info about the struct
     return MaterialParamsInfo(Equation = L"H_r = H_0 \\exp(-(z-z_0)/h_r)")
 end
 
 # Calculation routines
-function compute_radioactive_heat(s::ExpDepthDependentRadioactiveHeat, z::Quantity)
-    @unpack_units H_0, z_0, h_r   = s
-    
-    H_r = H_0*exp(-(z-z_0)/h_r);
-
-    return H_r
-end
-
-function compute_radioactive_heat(s::ExpDepthDependentRadioactiveHeat, z::Number)
+function (s::ExpDepthDependentRadioactiveHeat{_T})(; z::_T=zero(_T), kwargs...) where _T
     @unpack_val H_0, z_0, h_r   = s
     
     H_r = H_0*exp(-(z-z_0)/h_r);
 
     return H_r
 end
+
+compute_radioactive_heat(s::ExpDepthDependentRadioactiveHeat{_T}; z::_T=zero(_T)) where _T = s(; z=z)
+
 
 # Calculation routine
-function compute_radioactive_heat!(Hr_array::AbstractArray{_T}, s::ExpDepthDependentRadioactiveHeat{_T}, z::_T=zero(_T)) where _T
+function (s::ExpDepthDependentRadioactiveHeat{_T})(z::AbstractArray{_T,N}; kwargs...) where {_T,N}
+    Hr = similar(z) 
     @unpack_val H_0, z_0, h_r   = s
         
-    @. Hr_array = H_0*exp(-(z - z_0)/h_r);
-    return nothing
+    @. Hr = H_0*exp(-(z - z_0)/h_r);
+    return Hr
 end
 
-function compute_radioactive_heat!(Hr_array::AbstractArray{_T,N}, s::ExpDepthDependentRadioactiveHeat{_T}, z::AbstractArray{_T,N}) where {N,_T}
+(s::ExpDepthDependentRadioactiveHeat{_T})(z::AbstractArray{_T,N}, args...) where {_T,N} = s(z; args...)
+compute_radioactive_heat(s::ExpDepthDependentRadioactiveHeat{_T}, z::AbstractArray{_T,N}, args...) where {_T,N} = s(z; args...)
+
+
+function compute_radioactive_heat!(Hr::AbstractArray{_T,N}, s::ExpDepthDependentRadioactiveHeat{_T}; z::AbstractArray{_T,N}, kwargs...) where {N,_T}
     @unpack_val H_0, z_0, h_r   = s
         
-    @. Hr_array = H_0*exp(-(z - z_0)/h_r);
-    
+    @inbounds for i in eachindex(z)
+        Hr[i] = H_0*exp(-(z[i] - z_0)/h_r);
+    end
+
     return nothing
 end
 
@@ -127,6 +137,16 @@ In-place computation of radioactive heat `H_r`
 
 """
 compute_radioactive_heat!()
+
+# add methods programatically
+for myType in ( :ExpDepthDependentRadioactiveHeat, 
+                :ConstantRadioactiveHeat)
+@eval begin
+(s::$(myType))(args)= s(; args...)
+compute_radioactive_heat(s::$(myType), args) = s(args)
+compute_radioactive_heat!(H::AbstractArray{_T,N}, s::$(myType){_T}, args) where {_T,N} = compute_radioactive_heat!(H, s; args...)
+end
+end
 
 
 end
