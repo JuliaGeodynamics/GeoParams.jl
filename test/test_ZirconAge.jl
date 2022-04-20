@@ -28,8 +28,8 @@ time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average  = zircon_age_PDF(ages
 @test  prob[100] ≈ 5.5432526143365145e-6
 
 # A second way to generate the input is having Vector{Vector} for both time and Tt-path. 
-time_years_vecs = Vector{Vector}(undef,size(Tt_paths_Temp,2));
-Tt_paths_Temp_vecs		= Vector{Vector}(undef,size(Tt_paths_Temp,2));
+time_years_vecs = Vector{Vector{Float64}}(undef,size(Tt_paths_Temp,2));
+Tt_paths_Temp_vecs		= Vector{Vector{Float64}}(undef,size(Tt_paths_Temp,2));
 for i=1:size(Tt_paths_Temp,2)
 	if i<400
 		time_years_vecs[i] 		= time_years

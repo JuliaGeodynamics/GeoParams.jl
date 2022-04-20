@@ -110,7 +110,7 @@ This routine was developed based on an R-routine provided as electronic suppleme
 - Weber, G., Caricchi, L., Arce, J.L., Schmitt, A.K., 2020. Determining the current size and state of subvolcanic magma reservoirs. Nat Commun 11, 5477. https://doi.org/10.1038/s41467-020-19084-2
 
 """
-function compute_zircons_Ttpath(time_years::AbstractArray{Float64,1}, Tt_paths_Temp::AbstractArray{Float64,2}; ZirconData::ZirconAgeData = ZirconAgeData())
+function compute_zircons_Ttpath(time_years::AbstractArray{_T,1}, Tt_paths_Temp::AbstractArray{_T,2}; ZirconData::ZirconAgeData = ZirconAgeData()) where _T
 
     @unpack Tmin, Tsat, Tsol, time_zr_growth = ZirconData
     
@@ -205,7 +205,7 @@ This accepts Vector{Vector} as input for time and temperature of each Tt-path. H
 Internally, we interpolate this into a 2D matrix and a longer vector that includes all paths and a single vector with times 
 
 """
-function compute_zircons_Ttpath(time_years_vecs::Vector{Vector}, Tt_paths_Temp_vecs::Vector{Vector}; ZirconData::ZirconAgeData = ZirconAgeData())
+function compute_zircons_Ttpath(time_years_vecs::Vector{Vector{_T}}, Tt_paths_Temp_vecs::Vector{Vector{_T}}; ZirconData::ZirconAgeData = ZirconAgeData()) where _T
 
     # Create a single vector with the time values:
     time_years = unique(reduce(vcat,unique(time_years_vecs))); 
@@ -233,7 +233,7 @@ Compute probability density functions for zircon age path's describes in `number
 `bandwidth` is the smoothening window of the resulting curves (in years), whereas `n_analyses` are the number of analyses done. 	
 
 """
-function zircon_age_PDF(ages_eruptible::AbstractArray{Float64,1}, number_zircons::AbstractArray{Float64,2}; bandwidth=1e5, n_analyses=300)
+function zircon_age_PDF(ages_eruptible::AbstractArray{_T,1}, number_zircons::AbstractArray{_T,2}; bandwidth=1e5, n_analyses=300) where _T
 
     # compute PDF for each of the zircon Tt-paths:
     PDF_zircons = []
@@ -268,7 +268,7 @@ end
 This computes the PDF (probability density function) with zircon age data from Vectors with Tt-paths	
 
 """
-function compute_zircon_age_PDF(time_years_vecs::Vector{Vector}, Tt_paths_Temp_vecs::Vector{Vector}; ZirconData::ZirconAgeData = ZirconAgeData(), bandwidth=1e5, n_analyses=300)
+function compute_zircon_age_PDF(time_years_vecs::Vector{Vector{_T}}, Tt_paths_Temp_vecs::Vector{Vector{_T}}; ZirconData::ZirconAgeData = ZirconAgeData(), bandwidth=1e5, n_analyses=300) where _T
 
     # Compute the probability that a zircon of certain age is sampled:
     time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time = compute_zircons_Ttpath(time_years_vecs, Tt_paths_Temp_vecs, ZirconData=ZirconData);
