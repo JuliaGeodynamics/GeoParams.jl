@@ -51,42 +51,24 @@ function param_info(s::MeltingParam_Caricchi) # info about the struct
 end
 
 # Calculation routines
-function compute_meltfraction(p::MeltingParam_Caricchi{_T}, P::Quantity, T::Quantity) where _T
-    @unpack_units a,b,c   = p
-
-    θ       =   (a - (T - c))/b
-    ϕ       =   1.0./(1.0 .+ exp.(θ))
-
-    return ϕ
-end
-
-
-function compute_meltfraction(p::MeltingParam_Caricchi{_T}, P::_T, T::_T ) where _T
+function (p::MeltingParam_Caricchi)(; T, kwargs...)
     @unpack_val a,b,c   = p
-
     θ       =   (a - (T - c))/b
     return 1.0/(1.0 + exp(θ))
 end
 
 
-function compute_meltfraction!(ϕ::AbstractArray{_T}, p::MeltingParam_Caricchi{_T}, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
+function compute_meltfraction!(ϕ::AbstractArray, p::MeltingParam_Caricchi; T, kwargs...)
     @unpack_val a,b,c   = p
-    
-    @. ϕ = 1.0/(1.0 + exp((a-(T-c))/b)) 
 
+    for i in eachindex(T)
+        ϕ[i] = p(T=T[i])
+    end
     return nothing
 end
 
-function compute_dϕdT(p::MeltingParam_Caricchi{_T}, P::Quantity, T::Quantity) where _T
-    @unpack_units a,b,c   = p
-
-    # analytically computed derivative (using Symbolics.jl)
-    dϕdT    =   exp((a + c - T) / b) / (b*((1.0 + exp((a + c - T) / b))^2))
-
-    return dϕdT
-end
-
-function compute_dϕdT(p::MeltingParam_Caricchi{_T}, P::_T, T::_T ) where _T
+function compute_dϕdT(p::MeltingParam_Caricchi; T, kwargs...)
+    # function compute_dϕdT(p::MeltingParam_Caricchi{_T}, P::_T, T::_T ) where _T
     @unpack_val a,b,c   = p
 
     dϕdT    =   exp((a + c - T) / b) / (b*((1.0 + exp((a + c - T) / b))^2))
@@ -94,7 +76,7 @@ function compute_dϕdT(p::MeltingParam_Caricchi{_T}, P::_T, T::_T ) where _T
     return dϕdT
 end
 
-function compute_dϕdT!(dϕdT::AbstractArray{_T}, p::MeltingParam_Caricchi{_T}, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
+function compute_dϕdT!(dϕdT::AbstractArray, p::MeltingParam_Caricchi; T, kwargs...)
     @unpack_val a,b,c   = p
     
     @. dϕdT = exp((a + c - T) / b) / (b*((1.0 + exp((a + c - T) / b))^2))
@@ -146,8 +128,9 @@ function param_info(s::MeltingParam_5thOrder) # info about the struct
     return MaterialParamsInfo(Equation =  L"\phi = aT^5 + bT^4 + cT^3 + dT^2 + eT + f")
 end
 
+
 # Calculation routines
-function compute_meltfraction(p::MeltingParam_5thOrder{_T}, P::Quantity, T::Quantity) where _T
+function (p::MeltingParam_5thOrder)(; T, kwargs...)
     @unpack_units a,b,c,d,e,f,T_s,T_l   = p
 
     ϕ   =   a*T^5 + b*T^4 + c*T^3 + d*T^2 + e*T + f
@@ -161,42 +144,18 @@ function compute_meltfraction(p::MeltingParam_5thOrder{_T}, P::Quantity, T::Quan
 end
 
 
-function compute_meltfraction(p::MeltingParam_5thOrder{_T}, P::_T, T::_T ) where _T
-    @unpack_val a,b,c,d,e,f,T_s,T_l   = p
-
-    ϕ   =   a*T^5 + b*T^4 + c*T^3 + d*T^2 + e*T + f
-    if T<T_s
-        ϕ = 0.
-    elseif  T>T_l
-        ϕ = 1.
-    end
-    return  ϕ
-
-end
-
-function compute_meltfraction!(ϕ::AbstractArray{_T}, p::MeltingParam_5thOrder{_T}, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
+function compute_meltfraction!(ϕ::AbstractArray, p::MeltingParam_5thOrder; T::AbstractArray, kwargs...)
     @unpack_val a,b,c,d,e,f,T_s,T_l   = p
 
     @. ϕ   =   a*T^5 + b*T^4 + c*T^3 + d*T^2 + e*T + f
     
-    ϕ[T.<T_s] .= 0.
-    ϕ[T.>T_l] .= 1.
+    @views ϕ[T.<T_s] .= 0.
+    @views ϕ[T.>T_l] .= 1.
 
     return nothing
 end
 
-function compute_dϕdT(p::MeltingParam_5thOrder{_T}, P::Quantity, T::Quantity) where _T
-    @unpack_units a,b,c,d,e,T_s,T_l   = p
-
-    dϕdT   =   5*a*T^4 + 4*b*T^3 + 3*c*T^2 + 2*d*T + e
-    if T<T_s || T>T_l
-        dϕdT = 0.
-    end
-
-    return dϕdT
-end
-
-function compute_dϕdT(p::MeltingParam_5thOrder{_T}, P::_T, T::_T ) where _T
+function compute_dϕdT(p::MeltingParam_5thOrder; T::Real, kwargs...)
     @unpack_val a,b,c,d,e,T_s,T_l   = p
 
     dϕdT   =   5*a*T^4 + 4*b*T^3 + 3*c*T^2 + 2*d*T + e
@@ -207,13 +166,13 @@ function compute_dϕdT(p::MeltingParam_5thOrder{_T}, P::_T, T::_T ) where _T
     return  dϕdT
 end
 
-function compute_dϕdT!(dϕdT::AbstractArray{_T}, p::MeltingParam_5thOrder{_T}, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
+function compute_dϕdT!(dϕdT::AbstractArray, p::MeltingParam_5thOrder; T::AbstractArray, kwargs...)
     @unpack_val a,b,c,d,e,f,T_s,T_l   = p
 
     @. dϕdT   =   5*a*T^4 + 4*b*T^3 + 3*c*T^2 + 2*d*T + e
     
-    dϕdT[T.<T_s] .= 0.
-    dϕdT[T.>T_l] .= 0.
+    @views dϕdT[T.<T_s] .= 0.
+    @views dϕdT[T.>T_l] .= 0.
 
     return nothing
 end
@@ -260,7 +219,7 @@ function param_info(s::MeltingParam_4thOrder) # info about the struct
 end
 
 # Calculation routines
-function compute_meltfraction(p::MeltingParam_4thOrder{_T}, P::Quantity, T::Quantity) where _T
+function (p::MeltingParam_4thOrder)(; T::Real, kwargs...)
     @unpack_units b,c,d,e,f,T_s,T_l   = p
 
     ϕ   =   b*T^4 + c*T^3 + d*T^2 + e*T + f
@@ -273,43 +232,19 @@ function compute_meltfraction(p::MeltingParam_4thOrder{_T}, P::Quantity, T::Quan
     return ϕ
 end
 
-function compute_meltfraction(p::MeltingParam_4thOrder{_T}, P::_T, T::_T ) where _T
-    @unpack_val b,c,d,e,f,T_s,T_l   = p
 
-    ϕ   =    b*T^4 + c*T^3 + d*T^2 + e*T + f
-    if T<T_s
-        ϕ = 0.
-    elseif  T>T_l
-        ϕ = 1.
-    end
-    return  ϕ
-
-end
-
-function compute_meltfraction!(ϕ::AbstractArray{_T}, p::MeltingParam_4thOrder{_T}, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
+function compute_meltfraction!(ϕ::AbstractArray, p::MeltingParam_4thOrder; T::AbstractArray, kwargs...) 
     @unpack_val b,c,d,e,f,T_s,T_l   = p
 
     @. ϕ   =    b*T^4 + c*T^3 + d*T^2 + e*T + f
     
-    ϕ[T.<T_s] .= 0.
-    ϕ[T.>T_l] .= 1.
+    @views ϕ[T.<T_s] .= 0.
+    @views ϕ[T.>T_l] .= 1.
 
     return nothing
 end
 
-function compute_dϕdT(p::MeltingParam_4thOrder{_T}, P::Quantity, T::Quantity) where _T
-    @unpack_units b,c,d,e,T_s,T_l   = p
-
-    dϕdT   =   4*b*T^3 + 3*c*T^2 + 2*d*T + e    
-    if T<T_s || T>T_l
-        dϕdT = 0.
-    end
-
-    return dϕdT
-end
-
-
-function compute_dϕdT(p::MeltingParam_4thOrder{_T}, P::_T, T::_T ) where _T
+function compute_dϕdT(p::MeltingParam_4thOrder; T::Real, kwargs...)
     @unpack_val b,c,d,e,T_s,T_l   = p
 
     dϕdT   =   4*b*T^3 + 3*c*T^2 + 2*d*T + e    
@@ -320,13 +255,13 @@ function compute_dϕdT(p::MeltingParam_4thOrder{_T}, P::_T, T::_T ) where _T
 
 end
 
-function compute_dϕdT!(dϕdT::AbstractArray{_T}, p::MeltingParam_4thOrder{_T}, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
+function compute_dϕdT!(dϕdT::AbstractArray, p::MeltingParam_4thOrder; T::AbstractArray, kwargs...) 
     @unpack_val b,c,d,e,T_s,T_l   = p
 
     @.  dϕdT   =   4*b*T^3 + 3*c*T^2 + 2*d*T + e    
     
-    dϕdT[T.<T_s] .= 0.
-    dϕdT[T.>T_l] .= 0.
+    @views dϕdT[T.<T_s] .= 0.
+    @views dϕdT[T.>T_l] .= 0.
 
     return nothing
 end
@@ -367,7 +302,7 @@ function param_info(s::MeltingParam_Quadratic) # info about the struct
 end
 
 # Calculation routines
-function compute_meltfraction(p::MeltingParam_Quadratic{_T}, P::Quantity, T::Quantity) where _T
+function (p::MeltingParam_Quadratic)(;T::Real, kwargs...)
     @unpack_units T_s,T_l   = p
 
     ϕ   =    1.0 -  ((T_l - T)/(T_l - T_s))^2
@@ -379,30 +314,18 @@ function compute_meltfraction(p::MeltingParam_Quadratic{_T}, P::Quantity, T::Qua
     return ϕ
 end
 
-function compute_meltfraction(p::MeltingParam_Quadratic{_T}, P::_T, T::_T ) where _T
-    @unpack_val T_s,T_l   = p
 
-    ϕ   =    1.0 -  ((T_l - T)/(T_l - T_s))^2
-    if T>T_l
-        ϕ = 1.0
-    elseif T<T_s
-        ϕ = 0.0
-    end
-    return  ϕ
-
-end
-
-function compute_meltfraction!(ϕ::AbstractArray{_T}, p::MeltingParam_Quadratic{_T}, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
+function compute_meltfraction!(ϕ::AbstractArray, p::MeltingParam_Quadratic; T::AbstractArray, kwargs...)
     @unpack_val T_s,T_l   = p
 
     @. ϕ   =   1.0 -  ((T_l - T)/(T_l - T_s))^2
-    ϕ[T.<T_s] .= 0.
-    ϕ[T.>T_l] .= 1.
+    @views ϕ[T.<T_s] .= 0.
+    @views ϕ[T.>T_l] .= 1.
 
     return nothing
 end
 
-function compute_dϕdT(p::MeltingParam_Quadratic{_T}, P::Quantity, T::Quantity) where _T
+function compute_dϕdT(p::MeltingParam_Quadratic; T::Real, kwargs...) 
     @unpack_units T_s,T_l   = p
 
     dϕdT   =    (2T_l - 2T) / ((T_l - T_s)^2)
@@ -412,22 +335,13 @@ function compute_dϕdT(p::MeltingParam_Quadratic{_T}, P::Quantity, T::Quantity) 
     return dϕdT
 end
 
-function compute_dϕdT(p::MeltingParam_Quadratic{_T}, P::_T, T::_T ) where _T
-    @unpack_val T_s,T_l   = p
 
-    dϕdT   =    (2T_l - 2T) / ((T_l - T_s)^2)
-    if T>T_l || T<T_s
-        dϕdT = 0.0
-    end
-    return  dϕdT
-end
-
-function compute_dϕdT!(dϕdT::AbstractArray{_T}, p::MeltingParam_Quadratic{_T}, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
+function compute_dϕdT!(dϕdT::AbstractArray, p::MeltingParam_Quadratic; T::AbstractArray, kwargs...)
     @unpack_val T_s,T_l   = p
 
     @. dϕdT = (2T_l - 2T) / ((T_l - T_s)^2)
-    dϕdT[T.<T_s] .= 0.
-    dϕdT[T.>T_l] .= 0.
+    @views dϕdT[T.<T_s] .= 0.
+    @views dϕdT[T.>T_l] .= 0.
 
     return nothing
 end
@@ -444,7 +358,7 @@ end
 
 Computes melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
 """
-function compute_meltfraction(p::PhaseDiagram_LookupTable, P::_T,T::_T) where _T
+function compute_meltfraction(p::PhaseDiagram_LookupTable; P::_T, T::_T, kwargs...) where _T
    return p.meltFrac.(T,P)
 end
 
@@ -453,7 +367,7 @@ end
 
 In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
 """
-function compute_meltfraction!(ϕ::AbstractArray{_T}, p::PhaseDiagram_LookupTable, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
+function compute_meltfraction!(ϕ::AbstractArray{_T}, p::PhaseDiagram_LookupTable; P::AbstractArray{_T}, T::AbstractArray{_T}, kwargs...) where _T
     ϕ[:]    =   p.meltFrac.(T,P)
 
     return nothing
@@ -465,7 +379,7 @@ end
 Computes derivative of melt fraction vs T in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
 The derivative is computed by finite differencing.
 """
-function compute_dϕdT(p::PhaseDiagram_LookupTable, P::_T,T::_T) where _T  
+function compute_dϕdT(p::PhaseDiagram_LookupTable; P::_T, T::_T, kwargs...) where _T  
     
    dT = (maximum(T) - minimum(T))/2.0*1e-6  + 1e-6   # 1e-6 of the average T value
    ϕ1 = p.meltFrac.(T .+ dT ,P)
@@ -481,7 +395,7 @@ end
 In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
 The derivative is computed by finite differencing.
 """
-function compute_dϕdT!(dϕdT::AbstractArray{_T}, p::PhaseDiagram_LookupTable, P::AbstractArray{_T}, T::AbstractArray{_T}) where _T
+function compute_dϕdT!(dϕdT::AbstractArray{_T}, p::PhaseDiagram_LookupTable; P::AbstractArray{_T}, T::AbstractArray{_T}, kwargs...) where _T
     
     dT = (maximum(T) - minimum(T))/2.0*1e-6 + 1e-6   # 1e-6 of the average T value
     ϕ1 = p.meltFrac.(T .+ dT ,P)
@@ -491,19 +405,33 @@ function compute_dϕdT!(dϕdT::AbstractArray{_T}, p::PhaseDiagram_LookupTable, P
     return nothing
 end
 
-# Computational routines needed for computations with the MaterialParams structure 
-function compute_meltfraction(s::AbstractMaterialParamsStruct, P::_T=zero(_T),T::_T=zero(_T)) where {_T}
-    if isempty(s.Melting) #in case there is a phase with no melting parametrization
-        return zero(_T)
+
+for myType in (:MeltingParam_Caricchi, :MeltingParam_5thOrder, :MeltingParam_4thOrder, :MeltingParam_Quadratic)
+    @eval begin
+        (p::$(myType))(args) = p(; args...)
+        compute_meltfraction(p::$(myType), args) = p(; args...)
+        compute_meltfraction!(ϕ::AbstractArray, p::$(myType), args) = compute_meltfraction!(ϕ, p; args...)
+        compute_dϕdT(p::$(myType), args) = compute_dϕdT(p; args...)
+        compute_dϕdT!(dϕdT::AbstractArray, p::$(myType), args) = compute_dϕdT!(dϕdT, p; args...)
     end
-    return compute_meltfraction(s.Melting[1], P,T)
 end
 
-function compute_dϕdT(s::AbstractMaterialParamsStruct, P::_T=zero(_T),T::_T=zero(_T)) where {_T}
+
+# Computational routines needed for computations with the MaterialParams structure 
+function compute_meltfraction(s::AbstractMaterialParamsStruct; args)
     if isempty(s.Melting) #in case there is a phase with no melting parametrization
-        return zero(_T)
+        return zero(eltype(args[1]))
+    else
+        return s.Melting[1](args)
     end
-    return compute_dϕdT(s.Melting[1], P,T)
+end
+
+function compute_dϕdT(s::AbstractMaterialParamsStruct; args)
+    if isempty(s.Melting) #in case there is a phase with no melting parametrization
+        return zero(eltype(args[1]))
+    else
+        return compute_dϕdT(s.Melting[1], args)
+    end
 end
 
 """
