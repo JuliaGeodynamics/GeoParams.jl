@@ -22,7 +22,7 @@ end
 @inline function compute_param(fn::Function, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Int64, args) where N
     Phase_tup = ntuple(i->MatParam[i].Phase, Val(N))
     idx = find_ind(Phase_tup, Phase)
-    T = zero(typeof(args).types[1])
+    T = isempty(args) ? 0.0 : zero(typeof(args).types[1])
     out = ntuple(Val(N)) do i
         Base.@_inline_meta
         if i == idx
