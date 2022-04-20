@@ -1,6 +1,7 @@
 using Test
 using LinearAlgebra
 using GeoParams
+
 @testset "MeltingParam.jl" begin
 
     #Make sure structure is isbits
@@ -136,7 +137,7 @@ using GeoParams
     #------------------------------
 
     # Test computation of melt parameterization for the whole computational domain, using arrays 
-    MatParam = Array{MaterialParams,1}(undef, 4)
+    MatParam = Vector{MaterialParams}(undef, 4)
     MatParam[1] = SetMaterialParams(;
         Name="Mantle", Phase=1, Melting=PerpleX_LaMEM_Diagram("test_data/Peridotite.in")
     )

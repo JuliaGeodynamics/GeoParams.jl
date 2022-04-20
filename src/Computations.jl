@@ -6,13 +6,13 @@ using Parameters, Unitful
 # Computational routines needed for computations with the MaterialParams structure 
 
 # with tuple & vector - apply for all phases in MatParam
-function compute_param!(fn::Function, rho::Vector{_T}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, P::_T=zero(_T),T::_T=zero(_T)) where {F,N,_T}
+function compute_param!(fn::Function, rho::AbstractVector, MatParam::NTuple{N,AbstractMaterialParamsStruct}, args) where N
     rho .= map(x->fn(x,P,T), MatParam)
 end
 
 # each individual calcuation 
-function compute_param(fn::Function, MatParam::NTuple{N,AbstractMaterialParamsStruct}, P::_T=zero(_T),T::_T=zero(_T)) where {F,N,_T}
-    map(x->fn(x,P,T), MatParam)
+function compute_param(fn::Function, MatParam::NTuple{N,AbstractMaterialParamsStruct}, args) where N
+    map(x->fn(x, args), MatParam)
 end
 
 #---------------------------------------------------------------------------------------------------------------------------#

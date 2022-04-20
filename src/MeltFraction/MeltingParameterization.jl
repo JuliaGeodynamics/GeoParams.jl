@@ -5,22 +5,23 @@ module MeltingParam
 
 using Parameters, LaTeXStrings, Unitful
 using ..Units
-using GeoParams: AbstractMaterialParam, PhaseDiagram_LookupTable, AbstractMaterialParamsStruct
+using GeoParams:
+    AbstractMaterialParam, PhaseDiagram_LookupTable, AbstractMaterialParamsStruct
 import Base.show, GeoParams.param_info
 using ..MaterialParameters: MaterialParamsInfo
 
 abstract type AbstractMeltingParam{T} <: AbstractMaterialParam end
 
-export  compute_meltfraction, 
-        compute_meltfraction!,    # calculation routines
-        compute_dϕdT,             # derivative of melt fraction versus 
-        compute_dϕdT!,
-        param_info,
-        MeltingParam_Caricchi,    
-        MeltingParam_4thOrder,
-        MeltingParam_5thOrder,
-        MeltingParam_Quadratic
-        
+export compute_meltfraction,
+    compute_meltfraction!,    # calculation routines
+    compute_dϕdT,             # derivative of melt fraction versus 
+    compute_dϕdT!,
+    param_info,
+    MeltingParam_Caricchi,
+    MeltingParam_4thOrder,
+    MeltingParam_5thOrder,
+    MeltingParam_Quadratic
+
 include("../Utils.jl")
 include("../Computations.jl")
 
@@ -40,56 +41,71 @@ Note that T is in Kelvin.
 
 """
 @with_kw_noshow struct MeltingParam_Caricchi{T,U} <: AbstractMeltingParam{T}
-    a::GeoUnit{T,U}              =   800.0K              
-    b::GeoUnit{T,U}              =   23.0K
-    c::GeoUnit{T,U}              =   273.15K # shift from C to K
+    a::GeoUnit{T,U} = 800.0K
+    b::GeoUnit{T,U} = 23.0K
+    c::GeoUnit{T,U} = 273.15K # shift from C to K
 end
-MeltingParam_Caricchi(args...) = MeltingParam_Caricchi(convert.(GeoUnit,args)...)
+MeltingParam_Caricchi(args...) = MeltingParam_Caricchi(convert.(GeoUnit, args)...)
 
 function param_info(s::MeltingParam_Caricchi) # info about the struct
-    return MaterialParamsInfo(Equation =  L"\phi = {1 \over {1 + \exp( {800-T[^oC] \over 23})}}")
+    return MaterialParamsInfo(;
+        Equation=L"\phi = {1 \over {1 + \exp( {800-T[^oC] \over 23})}}"
+    )
 end
 
 # Calculation routines
 function (p::MeltingParam_Caricchi)(; T, kwargs...)
-    @unpack_val a,b,c   = p
-    θ       =   (a - (T - c))/b
-    return 1.0/(1.0 + exp(θ))
+    if T isa Quantity
+        @unpack_units a, b, c = p
+    else
+        @unpack_val a, b, c = p
+    end
+    θ = (a - (T - c)) / b
+    return 1.0 / (1.0 + exp(θ))
 end
 
-
 function compute_meltfraction!(ϕ::AbstractArray, p::MeltingParam_Caricchi; T, kwargs...)
-    @unpack_val a,b,c   = p
+    if T isa Quantity
+        @unpack_units a, b, c = p
+    else
+        @unpack_val a, b, c = p
+    end
 
     for i in eachindex(T)
-        ϕ[i] = p(T=T[i])
+        @inbounds ϕ[i] = p(; T=T[i])
     end
     return nothing
 end
 
 function compute_dϕdT(p::MeltingParam_Caricchi; T, kwargs...)
-    # function compute_dϕdT(p::MeltingParam_Caricchi{_T}, P::_T, T::_T ) where _T
-    @unpack_val a,b,c   = p
+    if T isa Quantity
+        @unpack_units a, b, c = p
+    else
+        @unpack_val a, b, c = p
+    end
 
-    dϕdT    =   exp((a + c - T) / b) / (b*((1.0 + exp((a + c - T) / b))^2))
+    dϕdT = exp((a + c - T) / b) / (b * ((1.0 + exp((a + c - T) / b))^2))
 
     return dϕdT
 end
 
 function compute_dϕdT!(dϕdT::AbstractArray, p::MeltingParam_Caricchi; T, kwargs...)
-    @unpack_val a,b,c   = p
-    
-    @. dϕdT = exp((a + c - T) / b) / (b*((1.0 + exp((a + c - T) / b))^2))
+    if T isa Quantity
+        @unpack_units a, b, c = p
+    else
+        @unpack_val a, b, c = p
+    end
+
+    @. dϕdT = exp((a + c - T) / b) / (b * ((1.0 + exp((a + c - T) / b))^2))
 
     return nothing
 end
 
 # Print info 
-function show(io::IO, g::MeltingParam_Caricchi)  
-    print(io, "Caricchi et al. melting parameterization")  
+function show(io::IO, g::MeltingParam_Caricchi)
+    return print(io, "Caricchi et al. melting parameterization")
 end
 #-------------------------------------------------------------------------
-
 
 # MeltingParam_5thOrder  -------------------------------------------------------
 """
@@ -112,74 +128,96 @@ The default values are for a composite liquid-line-of-descent:
 - the lower part is extrapolated to the granitic minimum using the Marxer & Ulmer LLD for Andesite (Marxer, F. & Ulmer, P. (2019) Crystallisation and zircon saturation of calc-alkaline tonalite from the Adamello Batholith at upper crustal conditions: an experimental study. *Contributions Mineral. Petrol.* 174, 84)
 
 """
-@with_kw_noshow struct MeltingParam_5thOrder{T,U,U1,U2,U3,U4,U5,U6} <: AbstractMeltingParam{T}
-    a::GeoUnit{T,U1}    =   2.083291971482524e-12/K^5              
-    b::GeoUnit{T,U2}    =  -1.239502833666574e-08/K^4
-    c::GeoUnit{T,U3}    =   2.938887604687626e-05/K^3 
-    d::GeoUnit{T,U4}    =  -0.034711533077108/K^2 
-    e::GeoUnit{T,U5}    =   20.425403874539178/K 
-    f::GeoUnit{T,U6}    =   -4.790664658179178e+03*NoUnits 
-    T_s::GeoUnit{T,U}   =   963.15K
-    T_l::GeoUnit{T,U}   =   1388.2K 
+@with_kw_noshow struct MeltingParam_5thOrder{T,U,U1,U2,U3,U4,U5,U6} <:
+                       AbstractMeltingParam{T}
+    a::GeoUnit{T,U1} = 2.083291971482524e-12 / K^5
+    b::GeoUnit{T,U2} = -1.239502833666574e-08 / K^4
+    c::GeoUnit{T,U3} = 2.938887604687626e-05 / K^3
+    d::GeoUnit{T,U4} = -0.034711533077108 / K^2
+    e::GeoUnit{T,U5} = 20.425403874539178 / K
+    f::GeoUnit{T,U6} = -4.790664658179178e+03 * NoUnits
+    T_s::GeoUnit{T,U} = 963.15K
+    T_l::GeoUnit{T,U} = 1388.2K
 end
-MeltingParam_5thOrder(args...) = MeltingParam_5thOrder(convert.(GeoUnit,args)...)
+MeltingParam_5thOrder(args...) = MeltingParam_5thOrder(convert.(GeoUnit, args)...)
 
 function param_info(s::MeltingParam_5thOrder) # info about the struct
-    return MaterialParamsInfo(Equation =  L"\phi = aT^5 + bT^4 + cT^3 + dT^2 + eT + f")
+    return MaterialParamsInfo(; Equation=L"\phi = aT^5 + bT^4 + cT^3 + dT^2 + eT + f")
 end
-
 
 # Calculation routines
 function (p::MeltingParam_5thOrder)(; T, kwargs...)
-    @unpack_units a,b,c,d,e,f,T_s,T_l   = p
+    if T isa Quantity
+        @unpack_units a, b, c, d, e, f, T_s, T_l = p
+    else
+        @unpack_val a, b, c, d, e, f, T_s, T_l = p
+    end
 
-    ϕ   =   a*T^5 + b*T^4 + c*T^3 + d*T^2 + e*T + f
-    if T<T_s
-        ϕ = 0.
-    elseif  T>T_l
-        ϕ = 1.
+    ϕ = a * T^5 + b * T^4 + c * T^3 + d * T^2 + e * T + f
+    if T < T_s
+        ϕ = 0.0
+    elseif T > T_l
+        ϕ = 1.0
     end
 
     return ϕ
 end
 
+function compute_meltfraction!(
+    ϕ::AbstractArray, p::MeltingParam_5thOrder; T::AbstractArray, kwargs...
+)
+    if T isa Quantity
+        @unpack_units a, b, c, d, e, f, T_s, T_l = p
+    else
+        @unpack_val a, b, c, d, e, f, T_s, T_l = p
+    end
 
-function compute_meltfraction!(ϕ::AbstractArray, p::MeltingParam_5thOrder; T::AbstractArray, kwargs...)
-    @unpack_val a,b,c,d,e,f,T_s,T_l   = p
+    @. ϕ = a * T^5 + b * T^4 + c * T^3 + d * T^2 + e * T + f
 
-    @. ϕ   =   a*T^5 + b*T^4 + c*T^3 + d*T^2 + e*T + f
-    
-    @views ϕ[T.<T_s] .= 0.
-    @views ϕ[T.>T_l] .= 1.
+    @views ϕ[T .< T_s] .= 0.0
+    @views ϕ[T .> T_l] .= 1.0
 
     return nothing
 end
 
 function compute_dϕdT(p::MeltingParam_5thOrder; T::Real, kwargs...)
-    @unpack_val a,b,c,d,e,T_s,T_l   = p
-
-    dϕdT   =   5*a*T^4 + 4*b*T^3 + 3*c*T^2 + 2*d*T + e
-    if T<T_s || T>T_l
-        dϕdT = 0.
+    if T isa Quantity
+        @unpack_units a, b, c, d, e, T_s, T_l = p
+    else
+        @unpack_val a, b, c, d, e, T_s, T_l = p
+    end
+    
+    dϕdT = 5 * a * T^4 + 4 * b * T^3 + 3 * c * T^2 + 2 * d * T + e
+    if T < T_s || T > T_l
+        dϕdT = 0.0
     end
 
-    return  dϕdT
+    return dϕdT
 end
 
-function compute_dϕdT!(dϕdT::AbstractArray, p::MeltingParam_5thOrder; T::AbstractArray, kwargs...)
-    @unpack_val a,b,c,d,e,f,T_s,T_l   = p
+function compute_dϕdT!(
+    dϕdT::AbstractArray, p::MeltingParam_5thOrder; T::AbstractArray, kwargs...
+)
+    if T isa Quantity
+        @unpack_units a, b, c, d, e, f, T_s, T_l = p
+    else
+        @unpack_val a, b, c, d, e, f, T_s, T_l = p
+    end
 
-    @. dϕdT   =   5*a*T^4 + 4*b*T^3 + 3*c*T^2 + 2*d*T + e
-    
-    @views dϕdT[T.<T_s] .= 0.
-    @views dϕdT[T.>T_l] .= 0.
+    @. dϕdT = 5 * a * T^4 + 4 * b * T^3 + 3 * c * T^2 + 2 * d * T + e
+
+    @views dϕdT[T .< T_s] .= 0.0
+    @views dϕdT[T .> T_l] .= 0.0
 
     return nothing
 end
 
 # Print info 
-function show(io::IO, g::MeltingParam_5thOrder)  
-    print(io, "5th order polynomial melting curve: phi = $(NumValue(g.a)) T^5 + $(NumValue(g.b))T^4 + $(NumValue(g.c))T^3 + $(NumValue(g.d))T^2 + $(NumValue(g.e))T + $(NumValue(g.f))  $(Value(g.T_s)) ≤ T ≤ $(Value(g.T_l))")  
+function show(io::IO, g::MeltingParam_5thOrder)
+    return print(
+        io,
+        "5th order polynomial melting curve: phi = $(NumValue(g.a)) T^5 + $(NumValue(g.b))T^4 + $(NumValue(g.c))T^3 + $(NumValue(g.d))T^2 + $(NumValue(g.e))T + $(NumValue(g.f))  $(Value(g.T_s)) ≤ T ≤ $(Value(g.T_l))",
+    )
 end
 #-------------------------------------------------------------------------
 
@@ -204,72 +242,76 @@ The default values are for Tonalite experiments from Marxer and Ulmer (2019):
 
 """
 @with_kw_noshow struct MeltingParam_4thOrder{T,U,U2,U3,U4,U5,U6} <: AbstractMeltingParam{T}
-    b::GeoUnit{T,U2}    =  -7.594512597174117e-10/K^4
-    c::GeoUnit{T,U3}    =   3.469192091489447e-06/K^3 
-    d::GeoUnit{T,U4}    =  -0.005923529809260/K^2 
-    e::GeoUnit{T,U5}    =   4.482855645604745/K 
-    f::GeoUnit{T,U6}    =   -1.268730161921053e+03*NoUnits 
-    T_s::GeoUnit{T,U}   =   963.15K
-    T_l::GeoUnit{T,U}   =   1270.15K
+    b::GeoUnit{T,U2} = -7.594512597174117e-10 / K^4
+    c::GeoUnit{T,U3} = 3.469192091489447e-06 / K^3
+    d::GeoUnit{T,U4} = -0.005923529809260 / K^2
+    e::GeoUnit{T,U5} = 4.482855645604745 / K
+    f::GeoUnit{T,U6} = -1.268730161921053e+03 * NoUnits
+    T_s::GeoUnit{T,U} = 963.15K
+    T_l::GeoUnit{T,U} = 1270.15K
 end
-MeltingParam_4thOrder(args...) = MeltingParam_4thOrder(convert.(GeoUnit,args)...)
+MeltingParam_4thOrder(args...) = MeltingParam_4thOrder(convert.(GeoUnit, args)...)
 
 function param_info(s::MeltingParam_4thOrder) # info about the struct
-    return MaterialParamsInfo(Equation =  L"\phi = bT^4 + cT^3 + dT^2 + eT + f")
+    return MaterialParamsInfo(; Equation=L"\phi = bT^4 + cT^3 + dT^2 + eT + f")
 end
 
 # Calculation routines
 function (p::MeltingParam_4thOrder)(; T::Real, kwargs...)
-    @unpack_units b,c,d,e,f,T_s,T_l   = p
+    @unpack_units b, c, d, e, f, T_s, T_l = p
 
-    ϕ   =   b*T^4 + c*T^3 + d*T^2 + e*T + f
-    if T<T_s
-        ϕ = 0.
-    elseif  T>T_l
-        ϕ = 1.
+    ϕ = b * T^4 + c * T^3 + d * T^2 + e * T + f
+    if T < T_s
+        ϕ = 0.0
+    elseif T > T_l
+        ϕ = 1.0
     end
 
     return ϕ
 end
 
+function compute_meltfraction!(
+    ϕ::AbstractArray, p::MeltingParam_4thOrder; T::AbstractArray, kwargs...
+)
+    @unpack_val b, c, d, e, f, T_s, T_l = p
 
-function compute_meltfraction!(ϕ::AbstractArray, p::MeltingParam_4thOrder; T::AbstractArray, kwargs...) 
-    @unpack_val b,c,d,e,f,T_s,T_l   = p
+    @. ϕ = b * T^4 + c * T^3 + d * T^2 + e * T + f
 
-    @. ϕ   =    b*T^4 + c*T^3 + d*T^2 + e*T + f
-    
-    @views ϕ[T.<T_s] .= 0.
-    @views ϕ[T.>T_l] .= 1.
+    @views ϕ[T .< T_s] .= 0.0
+    @views ϕ[T .> T_l] .= 1.0
 
     return nothing
 end
 
 function compute_dϕdT(p::MeltingParam_4thOrder; T::Real, kwargs...)
-    @unpack_val b,c,d,e,T_s,T_l   = p
+    @unpack_val b, c, d, e, T_s, T_l = p
 
-    dϕdT   =   4*b*T^3 + 3*c*T^2 + 2*d*T + e    
-    if T<T_s || T>T_l
-        dϕdT = 0.
+    dϕdT = 4 * b * T^3 + 3 * c * T^2 + 2 * d * T + e
+    if T < T_s || T > T_l
+        dϕdT = 0.0
     end
-    return  dϕdT
-
+    return dϕdT
 end
 
-function compute_dϕdT!(dϕdT::AbstractArray, p::MeltingParam_4thOrder; T::AbstractArray, kwargs...) 
-    @unpack_val b,c,d,e,T_s,T_l   = p
+function compute_dϕdT!(
+    dϕdT::AbstractArray, p::MeltingParam_4thOrder; T::AbstractArray, kwargs...
+)
+    @unpack_val b, c, d, e, T_s, T_l = p
 
-    @.  dϕdT   =   4*b*T^3 + 3*c*T^2 + 2*d*T + e    
-    
-    @views dϕdT[T.<T_s] .= 0.
-    @views dϕdT[T.>T_l] .= 0.
+    @. dϕdT = 4 * b * T^3 + 3 * c * T^2 + 2 * d * T + e
+
+    @views dϕdT[T .< T_s] .= 0.0
+    @views dϕdT[T .> T_l] .= 0.0
 
     return nothing
 end
 
-
 # Print info 
-function show(io::IO, g::MeltingParam_4thOrder)  
-    print(io, "4th order polynomial melting curve: phi = $(NumValue(g.b))T^4 + $(NumValue(g.c))T^3 + $(NumValue(g.d))T^2 + $(NumValue(g.e))T + $(NumValue(g.f))  $(Value(g.T_s)) ≤ T ≤ $(Value(g.T_l))")  
+function show(io::IO, g::MeltingParam_4thOrder)
+    return print(
+        io,
+        "4th order polynomial melting curve: phi = $(NumValue(g.b))T^4 + $(NumValue(g.c))T^3 + $(NumValue(g.d))T^2 + $(NumValue(g.e))T + $(NumValue(g.f))  $(Value(g.T_s)) ≤ T ≤ $(Value(g.T_l))",
+    )
 end
 #-------------------------------------------------------------------------
 
@@ -292,86 +334,101 @@ This was used, among others, in Tierney et al. (2016) Geology
 
 """
 @with_kw_noshow struct MeltingParam_Quadratic{T,U} <: AbstractMeltingParam{T}
-    T_s::GeoUnit{T,U}   =   963.15K
-    T_l::GeoUnit{T,U}   =   1273.15K
+    T_s::GeoUnit{T,U} = 963.15K
+    T_l::GeoUnit{T,U} = 1273.15K
 end
-MeltingParam_Quadratic(args...) = MeltingParam_Quadratic(convert.(GeoUnit,args)...)
+MeltingParam_Quadratic(args...) = MeltingParam_Quadratic(convert.(GeoUnit, args)...)
 
 function param_info(s::MeltingParam_Quadratic) # info about the struct
-    return MaterialParamsInfo(Equation =  L"\phi = 1.0 - ((T_l - T)/(T_l - T_s))^2")
+    return MaterialParamsInfo(; Equation=L"\phi = 1.0 - ((T_l - T)/(T_l - T_s))^2")
 end
 
 # Calculation routines
-function (p::MeltingParam_Quadratic)(;T::Real, kwargs...)
-    @unpack_units T_s,T_l   = p
+function (p::MeltingParam_Quadratic)(; T::Real, kwargs...)
+    @unpack_units T_s, T_l = p
 
-    ϕ   =    1.0 -  ((T_l - T)/(T_l - T_s))^2
-    if T>T_l
+    ϕ = 1.0 - ((T_l - T) / (T_l - T_s))^2
+    if T > T_l
         ϕ = 1.0
-    elseif T<T_s
+    elseif T < T_s
         ϕ = 0.0
     end
     return ϕ
 end
 
+function compute_meltfraction!(
+    ϕ::AbstractArray, p::MeltingParam_Quadratic; T::AbstractArray, kwargs...
+)
+    @unpack_val T_s, T_l = p
 
-function compute_meltfraction!(ϕ::AbstractArray, p::MeltingParam_Quadratic; T::AbstractArray, kwargs...)
-    @unpack_val T_s,T_l   = p
-
-    @. ϕ   =   1.0 -  ((T_l - T)/(T_l - T_s))^2
-    @views ϕ[T.<T_s] .= 0.
-    @views ϕ[T.>T_l] .= 1.
+    @. ϕ = 1.0 - ((T_l - T) / (T_l - T_s))^2
+    @views ϕ[T .< T_s] .= 0.0
+    @views ϕ[T .> T_l] .= 1.0
 
     return nothing
 end
 
-function compute_dϕdT(p::MeltingParam_Quadratic; T::Real, kwargs...) 
-    @unpack_units T_s,T_l   = p
+function compute_dϕdT(p::MeltingParam_Quadratic; T::Real, kwargs...)
+    @unpack_units T_s, T_l = p
 
-    dϕdT   =    (2T_l - 2T) / ((T_l - T_s)^2)
-    if T>T_l || T<T_s
+    dϕdT = (2T_l - 2T) / ((T_l - T_s)^2)
+    if T > T_l || T < T_s
         dϕdT = 0.0
     end
     return dϕdT
 end
 
-
-function compute_dϕdT!(dϕdT::AbstractArray, p::MeltingParam_Quadratic; T::AbstractArray, kwargs...)
-    @unpack_val T_s,T_l   = p
+function compute_dϕdT!(
+    dϕdT::AbstractArray, p::MeltingParam_Quadratic; T::AbstractArray, kwargs...
+)
+    @unpack_val T_s, T_l = p
 
     @. dϕdT = (2T_l - 2T) / ((T_l - T_s)^2)
-    @views dϕdT[T.<T_s] .= 0.
-    @views dϕdT[T.>T_l] .= 0.
+    @views dϕdT[T .< T_s] .= 0.0
+    @views dϕdT[T .> T_l] .= 0.0
 
     return nothing
 end
 
 # Print info 
-function show(io::IO, g::MeltingParam_Quadratic)  
-    print(io, "Quadratic melting curve:  ϕ = 1.0 - ((Tₗ-T)/(Tₗ-Tₛ))² with Tₛ=$(Value(g.T_s)), Tₗ=$(Value(g.T_l)) ")  
+function show(io::IO, g::MeltingParam_Quadratic)
+    return print(
+        io,
+        "Quadratic melting curve:  ϕ = 1.0 - ((Tₗ-T)/(Tₗ-Tₛ))² with Tₛ=$(Value(g.T_s)), Tₗ=$(Value(g.T_l)) ",
+    )
 end
 #-------------------------------------------------------------------------
-
 
 """
     compute_meltfraction(P,T, p::AbstractPhaseDiagramsStruct)
 
 Computes melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
 """
-function compute_meltfraction(p::PhaseDiagram_LookupTable; P::_T, T::_T, kwargs...) where _T
-   return p.meltFrac.(T,P)
+function compute_meltfraction(
+    p::PhaseDiagram_LookupTable; P::_T, T::_T, kwargs...
+) where {_T}
+    return p.meltFrac.(T, P)
 end
 
+compute_meltfraction(p::PhaseDiagram_LookupTable, args) = compute_meltfraction(p; args...)
 """
     compute_meltfraction!(ϕ::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T:AbstractArray{<:AbstractFloat}, p::PhaseDiagram_LookupTable)
 
 In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
 """
-function compute_meltfraction!(ϕ::AbstractArray{_T}, p::PhaseDiagram_LookupTable; P::AbstractArray{_T}, T::AbstractArray{_T}, kwargs...) where _T
-    ϕ[:]    =   p.meltFrac.(T,P)
+function compute_meltfraction!(
+    ϕ::AbstractArray{_T},
+    p::PhaseDiagram_LookupTable;
+    P::AbstractArray{_T},
+    T::AbstractArray{_T},
+    kwargs...,
+) where {_T}
+    ϕ[:] = p.meltFrac.(T, P)
 
     return nothing
 end
+
+compute_meltfraction!( ϕ::AbstractArray, p::PhaseDiagram_LookupTable, args) = compute_meltfraction!(p; args...)
 
 """
     compute_dϕdT(P,T, p::AbstractPhaseDiagramsStruct)
@@ -379,15 +436,17 @@ end
 Computes derivative of melt fraction vs T in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
 The derivative is computed by finite differencing.
 """
-function compute_dϕdT(p::PhaseDiagram_LookupTable; P::_T, T::_T, kwargs...) where _T  
-    
-   dT = (maximum(T) - minimum(T))/2.0*1e-6  + 1e-6   # 1e-6 of the average T value
-   ϕ1 = p.meltFrac.(T .+ dT ,P)
-   ϕ0 = p.meltFrac.(T  ,P)
-   dϕdT = (ϕ1-ϕ0)/dT
+function compute_dϕdT(p::PhaseDiagram_LookupTable; P::_T, T::_T, kwargs...) where {_T}
+    dT = (maximum(T) - minimum(T)) / 2.0 * 1e-6 + 1e-6   # 1e-6 of the average T value
+    ϕ1 = p.meltFrac.(T .+ dT, P)
+    ϕ0 = p.meltFrac.(T, P)
+    dϕdT = (ϕ1 - ϕ0) / dT
 
-   return dϕdT
+    return dϕdT
 end
+
+compute_dϕdT(p::PhaseDiagram_LookupTable, args) = compute_dϕdT(p; args...)
+
 
 """
     compute_dϕdT!(dϕdT::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T:AbstractArray{<:AbstractFloat}, p::PhaseDiagram_LookupTable)
@@ -395,40 +454,55 @@ end
 In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
 The derivative is computed by finite differencing.
 """
-function compute_dϕdT!(dϕdT::AbstractArray{_T}, p::PhaseDiagram_LookupTable; P::AbstractArray{_T}, T::AbstractArray{_T}, kwargs...) where _T
-    
-    dT = (maximum(T) - minimum(T))/2.0*1e-6 + 1e-6   # 1e-6 of the average T value
-    ϕ1 = p.meltFrac.(T .+ dT ,P)
-    ϕ0 = p.meltFrac.(T  ,P)
-    dϕdT = (ϕ1-ϕ0)/dT
+function compute_dϕdT!(
+    dϕdT::AbstractArray{_T},
+    p::PhaseDiagram_LookupTable;
+    P::AbstractArray{_T},
+    T::AbstractArray{_T},
+    kwargs...,
+) where {_T}
+    dT = (maximum(T) - minimum(T)) / 2.0 * 1e-6 + 1e-6   # 1e-6 of the average T value
+    ϕ1 = p.meltFrac.(T .+ dT, P)
+    ϕ0 = p.meltFrac.(T, P)
+    dϕdT = (ϕ1 - ϕ0) / dT
 
     return nothing
 end
 
+compute_dϕdT!( ϕ::AbstractArray, p::PhaseDiagram_LookupTable, args) = compute_dϕdT!(p; args...)
 
-for myType in (:MeltingParam_Caricchi, :MeltingParam_5thOrder, :MeltingParam_4thOrder, :MeltingParam_Quadratic)
+# fill methods programatically
+for myType in (
+    :MeltingParam_Caricchi,
+    :MeltingParam_5thOrder,
+    :MeltingParam_4thOrder,
+    :MeltingParam_Quadratic,
+)
     @eval begin
         (p::$(myType))(args) = p(; args...)
         compute_meltfraction(p::$(myType), args) = p(; args...)
-        compute_meltfraction!(ϕ::AbstractArray, p::$(myType), args) = compute_meltfraction!(ϕ, p; args...)
+        function compute_meltfraction!(ϕ::AbstractArray, p::$(myType), args)
+            return compute_meltfraction!(ϕ, p; args...)
+        end
         compute_dϕdT(p::$(myType), args) = compute_dϕdT(p; args...)
-        compute_dϕdT!(dϕdT::AbstractArray, p::$(myType), args) = compute_dϕdT!(dϕdT, p; args...)
+        function compute_dϕdT!(dϕdT::AbstractArray, p::$(myType), args)
+            return compute_dϕdT!(dϕdT, p; args...)
+        end
     end
 end
-
 
 # Computational routines needed for computations with the MaterialParams structure 
-function compute_meltfraction(s::AbstractMaterialParamsStruct; args)
+function compute_meltfraction(s::AbstractMaterialParamsStruct, args)
     if isempty(s.Melting) #in case there is a phase with no melting parametrization
-        return zero(eltype(args[1]))
+        return zero(typeof(args).types[1])
     else
-        return s.Melting[1](args)
+        return compute_meltfraction(s.Melting[1], args)
     end
 end
 
-function compute_dϕdT(s::AbstractMaterialParamsStruct; args)
+function compute_dϕdT(s::AbstractMaterialParamsStruct, args)
     if isempty(s.Melting) #in case there is a phase with no melting parametrization
-        return zero(eltype(args[1]))
+        return zero(typeof(args).types[1])
     else
         return compute_dϕdT(s.Melting[1], args)
     end
@@ -455,7 +529,6 @@ Computates the derivative of melt fraction ϕ versus temperature `T` for the who
 This is employed in computing latent heat terms in an implicit manner, for example
 """
 compute_dϕdT(args...) = compute_param(compute_dϕdT, args...)
-
 
 """
     compute_dϕdT!(ϕ::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
