@@ -49,14 +49,22 @@ end
 compute_radioactive_heat(s::ConstantRadioactiveHeat{_T}; kwargs...) where _T = s()
 
 function (s::ConstantRadioactiveHeat{_T})(I::Integer...) where _T
-    @unpack_val k = s
+    @unpack_val H_r = s
 
-    return fill(k, I...)
+    return fill(H_r, I...)
+end
+
+function compute_radioactive_heat!(Hr::AbstractArray{_T,N}, s::ConstantRadioactiveHeat{_T}; kwargs...) where {_T,N}
+    @unpack_val H_r = s
+    for i in eachindex(Hr)
+        @inbounds Hr[i] = H_r
+    end
+    return nothing
 end
 
 # Print info 
 function show(io::IO, g::ConstantRadioactiveHeat)  
-    print(io, "Constant radioactive heat: H_r=$(g.H_r.val)")  
+    print(io, "Constant radioactive heat: H_r=$(Value(g.H_r))")  
 end
 #-------------------------------------------------------------------------
 
@@ -118,14 +126,14 @@ end
 
 # Print info 
 function show(io::IO, g::ExpDepthDependentRadioactiveHeat)  
-    print(io, "Exponential depth-dependent radioactive heat: H_r=$(g.H_0.val) exp(-(z-$(g.z_0.val))/$(g.h_r.val))")  
+    print(io, "Exponential depth-dependent radioactive heat: H_r=$(Value(g.H_0)) exp(-(z-$(Value(g.z_0)))/$(Value(g.h_r)))")  
 end
 #-------------------------------------------------------------------------
 
 # Computational routines needed for computations with the MaterialParams structure 
 function compute_radioactive_heat(s::AbstractMaterialParamsStruct, args) 
     if isempty(s.RadioactiveHeat)
-        return zero(typeof(args).types[1])  # return zero if not specified
+        return isempty(args) ? 0.0 : zero(typeof(args).types[1])  # return zero if not specified
     else
         return s.RadioactiveHeat[1](args)
     end

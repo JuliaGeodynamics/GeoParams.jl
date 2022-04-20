@@ -68,18 +68,31 @@ using GeoParams
 
     Mat_tup = Tuple(MatParam)
 
+    Mat_tup1 =   (  SetMaterialParams(Name="Mantle", Phase=1,
+                        HeatCapacity  = ConstantHeatCapacity()),
+                    SetMaterialParams(Name="Crust", Phase=2,
+                        HeatCapacity  = ConstantHeatCapacity(cp=1100J/kg/K))
+                 );
+
 
     # test computing material properties
     n = 100;
     Phases              = ones(Int64,n,n,n);
-    Phases[:,:,20:end] .= 2
+    Phases[:,:,20:end] .= 2;
 
-    Cp = zeros(size(Phases))
-    T  =  ones(size(Phases))*1500
-    P  =  zeros(size(Phases))
+    Cp = zeros(size(Phases));
+    T  =  ones(size(Phases))*1500;
+    P  =  zeros(size(Phases));
 
-    args=(;T=T)
+    args=(;T=T);
     compute_heatcapacity!(Cp, Mat_tup, Phases, args)    # computation routine w/out P (not used in most heat capacity formulations)     
+    @test sum(Cp[1,1,:]) ≈ 121399.0486067196
+
+    # check with array of constant properties (and no required input args)
+    args1=(;);
+    compute_heatcapacity!(Cp, Mat_tup1, Phases, args1)    # computation routine w/out P (not used in most heat capacity formulations)     
+    @test sum(Cp[1,1,:]) ≈ 109050.0
+
     num_alloc = @allocated compute_heatcapacity!(Cp, Mat_tup, Phases, args)
     @test sum(Cp[1,1,:]) ≈ 121399.0486067196
     @test num_alloc <= 32
@@ -187,6 +200,8 @@ using GeoParams
                         Conductivity = Set_TP_Conductivity("Mantle"));
 
     Mat_tup = Tuple(MatParam)
+
+
     # test computing material properties
     n = 100;
     Phases              = ones(Int64,n,n,n);
@@ -256,6 +271,40 @@ using GeoParams
     a   = nondimensionalize(a,CharUnits_GEO)
     Q_L = compute_latent_heat(a)
     @test Q_L ≈ 4e21
+
+    # Check that it works if we give a phase array (including with an empty field)
+    Mat_tup    =  ( SetMaterialParams(Name="Mantle", Phase=1,
+                    LatentHeat  = ConstantLatentHeat()),
+                SetMaterialParams(Name="Crust", Phase=2,
+                    LatentHeat  = ConstantLatentHeat(Q_L=153kJ/kg)),
+                SetMaterialParams(Name="MantleLithosphere", Phase=3)
+                )
+
+    # test computing material properties
+    n = 100;
+    Phases              = ones(Int64,n,n,n);
+    Phases[:,:,20:end] .= 2;
+    Phases[:,:,60:end] .= 3;
+
+    PhaseRatio  = zeros(n,n,n,3);
+    for i in CartesianIndices(Phases)
+        iz = Phases[i]
+        I = CartesianIndex(i,iz)
+        PhaseRatio[I] = 1.0  
+    end
+   
+    Hl   =  zeros(size(Phases));
+    z    =  ones(size(Phases))*10e3;
+    args = (;)
+    
+    compute_latent_heat!(Hl, Mat_tup, Phases, args) 
+    @test  minimum(Hl)  ≈ 0.0
+    @test  maximum(Hl)  ≈ 400
+    @test  Hl[50,50,50] ≈ 153.0
+    
+    compute_latent_heat!(Hl, Mat_tup, PhaseRatio, args)
+    @test sum(Hl)≈ 1.372e8
+
     # -----------------------
 
     # Radioactive heat ------
@@ -283,13 +332,19 @@ using GeoParams
 
     @test  sum(H_r) ≈ 3.678794411714423e-7
 
-    # Check that it works if we give a phase array
+    # Check that it works if we give a phase array (including with an empty field)
     Mat_tup    =  ( SetMaterialParams(Name="Mantle", Phase=1,
                     RadioactiveHeat  = ConstantRadioactiveHeat()),
                 SetMaterialParams(Name="Crust", Phase=2,
                     RadioactiveHeat  = ExpDepthDependentRadioactiveHeat()),
                 SetMaterialParams(Name="MantleLithosphere", Phase=3)
                 )
+    Mat_tup1    =  ( SetMaterialParams(Name="Mantle", Phase=1,
+                RadioactiveHeat  = ConstantRadioactiveHeat()),
+            SetMaterialParams(Name="Crust", Phase=2,
+                RadioactiveHeat  = ConstantRadioactiveHeat()),
+            SetMaterialParams(Name="MantleLithosphere", Phase=3)
+            )
 
     # test computing material properties
     n = 100;
@@ -308,10 +363,16 @@ using GeoParams
     z    =  ones(size(Phases))*10e3;
     args= (z=z,)
        
+    
     compute_radioactive_heat!(Hr, Mat_tup, Phases, args) 
     @test  minimum(Hr)  ≈ 0.0
     @test  maximum(Hr)  ≈ 1e-6
     @test  Hr[50,50,50] ≈ 3.678794411714423e-7
+    
+    args1 = (;)
+    compute_radioactive_heat!(Hr, Mat_tup1, Phases, args1) 
+    @test  Hr[50,50,50] ≈ 1e-6
+    
     
     num_alloc = @allocated compute_radioactive_heat!(Hr, Mat_tup, Phases, args)  
     @test num_alloc <= 32   # in the commandline this gives 0; while running the script not always

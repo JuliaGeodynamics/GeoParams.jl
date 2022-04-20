@@ -12,10 +12,13 @@ import Base.show, GeoParams.param_info
 abstract type AbstractLatentHeat{T} <: AbstractMaterialParam end
 
 export  compute_latent_heat,                  # calculation routines
+        compute_latent_heat!,
         param_info,
         ConstantLatentHeat                  # constant
         
-
+include("../Computations.jl")
+include("../Utils.jl")
+        
 # Constant  -------------------------------------------------------
 """
     ConstantLatentHeat(Q_L=400kJ/kg)
@@ -29,22 +32,38 @@ where ``Q_L`` is the latent heat [``kJ/kg``].
 @with_kw_noshow struct ConstantLatentHeat{T,U} <: AbstractLatentHeat{T} 
     Q_L::GeoUnit{T,U}         =   400kJ/kg                # Latent heat
 end
-ConstantLatentHeat(a...) = ConstantLatentHeat(convert.(GeoUnit,a)...)
+ConstantLatentHeat(args...) = ConstantLatentHeat(convert.(GeoUnit,args)...)
 
 function param_info(s::ConstantLatentHeat) # info about the struct
     return MaterialParamsInfo(Equation = L"Q_L = cst")
 end
 
 # Calculation routine
-function compute_latent_heat(s::ConstantLatentHeat)
+function  (s::ConstantLatentHeat{_T})(;kwargs...) where _T
     @unpack_val Q_L   = s
     
     return Q_L
 end
 
+compute_latent_heat(s::ConstantLatentHeat{_T}; kwargs...) where _T = s()
+
+function (s::ConstantLatentHeat{_T})(I::Integer...) where _T
+    @unpack_val Q_L   = s
+
+    return fill(Q_L, I...)
+end
+
+function compute_latent_heat!(Hl::AbstractArray{_T,N}, s::ConstantLatentHeat{_T}; kwargs...) where {_T,N}
+    @unpack_val Q_L   = s
+    for i in eachindex(Hl)
+        @inbounds Hl[i] = Q_L
+    end
+    return nothing
+end
+
 # Print info 
 function show(io::IO, g::ConstantLatentHeat)  
-    print(io, "Constant latent heat: Q_L=$(g.Q_L.val)")  
+    print(io, "Constant latent heat: Q_L=$(Value(g.Q_L))")  
 end
 #-------------------------------------------------------------------------
 
@@ -56,7 +75,29 @@ end
 Returns the latent heat `Q_L`
 
 """
-compute_latent_heat()
+#compute_latent_heat()
+
+
+# Computational routines needed for computations with the MaterialParams structure 
+function compute_latent_heat(s::AbstractMaterialParamsStruct, args) 
+    if isempty(s.LatentHeat)
+        return isempty(args) ? 0.0 : zero(typeof(args).types[1])  # return zero if not specified
+    else
+        return s.LatentHeat[1](args)
+    end
+end
+
+# add methods programatically
+for myType in (:ConstantLatentHeat,)
+@eval begin
+(s::$(myType))(args)= s(; args...)
+compute_latent_heat(s::$(myType), args) = s(args)
+compute_latent_heat!(H::AbstractArray{_T,N}, s::$(myType){_T}, args) where {_T,N} = compute_latent_heat!(H, s; args...)
+end
+end
+
+compute_latent_heat(args...)  = compute_param(compute_latent_heat, args...)
+compute_latent_heat!(args...) = compute_param!(compute_latent_heat, args...)
 
 
 
