@@ -41,28 +41,22 @@ function param_info(s::ConstantHeatCapacity) # info about the struct
 end
 
 # Calculation routine
-function compute_heatcapacity(s::ConstantHeatCapacity{_T}, P::_T=zero(_T), T::_T=zero(_T)) where _T
+function (s::ConstantHeatCapacity)(; kwargs...)
     @unpack_val cp   = s
     return cp
 end
 
-function compute_heatcapacity(s::ConstantHeatCapacity{_T},P::Quantity, T::Quantity) where _T
-    @unpack_units cp   = s
-    return cp
-end
+compute_heatcapacity(s::ConstantHeatCapacity{_T}; kwargs...) where _T = s()
 
 # Calculation routine
-function compute_heatcapacity!(cp_array::AbstractArray{_T}, s::ConstantHeatCapacity{_T}, P::_T=zero(_T), T::_T=zero(_T)) where _T
-    @unpack_val cp   = s
-    cp_array .= cp
+function compute_heatcapacity!(cp_array::AbstractArray{_T}, s::ConstantHeatCapacity{_T}; kwargs...) where _T
+    Threads.@threads for i in eachindex(cp_array)
+        @inbounds cp_array[i] = s()
+    end
     return nothing
 end
 
-function compute_heatcapacity!(cp_array::AbstractArray{_T,N}, s::ConstantHeatCapacity{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T,N}) where {N,_T}
-    @unpack_val cp   = s
-    cp_array .= cp
-    return nothing
-end
+# compute_heatcapacity!(cp_array::AbstractArray{_T}, s::ConstantHeatCapacity{_T}, args) where _T = compute_heatcapacity!(cp_array, s; args...) 
 
 # Print info 
 function show(io::IO, g::ConstantHeatCapacity)  
@@ -109,25 +103,8 @@ function param_info(s::T_HeatCapacity_Whittington) # info about the struct
 end
 
 # Calculation routine
-function compute_heatcapacity(s::T_HeatCapacity_Whittington{_T}, P::_T=zero(_T), T::_T=zero(_T)) where _T
+function (s::T_HeatCapacity_Whittington{_T})(; T::_T=zero(_T), kwargs...) where _T
     @unpack_val a0,a1,b0,b1,c0,c1, molmass, Tcutoff   = s
-    
-    cp = a0/molmass
-    
-    if T <= Tcutoff
-        a,b,c = a0,b0,c0
-    else
-        a,b,c = a1,b1,c1
-    end
-       
-    cp = (a + b*T - c/T^2)/molmass 
-    
-    return cp
-end
-
-
-function compute_heatcapacity(s::T_HeatCapacity_Whittington{_T}, P::Quantity, T::Quantity) where _T
-    @unpack_units a0,a1,b0,b1,c0,c1, molmass, Tcutoff   = s
     
     cp = a0/molmass
     
@@ -146,19 +123,23 @@ end
     compute_heatcapacity!(cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}, T::_T=zero(_T), P::_T=zero(_T)) where {_T,N}
  
 Computes T-dependent heat capacity in-place    
-"""
-function compute_heatcapacity!(cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T, N}) where {_T,N}
-    @unpack_val a0,a1,b0,b1,c0,c1, molmass, Tcutoff   = s
-   
+""" 
+function compute_heatcapacity!(cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}; T::AbstractArray{_T, N}, kwargs...) where {_T,N}   
     @inbounds for i in eachindex(T)
-        if T[i] <= Tcutoff
-            cp_array[i] = (a0 + b0*T[i] - c0/T[i]^2)/molmass
-        else
-            cp_array[i] = (a1 + b1*T[i] - c1/T[i]^2)/molmass
-        end
+        cp_array[i] = s(T=T[i])
     end
     return nothing
 end
+
+# add methods programatically
+for myType in (:ConstantHeatCapacity, :T_HeatCapacity_Whittington)
+    @eval begin
+        (s::$(myType))(args)= s(; args...)
+        compute_heatcapacity(s::$(myType), args) = s(args)
+        compute_heatcapacity!(k::AbstractArray{_T,N}, s::$(myType){_T}, args) where {_T,N} = compute_heatcapacity!(k, s; args...)
+    end
+end
+
 
 """
     compute_heatcapacity!(cp_array::AbstractArray{_T,N},s::T_HeatCapacity_Whittington{_T}, T::AbstractArray{_T,N},P::AbstractArray{_T,N}) where {_T,N}
@@ -229,8 +210,8 @@ compute_heatcapacity()
 
 Computes heat capacity if only temperature (and not pressure) is specified
 """
-compute_heatcapacity(s::AbstractHeatCapacity, T::AbstractArray{_T}) where _T =  compute_heatcapacity(s,similar(T), T)
-compute_heatcapacity!(cp_array::AbstractArray{_T}, s::AbstractHeatCapacity, T::AbstractArray{_T}) where _T =  compute_heatcapacity!(cp_array,s,similar(T), T)
+# compute_heatcapacity(s::AbstractHeatCapacity, T::AbstractArray{_T}) where _T =  compute_heatcapacity(s,similar(T), T)
+# compute_heatcapacity!(cp_array::AbstractArray{_T}, s::AbstractHeatCapacity, T::AbstractArray{_T}) where _T =  compute_heatcapacity!(cp_array,s,similar(T), T)
 
 
 """
@@ -241,8 +222,8 @@ Returns heat capacity if we are sure that we will only employ constant heat capa
 #compute_heatcapacity(s::ConstantHeatCapacity) =  compute_heatcapacity(0,0, s)
 
 # Computational routines needed for computations with the MaterialParams structure 
-function compute_heatcapacity(s::AbstractMaterialParamsStruct, P::_T=zero(_T),T::_T=zero(_T)) where {_T}
-    return compute_heatcapacity(s.HeatCapacity[1], P, T)
+function compute_heatcapacity(s::AbstractMaterialParamsStruct, args)
+    return s.HeatCapacity[1](args)
 end
 
 """

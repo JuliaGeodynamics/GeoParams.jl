@@ -93,7 +93,7 @@ export compute_conductivity,
         Set_TP_Conductivity
 
 using .MaterialParameters.LatentHeat
-export compute_latent_heat,
+export compute_latent_heat,compute_latent_heat!,
         ConstantLatentHeat
 
 using .MaterialParameters.RadioactiveHeat
@@ -138,5 +138,8 @@ end
 #Set functions aliases using @use
 include("aliases.jl")
 
+# export ntuple_idx()
+include("Utils.jl")
+export ntuple_idx
 
 end # module
