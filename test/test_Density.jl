@@ -87,7 +87,6 @@ using GeoParams
   args = (P=1e7, T=1500.0)
   @test compute_density(PD_data, args) ≈ 3042.836820256982 # named tuple syntax
   @test compute_density(PD_data, P=1e7, T=1500.0) ≈ 3042.836820256982 # optional parameter syntax
-  @test PD_data(P=1e7, T=1500.0) ≈ 3042.836820256982 # functor syntax
 
   # Do the same but non-dimensionalize the result
   CharDim  =  GEO_units();
