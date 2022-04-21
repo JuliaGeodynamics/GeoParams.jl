@@ -35,7 +35,7 @@ Struct that holds default parameters for the calculations
     Tcal_step::Float64 		= 1.0		# temperature step to caclulate zircon fraction (resolution of Zircon saturation curve discretization)
     max_x_zr::Float64 		= 0.001		# max fraction zircons at solidus
     zircon_number::Int64    = 100.0		# number of required zircons 
-    time_zr_growth::Float64 = 0.1e6		# Minimum time within T saturation range (This is what the method used in the R script, boils down too)
+    time_zr_growth::Float64 = 0.7e6		# Minimum time within T saturation range (This is what the method used in the R script, boils down too)
                                         # -> remain in the Zr saturation zone more than 1/3 of the time the Tt path with the longest time in the saturation zone
 end
 
