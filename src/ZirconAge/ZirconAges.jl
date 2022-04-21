@@ -122,7 +122,7 @@ function compute_zircons_Ttpath(time_years::AbstractArray{_T,1}, Tt_paths_Temp::
     # find all the Tt paths that go through the zircon saturation range & are at the end of the path still below Tsat (otherwise Zr are not yet crystallized)
     ID_col_er 		= findall( (maximum(Tt_paths_Temp1,dims=1).>Tmin) .& (Tt_paths_Temp1[end,:]' .< Tsat))
     n_zr			= zero(Tt_paths_Temp1)
-    @time compute_number_zircons!(n_zr, Tt_paths_Temp1, ZirconData)		# computes the number of zircons for every path
+    compute_number_zircons!(n_zr, Tt_paths_Temp1, ZirconData)		# computes the number of zircons for every path
 
     # find the number of timesteps for every path, during which the temperature is > Tmin and < Tsat
     length_trace 	= Vector{Float64}(undef,length(ID_col_er))
