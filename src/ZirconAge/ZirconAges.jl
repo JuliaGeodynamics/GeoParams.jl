@@ -177,10 +177,14 @@ function compute_zircons_Ttpath(time_years::AbstractArray{_T,1}, Tt_paths_Temp::
     replace!(Tt_paths_Temp1, NaN => 0.0)
     ID_col_er			= getindex.(ID_col_er, [2])
     for i in 1:length(ID_col_er)
-        k 				= maximum(findall( (Tt_paths_Temp1[:,ID_col_er[i]]) .== 0.0 ))
-        Tt_paths_Temp1[1:k,ID_col_er[i]] .= 0.0
+        ind = findall( (Tt_paths_Temp1[:,ID_col_er[i]]) .== 0.0 );
+        if ~isempty(ind)
+            k 				= maximum(ind)
+            Tt_paths_Temp1[1:k,ID_col_er[i]] .= 0.0
+        end
     end
 
+    
     zr_select			= zero(Tt_paths_Temp1)
     zr_select[Tt_paths_Temp1 .> 0.0] .= 1.0	
     n_zrc2_0			= zr_select.*n_zr						# filters out those Tt path that are still >Tsat @ the end 
