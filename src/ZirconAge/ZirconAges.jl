@@ -71,7 +71,6 @@ function  compute_number_zircons!(n_zr::AbstractArray{_T,N}, Tt_paths_Temp::Abst
     @unpack Tmin, Tsat, Tsol = ZirconData
     
     n_zircon_N_fit  = 	loess_fit_zircon_sat(ZirconData)			# loess fit through zircon saturation
-    n_zr = zero(Tt_paths_Temp)
     Threads.@threads for i in 1:size(Tt_paths_Temp,2)
         for j in 1:size(Tt_paths_Temp,1)
             T = Tt_paths_Temp[j,i]
@@ -80,6 +79,8 @@ function  compute_number_zircons!(n_zr::AbstractArray{_T,N}, Tt_paths_Temp::Abst
                 # There is an open PR in the package that may fix it
                 dat::_T      = Loess.predict(n_zircon_N_fit, T)		
                 n_zr[j,i]    = floor(dat)
+            else
+                n_zr[j,i]    = 0.0
             end
         end
     end
@@ -121,7 +122,7 @@ function compute_zircons_Ttpath(time_years::AbstractArray{_T,1}, Tt_paths_Temp::
     # find all the Tt paths that go through the zircon saturation range & are at the end of the path still below Tsat (otherwise Zr are not yet crystallized)
     ID_col_er 		= findall( (maximum(Tt_paths_Temp1,dims=1).>Tmin) .& (Tt_paths_Temp1[end,:]' .< Tsat))
     n_zr			= zero(Tt_paths_Temp1)
-    compute_number_zircons!(n_zr, Tt_paths_Temp1, ZirconData)		# computes the number of zircons for every path
+    @time compute_number_zircons!(n_zr, Tt_paths_Temp1, ZirconData)		# computes the number of zircons for every path
 
     # find the number of timesteps for every path, during which the temperature is > Tmin and < Tsat
     length_trace 	= Vector{Float64}(undef,length(ID_col_er))
@@ -159,7 +160,7 @@ function compute_zircons_Ttpath(time_years::AbstractArray{_T,1}, Tt_paths_Temp::
     if isempty(id)
         max_Ptpath = maximum(length_trace)*Δt 
         error("I don't have a single Pt-path that is sufficiently long within time_zr_growth (=$(time_zr_growth) yrs). 
-            The longest Pt-path I have is $(max_Ptpath) years. 
+            The Longest Pt-path I have is $(max_Ptpath) years. 
             Decrease this value within the ZirconDataAge struct with ZirconData=ZirconAgeData(time_zr_growth=0.1e6) & rerun.")
     end
     ID_col_er_1		= getindex.(ID_col_er[id], [2])
