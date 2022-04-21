@@ -4,6 +4,7 @@ module ZirconAges
 # Used in the Nat. Comm. publication "Estimating the current size and state of subvolcanic magma reservoirs"
 # 15/04/2022, Nico Riel & Boris Kaus
 
+import Base.Threads
 using Parameters
 using Loess, Statistics, StatsBase, KernelDensity, Loess
 
@@ -34,7 +35,7 @@ Struct that holds default parameters for the calculations
     Tcal_step::Float64 		= 1.0		# temperature step to caclulate zircon fraction (resolution of Zircon saturation curve discretization)
     max_x_zr::Float64 		= 0.001		# max fraction zircons at solidus
     zircon_number::Int64    = 100.0		# number of required zircons 
-    time_zr_growth::Float64 = 0.7e6		# Minimum time within T saturation range (This is what the method used in the R script, boils down too)
+    time_zr_growth::Float64 = 0.1e6		# Minimum time within T saturation range (This is what the method used in the R script, boils down too)
                                         # -> remain in the Zr saturation zone more than 1/3 of the time the Tt path with the longest time in the saturation zone
 end
 
@@ -70,8 +71,8 @@ function  compute_number_zircons!(n_zr::AbstractArray{_T,N}, Tt_paths_Temp::Abst
     @unpack Tmin, Tsat, Tsol = ZirconData
     
     n_zircon_N_fit  = 	loess_fit_zircon_sat(ZirconData)			# loess fit through zircon saturation
-    
-    for i in 1:size(Tt_paths_Temp,2)
+    n_zr = zero(Tt_paths_Temp)
+    Threads.@threads for i in 1:size(Tt_paths_Temp,2)
         for j in 1:size(Tt_paths_Temp,1)
             T = Tt_paths_Temp[j,i]
             if (T > Tsol) & (T < Tsat)
@@ -79,12 +80,10 @@ function  compute_number_zircons!(n_zr::AbstractArray{_T,N}, Tt_paths_Temp::Abst
                 # There is an open PR in the package that may fix it
                 dat::_T      = Loess.predict(n_zircon_N_fit, T)		
                 n_zr[j,i]    = floor(dat)
-            else
-                n_zr[j,i]    = 0.0
             end
         end
     end
-
+  
     nothing
 end
 
@@ -116,7 +115,6 @@ function compute_zircons_Ttpath(time_years::AbstractArray{_T,1}, Tt_paths_Temp::
     
     Tt_paths_Temp1 = copy(Tt_paths_Temp)
     
-
     Δt 				=	diff(time_years)[1]							# timestep [yrs]
     time_er_min 	= 	maximum(time_years)							# backward count
 
@@ -158,6 +156,12 @@ function compute_zircons_Ttpath(time_years::AbstractArray{_T,1}, Tt_paths_Temp::
     # find the Tt paths that have a number of timesteps in the saturation range greater than the defined min_step_n ()
     # this is to mimic that it takes some time to grow zircons
     id				= findall( length_trace .> min_step_n) 
+    if isempty(id)
+        max_Ptpath = maximum(length_trace)*Δt 
+        error("I don't have a single Pt-path that is sufficiently long within time_zr_growth (=$(time_zr_growth) yrs). 
+            The longest Pt-path I have is $(max_Ptpath) years. 
+            Decrease this value within the ZirconDataAge struct with ZirconData=ZirconAgeData(time_zr_growth=0.1e6) & rerun.")
+    end
     ID_col_er_1		= getindex.(ID_col_er[id], [2])
     
     int_zr_sat		= collect(Float64,  ID_min_time:1.0:(time_er_min/Δt)-min_step_n)
@@ -273,10 +277,10 @@ This computes the PDF (probability density function) with zircon age data from V
 
 """
 function compute_zircon_age_PDF(time_years_vecs::Vector{Vector{_T}}, Tt_paths_Temp_vecs::Vector{Vector{_T}}; ZirconData::ZirconAgeData = ZirconAgeData(), bandwidth=1e5, n_analyses=300) where _T
-
+    
     # Compute the probability that a zircon of certain age is sampled:
     time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time = compute_zircons_Ttpath(time_years_vecs, Tt_paths_Temp_vecs, ZirconData=ZirconData);
-
+    
     # Use this to compute PDF curves: 
     time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average  = zircon_age_PDF(ages_eruptible, number_zircons, bandwidth=bandwidth, n_analyses=n_analyses)
 
