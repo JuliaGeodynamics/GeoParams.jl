@@ -109,7 +109,8 @@ export compute_shearheating!, compute_shearheating,
 include("./ZirconAge/ZirconAges.jl")
 using   .ZirconAges
 export  ZirconAgeData, 
-        compute_zircon_age_PDF,  compute_zircons_Ttpath, zircon_age_PDF 
+        compute_zircon_age_PDF,  compute_zircons_Ttpath, 
+        zircon_age_PDF, compute_zircons_convert_vecs2mat 
 
 # Seismic velocities
 using .MaterialParameters.SeismicVelocity

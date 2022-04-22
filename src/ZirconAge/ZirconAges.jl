@@ -10,7 +10,8 @@ using Loess, Statistics, StatsBase, KernelDensity, Loess
 
 export  ZirconAgeData, 
         compute_zircon_age_PDF,  compute_zircons_Ttpath,  # calculation routines
-        zircon_age_PDF
+        zircon_age_PDF, 
+        compute_zircons_convert_vecs2mat
     
 """
     Declare function to calculate zircon fraction as function of a temperature profile
@@ -216,16 +217,8 @@ Internally, we interpolate this into a 2D matrix and a longer vector that includ
 """
 function compute_zircons_Ttpath(time_years_vecs::Vector{Vector{_T}}, Tt_paths_Temp_vecs::Vector{Vector{_T}}; ZirconData::ZirconAgeData = ZirconAgeData()) where _T
 
-    # Create a single vector with the time values:
-    time_years = unique(reduce(vcat,unique(time_years_vecs))); 
-
-    # Add the vectors to an array with T values
-    Tt_paths_Temp = zeros(Float64,length(time_years), length(Tt_paths_Temp_vecs))
-    for i in eachindex(Tt_paths_Temp_vecs)
-        istart = findall(time_years .== time_years_vecs[i][1])
-        iend   = findall(time_years .== time_years_vecs[i][end])
-        Tt_paths_Temp[istart[1]:iend[1], i] .= Tt_paths_Temp_vecs[i]
-    end
+    # convert to a vector with time & matrix with T values at every timestep
+    time_years, Tt_paths_Temp = compute_zircons_convert_vecs2mat(time_years_vecs, Tt_paths_Temp_vecs)
 
     # call main routine
     prob, ages_eruptible, number_zircons, T_av_time, T_sd_time = compute_zircons_Ttpath(time_years, Tt_paths_Temp, ZirconData=ZirconData)
@@ -234,6 +227,32 @@ function compute_zircons_Ttpath(time_years_vecs::Vector{Vector{_T}}, Tt_paths_Te
     return time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time 
 
 end
+
+
+"""
+    time_years, Ttpaths_mat = compute_zircons_convert_vecs2mat(time_years_vecs::Vector{Vector{Float64}}, Tt_paths_Temp_vecs::Vector{Vector{Float64}})     
+
+This converts a vector with Vectors contain time and temperature path's to a single time vector and a matrix that combines all vectors
+"""
+function compute_zircons_convert_vecs2mat(time_years_vecs::Vector{Vector{_T}}, Tt_paths_Temp_vecs::Vector{Vector{_T}}) where _T
+    
+    # Create a single vector with the time values:
+    time_years = unique(reduce(vcat,unique(time_years_vecs))); 
+
+    # Add the vectors to an array with T values
+    Tt_paths_mat = zeros(_T,length(time_years), length(Tt_paths_Temp_vecs))
+    for i in eachindex(Tt_paths_Temp_vecs)
+        istart = findall(time_years .== time_years_vecs[i][1])
+        iend   = findall(time_years .== time_years_vecs[i][end])
+        Tt_paths_mat[istart[1]:iend[1], i] .= Tt_paths_Temp_vecs[i]
+    end
+
+    return time_years, Tt_paths_mat
+
+end
+
+
+
 
 """
     zircon_age_PDF(ages_eruptible::AbstractArray{Float64,1}, number_zircons::AbstractArray{Float64,2}, bandwidth=1e5, n_analyses=300)
