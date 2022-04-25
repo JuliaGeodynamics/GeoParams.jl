@@ -31,16 +31,25 @@ include("../Computations.jl")
 """
     MeltingParam_Caricchi()
     
-Implements the T-dependent melting parameterisation used by Caricchi et al 
+Implements the T-dependent melting parameterisation used by Caricchi, Simpson et al. (as for example described in Simpson) 
 ```math  
-    \\theta = {(800.0 - (T + 273.15)) \\over 23.0} 
+    \\theta = {(a - (T + c)) \\over b} 
 ```
 ```math  
     \\phi_{melt} = {1.0 \\over (1.0 + e^\\theta)}
 ```
 
-Note that T is in Kelvin.
+Note that T is in Kelvin. As default parameters we employ:
+```math
+b=23
+a=800
+c=273.15
+```
+Which gives a reasonable fit to experimental data of granodioritic composition (Piwinskii and Wyllie, 1968)
 
+References
+====
+- Simpson G. (2017) Practical finite element modelling in Earth Sciences Using MATLAB.
 """
 @with_kw_noshow struct MeltingParam_Caricchi{T,U} <: AbstractMeltingParam{T}
     a::GeoUnit{T,U} = 800.0K

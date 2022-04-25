@@ -228,15 +228,20 @@ function PlotMeltFraction(p::AbstractMeltingParam; T=nothing, P=nothing, plt=not
     end
 
     phi = ones(size(T))
-    compute_meltfraction!(phi, p, ustrip.(P), ustrip.(Vector(T)))
+    dϕdT= zeros(size(T))
+    args=(;T=ustrip.(Vector(T)))
+    compute_meltfraction!(phi, p, args)
+    compute_dϕdT!(dϕdT, p, args)
 
     if isnothing(plt)
-       plt = plot(T_C, ustrip(phi), label=lbl)
+       plt1 = plot(T_C, ustrip(phi), label=lbl, ylabel="Melt Fraction \\Phi")
+       plt2 = plot(T_C, ustrip(dϕdT), label=lbl, ylabel="d\\Phi / dT")
     else
-       plt = plot!(T_C, ustrip(phi), label=lbl)
+       plt1 = plot!(T_C, ustrip(phi), label=lbl, ylabel="Melt Fraction \\Phi")
+       plt2 = plot!(T_C, ustrip(phi), label=lbl, ylabel="d\\Phi / dT")
     end   
-    plot!(plt,   xlabel="Temperature [C]",
-                 ylabel="Melt Fraction \\Phi")
+    plt = plot!(plt1,plt2,   xlabel="Temperature [C]", layout=(2,1))
+                 
     gui(plt)
 
     return T,phi, plt
