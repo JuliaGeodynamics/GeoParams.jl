@@ -41,9 +41,7 @@ Implements the T-dependent melting parameterisation used by Caricchi, Simpson et
 
 Note that T is in Kelvin. As default parameters we employ:
 ```math
-b=23
-a=800
-c=273.15
+b=23K,  a=800K , c=273.15K
 ```
 Which gives a reasonable fit to experimental data of granodioritic composition (Piwinskii and Wyllie, 1968)
 
