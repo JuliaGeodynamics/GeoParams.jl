@@ -532,6 +532,8 @@ end
 # Smooth melting function ------------------------------------------------
 
 """
+    SmoothMelting(; p=MeltingParam_4thOrder(), k_sol=0.2/K,  k_liq=0.2/K) 
+
 This smoothens the melting parameterisation ``p`` around the solidus ``T_{sol}`` and liquidus ``T_{liq}``
 using a smoothened Heaviside step functions for the solidus:
         
@@ -546,6 +548,7 @@ The resulting melt fraction ``\\phi`` is computed from the original melt fractio
 ```math  
     \\phi =  \\phi_0 H_{sol} H_{liq} + 1.0 - H_{liq}
 ``` 
+The width of the smoothening zones is controlled by ``k_{sol}, k_{liq}`` (larger values = sharper boundary).
 
 This is important, as jumps in the derivative ``dϕ/dT`` can cause numerical instabilities in latent heat computations, which is prevented with this smoothening.
 
@@ -578,8 +581,6 @@ julia> plot!(plt1,plt2,   xlabel="Temperature [C]", layout=(2,1))
 The derivative no longer has a jump now:
 
 ![MeltingParam_Smooth](./assets/img/MeltingParam_Smooth.png)
-
-The width of the smoothening zones is controlled by ``k_{sol}, k_{liq}`` (larger values = sharper boundary).
 
 """
 struct SmoothMelting{P,T,U} <: AbstractMeltingParam{T}
