@@ -30,5 +30,5 @@ The computational routines work with that as well.
 # Plotting routines
 You can use the routine `PlotMeltFraction` to create a plot, provided that the `Plots` package has been loaded
 ```@docs
-GeoParams.Plotting.PlotMeltFraction
+GeoParams.PlotMeltFraction
 ```
