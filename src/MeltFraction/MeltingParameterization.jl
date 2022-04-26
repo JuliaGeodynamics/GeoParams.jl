@@ -77,12 +77,6 @@ function (p::MeltingParam_Caricchi)(; T, kwargs...)
 end
 
 function compute_meltfraction!(ϕ::AbstractArray, p::MeltingParam_Caricchi; T, kwargs...)
-    if T isa Quantity
-        @unpack_units a, b, c = p
-    else
-        @unpack_val a, b, c = p
-    end
-
     for i in eachindex(T)
         @inbounds ϕ[i] = p(; T=T[i])
     end
@@ -102,13 +96,9 @@ function compute_dϕdT(p::MeltingParam_Caricchi; T, kwargs...)
 end
 
 function compute_dϕdT!(dϕdT::AbstractArray, p::MeltingParam_Caricchi; T, kwargs...)
-    if T isa Quantity
-        @unpack_units a, b, c = p
-    else
-        @unpack_val a, b, c = p
+    for i in eachindex(T)
+        @inbounds dϕdT[i] = compute_dϕdT(p, T=T[i])
     end
-
-    @. dϕdT = exp((a + c - T) / b) / (b * ((1.0 + exp((a + c - T) / b))^2))
 
     return nothing
 end
@@ -180,16 +170,9 @@ end
 function compute_meltfraction!(
     ϕ::AbstractArray, p::MeltingParam_5thOrder; T::AbstractArray, kwargs...
 )
-    if T isa Quantity
-        @unpack_units a, b, c, d, e, f, T_s, T_l = p
-    else
-        @unpack_val a, b, c, d, e, f, T_s, T_l = p
+    for i in eachindex(T)
+        @inbounds ϕ[i] = p(; T=T[i])
     end
-
-    @. ϕ = a * T^5 + b * T^4 + c * T^3 + d * T^2 + e * T + f
-
-    @views ϕ[T .< T_s] .= 0.0
-    @views ϕ[T .> T_l] .= 1.0
 
     return nothing
 end
@@ -212,16 +195,10 @@ end
 function compute_dϕdT!(
     dϕdT::AbstractArray, p::MeltingParam_5thOrder; T::AbstractArray, kwargs...
 )
-    if T isa Quantity
-        @unpack_units a, b, c, d, e, f, T_s, T_l = p
-    else
-        @unpack_val a, b, c, d, e, f, T_s, T_l = p
+
+    for i in eachindex(T)
+        @inbounds dϕdT[i] = compute_dϕdT(p, T=T[i])
     end
-
-    @. dϕdT = 5 * a * T^4 + 4 * b * T^3 + 3 * c * T^2 + 2 * d * T + e
-
-    @views dϕdT[T .< T_s] .= 0.0
-    @views dϕdT[T .> T_l] .= 0.0
 
     return nothing
 end
@@ -293,16 +270,9 @@ end
 function compute_meltfraction!(
     ϕ::AbstractArray, p::MeltingParam_4thOrder; T::AbstractArray, kwargs...
 )
-    if T isa Quantity
-        @unpack_units b, c, d, e, f, T_s, T_l = p
-    else
-        @unpack_val b, c, d, e, f, T_s, T_l = p
+    for i in eachindex(T)
+        @inbounds ϕ[i] = p(; T=T[i])
     end
-
-    @. ϕ = b * T^4 + c * T^3 + d * T^2 + e * T + f
-
-    @views ϕ[T .< T_s] .= 0.0
-    @views ϕ[T .> T_l] .= 1.0
 
     return nothing
 end
@@ -324,16 +294,10 @@ end
 function compute_dϕdT!(
     dϕdT::AbstractArray, p::MeltingParam_4thOrder; T::AbstractArray, kwargs...
 )
-    if T isa Quantity
-        @unpack_units b, c, d, e, T_s, T_l = p
-    else
-        @unpack_val b, c, d, e, T_s, T_l = p
+
+    for i in eachindex(T)
+        @inbounds dϕdT[i] = compute_dϕdT(p, T=T[i])
     end
-
-    @. dϕdT = 4 * b * T^3 + 3 * c * T^2 + 2 * d * T + e
-
-    @views dϕdT[T .< T_s] .= 0.0
-    @views dϕdT[T .> T_l] .= 0.0
 
     return nothing
 end
@@ -398,15 +362,10 @@ end
 function compute_meltfraction!(
     ϕ::AbstractArray, p::MeltingParam_Quadratic; T::AbstractArray, kwargs...
 )
-    if T isa Quantity
-        @unpack_units T_s, T_l = p
-    else
-        @unpack_val T_s, T_l = p
+ 
+    for i in eachindex(T)
+        @inbounds ϕ[i] = p(; T=T[i])
     end
-
-    @. ϕ = 1.0 - ((T_l - T) / (T_l - T_s))^2
-    @views ϕ[T .< T_s] .= 0.0
-    @views ϕ[T .> T_l] .= 1.0
 
     return nothing
 end
@@ -428,15 +387,10 @@ end
 function compute_dϕdT!(
     dϕdT::AbstractArray, p::MeltingParam_Quadratic; T::AbstractArray, kwargs...
 )
-    if T isa Quantity
-        @unpack_units T_s, T_l = p
-    else
-        @unpack_val T_s, T_l = p
-    end
 
-    @. dϕdT = (2T_l - 2T) / ((T_l - T_s)^2)
-    @views dϕdT[T .< T_s] .= 0.0
-    @views dϕdT[T .> T_l] .= 0.0
+    for i in eachindex(T)
+        @inbounds dϕdT[i] = compute_dϕdT(p, T=T[i])
+    end
 
     return nothing
 end
@@ -526,20 +480,10 @@ end
 function compute_meltfraction!(
     ϕ::AbstractArray, p::MeltingParam_Assimilation; T::AbstractArray, kwargs...
 )
-    if T isa Quantity
-        @unpack_units T_s,T_l,a   = p
-    else
-        @unpack_val T_s,T_l,a   = p
-    end       
 
-    X =   zero(T)
-    @. X = (T - T_s)/(T_l - T_s)
-    @. ϕ = a * (exp(2*log(100)*X) - 1.0 )
-
-    @views ϕ[X .> 0.5] .=  1.0 .- a .* exp.( 2.0*log(100).*(1.0 .- X[X.>0.5] )) 
-
-    @views ϕ[T.<T_s] .= 0.
-    @views ϕ[T.>T_l] .= 1.
+    for i in eachindex(T)
+        @inbounds ϕ[i] = p(; T=T[i])
+    end
 
     return nothing
 end
@@ -566,20 +510,11 @@ end
 function compute_dϕdT!(
     dϕdT::AbstractArray, p::MeltingParam_Assimilation; T::AbstractArray, kwargs...
 )
-    if T isa Quantity
-        @unpack_units T_s,T_l,a   = p
-    else
-        @unpack_val T_s,T_l,a   = p
-    end       
-            
-    X         =    zero(T)
-    @. X      =   (T .- T_s)./(T_l .- T_s)
-    @. dϕdT   =   (9.210340371976184*a*exp((9.210340371976184*T - 9.210340371976184*T_s) / (T_l - T_s))) / (T_l - T_s)
-
-    @views dϕdT[X.>0.5]  = (9.210340371976184.*a.*exp.(9.210340371976184 .+ (9.210340371976184.*T_s .- 9.210340371976184.*T[X.>0.5]) ./ (T_l - T_s))) ./ (T_l - T_s)
-    @views dϕdT[T.<T_s] .= 0.
-    @views dϕdT[T.>T_l] .= 0.
-
+   
+    for i in eachindex(T)
+        @inbounds dϕdT[i] = compute_dϕdT(p, T=T[i])
+    end
+  
     return nothing
 end
 
@@ -622,21 +557,32 @@ This is important, as jumps in the derivative ``dϕ/dT`` can cause numerical ins
 end
 
 # Calculation routines
-function (param::SmoothMelting)(; kwargs...)
-    @unpack_val k_sol,k_liq,p   = param
+function (p::SmoothMelting)(; kwargs...)
 
+    ϕ = p(; kwargs)
 
     return ϕ
 end
 
 
 function compute_meltfraction!(
-    ϕ::AbstractArray, param::SmoothMelting; kwargs...
+    ϕ::AbstractArray, param::SmoothMelting;  args...
 )
+   # @unpack_val k_sol,k_liq   = param
 
-    @unpack_val k_sol,k_liq,p     = param
+  
 
-    compute_meltfraction!(ϕ,p,args)
+    
+    # Compute the usual melt function
+    compute_meltfraction!(ϕ, param.p, args)
+    
+    T       =    args[:T]
+    Hsol    =    zero(T)
+    Hliq    =    zero(T)
+    T_s     =    param.p.T_s
+    T_l     =    param.p.T_l
+
+    @. Hsol =  1/(1+exp(-2*k_sol*(T - T_s - (2/k_sol))));
 
     return nothing
 end
