@@ -635,6 +635,7 @@ function compute_meltfraction!(
 end
 
 function compute_dϕdT(param::SmoothMelting; T, kwargs...)
+
     if T isa Quantity
         @unpack_units k_sol,k_liq  = param
     else
@@ -651,7 +652,7 @@ function compute_dϕdT(param::SmoothMelting; T, kwargs...)
     dHl_dT = 2k_liq*(-1.0 / ((1.0 + exp(-2k_liq*(T +  2 / k_liq - T_l)))^2))*exp(-2k_liq*(T +  2 / k_liq - T_l)) 
     
     # melt fraction & derivative 
-    dϕdT = compute_dϕdT(param.p,T=T, kwargs...)
+    dϕdT = compute_dϕdT(param.p, T=T)
     ϕ    = param.p(; T, kwargs...) 
     
     # The derivative of the function
@@ -667,7 +668,6 @@ function compute_dϕdT!(
     dϕdT::AbstractArray, p::SmoothMelting; T::AbstractArray, kwargs...
 )
     
-
     for i in eachindex(T)
         @inbounds dϕdT[i] = compute_dϕdT(p, T=T[i])
     end
