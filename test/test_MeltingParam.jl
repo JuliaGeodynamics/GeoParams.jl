@@ -201,6 +201,7 @@ using GeoParams
     
     # Test smoothening of the melting curves:
     p = SmoothMelting(p=MeltingParam_5thOrder())
+    @test isbits(p)
     T = collect(250:100:1250) * K .+ 273.15K
     phi_dim = zeros(size(T))
     args=(;T=ustrip.(T))
@@ -213,6 +214,7 @@ using GeoParams
 
     # try non-dimensionalisation
     p_nd = nondimensionalize(p, CharUnits_GEO)
+    @test isbits(p)
     @test isdimensional(p_nd.p.a)==false
     @test p_nd.p.a ≈  6968.639721576996
 
