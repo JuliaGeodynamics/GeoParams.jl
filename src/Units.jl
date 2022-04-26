@@ -480,7 +480,12 @@ function nondimensionalize(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) w
             
             # Replace field (using Setfield package):
             MatParam = set(MatParam, Setfield.PropertyLens{param}(), z)
-        
+        elseif isa(getfield(MatParam, param), AbstractMaterialParam)
+            # The field contains another AbstractMaterialParam
+            z=getfield(MatParam, param)
+            z = nondimensionalize(z, g)  
+            MatParam = set(MatParam, Setfield.PropertyLens{param}(), z)
+
         end
     end
     return MatParam 
@@ -574,6 +579,12 @@ function dimensionalize(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) wher
             z_dim   =   dimensionalize(z, g)
 
             # Replace field (using Setfield package):
+            MatParam =  set(MatParam, Setfield.PropertyLens{param}(), z_dim)
+
+        elseif isa(getfield(MatParam, param), AbstractMaterialParam)
+            # The field contains another AbstractMaterialParam
+            z       =   getfield(MatParam, param)
+            z_dim   =   dimensionalize(z, g)
             MatParam =  set(MatParam, Setfield.PropertyLens{param}(), z_dim)
         end
     end

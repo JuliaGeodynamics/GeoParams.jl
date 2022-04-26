@@ -203,8 +203,8 @@ The 1D curve can be evaluated at a specific pressure `P` which can be given as a
 
 # Example
 ```
-julia> p        =  MeltingParam_Caricchi()
-julia> T,phi,plt = PlotMeltFraction(p)
+julia> p          =  MeltingParam_Caricchi()
+julia> T,phi,dϕdT =  PlotMeltFraction(p)
 ```
 you can now save the figure to disk with:
 ```
@@ -244,7 +244,7 @@ function PlotMeltFraction(p::AbstractMeltingParam; T=nothing, P=nothing, plt=not
                  
     gui(plt)
 
-    return T,phi, plt
+    return T,phi,dϕdT
 end
 
 

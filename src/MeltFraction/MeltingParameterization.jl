@@ -343,7 +343,7 @@ function param_info(s::MeltingParam_Quadratic) # info about the struct
 end
 
 # Calculation routines
-function (p::MeltingParam_Quadratic)(; T::Real, kwargs...)
+function (p::MeltingParam_Quadratic)(; T, kwargs...)
     if T isa Quantity
         @unpack_units T_s, T_l = p
     else
@@ -370,7 +370,7 @@ function compute_meltfraction!(
     return nothing
 end
 
-function compute_dϕdT(p::MeltingParam_Quadratic; T::Real, kwargs...)
+function compute_dϕdT(p::MeltingParam_Quadratic; T, kwargs...)
     if T isa Quantity
         @unpack_units T_s, T_l = p
     else
@@ -528,7 +528,7 @@ end
 
 #-------------------------------------------------------------------------
 
-#=
+
 # Smooth melting function ------------------------------------------------
 
 """
@@ -549,55 +549,142 @@ The resulting melt fraction ``\\phi`` is computed from the original melt fractio
 
 This is important, as jumps in the derivative ``dϕ/dT`` can cause numerical instabilities in latent heat computations, which is prevented with this smoothening.
 
+Example
+====
+
+Lets have a look at the original 4th order parameterisation:
+```julia
+julia> using GeoParams, Plots
+julia> p = MeltingParam_4thOrder();
+julia> T= collect(650.0:1:1050.) .+ 273.15;
+julia> T,phi,dϕdT =  PlotMeltFraction(p,T=T);
+```
+
+Now lets do the same but with smoothening:
+```julia
+julia> p_s = SmoothMelting(p=MeltingParam_4thOrder(), k_liq=0.21/K);
+4th order polynomial melting curve: phi = -7.594512597174117e-10T^4 + 3.469192091489447e-6T^3 + -0.00592352980926T^2 + 4.482855645604745T + -1268.730161921053  963.15 K ≤ T ≤ 1270.15 K with smooth Heaviside function smoothening using k_sol=0.1 K⁻¹·⁰, k_liq=0.11 K⁻¹·⁰
+julia> T_s,phi_s,dϕdT_s =  PlotMeltFraction(p_s,T=T);
+```
+
+We can create plots of this with:
+```julia
+julia>  plt1 = plot(T.-273.15, phi, ylabel="Melt Fraction \\Phi", color=:red, label="original", xlabel="Temperature [C]")
+julia>  plt1 = plot(plt1, T.-273.15, phi_s,  color=:black, label="smoothened", legend=:bottomright)
+julia>  plt2 = plot(T.-273.15, dϕdT, ylabel="d\\Phi / dT", color=:red, label="original", xlabel="Temperature [C]")
+julia>  plt2 = plot(plt2, T.-273.15, dϕdT_s,  color=:black, label="smoothened", legend=:topright)
+julia> plot!(plt1,plt2,   xlabel="Temperature [C]", layout=(2,1))
+```
+The derivative no longer has a jump now:
+
+![MeltingParam_Smooth](./assets/img/MeltingParam_Smooth.png)
+
+The width of the smoothening zones is controlled by ``k_{sol}, k_{liq}`` (larger values = sharper boundary).
+
 """
-@with_kw_noshow struct SmoothMelting{T,P} <: AbstractMeltingParam{T}
-    p::P
-    k_sol::T = 0.1/K
-    k_liq::T = 0.1/K
+struct SmoothMelting{P,T,U} <: AbstractMeltingParam{T}
+    p::P 
+    k_sol::GeoUnit{T,U}  
+    k_liq::GeoUnit{T,U}  
 end
 
-# Calculation routines
-function (p::SmoothMelting)(; kwargs...)
+# Set default values:
+function SmoothMelting(; p=MeltingParam_4thOrder(), k_sol=0.2/K,  k_liq=0.2/K) 
+    k_sol = convert(GeoUnit,k_sol)
+    k_liq = convert(GeoUnit,k_liq)
+    #@show p, Value(k_sol), k_liq
+    SmoothMelting(p, k_sol, k_liq)
+end
 
-    ϕ = p(; kwargs)
+SmoothMelting(p::AbstractMeltingParam) =  SmoothMelting(p=p)
+#SmoothMelting(p::AbstractMeltingParam; k_liq) =  SmoothMelting(p=p, k_liq=convert.(GeoUnit,k_liq))
+
+
+# Calculation routines
+function (param::SmoothMelting)(; T, kwargs...)
+    if T isa Quantity
+        @unpack_units k_sol,k_liq  = param
+    else
+        @unpack_val k_sol,k_liq  = param
+        k_sol = param.k_sol.val
+    end  
+
+    ϕ = param.p(; T, kwargs...)     # Melt fraction computed in usual manner
+
+    T_s = param.p.T_s
+    H_s = 1.0/( 1.0 + exp(-2*k_sol*(T-T_s-(2/k_sol))));
+    
+    T_l = param.p.T_l
+    H_l = 1.0 - 1.0/( 1.0 + exp(-2*k_liq*(T-T_l+(2/k_liq))));
+
+    # Apply heaviside smoothening above liquidus & below solidus
+    ϕ = ϕ*H_s*H_l + 1.0 - H_l
 
     return ϕ
 end
 
 
 function compute_meltfraction!(
-    ϕ::AbstractArray, param::SmoothMelting;  args...
+    ϕ::AbstractArray, param::SmoothMelting;  T::AbstractArray, kwargs...
 )
-   # @unpack_val k_sol,k_liq   = param
-
-  
-
-    
-    # Compute the usual melt function
-    compute_meltfraction!(ϕ, param.p, args)
-    
-    T       =    args[:T]
-    Hsol    =    zero(T)
-    Hliq    =    zero(T)
-    T_s     =    param.p.T_s
-    T_l     =    param.p.T_l
-
-    @. Hsol =  1/(1+exp(-2*k_sol*(T - T_s - (2/k_sol))));
+    for i in eachindex(T)
+        @inbounds ϕ[i] = param(; T=T[i], kwargs=kwargs)
+    end
 
     return nothing
 end
 
+function compute_dϕdT(param::SmoothMelting; T, kwargs...)
+
+    if T isa Quantity
+        @unpack_units k_sol,k_liq  = param
+    else
+        @unpack_val k_sol,k_liq  = param
+    end   
+
+    # compute heaviside functions & derivatives of that vs. T
+    T_s = param.p.T_s
+    T_l = param.p.T_l
+    H_s = 1.0/( 1.0 + exp(-2*k_sol*(T-T_s-(2/k_sol))));
+    H_l = 1.0 - 1.0/( 1.0 + exp(-2*k_liq*(T-T_l+(2/k_liq))));
+    
+    dHs_dT = 2k_sol*( 1.0 / ((1.0 + exp(-2k_sol*(T + -2 / k_sol - T_s)))^2))*exp(-2k_sol*(T + -2 / k_sol - T_s))
+    dHl_dT = 2k_liq*(-1.0 / ((1.0 + exp(-2k_liq*(T +  2 / k_liq - T_l)))^2))*exp(-2k_liq*(T +  2 / k_liq - T_l)) 
+    
+    # melt fraction & derivative 
+    dϕdT = compute_dϕdT(param.p, T=T)
+    ϕ    = param.p(; T, kwargs...) 
+    
+    # The derivative of the function
+    # ϕ = ϕ(T)*H_s(T)*H_l(T)  + 1.0 - H_l
+    # versus T is
+
+    dϕdT_tot = dϕdT*H_s*H_l + ϕ*dHs_dT*H_l + ϕ*H_s*dHl_dT - dHl_dT
+
+    return dϕdT_tot
+end
+
+function compute_dϕdT!(
+    dϕdT::AbstractArray, p::SmoothMelting; T::AbstractArray, kwargs...
+)
+    
+    for i in eachindex(T)
+        @inbounds dϕdT[i] = compute_dϕdT(p, T=T[i])
+    end
+  
+    return nothing
+end
 
 # Print info 
 function show(io::IO, g::SmoothMelting)
     param = show(io,g.p);
     return print(
         io,
-        " with Heaviside smoothening using k_sol=$(g.k_sol), k_liq=$(g.k_liq)",
+        " with smooth Heaviside function smoothening using k_sol=$(Value(g.k_sol)), k_liq=$(Value(g.k_liq))",
     )
 end
 #-------------------------------------------------------------------------
-=#
+
 
 """
     compute_meltfraction(P,T, p::AbstractPhaseDiagramsStruct)
@@ -678,6 +765,7 @@ for myType in (
     :MeltingParam_4thOrder,
     :MeltingParam_Quadratic,
     :MeltingParam_Assimilation,
+    :SmoothMelting,
 )
     @eval begin
         (p::$(myType))(args) = p(; args...)
