@@ -197,4 +197,16 @@ using GeoParams
 
     compute_dϕdT!(dϕdT, Mat_tup, PhaseRatio, args)
     @test sum(dϕdT) / n^3 ≈ 0.000176112129245805
+
+    
+    # Test smoothening of the melting curves
+    p = SmoothMelting(p=MeltingParam_5thOrder())
+    T = collect(250:100:1250) * K .+ 273.15K
+    phi_dim = zeros(size(T))
+    args=(;T=ustrip.(T))
+    compute_meltfraction!(phi_dim, p, args)
+    @test sum(phi_dim) ≈ 4.708294885812877
+
+    
+
 end
