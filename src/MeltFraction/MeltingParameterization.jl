@@ -9,6 +9,8 @@ using GeoParams:
     AbstractMaterialParam, PhaseDiagram_LookupTable, AbstractMaterialParamsStruct
 import Base.show, GeoParams.param_info
 using ..MaterialParameters: MaterialParamsInfo
+using Setfield # allows modifying fields in immutable struct
+
 
 abstract type AbstractMeltingParam{T} <: AbstractMaterialParam end
 
@@ -53,9 +55,10 @@ References
 - Simpson G. (2017) Practical finite element modelling in Earth Sciences Using MATLAB.
 """
 @with_kw_noshow struct MeltingParam_Caricchi{T,U} <: AbstractMeltingParam{T}
-    a::GeoUnit{T,U} = 800.0K
-    b::GeoUnit{T,U} = 23.0K
-    c::GeoUnit{T,U} = 273.15K # shift from C to K
+    a::GeoUnit{T,U}     = 800.0K
+    b::GeoUnit{T,U}     = 23.0K
+    c::GeoUnit{T,U}     = 273.15K # shift from C to K
+    apply_bounds::Bool  = true
 end
 MeltingParam_Caricchi(args...) = MeltingParam_Caricchi(convert.(GeoUnit, args)...)
 
@@ -142,6 +145,7 @@ The default values are for a composite liquid-line-of-descent:
     f::GeoUnit{T,U6} = -4.790664658179178e+03 * NoUnits
     T_s::GeoUnit{T,U} = 963.15K
     T_l::GeoUnit{T,U} = 1388.2K
+    apply_bounds::Bool  = true
 end
 MeltingParam_5thOrder(args...) = MeltingParam_5thOrder(convert.(GeoUnit, args)...)
 
@@ -152,16 +156,18 @@ end
 # Calculation routines
 function (p::MeltingParam_5thOrder)(; T, kwargs...)
     if T isa Quantity
-        @unpack_units a, b, c, d, e, f, T_s, T_l = p
+        @unpack_units a, b, c, d, e, f, T_s, T_l  = p
     else
         @unpack_val a, b, c, d, e, f, T_s, T_l = p
     end
 
     ϕ = a * T^5 + b * T^4 + c * T^3 + d * T^2 + e * T + f
-    if T < T_s
-        ϕ = 0.0
-    elseif T > T_l
-        ϕ = 1.0
+    if p.apply_bounds
+        if T < T_s
+            ϕ = 0.0
+        elseif T > T_l
+            ϕ = 1.0
+        end
     end
 
     return ϕ
@@ -185,7 +191,7 @@ function compute_dϕdT(p::MeltingParam_5thOrder; T::Real, kwargs...)
     end
     
     dϕdT = 5 * a * T^4 + 4 * b * T^3 + 3 * c * T^2 + 2 * d * T + e
-    if T < T_s || T > T_l
+    if (T < T_s || T > T_l) && p.apply_bounds
         dϕdT = 0.0
     end
 
@@ -242,6 +248,7 @@ The default values are for Tonalite experiments from Marxer and Ulmer (2019):
     f::GeoUnit{T,U6} = -1.268730161921053e+03 * NoUnits
     T_s::GeoUnit{T,U} = 963.15K
     T_l::GeoUnit{T,U} = 1270.15K
+    apply_bounds::Bool  = true
 end
 MeltingParam_4thOrder(args...) = MeltingParam_4thOrder(convert.(GeoUnit, args)...)
 
@@ -258,10 +265,12 @@ function (p::MeltingParam_4thOrder)(; T::Real, kwargs...)
     end
 
     ϕ = b * T^4 + c * T^3 + d * T^2 + e * T + f
-    if T < T_s
-        ϕ = 0.0
-    elseif T > T_l
-        ϕ = 1.0
+    if p.apply_bounds
+        if T < T_s
+            ϕ = 0.0
+        elseif T > T_l
+            ϕ = 1.0
+        end
     end
 
     return ϕ
@@ -285,7 +294,7 @@ function compute_dϕdT(p::MeltingParam_4thOrder; T::Real, kwargs...)
     end
 
     dϕdT = 4 * b * T^3 + 3 * c * T^2 + 2 * d * T + e
-    if T < T_s || T > T_l
+    if (T < T_s || T > T_l) && p.apply_bounds
         dϕdT = 0.0
     end
     return dϕdT
@@ -333,8 +342,9 @@ This was used, among others, in Tierney et al. (2016) Geology
 
 """
 @with_kw_noshow struct MeltingParam_Quadratic{T,U} <: AbstractMeltingParam{T}
-    T_s::GeoUnit{T,U} = 963.15K
-    T_l::GeoUnit{T,U} = 1273.15K
+    T_s::GeoUnit{T,U}   = 963.15K
+    T_l::GeoUnit{T,U}   = 1273.15K
+    apply_bounds::Bool  = true
 end
 MeltingParam_Quadratic(args...) = MeltingParam_Quadratic(convert.(GeoUnit, args)...)
 
@@ -351,10 +361,12 @@ function (p::MeltingParam_Quadratic)(; T, kwargs...)
     end
 
     ϕ = 1.0 - ((T_l - T) / (T_l - T_s))^2
-    if T > T_l
-        ϕ = 1.0
-    elseif T < T_s
-        ϕ = 0.0
+    if p.apply_bounds
+        if T > T_l
+            ϕ = 1.0
+        elseif T < T_s
+            ϕ = 0.0
+        end
     end
     return ϕ
 end
@@ -378,7 +390,7 @@ function compute_dϕdT(p::MeltingParam_Quadratic; T, kwargs...)
     end
 
     dϕdT = (2T_l - 2T) / ((T_l - T_s)^2)
-    if T > T_l || T < T_s
+    if (T > T_l || T < T_s) && p.apply_bounds
         dϕdT = 0.0
     end
     return dϕdT
@@ -446,6 +458,7 @@ References
     T_s::GeoUnit{T,U}   =   973.15K
     T_l::GeoUnit{T,U}   =   1173.15K
     a::GeoUnit{T,U1}    =   0.005NoUnits
+    apply_bounds::Bool  =   true
 end
 MeltingParam_Assimilation(args...) = MeltingParam_Assimilation(convert.(GeoUnit,args)...)
 
@@ -468,11 +481,12 @@ function (p::MeltingParam_Assimilation)(; T::Real, kwargs...)
     else
         ϕ   =    1.0 - a * exp(2*log(100)*(1-X) )
     end
-   
-    if T>T_l
-        ϕ = 1.0
-    elseif T<T_s
-        ϕ = 0.0
+    if p.apply_bounds
+        if T>T_l
+            ϕ = 1.0
+        elseif T<T_s
+            ϕ = 0.0
+        end
     end
     return ϕ
 end
@@ -501,7 +515,7 @@ function compute_dϕdT(p::MeltingParam_Assimilation; T::Real, kwargs...)
         dϕdT   = (9.210340371976184*a*exp(9.210340371976184 + (9.210340371976184*T_s - 9.210340371976184*T) / (T_l - T_s))) / (T_l - T_s)
     end
 
-    if T>T_l || T<T_s
+    if (T>T_l || T<T_s) && p.apply_bounds
         dϕdT = 0.0
     end
     return dϕdT
@@ -593,7 +607,7 @@ end
 function SmoothMelting(; p=MeltingParam_4thOrder(), k_sol=0.2/K,  k_liq=0.2/K) 
     k_sol = convert(GeoUnit,k_sol)
     k_liq = convert(GeoUnit,k_liq)
-    #@show p, Value(k_sol), k_liq
+    p = @set p.apply_bounds = false
     SmoothMelting(p, k_sol, k_liq)
 end
 
