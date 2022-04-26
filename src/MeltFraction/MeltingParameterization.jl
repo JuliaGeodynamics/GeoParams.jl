@@ -21,7 +21,8 @@ export  compute_meltfraction,
         MeltingParam_4thOrder,
         MeltingParam_5thOrder,
         MeltingParam_Quadratic,
-        MeltingParam_Assimilation
+        MeltingParam_Assimilation,
+        SmoothMelting
         
         
 include("../Utils.jl")
@@ -43,7 +44,9 @@ Note that T is in Kelvin. As default parameters we employ:
 ```math
 b=23K,  a=800K , c=273.15K
 ```
-Which gives a reasonable fit to experimental data of granodioritic composition (Piwinskii and Wyllie, 1968)
+Which gives a reasonable fit to experimental data of granodioritic composition (Piwinskii and Wyllie, 1968):
+
+![MeltParam_Carrichi](./assets/img/MeltingParam_Caricchi.png)
 
 References
 ====
@@ -131,6 +134,8 @@ Uses a 5th order polynomial to describe the melt fraction `phi` between solidus 
     \\phi = 0  \\textrm{   if   } T<T_s
 ```
 Temperature `T` is in Kelvin.
+
+![MeltingParam_5thOrder](./assets/img/MeltingParam_5thOrder.png)
 
 The default values are for a composite liquid-line-of-descent:
 - the upper part is for Andesite from: (Blatter, D. L. & Carmichael, I. S. (2001) Hydrous phase equilibria of a Mexican highsilica andesite: a candidate for a mantle origin? Geochim. Cosmochim. Acta 65, 4043–4065
@@ -246,6 +251,8 @@ Uses a 4th order polynomial to describe the melt fraction `phi` between solidus 
 ```
 Temperature `T` is in Kelvin.
 
+![MeltingParam_4thOrder](./assets/img/MeltingParam_4thOrder.png)
+
 The default values are for Tonalite experiments from Marxer and Ulmer (2019):
 - Marxer, F. & Ulmer, P. (2019) Crystallisation and zircon saturation of calc-alkaline tonalite from the Adamello Batholith at upper crustal conditions: an experimental study. *Contributions Mineral. Petrol.* 174, 84
 
@@ -355,6 +362,9 @@ Quadratic melt fraction parameterisation where melt fraction ``\\phi`` depends o
     \\phi = 0.0 \\textrm{ if } T<T_s 
 ```
 Temperature `T` is in Kelvin.
+
+![MeltingParam_Quadratic](./assets/img/MeltingParam_Quadratic.png)
+
 This was used, among others, in Tierney et al. (2016) Geology
 
 """
@@ -464,6 +474,8 @@ Here, the fraction of molten and assimilated host rocks ``\\phi`` depends on the
     \\phi = 0.0 \\textrm{ if } T<T_s 
 ```
 Temperature `T` is in Kelvin.
+
+![MeltingParam_Assimilation](./assets/img/MeltingParam_Assimilation.png)
 
 This was used, among others, in Tierney et al. (2016), who employed as default parameters:
 ```math  
@@ -580,6 +592,53 @@ function show(io::IO, g::MeltingParam_Assimilation)
 end
 
 #-------------------------------------------------------------------------
+
+
+#=
+# Smooth melting function ------------------------------------------------
+
+"""
+This smoothens the melting parameterisation ``p`` around the solidus ``T_{sol}`` and liquidus ``T_{liq}``
+using smoothened Heaviside step functions for the solidus:
+        
+```math  
+    H_{sol} =  {1.0 \\over { 1 + \\exp( -2 k_{sol} (T - T_{sol} - {2 \\over k_{sol}}) )  }}
+```        
+and liquidus:        
+```math  
+    H_{liq} =  {1.0 \\over { 1 + \\exp( -2 k_{sol} (T - T_{sol} - {2 \\over k_{sol}}) )  }}
+```  
+
+This is important, as jumps in the derivative ``dϕ/dT`` can cause numerical instabilities in latent heat computations, which is reduced or prevented with this smoothening.
+
+
+"""
+@with_kw_noshow struct SmoothMelting{T,P} <: AbstractMeltingParam{T}
+    p::P
+    k_sol::T = 0.1/K
+    k_liq::T = 0.1/K
+end
+
+# Calculation routines
+function (param::SmoothMelting)(; kwargs...)
+    @unpack_val k_sol,k_liq,p   = param
+    
+
+    return ϕ
+end
+
+
+
+# Print info 
+function show(io::IO, g::SmoothMelting)
+    param = show(io,g.p);
+    return print(
+        io,
+        " with Heaviside smoothening using k_sol=$(g.k_sol), k_liq=$(g.k_liq)",
+    )
+end
+#-------------------------------------------------------------------------
+=#
 
 
 """

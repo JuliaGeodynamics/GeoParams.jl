@@ -125,7 +125,7 @@ export  compute_meltfraction,   compute_meltfraction!,       # calculation routi
         compute_dϕdT,           compute_dϕdT!,
         MeltingParam_Caricchi,  MeltingParam_4thOrder, 
         MeltingParam_5thOrder,  MeltingParam_Quadratic,
-        MeltingParam_Assimilation
+        MeltingParam_Assimilation, SmoothMelting
 
 
 # Add plotting routines - only activated if the "Plots.jl" package is loaded 
