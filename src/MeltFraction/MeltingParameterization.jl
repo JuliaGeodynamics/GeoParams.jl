@@ -568,6 +568,7 @@ julia> T_s,phi_s,dϕdT_s =  PlotMeltFraction(p_s,T=T);
 ```
 
 We can create plots of this with:
+```julia
 julia>  plt1 = plot(T.-273.15, phi, ylabel="Melt Fraction \\Phi", color=:red, label="original", xlabel="Temperature [C]")
 julia>  plt1 = plot(plt1, T.-273.15, phi_s,  color=:black, label="smoothened", legend=:bottomright)
 julia>  plt2 = plot(T.-273.15, dϕdT, ylabel="d\\Phi / dT", color=:red, label="original", xlabel="Temperature [C]")
@@ -577,6 +578,8 @@ julia> plot!(plt1,plt2,   xlabel="Temperature [C]", layout=(2,1))
 The derivative no longer has a jump now:
 
 ![MeltingParam_Smooth](./assets/img/MeltingParam_Smooth.png)
+
+The width of the smoothening zones is controlled by ``k_{sol}, k_{liq}`` (larger values = sharper boundary).
 
 """
 struct SmoothMelting{P,T,U} <: AbstractMeltingParam{T}
