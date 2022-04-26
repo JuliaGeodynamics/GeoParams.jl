@@ -135,7 +135,7 @@ Uses a 5th order polynomial to describe the melt fraction `phi` between solidus 
 ```
 Temperature `T` is in Kelvin.
 
-![MeltingParam_5thOrder](./assets/img/MeltingParam_5thOrder.png)
+![MeltingParam_5thOrder](./assets/img/MeltingParam_5thorder.png)
 
 The default values are for a composite liquid-line-of-descent:
 - the upper part is for Andesite from: (Blatter, D. L. & Carmichael, I. S. (2001) Hydrous phase equilibria of a Mexican highsilica andesite: a candidate for a mantle origin? Geochim. Cosmochim. Acta 65, 4043–4065
@@ -251,7 +251,7 @@ Uses a 4th order polynomial to describe the melt fraction `phi` between solidus 
 ```
 Temperature `T` is in Kelvin.
 
-![MeltingParam_4thOrder](./assets/img/MeltingParam_4thOrder.png)
+![MeltingParam_4thOrder](./assets/img/MeltingParam_4thorder.png)
 
 The default values are for Tonalite experiments from Marxer and Ulmer (2019):
 - Marxer, F. & Ulmer, P. (2019) Crystallisation and zircon saturation of calc-alkaline tonalite from the Adamello Batholith at upper crustal conditions: an experimental study. *Contributions Mineral. Petrol.* 174, 84
@@ -593,24 +593,26 @@ end
 
 #-------------------------------------------------------------------------
 
-
 #=
 # Smooth melting function ------------------------------------------------
 
 """
 This smoothens the melting parameterisation ``p`` around the solidus ``T_{sol}`` and liquidus ``T_{liq}``
-using smoothened Heaviside step functions for the solidus:
+using a smoothened Heaviside step functions for the solidus:
         
 ```math  
     H_{sol} =  {1.0 \\over { 1 + \\exp( -2 k_{sol} (T - T_{sol} - {2 \\over k_{sol}}) )  }}
 ```        
 and liquidus:        
 ```math  
-    H_{liq} =  {1.0 \\over { 1 + \\exp( -2 k_{sol} (T - T_{sol} - {2 \\over k_{sol}}) )  }}
+    H_{liq} =  1.0 - {1.0 \\over { 1 + \\exp( -2 k_{liq} (T - T_{liq} + {2 \\over k_{liq}}) )  }}
 ```  
+The resulting melt fraction ``\\phi`` is computed from the original melt fraction ``\\phi_0`` (computed using one of the methods above) as:
+```math  
+    \\phi =  \\phi_0 H_{sol} H_{liq} + 1.0 - H_{liq}
+``` 
 
-This is important, as jumps in the derivative ``dϕ/dT`` can cause numerical instabilities in latent heat computations, which is reduced or prevented with this smoothening.
-
+This is important, as jumps in the derivative ``dϕ/dT`` can cause numerical instabilities in latent heat computations, which is prevented with this smoothening.
 
 """
 @with_kw_noshow struct SmoothMelting{T,P} <: AbstractMeltingParam{T}
@@ -622,11 +624,22 @@ end
 # Calculation routines
 function (param::SmoothMelting)(; kwargs...)
     @unpack_val k_sol,k_liq,p   = param
-    
+
 
     return ϕ
 end
 
+
+function compute_meltfraction!(
+    ϕ::AbstractArray, param::SmoothMelting; kwargs...
+)
+
+    @unpack_val k_sol,k_liq,p     = param
+
+    compute_meltfraction!(ϕ,p,args)
+
+    return nothing
+end
 
 
 # Print info 
@@ -639,7 +652,6 @@ function show(io::IO, g::SmoothMelting)
 end
 #-------------------------------------------------------------------------
 =#
-
 
 """
     compute_meltfraction(P,T, p::AbstractPhaseDiagramsStruct)
@@ -776,8 +788,8 @@ compute_dϕdT(args...) = compute_param(compute_dϕdT, args...)
 """
     compute_dϕdT!(ϕ::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
 
-Computates the derivative of melt fraction `ϕ` versus temperature `T`, ``\\partial \\phi} \\over {\\partial T}`` for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
-This is employed in computing latent heat terms in an implicit manner, for example
+Computates the derivative of melt fraction `ϕ` versus temperature `T`, ``{\\partial \\phi} \\over {\\partial T}`` for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
+This is employed, for example, in computing latent heat terms in an implicit manner.
 """
 compute_dϕdT!(args...) = compute_param!(compute_dϕdT, args...)
 
