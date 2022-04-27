@@ -210,7 +210,7 @@ using GeoParams
 
     dϕdT = zeros(size(T))
     compute_dϕdT!(dϕdT, p, args)
-    @test sum(dϕdT) ≈ 0.006484458815423713
+    @test sum(dϕdT) ≈ 0.006484456307540648
 
     # try non-dimensionalisation
     p_nd = nondimensionalize(p, CharUnits_GEO)
