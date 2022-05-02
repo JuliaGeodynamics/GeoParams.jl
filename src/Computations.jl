@@ -24,7 +24,7 @@ end
 #---------------------------------------------------------------------------------------------------------------------------#
 #Computational routines for Phases
 
-performs computation given a single Phase
+# performs computation given a single Phase
 @inline function compute_param(
     fn::F, MatParam::Tuple{N,AbstractMaterialParamsStruct}, Phase::Int64, args
 ) where {F,N}
