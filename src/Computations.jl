@@ -25,21 +25,14 @@ end
 #Computational routines for Phases
 
 # performs computation given a single Phase
-@inline function compute_param(
-    fn::F, MatParam::Tuple{N,AbstractMaterialParamsStruct}, Phase::Int64, args
-) where {F,N}
-    Phase_tup = ntuple(i -> MatParam[i].Phase, Val(N))
-    idx = find_ind(Phase_tup, Phase)
-    T = isempty(args) ? 0.0 : zero(typeof(args).types[1])
-    out = ntuple(Val(N)) do i
-        Base.@_inline_meta
-        if i == idx
-            return fn(MatParam[i], args)
-        else
-            return T
-        end
+@inline @generated function compute_param(
+    fn::F,MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Int64, args
+) where {F, N}
+    quote
+        T = isempty(args) ? 0.0 : zero(typeof(args).types[1])
+        out = T
+        Base.Cartesian.@nexprs $N i-> out += MatParam[i].Phase == Phase ? fn(MatParam[i], args) : T
     end
-    return out[idx]
 end
 
 function compute_param(
