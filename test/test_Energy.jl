@@ -142,6 +142,12 @@ using GeoParams
     k_nd     =   compute_conductivity(cond2_nd, T_nd)
     @test sum(k_nd) ≈ 35.01591097886205
 
+    k1      =   zeros(size(T));
+    args    =   (;T=ustrip.(T))
+    compute_conductivity!(k1, cond2, args)
+    @test sum(abs.(k-k1)) < 1e-13
+    
+
     # Dimensionalize again and double-check the results
     @test sum(abs.(ustrip.(k_nd*CharUnits_GEO.conductivity) - k)) < 1e-11
 

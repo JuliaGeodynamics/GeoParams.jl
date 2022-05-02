@@ -120,10 +120,12 @@ julia> savefig(plt,"Tdependent_heatcapacity.png")
 function PlotHeatCapacity(cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=nothing)
 
     if isnothing(T)
-        T = (273:10:1250)*K
+        T = collect(273.:10:1250)*K
     end
 
-    Cp       =   compute_heatcapacity(T,cp)
+    args = (;T=ustrip.(T))
+    Cp = zeros(size(T))
+    compute_heatcapacity!(Cp, cp, args)
     if length(Cp) == 1
         Cp = ones(size(T))*Cp
     end
@@ -166,13 +168,16 @@ julia> savefig(plt,"Tdependent_conductivity.png")
 function PlotConductivity(k::AbstractConductivity; T=nothing, P=nothing, plt=nothing, lbl=nothing)
 
     if isnothing(T)
-        T = (273:10:1250)*K
+        T = collect(273.:10:1250)*K
     end
     if isnothing(P)
         P = 1e6Pa*ones(size(T))
     end
 
-    Cond       =   compute_conductivity(P,T,k)
+    args = (;T=ustrip.(T))
+    Cond = zeros(size(T))
+    
+    compute_conductivity!(Cond, k, args)
     if length(Cond) == 1
         Cond = ones(size(T))*Cond
     end
