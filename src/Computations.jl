@@ -50,7 +50,9 @@ end
 ) where {F,ndim,N}
     @inbounds for I in eachindex(Phases)
         k = keys(args)
-        v = getindex.(values(args), I)
+        #v = getindex.(values(args), I)      # only works if all args have the same size (array)
+        i = min.(length.(values(args)),I)    # returns 1 for scalar and I otherwise
+        v = getindex.(values(args), i)       # works for arrays & scalars in args
         argsi = (; zip(k, v)...)
         rho[I] = compute_param(fn, MatParam, Phases[I], argsi)
     end
@@ -78,10 +80,13 @@ function compute_param!(
     if M != (N + 1)
         error("The PhaseRatios array should have one dimension more than the other arrays")
     end
-
+    #I1 = last(rho)
     @inbounds for I in CartesianIndices(rho)
         k = keys(args)
+        #Ii = min.(length.(values(args)),I)    # returns 1 for scalar and I otherwise
+        #v = getindex.(values(args), Tuple(Ii)...)
         v = getindex.(values(args), Tuple(I)...)
+        
         argsi = (; zip(k, v)...)
         # unroll the dot product
         val = Ref(zero(_T))
