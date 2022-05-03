@@ -21,11 +21,11 @@ NOTE: As of now (version 0.3.6), the package remains under development and the A
 * [1. Nondimensionalization](#1-nondimensionalization) 
 * [2. Material parameters](#2-material-parameters)
 * [3. Plotting and output](#3-plotting-and-output)
-* [4. Computations](#4-Computationss)
-* [5. Installation](#4-installation)
-* [6. Dependencies](#5-dependencies)
-* [7. Contributing](#6-contributing)
-* [8. Funding](#7-funding)
+* [4. Computational engine](#4-computational-engine)
+* [5. Installation](#5-installation)
+* [6. Dependencies](#6-dependencies)
+* [7. Contributing](#7-contributing)
+* [8. Funding](#8-funding)
 
 ### 1. Nondimensionalization 
 Typical geodynamic simulations involve dimensions on the order of 10's-1000's of kilometers, and viscosities on the order of ~1e20 Pas. If such values are directly employed in numerical solvers, they may result in roundoff errors. It is therefore common practice to nondimensionalize the input parameters by dividing them by typical values such that the result gives numbers that are closer to one.

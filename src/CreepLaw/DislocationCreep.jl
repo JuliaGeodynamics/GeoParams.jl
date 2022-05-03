@@ -11,7 +11,8 @@ using ..MaterialParameters: MaterialParamsInfo
 import GeoParams.param_info
 
 export  DislocationCreep,
-        SetDislocationCreep
+        SetDislocationCreep,
+        DislocationCreep_info
 
 const AxialCompression, SimpleShear, Invariant = 1,2,3
 
