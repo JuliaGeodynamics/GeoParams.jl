@@ -109,10 +109,10 @@ end
 
 # Computational routines needed for computations with the MaterialParams structure 
 function compute_yieldfunction(s::AbstractMaterialParamsStruct, args) 
-    if isempty(s.DruckerPrager)
+    if isempty(s.Plasticity)
         return isempty(args) ? 0.0 : zero(typeof(args).types[1])  # return zero if not specified
     else
-        return s.DruckerPrager[1](args)
+        return s.Plasticity[1](args)
     end
 end
 

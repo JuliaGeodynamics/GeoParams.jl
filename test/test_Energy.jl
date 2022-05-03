@@ -49,7 +49,7 @@ using GeoParams
     T_array     =  T*ones(10)'
     Cp_array    =  similar(T_array)
     compute_heatcapacity!(Cp_array, cp1, (;))
-    @test Cp_array[1] ≈ 1.3368075000000002e22
+    @test Cp_array[1] ≈ 1050
 
     Cp_array    =  similar(T_array)
     compute_heatcapacity!(Cp_array, cp2, (;T=T_array))
