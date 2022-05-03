@@ -67,7 +67,7 @@ export compute_density,                                # computational routines
 using .MaterialParameters.CreepLaw
 export computeCreepLaw_EpsII, computeCreepLaw_TauII, CreepLawVariables,
         LinearViscous, PowerlawViscous,
-        DislocationCreep, SetDislocationCreep,
+        DislocationCreep, SetDislocationCreep, DislocationCreep_info,
         DiffusionCreep,   SetDiffusionCreep
 
 # Plasticity        
