@@ -10,6 +10,7 @@ makedocs(
   pages = [
         "Home" => "index.md",
         "User Guide" => Any[
+            "GeoUnit" =>  "man/geounit.md",
             "Nondimensionalization" =>  "man/nondimensionalize.md",
             "Material Parameters" =>  "man/materialparameters.md",
             "Density" =>  "man/density.md",
