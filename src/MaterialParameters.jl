@@ -38,6 +38,7 @@ end
 include("./PhaseDiagrams/PhaseDiagrams.jl")
 include("./CreepLaw/CreepLaw.jl")
 include("./Plasticity/Plasticity.jl")
+include("./Elasticity/Elasticity.jl")
 include("./Density/Density.jl")
 include("./GravitationalAcceleration/GravitationalAcceleration.jl")
 include("./Energy/HeatCapacity.jl")

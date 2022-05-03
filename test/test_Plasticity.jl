@@ -36,7 +36,7 @@ using GeoParams
                           Plasticity  = DruckerPrager()),
                     SetMaterialParams(Name="Crust", Phase=2,
                           Plasticity  = DruckerPrager(ϕ=10)),
-                    SetMaterialParams(Name="Crust", Phase=2,
+                    SetMaterialParams(Name="Crust", Phase=3,
                         HeatCapacity  = ConstantHeatCapacity(cp=1100J/kg/K))
                     )
 
@@ -44,7 +44,7 @@ using GeoParams
     n = 100;
     Phases              = ones(Int64,n,n,n);
     Phases[:,:,20:end] .= 2;
-    Phases[:,:,60:end] .= 3;
+    Phases[:,:,60:end] .= 2;
 
     τII  =  ones(size(Phases))*10e6;
     P  =  ones(size(Phases))*1e6;

@@ -15,7 +15,7 @@ export  compute_elastic_shear_strainrate,      # calculation routines
         compute_elastic_shear_strainrate!,
         param_info,
         ConstantElasticity                      # constant
-        
+
 include("../Computations.jl")
 include("../Utils.jl")
         
@@ -39,18 +39,17 @@ function param_info(s::ConstantElasticity) # info about the struct
 end
 
 # Calculation routines
-function (s::ConstantElasticity{_T})(; τII::_T=zero(_T), τII_old::_T=zero(_T),  kwargs...) where _T
+function (s::ConstantElasticity{_T})(; τII::_T=zero(_T), τII_old::_T=zero(_T),  dt::_T=1.0, kwargs...) where _T
     @unpack_val G   = s
-    dt = 1.0
     ε_el = (τII-τII_old)/(2.0 * G * dt)    
 
     return ε_el
 end
-
-compute_elasticstrainrate(s::ConstantElasticity{_T}; P::_T=zero(_T), τ_II::_T=zero(_T)) where _T = s(; P=P, τII = τII)
+compute_elastic_shear_strainrate(s::ConstantElasticity{_T}; τII::_T=zero(_T), τII_old::_T=zero(_T), dt::_T=1.0) where _T = s(; τII = τII, τII_old=τII_old, dt=dt)
 
 # Calculation routine
-function (s::ConstantElasticity{_T})(τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}; kwargs...) where {_T,N}
+## obsolete?
+function (s::ConstantElasticity{_T})(τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, dt::_T; kwargs...) where {_T,N}
     ε_el = similar(τII) 
     @unpack_val G   = s
         
@@ -59,35 +58,35 @@ function (s::ConstantElasticity{_T})(τII::AbstractArray{_T,N}, τII_old::Abstra
     return ε_el
 end
 
-(s::ConstantElasticity{_T})(τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, args...) where {_T,N} = s(τII, τII_old; args...)
-compute_elastic_shear_strainrate(s::ConstantElasticity{_T}, τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, args...) where {_T,N} = s(τII, τII_old; args...)
+
+(s::ConstantElasticity{_T})(τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, dt::_T, args...) where {_T,N} = s(τII, τII_old, dt; args...)
+compute_elastic_shear_strainrate(s::ConstantElasticity{_T}, τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, dt::_T, args...) where {_T,N} = s(τII, τII_old, dt; args...)
+## obsolete?
 
 """
-    compute_elastic_shear_strainrate!(ε_el::AbstractArray{_T,N}, s::ConstantElasticity{_T}; τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, kwargs...) 
+    compute_elastic_shear_strainrate!(ε_el::AbstractArray{_T,N}, s::ConstantElasticity{_T}; τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, dt::_T, kwargs...) 
 
-Computes the elastic shear strainrate for a given deviatoric stress invariants at the previous (`τII_old`) and current (`τII`) timestep, as well as the timestep `dt`  
+Computes the elastic shear strainrate for given deviatoric stress invariants at the previous (`τII_old`) and new (`τII`) timestep, as well as the timestep `dt`  
 """
-function compute_elastic_shear_strainrate!(ε_el::AbstractArray{_T,N}, s::ConstantElasticity{_T}; τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, kwargs...) where {N,_T}
-    @unpack_val G   = s
-    dt =
-    @inbounds for i in eachindex(τII)
-        ε_el[i] = (τII[i]-τII_old[i])/(2.0 * G * dt)    
+function compute_elastic_shear_strainrate!(ε_el::AbstractArray{_T,N}, p::ConstantElasticity{_T}; τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, dt::_T, kwargs...) where {N,_T}
+    for i in eachindex(τII)
+        @inbounds ε_el[i] = compute_elastic_shear_strainrate(p, τII=τII[i], τII_old=τII_old[i], dt=dt)
     end
-
     return nothing
 end
 
 # Print info 
 function show(io::IO, g::ConstantElasticity) 
 
-    print(io, "Linear elasticity with shear modulus: G = $(UnitValue(g.G)), poison's ratio: ν = $(UnitValue(g.ν)), bulk modulus: K = $(UnitValue(g.K)) and youngs module: E=$(UnitValue(g.E))")  
+    print(io, "Linear elasticity with shear modulus: G = $(UnitValue(g.G)), Poison's ratio: ν = $(UnitValue(g.ν)), bulk modulus: K = $(UnitValue(g.K)) and Young's module: E=$(UnitValue(g.E))")  
   
 end   
 #-------------------------------------------------------------------------
 
 
 # Computational routines needed for computations with the MaterialParams structure 
-function compute_elastic_shear_strainrate!(s::AbstractMaterialParamsStruct, args) 
+function compute_elastic_shear_strainrate(s::AbstractMaterialParamsStruct, args) 
+    #@show s, args
     if isempty(s.Elasticity)
         return isempty(args) ? 0.0 : zero(typeof(args).types[1])  # return zero if not specified
     else
@@ -97,11 +96,11 @@ end
 
 # add methods programmatically
 for myType in (:ConstantElasticity,)
-@eval begin
-(s::$(myType))(args)= s(; args...)
-compute_elastic_shear_strainrate(s::$(myType), args) = s(args)
-compute_elastic_shear_strainrate!(H::AbstractArray{_T,N}, s::$(myType){_T}, args) where {_T,N} = compute_elastic_shear_strainrate!(H, s; args...)
-end
+    @eval begin
+        (s::$(myType))(args)= s(; args...)
+        compute_elastic_shear_strainrate(s::$(myType), args) = s(args)
+        compute_elastic_shear_strainrate!(ε_el::AbstractArray{_T,N}, s::$(myType){_T}, args) where {_T,N} = compute_elastic_shear_strainrate!(ε_el, s; args...)
+    end
 end
 
 compute_elastic_shear_strainrate(args...)  = compute_param(compute_elastic_shear_strainrate, args...)

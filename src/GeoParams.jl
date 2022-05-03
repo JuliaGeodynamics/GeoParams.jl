@@ -77,6 +77,13 @@ export  compute_yieldfunction,      # calculation routines
         param_info,
         DruckerPrager               
 
+# Elasticity
+using .MaterialParameters.Elasticity
+export  compute_elastic_shear_strainrate,       # calculation routines
+        compute_elastic_shear_strainrate!,
+        param_info,
+        ConstantElasticity                      # constant
+
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration
 export compute_gravity,                                # computational routines

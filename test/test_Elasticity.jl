@@ -33,6 +33,7 @@ using GeoParams
     @test ε_el_array[1] ≈  5.0e-11 
 
 
+
     # Check that it works if we give a phase array
     MatParam    =   (SetMaterialParams(Name="Mantle", Phase=1,
                           Elasticity  = ConstantElasticity()),
@@ -46,14 +47,14 @@ using GeoParams
     n = 100;
     Phases              = ones(Int64,n,n,n);
     Phases[:,:,20:end] .= 2;
-    Phases[:,:,60:end] .= 3;
+    Phases[:,:,60:end] .= 2;
 
     τII      =  ones(size(Phases))*20e6;
     τII_old  =  ones(size(Phases))*15e6;
     ε_el = zero(τII);
     args = (τII=τII, τII_old=τII_old, dt=1e6);
     compute_elastic_shear_strainrate!(ε_el, MatParam, Phases, args)    # computation routine w/out P (not used in most heat capacity formulations)     
-    @test maximum(F[1,1,:]) ≈ 839745.962155614
+    @test maximum(ε_el[1,1,:]) ≈ 2.5e-10
 
   
     # test if we provide phase ratios
@@ -63,9 +64,13 @@ using GeoParams
         I = CartesianIndex(i,iz)
         PhaseRatio[I] = 1.0  
     end
-    compute_yieldfunction!(F, MatParam, PhaseRatio, args)
-    num_alloc = @allocated compute_yieldfunction!(F, MatParam, PhaseRatio, args)
-    @test maximum(F[1,1,:]) ≈ 839745.962155614
+
+    # Note; using PhaseRatio currently requires an array of timesteps - can probably be fixed to also allow scalars
+    dt_arr   =  ones(size(Phases))*1e6;     # needs to be an array of timesteps currently
+    args = (τII=τII, τII_old=τII_old, dt=dt_arr);
+    compute_elastic_shear_strainrate!(ε_el, MatParam, PhaseRatio, args)  
+    num_alloc = @allocated compute_elastic_shear_strainrate!(ε_el, MatParam, PhaseRatio, args)  
+    @test maximum(ε_el[1,1,:]) ≈ 2.5e-10
     @test num_alloc <= 32
 
     # -----------------------

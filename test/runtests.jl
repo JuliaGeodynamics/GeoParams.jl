@@ -11,4 +11,5 @@ include("test_SeismicVelocity.jl")
 include("test_DiffusionCreep.jl")
 include("test_DislocationCreep.jl")
 include("test_Plasticity.jl")
+include("test_Elasticity.jl")
 
