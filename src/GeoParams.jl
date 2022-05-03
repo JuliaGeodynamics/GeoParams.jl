@@ -70,6 +70,13 @@ export computeCreepLaw_EpsII, computeCreepLaw_TauII, CreepLawVariables,
         DislocationCreep, SetDislocationCreep,
         DiffusionCreep,   SetDiffusionCreep
 
+# Plasticity        
+using .MaterialParameters.Plasticity
+export  compute_yieldfunction,      # calculation routines
+        compute_yieldfunction!,
+        param_info,
+        DruckerPrager               
+
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration
 export compute_gravity,                                # computational routines
