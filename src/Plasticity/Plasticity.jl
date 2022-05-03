@@ -65,20 +65,7 @@ function (s::DruckerPrager{_T})(; P::_T=zero(_T), τII::_T=zero(_T),  kwargs...)
     return F
 end
 
-compute_yieldfunction(s::DruckerPrager{_T}; P::_T=zero(_T), τ_II::_T=zero(_T)) where _T = s(; P=P, τII = τII)
-
-# Calculation routine
-function (s::DruckerPrager{_T})(P::AbstractArray{_T,N}, τII::AbstractArray{_T,N}; kwargs...) where {_T,N}
-    F = similar(P) 
-    @unpack_val ϕ, Ψ, C   = s
-        
-    @.   F = τII - cosd(ϕ)C - sind(ϕ)P   
-
-    return F
-end
-
-(s::DruckerPrager{_T})(P::AbstractArray{_T,N}, args...) where {_T,N} = s(P, τII; args...)
-compute_yieldfunction(s::DruckerPrager{_T}, P::AbstractArray{_T,N}, τII::AbstractArray{_T,N}, args...) where {_T,N} = s(P, τII; args...)
+compute_yieldfunction(s::DruckerPrager{_T}; P::_T=zero(_T), τII::_T=zero(_T)) where _T = s(; P=P, τII = τII)
 
 """
     compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager{_T}; P::AbstractArray{_T,N}, τII::AbstractArray{_T,N}, kwargs...) 
@@ -90,7 +77,7 @@ function compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager{_T}; P:
    @unpack_val ϕ, Ψ, C   = s
         
     @inbounds for i in eachindex(P)
-        F[i] = τII[i] - cosd(ϕ)C - sind(ϕ)P[i]      # no fluid pressure
+        F[i] = compute_yieldfunction(s, P=P[i], τII=τII[i])
     end
 
     return nothing
