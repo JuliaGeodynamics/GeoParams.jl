@@ -1,11 +1,7 @@
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 using ..Units
 using Parameters, Unitful
-import Base: getindex
 
-# overload to account for cases where this is an integer
-Base.getindex(val::Number, I::Vararg{Integer, N}) where N = val
-Base.getindex(val::Number, I::Integer) = val
 
 # Computational routines needed for computations with the MaterialParams structure 
 

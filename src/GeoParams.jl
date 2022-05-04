@@ -15,6 +15,12 @@ using Unitful           # Units
 using BibTeX            # references of creep laws
 using Requires          # To only add plotting routines if Plots is loaded
 
+import Base: getindex
+
+# overload to account for cases where this is an integer
+Base.getindex(val::Number, I::Vararg{Integer, N}) where N = val
+Base.getindex(val::Number, I::Integer) = val
+
 export
         @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
         GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnit,
