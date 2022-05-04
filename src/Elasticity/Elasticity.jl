@@ -51,15 +51,27 @@ end
 """
     compute_elastic_shear_strainrate(s::ConstantElasticity{_T}; τII, τII_old, dt) 
 
-Computes elastic strainrate given the second invariant of the deviatoric stress tensor at the current (`τII`) and old timestep (`τII_old`), for a timestep `dt`.
-Note that the old stresses, ``τII_old`` should be rotated. 
+Computes elastic strainrate given the deviatoric stress at the current (`τII`) and old timestep (`τII_old`), for a timestep `dt`:
+```math  
+    \\dot{\\varepsilon}^{el} = {1 \\over 2 G} {D \\tau_{II} \\over Dt } ≈ {1 \\over 2 G} {\\tau_{II}- \\tau_{II}^{old} \\over dt }
+```
+Note that we here solve the scalar equation, which is sufficient for isotropic cases. In tensor form, it would be
+```math  
+    \\dot{\\varepsilon}^{el}_{ij} = {1 \\over 2 G} {\\tau_{II}_{ij}- \\tau_{II}^{old}_{ij} \\over dt }
+```
+
 """
 compute_elastic_shear_strainrate(s::ConstantElasticity{_T}; τII::_T=zero(_T), τII_old::_T=zero(_T), dt::_T=1.0) where _T = s(; τII = τII, τII_old=τII_old, dt=dt)
 
 """
     compute_elastic_shear_strainrate!(ε_el::AbstractArray{_T,N}, s::ConstantElasticity{_T}; τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, dt::_T, kwargs...) 
 
-Computes the elastic shear strainrate for given deviatoric stress invariants at the previous (`τII_old`) and new (`τII`) timestep, as well as the timestep `dt`  
+In-place computation of the elastic shear strainrate for given deviatoric stress invariants at the previous (`τII_old`) and new (`τII`) timestep, as well as the timestep `dt`  
+
+```math  
+    \\dot{\\varepsilon}^{el} = {1 \\over 2 G} {D \\tau_{II} \\over Dt } ≈ {1 \\over 2 G} {\\tau_{II}- \\tau_{II}^{old} \\over dt }
+```
+
 """
 function compute_elastic_shear_strainrate!(ε_el::AbstractArray{_T,N}, p::ConstantElasticity{_T}; τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, dt::_T, kwargs...) where {N,_T}
     @inbounds for i in eachindex(τII)
