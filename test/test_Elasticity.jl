@@ -69,6 +69,12 @@ using GeoParams
     dt_arr   =  ones(size(Phases))*1e6;     # needs to be an array of timesteps currently
     args = (τII=τII, τII_old=τII_old, dt=dt_arr);
     compute_elastic_shear_strainrate!(ε_el, MatParam, PhaseRatio, args)  
+    @test maximum(ε_el[1,1,:]) ≈ 2.5e-10
+
+    args1 = (τII=τII, τII_old=τII_old, dt=1e6);
+    compute_elastic_shear_strainrate!(ε_el, MatParam, PhaseRatio, args1)  
+    @test maximum(ε_el[1,1,:]) ≈ 2.5e-10
+
     num_alloc = @allocated compute_elastic_shear_strainrate!(ε_el, MatParam, PhaseRatio, args)  
     @test maximum(ε_el[1,1,:]) ≈ 2.5e-10
     @test num_alloc <= 32
