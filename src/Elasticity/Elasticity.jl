@@ -34,6 +34,8 @@ Structure that holds parameters for constant, isotropic, linear elasticity.
 end
 ConstantElasticity(args...) = ConstantElasticity(convert.(GeoUnit,args)...)
 
+# Add multiple dispatch here to allow specifying combinations of 2 elastic parameters (say ν & E), to compute the others
+
 function param_info(s::ConstantElasticity) # info about the struct
     return MaterialParamsInfo(Equation = L"Constant elasticity")
 end
@@ -45,23 +47,14 @@ function (s::ConstantElasticity{_T})(; τII::_T=zero(_T), τII_old::_T=zero(_T),
 
     return ε_el
 end
+
+"""
+    compute_elastic_shear_strainrate(s::ConstantElasticity{_T}; τII, τII_old, dt) 
+
+Computes elastic strainrate given the second invariant of the deviatoric stress tensor at the current (`τII`) and old timestep (`τII_old`), for a timestep `dt`.
+Note that the old stresses, ``τII_old`` should be rotated. 
+"""
 compute_elastic_shear_strainrate(s::ConstantElasticity{_T}; τII::_T=zero(_T), τII_old::_T=zero(_T), dt::_T=1.0) where _T = s(; τII = τII, τII_old=τII_old, dt=dt)
-
-# Calculation routine
-## obsolete?
-function (s::ConstantElasticity{_T})(τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, dt::_T; kwargs...) where {_T,N}
-    ε_el = similar(τII) 
-    @unpack_val G   = s
-        
-    @.  ε_el = (τII-τII_old)/(2.0 * G * dt)   
-
-    return ε_el
-end
-
-
-(s::ConstantElasticity{_T})(τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, dt::_T, args...) where {_T,N} = s(τII, τII_old, dt; args...)
-compute_elastic_shear_strainrate(s::ConstantElasticity{_T}, τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, dt::_T, args...) where {_T,N} = s(τII, τII_old, dt; args...)
-## obsolete?
 
 """
     compute_elastic_shear_strainrate!(ε_el::AbstractArray{_T,N}, s::ConstantElasticity{_T}; τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, dt::_T, kwargs...) 
@@ -69,8 +62,8 @@ compute_elastic_shear_strainrate(s::ConstantElasticity{_T}, τII::AbstractArray{
 Computes the elastic shear strainrate for given deviatoric stress invariants at the previous (`τII_old`) and new (`τII`) timestep, as well as the timestep `dt`  
 """
 function compute_elastic_shear_strainrate!(ε_el::AbstractArray{_T,N}, p::ConstantElasticity{_T}; τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, dt::_T, kwargs...) where {N,_T}
-    for i in eachindex(τII)
-        @inbounds ε_el[i] = compute_elastic_shear_strainrate(p, τII=τII[i], τII_old=τII_old[i], dt=dt)
+    @inbounds for i in eachindex(τII)
+      ε_el[i] = compute_elastic_shear_strainrate(p, τII=τII[i], τII_old=τII_old[i], dt=dt)
     end
     return nothing
 end
