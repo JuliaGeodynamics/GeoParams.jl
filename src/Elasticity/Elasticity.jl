@@ -22,7 +22,7 @@ include("../Utils.jl")
 # ConstantElasticity  -------------------------------------------------------
 
 """
-    ConstantElasticity(ϕ=30, Ψ=0, C=10e6Pa, FluidPressure=false)
+    ConstantElasticity(G, ν, K, E)
 
 Structure that holds parameters for constant, isotropic, linear elasticity.
 """
@@ -56,8 +56,9 @@ Computes elastic strainrate given the deviatoric stress at the current (`τII`) 
     \\dot{\\varepsilon}^{el} = {1 \\over 2 G} {D \\tau_{II} \\over Dt } ≈ {1 \\over 2 G} {\\tau_{II}- \\tau_{II}^{old} \\over dt }
 ```
 Note that we here solve the scalar equation, which is sufficient for isotropic cases. In tensor form, it would be
+
 ```math  
-    \\dot{\\varepsilon}^{el}_{ij} = {1 \\over 2 G} {\\tau_{II}_{ij}- \\tau_{II}^{old}_{ij} \\over dt }
+    \\dot{\\varepsilon}^{el}_{ij} = {1 \\over 2 G} { \\tau_{II}_{ij} - \\tau_{II}^{old}_{ij} \\over dt }
 ```
 
 """

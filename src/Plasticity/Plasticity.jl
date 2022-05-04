@@ -21,7 +21,7 @@ include("../Utils.jl")
         
 # DruckerPrager  -------------------------------------------------------
 """
-    DruckerPrager(ϕ=30, Ψ=0, C=10e6Pa, FluidPressure=false)
+    DruckerPrager(ϕ=30, Ψ=0, C=10e6Pa)
 
 Sets parameters for Drucker-Prager plasticity, where the yield stress ``\\sigma_{y}`` is computed by
 ```math  
@@ -117,6 +117,5 @@ end
 
 compute_yieldfunction(args...)  = compute_param(compute_yieldfunction, args...)
 compute_yieldfunction!(args...) = compute_param!(compute_yieldfunction, args...)
-
 
 end
