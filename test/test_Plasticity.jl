@@ -20,15 +20,23 @@ using GeoParams
     τII = 20e6;
     P = 1e6;
     args = (P=P, τII=τII)
-    @test compute_yieldfunction(p,args) ≈ 1.0839745962155614e7  # compute
-   
+    @test compute_yieldfunction(p,args) ≈ 1.0839745962155614e7      # no Pfluid
+
+    args_f = (P=P, τII=τII, Pf=0.5e6)
+    @test compute_yieldfunction(p,args_f) ≈ 1.1089745962155614e7    # with Pfluid
+
     
     # Test with arrays
     P_array     =  ones(10)*1e6
-    τII_array   =  ones(10)*10e6
+    τII_array   =  ones(10)*20e6
     F_array     = similar(P_array)
     compute_yieldfunction!(F_array, p, (;P=P_array, τII=τII_array))
-    @test F_array[1] ≈ 839745.962155614
+    @test F_array[1] ≈ 1.0839745962155614e7
+
+    Pf_array    =  ones(10)*0.5e6
+    Ff_array    = similar(P_array)
+    compute_yieldfunction!(Ff_array, p, (;P=P_array, τII=τII_array, Pf=Pf_array))
+    @test Ff_array[1] ≈ 1.1089745962155614e7   
 
 
     # Check that it works if we give a phase array
@@ -47,12 +55,17 @@ using GeoParams
     Phases[:,:,60:end] .= 2;
 
     τII  =  ones(size(Phases))*10e6;
-    P  =  ones(size(Phases))*1e6;
-    F = zero(P);
+    P    =  ones(size(Phases))*1e6;
+    Pf   =  ones(size(Phases))*0.5e6;
+    F    = zero(P);
     args = (P=P, τII=τII);
     compute_yieldfunction!(F, MatParam, Phases, args)    # computation routine w/out P (not used in most heat capacity formulations)     
     @test maximum(F[1,1,:]) ≈ 839745.962155614
 
+    args_f = (P=P, τII=τII, Pf=Pf);
+    Ff    = zero(P);
+    compute_yieldfunction!(Ff, MatParam, Phases, args_f)    # computation routine w/out P (not used in most heat capacity formulations)     
+    
   
     # test if we provide phase ratios
     PhaseRatio  = zeros(n,n,n,3);

@@ -15,6 +15,7 @@ makedocs(
             "Material Parameters" =>  "man/materialparameters.md",
             "Density" =>  "man/density.md",
             "Creep laws" =>  "man/creeplaws.md",
+            "Elasticity" =>  "man/elasticity.md",
             "Plasticity" =>  "man/plasticity.md",
             "Heat Capacity" =>  "man/heatcapacity.md",
             "Conductivity" =>  "man/conductivity.md",
