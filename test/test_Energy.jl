@@ -14,14 +14,11 @@ using GeoParams
     @test isbits(cp1)
     @test cp1.cp.val == 1050.0
 
-    cp1_nd = cp1;
-    cp1_nd     = nondimensionalize(cp1_nd,CharUnits_GEO)
-    @test cp1_nd.cp.val ≈ 1.3368075000000002e22
-    @test compute_heatcapacity(cp1_nd) ≈ 1.3368075000000002e22  # compute
-    @test cp1_nd() ≈ 1.3368075000000002e22  # compute
-    @test compute_heatcapacity(cp1_nd, random_name=1) ≈ 1.3368075000000002e22  # compute
-
-
+    cp1     = nondimensionalize(cp1,CharUnits_GEO)
+    @test cp1.cp.val ≈ 1.3368075000000002e22
+    @test compute_heatcapacity(cp1) ≈ 1.3368075000000002e22  # compute
+    @test cp1() ≈ 1.3368075000000002e22  # compute
+    @test compute_heatcapacity(cp1, random_name=1) ≈ 1.3368075000000002e22  # compute
 
     # Temperature-dependent heat capacity
     # dimensional
@@ -49,7 +46,7 @@ using GeoParams
     T_array     =  T*ones(10)'
     Cp_array    =  similar(T_array)
     compute_heatcapacity!(Cp_array, cp1, (;))
-    @test Cp_array[1] ≈ 1050
+    @test Cp_array[1] ≈ 1.3368075000000002e22
 
     Cp_array    =  similar(T_array)
     compute_heatcapacity!(Cp_array, cp2, (;T=T_array))
