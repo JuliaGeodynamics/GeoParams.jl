@@ -75,35 +75,20 @@ Computes the plastic yield function ``F`` for a given second invariant of the de
 compute_yieldfunction(s::DruckerPrager{_T}; P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T)) where _T = s(; P=P, τII=τII, Pf=Pf)
 
 """
-    compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager{_T}; P::AbstractArray{_T,N}, τII::AbstractArray{_T,N}, kwargs...) 
+    compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager{_T}; P::AbstractArray{_T,N}, τII::AbstractArray{_T,N}, Pf=zero(P)::AbstractArray{_T,N}, kwargs...) 
 
 Computes the plastic yield function ``F`` for Drucker-Prager plasticity in an in-place manner.
-Required input arrays are pressure ``P`` and the second invariant of the deviatoric stress tensor ``τII`` at every point.
+Required input arrays are pressure ``P`` and the second invariant of the deviatoric stress tensor ``τII`` at every point. 
+You can optionally provide an array with fluid pressure `Pf` as well. 
 """
-function compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager{_T}; P::AbstractArray{_T,N}, τII::AbstractArray{_T,N}, kwargs...) where {N,_T}
-        
-    @inbounds for i in eachindex(P)
-        F[i] = compute_yieldfunction(s, P=P[i], τII=τII[i])
-    end
-
-    return nothing
-end
-
-"""
-    compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager{_T}; P::AbstractArray{_T,N}, τII::AbstractArray{_T,N},  Pf::AbstractArray{_T,N}, kwargs...) 
-
-Computes the plastic yield function ``F`` for Drucker-Prager plasticity in an in-place manner when fluid pressure is provided.
-Required input arrays are pressure ``P``, fluid pressure ``Pf`` and the second invariant of the deviatoric stress tensor ``τII`` at every point.
-"""
-function compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager{_T}; P::AbstractArray{_T,N}, τII::AbstractArray{_T,N},  Pf::AbstractArray{_T,N}, kwargs...) where {N,_T}
-        
+function compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager{_T}; P::AbstractArray{_T,N}, τII::AbstractArray{_T,N}, Pf=zero(P)::AbstractArray{_T,N}, kwargs...) where {N,_T}
+    
     @inbounds for i in eachindex(P)
         F[i] = compute_yieldfunction(s, P=P[i], τII=τII[i], Pf=Pf[i])
     end
 
     return nothing
 end
-
 
 # Print info 
 function show(io::IO, g::DruckerPrager) 
