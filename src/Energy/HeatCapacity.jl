@@ -231,16 +231,16 @@ end
 In-place computation of heat capacity `Cp` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `Phase` of every point is specified as an Integer in the `Phases` array.
 """
-compute_heatcapacity!
+compute_heatcapacity!()
 
-""""
+"""
     compute_heatcapacity!(Cp::AbstractArray{_T, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}, PhaseRatios::AbstractArray{_T, M}, P::AbstractArray{_T, N},T::AbstractArray{_T, N})
     
 In-place computation of heat capacity `Cp` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 
 """
-compute_heatcapacity!
+compute_heatcapacity!()
 
 
 compute_heatcapacity(args...) = compute_param(compute_heatcapacity, args...)

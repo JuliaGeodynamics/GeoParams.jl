@@ -70,15 +70,15 @@ end
 """
     compute_yieldfunction(s::DruckerPrager; P, τII_old, Pf, kwargs...) 
 
-Computes the plastic yield function ``F`` for a given second invariant of the deviatoric stress tensor `τII`,  `P` the pressure, and `Pf` fluid pressure.
+Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` the pressure, and `Pf` fluid pressure.
 """
 compute_yieldfunction(s::DruckerPrager{_T}; P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T)) where _T = s(; P=P, τII=τII, Pf=Pf)
 
 """
     compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager{_T}; P::AbstractArray{_T,N}, τII::AbstractArray{_T,N}, Pf=zero(P)::AbstractArray{_T,N}, kwargs...) 
 
-Computes the plastic yield function ``F`` for Drucker-Prager plasticity in an in-place manner.
-Required input arrays are pressure ``P`` and the second invariant of the deviatoric stress tensor ``τII`` at every point. 
+Computes the plastic yield function `F` for Drucker-Prager plasticity in an in-place manner.
+Required input arrays are pressure `P` and the second invariant of the deviatoric stress tensor `τII` at every point. 
 You can optionally provide an array with fluid pressure `Pf` as well. 
 """
 function compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager{_T}; P::AbstractArray{_T,N}, τII::AbstractArray{_T,N}, Pf=zero(P)::AbstractArray{_T,N}, kwargs...) where {N,_T}
