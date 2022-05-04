@@ -47,9 +47,8 @@ end
 
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
-function computeCreepLaw_EpsII(TauII, a::DiffusionCreep, c::CreepLawVariables)
+function computeCreepLaw_EpsII(TauII, a::DiffusionCreep; P, T, f, d, kwargs...)
     @unpack_val n,r,p,A,E,V,R = a
-    @unpack_val P,T,f,d       = c
     
     FT, FE = CorrectionFactor(a);    
    
@@ -58,14 +57,15 @@ end
 
 # EpsII .= A.*(TauII.*FT).^n.*f.^r.*d.^p.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
 # All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
-function computeCreepLaw_TauII(EpsII, a::DiffusionCreep, c::CreepLawVariables)
-    @unpack_val n,r,A,E,V,R = a
-    @unpack_val P,T,f,d     = c
+function computeCreepLaw_TauII(EpsII, a::DiffusionCreep; P, T, f, d, kwargs...)
+    @unpack_val n,r,p,A,E,V,R = a
 
     FT, FE = CorrectionFactor(a);    
 
     return A^(-1/n)*(EpsII*FE)^(1/n)*f^(-r/n)*d^(-p/n)*exp((E + P*V)/(n * R*T))/FT;
 end
+
+
 
 # Print info 
 function show(io::IO, g::DiffusionCreep)  
@@ -76,9 +76,6 @@ end
 # This computes correction factors to go from experimental data to tensor format
 # A nice discussion 
 function CorrectionFactor(a::DiffusionCreep{_T}) where {_T}
-
-    FT = one(_T) 
-    FE = one(_T)
     if a.Apparatus == AxialCompression
         FT = sqrt(one(_T)*3)               # relation between differential stress recorded by apparatus and TauII
         FE = one(_T)*2/sqrt(one(_T)*3)     # relation between gamma recorded by apparatus and EpsII
