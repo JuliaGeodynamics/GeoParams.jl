@@ -83,6 +83,10 @@ function compute_param!(
     #I1 = last(rho)
     @inbounds for I in CartesianIndices(rho)
         k = keys(args)
+        # Note: this routine currently only works if all input arguments are arrays of the same size.
+        # ideally, we would also make it work when some of the arguments are scalars instead.
+        # That is implemented for that case that Phases is an integer array, but not with PhaseRatio  
+
         #Ii = min.(length.(values(args)),I)    # returns 1 for scalar and I otherwise
         #v = getindex.(values(args), Tuple(Ii)...)
         v = getindex.(values(args), Tuple(I)...)
