@@ -50,29 +50,29 @@ where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the
     ϕ::GeoUnit{T,U}         =   30NoUnits      # Friction angle
     Ψ::GeoUnit{T,U}         =   0NoUnits        # Dilation angle
     C::GeoUnit{T,U1}        =   10e6Pa          # Cohesion
-    FluidPressure::Bool     =   false           # Take fluid pressure into account or not?
 end
 DruckerPrager(args...) = DruckerPrager(convert.(GeoUnit,args)...)
 
 function param_info(s::DruckerPrager) # info about the struct
-    return MaterialParamsInfo(Equation = L"F = \\tau_{II} - \\cos(ϕ)C - \\sin(ϕ)(P-P_f), Q=\\tau_{II} - \\sin(Ψ)(P-P_f)")
+    return MaterialParamsInfo(Equation = L"F = \\tau_{II} - \\cos(ϕ)C - \\sin(ϕ)(P-P_f); Q=\\tau_{II} - \\sin(Ψ)(P-P_f)")
 end
 
 # Calculation routines
-function (s::DruckerPrager{_T})(; P::_T=zero(_T), τII::_T=zero(_T),  kwargs...) where _T
-    @unpack_val ϕ, Ψ, C   = s
+function (s::DruckerPrager{_T,U,U1})(; P::_T=zero(_T), τII::_T=zero(_T),  Pf::_T=zero(_T), kwargs...) where {_T,U,U1}
+    @unpack_val ϕ, C   = s
+    sinϕ, cosϕ =  sincosd(ϕ)
     
-    F = τII - cosd(ϕ)C - sind(ϕ)P   
-
+    F = τII - cosϕ*C - sinϕ*(P-Pf)   # with fluid pressure (set to zero by default)
+    
     return F
 end
 
 """
-    compute_yieldfunction(s::DruckerPrager{_T}; P, τII_old, kwargs...) 
+    compute_yieldfunction(s::DruckerPrager; P, τII_old, Pf, kwargs...) 
 
-Computes the plastic yield function ``F`` for a given second invariant of the deviatoric stress tensor τII, and P the pressure.
+Computes the plastic yield function ``F`` for a given second invariant of the deviatoric stress tensor `τII`,  `P` the pressure, and `Pf` fluid pressure.
 """
-compute_yieldfunction(s::DruckerPrager{_T}; P::_T=zero(_T), τII::_T=zero(_T)) where _T = s(; P=P, τII = τII)
+compute_yieldfunction(s::DruckerPrager{_T}; P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T)) where _T = s(; P=P, τII=τII, Pf=Pf)
 
 """
     compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager{_T}; P::AbstractArray{_T,N}, τII::AbstractArray{_T,N}, kwargs...) 
@@ -89,13 +89,25 @@ function compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager{_T}; P:
     return nothing
 end
 
+"""
+    compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager{_T}; P::AbstractArray{_T,N}, τII::AbstractArray{_T,N},  Pf::AbstractArray{_T,N}, kwargs...) 
+
+Computes the plastic yield function ``F`` for Drucker-Prager plasticity in an in-place manner when fluid pressure is provided.
+Required input arrays are pressure ``P``, fluid pressure ``Pf`` and the second invariant of the deviatoric stress tensor ``τII`` at every point.
+"""
+function compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager{_T}; P::AbstractArray{_T,N}, τII::AbstractArray{_T,N},  Pf::AbstractArray{_T,N}, kwargs...) where {N,_T}
+        
+    @inbounds for i in eachindex(P)
+        F[i] = compute_yieldfunction(s, P=P[i], τII=τII[i], Pf=Pf[i])
+    end
+
+    return nothing
+end
+
+
 # Print info 
 function show(io::IO, g::DruckerPrager) 
-    if (g.FluidPressure)
-        print(io, "Drucker-Prager plasticity with ϕ = $(UnitValue(g.ϕ))ᵒ, Ψ = $(UnitValue(g.Ψ))ᵒ, C = $(UnitValue(g.C)) while taking fluid pressure into account")  
-    else 
-        print(io, "Drucker-Prager plasticity with: C = $(UnitValue(g.C)), ϕ = $(UnitValue(g.ϕ))ᵒ, Ψ = $(UnitValue(g.Ψ))ᵒ" )  
-    end
+    print(io, "Drucker-Prager plasticity with: C = $(UnitValue(g.C)), ϕ = $(UnitValue(g.ϕ))ᵒ, Ψ = $(UnitValue(g.Ψ))ᵒ" )  
 end   
 #-------------------------------------------------------------------------
 
@@ -111,11 +123,11 @@ end
 
 # add methods programmatically
 for myType in (:DruckerPrager,)
-@eval begin
-(s::$(myType))(args)= s(; args...)
-compute_yieldfunction(s::$(myType), args) = s(args)
-compute_yieldfunction!(H::AbstractArray{_T,N}, s::$(myType){_T}, args) where {_T,N} = compute_yieldfunction!(H, s; args...)
-end
+    @eval begin
+        (s::$(myType))(args)= s(; args...)
+        compute_yieldfunction(s::$(myType), args) = s(args)
+        compute_yieldfunction!(H::AbstractArray{_T,N}, s::$(myType){_T}, args) where {_T,N} = compute_yieldfunction!(H, s; args...)
+    end
 end
 
 compute_yieldfunction(args...)  = compute_param(compute_yieldfunction, args...)
