@@ -11,8 +11,7 @@ using ..MaterialParameters: MaterialParamsInfo
 import GeoParams.param_info
 
 export  DislocationCreep,
-        SetDislocationCreep,
-        DislocationCreep_info
+        SetDislocationCreep
 
 const AxialCompression, SimpleShear, Invariant = 1,2,3
 
@@ -73,7 +72,7 @@ function computeCreepLaw_EpsII(TauII, a::DislocationCreep, p::CreepLawVariables)
     return A*(TauII*FT)^n*f^r*exp(-(E + P*V)/(R*T))/FE
 end
 
-function computeCreepLaw_EpsII(TauII, a::DislocationCreep, P::_R, T::_R, f::_R) where _R<:Real
+function computeCreepLaw_EpsII(TauII, a::DislocationCreep; P::_R, T::_R, f::_R, args...) where _R<:Real
     @unpack_val n,r,A,E,V,R = a
     
     FT, FE = CorrectionFactor(a);    
@@ -95,7 +94,7 @@ end
 
 # EpsII .= A.*(TauII.*FT).^n.*f.^r.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
 # All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
-function computeCreepLaw_TauII(EpsII, a::DislocationCreep, P::_R, T::_R, f::_R) where _R<:Real
+function computeCreepLaw_TauII(EpsII, a::DislocationCreep; P::_R, T::_R, f::_R, args...) where _R<:Real
     @unpack_val n,r,A,E,V,R = a
 
     FT, FE = CorrectionFactor(a);    
@@ -113,9 +112,6 @@ end
 # This computes correction factors to go from experimental data to tensor format
 # A nice discussion 
 function CorrectionFactor(a::DislocationCreep{_T}) where {_T}
-
-    FT = one(_T) 
-    FE = one(_T)
     if a.Apparatus == AxialCompression
         FT = sqrt(one(_T)*3)               # relation between differential stress recorded by apparatus and TauII
         FE = one(_T)*2/sqrt(one(_T)*3)     # relation between gamma recorded by apparatus and EpsII
