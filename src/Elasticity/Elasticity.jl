@@ -48,6 +48,11 @@ function (s::ConstantElasticity{_T})(; τII::_T=zero(_T), τII_old::_T=zero(_T),
     return ε_el
 end
 
+function dεII_dτII(s::ConstantElasticity{_T}; dt::_T=1.0, kwargs...) where _T
+    @unpack_val G   = s
+    return 1/(G*dt)
+end
+
 """
     compute_elastic_shear_strainrate(s::ConstantElasticity{_T}; τII, τII_old, dt) 
 
@@ -93,7 +98,6 @@ end
 
 # Computational routines needed for computations with the MaterialParams structure 
 function compute_elastic_shear_strainrate(s::AbstractMaterialParamsStruct, args) 
-    #@show s, args
     if isempty(s.Elasticity)
         return isempty(args) ? 0.0 : zero(typeof(args).types[1])  # return zero if not specified
     else
@@ -106,12 +110,12 @@ for myType in (:ConstantElasticity,)
     @eval begin
         (s::$(myType))(args)= s(; args...)
         compute_elastic_shear_strainrate(s::$(myType), args) = s(args)
-        compute_elastic_shear_strainrate!(ε_el::AbstractArray{_T,N}, s::$(myType){_T}, args) where {_T,N} = compute_elastic_shear_strainrate!(ε_el, s; args...)
+        compute_elastic_shear_strainrate!(ε_el::AbstractArray{T,N}, s::$(myType){_T}, args) where {_T,N} = compute_elastic_shear_strainrate!(ε_el, s; args...)
+        dεII_dτII(s::ConstantElasticity, args) = dεII_dτII(s; args...)
     end
 end
 
 compute_elastic_shear_strainrate(args...)  = compute_param(compute_elastic_shear_strainrate, args...)
 compute_elastic_shear_strainrate!(args...) = compute_param!(compute_elastic_shear_strainrate, args...)
-
 
 end
