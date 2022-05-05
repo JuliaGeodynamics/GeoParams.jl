@@ -87,13 +87,12 @@ end
 
 # This computes correction factors to go from experimental data to tensor format
 # A nice discussion 
-function CorrectionFactor(a::DiffusionCreep{_T}) where {_T}
+function CorrectionFactor(a::DislocationCreep{_T}) where {_T}
     if a.Apparatus == AxialCompression
-        FT = sqrt(one(_T)*3)               # relation between differential stress recorded by apparatus and TauII
-        FE = one(_T)*2/sqrt(one(_T)*3)     # relation between gamma recorded by apparatus and EpsII
+        FT = sqrt(one(_T)*3) # relation between differential stress recorded by apparatus and TauII
+        FE = 2/FT            # relation between gamma recorded by apparatus and EpsII
     elseif a.Apparatus == SimpleShear
-        FT = one(_T)*2                     # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
-        FE = one(_T)*2 
+        FT = FE = one(_T)*2  # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
     end
     return FT,FE
 end

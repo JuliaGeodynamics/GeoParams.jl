@@ -16,8 +16,6 @@ export  DislocationCreep,
 const AxialCompression, SimpleShear, Invariant = 1,2,3
 
 
-
-
 # Dislocation Creep ------------------------------------------------
 """
     DislocationCreep(n = 1.0NoUnits, r = 0.00.0NoUnits, A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
@@ -72,7 +70,6 @@ function computeCreepLaw_EpsII(TauII, a::DislocationCreep; P::_R, T::_R, f::_R, 
     return A*(TauII*FT)^n*f^r*exp(-(E + P*V)/(R*T))/FE; 
 end
 
-
 function dεII_dτII((TauII, a::DislocationCreep; P, T, f, kwargs...))
     @unpack_val n,r,p,A,E,V,R = a
     FT, FE = CorrectionFactor(a)
@@ -106,11 +103,10 @@ end
 # A nice discussion 
 function CorrectionFactor(a::DislocationCreep{_T}) where {_T}
     if a.Apparatus == AxialCompression
-        FT = sqrt(one(_T)*3)               # relation between differential stress recorded by apparatus and TauII
-        FE = one(_T)*2/sqrt(one(_T)*3)     # relation between gamma recorded by apparatus and EpsII
+        FT = sqrt(one(_T)*3) # relation between differential stress recorded by apparatus and TauII
+        FE = 2/FT            # relation between gamma recorded by apparatus and EpsII
     elseif a.Apparatus == SimpleShear
-        FT = one(_T)*2                     # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
-        FE = one(_T)*2 
+        FT = FE = one(_T)*2  # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
     end
     return FT,FE
 end
