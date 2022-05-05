@@ -120,6 +120,15 @@ function show(io::IO, g::PowerlawViscous)
 end
 #-------------------------------------------------------------------------
 
+# add methods programatically 
+for myType in (:DiffusionCreep, :DislocationCreep)
+    @eval begin
+        computeCreepLaw_EpsII(TauII, a::$(myType), args) = computeCreepLaw_EpsII(TauII, a; args...) 
+        computeCreepLaw_TauII(EpsII, a::$(myType), args) = computeCreepLaw_TauII(EpsII, a; args...) 
+        dεII_dτII(TauII, a::$(myType), args) = dεII_dτII(tauII, a; args...) 
+        dτII_dεII(EpsII, a::$(myType), args) = dτII_dεII(EpsII, a; args...) 
+    end
+end
 
 # Help info for the calculation routines
 """

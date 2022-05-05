@@ -63,14 +63,6 @@ end
 
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
-function computeCreepLaw_EpsII(TauII, a::DislocationCreep, p::CreepLawVariables)
-    @unpack_val n,r,A,E,V,R = a
-    @unpack_val P,T,f       = p
-    
-    FT, FE = CorrectionFactor(a)
-   
-    return A*(TauII*FT)^n*f^r*exp(-(E + P*V)/(R*T))/FE
-end
 
 function computeCreepLaw_EpsII(TauII, a::DislocationCreep; P::_R, T::_R, f::_R, args...) where _R<:Real
     @unpack_val n,r,A,E,V,R = a
@@ -80,17 +72,12 @@ function computeCreepLaw_EpsII(TauII, a::DislocationCreep; P::_R, T::_R, f::_R, 
     return A*(TauII*FT)^n*f^r*exp(-(E + P*V)/(R*T))/FE; 
 end
 
-# EpsII .= A.*(TauII.*FT).^n.*f.^r.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
-# All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
-function computeCreepLaw_TauII(EpsII, a::DislocationCreep, p::CreepLawVariables)
-    @unpack_val n,r,A,E,V,R = a
-    @unpack_val P,T,f       = p
 
-    FT, FE = CorrectionFactor(a)    
-
-    return A^(-1/n)*(EpsII*FE)^(1/n)*f^(-r/n)*exp((E + P*V)/(n * R*T))/FT;
+function dεII_dτII((TauII, a::DislocationCreep; P, T, f, kwargs...))
+    @unpack_val n,r,p,A,E,V,R = a
+    FT, FE = CorrectionFactor(a)
+    return (FT*TauII)^(-1+n)+f^r*A*FT*n*exp((-E-P*V)/(R*T))*(1/FE)
 end
-
 
 # EpsII .= A.*(TauII.*FT).^n.*f.^r.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
 # All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
@@ -100,6 +87,12 @@ function computeCreepLaw_TauII(EpsII, a::DislocationCreep; P::_R, T::_R, f::_R, 
     FT, FE = CorrectionFactor(a);    
 
     return A^(-1/n)*(EpsII*FE)^(1/n)*f^(-r/n)*exp((E + P*V)/(n * R*T))/FT
+end
+
+function dτII_dεII(EpsII, a::DislocationCreep; P, T, f, kwargs...)
+    @unpack_val n,r,p,A,E,V,R = a
+    FT, FE = CorrectionFactor(a)
+    return (FT*EpsII)^(-1+1/n)+f^(-r/n)*A^(-1/n)*FE*n*exp((E+P*V)/(n*R*T))*(1/(FT*n))
 end
 
 
