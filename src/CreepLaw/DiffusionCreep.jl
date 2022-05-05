@@ -3,7 +3,9 @@ import GeoParams.param_info
 
 
 export  DiffusionCreep,
-        SetDiffusionCreep
+        SetDiffusionCreep,
+        dεII_dτII,
+        dτII_dεII
 
 const AxialCompression, SimpleShear, Invariant = 1,2,3
 

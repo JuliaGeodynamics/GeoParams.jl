@@ -1,5 +1,8 @@
-export computeViscosity_TauII,
-    computeViscosity_EpsII, computeViscosity_TauII!, computeViscosity_EpsII!
+export strain_rate_circuit, 
+    computeViscosity_TauII, 
+    computeViscosity_EpsII, 
+    computeViscosity_TauII!, 
+    computeViscosity_EpsII!
 
 """
     compute viscosity given strain rate 2nd invariant
@@ -26,6 +29,7 @@ end
 @inline function computeViscosity_TauII(τII::T, v::Tuple, args) where {T}
     return computeViscosity(computeViscosity_TauII, τII, v, args, Val(length(v)))
 end
+
 @inline function computeViscosity_EpsII(εII::T, v::Tuple, args) where {T}
     return computeViscosity(computeViscosity_EpsII, εII, v, args, Val(length(v)))
 end
@@ -70,7 +74,6 @@ end
     end
 end
 
-
 strain_rate_circuit(TauII, v, args) = strain_rate_circuit(TauII, v, args, Val(length(v)))
 
 @inline @generated function strain_rate_circuit(TauII, v, args, ::Val{N}; n=1) where {N}
@@ -88,7 +91,7 @@ end
 
 function viscosityCircuit_TauII(τII::T, v, args) where {T}
     εII = strain_rate_circuit(τII, v, args)
-    return η = 2 * εII / τII
+    return η = 0.5 * τII / εII
 end
 
 # v = (DiffusionCreep(), DislocationCreep())

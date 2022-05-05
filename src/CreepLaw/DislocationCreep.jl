@@ -11,7 +11,9 @@ using ..MaterialParameters: MaterialParamsInfo
 import GeoParams.param_info
 
 export  DislocationCreep,
-        SetDislocationCreep
+        SetDislocationCreep,
+        dεII_dτII,
+        dτII_dεII
 
 const AxialCompression, SimpleShear, Invariant = 1,2,3
 
@@ -71,7 +73,8 @@ function computeCreepLaw_EpsII(TauII, a::DislocationCreep; P::_R, T::_R, f::_R, 
 end
 
 function dεII_dτII(TauII, a::DislocationCreep; P, T, f, kwargs...)
-    @unpack_val n,r,p,A,E,V,R = a
+    @unpack_val n,r,A,E,V,R = a
+
     FT, FE = CorrectionFactor(a)
     return (FT*TauII)^(-1+n)+f^r*A*FT*n*exp((-E-P*V)/(R*T))*(1/FE)
 end
@@ -87,7 +90,8 @@ function computeCreepLaw_TauII(EpsII, a::DislocationCreep; P::_R, T::_R, f::_R, 
 end
 
 function dτII_dεII(EpsII, a::DislocationCreep; P, T, f, kwargs...)
-    @unpack_val n,r,p,A,E,V,R = a
+    @unpack_val n,r,A,E,V,R = a
+
     FT, FE = CorrectionFactor(a)
     return (FT*EpsII)^(-1+1/n)+f^(-r/n)*A^(-1/n)*FE*n*exp((E+P*V)/(n*R*T))*(1/(FT*n))
 end

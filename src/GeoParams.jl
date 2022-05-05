@@ -72,9 +72,14 @@ export compute_density,                                # computational routines
 # Creep laws
 using .MaterialParameters.CreepLaw
 export computeCreepLaw_EpsII, computeCreepLaw_TauII, CreepLawVariables,
-        LinearViscous, PowerlawViscous,
+        LinearViscous, PowerlawViscous, ConstantElasticity,
         DislocationCreep, SetDislocationCreep, DislocationCreep_info,
-        DiffusionCreep,   SetDiffusionCreep
+        DiffusionCreep, SetDiffusionCreep, dεII_dτII, dτII_dεII,
+        computeViscosity_TauII, 
+        computeViscosity_EpsII, 
+        computeViscosity_TauII!, 
+        computeViscosity_EpsII!,
+        strain_rate_circuit
 
 # Plasticity        
 using .MaterialParameters.Plasticity
@@ -84,11 +89,14 @@ export  compute_yieldfunction,      # calculation routines
         DruckerPrager               
 
 # Elasticity
-using .MaterialParameters.Elasticity
-export  compute_elastic_shear_strainrate,       # calculation routines
-        compute_elastic_shear_strainrate!,
-        param_info,
-        ConstantElasticity                      # constant
+# using .MaterialParameters.Elasticity
+# export  compute_elastic_shear_strainrate,       # calculation routines
+#         compute_elastic_shear_strainrate!,
+#         # computeCreepLaw_EpsII,
+#         # computeCreepLaw_EpsII!,
+#         param_info,
+#         ConstantElasticity, 
+#         # dεII_dτII
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration

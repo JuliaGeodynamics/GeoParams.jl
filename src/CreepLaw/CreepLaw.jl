@@ -22,9 +22,13 @@ abstract type AbstractCreepLaw{T} <: AbstractMaterialParam end
 export  computeCreepLaw_EpsII, computeCreepLaw_TauII,       # calculation routines
         CreepLawVariables,                                     # holds additional parameters required for calculations
         LinearViscous, 
-        PowerlawViscous
-        param_info
-
+        PowerlawViscous,
+        param_info,
+        dεII_dτII,
+        dτII_dεII,
+        computeViscosity_TauII, computeViscosity_EpsII, 
+        computeViscosity_TauII!, computeViscosity_EpsII!,
+        strain_rate_circuit
 
 # NOTE: we will likely have to remove this, in favor of multiple dispatch options
 """
@@ -49,6 +53,8 @@ CreepLawVariables(args...) = CreepLawVariables(convert.(GeoUnit,args)...)
 
 include("DislocationCreep.jl")
 include("DiffusionCreep.jl")
+include("Elasticity.jl")
+include("Viscosity.jl")
 
 # Linear viscous rheology ------------------------------------------------
 """
@@ -78,16 +84,28 @@ function param_info(s::LinearViscous) # info about the struct
 end
 
 # Calculation routines for linear viscous rheologies
-function computeCreepLaw_EpsII(TauII, s::LinearViscous, p::CreepLawVariables)
+function computeCreepLaw_EpsII(TauII, s::LinearViscous; kwargs...)
     @unpack η   = s
     
     return EpsII = (TauII/η)*0.5;
 end
 
-function computeCreepLaw_TauII(EpsII, s::LinearViscous, p::CreepLawVariables)
+function dεII_dτII(TauII, a::LinearViscous; kwargs...)
     @unpack η   = s
     
-    return TauII = 2.0*(η*EpsII);
+    return η*0.5;
+end
+
+function computeCreepLaw_TauII(EpsII, s::LinearViscous; kwargs)
+    @unpack η   = s
+    
+    return TauII = 2*(η*EpsII);
+end
+
+function dτII_dεII(EpsII, a::LinearViscous; kwargs...)
+    @unpack η   = s
+    
+    return 2*η;
 end
 
 # Print info 
@@ -121,12 +139,14 @@ end
 #-------------------------------------------------------------------------
 
 # add methods programatically 
-for myType in (:DiffusionCreep, :DislocationCreep)
+for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity)
     @eval begin
         computeCreepLaw_EpsII(TauII, a::$(myType), args) = computeCreepLaw_EpsII(TauII, a; args...) 
+        dεII_dτII(TauII, a::$(myType), args) = dεII_dτII(TauII, a; args...) 
         computeCreepLaw_TauII(EpsII, a::$(myType), args) = computeCreepLaw_TauII(EpsII, a; args...) 
-        dεII_dτII(TauII, a::$(myType), args) = dεII_dτII(tauII, a; args...) 
-        dτII_dεII(EpsII, a::$(myType), args) = dτII_dεII(EpsII, a; args...) 
+        if Symbol($myType) !== :ConstantElasticity
+            dτII_dεII(EpsII, a::$(myType), args) = dτII_dεII(EpsII, a; args...)
+        end
     end
 end
 
