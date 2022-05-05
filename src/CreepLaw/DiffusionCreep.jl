@@ -22,7 +22,7 @@ R is the universal gas constant
 Apparatus defines the appartus type that shall be recreated (Axial Compression, Simple Shear, Invariant)
 =#
 
-@with_kw_noshow mutable struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
+@with_kw_noshow struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     Name::NTuple{N,Char}        = ""
     n::GeoUnit{T,U1}            = 1.0NoUnits         # power-law exponent
     r::GeoUnit{T,U1}            = 0.0NoUnits         # exponent of water-fugacity

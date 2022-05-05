@@ -47,7 +47,7 @@ DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3
     E::GeoUnit{T,U3}        = 476.0kJ/mol        # activation energy
     V::GeoUnit{T,U4}        = 6e-6m^3/mol        # activation volume
     R::GeoUnit{T,U5}        = 8.314J/mol/K       # Universal gas constant
-    Apparatus::Int32        = AxialCompression   # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
+    Apparatus::Int64        = 1   # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
 end
 DislocationCreep(args...) = DislocationCreep(NTuple{length(args[1]), Char}(collect.(args[1])), convert.(GeoUnit,args[2:end-1])..., args[end])
 

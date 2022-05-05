@@ -32,9 +32,8 @@ function Local_Iterations()
     η = 0.5 * A^(-1.0 / n) * εII_ve^((1.0 - n) / n) * exp(E / (n * R * T)) # guess
     η_ve = 1.0 / (1.0 / η + 1.0 / (μ * dt)) # guess
     τII = 2 * η_ve * εII_ve            # guess
-    println(τII)
 
-    @time "iterations" while iter < 5  # Picard
+    while iter < 5  # Picard
         iter = iter + 1
         f = εII_ve - A * τII^n * exp(-E / R / T) - τII / (2 * μ * dt)
         dfdτII = 0.0 - n * A * τII^(n - 1.0) * exp(-E / R / T) - 1.0 / (2 * μ * dt)
@@ -57,4 +56,4 @@ function Local_Iterations()
 
     return nothing
 end
-@time Local_Iterations()
+@btime Local_Iterations()

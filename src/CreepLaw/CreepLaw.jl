@@ -85,25 +85,25 @@ end
 
 # Calculation routines for linear viscous rheologies
 function computeCreepLaw_EpsII(TauII, s::LinearViscous; kwargs...)
-    @unpack η   = s
+    @unpack_val η   = s
     
     return EpsII = (TauII/η)*0.5;
 end
 
-function dεII_dτII(TauII, a::LinearViscous; kwargs...)
-    @unpack η   = s
+function dεII_dτII(TauII, s::LinearViscous; kwargs...)
+    @unpack_val η   = s
     
     return η*0.5;
 end
 
-function computeCreepLaw_TauII(EpsII, s::LinearViscous; kwargs)
-    @unpack η   = s
+function computeCreepLaw_TauII(EpsII, s::LinearViscous; kwargs...)
+    @unpack_val η   = s
     
     return TauII = 2*(η*EpsII);
 end
 
-function dτII_dεII(EpsII, a::LinearViscous; kwargs...)
-    @unpack η   = s
+function dτII_dεII(EpsII, s::LinearViscous; kwargs...)
+    @unpack_val η   = s
     
     return 2*η;
 end
