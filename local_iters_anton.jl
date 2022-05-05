@@ -14,8 +14,6 @@ function Local_Iterations()
     εII_vis = εII_ve
     τII = []
     err = []
-    iter = 0
-    # Local Iterations
     #=while (iter < 2 || err[end] > 1e-10) && iter < nt  # Picard
        iter = iter + 1
        η       = A^(-1.0/n) * εII_vis^((1.0-n)/n)*exp(E/(n*R*T))
@@ -33,27 +31,20 @@ function Local_Iterations()
     η_ve = 1.0 / (1.0 / η + 1.0 / (μ * dt)) # guess
     τII = 2 * η_ve * εII_ve            # guess
 
-    while iter < 5  # Picard
+    # Local Iterations
+    iter = 0
+    tol = 1e-6
+    ϵ = 2*tol
+    τII_prev = τII
+    while ϵ > tol  # Newton
         iter = iter + 1
-        f = εII_ve - A * τII^n * exp(-E / R / T) - τII / (2 * μ * dt)
-        dfdτII = 0.0 - n * A * τII^(n - 1.0) * exp(-E / R / T) - 1.0 / (2 * μ * dt)
+        f = εII_ve - A * τII^n * exp(-E / R / T) - τII / (2 * μ * dt) # 1.7615218742570521e-15
+        dfdτII = 0.0 - n * A * τII^(n - 1.0) * exp(-E / R / T) - 1.0 / (2 * μ * dt) # -4.463716902546265e-21
         τII = τII - f / dfdτII
-        # println(f)
-        # println(τII)
-        #=if iter == 1
-            push!(err,abs(- 2.0*η_ve*εII_ve))
-        else
-            push!(err,abs((τII[end] - 2.0*η_ve*εII_ve)/(τII[end] + 2.0*η_ve*εII_ve)))
-        end
-        push!(τII,2.0*η_ve*εII_ve)
-        εII_vis = τII[end]/(2.0*η)=#
+        ϵ = abs(τII-τII_prev)/τII
+        τII_prev = τII
     end
-    #display(err[end])
-    #p1 = plot(log10.(abs.(err)))
-    #p2 = plot((τII))
 
-    #display(plot(p1,p2))
-
-    return nothing
+    return iter, ϵ
 end
-@btime Local_Iterations()
+@time Local_Iterations()
