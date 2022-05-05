@@ -18,8 +18,8 @@ using Requires          # To only add plotting routines if Plots is loaded
 import Base: getindex
 
 # overload to account for cases where this is an integer
-Base.getindex(val::Number, I::Vararg{Integer, N}) where N = val
-Base.getindex(val::Number, I::Integer) = val
+Base.getindex(val::Real, I::Vararg{Integer, N}) where N = val
+Base.getindex(val::Real, I::Integer) = val
 
 export
         @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
