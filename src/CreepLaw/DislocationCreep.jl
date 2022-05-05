@@ -76,7 +76,7 @@ function dεII_dτII(TauII, a::DislocationCreep; P, T, f, kwargs...)
     @unpack_val n,r,A,E,V,R = a
 
     FT, FE = CorrectionFactor(a)
-    return (1*TauII)^(-1+n)*f^r*A*1*n*exp((-E-P*V)/(R*T))*(1/1)
+    return (FT*TauII)^(-1+n)*f^r*A*FT*n*exp((-E-P*V)/(R*T))*(1/FE)
 end
 
 # EpsII .= A.*(TauII.*FT).^n.*f.^r.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
