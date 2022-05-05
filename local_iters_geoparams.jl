@@ -1,4 +1,3 @@
-using Revise
 import Pkg; Pkg.activate(".")
 using GeoParams
 
