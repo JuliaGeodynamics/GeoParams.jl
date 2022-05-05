@@ -55,7 +55,7 @@ function computeCreepLaw_EpsII(TauII, a::DiffusionCreep; P, T, f, d, kwargs...)
     return A*(TauII*FT)^n*f^r*d^p*exp(-(E + P*V)/(R*T))/FE
 end
 
-function dεII_dτII((TauII, a::DiffusionCreep; P, T, f, d, kwargs...))
+function dεII_dτII(TauII, a::DiffusionCreep; P, T, f, d, kwargs...)
     @unpack_val n,r,p,A,E,V,R = a
     FT, FE = CorrectionFactor(a)
     return (FT*TauII)^(-1+n)+f^r*d^p*A*FT*n*exp((-E-P*V)/(R*T))*(1/FE)
@@ -87,7 +87,7 @@ end
 
 # This computes correction factors to go from experimental data to tensor format
 # A nice discussion 
-function CorrectionFactor(a::DislocationCreep{_T}) where {_T}
+function CorrectionFactor(a::DiffusionCreep{_T}) where {_T}
     if a.Apparatus == AxialCompression
         FT = sqrt(one(_T)*3) # relation between differential stress recorded by apparatus and TauII
         FE = 2/FT            # relation between gamma recorded by apparatus and EpsII

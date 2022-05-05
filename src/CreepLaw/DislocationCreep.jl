@@ -70,7 +70,7 @@ function computeCreepLaw_EpsII(TauII, a::DislocationCreep; P::_R, T::_R, f::_R, 
     return A*(TauII*FT)^n*f^r*exp(-(E + P*V)/(R*T))/FE; 
 end
 
-function dεII_dτII((TauII, a::DislocationCreep; P, T, f, kwargs...))
+function dεII_dτII(TauII, a::DislocationCreep; P, T, f, kwargs...)
     @unpack_val n,r,p,A,E,V,R = a
     FT, FE = CorrectionFactor(a)
     return (FT*TauII)^(-1+n)+f^r*A*FT*n*exp((-E-P*V)/(R*T))*(1/FE)
