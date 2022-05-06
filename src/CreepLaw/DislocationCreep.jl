@@ -64,7 +64,7 @@ end
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
 
-function computeCreepLaw_EpsII(TauII, a::DislocationCreep; P::_R, T::_R, f::_R, args...) where _R<:Real
+@inline function computeCreepLaw_EpsII(TauII, a::DislocationCreep; P::_R, T::_R, f::_R, args...) where _R<:Real
     @unpack_val n,r,A,E,V,R = a
     
     FT, FE = CorrectionFactor(a);    
@@ -72,7 +72,7 @@ function computeCreepLaw_EpsII(TauII, a::DislocationCreep; P::_R, T::_R, f::_R, 
     return A*(TauII*FT)^n*f^r*exp(-(E + P*V)/(R*T))/FE; 
 end
 
-function dεII_dτII(TauII, a::DislocationCreep; P, T, f, kwargs...)
+@inline function dεII_dτII(TauII, a::DislocationCreep; P, T, f, kwargs...)
     @unpack_val n,r,A,E,V,R = a
 
     FT, FE = CorrectionFactor(a)
@@ -81,7 +81,7 @@ end
 
 # EpsII .= A.*(TauII.*FT).^n.*f.^r.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
 # All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
-function computeCreepLaw_TauII(EpsII, a::DislocationCreep; P::_R, T::_R, f::_R, args...) where _R<:Real
+@inline function computeCreepLaw_TauII(EpsII, a::DislocationCreep; P::_R, T::_R, f::_R, args...) where _R<:Real
     @unpack_val n,r,A,E,V,R = a
 
     FT, FE = CorrectionFactor(a);    
@@ -89,7 +89,7 @@ function computeCreepLaw_TauII(EpsII, a::DislocationCreep; P::_R, T::_R, f::_R, 
     return A^(-1/n)*(EpsII*FE)^(1/n)*f^(-r/n)*exp((E + P*V)/(n * R*T))/FT
 end
 
-function dτII_dεII(EpsII, a::DislocationCreep; P, T, f, kwargs...)
+@inline function dτII_dεII(EpsII, a::DislocationCreep; P, T, f, kwargs...)
     @unpack_val n,r,A,E,V,R = a
 
     FT, FE = CorrectionFactor(a)

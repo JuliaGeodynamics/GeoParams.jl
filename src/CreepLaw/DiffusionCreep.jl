@@ -49,7 +49,7 @@ end
 
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
-function computeCreepLaw_EpsII(TauII, a::DiffusionCreep; P, T, f, d, kwargs...)
+@inline function computeCreepLaw_EpsII(TauII, a::DiffusionCreep; P, T, f, d, kwargs...)
     @unpack_val n,r,p,A,E,V,R = a
     
     FT, FE = CorrectionFactor(a)
@@ -57,7 +57,7 @@ function computeCreepLaw_EpsII(TauII, a::DiffusionCreep; P, T, f, d, kwargs...)
     return A*(TauII*FT)^n*f^r*d^p*exp(-(E + P*V)/(R*T))/FE
 end
 
-function dεII_dτII(TauII, a::DiffusionCreep; P, T, f, d, kwargs...)
+@inline function dεII_dτII(TauII, a::DiffusionCreep; P, T, f, d, kwargs...)
     @unpack_val n,r,p,A,E,V,R = a
     FT, FE = CorrectionFactor(a)
     return (FT*TauII)^(-1+n)*f^r*d^p*A*FT*n*exp((-E-P*V)/(R*T))*(1/FE)
@@ -65,7 +65,7 @@ end
 
 # EpsII .= A.*(TauII.*FT).^n.*f.^r.*d.^p.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
 # All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
-function computeCreepLaw_TauII(EpsII, a::DiffusionCreep; P, T, f, d, kwargs...)
+@inline function computeCreepLaw_TauII(EpsII, a::DiffusionCreep; P, T, f, d, kwargs...)
     @unpack_val n,r,p,A,E,V,R = a
 
     FT, FE = CorrectionFactor(a);    
@@ -74,7 +74,7 @@ function computeCreepLaw_TauII(EpsII, a::DiffusionCreep; P, T, f, d, kwargs...)
 end
 
 
-function dτII_dεII(EpsII, a::DiffusionCreep; P, T, f, d, kwargs...)
+@inline function dτII_dεII(EpsII, a::DiffusionCreep; P, T, f, d, kwargs...)
     @unpack_val n,r,p,A,E,V,R = a
     FT, FE = CorrectionFactor(a)
     return (FT*EpsII)^(-1+1/n)*f^(-r/n)*d^(-p/n)*A^(-1/n)*FE*n*exp((E+P*V)/(n*R*T))*(1/(FT*n))

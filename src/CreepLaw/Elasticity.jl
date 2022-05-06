@@ -28,19 +28,19 @@ end
 
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
-function computeCreepLaw_EpsII(τII::_T, s::ConstantElasticity{_T}; τII_old::_T=zero(_T), dt::_T=one(_T), kwargs...) where _T
+@inline function computeCreepLaw_EpsII(τII::_T, s::ConstantElasticity{_T}; τII_old::_T=zero(_T), dt::_T=one(_T), kwargs...) where _T
     @unpack_val G   = s
     ε_el = (τII-τII_old)/(2.0 * G * dt)    
 
     return ε_el
 end
 
-function dεII_dτII(τII, s::ConstantElasticity{_T}; dt::_T=1.0, kwargs...) where _T
+@inline function dεII_dτII(τII, s::ConstantElasticity{_T}; dt::_T=1.0, kwargs...) where _T
     @unpack_val G   = s
     return 1/(2*G*dt)
 end
 
-function computeCreepLaw_TauII(εII::_T, s::ConstantElasticity{_T}; dt::_T=one(_T), kwargs...) where _T
+@inline function computeCreepLaw_TauII(εII::_T, s::ConstantElasticity{_T}; dt::_T=one(_T), kwargs...) where _T
     @unpack_val G   = s
     τII = G * dt
 

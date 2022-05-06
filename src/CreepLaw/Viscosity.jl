@@ -9,7 +9,7 @@ export strain_rate_circuit,
 
     τ = 2ηε -> η = τ/2/ε
 """
-function computeViscosity_EpsII(εII, v, args)
+@inline function computeViscosity_EpsII(εII, v, args)
     τII = computeCreepLaw_TauII(εII, v, args) # gives 
     η = 0.5 * τII / εII
     return η
