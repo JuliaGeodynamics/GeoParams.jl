@@ -70,7 +70,7 @@ function computeCreepLaw_EpsII(TauII, a::DislocationCreep, p::CreepLawVariables)
     
     FT, FE = CorrectionFactor(a)
    
-    return A*(TauII*FT)^n*f^r*exp(-(E + P*V)/(R*T))/FE
+    return A*fastpow(TauII*FT,n)*fastpow(f,r)*exp(-(E + P*V)/(R*T))/FE
 end
 
 function computeCreepLaw_EpsII(TauII, a::DislocationCreep, P::_R, T::_R, f::_R) where _R<:Real
@@ -78,7 +78,7 @@ function computeCreepLaw_EpsII(TauII, a::DislocationCreep, P::_R, T::_R, f::_R) 
     
     FT, FE = CorrectionFactor(a);    
    
-    return A*(TauII*FT)^n*f^r*exp(-(E + P*V)/(R*T))/FE; 
+    return A*fastpow(TauII*FT, n)*fastpow(f,r)*exp(-(E + P*V)/(R*T))/FE; 
 end
 
 # EpsII .= A.*(TauII.*FT).^n.*f.^r.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
@@ -89,7 +89,7 @@ function computeCreepLaw_TauII(EpsII, a::DislocationCreep, p::CreepLawVariables)
 
     FT, FE = CorrectionFactor(a)    
 
-    return A^(-1/n)*(EpsII*FE)^(1/n)*f^(-r/n)*exp((E + P*V)/(n * R*T))/FT;
+    return fastpow(A, -1/n)*fastpow(EpsII*FE,1/n)*fastpow(f, -r/n)*exp((E + P*V)/(n * R*T))/FT;
 end
 
 
@@ -100,7 +100,7 @@ function computeCreepLaw_TauII(EpsII, a::DislocationCreep, P::_R, T::_R, f::_R) 
 
     FT, FE = CorrectionFactor(a);    
 
-    return A^(-1/n)*(EpsII*FE)^(1/n)*f^(-r/n)*exp((E + P*V)/(n * R*T))/FT
+    return fastpow(A,-1/n)*fastpow(EpsII*FE,1/n)*fastpow(f,-r/n)*exp((E + P*V)/(n * R*T))/FT
 end
 
 

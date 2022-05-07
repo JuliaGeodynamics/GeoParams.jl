@@ -51,9 +51,9 @@ function computeCreepLaw_EpsII(TauII, a::DiffusionCreep, c::CreepLawVariables)
     @unpack_val n,r,p,A,E,V,R = a
     @unpack_val P,T,f,d       = c
     
-    FT, FE = CorrectionFactor(a);    
+    FT, FE = CorrectionFactor(a)
    
-    return A*(TauII*FT)^n*f^r*d^p*exp(-(E + P*V)/(R*T))/FE; 
+    return A*fastpow(TauII*FT,n)*fastpow(f,r)*fastpow(d,p)*exp(-(E + P*V)/(R*T))/FE
 end
 
 # EpsII .= A.*(TauII.*FT).^n.*f.^r.*d.^p.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
@@ -62,9 +62,9 @@ function computeCreepLaw_TauII(EpsII, a::DiffusionCreep, c::CreepLawVariables)
     @unpack_val n,r,A,E,V,R = a
     @unpack_val P,T,f,d     = c
 
-    FT, FE = CorrectionFactor(a);    
+    FT, FE = CorrectionFactor(a)  
 
-    return A^(-1/n)*(EpsII*FE)^(1/n)*f^(-r/n)*d^(-p/n)*exp((E + P*V)/(n * R*T))/FT;
+    return fastpow(A,-1/n)*fastpow(EpsII*FE,1/n)*fastpow(f, -r/n)*fastpow(d,-p/n)*exp((E + P*V)/(n * R*T))/FT
 end
 
 # Print info 

@@ -1,7 +1,5 @@
 # Various helper functions (mosty for internal use)
 
-
-
 # Finds index in an allocation-free manner
 function find_ind(x::NTuple{N,_I}, k::_I) where {N, _I<:Integer}
     @inbounds for i in 1:N
@@ -11,8 +9,6 @@ function find_ind(x::NTuple{N,_I}, k::_I) where {N, _I<:Integer}
     end
     return 0
 end
-
-
 
 # Find max element in a tuple
 function find_max_tuple(t::NTuple{N,T}) where {N,T}
@@ -36,3 +32,11 @@ function ntuple_idx(args::NamedTuple, I::Integer...)
     v = getindex.(values(args), Tuple(I)...)
     return (; zip(k, v)...)
 end
+
+# fast exponential (in exchange of some accuracy)
+function fastpow(x::Number, n::Integer)
+    n > 3 && return exp(log(x)*n)
+    return x^n
+end
+
+fastpow(x::Number, n::AbstractFloat) =  exp(log(x)*n)
