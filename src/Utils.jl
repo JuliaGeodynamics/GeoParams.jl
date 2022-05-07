@@ -33,7 +33,7 @@ function ntuple_idx(args::NamedTuple, I::Integer...)
     return (; zip(k, v)...)
 end
 
-# fast exponential (in exchange of some accuracy)
+# fast exponential
 function fastpow(x::Number, n::Integer)
     n > 3 && return exp(log(x)*n)
     return x^n
