@@ -12,11 +12,10 @@ import GeoParams.param_info
 
 export  DislocationCreep,
         SetDislocationCreep,
-        DislocationCreep_info
+        dεII_dτII,
+        dτII_dεII
 
 const AxialCompression, SimpleShear, Invariant = 1,2,3
-
-
 
 
 # Dislocation Creep ------------------------------------------------
@@ -48,7 +47,7 @@ DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3
     E::GeoUnit{T,U3}        = 476.0kJ/mol        # activation energy
     V::GeoUnit{T,U4}        = 6e-6m^3/mol        # activation volume
     R::GeoUnit{T,U5}        = 8.314J/mol/K       # Universal gas constant
-    Apparatus::Int32        = AxialCompression   # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
+    Apparatus::Int64        = 1   # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
 end
 DislocationCreep(args...) = DislocationCreep(NTuple{length(args[1]), Char}(collect.(args[1])), convert.(GeoUnit,args[2:end-1])..., args[end])
 
@@ -64,43 +63,37 @@ end
 
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
-function computeCreepLaw_EpsII(TauII, a::DislocationCreep, p::CreepLawVariables)
+
+@inline function computeCreepLaw_EpsII(TauII, a::DislocationCreep; P::_R, T::_R, f::_R, args...) where _R<:Real
     @unpack_val n,r,A,E,V,R = a
-    @unpack_val P,T,f       = p
     
     FT, FE = CorrectionFactor(a)
-   
-    return A*(TauII*FT)^n*f^r*exp(-(E + P*V)/(R*T))/FE
+
+    return A*fastpow(TauII*FT,n)*fastpow(f,r)*exp(-(E + P*V)/(R*T))/FE   
 end
 
-function computeCreepLaw_EpsII(TauII, a::DislocationCreep, P::_R, T::_R, f::_R) where _R<:Real
+@inline function dεII_dτII(TauII, a::DislocationCreep; P, T, f, kwargs...)
     @unpack_val n,r,A,E,V,R = a
-    
-    FT, FE = CorrectionFactor(a);    
-   
-    return A*(TauII*FT)^n*f^r*exp(-(E + P*V)/(R*T))/FE; 
+
+    FT, FE = CorrectionFactor(a)
+    return fastpow(FT*TauII,-1+n)*fastpow(f,r)*A*FT*n*exp((-E-P*V)/(R*T))*(1/FE)
 end
 
 # EpsII .= A.*(TauII.*FT).^n.*f.^r.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
 # All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
-function computeCreepLaw_TauII(EpsII, a::DislocationCreep, p::CreepLawVariables)
+@inline function computeCreepLaw_TauII(EpsII, a::DislocationCreep; P::_R, T::_R, f::_R, args...) where _R<:Real
     @unpack_val n,r,A,E,V,R = a
-    @unpack_val P,T,f       = p
 
-    FT, FE = CorrectionFactor(a)    
+    FT, FE = CorrectionFactor(a)
 
-    return A^(-1/n)*(EpsII*FE)^(1/n)*f^(-r/n)*exp((E + P*V)/(n * R*T))/FT;
+    return A*fastpow(TauII*FT, n)*fastpow(f,r)*exp(-(E + P*V)/(R*T))/FE
 end
 
-
-# EpsII .= A.*(TauII.*FT).^n.*f.^r.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
-# All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
-function computeCreepLaw_TauII(EpsII, a::DislocationCreep, P::_R, T::_R, f::_R) where _R<:Real
+@inline function dτII_dεII(EpsII, a::DislocationCreep; P, T, f, kwargs...)
     @unpack_val n,r,A,E,V,R = a
 
-    FT, FE = CorrectionFactor(a);    
-
-    return A^(-1/n)*(EpsII*FE)^(1/n)*f^(-r/n)*exp((E + P*V)/(n * R*T))/FT
+    FT, FE = CorrectionFactor(a)
+    return fastpow(FT*EpsII, -1+1/n)*fastpow(f,-r/n)*fastpow(A,-1/n)*FE*n*exp((E+P*V)/(n*R*T))*(1/(FT*n))
 end
 
 
@@ -113,15 +106,11 @@ end
 # This computes correction factors to go from experimental data to tensor format
 # A nice discussion 
 function CorrectionFactor(a::DislocationCreep{_T}) where {_T}
-
-    FT = one(_T) 
-    FE = one(_T)
     if a.Apparatus == AxialCompression
-        FT = sqrt(one(_T)*3)               # relation between differential stress recorded by apparatus and TauII
-        FE = one(_T)*2/sqrt(one(_T)*3)     # relation between gamma recorded by apparatus and EpsII
+        FT = sqrt(one(_T)*3) # relation between differential stress recorded by apparatus and TauII
+        FE = 2/FT            # relation between gamma recorded by apparatus and EpsII
     elseif a.Apparatus == SimpleShear
-        FT = one(_T)*2                     # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
-        FE = one(_T)*2 
+        FT = FE = one(_T)*2  # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
     end
     return FT,FE
 end

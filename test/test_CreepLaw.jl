@@ -3,12 +3,12 @@ using GeoParams
 
 @testset "CreepLaw" begin
 
- #Make sure structs are isbits
- x = LinearViscous()
- @test isbits(x)
+#Make sure structs are isbits
+x = LinearViscous()
+@test isbits(x)
  
- x = PowerlawViscous()
- @test isbits(x)
+x = PowerlawViscous()
+@test isbits(x)
 
 # This tests the MaterialParameters structure
 CharUnits_GEO   =   GEO_units(viscosity=1e19, length=1000km);
@@ -29,14 +29,16 @@ x1_ND = nondimensionalize(x1_ND,CharUnits_GEO)
 # perform a computation with the viscous creep laws 
 
 # Given stress
-@test computeCreepLaw_EpsII(1e6Pa, x1, CreepLawVariables())==5e-13/s                # dimensional input       
-@test computeCreepLaw_EpsII(1e0, x1_ND, CreepLawVariables())==5.0                   # non-dimensional
-@test computeCreepLaw_EpsII([1e0; 2.0], x1_ND, CreepLawVariables())==[5.0; 10.0]    # vector input
+vars = CreepLawVariables() 
+args = (P=vars.P, T=vars.T, f=vars.f, d=vars.d)
+@test computeCreepLaw_EpsII(1e6Pa, x1, args) ==5e-13/s                # dimensional input       
+@test computeCreepLaw_EpsII(1e0, x1_ND, args)==5.0                   # non-dimensional
+@test computeCreepLaw_EpsII([1e0; 2.0], x1_ND, args)==[5.0; 10.0]    # vector input
 
 # Given strainrate 
-@test computeCreepLaw_TauII(1e-13/s, x1, CreepLawVariables())==1e18*2*1e-13Pa       # dimensional input       
-@test computeCreepLaw_TauII(1e0, x1_ND, CreepLawVariables())==0.2                   # non-dimensional
-@test computeCreepLaw_TauII([1e0; 2.0], x1_ND, CreepLawVariables())==[0.2; 0.4]     # vector input
+@test computeCreepLaw_TauII(1e-13/s, x1, args)==1e18*2*1e-13Pa       # dimensional input       
+@test computeCreepLaw_TauII(1e0, x1_ND, args)==0.2                   # non-dimensional
+@test computeCreepLaw_TauII([1e0; 2.0], x1_ND, args)==[0.2; 0.4]     # vector input
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
