@@ -120,6 +120,10 @@ function show(io::IO, g::PowerlawViscous)
 end
 #-------------------------------------------------------------------------
 
+function TauIItoTauDiff(s::GeoUnit)
+    return 2.0 * s.val
+end
+
 
 # Help info for the calculation routines
 """
