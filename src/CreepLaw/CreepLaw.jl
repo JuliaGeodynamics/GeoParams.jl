@@ -121,7 +121,7 @@ end
 #-------------------------------------------------------------------------
 
 function TauIItoTauDiff(s::GeoUnit)
-    return 2.0 * s.val
+    return 2.0 * s
 end
 
 
