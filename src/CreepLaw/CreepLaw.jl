@@ -28,7 +28,8 @@ export  computeCreepLaw_EpsII, computeCreepLaw_TauII,       # calculation routin
         dτII_dεII,
         computeViscosity_TauII, computeViscosity_EpsII, 
         computeViscosity_TauII!, computeViscosity_EpsII!,
-        strain_rate_circuit
+        strain_rate_circuit,
+        AbstractCreepLaw
 
 # NOTE: we will likely have to remove this, in favor of multiple dispatch options
 """

@@ -1,6 +1,6 @@
 # Various helper functions (mosty for internal use)
-
-
+@inline fastpow(x::Number, n::AbstractFloat) = exp(log(x)*n)
+@inline fastpow(x::Number, n::Integer) = x^n
 
 # Finds index in an allocation-free manner
 function find_ind(x::NTuple{N,_I}, k::_I) where {N, _I<:Integer}
@@ -11,8 +11,6 @@ function find_ind(x::NTuple{N,_I}, k::_I) where {N, _I<:Integer}
     end
     return 0
 end
-
-
 
 # Find max element in a tuple
 function find_max_tuple(t::NTuple{N,T}) where {N,T}

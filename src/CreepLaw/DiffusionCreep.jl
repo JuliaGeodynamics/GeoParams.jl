@@ -1,6 +1,5 @@
 using ..MaterialParameters: MaterialParamsInfo
-import GeoParams.param_info
-
+import GeoParams: param_info, fastpow
 
 export  DiffusionCreep,
         SetDiffusionCreep,
@@ -55,12 +54,13 @@ end
     FT, FE = CorrectionFactor(a)
    
     return A*(TauII*FT)^n*f^r*d^p*exp(-(E + P*V)/(R*T))/FE
+    return A*fastpow(TauII*FT,n)*fastpow(f,r)*fastpow(d,p)*exp(-(E + P*V)/(R*T))/FE
 end
 
 @inline function dεII_dτII(TauII, a::DiffusionCreep; P, T, f, d, kwargs...)
     @unpack_val n,r,p,A,E,V,R = a
     FT, FE = CorrectionFactor(a)
-    return (FT*TauII)^(-1+n)*f^r*d^p*A*FT*n*exp((-E-P*V)/(R*T))*(1/FE)
+    return fastpow(FT*TauII, -1+n)*fastpow(f,r)*fastpow(d,p)*A*FT*n*exp((-E-P*V)/(R*T))*(1/FE)
 end
 
 # EpsII .= A.*(TauII.*FT).^n.*f.^r.*d.^p.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
@@ -70,14 +70,14 @@ end
 
     FT, FE = CorrectionFactor(a);    
 
-    return A^(-1/n)*(EpsII*FE)^(1/n)*f^(-r/n)*d^(-p/n)*exp((E + P*V)/(n * R*T))/FT
+    return fastpow(A,-1/n)*fastpow(EpsII*FE, 1/n)*fastpow(f,-r/n)*fastpow(d,-p/n)*exp((E + P*V)/(n * R*T))/FT
 end
 
 
 @inline function dτII_dεII(EpsII, a::DiffusionCreep; P, T, f, d, kwargs...)
     @unpack_val n,r,p,A,E,V,R = a
     FT, FE = CorrectionFactor(a)
-    return (FT*EpsII)^(-1+1/n)*f^(-r/n)*d^(-p/n)*A^(-1/n)*FE*n*exp((E+P*V)/(n*R*T))*(1/(FT*n))
+    return fastpow(FT*EpsII,-1+1/n)*fastpow(f,-r/n)*fastpow(d,-p/n)*fastpow(A,-1/n)*FE*n*exp((E+P*V)/(n*R*T))*(1/(FT*n))
 end
 
 
@@ -93,10 +93,13 @@ function CorrectionFactor(a::DiffusionCreep{_T}) where {_T}
     if a.Apparatus == AxialCompression
         FT = sqrt(one(_T)*3) # relation between differential stress recorded by apparatus and TauII
         FE = 2/FT            # relation between gamma recorded by apparatus and EpsII
+        return FT,FE
+        
     elseif a.Apparatus == SimpleShear
-        FT = FE = one(_T)*2  # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
+        FT = one(_T)*2  # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
+        FT = FE
+        return FT,FE
     end
-    return FT,FE
 end
 
 # Add pre-defined creep laws 
