@@ -2,17 +2,41 @@ export strain_rate_circuit,
     computeViscosity_TauII, 
     computeViscosity_EpsII, 
     computeViscosity_TauII!, 
-    computeViscosity_EpsII!
+    computeViscosity_EpsII!,
+    dεII_dτII
 
 """
     compute viscosity given strain rate 2nd invariant
 
     τ = 2ηε -> η = τ/2/ε
 """
-@inline function computeViscosity_EpsII(εII, v, args)
+@inline function computeViscosity_EpsII(εII, v::AbstractCreepLaw, args)
     τII = computeCreepLaw_TauII(εII, v, args) # gives 
     η = 0.5 * τII / εII
     return η
+end
+
+function local_iterations_EpsII(εII, v::Tuple, args)    # Physics
+    # Initial guess
+    η_ve = computeViscosity_EpsII(εII, v, args) # viscosity guess
+    τII = 2 * η_ve * εII # deviatoric stress guess
+    
+    # Local Iterations
+    iter = 0
+    tol = 1e-6
+    ϵ = 2*tol
+    τII_prev = τII
+    while ϵ > tol  # Newton
+        iter += 1
+        f = εII - strain_rate_circuit(τII, v, args)
+        dfdτII =  - dεII_dτII(rand(), v, args)
+        τII = τII - f / dfdτII
+
+        ϵ = abs(τII-τII_prev)/τII
+        τII_prev = τII
+    end
+    η = 0.5 * τII / εII
+    return iter, ϵ, η, η_ve
 end
 
 """
@@ -95,9 +119,18 @@ strain_rate_circuit(TauII, v, args) = strain_rate_circuit(TauII, v, args, Val(le
     end
 end
 
-function viscosityCircuit_TauII(τII::T, v, args) where {T}
+@inline function viscosityCircuit_TauII(τII::T, v, args) where {T}
     εII = strain_rate_circuit(τII, v, args)
     return η = 0.5 * τII / εII
+end
+
+@generated function dεII_dτII(τII::T, v::NTuple{N, AbstractCreepLaw}, args) where {T, N}
+    quote
+        Base.@_inline_meta
+        val = zero(T)
+        Base.Cartesian.@nexprs $N i -> val += dεII_dτII(τII, v[i], args)
+        return val 
+    end
 end
 
 # v = (DiffusionCreep(), DislocationCreep())
