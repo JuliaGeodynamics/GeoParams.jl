@@ -34,12 +34,18 @@ end
     return computeViscosity(computeViscosity_EpsII, εII, v, args, Val(length(v)))
 end
 
-@inline @generated function computeViscosity(
-    fn::F, CII::T, v::Tuple, args::NamedTuple, ::Val{N}
+@generated function computeViscosity(
+    fn::F, CII::T, v::Tuple, args::NamedTuple, ::Val{N}; n = -1
 ) where {F,T,N}
     quote
+        Base.@_inline_meta
         η = 0.0
-        Base.Cartesian.@nexprs $N i -> η += 1 / fn(CII, v[i], args)
+        Base.Cartesian.@nexprs $N i -> 
+            η += if v[i] isa Tuple 
+                computeViscosity(fn, CII, v[i], args; n=1) # viscosities in parallel → ηeff = 1/(η1 + η2)
+            else
+                fn(CII, v[i], args)^n # viscosities in series → ηeff = (1/η1 + 1/η2)^-1
+            end
         return 1 / η
     end
 end
