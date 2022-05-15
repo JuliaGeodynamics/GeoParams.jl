@@ -1,4 +1,4 @@
-module TAS_Classification
+module TASclassification
 
 # Julia script to retrieve  the classification of igneous rocks using a TAS diagram (Total Alkali (TA) vs Silica (S))
 # Positions of the fields are taken from Le Maitre et al., 2002
@@ -9,8 +9,9 @@ module TAS_Classification
 import Base.Threads
 using Parameters
 
-export  TAS_ClassificationData, 
-        computeClassification!
+export  TASclassificationData, 
+        computeTASclassification,
+        retrieveTASrockType
     
 """
     Declare function to test intersection between two vectors
@@ -46,17 +47,16 @@ function testIntersection(v::AbstractArray{_T},p::AbstractArray{_T}) where _T
 end
 
 """
-TAS_ClassificationData
+TASclassificationData
 
 Struct that holds default parameters for the TAS diagram
 """
-@with_kw_noshow struct TAS_ClassificationData
-        
+@with_kw_noshow struct TASclassificationData
         # name of the TAS field
         litho::Matrix{String} = ["foidite" "picrobasalt" "basanite" "phonotephrite" "tephriphonolite" "phonolite" "basalt" "trachybasalt" "basaltic trachyandesite" "trachyandesite" "trachyte" "basaltic andesite" "andesite" "dacite" "rhyolite"];
         
         # number of vertices per field (polygon)
-        n_ver::Matrix{Int64}  = [8 4 6 4 4 4 4 4 4 4 5 4 4 4 5];
+        n_ver::Matrix{Int64}  = [8 4 6 4 4 4 4 3 4 4 5 4 4 4 5];
 
         # next array store the vertices coordinates for polygon of all 15 fields defined in litho
         # this array should also be used to draw the fields
@@ -77,9 +77,29 @@ Struct that holds default parameters for the TAS diagram
                                 [77 0; 100 0; 100 16; 69 16; 69 8]                              ];
 end
 
+"""
+retrieveTASrockType(index::Int64; ClassTASdata::TASclassificationData = TASclassificationData())
+
+This retrieves the name of the volcanic rock-type using the computed index
+
+Input:
+====
+- `index` : integer [1-15]
+
+Output:
+- `litho` : a string of the name of corresponding volcanic rock
 
 """
-classIndex computeClassification!(chemComp::AbstractArray{_T,N}, ClassTASdata::TAS_ClassificationData)
+function retrieveTASrockType(index::Int64 ; ClassTASdata::TASclassificationData = TASclassificationData())
+        @unpack litho = ClassTASdata
+
+        return litho[index]
+end
+
+
+
+"""
+classIndex computeTASclassification!(chemComp::AbstractArray{_T,N}, ClassTASdata::TASclassificationData)
 
 This compute the classification of the igneous rock using TAS diagram (Total Alkali (TA) vs Silica (S)).
 
@@ -88,27 +108,18 @@ Input:
 - `chemComp` : vector rock composition in oxide wt%
 
 Output:
-- `classIndex` : an integer [0-14] corresponding to a TAS field (TAS_ClassificationData.litho[classIndex])
-
+- `classIndex` : an integer [0-14] corresponding to a TAS field (TASclassificationData.litho[classIndex])
 
 This routine was developed based the TAS classification of Le Maitre et al., 2002
 
 """
-function computeClassification!(chemComp::AbstractArray{_T,N}, ClassTASdata::TAS_ClassificationData) where {_T,N}
+function computeTASclassification(point::AbstractArray{_T,1}; ClassTASdata::TASclassificationData = TASclassificationData()) where {_T}
         @unpack litho, n_ver,  ver = ClassTASdata
 
         # set the classIndex to -1 to track for issue
         classIndex = -1;
 
-        # !!!!!!!!!!!
-        # here the composition should be retrieved correctly, shall we retrieve a string array with oxide names? or just retrieve TA and S??
-        # TA = chemComp[Na2O]+chemComp[K2O];
-        # S  = chemComp[SiO2];
-        # point = [TA,S];
-        # !!!!!!!!!!!
-
         n_poly  = size(litho,2);
-        point   = [65.0 6.1];
 
         shift   = 0;
         for poly=1:n_poly
@@ -134,7 +145,6 @@ function computeClassification!(chemComp::AbstractArray{_T,N}, ClassTASdata::TAS
                         # set origin of the ray casting outside the TAS diagram, to make sure we don't start from within a field!
                         p  = [0 0; point[1] point[2]];
                         n += testIntersection(v,p);
-
                 end
                 
                 # if the number of interestions is uneven then the point is within the tested polygon
@@ -147,13 +157,11 @@ function computeClassification!(chemComp::AbstractArray{_T,N}, ClassTASdata::TAS
 
         if classIndex == -1
                 print("could not find the proper TAS field. Is Na2O + K2O > 16wt%? do you have negative compositions?")
-        else
+        end
 
         # print(litho[classIndex])
 
-
-
         return classIndex;
-
 end   
 
+end

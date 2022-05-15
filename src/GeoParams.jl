@@ -125,6 +125,13 @@ using .MaterialParameters.Shearheating
 export compute_shearheating!, compute_shearheating,
         ConstantShearheating
 
+# Add TAS classification
+include("./RockClassification/TASclassification.jl")
+using   .TASclassification
+export  TASclassificationData, 
+        computeTASclassification,
+        retrieveTASrockType
+
 # Add zircon saturation parameterizations
 include("./ZirconAge/ZirconAges.jl")
 using   .ZirconAges
