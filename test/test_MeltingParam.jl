@@ -197,4 +197,54 @@ using GeoParams
 
     compute_dϕdT!(dϕdT, Mat_tup, PhaseRatio, args)
     @test sum(dϕdT) / n^3 ≈ 0.000176112129245805
+
+    
+    # Test smoothening of the melting curves:
+    p = SmoothMelting(p=MeltingParam_5thOrder())
+    @test isbits(p)
+    T = collect(250:100:1250) * K .+ 273.15K
+    phi_dim = zeros(size(T))
+    args=(;T=ustrip.(T))
+    compute_meltfraction!(phi_dim, p, args)
+    @test sum(phi_dim) ≈ 4.7084279086574226
+
+    dϕdT = zeros(size(T))
+    compute_dϕdT!(dϕdT, p, args)
+    @test sum(dϕdT) ≈ 0.006484456307540648
+
+    # try non-dimensionalisation
+    p_nd = nondimensionalize(p, CharUnits_GEO)
+    @test isbits(p)
+    @test isdimensional(p_nd.p.a)==false
+    @test p_nd.p.a ≈  6968.639721576996
+
+    p1= dimensionalize(p_nd,CharUnits_GEO)
+    @test isdimensional(p1.p.a)==true
+    @test Value(p1.p.a) ≈ Value(p.p.a)
+    
+    
+    #Mat_tup = ( SetMaterialParams( Name="Mantle", Phase=1, Melting=SmoothMelting(MeltingParam_4thOrder())),
+    #            SetMaterialParams( Name="Crust", Phase=2, Melting=MeltingParam_5thOrder()),
+    #            SetMaterialParams( Name="UpperCrust", Phase=3, Melting=SmoothMelting(MeltingParam_5thOrder()), Density=PT_Density()), 
+    #            SetMaterialParams( Name="LowerCrust", Phase=4, Density=PT_Density())
+    #                )
+    Mat_tup = ( SetMaterialParams( Name="Mantle",       Phase=1, Melting=SmoothMelting(MeltingParam_4thOrder())),
+                SetMaterialParams( Name="Crust",        Phase=2, Melting=MeltingParam_5thOrder()),
+                SetMaterialParams( Name="UpperCrust",   Phase=3, Melting=SmoothMelting(MeltingParam_5thOrder()), Density=PT_Density()), 
+                SetMaterialParams( Name="LowerCrust",   Phase=4, Density=PT_Density())
+                )
+
+
+    ϕ = zeros(size(Phases));
+    dϕdT = zeros(size(Phases));
+    T = ones(size(Phases)) * (800+273.15);
+    P = ones(size(Phases)) * 10;
+    args = (P=P, T=T);
+    compute_meltfraction!(ϕ, Mat_tup, Phases, args); #allocation free
+    @test sum(ϕ) / n^3 ≈ 0.4409766063389861
+
+    compute_dϕdT!(dϕdT, Mat_tup, Phases, args) #allocation free
+    @test sum(dϕdT) / n^3 ≈ 0.0006838372430250584
+
+    
 end

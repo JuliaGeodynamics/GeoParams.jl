@@ -78,18 +78,29 @@ function param_info(s::LinearViscous) # info about the struct
 end
 
 # Calculation routines for linear viscous rheologies
-function computeCreepLaw_EpsII(TauII, s::LinearViscous, p::CreepLawVariables)
-    @unpack η   = s
+@inline function computeCreepLaw_EpsII(TauII::T, s::LinearViscous; kwargs...) where T
+    η   = s.η
     
-    return EpsII = (TauII/η)*0.5;
+    return EpsII = (TauII/η)*0.5
 end
 
-function computeCreepLaw_TauII(EpsII, s::LinearViscous, p::CreepLawVariables)
-    @unpack η   = s
+@inline function dεII_dτII(TauII, s::LinearViscous; kwargs...)
+    η   = s.η
     
-    return TauII = 2.0*(η*EpsII);
+    return η*0.5;
 end
 
+@inline function computeCreepLaw_TauII(EpsII, s::LinearViscous; kwargs...)
+    η   = s.η
+    
+    return TauII = 2*(η*EpsII);
+end
+
+@inline function dτII_dεII(EpsII, s::LinearViscous; kwargs...)
+    η   = s.η
+    
+    return 2*η;
+end
 # Print info 
 function show(io::IO, g::LinearViscous)  
     print(io, "Linear viscosity: η=$(g.η.val)")  
@@ -119,6 +130,18 @@ function show(io::IO, g::PowerlawViscous)
     print(io, "Powerlaw viscosity: η0=$(g.η0.val), n=$(g.n.val), ε0=$(g.ε0.val) ")
 end
 #-------------------------------------------------------------------------
+
+# add methods programatically 
+for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep)
+    @eval begin
+        computeCreepLaw_EpsII(TauII, a::$(myType), args) = computeCreepLaw_EpsII(TauII, a; args...) 
+        dεII_dτII(TauII, a::$(myType), args) = dεII_dτII(TauII, a; args...) 
+        computeCreepLaw_TauII(EpsII, a::$(myType), args) = computeCreepLaw_TauII(EpsII, a; args...) 
+        if Symbol($myType) !== :ConstantElasticity
+            dτII_dεII(EpsII, a::$(myType), args) = dτII_dεII(EpsII, a; args...)
+        end
+    end
+end
 
 
 # Help info for the calculation routines

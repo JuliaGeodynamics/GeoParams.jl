@@ -118,6 +118,20 @@ where ``Cp`` is the heat capacity [``J/mol/K``], and ``a,b,c`` are parameters th
 - e = 0.062m^2/s        
 - f = 0.732m^2/s        
 - g = 0.000135m^2/s/K 
+
+This looks like:
+
+![subet1](./assets/img/Conductivity_Whittington.png)
+
+Example
+===
+```julia
+julia> using GeoParams, Plots
+julia> p=T_Conductivity_Whittington();
+julia> T,k,plt = PlotConductivity(p)
+```
+
+
 """
 @with_kw_noshow struct T_Conductivity_Whittington{T,U1,U2,U3,U4,U5,U6,U7,U8,U9} <: AbstractConductivity{T} 
     # Note: the resulting curve of k was visually compared with Fig. 2 of the paper  
@@ -146,7 +160,7 @@ function (s::T_Conductivity_Whittington{_T})(; T::_T=zero(_T), kwargs...) where 
     if T isa Quantity
         @unpack_units a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g = s
     else
-        @unpack_val  a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g = s
+        @unpack_val   a0,a1,b0,b1,c0,c1,molmass,Tcutoff,rho,d,e,f,g = s
     end
 
     if T ≤ Tcutoff
@@ -175,6 +189,8 @@ function (s::T_Conductivity_Whittington)(T::AbstractArray; kwargs...)
             a,b,c = a1,b1,c1
             κ     = f - g*T[i]
         end
+      #  κ = κ*1e-6
+
         cp = (a + b*T[i] - c/T[i]^2)*inv_molmass # conductivity
         k[i] = κ*rho*cp       # compute conductivity from diffusivity
     end
@@ -200,9 +216,9 @@ function compute_conductivity!(k::AbstractArray{_T,N}, s::T_Conductivity_Whittin
     inv_molmass = 1/molmass # multiplication is considerably faster than division
     @inbounds for i in eachindex(T)
         if T[i] <= Tcutoff
-            k[i] = (a0 + b0*T[i] - c0/T[i]^2)/inv_molmass * (d/T[i] - e) * rho
+            k[i] = (a0 + b0*T[i] - c0/T[i]^2)*inv_molmass * (d/T[i] - e) * rho
         else
-            k[i] = (a1 + b1*T[i] - c1/T[i]^2)/inv_molmass * (f - g*T[i]) * rho
+            k[i] = (a1 + b1*T[i] - c1/T[i]^2)*inv_molmass * (f - g*T[i]) * rho
         end
     end
     return nothing
@@ -229,6 +245,11 @@ The original parameterization involves quite a few parameters; this is a polynom
     Ts = 273.15 K
 ```
 where `T[K]` is the temperature in Kelvin (or the nondimensional equivalent of it).
+
+The comparison of this parameterisation vs. the original one is:
+![subet1](./assets/img/Conductivity_Whittington_smooth.png)
+
+
 """
 @with_kw_noshow struct T_Conductivity_Whittington_parameterised{T,U1,U2,U3,U4,U5} <: AbstractConductivity{T} 
     # Note: the resulting curve of k was visually compared with Fig. 2 of the paper  

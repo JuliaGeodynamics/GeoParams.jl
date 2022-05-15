@@ -15,6 +15,12 @@ using Unitful           # Units
 using BibTeX            # references of creep laws
 using Requires          # To only add plotting routines if Plots is loaded
 
+import Base: getindex
+
+# overload to account for cases where this is an integer
+Base.getindex(val::Real, I::Vararg{Integer, N}) where N = val
+Base.getindex(val::Real, I::Integer) = val
+
 export
         @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
         GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnit,
@@ -67,8 +73,22 @@ export compute_density,                                # computational routines
 using .MaterialParameters.CreepLaw
 export computeCreepLaw_EpsII, computeCreepLaw_TauII, CreepLawVariables,
         LinearViscous, PowerlawViscous,
-        DislocationCreep, SetDislocationCreep,
+        DislocationCreep, SetDislocationCreep, DislocationCreep_info,
         DiffusionCreep,   SetDiffusionCreep
+
+# Plasticity        
+using .MaterialParameters.Plasticity
+export  compute_yieldfunction,      # calculation routines
+        compute_yieldfunction!,
+        param_info,
+        DruckerPrager               
+
+# Elasticity
+using .MaterialParameters.Elasticity
+export  compute_elastic_shear_strainrate,       # calculation routines
+        compute_elastic_shear_strainrate!,
+        param_info,
+        ConstantElasticity                      # constant
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration
@@ -125,7 +145,7 @@ export  compute_meltfraction,   compute_meltfraction!,       # calculation routi
         compute_dϕdT,           compute_dϕdT!,
         MeltingParam_Caricchi,  MeltingParam_4thOrder, 
         MeltingParam_5thOrder,  MeltingParam_Quadratic,
-        MeltingParam_Assimilation
+        MeltingParam_Assimilation, SmoothMelting
 
 
 # Add plotting routines - only activated if the "Plots.jl" package is loaded 

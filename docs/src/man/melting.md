@@ -9,6 +9,7 @@ GeoParams.MeltingParam.MeltingParam_5thOrder
 GeoParams.MeltingParam.MeltingParam_4thOrder
 GeoParams.MeltingParam.MeltingParam_Quadratic
 GeoParams.MeltingParam.MeltingParam_Assimilation
+GeoParams.MeltingParam.SmoothMelting
 ```
 # Computational routines
 To compute the melt fraction at given `T` and `P`, use:
@@ -29,5 +30,5 @@ The computational routines work with that as well.
 # Plotting routines
 You can use the routine `PlotMeltFraction` to create a plot, provided that the `Plots` package has been loaded
 ```@docs
-GeoParams.Plotting.PlotMeltFraction
+GeoParams.PlotMeltFraction
 ```
