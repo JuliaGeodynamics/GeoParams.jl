@@ -37,6 +37,5 @@ using GeoParams, LinearAlgebra
 		@test retrieveTASrockType(index, ClassTASdata=ClassTASdata) == name[i];
 	end
 
-
 end
 

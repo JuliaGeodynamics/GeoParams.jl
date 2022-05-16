@@ -22,7 +22,8 @@ export
     PlotConductivity,
     PlotMeltFraction,
     PlotPhaseDiagram,
-    Plot_ZirconAge_PDF 
+    Plot_TAS_diagram,
+    Plot_ZirconAge_PDF
 
 
 """
@@ -330,6 +331,43 @@ function Plot_ZirconAge_PDF(time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_av
 	end
 	Plots.plot!(time_Ma_average, PDF_zircon_average, color=:black,linewidth=2.)
 	
+	display(plt)
+
+	return plt
+end
+
+"""
+	plt = Plot_TAS_diagram()
+
+Creates a TAS diagram plot
+"""
+function Plot_TAS_diagram()
+
+    # get TAS diagram data from TASclassification routine
+    ClassTASdata    = TASclassificationData();
+    @unpack litho, n_ver,  ver = ClassTASdata
+
+    plt = Plots.plot(0, 0, xlabel="SiO2 [wt%]", ylabel="Na2O+K2O [wt%]", title = "TAS Diagram")
+
+    n_poly  = size(litho,2);
+    shift   = 1;
+    for poly=1:n_poly
+
+            x = sum(ver[shift:shift+n_ver[poly]-1,1])/n_ver[poly];
+            y = sum(ver[shift:shift+n_ver[poly]-1,2])/n_ver[poly];
+
+            plt = Plots.plot!(Shape(ver[shift:shift+n_ver[poly]-1,1], ver[shift:shift+n_ver[poly]-1,2]), 
+            xlabel="SiO2 [wt%]", ylabel="Na2O+K2O [wt%]", title = "TAS Diagram", 
+            c = :transparent, xlims=(35,100),xticks=35:5:100, 
+            ylims=(0,16),yticks=0:2:16, legend = false,
+            ) #legend = false, 
+            annotate!(x,y,  (poly,:topleft,:blue,8))
+
+            shift  += n_ver[poly]
+    end
+    for i=1:n_poly
+        annotate!(86,16-i*3/4,  (string(i)*": "*litho[i],:left,:black,6))
+    end
 	display(plt)
 
 	return plt

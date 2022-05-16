@@ -47,9 +47,9 @@ function testIntersection(v::AbstractArray{_T},p::AbstractArray{_T}) where _T
 end
 
 """
-TASclassificationData
+    TASclassificationData
 
-Struct that holds default parameters for the TAS diagram
+    Struct that holds default parameters for the TAS diagram
 """
 @with_kw_noshow struct TASclassificationData
         # name of the TAS field
@@ -77,6 +77,7 @@ Struct that holds default parameters for the TAS diagram
                                 [77 0; 100 0; 100 16; 69 16; 69 8]                              ];
 end
 
+
 """
 retrieveTASrockType(index::Int64; ClassTASdata::TASclassificationData = TASclassificationData())
 
@@ -99,7 +100,7 @@ end
 
 
 """
-classIndex computeTASclassification!(chemComp::AbstractArray{_T,N}, ClassTASdata::TASclassificationData)
+classIndex computeTASclassification(chemComp::AbstractArray{_T,N}, ClassTASdata::TASclassificationData)
 
 This compute the classification of the igneous rock using TAS diagram (Total Alkali (TA) vs Silica (S)).
 
