@@ -3,12 +3,12 @@ using GeoParams
 
 @testset "CreepLaw" begin
 
- #Make sure structs are isbits
- x = LinearViscous()
- @test isbits(x)
+#Make sure structs are isbits
+x = LinearViscous()
+@test isbits(x)
  
- x = PowerlawViscous()
- @test isbits(x)
+x = PowerlawViscous()
+@test isbits(x)
 
 # This tests the MaterialParameters structure
 CharUnits_GEO   =   GEO_units(viscosity=1e19, length=1000km);

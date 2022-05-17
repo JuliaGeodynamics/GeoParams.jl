@@ -34,3 +34,11 @@ function ntuple_idx(args::NamedTuple, I::Integer...)
     v = getindex.(values(args), Tuple(I)...)
     return (; zip(k, v)...)
 end
+
+# fast exponential
+function fastpow(x::Number, n::Integer)
+    n > 3 && return exp(log(x)*n)
+    return x^n
+end
+
+fastpow(x::Number, n::AbstractFloat) =  exp(log(x)*n)
