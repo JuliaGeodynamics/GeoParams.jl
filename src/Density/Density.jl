@@ -12,7 +12,6 @@ using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 using ..MaterialParameters: No_MaterialParam, MaterialParamsInfo
 import Base.show, GeoParams.param_info
 
-include("../Utils.jl")
 include("../Computations.jl")
 
 abstract type AbstractDensity{T} <: AbstractMaterialParam end

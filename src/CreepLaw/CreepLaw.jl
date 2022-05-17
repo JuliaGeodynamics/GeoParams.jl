@@ -9,21 +9,13 @@
 
 abstract type AbstractCreepLaw{T} <: AbstractMaterialParam end
 
-export  computeCreepLaw_EpsII, computeCreepLaw_TauII,       # calculation routines
-        LinearViscous, 
+export  LinearViscous, 
         PowerlawViscous,
-        param_info,
-        dεII_dτII,
-        dτII_dεII,
-        computeViscosity_TauII, computeViscosity_EpsII, 
-        computeViscosity_TauII!, computeViscosity_EpsII!,
         strain_rate_circuit
 
 
 include("DislocationCreep.jl")
 include("DiffusionCreep.jl")
-#include("Elasticity.jl")
-#include("Viscosity.jl")
 
 # Linear viscous rheology ------------------------------------------------
 """

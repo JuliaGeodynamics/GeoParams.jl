@@ -24,11 +24,11 @@ export  param_info,
 
 
 include("Computations.jl")
-include("Utils.jl")
 
 include("CreepLaw/CreepLaw.jl")              # viscous Creeplaws
 include("Elasticity/Elasticity.jl")          # elasticity
 include("Plasticity/Plasticity.jl")          # plasticity
+#include("CreepLaw/Viscosity.jl")            # composite creeplaws
 
 
 # add methods programatically 

@@ -38,6 +38,7 @@ function PerpleX_LaMEM_Diagram end                                         # nec
 function param_info end
 export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
 
+include("Utils.jl")
 
 # note that this throws a "Method definition warning regarding superscript"; that is expected & safe 
 #  as we add a nicer way to create output of superscripts. I have been unable to get rid of this warning,
@@ -167,8 +168,6 @@ end
 #Set functions aliases using @use
 include("aliases.jl")
 
-# export ntuple_idx()
-include("Utils.jl")
 export ntuple_idx
 
 end # module
