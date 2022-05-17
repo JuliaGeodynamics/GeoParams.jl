@@ -3,7 +3,7 @@ module TASclassification
 # Julia script to retrieve  the classification of igneous rocks using a TAS diagram (Total Alkali (TA) vs Silica (S))
 # Positions of the fields are taken from Le Maitre et al., 2002
 # The classification is defined between [S = SiO2 = 0-100] and [TA = Na2O + K2O = 0-16]
-# NOTE that the oxide composition should be given in weigth%
+# NOTE that the oxide composition should be given in weight%
 # 15/05/2022, Nicolas Riel & Boris Kaus
 
 import Base.Threads
@@ -46,6 +46,7 @@ function testIntersection(v::AbstractArray{_T},p::AbstractArray{_T}) where _T
         return n;
 end
 
+
 """
     TASclassificationData
 
@@ -60,21 +61,24 @@ end
 
         # next array store the vertices coordinates for polygon of all 15 fields defined in litho
         # this array should also be used to draw the fields
-        ver::Matrix{Float64}  = [[35 0; 41 0; 41 7; 45 9.4; 48.4 11.5; 52.5 14; 48 16; 35 16];
-                                [41 0; 45 0; 45 3; 41 3];
-                                [41 3; 45 3; 45 5; 49.4 7.3; 45 9.4; 41 7];
-                                [49.4 7.3; 53 9.3; 48.4 11.5; 45 9.4];
-                                [53 9.3; 57.6 11.7; 52.5 14; 48.4 11.5];
-                                [52.5 14; 57.6 11.7; 65 16; 48 16];
-                                [45 0; 52 0; 52 5; 45 5];
-                                [45 5; 52 5; 49.4 7.3];
-                                [52 5; 57 5.9; 53 9.3; 49.4 7.3];
-                                [57 5.9; 63 7; 57.6 11.7; 53 9.3];
-                                [63 7; 69 8; 69 16; 65 16; 57.6 11.7];
-                                [52 0; 57 0; 57 5.9; 52 5];
-                                [57 0; 63 0; 63 7; 57 5.9];
-                                [63 0; 77 0; 69 8; 63 7];
-                                [77 0; 100 0; 100 16; 69 16; 69 8]                              ];
+        ver::Matrix{Float64}  = [[35.0 0.0; 41.0 0.0; 41.0 7.0; 45.0 9.4; 48.4 11.5; 52.5 14.0; 48.0 16.0; 35.0 16.0];
+                                [41.0 0.0; 45.0 0.0; 45.0 3.0; 41.0 3.0];
+                                [41.0 3.0; 45.0 3.0; 45.0 5.0; 49.4 7.3; 45.0 9.4; 41.0 7.0];
+                                [49.4 7.3; 53.0 9.3; 48.4 11.5; 45.0 9.4];
+                                [53.0 9.3; 57.6 11.7; 52.5 14.0; 48.4 11.5];
+                                [52.5 14.0; 57.6 11.7; 65.0 16.0; 48.0 16.0];
+                                [45.0 0.0; 52.0 0.0; 52.0 5.0; 45.0 5.0];
+                                [45.0 5.0; 52.0 5.0; 49.4 7.3];
+                                [52.0 5.0; 57.0 5.9; 53 9.3; 49.4 7.3];
+                                [57.0 5.9; 63.0 7.0; 57.6 11.7; 53.0 9.3];
+                                [63.0 7.0; 69.0 8.0; 69.0 16.0; 65.0 16; 57.6 11.7];
+                                [52.0 0.0; 57.0 0.0; 57.0 5.9; 52.0 5.0];
+                                [57.0 0.0; 63.0 0.0; 63.0 7.0; 57.0 5.9];
+                                [63.0 0.0; 77.0 0.0; 69.0 8.0; 63.0 7.0];
+                                [77.0 0.0; 100.0 0.0; 100.0 16.0; 69.0 16.0; 69.0 8.0]                              ];
+
+        p::Matrix{Float64} = zeros(2,2);
+        v::Matrix{Float64} = zeros(2,2);
 end
 
 
@@ -93,10 +97,8 @@ Output:
 """
 function retrieveTASrockType(index::Int64 ; ClassTASdata::TASclassificationData = TASclassificationData())
         @unpack litho = ClassTASdata
-
         return litho[index]
 end
-
 
 
 """
@@ -114,40 +116,34 @@ Output:
 This routine was developed based the TAS classification of Le Maitre et al., 2002
 
 """
-function computeTASclassification(point::AbstractArray{_T,1}; ClassTASdata::TASclassificationData = TASclassificationData()) where {_T}
-        @unpack litho, n_ver,  ver = ClassTASdata
+function computeTASclassification(point::AbstractArray{_T}; ClassTASdata::TASclassificationData = TASclassificationData()) where {_T}
+        @unpack litho, n_ver, ver, p, v = ClassTASdata
 
+        p[1,1] = 0.0; p[2,1] = point[1];
+        p[1,2] = 0.0; p[2,2] = point[2];
+        
         # set the classIndex to -1 to track for issue
-        classIndex = -1;
-
-        n_poly  = size(litho,2);
-
-        shift   = 0;
+        classIndex      = -1;
+        n_poly          = size(litho,2);
+        shift           = 0;
         for poly=1:n_poly
                 # shit the index to properly reconstruct the edge of the polygon using ver
                 if poly > 1
                         shift  += n_ver[poly-1]
                 end
-
                 n      = 0;
                 for i  = 1:n_ver[poly]
-                      
                         # here we get the coordinates of the polygon edges to be test for intersection
-                        x1 = ver[shift+i,1]; y1 = ver[shift+i,2];
+                        v[1,1] = ver[shift+i,1];           v[1,2] = ver[shift+i,2];
                         if (i == n_ver[poly])
-                            x2 = ver[shift+1,1]; 
-                            y2 = ver[shift+1,2];
+                                v[2,1] = ver[shift+1,1];   v[2,2] = ver[shift+1,2];
                         else
-                            x2 = ver[shift+i+1,1]; 
-                            y2 = ver[shift+i+1,2];
+                                v[2,1] = ver[shift+i+1,1]; v[2,2] = ver[shift+i+1,2];
                         end
-                        v  = [x1 y1; x2 y2];
 
-                        # set origin of the ray casting outside the TAS diagram, to make sure we don't start from within a field!
-                        p  = [0 0; point[1] point[2]];
                         n += testIntersection(v,p);
                 end
-                
+
                 # if the number of interestions is uneven then the point is within the tested polygon
                 if (mod(n,2) != 0)
                         classIndex = poly;
@@ -159,8 +155,6 @@ function computeTASclassification(point::AbstractArray{_T,1}; ClassTASdata::TASc
         if classIndex == -1
                 print("could not find the proper TAS field. Is Na2O + K2O > 16wt%? do you have negative compositions?")
         end
-
-        # print(litho[classIndex])
 
         return classIndex;
 end   

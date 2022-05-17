@@ -341,7 +341,11 @@ end
 
 Creates a TAS diagram plot
 """
-function Plot_TAS_diagram()
+function Plot_TAS_diagram(displayLabel=nothing)
+
+    if isnothing(displayLabel)
+        displayLabel = 1;
+    end
 
     # get TAS diagram data from TASclassification routine
     ClassTASdata    = TASclassificationData();
@@ -357,16 +361,19 @@ function Plot_TAS_diagram()
             y = sum(ver[shift:shift+n_ver[poly]-1,2])/n_ver[poly];
 
             plt = Plots.plot!(Shape(ver[shift:shift+n_ver[poly]-1,1], ver[shift:shift+n_ver[poly]-1,2]), 
-            xlabel="SiO2 [wt%]", ylabel="Na2O+K2O [wt%]", title = "TAS Diagram", 
             c = :transparent, xlims=(35,100),xticks=35:5:100, 
             ylims=(0,16),yticks=0:2:16, legend = false,
-            ) #legend = false, 
-            annotate!(x,y,  (poly,:topleft,:blue,8))
+            )
+            if displayLabel == 1
+                annotate!(x,y,  (poly,:topleft,:blue,8))
+            end
 
             shift  += n_ver[poly]
     end
-    for i=1:n_poly
-        annotate!(86,16-i*3/4,  (string(i)*": "*litho[i],:left,:black,6))
+    if displayLabel == 1
+        for i=1:n_poly
+            annotate!(86,16-i*3/4,  (string(i)*": "*litho[i],:left,:black,6))
+        end
     end
 	display(plt)
 
