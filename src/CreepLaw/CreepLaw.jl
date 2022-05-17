@@ -59,16 +59,58 @@ function compute_εII(s::LinearViscous, TauII; kwargs...)
     return (TauII/η)*0.5;
 end
 
+"""
+    
+    compute_εII!(EpsII::AbstractArray{_T,N}, s::LinearViscous, TauII::AbstractArray{_T,N})
+"""
+function compute_εII!(EpsII::AbstractArray{_T,N}, s::LinearViscous, TauII::AbstractArray{_T,N}; 
+                        kwargs...)  where {N,_T}
+    if TauII[1] isa Quantity
+        @unpack_units η   = s
+    else
+        @unpack_val η   = s
+    end
+
+    @inbounds for i in eachindex(EpsII)
+        EpsII[i] = compute_εII(s, TauII[i])
+    end
+  
+    return nothing
+end
+
+
 
 function dεII_dτII(a::LinearViscous, TauII; kwargs...)
     @unpack η   = s
     
     return η*0.5;
 end
+
+"""
+    compute_τII(s::LinearViscous, EpsII; kwargs...)
+
+Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor 
+"""
 function compute_τII(s::LinearViscous, EpsII; kwargs...)
     @unpack η   = s
 
     return 2*(η*EpsII);
+end
+
+
+function compute_τII!(TauII::AbstractArray{_T,N}, s::LinearViscous, EpsII::AbstractArray{_T,N}; 
+    kwargs...)  where {N,_T}
+    if EpsII[1] isa Quantity
+        @unpack_units η   = s
+    else
+        @unpack_val η   = s
+    end
+
+    @inbounds for i in eachindex(EpsII)
+        TauII[i] = compute_τII(s, EpsII[i])
+    end
+
+    return nothing
 end
 
 function dτII_dεII(a::LinearViscous, EpsII; kwargs...)

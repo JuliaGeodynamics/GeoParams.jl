@@ -7,16 +7,12 @@
 # In case you want to add new creep laws, have a look at how the ones
 # here are implemented. Please add tests as well!
 
-using ..MaterialParameters: MaterialParamsInfo
-import GeoParams: param_info, fastpow
-
 export  DislocationCreep,
         DislocationCreep_info,
         SetDislocationCreep,
         dεII_dτII,
         dτII_dεII
 
-const AxialCompression, SimpleShear, Invariant = 1,2,3
 
 
 # Dislocation Creep ------------------------------------------------
@@ -64,33 +60,79 @@ end
 
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
-function compute_εII(a::DislocationCreep, TauII; P::_R, T::_R, f::_R, args...) where _R<:Real
-
-    @unpack_val n,r,A,E,V,R = a
-    
+function compute_εII(a::DislocationCreep, TauII::_R; P::_R, T::_R, f::_R, args...) where _R<:Real
+    if TauII isa Quantity
+        @unpack_units n,r,A,E,V,R = a
+    else
+        @unpack_val n,r,A,E,V,R = a
+    end
     FT, FE = CorrectionFactor(a);    
    
     return A*fastpow(TauII*FT,n)*fastpow(f,r)*exp(-(E + P*V)/(R*T))/FE; 
 end
 
-function dεII_dτII(a::DislocationCreep, TauII; P, T, f, kwargs...)
+function compute_εII!(EpsII::AbstractArray{_T,N}, a::DislocationCreep, TauII::AbstractArray{_T,N}; 
+    P = zero(TauII)::AbstractArray{_T,N}, 
+    T = ones(size(TauII))::AbstractArray{_T,N}, 
+    f = ones(size(TauII))::AbstractArray{_T,N},
+    kwargs...)  where {N,_T}
+   
+    @inbounds for i in eachindex(EpsII)
+        EpsII[i] = compute_εII(a, TauII[i], T=T[i], P=P[i], f=f[i])
+    end
+  
+    return nothing
+end
+
+
+function dεII_dτII(a::DislocationCreep, TauII::_R; P, T, f, kwargs...) where _R<:Real
     @unpack_val n,r,A,E,V,R = a
 
     FT, FE = CorrectionFactor(a)
     return fastpow(FT*TauII, -1+n)*fastpow(f,r)*A*FT*n*exp((-E-P*V)/(R*T))*(1/FE)
 end
 
-# EpsII .= A.*(TauII.*FT).^n.*f.^r.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
-# All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
+"""
+    compute_τII(a::DislocationCreep, EpsII; P, T, f, args...)
+
+Computes the stress for a Dislocation creep law given a certain strain rate
+
+"""
 function compute_τII(a::DislocationCreep, EpsII::_R; P::_R, T::_R, f::_R, args...) where _R<:Real
-    @unpack_val n,r,A,E,V,R = a
+    if EpsII isa Quantity
+        @unpack_units n,r,A,E,V,R = a
+    else
+        @unpack_val n,r,A,E,V,R = a
+    end
 
     FT, FE = CorrectionFactor(a);    
 
     return fastpow(A,-1/n)*fastpow(EpsII*FE, 1/n)*fastpow(f,-r/n)*exp((E + P*V)/(n * R*T))/FT
 end
 
- function dτII_dεII(a::DislocationCreep, EpsII; P, T, f, kwargs...)
+"""
+    compute_τII!(TauII::AbstractArray{_T,N}, a::DislocationCreep, EpsII::AbstractArray{_T,N}; 
+        P =       zero(TauII)::AbstractArray{_T,N}, 
+        T = ones(size(TauII))::AbstractArray{_T,N}, 
+        f = ones(size(TauII))::AbstractArray{_T,N})
+
+Computes the stress for a Dislocation creep law
+"""
+function compute_τII!(TauII::AbstractArray{_T,N}, a::DislocationCreep, EpsII::AbstractArray{_T,N}; 
+                        P =       zero(TauII)::AbstractArray{_T,N}, 
+                        T = ones(size(TauII))::AbstractArray{_T,N}, 
+                        f = ones(size(TauII))::AbstractArray{_T,N},
+                        kwargs...)  where {N,_T}
+
+    @inbounds for i in eachindex(TauII)
+        TauII[i] = compute_τII(a, EpsII[i], T=T[i], P=P[i], f=f[i])
+    end
+  
+    return nothing
+end
+
+
+function dτII_dεII(a::DislocationCreep, EpsII; P, T, f, kwargs...)
     @unpack_val n,r,A,E,V,R = a
 
     FT, FE = CorrectionFactor(a)

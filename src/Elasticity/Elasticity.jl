@@ -8,10 +8,7 @@ export  compute_εII,            # calculation routines
         compute_εII!,
         param_info,
         ConstantElasticity      # constant
-
-include("../Computations.jl")
-include("../Utils.jl")
-        
+       
 # ConstantElasticity  -------------------------------------------------------
 
 """

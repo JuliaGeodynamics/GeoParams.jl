@@ -1,6 +1,3 @@
-using ..MaterialParameters: MaterialParamsInfo
-import GeoParams: param_info, fastpow
-
 export  DiffusionCreep,
         SetDiffusionCreep,
         DiffusionCreep_info,
@@ -8,8 +5,6 @@ export  DiffusionCreep,
         compute_εII!, compute_εII,
         compute_τII!, compute_τII
         
-
-const AxialCompression, SimpleShear, Invariant = 1,2,3
 
 #=----Diffusion Creep---
 Defines diffusion creep law parameters

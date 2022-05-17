@@ -7,9 +7,12 @@ using Base: Float64
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam
+import GeoParams: param_info, fastpow
 using BibTeX
 using ..MaterialParameters: MaterialParamsInfo
-import Base.show, GeoParams.param_info
+import Base.show
+
+const AxialCompression, SimpleShear, Invariant = 1,2,3
 
 abstract type AbstractConstitutiveRelationship{T} <: AbstractMaterialParam end
 
@@ -19,8 +22,13 @@ export  param_info,
         compute_τII!,   compute_τII,
         strain_rate_circuit
 
+
+include("Computations.jl")
+include("Utils.jl")
+
 include("CreepLaw/CreepLaw.jl")              # viscous Creeplaws
 include("Elasticity/Elasticity.jl")          # elasticity
+include("Plasticity/Plasticity.jl")          # plasticity
 
 
 # add methods programatically 

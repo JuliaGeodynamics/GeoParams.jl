@@ -28,7 +28,7 @@ using GeoParams
     T = nondimensionalize(T, CharDim)
     f = GeoUnit(50MPa)
     f = nondimensionalize(f, CharDim)
-    args = (; P=P, T=T, f=f)
+    args = (; P=100., T=500., f=50e6)
     Phase = SetMaterialParams(;
         Name="Viscous Matrix",
         Phase=2,
@@ -38,6 +38,18 @@ using GeoParams
     )
     TauII = 1e6
     ε = compute_εII(x1, TauII, args)
+
+
+
+    # test with arrays
+    τII_array       =   ones(10)*1e6
+    ε_array         =   similar(τII_array)
+    T_array         =   ones(size(τII_array))*(500)
+
+    args_array = (;T=T_array, P=100., f=5e7 )
+
+    compute_εII!(ε_array, x1, τII_array, args_array)
+    @test ε_array[1] ≈ ε 
 
 #    εII = computeCreepLaw_EpsII(TauII, Phase.CreepLaws[1], p)
 #    @test εII ≈ 2.1263214994323903e-11 rtol = 1e-8
