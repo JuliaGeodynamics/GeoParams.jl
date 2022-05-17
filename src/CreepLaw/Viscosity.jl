@@ -124,6 +124,7 @@ end
     return η = 0.5 * τII / εII
 end
 
+<<<<<<< Updated upstream
 @generated function dεII_dτII(τII::T, v::NTuple{N, AbstractCreepLaw}, args) where {T, N}
     quote
         Base.@_inline_meta
@@ -132,9 +133,15 @@ end
         return val 
     end
 end
+=======
+
+
+
+>>>>>>> Stashed changes
 
 # v = (DiffusionCreep(), DislocationCreep())
-# v = (DiffusionCreep(), (DiffusionCreep(), DislocationCreep()))
+# v = ( (DiffusionCreep(), (DiffusionCreep(), DislocationCreep())), ConstantViscosity())
+
 
 # EpsII = 1e-10
 # TauII = 20e6
@@ -160,3 +167,20 @@ end
 
 # @benchmark computeViscosity_EpsII2($EpsII, $v, $args)
 # @benchmark computeViscosity_EpsII($EpsII, $v, $args)
+
+
+
+
+
+# Plot
+using Plots
+x        = -20:.1:-11
+E2nd_vec = 10.0.^x;
+T        = (700+273.15)*ones(size(x));
+P        = 1e9   *ones(size(x));
+τII     = ones(size(x))
+args = (P=P, T=T)
+
+
+v = (SetDiffusionCreep("Dry Plagioclase | Bürgmann & Dresen (2008)"),)
+ 

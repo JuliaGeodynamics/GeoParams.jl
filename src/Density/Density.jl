@@ -94,7 +94,7 @@ function param_info(s::PT_Density)  # info
     return MaterialParamsInfo(Equation = L"\rho = \rho_0(1.0-\alpha (T-T_0) + \beta (P-P_0)" )
 end
 
-# Calculation routine in case units are provided
+# Calculation routine 
 function (ρ::PT_Density)(; P::Number, T::Number, kwargs...)
     if T isa Quantity
         @unpack_units ρ0, α, β, P0, T0 = ρ

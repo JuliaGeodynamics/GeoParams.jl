@@ -11,7 +11,7 @@ using ..MeltingParam
 using .Plots
 
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
-using .MaterialParameters.CreepLaw: CreepLawVariables, computeCreepLaw_TauII, AbstractCreepLaw
+using .MaterialParameters.CreepLaw: computeCreepLaw_TauII, AbstractCreepLaw
 using .MaterialParameters.HeatCapacity: AbstractHeatCapacity, compute_heatcapacity
 using .MaterialParameters.Conductivity: AbstractConductivity, compute_conductivity
 using .MeltingParam: AbstractMeltingParam, compute_meltfraction

@@ -30,7 +30,35 @@ f       = GeoUnit(1000NoUnits)
 f_nd    = nondimensionalize(f,CharDim)
 d       = GeoUnit(10mm)
 d_nd    = nondimensionalize(d,CharDim)
-c       = CreepLawVariables(P=P,T=T,f=f,d=d)
+
+
+
+
+# compute a pure diffusion creep rheology
+p = SetDiffusionCreep("Dry Plagioclase | Bürgmann & Dresen (2008)")
+
+T = 650+273.15;
+
+args = (;T=T )
+TauII = 1e6
+ε = compute_εII(p, TauII, args)
+
+
+# test with arrays
+τII_array       =   ones(10)*1e6
+ε_array         =   similar(τII_array)
+T_array         =   ones(size(τII_array))*(650. + 273.15)
+
+args_array = (;T=T_array )
+
+compute_εII!(ε_array, p, τII_array, args_array)
+@test ε_array[1] ≈ ε 
+
+# compute when args are scalars
+compute_εII!(ε_array, p, τII_array, args)
+@test ε_array[1] ≈ ε 
+
+
 #Phase   = SetMaterialParams(Name="Viscous Matrix", Phase=1,
 #                                     Density   = ConstantDensity(),
 #                                     CreepLaws = DiffusionCreep(n=1.0NoUnits, r=1.0NoUnits, p=-3.0NoUnits, A=1.0e6MPa^(-1.0)*s^(-1.0)*µm^(3.0), E=335000.0J/mol, V=4.0e-6m^(3.0)/mol, Apparatus="Invariant"), CharDim = CharDim)

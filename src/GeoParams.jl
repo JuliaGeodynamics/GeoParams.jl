@@ -69,18 +69,24 @@ export compute_density,                                # computational routines
         PhaseDiagram_LookupTable,
         Read_LaMEM_Perple_X_Diagram
 
-# Creep laws
-using .MaterialParameters.CreepLaw
-export computeCreepLaw_EpsII, computeCreepLaw_TauII, CreepLawVariables,
-        LinearViscous, PowerlawViscous, ConstantElasticity,
-        DislocationCreep, SetDislocationCreep, DislocationCreep_info,
-        DiffusionCreep, SetDiffusionCreep, dεII_dτII, dτII_dεII,
-        computeViscosity_TauII, 
-        computeViscosity_EpsII, 
-        computeViscosity_TauII!, 
-        computeViscosity_EpsII!,
-        strain_rate_circuit
+# Constitutive relationships laws
+using .MaterialParameters.ConstitutiveRelationships
 
+#       Calculation routines
+export  dεII_dτII,      dτII_dεII,
+        compute_εII!,   compute_εII,
+        compute_τII!,   compute_τII,
+        strain_rate_circuit,
+
+#       Viscous creep laws
+        LinearViscous, PowerlawViscous,
+        DislocationCreep, SetDislocationCreep,
+        DiffusionCreep, SetDiffusionCreep,
+
+#       Elasticity
+        ConstantElasticity
+
+#=        
 # Plasticity        
 using .MaterialParameters.Plasticity
 export  compute_yieldfunction,      # calculation routines
@@ -89,14 +95,15 @@ export  compute_yieldfunction,      # calculation routines
         DruckerPrager               
 
 # Elasticity
-# using .MaterialParameters.Elasticity
-# export  compute_elastic_shear_strainrate,       # calculation routines
-#         compute_elastic_shear_strainrate!,
-#         # computeCreepLaw_EpsII,
-#         # computeCreepLaw_EpsII!,
-#         param_info,
-#         ConstantElasticity, 
-#         # dεII_dτII
+using .MaterialParameters.Elasticity
+export  compute_elastic_shear_strainrate,       # calculation routines
+         compute_elastic_shear_strainrate!,
+         compute_εII,
+         compute_εII!,
+         param_info,
+         ConstantElasticity, 
+         dεII_dτII
+=#
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration

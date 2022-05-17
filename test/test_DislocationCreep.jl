@@ -28,7 +28,7 @@ using GeoParams
     T = nondimensionalize(T, CharDim)
     f = GeoUnit(50MPa)
     f = nondimensionalize(f, CharDim)
-    p = CreepLawVariables(; P=P, T=T, f=f)
+    args = (; P=P, T=T, f=f)
     Phase = SetMaterialParams(;
         Name="Viscous Matrix",
         Phase=2,
@@ -36,6 +36,9 @@ using GeoParams
         CreepLaws=DislocationCreep(; n=3NoUnits, r=1NoUnits),
         CharDim=CharDim,
     )
+    TauII = 1e6
+    ε = compute_εII(x1, TauII, args)
+
 #    εII = computeCreepLaw_EpsII(TauII, Phase.CreepLaws[1], p)
 #    @test εII ≈ 2.1263214994323903e-11 rtol = 1e-8
 

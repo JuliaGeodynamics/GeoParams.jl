@@ -1,20 +1,13 @@
-module Elasticity
-
 # If you want to add a new method here, feel free to do so. 
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
-using Parameters, LaTeXStrings, Unitful
-using ..Units
-using GeoParams: AbstractMaterialParam
-using ..MaterialParameters: MaterialParamsInfo
-import Base.show, GeoParams.param_info
 
 abstract type AbstractElasticity{T} <: AbstractMaterialParam end
 
-export  compute_elastic_shear_strainrate,      # calculation routines
-        compute_elastic_shear_strainrate!,
+export  compute_εII,            # calculation routines
+        compute_εII!,
         param_info,
-        ConstantElasticity                      # constant
+        ConstantElasticity      # constant
 
 include("../Computations.jl")
 include("../Utils.jl")
@@ -41,20 +34,20 @@ function param_info(s::ConstantElasticity) # info about the struct
 end
 
 # Calculation routines
-function (s::ConstantElasticity{_T})(; τII::_T=zero(_T), τII_old::_T=zero(_T),  dt::_T=1.0, kwargs...) where _T
+function compute_εII(s::ConstantElasticity, τII::_T;  τII_old::_T=zero(_T),  dt::_T=1.0, kwargs...) where _T
+
     @unpack_val G   = s
     ε_el = (τII-τII_old)/(2.0 * G * dt)    
-
     return ε_el
 end
 
-function dεII_dτII(s::ConstantElasticity{_T}; dt::_T=1.0, kwargs...) where _T
+function dεII_dτII(s::ConstantElasticity{_T}, τII::_T; dt::_T=1.0, kwargs...) where _T
     @unpack_val G   = s
     return 1/(G*dt)
 end
 
 """
-    compute_elastic_shear_strainrate(s::ConstantElasticity{_T}; τII, τII_old, dt) 
+    compute_εII(s::ConstantElasticity{_T}, τII; τII_old, dt) 
 
 Computes elastic strainrate given the deviatoric stress at the current (`τII`) and old timestep (`τII_old`), for a timestep `dt`:
 ```math  
@@ -68,10 +61,10 @@ Note that we here solve the scalar equation, which is sufficient for isotropic c
 here ``\\tilde{{\\tau_{ij}}}^{old}`` is the rotated old deviatoric stress tensor to ensure objectivity (this can be done with Jaumann derivative, or also by using the full rotational formula).
 
 """
-compute_elastic_shear_strainrate(s::ConstantElasticity{_T}; τII::_T=zero(_T), τII_old::_T=zero(_T), dt::_T=1.0) where _T = s(; τII = τII, τII_old=τII_old, dt=dt)
+#compute_εII(s::ConstantElasticity{_T}, τII::_T; τII_old::_T=zero(_T), dt::_T=1.0) where _T = s(; τII = τII, τII_old=τII_old, dt=dt)
 
 """
-    compute_elastic_shear_strainrate!(ε_el::AbstractArray{_T,N}, s::ConstantElasticity{_T}; τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, dt::_T, kwargs...) 
+    compute_εII!(ε_el::AbstractArray{_T,N}, s::ConstantElasticity{_T}; τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, dt::_T, kwargs...) 
 
 In-place computation of the elastic shear strainrate for given deviatoric stress invariants at the previous (`τII_old`) and new (`τII`) timestep, as well as the timestep `dt`  
 
@@ -80,9 +73,9 @@ In-place computation of the elastic shear strainrate for given deviatoric stress
 ```
 
 """
-function compute_elastic_shear_strainrate!(ε_el::AbstractArray{_T,N}, p::ConstantElasticity{_T}; τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, dt::_T, kwargs...) where {N,_T}
+function compute_εII!(ε_el::AbstractArray{_T,N}, p::ConstantElasticity{_T}, τII::AbstractArray{_T,N}; τII_old::AbstractArray{_T,N}, dt::_T, kwargs...) where {N,_T}
     @inbounds for i in eachindex(τII)
-      ε_el[i] = compute_elastic_shear_strainrate(p, τII=τII[i], τII_old=τII_old[i], dt=dt)
+      ε_el[i] = compute_εII(p, τII[i], τII_old=τII_old[i], dt=dt)
     end
     return nothing
 end
@@ -97,7 +90,7 @@ end
 
 
 # Computational routines needed for computations with the MaterialParams structure 
-function compute_elastic_shear_strainrate(s::AbstractMaterialParamsStruct, args) 
+function compute_εII(s::AbstractMaterialParamsStruct, args) 
     if isempty(s.Elasticity)
         return isempty(args) ? 0.0 : zero(typeof(args).types[1])  # return zero if not specified
     else
@@ -105,17 +98,18 @@ function compute_elastic_shear_strainrate(s::AbstractMaterialParamsStruct, args)
     end
 end
 
+#=
 # add methods programmatically
 for myType in (:ConstantElasticity,)
     @eval begin
         (s::$(myType))(args)= s(; args...)
-        compute_elastic_shear_strainrate(s::$(myType), args) = s(args)
-        compute_elastic_shear_strainrate!(ε_el::AbstractArray{T,N}, s::$(myType){_T}, args) where {_T,N} = compute_elastic_shear_strainrate!(ε_el, s; args...)
+        compute_εII(s::$(myType), args) = s(args)
+        compute_εII!(ε_el::AbstractArray{_T,N}, s::$(myType){_T}, args) where {_T,N} = compute_εII!(ε_el, s; args...)
         dεII_dτII(s::ConstantElasticity, args) = dεII_dτII(s; args...)
     end
 end
+=#
 
-compute_elastic_shear_strainrate(args...)  = compute_param(compute_elastic_shear_strainrate, args...)
-compute_elastic_shear_strainrate!(args...) = compute_param!(compute_elastic_shear_strainrate, args...)
+compute_εII(args...)  = compute_param(compute_εII, args...)
+compute_εII!(args...) = compute_param!(compute_εII, args...)
 
-end

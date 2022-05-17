@@ -20,19 +20,18 @@ using GeoParams
     τII = 20e6;
     τII_old = 15e6;
     dt = 1e6
-    args = (τII=τII, τII_old=τII_old, dt=dt)
-    @test compute_elastic_shear_strainrate(p,args) ≈ 5.0e-11  # compute
+    args = (τII_old=τII_old, dt=dt)
+    @test compute_εII(p,τII, args) ≈ 5.0e-11  # compute
    
     
+   #= 
     # Test with arrays
     τII_old_array   =   ones(10)*15e6
     τII_array       =   ones(10)*20e6
     ε_el_array      =   similar(τII_array)
-    args = (τII=τII_array, τII_old=τII_old_array, dt=dt)
-    compute_elastic_shear_strainrate!(ε_el_array, p, args)
+    args = (τII_old=τII_old_array, dt=dt)
+    compute_εII!(ε_el_array, p, τII_array, args)
     @test ε_el_array[1] ≈  5.0e-11 
-
-
 
     # Check that it works if we give a phase array
     MatParam    =   (SetMaterialParams(Name="Mantle", Phase=1,
@@ -52,8 +51,8 @@ using GeoParams
     τII      =  ones(size(Phases))*20e6;
     τII_old  =  ones(size(Phases))*15e6;
     ε_el = zero(τII);
-    args = (τII=τII, τII_old=τII_old, dt=1e6);
-    compute_elastic_shear_strainrate!(ε_el, MatParam, Phases, args)    # computation routine w/out P (not used in most heat capacity formulations)     
+    args = (τII_old=τII_old, dt=1e6);
+    compute_εII!(ε_el, MatParam, Phases, τII, args)    # computation routine w/out P (not used in most heat capacity formulations)     
     @test maximum(ε_el[1,1,:]) ≈ 2.5e-10
 
   
@@ -68,17 +67,18 @@ using GeoParams
     # Note; using PhaseRatio currently requires an array of timesteps - can probably be fixed to also allow scalars
     dt_arr   =  ones(size(Phases))*1e6;     # needs to be an array of timesteps currently
     args = (τII=τII, τII_old=τII_old, dt=dt_arr);
-    compute_elastic_shear_strainrate!(ε_el, MatParam, PhaseRatio, args)  
+    compute_εII!(ε_el, MatParam, PhaseRatio, args)  
     @test maximum(ε_el[1,1,:]) ≈ 2.5e-10
 
     args1 = (τII=τII, τII_old=τII_old, dt=1e6);
-    compute_elastic_shear_strainrate!(ε_el, MatParam, PhaseRatio, args1)  
+    compute_εII!(ε_el, MatParam, PhaseRatio, args1)  
     @test maximum(ε_el[1,1,:]) ≈ 2.5e-10
 
-    num_alloc = @allocated compute_elastic_shear_strainrate!(ε_el, MatParam, PhaseRatio, args)  
+    num_alloc = @allocated compute_εII!(ε_el, MatParam, PhaseRatio, args)  
     @test maximum(ε_el[1,1,:]) ≈ 2.5e-10
     @test num_alloc <= 32
 
     # -----------------------
+=#
 
 end
