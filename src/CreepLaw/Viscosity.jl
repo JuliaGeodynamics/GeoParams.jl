@@ -29,7 +29,7 @@ function local_iterations_EpsII(εII, v::Tuple, args)    # Physics
     while ϵ > tol  # Newton
         iter += 1
         f = εII - strain_rate_circuit(τII, v, args)
-        dfdτII =  - dεII_dτII(rand(), v, args)
+        dfdτII =  - dεII_dτII(τII, v, args)
         τII = τII - f / dfdτII
 
         ϵ = abs(τII-τII_prev)/τII
