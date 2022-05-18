@@ -19,6 +19,7 @@ abstract type AbstractSeismicVelocity{T} <: AbstractMaterialParam end
 export  compute_pwave_velocity,  compute_swave_velocity,    # calculation routines
         compute_pwave_velocity!, compute_swave_velocity!,   # in place calculation
         ConstantSeismicVelocity,                         # constant
+        melt_correction,
         param_info
 
 # Constant Velocity -------------------------------------------------------
@@ -234,5 +235,105 @@ function compute_swave_velocity!(Vs_array::AbstractArray{<:AbstractFloat, N}, Ph
 
 end
 
+
+"""
+Vp_cor,Vs_cor melt_correction(  Kb_L::Float64,
+                                Kb_S::Float64,
+                                Ks_S::Float64,
+                                ρL::Float64,
+                                ρS::Float64,
+                                Vp0::Float64,
+                                Vs0::Float64,
+                                ϕ::Float64,
+                                α::Float64          )
+
+This routine computes a correction of P-wave and S-wave velocities using melt fraction reduction. 
+
+Input:
+====
+- `chemComp` : vector rock composition in oxide wt%
+
+- `Kb_L`: adiabatic bulk modulus of melt
+- `Kb_S`: adiabatic bulk modulus of the solid phase
+- `Ks_S`: shear modulus of the solid phase
+- `ρL`  : density of the melt
+- `ρS`  : density of the solid phase
+- `Vp0` : raw P-wave velocitiy of the solid phase
+- `Vs0` : raw S-wave velocitiy of the solid phase
+- `ϕ`   : melt fraction
+- `α`   : contiguity coefficient defining the geometry of the solid framework (contiguity)
+          0.0 (layered melt distributed) < 0.1 (grain boundary melt) < 1.0 (melt in separated bubble pockets)
+
+Output:
+====
+- `Vp_cor,Vs_cor` : corrected P-wave and S-wave velocities for melt fraction
+
+The routine uses the reduction formulation of Clark et al., (2017) and is based on the equilibrium geometry model for the solid skeleton of Takei et al., 1997.
+
+"""
+function melt_correction(   Kb_L::Float64,
+                            Kb_S::Float64,
+                            Ks_S::Float64,
+                            ρL::Float64,
+                            ρS::Float64,
+                            Vp0::Float64,
+                            Vs0::Float64,
+                            ϕ::Float64,
+                            α::Float64)
+
+    # Takei 1998: Approximation Formulae for Bulk and Shear Moduli of Isotropic Solid Skeleton
+    ν       = 0.25;                         # poisson ratio
+
+    aij =[  0.318 6.780 57.560 0.182;
+            0.164 4.290 26.658 0.464;
+            1.549 4.814 8.777 -0.290   ];   #
+
+    bij =[  -0.3238 0.2341;
+            -0.1819 0.5103  ];
+
+    a = zeros(3);
+    for i=1:3
+        a[i] = aij[i,1]*exp(aij[i,2]*(ν-0.25) + aij[i,3]*(ν - 0.25)^3) + aij[i,4];
+    end
+    b = zeros(2);
+    for i=1:2
+        b[i] = bij[i,1]*ν + bij[i,2];
+    end
+
+    nk      = a[1]*α + a[2]*(1.0 - α) + a[3]*α*(1.0 - α)*(0.5 - α);
+    nμ      = b[1]*α + b[2]*(1.0 - α);
+
+    # computation of the bulk modulus ratio of the skeletal framework over the solid phase
+    ksk_k   = α^(nk);
+     # computation of the shear modulus ratio of the skeletal framework over the solid phase
+    μsk_μ   = α^(nμ);
+
+    # apply correction for the melt fraction to adiabatic bulk and shear modulii 
+    ksk     = ksk_k*Kb_S;
+    μsk     = μsk_μ*Ks_S;
+
+    kb      = (1.0-ϕ)*ksk;
+    μ       = (1.0-ϕ)*μsk;
+
+    # ratio of skeleton adiabatic bulk modulus over solid phase bulk modulus
+    ΛK      = Kb_S/kb;
+
+    # ratio of skeleton shear modulus over solid phase shear modulus
+    ΛG      = Ks_S/μ;
+
+    # Seismic wave velocity melt correction Clark et al., 2017
+    β       = Kb_S/Kb_L;
+    γ       = Ks_S/Kb_S;
+
+    # Formulation of the fraction reduction of P-wave and S-wave
+    ΔVp     = (((((β -1.0)*ΛK) / ((β-1.0) + ΛK) + 4.0/3.0*γ*ΛG ) / ( 1.0 + 4.0/3.0*γ)) - (1.0 - ρL/ρS) )*(ϕ/2.0);
+    ΔVs     = ( ΛG - (1.0 - ρL/ρS) )*(ϕ/2.0);
+
+    # get the correction values
+    Vp_cor  = Vp0 - ΔVp*Vp0;
+    Vs_cor  = Vs0 - Vs0*ΔVs;
+
+    return Vp_cor, Vs_cor
+end
 
 end
