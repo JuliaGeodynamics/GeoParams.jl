@@ -26,3 +26,13 @@ To compute melt-content based correction for seismic waves velocities, you can u
 ```@docs
 GeoParams.melt_correction
 ```
+# Seismic velocity correction for anelasticity
+
+# Methods
+The routine uses the reduction formulation of karato (1993), using the quality factor formulation from Behn et al. (2009)
+
+# Computational routines
+To compute a correction of S-wave velocity for anelasticity, use this:
+```@docs
+GeoParams.anelastic_correction
+```

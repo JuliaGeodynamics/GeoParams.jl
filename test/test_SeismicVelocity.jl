@@ -83,4 +83,7 @@ compute_swave_velocity!(Vs, PhaseRatio, P,T, MatParam)
 Vp_cor,Vs_cor = melt_correction(26.0,94.5,61.0,2802.0,3198.0,7.4,4.36,0.01,0.15) 
 @test  [Vp_cor,Vs_cor] ≈ [7.336238790906285, 4.314027804335563];
 
+Vs_anel = anelastic_correction(0,4.0,5.0,1250.0)
+@test  Vs_anel ≈ 3.9677304672493334;
+
 end
