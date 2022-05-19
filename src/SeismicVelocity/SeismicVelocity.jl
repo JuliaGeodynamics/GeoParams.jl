@@ -28,7 +28,9 @@ export  compute_pwave_velocity,  compute_swave_velocity,    # calculation routin
     
 Set a constant seismic P and S-wave velocity:
 ```math  
-    V_p = cst \\
+    V_p = cst
+```
+```math  
     V_s = cst
 ```
 where ``V_p, V_s`` are the P-wave and S-wave velocities [``km/s``].
@@ -258,14 +260,14 @@ Output:
 ====
 - `Vp_cor,Vs_cor` : corrected P-wave and S-wave velocities for melt fraction
 
-The routine uses the reduction formulation of Clark et al., (2017) and is based on the equilibrium geometry model for the solid skeleton of Takei et al., 1997.
+The routine uses the reduction formulation of Clark & Lesher, (2017) and is based on the equilibrium geometry model for the solid skeleton of Takei et al., 1998.
 
 References:
 ====
 
 - Takei (1998) Constitutive mechanical relations of solid-liquid composites in terms of grain-boundary contiguity, Journal of Geophysical Research: Solid Earth, Vol(103)(B8), 18183--18203
 
-- Clark & Lesher (2017) Elastic properties of silicate melts: Implications for low velocity zones at the lithosphere-asthenosphere boundary. Science advances, Vol 3 (12), e1701312
+- Clark & Lesher (2017) Elastic properties of silicate melts: Implications for low velocity zones at the lithosphere-asthenosphere boundary. Science Advances, Vol 3 (12), e1701312
 
 
 """
