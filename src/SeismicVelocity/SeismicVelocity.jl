@@ -408,7 +408,7 @@ function anelastic_correction(water::Int64, Vs0::Float64,P::Float64,T::Float64)
 
     B       = B0*dref^(G-Gref)*(COH/COHref)^r * exp( ((E+Pref*V)-(Eref + Pref*Vref))/(R*Tref) )
 
-    Qinv    = (B*d^(-G)*ω^(-1.0) * exp(- (E+P*V)/(R*T)) )^α;
+    Qinv    = (B*d^(-G)*ω^(-1.0) * exp(- (E+Pref*V)/(R*Tref)) )^α;
 
     Vs_anel = Vs0*(1.0 - (Qinv)/(2.0*tan(π*α/2.0) ) );
 
