@@ -20,6 +20,7 @@ export  compute_pwave_velocity,  compute_swave_velocity,    # calculation routin
         compute_pwave_velocity!, compute_swave_velocity!,   # in place calculation
         ConstantSeismicVelocity,                         # constant
         melt_correction,
+        anelastic_correction,
         param_info
 
 # Constant Velocity -------------------------------------------------------
@@ -335,5 +336,86 @@ function melt_correction(   Kb_L::_T,
 
     return Vp_cor, Vs_cor
 end
+
+
+"""
+Vs_anel anelastic_correction(water::Int64, Vs0::Float64,P::Float64,T::Float64)
+
+This routine computes a correction of S-wave velocity for anelasticity
+
+Input:
+====
+- `water`: water flag, 0 = dry; 1 = dampened; 2 = water saturated 
+- `Vs0`  : S-wave velocitiy of the solid phase (with or without melt correction)
+- `P`    : pressure given in kbar
+- `T`    : temperature given in °C
+
+Output:
+====
+- `Vs_anel` : corrected S-wave velocity for anelasticity
+
+The routine uses the reduction formulation of karato (1993), using the quality factor formulation from Behn et al. (2009)
+
+
+References:
+====
+
+- Karato, S. I. (1993). Importance of anelasticity in the interpretation of seismic tomography. Geophysical research letters, 20(15), 1623-1626.
+
+- Behn, M. D., Hirth, G., & Elsenbeck II, J. R. (2009). Implications of grain size evolution on the seismic structure of the oceanic upper mantle. Earth and Planetary Science Letters, 282(1-4), 178-189.
+
+
+"""
+function anelastic_correction(water::Int64, Vs0::Float64,P::Float64,T::Float64)
+
+    kbar2pa= 100.0e3;
+    c2K     = 273.0;
+
+    Pref    = P*kbar2pa;            # pa
+    Tref    = T+c2K;                # K
+
+    R       = 8.31446261815324;     # gas constant
+    # values based on fitting experimental constraints (Behn et al., 2009)
+    α       = 0.27;
+    B0      = 1.28e8;               # m/s
+    dref    = 1.24e-5;              # m
+    COHref  = 50.0/1e6;             # 50H/1e6Si
+
+    Gref    = 1.09;
+    Eref    = 505.0e3;              # J/mol
+    Vref    = 1.2e-5;               # m3*mol
+
+    G       = 1.00;
+    E       = 420.0e3;              # J/mol (activation energy)
+    V       = 1.2e-5;               # m3*mol (activation volume)
+
+    # using remaining values from Cobden et al., 2018
+    ω       = 0.01;                 # Hz (frequency to match for studied seismic system)
+    d       = 1e-2;                 # m (grain size)
+    
+    if water == 0
+        COH     = 50.0/1e6;         # for dry mantle
+        r       = 0.0;              # for dry mantle
+    elseif water == 1
+        COH     = 1000.0/1e6;       # for damp mantle    
+        r       = 1.0;              # for damp mantle
+    elseif water == 2
+        COH     = 3000.0/1e6;       # for wet mantle (saturated water)
+        r       = 2.0;              # for wet mantle
+    else
+        print("water mode is not implemented. Valid values are 0 (dry),1 (dampened) and 2 (wet)")
+    end
+
+    B       = B0*dref^(G-Gref)*(COH/COHref)^r * exp( ((E+Pref*V)-(Eref + Pref*Vref))/(R*Tref) )
+
+    Qinv    = (B*d^(-G)*ω^(-1.0) * exp(- (E+Pref*V)/(R*Tref)) )^α;
+
+    Vs_anel = Vs0*(1.0 - (Qinv)/(2.0*tan(π*α/2.0) ) );
+
+
+    return Vs_anel
+end
+
+
 
 end
