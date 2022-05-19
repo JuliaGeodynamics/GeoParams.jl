@@ -5,38 +5,42 @@ export strain_rate_circuit,
     computeViscosity_EpsII!,
     dεII_dτII
 
+
 """
     compute viscosity given strain rate 2nd invariant
 
     τ = 2ηε -> η = τ/2/ε
 """
-@inline function computeViscosity_EpsII(εII, v::AbstractCreepLaw, args)
+function computeViscosity_EpsII(εII, v::AbstractCreepLaw, args)
     τII = computeCreepLaw_TauII(εII, v, args) # gives 
     η = 0.5 * τII / εII
     return η
 end
 
-function local_iterations_EpsII(εII, v::Tuple, args)    # Physics
+function computeViscosity_EpsII(εII, v::Tuple, args; tol = 1e-6)
+    return local_iterations_EpsII(εII, v, args; tol = tol)
+end
+
+function local_iterations_EpsII(εII, v::Tuple, args; tol = 1e-6)
     # Initial guess
-    η_ve = computeViscosity_EpsII(εII, v, args) # viscosity guess
+    η_ve =  computeViscosity(computeViscosity_EpsII, εII, v, args, Val(length(v))) # viscosity guess
     τII = 2 * η_ve * εII # deviatoric stress guess
     
     # Local Iterations
     iter = 0
-    tol = 1e-6
     ϵ = 2*tol
     τII_prev = τII
     while ϵ > tol  # Newton
         iter += 1
         f = εII - strain_rate_circuit(τII, v, args)
-        dfdτII =  - dεII_dτII(τII, v, args)
+        dfdτII =  - dεII_dτII(rand(), v, args)
         τII = τII - f / dfdτII
 
         ϵ = abs(τII-τII_prev)/τII
         τII_prev = τII
     end
-    η = 0.5 * τII / εII
-    return iter, ϵ, η, η_ve
+
+    return 0.5 * τII / εII
 end
 
 """
@@ -52,10 +56,6 @@ end
 
 @inline function computeViscosity_TauII(τII::T, v::Tuple, args) where {T}
     return computeViscosity(computeViscosity_TauII, τII, v, args, Val(length(v)))
-end
-
-@inline function computeViscosity_EpsII(εII::T, v::Tuple, args) where {T}
-    return computeViscosity(computeViscosity_EpsII, εII, v, args, Val(length(v)))
 end
 
 @generated function computeViscosity(
@@ -124,7 +124,6 @@ end
     return η = 0.5 * τII / εII
 end
 
-<<<<<<< Updated upstream
 @generated function dεII_dτII(τII::T, v::NTuple{N, AbstractCreepLaw}, args) where {T, N}
     quote
         Base.@_inline_meta
@@ -133,54 +132,16 @@ end
         return val 
     end
 end
-=======
-
-
-
->>>>>>> Stashed changes
-
-# v = (DiffusionCreep(), DislocationCreep())
-# v = ( (DiffusionCreep(), (DiffusionCreep(), DislocationCreep())), ConstantViscosity())
-
-
-# EpsII = 1e-10
-# TauII = 20e6
-# P, T, f, d = 20e6, 300.0, 1.0, 1.0
-# args = (P=P, T=T, f=f, d=d)
-
-# @benchmark viscosityCircuit_TauII($TauII, $v, $args)
-# @benchmark strain_rate_circuit($TauII, $v, $args)
-
-# strain_rate_circuit(TauII, v, args)
-
-# computeCreepLaw_TauII(EpsII, DiffusionCreep(), args)
-# @btime computeCreepLaw_TauII($EpsII, $(DiffusionCreep()), $args)
-
-# computeCreepLaw_TauII(EpsII, DislocationCreep(), args)
-# computeCreepLaw_EpsII(TauII, DiffusionCreep(), args)
-# computeCreepLaw_EpsII(TauII, DislocationCreep(), args)
-
-# v = (DiffusionCreep(), DislocationCreep())
-
-# computeViscosity_EpsII2(EpsII, v, args)
-# computeViscosity_EpsII(EpsII, v, args)
-
-# @benchmark computeViscosity_EpsII2($EpsII, $v, $args)
-# @benchmark computeViscosity_EpsII($EpsII, $v, $args)
-
-
-
-
 
 # Plot
-using Plots
-x        = -20:.1:-11
-E2nd_vec = 10.0.^x;
-T        = (700+273.15)*ones(size(x));
-P        = 1e9   *ones(size(x));
-τII     = ones(size(x))
-args = (P=P, T=T)
+# using Plots
+# x        = -20:.1:-11
+# E2nd_vec = 10.0.^x;
+# T        = (700+273.15)*ones(size(x));
+# P        = 1e9   *ones(size(x));
+# τII     = ones(size(x))
+# args = (P=P, T=T)
 
 
-v = (SetDiffusionCreep("Dry Plagioclase | Bürgmann & Dresen (2008)"),)
+# v = (SetDiffusionCreep("Dry Plagioclase | Bürgmann & Dresen (2008)"),)
  
