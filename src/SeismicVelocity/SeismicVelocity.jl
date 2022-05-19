@@ -356,6 +356,15 @@ Output:
 
 The routine uses the reduction formulation of karato (1993), using the quality factor formulation from Behn et al. (2009)
 
+
+References:
+====
+
+- Karato, S. I. (1993). Importance of anelasticity in the interpretation of seismic tomography. Geophysical research letters, 20(15), 1623-1626.
+
+- Behn, M. D., Hirth, G., & Elsenbeck II, J. R. (2009). Implications of grain size evolution on the seismic structure of the oceanic upper mantle. Earth and Planetary Science Letters, 282(1-4), 178-189.
+
+
 """
 function anelastic_correction(water::Int64, Vs0::Float64,P::Float64,T::Float64)
 
