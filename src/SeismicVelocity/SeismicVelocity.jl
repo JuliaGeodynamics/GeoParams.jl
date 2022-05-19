@@ -371,7 +371,7 @@ function anelastic_correction(water::Int64, Vs0::Float64,P::Float64,T::Float64)
     kbar2pa= 100.0e3;
     c2K     = 273.0;
 
-    Pref    = T*kbar2pa;            # pa
+    Pref    = P*kbar2pa;            # pa
     Tref    = T+c2K;                # K
 
     R       = 8.31446261815324;     # gas constant
