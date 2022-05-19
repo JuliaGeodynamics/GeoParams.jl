@@ -237,30 +237,20 @@ end
 
 
 """
-Vp_cor,Vs_cor melt_correction(  Kb_L::Float64,
-                                Kb_S::Float64,
-                                Ks_S::Float64,
-                                ρL::Float64,
-                                ρS::Float64,
-                                Vp0::Float64,
-                                Vs0::Float64,
-                                ϕ::Float64,
-                                α::Float64          )
+        Vp_cor,Vs_cor = melt_correction(  Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
 
-This routine computes a correction of P-wave and S-wave velocities using melt fraction reduction. 
+Corrects P- and S-wave velocities if the rock is partially molten. 
 
 Input:
 ====
-- `chemComp` : vector rock composition in oxide wt%
-
 - `Kb_L`: adiabatic bulk modulus of melt
 - `Kb_S`: adiabatic bulk modulus of the solid phase
 - `Ks_S`: shear modulus of the solid phase
 - `ρL`  : density of the melt
 - `ρS`  : density of the solid phase
-- `Vp0` : raw P-wave velocitiy of the solid phase
-- `Vs0` : raw S-wave velocitiy of the solid phase
-- `ϕ`   : melt fraction
+- `Vp0` : initial P-wave velocitiy of the solid phase
+- `Vs0` : initial S-wave velocitiy of the solid phase
+- `ϕ`   : melt volume fraction
 - `α`   : contiguity coefficient defining the geometry of the solid framework (contiguity)
           0.0 (layered melt distributed) < 0.1 (grain boundary melt) < 1.0 (melt in separated bubble pockets)
 
@@ -270,16 +260,24 @@ Output:
 
 The routine uses the reduction formulation of Clark et al., (2017) and is based on the equilibrium geometry model for the solid skeleton of Takei et al., 1997.
 
+References:
+====
+
+- Takei (1998) Constitutive mechanical relations of solid-liquid composites in terms of grain-boundary contiguity, Journal of Geophysical Research: Solid Earth, Vol(103)(B8), 18183--18203
+
+- Clark & Lesher (2017) Elastic properties of silicate melts: Implications for low velocity zones at the lithosphere-asthenosphere boundary. Science advances, Vol 3 (12), e1701312
+
+
 """
-function melt_correction(   Kb_L::Float64,
-                            Kb_S::Float64,
-                            Ks_S::Float64,
-                            ρL::Float64,
-                            ρS::Float64,
-                            Vp0::Float64,
-                            Vs0::Float64,
-                            ϕ::Float64,
-                            α::Float64)
+function melt_correction(   Kb_L::_T,
+                            Kb_S::_T,
+                            Ks_S::_T,
+                            ρL::_T,
+                            ρS::_T,
+                            Vp0::_T,
+                            Vs0::_T,
+                            ϕ::_T,
+                            α::_T) where _T
 
     # Takei 1998: Approximation Formulae for Bulk and Shear Moduli of Isotropic Solid Skeleton
     ν       = 0.25;                         # poisson ratio
