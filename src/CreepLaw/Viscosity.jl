@@ -43,8 +43,7 @@ end
     iter = 0
     ϵ = 2 * tol
     τII_prev = τII
-    # while ϵ > tol
-    for _ in 1:3
+    while ϵ > tol
         iter += 1
         f = εII - strain_rate_circuit(τII, v, args)
         dfdτII = -dεII_dτII(τII, v, args)
