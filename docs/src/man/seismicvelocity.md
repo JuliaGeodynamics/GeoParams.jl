@@ -16,7 +16,7 @@ GeoParams.compute_pwave_velocity
 GeoParams.compute_swave_velocity
 ```
 
-# Seismic velocities correction for melt fraction
+# Seismic velocity correction for partial melt
 
 # Methods
 The routine uses the reduction formulation of Clark et al., (2017) and is based on the equilibrium geometry model for the solid skeleton of Takei et al., 1998.
