@@ -39,6 +39,11 @@ using GeoParams
     TauII = 1e6
     ε = compute_εII(x1, TauII, args)
 
+    
+    p = SetDislocationCreep("Dry Olivine | Hirth & Kohlstedt (2003)")
+    TauII= 0.3e6Pa;
+    args = (;T=1673.0K, P=0.0Pa)
+    ε = compute_εII(p, TauII, args)
 
 
     # test with arrays
@@ -49,17 +54,36 @@ using GeoParams
     args_array = (;T=T_array, P=100., f=5e7 )
 
     compute_εII!(ε_array, x1, τII_array, args_array)
-    @test ε_array[1] ≈ ε 
+    @test ε_array[1] ≈ 2.0065790455204593e6 
 
-#    εII = computeCreepLaw_EpsII(TauII, Phase.CreepLaws[1], p)
-#    @test εII ≈ 2.1263214994323903e-11 rtol = 1e-8
 
- #   @test εII == computeCreepLaw_EpsII(TauII, Phase.CreepLaws[1], P.val, T.val, f.val)
+    
+    # EXERCISE 6.1 of the Gerya textbook (as implemented in the matlab exercise)
+    Ad      =   2.5e-17Pa^-3.5*s^-1
+    n       =   3.5NoUnits
+    Ea      =   532e3J/mol
+    m       =   0;
+    V       =   0m^3/mol  
+    R       =   8.3145J/K/mol
+    T       =   (1000+273.15)K
+    ε       =   1e-14/s;
+    F2      =   1/2^((n-1)/n)/3^((n+1)/2/n)
+    η_book  =   F2/Ad^(1/n)/ε^((n-1)/n)*exp(Ea/n/R/T);
+    τ_book  =   2*η_book*ε
 
-    # Check that once inverted, we get back the TauII that we used to calculate EpsII
- #   NewTau = computeCreepLaw_TauII(εII, Phase.CreepLaws[1], p)
- #   @test NewTau ≈ TauII.val
- #   @test NewTau == computeCreepLaw_TauII(εII, Phase.CreepLaws[1], P.val, T.val, f.val)
+    # Same but using GeoParams & dimensional values:
+    p       =   SetDislocationCreep("Dry Olivine | Gerya (2019)")
+    args    =   (; T=T)
+    τ       =   compute_τII(p, ε, args)        # compute stress
+    @test τ ≈ τ_book
+
+    ε1      =   compute_εII(p, τ, args)
+    @test ε1 ≈  ε
+
+    # Do the same, but using Floats as input
+    args1   =   (;T=ustrip(T))
+    τ1      =   compute_τII(p, 1e-14, args1)    # only using Floats
+    @test ustrip(τ) ≈ τ1
 
   
 

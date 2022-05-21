@@ -78,11 +78,14 @@ export  dεII_dτII,      dτII_dεII,
         compute_εII!,   compute_εII,
         compute_τII!,   compute_τII,
         strain_rate_circuit,
+        CorrectionFactor,
 
 #       Viscous creep laws
         LinearViscous,    PowerlawViscous,
         DislocationCreep, SetDislocationCreep,
         DiffusionCreep,   SetDiffusionCreep,
+        DislocationCreep_info,
+        DiffusionCreep_info
 
 #       Elasticity
         ConstantElasticity,
