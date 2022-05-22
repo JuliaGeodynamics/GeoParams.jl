@@ -3,7 +3,7 @@
     SetDiffusionCreep["Name of Diffusion Creep"]
 This is a dictionary with pre-defined creep laws    
 """
-SetDiffusionCreep(name::String) = DiffusionCreep_info[name][1]
+SetDiffusionCreep(name::String) = Transform_DiffusionCreep(name)
 
 # predefined diffusion creep laws are to be added in the dictionary as it is done for dislocation creep laws (see 'DislocationCreep.jl')!
 DiffusionCreep_info = Dict([

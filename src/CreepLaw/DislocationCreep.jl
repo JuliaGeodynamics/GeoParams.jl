@@ -51,6 +51,24 @@ DislocationCreep(args...) = DislocationCreep(NTuple{length(args[1]), Char}(
                                 convert.(GeoUnit,args[2:end-1])..., 
                                 args[end])
 
+"""
+    Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
+"""
+function Transform_DislocationCreep(name)
+    p   = DislocationCreep_info[name][1]
+
+    Name =  String(collect(p.Name))
+    n    =  Value(p.n)
+    A_Pa =  Value(p.A) |> Pa^(-NumValue(p.n) - NumValue(p.r))/s
+    E_J  =  Value(p.E) |> J/mol
+    V_m3 =  Value(p.V) |> m^3/mol
+    Apparatus = p.Apparatus
+    r    =  Value(p.r)
+    
+    return DislocationCreep(Name=Name,n=n, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus, r=r)
+end
+
+                            
 function param_info(s::DislocationCreep)
     name = String(collect(s.Name))
     eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"
@@ -160,7 +178,7 @@ end
 
 # Print info 
 function show(io::IO, g::DislocationCreep)  
-    print(io, "DislocationCreep: Name = $(String(collect(g.Name))), n=$(g.n.val), r=$(g.r.val), A=$(g.A.val), E=$(g.E.val), V=$(g.V.val), Apparatus=$(g.Apparatus)" )  
+    print(io, "DislocationCreep: Name = $(String(collect(g.Name))), n=$(Value(g.n)), r=$(Value(g.r)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), Apparatus=$(g.Apparatus)" )  
 end
 #-------------------------------------------------------------------------
 

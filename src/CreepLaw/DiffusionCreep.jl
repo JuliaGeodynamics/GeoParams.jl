@@ -32,6 +32,24 @@ end
 
 DiffusionCreep(args...) = DiffusionCreep(NTuple{length(args[1]), Char}(collect.(args[1])), convert.(GeoUnit,args[2:end-1])..., args[end])
 
+"""
+    Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
+"""
+function Transform_DiffusionCreep(name)
+    pp   = DiffusionCreep_info[name][1]
+
+    Name =  String(collect(pp.Name))
+    n    =  Value(pp.n)
+    r    =  Value(pp.r)
+    p    =  Value(pp.p)
+    A_Pa =  Value(pp.A) |> Pa^(-NumValue(p.n) -NumValue(p.r))*s^(-1)*m^(-NumValue(p))
+    E_J  =  Value(pp.E) |> J/mol
+    V_m3 =  Value(pp.V) |> m^3/mol
+    Apparatus = pp.Apparatus
+    
+    return DiffusionCreep(Name=Name,n=n, r=r, p=p, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+end
+
 function param_info(s::DiffusionCreep)
     name = String(collect(s.Name))
     eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"
@@ -137,7 +155,7 @@ end
 
 # Print info 
 function show(io::IO, g::DiffusionCreep)  
-    print(io, "DiffusionCreep: Name = $(String(collect(g.Name))), n=$(g.n.val), r=$(g.r.val), p=$(g.p.val), A=$(g.A.val), E=$(g.E.val), V=$(g.V.val), Apparatus=$(g.Apparatus)" )  
+    print(io, "DiffusionCreep: Name = $(String(collect(g.Name))), n=$(Value(g.n)), r=$(Value(g.r)), p=$(Value(g.p)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), Apparatus=$(g.Apparatus)" )  
 end
 
 

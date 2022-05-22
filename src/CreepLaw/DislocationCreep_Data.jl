@@ -1,9 +1,12 @@
 # This contains predefined dislocation creep values - Feel free to expand
 """
     SetDislocationCreep["Name of Dislocation Creep"]
-This is a dictionary with pre-defined creep laws    
+
+Sets predefined dislocation creep data from a dictionary
+
 """
-SetDislocationCreep(name::String) = DislocationCreep_info[name][1]
+SetDislocationCreep(name::String) =  Transform_DislocationCreep(name)
+
 
 DislocationCreep_info = Dict([
 
