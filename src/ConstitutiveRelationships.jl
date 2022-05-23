@@ -30,7 +30,6 @@ include("Elasticity/Elasticity.jl")          # elasticity
 include("Plasticity/Plasticity.jl")          # plasticity
 #include("CreepLaw/Viscosity.jl")            # composite creeplaws
 
-
 # add methods programatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity)
 

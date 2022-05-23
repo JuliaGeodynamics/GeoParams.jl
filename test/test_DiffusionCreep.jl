@@ -33,7 +33,7 @@ d_nd    = nondimensionalize(d,CharDim)
 
 
 # compute a pure diffusion creep rheology
-p = SetDiffusionCreep("Dry Plagioclase | Bürgmann & Dresen (2008)")
+p = SetDiffusionCreep("Dry Anorthite | Bürgmann & Dresen (2008)")
 
 T = 650+273.15;
 
@@ -101,11 +101,11 @@ A0     = 10.0.^(logA);
 m_gr   = -m_gr0;
 PMPa   =  PPa/MPa2Pa;
 
+i_flow = 1;
 FG_e   = 1/(2^((npow[i_flow]-1)./npow[i_flow])*3^((npow[i_flow]+1)./(2*npow[i_flow])))
 FG_s   = 1/(3^((npow[i_flow]+1)./2));    
 
 
-iflow = 1;
 mu1    =         FG_e.*eII.^(1/npow[i_flow]-1)*A0[i_flow]^(-1.0/npow[i_flow])*gsiz^(-m_gr[i_flow]/npow[i_flow])*fugH[i_flow]^(-r_fug[i_flow]/npow[i_flow])*exp((Qact[i_flow]+PMPa*MPa2Pa.*Vact[i_flow]*cm32m3*J2kJ)/(R*J2kJ*TK*npow[i_flow]));
 mu     =        mu1.*MPa2Pa; #In Pa.s
 
@@ -113,6 +113,9 @@ mu     =        mu1.*MPa2Pa; #In Pa.s
 
 
 # How the same is implemented in GeoParams
+pp = SetDislocationCreep("Dry Anorthite | Rybecki and Dresen (2000)")
+FT, FE = CorrectionFactor(pp);   
+
 n = 1.0NoUnits                         # power-law exponent
 r = 0.0NoUnits                         # exponent of water-fugacity
 p = -3.0NoUnits                        # grain size exponent
@@ -126,36 +129,12 @@ P = 0.0Pa
 d = 100μm
 R = 8.3145J/K/mol
 T = 923.15K
+f = 1.
 
+ε =  A * (FT*τ)^n * f^r * d^p * exp( -(E + P*V)/(R*T) )/FE
+ε =  upreferred(ε)
+η =  τ/(2ε)  # viscosity
 
-ε =  A * τ^n * f^r * d^p * exp( -(E + P*V)/(R*T) )
-
-η = τ/(2ε)  # viscosity
-
-#p = SetDislocationCreep("Dry Anorthite | Rybecki and Dresen (2000)")
-#compute_τII!(τII_array, p, EpsII, args)
-
-
-
-
-#Phase   = SetMaterialParams(Name="Viscous Matrix", Phase=1,
-#                                     Density   = ConstantDensity(),
-#                                     CreepLaws = DiffusionCreep(n=1.0NoUnits, r=1.0NoUnits, p=-3.0NoUnits, A=1.0e6MPa^(-1.0)*s^(-1.0)*µm^(3.0), E=335000.0J/mol, V=4.0e-6m^(3.0)/mol, Apparatus="Invariant"), CharDim = CharDim)
-#EpsII.val = ComputeCreepLaw_EpsII(TauII,Phase.CreepLaws[1],c)
-# Tested value is Dimensional so need to non-dimensionalize it back to compare
-#@test EpsII.val  ≈ nondimensionalize(7.823165072337786e-15s^(-1.0), CharDim) rtol = 1e-12
-    # Check that once inverted, we get back the TauII that we used to calculate EpsII
-#NewTau = ComputeCreepLaw_TauII(EpsII,Phase.CreepLaws[1],c)
-#@show NewTau
-#@test NewTau ≈ TauII.val
-
-
-# Given stress
-#@test ComputeCreepLaw_EpsII(1e6Pa, x1, CreepLawParams())==5e-13/s                # dimensional input       
-
-# Given strainrate 
-#@test ComputeCreepLaw_TauII(1e-13/s, x1, CreepLawParams())==1e18*2*1e-13Pa       # dimensional input       
-# -------------------------------------------------------------------
 
 
 end

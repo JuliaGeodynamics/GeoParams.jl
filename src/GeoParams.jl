@@ -85,7 +85,7 @@ export  dεII_dτII,      dτII_dεII,
         DislocationCreep, SetDislocationCreep,
         DiffusionCreep,   SetDiffusionCreep,
         DislocationCreep_info,
-        DiffusionCreep_info
+        DiffusionCreep_info,
 
 #       Elasticity
         ConstantElasticity,

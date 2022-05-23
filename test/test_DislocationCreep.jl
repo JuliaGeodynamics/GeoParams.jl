@@ -55,8 +55,6 @@ using GeoParams
 
     compute_εII!(ε_array, x1, τII_array, args_array)
     @test ε_array[1] ≈ 2.0065790455204593e6 
-
-
     
     # EXERCISE 6.1 of the Gerya textbook (as implemented in the matlab exercise)
     Ad      =   2.5e-17Pa^-3.5*s^-1
@@ -65,7 +63,7 @@ using GeoParams
     m       =   0;
     V       =   0m^3/mol  
     R       =   8.3145J/K/mol
-    T       =   (1000+273.15)K
+    T       =   (1200+273.15)K
     ε       =   1e-14/s;
     F2      =   1/2^((n-1)/n)/3^((n+1)/2/n)
     η_book  =   F2/Ad^(1/n)/ε^((n-1)/n)*exp(Ea/n/R/T);
@@ -85,10 +83,25 @@ using GeoParams
     τ1      =   compute_τII(p, 1e-14, args1)    # only using Floats
     @test ustrip(τ) ≈ τ1
 
-  
+    # compute devatoric stress & viscosity profiles (as in book)
+    Tvec    =   (400+273.15):10:(1200+273.15)
+    εvec    =   ones(size(Tvec))*1e-14;
+    τvec    =   zero(εvec)
+    args2   =   (;T=Tvec)
+    compute_τII!(τvec, p, εvec, args2)    # only using Floats
+    ηvec    =   τvec./(2*εvec)
+    @test  sum(ηvec)/length(ηvec) ≈ 4.124658696991946e24
 
-    # Given strainrate 
-    #@test computeCreepLaw_EpsII(1e-13/s, x1, CreepLawParams())==1e18*2*1e-13Pa       # dimensional input       
-    # -------------------------------------------------------------------
+
+    p = SetDislocationCreep("Dry Anorthite | Rybecki and Dresen (2000)")
+    #p = SetDislocationCreep("Wet Anorthite | Rybecki and Dresen (2000)")
+    p = SetDislocationCreep("Dry Olivine | Hirth & Kohlstedt (2003)")
+    
+    args = (; T=(650+273.15))
+    ε_vec = exp10.(-22:-12);
+    τ_vec = zero(ε_vec);
+    compute_τII!(τ_vec, p, ε_vec, args) 
+    η_vec = τ_vec./(2*ε_vec)
+
 
 end
