@@ -92,7 +92,7 @@ fugH   = [  1      1]; #Fugacity of water MPa
 
 
 # Conversion Factors and constants ---------------------------------------------------
-R      = 8.314; #Gas Constant
+R      = 8.3145; #Gas Constant
 MPa2Pa = 1e6;   #MPa  -> Pa
 cm32m3 = 1e-6;  #cm3  -> m3
 J2kJ   = 1e-3;  #Joul -> kJoule
@@ -106,34 +106,51 @@ FG_e   = 1/(2^((npow[i_flow]-1)./npow[i_flow])*3^((npow[i_flow]+1)./(2*npow[i_fl
 FG_s   = 1/(3^((npow[i_flow]+1)./2));    
 
 
-mu1    =         FG_e.*eII.^(1/npow[i_flow]-1)*A0[i_flow]^(-1.0/npow[i_flow])*gsiz^(-m_gr[i_flow]/npow[i_flow])*fugH[i_flow]^(-r_fug[i_flow]/npow[i_flow])*exp((Qact[i_flow]+PMPa*MPa2Pa.*Vact[i_flow]*cm32m3*J2kJ)/(R*J2kJ*TK*npow[i_flow]));
-mu     =        mu1.*MPa2Pa; #In Pa.s
+mu1    =    FG_e.*eII.^(1/npow[i_flow]-1)*A0[i_flow]^(-1.0/npow[i_flow])*gsiz^(-m_gr[i_flow]/npow[i_flow])*fugH[i_flow]^(-r_fug[i_flow]/npow[i_flow])*exp((Qact[i_flow]+PMPa*MPa2Pa.*Vact[i_flow]*cm32m3*J2kJ)/(R*J2kJ*TK*npow[i_flow]));
+mu     =    mu1.*MPa2Pa; #In Pa.s
+Tau    =    2*mu*eII     # stress 
+
+# Do the same but using GeoParams:
+pp   = SetDiffusionCreep("Dry Anorthite | Bürgmann & Dresen (2008)")
+
+# using SI units
+τII  = compute_τII(pp,eII/s,(;T=TK*K, d=gsiz*1e-6m))
+η    = τII/(2*eII/s)
+@test  Tau ≈ ustrip(τII)
+@test  mu ≈ ustrip(η)
+
+εII  = compute_εII(pp,τII,(;T=TK*K, d=gsiz*1e-6m))
+@test  eII ≈ ustrip(εII)
+
+# using Floats
+τII  = compute_τII(pp,eII,(;T=TK, d=gsiz*1e-6))
+η    = τII/(2*eII)
+@test  Tau ≈ τII
+@test  mu ≈ η
+
+εII  = compute_εII(pp,τII,(;T=TK, d=gsiz*1e-6))
+@test  eII ≈ ustrip(εII)
+
+# using arrays for some of the variables
+TK_vec  = ones(10).*TK
+eII_vec = ones(size(TK_vec))*eII
+τII_vec = zero(eII_vec);
+args    = (;T=TK_vec, d=gsiz*1e-6)
+gsiz_vec = one(TK_vec)*gsiz*1e06
+args    = (;T=TK_vec, d=gsiz*1e-6)
+
+compute_τII!(τII_vec,pp,eII_vec,args)
+η_vec   =   τII_vec./(2*eII_vec)
+@test  Tau ≈ τII_vec[1]
+@test  mu ≈ η_vec[1]
+
+
+εII_vec = zero(τII_vec)
+compute_εII!(εII_vec,pp,τII_vec,args)
 
 
 
 
-# How the same is implemented in GeoParams
-pp = SetDislocationCreep("Dry Anorthite | Rybecki and Dresen (2000)")
-FT, FE = CorrectionFactor(pp);   
-
-n = 1.0NoUnits                         # power-law exponent
-r = 0.0NoUnits                         # exponent of water-fugacity
-p = -3.0NoUnits                        # grain size exponent
-#A = (10^12.1)MPa^(-1)*μm^3.0*s^(-1)    # material specific rheological parameter
-A = 1.258925411794166e-12*m^3/Pa/s
-
-E = 460.0e3J/mol                       # activation energy
-V = 24e-6m^3/mol                       # activation Volume
-τ = 1e6Pa
-P = 0.0Pa
-d = 100μm
-R = 8.3145J/K/mol
-T = 923.15K
-f = 1.
-
-ε =  A * (FT*τ)^n * f^r * d^p * exp( -(E + P*V)/(R*T) )/FE
-ε =  upreferred(ε)
-η =  τ/(2ε)  # viscosity
 
 
 

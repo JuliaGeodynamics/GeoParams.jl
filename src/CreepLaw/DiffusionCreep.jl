@@ -76,12 +76,22 @@ function compute_εII(a::DiffusionCreep, TauII::_T; T::_T, P=zero(_T), f=one(_T)
     @unpack_val n,r,p,A,E,V,R = a
     
     FT, FE = CorrectionFactor(a)
-   
-    # ε = A τ^n f^r d^p exp( -(E + pV)/(RT) )
-    # τ = τII*FT,  εII=
+
     return A*fastpow(TauII*FT,n)*fastpow(f,r)*fastpow(d,p)*exp(-(E + P*V)/(R*T))/FE
 end
 #compute_εII(s::DiffusionCreep, TauII::_T, args) where _T = compute_εII(s, TauII ; args...)
+
+
+
+function compute_εII(a::DiffusionCreep, TauII::Quantity; T=1K, P=0Pa, f=1NoUnits, d=1e-3m, args...)
+    @unpack_units n,r,p,A,E,V,R = a
+    FT, FE  =   CorrectionFactor(a);    
+    ε       =   A*(TauII*FT)^n* f^(r)*d^(p)*exp(-(E + P*V)/(R*T))/FE
+
+    return ε
+end
+
+
 
 """
     compute_εII!(EpsII::AbstractArray{_T,N}, a, TauII::AbstractArray{_T,N}; T, P, f,d,kwargs...)
@@ -119,7 +129,7 @@ end
 """
     computeCreepLaw_TauII(EpsII::_T, a::DiffusionCreep; T::_T, P=zero(_T), f=one(_T), d=one(_T), kwargs...)
 
-Returns dislocation creep stress as a function of 2nd invariant of the strain rate 
+Returns diffusion creep stress as a function of 2nd invariant of the strain rate 
 """
 function compute_τII(a::DiffusionCreep, EpsII::_T; T::_T, P=zero(_T), f=one(_T), d=one(_T), kwargs...) where _T
     @unpack_val n,r,p,A,E,V,R = a
@@ -129,6 +139,16 @@ function compute_τII(a::DiffusionCreep, EpsII::_T; T::_T, P=zero(_T), f=one(_T)
     return fastpow(A,-1/n)*fastpow(EpsII*FE, 1/n)*fastpow(f,-r/n)*fastpow(d,-p/n)*exp((E + P*V)/(n * R*T))/FT
 end
 #compute_τII(s::DiffusionCreep, EpsII::_T, args) where _T = compute_τII(s, EpsII ; args...)
+
+
+function compute_τII(a::DiffusionCreep, EpsII::Quantity; P=0Pa, T=1K, f=1NoUnits, d=1m, args...) where _T
+    @unpack_units n,r,p,A,E,V,R = a
+    
+    FT, FE = CorrectionFactor(a);    
+
+    τ =  A^(-1/n)*(EpsII*FE)^(1/n)*f^(-r/n)*d^(-p/n)*exp((E + P*V)/(n * R*T))/FT
+    return τ
+end
 
 function compute_τII!(TauII::AbstractArray{_T,N}, a::DiffusionCreep, EpsII::AbstractArray{_T,N}; 
     T = ones(size(TauII))::AbstractArray{_T,N}, 
