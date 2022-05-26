@@ -314,17 +314,16 @@ DislocationCreep_info = Dict([
 )
 
 # Dry Anorthite rheology
-("Dry Anorthite | Rybecki and Dresen (2000)", 
-    #  Rybecki and Dresen (2000), table 2 + table 3
+("Dry Anorthite | Rybacki et al. (2006)", 
     (DislocationCreep(
-        Name = "Dry Anorthite | Rybecki and Dresen (2000)",
+        Name = "Dry Anorthite | Rybacki et al. (2006)",
         n = 3.0NoUnits,
-        A = 1.0*exp10(-12.7)MPa^(-3.0)/s, 
-        E = 648kJ/mol,
-        V = 0m^3/mol,
+        A = exp10(12.7)MPa^(-3.0)/s, 
+        E = 641kJ/mol,
+        V = 24e-6m^3/mol,
         r = 0NoUnits,
         Apparatus = AxialCompression),
-        MaterialParamsInfo(Comment = "Values checked (Rybecki and Dresen (2000))(NM), plots are not reproduced (NM).",
+        MaterialParamsInfo(Comment = "Values taken from Bürgmann & Rybacki (2008) Supplementary table 1. (BK), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""
             @article{rybacki2000dislocation,
             title={Dislocation and diffusion creep of synthetic anorthite aggregates},
@@ -341,15 +340,15 @@ DislocationCreep_info = Dict([
 )
 
 # Wet Anorthite rheology
-("Wet Anorthite | Rybecki and Dresen (2000)", 
+("Wet Anorthite | Rybacki et al. (2006)", 
     #  Rybecki and Dresen (2000), table 2 + table 3
     (DislocationCreep(
-        Name = "Wet Anorthite | Rybecki and Dresen (2000)",
+        Name = "Wet Anorthite | Rybecki et al. (2006)",
         n = 3.0NoUnits,
-        A = 1.0*exp10(-2.6)MPa^(-3.0)/s, 
-        E = 356kJ/mol,
+        A = exp10(0.2)MPa^(-3.0)/s, 
+        E = 345kJ/mol,
         V = 0m^3/mol,
-        r = 0NoUnits,
+        r = 1NoUnits,
         Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Rybecki and Dresen (2000))(NM), plots are not reproduced (NM).",
         BibTex_Reference = parse_bibtex("""

@@ -62,91 +62,114 @@ compute_εII!(ε_array, p, τII_array, args)
 
 
 # dry anorthtite, stress-strainrate curve
-p = SetDiffusionCreep("Dry Anorthite | Bürgmann & Dresen (2008)")
-EpsII = exp10.(-22:.5:-12);
-T     = 650 + 273.15;
-gsiz  = 100e-6;
-P     = 0.
-args  = (T=T, d=gsiz, P=P)
-τII_array = zero(EpsII)
-compute_τII!(τII_array, p, EpsII, args)
-eta_array = τII_array./(2*EpsII)
+p    = SetDiffusionCreep("Dry Anorthite | Bürgmann & Dresen (2008)")
+εII  = exp10.(-22:.5:-12);
+τII  = zero(εII_array)            # preallocate array
+T    = 650 + 273.15;
+gsiz = 100e-6;
+args = (T=T, d=gsiz)
+compute_τII!(τII, p, εII, args)
 
-εII_array = zero(τII_array)
-compute_εII!(εII_array, p, τII_array, args)
-eta_array1 = τII_array./(2*εII_array)
+eta_array = τII./(2*εII)
 
+εII = zero(τII)
+compute_εII!(εII, p, τII, args)
+eta_array1 = τII./(2*εII)
 
-# matlab script
-eII = 1e-22; PPa = 0.0
-gsiz        = 100;
-TK          = 650+273.15;
+#---------------------------
+# This is data from a matlab script implementation of the rheology (which was again benchmarked vs. LaMEM)
+for itest=1:2
+    eII         = 1e-22; 
+    PPa         = 0.0
+    gsiz        = 100;
+    TK          = 650+273.15;
 
-logA   = [12.1  12.7]; #Logarithm of pre-exponential factor
-npow   = [   1     3]; #Power law exponent
-Qact   = [ 460   641]; #Activation energy (KJ)
-m_gr0  = [   3     0]; #Grain size Exponent (will convert to negative)
-r_fug  = [   0     0]; #Exponent of Fugacity
-Vact   = [  24    24]; #Activation Volume cm-3
-fugH   = [  1      1]; #Fugacity of water MPa 
+    logA   = [12.1  12.7]; #Logarithm of pre-exponential factor
+    npow   = [   1     3]; #Power law exponent
+    Qact   = [ 460   641]; #Activation energy (KJ)
+    m_gr0  = [   3     0]; #Grain size Exponent (will convert to negative)
+    r_fug  = [   0     0]; #Exponent of Fugacity
+    Vact   = [  24    24]; #Activation Volume cm-3
+    fugH   = [  1      1]; #Fugacity of water MPa 
 
+    R      = 8.3145; #Gas Constant
+    MPa2Pa = 1e6;   #MPa  -> Pa
+    cm32m3 = 1e-6;  #cm3  -> m3
+    J2kJ   = 1e-3;  #Joul -> kJoule
 
-# Conversion Factors and constants ---------------------------------------------------
-R      = 8.3145; #Gas Constant
-MPa2Pa = 1e6;   #MPa  -> Pa
-cm32m3 = 1e-6;  #cm3  -> m3
-J2kJ   = 1e-3;  #Joul -> kJoule
+    A0     = 10.0.^(logA);  # in MPa^-n s^-1 micrometer^m
+    m_gr   = -m_gr0;
+    PMPa   =  PPa/MPa2Pa;
 
-A0     = 10.0.^(logA);
-m_gr   = -m_gr0;
-PMPa   =  PPa/MPa2Pa;
+    i_flow = itest;
+    FG_e   = 1/(2^((npow[i_flow]-1)./npow[i_flow])*3^((npow[i_flow]+1)./(2*npow[i_flow])))
+    FG_s   = 1/(3^((npow[i_flow]+1)./2));    
 
-i_flow = 1;
-FG_e   = 1/(2^((npow[i_flow]-1)./npow[i_flow])*3^((npow[i_flow]+1)./(2*npow[i_flow])))
-FG_s   = 1/(3^((npow[i_flow]+1)./2));    
+    mu1    =    FG_e.*eII.^(1/npow[i_flow]-1)*A0[i_flow]^(-1.0/npow[i_flow])*gsiz^(-m_gr[i_flow]/npow[i_flow])*fugH[i_flow]^(-r_fug[i_flow]/npow[i_flow])*exp((Qact[i_flow]+PMPa*MPa2Pa.*Vact[i_flow]*cm32m3*J2kJ)/(R*J2kJ*TK*npow[i_flow]));
+    mu     =    mu1.*MPa2Pa; #In Pa.s
+    Tau    =    2*mu*eII     # stress 
 
-
-mu1    =    FG_e.*eII.^(1/npow[i_flow]-1)*A0[i_flow]^(-1.0/npow[i_flow])*gsiz^(-m_gr[i_flow]/npow[i_flow])*fugH[i_flow]^(-r_fug[i_flow]/npow[i_flow])*exp((Qact[i_flow]+PMPa*MPa2Pa.*Vact[i_flow]*cm32m3*J2kJ)/(R*J2kJ*TK*npow[i_flow]));
-mu     =    mu1.*MPa2Pa; #In Pa.s
-Tau    =    2*mu*eII     # stress 
-
-# Do the same but using GeoParams:
-pp   = SetDiffusionCreep("Dry Anorthite | Bürgmann & Dresen (2008)")
-
-# using SI units
-τII  = compute_τII(pp,eII/s,(;T=TK*K, d=gsiz*1e-6m))
-η    = τII/(2*eII/s)
-@test  Tau ≈ ustrip(τII)
-@test  mu ≈ ustrip(η)
-
-εII  = compute_εII(pp,τII,(;T=TK*K, d=gsiz*1e-6m))
-@test  eII ≈ ustrip(εII)
-
-# using Floats
-τII  = compute_τII(pp,eII,(;T=TK, d=gsiz*1e-6))
-η    = τII/(2*eII)
-@test  Tau ≈ τII
-@test  mu ≈ η
-
-εII  = compute_εII(pp,τII,(;T=TK, d=gsiz*1e-6))
-@test  eII ≈ ustrip(εII)
-
-# using arrays for some of the variables
-TK_vec  = ones(10).*TK
-eII_vec = ones(size(TK_vec))*eII
-τII_vec = zero(eII_vec);
-args    = (;T=TK_vec, d=gsiz*1e-6)
-gsiz_vec = one(TK_vec)*gsiz*1e06
-args    = (;T=TK_vec, d=gsiz*1e-6)
-
-compute_τII!(τII_vec,pp,eII_vec,args)
-η_vec   =   τII_vec./(2*eII_vec)
-@test  Tau ≈ τII_vec[1]
-@test  mu ≈ η_vec[1]
+    #---------------------------
 
 
-εII_vec = zero(τII_vec)
-compute_εII!(εII_vec,pp,τII_vec,args)
+    # Do the same but using GeoParams:
+    if itest==1
+        pp   = SetDiffusionCreep("Dry Anorthite | Bürgmann & Dresen (2008)")
+    elseif itest==2
+        pp   = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
+    end
+    
+    # using SI units
+    τII  = compute_τII(pp,eII/s,(;T=TK*K, d=gsiz*1e-6m))
+    η    = τII/(2*eII/s)
+    @test  Tau ≈ ustrip(τII)
+    @test  mu ≈ ustrip(η)
+
+    εII  = compute_εII(pp,τII,(;T=TK*K, d=gsiz*1e-6m))
+    @test  eII ≈ ustrip(εII)
+
+    # using Floats
+    τII  = compute_τII(pp,eII,(;T=TK, d=gsiz*1e-6))
+    η    = τII/(2*eII)
+    @test  Tau ≈ τII
+    @test  mu ≈ η
+
+    εII  = compute_εII(pp,τII,(;T=TK, d=gsiz*1e-6))
+    @test  eII ≈ ustrip(εII)
+
+    # using arrays for some of the variables
+    TK_vec  = ones(10).*TK
+    eII_vec = ones(size(TK_vec))*eII
+    τII_vec = zero(eII_vec);
+    args    = (;T=TK_vec, d=gsiz*1e-6)
+    gsiz_vec = ones(size(TK_vec))*gsiz*1e-6
+    args1   = (;T=TK_vec, d=gsiz_vec)
+
+    compute_τII!(τII_vec,pp,eII_vec,args)
+    η_vec   =   τII_vec./(2*eII_vec)
+    @test  Tau ≈ τII_vec[1]
+    @test  mu ≈ η_vec[1]
+
+
+    εII_vec = zero(τII_vec)
+    compute_εII!(εII_vec,pp,τII_vec,args)
+
+
+
+end
+
+
+# --- debugging
+
+#@unpack_units n,r,A,E,V,R = pp
+    
+#FT, FE = CorrectionFactor(pp);    
+#FT=0.5; FE=1;
+
+#τ = A^(-1/n)*(EpsII*FE)^(1/n)*f^(-r/n)*exp((E + P*V)/(n * R*T))/FT
+
+
+# ----
 
 
 

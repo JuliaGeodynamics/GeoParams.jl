@@ -11,13 +11,15 @@ using ..MeltingParam
 using .Plots
 
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
-using .MaterialParameters.CreepLaw: computeCreepLaw_TauII, AbstractCreepLaw
+using .MaterialParameters.ConstitutiveRelationships
 using .MaterialParameters.HeatCapacity: AbstractHeatCapacity, compute_heatcapacity
 using .MaterialParameters.Conductivity: AbstractConductivity, compute_conductivity
 using .MeltingParam: AbstractMeltingParam, compute_meltfraction
 
 export 
-    PlotStressStrainrate_CreepLaw,
+    PlotStrainrateStress,
+    PlotStressStrainrate,
+    PlotStrainrateViscosity,
     PlotHeatCapacity,
     PlotConductivity,
     PlotMeltFraction,
@@ -27,7 +29,7 @@ export
 
 
 """
-    PlotStressStrainrate_CreepLaw(x::AbstractCreepLaw; p::CreepLawParams=nothing, Strainrate=(1e-18,1e-12), CreatePlot::Bool=false)
+    PlotStrainrateStress(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Strainrate=(1e-18,1e-12), plt=nothing)
 
 Plots deviatoric stress versus deviatoric strain rate for a single creeplaw. 
     Note: if you want to create plots or use the `CreatePlot=true` option you need to install the `Plots.jl` package in julia
@@ -35,66 +37,215 @@ Plots deviatoric stress versus deviatoric strain rate for a single creeplaw.
 
 # Example 1    
 ```julia-repl
-julia> x=LinearViscous()
-Linear viscosity: η=1.0e20 Pa s
-julia> Tau_II, Eps_II,  = PlotStressStrainrate_CreepLaw(x);
+julia> pp   = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
+DiffusionCreep: Name = Dry Anorthite | Rybacki et al. (2006), n=1.0, r=0.0, p=-3.0, A=1.258925411794166e-12 m³·⁰ Pa⁻¹·⁰ s⁻¹·⁰, E=460000.0 J mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, Apparatus=1
+julia> pp1   = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
+DislocationCreep: Name = Dry Anorthite | Rybacki et al. (2006), n=3.0, r=0.0, A=5.011872336272715e-6 Pa⁻³·⁰ s⁻¹·⁰, E=641000.0 J mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, Apparatus=1
 ```
 Next you can plot this with
 ```julia-repl
 julia> using Plots;
-julia> plot(ustrip(Eps_II),ustrip(Tau_II), xaxis=:log, yaxis=:log,xlabel="strain rate [1/s]",ylabel="Dev. Stress [MPa]")
+julia> args=((T=900.0, d=100e-6), (;T=900.0))
+((T = 900.0, d = 0.0001), (T = 900.0,))
+julia> plt = PlotStrainrateStress((pp,pp1), args=args, Strainrate=(1e-22,1e-12))
 ```
-Note that `ustrip` removes the units of the arrays, as many of the plotting packages don't know how to deal with that.
-
-You could also have done:
-```julia-repl
-julia> using Plots;
-julia> Tau_II, Eps_II, pl = PlotStressStrainrate_CreepLaw(x,CreatePlot=true);
-```
-which will generate the following plot
-![subet1](./assets/img/Stress_Strainrate_LinearViscous.png)
 
 The plot can be customized as 
 ```julia-repl
-julia> plot(pl, title="Linear viscosity", linecolor=:red)
+julia> plot(plt, title="Diffusion and Dislocation Creep for Anorthite")
 ```
+
+which will generate the following plot
+![subet1](./assets/img/Stress_Strainrate_DislocationDiffusion_Anorthite.png)
+
+
 See the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package for more options.
 
 """
-function PlotStressStrainrate_CreepLaw(x::AbstractCreepLaw; p=nothing, Strainrate=(1e-18/s,1e-12/s), CreatePlot::Bool=false)
+function PlotStrainrateStress(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Strainrate=(1e-18,1e-12), plt=nothing)
 
-    if isnothing(p); p = CreepLawParams();  end
-
-    if isDimensional(x)==false
-       error("The struct with Creep Law parameters: $(typeof(x)) should be in dimensional units for plotting. You can use Dimensionalize! to do that.")
+    n = 1
+    if isa(x,Tuple)
+        n = length(x)
     end
 
-    # Define strainrate 
-    Eps_II = range(ustrip(Strainrate[1])/s, stop=ustrip(Strainrate[2])/s, length=101)/s
-    Tau_II = computeCreepLaw_TauII(Eps_II, x, p)                  # deviatoric stress
-
-    # Transfer to GeoUnits
-    Eps_II = GeoUnit(Eps_II);
-    Tau_II = GeoUnit(Tau_II/1e6);
-
-    if CreatePlot
-        try 
-            pl = plot(ustrip(Eps_II), ustrip(Tau_II), 
-                xaxis=:log, xlabel=L"\textrm{deviatoric strain rate  } \dot{\varepsilon}_{II} \textrm{    [1/s]}", 
-                yaxis=:log, ylabel=L"\textrm{deviatoric stress  }\tau_{II} \textrm{    [MPa]}",
-                legend=false,show = true)
-        catch
-            error("It seems that you did not install, or did not load Plots.jl. For plotting, please add that with `add Plots` in the package manager and type `using Plots` before running this.")
+    if isnothing(plt)
+        plot()      # new plot
+    end
+    for i=1:n   
+        if isa(x,Tuple)
+            p = x[i]
+        else
+            p = x;
+        end
+        if isa(args,Tuple)
+            args_in = args[i]
+        else
+            args_in = args;
+        end
+        
+        if isDimensional(p)==false
+            error("The struct with Creep Law parameters: $(typeof(x)) should be in dimensional units for plotting. You can use Dimensionalize! to do that.")
         end
 
-        return Tau_II, Eps_II, pl
-    else
-        return Tau_II, Eps_II
+        # Define strainrate 
+        Eps_II = range(ustrip(Strainrate[1]), stop=ustrip(Strainrate[2]), length=101)
+        Tau_II = zeros(size(Eps_II))
+
+        compute_τII!(Tau_II, p, Eps_II, args_in)       # Compute stress
+
+        η = Tau_II./(2 * Eps_II)                        # effective viscosity
+
+        Tau_II_MPa = Tau_II./1e6;
+
+        # Create Plot    
+        Name = String(collect(p.Name))
+        
+        # determine type of creeplaw 
+        Type = "$(typeof(p))"           # full name of type
+        id = findfirst("{", Type)
+        Type = Type[1:id[1]-1]
+
+        plt = plot!(Eps_II,  Tau_II_MPa, 
+                    xaxis=:log, xlabel=L"\dot{\varepsilon}_{II} \textrm{[s}^{-1}\textrm{]}", 
+                    yaxis=:log, ylabel=L"\tau_{II} \textrm{    [MPa]}",
+                    label="$Type: $Name $args_in",
+                    title="",
+                    legendfont=font(4))
+            
     end
 
+    display(plt)
+    return plt
     
 end
 
+"""
+    PlotStressStrainrate(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Stress=(1e0,1e8), plt=nothing)
+
+Same as `PlotStrainrateStress` but versus stress (in MPa) versus strainrate instead.
+
+"""
+function PlotStressStrainrate(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Stress=(1e0,1e8), plt=nothing)
+
+    n = 1
+    if isa(x,Tuple)
+        n = length(x)
+    end
+
+    if isnothing(plt)
+        plot()      # new plot
+    end
+    for i=1:n   
+        if isa(x,Tuple)
+            p = x[i]
+        else
+            p = x;
+        end
+        if isa(args,Tuple)
+            args_in = args[i]
+        else
+            args_in = args;
+        end
+        
+        if isDimensional(p)==false
+            error("The struct with Creep Law parameters: $(typeof(x)) should be in dimensional units for plotting. You can use Dimensionalize! to do that.")
+        end
+
+        # Define strainrate 
+        Tau_II_MPa  = range(ustrip(Stress[1]), stop=ustrip(Stress[2]), length=101)
+        Tau_II      = Tau_II_MPa.*1e6
+        Eps_II      = zeros(size(Tau_II))
+
+        compute_εII!(Eps_II, p, Tau_II, args_in)       # Compute strainrate
+        
+        η = Tau_II./(2 * Eps_II)                        # effective viscosity
+
+        # Create Plot    
+        Name = String(collect(p.Name))
+        
+        # determine type of creeplaw 
+        Type = "$(typeof(p))"           # full name of type
+        id = findfirst("{", Type)
+        Type = Type[1:id[1]-1]
+
+        plt = plot!(Tau_II_MPa,  Eps_II, 
+                    xaxis=:log, ylabel=L"\tau_{II} \textrm{    [MPa]}",
+                    yaxis=:log, xlabel=L"\dot{\varepsilon}_{II} \textrm{[s}^{-1}\textrm{]}", 
+                    label="$Type: $Name $args_in",
+                    title="",
+                    legendfont=font(4))
+            
+    end
+
+    display(plt)
+    return plt
+    
+end
+
+"""
+    PlotStrainrateViscosity(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Strainrate=(1e-18,1e-12), plt=nothing)
+
+Same as `PlotStrainrateStress` but versus viscosity instead of stress.
+
+"""
+function PlotStrainrateViscosity(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Strainrate=(1e-18,1e-12), plt=nothing)
+
+    n = 1
+    if isa(x,Tuple)
+        n = length(x)
+    end
+
+    if isnothing(plt)
+        plot()      # new plot
+    end
+    for i=1:n   
+        if isa(x,Tuple)
+            p = x[i]
+        else
+            p = x;
+        end
+        if isa(args,Tuple)
+            args_in = args[i]
+        else
+            args_in = args;
+        end
+        
+        if isDimensional(p)==false
+            error("The struct with Creep Law parameters: $(typeof(x)) should be in dimensional units for plotting. You can use Dimensionalize! to do that.")
+        end
+
+        # Define strainrate 
+        Eps_II = range(ustrip(Strainrate[1]), stop=ustrip(Strainrate[2]), length=101)
+        Tau_II = zeros(size(Eps_II))
+
+        compute_τII!(Tau_II, p, Eps_II, args_in)       # Compute stress
+
+        η = Tau_II./(2 * Eps_II)                        # effective viscosity
+
+        Tau_II_MPa = Tau_II./1e6;
+
+        # Create Plot    
+        Name = String(collect(p.Name))
+        
+        # determine type of creeplaw 
+        Type = "$(typeof(p))"           # full name of type
+        id = findfirst("{", Type)
+        Type = Type[1:id[1]-1]
+
+        plt = plot!(Eps_II,  η, 
+                    xaxis=:log, xlabel=L"\dot{\varepsilon}_{II} \textrm{    [1/s]}", 
+                    yaxis=:log, ylabel=L"\eta \textrm{    [Pa S]}",
+                    label="$Type: $Name $args_in",
+                    title="",
+                    legendfont=font(4))
+            
+    end
+
+    display(plt)
+    return plt
+    
+end
 
 """
     T,Cp,plt = PlotHeatCapacity(cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=nothing)

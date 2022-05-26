@@ -9,9 +9,9 @@ SetDiffusionCreep(name::String) = Transform_DiffusionCreep(name)
 DiffusionCreep_info = Dict([
 
     # Dry Plagioclase rheology 
-    ("Dry Anorthite | Bürgmann & Dresen (2008)", 
+    ("Dry Anorthite | Rybacki et al. (2006)", 
         (DiffusionCreep(
-            Name = "Dry Anorthite | Bürgmann & Dresen (2008)",
+            Name = "Dry Anorthite | Rybacki et al. (2006)",
             n = 1.0NoUnits,                         # power-law exponent
             r = 0.0NoUnits,                         # exponent of water-fugacity
             p = -3.0NoUnits,                        # grain size exponent
@@ -20,24 +20,23 @@ DiffusionCreep_info = Dict([
             V = 24e-6m^3/mol,                       # activation Volume
             Apparatus = AxialCompression),
             
-            MaterialParamsInfo(Comment = "Taken from Bürgmann & Dresen (2008), supplementary table 1 .",
+            MaterialParamsInfo(Comment = "Checked values; not yet plots (BK)",
             
             BibTex_Reference = parse_bibtex("""
-                @article{Bürgmann_Dresen_2008,
-                address = {Washington, D. C.},
-                title = {Rheology of the Lower Crust and Upper Mantle: Evidence from Rock Mechanics, Geodesy, and Field Observations},
-                volume = {36},
-                ISSN={0084-6597, 1545-4495},
-                journal={Annual Review of Earth and Planetary Sciences}, 
-                author={Bürgmann, Roland and Dresen, Georg}, 
-                year={2008}, 
-                month={May}, 
-                pages={531–567},
+                @article{Rybacki_Gottschalk_Wirth_Dresen_2006, 
+                title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates}, 
+                volume={111}, 
+                DOI={10.1029/2005JB003663}, 
+                number={B3}, 
+                journal={Journal of Geophysical Research: Solid Earth}, 
+                author={Rybacki, E. and Gottschalk, M. and Wirth, R. and Dresen, G.}, 
+                year={2006}, 
+                month={Mar}
                 }
             """))
         )
     )
-
+    
 
 
 
