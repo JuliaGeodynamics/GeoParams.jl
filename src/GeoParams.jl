@@ -93,7 +93,17 @@ export  dεII_dτII,      dτII_dεII,
 #       Plasticity
         compute_yieldfunction,      
         compute_yieldfunction!,
-        DruckerPrager        
+        DruckerPrager,        
+
+#       Composite rheologies
+        strain_rate_circuit,
+        computeViscosity_τII,
+        computeViscosity_εII,
+        computeViscosity_τII!,
+        computeViscosity_εII!,
+        dεII_dτII,
+        local_iterations_εII, 
+        computeViscosity
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration

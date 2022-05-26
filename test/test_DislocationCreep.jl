@@ -93,7 +93,7 @@ using GeoParams
     @test  sum(ηvec)/length(ηvec) ≈ 4.124658696991946e24
 
 
-    p = SetDislocationCreep("Dry Anorthite | Rybecki and Dresen (2000)")
+    p = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
     #p = SetDislocationCreep("Wet Anorthite | Rybecki and Dresen (2000)")
     p = SetDislocationCreep("Dry Olivine | Hirth & Kohlstedt (2003)")
     

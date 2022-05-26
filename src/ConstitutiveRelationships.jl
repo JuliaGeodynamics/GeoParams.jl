@@ -28,7 +28,7 @@ include("Computations.jl")
 include("CreepLaw/CreepLaw.jl")              # viscous Creeplaws
 include("Elasticity/Elasticity.jl")          # elasticity
 include("Plasticity/Plasticity.jl")          # plasticity
-#include("CreepLaw/Viscosity.jl")            # composite creeplaws
+include("CreepLaw/Viscosity.jl")             # composite creeplaws
 
 # add methods programatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity)
@@ -36,14 +36,13 @@ for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElas
     @eval begin
         compute_εII(a::$(myType), TauII, args) = compute_εII(a, TauII; args...) 
         compute_εII!(ε::AbstractArray{_T,N}, s::$(myType){_T}, TauII::AbstractArray{_T,N}, args) where {_T,N} = compute_εII!(ε, s, TauII; args...)
-        
-        dεII_dτII(a::$(myType), TauII, args) = dεII_dτII(a, TauII; args...) 
-        
+                
         compute_τII(a::$(myType), EpsII, args) = compute_τII(a, EpsII; args...) 
         compute_τII!(τ::AbstractArray{_T,N}, s::$(myType){_T}, EpsII::AbstractArray{_T,N}, args) where {_T,N} = compute_τII!(τ, s, EpsII; args...)
         
         if Symbol($myType) !== :ConstantElasticity
             dτII_dεII(a::$(myType), EpsII, args) = dτII_dεII(a, EpsII; args...)
+            dεII_dτII(a::$(myType), TauII, args) = dεII_dτII(a, TauII; args...)
         end
     end
 end

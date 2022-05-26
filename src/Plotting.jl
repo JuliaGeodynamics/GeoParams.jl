@@ -83,11 +83,7 @@ function PlotStrainrateStress(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Strainra
         else
             args_in = args;
         end
-        
-        if isDimensional(p)==false
-            error("The struct with Creep Law parameters: $(typeof(x)) should be in dimensional units for plotting. You can use Dimensionalize! to do that.")
-        end
-
+      
         # Define strainrate 
         Eps_II = range(ustrip(Strainrate[1]), stop=ustrip(Strainrate[2]), length=101)
         Tau_II = zeros(size(Eps_II))
@@ -99,13 +95,20 @@ function PlotStrainrateStress(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Strainra
         Tau_II_MPa = Tau_II./1e6;
 
         # Create Plot    
-        Name = String(collect(p.Name))
-        
-        # determine type of creeplaw 
-        Type = "$(typeof(p))"           # full name of type
-        id = findfirst("{", Type)
-        Type = Type[1:id[1]-1]
+        if isa(p,Tuple)
+            Name = ""
+            Type = ""
+        else
+            Name = String(collect(p.Name))
+            
+            # determine type of creeplaw 
+            Type = "$(typeof(p))"           # full name of type
+            id = findfirst("{", Type)
+            Type = Type[1:id[1]-1]
 
+        end
+        
+        
         plt = plot!(Eps_II,  Tau_II_MPa, 
                     xaxis=:log, xlabel=L"\dot{\varepsilon}_{II} \textrm{[s}^{-1}\textrm{]}", 
                     yaxis=:log, ylabel=L"\tau_{II} \textrm{    [MPa]}",

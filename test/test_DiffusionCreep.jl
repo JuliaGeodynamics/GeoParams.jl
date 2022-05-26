@@ -33,7 +33,7 @@ d_nd    = nondimensionalize(d,CharDim)
 
 
 # compute a pure diffusion creep rheology
-p = SetDiffusionCreep("Dry Anorthite | Bürgmann & Dresen (2008)")
+p = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
 
 T = 650+273.15;
 
@@ -62,9 +62,9 @@ compute_εII!(ε_array, p, τII_array, args)
 
 
 # dry anorthtite, stress-strainrate curve
-p    = SetDiffusionCreep("Dry Anorthite | Bürgmann & Dresen (2008)")
+p    = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
 εII  = exp10.(-22:.5:-12);
-τII  = zero(εII_array)            # preallocate array
+τII  = zero(εII)                # preallocate array
 T    = 650 + 273.15;
 gsiz = 100e-6;
 args = (T=T, d=gsiz)
@@ -114,7 +114,7 @@ for itest=1:2
 
     # Do the same but using GeoParams:
     if itest==1
-        pp   = SetDiffusionCreep("Dry Anorthite | Bürgmann & Dresen (2008)")
+        pp   = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
     elseif itest==2
         pp   = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
     end

@@ -111,7 +111,7 @@ function compute_εII!(EpsII::AbstractArray{_T,N}, a::DislocationCreep, TauII::A
 end
 
 
-function dεII_dτII(a::DislocationCreep, TauII::_R; P, T, f, kwargs...) where _R<:Real
+function dεII_dτII(a::DislocationCreep, TauII::_T; P::_T=zero(_T), T::_T=one(_T), f::_T=one(_T), args...) where _T
     @unpack_val n,r,A,E,V,R = a
 
     FT, FE = CorrectionFactor(a)
@@ -168,7 +168,7 @@ function compute_τII!(TauII::AbstractArray{_T,N}, a::DislocationCreep, EpsII::A
 end
 
 
-function dτII_dεII(a::DislocationCreep, EpsII; P, T, f, kwargs...)
+function dτII_dεII(a::DislocationCreep, EpsII::_T; P::_T=zero(_T), T::_T=one(_T), f::_T=one(_T), args...) where _T
     @unpack_val n,r,A,E,V,R = a
 
     FT, FE = CorrectionFactor(a)

@@ -1,42 +1,60 @@
 export strain_rate_circuit,
-    computeViscosity_TauII,
-    computeViscosity_EpsII,
-    computeViscosity_TauII!,
-    computeViscosity_EpsII!,
-    dεII_dτII
+    computeViscosity_τII,
+    computeViscosity_εII,
+    computeViscosity_τII!,
+    computeViscosity_εII!,
+    compute_τII,
+    dεII_dτII,
+    local_iterations_εII,
+    computeViscosity
 
 """
-    computeViscosity_EpsII(εII, v::AbstractCreepLaw, args)
+    computeViscosity_EpsII(v::AbstractCreepLaw, εII, args)
     
-    Compute viscosity given strain rate 2nd invariant.
-
-
+Compute viscosity given strain rate 2nd invariant for a given rheological element
 """
-# method for a material with single rheology law
-@inline function computeViscosity_EpsII(εII, v::AbstractCreepLaw, args)
-    τII = computeCreepLaw_TauII(εII, v, args)
+@inline function computeViscosity_εII(v::AbstractCreepLaw, εII,  args)
+    τII = compute_τII(v, εII, args)
     η = 0.5 * τII / εII
     return η
 end
 
 """
-    computeViscosity_EpsII(εII, v::NTuple{N, AbstractCreepLaw}, args)
+    computeViscosity_εII(εII, v::NTuple{N, AbstractCreepLaw}, args)
     
-    Compute viscosity given strain rate 2nd invariant
-
+Compute viscosity given strain rate 2nd invariant
 """
-# method for a material an arbitrary rheology circuit
-function computeViscosity_EpsII(
-    εII, v::NTuple{N,AbstractCreepLaw}, args; tol=1e-6
+function computeViscosity_εII(
+    v::NTuple{N,AbstractCreepLaw}, εII, args; tol=1e-6
 ) where {N}
-    return local_iterations_EpsII(εII, v, args; tol=tol)
+        τII = local_iterations_εII(v, εII, args; tol=tol)
+        η = 0.5 * τII / εII
+    return  η
 end
 
-@inline function local_iterations_EpsII(
-    εII, v::NTuple{N,AbstractCreepLaw}, args; tol=1e-6
+
+"""
+    compute_τII(εII, v::NTuple{N, AbstractCreepLaw}, args)
+    
+Compute deviatoric stress invariant given strain rate 2nd invariant
+
+"""
+function compute_τII(
+    v::NTuple{N,AbstractCreepLaw}, εII, args; tol=1e-6
+) where {N}
+        τII = local_iterations_εII(v, εII, args; tol=tol)
+    return τII
+end
+
+"""
+
+Performs local iterations versus stress
+"""
+@inline function local_iterations_εII(
+    v::NTuple{N,AbstractCreepLaw}, εII, args; tol=1e-6
 ) where {N}
     # Initial guess
-    η_ve = computeViscosity(computeViscosity_EpsII, εII, v, args) # viscosity guess
+    η_ve = computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess
     τII = 2 * η_ve * εII # deviatoric stress guess
 
     # Local Iterations
@@ -45,15 +63,15 @@ end
     τII_prev = τII
     while ϵ > tol
         iter += 1
-        f = εII - strain_rate_circuit(τII, v, args)
-        dfdτII = -dεII_dτII(τII, v, args)
+        f   = εII - strain_rate_circuit(τII, v, args)
+        dfdτII = -dεII_dτII(v, τII, args)
         τII -= f / dfdτII
 
         ϵ = abs(τII - τII_prev) / τII
         τII_prev = τII
     end
 
-    return 0.5 * τII / εII
+    return τII
 end
 
 """
@@ -61,38 +79,38 @@ end
 
     τ = 2ηε -> η = τ/2/ε
 """
-@inline function computeViscosity_TauII(τII, v, args)
-    εII = computeCreepLaw_EpsII(τII, v, args)
+@inline function computeViscosity_τII(v, τII, args)
+    εII = compute_εII(v, τII, args)
     η = 0.5 * τII / εII
     return η
 end
 
-@inline function computeViscosity_TauII(
-    τII::T, v::NTuple{N,AbstractCreepLaw}, args
-) where {T,N}
-    return computeViscosity(computeViscosity_TauII, τII, v, args)
+@inline function computeViscosity_τII(
+    v::NTuple{N,AbstractCreepLaw}, τII::_T, args
+) where {_T,N}
+    return computeViscosity(computeViscosity_τII, v, τII, args)
 end
 
 @generated function computeViscosity(
-    fn::F, CII::T, v::NTuple{N,AbstractCreepLaw}, args::NamedTuple; n=-1
+    fn::F, v::NTuple{N,AbstractCreepLaw}, CII::T, args::NamedTuple; n=-1
 ) where {F,T,N}
     quote
         Base.@_inline_meta
         η = zero(T)
         Base.Cartesian.@nexprs $N i ->
             η += if v[i] isa Tuple
-                computeViscosity(fn, CII, v[i], args; n=1) # viscosities in parallel → ηeff = 1/(η1 + η2)
+                computeViscosity(fn, v[i], CII, args; n=1) # viscosities in parallel → ηeff = 1/(η1 + η2)
             else
-                fn(CII, v[i], args)^n # viscosities in series → ηeff = (1/η1 + 1/η2)^-1
+                fn(v[i], CII, args)^n # viscosities in series → ηeff = (1/η1 + 1/η2)^-1
             end
         return 1 / η
     end
 end
 
-@inline function computeViscosity_TauII!(
+@inline function computeViscosity_τII!(
     η::AbstractArray{T,nDim},
-    τII::AbstractArray{T,nDim},
     v::NTuple{N,AbstractCreepLaw},
+    τII::AbstractArray{T,nDim},
     args;
     cutoff=(1e16, 1e25),
 ) where {T,nDim,N}
@@ -102,9 +120,9 @@ end
             min(
                 cutoff[2],
                 computeViscosity(
-                    computeViscosity_TauII,
-                    τII[I],
+                    computeViscosity_τII,
                     v,
+                    τII[I],
                     (; zip(keys(args), getindex.(values(args), I))...),
                 ),
             ),
@@ -112,10 +130,10 @@ end
     end
 end
 
-@inline function computeViscosity_EpsII!(
+@inline function computeViscosity_εII!(
     η::AbstractArray{T,nDim},
-    τII::AbstractArray{T,nDim},
     v::NTuple{N,AbstractCreepLaw},
+    τII::AbstractArray{T,nDim},
     args;
     cutoff=(1e16, 1e25),
 ) where {T,nDim,N}
@@ -125,15 +143,30 @@ end
             min(
                 cutoff[2],
                 computeViscosity(
-                    computeViscosity_EpsII,
-                    τII[I],
+                    computeViscosity_εII,
                     v,
+                    τII[I],
                     (; zip(keys(args), getindex.(values(args), I))...),
                 ),
             ),
         )
     end
 end
+
+
+@inline function compute_τII!(
+    τII::AbstractArray{T,nDim},
+    v::NTuple{N,AbstractCreepLaw},
+    εII::AbstractArray{T,nDim},
+    args;
+) where {T,nDim,N}
+    for I in eachindex(τII)
+        τII[I] =  compute_τII(v, εII[I],
+                                (; zip(keys(args), getindex.(values(args), I))...)
+                             )
+    end
+end
+
 
 @inline @generated function strain_rate_circuit(
     TauII, v::NTuple{N,AbstractCreepLaw}, args; n=1
@@ -142,24 +175,24 @@ end
         c = 0.0
         Base.Cartesian.@nexprs $N i ->
             c += if v[i] isa Tuple
-                1 / strain_rate_circuit(TauII, v[i], args; n=-1)
+                1 / strain_rate_circuit(v[i], TauII, args; n=-1)
             else
-                computeCreepLaw_EpsII(TauII, v[i], args)^n
+                compute_εII(v[i], TauII, args)^n
             end
         return c
     end
 end
 
-@inline function viscosityCircuit_TauII(τII, v, args)
-    εII = strain_rate_circuit(τII, v, args)
+@inline function viscosityCircuit_τII(v, τII, args)
+    εII = strain_rate_circuit(v, τII, args)
     return 0.5 * τII / εII
 end
 
-@generated function dεII_dτII(τII::T, v::NTuple{N,AbstractCreepLaw}, args) where {T,N}
+@generated function dεII_dτII(v::NTuple{N,AbstractCreepLaw}, τII::T, args) where {T,N}
     quote
         Base.@_inline_meta
         val = zero(T)
-        Base.Cartesian.@nexprs $N i -> val += dεII_dτII(τII, v[i], args)
+        Base.Cartesian.@nexprs $N i -> val += dεII_dτII(v[i], τII, args)
         return val
     end
 end
