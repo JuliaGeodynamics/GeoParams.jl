@@ -53,9 +53,10 @@ Performs local iterations versus stress
 @inline function local_iterations_εII(
     v::NTuple{N,AbstractCreepLaw}, εII, args; tol=1e-6
 ) where {N}
+
     # Initial guess
-    η_ve = computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess
-    τII = 2 * η_ve * εII # deviatoric stress guess
+    η_ve    =   computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess
+    τII     =   2 * η_ve * εII # deviatoric stress guess
 
     # Local Iterations
     iter = 0
@@ -63,9 +64,9 @@ Performs local iterations versus stress
     τII_prev = τII
     while ϵ > tol
         iter += 1
-        f   = εII - strain_rate_circuit(τII, v, args)
-        dfdτII = -dεII_dτII(v, τII, args)
-        τII -= f / dfdτII
+        f       = εII - strain_rate_circuit(τII, v, args)
+        dfdτII  = -dεII_dτII(v, τII, args)
+        τII    -= f / dfdτII
 
         ϵ = abs(τII - τII_prev) / τII
         τII_prev = τII
