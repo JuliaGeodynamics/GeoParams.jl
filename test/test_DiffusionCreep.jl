@@ -40,6 +40,12 @@ T = 650+273.15;
 args = (;T=T )
 TauII = 1e6
 ε = compute_εII(p, TauII, args)
+@test ε ≈ 1.7722083485120549e-32
+
+# same but while removing the tensor correction
+ε_notensor = compute_εII(remove_tensor_correction(p), TauII, args)
+
+@test ε_notensor ≈ 1.1814722323413693e-32
 
 
 # test with arrays
@@ -153,8 +159,6 @@ for itest=1:2
 
     εII_vec = zero(τII_vec)
     compute_εII!(εII_vec,pp,τII_vec,args)
-
-
 
 end
 

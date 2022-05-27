@@ -39,13 +39,19 @@ using GeoParams
     TauII = 1e6
     ε = compute_εII(x1, TauII, args)
 
-    
-    p = SetDislocationCreep("Dry Olivine | Hirth & Kohlstedt (2003)")
-    TauII= 0.3e6Pa;
-    args = (;T=1673.0K, P=0.0Pa)
-    ε = compute_εII(p, TauII, args)
 
+   
+    # Test some of the preset rheologies
+    p       = SetDislocationCreep("Dry Olivine | Hirth & Kohlstedt (2003)")
+    TauII   = 0.3e6Pa;
+    args    = (;T=1673.0K, P=0.0Pa)
+    ε       = compute_εII(p, TauII, args)
+    @test ε ≈ 2.7319532582144474e-13/s
 
+    # same but while removing the tensor correction
+    ε_notensor = compute_εII(remove_tensor_correction(p), TauII, args)
+    @test ε_notensor ≈ 4.612967949163285e-14/s
+ 
     # test with arrays
     τII_array       =   ones(10)*1e6
     ε_array         =   similar(τII_array)

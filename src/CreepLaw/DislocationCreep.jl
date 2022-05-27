@@ -10,6 +10,7 @@
 export  DislocationCreep,
         DislocationCreep_info,
         SetDislocationCreep,
+        remove_tensor_correction,
         dεII_dτII,
         dτII_dεII
 
@@ -68,7 +69,16 @@ function Transform_DislocationCreep(name)
     return DislocationCreep(Name=Name,n=n, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus, r=r)
 end
 
-                            
+"""
+    s = remove_tensor_correction(s::DiffusionCreep)
+
+Removes the tensor correction of the creeplaw, which is useful to compare the implemented creeplaws
+with the curves of the original publications, as those publications usually do not transfer their data to tensor format
+"""
+function remove_tensor_correction(s::DislocationCreep)
+    return DislocationCreep(s.Name,s.n, s.r, s.A, s.E, s.V, s.R, Invariant)
+end
+                        
 function param_info(s::DislocationCreep)
     name = String(collect(s.Name))
     eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"

@@ -79,6 +79,7 @@ export  dεII_dτII,      dτII_dεII,
         compute_τII!,   compute_τII,
         strain_rate_circuit,
         CorrectionFactor,
+        remove_tensor_correction,
 
 #       Viscous creep laws
         LinearViscous,    PowerlawViscous,

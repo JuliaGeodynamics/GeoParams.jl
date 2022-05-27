@@ -16,8 +16,6 @@ using GeoParams
     
     εII_array       =   ones(10)*1e-5
     τII_array       =   similar(εII_array)
-    
-    args_array = (;T=T_array )
     compute_τII!(τII_array, v,εII_array, args) 
 
 

@@ -1,6 +1,7 @@
 export  DiffusionCreep,
         SetDiffusionCreep,
         DiffusionCreep_info,
+        remove_tensor_correction,
         dεII_dτII,    dτII_dεII,
         compute_εII!, compute_εII,
         compute_τII!, compute_τII
@@ -33,7 +34,8 @@ end
 DiffusionCreep(args...) = DiffusionCreep(NTuple{length(args[1]), Char}(collect.(args[1])), convert.(GeoUnit,args[2:end-1])..., args[end])
 
 """
-    Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
+    Transform_DiffusionCreep(name)
+Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 """
 function Transform_DiffusionCreep(name)
     pp   = DiffusionCreep_info[name][1]
@@ -50,6 +52,16 @@ function Transform_DiffusionCreep(name)
     return DiffusionCreep(Name=Name,n=n, r=r, p=p, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
 end
 
+"""
+    s = remove_tensor_correction(s::DiffusionCreep)
+
+Removes the tensor correction of the creeplaw, which is useful to compare the implemented creeplaws
+with the curves of the original publications, as those publications usually do not transfer their data to tensor format
+"""
+function remove_tensor_correction(s::DiffusionCreep)
+    return DiffusionCreep(s.Name,s.n, s.r, s.p, s.A, s.E, s.V, s.R, Invariant)
+end
+    
 function param_info(s::DiffusionCreep)
     name = String(collect(s.Name))
     eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"
