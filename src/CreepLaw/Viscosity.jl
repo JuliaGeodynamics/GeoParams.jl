@@ -9,23 +9,23 @@ export strain_rate_circuit,
     computeViscosity
 
 """
-    computeViscosity_EpsII(v::AbstractCreepLaw, εII, args)
+    computeViscosity_EpsII(v::AbstractConstitutiveLaw, εII, args)
     
 Compute viscosity given strain rate 2nd invariant for a given rheological element
 """
-@inline function computeViscosity_εII(v::AbstractCreepLaw, εII,  args)
+@inline function computeViscosity_εII(v::AbstractConstitutiveLaw, εII,  args)
     τII = compute_τII(v, εII, args)
     η = 0.5 * τII / εII
     return η
 end
 
 """
-    computeViscosity_εII(εII, v::NTuple{N, AbstractCreepLaw}, args)
+    computeViscosity_εII(εII, v::NTuple{N, AbstractConstitutiveLaw}, args)
     
 Compute viscosity given strain rate 2nd invariant
 """
 function computeViscosity_εII(
-    v::NTuple{N,AbstractCreepLaw}, εII, args; tol=1e-6
+    v::NTuple{N,AbstractConstitutiveLaw}, εII, args; tol=1e-6
 ) where {N}
         τII = local_iterations_εII(v, εII, args; tol=tol)
         η = 0.5 * τII / εII
@@ -34,13 +34,13 @@ end
 
 
 """
-    compute_τII(εII, v::NTuple{N, AbstractCreepLaw}, args)
+    compute_τII(εII, v::NTuple{N, AbstractConstitutiveLaw}, args)
     
 Compute deviatoric stress invariant given strain rate 2nd invariant
 
 """
 function compute_τII(
-    v::NTuple{N,AbstractCreepLaw}, εII, args; tol=1e-6
+    v::NTuple{N,AbstractConstitutiveLaw}, εII, args; tol=1e-6
 ) where {N}
         τII = local_iterations_εII(v, εII, args; tol=tol)
     return τII
@@ -51,12 +51,11 @@ end
 Performs local iterations versus stress
 """
 @inline function local_iterations_εII(
-    v::NTuple{N,AbstractCreepLaw}, εII, args; tol=1e-6
+    v::NTuple{N,AbstractConstitutiveLaw}, εII, args; tol=1e-6
 ) where {N}
-
     # Initial guess
-    η_ve    =   computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess
-    τII     =   2 * η_ve * εII # deviatoric stress guess
+    η_ve = computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess
+    τII = 2 * η_ve * εII # deviatoric stress guess
 
     # Local Iterations
     iter = 0
@@ -64,9 +63,9 @@ Performs local iterations versus stress
     τII_prev = τII
     while ϵ > tol
         iter += 1
-        f       = εII - strain_rate_circuit(τII, v, args)
-        dfdτII  = -dεII_dτII(v, τII, args)
-        τII    -= f / dfdτII
+        f   = εII - strain_rate_circuit(τII, v, args)
+        dfdτII = -dεII_dτII(v, τII, args)
+        τII -= f / dfdτII
 
         ϵ = abs(τII - τII_prev) / τII
         τII_prev = τII
@@ -87,13 +86,13 @@ end
 end
 
 @inline function computeViscosity_τII(
-    v::NTuple{N,AbstractCreepLaw}, τII::_T, args
+    v::NTuple{N,AbstractConstitutiveLaw}, τII::_T, args
 ) where {_T,N}
     return computeViscosity(computeViscosity_τII, v, τII, args)
 end
 
 @generated function computeViscosity(
-    fn::F, v::NTuple{N,AbstractCreepLaw}, CII::T, args::NamedTuple; n=-1
+    fn::F, v::NTuple{N,AbstractConstitutiveLaw}, CII::T, args::NamedTuple; n=-1
 ) where {F,T,N}
     quote
         Base.@_inline_meta
@@ -110,7 +109,7 @@ end
 
 @inline function computeViscosity_τII!(
     η::AbstractArray{T,nDim},
-    v::NTuple{N,AbstractCreepLaw},
+    v::NTuple{N,AbstractConstitutiveLaw},
     τII::AbstractArray{T,nDim},
     args;
     cutoff=(1e16, 1e25),
@@ -133,7 +132,7 @@ end
 
 @inline function computeViscosity_εII!(
     η::AbstractArray{T,nDim},
-    v::NTuple{N,AbstractCreepLaw},
+    v::NTuple{N,AbstractConstitutiveLaw},
     τII::AbstractArray{T,nDim},
     args;
     cutoff=(1e16, 1e25),
@@ -157,12 +156,13 @@ end
 
 @inline function compute_τII!(
     τII::AbstractArray{T,nDim},
-    v::NTuple{N,AbstractCreepLaw},
+    v::NTuple{N,AbstractConstitutiveLaw},
     εII::AbstractArray{T,nDim},
     args;
 ) where {T,nDim,N}
     for I in eachindex(τII)
-        τII[I] =  compute_τII(v, εII[I],
+        τII[I] =  compute_τII(  v, 
+                                εII[I],
                                 (; zip(keys(args), getindex.(values(args), I))...)
                              )
     end
@@ -170,7 +170,7 @@ end
 
 
 @inline @generated function strain_rate_circuit(
-    TauII, v::NTuple{N,AbstractCreepLaw}, args; n=1
+    TauII, v::NTuple{N,AbstractConstitutiveLaw}, args; n=1
 ) where {N}
     quote
         c = 0.0
@@ -189,7 +189,7 @@ end
     return 0.5 * τII / εII
 end
 
-@generated function dεII_dτII(v::NTuple{N,AbstractCreepLaw}, τII::T, args) where {T,N}
+@generated function dεII_dτII(v::NTuple{N,AbstractConstitutiveLaw}, τII::T, args) where {T,N}
     quote
         Base.@_inline_meta
         val = zero(T)

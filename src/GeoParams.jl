@@ -90,6 +90,7 @@ export  dεII_dτII,      dτII_dεII,
 
 #       Elasticity
         ConstantElasticity,
+        SetConstantElasticity,
 
 #       Plasticity
         compute_yieldfunction,      

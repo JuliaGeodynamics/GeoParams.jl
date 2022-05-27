@@ -7,7 +7,7 @@
 # In case you want to add new creep laws, have a look at how the ones
 # here are implemented. Please add tests as well!
 
-abstract type AbstractCreepLaw{T} <: AbstractMaterialParam end
+abstract type AbstractCreepLaw{T} <: AbstractConstitutiveLaw{T} end
 
 export  LinearViscous, 
         PowerlawViscous,

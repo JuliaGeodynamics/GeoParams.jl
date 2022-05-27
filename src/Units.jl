@@ -109,7 +109,7 @@ isdimensional(v::Number)                        =   false                       
 NumValue(v::GeoUnit)                            =   v.val                           # numeric value, with no units
 NumValue(v::Number)                             =   v                               # numeric value
 NumValue(v::AbstractArray)                      =   v                               # numeric value
-Value(v::GeoUnit)                               =   Unitful.Quantity.(v.val,v.unit)  # value, with units
+Value(v::GeoUnit)                               =   Unitful.Quantity.(v.val,v.unit) # value, with units
 
 function UnitValue(v::GeoUnit{T,U}) where {T,U}
     if v.isdimensional

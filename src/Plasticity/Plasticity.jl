@@ -1,6 +1,6 @@
 # If you want to add a new method here, feel free to do so. 
 # Remember to also export the function name in GeoParams.jl (in addition to here)
-abstract type AbstractPlasticity{T} <: AbstractMaterialParam end
+abstract type AbstractPlasticity{T} <: AbstractConstitutiveLaw{T} end
 
 export  compute_yieldfunction,      # calculation routines
         compute_yieldfunction!,

@@ -14,14 +14,13 @@ import Base.show
 
 const AxialCompression, SimpleShear, Invariant = 1,2,3
 
-abstract type AbstractConstitutiveRelationship{T} <: AbstractMaterialParam end
+abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
 
 export  param_info,
         dεII_dτII,      dτII_dεII,
         compute_εII!,   compute_εII,
         compute_τII!,   compute_τII,
         strain_rate_circuit
-
 
 include("Computations.jl")
 
