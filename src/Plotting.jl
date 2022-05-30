@@ -2,19 +2,20 @@
     This provides a few plotting routines, for example, for CreepLaws
 """
 
-using LaTeXStrings
 using Unitful
 using Parameters
 using ..Units
 using ..MaterialParameters
 using ..MeltingParam
-using .Plots
+using .GLMakie
 
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 using .MaterialParameters.ConstitutiveRelationships
 using .MaterialParameters.HeatCapacity: AbstractHeatCapacity, compute_heatcapacity
 using .MaterialParameters.Conductivity: AbstractConductivity, compute_conductivity
 using .MeltingParam: AbstractMeltingParam, compute_meltfraction
+
+#Makie.inline!(true)
 
 export 
     PlotStrainrateStress,
@@ -29,98 +30,177 @@ export
 
 
 """
-    PlotStrainrateStress(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Strainrate=(1e-18,1e-12), plt=nothing)
+    fig, ax, εII,τII = PlotStrainrateStress(x; Strainrate=(1e-18,1e-12), args =(T=1000.0, P=0.0, d=1e-3, f=1.0), 
+                                            linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="", 
+                                            fig=nothing, filename=nothing, res=(1200, 1200), legendsize=15, labelsize=35)
+                                            
+Plots deviatoric stress versus deviatoric strain rate for a single or multiple creeplaws 
+    Note: if you want to create plots you need to install and load the `GLMakie.jl` package in julia.
 
-Plots deviatoric stress versus deviatoric strain rate for a single creeplaw. 
-    Note: if you want to create plots or use the `CreatePlot=true` option you need to install the `Plots.jl` package in julia
-    which is not added as a dependency here (as it is a rather large dependency).
 
-# Example 1    
+# Example
+
+First, we retrieve the data for anorthite creeplaws
 ```julia-repl
-julia> pp   = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
-DiffusionCreep: Name = Dry Anorthite | Rybacki et al. (2006), n=1.0, r=0.0, p=-3.0, A=1.258925411794166e-12 m³·⁰ Pa⁻¹·⁰ s⁻¹·⁰, E=460000.0 J mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, Apparatus=1
-julia> pp1   = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
-DislocationCreep: Name = Dry Anorthite | Rybacki et al. (2006), n=3.0, r=0.0, A=5.011872336272715e-6 Pa⁻³·⁰ s⁻¹·⁰, E=641000.0 J mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, Apparatus=1
+julia> pp  = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)");
+julia> pp1 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)");
 ```
-Next you can plot this with
+Next you can define each of the creeplaws inidvidually, plus a combined diffusion & dislocation creep law:
 ```julia-repl
-julia> using Plots;
-julia> args=((T=900.0, d=100e-6), (;T=900.0))
-((T = 900.0, d = 0.0001), (T = 900.0,))
-julia> plt = PlotStrainrateStress((pp,pp1), args=args, Strainrate=(1e-22,1e-12))
+julia> v   = (pp,pp1,(pp,pp1));   
+```
+Next, define temperature to be `900K` and grainsize to be `100 μm` and create a default plot of the 3 mechanisms:
+```julia-repl
+julia> using GLMakie;
+julia> args=(T=900.0, d=100e-6)
+julia> PlotStrainrateStress(v, args=args, Strainrate=(1e-22,1e-15));
 ```
 
-The plot can be customized as 
+We have quite a few options to customize the look & feel of the plot: 
 ```julia-repl
-julia> plot(plt, title="Diffusion and Dislocation Creep for Anorthite")
+julia> fig,ax,E,T = PlotStrainrateStress(v, args=args, Strainrate=(1e-22,1e-15), 
+                                            color=(:red,:blue,:green), linewidth=(1,1,3), linestyle=(:dash,:dash,:solid), label=("diffusion creep","dislocation creep","diffusion+dislocation creep"),
+                                            title="Dry Anorthite after Rybacki et al. (2006) for T=900K, d=100μm");
 ```
 
 which will generate the following plot
 ![subet1](./assets/img/Stress_Strainrate_DislocationDiffusion_Anorthite.png)
 
+You 
 
 See the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package for more options.
 
 """
-function PlotStrainrateStress(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Strainrate=(1e-18,1e-12), plt=nothing)
+function PlotStrainrateStress(x;Strainrate=(1e-18,1e-12), 
+                                args      =(T=1000.0, P=0.0, d=1e-3, f=1.0), 
+                                linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="", 
+                                fig=nothing, filename=nothing, res=(1200, 1200), legendsize=15, labelsize=35)
 
     n = 1
     if isa(x,Tuple)
         n = length(x)
     end
-
-    if isnothing(plt)
-        plot()      # new plot
+    if isnothing(fig)
+        fig = Figure(fontsize = 25, resolution = res)
     end
+    ax  = Axis(fig[1, 1], yscale = log10, xscale=log10, 
+        xlabel=L"Deviatoric strain rate $\dot{ε}_{II}$ [1/s]",
+        ylabel=L"Deviatoric stress $\tau_{II}$ [MPa]",
+        xlabelsize=labelsize, ylabelsize=labelsize,
+        title=title)
+        
+    Eps_II=[]
+    Tau_II_MPa = [];
     for i=1:n   
+
+        # This allows plotting different curves on the same plot
         if isa(x,Tuple)
             p = x[i]
         else
             p = x;
         end
+        
+        # This way we can set different args for every input argument in the tuple
         if isa(args,Tuple)
             args_in = args[i]
         else
             args_in = args;
         end
-      
+        
         # Define strainrate 
         Eps_II = exp10.(range(ustrip(log10(Strainrate[1])), stop=ustrip(log10(Strainrate[2])), length=101))
         Tau_II = zeros(size(Eps_II))
 
-        compute_τII!(Tau_II, p, Eps_II, args_in)       # Compute stress
-
-        η = Tau_II./(2 * Eps_II)                        # effective viscosity
+        # Compute stress
+        compute_τII!(Tau_II, p, Eps_II, args_in)      
 
         Tau_II_MPa = Tau_II./1e6;
 
-        # Create Plot    
-        if isa(p,Tuple)
-            Name = ""
-            Type = ""
-        else
-            Name = String(collect(p.Name))
-            
-            # determine type of creeplaw 
-            Type = "$(typeof(p))"           # full name of type
-            id = findfirst("{", Type)
-            Type = Type[1:id[1]-1]
+        # Retrieve plot arguments (label, color etc.)
+        plot_args = ObtainPlotArgs(i, p, args_in, linewidth, linestyle, color, label)
 
-        end
+        # Create plot:
+        li = lines!(Eps_II,  Tau_II_MPa)    # plot line
+
+        # Customize line:
+        customize_plot!(li, plot_args)
         
-        
-        plt = plot!(Eps_II,  Tau_II_MPa, 
-                    xaxis=:log, xlabel=L"\dot{\varepsilon}_{II} \textrm{[s}^{-1}\textrm{]}", 
-                    yaxis=:log, ylabel=L"\tau_{II} \textrm{    [MPa]}",
-                    label="$Type: $Name $args_in",
-                    title="",
-                    legendfont=font(4))
-            
+    end
+    axislegend(ax, labelsize=legendsize)
+
+    if !isnothing(filename)
+        save(filename, fig)
+    else
+        display(fig)
     end
 
-    display(plt)
-    return plt
+    return fig, ax, Eps_II, Tau_II_MPa
     
+end
+
+# Gelper function that simplifies customising the plots 
+function  ObtainPlotArgs(i, p, args_in, linewidth, linestyle, color, label_in )
+    if isa(linewidth,Tuple)
+        linewidth_in = linewidth[i]
+    else
+        linewidth_in = linewidth;
+    end
+
+    if isa(color,Tuple)
+        color_in = color[i]
+    else
+        color_in = color;
+    end
+    
+    if isa(linestyle,Tuple)
+        linestyle_in = linestyle[i]
+    else
+        linestyle_in = linestyle;
+    end
+    
+    # Create a label name from the input parameters
+    if isa(p,Tuple)
+        # Combined creep law 
+        Name    = ""
+        Type    = ""
+        label   = "$Type: $Name $args_in"
+    else
+        Name = String(collect(p.Name))
+        
+        # determine type of creeplaw 
+        Type    = "$(typeof(p))"           # full name of type
+        id      = findfirst("{", Type)
+        Type    = Type[1:id[1]-1]
+
+        label   = "$Type: $Name $args_in"
+    end
+
+    # We can manually overrule the auto-generated label 
+    if !isnothing(label_in)
+        if isa(label_in,Tuple)
+            label = label_in[i]
+        else
+            label = label_in;
+        end
+    end
+
+    # Create NamedTuple with arguments
+    args = (linewidth=linewidth_in, linestyle=linestyle_in, label=label, color=color_in)
+
+    return args
+end
+
+# Internal fucntion that customizes the plot
+function customize_plot!(li, args)
+
+    # Customize line:
+    li.label        =   args.label
+    li.linewidth    =   args.linewidth
+    li.linestyle    =   args.linestyle
+    if !isnothing(args.color)
+        li.color = args.color
+    end
+
 end
 
 """
@@ -138,7 +218,7 @@ function PlotStressStrainrate(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Stress=(
 
     if isnothing(plt)
         plot()      # new plot
-    end
+    end 
     for i=1:n   
         if isa(x,Tuple)
             p = x[i]

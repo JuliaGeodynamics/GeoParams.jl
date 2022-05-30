@@ -44,9 +44,7 @@ TauII = 1e6
 
 # same but while removing the tensor correction
 ε_notensor = compute_εII(remove_tensor_correction(p), TauII, args)
-
 @test ε_notensor ≈ 1.1814722323413693e-32
-
 
 # test with arrays
 τII_array       =   ones(10)*1e6

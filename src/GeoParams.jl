@@ -174,8 +174,8 @@ export  compute_meltfraction,   compute_meltfraction!,       # calculation routi
 
 # Add plotting routines - only activated if the "Plots.jl" package is loaded 
 function __init__()
-        @require Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80" begin
-                print("Adding plotting routines of GeoParams")
+        @require GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a" begin
+                print("Adding plotting routines of GeoParams through GLMakie")
                 @eval include("./Plotting.jl")
         end
 end

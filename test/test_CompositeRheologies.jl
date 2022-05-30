@@ -24,12 +24,12 @@ using GeoParams
     el      = ConstantElasticity();
     v         = (pp,pp1, el)
     dt_maxwell= η/NumValue(el.G);  
-    args    = (T=900.0, d=100e-6,  τII_old = 0.0, dt=dt_maxwell/2)
+    args    = (T=900.0, d=100e-6,  τII_old = 0.0, dt=dt_maxwell/20)
     εII     = 1e-15
     
     τII_vec = [0.0];
     t       = [0.0];
-    for i=1:10
+    for i=1:100
         τII  = compute_τII(v,εII, args)
         args = merge(args, (;τII_old=τII))
         τII_vec = [τII_vec; τII]

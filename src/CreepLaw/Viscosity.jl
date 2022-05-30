@@ -51,7 +51,7 @@ end
 Performs local iterations versus stress
 """
 @inline function local_iterations_εII(
-    v::NTuple{N,AbstractConstitutiveLaw}, εII, args; tol=1e-6
+    v::NTuple{N,AbstractConstitutiveLaw}, εII, args; tol=1e-6, verbose=false
 ) where {N}
     # Initial guess
     η_ve = computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess
@@ -69,8 +69,13 @@ Performs local iterations versus stress
 
         ϵ = abs(τII - τII_prev) / τII
         τII_prev = τII
+        if verbose
+            println(" iter $(iter) $ϵ")
+        end
     end
-
+    if verbose
+        println("---")
+    end
     return τII
 end
 
