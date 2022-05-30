@@ -21,6 +21,7 @@ export
     PlotStrainrateStress,
     PlotStressStrainrate,
     PlotStrainrateViscosity,
+    PlotStressViscosity,
     PlotHeatCapacity,
     PlotConductivity,
     PlotMeltFraction,
@@ -58,7 +59,7 @@ julia> PlotStrainrateStress(v, args=args, Strainrate=(1e-22,1e-15));
 
 We have quite a few options to customize the look & feel of the plot: 
 ```julia-repl
-julia> fig,ax,E,T = PlotStrainrateStress(v, args=args, Strainrate=(1e-22,1e-15), 
+julia> fig,ax,εII,τII = PlotStrainrateStress(v, args=args, Strainrate=(1e-22,1e-15), 
                                             color=(:red,:blue,:green), linewidth=(1,1,3), linestyle=(:dash,:dash,:solid), label=("diffusion creep","dislocation creep","diffusion+dislocation creep"),
                                             title="Dry Anorthite after Rybacki et al. (2006) for T=900K, d=100μm");
 ```
@@ -66,9 +67,8 @@ julia> fig,ax,E,T = PlotStrainrateStress(v, args=args, Strainrate=(1e-22,1e-15),
 which will generate the following plot
 ![subet1](./assets/img/Stress_Strainrate_DislocationDiffusion_Anorthite.png)
 
-You 
 
-See the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package for more options.
+See the [Makie.jl](https://makie.juliaplots.org/stable/) package for more options.
 
 """
 function PlotStrainrateStress(x;Strainrate=(1e-18,1e-12), 
@@ -204,21 +204,32 @@ function customize_plot!(li, args)
 end
 
 """
-    PlotStressStrainrate(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Stress=(1e0,1e8), plt=nothing)
+    fig,ax,τII,εII =  PlotStressStrainrate(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Stress=(1e0,1e8), plt=nothing)
 
-Same as `PlotStrainrateStress` but versus stress (in MPa) versus strainrate instead.
+Same as `PlotStrainrateStress` but with stress (in MPa) versus strainrate (in 1/s) instead.
 
 """
-function PlotStressStrainrate(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Stress=(1e0,1e8), plt=nothing)
+function PlotStressStrainrate(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Stress=(1e0,1e8), 
+                                linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="", 
+                                fig=nothing, filename=nothing, res=(1200, 1200), legendsize=15, labelsize=35
+                            )
 
     n = 1
     if isa(x,Tuple)
         n = length(x)
     end
 
-    if isnothing(plt)
-        plot()      # new plot
-    end 
+    if isnothing(fig)
+        fig = Figure(fontsize = 25, resolution = res)
+    end
+    ax  = Axis(fig[1, 1], yscale = log10, xscale=log10, 
+        xlabel=L"Deviatoric stress $\tau_{II}$ [MPa]",
+        ylabel=L"Deviatoric strain rate $\dot{ε}_{II}$ [1/s]",
+        xlabelsize=labelsize, ylabelsize=labelsize,
+        title=title)
+
+    Eps_II=[]
+    Tau_II_MPa = [];
     for i=1:n   
         if isa(x,Tuple)
             p = x[i]
@@ -240,50 +251,58 @@ function PlotStressStrainrate(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Stress=(
         
         η = Tau_II./(2 * Eps_II)                        # effective viscosity
 
-        # Create Plot    
-        if isa(p,Tuple)
-            Name = ""
-            Type = ""
-        else
-            Name = String(collect(p.Name))
-            
-            # determine type of creeplaw 
-            Type = "$(typeof(p))"           # full name of type
-            id = findfirst("{", Type)
-            Type = Type[1:id[1]-1]
+        # Retrieve plot arguments (label, color etc.)
+        plot_args = ObtainPlotArgs(i, p, args_in, linewidth, linestyle, color, label)
 
-        end
-        
-        plt = plot!(Tau_II_MPa,  Eps_II, 
-                    xaxis=:log, ylabel=L"\tau_{II} \textrm{    [MPa]}",
-                    yaxis=:log, xlabel=L"\dot{\varepsilon}_{II} \textrm{[s}^{-1}\textrm{]}", 
-                    label="$Type: $Name $args_in",
-                    title="",
-                    legendfont=font(4))
-            
+        # Create plot:
+        li = lines!(Tau_II_MPa, Eps_II)    # plot line
+
+        # Customize plot:
+        customize_plot!(li, plot_args)
+      
     end
 
-    display(plt)
-    return plt
+    axislegend(ax, labelsize=legendsize)
+
+    if !isnothing(filename)
+        save(filename, fig)
+    else
+        display(fig)
+    end
+
+    return fig, ax, Tau_II_MPa, Eps_II
+    
     
 end
 
 """
-    PlotStrainrateViscosity(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Strainrate=(1e-18,1e-12), plt=nothing)
+    fig, ax, εII, η = PlotStrainrateViscosity(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Strainrate=(1e-18,1e-12),    
+                                linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="", 
+                                fig=nothing, filename=nothing, res=(1200, 1200), legendsize=15, labelsize=35)
 
 Same as `PlotStrainrateStress` but versus viscosity instead of stress.
 
 """
-function PlotStrainrateViscosity(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Strainrate=(1e-18,1e-12), plt=nothing)
+function PlotStrainrateViscosity(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Strainrate=(1e-18,1e-12),    
+                                    linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="", 
+                                    fig=nothing, filename=nothing, res=(1200, 1200), legendsize=15, labelsize=35)
 
     n = 1
     if isa(x,Tuple)
         n = length(x)
     end
 
-    if isnothing(plt)
-        plot()      # new plot
+    if isnothing(fig)
+        fig = Figure(fontsize = 25, resolution = res)
     end
+    ax  = Axis(fig[1, 1], yscale = log10, xscale=log10, 
+        xlabel=L"Deviatoric strain rate $\dot{ε}_{II}$ [1/s]",
+        ylabel=L"Effective viscosity $\eta$ [Pa s]",
+        xlabelsize=labelsize, ylabelsize=labelsize,
+        title=title)
+        
+    Eps_II = [];
+    η      = [];
     for i=1:n   
         if isa(x,Tuple)
             p = x[i]
@@ -304,35 +323,116 @@ function PlotStrainrateViscosity(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Strai
 
         η = Tau_II./(2 * Eps_II)                        # effective viscosity
 
-        Tau_II_MPa = Tau_II./1e6;
-
-         # Create Plot    
-         if isa(p,Tuple)
-            Name = ""
-            Type = ""
-        else
-            Name = String(collect(p.Name))
-            
-            # determine type of creeplaw 
-            Type = "$(typeof(p))"           # full name of type
-            id = findfirst("{", Type)
-            Type = Type[1:id[1]-1]
-
+        if  maximum(η) ≈ minimum(η)
+            # if all values are the same, plotting creates an error can occur, so we perturb the values a bit
+            η[1] *= (1.0 - 1e-5);
         end
 
-        plt = plot!(Eps_II,  η, 
-                    xaxis=:log, xlabel=L"\dot{\varepsilon}_{II} \textrm{    [1/s]}", 
-                    yaxis=:log, ylabel=L"\eta \textrm{    [Pa s]}",
-                    label="$Type: $Name $args_in",
-                    title="",
-                    legendfont=font(4))
+        Tau_II_MPa = Tau_II./1e6;
+
+        # Retrieve plot arguments (label, color etc.)
+        plot_args = ObtainPlotArgs(i, p, args_in, linewidth, linestyle, color, label)
+
+        # Create plot:
+        li = lines!(Eps_II,  η)    # plot line
+
+        # Customize line:
+        customize_plot!(li, plot_args)
             
     end
 
-    display(plt)
-    return plt
+    axislegend(ax, labelsize=legendsize)
+
+    if !isnothing(filename)
+        save(filename, fig)
+    else
+        display(fig)
+    end
+
+    return fig, ax, Eps_II, η
+
+end
+
+"""
+    fig,ax,τII,η =  PlotStressViscosity(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Stress=(1e0,1e8), 
+                                    linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="", 
+                                    fig=nothing, filename=nothing, res=(1200, 1200), legendsize=15, labelsize=35)
+
+
+Same as `PlotStrainrateStress` but versus stress (in MPa) and viscosity (Pas) instead.
+
+"""
+function PlotStressViscosity(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Stress=(1e0,1e8), 
+                                linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="", 
+                                fig=nothing, filename=nothing, res=(1200, 1200), legendsize=15, labelsize=35
+                            )
+
+    n = 1
+    if isa(x,Tuple)
+        n = length(x)
+    end
+
+    if isnothing(fig)
+        fig = Figure(fontsize = 25, resolution = res)
+    end
+    ax  = Axis(fig[1, 1], yscale = log10, xscale=log10, 
+        xlabel=L"Deviatoric stress $\tau_{II}$ [MPa]",
+        ylabel=L"Effective viscosity $\eta$ [Pa s]",
+        xlabelsize=labelsize, ylabelsize=labelsize,
+        title=title)
+
+    η           = [];
+    Tau_II_MPa  = [];
+    for i=1:n   
+        if isa(x,Tuple)
+            p = x[i]
+        else
+            p = x;
+        end
+        @show typeof(p)
+        if isa(args,Tuple)
+            args_in = args[i]
+        else
+            args_in = args;
+        end
+      
+        # Define strainrate 
+        Tau_II_MPa  = range(ustrip(Stress[1]), stop=ustrip(Stress[2]), length=101)
+        Tau_II      = Tau_II_MPa.*1e6
+        Eps_II      = zeros(size(Tau_II))
+
+        compute_εII!(Eps_II, p, Tau_II, args_in)       # Compute strainrate
+        
+        η = Tau_II./(2 * Eps_II)                        # effective viscosity
+
+        if  maximum(η) ≈ minimum(η)
+            # if all values are the same, plotting creates an error can occur, so we perturb the values a bit
+            η[1] *= (1.0 - 1e-5);
+        end
+        
+        # Retrieve plot arguments (label, color etc.)
+        plot_args = ObtainPlotArgs(i, p, args_in, linewidth, linestyle, color, label)
+
+        # Create plot:
+        li = lines!(Tau_II_MPa, η)    # plot line
+
+        # Customize plot:
+        customize_plot!(li, plot_args)
+      
+    end
+
+    axislegend(ax, labelsize=legendsize)
+
+    if !isnothing(filename)
+        save(filename, fig)
+    else
+        display(fig)
+    end
+
+    return fig, ax, Tau_II_MPa, η
     
 end
+
 
 """
     T,Cp,plt = PlotHeatCapacity(cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=nothing)

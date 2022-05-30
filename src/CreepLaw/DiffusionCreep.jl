@@ -129,7 +129,7 @@ end
 
 returns the derivative of strainrate versus stress 
 """
-function dεII_dτII(a::DiffusionCreep, TauII::_T; T::_T, P=zero(_T), f=one(_T), d=one(_T), kwargs...) where _T
+function dεII_dτII(a::DiffusionCreep, TauII::_T;  T::_T=one(_T), P=zero(_T),  f=one(_T), d=one(_T), kwargs...) where _T
     @unpack_val n,r,p,A,E,V,R = a
     FT, FE = CorrectionFactor(a)
     
@@ -143,7 +143,7 @@ end
 
 Returns diffusion creep stress as a function of 2nd invariant of the strain rate 
 """
-function compute_τII(a::DiffusionCreep, EpsII::_T; T::_T, P=zero(_T), f=one(_T), d=one(_T), kwargs...) where _T
+function compute_τII(a::DiffusionCreep, EpsII::_T; T::_T=one(_T), P=zero(_T),  f=one(_T), d=one(_T), kwargs...) where _T
     @unpack_val n,r,p,A,E,V,R = a
 
     FT, FE = CorrectionFactor(a);    
@@ -153,7 +153,7 @@ end
 #compute_τII(s::DiffusionCreep, EpsII::_T, args) where _T = compute_τII(s, EpsII ; args...)
 
 
-function compute_τII(a::DiffusionCreep, EpsII::Quantity; P=0Pa, T=1K, f=1NoUnits, d=1m, args...) where _T
+function compute_τII(a::DiffusionCreep, EpsII::Quantity; T=1K, P=0Pa, f=1NoUnits, d=1m, args...) where _T
     @unpack_units n,r,p,A,E,V,R = a
     
     FT, FE = CorrectionFactor(a);    
@@ -176,12 +176,14 @@ function compute_τII!(TauII::AbstractArray{_T,N}, a::DiffusionCreep, EpsII::Abs
     return nothing
 end
 
-
-function dτII_dεII(a::DiffusionCreep, EpsII,; T::_T, P=zero(_T), f=one(_T), d=one(_T), kwargs...) where _T
+function dτII_dεII(a::DiffusionCreep, EpsII::_T; T::_T=one(_T),  P=zero(_T), f=one(_T), d=one(_T), kwargs...) where _T
     @unpack_val n,r,p,A,E,V,R = a
     FT, FE = CorrectionFactor(a)
-    return fastpow(FT*EpsII,-1+1/n)*fastpow(f,-r/n)*fastpow(d,-p/n)*fastpow(A,-1/n)*FE*n*exp((E+P*V)/(n*R*T))*(1/(FT*n))
+    #return fastpow(FT*EpsII,-1+1/n)*fastpow(f,-r/n)*fastpow(d,-p/n)*fastpow(A,-1/n)*FE*n*exp((E+P*V)/(n*R*T))*(1/(FT*n))
+    # computed symbolically:
+    return (FE*(A^(-1 / n))*(d^((-p) / n))*(f^((-r) / n))*((EpsII*FE)^(1 / n - 1))*exp((E + P*V) / (R*T*n))) / (FT*n)
 end
+
 #dτII_dεII(s::DiffusionCreep, EpsII::_T, args) where _T = dτII_dεII(s, EpsII ; args...)
 
 

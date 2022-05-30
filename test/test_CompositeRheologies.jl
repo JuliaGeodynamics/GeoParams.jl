@@ -3,7 +3,7 @@ using GeoParams
     
 @testset "CompositeRheologies" begin
 
-    # Diffusion & dislocation creep
+    # Diffusion & dislocation creep in series
     pp   = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
     pp1  = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
     v    = (pp,pp1)
@@ -19,6 +19,13 @@ using GeoParams
     τII_array       =   similar(εII_array)
     compute_τII!(τII_array, v,εII_array, args) 
     @test τII_array[1] ≈ 1.918028581543394e12
+
+    # compute strainrate given stress  [not working yet!]
+    # εII1  = compute_εII(v,τII, args) 
+    
+
+
+
 
     # Add elasticity in the mix
     el      = ConstantElasticity();
@@ -36,7 +43,9 @@ using GeoParams
         t       = [t; i*args.dt]
     end
     SecYear = 3600*24*365.25
-    @test sum(τII_vec) ≈ 8.016289174454965e9
+    @test sum(τII_vec) ≈ 7.840307351918251e10
+
+
 
 
 end

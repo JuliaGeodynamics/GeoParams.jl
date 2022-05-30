@@ -121,7 +121,7 @@ function compute_εII!(EpsII::AbstractArray{_T,N}, a::DislocationCreep, TauII::A
 end
 
 
-function dεII_dτII(a::DislocationCreep, TauII::_T; P::_T=zero(_T), T::_T=one(_T), f::_T=one(_T), args...) where _T
+function dεII_dτII(a::DislocationCreep, TauII::_T;  T::_T=one(_T), P::_T=zero(_T),f::_T=one(_T), args...) where _T
     @unpack_val n,r,A,E,V,R = a
 
     FT, FE = CorrectionFactor(a)
@@ -134,7 +134,7 @@ end
 Computes the stress for a Dislocation creep law given a certain strain rate
 
 """
-function compute_τII(a::DislocationCreep, EpsII::_T; P::_T=zero(_T), T::_T=one(_T), f::_T=one(_T), args...) where _T
+function compute_τII(a::DislocationCreep, EpsII::_T; T::_T=one(_T), P::_T=zero(_T),  f::_T=one(_T), args...) where _T
     if EpsII isa Quantity
         @unpack_units n,r,A,E,V,R = a
     else
@@ -165,8 +165,8 @@ end
 Computes the stress for a Dislocation creep law
 """
 function compute_τII!(TauII::AbstractArray{_T,N}, a::DislocationCreep, EpsII::AbstractArray{_T,N}; 
-                        P =       zero(TauII)::AbstractArray{_T,N}, 
                         T = ones(size(TauII))::AbstractArray{_T,N}, 
+                        P =       zero(TauII)::AbstractArray{_T,N}, 
                         f = ones(size(TauII))::AbstractArray{_T,N},
                         kwargs...)  where {N,_T}
 
@@ -178,11 +178,12 @@ function compute_τII!(TauII::AbstractArray{_T,N}, a::DislocationCreep, EpsII::A
 end
 
 
-function dτII_dεII(a::DislocationCreep, EpsII::_T; P::_T=zero(_T), T::_T=one(_T), f::_T=one(_T), args...) where _T
+function dτII_dεII(a::DislocationCreep, EpsII::_T; T::_T=one(_T), P::_T=zero(_T),  f::_T=one(_T), args...) where _T
     @unpack_val n,r,A,E,V,R = a
 
     FT, FE = CorrectionFactor(a)
-    return fastpow(FT*EpsII,-1+1/n)*fastpow(f,-r/n)*fastpow(A,-1/n)*FE*n*exp((E+P*V)/(n*R*T))*(1/(FT*n))
+    #return fastpow(FT*EpsII,-1+1/n)*fastpow(f,-r/n)*fastpow(A,-1/n)*FE*n*exp((E+P*V)/(n*R*T))*(1/(FT*n))
+    return (FE*(A^(-1 / n))*(f^((-r) / n))*((EpsII*FE)^(1 / n - 1))*exp((E + P*V) / (R*T*n))) / (FT*n)
 end
 
 
