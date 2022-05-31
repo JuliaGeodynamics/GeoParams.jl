@@ -27,7 +27,7 @@ function CorrectionFactor(a::AbstractCreepLaw{_T} ) where _T
         return FT,FE
         
     elseif a.Apparatus == Invariant
-        FT,FE = 1.0,1.0
+        FT,FE = one(_T), one(_T)
         return FT,FE
     end
 end
