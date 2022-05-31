@@ -13,24 +13,24 @@ export  LinearViscous,
         PowerlawViscous,
         CorrectionFactor,
         strain_rate_circuit
-        
 
 # This computes correction factors to go from experimental data to tensor format
 function CorrectionFactor(a::AbstractCreepLaw{_T} ) where _T
     if a.Apparatus == AxialCompression
         FT = sqrt(one(_T)*3) # relation between differential stress recorded by apparatus and TauII
         FE = 2/FT            # relation between gamma recorded by apparatus and EpsII
+        return FT,FE
     
     elseif a.Apparatus == SimpleShear
         FT = one(_T)*2      # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
         FE = FT
+        return FT,FE
         
     elseif a.Apparatus == Invariant
         FT,FE = 1.0,1.0
+        return FT,FE
     end
-    return FT,FE
 end
-
 
 include("DislocationCreep.jl")
 include("DiffusionCreep.jl")
