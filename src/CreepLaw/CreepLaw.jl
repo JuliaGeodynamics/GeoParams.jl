@@ -32,6 +32,23 @@ function CorrectionFactor(a::AbstractCreepLaw{_T} ) where _T
     end
 end
 
+function CorrectionFactor(a::_T ) where _T
+    if a == AxialCompression
+        FT = sqrt(one(_T)*3) # relation between differential stress recorded by apparatus and TauII
+        FE = 2/FT            # relation between gamma recorded by apparatus and EpsII
+        return FT,FE
+    
+    elseif a == SimpleShear
+        FT = one(_T)*2      # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
+        FE = FT
+        return FT,FE
+        
+    elseif a == Invariant
+        FT,FE = one(_T), one(_T)
+        return FT,FE
+    end
+end
+
 include("DislocationCreep.jl")
 include("DiffusionCreep.jl")
 
