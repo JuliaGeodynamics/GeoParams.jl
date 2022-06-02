@@ -106,7 +106,6 @@ Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 function Transform_DiffusionCreep(name)
     pp = DiffusionCreep_info[name][1]
 
-
     Name =  String(collect(pp.Name))
     n    =  Value(pp.n)
     r    =  Value(pp.r)
@@ -157,7 +156,7 @@ Returns diffusion creep strainrate as a function of 2nd invariant of the stress 
 
 
 """
-function compute_εII(
+@inline function compute_εII(
     a::DiffusionCreep, TauII::_T; T::_T, P=zero(_T), f=one(_T), d=one(_T), kwargs...
 ) where {_T}
     @unpack_val n, r, p, A, E, V, R = a
@@ -170,7 +169,7 @@ function compute_εII(
            exp(-(E + P * V) / (R * T)) / FE
 end
 
-function compute_εII(
+@inline function compute_εII(
     a::DiffusionCreep, TauII::Quantity; T=1K, P=0Pa, f=1NoUnits, d=1e-3m, args...
 )
     @unpack_units n, r, p, A, E, V, R = a
@@ -208,7 +207,7 @@ end
 
 returns the derivative of strainrate versus stress 
 """
-function dεII_dτII(
+@inline function dεII_dτII(
     a::DiffusionCreep, TauII::_T; T::_T=one(_T), P=zero(_T), f=one(_T), d=one(_T), kwargs...
 ) where {_T}
     @unpack_val n, r, p, A, E, V, R = a
@@ -229,7 +228,7 @@ end
 
 Returns diffusion creep stress as a function of 2nd invariant of the strain rate 
 """
-function compute_τII(
+@inline function compute_τII(
     a::DiffusionCreep, EpsII::_T; T::_T=one(_T), P=zero(_T), f=one(_T), d=one(_T), kwargs...
 ) where {_T}
     @unpack_val n, r, p, A, E, V, R = a
@@ -242,7 +241,7 @@ function compute_τII(
            exp((E + P * V) / (n * R * T)) / FT
 end
 
-function compute_τII(
+@inline function compute_τII(
     a::DiffusionCreep, EpsII::Quantity; T=1K, P=0Pa, f=1NoUnits, d=1m, args...
 ) where {_T}
     @unpack_units n, r, p, A, E, V, R = a
@@ -275,7 +274,7 @@ function compute_τII!(
     return nothing
 end
 
-function dτII_dεII(
+@inline function dτII_dεII(
     a::DiffusionCreep, EpsII::_T; T::_T=one(_T), P=zero(_T), f=one(_T), d=one(_T), kwargs...
 ) where {_T}
     @unpack_val n, r, p, A, E, V, R = a

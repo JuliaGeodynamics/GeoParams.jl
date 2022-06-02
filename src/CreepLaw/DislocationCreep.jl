@@ -35,21 +35,6 @@ julia> x2      =   DislocationCreep(n=3)
 DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3 mol^-1, Apparatus=AxialCompression
 ```
 """
-# @with_kw_noshow struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-#     Name::NTuple{N,Char}    =   ""               # The name is encoded as a NTuple{Char} to make it isbits    
-#     n::GeoUnit{T,U1}        = 1.0NoUnits         # power-law exponent
-#     r::GeoUnit{T,U1}        = 0.0NoUnits         # exponent of water-fugacity dependence
-#     A::GeoUnit{T,U2}        = 1.5MPa^(-n-r)/s    # pre-exponential factor
-#     E::GeoUnit{T,U3}        = 476.0kJ/mol        # activation energy
-#     V::GeoUnit{T,U4}        = 6e-6m^3/mol        # activation volume
-#     R::GeoUnit{T,U5}        = 8.3145J/mol/K      # Universal gas constant
-#     Apparatus::Int64        = 1                  # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
-# end
-# DislocationCreep(args...) = DislocationCreep(NTuple{length(args[1]), Char}(
-#                                 collect.(args[1])), 
-#                                 convert.(GeoUnit,args[2:end-1])..., 
-#                                 args[end])
-
 struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     Name::NTuple{N,Char}
     n::GeoUnit{T,U1} # power-law exponent
@@ -57,7 +42,7 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     A::GeoUnit{T,U2} # material specific rheological parameter
     E::GeoUnit{T,U3} # activation energy
     V::GeoUnit{T,U4} # activation volume
-    R::GeoUnit{T,U5}  # universal gas constant
+    R::GeoUnit{T,U5} # universal gas constant
     Apparatus::Int8 # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
     FT::T # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
     FE::T # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
@@ -173,7 +158,7 @@ end
 
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
-function compute_εII(
+@inline function compute_εII(
     a::DislocationCreep, TauII::_T; T::_T, P::_T=zero(_T), f::_T=one(_T), args...
 ) where {_T}
     @unpack_val n, r, A, E, V, R = a
@@ -183,7 +168,7 @@ function compute_εII(
     return ε
 end
 
-function compute_εII(a::DislocationCreep, TauII::Quantity; T=1K, P=0Pa, f=1NoUnits, args...)
+@inline function compute_εII(a::DislocationCreep, TauII::Quantity; T=1K, P=0Pa, f=1NoUnits, args...)
     @unpack_units n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
@@ -208,7 +193,7 @@ function compute_εII!(
     return nothing
 end
 
-function dεII_dτII(
+@inline function dεII_dτII(
     a::DislocationCreep, TauII::_T; T::_T=one(_T), P::_T=zero(_T), f::_T=one(_T), args...
 ) where {_T}
     @unpack_val n, r, A, E, V, R = a
@@ -229,7 +214,7 @@ end
 Computes the stress for a Dislocation creep law given a certain strain rate
 
 """
-function compute_τII(
+@inline function compute_τII(
     a::DislocationCreep, EpsII::_T; T::_T=one(_T), P::_T=zero(_T), f::_T=one(_T), args...
 ) where {_T}
     local n, r, A, E, V, R
@@ -247,7 +232,7 @@ function compute_τII(
            exp((E + P * V) / (n * R * T)) / FT
 end
 
-function compute_τII(
+@inline function compute_τII(
     a::DislocationCreep, EpsII::Quantity; P=0Pa, T=1K, f=1NoUnits, args...
 ) where {_T}
     @unpack_units n, r, A, E, V, R = a
@@ -282,7 +267,7 @@ function compute_τII!(
     return nothing
 end
 
-function dτII_dεII(
+@inline function dτII_dεII(
     a::DislocationCreep, EpsII::_T; T::_T=one(_T), P::_T=zero(_T), f::_T=one(_T), args...
 ) where {_T}
     @unpack_val n, r, A, E, V, R = a
