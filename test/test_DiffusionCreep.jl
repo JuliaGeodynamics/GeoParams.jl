@@ -31,13 +31,12 @@ f_nd    = nondimensionalize(f,CharDim)
 d       = GeoUnit(10mm)
 d_nd    = nondimensionalize(d,CharDim)
 
-
 # compute a pure diffusion creep rheology
 p = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
 
 T = 650+273.15;
 
-args = (;T=T )
+args = (;T=T)
 TauII = 1e6
 ε = compute_εII(p, TauII, args)
 @test ε ≈ 1.7722083485120549e-32

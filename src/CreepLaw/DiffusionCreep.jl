@@ -30,9 +30,9 @@ struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     E::GeoUnit{T,U3} # activation energy
     V::GeoUnit{T,U4} # activation volume
     R::GeoUnit{T,U5} # universal gas constant
-    FT::GeoUnit{T,U1} # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
-    FE::GeoUnit{T,U1} # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
     Apparatus::Int8 # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
+    FT::T # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
+    FE::T # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
 
     function DiffusionCreep(;
         Name="",
@@ -52,15 +52,13 @@ struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         # Corrections from lab experiments
         FT, FE = CorrectionFactor(Apparatus)
         # Convert to GeoUnits
-        nU = convert(GeoUnit, n)
-        rU = convert(GeoUnit, r)
-        pU = convert(GeoUnit, p)
-        AU = convert(GeoUnit, A)
-        EU = convert(GeoUnit, E)
-        VU = convert(GeoUnit, V)
-        RU = convert(GeoUnit, R)
-        FTU = convert(GeoUnit, FT)
-        FEU = convert(GeoUnit, FE)
+        nU = n isa GeoUnit ? n : convert(GeoUnit, n)
+        rU = r isa GeoUnit ? r : convert(GeoUnit, r)
+        pU = p isa GeoUnit ? p : convert(GeoUnit, p)
+        AU = A isa GeoUnit ? A : convert(GeoUnit, A)
+        EU = E isa GeoUnit ? E : convert(GeoUnit, E)
+        VU = V isa GeoUnit ? V : convert(GeoUnit, V)
+        RU = R isa GeoUnit ? R : convert(GeoUnit, R)
         # Extract struct types
         T = typeof(nU).types[1]
         U1 = typeof(nU).types[2]
@@ -70,7 +68,33 @@ struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U5 = typeof(RU).types[2]
         # Create struct
         return new{T,N,U1,U2,U3,U4,U5}(
-            NameU, nU, rU, pU, AU, EU, VU, RU, FTU, FEU, Int8(Apparatus)
+            NameU, nU, rU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
+        )
+    end
+
+    function DiffusionCreep(Name, n, r, p, A, E, V, R, Apparatus, FT, FE)
+
+        # Rheology name
+        N = length(Name)
+        NameU = NTuple{N,Char}(collect.(Name))
+        # Convert to GeoUnits
+        nU = n isa GeoUnit ? n : convert(GeoUnit, n)
+        rU = r isa GeoUnit ? r : convert(GeoUnit, r)
+        pU = p isa GeoUnit ? p : convert(GeoUnit, p)
+        AU = A isa GeoUnit ? A : convert(GeoUnit, A)
+        EU = E isa GeoUnit ? E : convert(GeoUnit, E)
+        VU = V isa GeoUnit ? V : convert(GeoUnit, V)
+        RU = R isa GeoUnit ? R : convert(GeoUnit, R)
+        # Extract struct types
+        T = typeof(nU).types[1]
+        U1 = typeof(nU).types[2]
+        U2 = typeof(AU).types[2]
+        U3 = typeof(EU).types[2]
+        U4 = typeof(VU).types[2]
+        U5 = typeof(RU).types[2]
+        # Create struct
+        return new{T,N,U1,U2,U3,U4,U5}(
+            NameU, nU, rU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
         )
     end
 end
@@ -135,12 +159,8 @@ Returns diffusion creep strainrate as a function of 2nd invariant of the stress 
 function compute_εII(
     a::DiffusionCreep, TauII::_T; T::_T, P=zero(_T), f=one(_T), d=one(_T), kwargs...
 ) where {_T}
-
-    # @unpack_val n,r,p,A,E,V,R = a
-
-    # FT, FE = CorrectionFactor(a)
-
-    @unpack_val n, r, p, A, E, V, R, FT, FE = a
+    @unpack_val n, r, p, A, E, V, R = a
+    FT, FE = a.FT, a.FE
 
     return A *
            fastpow(TauII * FT, n) *
@@ -152,10 +172,8 @@ end
 function compute_εII(
     a::DiffusionCreep, TauII::Quantity; T=1K, P=0Pa, f=1NoUnits, d=1e-3m, args...
 )
-    # @unpack_units n,r,p,A,E,V,R = a
-    # FT, FE  =   CorrectionFactor(a);    
-
-    @unpack_units n, r, p, A, E, V, R, FT, FE = a
+    @unpack_units n, r, p, A, E, V, R = a
+    FT, FE = a.FT, a.FE
 
     ε = A * (TauII * FT)^n * f^(r) * d^(p) * exp(-(E + P * V) / (R * T)) / FE
 
@@ -192,9 +210,8 @@ returns the derivative of strainrate versus stress
 function dεII_dτII(
     a::DiffusionCreep, TauII::_T; T::_T=one(_T), P=zero(_T), f=one(_T), d=one(_T), kwargs...
 ) where {_T}
-    # @unpack_val n, r, p, A, E, V, R = a
-    # FT, FE = CorrectionFactor(a)
-    @unpack_val n, r, p, A, E, V, R, FT, FE = a
+    @unpack_val n, r, p, A, E, V, R = a
+    FT, FE = a.FT, a.FE
 
     return fastpow(FT * TauII, -1 + n) *
            fastpow(f, r) *
@@ -214,10 +231,8 @@ Returns diffusion creep stress as a function of 2nd invariant of the strain rate
 function compute_τII(
     a::DiffusionCreep, EpsII::_T; T::_T=one(_T), P=zero(_T), f=one(_T), d=one(_T), kwargs...
 ) where {_T}
-    # @unpack_val n, r, p, A, E, V, R = a
-    # FT, FE = CorrectionFactor(a)
-
-    @unpack_val n, r, p, A, E, V, R, FT, FE = a
+    @unpack_val n, r, p, A, E, V, R = a
+    FT, FE = a.FT, a.FE
 
     return fastpow(A, -1 / n) *
            fastpow(EpsII * FE, 1 / n) *
@@ -229,10 +244,8 @@ end
 function compute_τII(
     a::DiffusionCreep, EpsII::Quantity; T=1K, P=0Pa, f=1NoUnits, d=1m, args...
 ) where {_T}
-    # @unpack_units n, r, p, A, E, V, R = a
-    # FT, FE = CorrectionFactor(a)
-
-    @unpack_units n, r, p, A, E, V, R, FT, FE = a
+    @unpack_units n, r, p, A, E, V, R = a
+    FT, FE = a.FT, a.FE
 
     τ =
         A^(-1 / n) *
@@ -264,12 +277,9 @@ end
 function dτII_dεII(
     a::DiffusionCreep, EpsII::_T; T::_T=one(_T), P=zero(_T), f=one(_T), d=one(_T), kwargs...
 ) where {_T}
-    # @unpack_val n, r, p, A, E, V, R = a
-    # FT, FE = CorrectionFactor(a)
+    @unpack_val n, r, p, A, E, V, R = a
+    FT, FE = a.FT, a.FE
 
-    @unpack_val n, r, p, A, E, V, R, FT, FE = a
-
-    #return fastpow(FT*EpsII,-1+1/n)*fastpow(f,-r/n)*fastpow(d,-p/n)*fastpow(A,-1/n)*FE*n*exp((E+P*V)/(n*R*T))*(1/(FT*n))
     # computed symbolically:
     return (
         FE *

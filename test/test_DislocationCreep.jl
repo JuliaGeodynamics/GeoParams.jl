@@ -39,8 +39,6 @@ using GeoParams
     TauII = 1e6
     ε = compute_εII(x1, TauII, args)
 
-
-   
     # Test some of the preset rheologies
     p       = SetDislocationCreep("Dry Olivine | Hirth & Kohlstedt (2003)")
     TauII   = 0.3e6Pa;

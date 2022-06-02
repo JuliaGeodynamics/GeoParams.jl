@@ -173,7 +173,7 @@ julia> MatParam
 
 """
 function SetMaterialParams(; 
-            Name::String        =   "",         # this makes the struct !isbits(); as that sucks for portability we change that later to NTuple(Char)
+            Name::String        =   "", # this makes the struct !isbits(); as that sucks for portability we change that later to NTuple(Char)
             Phase               =   1,
             Density             =   nothing, 
             Gravity             =   nothing,

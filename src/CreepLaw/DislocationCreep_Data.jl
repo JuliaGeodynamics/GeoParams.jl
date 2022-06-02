@@ -17,12 +17,14 @@ DislocationCreep_info = Dict([
     (DislocationCreep(
         Name = "Dry Olivine | Hirth & Kohlstedt (2003)",
         n = 3.5NoUnits,
+        r = 0.0NoUnits,
         A = 1.1e5MPa^(-3.5)/s, 
         E = 530.0kJ/mol,
         V = 15e-6m^3/mol,
-        Apparatus = AxialCompression,
-        r = 0.0NoUnits),
-    MaterialParamsInfo(Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
+        Apparatus = AxialCompression),
+    
+        MaterialParamsInfo(Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
+    
         BibTex_Reference = parse_bibtex("""
             @incollection{eiler_rheology_2003,
             address = {Washington, D. C.},
@@ -56,8 +58,9 @@ DislocationCreep_info = Dict([
         A = 90MPa^(-3.5)/s, 
         E = 480kJ/mol,
         V = 11e-6m^3/mol,
-        r   = 1.2NoUnits,
+        r = 1.2NoUnits,
         Apparatus = AxialCompression),
+
         MaterialParamsInfo(Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
         BibTex_Reference = parse_bibtex("""
             @incollection{HirthKohlstedt_OlivineRheology_2003,

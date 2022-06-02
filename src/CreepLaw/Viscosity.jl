@@ -108,7 +108,7 @@ Performs local iterations versus stress for a given strain rate
     τII_prev = τII
     while ϵ > tol
         iter += 1
-        f   = εII - strain_rate_circuit(v, τII, args)
+        f = εII - strain_rate_circuit(v, τII, args)
         dfdτII = -dεII_dτII(v, τII, args)
         τII -= f / dfdτII
 
@@ -144,7 +144,7 @@ Performs local iterations versus strain rate for a given stress
     εII_prev = εII
     while ϵ > tol
         iter += 1
-        f   = τII - stress_circuit(v, εII, args, n=n)
+        f = τII - stress_circuit(v, εII, args, n=n)
         dfdεII = -dτII_dεII(v, εII, args)
         εII -= f / dfdεII
 
