@@ -127,14 +127,16 @@ end
 """
     Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 """
+
 function Transform_DislocationCreep(name)
     p = DislocationCreep_info[name][1]
 
-    Name = String(collect(p.Name))
-    n = Value(p.n)
-    A_Pa = Pa^(-NumValue(p.n) - NumValue(p.r)) / s(Value(p.A))
-    E_J = J / mol(Value(p.E))
-    V_m3 = m^3 / mol(Value(p.V))
+    Name =  String(collect(p.Name))
+    n    =  Value(p.n)
+    A_Pa =  Value(p.A) |> Pa^(-NumValue(p.n) - NumValue(p.r))/s
+    E_J  =  Value(p.E) |> J/mol
+    V_m3 =  Value(p.V) |> m^3/mol
+    
     Apparatus = p.Apparatus
     r = Value(p.r)
 
