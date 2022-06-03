@@ -84,27 +84,15 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     end
 
     function DislocationCreep(Name, n, r, A, E, V, R, Apparatus, FT, FE)
-
-        # Rheology name
-        N = length(Name)
-        NameU = NTuple{N,Char}(collect.(Name))
-        # Convert to GeoUnits
-        nU = n isa GeoUnit ? n : convert(GeoUnit, n)
-        rU = r isa GeoUnit ? r : convert(GeoUnit, r)
-        AU = A isa GeoUnit ? A : convert(GeoUnit, A)
-        EU = E isa GeoUnit ? E : convert(GeoUnit, E)
-        VU = V isa GeoUnit ? V : convert(GeoUnit, V)
-        RU = R isa GeoUnit ? R : convert(GeoUnit, R)
-        # Extract struct types
-        T = typeof(nU).types[1]
-        U1 = typeof(nU).types[2]
-        U2 = typeof(AU).types[2]
-        U3 = typeof(EU).types[2]
-        U4 = typeof(VU).types[2]
-        U5 = typeof(RU).types[2]
-        # Create struct
-        return new{T,N,U1,U2,U3,U4,U5}(
-            NameU, nU, rU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
+        return DislocationCreep(;
+            Name=Name,
+            n=n,
+            r=r,
+            A=A,
+            E=E,
+            V=V,
+            R=R,
+            Apparatus=Apparatus,
         )
     end
 end
