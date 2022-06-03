@@ -20,7 +20,8 @@ export  param_info,
         dεII_dτII,      dτII_dεII,
         compute_εII!,   compute_εII,
         compute_τII!,   compute_τII,
-        strain_rate_circuit
+        strain_rate_circuit,
+        InverseCreepLaw
 
 include("Computations.jl")
 

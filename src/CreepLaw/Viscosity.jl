@@ -9,8 +9,21 @@ export strain_rate_circuit,
     compute_εII,
     dεII_dτII,
     local_iterations_εII,
-    computeViscosity
+    computeViscosity,
+    InverseCreepLaw
 
+struct InverseCreepLaw{N} <: AbstractConstitutiveLaw{Float64}
+    v::NTuple{N,AbstractConstitutiveLaw}
+    
+    function InverseCreepLaw(v::Vararg{AbstractConstitutiveLaw, N}) where N
+        new{N}(ntuple(i->v[i], Val(N)))
+    end
+
+    function InverseCreepLaw(v::NTuple{N,AbstractConstitutiveLaw}) where N
+        new{N}(v)
+    end
+end
+    
 """
     computeViscosity_εII(v::AbstractConstitutiveLaw, εII, args)
     
@@ -265,17 +278,26 @@ end
 
 
 @inline @generated function strain_rate_circuit(
-    v::NTuple{N,AbstractConstitutiveLaw},  TauII, args; n=1
+    v::NTuple{N,AbstractConstitutiveLaw},  TauII, args
 ) where {N}
     quote
         c = 0.0
         Base.Cartesian.@nexprs $N i ->
-            c += if v[i] isa Tuple
-                1 / strain_rate_circuit(v[i], TauII, args; n=-1)
+            c += if v[i] isa InverseCreepLaw
+                strain_rate_circuit(v[i], TauII, args)
             else
-                compute_εII(v[i], TauII, args)^n
+                compute_εII(v[i], TauII, args)
             end
         return c
+    end
+end
+
+@generated function strain_rate_circuit(v_ice::InverseCreepLaw{N}, τII::_T, args) where {_T,N}
+    quote
+        Base.@_inline_meta
+        c = zero(_T)
+        Base.Cartesian.@nexprs $N i -> c += 1/compute_εII(v_ice.v[i], τII, args)
+        return 1/c
     end
 end
 
