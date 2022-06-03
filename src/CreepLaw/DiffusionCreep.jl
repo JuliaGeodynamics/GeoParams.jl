@@ -73,28 +73,16 @@ struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     end
 
     function DiffusionCreep(Name, n, r, p, A, E, V, R, Apparatus, FT, FE)
-
-        # Rheology name
-        N = length(Name)
-        NameU = NTuple{N,Char}(collect.(Name))
-        # Convert to GeoUnits
-        nU = n isa GeoUnit ? n : convert(GeoUnit, n)
-        rU = r isa GeoUnit ? r : convert(GeoUnit, r)
-        pU = p isa GeoUnit ? p : convert(GeoUnit, p)
-        AU = A isa GeoUnit ? A : convert(GeoUnit, A)
-        EU = E isa GeoUnit ? E : convert(GeoUnit, E)
-        VU = V isa GeoUnit ? V : convert(GeoUnit, V)
-        RU = R isa GeoUnit ? R : convert(GeoUnit, R)
-        # Extract struct types
-        T = typeof(nU).types[1]
-        U1 = typeof(nU).types[2]
-        U2 = typeof(AU).types[2]
-        U3 = typeof(EU).types[2]
-        U4 = typeof(VU).types[2]
-        U5 = typeof(RU).types[2]
-        # Create struct
-        return new{T,N,U1,U2,U3,U4,U5}(
-            NameU, nU, rU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
+        return DiffusionCreep(;
+            Name=Name,
+            n=n,
+            r=r,
+            p=p,
+            A=A,
+            E=E,
+            V=V,
+            R=R,
+            Apparatus=Apparatus,
         )
     end
 end
@@ -234,15 +222,19 @@ Returns diffusion creep stress as a function of 2nd invariant of the strain rate
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    return fastpow(A, -1 / n) *
-           fastpow(EpsII * FE, 1 / n) *
-           fastpow(f, -r / n) *
-           fastpow(d, -p / n) *
-           exp((E + P * V) / (n * R * T)) / FT
+    τ = 
+        fastpow(A, -1 / n) *
+        fastpow(EpsII * FE, 1 / n) *
+        fastpow(f, -r / n) *
+        fastpow(d, -p / n) *
+        exp((E + P * V) / (n * R * T)) / FT
+
+    return τ
+
 end
 
 @inline function compute_τII(
-    a::DiffusionCreep, EpsII::Quantity; T=1K, P=0Pa, f=1NoUnits, d=1m, args...
+    a::DiffusionCreep, EpsII::Quantity; T=1K, P=0Pa, f=1NoUnits, d=1m, kwargs...
 ) where {_T}
     @unpack_units n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
