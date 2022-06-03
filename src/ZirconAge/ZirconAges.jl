@@ -237,7 +237,7 @@ This converts a vector with Vectors contain time and temperature path's to a sin
 function compute_zircons_convert_vecs2mat(time_years_vecs::Vector{Vector{_T}}, Tt_paths_Temp_vecs::Vector{Vector{_T}}) where _T
     
     # Create a single vector with the time values:
-    time_years = unique(reduce(vcat,unique(time_years_vecs))); 
+    time_years = sort(unique(reduce(vcat,unique(time_years_vecs)))); 
 
     # Add the vectors to an array with T values
     Tt_paths_mat = zeros(_T,length(time_years), length(Tt_paths_Temp_vecs))
