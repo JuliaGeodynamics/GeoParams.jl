@@ -19,7 +19,7 @@ time_years 		= 	Tt_paths[:,1]./s2y							# time fron seconds to years
 Tt_paths_Temp 	= 	Tt_paths[:,2:end]	
 	
 # first: test case in which we provide the Tt-path as matrix 
-prob, ages_eruptible, number_zircons, T_av_time, T_sd_time = compute_zircons_Ttpath(time_years, Tt_paths_Temp, ZirconData=ZirconData)
+time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time,zircon_PDF  = compute_zircons_Ttpath(time_years, Tt_paths_Temp, ZirconData=ZirconData)
 time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average  = zircon_age_PDF(ages_eruptible, number_zircons, bandwidth=1e5, n_analyses=n_analyses)
 
 @test  prob[100] ≈ 5.536734758661114e-6
@@ -40,7 +40,7 @@ for i=1:size(Tt_paths_Temp,2)
 end
 
 # the calling routine is the same, but we get one additional output vector:
-time_years1, prob1, ages_eruptible1, number_zircons1, T_av_time1, T_sd_time1  = compute_zircons_Ttpath(time_years_vecs, Tt_paths_Temp_vecs)
+time_years1, prob1, ages_eruptible1, number_zircons1, T_av_time1, T_sd_time1, zircon_PDF1  = compute_zircons_Ttpath(time_years_vecs, Tt_paths_Temp_vecs)
 
 @test  prob1[100] ≈ 5.536734758661114e-6
 

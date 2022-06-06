@@ -91,7 +91,7 @@ function  compute_number_zircons!(n_zr::AbstractArray{_T,N}, Tt_paths_Temp::Abst
 end
 
 """
-    prob, ages_eruptible, number_zircons, T_av_time, T_sd_time  compute_zircons_Ttpath(time_years::AbstractArray{Float64,1}, Tt_paths_Temp::AbstractArray{Float64,2}; ZirconData::ZirconAgeData)
+    time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, n_meas_cumsum  = compute_zircons_Ttpath(time_years::AbstractArray{Float64,1}, Tt_paths_Temp::AbstractArray{Float64,2}; ZirconData::ZirconAgeData)
 
 This computes the number of zircons produced from a series of temperature-time path's. 
 The Tt-paths are stored in a 2D matrix `Tt_paths_Temp` with rows being the temperature at time `time_years`.
@@ -227,7 +227,7 @@ function compute_zircons_Ttpath(time_years_vecs::Vector{Vector{_T}}, Tt_paths_Te
     time_years, Tt_paths_Temp = compute_zircons_convert_vecs2mat(time_years_vecs, Tt_paths_Temp_vecs)
 
     # call main routine
-    prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, n_meas_cumsum = compute_zircons_Ttpath(time_years, Tt_paths_Temp, ZirconData=ZirconData)
+    time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, n_meas_cumsum = compute_zircons_Ttpath(time_years, Tt_paths_Temp, ZirconData=ZirconData)
 
     # return, including time_years
     return time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, n_meas_cumsum
