@@ -209,7 +209,7 @@ function compute_zircons_Ttpath(time_years::AbstractArray{_T,1}, Tt_paths_Temp::
         number_zircons[:,i] = sample(ages_eruptible, Weights(prob), n_analyses, replace=true)
     end
 
-    return prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, n_meas_cumsum
+    return time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, n_meas_cumsum
 end
 
 
