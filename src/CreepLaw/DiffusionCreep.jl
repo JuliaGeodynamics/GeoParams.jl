@@ -74,15 +74,7 @@ struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
 
     function DiffusionCreep(Name, n, r, p, A, E, V, R, Apparatus, FT, FE)
         return DiffusionCreep(;
-            Name=Name,
-            n=n,
-            r=r,
-            p=p,
-            A=A,
-            E=E,
-            V=V,
-            R=R,
-            Apparatus=Apparatus,
+            Name=Name, n=n, r=r, p=p, A=A, E=E, V=V, R=R, Apparatus=Apparatus
         )
     end
 end
@@ -94,13 +86,13 @@ Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 function Transform_DiffusionCreep(name)
     pp = DiffusionCreep_info[name][1]
 
-    Name =  String(collect(pp.Name))
-    n    =  Value(pp.n)
-    r    =  Value(pp.r)
-    p    =  Value(pp.p)
-    A_Pa =  Value(pp.A) |> Pa^(-NumValue(pp.n) -NumValue(pp.r))*s^(-1)*m^(-NumValue(p))
-    E_J  =  Value(pp.E) |> J/mol
-    V_m3 =  Value(pp.V) |> m^3/mol
+    Name = String(collect(pp.Name))
+    n = Value(pp.n)
+    r = Value(pp.r)
+    p = Value(pp.p)
+    A_Pa = Pa^(-NumValue(pp.n) - NumValue(pp.r)) * s^(-1) * m^(-NumValue(p))(Value(pp.A))
+    E_J = J / mol(Value(pp.E))
+    V_m3 = m^3 / mol(Value(pp.V))
     Apparatus = pp.Apparatus
 
     return DiffusionCreep(;
@@ -222,7 +214,7 @@ Returns diffusion creep stress as a function of 2nd invariant of the strain rate
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    τ = 
+    τ =
         fastpow(A, -1 / n) *
         fastpow(EpsII * FE, 1 / n) *
         fastpow(f, -r / n) *
@@ -230,7 +222,6 @@ Returns diffusion creep stress as a function of 2nd invariant of the strain rate
         exp((E + P * V) / (n * R * T)) / FT
 
     return τ
-
 end
 
 @inline function compute_τII(

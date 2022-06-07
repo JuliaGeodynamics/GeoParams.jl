@@ -85,14 +85,7 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
 
     function DislocationCreep(Name, n, r, A, E, V, R, Apparatus, FT, FE)
         return DislocationCreep(;
-            Name=Name,
-            n=n,
-            r=r,
-            A=A,
-            E=E,
-            V=V,
-            R=R,
-            Apparatus=Apparatus,
+            Name=Name, n=n, r=r, A=A, E=E, V=V, R=R, Apparatus=Apparatus
         )
     end
 end
@@ -104,12 +97,12 @@ end
 function Transform_DislocationCreep(name)
     p = DislocationCreep_info[name][1]
 
-    Name =  String(collect(p.Name))
-    n    =  Value(p.n)
-    A_Pa =  Value(p.A) |> Pa^(-NumValue(p.n) - NumValue(p.r))/s
-    E_J  =  Value(p.E) |> J/mol
-    V_m3 =  Value(p.V) |> m^3/mol
-    
+    Name = String(collect(p.Name))
+    n = Value(p.n)
+    A_Pa = Pa^(-NumValue(p.n) - NumValue(p.r)) / s(Value(p.A))
+    E_J = J / mol(Value(p.E))
+    V_m3 = m^3 / mol(Value(p.V))
+
     Apparatus = p.Apparatus
     r = Value(p.r)
 
@@ -156,7 +149,9 @@ end
     return ε
 end
 
-@inline function compute_εII(a::DislocationCreep, TauII::Quantity; T=1K, P=0Pa, f=1NoUnits, args...)
+@inline function compute_εII(
+    a::DislocationCreep, TauII::Quantity; T=1K, P=0Pa, f=1NoUnits, args...
+)
     @unpack_units n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
 

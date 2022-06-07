@@ -9,43 +9,40 @@
 
 abstract type AbstractCreepLaw{T} <: AbstractConstitutiveLaw{T} end
 
-export  LinearViscous, 
-        PowerlawViscous,
-        CorrectionFactor,
-        strain_rate_circuit
+export LinearViscous, PowerlawViscous, CorrectionFactor, strain_rate_circuit
 
 # This computes correction factors to go from experimental data to tensor format
-function CorrectionFactor(a::AbstractCreepLaw{_T} ) where _T
+function CorrectionFactor(a::AbstractCreepLaw{_T}) where {_T}
     if a.Apparatus == AxialCompression
-        FT = sqrt(one(_T)*3) # relation between differential stress recorded by apparatus and TauII
-        FE = 2/FT            # relation between gamma recorded by apparatus and EpsII
-        return FT,FE
-    
+        FT = sqrt(one(_T) * 3) # relation between differential stress recorded by apparatus and TauII
+        FE = 2 / FT            # relation between gamma recorded by apparatus and EpsII
+        return FT, FE
+
     elseif a.Apparatus == SimpleShear
-        FT = one(_T)*2      # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
+        FT = one(_T) * 2      # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
         FE = FT
-        return FT,FE
-        
+        return FT, FE
+
     elseif a.Apparatus == Invariant
-        FT,FE = one(_T), one(_T)
-        return FT,FE
+        FT, FE = one(_T), one(_T)
+        return FT, FE
     end
 end
 
-function CorrectionFactor(a::_T ) where _T
+function CorrectionFactor(a::_T) where {_T}
     if a == AxialCompression
-        FT = sqrt(one(_T)*3) # relation between differential stress recorded by apparatus and TauII
-        FE = 2/FT            # relation between gamma recorded by apparatus and EpsII
-        return FT,FE
-    
+        FT = sqrt(one(_T) * 3) # relation between differential stress recorded by apparatus and TauII
+        FE = 2 / FT            # relation between gamma recorded by apparatus and EpsII
+        return FT, FE
+
     elseif a == SimpleShear
-        FT = one(_T)*2      # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
+        FT = one(_T) * 2      # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
         FE = FT
-        return FT,FE
-        
+        return FT, FE
+
     elseif a == Invariant
-        FT,FE = one(_T), one(_T)
-        return FT,FE
+        FT, FE = one(_T), one(_T)
+        return FT, FE
     end
 end
 
@@ -69,48 +66,47 @@ or
 
 where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\\dot{\\varepsilon}_0``[1/s], and ``n`` the power law exponent []. 
 """
-@with_kw_noshow struct LinearViscous{T,U} <: AbstractCreepLaw{T}    
-    η::GeoUnit{T,U}     =   1e20Pa*s                # viscosity
-    η_val::T            =   1.0
+@with_kw_noshow struct LinearViscous{T,U} <: AbstractCreepLaw{T}
+    η::GeoUnit{T,U} = 1e20Pa * s                # viscosity
+    η_val::T = 1.0
 end
-LinearViscous(args...) = LinearViscous(convert(GeoUnit,args[1]), args[2])
+LinearViscous(args...) = LinearViscous(convert(GeoUnit, args[1]), args[2])
 
 function param_info(s::LinearViscous) # info about the struct
-    return MaterialParamsInfo(Equation = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}")
+    return MaterialParamsInfo(; Equation=L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}")
 end
 
 # Calculation routines for linear viscous rheologies
 function compute_εII(s::LinearViscous, TauII; kwargs...)
-    @unpack η   = s
-    
-    return (TauII/η)*0.5;
+    @unpack η = s
+
+    return (TauII / η) * 0.5
 end
 
 """
     
     compute_εII!(EpsII::AbstractArray{_T,N}, s::LinearViscous, TauII::AbstractArray{_T,N})
 """
-function compute_εII!(EpsII::AbstractArray{_T,N}, s::LinearViscous, TauII::AbstractArray{_T,N}; 
-                        kwargs...)  where {N,_T}
+function compute_εII!(
+    EpsII::AbstractArray{_T,N}, s::LinearViscous, TauII::AbstractArray{_T,N}; kwargs...
+) where {N,_T}
     if TauII[1] isa Quantity
-        @unpack_units η   = s
+        @unpack_units η = s
     else
-        @unpack_val η   = s
+        @unpack_val η = s
     end
 
     @inbounds for i in eachindex(EpsII)
         EpsII[i] = compute_εII(s, TauII[i])
     end
-  
+
     return nothing
 end
 
-
-
 function dεII_dτII(a::LinearViscous, TauII; kwargs...)
-    @unpack η   = s
-    
-    return η*0.5;
+    @unpack η = s
+
+    return η * 0.5
 end
 
 """
@@ -119,18 +115,18 @@ end
 Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor 
 """
 function compute_τII(s::LinearViscous, EpsII; kwargs...)
-    @unpack η   = s
+    @unpack η = s
 
-    return 2*(η*EpsII);
+    return 2 * (η * EpsII)
 end
 
-
-function compute_τII!(TauII::AbstractArray{_T,N}, s::LinearViscous, EpsII::AbstractArray{_T,N}; 
-    kwargs...)  where {N,_T}
+function compute_τII!(
+    TauII::AbstractArray{_T,N}, s::LinearViscous, EpsII::AbstractArray{_T,N}; kwargs...
+) where {N,_T}
     if EpsII[1] isa Quantity
-        @unpack_units η   = s
+        @unpack_units η = s
     else
-        @unpack_val η   = s
+        @unpack_val η = s
     end
 
     @inbounds for i in eachindex(EpsII)
@@ -141,14 +137,14 @@ function compute_τII!(TauII::AbstractArray{_T,N}, s::LinearViscous, EpsII::Abst
 end
 
 function dτII_dεII(a::LinearViscous, EpsII; kwargs...)
-    @unpack η   = s
-    
-    return 2*η;
+    @unpack η = s
+
+    return 2 * η
 end
 
 # Print info 
-function show(io::IO, g::LinearViscous)  
-    print(io, "Linear viscosity: η=$(g.η.val)")  
+function show(io::IO, g::LinearViscous)
+    return print(io, "Linear viscosity: η=$(g.η.val)")
 end
 #-------------------------------------------------------------------------
 
@@ -164,15 +160,15 @@ Defines a power law viscous creeplaw as:
 where ``\\eta`` is the effective viscosity [Pa*s].
 """
 @with_kw_noshow struct PowerlawViscous{T,U1,U2,U3} <: AbstractCreepLaw{T}
-    η0::GeoUnit{T,U1}     =  1e18Pa*s            # reference viscosity 
-    n::GeoUnit{T,U2}      =  2.0*NoUnits         # powerlaw exponent
-    ε0::GeoUnit{T,U3}     =  1e-15*1/s;          # reference strainrate
+    η0::GeoUnit{T,U1} = 1e18Pa * s            # reference viscosity 
+    n::GeoUnit{T,U2} = 2.0 * NoUnits         # powerlaw exponent
+    ε0::GeoUnit{T,U3} = 1e-15 * 1 / s          # reference strainrate
 end
-PowerlawViscous(a...) = PowerlawViscous(convert.(GeoUnit,a)...)
+PowerlawViscous(a...) = PowerlawViscous(convert.(GeoUnit, a)...)
 
 # Print info 
-function show(io::IO, g::PowerlawViscous)  
-    print(io, "Powerlaw viscosity: η0=$(g.η0.val), n=$(g.n.val), ε0=$(g.ε0.val) ")
+function show(io::IO, g::PowerlawViscous)
+    return print(io, "Powerlaw viscosity: η0=$(g.η0.val), n=$(g.n.val), ε0=$(g.ε0.val) ")
 end
 #-------------------------------------------------------------------------
 
@@ -222,5 +218,3 @@ may need for the calculations
 
 """
 computeCreepLaw_TauII
-
-
