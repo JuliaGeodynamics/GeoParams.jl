@@ -106,7 +106,8 @@ export  dεII_dτII,      dτII_dεII,
         dεII_dτII,
         local_iterations_εII, 
         computeViscosity,
-        InverseCreepLaw
+        InverseCreepLaw,
+        KelvinVoigt
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration

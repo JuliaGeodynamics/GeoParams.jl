@@ -21,7 +21,8 @@ export  param_info,
         compute_εII!,   compute_εII,
         compute_τII!,   compute_τII,
         strain_rate_circuit,
-        InverseCreepLaw
+        InverseCreepLaw,
+        KelvinVoigt
 
 include("Computations.jl")
 

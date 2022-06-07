@@ -1,16 +1,17 @@
-export strain_rate_circuit,
-    computeViscosity_τII,
-    computeViscosity_εII,
-    computeViscosity_τII!,
-    computeViscosity_εII!,
-    compute_τII,
-    compute_τII!,
-    compute_εII!,
-    compute_εII,
-    dεII_dτII,
-    local_iterations_εII,
-    computeViscosity,
-    InverseCreepLaw
+# export strain_rate_circuit,
+#     computeViscosity_τII,
+#     computeViscosity_εII,
+#     computeViscosity_τII!,
+#     computeViscosity_εII!,
+#     compute_τII,
+#     compute_τII!,
+#     compute_εII!,
+#     compute_εII,
+#     dεII_dτII,
+#     local_iterations_εII,
+#     computeViscosity,
+#     InverseCreepLaw,
+#     KelvinVoigt
 
 struct InverseCreepLaw{N} <: AbstractConstitutiveLaw{Float64}
     v::NTuple{N,AbstractConstitutiveLaw}
@@ -23,7 +24,52 @@ struct InverseCreepLaw{N} <: AbstractConstitutiveLaw{Float64}
         new{N}(v)
     end
 end
-    
+
+
+"""
+    struct KelvinVoigt{N, V1, V2} <: AbstractConstitutiveLaw{Float64}
+        v_el::V1
+        v_vis::V2
+    end
+
+    Elastic spring and viscous dashpot in parallel. 
+
+    τ = 2Gε + η̇ε
+"""
+struct KelvinVoigt{N, V1, V2} <: AbstractConstitutiveLaw{Float64}
+    spring::V1
+    dashpot::V2
+
+    function KelvinVoigt(v1::AbstractConstitutiveLaw, v2::AbstractConstitutiveLaw)
+        T1 = typeof(v1)
+        T2 = typeof(v2)
+        new{2, T1, T2}(v1, v2)
+    end
+end
+
+"""
+    τ = 2Gε + η̇ε =  2G ̇ε Δt + η̇ε
+    ̇ε = τ/(2GΔt + η)
+"""
+function compute_εII(v::KelvinVoigt, τII, args)
+    η = computeViscosity_τII(v.viscous, τII,  args)
+    G = v.elastic.G
+    εII = τII/(2*G*args.Δt + η)
+
+    return εII
+end
+
+"""
+    τ = 2Gε + η̇ε =  2G ̇ε Δt + η̇ε
+"""
+function compute_τII(v::KelvinVoigt, εII, args)
+    η = computeViscosity_εII(v.viscous, εII,  args)
+    G = v.elastic.G
+    τII = εII*(2*G*args.Δt + η)
+
+    return τII
+end
+
 """
     computeViscosity_εII(v::AbstractConstitutiveLaw, εII, args)
     
@@ -35,6 +81,8 @@ Compute viscosity given strain rate 2nd invariant for a given rheological elemen
     return η
 end
 
+# special case for linar viscous rheology
+computeViscosity_εII(v::LinearViscous, args...) = v.η.val
 
 """
     computeViscosity_τII(v::AbstractConstitutiveLaw, τII, args; tol=1e-6, verbose=false)
@@ -46,6 +94,9 @@ Compute viscosity given stress 2nd invariant for a given rheological element
     η = 0.5 * τII / εII
     return η
 end
+
+# special case for linar viscous rheology
+computeViscosity_τII(v::LinearViscous, args...) = v.η.val
 
 """
     computeViscosity_εII(v::NTuple{N, AbstractConstitutiveLaw}, εII, args)
