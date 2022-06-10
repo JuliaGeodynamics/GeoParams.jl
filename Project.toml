@@ -1,7 +1,7 @@
 name = "GeoParams"
 uuid = "e018b62d-d9de-4a26-8697-af89c310ae38"
 authors = ["Boris Kaus <kaus@uni-mainz.de>, Albert De Montserrat <albertdemontserratnavarro@erdw.ethz.ch>"]
-version = "0.3.8"
+version = "0.3.7"
 
 [deps]
 BibTeX = "7b0aa2c9-049f-5cec-894a-2b6b781bb25e"
@@ -25,7 +25,7 @@ Interpolations = "0.13"
 KernelDensitySJ = "0.2.0"
 LaTeXStrings = "1.2.1"
 Loess = "0.5"
-Parameters = "0.12" 
+Parameters = "0.12"
 Requires = "1.0 - 1.3"
 Setfield = "0.8 - 0.8"
 StatsBase = "0.33"

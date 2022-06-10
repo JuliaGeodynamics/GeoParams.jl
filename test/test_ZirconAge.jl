@@ -43,7 +43,7 @@ for i=1:size(Tt_paths_Temp,2)
 end
 
 # the calling routine is the same, but we get one additional output vector:
-time_years1, prob1, ages_eruptible1, number_zircons1, T_av_time1, T_sd_time1, zircon_cumulativePDF1  = compute_zircons_Ttpath(time_years_vecs, Tt_paths_Temp_vecs)
+time_years1, prob1, ages_eruptible1, number_zircons1, T_av_time1, T_sd_time1  = compute_zircons_Ttpath(time_years_vecs, Tt_paths_Temp_vecs)
 
 # add tests to check that results are consistent
 @test sum(number_zircons1[1:200]) 		== 67333.0
@@ -86,4 +86,3 @@ time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average, time_years,
 
 
 end
-
