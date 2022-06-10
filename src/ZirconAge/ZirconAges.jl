@@ -29,6 +29,7 @@ end
 Struct that holds default parameters for the calculations
 """
 @with_kw_noshow struct ZirconAgeData
+    n_analyses::Int64		= 200       # number of sampled zircon for PD
     Tsat::Float64 			= 825.0		# Maximum zircon saturation temperature [C]
     Tmin::Float64 			= 690.0 	# [C] Minimum zircon saturation Temperature [C]
     Tsol::Float64 			= 690.0		# [C] Solidus temperature [C]
@@ -89,7 +90,7 @@ function  compute_number_zircons!(n_zr::AbstractArray{_T,N}, Tt_paths_Temp::Abst
 end
 
 """
-    prob, ages_eruptible, number_zircons, T_av_time, T_sd_time  compute_zircons_Ttpath(time_years::AbstractArray{Float64,1}, Tt_paths_Temp::AbstractArray{Float64,2}; ZirconData::ZirconAgeData)
+    time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, zircon_cumulativePDF  = compute_zircons_Ttpath(time_years::AbstractArray{Float64,1}, Tt_paths_Temp::AbstractArray{Float64,2}; ZirconData::ZirconAgeData)
 
 This computes the number of zircons produced from a series of temperature-time path's. 
 The Tt-paths are stored in a 2D matrix `Tt_paths_Temp` with rows being the temperature at time `time_years`.
@@ -105,8 +106,9 @@ Output:
 - `number_zircons` : 1D array of size `(nt,)`
 - `T_av_time`: vector of size `nt` that contains the average T of the paths
 - `T_sd_time`: vector of size `nt` that contains the standard deviation of the T of the paths
+- `zircon_cumulativePDF`: vector of size `nt` that contains cumulative probability density of zircon ages [%]
 
-This routine was developed based on an R-routine provided as electronic supplement in the paper:
+This routine is based on an R-routine provided as electronic supplement in the paper:
 - Weber, G., Caricchi, L., Arce, J.L., Schmitt, A.K., 2020. Determining the current size and state of subvolcanic magma reservoirs. Nat Commun 11, 5477. https://doi.org/10.1038/s41467-020-19084-2
 
 """
@@ -175,12 +177,20 @@ function compute_zircons_Ttpath(time_years::AbstractArray{_T,1}, Tt_paths_Temp::
     prob                = prob[:,1]
     number_zircons      = number_zircons[:,1]
 
-    return prob, ages_eruptible, number_zircons, T_av_time, T_sd_time
+    zircon_cumulativePDF= (1.0 .- cumsum(n_measurable_ages, dims=1)/sum(n_measurable_ages))*100.0
+
+    n                   = size(n_zircons,2)
+    number_zircons      = Matrix{Float64}(undef,n_analyses,n) .= 0.0
+    for i in 1:n
+        number_zircons[:,i] = sample(ages_eruptible, Weights(prob), n_analyses, replace=true)
+    end
+
+    return time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, zircon_cumulativePDF
 end
 
 
 """
-    time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time  = compute_zircons_Ttpath(time_years::Vector{Vector{Float64}}, Tt_paths_Temp::Vector{Vector{Float64}}; ZirconData::ZirconAgeData = ZirconAgeData())
+    time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, zircon_cumulativePDF  = compute_zircons_Ttpath(time_years::Vector{Vector{Float64}}, Tt_paths_Temp::Vector{Vector{Float64}}; ZirconData::ZirconAgeData = ZirconAgeData())
 
 This accepts Vector{Vector} as input for time and temperature of each Tt-path. Here, the length of the vector can be variable between different points.
 
@@ -193,10 +203,10 @@ function compute_zircons_Ttpath(time_years_vecs::Vector{Vector{_T}}, Tt_paths_Te
     time_years, Tt_paths_Temp = compute_zircons_convert_vecs2mat(time_years_vecs, Tt_paths_Temp_vecs)
 
     # call main routine
-    prob, ages_eruptible, number_zircons, T_av_time, T_sd_time = compute_zircons_Ttpath(time_years, Tt_paths_Temp, ZirconData=ZirconData)
+    time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, zircon_cumulativePDF = compute_zircons_Ttpath(time_years, Tt_paths_Temp, ZirconData=ZirconData)
 
     # return, including time_years
-    return time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time 
+    return time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, zircon_cumulativePDF
 
 end
 
@@ -209,7 +219,7 @@ This converts a vector with Vectors contain time and temperature path's to a sin
 function compute_zircons_convert_vecs2mat(time_years_vecs::Vector{Vector{_T}}, Tt_paths_Temp_vecs::Vector{Vector{_T}}) where _T
     
     # Create a single vector with the time values:
-    time_years = unique(reduce(vcat,unique(time_years_vecs))); 
+    time_years = sort(unique(reduce(vcat,unique(time_years_vecs)))); 
 
     # Add the vectors to an array with T values
     Tt_paths_mat = zeros(_T,length(time_years), length(Tt_paths_Temp_vecs))
@@ -259,7 +269,7 @@ function zircon_age_PDF(ages_eruptible::AbstractArray{_T,1}, number_zircons::Abs
 end
 
 """
-    time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average, time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time = compute_zircon_age_PDF(time_years_vecs::Vector{Vector}, Tt_paths_Temp_vecs::Vector{Vector}; ZirconData::ZirconAgeData = ZirconAgeData(), bandwidth=bandwidth, n_analyses=300)
+    time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average, time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, zircon_cumulativePDF  = compute_zircon_age_PDF(time_years_vecs::Vector{Vector}, Tt_paths_Temp_vecs::Vector{Vector}; ZirconData::ZirconAgeData = ZirconAgeData(), bandwidth=bandwidth, n_analyses=300)
 
 This computes the PDF (probability density function) with zircon age data from Vectors with Tt-paths	
 
@@ -267,12 +277,12 @@ This computes the PDF (probability density function) with zircon age data from V
 function compute_zircon_age_PDF(time_years_vecs::Vector{Vector{_T}}, Tt_paths_Temp_vecs::Vector{Vector{_T}}; ZirconData::ZirconAgeData = ZirconAgeData(), bandwidth=1e5, n_analyses=300) where _T
     
     # Compute the probability that a zircon of certain age is sampled:
-    time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time = compute_zircons_Ttpath(time_years_vecs, Tt_paths_Temp_vecs, ZirconData=ZirconData);
+    time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, zircon_cumulativePDF = compute_zircons_Ttpath(time_years_vecs, Tt_paths_Temp_vecs, ZirconData=ZirconData);
     
     # Use this to compute PDF curves: 
     time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average  = zircon_age_PDF(ages_eruptible, number_zircons, bandwidth=bandwidth, n_analyses=n_analyses, ZirconData=ZirconData)
 
-    return time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average, time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time
+    return time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average, time_years, prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, zircon_cumulativePDF 
 
 end
 

@@ -72,7 +72,7 @@ All geodynamic simulations require specifying material parameters, such as (nonl
 Some examples of where this is used:
 #### 2.1 Constant density, constant linear viscosity
 ```julia
-julia> Phase = SetMaterialParams(Name="Viscous Matrix", Phase=2,
+julia> MatParam = SetMaterialParams(Name="Viscous Matrix", Phase=2,
                                      Density   = ConstantDensity(),
                                      CreepLaws = LinearViscous(η=1e23Pa*s))
 Phase 2 : Viscous Matrix
@@ -85,7 +85,7 @@ Phase 2 : Viscous Matrix
 The same but with non-dimensionalization of all parameters:
 ```julia
 julia> CharDim = GEO_units(length=1000km, temperature=1000C, stress=10MPa, viscosity=1e20Pas);
-julia> Phase = SetMaterialParams(Name="Viscous Matrix", Phase=2, 
+julia> MatParam = SetMaterialParams(Name="Viscous Matrix", Phase=2, 
                                      Density   = ConstantDensity(),
                                      CreepLaws = LinearViscous(η=1e23Pa*s), CharDim=CharDim)
 Phase 2 : Viscous Matrix

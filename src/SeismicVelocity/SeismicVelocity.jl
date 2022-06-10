@@ -339,7 +339,7 @@ end
 
 
 """
-Vs_anel anelastic_correction(water::Int64, Vs0::Float64,P::Float64,T::Float64)
+        Vs_anel = anelastic_correction(water::Int64, Vs0::Float64,P::Float64,T::Float64)
 
 This routine computes a correction of S-wave velocity for anelasticity
 
@@ -354,7 +354,7 @@ Output:
 ====
 - `Vs_anel` : corrected S-wave velocity for anelasticity
 
-The routine uses the reduction formulation of karato (1993), using the quality factor formulation from Behn et al. (2009)
+The routine uses the reduction formulation of Karato (1993), using the quality factor formulation from Behn et al. (2009)
 
 
 References:
