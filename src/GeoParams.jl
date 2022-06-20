@@ -13,7 +13,7 @@ module GeoParams
 using Parameters        # helps setting default parameters in structures
 using Unitful           # Units
 using BibTeX            # references of creep laws
-using Requires          # To only add plotting routines if Plots is loaded
+using Requires          # To only add plotting routines if Plots is loaded 
 
 export
         @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
@@ -45,6 +45,11 @@ export compute_units
 include("MaterialParameters.jl")
 using .MaterialParameters
 export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo
+
+# Define Table output functions
+includ("Tables.jl")
+using .Tables
+export Phase2Dict, Dict2LatexTable
 
 # Phase Diagrams
 using .MaterialParameters.PhaseDiagrams

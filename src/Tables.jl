@@ -1,11 +1,19 @@
-# using GeoParams, Unidecode
+using GeoParams: AbstractMaterialParam
+using Unidecode
+
 # was tested with:
 # TestPh = (SetMaterialParams(Name="Viscous Matrix", Phase=1, Density=ConstantDensity(),CreepLaws = SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)")),
 #           SetMaterialParams(Name="Viscous Sinker", Phase=2, Density= PT_Density(),CreepLaws = LinearViscous(η=1e21Pa*s)),
 #           SetMaterialParams(Name="Viscous Bottom", Phase=3, Density= PT_Density(),CreepLaws = SetDislocationCreep("Diabase | Caristan (1982)")));
-#
-#
-#=
+
+
+"""
+Phase2Dict() puts all parameters of a phase in a dict.
+Dict2LatexTable() writes .tex file with all parameters in a table.
+
+"""
+
+
 function Phase2Dict(s)
     # Dict has Key with Fieldname and Value with Tuple(value, symbol, unit)
     fds = Dict{String, Tuple{String, String, String, String}}()
@@ -50,8 +58,6 @@ function Phase2Dict(s)
     end
     return fds
 end
-
-
 
 
 function Dict2LatexTable(d::Dict)
@@ -143,4 +149,4 @@ function Dict2LatexTable(d::Dict)
     # Writes result into a .tex file
     write("MaterialParameters.tex", Table);
 end
-=#
+
