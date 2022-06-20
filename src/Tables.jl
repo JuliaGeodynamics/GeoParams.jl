@@ -15,7 +15,7 @@ export Phase2Dict,
 
 """
 Phase2Dict() puts all parameters of a phase in a dict.
-Dict2LatexTable() writes .tex file with all parameters in a table.
+Dict2LatexTable() writes .tex file with all parameters from Phase2Dict() output in a table.
 
 """
 
@@ -101,8 +101,8 @@ function Dict2LatexTable(d::Dict)
 
     # Latex formating and comment
     Table *= "\\\\\n";
-    Table *= " \\hline \n";
-    Table *= "    % Table body\n";
+    Table *= "\\hline \n";
+    Table *= "% Table body\n";
 
     # Get vector with all unique symbols without phasenames
     for key in dictkeys
