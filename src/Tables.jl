@@ -1,6 +1,12 @@
+module Tables
+
 using GeoParams: AbstractMaterialParam
 using Unidecode
+using ..Units
 
+export Phase2Dict,
+       Dict2LatexTable
+       
 # was tested with:
 # TestPh = (SetMaterialParams(Name="Viscous Matrix", Phase=1, Density=ConstantDensity(),CreepLaws = SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)")),
 #           SetMaterialParams(Name="Viscous Sinker", Phase=2, Density= PT_Density(),CreepLaws = LinearViscous(η=1e21Pa*s)),

@@ -47,7 +47,7 @@ using .MaterialParameters
 export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo
 
 # Define Table output functions
-includ("Tables.jl")
+include("Tables.jl")
 using .Tables
 export Phase2Dict, Dict2LatexTable
 
