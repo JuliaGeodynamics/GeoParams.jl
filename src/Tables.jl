@@ -12,7 +12,7 @@ export Phase2Dict,
 #           SetMaterialParams(Name="Viscous Sinker", Phase=2, Density= PT_Density(),CreepLaws = LinearViscous(η=1e21Pa*s)),
 #           SetMaterialParams(Name="Viscous Bottom", Phase=3, Density= PT_Density(),CreepLaws = SetDislocationCreep("Diabase | Caristan (1982)")));
 
-
+,
 """
 Phase2Dict() puts all parameters of a phase in a dict.
 Dict2LatexTable() writes .tex file with all parameters from Phase2Dict() output in a table.
@@ -36,6 +36,15 @@ function Phase2Dict(s)
                 for j = 1:length(getproperty(s[i], label))
                     a = getproperty(s[i], label)
                     varnames = propertynames(a[j])
+                    law = string(typeof(a[1]))
+                    flowlaw = ""
+                    if occursin("Disl", law)
+                        flowlaw = "DislCreep"
+                    elseif occursin("Diff", law)
+                        flowlaw = "DiffCreep"
+                    elseif occursin("LinearViscous", law)
+                        flowlaw = "LinVisc"
+                    end
                     # Goes through all variables in a field component
                     for var in varnames
                         b = getproperty(a[j], var)
@@ -50,7 +59,7 @@ function Phase2Dict(s)
                                 latexvar = string("$var")
                             end
                             # Put value, LaTex name and units in a Dict
-                            fds["$var $label $i"] = (value, latexvar, unit, "$i")
+                            fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i")
                         end
                         k += 1
                     end
@@ -84,6 +93,7 @@ function Dict2LatexTable(d::Dict)
     Table  = "\\documentclass{article}\n";
     Table *= "\\usepackage{booktabs}\n";
     Table *= "\\usepackage{graphicx}\n";
+    Table *= "\\usepackage{multirow}\n";
     Table *= "\\usepackage[utf8]{inputenc}\n";
     Table *= "\\begin{document}\n";
     Table *= "\\begin{table}[hbt]\n";
@@ -143,9 +153,31 @@ function Dict2LatexTable(d::Dict)
         Table *= " \\\\\n";
     end
 
+    # Adds the used flow law equations after all parameters
+    dislhit = 0
+    diffhit = 0
+    linvischit = 0
+    for i = 1:length(dictpairs)
+        if dictpairs[i].second[3] == "DislCreep" && dislhit == 0
+            Table *= "\\rule[-5pt]{-3pt}{20pt} Dislocation Creep: & " * "\\multicolumn{4}{l}{\$ \\dot{\\gamma} = A \\sigma^n f_{H2O}^r \\exp \\left(-\\frac{E+PV}{RT} \\right)\$}"
+            Table *= " \\\\\n";
+            dislhit = 1
+        end
+        if dictpairs[i].second[3] == "DiffCreep" && diffhit == 0
+            Table *= "\\rule[-5pt]{-3pt}{20pt} Diffusion Creep: & " * "\\multicolumn{4}{l}{\$ \\dot{\\gamma} = A \\sigma^n d^p f_{H2O}^r \\exp \\left (-\\frac{E+PV}{RT} \\right)\$}"
+            Table *= " \\\\\n";
+            diffhit = 1
+        end
+        if dictpairs[i].second[3] == "LinVisc" && linvischit == 0
+            Table *= "\\rule[-5pt]{-3pt}{20pt} Linear Viscous: & " * "\\multicolumn{4}{l}{\$ \\eta  = \\frac{\\sigma_{II}}{2\\dot{\\varepsilon_{II}}}\$}"
+            Table *= " \\\\\n";
+            linvischit = 1
+        end
+    end 
+
     # finishes latex table, closes all open formats
-    Table *= "\\toprule[1pt]\n";
     Table *= "\\midrule[0.3pt]\n";
+    Table *= "\\bottomrule[1pt]\n";
     Table *= "\\end{tabular}}\n";
     Table *= "\\caption{Parameter table}\n"
     Table *= "\\label{tab:para_table}\n";
