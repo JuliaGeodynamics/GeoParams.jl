@@ -19,7 +19,7 @@ time_years 		= 	Tt_paths[:,1]./s2y							# time fron seconds to years
 Tt_paths_Temp 	= 	Tt_paths[:,2:end]	
 	
 # first: test case in which we provide the Tt-path as matrix 
-prob, ages_eruptible, number_zircons, T_av_time, T_sd_time = compute_zircons_Ttpath(time_years, Tt_paths_Temp, ZirconData=ZirconData)
+prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, cumPDF = compute_zircons_Ttpath(time_years, Tt_paths_Temp, ZirconData=ZirconData)
 time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average  = zircon_age_PDF(ages_eruptible, number_zircons, bandwidth=1e5, n_analyses=n_analyses, ZirconData=ZirconData)
 
 # add tests to check that results are consistent
@@ -43,12 +43,13 @@ for i=1:size(Tt_paths_Temp,2)
 end
 
 # the calling routine is the same, but we get one additional output vector:
-time_years1, prob1, ages_eruptible1, number_zircons1, T_av_time1, T_sd_time1  = compute_zircons_Ttpath(time_years_vecs, Tt_paths_Temp_vecs)
+time_years1, prob1, ages_eruptible1, number_zircons1, T_av_time1, T_sd_time1, cumPDF1  = compute_zircons_Ttpath(time_years_vecs, Tt_paths_Temp_vecs)
 
 # add tests to check that results are consistent
 @test sum(number_zircons1[1:200]) 		== 67333.0
 @test sum(number_zircons1)				== 5.886208e6
 @test  prob1[100] 						≈  1.868775279432871e-5
+@test cumPDF[100] ==  cumPDF1[100]
 
 
 # Do the same but with a single routine that also returns the PDF's 
