@@ -201,6 +201,51 @@ function computeViscosity_εII(
     return η
 end
 
+"""
+    computeViscosity_εII(v::NTuple{N, AbstractConstitutiveLaw}, εII, args)
+    
+Compute viscosity given strain rate 2nd invariant
+"""
+function computeViscosity_εII!(
+    η::AbstractArray{T,nDim},
+    v::NTuple{N,AbstractConstitutiveLaw}, 
+    εII::AbstractArray{T,nDim}, 
+    args; 
+    tol=1e-6, 
+    verbose=false,
+    cutoff=(1e16, 1e25),
+) where {N}
+    for I in eachindex(τII)
+        argsi = (; zip(keys(args), getindex.(values(args), I))...)
+        τII = local_iterations_εII(v, εII[I], argsi; tol=tol, verbose=verbose)
+        ηi = 0.5 * τII / εII[I]
+        η[I] = max(min(cutoff[2], ηi), cutoff[1])
+    end
+    return nothing
+end
+
+@inline function computeViscosity_τII!(
+    η::AbstractArray{T,nDim},
+    v::NTuple{N,AbstractConstitutiveLaw},
+    τII::AbstractArray{T,nDim},
+    args;
+    cutoff=(1e16, 1e25),
+) where {T,nDim,N}
+    Threads.@threads for I in eachindex(τII)
+        η[I] = max(
+            cutoff[1],
+            min(
+                cutoff[2],
+                computeViscosity(
+                    computeViscosity_τII,
+                    v,
+                    τII[I],
+                    (; zip(keys(args), getindex.(values(args), I))...),
+                ),
+            ),
+        )
+    end
+end
 ## BASED ON DEVIATORIC STRESS
 
 """
