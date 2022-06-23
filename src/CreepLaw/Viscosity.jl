@@ -137,9 +137,19 @@ Compute deviatoric stress invariant given strain rate 2nd invariant
 
 """
 function compute_τII(
-    v::NTuple{N,AbstractConstitutiveLaw}, εII, args; tol=1e-6, verbose=false
+    v::NTuple{N,AbstractConstitutiveLaw},
+    εII,
+    args;
+    tol=1e-6,
+    verbose=false,
 ) where {N}
-    τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose)
+    τII = local_iterations_εII(
+        v,
+        εII,
+        args;
+        tol=tol,
+        verbose=verbose,
+    )
     return τII
 end
 
@@ -179,9 +189,11 @@ end
     
 Compute viscosity given strain rate 2nd invariant for a given rheological element
 """
-@inline function computeViscosity_εII(v::AbstractConstitutiveLaw, εII, args)
+@inline function computeViscosity_εII(v::AbstractConstitutiveLaw, εII, args; cutoff=(1e16, 1e25))
+    lower_cutoff, upper_cutoff = cutoff    
     τII = compute_τII(v, εII, args)
     η = 0.5 * τII / εII
+    η = max(min(lower_cutoff, ηi), upper_cutoff)
     return η
 end
 
@@ -194,10 +206,23 @@ computeViscosity_εII(v::LinearViscous, args...) = v.η.val
 Compute viscosity given strain rate 2nd invariant
 """
 function computeViscosity_εII(
-    v::NTuple{N,AbstractConstitutiveLaw}, εII, args; tol=1e-6, verbose=false
+    v::NTuple{N,AbstractConstitutiveLaw},
+    εII,
+    args;
+    tol=1e-6,
+    verbose=false,
+    cutoff=(1e16, 1e25),
 ) where {N}
-    τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose)
+    lower_cutoff, upper_cutoff = cutoff
+    τII = local_iterations_εII(
+        v,
+        εII,
+        args;
+        tol=tol,
+        verbose=verbose,
+    )
     η = 0.5 * τII / εII
+    η = max(min(lower_cutoff, ηi), upper_cutoff)
     return η
 end
 
@@ -208,18 +233,25 @@ Compute viscosity given strain rate 2nd invariant
 """
 function computeViscosity_εII!(
     η::AbstractArray{T,nDim},
-    v::NTuple{N,AbstractConstitutiveLaw}, 
-    εII::AbstractArray{T,nDim}, 
-    args; 
-    tol=1e-6, 
+    v::NTuple{N,AbstractConstitutiveLaw},
+    εII::AbstractArray{T,nDim},
+    args;
+    tol=1e-6,
     verbose=false,
     cutoff=(1e16, 1e25),
-) where {N, nDim, T}
+) where {N,nDim,T}
+    lower_cutoff, upper_cutoff = cutoff
     for I in eachindex(εII)
         argsi = (; zip(keys(args), getindex.(values(args), I))...)
-        τII = local_iterations_εII(v, εII[I], argsi; tol=tol, verbose=verbose)
+        τII = local_iterations_εII(
+            v,
+            εII[I],
+            argsi;
+            tol=tol,
+            verbose=verbose,
+        )
         ηi = 0.5 * τII / εII[I]
-        η[I] = max(min(cutoff[2], ηi), cutoff[1])
+        η[I] = max(min(lower_cutoff, ηi), upper_cutoff)
     end
     return nothing
 end
@@ -253,9 +285,11 @@ end
     
 Compute viscosity given stress 2nd invariant for a given rheological element
 """
-@inline function computeViscosity_τII(v::AbstractConstitutiveLaw, τII, args)
+@inline function computeViscosity_τII(v::AbstractConstitutiveLaw, τII, args; cutoff=(1e16, 1e25))
+    lower_cutoff, upper_cutoff = cutoff
     εII = compute_εII(v, τII, args)
     η = 0.5 * τII / εII
+    η = max(min(η, upper_cutoff), lower_cutoff)
     return η
 end
 
@@ -286,29 +320,6 @@ function computeViscosity_τII(
     return η
 end
 
-@inline function computeViscosity_τII!(
-    η::AbstractArray{T,nDim},
-    v::NTuple{N,AbstractConstitutiveLaw},
-    τII::AbstractArray{T,nDim},
-    args;
-    cutoff=(1e16, 1e25),
-) where {T,nDim,N}
-    Threads.@threads for I in eachindex(τII)
-        η[I] = max(
-            cutoff[1],
-            min(
-                cutoff[2],
-                computeViscosity(
-                    computeViscosity_τII,
-                    v,
-                    τII[I],
-                    (; zip(keys(args), getindex.(values(args), I))...),
-                ),
-            ),
-        )
-    end
-end
-
 ## LOCAL ITERATIONS TO COMPUTE VISCOSITY
 
 """
@@ -316,7 +327,11 @@ end
 Performs local iterations versus stress for a given strain rate 
 """
 @inline function local_iterations_εII(
-    v::NTuple{N,AbstractConstitutiveLaw}, εII, args; tol=1e-6, verbose=false
+    v::NTuple{N,AbstractConstitutiveLaw},
+    εII,
+    args;
+    tol=1e-6,
+    verbose=false,
 ) where {N}
     # Initial guess
     η_ve = computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess
