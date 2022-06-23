@@ -215,7 +215,7 @@ function computeViscosity_εII!(
     verbose=false,
     cutoff=(1e16, 1e25),
 ) where {N, nDim, T}
-    for I in eachindex(τII)
+    for I in eachindex(εII)
         argsi = (; zip(keys(args), getindex.(values(args), I))...)
         τII = local_iterations_εII(v, εII[I], argsi; tol=tol, verbose=verbose)
         ηi = 0.5 * τII / εII[I]
