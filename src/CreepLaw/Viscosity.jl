@@ -320,7 +320,6 @@ Performs local iterations versus stress for a given strain rate
 ) where {N}
     # Initial guess
     η_ve = computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess
-    @show η_ve
     τII = 2 * η_ve * εII # deviatoric stress guess
 
     # Local Iterations
