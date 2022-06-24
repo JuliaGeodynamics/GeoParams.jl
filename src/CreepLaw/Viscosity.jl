@@ -193,7 +193,7 @@ Compute viscosity given strain rate 2nd invariant for a given rheological elemen
     lower_cutoff, upper_cutoff = cutoff    
     τII = compute_τII(v, εII, args)
     η = 0.5 * τII / εII
-    η = max(min(lower_cutoff, η), upper_cutoff)
+    η = max(min(upper_cutoff, η), lower_cutoff)
     return η
 end
 
@@ -222,7 +222,7 @@ function computeViscosity_εII(
         verbose=verbose,
     )
     η = 0.5 * τII / εII
-    η = max(min(lower_cutoff, η), upper_cutoff)
+    η = max(min(upper_cutoff, η), lower_cutoff)
     return η
 end
 
