@@ -146,7 +146,7 @@ function PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing)
     Struct_Fields = ComputeTotalField_withMeltFraction(:VpVs,:meltVpVs,:rockVpVs,:meltFrac, Struct_Fields, Struct_Fieldnames) 
     
     # Store in phase diagram structure
-    PD_data = PhaseDiagram_LookupTable("Perple_X/LaMEM", header_text, fname, Struct_Fields... )
+    PD_data = PhaseDiagram_LookupTable("Perple_X/MAGEMin/LaMEM", header_text, fname, Struct_Fields... )
 
     return PD_data
 end
