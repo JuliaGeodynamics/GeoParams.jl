@@ -141,10 +141,9 @@ function PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing)
 
     # Some fields have melt and solid part; we can reconstruct the total part as an arithmetic average:
     Struct_Fields = ComputeTotalField_withMeltFraction(:Rho, :meltRho, :rockRho, :meltFrac, Struct_Fields, Struct_Fieldnames) 
-    @show Struct_Fieldnames
     Struct_Fields = ComputeTotalField_withMeltFraction(:Vp,  :meltVp,  :rockVp,  :meltFrac, Struct_Fields, Struct_Fieldnames) 
-    #Struct_Fields = ComputeTotalField_withMeltFraction(:Vs,  :meltVs,  :rockVs,  :meltFrac, Struct_Fields, Struct_Fieldnames) 
-    #Struct_Fields = ComputeTotalField_withMeltFraction(:VpVs,:meltVpVs,:rockVpVs,:meltFrac, Struct_Fields, Struct_Fieldnames) 
+    Struct_Fields = ComputeTotalField_withMeltFraction(:Vs,  :meltVs,  :rockVs,  :meltFrac, Struct_Fields, Struct_Fieldnames) 
+    Struct_Fields = ComputeTotalField_withMeltFraction(:VpVs,:meltVpVs,:rockVpVs,:meltFrac, Struct_Fields, Struct_Fieldnames) 
     
     # Store in phase diagram structure
     PD_data = PhaseDiagram_LookupTable("Perple_X/LaMEM", header_text, fname, Struct_Fields... )
