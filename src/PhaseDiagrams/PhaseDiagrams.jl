@@ -141,9 +141,10 @@ function PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing)
 
     # Some fields have melt and solid part; we can reconstruct the total part as an arithmetic average:
     Struct_Fields = ComputeTotalField_withMeltFraction(:Rho, :meltRho, :rockRho, :meltFrac, Struct_Fields, Struct_Fieldnames) 
+    @show Struct_Fieldnames
     Struct_Fields = ComputeTotalField_withMeltFraction(:Vp,  :meltVp,  :rockVp,  :meltFrac, Struct_Fields, Struct_Fieldnames) 
-    Struct_Fields = ComputeTotalField_withMeltFraction(:Vs,  :meltVs,  :rockVs,  :meltFrac, Struct_Fields, Struct_Fieldnames) 
-    Struct_Fields = ComputeTotalField_withMeltFraction(:VpVs,:meltVpVs,:rockVpVs,:meltFrac, Struct_Fields, Struct_Fieldnames) 
+    #Struct_Fields = ComputeTotalField_withMeltFraction(:Vs,  :meltVs,  :rockVs,  :meltFrac, Struct_Fields, Struct_Fieldnames) 
+    #Struct_Fields = ComputeTotalField_withMeltFraction(:VpVs,:meltVpVs,:rockVpVs,:meltFrac, Struct_Fields, Struct_Fieldnames) 
     
     # Store in phase diagram structure
     PD_data = PhaseDiagram_LookupTable("Perple_X/LaMEM", header_text, fname, Struct_Fields... )
@@ -170,8 +171,9 @@ function show(io::IO, d::PhaseDiagram_LookupTable)
         if !isnothing(getfield(d,lst[i]))
             if i==4
                 str = "                      fields  :   :$(lst[i]),"
+            else
+                str = str*" :$(lst[i]),"
             end
-            str = str*" :$(lst[i]),"
             if mod( (i-3),5)==0
                 str = str[1:end-1]
                 println(io, str) 
@@ -217,14 +219,12 @@ function ComputeTotalField_withMeltFraction(totalData::Symbol, meltData::Symbol,
     ind_meltData  = findall(Struct_Fieldnames .== meltData )
     ind_solidData = findall(Struct_Fieldnames .== solidData)    
     ind_meltFrac  = findall(Struct_Fieldnames .== meltFrac )
-
     # extract arrays from interpolation objects
     if  (length(ind_totalData)>0) & (length(ind_meltData)>0) & 
         (length(ind_solidData)>0) & (length(ind_meltFrac)>0) &
-        !(isnothing(Struct_Fields[ind_meltFrac ])) & 
-        !(isnothing(Struct_Fields[ind_solidData])) &
-        !(isnothing(Struct_Fields[ind_meltData ]))
-
+        !(isnothing(Struct_Fields[ind_meltFrac[1] ])) & 
+        !(isnothing(Struct_Fields[ind_solidData[1]])) &
+        !(isnothing(Struct_Fields[ind_meltData[1] ]))
         if Struct_Fields[ind_meltFrac[1]]!=nothing
             ϕ = Struct_Fields[ind_meltFrac[1] ].itp.coefs      # melt fraction
             S = Struct_Fields[ind_solidData[1]].itp.coefs      # solid property
@@ -248,7 +248,6 @@ function ComputeTotalField_withMeltFraction(totalData::Symbol, meltData::Symbol,
             Struct_Fields[ind_totalData[1]] = S
         
         end
-
     end
     
     return Struct_Fields
