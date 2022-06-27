@@ -1,24 +1,20 @@
 # Various helper functions (mosty for internal use)
 
 # Finds index in an allocation-free manner
-function find_ind(x::NTuple{N,_I}, k::_I) where {N, _I<:Integer}
-    @inbounds for i in 1:N
-        if x[i] == k
-            return i
-        end
+@generated function find_ind(x::NTuple{N, Integer}, k::Integer) where {N}
+    quote
+        Base.Cartesian.@nexprs $N i -> x[i] == k && return i
+        return 0
     end
-    return 0
 end
 
 # Find max element in a tuple
-function find_max_tuple(t::NTuple{N,T}) where {N,T}
-    max = t[1]
-    @inbounds for i in 2:N
-        if t[i] > max
-            max = t[i]
-        end
+@generated function find_max_tuple(x::NTuple{N,T}) where {N,T}
+    quote
+        max = x[1]
+        Base.Cartesian.@nexprs $N i -> max = (i > 1 && x[i] > max) ? x[i] : max
+        return max
     end
-    max
 end
 
 # Find inner tuple of maximum length
@@ -27,7 +23,7 @@ function max_length_tuple(t::NTuple{N, Tuple}) where N
 end
 
 # broadcast getindex() to NamedTuples
-function ntuple_idx(args::NamedTuple, I::Integer...)
+function ntuple_idx(args::NamedTuple, I::Vararg{Integer,N}) where N
     k = keys(args)
     v = getindex.(values(args), Tuple(I)...)
     return (; zip(k, v)...)
