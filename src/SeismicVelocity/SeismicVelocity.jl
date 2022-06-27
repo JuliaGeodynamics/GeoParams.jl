@@ -231,17 +231,17 @@ function melt_correction(   Kb_L::_T,
                             Vp0::_T,
                             Vs0::_T,
                             ϕ::_T,
-                            α::_T) where _T
+                            α::_T) where _T<:Number
 
     # Takei 1998: Approximation Formulae for Bulk and Shear Moduli of Isotropic Solid Skeleton
-    ν       = 0.25;                         # poisson ratio
+    ν       = 0.25                         # poisson ratio
 
-    aij =[  0.318 6.780 57.560 0.182;
-            0.164 4.290 26.658 0.464;
-            1.549 4.814 8.777 -0.290   ];   #
+    aij =@SMatrix [ 0.318 6.780 57.560 0.182
+                    0.164 4.290 26.658 0.464
+                    1.549 4.814 8.777 -0.290   ]  #
 
-    bij =[  -0.3238 0.2341;
-            -0.1819 0.5103  ];
+    bij = @SMatrix [  -0.3238 0.2341
+                      -0.1819 0.5103  ]
 
     a = zeros(3);
     for i=1:3
@@ -278,8 +278,8 @@ function melt_correction(   Kb_L::_T,
     γ       = Ks_S/Kb_S;
 
     # Formulation of the fraction reduction of P-wave and S-wave
-    ΔVp     = (((((β -1.0)*ΛK) / ((β-1.0) + ΛK) + 4.0/3.0*γ*ΛG ) / ( 1.0 + 4.0/3.0*γ)) - (1.0 - ρL/ρS) )*(ϕ/2.0);
-    ΔVs     = ( ΛG - (1.0 - ρL/ρS) )*(ϕ/2.0);
+    ΔVp     = (((((β -1.0)*ΛK) / ((β-1.0) + ΛK) + 4.0/3.0*γ*ΛG ) / ( 1.0 + 4.0/3.0*γ)) - (1.0 - ρL/ρS) )*(ϕ*0.5);
+    ΔVs     = ( ΛG - (1.0 - ρL/ρS) )*(ϕ*0.5);
 
     # get the correction values
     Vp_cor  = Vp0 - ΔVp*Vp0;
