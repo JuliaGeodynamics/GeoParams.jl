@@ -236,12 +236,12 @@ function melt_correction(   Kb_L::_T,
     # Takei 1998: Approximation Formulae for Bulk and Shear Moduli of Isotropic Solid Skeleton
     ν       = 0.25                         # poisson ratio
 
-    aij =@SMatrix [ 0.318 6.780 57.560 0.182
-                    0.164 4.290 26.658 0.464
-                    1.549 4.814 8.777 -0.290   ]  #
+    aij = [ 0.318 6.780 57.560 0.182
+            0.164 4.290 26.658 0.464
+            1.549 4.814 8.777 -0.290   ]  #
 
-    bij = @SMatrix [  -0.3238 0.2341
-                      -0.1819 0.5103  ]
+    bij = [  -0.3238 0.2341
+             -0.1819 0.5103  ]
 
     a = zeros(3);
     for i=1:3
