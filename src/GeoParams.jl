@@ -143,6 +143,7 @@ export  ZirconAgeData,
 using .MaterialParameters.SeismicVelocity
 export compute_pwave_velocity,          compute_swave_velocity,
         compute_pwave_velocity!,        compute_swave_velocity!,
+        compute_pwave_swave_ratio,      compute_pwave_swave_ratio!,
         ConstantSeismicVelocity,        anelastic_correction,
         melt_correction
         
