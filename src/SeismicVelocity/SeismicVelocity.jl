@@ -55,6 +55,9 @@ function compute_pwave_velocity(s::ConstantSeismicVelocity{_T}; kwargs...) where
     return Vp
 end
 
+compute_pwave_velocity(s::ConstantSeismicVelocity{_T}, kwargs) where _T = compute_pwave_velocity(s; kwargs...) 
+
+
 #function (s::ConstantSeismicVelocity)(; kwargs...)
 #function compute_pwave_velocity(s::ConstantSeismicVelocity; kwargs...)
 #    @unpack Vs   = s
@@ -72,6 +75,10 @@ function compute_pwave_velocity!(Vp_array::AbstractArray{_T}, s::ConstantSeismic
     end
     return nothing
 end
+
+compute_pwave_velocity!(Vp_array::AbstractArray{_T}, s::ConstantSeismicVelocity{_T}, args) where _T = 
+    compute_pwave_velocity!(Vp_array, s; args) 
+
 
 function compute_swave_velocity!(Vs_array::AbstractArray{_T}, s::ConstantSeismicVelocity{_T}; kwargs...) where _T
     Threads.@threads for i in eachindex(Vs_array)
@@ -142,11 +149,10 @@ end
 # Computational routines needed for computations with the MaterialParams structure 
 
 function compute_pwave_velocity(s::AbstractMaterialParamsStruct, args)
-    @show s args
     if isempty(s.SeismicVelocity) #in case there is a phase with no melting parametrization
         return zero(typeof(args).types[1])
     else
-        return compute_pwave_velocity!(s.SeismicVelocity[1], args)
+        return compute_pwave_velocity(s.SeismicVelocity[1], args)
     end
 end
 
@@ -154,14 +160,15 @@ function compute_swave_velocity(s::AbstractMaterialParamsStruct, args)
     if isempty(s.SeismicVelocity) #in case there is a phase with no melting parametrization
         return zero(typeof(args).types[1])
     else
-        return compute_swave_velocity!(s.SeismicVelocity[1], args)
+        return compute_swave_velocity(s.SeismicVelocity[1], args)
     end
 end
 
 #-------------------------------------------------------------------------------------------------------------
 
+
 function compute_pwave_velocity!(args...) 
-    @show typeof.(args)
+   
     compute_param!(compute_pwave_velocity, args...) #Multiple dispatch to rest of routines found in Computations.jl
 end
 
@@ -169,18 +176,18 @@ compute_pwave_velocity(args...)  = compute_param(compute_pwave_velocity, args...
 #compute_swave_velocity!(args...) = compute_param!(compute_swave_velocity, args...) #Multiple dispatch to rest of routines found in Computations.jl
 #compute_swave_velocity(args...)  = compute_param(compute_swave_velocity, args...)
 
-for myType in (
-    :ConstantSeismicVelocity,
-)
-    @eval begin
-        #(p::$(myType))(args) = p(; args...)
-        compute_pwave_velocity(p::$(myType), args) = compute_pwave_velocity(p::$(myType); args...)
-        function compute_pwave_velocity!(Vp::AbstractArray, p::$(myType), args)
-            return compute_pwave_velocity!(Vp, p; args...)
-        end
+# for myType in (
+#     :ConstantSeismicVelocity,
+# )
+#     @eval begin
+#         #(p::$(myType))(args) = p(; args...)
+#         compute_pwave_velocity(p::$(myType), args) = compute_pwave_velocity(p::$(myType); args...)
+#         function compute_pwave_velocity!(Vp::AbstractArray, p::$(myType), args)
+#             return compute_pwave_velocity!(Vp, p; args...)
+#         end
 
-    end
-end
+#     end
+# end
 
 
 """
