@@ -26,7 +26,7 @@ using GeoParams
                         SeismicVelocity  = ConstantSeismicVelocity());
 
     MatParam[2] =   SetMaterialParams(Name="Crust", Phase=2,
-                        SeismicVelocity  = ConstantSeismicVelocity(Vp=10km/s));
+                        SeismicVelocity  = PerpleX_LaMEM_Diagram("test_data/Peridotite.in"))
 
     Mat_tup = Tuple(MatParam)
 
@@ -41,12 +41,13 @@ using GeoParams
     T  =  ones(size(Phases))*1500;
     P  =  zeros(size(Phases));
 
-    args=(;T=T);
+    args=(;T=T, P=P);
     compute_pwave_velocity!(Vp, Mat_tup, Phases, args)
     compute_swave_velocity!(Vs, Mat_tup, Phases, args)
     @test Vp[1] == 8.1
-
-
+    @test Vp[1,1,end] ≈ 6.5290725233303935
+    @test Vs[1] == 4.5
+    @test Vs[1,1,end] ≈ 2.4874400647487658
 
 
 
