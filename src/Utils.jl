@@ -35,8 +35,11 @@ end
 
 # fast exponential
 function fastpow(x::Number, n::Integer)
-    n > 3 && return exp(log(x)*n)
+    n > 3 && x > 0 && return exp(log(x)*n)
     return x^n
 end
 
-fastpow(x::Number, n::AbstractFloat) =  exp(log(x)*n)
+function fastpow(x::Number, n::AbstractFloat) 
+    x > 0 && return exp(log(x)*n)
+    return x^n
+end
