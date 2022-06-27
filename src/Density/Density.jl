@@ -167,32 +167,32 @@ end
 (s::Compressible_Density)(args) = s(; args...)
 compute_density(s::Compressible_Density, args) = s(; args...)
 
-function compute_density!(ρ::_T, s::Compressible_Density{_T}; P::_T, kwargs...) where _T
-    if T isa Quantity
-        @unpack_units ρ0, β, P0 = s
-    else
-        @unpack_val ρ0, β, P0 = s
-    end
+# function compute_density!(ρ::_T, s::Compressible_Density{_T}; P::_T, kwargs...) where _T
+#     if T isa Quantity
+#         @unpack_units ρ0, β, P0 = s
+#     else
+#         @unpack_val ρ0, β, P0 = s
+#     end
 
-    return ρ0*exp( β*(P-P0) )
-end
+#     return ρ0*exp( β*(P-P0) )
+# end
 
-compute_density!(ρ::_T, s::Compressible_Density{_T}, P::_T, kwargs...) where _T = compute_density!(ρ, s; P, kwargs)
+# compute_density!(ρ::_T, s::Compressible_Density{_T}, P::_T, kwargs...) where _T = compute_density!(ρ, s; P, kwargs)
 
-function compute_density!(ρ::AbstractArray, s::Compressible_Density{_T}; P::_T, kwargs...) where _T
-    if P isa Quantity
-        @unpack_units ρ0, β, P0 = s
-    else
-        @unpack_val ρ0, β, P0 = s
-    end
+# function compute_density!(ρ::AbstractArray, s::Compressible_Density{_T}; P::_T, kwargs...) where _T
+#     if P isa Quantity
+#         @unpack_units ρ0, β, P0 = s
+#     else
+#         @unpack_val ρ0, β, P0 = s
+#     end
     
-    for i in eachindex(P)
-        @inbounds ρ[i] = ρ0*exp(β*(P[i]-P0))
-    end
-    return nothing
-end
+#     for i in eachindex(P)
+#         @inbounds ρ[i] = ρ0*exp(β*(P[i]-P0))
+#     end
+#     return nothing
+# end
 
-compute_density!(ρ::AbstractArray, s::Compressible_Density{_T}, args) where _T = compute_density!(ρ, s; args...)
+# compute_density!(ρ::AbstractArray, s::Compressible_Density{_T}, args) where _T = compute_density!(ρ, s; args...)
 
 # Print info 
 function show(io::IO, g::Compressible_Density)  
@@ -221,12 +221,12 @@ compute_density(s::PhaseDiagram_LookupTable, args) = compute_density(s; args...)
     compute_density!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
 In-place computation of density as a function of `T,P`, in case we are using a lookup table.    
 """
-function compute_density!(rho::AbstractArray{_T}, s::PhaseDiagram_LookupTable; P::AbstractArray{_T}=[zero(_T)],T::AbstractArray{_T}=[zero(_T)], kwargs...) where _T
-    rho[:] = s.Rho.(T,P)
-    return nothing
-end
+# function compute_density!(rho::AbstractArray{_T}, s::PhaseDiagram_LookupTable; P::AbstractArray{_T}=[zero(_T)],T::AbstractArray{_T}=[zero(_T)], kwargs...) where _T
+#     rho[:] = s.Rho.(T,P)
+#     return nothing
+# end
 
-compute_density!(rho::AbstractArray, s::PhaseDiagram_LookupTable, args) = compute_density!(rho, s, args...)
+# compute_density!(rho::AbstractArray, s::PhaseDiagram_LookupTable, args) = compute_density!(rho, s, args...)
 
 #------------------------------------------------------------------------------------------------------------------#
 # Computational routines needed for computations with the MaterialParams structure 
@@ -236,7 +236,6 @@ compute_density!(rho::AbstractArray, s::PhaseDiagram_LookupTable, args) = comput
 #     return compute_density(s.Density[1], args...)
 # end
 function compute_density(s::AbstractMaterialParamsStruct, args)
-    # return s.Density[1](args)
     return compute_density(s.Density[1], args)
 end
 
