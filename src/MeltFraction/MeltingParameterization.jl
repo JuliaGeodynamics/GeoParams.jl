@@ -79,12 +79,12 @@ function (p::MeltingParam_Caricchi)(; T, kwargs...)
     return 1.0 / (1.0 + exp(θ))
 end
 
-function compute_meltfraction!(ϕ::AbstractArray, p::MeltingParam_Caricchi; T, kwargs...)
-    for i in eachindex(T)
-        @inbounds ϕ[i] = p(; T=T[i])
-    end
-    return nothing
-end
+# function compute_meltfraction!(ϕ::AbstractArray, p::MeltingParam_Caricchi; T, kwargs...)
+#     for i in eachindex(T)
+#         @inbounds ϕ[i] = p(; T=T[i])
+#     end
+#     return nothing
+# end
 
 function compute_dϕdT(p::MeltingParam_Caricchi; T, kwargs...)
     if T isa Quantity
@@ -96,14 +96,6 @@ function compute_dϕdT(p::MeltingParam_Caricchi; T, kwargs...)
     dϕdT = exp((a + c - T) / b) / (b * ((1.0 + exp((a + c - T) / b))^2))
 
     return dϕdT
-end
-
-function compute_dϕdT!(dϕdT::AbstractArray, p::MeltingParam_Caricchi; T, kwargs...)
-    for i in eachindex(T)
-        @inbounds dϕdT[i] = compute_dϕdT(p, T=T[i])
-    end
-
-    return nothing
 end
 
 # Print info 
@@ -173,16 +165,6 @@ function (p::MeltingParam_5thOrder)(; T, kwargs...)
     return ϕ
 end
 
-function compute_meltfraction!(
-    ϕ::AbstractArray, p::MeltingParam_5thOrder; T::AbstractArray, kwargs...
-)
-    for i in eachindex(T)
-        @inbounds ϕ[i] = p(; T=T[i])
-    end
-
-    return nothing
-end
-
 function compute_dϕdT(p::MeltingParam_5thOrder; T::Real, kwargs...)
     if T isa Quantity
         @unpack_units a, b, c, d, e, T_s, T_l = p
@@ -196,17 +178,6 @@ function compute_dϕdT(p::MeltingParam_5thOrder; T::Real, kwargs...)
     end
 
     return dϕdT
-end
-
-function compute_dϕdT!(
-    dϕdT::AbstractArray, p::MeltingParam_5thOrder; T::AbstractArray, kwargs...
-)
-
-    for i in eachindex(T)
-        @inbounds dϕdT[i] = compute_dϕdT(p, T=T[i])
-    end
-
-    return nothing
 end
 
 # Print info 
@@ -274,16 +245,6 @@ function (p::MeltingParam_4thOrder)(; T::Real, kwargs...)
     end
 
     return ϕ
-end
-
-function compute_meltfraction!(
-    ϕ::AbstractArray, p::MeltingParam_4thOrder; T::AbstractArray, kwargs...
-)
-    for i in eachindex(T)
-        @inbounds ϕ[i] = p(; T=T[i])
-    end
-
-    return nothing
 end
 
 function compute_dϕdT(p::MeltingParam_4thOrder; T::Real, kwargs...)
@@ -371,17 +332,6 @@ function (p::MeltingParam_Quadratic)(; T, kwargs...)
     return ϕ
 end
 
-function compute_meltfraction!(
-    ϕ::AbstractArray, p::MeltingParam_Quadratic; T::AbstractArray, kwargs...
-)
- 
-    for i in eachindex(T)
-        @inbounds ϕ[i] = p(; T=T[i])
-    end
-
-    return nothing
-end
-
 function compute_dϕdT(p::MeltingParam_Quadratic; T, kwargs...)
     if T isa Quantity
         @unpack_units T_s, T_l = p
@@ -394,17 +344,6 @@ function compute_dϕdT(p::MeltingParam_Quadratic; T, kwargs...)
         dϕdT = 0.0
     end
     return dϕdT
-end
-
-function compute_dϕdT!(
-    dϕdT::AbstractArray, p::MeltingParam_Quadratic; T::AbstractArray, kwargs...
-)
-
-    for i in eachindex(T)
-        @inbounds dϕdT[i] = compute_dϕdT(p, T=T[i])
-    end
-
-    return nothing
 end
 
 # Print info 
@@ -491,17 +430,6 @@ function (p::MeltingParam_Assimilation)(; T::Real, kwargs...)
     return ϕ
 end
 
-function compute_meltfraction!(
-    ϕ::AbstractArray, p::MeltingParam_Assimilation; T::AbstractArray, kwargs...
-)
-
-    for i in eachindex(T)
-        @inbounds ϕ[i] = p(; T=T[i])
-    end
-
-    return nothing
-end
-
 function compute_dϕdT(p::MeltingParam_Assimilation; T::Real, kwargs...)
     if T isa Quantity
         @unpack_units T_s,T_l,a   = p
@@ -519,17 +447,6 @@ function compute_dϕdT(p::MeltingParam_Assimilation; T::Real, kwargs...)
         dϕdT = 0.0
     end
     return dϕdT
-end
-
-function compute_dϕdT!(
-    dϕdT::AbstractArray, p::MeltingParam_Assimilation; T::AbstractArray, kwargs...
-)
-   
-    for i in eachindex(T)
-        @inbounds dϕdT[i] = compute_dϕdT(p, T=T[i])
-    end
-  
-    return nothing
 end
 
 # Print info 
@@ -612,8 +529,6 @@ function SmoothMelting(; p=MeltingParam_4thOrder(), k_sol=0.2/K,  k_liq=0.2/K)
 end
 
 SmoothMelting(p::AbstractMeltingParam) =  SmoothMelting(p=p)
-#SmoothMelting(p::AbstractMeltingParam; k_liq) =  SmoothMelting(p=p, k_liq=convert.(GeoUnit,k_liq))
-
 
 # Calculation routines
 function (param::SmoothMelting)(; T, kwargs...)
@@ -636,17 +551,6 @@ function (param::SmoothMelting)(; T, kwargs...)
     ϕ = ϕ*H_s*H_l + 1.0 - H_l
 
     return ϕ
-end
-
-
-function compute_meltfraction!(
-    ϕ::AbstractArray, param::SmoothMelting;  T::AbstractArray, kwargs...
-)
-    for i in eachindex(T)
-        @inbounds ϕ[i] = param(; T=T[i], kwargs=kwargs)
-    end
-
-    return nothing
 end
 
 function compute_dϕdT(param::SmoothMelting; T, kwargs...)
@@ -679,17 +583,6 @@ function compute_dϕdT(param::SmoothMelting; T, kwargs...)
     return dϕdT_tot
 end
 
-function compute_dϕdT!(
-    dϕdT::AbstractArray, p::SmoothMelting; T::AbstractArray, kwargs...
-)
-    
-    for i in eachindex(T)
-        @inbounds dϕdT[i] = compute_dϕdT(p, T=T[i])
-    end
-  
-    return nothing
-end
-
 # Print info 
 function show(io::IO, g::SmoothMelting)
     param = show(io,g.p);
@@ -718,19 +611,7 @@ compute_meltfraction(p::PhaseDiagram_LookupTable, args) = compute_meltfraction(p
 
 In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
 """
-function compute_meltfraction!(
-    ϕ::AbstractArray{_T},
-    p::PhaseDiagram_LookupTable;
-    P::AbstractArray{_T},
-    T::AbstractArray{_T},
-    kwargs...,
-) where {_T}
-    ϕ[:] = p.meltFrac.(T, P)
-
-    return nothing
-end
-
-compute_meltfraction!( ϕ::AbstractArray, p::PhaseDiagram_LookupTable, args) = compute_meltfraction!(p; args...)
+function compute_meltfraction!(p::PhaseDiagram_LookupTable, args) end
 
 """
     compute_dϕdT(P,T, p::AbstractPhaseDiagramsStruct)
@@ -756,22 +637,22 @@ compute_dϕdT(p::PhaseDiagram_LookupTable, args) = compute_dϕdT(p; args...)
 In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
 The derivative is computed by finite differencing.
 """
-function compute_dϕdT!(
-    dϕdT::AbstractArray{_T},
-    p::PhaseDiagram_LookupTable;
-    P::AbstractArray{_T},
-    T::AbstractArray{_T},
-    kwargs...,
-) where {_T}
-    dT = (maximum(T) - minimum(T)) / 2.0 * 1e-6 + 1e-6   # 1e-6 of the average T value
-    ϕ1 = p.meltFrac.(T .+ dT, P)
-    ϕ0 = p.meltFrac.(T, P)
-    dϕdT = (ϕ1 - ϕ0) / dT
+# function compute_dϕdT!(
+#     dϕdT::AbstractArray{_T},
+#     p::PhaseDiagram_LookupTable;
+#     P::AbstractArray{_T},
+#     T::AbstractArray{_T},
+#     kwargs...,
+# ) where {_T}
+#     dT = (maximum(T) - minimum(T)) / 2.0 * 1e-6 + 1e-6   # 1e-6 of the average T value
+#     ϕ1 = p.meltFrac.(T .+ dT, P)
+#     ϕ0 = p.meltFrac.(T, P)
+#     dϕdT = (ϕ1 - ϕ0) / dT
 
-    return nothing
-end
+#     return nothing
+# end
 
-compute_dϕdT!( ϕ::AbstractArray, p::PhaseDiagram_LookupTable, args) = compute_dϕdT!(p; args...)
+# compute_dϕdT!( ϕ::AbstractArray, p::PhaseDiagram_LookupTable, args) = compute_dϕdT!(p; args...)
 
 # fill methods programatically
 for myType in (
@@ -785,13 +666,7 @@ for myType in (
     @eval begin
         (p::$(myType))(args) = p(; args...)
         compute_meltfraction(p::$(myType), args) = p(; args...)
-        function compute_meltfraction!(ϕ::AbstractArray, p::$(myType), args)
-            return compute_meltfraction!(ϕ, p; args...)
-        end
         compute_dϕdT(p::$(myType), args) = compute_dϕdT(p; args...)
-        function compute_dϕdT!(dϕdT::AbstractArray, p::$(myType), args)
-            return compute_dϕdT!(dϕdT, p; args...)
-        end
     end
 end
 
