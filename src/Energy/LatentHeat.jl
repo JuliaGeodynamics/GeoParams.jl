@@ -11,14 +11,14 @@ import Base.show, GeoParams.param_info
 
 abstract type AbstractLatentHeat{T} <: AbstractMaterialParam end
 
-export  compute_latent_heat,                  # calculation routines
-        compute_latent_heat!,
-        param_info,
-        ConstantLatentHeat                  # constant
-        
+export compute_latent_heat,                  # calculation routines
+    compute_latent_heat!,
+    param_info,
+    ConstantLatentHeat                  # constant
+
 include("../Computations.jl")
 include("../Utils.jl")
-        
+
 # Constant  -------------------------------------------------------
 """
     ConstantLatentHeat(Q_L=400kJ/kg)
@@ -29,32 +29,34 @@ Set a constant latent heat:
 ```
 where ``Q_L`` is the latent heat [``kJ/kg``].
 """
-@with_kw_noshow struct ConstantLatentHeat{T,U} <: AbstractLatentHeat{T} 
-    Q_L::GeoUnit{T,U}         =   400kJ/kg                # Latent heat
+@with_kw_noshow struct ConstantLatentHeat{T,U} <: AbstractLatentHeat{T}
+    Q_L::GeoUnit{T,U} = 400kJ / kg                # Latent heat
 end
-ConstantLatentHeat(args...) = ConstantLatentHeat(convert.(GeoUnit,args)...)
+ConstantLatentHeat(args...) = ConstantLatentHeat(convert.(GeoUnit, args)...)
 
 function param_info(s::ConstantLatentHeat) # info about the struct
-    return MaterialParamsInfo(Equation = L"Q_L = cst")
+    return MaterialParamsInfo(; Equation=L"Q_L = cst")
 end
 
 # Calculation routine
-function  (s::ConstantLatentHeat{_T})(;kwargs...) where _T
-    @unpack_val Q_L   = s
-    
+function (s::ConstantLatentHeat{_T})(; kwargs...) where {_T}
+    @unpack_val Q_L = s
+
     return Q_L
 end
 
-compute_latent_heat(s::ConstantLatentHeat{_T}; kwargs...) where _T = s()
+compute_latent_heat(s::ConstantLatentHeat{_T}; kwargs...) where {_T} = s()
 
-function (s::ConstantLatentHeat{_T})(I::Integer...) where _T
-    @unpack_val Q_L   = s
+function (s::ConstantLatentHeat{_T})(I::Integer...) where {_T}
+    @unpack_val Q_L = s
 
     return fill(Q_L, I...)
 end
 
-function compute_latent_heat!(Hl::AbstractArray{_T,N}, s::ConstantLatentHeat{_T}; kwargs...) where {_T,N}
-    @unpack_val Q_L   = s
+function compute_latent_heat!(
+    Hl::AbstractArray{_T,N}, s::ConstantLatentHeat{_T}; kwargs...
+) where {_T,N}
+    @unpack_val Q_L = s
     for i in eachindex(Hl)
         @inbounds Hl[i] = Q_L
     end
@@ -62,11 +64,10 @@ function compute_latent_heat!(Hl::AbstractArray{_T,N}, s::ConstantLatentHeat{_T}
 end
 
 # Print info 
-function show(io::IO, g::ConstantLatentHeat)  
-    print(io, "Constant latent heat: Q_L=$(Value(g.Q_L))")  
+function show(io::IO, g::ConstantLatentHeat)
+    return print(io, "Constant latent heat: Q_L=$(Value(g.Q_L))")
 end
 #-------------------------------------------------------------------------
-
 
 # Help info for the calculation routines
 """
@@ -77,9 +78,8 @@ Returns the latent heat `Q_L`
 """
 #compute_latent_heat()
 
-
 # Computational routines needed for computations with the MaterialParams structure 
-function compute_latent_heat(s::AbstractMaterialParamsStruct, args) 
+function compute_latent_heat(s::AbstractMaterialParamsStruct, args)
     if isempty(s.LatentHeat)
         return isempty(args) ? 0.0 : zero(typeof(args).types[1])  # return zero if not specified
     else
@@ -89,16 +89,18 @@ end
 
 # add methods programatically
 for myType in (:ConstantLatentHeat,)
-@eval begin
-(s::$(myType))(args)= s(; args...)
-compute_latent_heat(s::$(myType), args) = s(args)
-compute_latent_heat!(H::AbstractArray{_T,N}, s::$(myType){_T}, args) where {_T,N} = compute_latent_heat!(H, s; args...)
-end
+    @eval begin
+        (s::$(myType))(args) = s(; args...)
+        compute_latent_heat(s::$(myType), args) = s(args)
+        function compute_latent_heat!(
+            H::AbstractArray{_T,N}, s::$(myType){_T}, args
+        ) where {_T,N}
+            return compute_latent_heat!(H, s; args...)
+        end
+    end
 end
 
-compute_latent_heat(args...)  = compute_param(compute_latent_heat, args...)
+compute_latent_heat(args...) = compute_param(compute_latent_heat, args...)
 compute_latent_heat!(args...) = compute_param!(compute_latent_heat, args...)
-
-
 
 end

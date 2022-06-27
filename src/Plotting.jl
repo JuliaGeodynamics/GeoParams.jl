@@ -11,20 +11,19 @@ using ..MeltingParam
 using .Plots
 
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
-using .MaterialParameters.CreepLaw: CreepLawVariables, computeCreepLaw_TauII, AbstractCreepLaw
+using .MaterialParameters.CreepLaw:
+    CreepLawVariables, computeCreepLaw_TauII, AbstractCreepLaw
 using .MaterialParameters.HeatCapacity: AbstractHeatCapacity, compute_heatcapacity
 using .MaterialParameters.Conductivity: AbstractConductivity, compute_conductivity
 using .MeltingParam: AbstractMeltingParam, compute_meltfraction
 
-export 
-    PlotStressStrainrate_CreepLaw,
+export PlotStressStrainrate_CreepLaw,
     PlotHeatCapacity,
     PlotConductivity,
     PlotMeltFraction,
     PlotPhaseDiagram,
     Plot_TAS_diagram,
     Plot_ZirconAge_PDF
-
 
 """
     PlotStressStrainrate_CreepLaw(x::AbstractCreepLaw; p::CreepLawParams=nothing, Strainrate=(1e-18,1e-12), CreatePlot::Bool=false)
@@ -61,40 +60,54 @@ julia> plot(pl, title="Linear viscosity", linecolor=:red)
 See the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package for more options.
 
 """
-function PlotStressStrainrate_CreepLaw(x::AbstractCreepLaw; p=nothing, Strainrate=(1e-18/s,1e-12/s), CreatePlot::Bool=false)
+function PlotStressStrainrate_CreepLaw(
+    x::AbstractCreepLaw;
+    p=nothing,
+    Strainrate=(1e-18 / s, 1e-12 / s),
+    CreatePlot::Bool=false,
+)
+    if isnothing(p)
+        p = CreepLawParams()
+    end
 
-    if isnothing(p); p = CreepLawParams();  end
-
-    if isDimensional(x)==false
-       error("The struct with Creep Law parameters: $(typeof(x)) should be in dimensional units for plotting. You can use Dimensionalize! to do that.")
+    if isDimensional(x) == false
+        error(
+            "The struct with Creep Law parameters: $(typeof(x)) should be in dimensional units for plotting. You can use Dimensionalize! to do that.",
+        )
     end
 
     # Define strainrate 
-    Eps_II = range(ustrip(Strainrate[1])/s, stop=ustrip(Strainrate[2])/s, length=101)/s
+    Eps_II =
+        range(ustrip(Strainrate[1]) / s; stop=ustrip(Strainrate[2]) / s, length=101) / s
     Tau_II = computeCreepLaw_TauII(Eps_II, x, p)                  # deviatoric stress
 
     # Transfer to GeoUnits
-    Eps_II = GeoUnit(Eps_II);
-    Tau_II = GeoUnit(Tau_II/1e6);
+    Eps_II = GeoUnit(Eps_II)
+    Tau_II = GeoUnit(Tau_II / 1e6)
 
     if CreatePlot
-        try 
-            pl = plot(ustrip(Eps_II), ustrip(Tau_II), 
-                xaxis=:log, xlabel=L"\textrm{deviatoric strain rate  } \dot{\varepsilon}_{II} \textrm{    [1/s]}", 
-                yaxis=:log, ylabel=L"\textrm{deviatoric stress  }\tau_{II} \textrm{    [MPa]}",
-                legend=false,show = true)
+        try
+            pl = plot(
+                ustrip(Eps_II),
+                ustrip(Tau_II);
+                xaxis=:log,
+                xlabel=L"\textrm{deviatoric strain rate  } \dot{\varepsilon}_{II} \textrm{    [1/s]}",
+                yaxis=:log,
+                ylabel=L"\textrm{deviatoric stress  }\tau_{II} \textrm{    [MPa]}",
+                legend=false,
+                show=true,
+            )
         catch
-            error("It seems that you did not install, or did not load Plots.jl. For plotting, please add that with `add Plots` in the package manager and type `using Plots` before running this.")
+            error(
+                "It seems that you did not install, or did not load Plots.jl. For plotting, please add that with `add Plots` in the package manager and type `using Plots` before running this.",
+            )
         end
 
         return Tau_II, Eps_II, pl
     else
         return Tau_II, Eps_II
     end
-
-    
 end
-
 
 """
     T,Cp,plt = PlotHeatCapacity(cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=nothing)
@@ -119,30 +132,27 @@ julia> savefig(plt,"Tdependent_heatcapacity.png")
 
 """
 function PlotHeatCapacity(cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=nothing)
-
     if isnothing(T)
-        T = collect(273.:10:1250)*K
+        T = collect(273.0:10:1250) * K
     end
 
-    args = (;T=ustrip.(T))
+    args = (; T=ustrip.(T))
     Cp = zeros(size(T))
     compute_heatcapacity!(Cp, cp, args)
     if length(Cp) == 1
-        Cp = ones(size(T))*Cp
+        Cp = ones(size(T)) * Cp
     end
 
     if isnothing(plt)
-        plt = plot(ustrip(T), ustrip(Cp), label=lbl)
+        plt = plot(ustrip(T), ustrip(Cp); label=lbl)
     else
-        plt = plot!(ustrip(T), ustrip(Cp), label=lbl)
-    end   
-    plot!(plt,   xlabel="Temperature [$(unit(T[1]))]",
-                 ylabel="Cp [$(unit(Cp[1]))]")
+        plt = plot!(ustrip(T), ustrip(Cp); label=lbl)
+    end
+    plot!(plt; xlabel="Temperature [$(unit(T[1]))]", ylabel="Cp [$(unit(Cp[1]))]")
     gui(plt)
 
-    return T,Cp, plt
+    return T, Cp, plt
 end
-
 
 """
     T,Kk,plt = PlotConductivity(cp::AbstractConductivity; T=nothing, plt=nothing, lbl=nothing)
@@ -166,33 +176,37 @@ julia> savefig(plt,"Tdependent_conductivity.png")
 ```
 
 """
-function PlotConductivity(k::AbstractConductivity; T=nothing, P=nothing, plt=nothing, lbl=nothing)
-
+function PlotConductivity(
+    k::AbstractConductivity; T=nothing, P=nothing, plt=nothing, lbl=nothing
+)
     if isnothing(T)
-        T = collect(273.:10:1250)*K
+        T = collect(273.0:10:1250) * K
     end
     if isnothing(P)
-        P = 1e6Pa*ones(size(T))
+        P = 1e6Pa * ones(size(T))
     end
 
-    args = (;T=ustrip.(T))
+    args = (; T=ustrip.(T))
     Cond = zeros(size(T))
-    
+
     compute_conductivity!(Cond, k, args)
     if length(Cond) == 1
-        Cond = ones(size(T))*Cond
+        Cond = ones(size(T)) * Cond
     end
 
     if isnothing(plt)
-        plt = plot(ustrip(T), ustrip(Cond), label=lbl)
+        plt = plot(ustrip(T), ustrip(Cond); label=lbl)
     else
-        plt = plot!(ustrip(T), ustrip(Cond), label=lbl)
-    end   
-    plot!(plt,   xlabel="Temperature [$(unit(T[1]))]",
-                 ylabel="Thermal conductivity [$(unit(Cond[1]))]")
+        plt = plot!(ustrip(T), ustrip(Cond); label=lbl)
+    end
+    plot!(
+        plt;
+        xlabel="Temperature [$(unit(T[1]))]",
+        ylabel="Thermal conductivity [$(unit(Cond[1]))]",
+    )
     gui(plt)
 
-    return T,Cond, plt
+    return T, Cond, plt
 end
 
 """
@@ -219,42 +233,40 @@ julia> savefig(plt,"MeltFraction.png")
 ```
 
 """
-function PlotMeltFraction(p::AbstractMeltingParam; T=nothing, P=nothing, plt=nothing, lbl=nothing)
-    
+function PlotMeltFraction(
+    p::AbstractMeltingParam; T=nothing, P=nothing, plt=nothing, lbl=nothing
+)
     if isnothing(T)
-        T = (500.:10:1500.)*K
+        T = (500.0:10:1500.0) * K
     end
     T_C = ustrip(T) .- 273.15
 
-    if isnothing(P) 
-        P = 1e6Pa*ones(size(T))
+    if isnothing(P)
+        P = 1e6Pa * ones(size(T))
     end
     if length(P) == 1
-        P = P*ones(size(T))
+        P = P * ones(size(T))
     end
 
     phi = ones(size(T))
-    dϕdT= zeros(size(T))
-    args=(;T=ustrip.(Vector(T)))
+    dϕdT = zeros(size(T))
+    args = (; T=ustrip.(Vector(T)))
     compute_meltfraction!(phi, p, args)
     compute_dϕdT!(dϕdT, p, args)
 
     if isnothing(plt)
-       plt1 = plot(T_C, ustrip(phi), label=lbl, ylabel="Melt Fraction \\Phi")
-       plt2 = plot(T_C, ustrip(dϕdT), label=lbl, ylabel="d\\Phi / dT")
+        plt1 = plot(T_C, ustrip(phi); label=lbl, ylabel="Melt Fraction \\Phi")
+        plt2 = plot(T_C, ustrip(dϕdT); label=lbl, ylabel="d\\Phi / dT")
     else
-       plt1 = plot!(T_C, ustrip(phi), label=lbl, ylabel="Melt Fraction \\Phi")
-       plt2 = plot!(T_C, ustrip(phi), label=lbl, ylabel="d\\Phi / dT")
-    end   
-    plt = plot!(plt1,plt2,   xlabel="Temperature [C]", layout=(2,1))
-                 
+        plt1 = plot!(T_C, ustrip(phi); label=lbl, ylabel="Melt Fraction \\Phi")
+        plt2 = plot!(T_C, ustrip(phi); label=lbl, ylabel="d\\Phi / dT")
+    end
+    plt = plot!(plt1, plt2; xlabel="Temperature [C]", layout=(2, 1))
+
     gui(plt)
 
-    return T,phi,dϕdT
+    return T, phi, dϕdT
 end
-
-
-
 
 """
     plt, data, Tvec, Pvec = PlotPhaseDiagram(p::PhaseDiagram_LookupTable; fieldname::Symbol, Tvec=nothing, Pvec=nothing)
@@ -285,37 +297,39 @@ julia> PlotPhaseDiagram(PD_data,:Rho)
 ```
 
 """
-function PlotPhaseDiagram(p::PhaseDiagram_LookupTable, fieldn::Symbol; Tvec=nothing, Pvec=nothing)
-
-    data = getfield( p, fieldn)
+function PlotPhaseDiagram(
+    p::PhaseDiagram_LookupTable, fieldn::Symbol; Tvec=nothing, Pvec=nothing
+)
+    data = getfield(p, fieldn)
     if isnothing(Tvec)
-        Tvec_K  =   data.itp.knots[1]
-        Tvec    =   Tvec_K;
+        Tvec_K = data.itp.knots[1]
+        Tvec = Tvec_K
     else
-        Tvec_K  =   Float64.(uconvert.(K,Tvec))
+        Tvec_K = Float64.(uconvert.(K, Tvec))
     end
     if isnothing(Pvec)
-        Pvec_Pa =   data.itp.knots[2]
-        Pvec    =   Pvec_Pa
+        Pvec_Pa = data.itp.knots[2]
+        Pvec = Pvec_Pa
     else
-        Pvec_Pa =   Float64.(uconvert.(Pa,Pvec))
+        Pvec_Pa = Float64.(uconvert.(Pa, Pvec))
     end
 
+    data_scalar = data(ustrip.(Tvec_K), ustrip.(Pvec_Pa))
 
-    data_scalar = data(ustrip.(Tvec_K), ustrip.(Pvec_Pa) )
-
-
-    plt = heatmap(ustrip.(Tvec), ustrip.(Pvec), data_scalar', 
-                title  = string(fieldn),
-                xlabel = "T [$(unit(Tvec[1]))]",
-                ylabel = "P [$(unit(Pvec[1]))]", c=:batlow)
+    plt = heatmap(
+        ustrip.(Tvec),
+        ustrip.(Pvec),
+        data_scalar';
+        title=string(fieldn),
+        xlabel="T [$(unit(Tvec[1]))]",
+        ylabel="P [$(unit(Pvec[1]))]",
+        c=:batlow,
+    )
 
     display(plt)
 
-    return  plt, data_scalar, Tvec, Pvec  
+    return plt, data_scalar, Tvec, Pvec
 end
-            
-
 
 """
 	plt = Plot_ZirconAge_PDF(time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average)
@@ -323,17 +337,24 @@ end
 Creates a plot of the Zircon Age probability density function from the parameters in a simulation
 """
 function Plot_ZirconAge_PDF(time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average)
+    plt = Plots.plot(
+        time_Ma[1],
+        PDF_zircons[1];
+        color=:lightgray,
+        linewidth=0.1,
+        xlabel="Time [Ma]",
+        ylabel="probability []",
+        title="Zircon age probability distribution",
+        legend=:none,
+    )
+    for i in 2:length(PDF_zircons)
+        plt = Plots.plot!(time_Ma[i], PDF_zircons[i]; color=:lightgray, linewidth=0.1)
+    end
+    Plots.plot!(time_Ma_average, PDF_zircon_average; color=:black, linewidth=2.0)
 
-	plt = Plots.plot(time_Ma[1], PDF_zircons[1], color=:lightgray,linewidth=0.1, 
-				xlabel="Time [Ma]", ylabel="probability []", title = "Zircon age probability distribution", legend=:none)
-	for i in 2:length(PDF_zircons)
-		plt = Plots.plot!(time_Ma[i], PDF_zircons[i], color=:lightgray,linewidth=0.1)
-	end
-	Plots.plot!(time_Ma_average, PDF_zircon_average, color=:black,linewidth=2.)
-	
-	display(plt)
+    display(plt)
 
-	return plt
+    return plt
 end
 
 """
@@ -342,40 +363,48 @@ end
 Creates a TAS diagram plot
 """
 function Plot_TAS_diagram(displayLabel=nothing)
-
     if isnothing(displayLabel)
-        displayLabel = 1;
+        displayLabel = 1
     end
 
     # get TAS diagram data from TASclassification routine
-    ClassTASdata    = TASclassificationData();
-    @unpack litho, n_ver,  ver = ClassTASdata
+    ClassTASdata = TASclassificationData()
+    @unpack litho, n_ver, ver = ClassTASdata
 
-    plt = Plots.plot(0, 0, xlabel="SiO2 [wt%]", ylabel="Na2O+K2O [wt%]", title = "TAS Diagram")
+    plt = Plots.plot(
+        0, 0; xlabel="SiO2 [wt%]", ylabel="Na2O+K2O [wt%]", title="TAS Diagram"
+    )
 
-    n_poly  = size(litho,2);
-    shift   = 1;
-    for poly=1:n_poly
+    n_poly = size(litho, 2)
+    shift = 1
+    for poly in 1:n_poly
+        x = sum(ver[shift:(shift + n_ver[poly] - 1), 1]) / n_ver[poly]
+        y = sum(ver[shift:(shift + n_ver[poly] - 1), 2]) / n_ver[poly]
 
-            x = sum(ver[shift:shift+n_ver[poly]-1,1])/n_ver[poly];
-            y = sum(ver[shift:shift+n_ver[poly]-1,2])/n_ver[poly];
+        plt = Plots.plot!(
+            Shape(
+                ver[shift:(shift + n_ver[poly] - 1), 1],
+                ver[shift:(shift + n_ver[poly] - 1), 2],
+            );
+            c=:transparent,
+            xlims=(35, 100),
+            xticks=35:5:100,
+            ylims=(0, 16),
+            yticks=0:2:16,
+            legend=false,
+        )
+        if displayLabel == 1
+            annotate!(x, y, (poly, :topleft, :blue, 8))
+        end
 
-            plt = Plots.plot!(Shape(ver[shift:shift+n_ver[poly]-1,1], ver[shift:shift+n_ver[poly]-1,2]), 
-            c = :transparent, xlims=(35,100),xticks=35:5:100, 
-            ylims=(0,16),yticks=0:2:16, legend = false,
-            )
-            if displayLabel == 1
-                annotate!(x,y,  (poly,:topleft,:blue,8))
-            end
-
-            shift  += n_ver[poly]
+        shift += n_ver[poly]
     end
     if displayLabel == 1
-        for i=1:n_poly
-            annotate!(86,16-i*3/4,  (string(i)*": "*litho[i],:left,:black,6))
+        for i in 1:n_poly
+            annotate!(86, 16 - i * 3 / 4, (string(i) * ": " * litho[i], :left, :black, 6))
         end
     end
-	display(plt)
+    display(plt)
 
-	return plt
+    return plt
 end

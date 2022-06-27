@@ -1,5 +1,5 @@
 using UnPack
-export @unpack_val, @unpack_units 
+export @unpack_val, @unpack_units
 
 """
     This unpacks the numerical value of `GeoUnit` in a structure, without the units.
@@ -22,23 +22,25 @@ Float64
 ```    
 """
 macro unpack_val(args)
-    args.head!=:(=) && error("Expression needs to be of form `a, b = c`")
+    args.head != :(=) && error("Expression needs to be of form `a, b = c`")
     items, suitecase = args.args
     items = isa(items, Symbol) ? [items] : items.args
     suitecase_instance = gensym()
 
     # This extracts the value, but not the units
-    kd = [:( $key = $UnPack.unpack($suitecase_instance, Val{$(Expr(:quote, key))}()).val 
-            ) for key in items]
-    
-    kdblock      = Expr(:block, kd...)
-   
+    kd = [
+        :($key = $UnPack.unpack($suitecase_instance, Val{$(Expr(:quote, key))}()).val) for
+        key in items
+    ]
+
+    kdblock = Expr(:block, kd...)
+
     expr = quote
         local $suitecase_instance = $suitecase # handles if suitecase is not a variable but an expression
         $kdblock
         $suitecase_instance # return RHS of `=` as standard in Julia
     end
-    esc(expr)
+    return esc(expr)
 end
 
 """
@@ -62,22 +64,26 @@ Quantity{Float64, 𝚯⁻¹·⁰, Unitful.FreeUnits{(K⁻¹·⁰,), 𝚯⁻¹·�
 ```    
 """
 macro unpack_units(args)
-    args.head!=:(=) && error("Expression needs to be of form `a, b = c`")
+    args.head != :(=) && error("Expression needs to be of form `a, b = c`")
     items, suitecase = args.args
     items = isa(items, Symbol) ? [items] : items.args
     suitecase_instance = gensym()
 
     # This extracts the value with units
-    kd = [:( $key =   $UnPack.unpack($suitecase_instance, Val{$(Expr(:quote, key))}()).val 
-                   .* $UnPack.unpack($suitecase_instance, Val{$(Expr(:quote, key))}()).unit 
-            ) for key in items]
-    
-    kdblock      = Expr(:block, kd...)
-   
+    kd = [
+        :(
+            $key =
+                $UnPack.unpack($suitecase_instance, Val{$(Expr(:quote, key))}()).val .*
+                $UnPack.unpack($suitecase_instance, Val{$(Expr(:quote, key))}()).unit
+        ) for key in items
+    ]
+
+    kdblock = Expr(:block, kd...)
+
     expr = quote
         local $suitecase_instance = $suitecase # handles if suitecase is not a variable but an expression
         $kdblock
         $suitecase_instance # return RHS of `=` as standard in Julia
     end
-    esc(expr)
+    return esc(expr)
 end

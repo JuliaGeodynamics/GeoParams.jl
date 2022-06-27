@@ -2,15 +2,11 @@ using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 using ..Units
 using Parameters, Unitful
 
-
 # Computational routines needed for computations with the MaterialParams structure 
 
 # with tuple & vector - apply for all phases in MatParam
 function compute_param!(
-    fn::F,
-    rho::AbstractVector,
-    MatParam::NTuple{N,AbstractMaterialParamsStruct},
-    args,
+    fn::F, rho::AbstractVector, MatParam::NTuple{N,AbstractMaterialParamsStruct}, args
 ) where {F,N}
     return rho .= map(x -> fn(x, P, T), MatParam)
 end
@@ -27,18 +23,19 @@ end
 
 # performs computation given a single Phase
 @inline @generated function compute_param(
-    fn::F,MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Int64, args
-) where {F, N}
+    fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Int64, args
+) where {F,N}
     quote
         T = isempty(args) ? 0.0 : zero(typeof(args).types[1])
         out = T
-        Base.Cartesian.@nexprs $N i-> out += MatParam[i].Phase == Phase ? fn(MatParam[i], args) : T
+        Base.Cartesian.@nexprs $N i ->
+            out += MatParam[i].Phase == Phase ? fn(MatParam[i], args) : T
     end
 end
 
 function compute_param(
     fn::F, MatParam::AbstractVector{AbstractMaterialParamsStruct}, Phase::Int64, args
-) where F
+) where {F}
     return compute_param(fn, Tuple(MatParam), Phase, args)
 end
 
@@ -96,10 +93,7 @@ end
 
 #Multiplies parameter with the fraction of a phase
 function compute_param_times_frac(
-    fn::F,
-    PhaseRatios::NTuple{N,T},
-    MatParam::NTuple{N,AbstractMaterialParamsStruct},
-    argsi,
+    fn::F, PhaseRatios::NTuple{N,T}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, argsi
 ) where {F,N,T}
     # Unrolled dot product
     val = Ref(zero(T))

@@ -2,88 +2,93 @@ using Test
 using GeoParams, LinearAlgebra, DelimitedFiles
 @testset "ZirconAge.jl" begin
 
-# declare constant variables
-s2y 			= 365.0*24.0*3600.0 							# second to year
-ZirconData  	= ZirconAgeData();		# default data
+    # declare constant variables
+    s2y = 365.0 * 24.0 * 3600.0 # second to year
+    ZirconData = ZirconAgeData()# default data
 
-# Parameters for Zircon statistical analysis
-n_analyses		= 300											# number of synthetic zircon analyses
+    # Parameters for Zircon statistical analysis
+    n_analyses = 300# number of synthetic zircon analyses
 
-# read input file (this step should be skipped, when using tracers)		
-filename 		= 	"Data/Tt15_st_Bl_rad5_0.0126.txt"				# path to input file 
-Tt_paths		=	readdlm(filename,',')
-n_paths			= 	size(Tt_paths,2)-1							# -1 ro remove first column that corresponds to the time
-time_years 		= 	Tt_paths[:,1]./s2y							# time fron seconds to years
+    # read input file (this step should be skipped, when using tracers)		
+    filename = "Data/Tt15_st_Bl_rad5_0.0126.txt"# path to input file 
+    Tt_paths = readdlm(filename, ',')
+    n_paths = size(Tt_paths, 2) - 1# -1 ro remove first column that corresponds to the time
+    time_years = Tt_paths[:, 1] ./ s2y# time fron seconds to years
 
-# Here a matrix is constructed that only contains the temperature information:
-Tt_paths_Temp 	= 	Tt_paths[:,2:end]	
-	
-# first: test case in which we provide the Tt-path as matrix 
-prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, cumPDF = compute_zircons_Ttpath(time_years, Tt_paths_Temp, ZirconData=ZirconData)
-time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average  = zircon_age_PDF(ages_eruptible, number_zircons, bandwidth=1e5, n_analyses=n_analyses, ZirconData=ZirconData)
+    # Here a matrix is constructed that only contains the temperature information:
+    Tt_paths_Temp = Tt_paths[:, 2:end]
 
-# add tests to check that results are consistent
-@test sum(number_zircons[1:200]) 		== 67333.0
-@test sum(number_zircons)				== 5.886208e6
-@test  prob[100] 				 		≈  1.868775279432871e-5
+    # first: test case in which we provide the Tt-path as matrix 
+    prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, cumPDF = compute_zircons_Ttpath(
+        time_years, Tt_paths_Temp; ZirconData=ZirconData
+    )
+    time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average = zircon_age_PDF(
+        ages_eruptible,
+        number_zircons;
+        bandwidth=1e5,
+        n_analyses=n_analyses,
+        ZirconData=ZirconData,
+    )
 
-# A second way to generate the input is having Vector{Vector} for both time and Tt-path. 
-time_years_vecs = Vector{Vector{Float64}}(undef,size(Tt_paths_Temp,2));
-Tt_paths_Temp_vecs		= Vector{Vector{Float64}}(undef,size(Tt_paths_Temp,2));
-for i=1:size(Tt_paths_Temp,2)
-	if i<400
-		time_years_vecs[i] 		= time_years
-		Tt_paths_Temp_vecs[i] 	= Tt_paths_Temp[:,i]
-	else
-		# slightly adjust the size of the vectors
-		time_years_vecs[i] 		= time_years[3:end]
-		Tt_paths_Temp_vecs[i] 	= Tt_paths_Temp[3:end,i]
-	end
+    # add tests to check that results are consistent
+    @test sum(number_zircons[1:200]) == 67333.0
+    @test sum(number_zircons) == 5.886208e6
+    @test prob[100] ≈ 1.868775279432871e-5
 
-end
+    # A second way to generate the input is having Vector{Vector} for both time and Tt-path. 
+    time_years_vecs = Vector{Vector{Float64}}(undef, size(Tt_paths_Temp, 2))
+    Tt_paths_Temp_vecs = Vector{Vector{Float64}}(undef, size(Tt_paths_Temp, 2))
+    for i in 1:size(Tt_paths_Temp, 2)
+        if i < 400
+            time_years_vecs[i] = time_years
+            Tt_paths_Temp_vecs[i] = Tt_paths_Temp[:, i]
+        else
+            # slightly adjust the size of the vectors
+            time_years_vecs[i] = time_years[3:end]
+            Tt_paths_Temp_vecs[i] = Tt_paths_Temp[3:end, i]
+        end
+    end
 
-# the calling routine is the same, but we get one additional output vector:
-time_years1, prob1, ages_eruptible1, number_zircons1, T_av_time1, T_sd_time1, cumPDF1  = compute_zircons_Ttpath(time_years_vecs, Tt_paths_Temp_vecs)
+    # the calling routine is the same, but we get one additional output vector:
+    time_years1, prob1, ages_eruptible1, number_zircons1, T_av_time1, T_sd_time1, cumPDF1 = compute_zircons_Ttpath(
+        time_years_vecs, Tt_paths_Temp_vecs
+    )
 
-# add tests to check that results are consistent
-@test sum(number_zircons1[1:200]) 		== 67333.0
-@test sum(number_zircons1)				== 5.886208e6
-@test  prob1[100] 						≈  1.868775279432871e-5
-@test cumPDF[100] ==  cumPDF1[100]
+    # add tests to check that results are consistent
+    @test sum(number_zircons1[1:200]) == 67333.0
+    @test sum(number_zircons1) == 5.886208e6
+    @test prob1[100] ≈ 1.868775279432871e-5
+    @test cumPDF[100] == cumPDF1[100]
 
+    # Do the same but with a single routine that also returns the PDF's 
+    # Note that given the randomness, you'll always get different results
+    time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average, time_years, prob2, ages_eruptible, number_zircons2, T_av_time, T_sd_time = compute_zircon_age_PDF(
+        time_years_vecs, Tt_paths_Temp_vecs; ZirconData=ZirconData
+    )
 
-# Do the same but with a single routine that also returns the PDF's 
-# Note that given the randomness, you'll always get different results
-time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average, time_years, 
-	prob2, ages_eruptible, number_zircons2, T_av_time, T_sd_time = compute_zircon_age_PDF(time_years_vecs, Tt_paths_Temp_vecs, ZirconData=ZirconData)
+    @test sum(number_zircons2[1:200]) == 67333.0
+    @test sum(number_zircons2) == 5.886208e6
+    @test prob2[100] ≈ 1.868775279432871e-5
 
-	@test sum(number_zircons2[1:200]) 	== 67333.0
-	@test sum(number_zircons2)			== 5.886208e6
-	@test  prob2[100] 					≈  1.868775279432871e-5
-	
+    #=	
+        # Plot Zircon age probability distribution
+    	# these are the ploting routines using Makie, which is currently not a dependency of GeoParams (but may become one @ some stage)
 
-#=	
-    # Plot Zircon age probability distribution
-	# these are the ploting routines using Makie, which is currently not a dependency of GeoParams (but may become one @ some stage)
+    	f = Figure()
+    	Axis(f[1, 1], xlabel = "Age [Myr]", ylabel = "Kernel density [ ]", title = "Zircon age probability distribution")
+    	for i in 1:length(PDF_zircons)
+    		CairoMakie.lines!(time_Ma[i]/1e6, PDF_zircons[i], color="gray66",linewidth=0.25)
+    	end
+    	CairoMakie.lines!(time_Ma_average/1e6, PDF_zircon_average, color="grey0",linewidth=2.)
+    	CairoMakie.xlims!(-1e5/1e6,1.5e6/1e6)
+    	save("Zircon_probability_plot_800kyrs.png",f)
 
-	f = Figure()
-	Axis(f[1, 1], xlabel = "Age [Myr]", ylabel = "Kernel density [ ]", title = "Zircon age probability distribution")
-	for i in 1:length(PDF_zircons)
-		CairoMakie.lines!(time_Ma[i]/1e6, PDF_zircons[i], color="gray66",linewidth=0.25)
-	end
-	CairoMakie.lines!(time_Ma_average/1e6, PDF_zircon_average, color="grey0",linewidth=2.)
-	CairoMakie.xlims!(-1e5/1e6,1.5e6/1e6)
-	save("Zircon_probability_plot_800kyrs.png",f)
-
-	# plot evolution of the average temperature since the onset of magma injection
-	f = Figure()
-	Axis(f[1, 1], ylabel = "Temperature [°C]", xlabel = "Time [Myr]", title = "Evolution of the average temperature of the magmatic system")
-	CairoMakie.lines!(time_years./1e6, T_av_time, color="grey0",linewidth=0.5)
-	f
-	save("Average_T.png",f)
-=#
-
-
-
+    	# plot evolution of the average temperature since the onset of magma injection
+    	f = Figure()
+    	Axis(f[1, 1], ylabel = "Temperature [°C]", xlabel = "Time [Myr]", title = "Evolution of the average temperature of the magmatic system")
+    	CairoMakie.lines!(time_years./1e6, T_av_time, color="grey0",linewidth=0.5)
+    	f
+    	save("Average_T.png",f)
+    =#
 
 end
