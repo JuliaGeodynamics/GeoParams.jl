@@ -57,16 +57,11 @@ end
 
 compute_pwave_velocity(s::ConstantSeismicVelocity{_T}, kwargs) where _T = compute_pwave_velocity(s; kwargs...) 
 
-
-#function (s::ConstantSeismicVelocity)(; kwargs...)
-#function compute_pwave_velocity(s::ConstantSeismicVelocity; kwargs...)
-#    @unpack Vs   = s
-#    return Vs
-#end
-
-#compute_pwave_velocity(s::ConstantSeismicVelocity{_T}; kwargs...) where _T = s()
-#compute_swave_velocity(s::ConstantSeismicVelocity{_T}; kwargs...) where _T = s()
-
+function compute_swave_velocity(s::ConstantSeismicVelocity; kwargs...)
+    @unpack Vs   = s
+    return Vs
+end
+compute_swave_velocity(s::ConstantSeismicVelocity{_T}, kwargs) where _T = compute_swave_velocity(s; kwargs...) 
 
 # Calculation routine
 function compute_pwave_velocity!(Vp_array::AbstractArray{_T}, s::ConstantSeismicVelocity{_T}; kwargs...) where _T
@@ -76,8 +71,7 @@ function compute_pwave_velocity!(Vp_array::AbstractArray{_T}, s::ConstantSeismic
     return nothing
 end
 
-compute_pwave_velocity!(Vp_array::AbstractArray{_T}, s::ConstantSeismicVelocity{_T}, args) where _T = 
-    compute_pwave_velocity!(Vp_array, s; args) 
+compute_pwave_velocity!(Vp_array::AbstractArray{_T}, s::ConstantSeismicVelocity{_T}, args) where _T = compute_pwave_velocity!(Vp_array, s; args) 
 
 
 function compute_swave_velocity!(Vs_array::AbstractArray{_T}, s::ConstantSeismicVelocity{_T}; kwargs...) where _T
@@ -86,6 +80,7 @@ function compute_swave_velocity!(Vs_array::AbstractArray{_T}, s::ConstantSeismic
     end
     return nothing
 end
+compute_swave_velocity!(Vs_array::AbstractArray{_T}, s::ConstantSeismicVelocity{_T}, args) where _T = compute_swave_velocity!(Vs_array, s; args) 
 
 # Print info 
 function show(io::IO, g::ConstantSeismicVelocity)  
@@ -167,13 +162,14 @@ end
 #-------------------------------------------------------------------------------------------------------------
 
 
-function compute_pwave_velocity!(args...) 
-   
-    compute_param!(compute_pwave_velocity, args...) #Multiple dispatch to rest of routines found in Computations.jl
-end
+compute_pwave_velocity!(args...)  = compute_param!(compute_pwave_velocity, args...) #Multiple dispatch to rest of routines found in Computations.jl
+compute_swave_velocity!(args...)  = compute_param!(compute_swave_velocity, args...) #Multiple dispatch to rest of routines found in Computations.jl
+
+
+
 
 compute_pwave_velocity(args...)  = compute_param(compute_pwave_velocity, args...)
-#compute_swave_velocity!(args...) = compute_param!(compute_swave_velocity, args...) #Multiple dispatch to rest of routines found in Computations.jl
+compute_swave_velocity(args...)  = compute_param(compute_swave_velocity, args...) #Multiple dispatch to rest of routines found in Computations.jl
 #compute_swave_velocity(args...)  = compute_param(compute_swave_velocity, args...)
 
 # for myType in (

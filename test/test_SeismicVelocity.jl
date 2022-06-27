@@ -1,4 +1,4 @@
-eousing Test
+using Test
 using GeoParams
 @testset "SeismicVelocity.jl" begin
     # This tests the MaterialParameters structure
@@ -14,8 +14,8 @@ using GeoParams
 
     @test Value(x.Vp) ≈ 8.1km/s
     @test Value(x.Vs) ≈ 4.5km/s
-    @test Value(x_nd.Vp) ≈ 8.1e11
-    @test Value(x_nd.Vs) ≈ 4.5e11
+    @test UnitValue(x_nd.Vp) ≈ 8.1e11
+    @test UnitValue(x_nd.Vs) ≈ 4.5e11
     
     @test UnitValue(compute_pwave_velocity(x_nd, random_name=1)) ≈ 8.1e11
 
@@ -36,12 +36,15 @@ using GeoParams
     Phases              = ones(Int64,n,n,n);
     Phases[:,:,20:end] .= 2;
 
-    Vp = zeros(size(Phases));
+    Vp =  zeros(size(Phases));
+    Vs =  zeros(size(Phases));
     T  =  ones(size(Phases))*1500;
     P  =  zeros(size(Phases));
 
     args=(;T=T);
     compute_pwave_velocity!(Vp, Mat_tup, Phases, args)
+    compute_swave_velocity!(Vs, Mat_tup, Phases, args)
+    @test Vp[1] == 8.1
 
 
 
