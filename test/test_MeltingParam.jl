@@ -17,7 +17,7 @@ using GeoParams
     # Caricchi parameterization [in ND numbers, which is anyways the typical use case]
     p = MeltingParam_Caricchi()
     phi_dim = zeros(size(T))
-    args=(;T=ustrip.(T))
+    args = (; T=ustrip.(T))
     compute_meltfraction!(phi_dim, p, args)
 
     phi_dim1 = zeros(size(phi_dim))
@@ -26,7 +26,7 @@ using GeoParams
     p_nd = p
     p_nd = nondimensionalize(p_nd, CharUnits_GEO)
     phi_nd = zeros(size(T))
-    args=(;T=T_nd)
+    args = (; T=T_nd)
     compute_meltfraction!(phi_nd, p_nd, args)
 
     # Do this computation manually, using the actual expression of Caricchi
@@ -40,7 +40,7 @@ using GeoParams
 
     # test derivative vs T
     dϕdT_dim = zeros(size(T))
-    args=(;T=ustrip.(T))
+    args = (; T=ustrip.(T))
     compute_dϕdT!(dϕdT_dim, p, args)
     @test sum(dϕdT_dim) ≈ 0.008102237679214096
 
@@ -71,14 +71,14 @@ using GeoParams
     data[:, 2] = data[:, 2] / 100
     Tdata = data[:, 1] .+ 273.15
     phi = zeros(size(Tdata))
-    args = (;T=ustrip.(Tdata))
+    args = (; T=ustrip.(Tdata))
     compute_meltfraction!(phi, p, args)
 
     @test norm(data[:, 2] - phi) ≈ 0.07151515017819135
 
     # test derivative vs T
     dϕdT_dim = zeros(size(T))
-    args = (;T=ustrip.(T))
+    args = (; T=ustrip.(T))
     compute_dϕdT!(dϕdT_dim, p, args)
     @test sum(dϕdT_dim) ≈ 0.006484458453421382
 
@@ -112,14 +112,14 @@ using GeoParams
     data[:, 2] = data[:, 2] / 100
     Tdata = data[:, 1] .+ 273.15
     phi = zeros(size(Tdata))
-    args = (;T=ustrip.(Tdata))
+    args = (; T=ustrip.(Tdata))
     compute_meltfraction!(phi, p, args)
 
     @test norm(data[:, 2] - phi) ≈ 0.0678052542705406
 
     # test derivative vs T
     dϕdT_dim = zeros(size(T))
-    args = (;T=ustrip.(T))
+    args = (; T=ustrip.(T))
     compute_dϕdT!(dϕdT_dim, p, args)
     @test sum(dϕdT_dim) ≈ 0.00830985782591842
 
@@ -138,12 +138,12 @@ using GeoParams
 
     #------------------------------
     # Assimilation parameterisation
-    p        =  MeltingParam_Assimilation();
+    p = MeltingParam_Assimilation()
     compute_meltfraction!(phi_dim, p, args)
     @test sum(phi_dim) ≈ 4.995
-    dϕdT_dim =  zeros(size(T))
+    dϕdT_dim = zeros(size(T))
     compute_dϕdT!(dϕdT_dim, p, args)
-    @test sum(abs.(dϕdT_dim)) ≈0.004605170185988078
+    @test sum(abs.(dϕdT_dim)) ≈ 0.004605170185988078
     #------------------------------
 
     # Test computation of melt parameterization for the whole computational domain, using arrays 
@@ -198,13 +198,12 @@ using GeoParams
     compute_dϕdT!(dϕdT, Mat_tup, PhaseRatio, args)
     @test sum(dϕdT) / n^3 ≈ 0.000176112129245805
 
-    
     # Test smoothening of the melting curves:
-    p = SmoothMelting(p=MeltingParam_5thOrder())
+    p = SmoothMelting(; p=MeltingParam_5thOrder())
     @test isbits(p)
     T = collect(250:100:1250) * K .+ 273.15K
     phi_dim = zeros(size(T))
-    args=(;T=ustrip.(T))
+    args = (; T=ustrip.(T))
     compute_meltfraction!(phi_dim, p, args)
     @test sum(phi_dim) ≈ 4.7084279086574226
 
@@ -215,36 +214,40 @@ using GeoParams
     # try non-dimensionalisation
     p_nd = nondimensionalize(p, CharUnits_GEO)
     @test isbits(p)
-    @test isdimensional(p_nd.p.a)==false
-    @test p_nd.p.a ≈  6968.639721576996
+    @test isdimensional(p_nd.p.a) == false
+    @test p_nd.p.a ≈ 6968.639721576996
 
-    p1= dimensionalize(p_nd,CharUnits_GEO)
-    @test isdimensional(p1.p.a)==true
+    p1 = dimensionalize(p_nd, CharUnits_GEO)
+    @test isdimensional(p1.p.a) == true
     @test Value(p1.p.a) ≈ Value(p.p.a)
-    
-    
+
     #Mat_tup = ( SetMaterialParams( Name="Mantle", Phase=1, Melting=SmoothMelting(MeltingParam_4thOrder())),
     #            SetMaterialParams( Name="Crust", Phase=2, Melting=MeltingParam_5thOrder()),
     #            SetMaterialParams( Name="UpperCrust", Phase=3, Melting=SmoothMelting(MeltingParam_5thOrder()), Density=PT_Density()), 
     #            SetMaterialParams( Name="LowerCrust", Phase=4, Density=PT_Density())
     #                )
-    Mat_tup = ( SetMaterialParams( Name="Mantle",       Phase=1, Melting=SmoothMelting(MeltingParam_4thOrder())),
-                SetMaterialParams( Name="Crust",        Phase=2, Melting=MeltingParam_5thOrder()),
-                SetMaterialParams( Name="UpperCrust",   Phase=3, Melting=SmoothMelting(MeltingParam_5thOrder()), Density=PT_Density()), 
-                SetMaterialParams( Name="LowerCrust",   Phase=4, Density=PT_Density())
-                )
+    Mat_tup = (
+        SetMaterialParams(;
+            Name="Mantle", Phase=1, Melting=SmoothMelting(MeltingParam_4thOrder())
+        ),
+        SetMaterialParams(; Name="Crust", Phase=2, Melting=MeltingParam_5thOrder()),
+        SetMaterialParams(;
+            Name="UpperCrust",
+            Phase=3,
+            Melting=SmoothMelting(MeltingParam_5thOrder()),
+            Density=PT_Density(),
+        ),
+        SetMaterialParams(; Name="LowerCrust", Phase=4, Density=PT_Density()),
+    )
 
-
-    ϕ = zeros(size(Phases));
-    dϕdT = zeros(size(Phases));
-    T = ones(size(Phases)) * (800+273.15);
-    P = ones(size(Phases)) * 10;
-    args = (P=P, T=T);
-    compute_meltfraction!(ϕ, Mat_tup, Phases, args); #allocation free
+    ϕ = zeros(size(Phases))
+    dϕdT = zeros(size(Phases))
+    T = ones(size(Phases)) * (800 + 273.15)
+    P = ones(size(Phases)) * 10
+    args = (P=P, T=T)
+    compute_meltfraction!(ϕ, Mat_tup, Phases, args) #allocation free
     @test sum(ϕ) / n^3 ≈ 0.4409766063389861
 
     compute_dϕdT!(dϕdT, Mat_tup, Phases, args) #allocation free
     @test sum(dϕdT) / n^3 ≈ 0.0006838372430250584
-
-    
 end

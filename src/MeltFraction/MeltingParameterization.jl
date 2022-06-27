@@ -11,22 +11,20 @@ import Base.show, GeoParams.param_info
 using ..MaterialParameters: MaterialParamsInfo
 using Setfield # allows modifying fields in immutable struct
 
-
 abstract type AbstractMeltingParam{T} <: AbstractMaterialParam end
 
-export  compute_meltfraction, 
-        compute_meltfraction!,    # calculation routines
-        compute_dϕdT,             # derivative of melt fraction versus 
-        compute_dϕdT!,
-        param_info,
-        MeltingParam_Caricchi,    
-        MeltingParam_4thOrder,
-        MeltingParam_5thOrder,
-        MeltingParam_Quadratic,
-        MeltingParam_Assimilation,
-        SmoothMelting
-        
-        
+export compute_meltfraction,
+    compute_meltfraction!,    # calculation routines
+    compute_dϕdT,             # derivative of melt fraction versus 
+    compute_dϕdT!,
+    param_info,
+    MeltingParam_Caricchi,
+    MeltingParam_4thOrder,
+    MeltingParam_5thOrder,
+    MeltingParam_Quadratic,
+    MeltingParam_Assimilation,
+    SmoothMelting
+
 include("../Utils.jl")
 include("../Computations.jl")
 
@@ -55,10 +53,10 @@ References
 - Simpson G. (2017) Practical finite element modelling in Earth Sciences Using MATLAB.
 """
 @with_kw_noshow struct MeltingParam_Caricchi{T,U} <: AbstractMeltingParam{T}
-    a::GeoUnit{T,U}     = 800.0K
-    b::GeoUnit{T,U}     = 23.0K
-    c::GeoUnit{T,U}     = 273.15K # shift from C to K
-    apply_bounds::Bool  = true
+    a::GeoUnit{T,U} = 800.0K
+    b::GeoUnit{T,U} = 23.0K
+    c::GeoUnit{T,U} = 273.15K # shift from C to K
+    apply_bounds::Bool = true
 end
 MeltingParam_Caricchi(args...) = MeltingParam_Caricchi(convert.(GeoUnit, args)...)
 
@@ -137,7 +135,7 @@ The default values are for a composite liquid-line-of-descent:
     f::GeoUnit{T,U6} = -4.790664658179178e+03 * NoUnits
     T_s::GeoUnit{T,U} = 963.15K
     T_l::GeoUnit{T,U} = 1388.2K
-    apply_bounds::Bool  = true
+    apply_bounds::Bool = true
 end
 MeltingParam_5thOrder(args...) = MeltingParam_5thOrder(convert.(GeoUnit, args)...)
 
@@ -148,7 +146,7 @@ end
 # Calculation routines
 function (p::MeltingParam_5thOrder)(; T, kwargs...)
     if T isa Quantity
-        @unpack_units a, b, c, d, e, f, T_s, T_l  = p
+        @unpack_units a, b, c, d, e, f, T_s, T_l = p
     else
         @unpack_val a, b, c, d, e, f, T_s, T_l = p
     end
@@ -171,7 +169,7 @@ function compute_dϕdT(p::MeltingParam_5thOrder; T::Real, kwargs...)
     else
         @unpack_val a, b, c, d, e, T_s, T_l = p
     end
-    
+
     dϕdT = 5 * a * T^4 + 4 * b * T^3 + 3 * c * T^2 + 2 * d * T + e
     if (T < T_s || T > T_l) && p.apply_bounds
         dϕdT = 0.0
@@ -219,7 +217,7 @@ The default values are for Tonalite experiments from Marxer and Ulmer (2019):
     f::GeoUnit{T,U6} = -1.268730161921053e+03 * NoUnits
     T_s::GeoUnit{T,U} = 963.15K
     T_l::GeoUnit{T,U} = 1270.15K
-    apply_bounds::Bool  = true
+    apply_bounds::Bool = true
 end
 MeltingParam_4thOrder(args...) = MeltingParam_4thOrder(convert.(GeoUnit, args)...)
 
@@ -232,7 +230,7 @@ function (p::MeltingParam_4thOrder)(; T::Real, kwargs...)
     if T isa Quantity
         @unpack_units b, c, d, e, f, T_s, T_l = p
     else
-        @unpack_val  b, c, d, e, f, T_s, T_l = p
+        @unpack_val b, c, d, e, f, T_s, T_l = p
     end
 
     ϕ = b * T^4 + c * T^3 + d * T^2 + e * T + f
@@ -249,7 +247,7 @@ end
 
 function compute_dϕdT(p::MeltingParam_4thOrder; T::Real, kwargs...)
     if T isa Quantity
-        @unpack_units  b, c, d, e, T_s, T_l = p
+        @unpack_units b, c, d, e, T_s, T_l = p
     else
         @unpack_val b, c, d, e, T_s, T_l = p
     end
@@ -264,9 +262,8 @@ end
 function compute_dϕdT!(
     dϕdT::AbstractArray, p::MeltingParam_4thOrder; T::AbstractArray, kwargs...
 )
-
     for i in eachindex(T)
-        @inbounds dϕdT[i] = compute_dϕdT(p, T=T[i])
+        @inbounds dϕdT[i] = compute_dϕdT(p; T=T[i])
     end
 
     return nothing
@@ -303,9 +300,9 @@ This was used, among others, in Tierney et al. (2016) Geology
 
 """
 @with_kw_noshow struct MeltingParam_Quadratic{T,U} <: AbstractMeltingParam{T}
-    T_s::GeoUnit{T,U}   = 963.15K
-    T_l::GeoUnit{T,U}   = 1273.15K
-    apply_bounds::Bool  = true
+    T_s::GeoUnit{T,U} = 963.15K
+    T_l::GeoUnit{T,U} = 1273.15K
+    apply_bounds::Bool = true
 end
 MeltingParam_Quadratic(args...) = MeltingParam_Quadratic(convert.(GeoUnit, args)...)
 
@@ -355,7 +352,6 @@ function show(io::IO, g::MeltingParam_Quadratic)
 end
 #-------------------------------------------------------------------------
 
-
 # MeltingParam_Assimilation  -------------------------------------------------------
 """
     MeltingParam_Assimilation(T_s,T_l,a)
@@ -394,36 +390,38 @@ References
 
 """
 @with_kw_noshow struct MeltingParam_Assimilation{T,U,U1} <: AbstractMeltingParam{T}
-    T_s::GeoUnit{T,U}   =   973.15K
-    T_l::GeoUnit{T,U}   =   1173.15K
-    a::GeoUnit{T,U1}    =   0.005NoUnits
-    apply_bounds::Bool  =   true
+    T_s::GeoUnit{T,U} = 973.15K
+    T_l::GeoUnit{T,U} = 1173.15K
+    a::GeoUnit{T,U1} = 0.005NoUnits
+    apply_bounds::Bool = true
 end
-MeltingParam_Assimilation(args...) = MeltingParam_Assimilation(convert.(GeoUnit,args)...)
+MeltingParam_Assimilation(args...) = MeltingParam_Assimilation(convert.(GeoUnit, args)...)
 
 function param_info(s::MeltingParam_Assimilation) # info about the struct
-    return MaterialParamsInfo(Equation =  L"\phi = f(T_S,T_l,a) taking crustal assimilation into account.")
+    return MaterialParamsInfo(;
+        Equation=L"\phi = f(T_S,T_l,a) taking crustal assimilation into account."
+    )
 end
 
 # Calculation routines
 function (p::MeltingParam_Assimilation)(; T::Real, kwargs...)
     if T isa Quantity
-        @unpack_units T_s,T_l,a   = p
+        @unpack_units T_s, T_l, a = p
     else
-        @unpack_val T_s,T_l,a   = p
+        @unpack_val T_s, T_l, a = p
     end
 
-    X = (T - T_s)/(T_l - T_s)
+    X = (T - T_s) / (T_l - T_s)
 
     if X <= 0.5
-        ϕ   =    a * (exp(2*log(100)*X) - 1.0 )
+        ϕ = a * (exp(2 * log(100) * X) - 1.0)
     else
-        ϕ   =    1.0 - a * exp(2*log(100)*(1-X) )
+        ϕ = 1.0 - a * exp(2 * log(100) * (1 - X))
     end
     if p.apply_bounds
-        if T>T_l
+        if T > T_l
             ϕ = 1.0
-        elseif T<T_s
+        elseif T < T_s
             ϕ = 0.0
         end
     end
@@ -432,18 +430,31 @@ end
 
 function compute_dϕdT(p::MeltingParam_Assimilation; T::Real, kwargs...)
     if T isa Quantity
-        @unpack_units T_s,T_l,a   = p
+        @unpack_units T_s, T_l, a = p
     else
-        @unpack_val T_s,T_l,a   = p
-    end       
-    
-    X      =   (T - T_s)/(T_l - T_s)
-    dϕdT   =   (9.210340371976184*a*exp((9.210340371976184*T - 9.210340371976184*T_s) / (T_l - T_s))) / (T_l - T_s)
-    if X>0.5
-        dϕdT   = (9.210340371976184*a*exp(9.210340371976184 + (9.210340371976184*T_s - 9.210340371976184*T) / (T_l - T_s))) / (T_l - T_s)
+        @unpack_val T_s, T_l, a = p
     end
 
-    if (T>T_l || T<T_s) && p.apply_bounds
+    X = (T - T_s) / (T_l - T_s)
+    dϕdT =
+        (
+            9.210340371976184 *
+            a *
+            exp((9.210340371976184 * T - 9.210340371976184 * T_s) / (T_l - T_s))
+        ) / (T_l - T_s)
+    if X > 0.5
+        dϕdT =
+            (
+                9.210340371976184 *
+                a *
+                exp(
+                    9.210340371976184 +
+                    (9.210340371976184 * T_s - 9.210340371976184 * T) / (T_l - T_s),
+                )
+            ) / (T_l - T_s)
+    end
+
+    if (T > T_l || T < T_s) && p.apply_bounds
         dϕdT = 0.0
     end
     return dϕdT
@@ -452,13 +463,11 @@ end
 # Print info 
 function show(io::IO, g::MeltingParam_Assimilation)
     return print(
-        io,
-        "Quadratic melting assimilation parameterisation after Spera & Bohrson (2001)",
+        io, "Quadratic melting assimilation parameterisation after Spera & Bohrson (2001)"
     )
 end
 
 #-------------------------------------------------------------------------
-
 
 # Smooth melting function ------------------------------------------------
 
@@ -515,84 +524,88 @@ The derivative no longer has a jump now:
 
 """
 struct SmoothMelting{P,T,U} <: AbstractMeltingParam{T}
-    p::P 
-    k_sol::GeoUnit{T,U}  
-    k_liq::GeoUnit{T,U}  
+    p::P
+    k_sol::GeoUnit{T,U}
+    k_liq::GeoUnit{T,U}
 end
 
 # Set default values:
-function SmoothMelting(; p=MeltingParam_4thOrder(), k_sol=0.2/K,  k_liq=0.2/K) 
-    k_sol = convert(GeoUnit,k_sol)
-    k_liq = convert(GeoUnit,k_liq)
+function SmoothMelting(; p=MeltingParam_4thOrder(), k_sol=0.2 / K, k_liq=0.2 / K)
+    k_sol = convert(GeoUnit, k_sol)
+    k_liq = convert(GeoUnit, k_liq)
     p = @set p.apply_bounds = false
-    SmoothMelting(p, k_sol, k_liq)
+    return SmoothMelting(p, k_sol, k_liq)
 end
 
-SmoothMelting(p::AbstractMeltingParam) =  SmoothMelting(p=p)
+SmoothMelting(p::AbstractMeltingParam) = SmoothMelting(; p=p)
 
 # Calculation routines
 function (param::SmoothMelting)(; T, kwargs...)
     if T isa Quantity
-        @unpack_units k_sol,k_liq  = param
+        @unpack_units k_sol, k_liq = param
     else
-        @unpack_val k_sol,k_liq  = param
+        @unpack_val k_sol, k_liq = param
         k_sol = param.k_sol.val
-    end  
+    end
 
     ϕ = param.p(; T, kwargs...)     # Melt fraction computed in usual manner
 
     T_s = param.p.T_s
-    H_s = 1.0/( 1.0 + exp(-2*k_sol*(T-T_s-(2/k_sol))));
-    
+    H_s = 1.0 / (1.0 + exp(-2 * k_sol * (T - T_s - (2 / k_sol))))
+
     T_l = param.p.T_l
-    H_l = 1.0 - 1.0/( 1.0 + exp(-2*k_liq*(T-T_l+(2/k_liq))));
+    H_l = 1.0 - 1.0 / (1.0 + exp(-2 * k_liq * (T - T_l + (2 / k_liq))))
 
     # Apply heaviside smoothening above liquidus & below solidus
-    ϕ = ϕ*H_s*H_l + 1.0 - H_l
+    ϕ = ϕ * H_s * H_l + 1.0 - H_l
 
     return ϕ
 end
 
 function compute_dϕdT(param::SmoothMelting; T, kwargs...)
-
     if T isa Quantity
-        @unpack_units k_sol,k_liq  = param
+        @unpack_units k_sol, k_liq = param
     else
-        @unpack_val k_sol,k_liq  = param
-    end   
+        @unpack_val k_sol, k_liq = param
+    end
 
     # compute heaviside functions & derivatives of that vs. T
     T_s = param.p.T_s
     T_l = param.p.T_l
-    H_s = 1.0/( 1.0 + exp(-2*k_sol*(T-T_s-(2/k_sol))));
-    H_l = 1.0 - 1.0/( 1.0 + exp(-2*k_liq*(T-T_l+(2/k_liq))));
-    
-    dHs_dT = 2k_sol*( 1.0 / ((1.0 + exp(-2k_sol*(T + -2 / k_sol - T_s)))^2))*exp(-2k_sol*(T + -2 / k_sol - T_s))
-    dHl_dT = 2k_liq*(-1.0 / ((1.0 + exp(-2k_liq*(T +  2 / k_liq - T_l)))^2))*exp(-2k_liq*(T +  2 / k_liq - T_l)) 
-    
+    H_s = 1.0 / (1.0 + exp(-2 * k_sol * (T - T_s - (2 / k_sol))))
+    H_l = 1.0 - 1.0 / (1.0 + exp(-2 * k_liq * (T - T_l + (2 / k_liq))))
+
+    dHs_dT =
+        2k_sol *
+        (1.0 / ((1.0 + exp(-2k_sol * (T + -2 / k_sol - T_s)))^2)) *
+        exp(-2k_sol * (T + -2 / k_sol - T_s))
+    dHl_dT =
+        2k_liq *
+        (-1.0 / ((1.0 + exp(-2k_liq * (T + 2 / k_liq - T_l)))^2)) *
+        exp(-2k_liq * (T + 2 / k_liq - T_l))
+
     # melt fraction & derivative 
-    dϕdT = compute_dϕdT(param.p, T=T)
-    ϕ    = param.p(; T, kwargs...) 
-    
+    dϕdT = compute_dϕdT(param.p; T=T)
+    ϕ = param.p(; T, kwargs...)
+
     # The derivative of the function
     # ϕ = ϕ(T)*H_s(T)*H_l(T)  + 1.0 - H_l
     # versus T is
 
-    dϕdT_tot = dϕdT*H_s*H_l + ϕ*dHs_dT*H_l + ϕ*H_s*dHl_dT - dHl_dT
+    dϕdT_tot = dϕdT * H_s * H_l + ϕ * dHs_dT * H_l + ϕ * H_s * dHl_dT - dHl_dT
 
     return dϕdT_tot
 end
 
 # Print info 
 function show(io::IO, g::SmoothMelting)
-    param = show(io,g.p);
+    param = show(io, g.p)
     return print(
         io,
         " with smooth Heaviside function smoothening using k_sol=$(Value(g.k_sol)), k_liq=$(Value(g.k_liq))",
     )
 end
 #-------------------------------------------------------------------------
-
 
 """
     compute_meltfraction(P,T, p::AbstractPhaseDiagramsStruct)
@@ -629,7 +642,6 @@ function compute_dϕdT(p::PhaseDiagram_LookupTable; P::_T, T::_T, kwargs...) whe
 end
 
 compute_dϕdT(p::PhaseDiagram_LookupTable, args) = compute_dϕdT(p; args...)
-
 
 """
     compute_dϕdT!(dϕdT::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T:AbstractArray{<:AbstractFloat}, p::PhaseDiagram_LookupTable)

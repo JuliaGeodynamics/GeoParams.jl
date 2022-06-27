@@ -13,11 +13,11 @@ using ..MaterialParameters: MaterialParamsInfo
 
 abstract type AbstractShearheating{T} <: AbstractMaterialParam end
 
-export  ConstantShearheating,   # constant
-        compute_shearheating,   # calculation routines
-        compute_shearheating!,     
-        param_info
-        
+export ConstantShearheating,   # constant
+    compute_shearheating,   # calculation routines
+    compute_shearheating!,
+    param_info
+
 # Constant Shearheating -------------------------------------------------------
 """
     ConstantShearheating(Χ=0.0NoUnits)
@@ -35,42 +35,43 @@ H_s = \\Chi \\cdot \\tau_{ij}(\\dot{\\varepsilon}_{ij} - \\dot{\\varepsilon}^{el
 
 """
 @with_kw_noshow struct ConstantShearheating{T,U} <: AbstractShearheating{T}
-    Χ::GeoUnit{T,U}         =   0.0*NoUnits               
+    Χ::GeoUnit{T,U} = 0.0 * NoUnits
 end
-ConstantShearheating(args...) = ConstantShearheating(convert.(GeoUnit,args)...)
+ConstantShearheating(args...) = ConstantShearheating(convert.(GeoUnit, args)...)
 
 function param_info(s::ConstantShearheating) # info about the struct
-    return MaterialParamsInfo(Equation =  L"\H_s = \Chi \tau_{ij}(\dot{\varepsilon}_{ij} - \dot{\varepsilon}^{el}_{ij})")
+    return MaterialParamsInfo(;
+        Equation=L"\H_s = \Chi \tau_{ij}(\dot{\varepsilon}_{ij} - \dot{\varepsilon}^{el}_{ij})",
+    )
 end
 
 # In-place routine (H_s can't take new value)
-function compute_shearheating!(H_s, s::ConstantShearheating{_T}, τ, ε, ε_el) where _T
-    @unpack_val Χ   = s
+function compute_shearheating!(H_s, s::ConstantShearheating{_T}, τ, ε, ε_el) where {_T}
+    @unpack_val Χ = s
 
     if isnothing(ε_el)
-        H_s = Χ*sum( τ .* ε  )
+        H_s = Χ * sum(τ .* ε)
     else
-        H_s = Χ*sum( τ .* (ε .- ε_el) )
+        H_s = Χ * sum(τ .* (ε .- ε_el))
     end
-
 end
 
 # Calculation routine
-function compute_shearheating(s::ConstantShearheating{_T}, τ, ε, ε_el) where _T
-    @unpack_val Χ   = s
-    
+function compute_shearheating(s::ConstantShearheating{_T}, τ, ε, ε_el) where {_T}
+    @unpack_val Χ = s
+
     if isnothing(ε_el)
-        H_s = Χ*sum( τ .* ε  )
+        H_s = Χ * sum(τ .* ε)
     else
-        H_s = Χ*sum( τ .* (ε .- ε_el) )
+        H_s = Χ * sum(τ .* (ε .- ε_el))
     end
 
     return H_s
 end
 
 # Print info 
-function show(io::IO, g::ConstantShearheating)  
-    print(io, "Shear heating: H_s = $(UnitValue(g.Χ)) τ_ij*(ε_ij - ε^el_ij)")   
+function show(io::IO, g::ConstantShearheating)
+    return print(io, "Shear heating: H_s = $(UnitValue(g.Χ)) τ_ij*(ε_ij - ε^el_ij)")
 end
 #-------------------------------------------------------------------------
 
@@ -93,7 +94,6 @@ H_s = \\Chi \\cdot \\tau_{ij} ( \\dot{\\varepsilon}_{ij} - \\dot{\\varepsilon}^{
 """
 compute_shearheating(s::AbstractShearheating, τ, ε, ε_el)
 
-
 """
     H_s = ComputeShearheating(s:<AbstractShearheating, τ, ε)
 
@@ -108,8 +108,9 @@ H_s = \\Chi \\cdot \\tau_{ij}  \\dot{\\varepsilon}_{ij}
 - ``\\tau_{ij}`` : The full deviatoric stress tensor [4 components in 2D; 9 in 3D]
 - ``\\dot{\\varepsilon}_{ij}`` : The full deviatoric strainrate tensor
 """
-compute_shearheating(s::AbstractShearheating{_T}, τ::Any, ε::Any) where _T = compute_shearheating(s, τ, ε, nothing)
-
+function compute_shearheating(s::AbstractShearheating{_T}, τ::Any, ε::Any) where {_T}
+    return compute_shearheating(s, τ, ε, nothing)
+end
 
 """
     compute_shearheating!(H_s, s:<AbstractShearheating,  τ, ε, ε_el)
@@ -139,7 +140,7 @@ The shear heating terms require the full deviatoric stress & strain rate tensors
 ```
 Since ``\\tau_{zx}=\\tau_{xz}``, most geodynamic codes only take one of the terms into account; shear heating requires all components to be used! 
 """
-compute_shearheating!(H_s, s::AbstractShearheating{_T}, τ, ε, ε_el) where _T
+compute_shearheating!(H_s, s::AbstractShearheating{_T}, τ, ε, ε_el) where {_T}
 
 """
     compute_shearheating!(H_s, s:<AbstractShearheating, τ, ε)
@@ -155,6 +156,10 @@ H_s = \\Chi \\cdot \\tau_{ij}  \\dot{\\varepsilon}_{ij}
 - ``\\tau_{ij}`` : The full deviatoric stress tensor [4 components in 2D; 9 in 3D]
 - ``\\dot{\\varepsilon}_{ij}`` : The full deviatoric strainrate tensor
 """
-compute_shearheating!(H_s::Any, s::AbstractShearheating{_T}, τ::Any, ε::Any) where _T = compute_shearheating!(H_s, s, τ, ε, nothing)
+function compute_shearheating!(
+    H_s::Any, s::AbstractShearheating{_T}, τ::Any, ε::Any
+) where {_T}
+    return compute_shearheating!(H_s, s, τ, ε, nothing)
+end
 
 end
