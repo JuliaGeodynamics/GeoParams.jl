@@ -23,6 +23,9 @@ export  compute_pwave_velocity,  compute_swave_velocity,    # calculation routin
         anelastic_correction,
         param_info
 
+include("../Utils.jl")
+include("../Computations.jl") 
+
 # Constant Velocity -------------------------------------------------------
 """
     ConstantSeismicVelocity(Vp=8.1 km/s, Vs=4.5km/s)
@@ -47,195 +50,136 @@ function param_info(s::ConstantSeismicVelocity) # info about the struct
 end
 
 # Calculation routines
-function compute_pwave_velocity(P,T, s::ConstantSeismicVelocity)
+function compute_pwave_velocity(s::ConstantSeismicVelocity{_T}; kwargs...) where _T
     @unpack Vp   = s
-    if length(T)>1
-        return Value(Vp).*ones(size(T))
-    else
-        return NumValue(Vp)
-    end
+    return Vp
 end
 
-function compute_swave_velocity(P,T, s::ConstantSeismicVelocity)
-    @unpack Vs   = s
-    if length(T)>1
-        return Value(Vs).*ones(size(T))
-    else
-        return NumValue(Vs)
-    end
-end
+#function (s::ConstantSeismicVelocity)(; kwargs...)
+#function compute_pwave_velocity(s::ConstantSeismicVelocity; kwargs...)
+#    @unpack Vs   = s
+#    return Vs
+#end
 
-function compute_pwave_velocity!(Vp_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::ConstantSeismicVelocity) where N
-    @unpack Vp   = s
-    
-    Vp_array .= NumValue(Vp)
-    
+#compute_pwave_velocity(s::ConstantSeismicVelocity{_T}; kwargs...) where _T = s()
+#compute_swave_velocity(s::ConstantSeismicVelocity{_T}; kwargs...) where _T = s()
+
+
+# Calculation routine
+function compute_pwave_velocity!(Vp_array::AbstractArray{_T}, s::ConstantSeismicVelocity{_T}; kwargs...) where _T
+    for i in eachindex(Vp_array)
+        @inbounds Vp_array[i] = compute_pwave_velocity(s; kwargs...)
+    end
     return nothing
 end
 
-function compute_swave_velocity!(Vs_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::ConstantSeismicVelocity) where N
-    @unpack Vs   = s
-    
-    Vs_array .= NumValue(Vs)
-    
+function compute_swave_velocity!(Vs_array::AbstractArray{_T}, s::ConstantSeismicVelocity{_T}; kwargs...) where _T
+    Threads.@threads for i in eachindex(Vs_array)
+        @inbounds Vs_array[i] = s()
+    end
     return nothing
 end
 
 # Print info 
 function show(io::IO, g::ConstantSeismicVelocity)  
-    print(io, "Constant seismic velocity: Vp=$(Value(g.Vp)), Vs=$(Value(g.Vs))")  
+    print(io, "Constant seismic velocity: Vp=$(UnitValue(g.Vp)), Vs=$(UnitValue(g.Vs))")  
 end
 #-------------------------------------------------------------------------
 
 
 #-------------------------------------------------------------------------
 # Phase diagrams
-"""
-    compute_pwave_velocity(P,T, s::PhaseDiagram_LookupTable)
 
-Interpolates `Vp` as a function of `T,P`   
+#function param_info(s::PhaseDiagram_LookupTable) # info about the struct
+#    return MaterialParamsInfo(Equation = L"Vp = f_{PhaseDiagram}(T,P))" )
+#end
+
 """
-function compute_pwave_velocity(P,T, s::PhaseDiagram_LookupTable)
-    return s.Vp.(T,P)
+    compute_pwave_velocity(s::PhaseDiagram_LookupTable, P,T)
+Interpolates density as a function of `T,P` from a lookup table  
+"""
+function compute_pwave_velocity(s::PhaseDiagram_LookupTable; P, T, kwargs...)
+    fn = s.Vp
+    return fn(T,P)
 end
+compute_pwave_velocity(s::PhaseDiagram_LookupTable, args) = compute_pwave_velocity(s; args...)
 
 """
-    compute_swave_velocity(P,T, s::PhaseDiagram_LookupTable)
-
-Interpolates `Vs` as a function of `T,P`   
+    compute_swave_velocity(s::PhaseDiagram_LookupTable, P,T)
+Interpolates density as a function of `T,P` from a lookup table  
 """
-function compute_swave_velocity(P,T, s::PhaseDiagram_LookupTable)
-    return s.Vs.(T,P)
+function compute_swave_velocity(s::PhaseDiagram_LookupTable; P, T, kwargs...)
+    fn = s.Vs
+    return fn(T,P)
 end
+compute_swave_velocity(s::PhaseDiagram_LookupTable, args) = compute_swave_velocity(s; args...)
+
 
 """
-    compute_pwave_velocity!(Vp_array::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
-
-In-place computation of P-wave velocity as a function of `T,P`, in case we are using a lookup table.    
+    compute_pwave_velocity!(Vp::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
+In-place computation of p-wave velocity as a function of `T,P`, in case we are using a lookup table.    
 """
-function compute_pwave_velocity!(Vp_array::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
-    Vp_array[:] = s.Vp.(T,P)
+function compute_pwave_velocity!(Vp::AbstractArray{_T}, s::PhaseDiagram_LookupTable; P::AbstractArray{_T}=[zero(_T)],T::AbstractArray{_T}=[zero(_T)], kwargs...) where _T
+    Vp[:] = s.Vp.(T,P)
     return nothing
 end
 
 """
-    compute_swave_velocity!(Vs_array::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
-
-In-place computation of S-wave velocity as a function of `T,P`, in case we are using a lookup table.    
+    compute_swave_velocity!(Vs::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
+In-place computation of s-wave velocity as a function of `T,P`, in case we are using a lookup table.    
 """
-function compute_swave_velocity!(Vs_array::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
-    Vs_array[:] = s.Vs.(T,P)
+function compute_swave_velocity!(Vs::AbstractArray{_T}, s::PhaseDiagram_LookupTable; P::AbstractArray{_T}=[zero(_T)],T::AbstractArray{_T}=[zero(_T)], kwargs...) where _T
+    Vs[:] = s.Vs.(T,P)
     return nothing
 end
+
+#compute_pwave_velocity!(Vp::AbstractArray, s::PhaseDiagram_LookupTable, args) = compute_pwave_velocity!(Vp, s, args...)
+#compute_swave_velocity!(Vs::AbstractArray, s::PhaseDiagram_LookupTable, args) = compute_swave_velocity!(Vs, s, args...)
 
 #-------------------------------------------------------------------------
 
-"""
-    compute_pwave_velocity!(Vp_array::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
+#------------------------------------------------------------------------------------------------------------------#
+# Computational routines needed for computations with the MaterialParams structure 
 
-In-place computation of P-wave velocity `Vp` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
-This assumes that the `Phase` of every point is specified as an Integer in the `Phases` array.
-
-"""
-function compute_pwave_velocity!(Vp_array::AbstractArray{<:AbstractFloat, N}, Phases::AbstractArray{<:Integer, N}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where N
-
-    for i = 1:length(MatParam)
-
-        if !isnothing(MatParam[i].SeismicVelocity)
-            # Create views into arrays (so we don't have to allocate)
-            ind = Phases .== MatParam[i].Phase
-            Vp_local    =   view(Vp_array, ind )
-            P_local     =   view(P  , ind )
-            T_local     =   view(T  , ind )
-
-            compute_pwave_velocity!(Vp_local, P_local, T_local, MatParam[i].SeismicVelocity[1] ) 
-        end
-        
+function compute_pwave_velocity(s::AbstractMaterialParamsStruct, args)
+    @show s args
+    if isempty(s.SeismicVelocity) #in case there is a phase with no melting parametrization
+        return zero(typeof(args).types[1])
+    else
+        return compute_pwave_velocity!(s.SeismicVelocity[1], args)
     end
-
 end
 
-"""
-    compute_swave_velocity!(Vs_array::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
-
-In-place computation of S-wave velocity `Vp` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
-This assumes that the `Phase` of every point is specified as an Integer in the `Phases` array.
-
-"""
-function compute_swave_velocity!(Vs_array::AbstractArray{<:AbstractFloat, N}, Phases::AbstractArray{<:Integer, N}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where N
-
-    for i = 1:length(MatParam)
-
-        if !isnothing(MatParam[i].SeismicVelocity)
-            # Create views into arrays (so we don't have to allocate)
-            ind = Phases .== MatParam[i].Phase
-            Vs_local    =   view(Vs_array, ind )
-            P_local     =   view(P  , ind )
-            T_local     =   view(T  , ind )
-
-            compute_swave_velocity!(Vs_local, P_local, T_local, MatParam[i].SeismicVelocity[1] ) 
-        end
-        
+function compute_swave_velocity(s::AbstractMaterialParamsStruct, args)
+    if isempty(s.SeismicVelocity) #in case there is a phase with no melting parametrization
+        return zero(typeof(args).types[1])
+    else
+        return compute_swave_velocity!(s.SeismicVelocity[1], args)
     end
-
 end
 
-"""
-    compute_pwave_velocity!(Vp_array::AbstractArray{<:AbstractFloat,N}, PhaseRatios::AbstractArray{<:AbstractFloat, M}, P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
+#-------------------------------------------------------------------------------------------------------------
 
-In-place computation of seismic P-wave velocity `Vp` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
-This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
-
-"""
-function compute_pwave_velocity!(Vp_array::AbstractArray{<:AbstractFloat, N}, PhaseRatios::AbstractArray{<:AbstractFloat, M}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where {N,M}
-    
-    if M!=(N+1)
-        error("The PhaseRatios array should have one dimension more than the other arrays")
-    end
-
-    Vp_array .= 0.0;
-    for i = 1:length(MatParam)
-        
-        Vp_local    = zeros(size(Vp_array))
-        Fraction    = selectdim(PhaseRatios,M,i);
-        if (maximum(Fraction)>0.0) & (!isnothing(MatParam[i].SeismicVelocity))
-
-            compute_pwave_velocity!(Vp_local, P, T, MatParam[i].SeismicVelocity[1] ) 
-
-            Vp_array .= Vp_array .+ Vp_local.*Fraction
-        end
-        
-    end
-
+function compute_pwave_velocity!(args...) 
+    @show typeof.(args)
+    compute_param!(compute_pwave_velocity, args...) #Multiple dispatch to rest of routines found in Computations.jl
 end
 
-"""
-    compute_swave_velocity!(Vs_array::AbstractArray{<:AbstractFloat,N}, PhaseRatios::AbstractArray{<:AbstractFloat, M}, P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
+compute_pwave_velocity(args...)  = compute_param(compute_pwave_velocity, args...)
+#compute_swave_velocity!(args...) = compute_param!(compute_swave_velocity, args...) #Multiple dispatch to rest of routines found in Computations.jl
+#compute_swave_velocity(args...)  = compute_param(compute_swave_velocity, args...)
 
-In-place computation of seismic S-wave velocity `Vs` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
-This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
-
-"""
-function compute_swave_velocity!(Vs_array::AbstractArray{<:AbstractFloat, N}, PhaseRatios::AbstractArray{<:AbstractFloat, M}, P::AbstractArray{<:AbstractFloat, N},T::AbstractArray{<:AbstractFloat, N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct, 1}) where {N,M}
-    
-    if M!=(N+1)
-        error("The PhaseRatios array should have one dimension more than the other arrays")
-    end
-
-    Vs_array .= 0.0;
-    for i = 1:length(MatParam)
-        
-        Vs_local    = zeros(size(Vs_array))
-        Fraction    = selectdim(PhaseRatios,M,i);
-        if (maximum(Fraction)>0.0) & (!isnothing(MatParam[i].SeismicVelocity))
-
-            compute_swave_velocity!(Vs_local, P, T, MatParam[i].SeismicVelocity[1] ) 
-
-            Vs_array .= Vs_array .+ Vs_local.*Fraction
+for myType in (
+    :ConstantSeismicVelocity,
+)
+    @eval begin
+        #(p::$(myType))(args) = p(; args...)
+        compute_pwave_velocity(p::$(myType), args) = compute_pwave_velocity(p::$(myType); args...)
+        function compute_pwave_velocity!(Vp::AbstractArray, p::$(myType), args)
+            return compute_pwave_velocity!(Vp, p; args...)
         end
-        
-    end
 
+    end
 end
 
 
