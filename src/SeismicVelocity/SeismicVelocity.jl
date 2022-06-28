@@ -15,12 +15,9 @@ import Base.show, GeoParams.param_info
 abstract type AbstractSeismicVelocity{T} <: AbstractMaterialParam end
 
 export compute_pwave_velocity,
-    compute_swave_velocity,    # calculation routines
-    compute_pwave_velocity!,
-    compute_swave_velocity!,   # in place calculation
-    compute_pwave_swave_ratio,
-    compute_pwave_swave_ratio!,
-    ConstantSeismicVelocity,                         # constant
+    compute_wave_velocity, # calculation routines
+    compute_wave_velocity!, # calculation routines
+    ConstantSeismicVelocity, # constant
     melt_correction,
     anelastic_correction,
     param_info
@@ -52,73 +49,10 @@ function param_info(s::ConstantSeismicVelocity) # info about the struct
 end
 
 # Calculation routines
-function compute_pwave_velocity(s::ConstantSeismicVelocity{_T}; kwargs...) where {_T}
-    @unpack Vp = s
-    return Vp
-end
-
-function compute_pwave_velocity(s::ConstantSeismicVelocity{_T}, kwargs) where {_T}
-    return compute_pwave_velocity(s; kwargs...)
-end
-
-function compute_swave_velocity(s::ConstantSeismicVelocity; kwargs...)
-    @unpack Vs = s
-    return Vs
-end
-function compute_swave_velocity(s::ConstantSeismicVelocity{_T}, kwargs) where {_T}
-    return compute_swave_velocity(s; kwargs...)
-end
-
-function compute_pwave_swave_ratio(s::ConstantSeismicVelocity; kwargs...)
-    @unpack Vs, Vp = s
+function compute_wave_velocity(s::ConstantSeismicVelocity{_T}; wave, kwargs...) where {_T}
+    wave != :VpVs && return getfield(s, wave)
+    @unpack Vp, Vs = s
     return Vp / Vs
-end
-function compute_pwave_swave_ratio(s::ConstantSeismicVelocity{_T}, kwargs) where {_T}
-    return compute_pwave_swave_ratio(s; kwargs...)
-end
-
-# Calculation routine
-function compute_pwave_velocity!(
-    Vp_array::AbstractArray{_T}, s::ConstantSeismicVelocity{_T}; kwargs...
-) where {_T}
-    for i in eachindex(Vp_array)
-        @inbounds Vp_array[i] = compute_pwave_velocity(s; kwargs...)
-    end
-    return nothing
-end
-
-function compute_pwave_velocity!(
-    Vp_array::AbstractArray{_T}, s::ConstantSeismicVelocity{_T}, args
-) where {_T}
-    return compute_pwave_velocity!(Vp_array, s; args)
-end
-
-function compute_swave_velocity!(
-    Vs_array::AbstractArray{_T}, s::ConstantSeismicVelocity{_T}; kwargs...
-) where {_T}
-    for i in eachindex(Vs_array)
-        @inbounds Vs_array[i] = compute_swave_velocity(s; kwargs...)
-    end
-    return nothing
-end
-function compute_swave_velocity!(
-    Vs_array::AbstractArray{_T}, s::ConstantSeismicVelocity{_T}, args
-) where {_T}
-    return compute_swave_velocity!(Vs_array, s; args)
-end
-
-function compute_pwave_swave_ratio!(
-    VpVs_array::AbstractArray{_T}, s::ConstantSeismicVelocity{_T}; kwargs...
-) where {_T}
-    for i in eachindex(VpVs_array)
-        @inbounds VpVs_array[i] = compute_pwave_swave_ratio(s; kwargs...)
-    end
-    return nothing
-end
-function compute_pwave_swave_ratio!(
-    VpVs_array::AbstractArray{_T}, s::ConstantSeismicVelocity{_T}, args
-) where {_T}
-    return compute_pwave_swave_ratio!(VpVs_array, s; args)
 end
 
 # Print info 
@@ -138,140 +72,38 @@ end
 
 """
     compute_pwave_velocity(s::PhaseDiagram_LookupTable, P,T)
-Interpolates Vp velocity as a function of `T,P` from a lookup table  
+Interpolates Vp, Vs or VpVs velocity as a function of `T,P` from a lookup table  
 """
-function compute_pwave_velocity(s::PhaseDiagram_LookupTable; P, T, kwargs...)
-    fn = s.Vp
+function compute_wave_velocity(s::PhaseDiagram_LookupTable; P, T, wave, kwargs...)
+    fn = getfield(s, wave)
     return fn(T, P)
 end
-function compute_pwave_velocity(s::PhaseDiagram_LookupTable, args)
-    return compute_pwave_velocity(s; args...)
-end
-
-"""
-    compute_swave_velocity(s::PhaseDiagram_LookupTable, P,T)
-Interpolates Vs velocity as a function of `T,P` from a lookup table  
-"""
-function compute_swave_velocity(s::PhaseDiagram_LookupTable; P, T, kwargs...)
-    fn = s.Vs
-    return fn(T, P)
-end
-function compute_swave_velocity(s::PhaseDiagram_LookupTable, args)
-    return compute_swave_velocity(s; args...)
-end
-
-"""
-    compute_pwave_swave_ratio(s::PhaseDiagram_LookupTable, P,T)
-Interpolates Vp/Vs ratio as a function of `T,P` from a lookup table  
-"""
-function compute_pwave_swave_ratio(s::PhaseDiagram_LookupTable; P, T, kwargs...)
-    fn = s.VpVs
-    return fn(T, P)
-end
-function compute_pwave_swave_ratio(s::PhaseDiagram_LookupTable, args)
-    return compute_pwave_swave_ratio(s; args...)
-end
-
-"""
-    compute_pwave_velocity!(Vp::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
-In-place computation of p-wave velocity as a function of `T,P`, in case we are using a lookup table.    
-"""
-function compute_pwave_velocity!(
-    Vp::AbstractArray{_T},
-    s::PhaseDiagram_LookupTable;
-    P::AbstractArray{_T}=[zero(_T)],
-    T::AbstractArray{_T}=[zero(_T)],
-    kwargs...,
-) where {_T}
-    Vp[:] = s.Vp.(T, P)
-    return nothing
-end
-
-"""
-    compute_swave_velocity!(Vs::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
-In-place computation of s-wave velocity as a function of `T,P`, in case we are using a lookup table.    
-"""
-function compute_swave_velocity!(
-    Vs::AbstractArray{_T},
-    s::PhaseDiagram_LookupTable;
-    P::AbstractArray{_T}=[zero(_T)],
-    T::AbstractArray{_T}=[zero(_T)],
-    kwargs...,
-) where {_T}
-    Vs[:] = s.Vs.(T, P)
-    return nothing
-end
-
-"""
-    compute_swave_velocity!(Vs::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
-In-place computation of s-wave velocity as a function of `T,P`, in case we are using a lookup table.    
-"""
-function compute_pwave_swave_ratio!(
-    VpVs::AbstractArray{_T},
-    s::PhaseDiagram_LookupTable;
-    P::AbstractArray{_T}=[zero(_T)],
-    T::AbstractArray{_T}=[zero(_T)],
-    kwargs...,
-) where {_T}
-    VpVs[:] = s.VpVs.(T, P)
-    return nothing
-end
-
-#compute_pwave_velocity!(Vp::AbstractArray, s::PhaseDiagram_LookupTable, args) = compute_pwave_velocity!(Vp, s, args...)
-#compute_swave_velocity!(Vs::AbstractArray, s::PhaseDiagram_LookupTable, args) = compute_swave_velocity!(Vs, s, args...)
-
 #-------------------------------------------------------------------------
 
 #------------------------------------------------------------------------------------------------------------------#
 # Computational routines needed for computations with the MaterialParams structure 
 
-function compute_pwave_velocity(s::AbstractMaterialParamsStruct, args)
+function compute_wave_velocity(s::AbstractMaterialParamsStruct, args)
     if isempty(s.SeismicVelocity) #in case there is a phase with no melting parametrization
         return zero(typeof(args).types[1])
     else
-        return compute_pwave_velocity(s.SeismicVelocity[1], args)
+        return compute_wave_velocity(s.SeismicVelocity[1], args)
     end
 end
 
-function compute_swave_velocity(s::AbstractMaterialParamsStruct, args)
-    if isempty(s.SeismicVelocity) #in case there is a phase with no melting parametrization
-        return zero(typeof(args).types[1])
-    else
-        return compute_swave_velocity(s.SeismicVelocity[1], args)
-    end
-end
-
-function compute_pwave_swave_ratio(s::AbstractMaterialParamsStruct, args)
-    if isempty(s.SeismicVelocity) #in case there is a phase with no melting parametrization
-        return zero(typeof(args).types[1])
-    else
-        return compute_pwave_swave_ratio(s.SeismicVelocity[1], args)
-    end
-end
 #-------------------------------------------------------------------------------------------------------------
 
 #Multiple dispatch to rest of routines found in Computations.jl
+for myType in (:ConstantSeismicVelocity, :PhaseDiagram_LookupTable)
+    @eval begin
+        function compute_wave_velocity(p::$(myType), args)
+            return compute_wave_velocity(p::$(myType); args...)
+        end
+    end
+end
 
-compute_pwave_velocity!(args...) = compute_param!(compute_pwave_velocity, args...)
-compute_swave_velocity!(args...) = compute_param!(compute_swave_velocity, args...)
-compute_pwave_swave_ratio!(args...) = compute_param!(compute_pwave_swave_ratio, args...)
-
-compute_pwave_velocity(args...) = compute_param(compute_pwave_velocity, args...)
-compute_swave_velocity(args...) = compute_param(compute_swave_velocity, args...) #Multiple dispatch to rest of routines found in Computations.jl
-compute_pwave_swave_ratio(args...) = compute_param(compute_pwave_swave_ratio, args...) #Multiple dispatch to rest of routines found in Computations.jl
-
-# for myType in (
-#     :ConstantSeismicVelocity,
-# )
-#     @eval begin
-#         #(p::$(myType))(args) = p(; args...)
-#         compute_pwave_velocity(p::$(myType), args) = compute_pwave_velocity(p::$(myType); args...)
-#         function compute_pwave_velocity!(Vp::AbstractArray, p::$(myType), args)
-#             return compute_pwave_velocity!(Vp, p; args...)
-#         end
-
-#     end
-# end
+compute_wave_velocity!(args...) = compute_param!(compute_wave_velocity, args...)
+compute_wave_velocity(args...) = compute_param(compute_wave_velocity, args...)
 
 """
         Vp_cor,Vs_cor = melt_correction(  Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
