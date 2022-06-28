@@ -183,7 +183,7 @@ DislocationCreep_info = Dict(
     doi = {10.1029/138GM06},
     pages = {83--105},
     }
-"""
+""",
                     ),
                 ),
             ),
@@ -226,7 +226,7 @@ DislocationCreep_info = Dict(
     doi = {10.1029/138GM06},
     pages = {83--105},
     }
-"""
+""",
                     ),
                 ),
             ),
@@ -372,7 +372,7 @@ DislocationCreep_info = Dict(
     year={1998},
     publisher={Wiley Online Library}
     }
-"""
+""",
                     ),
                 ),
             ),
@@ -611,7 +611,7 @@ DislocationCreep_info = Dict(
     year={2003},
     publisher={AGU AMERICAN GEOPHYSICAL UNION}
     }
-"""
+""",
                     ),
                 ),
             ),
