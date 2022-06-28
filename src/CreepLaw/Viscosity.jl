@@ -256,6 +256,53 @@ function computeViscosity_εII!(
     return nothing
 end
 
+# support for multiple phases
+for fn in (:computeViscosity_εII, :computeViscosity_τII)
+    fn! = Symbol(fn, :!)
+    @eval begin
+        # local version
+        function $(fn)(
+            MatParam::NTuple{N,AbstractMaterialParamsStruct},
+            εII::Real,
+            Phase::Integer,
+            args::NamedTuple;
+            cutoff=(1e16, 1e25),
+        ) where N
+            lower_cutoff, upper_cutoff = cutoff
+            η = compute_viscosity_param($(fn), MatParam, Phase, εII, args)
+            return max(min(η, upper_cutoff), lower_cutoff)
+        end
+
+        # in-place version for Arrays
+        function $(fn!)(
+            η::AbstractArray,
+            MatParam::NTuple{N,AbstractMaterialParamsStruct},
+            εII::AbstractArray,
+            Phases::AbstractArray,
+            args::NamedTuple;
+            cutoff=(1e16, 1e25),
+        ) where N
+            @inbounds for I in eachindex(Phases)
+                k, v = keys(args), getindex.(values(args), I)
+                argsi = (; zip(k, v)...)
+                η[I] = $(fn)(MatParam, εII[I], Phases[I], argsi; cutoff=cutoff)
+            end
+            return nothing
+        end
+    end
+end
+
+@inline @generated function compute_viscosity_param(
+    fn::F,MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Integer, CII::T, args::NamedTuple
+) where {F, N, T}
+    quote
+        out = zero(T)
+        Base.Cartesian.@nexprs $N i-> out += MatParam[i].Phase == Phase ? computeViscosity(fn, MatParam[i].CreepLaws, CII, args) : zero(T)
+    end
+end
+
+
+
 @inline function computeViscosity_τII!(
     η::AbstractArray{T,nDim},
     v::NTuple{N,AbstractConstitutiveLaw},
@@ -278,6 +325,8 @@ end
         )
     end
 end
+
+
 ## BASED ON DEVIATORIC STRESS
 
 """
@@ -323,7 +372,6 @@ end
 ## LOCAL ITERATIONS TO COMPUTE VISCOSITY
 
 """
-
 Performs local iterations versus stress for a given strain rate 
 """
 @inline function local_iterations_εII(
@@ -360,7 +408,6 @@ Performs local iterations versus stress for a given strain rate
 end
 
 """
-
 Performs local iterations versus strain rate for a given stress
 """
 @inline function local_iterations_τII(
