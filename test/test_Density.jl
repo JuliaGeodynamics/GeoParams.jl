@@ -114,7 +114,7 @@ using GeoParams
         Name="Mantle",
         Phase=0,
         CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e23Pa * s)),
-        Density=PerpleX_LaMEM_Diagram(joinpath(@__DIR__, "/test_data/Peridotite.in")),
+        Density=PerpleX_LaMEM_Diagram("test_data/Peridotite.in"),
     )
 
     MatParam[2] = SetMaterialParams(;
