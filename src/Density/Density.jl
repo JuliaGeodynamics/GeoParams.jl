@@ -120,24 +120,6 @@ end
 compute_density(s::PT_Density, args) = s(args)
 compute_density(s::PT_Density, P::AbstractArray, T::AbstractArray) = s(; P=P, T=T)
 
-function compute_density!(ρ::AbstractArray, s::PT_Density; P, T, kwargs...)
-    if T isa Quantity
-        @unpack_units ρ0, α, β, P0, T0 = s
-    else
-        @unpack_val ρ0, α, β, P0, T0 = s
-    end
-
-    for i in eachindex(P)
-        @inbounds ρ[i] = ρ0 * (1.0 - α * (T[i] - T0) + β * (P[i] - P0))
-    end
-
-    return nothing
-end
-
-function compute_density!(ρ::AbstractArray, s::PT_Density{_T}, args) where {_T}
-    return compute_density!(ρ, s; args...)
-end
-
 # Print info 
 function show(io::IO, g::PT_Density)
     return print(
@@ -210,12 +192,7 @@ compute_density(s::PhaseDiagram_LookupTable, args) = compute_density(s; args...)
     compute_density!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
 In-place computation of density as a function of `T,P`, in case we are using a lookup table.    
 """
-# function compute_density!(rho::AbstractArray{_T}, s::PhaseDiagram_LookupTable; P::AbstractArray{_T}=[zero(_T)],T::AbstractArray{_T}=[zero(_T)], kwargs...) where _T
-#     rho[:] = s.Rho.(T,P)
-#     return nothing
-# end
-
-# compute_density!(rho::AbstractArray, s::PhaseDiagram_LookupTable, args) = compute_density!(rho, s, args...)
+# function compute_density!(rho::AbstractArray{_T}, s::PhaseDiagram_LookupTable; P::AbstractArray{_T}=[zero(_T)],T::AbstractArray{_T}=[zero(_T)], kwargs...) where _T end
 
 #------------------------------------------------------------------------------------------------------------------#
 # Computational routines needed for computations with the MaterialParams structure 
