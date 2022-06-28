@@ -102,8 +102,8 @@ for myType in (:ConstantSeismicVelocity, :PhaseDiagram_LookupTable)
     end
 end
 
-compute_wave_velocity!(args...) = compute_param!(compute_pwave_velocity, args...)
-compute_wave_velocity(args...) = compute_param(compute_pwave_velocity, args...)
+compute_wave_velocity!(args...) = compute_param!(compute_wave_velocity, args...)
+compute_wave_velocity(args...) = compute_param(compute_wave_velocity, args...)
 
 """
         Vp_cor,Vs_cor = melt_correction(  Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
