@@ -27,7 +27,7 @@ end
 
 # performs computation given a single Phase
 @inline @generated function compute_param(
-    fn::F,MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Int64, args
+    fn::F,MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Integer, args
 ) where {F, N}
     quote
         T = isempty(args) ? 0.0 : zero(typeof(args).types[1])
@@ -37,7 +37,7 @@ end
 end
 
 function compute_param(
-    fn::F, MatParam::AbstractVector{AbstractMaterialParamsStruct}, Phase::Int64, args
+    fn::F, MatParam::AbstractVector{AbstractMaterialParamsStruct}, Phase::Integer, args
 ) where F
     return compute_param(fn, Tuple(MatParam), Phase, args)
 end
@@ -61,7 +61,7 @@ function compute_param!(
     fn::F,
     rho::AbstractArray,
     MatParam::AbstractVector{AbstractMaterialParamsStruct},
-    Phases::AbstractArray{<:Integer,ndim},
+    Phases::AbstractArray{Integer,ndim},
     args,
 ) where {F,ndim}
     return compute_param!(fn, rho, Tuple(MatParam), Phases, args)
