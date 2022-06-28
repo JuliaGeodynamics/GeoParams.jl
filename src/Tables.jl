@@ -12,7 +12,7 @@ export Phase2Dict,
 #           SetMaterialParams(Name="Viscous Sinker", Phase=2, Density= PT_Density(),CreepLaws = LinearViscous(η=1e21Pa*s)),
 #           SetMaterialParams(Name="Viscous Bottom", Phase=3, Density= PT_Density(),CreepLaws = SetDislocationCreep("Diabase | Caristan (1982)")));
 
-,
+
 """
 Phase2Dict() puts all parameters of a phase in a dict.
 Dict2LatexTable() writes .tex file with all parameters from Phase2Dict() output in a table.
