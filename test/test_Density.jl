@@ -78,7 +78,7 @@ using GeoParams
 
     # Read Phase diagram interpolation object
     fname = "test_data/Peridotite.in"
-    PD_data = PerpleX_LaMEM_Diagram(joinpath(@__DIR__, fname))
+    PD_data = PerpleX_LaMEM_Diagram(fname)
     @test PD_data.meltFrac(1500, 1e7) ≈ 0.24368492372485706
     @test PD_data.Rho(1500, 1e7) ≈ 3042.836820256982
     @test PD_data.meltRho(1500, 1e7) ≈ 2662.227167592414
