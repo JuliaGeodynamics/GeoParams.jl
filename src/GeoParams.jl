@@ -18,15 +18,56 @@ using Requires          # To only add plotting routines if Plots is loaded
 import Base: getindex
 
 # overload to account for cases where this is an integer
-Base.getindex(val::Real, I::Vararg{Integer, N}) where N = val
+Base.getindex(val::Real, I::Vararg{Integer,N}) where {N} = val
 Base.getindex(val::Real, I::Integer) = val
 
-export
-        @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
-        GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnit,
-        nondimensionalize, dimensionalize,
-        superscript, upreferred, GEO, SI, NONE, isDimensional, Value, NumValue, Unit, UnitValue, isdimensional,
-        km, m, cm, mm, μm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW, Quantity
+export @u_str,
+    uconvert,
+    upreffered,
+    unit,
+    ustrip,
+    NoUnits,  #  Units 
+    GeoUnit,
+    GeoUnits,
+    GEO_units,
+    SI_units,
+    NO_units,
+    AbstractGeoUnit,
+    nondimensionalize,
+    dimensionalize,
+    superscript,
+    upreferred,
+    GEO,
+    SI,
+    NONE,
+    isDimensional,
+    Value,
+    NumValue,
+    Unit,
+    UnitValue,
+    isdimensional,
+    km,
+    m,
+    cm,
+    mm,
+    μm,
+    Myrs,
+    yr,
+    s,
+    MPa,
+    Pa,
+    kbar,
+    Pas,
+    K,
+    C,
+    g,
+    kg,
+    mol,
+    J,
+    kJ,
+    Watt,
+    μW,
+    Quantity
 
 export AbstractGeoUnit1, GeoUnit1
 
@@ -37,7 +78,6 @@ abstract type AbstractPhaseDiagramsStruct <: AbstractMaterialParam end    # will
 function PerpleX_LaMEM_Diagram end                                         # necessary as we already use this function in Units, but only define it later in PhaseDiagrams
 function param_info end
 export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
-
 
 # note that this throws a "Method definition warning regarding superscript"; that is expected & safe 
 #  as we add a nicer way to create output of superscripts. I have been unable to get rid of this warning,
@@ -59,85 +99,85 @@ export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
 # Density
 using .MaterialParameters.Density
 export compute_density,                                # computational routines
-        compute_density!,
-        param_info,
-        AbstractDensity,
-        No_Density,
-        ConstantDensity,
-        PT_Density,
-        Compressible_Density,
-        PhaseDiagram_LookupTable,
-        Read_LaMEM_Perple_X_Diagram
+    compute_density!,
+    param_info,
+    AbstractDensity,
+    No_Density,
+    ConstantDensity,
+    PT_Density,
+    Compressible_Density,
+    PhaseDiagram_LookupTable,
+    Read_LaMEM_Perple_X_Diagram
 
 # Creep laws
 using .MaterialParameters.CreepLaw
-export computeCreepLaw_EpsII, computeCreepLaw_TauII, CreepLawVariables,
-        LinearViscous, PowerlawViscous,
-        DislocationCreep, SetDislocationCreep, DislocationCreep_info,
-        DiffusionCreep,   SetDiffusionCreep
+export computeCreepLaw_EpsII,
+    computeCreepLaw_TauII,
+    CreepLawVariables,
+    LinearViscous,
+    PowerlawViscous,
+    DislocationCreep,
+    SetDislocationCreep,
+    DislocationCreep_info,
+    DiffusionCreep,
+    SetDiffusionCreep
 
 # Plasticity        
 using .MaterialParameters.Plasticity
-export  compute_yieldfunction,      # calculation routines
-        compute_yieldfunction!,
-        param_info,
-        DruckerPrager               
+export compute_yieldfunction,      # calculation routines
+    compute_yieldfunction!,
+    param_info,
+    DruckerPrager
 
 # Elasticity
 using .MaterialParameters.Elasticity
-export  compute_elastic_shear_strainrate,       # calculation routines
-        compute_elastic_shear_strainrate!,
-        param_info,
-        ConstantElasticity                      # constant
+export compute_elastic_shear_strainrate,       # calculation routines
+    compute_elastic_shear_strainrate!,
+    param_info,
+    ConstantElasticity                      # constant
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration
 export compute_gravity,                                # computational routines
-        ConstantGravity
-
+    ConstantGravity
 
 # Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat         
 using .MaterialParameters.HeatCapacity
 export compute_heatcapacity,
-        compute_heatcapacity!,
-        ConstantHeatCapacity,
-        T_HeatCapacity_Whittington
+    compute_heatcapacity!, ConstantHeatCapacity, T_HeatCapacity_Whittington
 
 using .MaterialParameters.Conductivity
 export compute_conductivity,
-        compute_conductivity!,
-        ConstantConductivity,
-        T_Conductivity_Whittington,
-        T_Conductivity_Whittington_parameterised,
-        TP_Conductivity,
-        Set_TP_Conductivity
+    compute_conductivity!,
+    ConstantConductivity,
+    T_Conductivity_Whittington,
+    T_Conductivity_Whittington_parameterised,
+    TP_Conductivity,
+    Set_TP_Conductivity
 
 using .MaterialParameters.LatentHeat
-export compute_latent_heat,compute_latent_heat!,
-        ConstantLatentHeat
+export compute_latent_heat, compute_latent_heat!, ConstantLatentHeat
 
 using .MaterialParameters.RadioactiveHeat
-export compute_radioactive_heat,compute_radioactive_heat!,
-        ConstantRadioactiveHeat,
-        ExpDepthDependentRadioactiveHeat
+export compute_radioactive_heat,
+    compute_radioactive_heat!, ConstantRadioactiveHeat, ExpDepthDependentRadioactiveHeat
 
 using .MaterialParameters.Shearheating
-export compute_shearheating!, compute_shearheating,
-        ConstantShearheating
+export compute_shearheating!, compute_shearheating, ConstantShearheating
 
 # Add TAS classification
 include("./RockClassification/TASclassification.jl")
-using   .TASclassification
-export  TASclassificationData, 
-        computeTASclassification,
-        retrieveTASrockType
+using .TASclassification
+export TASclassificationData, computeTASclassification, retrieveTASrockType
 
 # Add zircon saturation parameterizations
 include("./ZirconAge/ZirconAges.jl")
-using   .ZirconAges
-export  ZirconAgeData, 
-        compute_zircon_age_PDF,  compute_zircons_Ttpath, 
-        zircon_age_PDF, compute_zircons_convert_vecs2mat 
+using .ZirconAges
+export ZirconAgeData,
+    compute_zircon_age_PDF,
+    compute_zircons_Ttpath,
+    zircon_age_PDF,
+    compute_zircons_convert_vecs2mat
 
 # Seismic velocities
 using .MaterialParameters.SeismicVelocity
@@ -146,24 +186,27 @@ export compute_pwave_velocity,          compute_swave_velocity,
         compute_pwave_swave_ratio,      compute_pwave_swave_ratio!,
         ConstantSeismicVelocity,        anelastic_correction,
         melt_correction
-        
 
 # Add melting parameterizations
 include("./MeltFraction/MeltingParameterization.jl")
 using .MeltingParam
-export  compute_meltfraction,   compute_meltfraction!,       # calculation routines
-        compute_dϕdT,           compute_dϕdT!,
-        MeltingParam_Caricchi,  MeltingParam_4thOrder, 
-        MeltingParam_5thOrder,  MeltingParam_Quadratic,
-        MeltingParam_Assimilation, SmoothMelting
-
+export compute_meltfraction,
+    compute_meltfraction!,       # calculation routines
+    compute_dϕdT,
+    compute_dϕdT!,
+    MeltingParam_Caricchi,
+    MeltingParam_4thOrder,
+    MeltingParam_5thOrder,
+    MeltingParam_Quadratic,
+    MeltingParam_Assimilation,
+    SmoothMelting
 
 # Add plotting routines - only activated if the "Plots.jl" package is loaded 
 function __init__()
-        @require Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80" begin
-                print("Adding plotting routines of GeoParams")
-                @eval include("./Plotting.jl")
-        end
+    @require Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80" begin
+        print("Adding plotting routines of GeoParams")
+        @eval include("./Plotting.jl")
+    end
 end
 
 #Set functions aliases using @use

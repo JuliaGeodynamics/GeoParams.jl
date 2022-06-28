@@ -19,12 +19,12 @@ import Base.show, GeoParams.param_info
 
 abstract type AbstractCreepLaw{T} <: AbstractMaterialParam end
 
-export  computeCreepLaw_EpsII, computeCreepLaw_TauII,       # calculation routines
-        CreepLawVariables,                                     # holds additional parameters required for calculations
-        LinearViscous, 
-        PowerlawViscous
-        param_info
-
+export computeCreepLaw_EpsII,
+    computeCreepLaw_TauII,       # calculation routines
+    CreepLawVariables,                                     # holds additional parameters required for calculations
+    LinearViscous,
+    PowerlawViscous
+param_info
 
 # NOTE: we will likely have to remove this, in favor of multiple dispatch options
 """
@@ -39,13 +39,13 @@ where you can also pass vectors or arrays as values.
 Note that, if needed, this can be extended, w/out interfering with existing calculation  
 """
 
-@with_kw struct CreepLawVariables{_T,U1,U2,U3,U4}     
-    P::GeoUnit{_T,U1}  =   100.0MPa   # pressure
-    T::GeoUnit{_T,U2}  =   500.0C     # temperature
-    d::GeoUnit{_T,U3}  =   1.0cm      # grainsize
-    f::GeoUnit{_T,U4}  =   0.0MPa     # water-fugacity         
+@with_kw struct CreepLawVariables{_T,U1,U2,U3,U4}
+    P::GeoUnit{_T,U1} = 100.0MPa   # pressure
+    T::GeoUnit{_T,U2} = 500.0C     # temperature
+    d::GeoUnit{_T,U3} = 1.0cm      # grainsize
+    f::GeoUnit{_T,U4} = 0.0MPa     # water-fugacity         
 end
-CreepLawVariables(args...) = CreepLawVariables(convert.(GeoUnit,args)...)
+CreepLawVariables(args...) = CreepLawVariables(convert.(GeoUnit, args)...)
 
 include("DislocationCreep.jl")
 include("DiffusionCreep.jl")
@@ -67,43 +67,43 @@ or
 
 where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\\dot{\\varepsilon}_0``[1/s], and ``n`` the power law exponent []. 
 """
-@with_kw_noshow struct LinearViscous{T,U} <: AbstractCreepLaw{T}    
-    η::GeoUnit{T,U}     =   1e20Pa*s                # viscosity
-    η_val::T            =   1.0
+@with_kw_noshow struct LinearViscous{T,U} <: AbstractCreepLaw{T}
+    η::GeoUnit{T,U} = 1e20Pa * s                # viscosity
+    η_val::T = 1.0
 end
-LinearViscous(args...) = LinearViscous(convert(GeoUnit,args[1]), args[2])
+LinearViscous(args...) = LinearViscous(convert(GeoUnit, args[1]), args[2])
 
 function param_info(s::LinearViscous) # info about the struct
-    return MaterialParamsInfo(Equation = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}")
+    return MaterialParamsInfo(; Equation=L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}")
 end
 
 # Calculation routines for linear viscous rheologies
-@inline function computeCreepLaw_EpsII(TauII::T, s::LinearViscous; kwargs...) where T
-    η   = s.η
-    
-    return EpsII = (TauII/η)*0.5
+@inline function computeCreepLaw_EpsII(TauII::T, s::LinearViscous; kwargs...) where {T}
+    η = s.η
+
+    return EpsII = (TauII / η) * 0.5
 end
 
 @inline function dεII_dτII(TauII, s::LinearViscous; kwargs...)
-    η   = s.η
-    
-    return η*0.5;
+    η = s.η
+
+    return η * 0.5
 end
 
 @inline function computeCreepLaw_TauII(EpsII, s::LinearViscous; kwargs...)
-    η   = s.η
-    
-    return TauII = 2*(η*EpsII);
+    η = s.η
+
+    return TauII = 2 * (η * EpsII)
 end
 
 @inline function dτII_dεII(EpsII, s::LinearViscous; kwargs...)
-    η   = s.η
-    
-    return 2*η;
+    η = s.η
+
+    return 2 * η
 end
 # Print info 
-function show(io::IO, g::LinearViscous)  
-    print(io, "Linear viscosity: η=$(g.η.val)")  
+function show(io::IO, g::LinearViscous)
+    return print(io, "Linear viscosity: η=$(g.η.val)")
 end
 #-------------------------------------------------------------------------
 
@@ -119,30 +119,33 @@ Defines a power law viscous creeplaw as:
 where ``\\eta`` is the effective viscosity [Pa*s].
 """
 @with_kw_noshow struct PowerlawViscous{T,U1,U2,U3} <: AbstractCreepLaw{T}
-    η0::GeoUnit{T,U1}     =  1e18Pa*s            # reference viscosity 
-    n::GeoUnit{T,U2}      =  2.0*NoUnits         # powerlaw exponent
-    ε0::GeoUnit{T,U3}     =  1e-15*1/s;          # reference strainrate
+    η0::GeoUnit{T,U1} = 1e18Pa * s            # reference viscosity 
+    n::GeoUnit{T,U2} = 2.0 * NoUnits         # powerlaw exponent
+    ε0::GeoUnit{T,U3} = 1e-15 * 1 / s          # reference strainrate
 end
-PowerlawViscous(a...) = PowerlawViscous(convert.(GeoUnit,a)...)
+PowerlawViscous(a...) = PowerlawViscous(convert.(GeoUnit, a)...)
 
 # Print info 
-function show(io::IO, g::PowerlawViscous)  
-    print(io, "Powerlaw viscosity: η0=$(g.η0.val), n=$(g.n.val), ε0=$(g.ε0.val) ")
+function show(io::IO, g::PowerlawViscous)
+    return print(io, "Powerlaw viscosity: η0=$(g.η0.val), n=$(g.n.val), ε0=$(g.ε0.val) ")
 end
 #-------------------------------------------------------------------------
 
 # add methods programatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep)
     @eval begin
-        computeCreepLaw_EpsII(TauII, a::$(myType), args) = computeCreepLaw_EpsII(TauII, a; args...) 
-        dεII_dτII(TauII, a::$(myType), args) = dεII_dτII(TauII, a; args...) 
-        computeCreepLaw_TauII(EpsII, a::$(myType), args) = computeCreepLaw_TauII(EpsII, a; args...) 
+        function computeCreepLaw_EpsII(TauII, a::$(myType), args)
+            return computeCreepLaw_EpsII(TauII, a; args...)
+        end
+        dεII_dτII(TauII, a::$(myType), args) = dεII_dτII(TauII, a; args...)
+        function computeCreepLaw_TauII(EpsII, a::$(myType), args)
+            return computeCreepLaw_TauII(EpsII, a; args...)
+        end
         if Symbol($myType) !== :ConstantElasticity
             dτII_dεII(EpsII, a::$(myType), args) = dτII_dεII(EpsII, a; args...)
         end
     end
 end
-
 
 # Help info for the calculation routines
 """
@@ -174,6 +177,5 @@ may need for the calculations
 
 """
 computeCreepLaw_TauII
-
 
 end

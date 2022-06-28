@@ -1,13 +1,9 @@
 using ..MaterialParameters: MaterialParamsInfo
 import GeoParams.param_info
 
+export DiffusionCreep, SetDiffusionCreep, dεII_dτII, dτII_dεII
 
-export  DiffusionCreep,
-        SetDiffusionCreep,
-        dεII_dτII,
-        dτII_dεII
-
-const AxialCompression, SimpleShear, Invariant = 1,2,3
+const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 
 #=----Diffusion Creep---
 Defines diffusion creep law parameters
@@ -23,77 +19,109 @@ Apparatus defines the appartus type that shall be recreated (Axial Compression, 
 =#
 
 @with_kw_noshow struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-    Name::NTuple{N,Char}        = ""
-    n::GeoUnit{T,U1}            = 1.0NoUnits         # power-law exponent
-    r::GeoUnit{T,U1}            = 0.0NoUnits         # exponent of water-fugacity
-    p::GeoUnit{T,U1}            = -3.0NoUnits         # grain size exponent
-    A::GeoUnit{T,U2}            = 1.5MPa^(-n-r)*s^(-1)*m^(-p)    # material specific rheological parameter
-    E::GeoUnit{T,U3}            = 500kJ/mol          # activation energy
-    V::GeoUnit{T,U4}            = 6e-6m^3/mol        # activation volume
-    R::GeoUnit{T,U5}            = 8.314J/mol/K       # universal gas constant
-    Apparatus::Int32            = AxialCompression # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
+    Name::NTuple{N,Char} = ""
+    n::GeoUnit{T,U1} = 1.0NoUnits         # power-law exponent
+    r::GeoUnit{T,U1} = 0.0NoUnits         # exponent of water-fugacity
+    p::GeoUnit{T,U1} = -3.0NoUnits         # grain size exponent
+    A::GeoUnit{T,U2} = 1.5MPa^(-n - r) * s^(-1) * m^(-p)    # material specific rheological parameter
+    E::GeoUnit{T,U3} = 500kJ / mol          # activation energy
+    V::GeoUnit{T,U4} = 6e-6m^3 / mol        # activation volume
+    R::GeoUnit{T,U5} = 8.314J / mol / K       # universal gas constant
+    Apparatus::Int32 = AxialCompression # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
 end
 
-
-DiffusionCreep(args...) = DiffusionCreep(NTuple{length(args[1]), Char}(collect.(args[1])), convert.(GeoUnit,args[2:end-1])..., args[end])
+function DiffusionCreep(args...)
+    return DiffusionCreep(
+        NTuple{length(args[1]),Char}(collect.(args[1])),
+        convert.(GeoUnit, args[2:(end - 1)])...,
+        args[end],
+    )
+end
 
 function param_info(s::DiffusionCreep)
     name = String(collect(s.Name))
     eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"
-    if name == "" 
-        return MaterialParamsInfo(Equation=eq)
+    if name == ""
+        return MaterialParamsInfo(; Equation=eq)
     end
     inf = DiffusionCreep_info[name][2]
-    return MaterialParamsInfo(Equation=eq, Comment=inf.Comment, BibTex_Reference=inf.BibTex_Reference)
+    return MaterialParamsInfo(;
+        Equation=eq, Comment=inf.Comment, BibTex_Reference=inf.BibTex_Reference
+    )
 end
 
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
 @inline function computeCreepLaw_EpsII(TauII, a::DiffusionCreep; P, T, f, d, kwargs...)
-    @unpack_val n,r,p,A,E,V,R = a
-    
+    @unpack_val n, r, p, A, E, V, R = a
+
     FT, FE = CorrectionFactor(a)
-   
-    return A*fastpow(TauII*FT,n)*fastpow(f,r)*fastpow(d,p)*exp(-(E + P*V)/(R*T))/FE
+
+    return A *
+           fastpow(TauII * FT, n) *
+           fastpow(f, r) *
+           fastpow(d, p) *
+           exp(-(E + P * V) / (R * T)) / FE
 end
 
 @inline function dεII_dτII(TauII, a::DiffusionCreep; P, T, f, d, kwargs...)
-    @unpack_val n,r,p,A,E,V,R = a
+    @unpack_val n, r, p, A, E, V, R = a
     FT, FE = CorrectionFactor(a)
-    return fastpow(FT*TauII,-1+n)*fastpow(f,r)*fastpow(d,p)*A*FT*n*exp((-E-P*V)/(R*T))*(1/FE)
+    return fastpow(FT * TauII, -1 + n) *
+           fastpow(f, r) *
+           fastpow(d, p) *
+           A *
+           FT *
+           n *
+           exp((-E - P * V) / (R * T)) *
+           (1 / FE)
 end
 
 # EpsII .= A.*(TauII.*FT).^n.*f.^r.*d.^p.*exp.(-(E.+P.*V)./(R.*T))./FE; Once we have a 
 # All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
 @inline function computeCreepLaw_TauII(EpsII, a::DiffusionCreep; P, T, f, d, kwargs...)
-    @unpack_val n,r,p,A,E,V,R = a
+    @unpack_val n, r, p, A, E, V, R = a
 
-    FT, FE = CorrectionFactor(a);    
+    FT, FE = CorrectionFactor(a)
 
-    return fastpow(A,-1/n)*fastpow(EpsII*FE,1/n)*fastpow(f, -r/n)*fastpow(d,-p/n)*exp((E + P*V)/(n * R*T))/FT
+    return fastpow(A, -1 / n) *
+           fastpow(EpsII * FE, 1 / n) *
+           fastpow(f, -r / n) *
+           fastpow(d, -p / n) *
+           exp((E + P * V) / (n * R * T)) / FT
 end
 
 @inline function dτII_dεII(EpsII, a::DiffusionCreep; P, T, f, d, kwargs...)
-    @unpack_val n,r,p,A,E,V,R = a
+    @unpack_val n, r, p, A, E, V, R = a
     FT, FE = CorrectionFactor(a)
-    return fastpow(FT*EpsII,-1+1/n)*fastpow(f,-r/n)*fastpow(d,-p/n)*fastpow(A,-1/n)*FE*n*exp((E+P*V)/(n*R*T))*(1/(FT*n))
+    return fastpow(FT * EpsII, -1 + 1 / n) *
+           fastpow(f, -r / n) *
+           fastpow(d, -p / n) *
+           fastpow(A, -1 / n) *
+           FE *
+           n *
+           exp((E + P * V) / (n * R * T)) *
+           (1 / (FT * n))
 end
 
 # Print info 
-function show(io::IO, g::DiffusionCreep)  
-    print(io, "DiffusionCreep: Name = $(String(collect(g.Name))), n=$(g.n.val), r=$(g.r.val), p=$(g.p.val), A=$(g.A.val), E=$(g.E.val), V=$(g.V.val), Apparatus=$(g.Apparatus)" )  
+function show(io::IO, g::DiffusionCreep)
+    return print(
+        io,
+        "DiffusionCreep: Name = $(String(collect(g.Name))), n=$(g.n.val), r=$(g.r.val), p=$(g.p.val), A=$(g.A.val), E=$(g.E.val), V=$(g.V.val), Apparatus=$(g.Apparatus)",
+    )
 end
 
 # This computes correction factors to go from experimental data to tensor format
 # A nice discussion 
 function CorrectionFactor(a::DiffusionCreep{_T}) where {_T}
     if a.Apparatus == AxialCompression
-        FT = sqrt(one(_T)*3) # relation between differential stress recorded by apparatus and TauII
-        FE = 2/FT            # relation between gamma recorded by apparatus and EpsII
+        FT = sqrt(one(_T) * 3) # relation between differential stress recorded by apparatus and TauII
+        FE = 2 / FT            # relation between gamma recorded by apparatus and EpsII
     elseif a.Apparatus == SimpleShear
-        FT = FE = one(_T)*2  # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
+        FT = FE = one(_T) * 2  # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
     end
-    return FT,FE
+    return FT, FE
 end
 
 # Add pre-defined creep laws 
