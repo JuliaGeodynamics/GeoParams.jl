@@ -1,5 +1,6 @@
 using Test
 using GeoParams
+
 @testset "SeismicVelocity.jl" begin
     # This tests the MaterialParameters structure
     CharUnits_GEO = GEO_units(; viscosity=1e19, length=10km)
@@ -17,7 +18,9 @@ using GeoParams
     @test UnitValue(x_nd.Vp) ≈ 8.1e11
     @test UnitValue(x_nd.Vs) ≈ 4.5e11
 
-    @test UnitValue(compute_pwave_velocity(x_nd; random_name=1)) ≈ 8.1e11
+    @test UnitValue(compute_wave_velocity(x_nd, (; wave = :Vp))) ≈ 8.1e11
+    @test UnitValue(compute_wave_velocity(x_nd, (; wave = :Vs))) ≈ 4.5e11
+    @test UnitValue(compute_wave_velocity(x_nd, (; wave = :VpVs))) ≈1.8
 
     # Check that it works if we give a phase array
     MatParam = Array{MaterialParams,1}(undef, 2)
@@ -44,10 +47,14 @@ using GeoParams
     T = ones(size(Phases)) * 1500
     P = zeros(size(Phases))
 
-    args = (; T=T, P=P)
-    compute_pwave_velocity!(Vp, Mat_tup, Phases, args)
-    compute_swave_velocity!(Vs, Mat_tup, Phases, args)
-    compute_pwave_swave_ratio!(VpVs, Mat_tup, Phases, args)
+    args = (; T=T, P=P, wave=:Vp)
+    compute_wave_velocity!(Vp, Mat_tup, Phases, args)
+
+    args = (; T=T, P=P, wave=:Vs)
+    compute_wave_velocity!(Vs, Mat_tup, Phases, args)
+
+    args = (; T=T, P=P, wave=:VpVs)
+    compute_wave_swave_ratio!(VpVs, Mat_tup, Phases, args)
 
     @test Vp[1] == 8.1
     @test Vp[1, 1, end] ≈ 6.5290725233303935
