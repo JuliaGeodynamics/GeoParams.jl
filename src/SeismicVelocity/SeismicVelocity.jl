@@ -94,17 +94,16 @@ end
 #-------------------------------------------------------------------------------------------------------------
 
 #Multiple dispatch to rest of routines found in Computations.jl
-for myType in (
-    :ConstantSeismicVelocity, :PhaseDiagram_LookupTable
-)
+for myType in (:ConstantSeismicVelocity, :PhaseDiagram_LookupTable)
     @eval begin
-        compute_wave_velocity(p::$(myType), args) = compute_wave_velocity(p::$(myType); args...)
+        function compute_wave_velocity(p::$(myType), args)
+            return compute_wave_velocity(p::$(myType); args...)
+        end
     end
 end
 
 compute_wave_velocity!(args...) = compute_param!(compute_pwave_velocity, args...)
 compute_wave_velocity(args...) = compute_param(compute_pwave_velocity, args...)
-
 
 """
         Vp_cor,Vs_cor = melt_correction(  Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)

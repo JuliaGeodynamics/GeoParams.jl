@@ -18,9 +18,9 @@ using GeoParams
     @test UnitValue(x_nd.Vp) ≈ 8.1e11
     @test UnitValue(x_nd.Vs) ≈ 4.5e11
 
-    @test UnitValue(compute_wave_velocity(x_nd, (; wave = :Vp))) ≈ 8.1e11
-    @test UnitValue(compute_wave_velocity(x_nd, (; wave = :Vs))) ≈ 4.5e11
-    @test UnitValue(compute_wave_velocity(x_nd, (; wave = :VpVs))) ≈1.8
+    @test UnitValue(compute_wave_velocity(x_nd, (; wave=:Vp))) ≈ 8.1e11
+    @test UnitValue(compute_wave_velocity(x_nd, (; wave=:Vs))) ≈ 4.5e11
+    @test UnitValue(compute_wave_velocity(x_nd, (; wave=:VpVs))) ≈ 1.8
 
     # Check that it works if we give a phase array
     MatParam = Array{MaterialParams,1}(undef, 2)
