@@ -147,7 +147,7 @@ DislocationCreep_info = Dict([
         Apparatus = AxialCompression,
         r = 0.0NoUnits),
     MaterialParamsInfo(Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
-        BibTex_Reference = parse_bibtex("""
+        BibTex_Reference = "
             @incollection{eiler_rheology_2003,
             address = {Washington, D. C.},
             title = {Rheology of the upper mantle and the mantle wedge: {A} view from the experimentalists},
@@ -165,7 +165,7 @@ DislocationCreep_info = Dict([
             doi = {10.1029/138GM06},
             pages = {83--105},
             }
-        """))
+        ")
     )
 )
 
@@ -183,7 +183,7 @@ DislocationCreep_info = Dict([
         r   = 1.2NoUnits,
         Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
-        BibTex_Reference = parse_bibtex("""
+        BibTex_Reference = "
             @incollection{HirthKohlstedt_OlivineRheology_2003,
             address = {Washington, D. C.},
             title = {Rheology of the upper mantle and the mantle wedge: {A} view from the experimentalists},
@@ -201,7 +201,7 @@ DislocationCreep_info = Dict([
             doi = {10.1029/138GM06},
             pages = {83--105},
             }
-        """))
+        ")
     )
 )
 
@@ -220,7 +220,7 @@ DislocationCreep_info = Dict([
         r   = 0NoUnits,
         Apparatus =   AxialCompression),
         MaterialParamsInfo(Comment = "Verified with the original publication Hansen(1982)(NM). Values checked, plots are not reproduced (NM).",
-        BibTex_Reference = parse_bibtex("""
+        BibTex_Reference = "
              @article{carter1982stress,
              title={Stress magnitudes in natural rock salt},
              author={Carter, Neville L and Hansen, Francis D and Senseny, Paul E},
@@ -231,7 +231,7 @@ DislocationCreep_info = Dict([
              year={1982},
              publisher={Wiley Online Library}
              }
-        """))
+        ")
     )
 )
                 
@@ -250,7 +250,7 @@ DislocationCreep_info = Dict([
         r   = 0NoUnits,
         Apparatus =   AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Bremond (1999)), plots are not reproduced (NM).",
-        BibTex_Reference = parse_bibtex("""
+        BibTex_Reference = "
              @article{caristan1982transition,
              title={The transition from high temperature creep to fracture in Maryland diabase},
              author={Caristan, Y},
@@ -261,7 +261,7 @@ DislocationCreep_info = Dict([
              year={1982},
              publisher={Wiley Online Library}
              }
-        """))
+        ")
     )
 )
 
@@ -280,7 +280,7 @@ DislocationCreep_info = Dict([
         r   = 0NoUnits,
         Apparatus =   AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Bremond (1999)), plots are not reproduced (NM).",
-        BibTex_Reference = parse_bibtex("""
+        BibTex_Reference = "
              @article{raleigh1965experimental,
              title={Experimental deformation of serpentinite and its tectonic implications},
              author={Raleigh, CB and Paterson, MS},
@@ -291,7 +291,7 @@ DislocationCreep_info = Dict([
              year={1965},
              publisher={Wiley Online Library}
              }
-        """))
+        ")
     )
 )
 
@@ -308,7 +308,7 @@ DislocationCreep_info = Dict([
         r = 0NoUnits,
         Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Mackwell et al. (1998))(NM), plots are not reproduced (NM).",
-        BibTex_Reference = parse_bibtex("""
+        BibTex_Reference = "
             @article{mackwell1998high,
             title={High-temperature deformation of dry diabase with application to tectonics on Venus},
             author={Mackwell, SJ and Zimmerman, ME and Kohlstedt, DL},
@@ -319,7 +319,7 @@ DislocationCreep_info = Dict([
             year={1998},
             publisher={Wiley Online Library}
             }
-        """))
+        ")
     )
 )       
 
@@ -337,7 +337,7 @@ DislocationCreep_info = Dict([
         r = 0NoUnits,
         Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Wilks and Carter (1990))(NM), plots are not reproduced (NM).",
-        BibTex_Reference = parse_bibtex("""
+        BibTex_Reference = "
             @article{wilks1990rheology,
             title={Rheology of some continental lower crustal rocks},
             author={Wilks, Kenneth R and Carter, Neville L},
@@ -348,7 +348,7 @@ DislocationCreep_info = Dict([
             year={1990},
             publisher={Elsevier}
             }
-        """))
+        ")
     )
 )
 
@@ -364,7 +364,7 @@ DislocationCreep_info = Dict([
         r = 0NoUnits,
         Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Ueda et al. (2008))(NM), plots are not reproduced (NM).",
-        BibTex_Reference = parse_bibtex("""
+        BibTex_Reference = "
             @article{ueda2008subduction,
             title={Subduction initiation by thermal--chemical plumes: numerical studies},
             author={Ueda, Kosuke and Gerya, Taras and Sobolev, Stephan V},
@@ -375,7 +375,7 @@ DislocationCreep_info = Dict([
             year={2008},
             publisher={Elsevier}
             }
-        """))
+        ")
     )
 )
 
@@ -393,7 +393,7 @@ DislocationCreep_info = Dict([
         r = 0NoUnits,
         Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Carter and Tsenn (1987))(NM), plots are not reproduced (NM).",
-        BibTex_Reference = parse_bibtex("""
+        BibTex_Reference = "
             @article{carter1987flow,
             title={Flow properties of continental lithosphere},
             author={Carter, Neville L and Tsenn, Michael C},
@@ -404,7 +404,7 @@ DislocationCreep_info = Dict([
             year={1987},
             publisher={Elsevier}
             }
-        """))
+        ")
     )
 )
 
@@ -422,7 +422,7 @@ DislocationCreep_info = Dict([
         r = 0NoUnits,
         Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Ji and Zhao (1993))(NM), plots are not reproduced (NM).",
-        BibTex_Reference = parse_bibtex("""
+        BibTex_Reference = "
             @article{ji1993flow,
             title={Flow laws of multiphase rocks calculated from experimental data on the constituent phases},
             author={Ji, Shaocheng and Zhao, Pinglao},
@@ -433,7 +433,7 @@ DislocationCreep_info = Dict([
             year={1993},
             publisher={Elsevier}
             }
-        """))
+        ")
     )
 )
 
@@ -449,7 +449,7 @@ DislocationCreep_info = Dict([
         r = 0NoUnits,
         Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Rybecki and Dresen (2000))(NM), plots are not reproduced (NM).",
-        BibTex_Reference = parse_bibtex("""
+        BibTex_Reference = "
             @article{rybacki2000dislocation,
             title={Dislocation and diffusion creep of synthetic anorthite aggregates},
             author={Rybacki, Erik and Dresen, Georg},
@@ -460,7 +460,7 @@ DislocationCreep_info = Dict([
             year={2000},
             publisher={Wiley Online Library}
             }
-        """))
+        ")
     )
 )
 
@@ -476,7 +476,7 @@ DislocationCreep_info = Dict([
         r = 0NoUnits,
         Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Rybecki and Dresen (2000))(NM), plots are not reproduced (NM).",
-        BibTex_Reference = parse_bibtex("""
+        BibTex_Reference = "
             @article{rybacki2000dislocation,
             title={Dislocation and diffusion creep of synthetic anorthite aggregates},
             author={Rybacki, Erik and Dresen, Georg},
@@ -487,7 +487,7 @@ DislocationCreep_info = Dict([
             year={2000},
             publisher={Wiley Online Library}
             }
-        """))
+        ")
     )
 )
 
@@ -503,7 +503,7 @@ DislocationCreep_info = Dict([
         r = 1.2NoUnits,
         Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Hirth and Kohlstedt (2003))(NM), plots are not reproduced (NM).",
-        BibTex_Reference = parse_bibtex("""
+        BibTex_Reference = "
             @article{hirth2003rheology,
             title={Rheology of the upper mantle and the mantle wedge: A view from the experimentalists},
             author={Hirth, Greg and Kohlstedf, D},
@@ -513,7 +513,7 @@ DislocationCreep_info = Dict([
             year={2003},
             publisher={AGU AMERICAN GEOPHYSICAL UNION}
             }
-        """))
+        ")
     )
 )
                 
@@ -532,7 +532,7 @@ DislocationCreep_info = Dict([
         r = 0NoUnits,
         Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Kirby (1983))(NM), plots are not reproduced (NM).",
-        BibTex_Reference = parse_bibtex("""
+        BibTex_Reference = "
             @article{kirby1983rheology,
             title={Rheology of the lithosphere},
             author={Kirby, Stephen H},
@@ -543,7 +543,7 @@ DislocationCreep_info = Dict([
             year={1983},
             publisher={Wiley Online Library}
             }
-        """))
+        ")
     )
 )
 
@@ -561,7 +561,7 @@ DislocationCreep_info = Dict([
         r = 0.0NoUnits,
         Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Afonso and Ranalli (2004))(NM), plots are not reproduced (NM).",
-        BibTex_Reference = parse_bibtex("""
+        BibTex_Reference = "
             @article{afonso2004crustal,
             title={Crustal and mantle strengths in continental lithosphere: is the jelly sandwich model obsolete?},
             author={Afonso, Juan Carlos and Ranalli, Giorgio},
@@ -572,7 +572,7 @@ DislocationCreep_info = Dict([
             year={2004},
             publisher={Elsevier}
             }
-        """))
+        ")
     )
 )
 
@@ -590,7 +590,7 @@ DislocationCreep_info = Dict([
         r = 0.0NoUnits,
         Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked (Tirel et al. (2008))(NM), plots are not reproduced (NM).",
-        BibTex_Reference = parse_bibtex("""
+        BibTex_Reference = "
             @article{tirel2008dynamics,
             title={Dynamics and structural development of metamorphic core complexes},
             author={Tirel, C{\'e}line and Brun, Jean-Pierre and Burov, Evgueni},
@@ -600,7 +600,7 @@ DislocationCreep_info = Dict([
             year={2008},
             publisher={Wiley Online Library}
             }
-        """))
+        ")
     )
 )
 
@@ -617,7 +617,7 @@ DislocationCreep_info = Dict([
         r = 0.0NoUnits,
         Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked in (Li & Urai, (2016)) are different from given source (Wawersik & Zeuch, (1986))(NM), plots are not reproduced (NM).",
-        BibTex_Reference = parse_bibtex("""
+        BibTex_Reference = "
             @article{li2016rheology,
             title={Rheology of rock salt for salt tectonics modeling},
             author={Li, Shi-Yuan and Urai, Janos L},
@@ -628,7 +628,7 @@ DislocationCreep_info = Dict([
             year={2016},
             publisher={Springer}
             }
-        """))
+        ")
     )
 )
 
@@ -645,7 +645,7 @@ DislocationCreep_info = Dict([
         r = 0.0NoUnits,
         Apparatus = AxialCompression),
         MaterialParamsInfo(Comment = "Values checked in (Li & Urai, (2016)) are different from given source (Wawersik & Zeuch, (1986))(NM), plots are not reproduced (NM).",
-        BibTex_Reference = parse_bibtex("""
+        BibTex_Reference = "
             @article{li2016rheology,
             title={Rheology of rock salt for salt tectonics modeling},
             author={Li, Shi-Yuan and Urai, Janos L},
@@ -656,7 +656,7 @@ DislocationCreep_info = Dict([
             year={2016},
             publisher={Springer}
             }
-        """))
+        ")
     )
 )
 
