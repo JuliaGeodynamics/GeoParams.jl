@@ -216,15 +216,18 @@ Base.size(v::GeoUnit) = size(v.val)
 Base.getindex(A::GeoUnit{T,U}, inds::Vararg{Int,N}) where {T,U,N} = A.val[inds...]
 
 for op in (:+, :-, :*, :/)
+    
     # Multiply with number
     @eval Base.$op(x::GeoUnit, y::Number) = $(op)(x.val, y)
     @eval Base.$op(x::Number, y::GeoUnit) = $(op)(x, y.val)
+
     # Multiplying a GeoUnit with another one, returns a GeoUnit
     @eval function Base.$op(x::GeoUnit{T1,U1}, y::GeoUnit{T2,U2}) where {T1,T2,U1,U2}
-        return GeoUnit($(op)(Value(x), Value(y)))
+        return GeoUnit($(op)(UnitValue(x), UnitValue(y)))
     end
     @eval Base.$op(x::GeoUnit, y::Quantity) = $(op).(UnitValue(x), y)
     @eval Base.$op(x::Quantity, y::GeoUnit) = $(op).(x, UnitValue(y))
+
     # If we multiply a GeoUnit with an abstract array, we only return values, not units (use GeoUnits for that)
     @eval Base.$op(x::GeoUnit, y::AbstractArray) = broadcast($op, NumValue(x), y)
     @eval Base.$op(x::AbstractArray, y::GeoUnit) = broadcast($op, x, NumValue(y))

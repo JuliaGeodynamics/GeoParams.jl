@@ -55,9 +55,12 @@ using GeoParams
     # test nondimensionization of various parameters
     @test nondimensionalize(10cm / yr, CharUnits_GEO) ≈ 0.0031688087814028945 rtol = 1e-10
     @test nondimensionalize(10cm / yr, CharUnits_SI) ≈ 3.168808781402895e7 rtol = 1e-10
-
     @test nondimensionalize([10 1; 20 30.0], CharUnits_GEO) == [10 1; 20 30.0]
 
+    # test the same nondimensionalisation if giving a GeoUnit as input:
+    @test NumValue(nondimensionalize(GeoUnit(10cm / yr), CharUnits_GEO)) ≈ 0.0031688087814028945 rtol = 1e-10
+    @test NumValue(nondimensionalize(GeoUnit(10cm / yr), CharUnits_SI)) ≈ 3.168808781402895e7 rtol = 1e-10
+        
     A = 10MPa * s^(-1)   # should give 1e12 in ND units
     @test nondimensionalize(A, CharUnits_GEO) ≈ 1e12
 
@@ -124,6 +127,16 @@ using GeoParams
     @test Unit(convert(GeoUnit, 10km / s)) == km / s
     @test convert(Float64, GeoUnit(10.2)) == 10.2
     @test convert(Float64, GeoUnit([10.2 11.2])) == [10.2 11.2]
+
+
+    a = GeoUnit(3km)
+    b = GeoUnit(2000m)
+    @test a-b == GeoUnit(1000m)
+
+    CharUnits = SI_units()
+    c = nondimensionalize(a, CharUnits)
+    d = nondimensionalize(b, CharUnits)
+    @test c-d == GeoUnit(1)
 
     # test various calculations (using arrays with and without units)
     T_vec = (273K):(10K):(500K)        # using units
