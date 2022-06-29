@@ -18,8 +18,12 @@ using Requires          # To only add plotting routines if Plots is loaded
 import Base: getindex
 
 # overload to account for cases where this is an integer
-Base.getindex(val::Real, I::Vararg{Integer,N}) where {N} = val
-Base.getindex(val::Real, I::Integer) = val
+for T in (:Real, :Symbol)
+    @eval begin
+        Base.getindex(val::$(T), I::Vararg{Integer,N}) where {N} = val
+        Base.getindex(val::$(T), I::Integer) = val
+    end
+end
 
 export @u_str,
     uconvert,
@@ -182,11 +186,8 @@ export ZirconAgeData,
 # Seismic velocities
 using .MaterialParameters.SeismicVelocity
 export compute_pwave_velocity,
-    compute_swave_velocity,
-    compute_pwave_velocity!,
-    compute_swave_velocity!,
-    compute_pwave_swave_ratio,
-    compute_pwave_swave_ratio!,
+    compute_wave_velocity,
+    compute_wave_velocity!,
     ConstantSeismicVelocity,
     anelastic_correction,
     melt_correction

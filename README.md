@@ -7,7 +7,7 @@ Typical geodynamic simulations involve a large number of material parameters tha
 This package has three main features that help with this:
 - Create a nondimensionalization object, which can be used to transfer dimensional to non-dimensional parameters (usually better for numerical solvers)
 - Create an object in which you can specify material parameters employed in the geodynamic simulations
-- Provide allocation-free computational routinesfor GPU and CPUs, that can be integrated in solvers, which replaces all point wise operations (done to compute material parameter, or equations of state).
+- Provide allocation-free computational routines for GPU and CPUs, that can be integrated in solvers, which replaces all point wise operations (done to compute material parameter, or equations of state).
 
 The material parameter object is designed to be extensible and can be passed on to the solvers, such that new creep laws or features can be readily added. if you use the computational routines we provide, these new features are immediately available in all your codes. 
 
