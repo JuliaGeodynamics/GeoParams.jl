@@ -1,8 +1,9 @@
 module Tables
 
-using GeoParams: AbstractMaterialParam
 using Unidecode
+using GeoParams: AbstractMaterialParam, param_info
 using ..Units
+using ..MaterialParameters.MaterialParamsInfo
 
 export Phase2Dict,
        Dict2LatexTable
@@ -23,9 +24,11 @@ Dict2LatexTable() writes .tex file with all parameters from Phase2Dict() output 
 function Phase2Dict(s)
     # Dict has Key with Fieldname and Value with Tuple(value, symbol, unit)
     fds = Dict{String, Tuple{String, String, String, String}}()
+    refs = Dict{String, Tuple{String, String, String}}()
     # Descriptions for every parameter that could occur in the table and their corresponding variable name(s) that is used in GeoParams
     phasecount = length(s)
     k = 1
+    flowlawcount = 0
     # Checks all Phases 
     for i = 1:phasecount
         fieldnames = propertynames(s[i])
@@ -39,10 +42,21 @@ function Phase2Dict(s)
                     law = string(typeof(a[1]))
                     flowlaw = ""
                     if occursin("Disl", law)
+                        flowlawcount += 1
                         flowlaw = "DislCreep"
+                        name = join(a[j].Name)
+                        bibinfo_disl = param_info(a[j])
+                        bib_disl = bibinfo_disl.BibTex_Reference
+                        refs["$name"] = (bib_disl, "$flowlawcount", "$i")
                     elseif occursin("Diff", law)
+                        flowlawcount += 1
                         flowlaw = "DiffCreep"
+                        name = join(a[j].Name)
+                        bibinfo_diff = param_info(a[j])
+                        bib_diff = bibinfo_diff.BibTex_Reference
+                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
                     elseif occursin("LinearViscous", law)
+                        flowlawcount += 1
                         flowlaw = "LinVisc"
                     end
                     # Goes through all variables in a field component
@@ -71,13 +85,20 @@ function Phase2Dict(s)
             end
         end
     end
-    return fds
+    return fds, refs
 end
 
 
-function Dict2LatexTable(d::Dict)
+function Dict2LatexTable(d::Dict, refs::Dict)
     dictkeys = keys(d)
     symbs = []
+
+    # Creates vectors of type Pairs (can be iterated over, sorted, etc.)
+    dictpairs = sort(collect(pairs(d)))
+    refpair = sort(collect(pairs(refs)))
+
+    References = "";
+    InTextRef = "";
 
     # Descriptions for every parameter that could occur in the table and their corresponding variable name(s) that is used in GeoParams
     desc = Dict("\\rho"=>"Density \$(kg/m^{3})\$","\\rho0"=>"Reference density \$(kg/m^{3})\$","g"=>"Gravity \$(m/s^{2})\$","\\eta"=>"Viscosity \$(Pa \\cdot s)\$",
@@ -91,9 +112,13 @@ function Dict2LatexTable(d::Dict)
 
     # Generates latex preamble
     Table  = "\\documentclass{article}\n";
+    Table *= "\\usepackage{natbib}\n";
+    Table *= "\\bibliographystyle{abbrvnat}\n";
+    Table *= "\\setcitestyle{authoryear,open={(},close={)}} %Citation-related commands\n";
     Table *= "\\usepackage{booktabs}\n";
     Table *= "\\usepackage{graphicx}\n";
     Table *= "\\usepackage{multirow}\n";
+    Table *= "\\usepackage[round, comma, sort, ]{natbib}\n";
     Table *= "\\usepackage[utf8]{inputenc}\n";
     Table *= "\\begin{document}\n";
     Table *= "\\begin{table}[hbt]\n";
@@ -104,9 +129,23 @@ function Dict2LatexTable(d::Dict)
     Table *= "\\midrule[0.3pt]\n";
     Table *= " & ";
 
-    # Creates table headers
-    for j = 1:parse(Int64, d["Name 1"][2])
-        Table *= " & " * d["Name $j"][1]
+    # Creates table headers and in text citations
+    counter = 1
+    for i = 1:parse(Int64, d["Name 1"][2])
+        Table *= " & " * d["Name $i"][1]
+        for j = 1:length(refs)
+            if parse(Int64, refpair[j].second[3]) == i
+                Table *= "(" * "*" ^ counter * ")";
+                currentbib = refpair[j].second[1]
+                startidx = first(findfirst("{", currentbib))
+                endidx = first(findfirst(",", currentbib))
+                InTextRef *= "(" * "*" ^ counter * ") \\cite{" * currentbib[startidx+1:endidx-1] * "}";
+                if counter != length(refs)
+                    InTextRef *= ", "
+                end
+                counter += 1
+            end
+        end
     end
 
     # Latex formating and comment
@@ -123,8 +162,6 @@ function Dict2LatexTable(d::Dict)
         end
     end
     symbs = unique(sort(symbs))
-    # Creates a vector of Pairs (can be iterated over)
-    dictpairs = sort(collect(pairs(d)))
 
     # Creates columnwise output for all parameters of the input phase
     for symbol in symbs
@@ -153,38 +190,56 @@ function Dict2LatexTable(d::Dict)
         Table *= " \\\\\n";
     end
 
-    # Adds the used flow law equations after all parameters
-    dislhit = 0
-    diffhit = 0
-    linvischit = 0
+    # Adds equations for flow laws underneath the parameters
+    DislCreep = 0
+    DiffCreep = 0
+    LinVisc = 0
     for i = 1:length(dictpairs)
-        if dictpairs[i].second[3] == "DislCreep" && dislhit == 0
-            Table *= "\\rule[-5pt]{-3pt}{20pt} Dislocation Creep: & " * "\\multicolumn{4}{l}{\$ \\dot{\\gamma} = A \\sigma^n f_{H2O}^r \\exp \\left(-\\frac{E+PV}{RT} \\right)\$}"
+        if dictpairs[i].second[3] == "DislCreep" && DislCreep == 0
+            Table *= "\\rule[-5pt]{-3pt}{20pt} Dislocation Creep: & " * "\\multicolumn{4}{l}{\$ \\dot{\\gamma} = A \\sigma^n f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) \$}\n"
             Table *= " \\\\\n";
-            dislhit = 1
+            DislCreep += 1
         end
-        if dictpairs[i].second[3] == "DiffCreep" && diffhit == 0
-            Table *= "\\rule[-5pt]{-3pt}{20pt} Diffusion Creep: & " * "\\multicolumn{4}{l}{\$ \\dot{\\gamma} = A \\sigma^n d^p f_{H2O}^r \\exp \\left (-\\frac{E+PV}{RT} \\right)\$}"
+        if dictpairs[i].second[3] == "DiffCreep" && DiffCreep == 0
+            Table *= "\\rule[-5pt]{-3pt}{20pt} Diffusion Creep: & " * "\\multicolumn{4}{l}{\$ \\dot{\\gamma} = A \\sigma^n d^p f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) \$}\n"
             Table *= " \\\\\n";
-            diffhit = 1
+            DiffCreep += 1
         end
-        if dictpairs[i].second[3] == "LinVisc" && linvischit == 0
-            Table *= "\\rule[-5pt]{-3pt}{20pt} Linear Viscous: & " * "\\multicolumn{4}{l}{\$ \\eta  = \\frac{\\sigma_{II}}{2\\dot{\\varepsilon_{II}}}\$}"
+        if dictpairs[i].second[3] == "LinVisc" && LinVisc == 0
+            Table *= "\\rule[-5pt]{-3pt}{20pt} Linear Viscous: & " * "\\multicolumn{4}{l}{\$ \\eta  = \\frac{\\tau_{II} }{ 2\\dot{\\varepsilon_{II}}} \$}\n"
             Table *= " \\\\\n";
-            linvischit = 1
+            LinVisc += 1
         end
-    end 
+    end
+    
 
-    # finishes latex table, closes all open formats
+    Table *= "\\midrule[0.3pt]\n";
+
+    # Creates References string which is later written to References.bib 
+    for i = 1:parse(Int64, d["Name 1"][2])
+        for j = 1:length(refs)
+            if parse(Int64, refpair[j].second[2]) == i
+                References *= refpair[j].second[1];
+            end
+        end
+    end
+
+    # Adds in text citation for all BibTex sources to LaTEx code. InTextRef is created simultaneously with table headers
+    Table *= InTextRef * "\n";
+
+    # finishes latex table, closes all open formats and writes References beneath table
     Table *= "\\midrule[0.3pt]\n";
     Table *= "\\bottomrule[1pt]\n";
     Table *= "\\end{tabular}}\n";
-    Table *= "\\caption{Parameter table}\n"
+    Table *= "\\caption{Parameter table}\n";
     Table *= "\\label{tab:para_table}\n";
-    Table *= "\\end{table}\n"
+    Table *= "\\end{table}\n";
+    Table *= "\\bibliography{References}\n";
     Table *= "\\end{document}\n";
 
-    # Writes result into a .tex file
+    # Writes BibTex sources in to .bib file and Table string into .tex file
+    write("References.bib", References);
+    print("\n")
     write("MaterialParameters.tex", Table);
 end
 
