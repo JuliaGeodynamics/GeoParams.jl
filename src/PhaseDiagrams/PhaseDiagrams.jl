@@ -123,7 +123,7 @@ function PerpleX_LaMEM_Diagram(fname::String; CharDim=nothing)
     data = readdlm(fname; skipstart=55, header=false)        # read numerical data
 
     # Shape of 2D arrays:
-    siz = (numP, numT)
+    siz = (numT, numP)
 
     # Initialize fields in the order they are defined in the PhaseDiagram_LookupTable structure 
     Struct_Fieldnames = fieldnames(PhaseDiagram_LookupTable)[4:end] # fieldnames from structure
@@ -217,6 +217,7 @@ function CreateInterpolationObject_PhaseDiagram(
     end
 
     # Create interpolation object
+    #@show size(Tvec), size(Pvec), size(data)
     intp_data = LinearInterpolation((Tvec, Pvec), data; extrapolation_bc=Flat())
 
     return intp_data
