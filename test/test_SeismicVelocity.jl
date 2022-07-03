@@ -69,6 +69,12 @@ using GeoParams
     )
     @test [Vp_cor, Vs_cor] ≈ [7.336238790906285, 4.314027804335563]
 
+    Vs_cor = porosity_correction(
+         94.5, 61.0, 1000.0, 3198.0, 4.36, 0.25, 0.25
+    )
+    @test [Vs_cor] ≈ [2.226167083352012]
+
+
     Vs_anel = anelastic_correction(0, 4.36734, 5.0, 1250.0)
     @test Vs_anel ≈ 4.1182815519599325
 end
