@@ -190,7 +190,8 @@ export compute_pwave_velocity,
     compute_wave_velocity!,
     ConstantSeismicVelocity,
     anelastic_correction,
-    melt_correction
+    melt_correction,
+    porosity_correction
 
 # Add melting parameterizations
 include("./MeltFraction/MeltingParameterization.jl")

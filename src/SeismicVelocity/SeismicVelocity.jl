@@ -19,6 +19,7 @@ export compute_pwave_velocity,
     compute_wave_velocity!, # calculation routines
     ConstantSeismicVelocity, # constant
     melt_correction,
+    porosity_correction,
     anelastic_correction,
     param_info
 
@@ -207,6 +208,101 @@ function melt_correction(
 
     return Vp_cor, Vs_cor
 end
+
+
+"""
+        Vs_cor = porosity_correction(  Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
+
+Corrects S-wave velocity at shallow depth as function of empirical porosity-depth profile. 
+
+Input:
+====
+- `Kb_S`: adiabatic bulk modulus of the solid phase
+- `Ks_S`: shear modulus of the solid phase
+- `ρL`  : density of the melt
+- `ρS`  : density of the solid phase
+- `Vs0` : initial S-wave velocitiy of the solid phase
+- `depth`: in kilometers
+- `α`   : contiguity coefficient defining the geometry of the solid framework (contiguity)
+          0.0 (layered fluid distributed) < 0.1 (grain boundary melt) < 1.0 (fluid in separated bubble pockets)
+
+Output:
+====
+- `Vs_cor` : corrected P-wave and S-wave velocities for water-filled porosity
+
+The routine is based on the equilibrium geometry model for the solid skeleton of Takei et al., 1998.
+
+References:
+====
+
+- Takei (1998) Constitutive mechanical relations of solid-liquid composites in terms of grain-boundary contiguity, Journal of Geophysical Research: Solid Earth, Vol(103)(B8), 18183--18203
+- Chen et al. (2020) Empirical porosity-depth model for continental crust
+
+"""
+function porosity_correction(
+    Kb_S::_T, Ks_S::_T, ρf::_T, ρS::_T, Vs0::_T, depth::_T, α::_T
+) where {_T<:Number}
+    # Empirical porosity-depth model for continental crust after Chen et al., 2020 (hydrogeology journal)
+    m = 0.071;
+    n = 5.989;
+    ϕ0 = 0.474;
+
+    ϕ = ϕ0 / ((1.0+depth*m)^n)
+
+    # Takei 1998: Approximation Formulae for Bulk and Shear Moduli of Isotropic Solid Skeleton
+    ν = 0.25                         # poisson ratio
+
+    aij = [
+        0.318 6.780 57.560 0.182
+        0.164 4.290 26.658 0.464
+        1.549 4.814 8.777 -0.290
+    ] 
+
+    bij = [
+        -0.3238 0.2341
+        -0.1819 0.5103
+    ]
+
+    a = zeros(3)
+    for i in 1:3
+        a[i] =
+            aij[i, 1] * exp(aij[i, 2] * (ν - 0.25) + aij[i, 3] * (ν - 0.25)^3) + aij[i, 4]
+    end
+    b = zeros(2)
+    for i in 1:2
+        b[i] = bij[i, 1] * ν + bij[i, 2]
+    end
+
+    nk = a[1] * α + a[2] * (1.0 - α) + a[3] * α * (1.0 - α) * (0.5 - α)
+    nμ = b[1] * α + b[2] * (1.0 - α)
+
+    # computation of the bulk modulus ratio of the skeletal framework over the solid phase
+    ksk_k = α^(nk)
+    # computation of the shear modulus ratio of the skeletal framework over the solid phase
+    μsk_μ = α^(nμ)
+
+    # apply correction for the melt fraction to adiabatic bulk and shear modulii 
+    ksk = ksk_k * Kb_S
+    μsk = μsk_μ * Ks_S
+
+    kb = (1.0 - ϕ) * ksk
+    μ = (1.0 - ϕ) * μsk
+
+    # ratio of skeleton adiabatic bulk modulus over solid phase bulk modulus
+    ΛK = Kb_S / kb
+
+    # ratio of skeleton shear modulus over solid phase shear modulus
+    ΛG = Ks_S / μ
+
+    ΔVs = (ΛG - (1.0 - ρf / ρS)) * (ϕ * 0.5)
+
+    # get the correction values
+    Vs_cor = Vs0 - Vs0 * ΔVs
+
+    return Vs_cor
+end
+
+
 
 """
         Vs_anel = anelastic_correction(water::Int64, Vs0::Float64,P::Float64,T::Float64)

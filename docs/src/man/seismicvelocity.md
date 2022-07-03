@@ -26,6 +26,19 @@ To compute melt-content based correction for seismic waves velocities, you can u
 ```@docs
 GeoParams.melt_correction
 ```
+
+# Seismic S-wave velocity correction for (shallow depth) porosity
+
+# Methods
+Ths routine is based on the equilibrium geometry model for the solid skeleton of Takei et al. (1998) and the porosity-depth empirical relationship of Chen et al. (2020)
+
+# Computational routines
+To compute porosity based correction for seismic S-wave velocity, you can use:
+```@docs
+GeoParams.porosity_correction
+```
+
+
 # Seismic velocity correction for anelasticity
 
 # Methods
