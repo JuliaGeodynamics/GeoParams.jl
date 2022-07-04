@@ -9,6 +9,7 @@ using Parameters, LaTeXStrings, Unitful
 using ..Units
 using ..PhaseDiagrams
 using ..MaterialParameters: MaterialParamsInfo
+using Interpolations, Statistics
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 import Base.show, GeoParams.param_info
 
@@ -21,7 +22,8 @@ export compute_pwave_velocity,
     melt_correction,
     porosity_correction,
     anelastic_correction,
-    param_info
+    param_info,
+    correct_wavevelocities_phasediagrams
 
 include("../Utils.jl")
 include("../Computations.jl")
@@ -118,8 +120,8 @@ Input:
 - `Ks_S`: shear modulus of the solid phase
 - `ρL`  : density of the melt
 - `ρS`  : density of the solid phase
-- `Vp0` : initial P-wave velocitiy of the solid phase
-- `Vs0` : initial S-wave velocitiy of the solid phase
+- `Vp0` : initial P-wave velocity of the solid phase
+- `Vs0` : initial S-wave velocity of the solid phase
 - `ϕ`   : melt volume fraction
 - `α`   : contiguity coefficient defining the geometry of the solid framework (contiguity)
           0.0 (layered melt distributed) < 0.1 (grain boundary melt) < 1.0 (melt in separated bubble pockets)
@@ -146,34 +148,44 @@ function melt_correction(
     # Takei 1998: Approximation Formulae for Bulk and Shear Moduli of Isotropic Solid Skeleton
     ν = 0.25                         # poisson ratio
 
-    aij = [
-        0.318 6.780 57.560 0.182
-        0.164 4.290 26.658 0.464
-        1.549 4.814 8.777 -0.290
-    ]  #
+    aij = (
+        0.318, 6.780, 57.560,  0.182,
+        0.164, 4.290, 26.658,  0.464,
+        1.549, 4.814, 8.777, -0.290,
+    )
+    bij = (
+        -0.3238, 0.2341, 
+        -0.1819, 0.5103
+    )
 
-    bij = [
-        -0.3238 0.2341
-        -0.1819 0.5103
-    ]
-
-    a = zeros(3)
-    for i in 1:3
-        a[i] =
-            aij[i, 1] * exp(aij[i, 2] * (ν - 0.25) + aij[i, 3] * (ν - 0.25)^3) + aij[i, 4]
+    # Lines below are equivalent to:
+    # a = zeros(3)
+    # for i in 1:3
+    #     a[i] =
+    #         aij[i, 1] * exp(aij[i, 2] * (ν - 0.25) + aij[i, 3] * (ν - 0.25)^3) + aij[i, 4]
+    # end
+    a = ntuple(Val(3)) do i
+        idx = 4*i-3 # linear offset index
+        aij[idx] * exp(aij[idx+1] * (ν - 0.25) + aij[idx+2] * (ν - 0.25)^3) + aij[idx+3]
     end
-    b = zeros(2)
-    for i in 1:2
-        b[i] = bij[i, 1] * ν + bij[i, 2]
+
+    # Lines below are equivalent to:
+    # b = zeros(2)
+    # for i in 1:2
+    #     b[i] = bij[i, 1] * ν + bij[i, 2]
+    # end
+    b = ntuple(Val(2)) do i
+        idx = 2*i-1 # linear offset index
+        bij[idx] * ν + bij[idx+1]
     end
 
     nk = a[1] * α + a[2] * (1.0 - α) + a[3] * α * (1.0 - α) * (0.5 - α)
     nμ = b[1] * α + b[2] * (1.0 - α)
 
     # computation of the bulk modulus ratio of the skeletal framework over the solid phase
-    ksk_k = α^(nk)
+    ksk_k = fastpow(α, nk)
     # computation of the shear modulus ratio of the skeletal framework over the solid phase
-    μsk_μ = α^(nμ)
+    μsk_μ = fastpow(α, nμ)
 
     # apply correction for the melt fraction to adiabatic bulk and shear modulii 
     ksk = ksk_k * Kb_S
@@ -198,7 +210,7 @@ function melt_correction(
             (
                 (((β - 1.0) * ΛK) / ((β - 1.0) + ΛK) + 4.0 / 3.0 * γ * ΛG) /
                 (1.0 + 4.0 / 3.0 * γ)
-            ) - (1.0 - ρL / ρS)
+            ) - (1.0 - ρL / ρL)
         ) * (ϕ * 0.5)
     ΔVs = (ΛG - (1.0 - ρL / ρS)) * (ϕ * 0.5)
 
@@ -221,7 +233,7 @@ Input:
 - `Ks_S`: shear modulus of the solid phase
 - `ρL`  : density of the melt
 - `ρS`  : density of the solid phase
-- `Vs0` : initial S-wave velocitiy of the solid phase
+- `Vs0` : initial S-wave velocity of the solid phase
 - `depth`: in kilometers
 - `α`   : contiguity coefficient defining the geometry of the solid framework (contiguity)
           0.0 (layered fluid distributed) < 0.1 (grain boundary melt) < 1.0 (fluid in separated bubble pockets)
@@ -243,43 +255,54 @@ function porosity_correction(
     Kb_S::_T, Ks_S::_T, ρf::_T, ρS::_T, Vs0::_T, depth::_T, α::_T
 ) where {_T<:Number}
     # Empirical porosity-depth model for continental crust after Chen et al., 2020 (hydrogeology journal)
-    m = 0.071;
-    n = 5.989;
-    ϕ0 = 0.474;
+    m = 0.071
+    n = 5.989
+    ϕ0 = 0.474
 
-    ϕ = ϕ0 / ((1.0+depth*m)^n)
+    ϕ = ϕ0 / fastpow((1.0+depth*m), n)
 
     # Takei 1998: Approximation Formulae for Bulk and Shear Moduli of Isotropic Solid Skeleton
-    ν = 0.25                         # poisson ratio
+    ν = 0.25 # poisson ratio
 
-    aij = [
-        0.318 6.780 57.560 0.182
-        0.164 4.290 26.658 0.464
-        1.549 4.814 8.777 -0.290
-    ] 
+    # Tuples are a better option than standard arrays for matrices/vectors of known size at compile time
+    aij = (
+        0.318, 6.780, 57.560,  0.182,
+        0.164, 4.290, 26.658,  0.464,
+        1.549, 4.814, 8.777, -0.290,
+    )
+    bij = (
+        -0.3238, 0.2341, 
+        -0.1819, 0.5103
+    )
 
-    bij = [
-        -0.3238 0.2341
-        -0.1819 0.5103
-    ]
-
-    a = zeros(3)
-    for i in 1:3
-        a[i] =
-            aij[i, 1] * exp(aij[i, 2] * (ν - 0.25) + aij[i, 3] * (ν - 0.25)^3) + aij[i, 4]
+    # Lines below are equivalent to:
+    # a = zeros(3)
+    # for i in 1:3
+    #     a[i] =
+    #         aij[i, 1] * exp(aij[i, 2] * (ν - 0.25) + aij[i, 3] * (ν - 0.25)^3) + aij[i, 4]
+    # end
+    a = ntuple(Val(3)) do i
+        idx = 4*i-3 # linear offset index
+        aij[idx] * exp(aij[idx+1] * (ν - 0.25) + aij[idx+2] * (ν - 0.25)^3) + aij[idx+3]
     end
-    b = zeros(2)
-    for i in 1:2
-        b[i] = bij[i, 1] * ν + bij[i, 2]
+
+    # Lines below are equivalent to:
+    # b = zeros(2)
+    # for i in 1:2
+    #     b[i] = bij[i, 1] * ν + bij[i, 2]
+    # end
+    b = ntuple(Val(2)) do i
+        idx = 2*i-1 # linear offset index
+        bij[idx] * ν + bij[idx+1]
     end
 
     nk = a[1] * α + a[2] * (1.0 - α) + a[3] * α * (1.0 - α) * (0.5 - α)
     nμ = b[1] * α + b[2] * (1.0 - α)
 
     # computation of the bulk modulus ratio of the skeletal framework over the solid phase
-    ksk_k = α^(nk)
+    ksk_k = fastpow(α, nk)
     # computation of the shear modulus ratio of the skeletal framework over the solid phase
-    μsk_μ = α^(nμ)
+    μsk_μ = fastpow(α, nμ)
 
     # apply correction for the melt fraction to adiabatic bulk and shear modulii 
     ksk = ksk_k * Kb_S
@@ -303,7 +326,6 @@ function porosity_correction(
 end
 
 
-
 """
         Vs_anel = anelastic_correction(water::Int64, Vs0::Float64,P::Float64,T::Float64)
 
@@ -313,8 +335,8 @@ Input:
 ====
 - `water`: water flag, 0 = dry; 1 = dampened; 2 = water saturated 
 - `Vs0`  : S-wave velocitiy of the solid phase (with or without melt correction)
-- `P`    : pressure given in kbar
-- `T`    : temperature given in °C
+- `P`    : pressure given in Pa
+- `T`    : temperature given in °K
 
 Output:
 ====
@@ -332,14 +354,9 @@ References:
 
 
 """
-function anelastic_correction(water::Int64, Vs0::Float64, P::Float64, T::Float64)
-    kbar2pa = 100.0e3
-    c2K = 273.0
-
-    Pref = P * kbar2pa            # pa
-    Tref = T + c2K                # K
-
+function anelastic_correction(water::Int64, Vs0::Float64, Pref::Float64, Tref::Float64)
     R = 8.31446261815324     # gas constant
+
     # values based on fitting experimental constraints (Behn et al., 2009)
     α = 0.27
     B0 = 1.28e8               # m/s
@@ -359,13 +376,13 @@ function anelastic_correction(water::Int64, Vs0::Float64, P::Float64, T::Float64
     d = 1e-2                 # m (grain size)
 
     if water == 0
-        COH = 50.0 / 1e6         # for dry mantle
+        COH = 50.0 / 1e6     # for dry mantle
         r = 0.0              # for dry mantle
     elseif water == 1
-        COH = 1000.0 / 1e6       # for damp mantle    
+        COH = 1000.0 / 1e6   # for damp mantle    
         r = 1.0              # for damp mantle
     elseif water == 2
-        COH = 3000.0 / 1e6       # for wet mantle (saturated water)
+        COH = 3000.0 / 1e6   # for wet mantle (saturated water)
         r = 2.0              # for wet mantle
     else
         print(
@@ -385,5 +402,129 @@ function anelastic_correction(water::Int64, Vs0::Float64, P::Float64, T::Float64
 
     return Vs_anel
 end
+
+"""
+    PD_corrected = correct_wavevelocities_phasediagrams(PD::PhaseDiagram_LookupTable,  
+                                apply_porosity_correction=true, ρf=1000.0, α_porosity=0.5,
+                                apply_melt_correction=true, α_melt = 0.1,
+                                apply_anelasticity_correction=true, water=2)
+
+This applies various corrections to the seismic velocities specified in the phase diagram lookup table `PD`, and replaces the fields `Vp` and `Vs` in the diagram with the corrected ones.
+The original `Vp`,`Vs` is stored in `Vp_uncorrected`,`Vs_uncorrected`
+
+The following corrections can be applied (together with potential options)
+- *apply_porosity_correction*: applies a correction for fluid-filled pores to vs velocity. Optional parameters are `ρf` (density fluid=[1000kg/m3]) and  `α_porosity` (contiguity coefficient defining the geometry of the solid framework, with 0.0 (layered fluid distributed) < 0.1 (grain boundary melt) < 1.0 (fluid in separated bubble pockets)
+- *apply_melt_correction*: applies a correction to the P/S-wave velocity for the presence of melt for a given pore contiguity described by `α_melt`: 0.0 (layered fluid distributed) < 0.1 (grain boundary melt) < 1.0 (fluid in separated bubble pockets)
+- *apply_anelasticity_correction*: applies an anelasticity correction to the S-wave velocity, with the optional parameter `water`: 0 = dry; 1 = dampened; 2 = water saturated
+
+"""
+function correct_wavevelocities_phasediagrams(PD::PhaseDiagram_LookupTable;  
+    apply_porosity_correction=true, ρf=1000.0, α_porosity=0.1,
+    apply_melt_correction=true, α_melt = 0.1,
+    apply_anelasticity_correction=true, water=0)
+
+    # extract required data
+    T,P = PD.Rho.itp.knots   # T,P vectors of diagrams
+
+    # store original results correction   
+    Vs_uncorrected = PD.Vs;
+    Vp_uncorrected = PD.Vp;
+
+    # Extract required data to apply corrections
+    Vs_corrected  = PD.solid_Vs.itp.coefs;   # Vs velocity of solid rocks
+    Vp_corrected  = PD.solid_Vp.itp.coefs;   # Vp velocity of solid rocks
+
+    # Apply anelasticity correction
+    if apply_anelasticity_correction==true
+        for i in CartesianIndices(Vs_corrected)
+            Vs_corrected[i] =  anelastic_correction(water, Vs_corrected[i], P[i[2]], T[i[1]])
+        end
+    end
+
+    # Apply porosity correction 
+    if apply_porosity_correction==true
+        Kb_S  = PD.solid_bulkModulus.itp.coefs;    #  bulk modulus solid
+        Ks_S  = PD.solid_shearModulus.itp.coefs;   #  shear modulus solid
+        ρS    = PD.rockRho.itp.coefs;
+        ρ_av  = mean(ρS);           # average solid density
+
+        for i in CartesianIndices(Vs_corrected)
+            depth = P[i[2]]/(9.81*ρ_av*1e3)         # approximate depth in km (assuming lithostatic P)
+            Vs_corrected[i] =  porosity_correction(Kb_S[i], Ks_S[i], ρf, ρS[i], Vs_corrected[i], depth, α_porosity)
+        end
+
+    end
+
+    # Apply melt correction 
+    if apply_melt_correction==true
+        Kb_L  = PD.melt_bulkModulus.itp.coefs;    #  bulk modulus melt
+        Kb_S  = PD.solid_bulkModulus.itp.coefs;   #  bulk modulus solid
+        Ks_S  = PD.solid_shearModulus.itp.coefs;  #  shear modulus solid
+        ρS    = PD.rockRho.itp.coefs;                 #  solid density
+        ρL    = PD.meltRho.itp.coefs;                 #  melt density
+        ϕ     = PD.meltFrac.itp.coefs;                #  melt fraction
+
+        for i in CartesianIndices(Vs_corrected)
+            if ϕ[i]>0
+                Vp_c, Vs_c =  melt_correction(Kb_L[i],Kb_S[i], Ks_S[i], ρL[i], ρS[i], Vp_corrected[i], Vs_corrected[i], ϕ[i], α_melt)
+                Vp_corrected[i], Vs_corrected[i] = Vp_c, Vs_c
+            end
+        end
+
+    end
+
+    # Store results ----
+
+    # Create interpolation objects
+    Vs_corrected_intp   = LinearInterpolation((T, P), Vs_corrected; extrapolation_bc=Flat())
+    Vp_corrected_intp   = LinearInterpolation((T, P), Vp_corrected; extrapolation_bc=Flat())
+    VpVs_corrected_intp = LinearInterpolation((T, P), Vp_corrected./Vs_corrected; extrapolation_bc=Flat())
+
+    # Initialize fields in the order they are defined in the PhaseDiagram_LookupTable structure 
+    Struct_Fieldnames = fieldnames(PhaseDiagram_LookupTable)[4:end] # fieldnames from structure
+
+    # Process all fields that are present in the phase diagram (and non-dimensionalize if requested)
+    Struct_Fields = Vector{Union{Nothing,Interpolations.Extrapolation}}(
+        nothing, length(Struct_Fieldnames)
+    )
+
+    # Loop through all fields & copy the existing field. For :Vs_corrected, :Vp_corrected, we create the new objects
+    for (i, field) in enumerate(Struct_Fieldnames)
+        data = getfield(PD,field)
+
+        if data != nothing
+            Struct_Fields[i] = data 
+        end
+
+        # add corrected Vs/Vp fields
+        if field==:Vs
+            Struct_Fields[i] = Vs_corrected_intp 
+        end
+        if field==:Vp
+            Struct_Fields[i] = Vp_corrected_intp 
+        end
+        if field==:VpVs
+            Struct_Fields[i] = VpVs_corrected_intp
+        end
+
+        # Store 
+        if field==:Vs_uncorrected
+            Struct_Fields[i] = Vs_uncorrected 
+        end
+        if field==:Vp_uncorrected
+            Struct_Fields[i] = Vp_uncorrected 
+        end
+        
+    end
+
+    # Store in phase diagram structure
+    PD_corrected = PhaseDiagram_LookupTable(
+        "Perple_X/MAGEMin/LaMEM", PD.HeaderText, PD.Name, Struct_Fields...
+    )
+
+    
+    return PD_corrected
+end
+
 
 end

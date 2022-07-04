@@ -67,7 +67,7 @@ using GeoParams
     Vp_cor, Vs_cor = melt_correction(
         26.0, 94.5, 61.0, 2802.0, 3198.0, 7.4, 4.36, 0.01, 0.15
     )
-    @test [Vp_cor, Vs_cor] ≈ [7.336238790906285, 4.314027804335563]
+    @test [Vp_cor, Vs_cor] ≈  [7.331657177397843, 4.314027804335563]
 
     Vs_cor = porosity_correction(
          94.5, 61.0, 1000.0, 3198.0, 4.36, 0.25, 0.25
@@ -76,5 +76,28 @@ using GeoParams
 
 
     Vs_anel = anelastic_correction(0, 4.36734, 5.0, 1250.0)
-    @test Vs_anel ≈ 4.1182815519599325
+    @test Vs_anel ≈ 4.343623758644558
+
+
+    # Correct phase diagrams for melt, anelasticity and porosity
+
+    PD= correct_wavevelocities_phasediagrams(PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in"), apply_melt_correction=false, apply_porosity_correction=false, apply_anelasticity_correction=false)
+    @test PD.VpVs(1500,5e8) ≈  1.7040210607486448 
+    @test PD.Vs(1500,5e8) ≈ 4.329112661008007
+    @test PD.Vp(1500,5e8) ≈ 7.376899430314534
+
+    PD= correct_wavevelocities_phasediagrams(PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in"), apply_melt_correction=false, apply_porosity_correction=false, apply_anelasticity_correction=true)
+    @test PD.Vs(1500,5e8) ≈ 4.145262692579164
+    @test PD.Vp(1500,5e8) ≈ 7.376899430314534
+
+    PD= correct_wavevelocities_phasediagrams(PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in"), apply_melt_correction=false, apply_porosity_correction=true, apply_anelasticity_correction=true)
+    @test PD.Vs(1500,5e8) ≈ 4.121416536658633 
+    @test PD.Vp(1500,5e8) ≈ 7.376899430314534
+
+    PD= correct_wavevelocities_phasediagrams(PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in"), apply_melt_correction=true, apply_porosity_correction=true, apply_anelasticity_correction=true)
+    @test PD.Vs(1500,1e8) ≈ 2.133356250353467
+    @test PD.Vp(1500,5e8) ≈ 6.774831213555857
+
+    @test PD.VpVs(1500,5e8) ≈ 1.8277368391346367
+
 end
