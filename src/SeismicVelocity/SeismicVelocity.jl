@@ -405,13 +405,13 @@ The original `Vp`,`Vs` is stored in `Vp_uncorrected`,`Vs_uncorrected`
 The following corrections can be applied (together with potential options)
 - *apply_porosity_correction*: applies a correction for fluid-filled pores to vs velocity. Optional parameters are `ρf` (density fluid=[1000kg/m3]) and  `α_porosity` (contiguity coefficient defining the geometry of the solid framework, with 0.0 (layered fluid distributed) < 0.1 (grain boundary melt) < 1.0 (fluid in separated bubble pockets)
 - *apply_melt_correction*: applies a correction to the P/S-wave velocity for the presence of melt for a given pore contiguity described by `α_melt`: 0.0 (layered fluid distributed) < 0.1 (grain boundary melt) < 1.0 (fluid in separated bubble pockets)
-- *apply_anelasticity_correction*: applies an anelasticity correction to the S-wave velocity, with the optional parameter `water`: 0 = dry; 1 = dampened; [2 = water saturated = default]
+- *apply_anelasticity_correction*: applies an anelasticity correction to the S-wave velocity, with the optional parameter `water`: 0 = dry; 1 = dampened; 2 = water saturated
 
 """
 function correct_wavevelocities_phasediagrams(PD::PhaseDiagram_LookupTable;  
-    apply_porosity_correction=true, ρf=1000.0, α_porosity=0.5,
+    apply_porosity_correction=true, ρf=1000.0, α_porosity=0.1,
     apply_melt_correction=true, α_melt = 0.1,
-    apply_anelasticity_correction=true, water=2)
+    apply_anelasticity_correction=true, water=0)
 
     # extract required data
     T,P = PD.Rho.itp.knots   # T,P vectors of diagrams
@@ -466,8 +466,9 @@ function correct_wavevelocities_phasediagrams(PD::PhaseDiagram_LookupTable;
     # Store results ----
 
     # Create interpolation objects
-    Vs_corrected_intp = LinearInterpolation((T, P), Vs_corrected; extrapolation_bc=Flat())
-    Vp_corrected_intp = LinearInterpolation((T, P), Vp_corrected; extrapolation_bc=Flat())
+    Vs_corrected_intp   = LinearInterpolation((T, P), Vs_corrected; extrapolation_bc=Flat())
+    Vp_corrected_intp   = LinearInterpolation((T, P), Vp_corrected; extrapolation_bc=Flat())
+    VpVs_corrected_intp = LinearInterpolation((T, P), Vp_corrected./Vs_corrected; extrapolation_bc=Flat())
 
     # Initialize fields in the order they are defined in the PhaseDiagram_LookupTable structure 
     Struct_Fieldnames = fieldnames(PhaseDiagram_LookupTable)[4:end] # fieldnames from structure
@@ -492,7 +493,10 @@ function correct_wavevelocities_phasediagrams(PD::PhaseDiagram_LookupTable;
         if field==:Vp
             Struct_Fields[i] = Vp_corrected_intp 
         end
-        
+        if field==:VpVs
+            Struct_Fields[i] = VpVs_corrected_intp
+        end
+
         # Store 
         if field==:Vs_uncorrected
             Struct_Fields[i] = Vs_uncorrected 
