@@ -31,7 +31,7 @@ using GeoParams
     MatParam[2] = SetMaterialParams(;
         Name="Crust",
         Phase=2,
-        SeismicVelocity=PerpleX_LaMEM_Diagram("test_data/Peridotite.in"),
+        SeismicVelocity=PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in"),
     )
 
     Mat_tup = Tuple(MatParam)
@@ -57,12 +57,12 @@ using GeoParams
     compute_wave_velocity!(VpVs, Mat_tup, Phases, args)
 
     @test Vp[1] == 8.1
-    @test Vp[1, 1, end] ≈ 6.5290725233303935
+    @test Vp[1, 1, end] ≈ 5.500887338991992
     @test Vs[1] == 4.5
-    @test Vs[1, 1, end] ≈ 2.4874400647487658
+    @test Vs[1, 1, end] ≈ 2.68 
 
     @test VpVs[1] ≈ 1.8
-    @test VpVs[1, 1, end] ≈ 2.08167
+    @test VpVs[1, 1, end] ≈ 2.05
 
     Vp_cor, Vs_cor = melt_correction(
         26.0, 94.5, 61.0, 2802.0, 3198.0, 7.4, 4.36, 0.01, 0.15

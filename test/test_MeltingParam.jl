@@ -149,7 +149,7 @@ using GeoParams
     # Test computation of melt parameterization for the whole computational domain, using arrays 
     MatParam = Vector{MaterialParams}(undef, 4)
     MatParam[1] = SetMaterialParams(;
-        Name="Mantle", Phase=1, Melting=PerpleX_LaMEM_Diagram("test_data/Peridotite.in")
+        Name="Mantle", Phase=1, Melting=PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in")
     )
 
     MatParam[2] = SetMaterialParams(;
@@ -179,10 +179,10 @@ using GeoParams
     P = ones(size(Phases)) * 10
     args = (P=P, T=T)
     compute_meltfraction!(ϕ, Mat_tup, Phases, args) #allocations coming from computing meltfraction using PhaseDiagram_LookupTable
-    @test sum(ϕ) / n^3 ≈ 0.7463001302812086
+    @test sum(ϕ) / n^3 ≈ 0.7484802337240443
 
     compute_dϕdT!(dϕdT, Mat_tup, Phases, args)
-    @test sum(dϕdT) / n^3 ≈ 0.000176112129245805
+    @test sum(dϕdT) / n^3 ≈ 4.695945929818635e-5
 
     # test computing material properties when we have PhaseRatios, instead of Phase numbers
     PhaseRatio = zeros(n, n, n, 4)
@@ -193,10 +193,10 @@ using GeoParams
     end
 
     compute_meltfraction!(ϕ, Mat_tup, PhaseRatio, args)
-    @test sum(ϕ) / n^3 ≈ 0.7463001302812086
+    @test sum(ϕ) / n^3 ≈ 0.7484802337240443
 
     compute_dϕdT!(dϕdT, Mat_tup, PhaseRatio, args)
-    @test sum(dϕdT) / n^3 ≈ 0.000176112129245805
+    @test sum(dϕdT) / n^3 ≈ 4.695945929818635e-5
 
     # Test smoothening of the melting curves:
     p = SmoothMelting(; p=MeltingParam_5thOrder())

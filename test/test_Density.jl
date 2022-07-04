@@ -4,7 +4,10 @@ using GeoParams
 @testset "Density.jl" begin
 
     #Set alias for density function    
-    @use GeoParamsAliases density = ρ
+    if !isdefined(Main, :GeoParamsAliases)
+        eval(:(@use GeoParamsAliases density = ρ))
+    end
+   
 
     #Make sure that structs are isbits
     x = ConstantDensity()
@@ -77,16 +80,16 @@ using GeoParams
     @test num_alloc ≤ 32
 
     # Read Phase diagram interpolation object
-    fname = "test_data/Peridotite.in"
+    fname = "test_data/Peridotite_dry.in"
     PD_data = PerpleX_LaMEM_Diagram(fname)
-    @test PD_data.meltFrac(1500, 1e7) ≈ 0.24368492372485706
-    @test PD_data.Rho(1500, 1e7) ≈ 3042.836820256982
-    @test PD_data.meltRho(1500, 1e7) ≈ 2662.227167592414
-    @test PD_data.rockRho(1500, 1e7) ≈ 3165.467673917775
+    @test PD_data.meltFrac(1500, 1e7) ≈ 0.2538048323727155
+    @test PD_data.Rho(1500, 1e7) ≈ 3054.8671154189938
+    @test PD_data.meltRho(1500, 1e7) ≈ 2669.0094526913545
+    @test PD_data.rockRho(1500, 1e7) ≈ 3186.1092890687055
 
     args = (P=1e7, T=1500.0)
-    @test compute_density(PD_data, args) ≈ 3042.836820256982 # named tuple syntax
-    @test compute_density(PD_data; P=1e7, T=1500.0) ≈ 3042.836820256982 # optional parameter syntax
+    @test compute_density(PD_data, args) ≈ 3054.8671154189938 # named tuple syntax
+    @test compute_density(PD_data; P=1e7, T=1500.0) ≈ 3054.8671154189938 # optional parameter syntax
 
     # Do the same but non-dimensionalize the result
     CharDim = GEO_units()
@@ -114,7 +117,7 @@ using GeoParams
         Name="Mantle",
         Phase=0,
         CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e23Pa * s)),
-        Density=PerpleX_LaMEM_Diagram("test_data/Peridotite.in"),
+        Density=PerpleX_LaMEM_Diagram("test_data/sediments_1.in"),
     )
 
     MatParam[2] = SetMaterialParams(;
@@ -199,7 +202,7 @@ using GeoParams
 
     # If we employ a phase diagram many allocations occur:
     compute_density!(rho, Mat_tup, Phases, args)   #        37.189 ms (1439489 allocations: 26.85 MiB)     - the allocations are from the phase diagram
-    @test sum(rho) / 400^2 ≈ 2920.6151145725003
+    @test sum(rho) / 400^2 ≈ 2895.5241895725003
 
     # test computing material properties when we have PhaseRatios, instead of Phase numbers
     PhaseRatio = zeros(size(Phases)..., length(Mat_tup1))
@@ -223,7 +226,7 @@ using GeoParams
     # In case we only want to compute with T, do this:
     #  NOTE that in this example the results are actually wrong (as some functions require P as well)
     compute_density!(rho, Mat_tup, PhaseRatio, (P=zeros(size(T)), T=T))
-    @test sum(rho) / 400^2 ≈ 2920.6151
+    @test sum(rho) / 400^2 ≈ 2895.5241749999996
 
     #Test computation of density given a single phase and P,T as scalars
     Phase, P, T = 0, 1.0, 1.0
