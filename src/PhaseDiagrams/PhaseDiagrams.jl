@@ -37,8 +37,8 @@ struct PhaseDiagram_LookupTable <: AbstractPhaseDiagramsStruct
     melt_bulkModulus::Any
     solid_bulkModulus::Any
     solid_shearModulus::Any
-    Vp_corrected::Any           # will hold Vs velocity corrected for pores, fluids, & melt 
-    Vs_corrected::Any
+    Vp_uncorrected::Any           # will hold Vs velocity corrected for pores, fluids, & melt 
+    Vs_uncorrected::Any
 end
 
 """
