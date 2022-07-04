@@ -148,34 +148,44 @@ function melt_correction(
     # Takei 1998: Approximation Formulae for Bulk and Shear Moduli of Isotropic Solid Skeleton
     ν = 0.25                         # poisson ratio
 
-    aij = [
-        0.318 6.780 57.560 0.182
-        0.164 4.290 26.658 0.464
-        1.549 4.814 8.777 -0.290
-    ]  #
+    aij = (
+        0.318, 6.780, 57.560,  0.182,
+        0.164, 4.290, 26.658,  0.464,
+        1.549, 4.814, 8.777, -0.290,
+    )
+    bij = (
+        -0.3238, 0.2341, 
+        -0.1819, 0.5103
+    )
 
-    bij = [
-        -0.3238 0.2341
-        -0.1819 0.5103
-    ]
-
-    a = zeros(3)
-    for i in 1:3
-        a[i] =
-            aij[i, 1] * exp(aij[i, 2] * (ν - 0.25) + aij[i, 3] * (ν - 0.25)^3) + aij[i, 4]
+    # Lines below are equivalent to:
+    # a = zeros(3)
+    # for i in 1:3
+    #     a[i] =
+    #         aij[i, 1] * exp(aij[i, 2] * (ν - 0.25) + aij[i, 3] * (ν - 0.25)^3) + aij[i, 4]
+    # end
+    a = ntuple(Val(3)) do i
+        idx = 4*i-3 # linear offset index
+        aij[idx] * exp(aij[idx+1] * (ν - 0.25) + aij[idx+2] * (ν - 0.25)^3) + aij[idx+3]
     end
-    b = zeros(2)
-    for i in 1:2
-        b[i] = bij[i, 1] * ν + bij[i, 2]
+
+    # Lines below are equivalent to:
+    # b = zeros(2)
+    # for i in 1:2
+    #     b[i] = bij[i, 1] * ν + bij[i, 2]
+    # end
+    b = ntuple(Val(2)) do i
+        idx = 2*i-1 # linear offset index
+        bij[idx] * ν + bij[idx+1]
     end
 
     nk = a[1] * α + a[2] * (1.0 - α) + a[3] * α * (1.0 - α) * (0.5 - α)
     nμ = b[1] * α + b[2] * (1.0 - α)
 
     # computation of the bulk modulus ratio of the skeletal framework over the solid phase
-    ksk_k = α^(nk)
+    ksk_k = fastpow(α, nk)
     # computation of the shear modulus ratio of the skeletal framework over the solid phase
-    μsk_μ = α^(nμ)
+    μsk_μ = fastpow(α, nμ)
 
     # apply correction for the melt fraction to adiabatic bulk and shear modulii 
     ksk = ksk_k * Kb_S
