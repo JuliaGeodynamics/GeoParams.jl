@@ -14,31 +14,31 @@ export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram, ComputeDensity
 """
     Contains data of a Phase Diagram that is regularly spaced in P & T
 """
-struct PhaseDiagram_LookupTable <: AbstractPhaseDiagramsStruct
-    Type::String
-    HeaderText::Any
-    Name::String
-    rockRho::Any
-    meltRho::Any
-    meltFrac::Any
-    Rho::Any
-    rockVp::Any
-    rockVs::Any
-    rockVpVs::Any
-    meltVp::Any
-    meltVs::Any
-    meltVpVs::Any
-    Vp::Any
-    Vs::Any
-    VpVs::Any
-    cpxFrac::Any
-    solid_Vp::Any
-    solid_Vs::Any
-    melt_bulkModulus::Any
-    solid_bulkModulus::Any
-    solid_shearModulus::Any
-    Vp_uncorrected::Any           # will hold Vs velocity corrected for pores, fluids, & melt 
-    Vs_uncorrected::Any
+struct PhaseDiagram_LookupTable{S,T,nothing} <: AbstractPhaseDiagramsStruct
+    Type::S
+    HeaderText::Vector{S}
+    Name::S
+    rockRho::Union{T, nothing}
+    meltRho::Union{T, nothing}
+    meltFrac::Union{T, nothing}
+    Rho::Union{T, nothing}
+    rockVp::Union{T, nothing}
+    rockVs::Union{T, nothing}
+    rockVpVs::Union{T, nothing}
+    meltVp::Union{T, nothing}
+    meltVs::Union{T, nothing}
+    meltVpVs::Union{T, nothing}
+    Vp::Union{T, nothing}
+    Vs::Union{T, nothing}
+    VpVs::Union{T, nothing}
+    cpxFrac::Union{T, nothing}
+    solid_Vp::Union{T, nothing}
+    solid_Vs::Union{T, nothing}
+    melt_bulkModulus::Union{T, nothing}
+    solid_bulkModulus::Union{T, nothing}
+    solid_shearModulus::Union{T, nothing}
+    Vp_uncorrected::Union{T, nothing}           # will hold Vs velocity corrected for pores, fluids, & melt 
+    Vs_uncorrected::Union{T, nothing}
 end
 
 """
