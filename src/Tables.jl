@@ -3,7 +3,7 @@ module Tables
 using Unidecode
 using GeoParams: AbstractMaterialParam, param_info
 using ..Units
-using ..MaterialParameters.MaterialParamsInfo
+using ..MaterialParameters: MaterialParamsInfo
 
 export Phase2Dict,
        Dict2LatexTable
