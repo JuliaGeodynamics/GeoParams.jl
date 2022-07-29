@@ -96,6 +96,11 @@ include("MaterialParameters.jl")
 using .MaterialParameters
 export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo
 
+# Define Table output functions
+include("Tables.jl")
+using .Tables
+export Phase2Dict, Dict2LatexTable
+
 # Phase Diagrams
 using .MaterialParameters.PhaseDiagrams
 export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
