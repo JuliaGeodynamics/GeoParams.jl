@@ -192,7 +192,8 @@ export compute_pwave_velocity,
     anelastic_correction,
     melt_correction,
     porosity_correction,
-    correct_wavevelocities_phasediagrams
+    correct_wavevelocities_phasediagrams,
+    melt_correction_Takei
 
 # Add melting parameterizations
 include("./MeltFraction/MeltingParameterization.jl")

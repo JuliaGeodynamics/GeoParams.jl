@@ -11,6 +11,8 @@ using ..PhaseDiagrams
 using ..MaterialParameters: MaterialParamsInfo
 using Interpolations, Statistics
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
+
+using Roots
 import Base.show, GeoParams.param_info
 
 abstract type AbstractSeismicVelocity{T} <: AbstractMaterialParam end
@@ -23,7 +25,9 @@ export compute_pwave_velocity,
     porosity_correction,
     anelastic_correction,
     param_info,
-    correct_wavevelocities_phasediagrams
+    correct_wavevelocities_phasediagrams,
+    melt_correction_Takei
+
 
 include("../Utils.jl")
 include("../Computations.jl")
@@ -265,6 +269,8 @@ function porosity_correction(
     ν = 0.25 # poisson ratio
 
     # Tuples are a better option than standard arrays for matrices/vectors of known size at compile time
+
+    #=
     aij = (
         0.318, 6.780, 57.560,  0.182,
         0.164, 4.290, 26.658,  0.464,
@@ -274,16 +280,36 @@ function porosity_correction(
         -0.3238, 0.2341, 
         -0.1819, 0.5103
     )
+    =#
+
+    # Takei et al. 2002:
+    aij = (
+        1.8625,  0.52594, -4.8397,  0.,
+        4.5001, -6.1551,  -4.3634,  0.0,
+       -5.6512, 6.9159,   29.595, -58.96
+    )
+    bij = (
+        1.6122, 0.13527, 0.0,
+        4.5869, 3.6086, 0.0,
+        -7.5395,-4.8676, -4.3182
+    )
+
 
     # Lines below are equivalent to:
-    # a = zeros(3)
-    # for i in 1:3
+    a = zeros(3)
+    #for i in 1:4
     #     a[i] =
     #         aij[i, 1] * exp(aij[i, 2] * (ν - 0.25) + aij[i, 3] * (ν - 0.25)^3) + aij[i, 4]
-    # end
+    #end
+    #a = ntuple(Val(3)) do i
+    #    idx = 4*i-3 # linear offset index
+    #    aij[idx] * exp(aij[idx+1] * (ν - 0.25) + aij[idx+2] * (ν - 0.25)^3) + aij[idx+3]
+    #end
+
+    # Takei (2002): 
     a = ntuple(Val(3)) do i
         idx = 4*i-3 # linear offset index
-        aij[idx] * exp(aij[idx+1] * (ν - 0.25) + aij[idx+2] * (ν - 0.25)^3) + aij[idx+3]
+        aij[idx] + aij[idx+1]*ν^1 + aij[idx+2]*ν^2 + aij[idx+3]*ν^3
     end
 
     # Lines below are equivalent to:
@@ -420,7 +446,7 @@ The following corrections can be applied (together with potential options)
 """
 function correct_wavevelocities_phasediagrams(PD::PhaseDiagram_LookupTable;  
     apply_porosity_correction=true, ρf=1000.0, α_porosity=0.1,
-    apply_melt_correction=true, α_melt = 0.1,
+    apply_melt_correction=true, α_melt = 0.1, melt_correction_takei=true,
     apply_anelasticity_correction=true, water=0)
 
     # extract required data
@@ -466,7 +492,19 @@ function correct_wavevelocities_phasediagrams(PD::PhaseDiagram_LookupTable;
 
         for i in CartesianIndices(Vs_corrected)
             if ϕ[i]>0
-                Vp_c, Vs_c =  melt_correction(Kb_L[i],Kb_S[i], Ks_S[i], ρL[i], ρS[i], Vp_corrected[i], Vs_corrected[i], ϕ[i], α_melt)
+                if melt_correction_takei==true
+                    Vp_c, Vs_c =  melt_correction_Takei(Kb_L[i],Kb_S[i], Ks_S[i], ρL[i], ρS[i], Vp_corrected[i], Vs_corrected[i], ϕ[i], α_melt)
+                else
+                    Vp_c, Vs_c =  melt_correction(Kb_L[i],Kb_S[i], Ks_S[i], ρL[i], ρS[i], Vp_corrected[i], Vs_corrected[i], ϕ[i], α_melt)
+                end
+
+                if Vs_c<0.0
+                    Vs_c = 0.0;
+                end
+                if Vp_c<0.0
+                    Vp_c = 0.0;
+                end
+                
                 Vp_corrected[i], Vs_corrected[i] = Vp_c, Vs_c
             end
         end
@@ -525,6 +563,210 @@ function correct_wavevelocities_phasediagrams(PD::PhaseDiagram_LookupTable;
     
     return PD_corrected
 end
+
+
+function melt_correction_Takei(
+        Kb_L::_T, Kb_S::_T, Ks_S::_T, ρL::_T, ρS::_T, Vp0::_T, Vs0::_T, ϕ::_T, α::_T
+    ) where {_T<:Number}
+
+
+    # compute R
+    #R        = find_roots_R(0.5, α, ϕ, Kb_S, Ks_S, tol=1e-5)
+    
+    f(x)    =  R_func(x, α, ϕ, Kb_S, Ks_S)
+    #df(x)   =  R_func_deriv(x, α, ϕ, Kb_S, Ks_S)
+    eps     =  1e-3;
+    R       =  find_zero(f, (eps,1.0-eps), Bisection())
+
+    # compute Q0 and P0
+    ΛG       =  Q0_func(α, R)   
+    ΛK       =  P0_func(α, R)   
+       
+    # Seismic wave velocity melt correction Clark et al., 2017
+    β = Kb_S / Kb_L
+    γ = Ks_S / Kb_S
+
+    # Formulation of the fraction reduction of P-wave and S-wave
+    ΔVp =
+        (
+            (
+                (((β - 1.0) * ΛK) / ((β - 1.0) + ΛK) + 4.0 / 3.0 * γ * ΛG) /
+                (1.0 + 4.0 / 3.0 * γ)
+            ) - (1.0 - ρL / ρL) ) * Vp0
+ 
+    ΔVs      =  (ΛG - (1.0 - ρL / ρS)) * (ϕ * 0.5)*Vs0
+
+    Vs_new   =  Vs0 - ΔVs
+    Vp_new   =  Vp0 - ΔVp
+
+   # @show Vs_new, Vp_new, ΔVp, R
+    if Vs_new<0
+        Vs_new = 0.0
+    end
+
+    if Vp_new<0
+        Vp_new = 0.0
+    end
+
+    
+    return Vs_new,Vp_new
+end
+
+
+
+"""
+- Dean (1983), Elastic Moduli of Porous Sintered Materials as Modeled by a 
+Variable-Aspect-Ratio Self-Consistent Oblate-Spheroidal-Inclusion Theory
+
+- Phani (1996), Porosity-dependence of ultrasonic velocity in sintered 
+materials - a model based on the self-consistent spheroidal inclusion theory 
+"""
+function θ_func(α)
+
+    return α / ( (1 - α^2)^(3/2) ) * ( acos(α) - α*(1-α^2)^0.5 )
+end
+
+"""
+- Dean (1983), Elastic Moduli of Porous Sintered Materials as Modeled by a 
+Variable-Aspect-Ratio Self-Consistent Oblate-Spheroidal-Inclusion Theory
+
+- Phani (1996), Porosity-dependence of ultrasonic velocity in sintered 
+materials - a model based on the self-consistent spheroidal inclusion theory 
+"""
+function f_func(α)
+    θ = θ_func(α)
+    return α^2 * (3*θ - 2) / (1 - α^2)
+end
+
+function P0_func(α, R)
+    f = f_func(α)
+    θ = θ_func(α)
+    F1 = 1 - 3/2*(f+θ) + R*(3/2*f + 5/2*θ - 4/3)
+    F2 = R * ( 2*θ - 2*f - 3*θ^2  + 2R*(f - θ + 2θ^2) )
+    return F1 / F2
+end
+
+function Q0_func(α, R)
+    f = f_func(α)
+    θ = θ_func(α)
+    
+    F2 = R * ( 2*θ - 2*f - 3*θ^2 + 2*R*(f - θ + 2*θ^2) )
+    F3 = f + 3/2*θ - R*(f + θ)
+    F4 = 1 - 1/4 * (f + 3*θ - R*(f - θ))
+    F5 = f - R*(f + θ - 4/3)
+    F6 = -f + R*(f + θ)
+    F7 = 2 - 1/4 * (3*f + 9*θ - R*(3*f + 5*θ))
+    F8 = -1 + 1/2*f + 3/2*θ + R*(2 - 1/2*f - 5/2*θ)
+    F9 = f - R*(f - θ)
+
+    return 1/5 * ( 2/F3 + 1/F4 + F5/F2 + (F6*F7 - F8*F9) / (F2*F4) )
+end
+
+function P0_func_deriv(α, R)
+    """
+    d/dR (P0(R)) : Evaluated through SymPy:
+        
+    from sympy import symbols, diff, Rational
+    R, f, θ, α = symbols('R f θ α')
+    F1 = 1 - Rational(3,2)*(f+θ) + R*(Rational(3,2)*f + Rational(5,2)*θ - Rational(4,3))
+    F2 = R * ( 2*θ - 2*f - 3*θ^2 + 2*R*(f - θ + 2*θ^2) )
+    F3 = f + Rational(3, 2)*θ - R*(f + θ)
+    F4 = 1 - Rational(1, 4) * (f + 3*θ - R*(f - θ))
+    F5 = f - R*(f + θ - Rational(4, 3))
+    F6 = -f + R*(f + θ)
+    F7 = 2 - Rational(1, 4) * (3*f + 9*θ - R*(3*f + 5*θ))
+    F8 = -1 + Rational(1, 2)*f + Rational(3, 2)*θ + R*(2 - Rational(1, 2)*f -Rational(5, 2)*θ)
+    F9 = f - R*(f - θ)
+    P0 = F1/F2
+    derivative = diff(P0, R)
+    """
+    f = f_func(α)
+    θ = θ_func(α)
+    p1 = -2*f - 4*θ^2 + 2*θ
+    p2 = R*(3*f/2 + 5*θ/2 - 4/3) - 3*f/2 - 3*θ/2 + 1
+    p3 = R*(2*R*(f + 2*θ^2 - θ) - 2*f - 3*θ^2 + 2*θ)^2
+    p4 = 3*f/2 + 5*θ/2 - 4/3
+    p5 = R * (2*R*(f + 2*θ^2 - θ) - 2*f - 3*θ^2 + 2*θ)
+    p6 = R * (3*f/2 + 5*θ/2 - 4/3) - 3*f/2 - 3*θ/2 + 1
+    p7 = R^2 * ( 2*R*(f + 2*θ^2 - θ) - 2*f - 3*θ^2 + 2*θ )
+    return p1*p2/p3 + p4/p5 - p6/p7
+end
+
+function Q0_func_deriv(α, R)
+    """
+    d/dR (Q0(R)) : Evaluated through SymPy
+    """
+    f = f_func(α)
+    θ = θ_func(α)
+    p1 = (-f/4 + θ/4)/(5*(R*(f - θ)/4 - f/4 - 3*θ/4 + 1)^2)
+    p2 = 2*(f + θ)/(5*(-R*(f + θ) + f + 3*θ/2)^2)
+    p3 = -f/4 + θ/4
+    p4 = (-R*(f - θ) + f)*(R*(-f/2 - 5*θ/2 + 2) + f/2 + 3*θ/2 - 1)
+    p5 = (R*(f + θ) - f)*(R*(3*f + 5*θ)/4 - 3*f/4 - 9*θ/4 + 2)
+    p6 = 5*R*(R*(f - θ)/4 - f/4 - 3*θ/4 + 1)^2*(2*R*(f + 2*θ^2 - θ) - 2*f - 3*θ^2 + 2*θ)
+    p7 = (-R*(f + θ - 4/3) + f)*(-2*f - 4*θ^2 + 2*θ)
+    p8 = 5*R*(2*R*(f + 2*θ^2 - θ) - 2*f - 3*θ^2 + 2*θ)^2
+    p9 = (-R*(f - θ) + f)*(R*(-f/2 - 5*θ/2 + 2) + f/2 + 3*θ/2 - 1)
+    p10 = (R*(f + θ) - f)*(R*(3*f + 5*θ)/4 - 3*f/4 - 9*θ/4 + 2)
+    p11 = -2*f - 4*θ^2 + 2*θ
+    p12 = 5*R*(R*(f - θ)/4 - f/4 - 3*θ/4 + 1)*(2*R*(f + 2*θ^2 - θ) - 2*f - 3*θ^2 + 2*θ)^2
+    p13 = (-f - θ + 4/3)/(5*R*(2*R*(f + 2*θ^2 - θ) - 2*f - 3*θ^2 + 2*θ))
+    p14 = (3*f/4 + 5*θ/4)*(R*(f + θ) - f)
+    p15 = (f - θ)*(R*(-f/2 - 5*θ/2 + 2) + f/2 + 3*θ/2 - 1)
+    p16 = (f + θ)*(R*(3*f + 5*θ)/4 - 3*f/4 - 9*θ/4 + 2)
+    p17 = (R*(f - θ) - f)*(-f/2 - 5*θ/2 + 2)
+    p18 = 5*R*(R*(f - θ)/4 - f/4 - 3*θ/4 + 1)*(2*R*(f + 2*θ^2 - θ) - 2*f - 3*θ^2 + 2*θ)
+    p19 = (-R*(f + θ - 4/3) + f)/(5*R^2*(2*R*(f + 2*θ^2 - θ) - 2*f - 3*θ^2 + 2*θ))
+    p20 = (-R*(f - θ) + f)*(R*(-f/2 - 5*θ/2 + 2) + f/2 + 3*θ/2 - 1)
+    p21 = (R*(f + θ) - f)*(R*(3*f + 5*θ)/4 - 3*f/4 - 9*θ/4 + 2)
+    p22 = 5*R^2*(R*(f - θ)/4 - f/4 - 3*θ/4 + 1)*(2*R*(f + 2*θ^2 - θ) - 2*f - 3*θ^2 + 2*θ)
+    return p1 + p2 + p3*(-p4 + p5)/p6 + p7/p8 + (-p9 + p10)*p11/p12 + p13 \
+        + (p14 + p15 + p16 + p17)/p18 - p19 - (-p20 + p21)/p22
+
+end
+
+function R_func(R, α, Φ, K_m, G_m)
+    P0 = P0_func(α, R)
+    Q0 = Q0_func(α, R)
+    p1 = R * (3*K_m + 4*G_m)
+    p2 = -3 * G_m
+    p3 = -Φ * ( R*(3*K_m*P0 + 4*G_m*Q0) - 3*G_m*Q0 )
+    return p1 + p2 + p3
+end
+
+function R_func_deriv(R, α, Φ, K_m, G_m)
+    P0 = P0_func(α, R)
+    Q0 = Q0_func(α, R)
+    P0_deriv = P0_func_deriv(α, R)
+    Q0_deriv = Q0_func_deriv(α, R)
+    p1 = 3*K_m + 4*G_m
+    p2 = -3 * Φ * K_m * (P0 + R*P0_deriv)
+    p3 = -4 * Φ * G_m * (Q0 + R*Q0_deriv)
+    p4 = 3 * Φ * G_m * Q0_deriv
+    return p1 + p2 + p3 + p4
+end
+
+
+"""
+    simple Newton root finding algorithm as used to determine R
+"""
+function find_roots_R(R0, α, Φ, K_m, G_m; tol=1e-5)
+    Rn = R0
+    for n = 1:500
+        f = R_func(Rn, α, Φ, K_m, G_m)
+        if abs(f) < tol
+            return Rn
+        end
+        df = R_func_deriv(Rn, α, Φ, K_m, G_m)
+
+        if df == 0
+            error("No solution found")
+        end
+        Rn = Rn - f/df
+    end
+end
+
+
 
 
 end

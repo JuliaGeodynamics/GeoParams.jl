@@ -100,4 +100,48 @@ using GeoParams
 
     @test PD.VpVs(1500,5e8) ≈ 1.8277368391346367
 
+
+
+    # testing the new seismic velocity correction for partial melt
+
+
+    ρL   = 2000.;
+    ρS   = 3300.;
+    Vs0  = 3000.
+    Vp0  = 6000.
+    α    = 0.4;
+    ϕ    = 0.7
+    Kb_S = 250.
+    Ks_S = 162.
+    Kb_L = 200.
+
+    R = 0.1
+
+    f(x)    =  GeoParams.SeismicVelocity.R_func(x, α, ϕ, Kb_S, Ks_S)
+    df(x)   =  GeoParams.SeismicVelocity.R_func_deriv(x, α, ϕ, Kb_S, Ks_S)
+    eps     = 1e-3;
+    R       = find_zero(f, (eps,1.0-eps), Bisection())
+
+    R        = GeoParams.SeismicVelocity.find_roots_R(0.5, α, ϕ, Kb_S, Ks_S, tol=1e-5)
+    Q0       = GeoParams.SeismicVelocity.Q0_func(α, R)   
+    
+    melt_correction_Takei( Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
+
+    
+    ϕ_vec  = 0:.01:1
+    Vs_new = zero(ϕ_vec)
+    Vp_new = zero(ϕ_vec)
+    
+    for i in eachindex(ϕ_vec)
+        Vs_new[i],Vp_new[i]  = melt_correction_Takei( Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ_vec[i], α)
+    end
+    
+    @test Vs_new[10] ≈ 2717.727074700984
+    @test Vp_new[10] ≈ 2717.727074700984
+
+
+
+
 end
+
+
