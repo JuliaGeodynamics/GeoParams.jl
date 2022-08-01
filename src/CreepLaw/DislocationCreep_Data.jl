@@ -45,7 +45,7 @@ DislocationCreep_info = Dict(
                         }
                 "),
             ),
-        ),
+        )
 
         # Olivine rheology 
         (
@@ -85,7 +85,7 @@ DislocationCreep_info = Dict(
                         }
                 "),
             ),
-        ),
+        )
 
         # Quartz Diorite rheology
         (
@@ -119,7 +119,7 @@ DislocationCreep_info = Dict(
                         }
                 "),
             ),
-        ),
+        )
 
         # Diabase rheology
         (
@@ -153,7 +153,7 @@ DislocationCreep_info = Dict(
                     }
                 "),
             ),
-        ),
+        )
 
         # Tumut Pond Serpentinite rheology
         (
@@ -187,7 +187,7 @@ DislocationCreep_info = Dict(
                         }
                 "),
             ),
-        ),
+        )
 
         # Maryland strong diabase rheology
         (
@@ -219,7 +219,7 @@ DislocationCreep_info = Dict(
                         }
                 "),
             ),
-        ),
+        )
 
         # Mafic Granulite rheology
         (
@@ -252,7 +252,7 @@ DislocationCreep_info = Dict(
                       }
                 "),
             ),
-        ),
+        )
 
         # Wet Quartzite rheology
         (
@@ -283,7 +283,7 @@ DislocationCreep_info = Dict(
                         }
                 "),
             ),
-        ),
+        )
 
         # Granite rheology
         (
@@ -316,7 +316,7 @@ DislocationCreep_info = Dict(
                       }
                 "),
             ),
-        ),
+        )
 
         # Plagioclase An75 rheology
         (
@@ -349,7 +349,7 @@ DislocationCreep_info = Dict(
                         }
                 "),
             ),
-        ),
+        )
 
         # Dry Anorthite rheology
         (
@@ -379,7 +379,7 @@ DislocationCreep_info = Dict(
                         }
                 "),
             ),
-        ),
+        )
 
         # Wet Anorthite rheology
         (
@@ -410,7 +410,7 @@ DislocationCreep_info = Dict(
                         }
                 "),
             ),
-        ),
+        )
 
         # Wet Olivine rheology
         (
@@ -440,7 +440,7 @@ DislocationCreep_info = Dict(
                         }
                 "),
             ),
-        ),
+        )
 
         # Wet Quarzite rheology
         (
@@ -474,7 +474,7 @@ DislocationCreep_info = Dict(
                         }
                 "),
             ),
-        ),
+        )
 
         # Wet Upper Mantle Olivine rheology
         (
@@ -507,7 +507,7 @@ DislocationCreep_info = Dict(
                         }
                 "),
             ),
-        ),
+        )
 
         # Granite rheology
         (
@@ -539,7 +539,7 @@ DislocationCreep_info = Dict(
                         }
                 "),
             ),
-        ),
+        )
 
         # Dry olivine rheology 
         (
@@ -569,6 +569,6 @@ DislocationCreep_info = Dict(
                         language={en} }
                 "),
             ),
-        ),
+        )
     ],
 ); # end of setting pre-defined creep laws
