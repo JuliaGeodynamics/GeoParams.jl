@@ -1,7 +1,9 @@
 # This contains predefined dislocation creep values - Feel free to expand
 """
     SetDislocationCreep["Name of Dislocation Creep"]
+
 Sets predefined dislocation creep data from a dictionary
+
 """
 SetDislocationCreep(name::String) = Transform_DislocationCreep(name)
 

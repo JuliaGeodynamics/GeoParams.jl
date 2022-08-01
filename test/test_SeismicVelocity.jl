@@ -45,7 +45,6 @@ Vs_ND    =  PD_data1.Vs(nondimensionalize(1500K,CharDim),  nondimensionalize(1e8
 @test   ustrip(dimensionalize(Vs_ND, km/s,  CharDim)) ≈ PD_data.Vs(1500,1e8) 
 
 
-
 # Test computation of velocity for the whole computational domain, using arrays 
 MatParam    =   Array{MaterialParams, 1}(undef, 3);
 MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=0,
@@ -80,5 +79,11 @@ end
 
 compute_swave_velocity!(Vs, PhaseRatio, P,T, MatParam)
 @test sum(Vs)/400^2 ≈ 4.0739837
+
+Vp_cor,Vs_cor = melt_correction(26.0,94.5,61.0,2802.0,3198.0,7.4,4.36,0.01,0.15) 
+@test  [Vp_cor,Vs_cor] ≈ [7.336238790906285, 4.314027804335563];
+
+Vs_anel = anelastic_correction(0,4.36734,5.0,1250.0)
+@test  Vs_anel ≈ 4.1182815519599325;
 
 end

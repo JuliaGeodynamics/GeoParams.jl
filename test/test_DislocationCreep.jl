@@ -3,51 +3,109 @@ using GeoParams
 
 @testset "DislocationCreepLaws" begin
 
-# This tests the MaterialParameters structure
-CharUnits_GEO = GEO_units(; viscosity=1e19, length=1000km)
+    # This tests the MaterialParameters structure
+    CharUnits_GEO = GEO_units(; viscosity=1e19, length=1000km)
 
-# Define a linear viscous creep law ---------------------------------
-x1 = DislocationCreep()
-@test isbits(x1)
-@test x1.n.val == 1.0
-@test x1.A.val == 1.5
+    # Define a linear viscous creep law ---------------------------------
+    x1 = DislocationCreep()
+    @test isbits(x1)
+    @test x1.n.val == 1.0
+    @test x1.A.val == 1.5
 
-x2 = DislocationCreep(; n=3)
-@test x2.A.val == 1.5
+    x2 = DislocationCreep(; n=3)
+    @test x2.A.val == 1.5
 
-# perform a computation with the dislocation creep laws 
-# Calculate EpsII, using a set of pre-defined values
-# Test data and example from Hirth & Kohlstedt, (2000), table 1, footnote e 
-CharDim = GEO_units(;length=1000km, stress=100MPa, viscosity=1Pas, temperature=1000C)
-EpsII   = GeoUnit(0.0s^-1.0)
-TauII   = GeoUnit(0.3MPa)
-P       = GeoUnit(1000MPa)
-T       = GeoUnit(1673K)
-f       = GeoUnit(1000NoUnits)
-z       = CreepLawVariables(P=nondimensionalize(P,CharDim),T=nondimensionalize(T,CharDim),f=nondimensionalize(f,CharDim))
-Phase   = SetMaterialParams(Name="Viscous Matrix", Phase=2,
-                                     Density   = ConstantDensity(),
-                                     CreepLaws = DislocationCreep(n=3.5NoUnits, r=1.2NoUnits, A=90MPa^(-3.5)/s,E=480000.0J/mol,V=11e-6m^(3.0)/mol,Apparatus=3), CharDim = CharDim)
+    # perform a computation with the dislocation creep laws 
+    # Calculate EpsII, using a set of pre-defined values
+    CharDim = GEO_units()
+    EpsII = GeoUnit(0s^-1)
+    EpsII = nondimensionalize(EpsII, CharDim)
+    TauII = GeoUnit(100MPa)
+    TauII = nondimensionalize(TauII, CharDim)
+    P = GeoUnit(100MPa)
+    P = nondimensionalize(P, CharDim)
+    T = GeoUnit(500C)
+    T = nondimensionalize(T, CharDim)
+    f = GeoUnit(50MPa)
+    f = nondimensionalize(f, CharDim)
+    args = (; P=100., T=500., f=50e6)
+    Phase = SetMaterialParams(;
+        Name="Viscous Matrix",
+        Phase=2,
+        Density=ConstantDensity(),
+        CreepLaws=DislocationCreep(; n=3NoUnits, r=1NoUnits),
+        CharDim=CharDim,
+    )
+    TauII = 1e6
+    ε = compute_εII(x1, TauII, args)
 
-# calculate strainrate with non-dimensional values, create GeoUnit() with the calculated non-dim. value and also dimensionalize it back
-EpsII = computeCreepLaw_EpsII(nondimensionalize(TauII,CharDim),Phase.CreepLaws[1],z)
-EpsII_geo = GeoUnit(EpsII, s^(-1.0), false)
-EpsII_dim = dimensionalize(EpsII_geo, CharDim)
+    # Test some of the preset rheologies
+    p       = SetDislocationCreep("Dry Olivine | Hirth & Kohlstedt (2003)")
+    TauII   = 0.3e6Pa;
+    args    = (;T=1673.0K, P=0.0Pa)
+    ε       = compute_εII(p, TauII, args)
+    @test ε ≈ 2.7319532582144474e-13/s
 
-# check whether those calculated non-dim. and dim. values agree with example calculation from Hirth&Kohlstedt, 2000 for disl. creep
-@test EpsII  ≈ nondimensionalize(2.4748138964055293e-12s^(-1.0), CharDim) rtol = 1e-12
-@test EpsII_dim.val ≈ 2.4748138964055293e-12 rtol = 1e-12
+    # same but while removing the tensor correction
+    ε_notensor = compute_εII(remove_tensor_correction(p), TauII, args)
+    @test ε_notensor ≈ 4.612967949163285e-14/s
+ 
+    # test with arrays
+    τII_array       =   ones(10)*1e6
+    ε_array         =   similar(τII_array)
+    T_array         =   ones(size(τII_array))*(500)
 
-# Check that once inverted, we get back the TauII that we used to calculate EpsII, for both non-dim. and dim. NewTau
-NewTau = computeCreepLaw_TauII(EpsII_geo,Phase.CreepLaws[1],z)
-NewTau_geo = GeoUnit(NewTau, MPa, false)
-NewTau_dim = dimensionalize(NewTau_geo, CharDim)
-@test NewTau_geo ≈ nondimensionalize(0.3MPa,CharDim) rtol = 1e-12
-@test NewTau_dim ≈ TauII.val
+    args_array = (;T=T_array, P=100., f=5e7 )
+
+    compute_εII!(ε_array, x1, τII_array, args_array)
+    @test ε_array[1] ≈ 2.0065790455204593e6 
+    
+    # EXERCISE 6.1 of the Gerya textbook (as implemented in the matlab exercise)
+    Ad      =   2.5e-17Pa^-3.5*s^-1
+    n       =   3.5NoUnits
+    Ea      =   532e3J/mol
+    m       =   0;
+    V       =   0m^3/mol  
+    R       =   8.3145J/K/mol
+    T       =   (1200+273.15)K
+    ε       =   1e-14/s;
+    F2      =   1/2^((n-1)/n)/3^((n+1)/2/n)
+    η_book  =   F2/Ad^(1/n)/ε^((n-1)/n)*exp(Ea/n/R/T);
+    τ_book  =   2*η_book*ε
+
+    # Same but using GeoParams & dimensional values:
+    p       =   SetDislocationCreep("Dry Olivine | Gerya (2019)")
+    args    =   (; T=T)
+    τ       =   compute_τII(p, ε, args)        # compute stress
+    @test τ ≈ τ_book
+
+    ε1      =   compute_εII(p, τ, args)
+    @test ε1 ≈  ε
+
+    # Do the same, but using Floats as input
+    args1   =   (;T=ustrip(T))
+    τ1      =   compute_τII(p, 1e-14, args1)    # only using Floats
+    @test ustrip(τ) ≈ τ1
+
+    # compute devatoric stress & viscosity profiles (as in book)
+    Tvec    =   (400+273.15):10:(1200+273.15)
+    εvec    =   ones(size(Tvec))*1e-14;
+    τvec    =   zero(εvec)
+    args2   =   (;T=Tvec)
+    compute_τII!(τvec, p, εvec, args2)    # only using Floats
+    ηvec    =   τvec./(2*εvec)
+    @test  sum(ηvec)/length(ηvec) ≈ 4.124658696991946e24
 
 
-# Given strainrate 
-#@test computeCreepLaw_EpsII(1e-13/s, x1, CreepLawParams())==1e18*2*1e-13Pa       # dimensional input       
-# -------------------------------------------------------------------
+    p = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
+    #p = SetDislocationCreep("Wet Anorthite | Rybecki and Dresen (2000)")
+    p = SetDislocationCreep("Dry Olivine | Hirth & Kohlstedt (2003)")
+    
+    args = (; T=(650+273.15))
+    ε_vec = exp10.(-22:-12);
+    τ_vec = zero(ε_vec);
+    compute_τII!(τ_vec, p, ε_vec, args) 
+    η_vec = τ_vec./(2*ε_vec)
+
 
 end
