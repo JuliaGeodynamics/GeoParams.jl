@@ -1,7 +1,9 @@
 # This contains predefined dislocation creep values - Feel free to expand
 """
     SetDislocationCreep["Name of Dislocation Creep"]
+
 Sets predefined dislocation creep data from a dictionary
+
 """
 SetDislocationCreep(name::String) = Transform_DislocationCreep(name)
 
@@ -567,6 +569,64 @@ DislocationCreep_info = Dict(
                         author={Gerya, Taras}, 
                         year={2019}, month={May}, 
                         language={en} }
+                "),
+            ),
+        )
+
+        # Rock salt rheology
+        ("Rock salt | Li & Urai (2016)", 
+            #  Li & Urai (2016), table 1
+            #  referes to Wawersik & Zeuch (1986), values can not be reproduced!
+            (
+                DislocationCreep(
+                Name = "Rock salt | Li & Urai (2016)",
+                n = 5.0NoUnits,
+                A = 7.26e-6MPa^(-5.0)/s, 
+                E = 53.92kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked in (Li & Urai, (2016)) are different from given source (Wawersik & Zeuch, (1986))(NM), plots are not reproduced (NM).",
+                BibTex_Reference = "
+                    @article{li2016rheology,
+                    title={Rheology of rock salt for salt tectonics modeling},
+                    author={Li, Shi-Yuan and Urai, Janos L},
+                    journal={Petroleum science},
+                    volume={13},
+                    number={4},
+                    pages={712--724},
+                    year={2016},
+                    publisher={Springer}
+                    }
+                "),
+            ),
+        )
+
+        # Avery Island rock salt rheology
+        ("Salado rock salt | Li & Urai (2016)", 
+            #  Li & Urai (2016), table 1
+            #  referes to Wawersik & Zeuch (1986), values can not be reproduced!
+            (
+                DislocationCreep(
+                Name = "Rock salt | Li & Urai (2016)",
+                n = 5.0NoUnits,
+                A = 7.26e-6MPa^(-5.0)/s, 
+                E = 53.92kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked in (Li & Urai, (2016)) are different from given source (Wawersik & Zeuch, (1986))(NM), plots are not reproduced (NM).",
+                BibTex_Reference = "
+                    @article{li2016rheology,
+                    title={Rheology of rock salt for salt tectonics modeling},
+                    author={Li, Shi-Yuan and Urai, Janos L},
+                    journal={Petroleum science},
+                    volume={13},
+                    number={4},
+                    pages={712--724},
+                    year={2016},
+                    publisher={Springer}
+                    }
                 "),
             ),
         )
