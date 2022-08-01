@@ -120,11 +120,6 @@ function show(io::IO, g::PowerlawViscous)
 end
 #-------------------------------------------------------------------------
 
-function TauIItoTauDiff(s::GeoUnit)
-    return 2.0 * s
-end
-
-
 # Help info for the calculation routines
 """
     computeCreepLaw_EpsII(TauII, s:<AbstractCreepLaw, p::CreepLawVariables)
