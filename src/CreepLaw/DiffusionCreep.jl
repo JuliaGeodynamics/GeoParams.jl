@@ -90,7 +90,7 @@ function Transform_DiffusionCreep(name)
     n = Value(pp.n)
     r = Value(pp.r)
     p = Value(pp.p)
-    A_Pa = Pa^(-NumValue(pp.n) - NumValue(pp.r)) * s^(-1) * m^(-NumValue(p))(Value(pp.A))
+    A_Pa = Pa^(-NumValue(pp.n) - NumValue(pp.r)) * s^(-1) * m^(-NumValue(p)) * (Value(pp.A))
     E_J = J / mol(Value(pp.E))
     V_m3 = m^3 / mol(Value(pp.V))
     Apparatus = pp.Apparatus
