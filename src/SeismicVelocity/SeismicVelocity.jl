@@ -564,7 +564,26 @@ function correct_wavevelocities_phasediagrams(PD::PhaseDiagram_LookupTable;
     return PD_corrected
 end
 
+"""
+    Vs,Vp = melt_correction_Takei(Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
 
+This corrects the Vp/Vs velocities if melt is present, following Takei (2002)
+
+Input arguments:
+- Kb_L: bulk modulus liquid
+- Kb_S: bulk modulus solid
+- Ks_S: shear modulus solid
+- ρL: density liquid
+- ρS: density solid
+- Vp0: P-wave velocity of solid
+- Vs0: S-wave velocity of solid
+- ϕ: melt content
+- α: melt aspect ratio [0.001 - 1]
+
+Output arguments:
+- Vs: corrected S-wave velocity
+- Vp: corrected P-wave velocity
+"""
 function melt_correction_Takei(
         Kb_L::_T, Kb_S::_T, Ks_S::_T, ρL::_T, ρS::_T, Vp0::_T, Vs0::_T, ϕ::_T, α::_T
     ) where {_T<:Number}
