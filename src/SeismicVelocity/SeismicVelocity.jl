@@ -593,37 +593,39 @@ function melt_correction_Takei(
 
 
     # compute R
-    #R        = find_roots_R(0.5, α, ϕ, Kb_S, Ks_S, tol=1e-5)
-    
     f(x)    =  R_func(x, α, ϕ, Kb_S, Ks_S)
-    #df(x)   =  R_func_deriv(x, α, ϕ, Kb_S, Ks_S)
     
     # Note: this bracketing algorithm sometimes fails, as there might be 2 roots
     eps     =  1e-3;
-    if sign(f(eps)) != sign(f(1.0-eps))
-        R       =  find_zero(f, (eps,1.0-eps), Bisection())
-    else
-        # if bisection fails, try fzero 
-        R       =  fzero(f, 0.5)
-    end
+    if !isnan(f(0.5))
+        if (sign(f(eps)) != sign(f(1.0-eps))) & 
+            R       =  find_zero(f, (eps,1.0-eps), Bisection())
+        else
+            # if bisection fails, try fzero 
+            R       =  fzero(f, 0.5)
+        end
     
-    # compute Q0 and P0
-    ΛG       =  Q0_func(α, R)   
-    ΛK       =  P0_func(α, R)   
-       
-    # Seismic wave velocity melt correction Clark et al., 2017
-    β = Kb_S / Kb_L
-    γ = Ks_S / Kb_S
+        # compute Q0 and P0
+        ΛG       =  Q0_func(α, R)   
+        ΛK       =  P0_func(α, R)   
+        
+        # Seismic wave velocity melt correction Clark et al., 2017
+        β = Kb_S / Kb_L
+        γ = Ks_S / Kb_S
 
-    # Formulation of the fraction reduction of P-wave and S-wave
-    ΔVp =
-        (
+        # Formulation of the fraction reduction of P-wave and S-wave
+        ΔVp =
             (
-                (((β - 1.0) * ΛK) / ((β - 1.0) + ΛK) + 4.0 / 3.0 * γ * ΛG) /
-                (1.0 + 4.0 / 3.0 * γ)
-            ) - (1.0 - ρL / ρL) ) * Vp0
- 
-    ΔVs      =  (ΛG - (1.0 - ρL / ρS)) * (ϕ * 0.5)*Vs0
+                (
+                    (((β - 1.0) * ΛK) / ((β - 1.0) + ΛK) + 4.0 / 3.0 * γ * ΛG) /
+                    (1.0 + 4.0 / 3.0 * γ)
+                ) - (1.0 - ρL / ρL) ) * Vp0
+    
+        ΔVs      =  (ΛG - (1.0 - ρL / ρS)) * (ϕ * 0.5)*Vs0
+    else
+        ΔVp = 0.0
+        ΔVs = 0.0
+    end
 
     Vs_new   =  Vs0 - ΔVs
     Vp_new   =  Vp0 - ΔVp
