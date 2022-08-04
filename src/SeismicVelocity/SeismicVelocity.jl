@@ -594,9 +594,16 @@ function melt_correction_Takei(
     
     f(x)    =  R_func(x, α, ϕ, Kb_S, Ks_S)
     #df(x)   =  R_func_deriv(x, α, ϕ, Kb_S, Ks_S)
+    
+    # Note: this bracketing algorithm sometimes fails, as there might be 2 roots
     eps     =  1e-3;
-    R       =  find_zero(f, (eps,1.0-eps), Bisection())
-
+    if sign(f(eps)) != sign(f(1.0-eps))
+        R       =  find_zero(f, (eps,1.0-eps), Bisection())
+    else
+        # if bisection fails, try fzero 
+        R       =  fzero(f, 0.5)
+    end
+    
     # compute Q0 and P0
     ΛG       =  Q0_func(α, R)   
     ΛK       =  P0_func(α, R)   
