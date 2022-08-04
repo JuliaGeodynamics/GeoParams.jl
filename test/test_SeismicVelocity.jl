@@ -65,10 +65,10 @@ using GeoParams
     @test VpVs[1, 1, end] ≈ 2.05
 
     # NOTE: This will be made obsolete by melt_correction_Takei  
-    Vp_cor, Vs_cor = melt_correction(
-        26.0, 94.5, 61.0, 2802.0, 3198.0, 7.4, 4.36, 0.01, 0.15
-    )
-    @test [Vp_cor, Vs_cor] ≈  [7.331657177397843, 4.314027804335563]
+#    Vp_cor, Vs_cor = melt_correction(
+#        26.0, 94.5, 61.0, 2802.0, 3198.0, 7.4, 4.36, 0.01, 0.15
+#    )
+#    @test [Vp_cor, Vs_cor] ≈  [7.331657177397843, 4.314027804335563]
 
     # NOTE: This will be made obsolete by melt_correction_Takei  
   #  Vs_cor = porosity_correction(

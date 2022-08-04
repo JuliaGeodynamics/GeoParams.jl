@@ -598,7 +598,7 @@ function melt_correction_Takei(
     # Note: this bracketing algorithm sometimes fails, as there might be 2 roots
     eps     =  1e-3;
     if !isnan(f(0.5))
-        if (sign(f(eps)) != sign(f(1.0-eps))) & 
+        if (sign(f(eps)) != sign(f(1.0-eps))) 
             R       =  find_zero(f, (eps,1.0-eps), Bisection())
         else
             # if bisection fails, try fzero 
