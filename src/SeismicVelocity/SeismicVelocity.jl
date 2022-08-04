@@ -598,6 +598,7 @@ function melt_correction_Takei(
     # Note: this bracketing algorithm sometimes fails, as there might be 2 roots
     eps     =  1e-3;
     if !isnan(f(0.5))
+        R = zero(Kb_L)
         if (sign(f(eps)) != sign(f(1.0-eps))) 
             R       =  find_zero(f, (eps,1.0-eps), Bisection())
         else
@@ -652,7 +653,7 @@ Variable-Aspect-Ratio Self-Consistent Oblate-Spheroidal-Inclusion Theory
 - Phani (1996), Porosity-dependence of ultrasonic velocity in sintered 
 materials - a model based on the self-consistent spheroidal inclusion theory 
 """
-function θ_func(α)
+function θ_func(α::_T) where _T
 
     return α / ( (1 - α^2)^(3/2) ) * ( acos(α) - α*(1-α^2)^0.5 )
 end
@@ -664,12 +665,12 @@ Variable-Aspect-Ratio Self-Consistent Oblate-Spheroidal-Inclusion Theory
 - Phani (1996), Porosity-dependence of ultrasonic velocity in sintered 
 materials - a model based on the self-consistent spheroidal inclusion theory 
 """
-function f_func(α)
+function f_func(α::_T)  where _T
     θ = θ_func(α)
     return α^2 * (3*θ - 2) / (1 - α^2)
 end
 
-function P0_func(α, R)
+function P0_func(α::_T, R::_T) where _T
     f = f_func(α)
     θ = θ_func(α)
     F1 = 1 - 3/2*(f+θ) + R*(3/2*f + 5/2*θ - 4/3)
@@ -677,7 +678,7 @@ function P0_func(α, R)
     return F1 / F2
 end
 
-function Q0_func(α, R)
+function Q0_func(α::_T, R::_T) where _T
     f = f_func(α)
     θ = θ_func(α)
     
@@ -693,7 +694,7 @@ function Q0_func(α, R)
     return 1/5 * ( 2/F3 + 1/F4 + F5/F2 + (F6*F7 - F8*F9) / (F2*F4) )
 end
 
-function P0_func_deriv(α, R)
+function P0_func_deriv(α::_T, R::_T) where _T
     """
     d/dR (P0(R)) : Evaluated through SymPy:
         
@@ -723,7 +724,7 @@ function P0_func_deriv(α, R)
     return p1*p2/p3 + p4/p5 - p6/p7
 end
 
-function Q0_func_deriv(α, R)
+function Q0_func_deriv(α::_T, R::_T) where _T
     """
     d/dR (Q0(R)) : Evaluated through SymPy
     """
@@ -756,7 +757,7 @@ function Q0_func_deriv(α, R)
 
 end
 
-function R_func(R, α, Φ, K_m, G_m)
+function R_func(R::_T, α::_T, Φ::_T, K_m::_T, G_m::_T) where _T
     P0 = P0_func(α, R)
     Q0 = Q0_func(α, R)
     p1 = R * (3*K_m + 4*G_m)
@@ -765,7 +766,7 @@ function R_func(R, α, Φ, K_m, G_m)
     return p1 + p2 + p3
 end
 
-function R_func_deriv(R, α, Φ, K_m, G_m)
+function R_func_deriv(R::_T, α::_T, Φ::_T, K_m::_T, G_m::_T) where _T
     P0 = P0_func(α, R)
     Q0 = Q0_func(α, R)
     P0_deriv = P0_func_deriv(α, R)
@@ -781,7 +782,7 @@ end
 """
     simple Newton root finding algorithm as used to determine R
 """
-function find_roots_R(R0, α, Φ, K_m, G_m; tol=1e-5)
+function find_roots_R(R0::_T, α::_T, Φ::_T, K_m::_T, G_m::_T; tol=1e-5) where _T
     Rn = R0
     for n = 1:500
         f = R_func(Rn, α, Φ, K_m, G_m)
