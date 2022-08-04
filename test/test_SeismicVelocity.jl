@@ -64,47 +64,26 @@ using GeoParams
     @test VpVs[1] ≈ 1.8
     @test VpVs[1, 1, end] ≈ 2.05
 
+    # NOTE: This will be made obsolete by melt_correction_Takei  
     Vp_cor, Vs_cor = melt_correction(
         26.0, 94.5, 61.0, 2802.0, 3198.0, 7.4, 4.36, 0.01, 0.15
     )
     @test [Vp_cor, Vs_cor] ≈  [7.331657177397843, 4.314027804335563]
 
-    Vs_cor = porosity_correction(
-         94.5, 61.0, 1000.0, 3198.0, 4.36, 0.25, 0.25
-    )
-    @test [Vs_cor] ≈ [2.226167083352012]
+    # NOTE: This will be made obsolete by melt_correction_Takei  
+  #  Vs_cor = porosity_correction(
+  #       94.5, 61.0, 1000.0, 3198.0, 4.36, 0.25, 0.25
+  #  )
+  #  @test [Vs_cor] ≈ [2.226167083352012]
 
 
     Vs_anel = anelastic_correction(0, 4.36734, 5.0, 1250.0)
     @test Vs_anel ≈ 4.343623758644558
 
 
-    # Correct phase diagrams for melt, anelasticity and porosity
-
-    PD= correct_wavevelocities_phasediagrams(PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in"), apply_melt_correction=false, apply_porosity_correction=false, apply_anelasticity_correction=false)
-    @test PD.VpVs(1500,5e8) ≈  1.7040210607486448 
-    @test PD.Vs(1500,5e8) ≈ 4.329112661008007
-    @test PD.Vp(1500,5e8) ≈ 7.376899430314534
-
-    PD= correct_wavevelocities_phasediagrams(PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in"), apply_melt_correction=false, apply_porosity_correction=false, apply_anelasticity_correction=true)
-    @test PD.Vs(1500,5e8) ≈ 4.145262692579164
-    @test PD.Vp(1500,5e8) ≈ 7.376899430314534
-
-    PD= correct_wavevelocities_phasediagrams(PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in"), apply_melt_correction=false, apply_porosity_correction=true, apply_anelasticity_correction=true)
-    @test PD.Vs(1500,5e8) ≈ 4.121416536658633 
-    @test PD.Vp(1500,5e8) ≈ 7.376899430314534
-
-    PD= correct_wavevelocities_phasediagrams(PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in"), apply_melt_correction=true, apply_porosity_correction=true, apply_anelasticity_correction=true)
-    @test PD.Vs(1500,1e8) ≈ 2.133356250353467
-    @test PD.Vp(1500,5e8) ≈ 6.774831213555857
-
-    @test PD.VpVs(1500,5e8) ≈ 1.8277368391346367
-
 
 
     # testing the new seismic velocity correction for partial melt
-
-
     ρL   = 2000.;
     ρS   = 3300.;
     Vs0  = 3000.
@@ -114,17 +93,8 @@ using GeoParams
     Kb_S = 250.
     Ks_S = 162.
     Kb_L = 200.
-
     R = 0.1
 
-    f(x)    =  GeoParams.SeismicVelocity.R_func(x, α, ϕ, Kb_S, Ks_S)
-    df(x)   =  GeoParams.SeismicVelocity.R_func_deriv(x, α, ϕ, Kb_S, Ks_S)
-    eps     = 1e-3;
-    R       = find_zero(f, (eps,1.0-eps), Bisection())
-
-    R        = GeoParams.SeismicVelocity.find_roots_R(0.5, α, ϕ, Kb_S, Ks_S, tol=1e-5)
-    Q0       = GeoParams.SeismicVelocity.Q0_func(α, R)   
-    
     melt_correction_Takei( Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
 
     
@@ -136,8 +106,8 @@ using GeoParams
         Vs_new[i],Vp_new[i]  = melt_correction_Takei( Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ_vec[i], α)
     end
     
-    @test Vs_new[10] ≈ 2717.727074700984
-    @test Vp_new[10] ≈ 2717.727074700984
+    @test Vs_new[10] ≈ 2750.713407744307
+    @test Vp_new[10] ≈ 0.0
 
 
 

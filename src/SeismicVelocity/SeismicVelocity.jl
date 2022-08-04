@@ -112,6 +112,8 @@ end
 compute_wave_velocity!(args...) = compute_param!(compute_wave_velocity, args...)
 compute_wave_velocity(args...) = compute_param(compute_wave_velocity, args...)
 
+
+#=
 """
         Vp_cor,Vs_cor = melt_correction(  Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
 
@@ -224,8 +226,9 @@ function melt_correction(
 
     return Vp_cor, Vs_cor
 end
+=#
 
-
+#=
 """
         Vs_cor = porosity_correction(  Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
 
@@ -350,7 +353,7 @@ function porosity_correction(
 
     return Vs_cor
 end
-
+=#
 
 """
         Vs_anel = anelastic_correction(water::Int64, Vs0::Float64,P::Float64,T::Float64)
