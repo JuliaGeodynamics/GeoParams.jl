@@ -7,6 +7,8 @@ using ..MaterialParameters: MaterialParamsInfo
 
 export Phase2Dict,
        Dict2LatexTable
+       Phase2DictMd,
+       Dict2MarkdownTable
 
 # was tested with:
 # TestPh = (SetMaterialParams(Name="Viscous Matrix", Phase=1, Density=ConstantDensity(),CreepLaws = SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)")),
@@ -241,6 +243,207 @@ function Dict2LatexTable(d::Dict, refs::Dict)
     write("References.bib", References);
     print("\n")
     write("MaterialParameters.tex", Table);
+end
+
+function Phase2DictMd(s)
+    # Dict has Key with Fieldname and Value with Tuple(value, symbol, unit)
+    fds = Dict{String, Tuple{String, String, String, String}}()
+    refs = Dict{String, Tuple{String, String, String}}()
+    # Descriptions for every parameter that could occur in the table and their corresponding variable name(s) that is used in GeoParams
+    phasecount = length(s)
+    k = 1
+    flowlawcount = 0
+    # Checks all Phases 
+    for i = 1:phasecount
+        fieldnames = propertynames(s[i])
+        # Goes through all fields of a phase that are not "Name"
+        for label in fieldnames
+            if !isempty(getproperty(s[i], label)) && label != :Name
+                # Goes through all components of all fields
+                for j = 1:length(getproperty(s[i], label))
+                    a = getproperty(s[i], label)
+                    varnames = propertynames(a[j])#=
+                    law = string(typeof(a[1]))
+                    flowlaw = ""
+                    if occursin("Disl", law)
+                        flowlawcount += 1
+                        flowlaw = "DislCreep"
+                        name = join(a[j].Name)
+                        bibinfo_disl = param_info(a[j])
+                        bib_disl = bibinfo_disl.BibTex_Reference
+                        refs["$name"] = (bib_disl, "$flowlawcount", "$i")
+                    elseif occursin("Diff", law)
+                        flowlawcount += 1
+                        flowlaw = "DiffCreep"
+                        name = join(a[j].Name)
+                        bibinfo_diff = param_info(a[j])
+                        bib_diff = bibinfo_diff.BibTex_Reference
+                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                    elseif occursin("LinearViscous", law)
+                        flowlawcount += 1
+                        flowlaw = "LinVisc"
+                    end=#
+                    # Goes through all variables in a field component
+                    for var in varnames
+                        b = getproperty(a[j], var)
+                        # Checks if they are GeoUnit (Value and Unit exist then)
+                        if isa(b, GeoUnit)
+                            unit = string(getproperty(b, :unit))
+                            value = string(getproperty(b, :val))
+                            # Gives back variablename 
+                            latexvar = "$var"
+                            # Put value, LaTex name and units in a Dict
+                            fds["$var $label $i"] = (value, latexvar, "", "$i") # 3te Stelle sollte sein: "$flowlaw" statt ""
+                        end
+                        k += 1
+                    end
+                end
+            # Takes field "Name" and puts it in the first entry of the Tuple, takes Phasecount of all Phases and puts it in the second entry of the Dict
+            elseif !isempty(getproperty(s[i], label)) && label == :Name
+                phasename = join(getproperty(s[i], :Name))
+                fds["$label $i"] = (phasename, "$phasecount", "$i", "")
+            end
+        end
+    end
+    return fds, refs
+end
+
+
+function Dict2MarkdownTable(d::Dict, refs::Dict)
+    dictkeys = keys(d)
+    symbs = []
+
+    # Creates vectors of type Pairs (can be iterated over, sorted, etc.)
+    dictpairs = sort(collect(pairs(d)))
+    refpair = sort(collect(pairs(refs)))
+
+    References = "";
+    InTextRef = "";
+
+    # Descriptions for every parameter that could occur in the table and their corresponding variable name(s) that is used in GeoParams
+    desc = Dict("ρ"=>"Density (kg/m^(3))","ρ0"=>"Reference density (kg/m^(3))","g"=>"Gravity (m/s^(2))","η"=>"Viscosity (Pa s)",
+    "P"=>"Pressure (MPa)","T"=>"Temperature (C)","V"=>"Volume (m^(3))" ,"d"=>"Grain size (cm)" ,"f"=>"Water fugacity (MPa)",
+    "n"=>"Power-law exponent (-)","r"=>"Water fugacity exponent (-)" ,"p"=>"Grain size exponent (-)" ,"A"=>"Coefficient (Pa^(-n)/s)" ,
+    "E"=>"Activation energy (kJ/mol)" ,"R"=>"Gas constant (J/mol/K)" ,"G"=>"Shear modulus (Pa)","ν"=>"Poisson ratio (-)",
+    "K"=>"Bulk modulus (Pa)" , "Y"=>"Young's modulus (Pa)","k"=>"Thermal conductivity (W/m/K)","cp"=>"Heat capacity (J/kg/K)",
+    "Q_L"=>"Latent heat (kJ/kg)","H_r"=>"Radioactive heat (W/m^(3))","H_s"=>"Shear heating (-)","ϕ"=>"Friction angle (°)",
+    "ψ"=>"Dilation angle (°)","C"=>"Cohesion (Pa)" ,"Vp"=>"P-wave velocity (km/s)","Vs"=>"S-wave velocity (km/s)" ,
+    "T0"=>"Reference temperature (C)","P0"=>"Reference pressure (Pa)","β"=>"Compressibility (1/Pa)","α"=>"Thermal expansion coeff. (1/K)");
+
+    # Generates latex preamble
+    Table = " | Denotation | Variablename | "
+
+    # Creates table headers and in text citations
+    counter = 1
+    for i = 1:parse(Int64, d["Name 1"][2])
+        Table *=  d["Name $i"][1] * " | "
+        for j = 1:length(refs)
+            if parse(Int64, refpair[j].second[3]) == i
+                Table *= "(" * "*" ^ counter * ") |";
+
+                # Ab hier sinds die References für am Ende -> Später machen!
+                #currentbib = refpair[j].second[1]
+                #startidx = first(findfirst("{", currentbib))
+                #endidx = first(findfirst(",", currentbib))
+                #InTextRef *= "(" * "*" ^ counter * ") \\cite{" * currentbib[startidx+1:endidx-1] * "}";
+                #if counter != length(refs)
+                #    InTextRef *= ", "
+                #end
+                #counter += 1
+            else
+                Table *= " | "
+            end
+        end
+    end
+
+    Table *= "\n";
+    Table *= " | ---------- | ------------ | ";
+
+    for i = 1:parse(Int64, d["Name 1"][2])
+        Table *= "-" ^ length(d["Name $i"][1]) * " | ";
+    end
+
+    Table *= "\n";
+
+    # Get vector with all unique symbols without phasenames
+    for key in dictkeys
+        if occursin("Name", key)
+            continue
+        else
+            push!(symbs, d[key][2])
+        end
+    end
+    symbs = unique(sort(symbs))
+
+    # Creates columnwise output for all parameters of the input phase
+    for symbol in symbs
+        # Sets parametername and variable
+        Table *= " " * string(desc[symbol]) * " | " * symbol;
+        # Iterates over all phases
+        for j = 1:parse(Int64, d["Name 1"][2])
+            hit = 0
+            # Iterates over all pairs
+            for i = 1:length(dictpairs)
+                # Checks if symbol matches the symbol in the pair and if phase matches phase of the pair
+                if symbol == dictpairs[i].second[2] && j == parse(Int64, dictpairs[i].second[4])
+                    # put in the matched parameter value
+                    Table *= " | " * dictpairs[i].second[1];
+                    hit += 1
+                end
+            end
+
+            # checks if a parameter in a phase is not existing 
+            if hit == 0
+                Table *= " | ";
+            end
+
+        end
+        # new line in latex
+        Table *= " \n";
+    end
+
+    #=
+
+    # Adds equations for flow laws underneath the parameters
+    DislCreep = 0
+    DiffCreep = 0
+    LinVisc = 0
+    for i = 1:length(dictpairs)
+        if dictpairs[i].second[3] == "DislCreep" && DislCreep == 0
+            Table *= "\\rule[-5pt]{-3pt}{20pt} Dislocation Creep: & " * "\\multicolumn{4}{l}{ \\dot{\\gamma} = A \\sigma^n f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) }\n"
+            Table *= " \\\\\n";
+            DislCreep += 1
+        end
+        if dictpairs[i].second[3] == "DiffCreep" && DiffCreep == 0
+            Table *= "\\rule[-5pt]{-3pt}{20pt} Diffusion Creep: & " * "\\multicolumn{4}{l}{ \\dot{\\gamma} = A \\sigma^n d^p f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) }\n"
+            Table *= " \\\\\n";
+            DiffCreep += 1
+        end
+        if dictpairs[i].second[3] == "LinVisc" && LinVisc == 0
+            Table *= "\\rule[-5pt]{-3pt}{20pt} Linear Viscous: & " * "\\multicolumn{4}{l}{ \\eta  = \\frac{\\tau_{II} }{ 2\\dot{\\varepsilon_{II}}} }\n"
+            Table *= " \\\\\n";
+            LinVisc += 1
+        end
+    end
+    
+    
+    # Creates References string which is later written to References.bib 
+    for i = 1:parse(Int64, d["Name 1"][2])
+        for j = 1:length(refs)
+            if parse(Int64, refpair[j].second[2]) == i
+                References *= refpair[j].second[1];
+            end
+        end
+    end
+
+    # Adds in text citation for all BibTex sources to LaTEx code. InTextRef is created simultaneously with table headers
+    Table *= InTextRef * "\n";
+    =#
+
+    # Writes BibTex sources in to .bib file and Table string into .m file
+    #write("References.bib", References);
+    print("\n")
+    write("MaterialParameters.md", Table);
 end
 
 end
