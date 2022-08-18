@@ -4,7 +4,7 @@ module GravitationalAcceleration
 
 using Parameters, LaTeXStrings, Unitful
 using ..Units
-using GeoParams: AbstractMaterialParam
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 import Base.show, GeoParams.param_info
 using ..MaterialParameters: MaterialParamsInfo
 
@@ -37,6 +37,14 @@ function compute_gravity(s::ConstantGravity{_T}) where {_T}
     @unpack_val g = s
 
     return g
+end
+
+# Calculation routine
+@inline @generated function compute_gravity( MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Integer) where {N}
+    quote
+        Base.Cartesian.@nexprs $N i ->
+            (MatParam[i].Phase == Phase) && return compute_gravity(MatParam[i].Gravity[1])
+    end
 end
 
 # Print info 

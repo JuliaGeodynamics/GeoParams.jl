@@ -26,10 +26,8 @@ end
     fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Int64, args
 ) where {F,N}
     quote
-        T = isempty(args) ? 0.0 : zero(typeof(args).types[1])
-        out = T
         Base.Cartesian.@nexprs $N i ->
-            out += MatParam[i].Phase == Phase ? fn(MatParam[i], args) : T
+            @inbounds (MatParam[i].Phase == Phase) && return fn(MatParam[i], args)
     end
 end
 
