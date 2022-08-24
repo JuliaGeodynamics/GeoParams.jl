@@ -283,4 +283,4 @@ function show(io::IO, g::DiffusionCreep)
 end
 
 # Add a list of pre-defined creep laws 
-include("Data/DiffusionCreep_Data.jl")
+include("Data/DiffusionCreep.jl")
