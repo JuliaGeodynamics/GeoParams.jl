@@ -27,28 +27,25 @@ DislocationCreep_info = Dict(
                 ),
                 MaterialParamsInfo(;
                     Comment="Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
-                    BibTex_Reference=parse_bibtex(
-                        """
-    @incollection{eiler_rheology_2003,
-    address = {Washington, D. C.},
-    title = {Rheology of the upper mantle and the mantle wedge: {A} view from the experimentalists},
-    volume = {138},
-    isbn = {978-0-87590-997-4},
-    shorttitle = {Rheology of the upper mantle and the mantle wedge},
-    url = {http://www.agu.org/books/gm/v138/138GM06/138GM06.shtml},
-    language = {en},
-    urldate = {2019-10-09},
-    booktitle = {Geophysical {Monograph} {Series}},
-    publisher = {American Geophysical Union},
-    author = {Hirth, Greg and Kohlstedt, David},
-    editor = {Eiler, John},
-    year = {2003},
-    doi = {10.1029/138GM06},
-    pages = {83--105},
-    }
-""",
-                    ),
-                ),
+                    BibTex_Reference="
+                        @incollection{eiler_rheology_2003,
+                        address = {Washington, D. C.},
+                        title = {Rheology of the upper mantle and the mantle wedge: {A} view from the experimentalists},
+                        volume = {138},
+                        isbn = {978-0-87590-997-4},
+                        shorttitle = {Rheology of the upper mantle and the mantle wedge},
+                        url = {http://www.agu.org/books/gm/v138/138GM06/138GM06.shtml},
+                        language = {en},
+                        urldate = {2019-10-09},
+                        booktitle = {Geophysical {Monograph} {Series}},
+                        publisher = {American Geophysical Union},
+                        author = {Hirth, Greg and Kohlstedt, David},
+                        editor = {Eiler, John},
+                        year = {2003},
+                        doi = {10.1029/138GM06},
+                        pages = {83--105},
+                        }
+                "),
             ),
         )
 
@@ -70,28 +67,25 @@ DislocationCreep_info = Dict(
                 ),
                 MaterialParamsInfo(;
                     Comment="Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
-                    BibTex_Reference=parse_bibtex(
-                        """
-    @incollection{HirthKohlstedt_OlivineRheology_2003,
-    address = {Washington, D. C.},
-    title = {Rheology of the upper mantle and the mantle wedge: {A} view from the experimentalists},
-    volume = {138},
-    isbn = {978-0-87590-997-4},
-    shorttitle = {Rheology of the upper mantle and the mantle wedge},
-    url = {http://www.agu.org/books/gm/v138/138GM06/138GM06.shtml},
-    language = {en},
-    urldate = {2019-10-09},
-    booktitle = {Geophysical {Monograph} {Series}},
-    publisher = {American Geophysical Union},
-    author = {Hirth, Greg and Kohlstedt, David},
-    editor = {Eiler, John},
-    year = {2003},
-    doi = {10.1029/138GM06},
-    pages = {83--105},
-    }
-""",
-                    ),
-                ),
+                    BibTex_Reference="
+                        @incollection{HirthKohlstedt_OlivineRheology_2003,
+                        address = {Washington, D. C.},
+                        title = {Rheology of the upper mantle and the mantle wedge: {A} view from the experimentalists},
+                        volume = {138},
+                        isbn = {978-0-87590-997-4},
+                        shorttitle = {Rheology of the upper mantle and the mantle wedge},
+                        url = {http://www.agu.org/books/gm/v138/138GM06/138GM06.shtml},
+                        language = {en},
+                        urldate = {2019-10-09},
+                        booktitle = {Geophysical {Monograph} {Series}},
+                        publisher = {American Geophysical Union},
+                        author = {Hirth, Greg and Kohlstedt, David},
+                        editor = {Eiler, John},
+                        year = {2003},
+                        doi = {10.1029/138GM06},
+                        pages = {83--105},
+                        }
+                "),
             ),
         )
 
@@ -114,21 +108,18 @@ DislocationCreep_info = Dict(
                 ),
                 MaterialParamsInfo(;
                     Comment="Verified with the original publication Hansen(1982)(NM). Values checked, plots are not reproduced (NM).",
-                    BibTex_Reference=parse_bibtex(
-                        """
-     @article{carter1982stress,
-     title={Stress magnitudes in natural rock salt},
-     author={Carter, Neville L and Hansen, Francis D and Senseny, Paul E},
-     journal={Journal of Geophysical Research: Solid Earth},
-     volume={87},
-     number={B11},
-     pages={9289--9300},
-     year={1982},
-     publisher={Wiley Online Library}
-     }
-"""
-                    ),
-                ),
+                    BibTex_Reference="
+                        @article{carter1982stress,
+                        title={Stress magnitudes in natural rock salt},
+                        author={Carter, Neville L and Hansen, Francis D and Senseny, Paul E},
+                        journal={Journal of Geophysical Research: Solid Earth},
+                        volume={87},
+                        number={B11},
+                        pages={9289--9300},
+                        year={1982},
+                        publisher={Wiley Online Library}
+                        }
+                "),
             ),
         )
 
@@ -151,21 +142,18 @@ DislocationCreep_info = Dict(
                 ),
                 MaterialParamsInfo(;
                     Comment="Values checked (Bremond (1999)), plots are not reproduced (NM).",
-                    BibTex_Reference=parse_bibtex(
-                        """
-     @article{caristan1982transition,
-     title={The transition from high temperature creep to fracture in Maryland diabase},
-     author={Caristan, Y},
-     journal={Journal of Geophysical Research: Solid Earth},
-     volume={87},
-     number={B8},
-     pages={6781--6790},
-     year={1982},
-     publisher={Wiley Online Library}
-     }
-"""
-                    ),
-                ),
+                    BibTex_Reference="
+                    @article{caristan1982transition,
+                    title={The transition from high temperature creep to fracture in Maryland diabase},
+                    author={Caristan, Y},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={87},
+                    number={B8},
+                    pages={6781--6790},
+                    year={1982},
+                    publisher={Wiley Online Library}
+                    }
+                "),
             ),
         )
 
@@ -188,21 +176,18 @@ DislocationCreep_info = Dict(
                 ),
                 MaterialParamsInfo(;
                     Comment="Values checked (Bremond (1999)), plots are not reproduced (NM).",
-                    BibTex_Reference=parse_bibtex(
-                        """
-     @article{raleigh1965experimental,
-     title={Experimental deformation of serpentinite and its tectonic implications},
-     author={Raleigh, CB and Paterson, MS},
-     journal={Journal of Geophysical Research},
-     volume={70},
-     number={16},
-     pages={3965--3985},
-     year={1965},
-     publisher={Wiley Online Library}
-     }
-"""
-                    ),
-                ),
+                    BibTex_Reference="
+                        @article{raleigh1965experimental,
+                        title={Experimental deformation of serpentinite and its tectonic implications},
+                        author={Raleigh, CB and Paterson, MS},
+                        journal={Journal of Geophysical Research},
+                        volume={70},
+                        number={16},
+                        pages={3965--3985},
+                        year={1965},
+                        publisher={Wiley Online Library}
+                        }
+                "),
             ),
         )
 
@@ -223,21 +208,18 @@ DislocationCreep_info = Dict(
                 ),
                 MaterialParamsInfo(;
                     Comment="Values checked (Mackwell et al. (1998))(NM), plots are not reproduced (NM).",
-                    BibTex_Reference=parse_bibtex(
-                        """
-    @article{mackwell1998high,
-    title={High-temperature deformation of dry diabase with application to tectonics on Venus},
-    author={Mackwell, SJ and Zimmerman, ME and Kohlstedt, DL},
-    journal={Journal of Geophysical Research: Solid Earth},
-    volume={103},
-    number={B1},
-    pages={975--984},
-    year={1998},
-    publisher={Wiley Online Library}
-    }
-""",
-                    ),
-                ),
+                    BibTex_Reference="
+                        @article{mackwell1998high,
+                        title={High-temperature deformation of dry diabase with application to tectonics on Venus},
+                        author={Mackwell, SJ and Zimmerman, ME and Kohlstedt, DL},
+                        journal={Journal of Geophysical Research: Solid Earth},
+                        volume={103},
+                        number={B1},
+                        pages={975--984},
+                        year={1998},
+                        publisher={Wiley Online Library}
+                        }
+                "),
             ),
         )
 
@@ -259,7 +241,7 @@ DislocationCreep_info = Dict(
                 ),
                 MaterialParamsInfo(;
                     Comment="Values checked (Wilks and Carter (1990))(NM), plots are not reproduced (NM).",
-                    BibTex_Reference=parse_bibtex("""
+                    BibTex_Reference="
                       @article{wilks1990rheology,
                       title={Rheology of some continental lower crustal rocks},
                       author={Wilks, Kenneth R and Carter, Neville L},
@@ -270,8 +252,7 @@ DislocationCreep_info = Dict(
                       year={1990},
                       publisher={Elsevier}
                       }
-                  """),
-                ),
+                "),
             ),
         )
 
@@ -291,21 +272,18 @@ DislocationCreep_info = Dict(
                 ),
                 MaterialParamsInfo(;
                     Comment="Values checked (Ueda et al. (2008))(NM), plots are not reproduced (NM).",
-                    BibTex_Reference=parse_bibtex(
-                        """
-    @article{ueda2008subduction,
-    title={Subduction initiation by thermal--chemical plumes: numerical studies},
-    author={Ueda, Kosuke and Gerya, Taras and Sobolev, Stephan V},
-    journal={Physics of the Earth and Planetary Interiors},
-    volume={171},
-    number={1-4},
-    pages={296--312},
-    year={2008},
-    publisher={Elsevier}
-    }
-"""
-                    ),
-                ),
+                    BibTex_Reference="
+                        @article{ueda2008subduction,
+                        title={Subduction initiation by thermal--chemical plumes: numerical studies},
+                        author={Ueda, Kosuke and Gerya, Taras and Sobolev, Stephan V},
+                        journal={Physics of the Earth and Planetary Interiors},
+                        volume={171},
+                        number={1-4},
+                        pages={296--312},
+                        year={2008},
+                        publisher={Elsevier}
+                        }
+                "),
             ),
         )
 
@@ -327,7 +305,7 @@ DislocationCreep_info = Dict(
                 ),
                 MaterialParamsInfo(;
                     Comment="Values checked (Carter and Tsenn (1987))(NM), plots are not reproduced (NM).",
-                    BibTex_Reference=parse_bibtex("""
+                    BibTex_Reference="
                       @article{carter1987flow,
                       title={Flow properties of continental lithosphere},
                       author={Carter, Neville L and Tsenn, Michael C},
@@ -338,8 +316,7 @@ DislocationCreep_info = Dict(
                       year={1987},
                       publisher={Elsevier}
                       }
-                  """),
-                ),
+                "),
             ),
         )
 
@@ -361,21 +338,18 @@ DislocationCreep_info = Dict(
                 ),
                 MaterialParamsInfo(;
                     Comment="Values checked (Ji and Zhao (1993))(NM), plots are not reproduced (NM).",
-                    BibTex_Reference=parse_bibtex(
-                        """
-    @article{ji1993flow,
-    title={Flow laws of multiphase rocks calculated from experimental data on the constituent phases},
-    author={Ji, Shaocheng and Zhao, Pinglao},
-    journal={Earth and Planetary Science Letters},
-    volume={117},
-    number={1-2},
-    pages={181--187},
-    year={1993},
-    publisher={Elsevier}
-    }
-""",
-                    ),
-                ),
+                    BibTex_Reference="
+                        @article{ji1993flow,
+                        title={Flow laws of multiphase rocks calculated from experimental data on the constituent phases},
+                        author={Ji, Shaocheng and Zhao, Pinglao},
+                        journal={Earth and Planetary Science Letters},
+                        volume={117},
+                        number={1-2},
+                        pages={181--187},
+                        year={1993},
+                        publisher={Elsevier}
+                        }
+                "),
             ),
         )
 
@@ -394,21 +368,18 @@ DislocationCreep_info = Dict(
                 ),
                 MaterialParamsInfo(;
                     Comment="Values taken from Bürgmann & Rybacki (2008) Supplementary table 1. (BK), plots are not reproduced (NM).",
-                    BibTex_Reference=parse_bibtex(
-                        """
-    @article{rybacki2000dislocation,
-    title={Dislocation and diffusion creep of synthetic anorthite aggregates},
-    author={Rybacki, Erik and Dresen, Georg},
-    journal={Journal of Geophysical Research: Solid Earth},
-    volume={105},
-    number={B11},
-    pages={26017--26036},
-    year={2000},
-    publisher={Wiley Online Library}
-    }
-"""
-                    ),
-                ),
+                    BibTex_Reference="
+                        @article{rybacki2000dislocation,
+                        title={Dislocation and diffusion creep of synthetic anorthite aggregates},
+                        author={Rybacki, Erik and Dresen, Georg},
+                        journal={Journal of Geophysical Research: Solid Earth},
+                        volume={105},
+                        number={B11},
+                        pages={26017--26036},
+                        year={2000},
+                        publisher={Wiley Online Library}
+                        }
+                "),
             ),
         )
 
@@ -428,21 +399,18 @@ DislocationCreep_info = Dict(
                 ),
                 MaterialParamsInfo(;
                     Comment="Values checked (Rybecki and Dresen (2000))(NM), plots are not reproduced (NM).",
-                    BibTex_Reference=parse_bibtex(
-                        """
-    @article{rybacki2000dislocation,
-    title={Dislocation and diffusion creep of synthetic anorthite aggregates},
-    author={Rybacki, Erik and Dresen, Georg},
-    journal={Journal of Geophysical Research: Solid Earth},
-    volume={105},
-    number={B11},
-    pages={26017--26036},
-    year={2000},
-    publisher={Wiley Online Library}
-    }
-"""
-                    ),
-                ),
+                    BibTex_Reference="
+                        @article{rybacki2000dislocation,
+                        title={Dislocation and diffusion creep of synthetic anorthite aggregates},
+                        author={Rybacki, Erik and Dresen, Georg},
+                        journal={Journal of Geophysical Research: Solid Earth},
+                        volume={105},
+                        number={B11},
+                        pages={26017--26036},
+                        year={2000},
+                        publisher={Wiley Online Library}
+                        }
+                "),
             ),
         )
 
@@ -462,20 +430,17 @@ DislocationCreep_info = Dict(
                 ),
                 MaterialParamsInfo(;
                     Comment="Values checked (Hirth and Kohlstedt (2003))(NM), plots are not reproduced (NM).",
-                    BibTex_Reference=parse_bibtex(
-                        """
-    @article{hirth2003rheology,
-    title={Rheology of the upper mantle and the mantle wedge: A view from the experimentalists},
-    author={Hirth, Greg and Kohlstedf, D},
-    journal={Geophysical monograph-american geophysical union},
-    volume={138},
-    pages={83--106},
-    year={2003},
-    publisher={AGU AMERICAN GEOPHYSICAL UNION}
-    }
-""",
-                    ),
-                ),
+                    BibTex_Reference="
+                        @article{hirth2003rheology,
+                        title={Rheology of the upper mantle and the mantle wedge: A view from the experimentalists},
+                        author={Hirth, Greg and Kohlstedf, D},
+                        journal={Geophysical monograph-american geophysical union},
+                        volume={138},
+                        pages={83--106},
+                        year={2003},
+                        publisher={AGU AMERICAN GEOPHYSICAL UNION}
+                        }
+                "),
             ),
         )
 
@@ -498,19 +463,18 @@ DislocationCreep_info = Dict(
                 ),
                 MaterialParamsInfo(;
                     Comment="Values checked (Kirby (1983))(NM), plots are not reproduced (NM).",
-                    BibTex_Reference=parse_bibtex("""
-                      @article{kirby1983rheology,
-                      title={Rheology of the lithosphere},
-                      author={Kirby, Stephen H},
-                      journal={Reviews of Geophysics},
-                      volume={21},
-                      number={6},
-                      pages={1458--1487},
-                      year={1983},
-                      publisher={Wiley Online Library}
-                      }
-                  """),
-                ),
+                    BibTex_Reference="
+                        @article{kirby1983rheology,
+                        title={Rheology of the lithosphere},
+                        author={Kirby, Stephen H},
+                        journal={Reviews of Geophysics},
+                        volume={21},
+                        number={6},
+                        pages={1458--1487},
+                        year={1983},
+                        publisher={Wiley Online Library}
+                        }
+                "),
             ),
         )
 
@@ -532,21 +496,18 @@ DislocationCreep_info = Dict(
                 ),
                 MaterialParamsInfo(;
                     Comment="Values checked (Afonso and Ranalli (2004))(NM), plots are not reproduced (NM).",
-                    BibTex_Reference=parse_bibtex(
-                        """
-    @article{afonso2004crustal,
-    title={Crustal and mantle strengths in continental lithosphere: is the jelly sandwich model obsolete?},
-    author={Afonso, Juan Carlos and Ranalli, Giorgio},
-    journal={Tectonophysics},
-    volume={394},
-    number={3-4},
-    pages={221--232},
-    year={2004},
-    publisher={Elsevier}
-    }
-""",
-                    ),
-                ),
+                    BibTex_Reference="
+                        @article{afonso2004crustal,
+                        title={Crustal and mantle strengths in continental lithosphere: is the jelly sandwich model obsolete?},
+                        author={Afonso, Juan Carlos and Ranalli, Giorgio},
+                        journal={Tectonophysics},
+                        volume={394},
+                        number={3-4},
+                        pages={221--232},
+                        year={2004},
+                        publisher={Elsevier}
+                        }
+                "),
             ),
         )
 
@@ -568,20 +529,17 @@ DislocationCreep_info = Dict(
                 ),
                 MaterialParamsInfo(;
                     Comment="Values checked (Tirel et al. (2008))(NM), plots are not reproduced (NM).",
-                    BibTex_Reference=parse_bibtex(
-                        """
-    @article{tirel2008dynamics,
-    title={Dynamics and structural development of metamorphic core complexes},
-    author={Tirel, C{\'e}line and Brun, Jean-Pierre and Burov, Evgueni},
-    journal={Journal of Geophysical Research: Solid Earth},
-    volume={113},
-    number={B4},
-    year={2008},
-    publisher={Wiley Online Library}
-    }
-"""
-                    ),
-                ),
+                    BibTex_Reference="
+                        @article{tirel2008dynamics,
+                        title={Dynamics and structural development of metamorphic core complexes},
+                        author={Tirel, C{\'e}line and Brun, Jean-Pierre and Burov, Evgueni},
+                        journal={Journal of Geophysical Research: Solid Earth},
+                        volume={113},
+                        number={B4},
+                        year={2008},
+                        publisher={Wiley Online Library}
+                        }
+                "),
             ),
         )
 
@@ -602,17 +560,74 @@ DislocationCreep_info = Dict(
                 ),
                 MaterialParamsInfo(;
                     Comment="This is from Exercise 6.1, indicated to be valid for olivine under upper mantle conditions.",
-                    BibTex_Reference=parse_bibtex("""
-                      @book{Gerya_2019, 
-                      title={Introduction to Numerical Geodynamic Modelling}, 
-                      ISBN={978-1-107-14314-2}, 
-                      note={Google-Books-ID: 8XGSDwAAQBAJ}, 
-                      publisher={Cambridge University Press}, 
-                      author={Gerya, Taras}, 
-                      year={2019}, month={May}, 
-                      language={en} }
-                  """),
-                ),
+                    BibTex_Reference="
+                        @book{Gerya_2019, 
+                        title={Introduction to Numerical Geodynamic Modelling}, 
+                        ISBN={978-1-107-14314-2}, 
+                        note={Google-Books-ID: 8XGSDwAAQBAJ}, 
+                        publisher={Cambridge University Press}, 
+                        author={Gerya, Taras}, 
+                        year={2019}, month={May}, 
+                        language={en} }
+                "),
+            ),
+        )
+
+        # Rock salt rheology
+        ("Rock salt | Li & Urai (2016)", 
+            #  Li & Urai (2016), table 1
+            #  referes to Wawersik & Zeuch (1986), values can not be reproduced!
+            (
+                DislocationCreep(
+                Name = "Rock salt | Li & Urai (2016)",
+                n = 5.0NoUnits,
+                A = 7.26e-6MPa^(-5.0)/s, 
+                E = 53.92kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked in (Li & Urai, (2016)) are different from given source (Wawersik & Zeuch, (1986))(NM), plots are not reproduced (NM).",
+                BibTex_Reference = "
+                    @article{li2016rheology,
+                    title={Rheology of rock salt for salt tectonics modeling},
+                    author={Li, Shi-Yuan and Urai, Janos L},
+                    journal={Petroleum science},
+                    volume={13},
+                    number={4},
+                    pages={712--724},
+                    year={2016},
+                    publisher={Springer}
+                    }
+                "),
+            ),
+        )
+
+        # Avery Island rock salt rheology
+        ("Salado rock salt | Li & Urai (2016)", 
+            #  Li & Urai (2016), table 1
+            #  referes to Wawersik & Zeuch (1986), values can not be reproduced!
+            (
+                DislocationCreep(
+                Name = "Rock salt | Li & Urai (2016)",
+                n = 5.0NoUnits,
+                A = 7.26e-6MPa^(-5.0)/s, 
+                E = 53.92kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked in (Li & Urai, (2016)) are different from given source (Wawersik & Zeuch, (1986))(NM), plots are not reproduced (NM).",
+                BibTex_Reference = "
+                    @article{li2016rheology,
+                    title={Rheology of rock salt for salt tectonics modeling},
+                    author={Li, Shi-Yuan and Urai, Janos L},
+                    journal={Petroleum science},
+                    volume={13},
+                    number={4},
+                    pages={712--724},
+                    year={2016},
+                    publisher={Springer}
+                    }
+                "),
             ),
         )
     ],

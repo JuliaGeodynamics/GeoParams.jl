@@ -16,16 +16,12 @@ x2      =   DiffusionCreep(n=3, p=-3.0)
 @test Value(x2.A) == 1.5MPa^-3.0*s^-1*m^(3.0)
 
 # perform a computation with the dislocation creep laws 
-    # Calculate EpsII, using a set of pre-defined values
+# Calculate EpsII, using a set of pre-defined values
 CharDim = GEO_units(length=1000km, viscosity=1e19Pa*s, stress=100MPa, temperature=1000C)
 EpsII   = GeoUnit(1.0s^-1.0)
-EpsII_nd= nondimensionalize(EpsII,CharDim)
 TauII   = GeoUnit(0.3MPa)
-TauII_nd= nondimensionalize(TauII,CharDim)
 P       = GeoUnit(1.0e9Pa)
-P_nd    = nondimensionalize(P,CharDim)
 T       = GeoUnit(1400C)
-T_nd    = nondimensionalize(T,CharDim)
 f       = GeoUnit(1000NoUnits)
 f_nd    = nondimensionalize(f,CharDim)
 d       = GeoUnit(10mm)

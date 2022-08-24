@@ -90,8 +90,8 @@ function Transform_DiffusionCreep(name)
     n = Value(pp.n)
     r = Value(pp.r)
     p = Value(pp.p)
-    A_Pa = Pa^(-NumValue(pp.n) - NumValue(pp.r)) * s^(-1) * m^(-NumValue(p))(Value(pp.A))
-    E_J = J / mol(Value(pp.E))
+    A_Pa = Pa^(-NumValue(pp.n) - NumValue(pp.r)) * s^(-1) * m^(-NumValue(p)) * (Value(pp.A))
+    E_J = kJ / mol(Value(pp.E))
     V_m3 = m^3 / mol(Value(pp.V))
     Apparatus = pp.Apparatus
 
@@ -283,4 +283,4 @@ function show(io::IO, g::DiffusionCreep)
 end
 
 # Add a list of pre-defined creep laws 
-include("DiffusionCreep_Data.jl")
+include("Data/DiffusionCreep.jl")

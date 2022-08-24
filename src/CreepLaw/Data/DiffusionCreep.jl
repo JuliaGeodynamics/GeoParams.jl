@@ -24,20 +24,18 @@ DiffusionCreep_info = Dict([
         ),
         MaterialParamsInfo(;
             Comment="Checked values; not yet plots (BK)",
-            BibTex_Reference=parse_bibtex(
-                """
-    @article{Rybacki_Gottschalk_Wirth_Dresen_2006, 
-    title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates}, 
-    volume={111}, 
-    DOI={10.1029/2005JB003663}, 
-    number={B3}, 
-    journal={Journal of Geophysical Research: Solid Earth}, 
-    author={Rybacki, E. and Gottschalk, M. and Wirth, R. and Dresen, G.}, 
-    year={2006}, 
-    month={Mar}
-    }
-""",
-            ),
+            BibTex_Reference="
+                @article{Rybacki_Gottschalk_Wirth_Dresen_2006, 
+                title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates}, 
+                volume={111}, 
+                DOI={10.1029/2005JB003663}, 
+                number={B3}, 
+                journal={Journal of Geophysical Research: Solid Earth}, 
+                author={Rybacki, E. and Gottschalk, M. and Wirth, R. and Dresen, G.}, 
+                year={2006}, 
+                month={Mar}
+                }
+            "),
         ),
-    ),
-)])  # end of list
+    )
+])  # end of list
