@@ -216,7 +216,7 @@ Base.size(v::GeoUnit) = size(v.val)
 Base.getindex(A::GeoUnit{T,U}, inds::Vararg{Int,N}) where {T,U,N} = A.val[inds...]
 
 for op in (:+, :-, :*, :/)
-    
+
     # Multiply with number
     @eval Base.$op(x::GeoUnit, y::Number) = $(op)(x.val, y)
     @eval Base.$op(x::Number, y::GeoUnit) = $(op)(x, y.val)

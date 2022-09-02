@@ -7,7 +7,6 @@ using GeoParams
     if !isdefined(Main, :GeoParamsAliases)
         eval(:(@use GeoParamsAliases density = ρ))
     end
-   
 
     #Make sure that structs are isbits
     x = ConstantDensity()
