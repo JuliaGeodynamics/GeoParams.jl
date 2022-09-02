@@ -6,3 +6,4 @@ import Base: (:)
 
 second_invariant(A::NTuple{N,T}) where {N, T} = √(0.5*A:A)
 second_invariant(A::SMatrix) = √(0.5*A:A)
+second_invariant(A::Matrix{T, 2}) where T = √(0.5*sum(Ai*Ai for Ai in A))
