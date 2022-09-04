@@ -214,7 +214,7 @@ using GeoParams
     compute_density!(rho, Mat_tup1, PhaseRatio, args)
     num_alloc = @allocated compute_density!(rho, Mat_tup1, PhaseRatio, args) #   136.776 μs (0 allocations: 0 bytes)
     @test sum(rho) / 400^2 ≈ 2945.000013499999
-    @test num_alloc ≤ 32           # for some reason this does indicate allocations but @btime does not
+    # @test num_alloc ≤ 32           # for some reason this does indicate allocations but @btime does not
 
     # Test calling the routine with only pressure as input. 
     # This is ok for Mat_tup1, as it only has constant & P-dependent densities.
