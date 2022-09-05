@@ -59,59 +59,50 @@ using GeoParams
     @test Vp[1] == 8.1
     @test Vp[1, 1, end] ≈ 5.500887338991992
     @test Vs[1] == 4.5
-    @test Vs[1, 1, end] ≈ 2.68 
+    @test Vs[1, 1, end] ≈ 2.68
 
     @test VpVs[1] ≈ 1.8
     @test VpVs[1, 1, end] ≈ 2.05
 
     # NOTE: This will be made obsolete by melt_correction_Takei  
-#    Vp_cor, Vs_cor = melt_correction(
-#        26.0, 94.5, 61.0, 2802.0, 3198.0, 7.4, 4.36, 0.01, 0.15
-#    )
-#    @test [Vp_cor, Vs_cor] ≈  [7.331657177397843, 4.314027804335563]
+    #    Vp_cor, Vs_cor = melt_correction(
+    #        26.0, 94.5, 61.0, 2802.0, 3198.0, 7.4, 4.36, 0.01, 0.15
+    #    )
+    #    @test [Vp_cor, Vs_cor] ≈  [7.331657177397843, 4.314027804335563]
 
     # NOTE: This will be made obsolete by melt_correction_Takei  
-  #  Vs_cor = porosity_correction(
-  #       94.5, 61.0, 1000.0, 3198.0, 4.36, 0.25, 0.25
-  #  )
-  #  @test [Vs_cor] ≈ [2.226167083352012]
-
+    #  Vs_cor = porosity_correction(
+    #       94.5, 61.0, 1000.0, 3198.0, 4.36, 0.25, 0.25
+    #  )
+    #  @test [Vs_cor] ≈ [2.226167083352012]
 
     Vs_anel = anelastic_correction(0, 4.36734, 5.0, 1250.0)
     @test Vs_anel ≈ 4.343623758644558
 
-
-
-
     # testing the new seismic velocity correction for partial melt
-    ρL   = 2000.;
-    ρS   = 3300.;
-    Vs0  = 3000.
-    Vp0  = 6000.
-    α    = 0.4;
-    ϕ    = 0.7
-    Kb_S = 250.
-    Ks_S = 162.
-    Kb_L = 200.
+    ρL = 2000.0
+    ρS = 3300.0
+    Vs0 = 3000.0
+    Vp0 = 6000.0
+    α = 0.4
+    ϕ = 0.7
+    Kb_S = 250.0
+    Ks_S = 162.0
+    Kb_L = 200.0
     R = 0.1
 
-    melt_correction_Takei( Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
+    melt_correction_Takei(Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
 
-    
-    ϕ_vec  = 0:.01:1
+    ϕ_vec = 0:0.01:1
     Vs_new = zero(ϕ_vec)
     Vp_new = zero(ϕ_vec)
-    
+
     for i in eachindex(ϕ_vec)
-        Vs_new[i],Vp_new[i]  = melt_correction_Takei( Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ_vec[i], α)
+        Vs_new[i], Vp_new[i] = melt_correction_Takei(
+            Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ_vec[i], α
+        )
     end
-    
+
     @test Vs_new[10] ≈ 2750.713407744307
     @test Vp_new[10] ≈ 0.0
-
-
-
-
 end
-
-

@@ -47,9 +47,9 @@ where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the
         
 """
 @with_kw_noshow struct DruckerPrager{T,U,U1} <: AbstractPlasticity{T}
-    ϕ::GeoUnit{T,U} = 30NoUnits      # Friction angle
-    Ψ::GeoUnit{T,U} = 0NoUnits        # Dilation angle
-    C::GeoUnit{T,U1} = 10e6Pa          # Cohesion
+    ϕ::GeoUnit{T,U} = 30NoUnits # Friction angle
+    Ψ::GeoUnit{T,U} = 0NoUnits # Dilation angle
+    C::GeoUnit{T,U1} = 10e6Pa # Cohesion
 end
 DruckerPrager(args...) = DruckerPrager(convert.(GeoUnit, args)...)
 

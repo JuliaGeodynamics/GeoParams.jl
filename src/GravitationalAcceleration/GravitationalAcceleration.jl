@@ -40,7 +40,9 @@ function compute_gravity(s::ConstantGravity{_T}) where {_T}
 end
 
 # Calculation routine
-@inline @generated function compute_gravity( MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Integer) where {N}
+@inline @generated function compute_gravity(
+    MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Integer
+) where {N}
     quote
         Base.Cartesian.@nexprs $N i ->
             (MatParam[i].Phase == Phase) && return compute_gravity(MatParam[i].Gravity[1])

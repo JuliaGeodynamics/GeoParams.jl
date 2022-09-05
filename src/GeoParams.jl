@@ -14,6 +14,7 @@ using Parameters        # helps setting default parameters in structures
 using Unitful           # Units
 using BibTeX            # references of creep laws
 using Requires          # To only add plotting routines if Plots is loaded
+using StaticArrays
 
 import Base: getindex
 
@@ -228,5 +229,8 @@ include("aliases.jl")
 # export ntuple_idx()
 include("Utils.jl")
 export ntuple_idx
+
+include("TensorAlgebra/TensorAlgebra.jl")
+export second_invariant, second_invariant_staggered
 
 end # module
