@@ -14,31 +14,31 @@ export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram, ComputeDensity
 """
     Contains data of a Phase Diagram that is regularly spaced in P & T
 """
-struct PhaseDiagram_LookupTable{S,T,N} <: AbstractPhaseDiagramsStruct
+struct PhaseDiagram_LookupTable{S,T} <: AbstractPhaseDiagramsStruct
     Type::S
     HeaderText::Vector{S}
     Name::S
-    rockRho::Union{T,N}
-    meltRho::Union{T,N}
-    meltFrac::Union{T,N}
-    Rho::Union{T,N}
-    rockVp::Union{T,N}
-    rockVs::Union{T,N}
-    rockVpVs::Union{T,N}
-    meltVp::Union{T,N}
-    meltVs::Union{T,N}
-    meltVpVs::Union{T,N}
-    Vp::Union{T,N}
-    Vs::Union{T,N}
-    VpVs::Union{T,N}
-    cpxFrac::Union{T,N}
-    solid_Vp::Union{T,N}
-    solid_Vs::Union{T,N}
-    melt_bulkModulus::Union{T,N}
-    solid_bulkModulus::Union{T,N}
-    solid_shearModulus::Union{T,N}
-    Vp_uncorrected::Union{T,N}           # will hold Vs velocity corrected for pores, fluids, & melt 
-    Vs_uncorrected::Union{T,N}
+    rockRho::Union{T,Nothing}
+    meltRho::Union{T,Nothing}
+    meltFrac::Union{T,Nothing}
+    Rho::Union{T,Nothing}
+    rockVp::Union{T,Nothing}
+    rockVs::Union{T,Nothing}
+    rockVpVs::Union{T,Nothing}
+    meltVp::Union{T,Nothing}
+    meltVs::Union{T,Nothing}
+    meltVpVs::Union{T,Nothing}
+    Vp::Union{T,Nothing}
+    Vs::Union{T,Nothing}
+    VpVs::Union{T,Nothing}
+    cpxFrac::Union{T,Nothing}
+    solid_Vp::Union{T,Nothing}
+    solid_Vs::Union{T,Nothing}
+    melt_bulkModulus::Union{T,Nothing}
+    solid_bulkModulus::Union{T,Nothing}
+    solid_shearModulus::Union{T,Nothing}
+    Vp_uncorrected::Union{T,Nothing}           # will hold Vs velocity corrected for pores, fluids, & melt 
+    Vs_uncorrected::Union{T,Nothing}
 end
 
 """
@@ -88,7 +88,8 @@ function PerpleX_LaMEM_Diagram(fname::String; CharDim=nothing)
     # Read header: 
     #  the first 50 lines are comments (freely useable), followed by data 
     n = 55
-    header = open(readlines, `head -n $(n) $(fname)`)
+    # header = open(readlines, `head -n $(n) $(fname)`)
+    header = open(readlines, fname)
     header_text = header[1:49]
 
     # Parse the names of the collumns in the data file 
