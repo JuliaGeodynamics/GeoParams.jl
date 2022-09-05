@@ -23,7 +23,7 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
 BibTeX = "0.1"
-Interpolations = "0.13"
+Interpolations = "0.13, 0.14"
 KernelDensitySJ = "0.2"
 LaTeXStrings = "1.2"
 Loess = "0.5"
