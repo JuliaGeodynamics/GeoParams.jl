@@ -231,6 +231,6 @@ include("Utils.jl")
 export ntuple_idx
 
 include("TensorAlgebra/TensorAlgebra.jl")
-export second_invariant
+export second_invariant, second_invariant_staggered
 
 end # module
