@@ -89,7 +89,7 @@ function PerpleX_LaMEM_Diagram(fname::String; CharDim=nothing)
     #  the first 50 lines are comments (freely useable), followed by data 
     n = 55
     # header = open(readlines, `head -n $(n) $(fname)`)
-    header = open(readlines, fname)
+    header = open(readlines, fname)[1:55]
     header_text = header[1:49]
 
     # Parse the names of the collumns in the data file 
