@@ -14,31 +14,31 @@ export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram, ComputeDensity
 """
     Contains data of a Phase Diagram that is regularly spaced in P & T
 """
-struct PhaseDiagram_LookupTable{S,T,Nothing} <: AbstractPhaseDiagramsStruct
+struct PhaseDiagram_LookupTable{S,T,nothing} <: AbstractPhaseDiagramsStruct
     Type::S
     HeaderText::Vector{S}
     Name::S
-    rockRho::Union{T,Nothing}
-    meltRho::Union{T,Nothing}
-    meltFrac::Union{T,Nothing}
-    Rho::Union{T,Nothing}
-    rockVp::Union{T,Nothing}
-    rockVs::Union{T,Nothing}
-    rockVpVs::Union{T,Nothing}
-    meltVp::Union{T,Nothing}
-    meltVs::Union{T,Nothing}
-    meltVpVs::Union{T,Nothing}
-    Vp::Union{T,Nothing}
-    Vs::Union{T,Nothing}
-    VpVs::Union{T,Nothing}
-    cpxFrac::Union{T,Nothing}
-    solid_Vp::Union{T,Nothing}
-    solid_Vs::Union{T,Nothing}
-    melt_bulkModulus::Union{T,Nothing}
-    solid_bulkModulus::Union{T,Nothing}
-    solid_shearModulus::Union{T,Nothing}
-    Vp_uncorrected::Union{T,Nothing}           # will hold Vs velocity corrected for pores, fluids, & melt 
-    Vs_uncorrected::Union{T,Nothing}
+    rockRho::Union{T,nothing}
+    meltRho::Union{T,nothing}
+    meltFrac::Union{T,nothing}
+    Rho::Union{T,nothing}
+    rockVp::Union{T,nothing}
+    rockVs::Union{T,nothing}
+    rockVpVs::Union{T,nothing}
+    meltVp::Union{T,nothing}
+    meltVs::Union{T,nothing}
+    meltVpVs::Union{T,nothing}
+    Vp::Union{T,nothing}
+    Vs::Union{T,nothing}
+    VpVs::Union{T,nothing}
+    cpxFrac::Union{T,nothing}
+    solid_Vp::Union{T,nothing}
+    solid_Vs::Union{T,nothing}
+    melt_bulkModulus::Union{T,nothing}
+    solid_bulkModulus::Union{T,nothing}
+    solid_shearModulus::Union{T,nothing}
+    Vp_uncorrected::Union{T,nothing}           # will hold Vs velocity corrected for pores, fluids, & melt 
+    Vs_uncorrected::Union{T,nothing}
 end
 
 """
@@ -66,7 +66,7 @@ Once imported, the properties on the diagram can be interpolated in a simple man
 julia> PD_Data.Rho(1500,1e7)
 3042.836820256982
 ```
-This also works for vectors or arrays:44444444444444444444444444444444444444444444324    
+This also works for vectors or arrays:
 ```julia
 julia> T = [1500 1800; 1233 1300]
 julia> P = [1e8 1e9; 1e7 1e7]
