@@ -125,40 +125,46 @@ export compute_density,                                # computational routines
 using .MaterialParameters.ConstitutiveRelationships
 
 #       Calculation routines
-export  dεII_dτII,      dτII_dεII,
-        compute_εII!,   compute_εII,
-        compute_τII!,   compute_τII,
-        strain_rate_circuit,
-        CorrectionFactor,
-        remove_tensor_correction,
+export dεII_dτII,
+    dτII_dεII,
+    compute_εII!,
+    compute_εII,
+    compute_τII!,
+    compute_τII,
+    strain_rate_circuit,
+    CorrectionFactor,
+    remove_tensor_correction,
 
-#       Viscous creep laws
-        LinearViscous,    PowerlawViscous,
-        DislocationCreep, SetDislocationCreep,
-        DiffusionCreep,   SetDiffusionCreep,
-        DislocationCreep_info,
-        DiffusionCreep_info,
+    #       Viscous creep laws
+    LinearViscous,
+    PowerlawViscous,
+    DislocationCreep,
+    SetDislocationCreep,
+    DiffusionCreep,
+    SetDiffusionCreep,
+    DislocationCreep_info,
+    DiffusionCreep_info,
 
-#       Elasticity
-        ConstantElasticity,
-        SetConstantElasticity,
+    #       Elasticity
+    ConstantElasticity,
+    SetConstantElasticity,
 
-#       Plasticity
-        compute_yieldfunction,      
-        compute_yieldfunction!,
-        DruckerPrager,        
+    #       Plasticity
+    compute_yieldfunction,
+    compute_yieldfunction!,
+    DruckerPrager,
 
-#       Composite rheologies
-        strain_rate_circuit,
-        computeViscosity_τII,
-        computeViscosity_εII,
-        computeViscosity_τII!,
-        computeViscosity_εII!,
-        dεII_dτII,
-        local_iterations_εII, 
-        computeViscosity,
-        InverseCreepLaw,
-        KelvinVoigt
+    #       Composite rheologies
+    strain_rate_circuit,
+    computeViscosity_τII,
+    computeViscosity_εII,
+    computeViscosity_τII!,
+    computeViscosity_εII!,
+    dεII_dτII,
+    local_iterations_εII,
+    computeViscosity,
+    InverseCreepLaw,
+    KelvinVoigt
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration
@@ -231,10 +237,10 @@ export compute_meltfraction,
 
 # Add plotting routines - only activated if the "Plots.jl" package is loaded 
 function __init__()
-        @require GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a" begin
-                print("Adding plotting routines of GeoParams through GLMakie")
-                @eval include("./Plotting.jl")
-        end
+    @require GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a" begin
+        print("Adding plotting routines of GeoParams through GLMakie")
+        @eval include("./Plotting.jl")
+    end
 end
 
 #Set functions aliases using @use

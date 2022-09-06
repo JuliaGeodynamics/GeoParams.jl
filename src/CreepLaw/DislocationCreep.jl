@@ -99,9 +99,9 @@ function Transform_DislocationCreep(name)
 
     Name = String(collect(p.Name))
     n = Value(p.n)
-    A_Pa = Pa^(-NumValue(p.n) - NumValue(p.r)) / s(Value(p.A))
-    E_J = J / mol(Value(p.E))
-    V_m3 = m^3 / mol(Value(p.V))
+    A_Pa = uconvert(Pa^(-NumValue(p.n) - NumValue(p.r)) / s, Value(p.A))
+    E_J = uconvert(J / mol, Value(p.E))
+    V_m3 = uconvert(m^3 / mol, Value(p.V))
 
     Apparatus = p.Apparatus
     r = Value(p.r)
@@ -274,5 +274,5 @@ function show(io::IO, g::DislocationCreep)
 end
 #-------------------------------------------------------------------------
 
-# Add pre-defined creep laws 
+# load collection of dislocation creep laws
 include("Data/DislocationCreep.jl")

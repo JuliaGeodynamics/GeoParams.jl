@@ -34,14 +34,14 @@ function Local_Iterations()
     # Local Iterations
     iter = 0
     tol = 1e-6
-    ϵ = 2*tol
+    ϵ = 2 * tol
     τII_prev = τII
     while ϵ > tol  # Newton
         iter = iter + 1
         f = εII_ve - A * τII^n * exp(-E / R / T) - τII / (2 * μ * dt) # 1.7615218742570521e-15
         dfdτII = 0.0 - n * A * τII^(n - 1.0) * exp(-E / R / T) - 1.0 / (2 * μ * dt) # -4.463716902546265e-21
         τII = τII - f / dfdτII
-        ϵ = abs(τII-τII_prev)/τII
+        ϵ = abs(τII - τII_prev) / τII
         τII_prev = τII
     end
 

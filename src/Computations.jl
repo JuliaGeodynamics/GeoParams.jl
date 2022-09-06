@@ -23,8 +23,8 @@ end
 
 # performs computation given a single Phase
 @inline @generated function compute_param(
-    fn::F,MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Integer, args
-) where {F, N}
+    fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Integer, args
+) where {F,N}
     quote
         Base.Cartesian.@nexprs $N i ->
             @inbounds (MatParam[i].Phase == Phase) && return fn(MatParam[i], args)
@@ -33,7 +33,7 @@ end
 
 function compute_param(
     fn::F, MatParam::AbstractVector{AbstractMaterialParamsStruct}, Phase::Integer, args
-) where F
+) where {F}
     return compute_param(fn, Tuple(MatParam), Phase, args)
 end
 

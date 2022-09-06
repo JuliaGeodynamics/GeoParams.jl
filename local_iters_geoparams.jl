@@ -1,15 +1,16 @@
-import Pkg; Pkg.activate(".")
+using Pkg: Pkg;
+Pkg.activate(".");
 using GeoParams
 
 function Local_Iterations(v, args)
     # Physics
     εII_ve = 1e-14          # second invariant of effective viscoelastic strain rate, 1/s
     εII_vis = εII_ve
-    
+
     # Initial guess
     η_ve = computeViscosity_EpsII(εII_ve, v, args) # guess: it computes 1.0 / (1.0 / η + 1.0 / (μ * dt))
     τII = 2 * η_ve * εII_ve            # guess
-    
+
     # Local Iterations
     iter = 0
     while iter < 5  # Newton
@@ -18,7 +19,6 @@ function Local_Iterations(v, args)
         dfdτII = 0.0 - dεII_dτII(τII, v[1], args) - dεII_dτII(τII, v[2], args) # yet to be generalized
         τII = τII - f / dfdτII
     end
-
 end
 
 # Physics
@@ -37,8 +37,8 @@ nt = 5                   # number of iterations, []
 iter = 0
 
 # Define composite rheology
-v_dis = DislocationCreep(A=A, E=E, n=n, V=0.0)
-v_el = ConstantElasticity(G=μ*Pa)
+v_dis = DislocationCreep(; A=A, E=E, n=n, V=0.0)
+v_el = ConstantElasticity(; G=μ * Pa)
 v = (v_el, v_el) # dislocation and elasticity are in serie
 args = (P=0.0, T=T, f=1.0, dt=dt)
 

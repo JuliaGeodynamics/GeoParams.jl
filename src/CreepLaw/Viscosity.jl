@@ -137,19 +137,9 @@ Compute deviatoric stress invariant given strain rate 2nd invariant
 
 """
 function compute_τII(
-    v::NTuple{N,AbstractConstitutiveLaw},
-    εII,
-    args;
-    tol=1e-6,
-    verbose=false,
+    v::NTuple{N,AbstractConstitutiveLaw}, εII, args; tol=1e-6, verbose=false
 ) where {N}
-    τII = local_iterations_εII(
-        v,
-        εII,
-        args;
-        tol=tol,
-        verbose=verbose,
-    )
+    τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose)
     return τII
 end
 
@@ -189,8 +179,10 @@ end
     
 Compute viscosity given strain rate 2nd invariant for a given rheological element
 """
-@inline function computeViscosity_εII(v::AbstractConstitutiveLaw, εII, args; cutoff=(1e16, 1e25))
-    lower_cutoff, upper_cutoff = cutoff    
+@inline function computeViscosity_εII(
+    v::AbstractConstitutiveLaw, εII, args; cutoff=(1e16, 1e25)
+)
+    lower_cutoff, upper_cutoff = cutoff
     τII = compute_τII(v, εII, args)
     η = 0.5 * τII / εII
     η = max(min(upper_cutoff, η), lower_cutoff)
@@ -214,13 +206,7 @@ function computeViscosity_εII(
     cutoff=(1e16, 1e25),
 ) where {N}
     lower_cutoff, upper_cutoff = cutoff
-    τII = local_iterations_εII(
-        v,
-        εII,
-        args;
-        tol=tol,
-        verbose=verbose,
-    )
+    τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose)
     η = 0.5 * τII / εII
     η = max(min(upper_cutoff, η), lower_cutoff)
     return η
@@ -243,13 +229,7 @@ function computeViscosity_εII!(
     lower_cutoff, upper_cutoff = cutoff
     for I in eachindex(εII)
         argsi = (; zip(keys(args), getindex.(values(args), I))...)
-        τII = local_iterations_εII(
-            v,
-            εII[I],
-            argsi;
-            tol=tol,
-            verbose=verbose,
-        )
+        τII = local_iterations_εII(v, εII[I], argsi; tol=tol, verbose=verbose)
         ηi = 0.5 * τII / εII[I]
         η[I] = max(min(lower_cutoff, ηi), upper_cutoff)
     end
@@ -267,7 +247,7 @@ for fn in (:computeViscosity_εII, :computeViscosity_τII)
             Phase::Integer,
             args::NamedTuple;
             cutoff=(1e16, 1e25),
-        ) where N
+        ) where {N}
             lower_cutoff, upper_cutoff = cutoff
             η = compute_viscosity_param($(fn), MatParam, Phase, εII, args)
             return max(min(η, upper_cutoff), lower_cutoff)
@@ -281,7 +261,7 @@ for fn in (:computeViscosity_εII, :computeViscosity_τII)
             Phases::AbstractArray,
             args::NamedTuple;
             cutoff=(1e16, 1e25),
-        ) where N
+        ) where {N}
             @inbounds for I in eachindex(Phases)
                 k, v = keys(args), getindex.(values(args), I)
                 argsi = (; zip(k, v)...)
@@ -293,15 +273,22 @@ for fn in (:computeViscosity_εII, :computeViscosity_τII)
 end
 
 @inline @generated function compute_viscosity_param(
-    fn::F,MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Integer, CII::T, args::NamedTuple
-) where {F, N, T}
+    fn::F,
+    MatParam::NTuple{N,AbstractMaterialParamsStruct},
+    Phase::Integer,
+    CII::T,
+    args::NamedTuple,
+) where {F,N,T}
     quote
         out = zero(T)
-        Base.Cartesian.@nexprs $N i-> out += MatParam[i].Phase == Phase ? computeViscosity(fn, MatParam[i].CreepLaws, CII, args) : zero(T)
+        Base.Cartesian.@nexprs $N i ->
+            out += if MatParam[i].Phase == Phase
+                computeViscosity(fn, MatParam[i].CreepLaws, CII, args)
+            else
+                zero(T)
+            end
     end
 end
-
-
 
 @inline function computeViscosity_τII!(
     η::AbstractArray{T,nDim},
@@ -326,7 +313,6 @@ end
     end
 end
 
-
 ## BASED ON DEVIATORIC STRESS
 
 """
@@ -334,7 +320,9 @@ end
     
 Compute viscosity given stress 2nd invariant for a given rheological element
 """
-@inline function computeViscosity_τII(v::AbstractConstitutiveLaw, τII, args; cutoff=(1e16, 1e25))
+@inline function computeViscosity_τII(
+    v::AbstractConstitutiveLaw, τII, args; cutoff=(1e16, 1e25)
+)
     lower_cutoff, upper_cutoff = cutoff
     εII = compute_εII(v, τII, args)
     η = 0.5 * τII / εII
@@ -375,11 +363,7 @@ end
 Performs local iterations versus stress for a given strain rate 
 """
 @inline function local_iterations_εII(
-    v::NTuple{N,AbstractConstitutiveLaw},
-    εII,
-    args;
-    tol=1e-6,
-    verbose=false,
+    v::NTuple{N,AbstractConstitutiveLaw}, εII, args; tol=1e-6, verbose=false
 ) where {N}
     # Initial guess
     η_ve = computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess

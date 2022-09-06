@@ -2,10 +2,10 @@
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 abstract type AbstractPlasticity{T} <: AbstractConstitutiveLaw{T} end
 
-export  compute_yieldfunction,      # calculation routines
-        compute_yieldfunction!,
-        DruckerPrager               # constant
-        
+export compute_yieldfunction,      # calculation routines
+    compute_yieldfunction!,
+    DruckerPrager               # constant
+
 # DruckerPrager  -------------------------------------------------------
 """
     DruckerPrager(ϕ=30, Ψ=0, C=10e6Pa)

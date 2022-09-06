@@ -90,9 +90,12 @@ function Transform_DiffusionCreep(name)
     n = Value(pp.n)
     r = Value(pp.r)
     p = Value(pp.p)
-    A_Pa = Pa^(-NumValue(pp.n) - NumValue(pp.r)) * s^(-1) * m^(-NumValue(p)) * (Value(pp.A))
-    E_J = kJ / mol(Value(pp.E))
-    V_m3 = m^3 / mol(Value(pp.V))
+    A_Pa = uconvert(
+        Pa^(-NumValue(pp.n) - NumValue(pp.r)) * m^(-NumValue(p)) / s, Value(pp.A)
+    )
+    E_J = uconvert(J / mol, Value(pp.E))
+    V_m3 = uconvert(m^3 / mol, Value(pp.V))
+
     Apparatus = pp.Apparatus
 
     return DiffusionCreep(;
@@ -119,6 +122,7 @@ function param_info(s::DiffusionCreep)
     if name == ""
         return MaterialParamsInfo(; Equation=eq)
     end
+
     inf = DiffusionCreep_info[name][2]
     return MaterialParamsInfo(;
         Equation=eq, Comment=inf.Comment, BibTex_Reference=inf.BibTex_Reference
@@ -282,5 +286,5 @@ function show(io::IO, g::DiffusionCreep)
     )
 end
 
-# Add a list of pre-defined creep laws 
+# load collection of diffusion creep laws
 include("Data/DiffusionCreep.jl")

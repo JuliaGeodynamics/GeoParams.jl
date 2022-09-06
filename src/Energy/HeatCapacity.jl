@@ -20,7 +20,7 @@ export compute_heatcapacity,               # calculation routines
     param_info
 
 #include("../Utils.jl")
-include("../Computations.jl") 
+include("../Computations.jl")
 
 # Constant Heat Capacity -------------------------------------------------------
 """
@@ -201,7 +201,6 @@ In-place computation of heat capacity `Cp` for the whole domain and all phases, 
 This assumes that the `Phase` of every point is specified as an Integer in the `Phases` array.
 """
 compute_heatcapacity!()
-
 
 compute_heatcapacity(args...) = compute_param(compute_heatcapacity, args...)
 compute_heatcapacity!(args...) = compute_param!(compute_heatcapacity, args...)

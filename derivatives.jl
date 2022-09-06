@@ -9,19 +9,19 @@ using Symbolics
 
 # ╔═╡ 1b59cb18-224b-4b63-a161-47382c156438
 # @unpack_val n,r,p,A,E,V,R = a
-    
+
 #     FT, FE = CorrectionFactor(a);    
-   
+
 #     return A*(TauII*FT)^n*f^r*d^p*exp(-(E + P*V)/(R*T))/FE; 
 
 # ╔═╡ c48ba1db-8447-4a3e-b51c-8f86c91ec955
-@variables  n,r,p,A,E,V,R, FT, FE, τII, εII, P, T,f,d
+@variables n, r, p, A, E, V, R, FT, FE, τII, εII, P, T, f, d
 
 # ╔═╡ 71159e99-ea64-4e96-b292-9dafeee0bdb8
-Dτ=Differential(τII);
+Dτ = Differential(τII);
 
 # ╔═╡ b783992f-4f75-4a0d-ae41-8354736f02f8
-Dε=Differential(εII);
+Dε = Differential(εII);
 
 # ╔═╡ 4285c73b-eaee-4510-81fe-855b31e51efa
 md"""
@@ -29,17 +29,21 @@ md"""
 """
 
 # ╔═╡ db8ca612-201b-4d22-bfb3-de3efdab4022
-εII_dif = A*(τII*FT)^n*f^r*d^p*exp(-(E + P*V)/(R*T))/FE;
+εII_dif = A * (τII * FT)^n * f^r * d^p * exp(-(E + P * V) / (R * T)) / FE;
 
 # ╔═╡ 087980a7-459a-4729-bcc8-c0135d94a5fa
 dεII_dτII_dif = expand_derivatives(Dτ(εII_dif))
 
 # ╔═╡ 8c5af7b1-b464-433c-9cb9-5bd6734a5e07
-τII_dif = A^(-1/n)*(εII*FE)^(1/n)*f^(-r/n)*d^(-p/n)*exp((E + P*V)/(n * R*T))/FT;
+τII_dif =
+    A^(-1 / n) *
+    (εII * FE)^(1 / n) *
+    f^(-r / n) *
+    d^(-p / n) *
+    exp((E + P * V) / (n * R * T)) / FT;
 
 # ╔═╡ 41f7b22c-a934-4422-996c-ed969e14a7e6
 dτII_dεII_dif = expand_derivatives(Dε(τII_dif))
-
 
 # ╔═╡ c1f2717a-a9a1-44e6-bd3d-27b4e2825bc0
 md"""
@@ -47,13 +51,13 @@ md"""
 """
 
 # ╔═╡ 6190faf4-8c63-4ea8-82ea-56cbda146545
-εII_dis =A*(τII*FT)^n*f^r*exp(-(E + P*V)/(R*T))/FE; 
+εII_dis = A * (τII * FT)^n * f^r * exp(-(E + P * V) / (R * T)) / FE;
 
 # ╔═╡ 62638745-8f85-4c73-9eb7-41b5a2fa181b
 dεII_dτII_dis = simplify(expand_derivatives(Dτ(εII_dis)))
 
 # ╔═╡ 3e8d0964-946a-4cf0-bbd8-c506b0d655b4
-τII_dis = A^(-1/n)*(εII*FE)^(1/n)*f^(-r/n)*exp((E + P*V)/(n * R*T))/FT;
+τII_dis = A^(-1 / n) * (εII * FE)^(1 / n) * f^(-r / n) * exp((E + P * V) / (n * R * T)) / FT;
 
 # ╔═╡ f33124f5-e8e1-4069-8699-3511b20331fc
 dτII_dεII_dis = expand_derivatives(Dε(τII_dis))
@@ -67,7 +71,7 @@ md"""
 @variables τII_old, G, dt
 
 # ╔═╡ 3b81a30d-b613-427c-9dbc-aec41e76b3aa
-εII_el = (τII-τII_old)/(2.0 * G * dt)  
+εII_el = (τII - τII_old) / (2.0 * G * dt)
 
 # ╔═╡ 7689dc4c-fc06-4f6c-9d21-ee88db8b6d8b
 dτII_dεII_el = expand_derivatives(Dτ(εII_el))
@@ -81,16 +85,16 @@ md"""
 @variables τ1, τ2
 
 # ╔═╡ 22c8f377-f628-4505-9efe-9d317119b5d8
-ε1 = (τ1-τII_old)/(2 * G * dt);
+ε1 = (τ1 - τII_old) / (2 * G * dt);
 
 # ╔═╡ 19f19d26-68b6-421b-bf4e-315bed90dfc0
-ε2 =A*(τ2*FT)^n*f^r*exp(-(E + P*V)/(R*T))/FE; 
+ε2 = A * (τ2 * FT)^n * f^r * exp(-(E + P * V) / (R * T)) / FE;
 
 # ╔═╡ c4714482-f861-4000-80b2-c722d862faba
-tau1 = εII*(2 * G * dt) + τII_old;
+tau1 = εII * (2 * G * dt) + τII_old;
 
 # ╔═╡ b70bf3df-5e2b-4c25-979c-c651e7be7cf9
-tau2 = A^(-1/n)*(εII*FE)^(1/n)*f^(-r/n)*exp((E + P*V)/(n * R*T))/FT;
+tau2 = A^(-1 / n) * (εII * FE)^(1 / n) * f^(-r / n) * exp((E + P * V) / (n * R * T)) / FT;
 
 # ╔═╡ 66e325a1-931a-49e2-b1aa-830ccaa57b2c
 τ = ε1 + ε2

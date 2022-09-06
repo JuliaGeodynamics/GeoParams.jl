@@ -157,13 +157,13 @@ function GeoUnit(val::Union{Quantity{Int32},AbstractArray{<:Quantity{<:Int32}}})
 end
 
 # helper functions
-Unit(v::GeoUnit{T,U}) where {T,U} =  Unitful.unit(v.unit*1)
-isdimensional(v::GeoUnit{T,U})  where {T,U}     =   v.isdimensional                 # is it a nondimensional number or not?
-isdimensional(v::Number)                        =   false                           # nope
-NumValue(v::GeoUnit)                            =   v.val                           # numeric value, with no units
-NumValue(v::Number)                             =   v                               # numeric value
-NumValue(v::AbstractArray)                      =   v                               # numeric value
-Value(v::GeoUnit)                               =   Unitful.Quantity.(v.val,v.unit) # value, with units
+Unit(v::GeoUnit{T,U}) where {T,U} = Unitful.unit(v.unit * 1)
+isdimensional(v::GeoUnit{T,U}) where {T,U} = v.isdimensional                 # is it a nondimensional number or not?
+isdimensional(v::Number) = false                           # nope
+NumValue(v::GeoUnit) = v.val                           # numeric value, with no units
+NumValue(v::Number) = v                               # numeric value
+NumValue(v::AbstractArray) = v                               # numeric value
+Value(v::GeoUnit) = Unitful.Quantity.(v.val, v.unit)  # value, with units
 
 function UnitValue(v::GeoUnit{T,U}) where {T,U}
     if v.isdimensional
@@ -215,25 +215,40 @@ Base.length(v::GeoUnit) = length(v.val)
 Base.size(v::GeoUnit) = size(v.val)
 Base.getindex(A::GeoUnit{T,U}, inds::Vararg{Int,N}) where {T,U,N} = A.val[inds...]
 
-for op in (:+,:-,:*,:/)
-    @eval begin
-        # Multiply with number
-        Base.$op(x::GeoUnit, y::Number) = $(op)(x.val, y)
-        Base.$op(x::Number, y::GeoUnit) = $(op)(x, y.val)
-        # Multiplying a GeoUnit with another one, returns a GeoUnit
-        Base.$op(x::GeoUnit{T1,U1}, y::GeoUnit{T2,U2}) where {T1,T2,U1,U2} = GeoUnit($(op)(Value(x), Value(y)))
-        Base.$op(x::GeoUnit, y::Quantity) = $(op).(UnitValue(x), y)
-        Base.$op(x::Quantity, y::GeoUnit) = $(op).(x, UnitValue(y))
-        # If we multiply a GeoUnit with an abstract array, we only return values, not units (use GeoUnits for that)
-        Base.$op(x::GeoUnit, y::AbstractArray) = broadcast($op, NumValue(x), y)
-        Base.$op(x::AbstractArray, y::GeoUnit) = broadcast($op, x, NumValue(y))
-        Base.$op(x::GeoUnit, y::AbstractArray{<:Quantity}) = broadcast($op, Value(x), y)
-        Base.$op(x::AbstractArray{<:Quantity}, y::GeoUnit) = broadcast($op, x, Value(y))
-        # Broadcasting
-        Base.broadcasted(::typeof($(op)), A::GeoUnit, B::AbstractArray) = broadcast($(op), NumValue(A), B)
-        Base.broadcasted(::typeof($(op)), A::AbstractArray, B::GeoUnit) = broadcast($(op), A, NumValue(B))
-        Base.broadcasted(::typeof($(op)), A::GeoUnit, B::AbstractArray{<:Quantity}) = broadcast($(op), Value(A), B)
-        Base.broadcasted(::typeof($(op)), A::AbstractArray{<:Quantity}, B::GeoUnit) = broadcast($(op), A, Value(B))
+for op in (:+, :-, :*, :/)
+
+    # Multiply with number
+    @eval Base.$op(x::GeoUnit, y::Number) = $(op)(x.val, y)
+    @eval Base.$op(x::Number, y::GeoUnit) = $(op)(x, y.val)
+
+    # Multiplying a GeoUnit with another one, returns a GeoUnit
+    @eval function Base.$op(x::GeoUnit{T1,U1}, y::GeoUnit{T2,U2}) where {T1,T2,U1,U2}
+        return GeoUnit($(op)(UnitValue(x), UnitValue(y)))
+    end
+    @eval Base.$op(x::GeoUnit, y::Quantity) = $(op).(UnitValue(x), y)
+    @eval Base.$op(x::Quantity, y::GeoUnit) = $(op).(x, UnitValue(y))
+
+    # If we multiply a GeoUnit with an abstract array, we only return values, not units (use GeoUnits for that)
+    @eval Base.$op(x::GeoUnit, y::AbstractArray) = broadcast($op, NumValue(x), y)
+    @eval Base.$op(x::AbstractArray, y::GeoUnit) = broadcast($op, x, NumValue(y))
+    @eval Base.$op(x::GeoUnit, y::AbstractArray{<:Quantity}) = broadcast($op, Value(x), y)
+    @eval Base.$op(x::AbstractArray{<:Quantity}, y::GeoUnit) = broadcast($op, x, Value(y))
+    # Broadcasting
+    @eval function Base.broadcasted(::typeof($(op)), A::GeoUnit, B::AbstractArray)
+        return broadcast($(op), NumValue(A), B)
+    end
+    @eval function Base.broadcasted(::typeof($(op)), A::AbstractArray, B::GeoUnit)
+        return broadcast($(op), A, NumValue(B))
+    end
+    @eval function Base.broadcasted(
+        ::typeof($(op)), A::GeoUnit, B::AbstractArray{<:Quantity}
+    )
+        return broadcast($(op), Value(A), B)
+    end
+    @eval function Base.broadcasted(
+        ::typeof($(op)), A::AbstractArray{<:Quantity}, B::GeoUnit
+    )
+        return broadcast($(op), A, Value(B))
     end
 end
 
@@ -584,7 +599,7 @@ function nondimensionalize(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) w
             z = getfield(MatParam, param)
 
             # non-dimensionalize:
-            z = nondimensionalize(z, g)  
+            z = nondimensionalize(z, g)
 
             # Replace field (using Setfield package):
             MatParam = set(MatParam, Setfield.PropertyLens{param}(), z)

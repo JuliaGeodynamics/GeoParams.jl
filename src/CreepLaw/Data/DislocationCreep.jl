@@ -7,7 +7,7 @@ Sets predefined dislocation creep data from a dictionary
 """
 SetDislocationCreep(name::String) = Transform_DislocationCreep(name)
 
-DislocationCreep_info = Dict(
+const DislocationCreep_info = Dict(
     [
 
         # Olivine rheology 
@@ -45,7 +45,8 @@ DislocationCreep_info = Dict(
                         doi = {10.1029/138GM06},
                         pages = {83--105},
                         }
-                "),
+                ",
+                ),
             ),
         )
 
@@ -85,7 +86,8 @@ DislocationCreep_info = Dict(
                         doi = {10.1029/138GM06},
                         pages = {83--105},
                         }
-                "),
+                ",
+                ),
             ),
         )
 
@@ -119,7 +121,8 @@ DislocationCreep_info = Dict(
                         year={1982},
                         publisher={Wiley Online Library}
                         }
-                "),
+                ",
+                ),
             ),
         )
 
@@ -153,7 +156,8 @@ DislocationCreep_info = Dict(
                     year={1982},
                     publisher={Wiley Online Library}
                     }
-                "),
+                ",
+                ),
             ),
         )
 
@@ -187,7 +191,8 @@ DislocationCreep_info = Dict(
                         year={1965},
                         publisher={Wiley Online Library}
                         }
-                "),
+                ",
+                ),
             ),
         )
 
@@ -219,7 +224,8 @@ DislocationCreep_info = Dict(
                         year={1998},
                         publisher={Wiley Online Library}
                         }
-                "),
+                ",
+                ),
             ),
         )
 
@@ -242,17 +248,18 @@ DislocationCreep_info = Dict(
                 MaterialParamsInfo(;
                     Comment="Values checked (Wilks and Carter (1990))(NM), plots are not reproduced (NM).",
                     BibTex_Reference="
-                      @article{wilks1990rheology,
-                      title={Rheology of some continental lower crustal rocks},
-                      author={Wilks, Kenneth R and Carter, Neville L},
-                      journal={Tectonophysics},
-                      volume={182},
-                      number={1-2},
-                      pages={57--77},
-                      year={1990},
-                      publisher={Elsevier}
-                      }
-                "),
+                    @article{wilks1990rheology,
+                    title={Rheology of some continental lower crustal rocks},
+                    author={Wilks, Kenneth R and Carter, Neville L},
+                    journal={Tectonophysics},
+                    volume={182},
+                    number={1-2},
+                    pages={57--77},
+                    year={1990},
+                    publisher={Elsevier}
+                    }
+                ",
+                ),
             ),
         )
 
@@ -283,7 +290,8 @@ DislocationCreep_info = Dict(
                         year={2008},
                         publisher={Elsevier}
                         }
-                "),
+                ",
+                ),
             ),
         )
 
@@ -306,17 +314,18 @@ DislocationCreep_info = Dict(
                 MaterialParamsInfo(;
                     Comment="Values checked (Carter and Tsenn (1987))(NM), plots are not reproduced (NM).",
                     BibTex_Reference="
-                      @article{carter1987flow,
-                      title={Flow properties of continental lithosphere},
-                      author={Carter, Neville L and Tsenn, Michael C},
-                      journal={Tectonophysics},
-                      volume={136},
-                      number={1-2},
-                      pages={27--63},
-                      year={1987},
-                      publisher={Elsevier}
-                      }
-                "),
+                    @article{carter1987flow,
+                    title={Flow properties of continental lithosphere},
+                    author={Carter, Neville L and Tsenn, Michael C},
+                    journal={Tectonophysics},
+                    volume={136},
+                    number={1-2},
+                    pages={27--63},
+                    year={1987},
+                    publisher={Elsevier}
+                    }
+                ",
+                ),
             ),
         )
 
@@ -349,7 +358,8 @@ DislocationCreep_info = Dict(
                         year={1993},
                         publisher={Elsevier}
                         }
-                "),
+                ",
+                ),
             ),
         )
 
@@ -379,7 +389,8 @@ DislocationCreep_info = Dict(
                         year={2000},
                         publisher={Wiley Online Library}
                         }
-                "),
+                ",
+                ),
             ),
         )
 
@@ -410,7 +421,8 @@ DislocationCreep_info = Dict(
                         year={2000},
                         publisher={Wiley Online Library}
                         }
-                "),
+                ",
+                ),
             ),
         )
 
@@ -440,7 +452,8 @@ DislocationCreep_info = Dict(
                         year={2003},
                         publisher={AGU AMERICAN GEOPHYSICAL UNION}
                         }
-                "),
+                ",
+                ),
             ),
         )
 
@@ -474,7 +487,8 @@ DislocationCreep_info = Dict(
                         year={1983},
                         publisher={Wiley Online Library}
                         }
-                "),
+                ",
+                ),
             ),
         )
 
@@ -507,7 +521,8 @@ DislocationCreep_info = Dict(
                         year={2004},
                         publisher={Elsevier}
                         }
-                "),
+                ",
+                ),
             ),
         )
 
@@ -539,7 +554,8 @@ DislocationCreep_info = Dict(
                         year={2008},
                         publisher={Wiley Online Library}
                         }
-                "),
+                ",
+                ),
             ),
         )
 
@@ -569,66 +585,75 @@ DislocationCreep_info = Dict(
                         author={Gerya, Taras}, 
                         year={2019}, month={May}, 
                         language={en} }
-                "),
+                ",
+                ),
             ),
         )
 
         # Rock salt rheology
-        ("Rock salt | Li & Urai (2016)", 
+        (
+            "Rock salt | Li & Urai (2016)",
             #  Li & Urai (2016), table 1
             #  referes to Wawersik & Zeuch (1986), values can not be reproduced!
             (
-                DislocationCreep(
-                Name = "Rock salt | Li & Urai (2016)",
-                n = 5.0NoUnits,
-                A = 7.26e-6MPa^(-5.0)/s, 
-                E = 53.92kJ/mol,
-                V = 0.0m^3/mol,
-                r = 0.0NoUnits,
-                Apparatus = AxialCompression),
-                MaterialParamsInfo(Comment = "Values checked in (Li & Urai, (2016)) are different from given source (Wawersik & Zeuch, (1986))(NM), plots are not reproduced (NM).",
-                BibTex_Reference = "
-                    @article{li2016rheology,
-                    title={Rheology of rock salt for salt tectonics modeling},
-                    author={Li, Shi-Yuan and Urai, Janos L},
-                    journal={Petroleum science},
-                    volume={13},
-                    number={4},
-                    pages={712--724},
-                    year={2016},
-                    publisher={Springer}
-                    }
-                "),
+                DislocationCreep(;
+                    Name="Rock salt | Li & Urai (2016)",
+                    n=5.0NoUnits,
+                    A=7.26e-6MPa^(-5.0) / s,
+                    E=53.92kJ / mol,
+                    V=0.0m^3 / mol,
+                    r=0.0NoUnits,
+                    Apparatus=AxialCompression,
+                ),
+                MaterialParamsInfo(;
+                    Comment="Values checked in (Li & Urai, (2016)) are different from given source (Wawersik & Zeuch, (1986))(NM), plots are not reproduced (NM).",
+                    BibTex_Reference="
+                      @article{li2016rheology,
+                      title={Rheology of rock salt for salt tectonics modeling},
+                      author={Li, Shi-Yuan and Urai, Janos L},
+                      journal={Petroleum science},
+                      volume={13},
+                      number={4},
+                      pages={712--724},
+                      year={2016},
+                      publisher={Springer}
+                      }
+                  ",
+                ),
             ),
         )
 
         # Avery Island rock salt rheology
-        ("Salado rock salt | Li & Urai (2016)", 
+        (
+            "Salado rock salt | Li & Urai (2016)",
             #  Li & Urai (2016), table 1
             #  referes to Wawersik & Zeuch (1986), values can not be reproduced!
             (
-                DislocationCreep(
-                Name = "Rock salt | Li & Urai (2016)",
-                n = 5.0NoUnits,
-                A = 7.26e-6MPa^(-5.0)/s, 
-                E = 53.92kJ/mol,
-                V = 0.0m^3/mol,
-                r = 0.0NoUnits,
-                Apparatus = AxialCompression),
-                MaterialParamsInfo(Comment = "Values checked in (Li & Urai, (2016)) are different from given source (Wawersik & Zeuch, (1986))(NM), plots are not reproduced (NM).",
-                BibTex_Reference = "
-                    @article{li2016rheology,
-                    title={Rheology of rock salt for salt tectonics modeling},
-                    author={Li, Shi-Yuan and Urai, Janos L},
-                    journal={Petroleum science},
-                    volume={13},
-                    number={4},
-                    pages={712--724},
-                    year={2016},
-                    publisher={Springer}
-                    }
-                "),
+                DislocationCreep(;
+                    Name="Rock salt | Li & Urai (2016)",
+                    n=5.0NoUnits,
+                    A=7.26e-6MPa^(-5.0) / s,
+                    E=53.92kJ / mol,
+                    V=0.0m^3 / mol,
+                    r=0.0NoUnits,
+                    Apparatus=AxialCompression,
+                ),
+                MaterialParamsInfo(;
+                    Comment="Values checked in (Li & Urai, (2016)) are different from given source (Wawersik & Zeuch, (1986))(NM), plots are not reproduced (NM).",
+                    BibTex_Reference="
+                      @article{li2016rheology,
+                      title={Rheology of rock salt for salt tectonics modeling},
+                      author={Li, Shi-Yuan and Urai, Janos L},
+                      journal={Petroleum science},
+                      volume={13},
+                      number={4},
+                      pages={712--724},
+                      year={2016},
+                      publisher={Springer}
+                      }
+                  ",
+                ),
             ),
         )
     ],
-); # end of setting pre-defined creep laws
+) # end of setting pre-defined creep laws

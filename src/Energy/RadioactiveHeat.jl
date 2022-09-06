@@ -19,7 +19,7 @@ export compute_radioactive_heat,                  # calculation routines
 
 include("../Computations.jl")
 #include("../Utils.jl")
-        
+
 # Constant  -------------------------------------------------------
 """
     ConstantRadioactiveHeat(H_r=1e-6Watt/m^3)
