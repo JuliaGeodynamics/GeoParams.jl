@@ -5,7 +5,9 @@ function runtests()
     test_files = filter(startswith("test_"), files)
 
     for f in test_files
-        include(f)
+        if !isdir(f)
+            include(f)
+        end
     end
 end
 
