@@ -177,7 +177,7 @@ using GeoParams
     #Phases .= 2;
     rho = zeros(size(Phases))
     T = ones(size(Phases))
-    P = ones(size(Phases)) * 10
+    P = fill(10, size(Phases))
 
     args = (P=P, T=T)
 

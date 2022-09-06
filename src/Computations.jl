@@ -105,14 +105,22 @@ function compute_param!(
 end
 
 #Multiplies parameter with the fraction of a phase
-function compute_param_times_frac(
+@generated function compute_param_times_frac(
     fn::F, PhaseRatios::NTuple{N,T}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, argsi
 ) where {F,N,T}
+    # # Unrolled dot product
+    # val = Ref(zero(T))
+    # ntuple(Val(N)) do i
+    #     Base.@_inline_meta
+    #     val[] += PhaseRatios[i] * fn(MatParam[i], argsi)
+    # end
+    # return val[]
+
     # Unrolled dot product
-    val = Ref(zero(T))
-    ntuple(Val(N)) do i
+    quote
         Base.@_inline_meta
-        val[] += PhaseRatios[i] * fn(MatParam[i], argsi)
+        val = zero($T)
+        Base.Cartesian.@nexprs $N i -> val += @inbounds PhaseRatios[i] * fn(MatParam[i], argsi)
+        return val
     end
-    return val[]
 end
