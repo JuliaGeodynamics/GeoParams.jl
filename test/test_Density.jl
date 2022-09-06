@@ -169,7 +169,7 @@ using GeoParams
     Mat_tup1 = Tuple(MatParam1)
 
     # test computing material properties
-    Phases = ones(Int64, 400, 400) * 0
+    Phases = zeros(Int64, 400, 400)
     Phases[:, 20:end] .= 1
     Phases[:, 200:end] .= 2
     Phases[:, 300:end] .= 3
