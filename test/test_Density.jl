@@ -212,7 +212,6 @@ using GeoParams
     end
 
     compute_density!(rho, Mat_tup1, PhaseRatio, args)
-@btime compute_density!($rho, $Mat_tup1, $PhaseRatio, $args)
 
     num_alloc = @allocated compute_density!(rho, Mat_tup1, PhaseRatio, args) #   136.776 μs (0 allocations: 0 bytes)
     @test sum(rho) / 400^2 ≈ 2945.000013499999
