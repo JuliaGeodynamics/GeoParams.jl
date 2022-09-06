@@ -177,7 +177,7 @@ using GeoParams
     #Phases .= 2;
     rho = zeros(size(Phases))
     T = ones(size(Phases))
-    P = fill(10, size(Phases))
+    P = fill(10.0, size(Phases))
 
     args = (P=P, T=T)
 
@@ -212,6 +212,8 @@ using GeoParams
     end
 
     compute_density!(rho, Mat_tup1, PhaseRatio, args)
+@btime compute_density!($rho, $Mat_tup1, $PhaseRatio, $args)
+
     num_alloc = @allocated compute_density!(rho, Mat_tup1, PhaseRatio, args) #   136.776 μs (0 allocations: 0 bytes)
     @test sum(rho) / 400^2 ≈ 2945.000013499999
     # @test num_alloc ≤ 32           # for some reason this does indicate allocations but @btime does not
