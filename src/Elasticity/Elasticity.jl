@@ -62,7 +62,7 @@ end
 
 
 function param_info(s::ConstantElasticity) # info about the struct
-    return MaterialParamsInfo(Equation = L"Constant elasticity")
+    return MaterialParamsInfo(; Equation=L"Constant elasticity")
 end
 
 # Calculation routines
@@ -144,7 +144,6 @@ function show(io::IO, g::ConstantElasticity)
 end   
 #-------------------------------------------------------------------------
 
-
 # Computational routines needed for computations with the MaterialParams structure 
 function compute_εII(s::AbstractMaterialParamsStruct, args) 
     if isempty(s.Elasticity)
@@ -169,3 +168,4 @@ end
 compute_εII(args...)  = compute_param(compute_εII, args...)
 compute_εII!(args...) = compute_param!(compute_εII, args...)
 
+end

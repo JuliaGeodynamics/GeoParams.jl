@@ -13,20 +13,66 @@ module GeoParams
 using Parameters        # helps setting default parameters in structures
 using Unitful           # Units
 using BibTeX            # references of creep laws
-using Requires          # To only add plotting routines if Plots is loaded 
+using Requires          # To only add plotting routines if Plots is loaded
+using StaticArrays
 
 import Base: getindex
 
 # overload to account for cases where this is an integer
-Base.getindex(val::Real, I::Vararg{Integer, N}) where N = val
-Base.getindex(val::Real, I::Integer) = val
+for T in (:Real, :Symbol)
+    @eval begin
+        Base.getindex(val::$(T), I::Vararg{Integer,N}) where {N} = val
+        Base.getindex(val::$(T), I::Integer) = val
+    end
+end
 
-export
-        @u_str, uconvert, upreffered, unit, ustrip, NoUnits,  #  Units 
-        GeoUnit, GeoUnits, GEO_units, SI_units, NO_units, AbstractGeoUnit,
-        nondimensionalize, dimensionalize,
-        superscript, upreferred, GEO, SI, NONE, isDimensional, Value, NumValue, Unit, UnitValue, isdimensional,
-        km, m, cm, mm, μm, Myrs, yr, s, MPa, Pa, kbar, Pas, K, C, g, kg, mol, J, kJ, Watt, μW, Quantity
+export @u_str,
+    uconvert,
+    upreffered,
+    unit,
+    ustrip,
+    NoUnits,  #  Units 
+    GeoUnit,
+    GeoUnits,
+    GEO_units,
+    SI_units,
+    NO_units,
+    AbstractGeoUnit,
+    nondimensionalize,
+    dimensionalize,
+    superscript,
+    upreferred,
+    GEO,
+    SI,
+    NONE,
+    isDimensional,
+    Value,
+    NumValue,
+    Unit,
+    UnitValue,
+    isdimensional,
+    km,
+    m,
+    cm,
+    mm,
+    μm,
+    Myrs,
+    yr,
+    s,
+    MPa,
+    Pa,
+    kbar,
+    Pas,
+    K,
+    C,
+    g,
+    kg,
+    mol,
+    J,
+    kJ,
+    Watt,
+    μW,
+    Quantity
 
 export AbstractGeoUnit1, GeoUnit1
 
@@ -53,6 +99,11 @@ include("MaterialParameters.jl")
 using .MaterialParameters
 export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo
 
+# Define Table output functions
+include("Tables.jl")
+using .Tables
+export Phase2Dict, Dict2LatexTable
+
 # Phase Diagrams
 using .MaterialParameters.PhaseDiagrams
 export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
@@ -60,15 +111,15 @@ export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
 # Density
 using .MaterialParameters.Density
 export compute_density,                                # computational routines
-        compute_density!,
-        param_info,
-        AbstractDensity,
-        No_Density,
-        ConstantDensity,
-        PT_Density,
-        Compressible_Density,
-        PhaseDiagram_LookupTable,
-        Read_LaMEM_Perple_X_Diagram
+    compute_density!,
+    param_info,
+    AbstractDensity,
+    No_Density,
+    ConstantDensity,
+    PT_Density,
+    Compressible_Density,
+    PhaseDiagram_LookupTable,
+    Read_LaMEM_Perple_X_Diagram
 
 # Constitutive relationships laws
 using .MaterialParameters.ConstitutiveRelationships
@@ -112,69 +163,71 @@ export  dεII_dτII,      dτII_dεII,
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration
 export compute_gravity,                                # computational routines
-        ConstantGravity
-
+    ConstantGravity
 
 # Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat         
 using .MaterialParameters.HeatCapacity
 export compute_heatcapacity,
-        compute_heatcapacity!,
-        ConstantHeatCapacity,
-        T_HeatCapacity_Whittington
+    compute_heatcapacity!, ConstantHeatCapacity, T_HeatCapacity_Whittington
 
 using .MaterialParameters.Conductivity
 export compute_conductivity,
-        compute_conductivity!,
-        ConstantConductivity,
-        T_Conductivity_Whittington,
-        T_Conductivity_Whittington_parameterised,
-        TP_Conductivity,
-        Set_TP_Conductivity
+    compute_conductivity!,
+    ConstantConductivity,
+    T_Conductivity_Whittington,
+    T_Conductivity_Whittington_parameterised,
+    TP_Conductivity,
+    Set_TP_Conductivity
 
 using .MaterialParameters.LatentHeat
-export compute_latent_heat,compute_latent_heat!,
-        ConstantLatentHeat
+export compute_latent_heat, compute_latent_heat!, ConstantLatentHeat
 
 using .MaterialParameters.RadioactiveHeat
-export compute_radioactive_heat,compute_radioactive_heat!,
-        ConstantRadioactiveHeat,
-        ExpDepthDependentRadioactiveHeat
+export compute_radioactive_heat,
+    compute_radioactive_heat!, ConstantRadioactiveHeat, ExpDepthDependentRadioactiveHeat
 
 using .MaterialParameters.Shearheating
-export compute_shearheating!, compute_shearheating,
-        ConstantShearheating
+export compute_shearheating!, compute_shearheating, ConstantShearheating
 
 # Add TAS classification
 include("./RockClassification/TASclassification.jl")
-using   .TASclassification
-export  TASclassificationData, 
-        computeTASclassification,
-        retrieveTASrockType
+using .TASclassification
+export TASclassificationData, computeTASclassification, retrieveTASrockType
 
 # Add zircon saturation parameterizations
 include("./ZirconAge/ZirconAges.jl")
-using   .ZirconAges
-export  ZirconAgeData, 
-        compute_zircon_age_PDF,  compute_zircons_Ttpath, 
-        zircon_age_PDF, compute_zircons_convert_vecs2mat 
+using .ZirconAges
+export ZirconAgeData,
+    compute_zircon_age_PDF,
+    compute_zircons_Ttpath,
+    zircon_age_PDF,
+    compute_zircons_convert_vecs2mat
 
 # Seismic velocities
 using .MaterialParameters.SeismicVelocity
-export compute_pwave_velocity,          compute_swave_velocity,
-        compute_pwave_velocity!,        compute_swave_velocity!,
-        ConstantSeismicVelocity,        anelastic_correction,
-        melt_correction
-        
+export compute_pwave_velocity,
+    compute_wave_velocity,
+    compute_wave_velocity!,
+    ConstantSeismicVelocity,
+    anelastic_correction,
+    melt_correction,
+    porosity_correction,
+    correct_wavevelocities_phasediagrams,
+    melt_correction_Takei
 
 # Add melting parameterizations
 include("./MeltFraction/MeltingParameterization.jl")
 using .MeltingParam
-export  compute_meltfraction,   compute_meltfraction!,       # calculation routines
-        compute_dϕdT,           compute_dϕdT!,
-        MeltingParam_Caricchi,  MeltingParam_4thOrder, 
-        MeltingParam_5thOrder,  MeltingParam_Quadratic,
-        MeltingParam_Assimilation, SmoothMelting
-
+export compute_meltfraction,
+    compute_meltfraction!,       # calculation routines
+    compute_dϕdT,
+    compute_dϕdT!,
+    MeltingParam_Caricchi,
+    MeltingParam_4thOrder,
+    MeltingParam_5thOrder,
+    MeltingParam_Quadratic,
+    MeltingParam_Assimilation,
+    SmoothMelting
 
 # Add plotting routines - only activated if the "Plots.jl" package is loaded 
 function __init__()
@@ -188,5 +241,8 @@ end
 include("aliases.jl")
 
 export ntuple_idx
+
+include("TensorAlgebra/TensorAlgebra.jl")
+export second_invariant, second_invariant_staggered
 
 end # module

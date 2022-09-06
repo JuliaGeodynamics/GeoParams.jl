@@ -1,19 +1,19 @@
 using Test
 using GeoParams
-    
+
 @testset "Elasticity.jl" begin
 
     # This tests the MaterialParameters structure
-    CharUnits_GEO   =   GEO_units(viscosity=1e19, length=10km);
-            
+    CharUnits_GEO = GEO_units(; viscosity=1e19, length=10km)
+
     # ConstantElasticity ---------
-    p        =  ConstantElasticity()
-    info     =  param_info(p)
+    p = ConstantElasticity()
+    info = param_info(p)
     @test isbits(p)
     @test NumValue(p.G) == 5e10
 
-    p_nd = p;
-    p_nd = nondimensionalize(p_nd,CharUnits_GEO)
+    p_nd = p
+    p_nd = nondimensionalize(p_nd, CharUnits_GEO)
     @test p_nd.G.val ≈ 5000.0
 
     p=SetConstantElasticity(Kb=5e10, ν=0.43)
@@ -47,19 +47,21 @@ using GeoParams
     
     #=
     # Check that it works if we give a phase array
-    MatParam    =   (SetMaterialParams(Name="Mantle", Phase=1,
-                          Elasticity  = ConstantElasticity()),
-                    SetMaterialParams(Name="Crust", Phase=2,
-                          Elasticity  = ConstantElasticity(G=1e10Pa)),
-                    SetMaterialParams(Name="Crust", Phase=2,
-                        HeatCapacity  = ConstantHeatCapacity(cp=1100J/kg/K))
-                    )
+    MatParam = (
+        SetMaterialParams(; Name="Mantle", Phase=1, Elasticity=ConstantElasticity()),
+        SetMaterialParams(;
+            Name="Crust", Phase=2, Elasticity=ConstantElasticity(; G=1e10Pa)
+        ),
+        SetMaterialParams(;
+            Name="Crust", Phase=2, HeatCapacity=ConstantHeatCapacity(; cp=1100J / kg / K)
+        ),
+    )
 
     # test computing material properties
-    n = 100;
-    Phases              = ones(Int64,n,n,n);
-    Phases[:,:,20:end] .= 2;
-    Phases[:,:,60:end] .= 2;
+    n = 100
+    Phases = ones(Int64, n, n, n)
+    Phases[:, :, 20:end] .= 2
+    Phases[:, :, 60:end] .= 2
 
     τII      =  ones(size(Phases))*20e6;
     τII_old  =  ones(size(Phases))*15e6;
@@ -68,13 +70,12 @@ using GeoParams
     compute_εII!(ε_el, MatParam, Phases, τII, args)    # computation routine w/out P (not used in most heat capacity formulations)     
     @test maximum(ε_el[1,1,:]) ≈ 2.5e-10
 
-  
     # test if we provide phase ratios
-    PhaseRatio  = zeros(n,n,n,3);
+    PhaseRatio = zeros(n, n, n, 3)
     for i in CartesianIndices(Phases)
         iz = Phases[i]
-        I = CartesianIndex(i,iz)
-        PhaseRatio[I] = 1.0  
+        I = CartesianIndex(i, iz)
+        PhaseRatio[I] = 1.0
     end
 
     # Note; using PhaseRatio currently requires an array of timesteps - can probably be fixed to also allow scalars

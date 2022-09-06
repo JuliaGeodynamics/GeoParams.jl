@@ -9,15 +9,14 @@ using Parameters, LaTeXStrings, BibTeX
 using ..Units
 
 import Base.show, Base.convert
-using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
+using GeoParams:
+    AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
 
 # Define an "empty" Material parameter structure
 struct No_MaterialParam{_T} <: AbstractMaterialParam end
-No_MaterialParam() = No_MaterialParam{Float64}();
+No_MaterialParam() = No_MaterialParam{Float64}()
 
-export 
-    MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo    
-
+export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo
 
 """
     MaterialParamsInfo
@@ -29,9 +28,11 @@ Usually used in combination with `param_info(the_parameter_of_interest)`
 
 """
 @with_kw_noshow struct MaterialParamsInfo
-    Equation::LaTeXString   =   L"" 
-    Comment::String         =   ""
-    BibTex_Reference::String = ""
+    Equation::LaTeXString = L""
+    Comment::String = ""
+    BibTex_Reference::Tuple{String,Dict{String,Dict{String,String}}} = (
+        "", Dict("" => Dict("" => ""))
+    )
 end
 
 # Link the modules with various definitions:
@@ -57,34 +58,36 @@ using .Density: AbstractDensity
 Structure that holds all material parameters for a given phase
 
 """
- @with_kw_noshow struct MaterialParams{ N,
-                                        Vdensity  <: Tuple, 
-                                        Vgravity  <: Tuple,
-                                        Vcreep    <: Tuple,
-                                        Velastic  <: Tuple,
-                                        Vplastic  <: Tuple,
-                                        Vcond     <: Tuple,
-                                        Vheatc    <: Tuple,
-                                        Vradioact <: Tuple,
-                                        Vlatent   <: Tuple,
-                                        Vshearheat<: Tuple,
-                                        Vmelting  <: Tuple,
-                                        Vseismvel <: Tuple } <: AbstractMaterialParamsStruct
+@with_kw_noshow struct MaterialParams{
+    N,
+    Vdensity<:Tuple,
+    Vgravity<:Tuple,
+    Vcreep<:Tuple,
+    Velastic<:Tuple,
+    Vplastic<:Tuple,
+    Vcond<:Tuple,
+    Vheatc<:Tuple,
+    Vradioact<:Tuple,
+    Vlatent<:Tuple,
+    Vshearheat<:Tuple,
+    Vmelting<:Tuple,
+    Vseismvel<:Tuple,
+} <: AbstractMaterialParamsStruct
     Name::NTuple{N,Char}                            #       The name is encoded as a NTuple{Char} (to make it isbits and the whole MaterialParams isbits as well; required to use this on the GPU)
-    Phase::Int64                 =   1;             #       Number of the phase (optional)
-    Nondimensional::Bool         =   false;         #       Are all fields non-dimensionalized or not?
-    Density::Vdensity            =   ()             #       Density equation of state
-    Gravity::Vgravity            =   ()             #       Gravitational acceleration (set automatically)
-    CreepLaws::Vcreep            =   ()             #       Creep laws
-    Elasticity::Velastic         =   ()             #       Elastic parameters
-    Plasticity::Vplastic         =   ()             #       Plasticity
-    Conductivity::Vcond          =   ()             #       Parameters related to the energy equation 
-    HeatCapacity::Vheatc         =   ()             #       Heat capacity 
-    RadioactiveHeat::Vradioact   =   ()             #       Radioactive heating source terms in energy conservation equation
-    LatentHeat::Vlatent          =   ()             #       Latent heating source terms in energy conservation equation
-    ShearHeat::Vshearheat        =   ()             #       Shear heating source terms in energy conservation equation
-    Melting::Vmelting            =   ()             #       Melting model
-    SeismicVelocity::Vseismvel   =   ()             #       Seismic velocity
+    Phase::Int64 = 1             #       Number of the phase (optional)
+    Nondimensional::Bool = false         #       Are all fields non-dimensionalized or not?
+    Density::Vdensity = ()             #       Density equation of state
+    Gravity::Vgravity = ()             #       Gravitational acceleration (set automatically)
+    CreepLaws::Vcreep = ()             #       Creep laws
+    Elasticity::Velastic = ()             #       Elastic parameters
+    Plasticity::Vplastic = ()             #       Plasticity
+    Conductivity::Vcond = ()             #       Parameters related to the energy equation 
+    HeatCapacity::Vheatc = ()             #       Heat capacity 
+    RadioactiveHeat::Vradioact = ()             #       Radioactive heating source terms in energy conservation equation
+    LatentHeat::Vlatent = ()             #       Latent heating source terms in energy conservation equation
+    ShearHeat::Vshearheat = ()             #       Shear heating source terms in energy conservation equation
+    Melting::Vmelting = ()             #       Melting model
+    SeismicVelocity::Vseismvel = ()             #       Seismic velocity
 end
 
 """
@@ -172,57 +175,58 @@ julia> MatParam
 
 
 """
-function SetMaterialParams(; 
-            Name::String        =   "", # this makes the struct !isbits(); as that sucks for portability we change that later to NTuple(Char)
-            Phase               =   1,
-            Density             =   nothing, 
-            Gravity             =   nothing,
-            CreepLaws           =   nothing, 
-            Elasticity          =   nothing, 
-            Plasticity          =   nothing, 
-            Conductivity        =   nothing, 
-            HeatCapacity        =   nothing, 
-            RadioactiveHeat     =   nothing,
-            LatentHeat          =   nothing,
-            ShearHeat           =   nothing,
-            Melting             =   nothing,
-            SeismicVelocity     =   nothing,
-            CharDim             =   nothing)
+function SetMaterialParams(;
+    Name::String="",         # this makes the struct !isbits(); as that sucks for portability we change that later to NTuple(Char)
+    Phase=1,
+    Density=nothing,
+    Gravity=nothing,
+    CreepLaws=nothing,
+    Elasticity=nothing,
+    Plasticity=nothing,
+    Conductivity=nothing,
+    HeatCapacity=nothing,
+    RadioactiveHeat=nothing,
+    LatentHeat=nothing,
+    ShearHeat=nothing,
+    Melting=nothing,
+    SeismicVelocity=nothing,
+    CharDim=nothing,
+)
 
-        # In case density is defined and gravity not, set gravity to default value
-        if ~isnothing(Density) & isnothing(Gravity)
-            Gravity = GravitationalAcceleration.ConstantGravity();
-        end  
+    # In case density is defined and gravity not, set gravity to default value
+    if ~isnothing(Density) & isnothing(Gravity)
+        Gravity = GravitationalAcceleration.ConstantGravity()
+    end
 
-        # define struct for phase, while also specifying the maximum number of definitions for every field   
-        phase = MaterialParams(NTuple{length(Name), Char}(collect.(Name)),  
-                                     Phase, 
-                                     false,
-                                     ConvField(Density,             :Density,           maxAllowedFields=1),     
-                                     ConvField(Gravity,             :Gravity,           maxAllowedFields=1),       
-                                     ConvField(CreepLaws,           :Creeplaws),       
-                                     ConvField(Elasticity,          :Elasticity,        maxAllowedFields=1), 
-                                     ConvField(Plasticity,          :Plasticity),  
-                                     ConvField(Conductivity,        :Conductivity,      maxAllowedFields=1),    
-                                     ConvField(HeatCapacity,        :HeatCapacity,      maxAllowedFields=1), 
-                                     ConvField(RadioactiveHeat,     :RadioactiveHeat,   maxAllowedFields=1), 
-                                     ConvField(LatentHeat,          :LatentHeat,        maxAllowedFields=1), 
-                                     ConvField(ShearHeat,           :ShearHeat,         maxAllowedFields=1), 
-                                     ConvField(Melting,             :Melting,           maxAllowedFields=1),
-                                     ConvField(SeismicVelocity,     :SeismicVelocity,   maxAllowedFields=1)
-                                     ) 
+    # define struct for phase, while also specifying the maximum number of definitions for every field   
+    phase = MaterialParams(
+        NTuple{length(Name),Char}(collect.(Name)),
+        Phase,
+        false,
+        ConvField(Density, :Density; maxAllowedFields=1),
+        ConvField(Gravity, :Gravity; maxAllowedFields=1),
+        ConvField(CreepLaws, :Creeplaws),
+        ConvField(Elasticity, :Elasticity; maxAllowedFields=1),
+        ConvField(Plasticity, :Plasticity),
+        ConvField(Conductivity, :Conductivity; maxAllowedFields=1),
+        ConvField(HeatCapacity, :HeatCapacity; maxAllowedFields=1),
+        ConvField(RadioactiveHeat, :RadioactiveHeat; maxAllowedFields=1),
+        ConvField(LatentHeat, :LatentHeat; maxAllowedFields=1),
+        ConvField(ShearHeat, :ShearHeat; maxAllowedFields=1),
+        ConvField(Melting, :Melting; maxAllowedFields=1),
+        ConvField(SeismicVelocity, :SeismicVelocity; maxAllowedFields=1),
+    )
 
-        # [optionally] non-dimensionalize the struct
-        if ~isnothing(CharDim) 
-            if typeof(CharDim) <: GeoUnits
-                phase = nondimensionalize(phase, CharDim)
-            else
-                error("CharDim should be of type GeoUnits")
-            end
-
+    # [optionally] non-dimensionalize the struct
+    if ~isnothing(CharDim)
+        if typeof(CharDim) <: GeoUnits
+            phase = nondimensionalize(phase, CharDim)
+        else
+            error("CharDim should be of type GeoUnits")
         end
+    end
 
-        return phase
+    return phase
 end
 
 # Helper function that converts a field to a Tuple, provided it is not nothing
@@ -231,10 +235,10 @@ end
 function ConvField(field, fieldname::Symbol; maxAllowedFields=1e6)
     if ~isnothing(field)
         if typeof(field) <: AbstractMaterialParam
-            field = (field, )       # transform to tuple
+            field = (field,)       # transform to tuple
         end
         if typeof(field[1]) <: AbstractMaterialParam
-            if length(field)>maxAllowedFields
+            if length(field) > maxAllowedFields
                 error("Maximum $(maxAllowedFields) field allowed for: $fieldname")
             end
         end
@@ -247,11 +251,11 @@ end
 # Helper that prints info about each of the material parameters
 #  for this to look nice, you need to define a Base.show 
 function Print_MaterialParam(io::IO, name::Symbol, Data)
-    if length(Data)>0 
+    if length(Data) > 0
         if typeof(Data[1]) <: AbstractMaterialParam
             print(io, "        |-- $(rpad(name,18)):")
-            for i=1:length(Data)
-                if i==1
+            for i in 1:length(Data)
+                if i == 1
                     print(io, " $(Data[1]) \n")
                 else
                     print(io, "        |  $(rpad("     ",18))   $(Data[i]) \n")
@@ -261,37 +265,34 @@ function Print_MaterialParam(io::IO, name::Symbol, Data)
     end
 end
 
-
 # Specify how the printing of the MaterialParam structure is done
 function Base.show(io::IO, phase::MaterialParams)
     println(io, "Phase $(rpad(phase.Phase,2)): $(String(collect(phase.Name)))")
     if phase.Nondimensional
-        println(io,"        | [non-dimensional units]")
+        println(io, "        | [non-dimensional units]")
     else
-        println(io,"        | [dimensional units]")
-
+        println(io, "        | [dimensional units]")
     end
-    println(io,"        | ")
-        
+    println(io, "        | ")
+
     for param in fieldnames(typeof(phase))
         Print_MaterialParam(io, param, getfield(phase, param))
     end
-    
 end
 
 # Slightly nicer printout in case we have a tuple with material parameters 
-function Base.show(io::IO, phase_tuple::NTuple{N,MaterialParams}) where N
-    for i=1:N
+function Base.show(io::IO, phase_tuple::NTuple{N,MaterialParams}) where {N}
+    for i in 1:N
         Base.show(io, phase_tuple[i])
     end
-    return
+    return nothing
 end
 
 # Automatically fill tuples with No_MaterialParam given a length n
-function fill_tup(v::NTuple{N,Tuple{Vararg{AbstractMaterialParam}}}, n) where N
-    ntuple(i->ntuple(j-> j <= length(v[i]) ? v[i][j] : No_MaterialParam(), Val(n)),Val(N))
+function fill_tup(v::NTuple{N,Tuple{Vararg{AbstractMaterialParam}}}, n) where {N}
+    return ntuple(
+        i -> ntuple(j -> j <= length(v[i]) ? v[i][j] : No_MaterialParam(), Val(n)), Val(N)
+    )
 end
 
 end
-
-

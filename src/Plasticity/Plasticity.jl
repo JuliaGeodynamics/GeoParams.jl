@@ -33,24 +33,28 @@ Plasticity is activated when ``F(\\tau_{II}^{trial})`` (the yield function compu
 where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the resuling stress gives ``F(\\tau_{II}^{final})=0``, and ``\\sigma_{ij}=-P + \\tau_{ij}`` denotes the total stress tensor.   
         
 """
-@with_kw_noshow struct DruckerPrager{T,U,U1} <: AbstractPlasticity{T} 
-    ϕ::GeoUnit{T,U}         =   30NoUnits      # Friction angle
-    Ψ::GeoUnit{T,U}         =   0NoUnits        # Dilation angle
-    C::GeoUnit{T,U1}        =   10e6Pa          # Cohesion
+@with_kw_noshow struct DruckerPrager{T,U,U1} <: AbstractPlasticity{T}
+    ϕ::GeoUnit{T,U} = 30NoUnits # Friction angle
+    Ψ::GeoUnit{T,U} = 0NoUnits # Dilation angle
+    C::GeoUnit{T,U1} = 10e6Pa # Cohesion
 end
-DruckerPrager(args...) = DruckerPrager(convert.(GeoUnit,args)...)
+DruckerPrager(args...) = DruckerPrager(convert.(GeoUnit, args)...)
 
 function param_info(s::DruckerPrager) # info about the struct
-    return MaterialParamsInfo(Equation = L"F = \\tau_{II} - \\cos(ϕ)C - \\sin(ϕ)(P-P_f); Q=\\tau_{II} - \\sin(Ψ)(P-P_f)")
+    return MaterialParamsInfo(;
+        Equation=L"F = \\tau_{II} - \\cos(ϕ)C - \\sin(ϕ)(P-P_f); Q=\\tau_{II} - \\sin(Ψ)(P-P_f)",
+    )
 end
 
 # Calculation routines
-function (s::DruckerPrager{_T,U,U1})(; P::_T=zero(_T), τII::_T=zero(_T),  Pf::_T=zero(_T), kwargs...) where {_T,U,U1}
-    @unpack_val ϕ, C   = s
-    sinϕ, cosϕ =  sincosd(ϕ)
-    
-    F = τII - cosϕ*C - sinϕ*(P-Pf)   # with fluid pressure (set to zero by default)
-    
+function (s::DruckerPrager{_T,U,U1})(;
+    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), kwargs...
+) where {_T,U,U1}
+    @unpack_val ϕ, C = s
+    sinϕ, cosϕ = sincosd(ϕ)
+
+    F = τII - cosϕ * C - sinϕ * (P - Pf)   # with fluid pressure (set to zero by default)
+
     return F
 end
 
@@ -59,7 +63,11 @@ end
 
 Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` the pressure, and `Pf` fluid pressure.
 """
-compute_yieldfunction(s::DruckerPrager{_T}; P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T)) where _T = s(; P=P, τII=τII, Pf=Pf)
+function compute_yieldfunction(
+    s::DruckerPrager{_T}; P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T)
+) where {_T}
+    return s(; P=P, τII=τII, Pf=Pf)
+end
 
 """
     compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager{_T}; P::AbstractArray{_T,N}, τII::AbstractArray{_T,N}, Pf=zero(P)::AbstractArray{_T,N}, kwargs...) 
@@ -68,24 +76,32 @@ Computes the plastic yield function `F` for Drucker-Prager plasticity in an in-p
 Required input arrays are pressure `P` and the second invariant of the deviatoric stress tensor `τII` at every point. 
 You can optionally provide an array with fluid pressure `Pf` as well. 
 """
-function compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager{_T}; P::AbstractArray{_T,N}, τII::AbstractArray{_T,N}, Pf=zero(P)::AbstractArray{_T,N}, kwargs...) where {N,_T}
-    
+function compute_yieldfunction!(
+    F::AbstractArray{_T,N},
+    s::DruckerPrager{_T};
+    P::AbstractArray{_T,N},
+    τII::AbstractArray{_T,N},
+    Pf=zero(P)::AbstractArray{_T,N},
+    kwargs...,
+) where {N,_T}
     @inbounds for i in eachindex(P)
-        F[i] = compute_yieldfunction(s, P=P[i], τII=τII[i], Pf=Pf[i])
+        F[i] = compute_yieldfunction(s; P=P[i], τII=τII[i], Pf=Pf[i])
     end
 
     return nothing
 end
 
 # Print info 
-function show(io::IO, g::DruckerPrager) 
-    print(io, "Drucker-Prager plasticity with: C = $(UnitValue(g.C)), ϕ = $(UnitValue(g.ϕ))ᵒ, Ψ = $(UnitValue(g.Ψ))ᵒ" )  
-end   
+function show(io::IO, g::DruckerPrager)
+    return print(
+        io,
+        "Drucker-Prager plasticity with: C = $(UnitValue(g.C)), ϕ = $(UnitValue(g.ϕ))ᵒ, Ψ = $(UnitValue(g.Ψ))ᵒ",
+    )
+end
 #-------------------------------------------------------------------------
 
-
 # Computational routines needed for computations with the MaterialParams structure 
-function compute_yieldfunction(s::AbstractMaterialParamsStruct, args) 
+function compute_yieldfunction(s::AbstractMaterialParamsStruct, args)
     if isempty(s.Plasticity)
         return isempty(args) ? 0.0 : zero(typeof(args).types[1])  # return zero if not specified
     else
@@ -96,11 +112,15 @@ end
 # add methods programmatically
 for myType in (:DruckerPrager,)
     @eval begin
-        (s::$(myType))(args)= s(; args...)
+        (s::$(myType))(args) = s(; args...)
         compute_yieldfunction(s::$(myType), args) = s(args)
-        compute_yieldfunction!(H::AbstractArray{_T,N}, s::$(myType){_T}, args) where {_T,N} = compute_yieldfunction!(H, s; args...)
+        function compute_yieldfunction!(
+            H::AbstractArray{_T,N}, s::$(myType){_T}, args
+        ) where {_T,N}
+            return compute_yieldfunction!(H, s; args...)
+        end
     end
 end
 
-compute_yieldfunction(args...)  = compute_param(compute_yieldfunction, args...)
+compute_yieldfunction(args...) = compute_param(compute_yieldfunction, args...)
 compute_yieldfunction!(args...) = compute_param!(compute_yieldfunction, args...)
