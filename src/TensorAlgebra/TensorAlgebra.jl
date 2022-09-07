@@ -1,3 +1,15 @@
+## MAPPING OF DEVIATORIC STRAIN RATE TENSOR TO DEVIATORIC STRESS TENSOR
+
+function strain2stress!(τ::AbstractMatrix{T}, ε::AbstractMatrix{T}, η::Number) where T
+    for i in eachindex(τ)
+        τ[i] = ε[i] * η * T(2)
+    end
+end
+
+strain2stress(ε::AbstractMatrix{T}, η::Number) where T = ε .* η .* T(2)
+strain2stress(ε::NTuple{N, T}, η::Number) where {N,T} = ntuple(i -> ε[i] * η * T(2), Val(N))
+
+
 import Base: (:)
 
 @generated function average_pow2(x::NTuple{N,T}) where {N,T}
