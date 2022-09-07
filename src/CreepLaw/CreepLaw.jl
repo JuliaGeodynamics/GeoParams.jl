@@ -1,5 +1,3 @@
-module CreepLaw
-
 # This implements viscous creep laws and routines to compute with them
 #
 # Note that various simple creep laws are defined in this file; 
@@ -9,43 +7,44 @@ module CreepLaw
 # In case you want to add new creep laws, have a look at how the ones
 # here are implemented. Please add tests as well!
 
-using Base: Float64
-using Parameters, LaTeXStrings, Unitful
-using ..Units
-using GeoParams: AbstractMaterialParam
-using BibTeX
-using ..MaterialParameters: MaterialParamsInfo
-import Base.show, GeoParams.param_info
+abstract type AbstractCreepLaw{T} <: AbstractConstitutiveLaw{T} end
 
-abstract type AbstractCreepLaw{T} <: AbstractMaterialParam end
+export LinearViscous, PowerlawViscous, CorrectionFactor, strain_rate_circuit
 
-export computeCreepLaw_EpsII,
-    computeCreepLaw_TauII,       # calculation routines
-    CreepLawVariables,                                     # holds additional parameters required for calculations
-    LinearViscous,
-    PowerlawViscous
-param_info
+# This computes correction factors to go from experimental data to tensor format
+function CorrectionFactor(a::AbstractCreepLaw{_T}) where {_T}
+    if a.Apparatus == AxialCompression
+        FT = sqrt(one(_T) * 3) # relation between differential stress recorded by apparatus and TauII
+        FE = 2 / FT            # relation between gamma recorded by apparatus and EpsII
+        return FT, FE
 
-# NOTE: we will likely have to remove this, in favor of multiple dispatch options
-"""
- Struct that holds parameters required for creep law calculations (such as P,T, grain size etc.)
+    elseif a.Apparatus == SimpleShear
+        FT = one(_T) * 2      # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
+        FE = FT
+        return FT, FE
 
-You can assign the struct as
-```julia-repl
- p = CreepLawVariables(P=0.0, T=0.0, d=1.0) 
-```  
-where you can also pass vectors or arrays as values.
-
-Note that, if needed, this can be extended, w/out interfering with existing calculation  
-"""
-
-@with_kw struct CreepLawVariables{_T,U1,U2,U3,U4}
-    P::GeoUnit{_T,U1} = 100.0MPa   # pressure
-    T::GeoUnit{_T,U2} = 500.0C     # temperature
-    d::GeoUnit{_T,U3} = 1.0cm      # grainsize
-    f::GeoUnit{_T,U4} = 0.0MPa     # water-fugacity         
+    elseif a.Apparatus == Invariant
+        FT, FE = one(_T), one(_T)
+        return FT, FE
+    end
 end
-CreepLawVariables(args...) = CreepLawVariables(convert.(GeoUnit, args)...)
+
+function CorrectionFactor(a::_T) where {_T}
+    if a == AxialCompression
+        FT = sqrt(one(_T) * 3) # relation between differential stress recorded by apparatus and TauII
+        FE = 2 / FT            # relation between gamma recorded by apparatus and EpsII
+        return FT, FE
+
+    elseif a == SimpleShear
+        FT = one(_T) * 2      # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
+        FE = FT
+        return FT, FE
+
+    elseif a == Invariant
+        FT, FE = one(_T), one(_T)
+        return FT, FE
+    end
+end
 
 include("DislocationCreep.jl")
 include("DiffusionCreep.jl")
@@ -78,29 +77,71 @@ function param_info(s::LinearViscous) # info about the struct
 end
 
 # Calculation routines for linear viscous rheologies
-@inline function computeCreepLaw_EpsII(TauII::T, s::LinearViscous; kwargs...) where {T}
-    η = s.η
+function compute_εII(s::LinearViscous, TauII; kwargs...)
+    @unpack η = s
 
-    return EpsII = (TauII / η) * 0.5
+    return (TauII / η) * 0.5
 end
 
-@inline function dεII_dτII(TauII, s::LinearViscous; kwargs...)
-    η = s.η
+"""
+    
+    compute_εII!(EpsII::AbstractArray{_T,N}, s::LinearViscous, TauII::AbstractArray{_T,N})
+"""
+function compute_εII!(
+    EpsII::AbstractArray{_T,N}, s::LinearViscous, TauII::AbstractArray{_T,N}; kwargs...
+) where {N,_T}
+    if TauII[1] isa Quantity
+        @unpack_units η = s
+    else
+        @unpack_val η = s
+    end
+
+    @inbounds for i in eachindex(EpsII)
+        EpsII[i] = compute_εII(s, TauII[i])
+    end
+
+    return nothing
+end
+
+function dεII_dτII(a::LinearViscous, TauII; kwargs...)
+    @unpack η = s
 
     return η * 0.5
 end
 
-@inline function computeCreepLaw_TauII(EpsII, s::LinearViscous; kwargs...)
-    η = s.η
+"""
+    compute_τII(s::LinearViscous, EpsII; kwargs...)
 
-    return TauII = 2 * (η * EpsII)
+Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor 
+"""
+function compute_τII(s::LinearViscous, EpsII; kwargs...)
+    @unpack η = s
+
+    return 2 * (η * EpsII)
 end
 
-@inline function dτII_dεII(EpsII, s::LinearViscous; kwargs...)
-    η = s.η
+function compute_τII!(
+    TauII::AbstractArray{_T,N}, s::LinearViscous, EpsII::AbstractArray{_T,N}; kwargs...
+) where {N,_T}
+    if EpsII[1] isa Quantity
+        @unpack_units η = s
+    else
+        @unpack_val η = s
+    end
+
+    @inbounds for i in eachindex(EpsII)
+        TauII[i] = compute_τII(s, EpsII[i])
+    end
+
+    return nothing
+end
+
+function dτII_dεII(a::LinearViscous, EpsII; kwargs...)
+    @unpack η = s
 
     return 2 * η
 end
+
 # Print info 
 function show(io::IO, g::LinearViscous)
     return print(io, "Linear viscosity: η=$(g.η.val)")
@@ -131,25 +172,25 @@ function show(io::IO, g::PowerlawViscous)
 end
 #-------------------------------------------------------------------------
 
+#=
 # add methods programatically 
+#for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity)
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep)
+
     @eval begin
-        function computeCreepLaw_EpsII(TauII, a::$(myType), args)
-            return computeCreepLaw_EpsII(TauII, a; args...)
-        end
-        dεII_dτII(TauII, a::$(myType), args) = dεII_dτII(TauII, a; args...)
-        function computeCreepLaw_TauII(EpsII, a::$(myType), args)
-            return computeCreepLaw_TauII(EpsII, a; args...)
-        end
+        compute_εII(TauII, a::$(myType), args) = compute_εII(TauII, a; args...) 
+        dεII_dτII(TauII, a::$(myType), args) = dεII_dτII(TauII, a; args...) 
+        compute_τII(EpsII, a::$(myType), args) = compute_τII(EpsII, a; args...) 
         if Symbol($myType) !== :ConstantElasticity
             dτII_dεII(EpsII, a::$(myType), args) = dτII_dεII(EpsII, a; args...)
         end
     end
 end
+=#
 
 # Help info for the calculation routines
 """
-    computeCreepLaw_EpsII(TauII, s:<AbstractCreepLaw, p::CreepLawVariables)
+    compute_εII(TauII, s:<AbstractCreepLaw, p::CreepLawVariables)
 
 Returns the strainrate invariant ``\\dot{\\varepsilon}_{II}`` for a given deviatoric stress 
 invariant ``\\tau_{II}`` for any of the viscous creep laws implemented.
@@ -177,5 +218,3 @@ may need for the calculations
 
 """
 computeCreepLaw_TauII
-
-end

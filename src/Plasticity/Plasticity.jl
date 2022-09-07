@@ -1,23 +1,10 @@
-module Plasticity
-
 # If you want to add a new method here, feel free to do so. 
 # Remember to also export the function name in GeoParams.jl (in addition to here)
-
-using Parameters, LaTeXStrings, Unitful
-using ..Units
-using GeoParams: AbstractMaterialParam
-using ..MaterialParameters: MaterialParamsInfo
-import Base.show, GeoParams.param_info
-
-abstract type AbstractPlasticity{T} <: AbstractMaterialParam end
+abstract type AbstractPlasticity{T} <: AbstractConstitutiveLaw{T} end
 
 export compute_yieldfunction,      # calculation routines
     compute_yieldfunction!,
-    param_info,
     DruckerPrager               # constant
-
-include("../Computations.jl")
-include("../Utils.jl")
 
 # DruckerPrager  -------------------------------------------------------
 """
@@ -137,5 +124,3 @@ end
 
 compute_yieldfunction(args...) = compute_param(compute_yieldfunction, args...)
 compute_yieldfunction!(args...) = compute_param!(compute_yieldfunction, args...)
-
-end

@@ -30,16 +30,15 @@ Usually used in combination with `param_info(the_parameter_of_interest)`
 @with_kw_noshow struct MaterialParamsInfo
     Equation::LaTeXString = L""
     Comment::String = ""
-    BibTex_Reference::Tuple{String,Dict{String,Dict{String,String}}} = (
-        "", Dict("" => Dict("" => ""))
-    )
+    BibTex_Reference::String = ""
 end
 
 # Link the modules with various definitions:
 include("./PhaseDiagrams/PhaseDiagrams.jl")
-include("./CreepLaw/CreepLaw.jl")
-include("./Plasticity/Plasticity.jl")
-include("./Elasticity/Elasticity.jl")
+#include("./CreepLaw/CreepLaw.jl")
+#include("./Plasticity/Plasticity.jl")
+#include("./Elasticity/Elasticity.jl")
+include("./ConstitutiveRelationships.jl")
 include("./Density/Density.jl")
 include("./GravitationalAcceleration/GravitationalAcceleration.jl")
 include("./Energy/HeatCapacity.jl")

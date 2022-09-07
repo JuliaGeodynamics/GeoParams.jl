@@ -20,9 +20,12 @@ using GeoParams
     τII = 20e6
     P = 1e6
     args = (P=P, τII=τII)
+    args1 = (τII=τII, P=P)
     @test compute_yieldfunction(p, args) ≈ 1.0839745962155614e7      # no Pfluid
+    @test compute_yieldfunction(p, args) ≈ compute_yieldfunction(p, args1)    # different order
 
     args_f = (P=P, τII=τII, Pf=0.5e6)
+
     @test compute_yieldfunction(p, args_f) ≈ 1.1089745962155614e7    # with Pfluid
 
     # Test with arrays
@@ -61,6 +64,8 @@ using GeoParams
     @test maximum(F[1, 1, :]) ≈ 839745.962155614
 
     args_f = (P=P, τII=τII, Pf=Pf)
+    args_f1 = (Pf=Pf, τII=τII, P=P)
+
     Ff = zero(P)
     compute_yieldfunction!(Ff, MatParam, Phases, args_f)    # computation routine w/out P (not used in most heat capacity formulations)     
 

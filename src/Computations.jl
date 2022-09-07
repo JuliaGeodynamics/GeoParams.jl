@@ -54,11 +54,11 @@ end
 
 @inline function compute_param!(
     fn::F,
-    rho::AbstractArray,
+    rho::AbstractArray{T, ndim},
     MatParam::NTuple{N,AbstractMaterialParamsStruct},
-    Phases::AbstractArray{<:Integer,ndim},
+    Phases::AbstractArray{Int64,ndim},
     args,
-) where {F,ndim,N}
+) where {F, T, ndim, N}
     @inbounds for I in eachindex(Phases)
         k = keys(args)
         v = getindex.(values(args), I)      # works for scalars & arrays thanks to overload (above)
@@ -69,11 +69,11 @@ end
 
 function compute_param!(
     fn::F,
-    rho::AbstractArray,
-    MatParam::AbstractVector{AbstractMaterialParamsStruct},
-    Phases::AbstractArray{<:Integer,ndim},
+    rho::AbstractArray{T, ndim},
+    MatParam::Vector{AbstractMaterialParamsStruct},
+    Phases::AbstractArray{Int64,ndim},
     args,
-) where {F,ndim}
+) where {F, T, ndim}
     return compute_param!(fn, rho, Tuple(MatParam), Phases, args)
 end
 
@@ -105,14 +105,13 @@ function compute_param!(
 end
 
 #Multiplies parameter with the fraction of a phase
-function compute_param_times_frac(
+@generated function compute_param_times_frac(
     fn::F, PhaseRatios::NTuple{N,T}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, argsi
 ) where {F,N,T}
-    # Unrolled dot product
-    val = Ref(zero(T))
-    ntuple(Val(N)) do i
-        Base.@_inline_meta
-        val[] += PhaseRatios[i] * fn(MatParam[i], argsi)
+    # # Unrolled dot product
+    quote
+        val = zero($T)
+        Base.Cartesian.@nexprs $N i -> val += @inbounds PhaseRatios[i] * fn(MatParam[i], argsi)
+        return val
     end
-    return val[]
 end
