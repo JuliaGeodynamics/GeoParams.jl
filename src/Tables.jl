@@ -13,7 +13,7 @@ export Phase2Dict,
 # was tested with:
 # TestPh = (SetMaterialParams(Name="Viscous Matrix", Phase=1, Density=ConstantDensity(),CreepLaws = SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)")),
 #           SetMaterialParams(Name="Viscous Sinker", Phase=2, Density= PT_Density(),CreepLaws = LinearViscous(η=1e21Pa*s)),
-#           SetMaterialParams(Name="Viscous Bottom", Phase=3, Density= PT_Density(),CreepLaws = SetDislocationCreep("Diabase | Caristan (1982)")));
+#           SetMaterialParams(Name="Viscous Bottom", Phase=3, Density= PT_Density(),CreepLaws = SetDislocationCreep("Diabase | Caristan (1982)")))
 
 
 """
@@ -99,37 +99,62 @@ function Dict2LatexTable(d::Dict, refs::Dict)
     dictpairs = sort(collect(pairs(d)))
     refpair = sort(collect(pairs(refs)))
 
-    References = "";
-    InTextRef = "";
+    References = ""
+    InTextRef = ""
 
     # Descriptions for every parameter that could occur in the table and their corresponding variable name(s) that is used in GeoParams
-    desc = Dict("\\rho"=>"Density \$(kg/m^{3})\$","\\rho0"=>"Reference density \$(kg/m^{3})\$","g"=>"Gravity \$(m/s^{2})\$","\\eta"=>"Viscosity \$(Pa \\cdot s)\$",
-    "P"=>"Pressure (MPa)","T"=>"Temperature (C)","V"=>"Volume \$(m^{3})\$" ,"d"=>"Grain size (cm)" ,"f"=>"Water fugacity (MPa)",
-    "n"=>"Power-law exponent (-)","r"=>"Water fugacity exponent (-)" ,"p"=>"Grain size exponent (-)" ,"A"=>"Coefficient \$(Pa^{-n}/s)\$" ,
-    "E"=>"Activation energy (kJ/mol)" ,"R"=>"Gas constant (J/mol/K)" ,"G"=>"Shear modulus (Pa)","\\nu"=>"Poisson ratio (-)",
-    "K"=>"Bulk modulus (Pa)" , "Y"=>"Young's modulus (Pa)","k"=>"Thermal conductivity (W/m/K)","cp"=>"Heat capacity (J/kg/K)",
-    "Q_L"=>"Latent heat (kJ/kg)","H_r"=>"Radioactive heat \$(W/m^{3})\$","H_s"=>"Shear heating (-)","ϕ"=>"Friction angle \$(^{\\circ})\$",
-    "\\psi"=>"Dilation angle \$(^{\\circ})\$","C"=>"Cohesion (Pa)" ,"Vp"=>"P-wave velocity (km/s)","Vs"=>"S-wave velocity (km/s)" ,
-    "T0"=>"Reference temperature (C)","P0"=>"Reference pressure (Pa)","\\beta"=>"Compressibility (1/Pa)","\\alpha"=>"Thermal expansion coeff. (1/K)");
+    desc = Dict(
+        "\\rho"=>"Density \$(kg/m^{3})\$",
+        "\\rho0"=>"Reference density \$(kg/m^{3})\$",
+        "g"=>"Gravity \$(m/s^{2})\$",
+        "\\eta"=>"Viscosity \$(Pa \\cdot s)\$",
+        "P"=>"Pressure (MPa)","T"=>"Temperature (C)",
+        "V"=>"Volume \$(m^{3})\$" ,"d"=>"Grain size (cm)",
+        "f"=>"Water fugacity (MPa)",
+        "n"=>"Power-law exponent (-)",
+        "r"=>"Water fugacity exponent (-)",
+        "p"=>"Grain size exponent (-)" ,
+        "A"=>"Coefficient \$(Pa^{-n}/s)\$",
+        "E"=>"Activation energy (kJ/mol)",
+        "R"=>"Gas constant (J/mol/K)",
+        "G"=>"Shear modulus (Pa)",
+        "\\nu"=>"Poisson ratio (-)",
+        "K"=>"Bulk modulus (Pa)", 
+        "Y"=>"Young's modulus (Pa)",
+        "k"=>"Thermal conductivity (W/m/K)",
+        "cp"=>"Heat capacity (J/kg/K)",
+        "Q_L"=>"Latent heat (kJ/kg)",
+        "H_r"=>"Radioactive heat \$(W/m^{3})\$",
+        "H_s"=>"Shear heating (-)",
+        "ϕ"=>"Friction angle \$(^{\\circ})\$",
+        "\\psi"=>"Dilation angle \$(^{\\circ})\$",
+        "C"=>"Cohesion (Pa)",
+        "Vp"=>"P-wave velocity (km/s)",
+        "Vs"=>"S-wave velocity (km/s)",
+        "T0"=>"Reference temperature (C)",
+        "P0"=>"Reference pressure (Pa)",
+        "\\beta"=>"Compressibility (1/Pa)",
+        "\\alpha"=>"Thermal expansion coeff. (1/K)"
+        )
 
     # Generates latex preamble
-    Table  = "\\documentclass{article}\n";
-    Table *= "\\usepackage{natbib}\n";
-    Table *= "\\bibliographystyle{abbrvnat}\n";
-    Table *= "\\setcitestyle{authoryear,open={(},close={)}} %Citation-related commands\n";
-    Table *= "\\usepackage{booktabs}\n";
-    Table *= "\\usepackage{graphicx}\n";
-    Table *= "\\usepackage{multirow}\n";
-    Table *= "\\usepackage[round, comma, sort, ]{natbib}\n";
-    Table *= "\\usepackage[utf8]{inputenc}\n";
-    Table *= "\\begin{document}\n";
-    Table *= "\\begin{table}[hbt]\n";
+    Table  = "\\documentclass{article}\n"
+    Table *= "\\usepackage{natbib}\n"
+    Table *= "\\bibliographystyle{abbrvnat}\n"
+    Table *= "\\setcitestyle{authoryear,open={(},close={)}} %Citation-related commands\n"
+    Table *= "\\usepackage{booktabs}\n"
+    Table *= "\\usepackage{graphicx}\n"
+    Table *= "\\usepackage{multirow}\n"
+    Table *= "\\usepackage[round, comma, sort, ]{natbib}\n"
+    Table *= "\\usepackage[utf8]{inputenc}\n"
+    Table *= "\\begin{document}\n"
+    Table *= "\\begin{table}[hbt]\n"
     Table *= "\\centering\n"
     Table *= "\\resizebox{\\columnwidth}{!}{%\n"
-    Table *= "\\begin{tabular}{ " * "l " * "c " ^ (parse(Int64, d["Name 1"][2])+2) * "}\n";
-    Table *= "\\toprule[1pt]\n";
-    Table *= "\\midrule[0.3pt]\n";
-    Table *= " & ";
+    Table *= "\\begin{tabular}{ " * "l " * "c " ^ (parse(Int64, d["Name 1"][2])+2) * "}\n"
+    Table *= "\\toprule[1pt]\n"
+    Table *= "\\midrule[0.3pt]\n"
+    Table *= " & "
 
     # Creates table headers and in text citations
     counter = 1
@@ -137,11 +162,11 @@ function Dict2LatexTable(d::Dict, refs::Dict)
         Table *= " & " * d["Name $i"][1]
         for j = 1:length(refs)
             if parse(Int64, refpair[j].second[3]) == i
-                Table *= "(" * "*" ^ counter * ")";
+                Table *= "(" * "*" ^ counter * ")"
                 currentbib = refpair[j].second[1]
                 startidx = first(findfirst("{", currentbib))
                 endidx = first(findfirst(",", currentbib))
-                InTextRef *= "(" * "*" ^ counter * ") \\cite{" * currentbib[startidx+1:endidx-1] * "}";
+                InTextRef *= "(" * "*" ^ counter * ") \\cite{" * currentbib[startidx+1:endidx-1] * "}"
                 if counter != length(refs)
                     InTextRef *= ", "
                 end
@@ -151,9 +176,9 @@ function Dict2LatexTable(d::Dict, refs::Dict)
     end
 
     # Latex formating and comment
-    Table *= "\\\\\n";
-    Table *= "\\hline \n";
-    Table *= "% Table body\n";
+    Table *= "\\\\\n"
+    Table *= "\\hline \n"
+    Table *= "% Table body\n"
 
     # Get vector with all unique symbols without phasenames
     for key in dictkeys
@@ -168,7 +193,7 @@ function Dict2LatexTable(d::Dict, refs::Dict)
     # Creates columnwise output for all parameters of the input phase
     for symbol in symbs
         # Sets parametername and variable
-        Table *= " " * string(desc[symbol]) * " & " * "\$" * symbol * "\$";
+        Table *= " " * string(desc[symbol]) * " & " * "\$" * symbol * "\$"
         # Iterates over all phases
         for j = 1:parse(Int64, d["Name 1"][2])
             hit = 0
@@ -177,19 +202,19 @@ function Dict2LatexTable(d::Dict, refs::Dict)
                 # Checks if symbol matches the symbol in the pair and if phase matches phase of the pair
                 if symbol == dictpairs[i].second[2] && j == parse(Int64, dictpairs[i].second[4])
                     # put in the matched parameter value
-                    Table *= " & " * dictpairs[i].second[1];
+                    Table *= " & " * dictpairs[i].second[1]
                     hit += 1
                 end
             end
 
             # checks if a parameter in a phase is not existing 
             if hit == 0
-                Table *= " & ";
+                Table *= " & "
             end
 
         end
         # new line in latex
-        Table *= " \\\\\n";
+        Table *= " \\\\\n"
     end
 
     # Adds equations for flow laws underneath the parameters
@@ -199,50 +224,48 @@ function Dict2LatexTable(d::Dict, refs::Dict)
     for i = 1:length(dictpairs)
         if dictpairs[i].second[3] == "DislCreep" && DislCreep == 0
             Table *= "\\rule[-5pt]{-3pt}{20pt} Dislocation Creep: & " * "\\multicolumn{4}{l}{\$ \\dot{\\gamma} = A \\sigma^n f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) \$}\n"
-            Table *= " \\\\\n";
+            Table *= " \\\\\n"
             DislCreep += 1
         end
         if dictpairs[i].second[3] == "DiffCreep" && DiffCreep == 0
             Table *= "\\rule[-5pt]{-3pt}{20pt} Diffusion Creep: & " * "\\multicolumn{4}{l}{\$ \\dot{\\gamma} = A \\sigma^n d^p f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) \$}\n"
-            Table *= " \\\\\n";
+            Table *= " \\\\\n"
             DiffCreep += 1
         end
         if dictpairs[i].second[3] == "LinVisc" && LinVisc == 0
             Table *= "\\rule[-5pt]{-3pt}{20pt} Linear Viscous: & " * "\\multicolumn{4}{l}{\$ \\eta  = \\frac{\\tau_{II} }{ 2\\dot{\\varepsilon_{II}}} \$}\n"
-            Table *= " \\\\\n";
+            Table *= " \\\\\n"
             LinVisc += 1
         end
     end
     
 
-    Table *= "\\midrule[0.3pt]\n";
+    Table *= "\\midrule[0.3pt]\n"
 
     # Creates References string which is later written to References.bib 
     for i = 1:parse(Int64, d["Name 1"][2])
         for j = 1:length(refs)
             if parse(Int64, refpair[j].second[2]) == i
-                References *= refpair[j].second[1];
+                References *= refpair[j].second[1]
             end
         end
     end
 
     # Adds in text citation for all BibTex sources to LaTEx code. InTextRef is created simultaneously with table headers
-    Table *= InTextRef * "\n";
+    Table *= InTextRef * "\n"
 
     # finishes latex table, closes all open formats and writes References beneath table
-    Table *= "\\midrule[0.3pt]\n";
-    Table *= "\\bottomrule[1pt]\n";
-    Table *= "\\end{tabular}}\n";
-    Table *= "\\caption{Parameter table}\n";
-    Table *= "\\label{tab:para_table}\n";
-    Table *= "\\end{table}\n";
-    Table *= "\\bibliography{References}\n";
-    Table *= "\\end{document}\n";
+    Table *= "\\midrule[0.3pt]\n"
+    Table *= "\\bottomrule[1pt]\n"
+    Table *= "\\end{tabular}}\n"
+    Table *= "\\caption{Parameter table}\n"
+    Table *= "\\label{tab:para_table}\n"
+    Table *= "\\end{table}\n"
+    Table *= "\\bibliography{References}\n"
+    Table *= "\\end{document}\n"
 
     # Writes BibTex sources in to .bib file and Table string into .tex file
-    write("References.bib", References);
-    print("\n")
-    write("MaterialParameters.tex", Table);
+    return write("References.bib", References), write("MaterialParameters.tex", Table)
 end
 
 function Phase2DictMd(s)
@@ -317,18 +340,42 @@ function Dict2MarkdownTable(d::Dict, refs::Dict)
     dictpairs = sort(collect(pairs(d)))
     refpair = sort(collect(pairs(refs)))
 
-    References = "";
-    InTextRef = "";
+    References = ""
+    InTextRef = ""
 
     # Descriptions for every parameter that could occur in the table and their corresponding variable name(s) that is used in GeoParams
-    desc = Dict("ρ"=>"Density (kg/m^(3))","ρ0"=>"Reference density (kg/m^(3))","g"=>"Gravity (m/s^(2))","η"=>"Viscosity (Pa s)",
-    "P"=>"Pressure (MPa)","T"=>"Temperature (C)","V"=>"Volume (m^(3))" ,"d"=>"Grain size (cm)" ,"f"=>"Water fugacity (MPa)",
-    "n"=>"Power-law exponent (-)","r"=>"Water fugacity exponent (-)" ,"p"=>"Grain size exponent (-)" ,"A"=>"Coefficient (Pa^(-n)/s)" ,
-    "E"=>"Activation energy (kJ/mol)" ,"R"=>"Gas constant (J/mol/K)" ,"G"=>"Shear modulus (Pa)","ν"=>"Poisson ratio (-)",
-    "K"=>"Bulk modulus (Pa)" , "Y"=>"Young's modulus (Pa)","k"=>"Thermal conductivity (W/m/K)","cp"=>"Heat capacity (J/kg/K)",
-    "Q_L"=>"Latent heat (kJ/kg)","H_r"=>"Radioactive heat (W/m^(3))","H_s"=>"Shear heating (-)","ϕ"=>"Friction angle (°)",
-    "ψ"=>"Dilation angle (°)","C"=>"Cohesion (Pa)" ,"Vp"=>"P-wave velocity (km/s)","Vs"=>"S-wave velocity (km/s)" ,
-    "T0"=>"Reference temperature (C)","P0"=>"Reference pressure (Pa)","β"=>"Compressibility (1/Pa)","α"=>"Thermal expansion coeff. (1/K)");
+    desc = Dict(
+        "ρ"=>"Density (kg/m^(3))",
+        "ρ0"=>"Reference density (kg/m^(3))",
+        "g"=>"Gravity (m/s^(2))","η"=>"Viscosity (Pa s)",
+        "P"=>"Pressure (MPa)","T"=>"Temperature (C)",
+        "V"=>"Volume (m^(3))" ,"d"=>"Grain size (cm)",
+        "f"=>"Water fugacity (MPa)",
+        "n"=>"Power-law exponent (-)",
+        "r"=>"Water fugacity exponent (-)",
+        "p"=>"Grain size exponent (-)",
+        "A"=>"Coefficient (Pa^(-n)/s)",
+        "E"=>"Activation energy (kJ/mol)",
+        "R"=>"Gas constant (J/mol/K)",
+        "G"=>"Shear modulus (Pa)",
+        "ν"=>"Poisson ratio (-)",
+        "K"=>"Bulk modulus (Pa)", 
+        "Y"=>"Young's modulus (Pa)",
+        "k"=>"Thermal conductivity (W/m/K)",
+        "cp"=>"Heat capacity (J/kg/K)",
+        "Q_L"=>"Latent heat (kJ/kg)",
+        "H_r"=>"Radioactive heat (W/m^(3))",
+        "H_s"=>"Shear heating (-)",
+        "ϕ"=>"Friction angle (°)",
+        "ψ"=>"Dilation angle (°)",
+        "C"=>"Cohesion (Pa)",
+        "Vp"=>"P-wave velocity (km/s)",
+        "Vs"=>"S-wave velocity (km/s)",
+        "T0"=>"Reference temperature (C)",
+        "P0"=>"Reference pressure (Pa)",
+        "β"=>"Compressibility (1/Pa)",
+        "α"=>"Thermal expansion coeff. (1/K)"
+        )
 
     # Generates latex preamble
     Table = " | Denotation | Variablename | "
@@ -339,13 +386,13 @@ function Dict2MarkdownTable(d::Dict, refs::Dict)
         Table *=  d["Name $i"][1] * " | "
         for j = 1:length(refs)
             if parse(Int64, refpair[j].second[3]) == i
-                Table *= "(" * "*" ^ counter * ") |";
+                Table *= "(" * "*" ^ counter * ") |"
 
                 # Ab hier sinds die References für am Ende -> Später machen!
                 #currentbib = refpair[j].second[1]
                 #startidx = first(findfirst("{", currentbib))
                 #endidx = first(findfirst(",", currentbib))
-                #InTextRef *= "(" * "*" ^ counter * ") \\cite{" * currentbib[startidx+1:endidx-1] * "}";
+                #InTextRef *= "(" * "*" ^ counter * ") \\cite{" * currentbib[startidx+1:endidx-1] * "}"
                 #if counter != length(refs)
                 #    InTextRef *= ", "
                 #end
@@ -356,14 +403,14 @@ function Dict2MarkdownTable(d::Dict, refs::Dict)
         end
     end
 
-    Table *= "\n";
-    Table *= " | ---------- | ------------ | ";
+    Table *= "\n"
+    Table *= " | ---------- | ------------ | "
 
     for i = 1:parse(Int64, d["Name 1"][2])
-        Table *= "-" ^ length(d["Name $i"][1]) * " | ";
+        Table *= "-" ^ length(d["Name $i"][1]) * " | "
     end
 
-    Table *= "\n";
+    Table *= "\n"
 
     # Get vector with all unique symbols without phasenames
     for key in dictkeys
@@ -378,7 +425,7 @@ function Dict2MarkdownTable(d::Dict, refs::Dict)
     # Creates columnwise output for all parameters of the input phase
     for symbol in symbs
         # Sets parametername and variable
-        Table *= " " * string(desc[symbol]) * " | " * symbol;
+        Table *= " " * string(desc[symbol]) * " | " * symbol
         # Iterates over all phases
         for j = 1:parse(Int64, d["Name 1"][2])
             hit = 0
@@ -387,19 +434,19 @@ function Dict2MarkdownTable(d::Dict, refs::Dict)
                 # Checks if symbol matches the symbol in the pair and if phase matches phase of the pair
                 if symbol == dictpairs[i].second[2] && j == parse(Int64, dictpairs[i].second[4])
                     # put in the matched parameter value
-                    Table *= " | " * dictpairs[i].second[1];
+                    Table *= " | " * dictpairs[i].second[1]
                     hit += 1
                 end
             end
 
             # checks if a parameter in a phase is not existing 
             if hit == 0
-                Table *= " | ";
+                Table *= " | "
             end
 
         end
         # new line in latex
-        Table *= " \n";
+        Table *= " \n"
     end
 
     #=
@@ -411,17 +458,17 @@ function Dict2MarkdownTable(d::Dict, refs::Dict)
     for i = 1:length(dictpairs)
         if dictpairs[i].second[3] == "DislCreep" && DislCreep == 0
             Table *= "\\rule[-5pt]{-3pt}{20pt} Dislocation Creep: & " * "\\multicolumn{4}{l}{ \\dot{\\gamma} = A \\sigma^n f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) }\n"
-            Table *= " \\\\\n";
+            Table *= " \\\\\n"
             DislCreep += 1
         end
         if dictpairs[i].second[3] == "DiffCreep" && DiffCreep == 0
             Table *= "\\rule[-5pt]{-3pt}{20pt} Diffusion Creep: & " * "\\multicolumn{4}{l}{ \\dot{\\gamma} = A \\sigma^n d^p f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) }\n"
-            Table *= " \\\\\n";
+            Table *= " \\\\\n"
             DiffCreep += 1
         end
         if dictpairs[i].second[3] == "LinVisc" && LinVisc == 0
             Table *= "\\rule[-5pt]{-3pt}{20pt} Linear Viscous: & " * "\\multicolumn{4}{l}{ \\eta  = \\frac{\\tau_{II} }{ 2\\dot{\\varepsilon_{II}}} }\n"
-            Table *= " \\\\\n";
+            Table *= " \\\\\n"
             LinVisc += 1
         end
     end
@@ -431,19 +478,18 @@ function Dict2MarkdownTable(d::Dict, refs::Dict)
     for i = 1:parse(Int64, d["Name 1"][2])
         for j = 1:length(refs)
             if parse(Int64, refpair[j].second[2]) == i
-                References *= refpair[j].second[1];
+                References *= refpair[j].second[1]
             end
         end
     end
 
     # Adds in text citation for all BibTex sources to LaTEx code. InTextRef is created simultaneously with table headers
-    Table *= InTextRef * "\n";
+    Table *= InTextRef * "\n"
     =#
 
     # Writes BibTex sources in to .bib file and Table string into .m file
-    #write("References.bib", References);
-    print("\n")
-    write("MaterialParameters.md", Table);
+    #write("References.bib", References)
+    return write("MaterialParameters.md", Table)
 end
 
 end
