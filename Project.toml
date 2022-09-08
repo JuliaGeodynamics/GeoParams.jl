@@ -5,11 +5,13 @@ version = "0.3.16"
 
 [deps]
 BibTeX = "7b0aa2c9-049f-5cec-894a-2b6b781bb25e"
+CellArrays = "d35fcfd7-7af4-4c67-b1aa-d78070614af4"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 KernelDensitySJ = "49dc5b4e-6806-4504-b2cc-a81764e7a38b"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 Loess = "4345ca2d-374a-55d4-8d30-97f9976e7612"
+OhMyREPL = "5fb14364-9ced-5910-84b2-373655c76a03"
 Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
