@@ -28,6 +28,7 @@ end
     quote
         Base.Cartesian.@nexprs $N i ->
             @inbounds (MatParam[i].Phase == Phase) && return fn(MatParam[i], args)
+        return 0.0
     end
 end
 
