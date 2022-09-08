@@ -1,14 +1,39 @@
 ## MAPPING OF DEVIATORIC STRAIN RATE TENSOR TO DEVIATORIC STRESS TENSOR
 
+# local methods 
 function strain2stress!(τ::AbstractMatrix{T}, ε::AbstractMatrix{T}, η::Number) where T
     for i in eachindex(τ)
-        τ[i] = ε[i] * η * T(2)
+        @inbounds τ[i] = ε[i] * η * T(2)
     end
 end
 
 strain2stress(ε::AbstractMatrix{T}, η::Number) where T = ε .* η .* T(2)
 strain2stress(ε::NTuple{N, T}, η::Number) where {N,T} = ntuple(i -> ε[i] * η * T(2), Val(N))
 
+# array-like methods
+function strain2stress!(τ::CellArray{<:SArray, A,B,T}, ε::CellArray{<:SArray, A,B,T}, η::AbstractArray{F,G}) where {A,B,T,F,G}
+    Threads.@threads for i in eachindex(τ)
+        @inbounds τ[i] = strain2stress(ε[i], η[i])
+    end
+end
+
+# # Numerics
+# nx, ny = 16, 16
+# celldims = (2, 2)
+
+# # # Array initializations
+# # Cell = Matrix{Float64}(undef, celldims...)
+# # T  = CPUCellArray{Cell}(undef, nx, ny)
+# # T  = CPUCellArray{Float64, Matrix}(undef, nx, ny)
+
+# SCell = SMatrix{celldims..., Float64, prod(celldims)}
+# s  = CPUCellArray{SCell}(undef, nx, ny)
+# t  = CPUCellArray{SCell}(undef, nx, ny)
+
+# n=rand(nx,ny)
+# strain2stress!(s,t,n)
+
+##
 
 import Base: (:)
 
