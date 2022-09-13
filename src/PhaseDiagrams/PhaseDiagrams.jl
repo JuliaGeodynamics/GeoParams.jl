@@ -14,31 +14,31 @@ export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram, ComputeDensity
 """
     Contains data of a Phase Diagram that is regularly spaced in P & T
 """
-struct PhaseDiagram_LookupTable{S,T,nothing} <: AbstractPhaseDiagramsStruct
+struct PhaseDiagram_LookupTable{S,T} <: AbstractPhaseDiagramsStruct
     Type::S
     HeaderText::Vector{S}
     Name::S
-    rockRho::Union{T, nothing}
-    meltRho::Union{T, nothing}
-    meltFrac::Union{T, nothing}
-    Rho::Union{T, nothing}
-    rockVp::Union{T, nothing}
-    rockVs::Union{T, nothing}
-    rockVpVs::Union{T, nothing}
-    meltVp::Union{T, nothing}
-    meltVs::Union{T, nothing}
-    meltVpVs::Union{T, nothing}
-    Vp::Union{T, nothing}
-    Vs::Union{T, nothing}
-    VpVs::Union{T, nothing}
-    cpxFrac::Union{T, nothing}
-    solid_Vp::Union{T, nothing}
-    solid_Vs::Union{T, nothing}
-    melt_bulkModulus::Union{T, nothing}
-    solid_bulkModulus::Union{T, nothing}
-    solid_shearModulus::Union{T, nothing}
-    Vp_uncorrected::Union{T, nothing}           # will hold Vs velocity corrected for pores, fluids, & melt 
-    Vs_uncorrected::Union{T, nothing}
+    rockRho::Union{T,Nothing}
+    meltRho::Union{T,Nothing}
+    meltFrac::Union{T,Nothing}
+    Rho::Union{T,Nothing}
+    rockVp::Union{T,Nothing}
+    rockVs::Union{T,Nothing}
+    rockVpVs::Union{T,Nothing}
+    meltVp::Union{T,Nothing}
+    meltVs::Union{T,Nothing}
+    meltVpVs::Union{T,Nothing}
+    Vp::Union{T,Nothing}
+    Vs::Union{T,Nothing}
+    VpVs::Union{T,Nothing}
+    cpxFrac::Union{T,Nothing}
+    solid_Vp::Union{T,Nothing}
+    solid_Vs::Union{T,Nothing}
+    melt_bulkModulus::Union{T,Nothing}
+    solid_bulkModulus::Union{T,Nothing}
+    solid_shearModulus::Union{T,Nothing}
+    Vp_uncorrected::Union{T,Nothing}           # will hold Vs velocity corrected for pores, fluids, & melt 
+    Vs_uncorrected::Union{T,Nothing}
 end
 
 """
@@ -88,12 +88,13 @@ function PerpleX_LaMEM_Diagram(fname::String; CharDim=nothing)
     # Read header: 
     #  the first 50 lines are comments (freely useable), followed by data 
     n = 55
-    header = open(readlines, `head -n $(n) $(fname)`)
+    # header = open(readlines, `head -n $(n) $(fname)`)
+    header = open(readlines, fname)[1:55]
     header_text = header[1:49]
 
     # Parse the names of the collumns in the data file 
     fields = split(header[49], "[")[2:end]      # this line should contain the names and units of the collumns in the file 
-    
+
     # Throw error message if fields are not specified
     if length(fields) == 0
         error("Line 49 in the phase diagram file should contain the names of the collums")
@@ -113,7 +114,6 @@ function PerpleX_LaMEM_Diagram(fname::String; CharDim=nothing)
         unit_string = split(split(fields[i], ",")[3], "]")[1]
         fields_units[i] = uparse(unit_string)
     end
- 
 
     # Determine the range 
     T0 = parse(Float64, header[50]) * u"K"      # in K
@@ -146,10 +146,11 @@ function PerpleX_LaMEM_Diagram(fname::String; CharDim=nothing)
         ind = findall(Struct_Fieldnames .== field)
         if length(ind) > 0
             Struct_Fields[ind[1]] = CreateInterpolationObject_PhaseDiagram(
-                data[:, i], Tvec, Pvec, siz, fields_units[i], CharDim)
+                data[:, i], Tvec, Pvec, siz, fields_units[i], CharDim
+            )
         end
     end
-  
+
     # Some fields have melt and solid part; we can reconstruct the total part as an arithmetic average:
     Struct_Fields = ComputeTotalField_withMeltFraction(
         :Rho, :meltRho, :rockRho, :meltFrac, Struct_Fields, Struct_Fieldnames
@@ -204,10 +205,10 @@ end
 
 # Internal routine that creates an interpolation object from a collumn of the data
 function CreateInterpolationObject_PhaseDiagram(
-    data_vec::Vector{Float64}, Tvec, Pvec, siz::Tuple{Int64,Int64}, units, CharDim)
-    
+    data_vec::Vector{Float64}, Tvec, Pvec, siz::Tuple{Int64,Int64}, units, CharDim
+)
     data_units = reshape(data_vec, siz) * units      # Create 2D array 
-    
+
     # Convert to Pa & K
     Pvec_Pa = Float64.(uconvert.(u"Pa", Pvec))
     Tvec_K = Float64.(uconvert.(u"K", Tvec))

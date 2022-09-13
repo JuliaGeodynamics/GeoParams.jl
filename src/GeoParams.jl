@@ -14,6 +14,7 @@ using Parameters        # helps setting default parameters in structures
 using Unitful           # Units
 using BibTeX            # references of creep laws
 using Requires          # To only add plotting routines if Plots is loaded
+using StaticArrays
 
 import Base: getindex
 
@@ -83,6 +84,8 @@ function PerpleX_LaMEM_Diagram end                                         # nec
 function param_info end
 export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
 
+include("Utils.jl")
+
 # note that this throws a "Method definition warning regarding superscript"; that is expected & safe 
 #  as we add a nicer way to create output of superscripts. I have been unable to get rid of this warning,
 #  as I am indeed redefining a method originally defined in Unitful
@@ -118,32 +121,50 @@ export compute_density,                                # computational routines
     PhaseDiagram_LookupTable,
     Read_LaMEM_Perple_X_Diagram
 
-# Creep laws
-using .MaterialParameters.CreepLaw
-export computeCreepLaw_EpsII,
-    computeCreepLaw_TauII,
-    CreepLawVariables,
+# Constitutive relationships laws
+using .MaterialParameters.ConstitutiveRelationships
+
+#       Calculation routines
+export dεII_dτII,
+    dτII_dεII,
+    compute_εII!,
+    compute_εII,
+    compute_τII!,
+    compute_τII,
+    strain_rate_circuit,
+    CorrectionFactor,
+    remove_tensor_correction,
+
+    #       Viscous creep laws
     LinearViscous,
     PowerlawViscous,
     DislocationCreep,
     SetDislocationCreep,
-    DislocationCreep_info,
     DiffusionCreep,
-    SetDiffusionCreep
+    SetDiffusionCreep,
+    DislocationCreep_info,
+    DiffusionCreep_info,
 
-# Plasticity        
-using .MaterialParameters.Plasticity
-export compute_yieldfunction,      # calculation routines
+    #       Elasticity
+    ConstantElasticity,
+    SetConstantElasticity,
+
+    #       Plasticity
+    compute_yieldfunction,
     compute_yieldfunction!,
-    param_info,
-    DruckerPrager
+    DruckerPrager,
 
-# Elasticity
-using .MaterialParameters.Elasticity
-export compute_elastic_shear_strainrate,       # calculation routines
-    compute_elastic_shear_strainrate!,
-    param_info,
-    ConstantElasticity                      # constant
+    #       Composite rheologies
+    strain_rate_circuit,
+    computeViscosity_τII,
+    computeViscosity_εII,
+    computeViscosity_τII!,
+    computeViscosity_εII!,
+    dεII_dτII,
+    local_iterations_εII,
+    computeViscosity,
+    InverseCreepLaw,
+    KelvinVoigt
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration
@@ -216,8 +237,8 @@ export compute_meltfraction,
 
 # Add plotting routines - only activated if the "Plots.jl" package is loaded 
 function __init__()
-    @require Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80" begin
-        print("Adding plotting routines of GeoParams")
+    @require GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a" begin
+        print("Adding plotting routines of GeoParams through GLMakie")
         @eval include("./Plotting.jl")
     end
 end
@@ -225,8 +246,9 @@ end
 #Set functions aliases using @use
 include("aliases.jl")
 
-# export ntuple_idx()
-include("Utils.jl")
 export ntuple_idx
+
+include("TensorAlgebra/TensorAlgebra.jl")
+export second_invariant, second_invariant_staggered
 
 end # module

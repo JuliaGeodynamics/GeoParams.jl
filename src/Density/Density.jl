@@ -12,7 +12,6 @@ using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 using ..MaterialParameters: No_MaterialParam, MaterialParamsInfo
 import Base.show, GeoParams.param_info
 
-include("../Utils.jl")
 include("../Computations.jl")
 
 abstract type AbstractDensity{T} <: AbstractMaterialParam end
@@ -104,7 +103,7 @@ function param_info(s::PT_Density)  # info
     )
 end
 
-# Calculation routine in case units are provided
+# Calculation routine 
 function (ρ::PT_Density)(; P::Number, T::Number, kwargs...)
     if T isa Quantity
         @unpack_units ρ0, α, β, P0, T0 = ρ

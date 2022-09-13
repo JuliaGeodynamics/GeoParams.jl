@@ -1,4 +1,4 @@
-# Various helper functions (mosty for internal use)
+# Various helper functions (mostly for internal use)
 
 # Finds index in an allocation-free manner
 @generated function find_ind(x::NTuple{N,Integer}, k::Integer) where {N}
