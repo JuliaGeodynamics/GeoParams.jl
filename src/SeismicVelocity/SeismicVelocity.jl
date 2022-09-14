@@ -622,7 +622,7 @@ function melt_correction_Takei(
     if !isnan(f(0.5))
         R = zero(Kb_L)
         if (sign(f(eps)) != sign(f(1.0 - eps)))
-            R = find_zero(f, (eps, 1.0 - eps), Bisection())
+            R = find_zero(f, (eps, 1.0 - eps))
         else
             # if bisection fails, try fzero 
             R = fzero(f, 0.5)
