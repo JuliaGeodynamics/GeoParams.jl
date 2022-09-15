@@ -9,8 +9,8 @@ import Base: (:)
     end
 end
 
-@inline function (:)(A::NTuple{4,T}, B::NTuple{4,T}) where {T}
-    return (A[1] * B[1] + A[2] * B[2]) + T(2) * (A[3] * B[3] + A[4] * B[4])
+@inline function (:)(A::NTuple{3,T}, B::NTuple{3,T}) where {T}
+    return (A[1] * B[1] + A[2] * B[2]) + T(2) * (A[3] * B[3])
 end
 @inline function (:)(A::NTuple{6,T}, B::NTuple{6,T}) where {T}
     return (A[1] * B[1] + A[2] * B[2] + A[3] * B[3]) +
