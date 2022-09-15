@@ -1,3 +1,72 @@
+# This holds structures and computational routines for compositional rheologies
+
+
+export CompositeRheology, Parallel
+
+
+"""
+    Structure that holds composite rheologies (e.g., visco-elasto-viscoplastic),
+    but also indicates (in the name) whether we need to perform non-linear iterations.
+"""
+struct CompositeRheology{T, τ_it, P_it, λ_it} <: AbstractComposite
+    rheology_chain::T
+end
+
+# Defines tuples of composite rheologies, while also checking which type of iterations need to be performed
+function CompositeRheology(v::T) where T
+    τ_it = false;
+    P_it = false;
+    λ_it = false;
+
+    return CompositeRheology{T,τ_it, P_it, λ_it}(v)
+end
+
+# Print info 
+function show(io::IO, g::AbstractComposite)
+    rheology = g.rheology_chain;
+    println(io,"Composite rheology:   ")
+    for i in eachindex(g.rheology_chain)
+        rheology = g.rheology_chain[i]
+
+        if isa(rheology,Parallel)
+            rheo_par = rheology.elements
+            print(" {")
+            for j in eachindex(rheo_par)
+                print_symbol_rheology(rheo_par[j])
+                print(" ; ")
+            end
+            print("} ")
+        else 
+            print_symbol_rheology(rheology)
+        end
+    end
+ 
+    return nothing
+end
+
+function print_symbol_rheology(rheology)
+    if isa(rheology,     AbstractCreepLaw)
+        print("--⟦ ̲̅∣ ̶̲̅ ̶̲̅--")
+    elseif isa(rheology, AbstractPlasticity)
+        print("-⏤▬▬▬__⏤-")                
+    elseif  isa(rheology,AbstractElasticity)
+        print("--/\\/\\/--")
+    else 
+        print("---------")
+    end
+    return nothing
+end
+
+
+"""
+    Put rheological elements in parallel 
+"""
+struct Parallel{T}
+    elements::T
+end
+Parallel(v...) = Parallel{typeof( (v...,))}((v...,))
+
+
 struct InverseCreepLaw{N} <: AbstractConstitutiveLaw{Float64}
     v::NTuple{N,AbstractConstitutiveLaw}
 

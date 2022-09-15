@@ -136,6 +136,7 @@ export dεII_dτII,
     remove_tensor_correction,
 
     #       Viscous creep laws
+    AbstractCreepLaw,
     LinearViscous,
     PowerlawViscous,
     DislocationCreep,
@@ -164,7 +165,11 @@ export dεII_dτII,
     local_iterations_εII,
     computeViscosity,
     InverseCreepLaw,
-    KelvinVoigt
+    KelvinVoigt,
+    CompositeRheology,
+    Parallel
+    
+    
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration

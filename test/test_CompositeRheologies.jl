@@ -10,6 +10,7 @@ using GeoParams
     args = (T=900.0, d=100e-6)
     εII = 1e-15
 
+    
     τII = compute_τII(v, εII, args)
     @test τII ≈ 8.892678156850036e8
     η = τII / (2εII)
@@ -38,7 +39,24 @@ using GeoParams
         push!(τII_vec, τII)
         push!(t, i * args.dt)
     end
-    SecYear = 3600 * 24 * 365.25
+   # SecYear = 3600 * 24 * 365.25
     @test sum(τII_vec) ≈ 1.6950291132832108e10
     # @test sum(τII_vec) ≈ 7.840307351918251e10 # this was the original number
+
+
+  
+    # put the different rheological elements in a composite rheology structure
+    pp0 = LinearViscous()
+    pp1 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
+    pp2 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
+    
+    pp3 = ConstantElasticity()
+    pp4 = DruckerPrager()
+
+    a = CompositeRheology( (pp0, pp1, pp2, pp3, Parallel(pp4, pp0) ))   
+
+
+
+
+
 end

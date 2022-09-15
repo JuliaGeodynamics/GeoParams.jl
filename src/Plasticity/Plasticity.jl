@@ -4,7 +4,8 @@ abstract type AbstractPlasticity{T} <: AbstractConstitutiveLaw{T} end
 
 export compute_yieldfunction,      # calculation routines
     compute_yieldfunction!,
-    DruckerPrager               # constant
+    DruckerPrager,               # constant
+    AbstractPlasticity
 
 # DruckerPrager  -------------------------------------------------------
 """

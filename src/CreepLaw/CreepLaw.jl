@@ -9,7 +9,7 @@
 
 abstract type AbstractCreepLaw{T} <: AbstractConstitutiveLaw{T} end
 
-export LinearViscous, PowerlawViscous, CorrectionFactor, strain_rate_circuit
+export LinearViscous, PowerlawViscous, CorrectionFactor, AbstractCreepLaw
 
 # This computes correction factors to go from experimental data to tensor format
 function CorrectionFactor(a::AbstractCreepLaw{_T}) where {_T}

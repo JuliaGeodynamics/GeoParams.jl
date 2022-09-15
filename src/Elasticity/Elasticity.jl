@@ -11,7 +11,8 @@ export compute_εII,            # calculation routines
     dτII_dεII,
     param_info,
     ConstantElasticity,     # constant
-    SetConstantElasticity   # helper function
+    SetConstantElasticity,  # helper function
+    AbstractElasticity
 
 # ConstantElasticity  -------------------------------------------------------
 

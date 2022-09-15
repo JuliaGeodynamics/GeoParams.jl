@@ -15,6 +15,7 @@ import Base.show
 const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 
 abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
+abstract type AbstractComposite <: AbstractMaterialParam end
 
 export param_info,
     dεII_dτII,
@@ -31,14 +32,15 @@ export param_info,
     computeViscosity,
     strain_rate_circuit,
     InverseCreepLaw,
-    KelvinVoigt
+    KelvinVoigt,
+    Parallel
 
 include("Computations.jl")
 
 include("CreepLaw/CreepLaw.jl")              # viscous Creeplaws
 include("Elasticity/Elasticity.jl")          # elasticity
 include("Plasticity/Plasticity.jl")          # plasticity
-include("CreepLaw/Viscosity.jl")             # composite creeplaws
+include("CompositeRheologies.jl")            # composite constitutive relationships
 
 # add methods programatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity)
@@ -61,6 +63,7 @@ for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElas
             dτII_dεII(a::$(myType), EpsII, args) = dτII_dεII(a, EpsII; args...)
             dεII_dτII(a::$(myType), TauII, args) = dεII_dτII(a, TauII; args...)
         end
+
     end
 end
 
