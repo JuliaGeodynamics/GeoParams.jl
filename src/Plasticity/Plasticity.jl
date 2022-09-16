@@ -142,9 +142,21 @@ function ∂Q∂τ(
 end
 
 function ∂Q∂τ(
+    Q::PlasticPotential{F1,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing}, τij::SVector{6,T}
+) where {T,F1}
+    return ∂Q∂τij(Q, τij)
+end
+
+function ∂Q∂τ(
     Q::PlasticPotential{F1,F2,F3,F4,F5,F6,F7}, τij::SVector{3,T}
 ) where {T,F1,F2,F3,F4,F5,F6,F7}
     return SVector{3,T}(Q.∂Q∂τxx(τij), Q.∂Q∂τyy(τij), Q.∂Q∂τxy(τij))
+end
+
+function ∂Q∂τ(
+    Q::PlasticPotential{F1,F2,F3,F4,F5,F6,F7}, τij::SVector{6,T}
+) where {T,F1,F2,F3,F4,F5,F6,F7}
+    return SVector{6,T}(Q.∂Q∂τxx(τij), Q.∂Q∂τyy(τij), Q.∂Q∂τzz(τij), Q.∂Q∂τyz(τij), Q.∂Q∂τxz(τij), Q.∂Q∂τxy(τij))
 end
 
 # Wrapper for NTuple inputs (NTuples not supported by ForwardDiff.jl, but @SVectors are)
