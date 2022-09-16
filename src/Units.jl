@@ -566,9 +566,6 @@ function nondimensionalize(param::GeoUnit{T,U}, g::GeoUnits{TYPE}) where {T,U,TY
     return param_ND
 end
 
-# in case the parameter is already non-dimensional:
-nondimensionalize(param::String, g::GeoUnits{TYPE}) where {TYPE} = param
-
 # in case it is a unitful quantity
 function nondimensionalize(
     param::Union{Unitful.Quantity{T,K,M},AbstractArray{<:Quantity{T,K,M}}},
@@ -611,47 +608,47 @@ end
 Non-dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
 
 """
-# function nondimensionalize(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE}
-#     for param in fieldnames(typeof(MatParam))
-#         if isa(getfield(MatParam, param), GeoUnit)
-#             z = getfield(MatParam, param)
-#             typeof(z).types[1] <: Function && continue
-#             typeof(z).types[1] isa Nothing && continue
+function nondimensionalize(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE}
+    for param in fieldnames(typeof(MatParam))
+        if isa(getfield(MatParam, param), GeoUnit)
+            z = getfield(MatParam, param)
+            typeof(z).types[1] <: Function && continue
+            typeof(z).types[1] isa Nothing && continue
             
-#             # non-dimensionalize:
-#             z = nondimensionalize(z, g)
+            # non-dimensionalize:
+            z = nondimensionalize(z, g)
 
-#             # Replace field (using Setfield package):
-#             MatParam = set(MatParam, Setfield.PropertyLens{param}(), z)
-#         elseif isa(getfield(MatParam, param), AbstractMaterialParam)
-#             # The field contains another AbstractMaterialParam
-#             z = getfield(MatParam, param)
-#             typeof(z).types[1] <: Function && continue
-#             typeof(z).types[1] isa Nothing && continue
+            # Replace field (using Setfield package):
+            MatParam = set(MatParam, Setfield.PropertyLens{param}(), z)
+        elseif isa(getfield(MatParam, param), AbstractMaterialParam)
+            # The field contains another AbstractMaterialParam
+            z = getfield(MatParam, param)
+            typeof(z).types[1] <: Function && continue
+            typeof(z).types[1] isa Nothing && continue
              
-#             z = nondimensionalize(z, g)
-#             MatParam = set(MatParam, Setfield.PropertyLens{param}(), z)
-#         end
-#     end
-#     return MatParam
-# end
-_nondimensionalize(z::GeoUnit, g) = nondimensionalize(z, g)
-_nondimensionalize(z::AbstractMaterialParam, g) = nondimensionalize(z, g)
-_nondimensionalize(z::T, g) where T = z
-
-function nondimensionalize(MatParam, fields::NTuple{N, Symbol}, g::GeoUnits{TYPE}) where  {TYPE, N}
-    ntuple(Val(N)) do i
-        _nondimensionalize(getfield(MatParam, fields[i]), g)
+            z = nondimensionalize(z, g)
+            MatParam = set(MatParam, Setfield.PropertyLens{param}(), z)
+        end
     end
+    return MatParam
 end
+# _nondimensionalize(z::GeoUnit, g) = nondimensionalize(z, g)
+# _nondimensionalize(z::AbstractMaterialParam, g) = nondimensionalize(z, g)
+# _nondimensionalize(z::T, g) where T = z
 
-function nondimensionalize(MatParam::T, g::GeoUnits{TYPE}) where {TYPE, T<:AbstractMaterialParam}
-    fields = fieldnames(T)
-    fields_nd_tuple = nondimensionalize(MatParam, fields, g)
-    args = (; zip(fields, fields_nd_tuple)...)
-    MatParam_nd = Base.typename(T).wrapper(;args...)
-    return MatParam_nd
-end
+# function nondimensionalize(MatParam, fields::NTuple{N, Symbol}, g::GeoUnits{TYPE}) where  {TYPE, N}
+#     ntuple(Val(N)) do i
+#         _nondimensionalize(getfield(MatParam, fields[i]), g)
+#     end
+# end
+
+# function nondimensionalize(MatParam::T, g::GeoUnits{TYPE}) where {TYPE, T<:AbstractMaterialParam}
+#     fields = fieldnames(T)
+#     fields_nd_tuple = nondimensionalize(MatParam, fields, g)
+#     args = (; zip(fields, fields_nd_tuple)...)
+#     MatParam_nd = Base.typename(T).wrapper(;args...)
+#     return MatParam_nd
+# end
 
 """
     nondimensionalize(phase_mat::MaterialParams, g::GeoUnits{TYPE})
