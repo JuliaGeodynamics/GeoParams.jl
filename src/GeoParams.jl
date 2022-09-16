@@ -156,6 +156,7 @@ export dεII_dτII,
     compute_yieldfunction,
     compute_yieldfunction!,
     DruckerPrager,
+    PlasticFlow,
     ∂Q∂τ
 
     #       Composite rheologies
