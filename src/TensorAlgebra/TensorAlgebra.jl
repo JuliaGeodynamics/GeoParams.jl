@@ -1,7 +1,7 @@
 ## MAPPING OF DEVIATORIC STRAIN RATE TENSOR TO DEVIATORIC STRESS TENSOR
 
 # local methods 
-function strain2stress!(τ::AbstractMatrix{T}, ε::AbstractMatrix{T}, η::Number) where T
+function strain2stress!(τ::Matrix{T}, ε::Matrix{T}, η::Number) where T
     for i in eachindex(τ)
         @inbounds τ[i] = ε[i] * η * T(2)
     end
@@ -16,6 +16,19 @@ function strain2stress!(τ::CellArray{<:SArray, A,B,T}, ε::CellArray{<:SArray, 
         @inbounds τ[i] = strain2stress(ε[i], η[i])
     end
 end
+
+function strain2stress!(τ::Vector{T}, ε::Vector{T}, η::Matrix{T}) where T
+    for i in axes(η, 1)
+        v = zero(T)
+        for j in axes(η, 2)
+            @inbounds v += ε[j] * η[i,j] * T(2)
+        end
+        @inbounds τ[i] = v
+    end
+end
+
+# τ,ε,η = rand(3), rand(3), rand(3,3)
+# τ,ε,η = rand(6), rand(6), rand(6,6)
 
 # # Numerics
 # nx, ny = 16, 16
@@ -46,17 +59,23 @@ import Base: (:)
     end
 end
 
-@inline function (:)(A::NTuple{4,T}, B::NTuple{4,T}) where {T}
-    return (A[1] * B[1] + A[2] * B[2]) + T(2) * (A[3] * B[3] + A[4] * B[4])
-end
-@inline function (:)(A::NTuple{6,T}, B::NTuple{6,T}) where {T}
-    return (A[1] * B[1] + A[2] * B[2] + A[3] * B[3]) +
-           T(2) * (A[4] * B[4] + A[5] * B[5] + A[6] * B[6])
+for t in (:NTuple, :SVector)
+    @eval begin
+        @inline function (:)(A::$(t){3,T}, B::$(t){3,T}) where {T}
+            return (A[1] * B[1] + A[2] * B[2]) + T(2) * (A[3] * B[3])
+        end
+
+        @inline function (:)(A::$(t){6,T}, B::$(t){6,T}) where {T}
+            return (A[1] * B[1] + A[2] * B[2] + A[3] * B[3]) +
+                T(2) * (A[4] * B[4] + A[5] * B[5] + A[6] * B[6])
+        end 
+        
+        second_invariant(A::$(t){N,T}) where {N,T} = √(0.5 * (A:A))
+    end
 end
 @inline (:)(A::SMatrix{M,M,T,N}, B::SMatrix{M,M,T,N}) where {M,N,T} = sum(A .* B)
 
-second_invariant(A::NTuple{N,T}) where {N,T} = √((0.5 * A):A)
-second_invariant(A::SMatrix) = √((0.5 * A):A)
+second_invariant(A::SMatrix) = √(0.5 * (A:A))
 second_invariant(A::Matrix{T}) where {T} = √(0.5 * sum(Ai * Ai for Ai in A))
 
 """
@@ -121,3 +140,4 @@ function second_invariant_staggered(
         Aij[3]^2,
     )
 end
+
