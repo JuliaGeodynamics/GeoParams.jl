@@ -8,9 +8,12 @@ using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam
 import GeoParams: param_info, fastpow
+import GeoParams: second_invariant, second_invariant_staggered
 using BibTeX
 using ..MaterialParameters: MaterialParamsInfo
 import Base.show
+using ForwardDiff
+using StaticArrays
 
 const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 
