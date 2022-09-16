@@ -1,11 +1,12 @@
 # If you want to add a new method here, feel free to do so. 
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 abstract type AbstractPlasticity{T} <: AbstractConstitutiveLaw{T} end
+abstract type AbstractPlasticPotential{Float64}  <: AbstractConstitutiveLaw{Float64} end
 
 export compute_yieldfunction,      # calculation routines
     compute_yieldfunction!,
     DruckerPrager,               # constant
-    PlasticFlow,
+    PlasticPotential,
     ∂Q∂τ
 
 # DruckerPrager  -------------------------------------------------------
@@ -42,7 +43,7 @@ where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the
 end
 DruckerPrager(args...) = DruckerPrager(convert.(GeoUnit, args[1:3])..., args[4:end]...)
 
-struct PlasticFlow{F1,F2,F3,F4,F5,F6,F7}
+struct PlasticPotential{F1,F2,F3,F4,F5,F6,F7} <: AbstractPlasticPotential{Float64}
     Q::F1 # Plastic potential
     ∂Q∂τxx::F2
     ∂Q∂τyy::F3
@@ -51,7 +52,7 @@ struct PlasticFlow{F1,F2,F3,F4,F5,F6,F7}
     ∂Q∂τxz::F6
     ∂Q∂τxy::F7
 
-    function PlasticFlow(;
+    function PlasticPotential(;
         Q::F1=second_invariant,
         ∂Q∂τxx::F2=(τij) -> 0.5 * τij[1] / second_invariant(τij),
         ∂Q∂τyy::F3=(τij) -> 0.5 * τij[2] / second_invariant(τij),
@@ -65,47 +66,6 @@ struct PlasticFlow{F1,F2,F3,F4,F5,F6,F7}
         )
     end
 end
-
-# struct DruckerPrager{T,F1,F2,F3,F4,F5,F6,F7,U,U1} <: AbstractPlasticity{T}
-#     ϕ::GeoUnit{T,U} # Friction angle
-#     Ψ::GeoUnit{T,U} # Dilation angle
-#     C::GeoUnit{T,U1} # Cohesion
-#     Q::GeoUnit{F1, typeof(NoUnits)} # Plastic potential
-#     ∂Q∂τxx::GeoUnit{F2, typeof(NoUnits)}
-#     ∂Q∂τyy::GeoUnit{F3, typeof(NoUnits)}
-#     ∂Q∂τzz::GeoUnit{F4, typeof(NoUnits)}
-#     ∂Q∂τyz::GeoUnit{F5, typeof(NoUnits)}
-#     ∂Q∂τxz::GeoUnit{F6, typeof(NoUnits)}
-#     ∂Q∂τxy::GeoUnit{F7, typeof(NoUnits)}
-
-#     function DruckerPrager(;
-#         ϕ::A=30NoUnits, # Friction angle
-#         Ψ::A=0NoUnits, # Dilation angle
-#         C::B=10e6Pa, # Cohesion
-#         Q::F1=second_invariant,
-#         ∂Q∂τxx::F2=(τij) -> 0.5 * τij[1] / second_invariant(τij),
-#         ∂Q∂τyy::F3=(τij) -> 0.5 * τij[2] / second_invariant(τij),
-#         ∂Q∂τzz::F4=nothing,
-#         ∂Q∂τyz::F5=nothing,
-#         ∂Q∂τxz::F6=nothing,
-#         ∂Q∂τxy::F7=(τij) -> τij[3] / second_invariant(τij),
-#     ) where {A,B,F1,F2,F3,F4,F5,F6,F7}
-#         ϕU = ϕ isa GeoUnit ? ϕ : convert(GeoUnit, ϕ)
-#         ΨU = Ψ isa GeoUnit ? Ψ : convert(GeoUnit, Ψ)
-#         CU = C isa GeoUnit ? C : convert(GeoUnit, C)
-
-#         funs = (Q, ∂Q∂τxx, ∂Q∂τyy, ∂Q∂τzz, ∂Q∂τyz, ∂Q∂τxz, ∂Q∂τxy)
-#         funsU = ntuple(Val(7)) do i 
-#             GeoUnit(funs[i])
-#         end
-
-#         t1 = typeof(ϕU)
-#         t2 = typeof(CU)
-#         return new{t1.types[1],F1,F2,F3,F4,F5,F6,F7,t1.types[2],t2.types[2],}(
-#             ϕU, ΨU, CU, funsU...
-#         )
-#     end
-# end
 
 function param_info(s::DruckerPrager) # info about the struct
     return MaterialParamsInfo(;
@@ -169,26 +129,26 @@ end
 
 # Plastic Potential derivatives
 
-∂Q∂τij(Q::PlasticFlow, τij::SVector{N, T}) where {N, T} = ForwardDiff.gradient(Q.Q, τij)
-∂Q∂τij(Q::PlasticFlow, τij::Vector{T}) where {T} = ForwardDiff.gradient(Q.Q, τij)
-function ∂Q∂τij(Q::PlasticFlow, τij::NTuple{N,T}) where {N,T}
+∂Q∂τij(Q::PlasticPotential, τij::SVector{N, T}) where {N, T} = ForwardDiff.gradient(Q.Q, τij)
+∂Q∂τij(Q::PlasticPotential, τij::Vector{T}) where {T} = ForwardDiff.gradient(Q.Q, τij)
+function ∂Q∂τij(Q::PlasticPotential, τij::NTuple{N,T}) where {N,T}
     return ∂Q∂τij(Q, SVector{N}(τij...))
 end
 
 function ∂Q∂τ(
-    Q::PlasticFlow{F1,Nothing,Nothing,F4,F5,F6,Nothing}, τij::SVector{3,T}
+    Q::PlasticPotential{F1,Nothing,Nothing,F4,F5,F6,Nothing}, τij::SVector{3,T}
 ) where {T,F1,F4,F5,F6}
     return ∂Q∂τij(Q, τij)
 end
 
 function ∂Q∂τ(
-    Q::PlasticFlow{F1,F2,F3,F4,F5,F6,F7}, τij::SVector{3,T}
+    Q::PlasticPotential{F1,F2,F3,F4,F5,F6,F7}, τij::SVector{3,T}
 ) where {T,F1,F2,F3,F4,F5,F6,F7}
     return SVector{3,T}(Q.∂Q∂τxx(τij), Q.∂Q∂τyy(τij), Q.∂Q∂τxy(τij))
 end
 
 # Wrapper for NTuple inputs (NTuples not supported by ForwardDiff.jl, but @SVectors are)
-function ∂Q∂τ(Q::PlasticFlow, τij::NTuple{N,T}) where {N,T} 
+function ∂Q∂τ(Q::PlasticPotential, τij::NTuple{N,T}) where {N,T} 
     tmp = ∂Q∂τij(Q, SVector{N,T}(τij))
     return ntuple(i->tmp[i], Val(N))
 end
@@ -218,3 +178,5 @@ end
 
 compute_yieldfunction(args...) = compute_param(compute_yieldfunction, args...)
 compute_yieldfunction!(args...) = compute_param!(compute_yieldfunction, args...)
+compute_plasticpotential(args...) = compute_param(∂Q∂τ, args...)
+∂Q∂τ(args...) = compute_param(∂Q∂τ, args...)
