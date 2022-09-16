@@ -1,7 +1,7 @@
 # This holds structures and computational routines for compositional rheologies
 
 
-export CompositeRheology, Parallel
+export CompositeRheology, Parallel, create_rheology_string
 
 
 """
@@ -18,44 +18,113 @@ function CompositeRheology(v::T) where T
     P_it = false;
     λ_it = false;
 
-    return CompositeRheology{T,τ_it, P_it, λ_it}(v)
+    return CompositeRheology{typeof((v,)),τ_it, P_it, λ_it}( (v,))
 end
 
 # Print info 
 function show(io::IO, g::AbstractComposite)
-    rheology = g.rheology_chain;
+   # rheology = g.rheology_chain;
     println(io,"Composite rheology:   ")
-    for i in eachindex(g.rheology_chain)
-        rheology = g.rheology_chain[i]
 
-        if isa(rheology,Parallel)
-            rheo_par = rheology.elements
-            print(" {")
-            for j in eachindex(rheo_par)
-                print_symbol_rheology(rheo_par[j])
-                print(" ; ")
-            end
-            print("} ")
-        else 
-            print_symbol_rheology(rheology)
-        end
-    end
+    # Compose a string with rheological elements, so we have an overview in the REPL
+    str = create_rheology_string("",g)
+   # @show str
+    
+    println(io,str)
  
     return nothing
 end
 
-function print_symbol_rheology(rheology)
-    if isa(rheology,     AbstractCreepLaw)
-        print("--⟦ ̲̅∣ ̶̲̅ ̶̲̅--")
-    elseif isa(rheology, AbstractPlasticity)
-        print("-⏤▬▬▬__⏤-")                
-    elseif  isa(rheology,AbstractElasticity)
-        print("--/\\/\\/--")
-    else 
-        print("---------")
-    end
+
+function show(io::IO, g::Parallel)
+    rheology = g.elements;
+    println(io,"Parallel:   ")
+
+    # Compose a string with rheological elements, so we have an overview in the REPL
+    str = create_rheology_string("",g)
+    println(io,str)
+ 
     return nothing
 end
+
+
+
+function create_rheology_string(str, rheo_Comp::CompositeRheology)
+ 
+    rheology = rheo_Comp.rheology_chain
+    for i in eachindex(rheology)
+        str = create_rheology_string(str,rheology[i])
+    end
+
+    return str
+end
+
+function create_rheology_string(str, rheo_Parallel::Parallel)
+    rheology = rheo_Parallel.elements
+    str = str*"{"
+    for i in eachindex(rheology)
+        str = create_rheology_string(str,rheology[i])
+        str = str*";"
+    end
+    str = str*"}"
+
+    return str
+end
+
+function create_rheology_string(str, rheology::Tuple)
+    for i in eachindex(rheology)
+        str = create_rheology_string(str,rheology[i])
+    end
+    return str
+end
+
+# Print the individual rheological elements
+create_rheology_string(str, rheo_Parallel::AbstractCreepLaw)   = str = str*"--⟦▪̲̅▫̲̅▫̲̅▫̲̅--"
+create_rheology_string(str, rheo_Parallel::AbstractPlasticity) = str = str*"--▬▬▬__--"    
+create_rheology_string(str, rheo_Parallel::AbstractElasticity) = str = str*"--/\\/\\/--"
+
+
+function pretty_print_rheology_string(str, start="")
+    # This takes the rheology string & creates a string the prints it in a nicer looking manner
+
+    # WORK IN PROGRESS! 
+
+    num_ParallelBlocks = length(findall("{", str))      
+    num_lines          = length(findall(";", str))
+
+    # We need 
+    str_vec = split(str,";");
+    for i=2:length(str_vec)
+        str_line = str_vec[i]
+        if occursin("}", str_line)
+            str_split = split(str_line,"}")
+            str_line = str_split[1]
+            str_vec[i-1] *= "}"*str_split[2]
+            str_vec[i]  = "{"*str_line*"}"
+        end
+
+    end
+   
+end
+
+# Center strings
+cpad(s, n::Integer, p=" ")  = rpad(lpad(s,div(n+strwidth(s),2),p),n,p)
+
+#=
+function print_symbol_rheology(str,rheology)
+    if isa(rheology,     AbstractCreepLaw)
+        str = str*"--⟦▪̲̅▫̲̅▫̲̅▫̲̅--"
+    elseif isa(rheology, AbstractPlasticity)
+        str = str*"--▬▬▬__--"               
+    elseif  isa(rheology,AbstractElasticity)
+        str = str*"--/\\/\\/--"
+    else 
+        str = str*"         "
+    end
+    return str
+end
+
+=#
 
 
 """

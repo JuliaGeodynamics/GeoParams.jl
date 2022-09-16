@@ -53,8 +53,11 @@ using GeoParams
     pp3 = ConstantElasticity()
     pp4 = DruckerPrager()
 
-    a = CompositeRheology( (pp0, pp1, pp2, pp3, Parallel(pp4, pp0) ))   
+    #a = CompositeRheology( Parallel( (pp0, pp1, pp2, pp3, Parallel(pp4, pp0) ), pp0) )   
 
+    a = CompositeRheology( (pp0, pp1, pp2, pp3, Parallel(pp4, pp0, pp1),pp1, Parallel(pp4, pp0), pp1,pp2 ))   
+
+    b = CompositeRheology( (pp0, pp1, pp2, pp3, Parallel(pp4, pp3, (pp1, pp0, pp2) ), pp1,pp2) )   
 
 
 

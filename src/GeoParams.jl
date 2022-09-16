@@ -167,7 +167,8 @@ export dεII_dτII,
     InverseCreepLaw,
     KelvinVoigt,
     CompositeRheology,
-    Parallel
+    Parallel,
+    create_rheology_string
     
     
 
