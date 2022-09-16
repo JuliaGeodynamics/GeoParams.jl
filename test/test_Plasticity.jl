@@ -90,7 +90,6 @@ using StaticArrays
     fxy(τij) = τij[3]/second_invariant(τij)
     solution2D = [fxx(τij), fyy(τij), fxy(τij)]
 
-    
     p1 = PlasticPotential(; ∂Q∂τxx=fxx, ∂Q∂τyy=fyy, ∂Q∂τxy=fxy)
     p2 = PlasticPotential(; ∂Q∂τxx=nothing, ∂Q∂τyy=nothing, ∂Q∂τxy=nothing)
 
@@ -104,7 +103,7 @@ using StaticArrays
     τij_tuple = (1.0, 2.0, 3.0)
     out3 = ∂Q∂τ(p1, τij)
     out4 = ∂Q∂τ(p2, τij)
-    @test out3 == out4 == Tuple(solution)
+    @test out3 == out4 == Tuple(solution2D)
 
     ## 3D
     τij = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
