@@ -89,8 +89,8 @@ using StaticArrays
     τij = (1.0, 2.0, 3.0)
     solution = [τij[1]/second_invariant(τij)/2, τij[2]/second_invariant(τij)/2, τij[3]/second_invariant(τij)]
     
-    p1 = PlasticFlow(; ∂Q∂τxx=fxx, ∂Q∂τyy=fyy, ∂Q∂τxy=fxy)
-    p2 = PlasticFlow()
+    p1 = PlasticPotential(; ∂Q∂τxx=fxx, ∂Q∂τyy=fyy, ∂Q∂τxy=fxy)
+    p2 = PlasticPotential()
 
     # using StaticArrays
     τij_static = @SVector [1.0, 2.0, 3.0]

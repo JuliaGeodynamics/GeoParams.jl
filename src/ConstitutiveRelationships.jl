@@ -44,8 +44,8 @@ include("Plasticity/Plasticity.jl")          # plasticity
 include("CreepLaw/Viscosity.jl")             # composite creeplaws
 
 # These are functions, can't be (non)dimensionalized
-dimensionalize(MatParam::PlasticFlow, g::GeoUnits{TYPE}) where {TYPE} = MatParam
-nondimensionalize(MatParam::PlasticFlow, g::GeoUnits{TYPE}) where {TYPE} = MatParam
+dimensionalize(MatParam::PlasticPotential, g::GeoUnits{TYPE}) where {TYPE} = MatParam
+nondimensionalize(MatParam::PlasticPotential, g::GeoUnits{TYPE}) where {TYPE} = MatParam
 
 # add methods programatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity)
