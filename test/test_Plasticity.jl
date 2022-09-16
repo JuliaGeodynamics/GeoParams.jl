@@ -83,26 +83,53 @@ using StaticArrays
     # @test num_alloc <= 32
 
     # Test plastic potential derivatives
+    ## 2D
+    τij = (1.0, 2.0, 3.0)
     fxx(τij) = 0.5 * τij[1]/second_invariant(τij)
     fyy(τij) = 0.5 * τij[2]/second_invariant(τij)
     fxy(τij) = τij[3]/second_invariant(τij)
-    τij = (1.0, 2.0, 3.0)
-    solution = [τij[1]/second_invariant(τij)/2, τij[2]/second_invariant(τij)/2, τij[3]/second_invariant(τij)]
+    solution2D = [fxx(τij), fyy(τij), fxy(τij)]
+
     
     p1 = PlasticPotential(; ∂Q∂τxx=fxx, ∂Q∂τyy=fyy, ∂Q∂τxy=fxy)
-    p2 = PlasticPotential()
+    p2 = PlasticPotential(; ∂Q∂τxx=nothing, ∂Q∂τyy=nothing, ∂Q∂τxy=nothing)
 
     # using StaticArrays
     τij_static = @SVector [1.0, 2.0, 3.0]
     out1 = ∂Q∂τ(p1, τij_static)
     out2 = ∂Q∂τ(p2, τij_static)
-    @test out1 == out2 == solution
+    @test out1 == out2 == solution2D
 
     # using tuples
     τij_tuple = (1.0, 2.0, 3.0)
     out3 = ∂Q∂τ(p1, τij)
     out4 = ∂Q∂τ(p2, τij)
     @test out3 == out4 == Tuple(solution)
+
+    ## 3D
+    τij = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
+    gxx(τij) = 0.5 * τij[1]/second_invariant(τij)
+    gyy(τij) = 0.5 * τij[2]/second_invariant(τij)
+    gzz(τij) = 0.5 * τij[3]/second_invariant(τij)
+    gyz(τij) = τij[4]/second_invariant(τij)
+    gxz(τij) = τij[5]/second_invariant(τij)
+    gxy(τij) = τij[6]/second_invariant(τij)
+    solution3D = [gxx(τij), gyy(τij), gzz(τij), gyz(τij), gxz(τij), gxy(τij)]
+
+    p1 = PlasticPotential(; ∂Q∂τxx=gxx, ∂Q∂τyy=gyy, ∂Q∂τzz=gzz, ∂Q∂τyz=gyz, ∂Q∂τxz=gxz, ∂Q∂τxy=gxy)
+    p2 = PlasticPotential(; ∂Q∂τxx=nothing, ∂Q∂τyy=nothing, ∂Q∂τzz=nothing, ∂Q∂τyz=nothing, ∂Q∂τxz=nothing, ∂Q∂τxy=nothing)
+
+    # using StaticArrays
+    τij_static = @SVector [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+    out1 = ∂Q∂τ(p1, τij_static)
+    out2 = ∂Q∂τ(p2, τij_static)
+    @test out1 == out2 == solution3D
+
+    # using tuples
+    τij_tuple = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
+    out3 = ∂Q∂τ(p1, τij)
+    out4 = ∂Q∂τ(p2, τij)
+    @test out3 == out4 == Tuple(solution3D)
     # -----------------------
 
 end
