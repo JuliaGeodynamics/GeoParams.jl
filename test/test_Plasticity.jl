@@ -1,5 +1,6 @@
 using Test
 using GeoParams
+using StaticArrays
 
 @testset "Plasticity.jl" begin
 
@@ -81,6 +82,27 @@ using GeoParams
     @test maximum(F[1, 1, :]) ≈ 839745.962155614
     # @test num_alloc <= 32
 
+    # Test plastic potential derivatives
+    fxx(τij) = 0.5 * τij[1]/second_invariant(τij)
+    fyy(τij) = 0.5 * τij[2]/second_invariant(τij)
+    fxy(τij) = τij[3]/second_invariant(τij)
+    τij = (1.0, 2.0, 3.0)
+    solution = [τij[1]/second_invariant(τij)/2, τij[2]/second_invariant(τij)/2, τij[3]/second_invariant(τij)]
+    
+    p1 = DruckerPrager(; ∂Q∂τxx=fxx, ∂Q∂τyy=fyy, ∂Q∂τxy=fxy)
+    p2 = DruckerPrager()
+
+    # using StaticArrays
+    τij_static = @SVector [1.0, 2.0, 3.0]
+    out1 = ∂Q∂τ(p1, τij_static)
+    out2 = ∂Q∂τ(p2, τij_static)
+    @test out1 == out2 == solution
+
+    # using tuples
+    τij_tuple = (1.0, 2.0, 3.0)
+    out3 = ∂Q∂τ(p1, τij)
+    out4 = ∂Q∂τ(p2, τij)
+    @test out3 == out4 == Tuple(solution)
     # -----------------------
 
 end
