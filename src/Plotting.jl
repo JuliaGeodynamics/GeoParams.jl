@@ -132,7 +132,11 @@ function PlotStrainrateStress(
         Tau_II = zeros(size(Eps_II))
 
         # Compute stress
-        compute_τII!(Tau_II, p, Eps_II, args_in)
+        #compute_τII!(Tau_II, p, Eps_II, args_in)
+        for j in eachindex(Tau_II)
+            Tau_II[j] = compute_τII(p, Eps_II[j], args)
+        end
+
 
         Tau_II_MPa = Tau_II ./ 1e6
 
@@ -183,12 +187,16 @@ function ObtainPlotArgs(i, p, args_in, linewidth, linestyle, color, label_in)
         Type = ""
         label = "$Type: $Name $args_in"
     else
-        Name = String(collect(p.Name))
-
-        # determine type of creeplaw 
-        Type = "$(typeof(p))"           # full name of type
-        id = findfirst("{", Type)
-        Type = Type[1:(id[1] - 1)]
+        #if haskey(p,"Name")
+        #    Name = String(collect(p.Name))
+        #    # determine type of creeplaw 
+        #    Type = "$(typeof(p))"           # full name of type
+        #else
+            Name = "";
+            Type = ""
+        #end
+        #id = findfirst("{", Type)
+        #Type = Type[1:(id[1] - 1)]
 
         label = "$Type: $Name $args_in"
     end
