@@ -164,6 +164,11 @@ function ∂Q∂τ(Q::PlasticPotential, τij::NTuple{N,T}) where {N,T}
     tmp = ∂Q∂τij(Q, SVector{N,T}(τij))
     return ntuple(i->tmp[i], Val(N))
 end
+
+# Wrapper for arbitrary args in the form of a NamedTuple
+function ∂Q∂τ(Q::PlasticPotential, args::NamedTuple{N,T}) where {N,T} 
+    Q∂τij(Q, args.τij)
+end
 #-------------------------------------------------------------------------
 
 # Computational routines needed for computations with the MaterialParams structure 
