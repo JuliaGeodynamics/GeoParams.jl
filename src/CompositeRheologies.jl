@@ -18,8 +18,10 @@ function CompositeRheology(v::T) where T
     P_it = false;
     λ_it = false;
 
-    return CompositeRheology{typeof((v,)),τ_it, P_it, λ_it}( (v,))
+    return CompositeRheology{typeof(v),τ_it, P_it, λ_it}(v)
 end
+CompositeRheology(a,b...) = CompositeRheology( (a,b...,)) 
+#CompositeRheology(v::Tuple) =  CompositeRheology(v...) 
 
 # Print info 
 function show(io::IO, g::AbstractComposite)
@@ -28,12 +30,20 @@ function show(io::IO, g::AbstractComposite)
 
     # Compose a string with rheological elements, so we have an overview in the REPL
     str = create_rheology_string("",g)
-   # @show str
-    
+
     println(io,str)
  
     return nothing
 end
+
+
+"""
+    Put rheological elements in parallel 
+"""
+struct Parallel{T}
+    elements::T
+end
+Parallel(v...) = Parallel{typeof( (v...,))}((v...,))
 
 
 function show(io::IO, g::Parallel)
@@ -42,7 +52,9 @@ function show(io::IO, g::Parallel)
 
     # Compose a string with rheological elements, so we have an overview in the REPL
     str = create_rheology_string("",g)
+    
     println(io,str)
+
  
     return nothing
 end
@@ -78,10 +90,56 @@ function create_rheology_string(str, rheology::Tuple)
     return str
 end
 
-# Print the individual rheological elements
+# Print the individual rheological elements in the REPL
 create_rheology_string(str, rheo_Parallel::AbstractCreepLaw)   = str = str*"--⟦▪̲̅▫̲̅▫̲̅▫̲̅--"
 create_rheology_string(str, rheo_Parallel::AbstractPlasticity) = str = str*"--▬▬▬__--"    
 create_rheology_string(str, rheo_Parallel::AbstractElasticity) = str = str*"--/\\/\\/--"
+
+
+function create_parallel_str(str)
+    # Print them underneath each other:
+    l_start = findfirst("{", str)
+    l_end   = findlast("}", str)
+
+    if !isnothing(l_start)
+
+        # step 1: all inner Parallel objects should be left untouched
+        l_st2  = findnext("{", str, l_start[1]+1)
+        l_end2 = findprev("}", str, l_end[1]-1)
+        
+        @show l_st2, l_end2
+        if !isnothing(l_st2)
+            str_sub = str[l_st2[1]+1:l_end2[1]-1];
+            str_sub = replace(str_sub,";"=>"X")
+           
+            str = str[1:l_st2[1]]*str_sub*str[l_end2[1]:end]
+        end
+
+
+        str1 = split(str[l_start[1]+1:l_end[1]-2],";")
+        len  = maximum(textwidth.(str1))
+        for i = eachindex(str1)
+            str1[i] = "|"*cpad(str1[i],len,"-")*"|\n"
+        end 
+        str_out = join(str1)     # join the vectors back together
+        str_out = str_out[1:end-1]
+        str_out = replace(str_out,"X"=>";")
+
+        str_out1 =  str[1:l_start[1]-2]*str_out*str[l_end[1]+2:end]
+
+        str2 = split(str_out1,"\n")
+        len  = maximum(textwidth.(str2))
+        for i = eachindex(str2)
+            str2[i] = cpad(str2[i],len," ")*"\n"
+        end 
+        str_out = join(str2)  
+        
+    else
+        str_out = str
+    end
+
+    return str_out
+end
 
 
 function pretty_print_rheology_string(str, start="")
@@ -108,32 +166,9 @@ function pretty_print_rheology_string(str, start="")
 end
 
 # Center strings
-cpad(s, n::Integer, p=" ")  = rpad(lpad(s,div(n+strwidth(s),2),p),n,p)
-
-#=
-function print_symbol_rheology(str,rheology)
-    if isa(rheology,     AbstractCreepLaw)
-        str = str*"--⟦▪̲̅▫̲̅▫̲̅▫̲̅--"
-    elseif isa(rheology, AbstractPlasticity)
-        str = str*"--▬▬▬__--"               
-    elseif  isa(rheology,AbstractElasticity)
-        str = str*"--/\\/\\/--"
-    else 
-        str = str*"         "
-    end
-    return str
-end
-
-=#
+cpad(s, n::Integer, p=" ")  = rpad(lpad(s,div(n+textwidth(s),2),p),n,p)
 
 
-"""
-    Put rheological elements in parallel 
-"""
-struct Parallel{T}
-    elements::T
-end
-Parallel(v...) = Parallel{typeof( (v...,))}((v...,))
 
 
 struct InverseCreepLaw{N} <: AbstractConstitutiveLaw{Float64}
@@ -281,6 +316,11 @@ function compute_τII(
     return τII
 end
 
+function compute_τII(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
+    return compute_τII(v.rheology_chain, εII, args; tol=1e-6, verbose=false)
+end
+
+
 @inline function compute_τII!(
     τII::AbstractArray{T,nDim},
     v::NTuple{N,AbstractConstitutiveLaw},
@@ -291,6 +331,8 @@ end
         τII[I] = compute_τII(v, εII[I], (; zip(keys(args), getindex.(values(args), I))...))
     end
 end
+
+
 
 # COMPUTE VISCOSITY
 
@@ -610,7 +652,6 @@ end
 end
 
 ## VISCOSITY
-
 @inline function viscosityCircuit_τII(v, τII, args)
     εII = strain_rate_circuit(v, τII, args)
     return 0.5 * τII / εII

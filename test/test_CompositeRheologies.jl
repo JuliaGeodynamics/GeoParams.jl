@@ -15,6 +15,11 @@ using GeoParams
     @test τII ≈ 8.892678156850036e8
     η = τII / (2εII)
 
+    # Combined creeplaws
+    v1 = CompositeRheology(pp,pp1)
+    τII = compute_τII(v, εII, args) # Same computation as 
+    @test τII ≈ 8.892678156850036e8
+
     # Same with arrays:    
     εII_array = ones(10) * 1e-5
     τII_array = similar(εII_array)
@@ -53,11 +58,26 @@ using GeoParams
     pp3 = ConstantElasticity()
     pp4 = DruckerPrager()
 
-    #a = CompositeRheology( Parallel( (pp0, pp1, pp2, pp3, Parallel(pp4, pp0) ), pp0) )   
-
+    # Check that constructing them works
     a = CompositeRheology( (pp0, pp1, pp2, pp3, Parallel(pp4, pp0, pp1),pp1, Parallel(pp4, pp0), pp1,pp2 ))   
+    @test isa(a.rheology_chain[1], AbstractCreepLaw)
 
-    b = CompositeRheology( (pp0, pp1, pp2, pp3, Parallel(pp4, pp3, (pp1, pp0, pp2) ), pp1,pp2) )   
+    b = CompositeRheology( (pp0, pp1, pp2, pp3, Parallel(pp4, pp3, Parallel( (pp1, pp0), pp2) ), pp1,pp2) )   
+    @test isa(b.rheology_chain[3], AbstractCreepLaw)
+    
+
+    # Perform computations for different complexites
+
+    # Linear viscous
+    v1  = (LinearViscous(η=1e21Pas), )
+    v2  =  CompositeRheology(v1)
+
+    args = (T=900.0, d=100e-6, τII_old=0.0)
+    εII = 1e-15
+    τII   = compute_τII(v1, εII, args)
+    τII_2 = compute_τII(v2, εII, args)
+    @test τII ≈ τII_2 ≈ 2*1e21*1e-15
+
 
 
 
