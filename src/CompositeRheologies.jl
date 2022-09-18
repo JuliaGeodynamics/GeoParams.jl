@@ -1,8 +1,8 @@
 # This holds structures and computational routines for compositional rheologies
 
 
-export CompositeRheology, Parallel, create_rheology_string
-
+export CompositeRheology, Parallel, create_rheology_string, pretty_print_rheology_string, print_rheology_matrix!
+#import Base: size
 
 """
     Structure that holds composite rheologies (e.g., visco-elasto-viscoplastic),
@@ -36,6 +36,76 @@ function show(io::IO, g::AbstractComposite)
     return nothing
 end
 
+#=
+function size(v::AbstractComposite)
+    # Returns the # of parallel elements & the maximu width (in case one of them is a tuple )
+    le = 0
+    wi = 1
+    @show le
+    for elem in v.rheology_chain
+        if isa(elem, Tuple)
+            println("boris")
+            local_le = length(elem)
+            @show local_le
+
+            local_size = (0,0)
+            for elem_local in elem
+                if isa(elem_local, Tuple)
+
+                end
+            end
+
+            #=
+            # If one of the elements is a Parallel element again, determine the size of that one
+            # We do this recursively until 
+            if any(isa.(elem, Parallel))
+                local_size = (0,0)
+                for elem_local in elem
+                    if isa(elem_local, Parallel)
+                        local_size =.+ size(elem_local) .- (1,1)
+                    else
+                        local_size = (0,1)
+                    end
+
+                    le = le + local_size[2]+1;
+                    wi = wi + local_size[1];
+                end
+                @show local_size
+            end
+            =#
+
+            if local_le>le
+                le += local_le
+            end
+
+        elseif isa(elem, Parallel)
+            local_size =.+ size(elem) .- (1,1)
+            le = le + local_size[2]+1;
+            if local_size[1]>=wi
+                wi += local_size[1];
+            end
+
+        else
+            le += 1;
+            
+        end
+    end
+    return (wi, le)
+end
+
+# Computes the local size 
+function compute_rheology_size(v::Tuple)
+    local_size = (0,0)
+    for elem_local in elem
+        local_size = local_size .+ compute_rheology_size(v)
+    end
+    return local_size
+end
+
+compute_rheology_size(v::Parallel) = size(v)
+compute_rheology_size(v::Any) = (0,1)
+=#
+
 
 """
     Put rheological elements in parallel 
@@ -45,20 +115,162 @@ struct Parallel{T}
 end
 Parallel(v...) = Parallel{typeof( (v...,))}((v...,))
 
+#=
+function size(v::Parallel)
+    # Returns the # of parallel elements & the maximu width (in case one of them is a tuple )
+    le = length(v.elements)
+    wi = 1
+    for elem in v.elements
+        if isa(elem, Tuple)
+            local_wi = length(elem)
 
-function show(io::IO, g::Parallel)
-    rheology = g.elements;
-    println(io,"Parallel:   ")
+            # If one of the elements is a Parallel element again, determine the size of that one
+            # We do this recursively until 
+            if any(isa.(elem, Parallel))
+                local_size = (0,0)
+                for elem_local in elem
+                    if isa(elem_local, Parallel)
+                        local_size =.+ size(elem_local) .- (1,1)
+                    end
+                end
+                le = le + local_size[2];
+                local_wi = local_wi + local_size[1];
+            end
+
+            if local_wi>wi
+                wi = local_wi
+            end
+
+        elseif isa(elem, Parallel)
+            local_size =.+ size(elem) .- (1,1)
+            le = le + local_size[1];
+            if local_size[2]>=wi
+                wi += local_size[2];
+            end
+        end
+
+    end
+    return (le, wi)
+end
+=#
+
+function show(io::IO, a::Parallel)
+    rheology = a.elements;
+    println(io,"Parallel:   ")  
 
     # Compose a string with rheological elements, so we have an overview in the REPL
-    str = create_rheology_string("",g)
+    str = create_rheology_string("",a)
     
+
+    A = Matrix{String}(undef, 6, 6)
+    print_rheology_matrix!(A,1,1,a)    
+
+
+    for i=1:size(A,1)
+        le = 0;
+        for j=1:size(A,2)
+            if  isassigned(A,i,j)
+                le = j;
+            end
+        end
+        
+        # fill them with space if they are not assigned yet
+        for j=1:le
+            if  !isassigned(A,i,j)
+                A[i,j] = "         ";
+            end
+        end
+    end
+
+    for i in eachindex(A)
+        if  !isassigned(A,i); A[i] = ""; end
+    end
+    
+    B = String[];
+    for i=1:size(A,1)
+        str1 = join(A[i,:]);
+        if length(str1)>0
+            push!(B, str1)
+        end
+    end
+    nel =  maximum(textwidth.(B));
+    for i=1:length(B)
+        if  (B[i][1]=='|') &&  (B[i][end]=='|') 
+            B[i] = "|"*cpad(B[i][2:end-1],nel,"-")*"|"
+        else
+            B[i] = cpad(B[i],nel)
+            B[i] = "|"*B[i]*"|"
+        end
+
+    end
+    for i=1:length(B)
+        println(B[i])
+    end
+
+
+    println("")
     println(io,str)
 
  
     return nothing
 end
 
+function print_rheology_matrix!(A::Matrix,i::Int64,j::Int64,v::Parallel)
+    i_start = i
+    elem  = v.elements
+    i_max = length(elem) 
+    for entry in eachindex(elem)
+        if !isassigned(A,i,j) A[i,j]=""  end
+        A[i,j] *= "|"
+
+        j_start = j
+        i,j, i_max1 = print_rheology_matrix!(A,i,j, elem[entry]) 
+        if isa(elem[entry], Tuple)
+
+            if !isassigned(A,i,j-1) A[i,j-1]=""  end
+            A[i,j-1] *= "|"
+            j = j_start;
+
+        else
+            A[i,j] *= "|"
+        end
+
+        i += i_max1
+    end
+    i = i_start
+
+    return i,j, i_max
+end
+
+function print_rheology_matrix!(A::Matrix,i::Int64,j::Int64,v::Tuple)
+
+    i_max = 1;
+    for entry in eachindex(v)
+        i,j, i_max1 = print_rheology_matrix!(A,i,j, v[entry]) 
+        j += 1
+        i_max = max(i_max,i_max1)
+    end
+
+    return i,j, i_max
+end
+
+# Print the individual rheological elements in the REPL
+function print_rheology_matrix!(A::Matrix,i::Int64,j::Int64, v::AbstractCreepLaw)   
+    if !isassigned(A,i,j) A[i,j]=""  end
+    A[i,j] *= "--⟦▪̲̅▫̲̅▫̲̅▫̲̅--"
+    return i,j, 1
+end
+function print_rheology_matrix!(A::Matrix,i::Int64,j::Int64, v::AbstractPlasticity) 
+    if !isassigned(A,i,j) A[i,j]=""  end
+    A[i,j] *= "--▬▬▬__--"    
+    return i,j, 1
+end
+
+function print_rheology_matrix!(A::Matrix,i::Int64,j::Int64, v::AbstractElasticity) 
+    if !isassigned(A,i,j) A[i,j]=""  end
+    A[i,j] *= "--/\\/\\/--"
+    return i,j, 1
+end
 
 
 function create_rheology_string(str, rheo_Comp::CompositeRheology)
@@ -76,9 +288,10 @@ function create_rheology_string(str, rheo_Parallel::Parallel)
     str = str*"{"
     for i in eachindex(rheology)
         str = create_rheology_string(str,rheology[i])
+        if str[end]=='o'; str=str[1:end-1] end
         str = str*";"
     end
-    str = str*"}"
+    str = str[1:end-1]*"}"      # removes the last ";"
 
     return str
 end
@@ -86,6 +299,7 @@ end
 function create_rheology_string(str, rheology::Tuple)
     for i in eachindex(rheology)
         str = create_rheology_string(str,rheology[i])
+        str = str*"o"
     end
     return str
 end
@@ -144,24 +358,43 @@ end
 
 function pretty_print_rheology_string(str, start="")
     # This takes the rheology string & creates a string the prints it in a nicer looking manner
+    # The way we do this is decompose the string into an array of strings
+    #  By placing the elements in the right order
 
     # WORK IN PROGRESS! 
 
-    num_ParallelBlocks = length(findall("{", str))      
-    num_lines          = length(findall(";", str))
-
-    # We need 
-    str_vec = split(str,";");
-    for i=2:length(str_vec)
-        str_line = str_vec[i]
-        if occursin("}", str_line)
-            str_split = split(str_line,"}")
-            str_line = str_split[1]
-            str_vec[i-1] *= "}"*str_split[2]
-            str_vec[i]  = "{"*str_line*"}"
+    # Put the string elements into a matrix
+    str_row = split(str,";")
+    n_rows  = length(str_row)
+    n_cols  = 1
+    for row in str_row
+        str_col = split(row,"o")
+        if length(str_col)>n_cols
+            n_cols = length(str_col)        
         end
-
     end
+
+    A = Matrix{String}(undef, n_rows, n_cols)
+    start = 1;
+    for i in eachindex(str_row)    
+        str_col = split(str_row[i],"o")
+        for j in eachindex(str_col)    
+            col = str_col[j]
+            @show col
+            A[i,j+start-1] = str_col[j]
+            if (col[1] == '{') && (i>1)
+                start = start+1
+            end
+            if col[end] == '}'
+                start -= 1
+            end
+
+            @show start
+
+        end
+    end
+
+    return A
    
 end
 

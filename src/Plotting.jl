@@ -137,7 +137,6 @@ function PlotStrainrateStress(
             Tau_II[j] = compute_τII(p, Eps_II[j], args)
         end
 
-
         Tau_II_MPa = Tau_II ./ 1e6
 
         # Retrieve plot arguments (label, color etc.)
@@ -287,7 +286,12 @@ function PlotStressStrainrate(
         Tau_II = Tau_II_MPa .* 1e6
         Eps_II = zeros(size(Tau_II))
 
-        compute_εII!(Eps_II, p, Tau_II, args_in)       # Compute strainrate
+        
+        # Compute stress
+        #compute_εII!(Eps_II, p, Tau_II, args_in)       # Compute strainrate
+        for j in eachindex(Tau_II)
+            Eps_II[j] = compute_εII(p, Tau_II[j], args)
+        end
 
         η = Tau_II ./ (2 * Eps_II)                        # effective viscosity
 
@@ -379,7 +383,11 @@ function PlotStrainrateViscosity(
             )
         Tau_II = zeros(size(Eps_II))
 
-        compute_τII!(Tau_II, p, Eps_II, args_in)       # Compute stress
+        # Compute stress
+        #compute_τII!(Tau_II, p, Eps_II, args_in)
+        for j in eachindex(Tau_II)
+            Tau_II[j] = compute_τII(p, Eps_II[j], args)
+        end
 
         η = Tau_II ./ (2 * Eps_II)                        # effective viscosity
 
@@ -474,7 +482,10 @@ function PlotStressViscosity(
         Tau_II = Tau_II_MPa .* 1e6
         Eps_II = zeros(size(Tau_II))
 
-        compute_εII!(Eps_II, p, Tau_II, args_in)       # Compute strainrate
+        #compute_εII!(Eps_II, p, Tau_II, args_in)       # Compute strainrate
+        for j in eachindex(Tau_II)
+            Eps_II[j] = compute_εII(p, Tau_II[j], args)
+        end
 
         η = Tau_II ./ (2 * Eps_II)                        # effective viscosity
 
