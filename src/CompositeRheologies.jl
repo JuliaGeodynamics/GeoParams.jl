@@ -1,8 +1,16 @@
 # This holds structures and computational routines for compositional rheologies
 
+export CompositeRheology, Parallel, create_rheology_string, print_rheology_matrix
 
-export CompositeRheology, Parallel, create_rheology_string, pretty_print_rheology_string, print_rheology_matrix
-#import Base: size
+
+"""
+    Put rheological elements in parallel 
+"""
+struct Parallel{T}
+    elements::T
+end
+Parallel(v...) = Parallel{typeof( (v...,))}((v...,))
+
 
 """
     Structure that holds composite rheologies (e.g., visco-elasto-viscoplastic),
@@ -14,6 +22,8 @@ end
 
 # Defines tuples of composite rheologies, while also checking which type of iterations need to be performed
 function CompositeRheology(v::T) where T
+
+    # These three variables will indicate later which type of non-linear iterations are required
     τ_it = false;
     P_it = false;
     λ_it = false;
@@ -21,6 +31,7 @@ function CompositeRheology(v::T) where T
     return CompositeRheology{typeof(v),τ_it, P_it, λ_it}(v)
 end
 CompositeRheology(a,b...) = CompositeRheology( (a,b...,)) 
+CompositeRheology(a::Parallel) = CompositeRheology( (a,)) 
 #CompositeRheology(v::Tuple) =  CompositeRheology(v...) 
 
 # Print info 
@@ -35,13 +46,6 @@ function show(io::IO, g::AbstractComposite)
     return nothing
 end
 
-"""
-    Put rheological elements in parallel 
-"""
-struct Parallel{T}
-    elements::T
-end
-Parallel(v...) = Parallel{typeof( (v...,))}((v...,))
 
 
 function show(io::IO, a::Parallel)
