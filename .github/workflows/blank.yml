@@ -41,6 +41,8 @@ jobs:
             ${{ runner.os }}-test-${{ env.cache-name }}-
             ${{ runner.os }}-test-
             ${{ runner.os }}-
+      - name: Pkg.add("StaticArrays")
+        run: julia -e 'using Pkg; Pkg.add("StaticArrays")'
       - uses: julia-actions/julia-buildpkg@latest
       - uses: julia-actions/julia-runtest@latest
   build_docs:
