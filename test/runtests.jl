@@ -1,5 +1,4 @@
 using Test
-using Pkg
 
 function runtests()
     files = readdir(@__DIR__)
