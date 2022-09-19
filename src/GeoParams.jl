@@ -157,7 +157,7 @@ export dεII_dτII,
     compute_yieldfunction!,
     DruckerPrager,
     compute_plasticpotential,
-    ∂Q∂τ
+    ∂Q∂τ,
 
     #       Composite rheologies
     strain_rate_circuit,
