@@ -42,6 +42,10 @@ function compute_param(fn::F, MatParam::AbstractMaterialParam, args) where {F}
     return fn(MatParam, args)
 end
 
+function compute_param(fn::F, MatParam::AbstractMaterialParamsStruct, args) where {F}
+    return fn(MatParam, args)
+end
+
 @inline function compute_param!(
     fn::F, rho::AbstractArray, MatParam::AbstractMaterialParam, args
 ) where {F}

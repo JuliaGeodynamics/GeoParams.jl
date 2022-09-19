@@ -124,33 +124,34 @@ end
 
 # Thin convinience wrappers
 # 3D
-function ∂Q∂τ(p::AbstractPlasticity{T}, τij::SVector{6,T}) where {T}
+function ∂Q∂τ(p::AbstractPlasticity{T}, τij::SVector{6,T}; kwargs...) where {T}
     @SVector [∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τzz(p, τij), ∂Q∂τyz(p, τij), ∂Q∂τxz(p, τij), ∂Q∂τxy(p, τij)]
 end
 
-function ∂Q∂τ(p::AbstractPlasticity{T}, τij::NTuple{6,T}) where {T}
+function ∂Q∂τ(p::AbstractPlasticity{T}, τij::NTuple{6,T}; kwargs...) where {T}
     return ∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τzz(p, τij), ∂Q∂τyz(p, τij), ∂Q∂τxz(p, τij), ∂Q∂τxy(p, τij)
 end
 
 # 2D
-function ∂Q∂τ(p::AbstractPlasticity{T}, τij::SVector{3,T}) where {T}
+function ∂Q∂τ(p::AbstractPlasticity{T}, τij::SVector{3,T}; kwargs...) where {T}
     @SVector [∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τxy(p, τij)]
 end
 
-function ∂Q∂τ(p::AbstractPlasticity{T}, τij::NTuple{3,T}) where {T}
+function ∂Q∂τ(p::AbstractPlasticity{T}, τij::NTuple{3,T}; kwargs...) where {T}
     return ∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τxy(p, τij)
 end
 
 # Compute partial derivatives of a generic user-defined Q using AD
-∂Q∂τ(Q::F, args::SVector{N, T}) where {N, T, F<:Function} = ForwardDiff.gradient(Q, args)
-∂Q∂τ(Q::F, args::Vector{T}) where {T, F<:Function} = ForwardDiff.gradient(Q, args)
-function ∂Q∂τ(Q::F, args::NTuple{N,T}) where {N,T, F<:Function}
-    return ∂Q∂τ(Q, SVector{N}(args...))
+∂Q∂τ(Q::F, args::SVector{N, T}; kwargs...) where {N, T, F<:Function} = ForwardDiff.gradient(Q, args)
+∂Q∂τ(Q::F, args::Vector{T}; kwargs...) where {T, F<:Function} = ForwardDiff.gradient(Q, args)
+function ∂Q∂τ(Q::F, args::NTuple{N,T}; kwargs...) where {N,T, F<:Function}
+    tmp = ∂Q∂τ(Q, SVector{N}(args...))
+    return ntuple(i -> tmp[i], Val(N))
 end
 
 # Wrapper for arbitrary args in the form of a NamedTuple
-function ∂Q∂τ(p::DruckerPrager{T}, args::NamedTuple{N,T}) where {N,T} 
-    Q∂τij(Q, args.τij)
+function ∂Q∂τ(p::DruckerPrager{T}, args::NamedTuple{N,T}; kwargs...) where {N,T} 
+    Q∂τij(Q, args.τij, kwargs...)
 end
 #-------------------------------------------------------------------------
 
@@ -163,15 +164,18 @@ function compute_yieldfunction(s::AbstractMaterialParamsStruct, args)
     end
 end
 
+# ∂Q∂τ(p::DruckerPrager{T}, args, kwargs) = ∂Q∂τ(p, args; kwargs=kwargs)
+
 # add methods programmatically
 for myType in (:DruckerPrager,)
     @eval begin
-        (s::$(myType))(args) = s(; args...)
-        compute_yieldfunction(s::$(myType), args) = s(args)
+        (p::$(myType))(args) = p(; args...)
+        # ∂Q∂τ(p::$(myType), args, kwargs) = ∂Q∂τ(p, args; kwargs...)
+        compute_yieldfunction(p::$(myType), args) = p(args)
         function compute_yieldfunction!(
-            H::AbstractArray{_T,N}, s::$(myType){_T}, args
+            H::AbstractArray{_T,N}, p::$(myType){_T}, args
         ) where {_T,N}
-            return compute_yieldfunction!(H, s; args...)
+            return compute_yieldfunction!(H, p; args...)
         end
     end
 end
@@ -179,4 +183,10 @@ end
 compute_yieldfunction(args...) = compute_param(compute_yieldfunction, args...)
 compute_yieldfunction!(args...) = compute_param!(compute_yieldfunction, args...)
 compute_plasticpotential(args...) = compute_param(∂Q∂τ, args...)
-∂Q∂τ(args...) = compute_param(∂Q∂τ, args...)
+# ∂Q∂τ(args...) = compute_param(∂Q∂τ, args...)
+
+function compute_plasticpotential(p::AbstractMaterialParamsStruct, args)
+    return ∂Q∂τ(p.Plasticity[1], args)
+end
+
+∂Q∂τ(p::AbstractMaterialParamsStruct, args) = compute_plasticpotential(p, args)
