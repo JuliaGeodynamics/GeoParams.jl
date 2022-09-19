@@ -2,7 +2,6 @@
 
 export CompositeRheology, Parallel, create_rheology_string, print_rheology_matrix
 
-
 """
     Put rheological elements in parallel 
 """
@@ -10,7 +9,6 @@ struct Parallel{T}
     elements::T
 end
 Parallel(v...) = Parallel{typeof( (v...,))}((v...,))
-
 
 """
     Structure that holds composite rheologies (e.g., visco-elasto-viscoplastic),
@@ -40,6 +38,7 @@ function show(io::IO, g::AbstractComposite)
 
     # Compose a string with rheological elements, so we have an overview in the REPL
     #str = create_rheology_string("",g)
+    
     str = print_rheology_matrix(g)
     println.(str)
 
@@ -65,7 +64,7 @@ function print_rheology_matrix(v::Tuple)
     n = 40
     A = Matrix{String}(undef, n, n)
     
-    i,j, i_max = 1,0, 1
+    i,j, i_max = 1, 0, 1
     for entry in eachindex(v)
         out = print_rheology_matrix(v[entry]) 
         si  = size(out)
@@ -117,8 +116,7 @@ function print_rheology_matrix(v::Parallel)
         else
             push!(i_vec,i)
             A[i:i+si[1]-1,j:j+si[2]-1]  = out
-            i = i+si[1]
-            j = j+si[2]-1
+            i,j = i+si[1],j+si[2]-1
         end
     end
 
@@ -163,19 +161,17 @@ function print_rheology_matrix(v::CompositeRheology)
     n = 40
     A = Matrix{String}(undef, n, n)
     elements = v.rheology_chain
-    i,j, i_max = 1,0,0
+    i,j, i_max = 1,0,1
     for entry in eachindex(elements)
         out = print_rheology_matrix(elements[entry]) 
         si  = size(out)
         if prod(si)==1
             j = j+1   
             A[i,j] = out[1]
-              
         elseif (length(si)==1) && prod(si)!=1
             j=j+1
             A[i:i+si[1]-1,j]  = out
             i_max = max(i_max, si[1])
-            
         else
             j = j+1
             A[i:i+si[1]-1,j:j]  = out
@@ -184,7 +180,6 @@ function print_rheology_matrix(v::CompositeRheology)
             i_max = max(i_max, si[1])
         end
     end
-
     # Fill every index (with empty strings)
     for i in eachindex(A)
         if  !isassigned(A,i); A[i] = ""; end
@@ -195,20 +190,21 @@ function print_rheology_matrix(v::CompositeRheology)
             A[i] = print_rheology_matrix("")[1] 
         end
     end
-
-    # Extract the relevant part of A
-    A = A[1:i_max, 1:j];
     
-    B = create_string_vec(A)
+    A = A[1:i_max, 1:j];            # Extract the relevant part of A
+    B = create_string_vec(A)        # Create strings
     
     return B
 end
 
 # Print the individual rheological elements in the REPL
-print_rheology_matrix(v::AbstractCreepLaw)   = ["--⟦▪̲̅▫̲̅▫̲̅▫̲̅--"]
-print_rheology_matrix(v::AbstractPlasticity) = ["--▬▬▬__--"]
-print_rheology_matrix(v::AbstractElasticity) = ["--/\\/\\/--"]
 print_rheology_matrix(v::String)             = ["         "]
+print_rheology_matrix(v::AbstractCreepLaw)   = ["--⟦▪̲̅▫̲̅▫̲̅▫̲̅--"]
+print_rheology_matrix(v::AbstractElasticity) = ["--/\\/\\/--"]
+
+print_rheology_matrix(v::AbstractPlasticity) = ["--▬▬▬__--"]
+#print_rheology_matrix(v::DruckerPrager)      = ["-dp▬▬__--"] # we can further 
+
 
 function create_rheology_string(str, rheo_Comp::CompositeRheology)
  
