@@ -63,7 +63,6 @@ Structure that holds all material parameters for a given phase
     Vcreep<:Tuple,
     Velastic<:Tuple,
     Vplastic<:Tuple,
-    VQ<:Tuple,
     Vcond<:Tuple,
     Vheatc<:Tuple,
     Vradioact<:Tuple,
@@ -80,7 +79,6 @@ Structure that holds all material parameters for a given phase
     CreepLaws::Vcreep = ()             #       Creep laws
     Elasticity::Velastic = ()             #       Elastic parameters
     Plasticity::Vplastic = ()             #       Plasticity
-    PlasticityPotential::VQ = ()             #       Plasticity
     Conductivity::Vcond = ()             #       Parameters related to the energy equation 
     HeatCapacity::Vheatc = ()             #       Heat capacity 
     RadioactiveHeat::Vradioact = ()             #       Radioactive heating source terms in energy conservation equation
@@ -183,7 +181,6 @@ function SetMaterialParams(;
     CreepLaws=nothing,
     Elasticity=nothing,
     Plasticity=nothing,
-    PlasticityPotential=nothing,
     Conductivity=nothing,
     HeatCapacity=nothing,
     RadioactiveHeat=nothing,
@@ -209,7 +206,6 @@ function SetMaterialParams(;
         ConvField(CreepLaws, :Creeplaws),
         ConvField(Elasticity, :Elasticity; maxAllowedFields=1),
         ConvField(Plasticity, :Plasticity),
-        ConvField(PlasticityPotential, :PlasticityPotential),
         ConvField(Conductivity, :Conductivity; maxAllowedFields=1),
         ConvField(HeatCapacity, :HeatCapacity; maxAllowedFields=1),
         ConvField(RadioactiveHeat, :RadioactiveHeat; maxAllowedFields=1),
