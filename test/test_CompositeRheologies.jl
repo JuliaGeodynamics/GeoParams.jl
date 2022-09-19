@@ -65,6 +65,12 @@ using GeoParams
     b = CompositeRheology( (pp0, pp1, pp2, pp3, Parallel(pp4, pp3, Parallel( (pp1, pp0), pp2) ), pp1,pp2) )   
     @test isa(b.rheology_chain[3], AbstractCreepLaw)
     
+    a=Parallel((pp1,pp2,pp3, Parallel(pp1,pp2),pp1, Parallel(pp1,(pp2, pp1))),pp2,(pp3,pp4))
+    @show a
+
+    # This is wrongly visualized:
+    a=Parallel( (Parallel(pp4,pp1),pp3,pp0), pp1)
+
 
     # Perform computations for different complexites
 
@@ -78,6 +84,8 @@ using GeoParams
     τII_2 = compute_τII(v2, εII, args)
     @test τII ≈ τII_2 ≈ 2*1e21*1e-15
 
+
+    
 
 
 

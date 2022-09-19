@@ -168,7 +168,7 @@ export dεII_dτII,
     KelvinVoigt,
     CompositeRheology,
     Parallel,
-    create_rheology_string, pretty_print_rheology_string, print_rheology_matrix!
+    create_rheology_string, print_rheology_matrix
     
     
 
