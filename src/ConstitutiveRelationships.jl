@@ -43,10 +43,6 @@ include("Elasticity/Elasticity.jl")          # elasticity
 include("Plasticity/Plasticity.jl")          # plasticity
 include("CreepLaw/Viscosity.jl")             # composite creeplaws
 
-# These are functions, can't be (non)dimensionalized
-dimensionalize(MatParam::PlasticPotential, g::GeoUnits{TYPE}) where {TYPE} = MatParam
-nondimensionalize(MatParam::PlasticPotential, g::GeoUnits{TYPE}) where {TYPE} = MatParam
-
 # add methods programatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity)
     @eval begin
