@@ -28,6 +28,7 @@ end
 @inline (:)(A::SMatrix{M,M,T,N}, B::SMatrix{M,M,T,N}) where {M,N,T} = sum(A .* B)
 
 second_invariant(A::NTuple{N,T}) where {N,T} = √(0.5 * (A:A))
+second_invariant(A::Vararg{N,T}) where {N,T} = second_invariant(A)
 second_invariant(A::SMatrix) = √(0.5 * (A:A))
 second_invariant(A::SVector) = √(0.5 * (A:A))
 second_invariant(A::Matrix{T}) where {T} = √(0.5 * sum(Ai * Ai for Ai in A))
