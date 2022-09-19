@@ -6,7 +6,7 @@ abstract type AbstractPlasticPotential{Float64}  <: AbstractConstitutiveLaw{Floa
 export compute_yieldfunction,      # calculation routines
     compute_yieldfunction!,
     DruckerPrager,               # constant
-    PlasticPotential,
+    compute_plasticpotential,
     ∂Q∂τ
 
 # DruckerPrager  -------------------------------------------------------
@@ -42,30 +42,6 @@ where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the
     C::GeoUnit{T,U1} = 10e6Pa # Cohesion
 end
 DruckerPrager(args...) = DruckerPrager(convert.(GeoUnit, args[1:3])..., args[4:end]...)
-
-struct PlasticPotential{F1,F2,F3,F4,F5,F6,F7} <: AbstractPlasticPotential{Float64}
-    Q::F1 # Plastic potential
-    ∂Q∂τxx::F2
-    ∂Q∂τyy::F3
-    ∂Q∂τzz::F4
-    ∂Q∂τyz::F5
-    ∂Q∂τxz::F6
-    ∂Q∂τxy::F7
-
-    function PlasticPotential(;
-        Q::F1=second_invariant,
-        ∂Q∂τxx::F2=(τij) -> 0.5 * τij[1] / second_invariant(τij),
-        ∂Q∂τyy::F3=(τij) -> 0.5 * τij[2] / second_invariant(τij),
-        ∂Q∂τzz::F4=nothing,
-        ∂Q∂τyz::F5=nothing,
-        ∂Q∂τxz::F6=nothing,
-        ∂Q∂τxy::F7=(τij) -> τij[3] / second_invariant(τij),
-    ) where {F1,F2,F3,F4,F5,F6,F7}
-        return new{F1,F2,F3,F4,F5,F6,F7}(
-           Q, ∂Q∂τxx, ∂Q∂τyy, ∂Q∂τzz, ∂Q∂τyz, ∂Q∂τxz, ∂Q∂τxy
-        )
-    end
-end
 
 function param_info(s::DruckerPrager) # info about the struct
     return MaterialParamsInfo(;
@@ -127,46 +103,53 @@ function show(io::IO, g::DruckerPrager)
 end
 #-------------------------------------------------------------------------
 
-# Plastic Potential derivatives
+# Plastic Potential 
 
-∂Q∂τij(Q::PlasticPotential, τij::SVector{N, T}) where {N, T} = ForwardDiff.gradient(Q.Q, τij)
-∂Q∂τij(Q::PlasticPotential, τij::Vector{T}) where {T} = ForwardDiff.gradient(Q.Q, τij)
-function ∂Q∂τij(Q::PlasticPotential, τij::NTuple{N,T}) where {N,T}
-    return ∂Q∂τij(Q, SVector{N}(τij...))
+# Hard-coded partial derivatives of the plastic potential Q
+for t in (:NTuple,:SVector)
+    @eval begin
+        # 3D derivatives 
+        ∂Q∂τxx(p::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[1] / second_invariant(τij)
+        ∂Q∂τyy(p::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[2] / second_invariant(τij)
+        ∂Q∂τzz(p::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[3] / second_invariant(τij)
+        ∂Q∂τyz(p::DruckerPrager, τij::$(t){6, T}) where T = τij[4] / second_invariant(τij)
+        ∂Q∂τxz(p::DruckerPrager, τij::$(t){6, T}) where T = τij[5] / second_invariant(τij)
+        ∂Q∂τxy(p::DruckerPrager, τij::$(t){6, T}) where T = τij[6] / second_invariant(τij) 
+        # 2D derivatives 
+        ∂Q∂τxx(p::DruckerPrager, τij::$(t){3, T}) where T = 0.5 * τij[1] / second_invariant(τij)
+        ∂Q∂τyy(p::DruckerPrager, τij::$(t){3, T}) where T = 0.5 * τij[2] / second_invariant(τij)
+        ∂Q∂τxy(p::DruckerPrager, τij::$(t){3, T}) where T = τij[3] / second_invariant(τij) 
+    end
 end
 
-function ∂Q∂τ(
-    Q::PlasticPotential{F1,Nothing,Nothing,F4,F5,F6,Nothing}, τij::SVector{3,T}
-) where {T,F1,F4,F5,F6}
-    return ∂Q∂τij(Q, τij)
+# Thin convinience wrappers
+# 3D
+function ∂Q∂τ(p::AbstractPlasticity{T}, τij::SVector{6,T}) where {T}
+    @SVector [∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τzz(p, τij), ∂Q∂τyz(p, τij), ∂Q∂τxz(p, τij), ∂Q∂τxy(p, τij)]
 end
 
-function ∂Q∂τ(
-    Q::PlasticPotential{F1,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing}, τij::SVector{6,T}
-) where {T,F1}
-    return ∂Q∂τij(Q, τij)
+function ∂Q∂τ(p::AbstractPlasticity{T}, τij::NTuple{6,T}) where {T}
+    return ∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τzz(p, τij), ∂Q∂τyz(p, τij), ∂Q∂τxz(p, τij), ∂Q∂τxy(p, τij)
 end
 
-function ∂Q∂τ(
-    Q::PlasticPotential{F1,F2,F3,F4,F5,F6,F7}, τij::SVector{3,T}
-) where {T,F1,F2,F3,F4,F5,F6,F7}
-    return SVector{3,T}(Q.∂Q∂τxx(τij), Q.∂Q∂τyy(τij), Q.∂Q∂τxy(τij))
+# 2D
+function ∂Q∂τ(p::AbstractPlasticity{T}, τij::SVector{3,T}) where {T}
+    @SVector [∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τxy(p, τij)]
 end
 
-function ∂Q∂τ(
-    Q::PlasticPotential{F1,F2,F3,F4,F5,F6,F7}, τij::SVector{6,T}
-) where {T,F1,F2,F3,F4,F5,F6,F7}
-    return SVector{6,T}(Q.∂Q∂τxx(τij), Q.∂Q∂τyy(τij), Q.∂Q∂τzz(τij), Q.∂Q∂τyz(τij), Q.∂Q∂τxz(τij), Q.∂Q∂τxy(τij))
+function ∂Q∂τ(p::AbstractPlasticity{T}, τij::NTuple{3,T}) where {T}
+    return ∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τxy(p, τij)
 end
 
-# Wrapper for NTuple inputs (NTuples not supported by ForwardDiff.jl, but @SVectors are)
-function ∂Q∂τ(Q::PlasticPotential, τij::NTuple{N,T}) where {N,T} 
-    tmp = ∂Q∂τij(Q, SVector{N,T}(τij))
-    return ntuple(i->tmp[i], Val(N))
+# Compute partial derivatives of a generic user-defined Q using AD
+∂Q∂τ(Q::F, args::SVector{N, T}) where {N, T, F<:Function} = ForwardDiff.gradient(Q, args)
+∂Q∂τ(Q::F, args::Vector{T}) where {T, F<:Function} = ForwardDiff.gradient(Q, args)
+function ∂Q∂τ(Q::F, args::NTuple{N,T}) where {N,T, F<:Function}
+    return ∂Q∂τ(Q, SVector{N}(args...))
 end
 
 # Wrapper for arbitrary args in the form of a NamedTuple
-function ∂Q∂τ(Q::PlasticPotential, args::NamedTuple{N,T}) where {N,T} 
+function ∂Q∂τ(p::DruckerPrager{T}, args::NamedTuple{N,T}) where {N,T} 
     Q∂τij(Q, args.τij)
 end
 #-------------------------------------------------------------------------
