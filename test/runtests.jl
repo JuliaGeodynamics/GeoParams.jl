@@ -1,4 +1,6 @@
 using Test
+using Pkg
+Pkg.add("StaticArrays")
 
 function runtests()
     files = readdir(@__DIR__)
