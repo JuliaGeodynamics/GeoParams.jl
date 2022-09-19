@@ -1,6 +1,5 @@
 using Test
 using GeoParams
-using StaticArrays
 
 @testset "Plasticity.jl" begin
 
@@ -90,11 +89,11 @@ using StaticArrays
     fxy(τij) = τij[3]/second_invariant(τij)
     solution2D = [fxx(τij), fyy(τij), fxy(τij)]
  
-    # using StaticArrays
-    τij_static = @SVector [1.0, 2.0, 3.0]
-    out1 = ∂Q∂τ(p, τij_static)
-    @test out1 == solution2D
-    @test compute_plasticpotential(p, τij_static) == ∂Q∂τ(p, τij_static)
+    # # using StaticArrays
+    # τij_static = @SVector [1.0, 2.0, 3.0]
+    # out1 = ∂Q∂τ(p, τij_static)
+    # @test out1 == solution2D
+    # @test compute_plasticpotential(p, τij_static) == ∂Q∂τ(p, τij_static)
 
     # using tuples
     τij_tuple = (1.0, 2.0, 3.0)
@@ -104,9 +103,9 @@ using StaticArrays
 
     # using AD
     Q = second_invariant # where second_invariant is a function
-    ad1 = ∂Q∂τ(Q, τij_static)
-    @test out1 == solution2D
-    @test compute_plasticpotential(p, τij_static) == ∂Q∂τ(p, τij_static)
+    # ad1 = ∂Q∂τ(Q, τij_static)
+    # @test out1 == solution2D
+    # @test compute_plasticpotential(p, τij_static) == ∂Q∂τ(p, τij_static)
     ad2 = ∂Q∂τ(Q, τij_tuple)
     @test out2 == Tuple(solution2D)
     @test compute_plasticpotential(p, τij_tuple) == ∂Q∂τ(p, τij_tuple)
@@ -121,11 +120,11 @@ using StaticArrays
     gxy(τij) = τij[6]/second_invariant(τij)
     solution3D = [gxx(τij), gyy(τij), gzz(τij), gyz(τij), gxz(τij), gxy(τij)]
 
-    # using StaticArrays
-    τij_static = @SVector [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
-    out3 = ∂Q∂τ(p, τij_static)
-    @test out3 == solution3D
-    @test compute_plasticpotential(p, τij_static) == ∂Q∂τ(p, τij_static)
+    # # using StaticArrays
+    # τij_static = @SVector [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+    # out3 = ∂Q∂τ(p, τij_static)
+    # @test out3 == solution3D
+    # @test compute_plasticpotential(p, τij_static) == ∂Q∂τ(p, τij_static)
 
     # using tuples
     τij_tuple = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
@@ -135,9 +134,9 @@ using StaticArrays
 
     # using AD
     Q = second_invariant # where second_invariant is a function
-    ad3 = ∂Q∂τ(Q, τij_static)
-    @test out3 == solution3D
-    @test compute_plasticpotential(p, τij_static) == ∂Q∂τ(p, τij_static)
+    # ad3 = ∂Q∂τ(Q, τij_static)
+    # @test out3 == solution3D
+    # @test compute_plasticpotential(p, τij_static) == ∂Q∂τ(p, τij_static)
     ad4 = ∂Q∂τ(Q, τij_tuple)
     @test out4 == Tuple(solution3D)
     @test compute_plasticpotential(p, τij_tuple) == ∂Q∂τ(p, τij_tuple)
