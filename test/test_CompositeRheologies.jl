@@ -64,11 +64,6 @@ using GeoParams
     @test isa(b.rheology_chain[3], AbstractCreepLaw)
     
     a=Parallel((pp1,pp2,pp3, Parallel(pp1,pp2),pp1, Parallel(pp1,(pp2, pp1))),pp2,(pp3,pp4))
-    @show a
-
-    # This is wrongly visualized:
-    a=Parallel( (Parallel(pp4,pp1),pp3,pp0), pp1)
-
 
     # Perform computations for different complexites
 
@@ -83,7 +78,25 @@ using GeoParams
     @test τII ≈ τII_2 ≈ 2*1e21*1e-15
 
 
+    εII   = compute_εII(v1, τII, args)
+    @test εII ≈ 1e-15
+
+
+    # Linear viscoelastic 0D rheology test
+    η  =  1e21;
+    G  =  1e10;
+    η,G  =  10, 1;
     
+    t_M=  η/G
+    εII = 1.;
+    args=(;)
+    x  =  CompositeRheology((LinearViscous(η=η*Pa*s),ConstantElasticity(G=G*Pa)))
+    t_vec, τ_vec =   time_τII_0D(x, εII, args; t=(0.,t_M*4), nt=100, verbose=false)
+
+    analytical_sol = @. 2.0*η*(1.0-exp(-t_vec/t_M))*εII
+    
+    err = sum(abs.(τ_vec .- analytical_sol))/length(t_vec)
+    @test err ≈   0.0900844333898483
 
 
 
