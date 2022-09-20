@@ -169,7 +169,7 @@ export dεII_dτII,
     CompositeRheology,
     Parallel,
     create_rheology_string, print_rheology_matrix,
-    time_τII_0D, time_τII_0D!
+    time_τII_0D
     
     
 

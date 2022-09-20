@@ -1,7 +1,7 @@
 # This holds structures and computational routines for compositional rheologies
 
 export CompositeRheology, Parallel, create_rheology_string, print_rheology_matrix
-export time_τII_0D, time_τII_0D!
+export time_τII_0D
 
 """
     Put rheological elements in parallel 
