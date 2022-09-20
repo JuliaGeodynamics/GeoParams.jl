@@ -96,7 +96,7 @@ end
 
 function dεII_dτII(s::ConstantElasticity{_T}, τII::_T; dt::_T=1.0, kwargs...) where {_T}
     @unpack_val G = s
-    return 0.5 * (G * dt)
+    return 0.5 * inv(G * dt)
 end
 
 function compute_τII(
