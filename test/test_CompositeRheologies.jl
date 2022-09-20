@@ -44,11 +44,9 @@ using GeoParams
         push!(τII_vec, τII)
         push!(t, i * args.dt)
     end
+    SecYear = 3600 * 24 * 365.25
+    @test sum(τII_vec) ≈ 7.840307351918251e10 # this was the original number
    # SecYear = 3600 * 24 * 365.25
-    @test sum(τII_vec) ≈ 1.6950291132832108e10
-    # @test sum(τII_vec) ≈ 7.840307351918251e10 # this was the original number
-
-
   
     # put the different rheological elements in a composite rheology structure
     pp0 = LinearViscous()
