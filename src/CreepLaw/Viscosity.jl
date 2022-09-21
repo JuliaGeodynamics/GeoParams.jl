@@ -370,13 +370,11 @@ end
 Performs local iterations versus stress for a given strain rate 
 """
 @inline function local_iterations_εII(
-    v::NTuple{N,AbstractConstitutiveLaw}, εII, args; tol=1e-6, verbose=false
+    v::NTuple{N,AbstractConstitutiveLaw}, εII, args; tol=1e-12, verbose=true
 ) where {N}
     # Initial guess
     η_ve = computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess
     τII = 2 * η_ve * εII # deviatoric stress guess
-    # η_ve = 1/(1/2/v[1].η_val + 1/2/v[2].G/args.dt)
-    # τII = 2 * η_ve * (εII + args.τII_old/(2*v[2].G*args.dt))
 
     # Local Iterations
     iter = 0

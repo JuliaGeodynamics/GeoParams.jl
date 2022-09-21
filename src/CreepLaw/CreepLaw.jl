@@ -72,12 +72,12 @@ where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\
 end
 LinearViscous(args...) = LinearViscous(convert(GeoUnit, args[1]), args[2])
 
-function param_info(s::LinearViscous) # info about the struct
+@inline function param_info(s::LinearViscous) # info about the struct
     return MaterialParamsInfo(; Equation=L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}")
 end
 
 # Calculation routines for linear viscous rheologies
-function compute_εII(s::LinearViscous, TauII; kwargs...)
+@inline function compute_εII(s::LinearViscous, TauII; kwargs...)
     @unpack η = s
 
     return (TauII / η) * 0.5
@@ -103,7 +103,7 @@ function compute_εII!(
     return nothing
 end
 
-function dεII_dτII(a::LinearViscous, TauII; kwargs...)
+@inline function dεII_dτII(s::LinearViscous, TauII; kwargs...)
     @unpack η = s
 
     return 0.5*(1.0/η)
@@ -114,7 +114,7 @@ end
 
 Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor 
 """
-function compute_τII(s::LinearViscous, EpsII; kwargs...)
+@inline function compute_τII(s::LinearViscous, EpsII; kwargs...)
     @unpack η = s
 
     return 2 * (η * EpsII)
@@ -136,7 +136,7 @@ function compute_τII!(
     return nothing
 end
 
-function dτII_dεII(a::LinearViscous, EpsII; kwargs...)
+@inline function dτII_dεII(a::LinearViscous, EpsII; kwargs...)
     @unpack η = s
 
     return 2 * η
