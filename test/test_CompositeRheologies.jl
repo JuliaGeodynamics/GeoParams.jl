@@ -108,7 +108,7 @@ using GeoParams
     args = (T=1100.0, d=100e-6, τII_old=0.0)
     εII = 1e-15
     SecYear = 3600*24*365
-    t_vec, τ_vec =   time_τII_0D(x, εII, args; t=(0.,0.01*1e6*SecYear), nt=100, verbose=true)
-    @test sum(τ_vec) ≈ 4.903472451173494e8
+    t_vec, τ_vec =   time_τII_0D(x, εII, args; t=(0.,0.01*1e6*SecYear), nt=100, verbose=false)
+    @test sum(τ_vec) ≈ 4.41429358183189e8
 
 end
