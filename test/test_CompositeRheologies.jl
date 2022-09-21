@@ -118,6 +118,16 @@ using GeoParams
     τII_check = 2*εII*( NumValue(x.elements[1].η) +  NumValue(x.elements[2].η))
     @test τII ≈ τII_check
 
+    # Parallel element with one element that has two components 
+    v1    = (LinearViscous(η=1e23Pas), pp1);
+    v2    = LinearViscous(η=5e22Pas)
+    x     = Parallel(v1, v2)  # put elements in parallel
+    τII_1 = compute_τII(v1, εII, args)
+    τII_2 = compute_τII(v2, εII, args)
+    
+    τII   = compute_τII(x, εII, args)
+    @test τII == (τII_1+τII_2)
+
 
 end
 

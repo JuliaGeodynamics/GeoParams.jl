@@ -443,12 +443,11 @@ function compute_τII(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
     return compute_τII(v.rheology_chain, εII, args; tol=1e-6, verbose=verbose)
 end
 
-# For a parallel element, τII for a given εII is the sum
-function compute_τII(v::Parallel, εII, args; tol=1e-6, verbose=false)
+# For a parallel element, τII for a given εII is the sum of each component
+function compute_τII(v::Parallel, εII, args; tol=1e-6, verbose=true)
     
     τII = zero(εII)   
     for elem in v.elements
-        @show elem
         τII += compute_τII(elem, εII, args)
     end
     return τII
