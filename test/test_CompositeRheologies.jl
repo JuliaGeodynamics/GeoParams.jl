@@ -111,4 +111,13 @@ using GeoParams
     t_vec, τ_vec =   time_τII_0D(x, εII, args; t=(0.,0.01*1e6*SecYear), nt=100, verbose=false)
     @test sum(τ_vec) ≈ 4.41429358183189e8
 
+
+    # Parallel element
+    x = Parallel(LinearViscous(η=1e23Pas), LinearViscous(η=5e22Pas))  # put elements in parallel
+    τII   = compute_τII(x, εII, args)
+    τII_check = 2*εII*( NumValue(x.elements[1].η) +  NumValue(x.elements[2].η))
+    @test τII ≈ τII_check
+
+
 end
+

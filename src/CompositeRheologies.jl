@@ -304,6 +304,8 @@ struct InverseCreepLaw{N} <: AbstractConstitutiveLaw{Float64}
     end
 end
 
+
+# do we still need this, given the Parallel struct?
 """
     struct KelvinVoigt{N, V1, V2} <: AbstractConstitutiveLaw{Float64}
         v_el::V1
@@ -439,6 +441,17 @@ end
 
 function compute_τII(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
     return compute_τII(v.rheology_chain, εII, args; tol=1e-6, verbose=verbose)
+end
+
+# For a parallel element, τII for a given εII is the sum
+function compute_τII(v::Parallel, εII, args; tol=1e-6, verbose=false)
+    
+    τII = zero(εII)   
+    for elem in v.elements
+        @show elem
+        τII += compute_τII(elem, εII, args)
+    end
+    return τII
 end
 
 
@@ -821,7 +834,7 @@ end
 This performs a 0D constant strainrate experiment for a composite rheology structure `v`, and a given, constant, strainrate `εII` and rheology arguments `args`.
 The initial stress `τ0`, the time range `t` and the number of timesteps `nt` can be modified 
 """
-function time_τII_0D(v::Union{CompositeRheology,Tuple}, εII::Number, args; t=(0.,100.), τ0=0., nt::Int64=100, verbose=true)
+function time_τII_0D(v::Union{CompositeRheology,Tuple, Parallel}, εII::Number, args; t=(0.,100.), τ0=0., nt::Int64=100, verbose=true)
     t_vec    = range(t[1],t[2], nt)
     τ_vec    = zero(t_vec)
     εII_vec  = zero(t_vec) .+ εII
@@ -837,7 +850,7 @@ end
 
 Computes stress-time evolution for a 0D (homogeneous) setup with given strainrate vector (which can vary with time).
 """
-function time_τII_0D!(τ_vec::Vector{T}, v::Union{CompositeRheology,Tuple}, εII_vec::Vector{T}, args, t_vec::AbstractVector{T}; verbose=false) where {T}
+function time_τII_0D!(τ_vec::Vector{T}, v::Union{CompositeRheology,Tuple, Parallel}, εII_vec::Vector{T}, args, t_vec::AbstractVector{T}; verbose=false) where {T}
 
     nt  = length(τ_vec)
     τII = τ_vec[1]
