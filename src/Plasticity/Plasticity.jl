@@ -159,7 +159,7 @@ end
 
 # Wrapper for arbitrary args in the form of a NamedTuple
 function ∂Q∂τ(p::DruckerPrager{T}, args::NamedTuple{N,T}; kwargs...) where {N,T} 
-    Q∂τij(Q, args.τij, kwargs...)
+     ∂Q∂τ(Q, args.τij, kwargs...)
 end
 #-------------------------------------------------------------------------
 
