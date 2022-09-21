@@ -6,8 +6,9 @@ abstract type AbstractPlasticPotential{Float64}  <: AbstractConstitutiveLaw{Floa
 export compute_yieldfunction,      # calculation routines
     compute_yieldfunction!,
     DruckerPrager,               # constant
-    compute_plasticpotential,
-    ∂Q∂τ
+    compute_plasticpotentialDerivative,
+    ∂Q∂τ,
+    ∂Q∂P
 
 # DruckerPrager  -------------------------------------------------------
 """
@@ -38,10 +39,10 @@ where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the
 """
 @with_kw_noshow struct DruckerPrager{T, U, U1} <: AbstractPlasticity{T}
     ϕ::GeoUnit{T,U} = 30NoUnits # Friction angle
-    Ψ::GeoUnit{T,U} = 0NoUnits # Dilation angle
+    Ψ::GeoUnit{T,U} = 1NoUnits # Dilation angle
     C::GeoUnit{T,U1} = 10e6Pa # Cohesion
 end
-DruckerPrager(args...) = DruckerPrager(convert.(GeoUnit, args[1:3])..., args[4:end]...)
+DruckerPrager(args...) = DruckerPrager(convert.(GeoUnit, args)...)
 
 function param_info(s::DruckerPrager) # info about the struct
     return MaterialParamsInfo(;
@@ -105,17 +106,24 @@ end
 
 # Plastic Potential 
 
+# Derivatives w.r.t pressure
+
+∂Q∂P(p::DruckerPrager; kwargs...) = -sind(p.Ψ.val)
+∂Q∂P(p::DruckerPrager, args) = ∂Q∂P(p; args...)
+
+# Derivatives w.r.t stress tensor
+
 # Hard-coded partial derivatives of the plastic potential Q
 for t in (:NTuple,:SVector)
     @eval begin
-        # 3D derivatives 
+        ## 3D derivatives 
         ∂Q∂τxx(p::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[1] / second_invariant(τij)
         ∂Q∂τyy(p::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[2] / second_invariant(τij)
         ∂Q∂τzz(p::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[3] / second_invariant(τij)
         ∂Q∂τyz(p::DruckerPrager, τij::$(t){6, T}) where T = τij[4] / second_invariant(τij)
         ∂Q∂τxz(p::DruckerPrager, τij::$(t){6, T}) where T = τij[5] / second_invariant(τij)
         ∂Q∂τxy(p::DruckerPrager, τij::$(t){6, T}) where T = τij[6] / second_invariant(τij) 
-        # 2D derivatives 
+        ## 2D derivatives 
         ∂Q∂τxx(p::DruckerPrager, τij::$(t){3, T}) where T = 0.5 * τij[1] / second_invariant(τij)
         ∂Q∂τyy(p::DruckerPrager, τij::$(t){3, T}) where T = 0.5 * τij[2] / second_invariant(τij)
         ∂Q∂τxy(p::DruckerPrager, τij::$(t){3, T}) where T = τij[3] / second_invariant(τij) 
@@ -164,13 +172,11 @@ function compute_yieldfunction(s::AbstractMaterialParamsStruct, args)
     end
 end
 
-# ∂Q∂τ(p::DruckerPrager{T}, args, kwargs) = ∂Q∂τ(p, args; kwargs=kwargs)
-
 # add methods programmatically
 for myType in (:DruckerPrager,)
     @eval begin
         (p::$(myType))(args) = p(; args...)
-        # ∂Q∂τ(p::$(myType), args, kwargs) = ∂Q∂τ(p, args; kwargs...)
+        ∂Q∂τ(p::$(myType), args, kwargs) = ∂Q∂τ(p, args; kwargs...)
         compute_yieldfunction(p::$(myType), args) = p(args)
         function compute_yieldfunction!(
             H::AbstractArray{_T,N}, p::$(myType){_T}, args
@@ -182,11 +188,16 @@ end
 
 compute_yieldfunction(args...) = compute_param(compute_yieldfunction, args...)
 compute_yieldfunction!(args...) = compute_param!(compute_yieldfunction, args...)
-compute_plasticpotential(args...) = compute_param(∂Q∂τ, args...)
-# ∂Q∂τ(args...) = compute_param(∂Q∂τ, args...)
+compute_plasticpotentialDerivative(args...) = compute_param(∂Q∂τ, args...)
+∂Q∂τ(p::AbstractMaterialParamsStruct, args) = compute_plasticpotentialDerivative(p, args)
+∂Q∂τ(args...) = compute_param(∂Q∂τ, args...)
 
-function compute_plasticpotential(p::AbstractMaterialParamsStruct, args)
+function compute_plasticpotentialDerivative(p::AbstractMaterialParamsStruct, args)
     return ∂Q∂τ(p.Plasticity[1], args)
 end
 
-∂Q∂τ(p::AbstractMaterialParamsStruct, args) = compute_plasticpotential(p, args)
+∂Q∂P(args...) = compute_param(∂Q∂P, args...)
+
+function ∂Q∂P(p::AbstractMaterialParamsStruct, args)
+    return ∂Q∂P(p.Plasticity[1], args)
+end
