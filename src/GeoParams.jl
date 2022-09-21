@@ -86,6 +86,9 @@ export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagram
 
 include("Utils.jl")
 
+include("TensorAlgebra/TensorAlgebra.jl")
+export second_invariant, second_invariant_staggered
+
 # note that this throws a "Method definition warning regarding superscript"; that is expected & safe 
 #  as we add a nicer way to create output of superscripts. I have been unable to get rid of this warning,
 #  as I am indeed redefining a method originally defined in Unitful
@@ -154,7 +157,10 @@ export dεII_dτII,
     compute_yieldfunction,
     compute_yieldfunction!,
     DruckerPrager,
-
+    compute_plasticpotentialDerivative,
+    ∂Q∂τ,
+    ∂Q∂P,
+    
     #       Composite rheologies
     strain_rate_circuit,
     computeViscosity_τII,
@@ -252,10 +258,6 @@ end
 
 #Set functions aliases using @use
 include("aliases.jl")
-
 export ntuple_idx
-
-include("TensorAlgebra/TensorAlgebra.jl")
-export second_invariant, second_invariant_staggered
 
 end # module

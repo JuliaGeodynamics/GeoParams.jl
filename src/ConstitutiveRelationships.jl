@@ -8,14 +8,25 @@ using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam
 import GeoParams: param_info, fastpow
+import GeoParams: second_invariant, second_invariant_staggered
 using BibTeX
 using ..MaterialParameters: MaterialParamsInfo
 import Base.show
+using ForwardDiff
+using StaticArrays
 
 const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 
 abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
 abstract type AbstractComposite <: AbstractMaterialParam end
+
+include("Computations.jl")
+
+include("CreepLaw/CreepLaw.jl")              # viscous Creeplaws
+include("Elasticity/Elasticity.jl")          # elasticity
+include("Plasticity/Plasticity.jl")          # plasticity
+include("CreepLaw/Viscosity.jl")             # composite creeplaws
+include("CompositeRheologies.jl")            # composite constitutive relationships
 
 export param_info,
     dεII_dτII,
@@ -25,7 +36,6 @@ export param_info,
     compute_τII!,
     compute_τII,
     computeViscosity_τII,
-    computeViscosity_εII,
     computeViscosity_τII!,
     computeViscosity_εII!,
     local_iterations_εII,
@@ -34,13 +44,6 @@ export param_info,
     InverseCreepLaw,
     KelvinVoigt,
     Parallel
-
-include("Computations.jl")
-
-include("CreepLaw/CreepLaw.jl")              # viscous Creeplaws
-include("Elasticity/Elasticity.jl")          # elasticity
-include("Plasticity/Plasticity.jl")          # plasticity
-include("CompositeRheologies.jl")            # composite constitutive relationships
 
 # add methods programatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity)
