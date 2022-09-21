@@ -4,8 +4,8 @@ import Base: (:)
     quote
         Base.@_inline_meta
         val = zero($T)
-        Base.Cartesian.@nexprs $N i -> val = (@inbounds xi = x[i]; muladd(xi, xi, val))
-        return (1 / $N) * val
+        Base.Cartesian.@nexprs $N i -> val = (@inbounds let xi = x[i]; muladd(xi, xi, val); end)
+        return inv($T($N)) * val
     end
 end
 

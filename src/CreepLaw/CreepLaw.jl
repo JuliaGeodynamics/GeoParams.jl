@@ -106,7 +106,7 @@ end
 @inline function dεII_dτII(s::LinearViscous, TauII; kwargs...)
     @unpack η = s
 
-    return inv(η.val) * 0.5
+    return 0.5*(1.0/η)
 end
 
 """
