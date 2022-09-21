@@ -86,7 +86,7 @@ Note that we here solve the scalar equation, which is sufficient for isotropic c
 here ``\\tilde{{\\tau_{ij}}}^{old}`` is the rotated old deviatoric stress tensor to ensure objectivity (this can be done with Jaumann derivative, or also by using the full rotational formula).
 
 """
-function compute_εII(
+@inline function compute_εII(
     s::ConstantElasticity, τII::_T; τII_old::_T=zero(_T), dt::_T=1.0, kwargs...
 ) where {_T}
     @unpack_val G = s
@@ -94,20 +94,21 @@ function compute_εII(
     return ε_el
 end
 
-function dεII_dτII(s::ConstantElasticity{_T}, τII::_T; dt::_T=1.0, kwargs...) where {_T}
+@inline function dεII_dτII(s::ConstantElasticity{_T}, τII::_T; dt::_T=1.0, kwargs...) where {_T}
     @unpack_val G = s
-    return 0.5 * (G * dt)
+    return 0.5 * inv(G * dt)
 end
 
-function compute_τII(
+@inline function compute_τII(
     s::ConstantElasticity, εII::_T; τII_old::_T=zero(_T), dt::_T=1.0, kwargs...
 ) where {_T}
     @unpack_val G = s
-    τII = 2.0 * G * dt * εII + τII_old
+    τII = 2.0 * s.G.val * dt * εII + τII_old
+
     return τII
 end
 
-function dτII_dεII(s::ConstantElasticity{_T}, εII::_T; dt::_T=1.0, kwargs...) where {_T}
+@inline function dτII_dεII(s::ConstantElasticity{_T}, εII::_T; dt::_T=1.0, kwargs...) where {_T}
     @unpack_val G = s
     return _T(2) * G * dt
 end
