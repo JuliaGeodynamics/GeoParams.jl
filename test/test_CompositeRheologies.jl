@@ -1,5 +1,5 @@
 using Test
-using GeoParams
+using GeoParams #, ForwardDiff
 
 @testset "CompositeRheologies" begin
 
@@ -58,10 +58,10 @@ using GeoParams
 
     # Check that constructing them works
     a = CompositeRheology( (pp0, pp1, pp2, pp3, Parallel(pp4, pp0, pp1),pp1, Parallel(pp4, pp0), pp1,pp2 ))   
-    @test isa(a.rheology_chain[1], AbstractCreepLaw)
+    @test isa(a.elements[1], AbstractCreepLaw)
 
     b = CompositeRheology( (pp0, pp1, pp2, pp3, Parallel(pp4, pp3, Parallel( (pp1, pp0), pp2) ), pp1,pp2) )   
-    @test isa(b.rheology_chain[3], AbstractCreepLaw)
+    @test isa(b.elements[3], AbstractCreepLaw)
     
     a=Parallel((pp1,pp2,pp3, Parallel(pp1,pp2),pp1, Parallel(pp1,(pp2, pp1))),pp2,(pp3,pp4))
 
@@ -76,7 +76,6 @@ using GeoParams
     τII   = compute_τII(v1, εII, args)
     τII_2 = compute_τII(v2, εII, args)
     @test τII ≈ τII_2 ≈ 2*1e21*1e-15
-
 
     εII   = compute_εII(v1, τII, args)
     @test εII ≈ 1e-15
@@ -125,9 +124,64 @@ using GeoParams
     τII_1 = compute_τII(v1, εII, args)
     τII_2 = compute_τII(v2, εII, args)
     
-    τII   = compute_τII(x, εII, args)
+    τII   = compute_τII(x, εII, args)       # this allocates!
     @test τII == (τII_1+τII_2)
 
+    # Local iterations for a Parallel object for a given stress
+    x = Parallel(LinearViscous(η=1e23Pas), LinearViscous(η=5e22Pas))    # parallel object with 1 component/level
+    τII = 1e6
+    εII = compute_εII(x, τII, args, verbose=true)       # the strainrate of the parallel object (constant for all elements)
+    τII_check = compute_τII(x, εII, args)
+    @test τII == τII_check
+
+
+    x1 = Parallel( (LinearViscous(η=1e23Pas), pp1), LinearViscous(η=5e22Pas))    # parallel object with 2 
+    x2 = Parallel( (LinearViscous(η=1e23Pas), pp1), (LinearViscous(η=5e22Pas), Parallel(pp0,pp1)))    # parallel object with 2 entries but another parallel object 
+
+    
+
+    # test stress circuit implementations
+    τII = GeoParams.MaterialParameters.ConstitutiveRelationships.stress_circuit(x, εII, args)
+    @test τII == 1e6
+
+    τII1 = GeoParams.MaterialParameters.ConstitutiveRelationships.stress_circuit(x1, εII, args)
+    @test τII1 ≈ 345408.7183763343
+
+    # Check derivatives with FD
+    xt = Parallel(pp0,pp1)
+    Δτ = τII*1e-6;
+    ε0 = compute_εII(xt, τII, args, verbose=false)
+    ε1 = compute_εII(xt, τII + Δτ, args, verbose=false)
+    dε_dτ_FD = (ε1-ε0)/Δτ
+    dεII_dτII(x1, τII, args)
+
+    # 
+    ε = 1e-15
+    Δε = 1e-6*ε
+    τ0 = compute_τII(xt, ε, args, verbose=false)
+    τ1 = compute_τII(xt, ε+Δε, args, verbose=false)
+    dτ_dε_FD = (τ1-τ0)/Δε
+
+    dτII_dεII(x1, ε, args)
+    
+    #=
+    # use AD to test derivatives
+    xt = Parallel(pp0,pp1, pp2)
+    for i=1:length(xt.elements)
+        @show i
+        f(ε) = compute_τII(xt.elements[i], ε, args)
+        der_AD = ForwardDiff.derivative(f,1e-15)
+        @test der_AD ≈ dτII_dεII(xt.elements[i], 1e-15, args)
+
+        g(τ) = compute_εII(xt.elements[i], τ, args)
+        der_AD = ForwardDiff.derivative(g,1e-15)
+        @test der_AD ≈ dεII_dτII(xt.elements[i], 1e6, args)
+
+    end
+
+=#
+
+    εII = compute_εII(x, τII, args, verbose=true) 
 
 end
 

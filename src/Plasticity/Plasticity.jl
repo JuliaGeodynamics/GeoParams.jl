@@ -97,15 +97,6 @@ function compute_yieldfunction!(
     return nothing
 end
 
-# Print info 
-function show(io::IO, g::DruckerPrager)
-    return print(
-        io,
-        "Drucker-Prager plasticity with: C = $(UnitValue(g.C)), ϕ = $(UnitValue(g.ϕ))ᵒ, Ψ = $(UnitValue(g.Ψ))ᵒ",
-    )
-end
-#-------------------------------------------------------------------------
-
 # Plastic Potential 
 
 # Derivatives w.r.t pressure
@@ -131,6 +122,16 @@ for t in (:NTuple,:SVector)
         ∂Q∂τxy(p::DruckerPrager, τij::$(t){3, T}) where T = τij[3] / second_invariant(τij) 
     end
 end
+
+# Print info 
+function show(io::IO, g::DruckerPrager)
+    return print(
+        io,
+        "Drucker-Prager plasticity with: C = $(UnitValue(g.C)), ϕ = $(UnitValue(g.ϕ))ᵒ, Ψ = $(UnitValue(g.Ψ))ᵒ",
+    )
+end
+#-------------------------------------------------------------------------
+
 
 # Thin convinience wrappers
 # 3D

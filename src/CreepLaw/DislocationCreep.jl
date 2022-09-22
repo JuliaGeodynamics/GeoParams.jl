@@ -140,7 +140,7 @@ end
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
 @inline function compute_εII(
-    a::DislocationCreep, TauII::_T; T::_T, P::_T=zero(_T), f::_T=one(_T), args...
+    a::DislocationCreep, TauII::_T; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), args...
 ) where {_T}
     @unpack_val n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
@@ -177,7 +177,7 @@ function compute_εII!(
 end
 
 @inline function dεII_dτII(
-    a::DislocationCreep, TauII::_T; T::_T=one(_T), P::_T=zero(_T), f::_T=one(_T), args...
+    a::DislocationCreep, TauII::_T; T::_T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), args...
 ) where {_T}
     @unpack_val n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
@@ -191,6 +191,7 @@ end
            (1 / FE)
 end
 
+
 """
     compute_τII(a::DislocationCreep, EpsII; P, T, f, args...)
 
@@ -198,7 +199,8 @@ Computes the stress for a Dislocation creep law given a certain strain rate
 
 """
 @inline function compute_τII(
-    a::DislocationCreep, EpsII::_T; T::_T=one(_T), P::_T=zero(_T), f::_T=one(_T), args...
+    a::DislocationCreep, EpsII::_T; T=one(precision(a)), P=zero(precision(a)), 
+    f=one(precision(a)), args...
 ) where {_T}
     local n, r, A, E, V, R
     if EpsII isa Quantity
@@ -214,6 +216,7 @@ Computes the stress for a Dislocation creep law given a certain strain rate
            fastpow(f, -r / n) *
            exp((E + P * V) / (n * R * T)) / FT
 end
+
 
 @inline function compute_τII(
     a::DislocationCreep, EpsII::Quantity; P=0Pa, T=1K, f=1NoUnits, args...
@@ -251,7 +254,7 @@ function compute_τII!(
 end
 
 @inline function dτII_dεII(
-    a::DislocationCreep, EpsII::_T; T::_T=one(_T), P::_T=zero(_T), f::_T=one(_T), args...
+    a::DislocationCreep, EpsII::_T; T=one(precision(a)), P::_T=zero(precision(a)), f::_T=one(precision(a)), args...
 ) where {_T}
     @unpack_val n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE

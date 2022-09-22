@@ -141,7 +141,7 @@ Returns diffusion creep strainrate as a function of 2nd invariant of the stress 
 
 """
 @inline function compute_εII(
-    a::DiffusionCreep, TauII::_T; T::_T, P=zero(_T), f=one(_T), d=one(_T), kwargs...
+    a::DiffusionCreep, TauII::_T; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), d=one(precision(a)), kwargs...
 ) where {_T}
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
@@ -192,7 +192,7 @@ end
 returns the derivative of strainrate versus stress 
 """
 @inline function dεII_dτII(
-    a::DiffusionCreep, TauII::_T; T::_T=one(_T), P=zero(_T), f=one(_T), d=one(_T), kwargs...
+    a::DiffusionCreep, TauII::_T; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), d=one(precision(a)), kwargs...
 ) where {_T}
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
@@ -213,7 +213,7 @@ end
 Returns diffusion creep stress as a function of 2nd invariant of the strain rate 
 """
 @inline function compute_τII(
-    a::DiffusionCreep, EpsII::_T; T::_T=one(_T), P=zero(_T), f=one(_T), d=one(_T), kwargs...
+    a::DiffusionCreep, EpsII::_T; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), d=one(precision(a)), kwargs...
 ) where {_T}
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
@@ -262,7 +262,7 @@ function compute_τII!(
 end
 
 @inline function dτII_dεII(
-    a::DiffusionCreep, EpsII::_T; T::_T=one(_T), P=zero(_T), f=one(_T), d=one(_T), kwargs...
+    a::DiffusionCreep, EpsII::_T; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), d=one(precision(a)), kwargs...
 ) where {_T}
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE

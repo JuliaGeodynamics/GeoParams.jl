@@ -8,6 +8,7 @@
 # here are implemented. Please add tests as well!
 
 abstract type AbstractCreepLaw{T} <: AbstractConstitutiveLaw{T} end
+precision(v::AbstractCreepLaw) = (typeof(v).super).parameters[1]
 
 export LinearViscous, PowerlawViscous, CorrectionFactor, AbstractCreepLaw
 
