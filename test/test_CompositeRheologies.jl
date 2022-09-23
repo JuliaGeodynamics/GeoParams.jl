@@ -1,45 +1,42 @@
 using Test
-using GeoParams #, ForwardDiff
+using GeoParams, ForwardDiff
 
 @testset "CompositeRheologies" begin
 
     # Diffusion & dislocation creep in series
-    pp = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
-    pp1 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
-    v = (pp, pp1)
+    v1 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
+    v2 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
+    t1 = (v1, v2)
     args = (T=900.0, d=100e-6)
     εII = 1e-15
 
     
-    τII = compute_τII(v, εII, args)
+    τII = compute_τII(t1, εII, args)
     @test τII ≈ 8.892678156850036e8
     η = τII / (2εII)
 
     # Combined creeplaws
-    v1 = CompositeRheology(pp,pp1)
-    τII = compute_τII(v, εII, args) # Same computation as 
+    c1 = CompositeRheology(v1,v2)
+    τII = compute_τII(c1, εII, args) # Same computation as 
     @test τII ≈ 8.892678156850036e8
 
     # Same with arrays:    
     εII_array = ones(10) * 1e-5
     τII_array = similar(εII_array)
-    compute_τII!(τII_array, v, εII_array, args)
+    compute_τII!(τII_array, t1, εII_array, args)
     @test τII_array[1] ≈ 1.918028581543394e12
 
-    # compute strainrate given stress  [not working yet!]
-    # εII1  = compute_εII(v,τII, args) 
-
     # Add elasticity in the mix
-    el = ConstantElasticity()
-    v = (pp, pp1, el)
-    dt_maxwell = η / NumValue(el.G)
+    e1 = ConstantElasticity()
+    t2 = (v1, v2, e1)
+    dt_maxwell = η / NumValue(e1.G)
     args = (T=900.0, d=100e-6, τII_old=0.0, dt=dt_maxwell / 20)
     εII = 1e-15
 
     τII_vec = [0.0]
     t = [0.0]
     for i in 1:100
-        τII = compute_τII(v, εII, args)
+        τII = compute_τII(t2, εII, args)
         args = merge(args, (; τII_old=τII))
         push!(τII_vec, τII)
         push!(t, i * args.dt)
@@ -49,32 +46,32 @@ using GeoParams #, ForwardDiff
    # SecYear = 3600 * 24 * 365.25
   
     # put the different rheological elements in a composite rheology structure
-    pp0 = LinearViscous()
-    pp1 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
-    pp2 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
-    
-    pp3 = ConstantElasticity()
-    pp4 = DruckerPrager()
+    v1 = LinearViscous()
+    v2 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
+    v3 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
+    e1 = ConstantElasticity()
+    p1 = DruckerPrager()
 
     # Check that constructing them works
-    a = CompositeRheology( (pp0, pp1, pp2, pp3, Parallel(pp4, pp0, pp1),pp1, Parallel(pp4, pp0), pp1,pp2 ))   
-    @test isa(a.elements[1], AbstractCreepLaw)
+    c2 = CompositeRheology( (v1, v2, v3, e1, Parallel(p1, v1, v2),v2, Parallel(p1, v1), v2,v3 ))   
+    @test isa(c2.elements[1], AbstractCreepLaw)
 
-    b = CompositeRheology( (pp0, pp1, pp2, pp3, Parallel(pp4, pp3, Parallel( (pp1, pp0), pp2) ), pp1,pp2) )   
-    @test isa(b.elements[3], AbstractCreepLaw)
+    c3 = CompositeRheology( (v1, v2, v3, e1, Parallel(p1, e1, Parallel( (v1, v2), v3) ), v2,v3) )   
+    @test isa(c3.elements[3], AbstractCreepLaw)
     
-    a=Parallel((pp1,pp2,pp3, Parallel(pp1,pp2),pp1, Parallel(pp1,(pp2, pp1))),pp2,(pp3,pp4))
+    c4 = Parallel((v2,v3,e1, Parallel(v2,v3),v2, Parallel(v2,(v3, v2))),v3,(e1,p1))
+    @test isa(c4.elements[2], AbstractCreepLaw)
 
     # Perform computations for different complexites
 
     # Linear viscous
     v1  = (LinearViscous(η=1e21Pas), )
-    v2  =  CompositeRheology(v1)
+    c5  =  CompositeRheology(v1)
 
     args = (T=900.0, d=100e-6, τII_old=0.0)
     εII = 1e-15
     τII   = compute_τII(v1, εII, args)
-    τII_2 = compute_τII(v2, εII, args)
+    τII_2 = compute_τII(c5, εII, args)
     @test τII ≈ τII_2 ≈ 2*1e21*1e-15
 
     εII   = compute_εII(v1, τII, args)
@@ -89,8 +86,8 @@ using GeoParams #, ForwardDiff
     t_M=  η/G
     εII = 1.;
     args=(;)
-    x  =  CompositeRheology((LinearViscous(η=η*Pa*s),ConstantElasticity(G=G*Pa)))
-    t_vec, τ_vec =   time_τII_0D(x, εII, args; t=(0.,t_M*4), nt=100, verbose=false)
+    c6  =  CompositeRheology((LinearViscous(η=η*Pa*s),ConstantElasticity(G=G*Pa)))
+    t_vec, τ_vec =   time_τII_0D(c6, εII, args; t=(0.,t_M*4), nt=100, verbose=false)
 
     analytical_sol = @. 2.0*η*(1.0-exp(-t_vec/t_M))*εII
     
@@ -99,89 +96,109 @@ using GeoParams #, ForwardDiff
 
 
     # Case with nonlinear viscosity
-    pp0= LinearViscous(η=1e23Pas)
-    x  =  CompositeRheology(pp0,pp2,ConstantElasticity())
-    x1 =  CompositeRheology(pp0,pp2)
-    y = (x,x1)
+    v1 = LinearViscous(η=1e23Pas)
+    c6 =  CompositeRheology(v1,v3,ConstantElasticity())
+    c7 =  CompositeRheology(v1,v3)
+    y = (c6,c7)
 
     args = (T=1100.0, d=100e-6, τII_old=0.0)
     εII = 1e-15
     SecYear = 3600*24*365
-    t_vec, τ_vec =   time_τII_0D(x, εII, args; t=(0.,0.01*1e6*SecYear), nt=100, verbose=false)
+    t_vec, τ_vec =   time_τII_0D(c6, εII, args; t=(0.,0.01*1e6*SecYear), nt=100, verbose=false)
     @test sum(τ_vec) ≈ 4.41429358183189e8
 
 
     # Parallel element
-    x = Parallel(LinearViscous(η=1e23Pas), LinearViscous(η=5e22Pas))  # put elements in parallel
-    τII   = compute_τII(x, εII, args)
-    τII_check = 2*εII*( NumValue(x.elements[1].η) +  NumValue(x.elements[2].η))
+    pa1 = Parallel(LinearViscous(η=1e23Pas), LinearViscous(η=5e22Pas))  # put elements in parallel
+    τII  = compute_τII(pa1, εII, args)
+    τII_check = 2*εII*( NumValue(pa1.elements[1].η) +  NumValue(pa1.elements[2].η))
     @test τII ≈ τII_check
 
     # Parallel element with one element that has two components 
-    v1    = (LinearViscous(η=1e23Pas), pp1);
-    v2    = LinearViscous(η=5e22Pas)
-    x     = Parallel(v1, v2)  # put elements in parallel
+    c8    = (LinearViscous(η=1e23Pas), v2);
+    v1    = LinearViscous(η=5e22Pas)
+    pa2   = Parallel(v1, v2)  # put elements in parallel
     τII_1 = compute_τII(v1, εII, args)
     τII_2 = compute_τII(v2, εII, args)
     
-    τII   = compute_τII(x, εII, args)       # this allocates!
+    τII   = compute_τII(pa2, εII, args)       # this allocates!
     @test τII == (τII_1+τII_2)
 
     # Local iterations for a Parallel object for a given stress
-    x = Parallel(LinearViscous(η=1e23Pas), LinearViscous(η=5e22Pas))    # parallel object with 1 component/level
+    pa3 = Parallel(LinearViscous(η=1e23Pas), LinearViscous(η=5e22Pas))    # parallel object with 1 component/level
     τII = 1e6
-    εII = compute_εII(x, τII, args, verbose=true)       # the strainrate of the parallel object (constant for all elements)
-    τII_check = compute_τII(x, εII, args)
+    εII = compute_εII(pa3, τII, args, verbose=false)       # the strainrate of the parallel object (constant for all elements)
+    τII_check = compute_τII(pa3, εII, args)
     @test τII == τII_check
 
 
-    x1 = Parallel( (LinearViscous(η=1e23Pas), pp1), LinearViscous(η=5e22Pas))    # parallel object with 2 
-    x2 = Parallel( (LinearViscous(η=1e23Pas), pp1), (LinearViscous(η=5e22Pas), Parallel(pp0,pp1)))    # parallel object with 2 entries but another parallel object 
-
-    
+    pa4 = Parallel( (LinearViscous(η=1e23Pas), v2), LinearViscous(η=5e22Pas))    # parallel object with 2 
+    pa5 = Parallel( (LinearViscous(η=1e23Pas), v2), (LinearViscous(η=5e22Pas), Parallel(v1,v2)))    # parallel object with 2 entries but another parallel object 
 
     # test stress circuit implementations
-    τII = GeoParams.MaterialParameters.ConstitutiveRelationships.stress_circuit(x, εII, args)
+    τII = GeoParams.MaterialParameters.ConstitutiveRelationships.stress_circuit(pa3, εII, args)
     @test τII == 1e6
 
-    τII1 = GeoParams.MaterialParameters.ConstitutiveRelationships.stress_circuit(x1, εII, args)
+    τII1 = GeoParams.MaterialParameters.ConstitutiveRelationships.stress_circuit(pa4, εII, args)
     @test τII1 ≈ 345408.7183763343
 
     # Check derivatives with FD
-    xt = Parallel(pp0,pp1)
-    Δτ = τII*1e-6;
-    ε0 = compute_εII(xt, τII, args, verbose=false)
-    ε1 = compute_εII(xt, τII + Δτ, args, verbose=false)
+    pa6 = Parallel(v1,v2)
+    Δτ  = τII*1e-6;
+    ε0  = compute_εII(pa6, τII, args, verbose=false)
+    ε1  = compute_εII(pa6, τII + Δτ, args, verbose=false)
     dε_dτ_FD = (ε1-ε0)/Δτ
-    dεII_dτII(x1, τII, args)
+    dεII_dτII(pa6, τII, args)
 
     # 
     ε = 1e-15
     Δε = 1e-6*ε
-    τ0 = compute_τII(xt, ε, args, verbose=false)
-    τ1 = compute_τII(xt, ε+Δε, args, verbose=false)
+    τ0 = compute_τII(pa6, ε, args, verbose=false)
+    τ1 = compute_τII(pa6, ε+Δε, args, verbose=false)
     dτ_dε_FD = (τ1-τ0)/Δε
 
-    dτII_dεII(x1, ε, args)
+    dτII_dεII(pa6, ε, args)
     
-    #=
-    # use AD to test derivatives
-    xt = Parallel(pp0,pp1, pp2)
-    for i=1:length(xt.elements)
-        @show i
-        f(ε) = compute_τII(xt.elements[i], ε, args)
+    # use AD to check the individual derivatives of the separate creeplaws 
+    pa7 = Parallel(v1,v2,v3)
+    for i=1:length(pa7.elements)
+        f(ε) = compute_τII(pa7.elements[i], ε, args)
         der_AD = ForwardDiff.derivative(f,1e-15)
-        @test der_AD ≈ dτII_dεII(xt.elements[i], 1e-15, args)
+        @test der_AD ≈ dτII_dεII(pa7.elements[i], 1e-15, args)
 
-        g(τ) = compute_εII(xt.elements[i], τ, args)
-        der_AD = ForwardDiff.derivative(g,1e-15)
-        @test der_AD ≈ dεII_dτII(xt.elements[i], 1e6, args)
-
+        g(τ) = compute_εII(pa7.elements[i], τ, args)
+        der_AD = ForwardDiff.derivative(g, 1e6)
+        @test der_AD ≈ dεII_dτII(pa7.elements[i], 1e6, args)
     end
 
-=#
+    # test derivatives of the combined creep laws
+    f2(ε) = compute_τII(pa7, ε, args)
+    der_AD2 = ForwardDiff.derivative(f2,1e-15)
+    @test der_AD2 ≈ dτII_dεII(pa7, 1e-15, args)   # correct; we need this derivative for the jacobian
 
-    εII = compute_εII(x, τII, args, verbose=true) 
+
+    c9 = CompositeRheology(v2,v3,Parallel(v1,v2))
+    der = dεII_dτII(c9,1e6,args)         # this should compute dεII/dτII for serial elements that are NOT Parallel blocks
+    εII = compute_εII(c9,1e6,args)       # sums εII for serial elements that are NOT Parallel blocks
+
+    # Check that the sum & derivatives only apply to non-parallel elements
+    ε,dε = 0.0, 0.0
+    for i=1:length(c9.elements)
+        if !isa(c9.elements[i], Parallel)
+            ε += compute_εII(c9.elements[i],1e6,args)
+            dε += dεII_dτII(c9.elements[i],1e6,args)
+        end
+    end
+    @test ε ≈ εII
+    @test dε ≈ der
+
+    #J = ones(2,2)   # size depends on # of parallel objects (= likely plastic elements)
+    #J[1,1] = der;
+    #J[2,2] = 
+
+
+
+    #εII = compute_εII(x, τII, args, verbose=true) 
 
 end
 

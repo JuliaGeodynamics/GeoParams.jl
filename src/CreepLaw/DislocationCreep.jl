@@ -177,7 +177,7 @@ function compute_εII!(
 end
 
 @inline function dεII_dτII(
-    a::DislocationCreep, TauII::_T; T::_T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), args...
+    a::DislocationCreep, TauII::_T; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), args...
 ) where {_T}
     @unpack_val n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
@@ -254,7 +254,7 @@ function compute_τII!(
 end
 
 @inline function dτII_dεII(
-    a::DislocationCreep, EpsII::_T; T=one(precision(a)), P::_T=zero(precision(a)), f::_T=one(precision(a)), args...
+    a::DislocationCreep, EpsII::_T; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), args...
 ) where {_T}
     @unpack_val n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
