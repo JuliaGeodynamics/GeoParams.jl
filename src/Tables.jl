@@ -5,12 +5,34 @@ using GeoParams: AbstractMaterialParam, param_info
 using ..Units
 using ..MaterialParameters: MaterialParamsInfo
 
-export Phase2Dict, Dict2LatexTable
+export Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2MarkdownTable
 
 # was tested with:
 # TestPh = (SetMaterialParams(Name="Viscous Matrix", Phase=1, Density=ConstantDensity(),CreepLaws = SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)")),
 #           SetMaterialParams(Name="Viscous Sinker", Phase=2, Density= PT_Density(),CreepLaws = LinearViscous(η=1e21Pa*s)),
 #           SetMaterialParams(Name="Viscous Bottom", Phase=3, Density= PT_Density(),CreepLaws = SetDislocationCreep("Diabase | Caristan (1982)")))
+
+""" 
+floatdecimals() returns the number of float decimals after the comma as Integer. 
+If expon is True the function also returns the exponent as Integer.
+
+"""
+
+function floatdecimals(str::String, expon::Bool=false)
+    s = lowercase(str)
+    if 'e' in s
+        s, ex = split(s, "e")
+        expdig = parse(Int, ex)
+    else
+        expdig = 0
+    end
+    dig = something(findfirst('.', reverse(s)), 1) - 1
+    if expon == false
+        return dig
+    else
+        return dig, expdig
+    end
+end
 
 """
 Phase2Dict() puts all parameters of a phase in a dict.
@@ -111,7 +133,7 @@ function Dict2LatexTable(d::Dict, refs::Dict)
         "r" => "Water fugacity exponent (-)",
         "p" => "Grain size exponent (-)",
         "A" => "Coefficient \$(Pa^{-n}/s)\$",
-        "E" => "Activation energy (kJ/mol)",
+        "E" => "Activation energy (J/mol)",
         "R" => "Gas constant (J/mol/K)",
         "G" => "Shear modulus (Pa)",
         "\\nu" => "Poisson ratio (-)",
@@ -159,7 +181,7 @@ function Dict2LatexTable(d::Dict, refs::Dict)
         for j in 1:length(refs)
             if parse(Int64, refpair[j].second[3]) == i
 
-                Table *= "(" * "*"^counter * ")"
+                Table *= "(" * "*" ^ counter * ")"
                 currentbib = refpair[j].second[1]
                 startidx = first(findfirst("{", currentbib))
                 endidx = first(findfirst(",", currentbib))
@@ -293,7 +315,7 @@ function Phase2DictMd(s)
                 # Goes through all components of all fields
                 for j = 1:length(getproperty(s[i], label))
                     a = getproperty(s[i], label)
-                    varnames = propertynames(a[j])#=
+                    varnames = propertynames(a[j])
                     law = string(typeof(a[1]))
                     flowlaw = ""
                     if occursin("Disl", law)
@@ -313,7 +335,7 @@ function Phase2DictMd(s)
                     elseif occursin("LinearViscous", law)
                         flowlawcount += 1
                         flowlaw = "LinVisc"
-                    end=#
+                    end
                     # Goes through all variables in a field component
                     for var in varnames
                         b = getproperty(a[j], var)
@@ -340,7 +362,7 @@ function Phase2DictMd(s)
 end
 
 
-function Dict2MarkdownTable(d::Dict, refs::Dict)
+function Dict2MarkdownTable(d::Dict, refs::Dict, rdigits::Int64=4)
     dictkeys = keys(d)
     symbs = []
 
@@ -353,17 +375,17 @@ function Dict2MarkdownTable(d::Dict, refs::Dict)
 
     # Descriptions for every parameter that could occur in the table and their corresponding variable name(s) that is used in GeoParams
     desc = Dict(
-        "ρ"=>"Density (kg/m^(3))",
-        "ρ0"=>"Reference density (kg/m^(3))",
-        "g"=>"Gravity (m/s^(2))","η"=>"Viscosity (Pa s)",
+        "ρ"=>"Density (kg/m^3^)",
+        "ρ0"=>"Reference density (kg/m^3^)",
+        "g"=>"Gravity (m/s^2^)","η"=>"Viscosity (Pa s)",
         "P"=>"Pressure (MPa)","T"=>"Temperature (C)",
-        "V"=>"Volume (m^(3))" ,"d"=>"Grain size (cm)",
+        "V"=>"Volume (m^3^)" ,"d"=>"Grain size (cm)",
         "f"=>"Water fugacity (MPa)",
         "n"=>"Power-law exponent (-)",
         "r"=>"Water fugacity exponent (-)",
         "p"=>"Grain size exponent (-)",
-        "A"=>"Coefficient (Pa^(-n)/s)",
-        "E"=>"Activation energy (kJ/mol)",
+        "A"=>"Coefficient (Pa^-n^/s)",
+        "E"=>"Activation energy (J/mol)",
         "R"=>"Gas constant (J/mol/K)",
         "G"=>"Shear modulus (Pa)",
         "ν"=>"Poisson ratio (-)",
@@ -372,7 +394,7 @@ function Dict2MarkdownTable(d::Dict, refs::Dict)
         "k"=>"Thermal conductivity (W/m/K)",
         "cp"=>"Heat capacity (J/kg/K)",
         "Q_L"=>"Latent heat (kJ/kg)",
-        "H_r"=>"Radioactive heat (W/m^(3))",
+        "H_r"=>"Radioactive heat (W/m^3^)",
         "H_s"=>"Shear heating (-)",
         "ϕ"=>"Friction angle (°)",
         "ψ"=>"Dilation angle (°)",
@@ -433,7 +455,11 @@ function Dict2MarkdownTable(d::Dict, refs::Dict)
     # Creates columnwise output for all parameters of the input phase
     for symbol in symbs
         # Sets parametername and variable
-        Table *= " " * string(desc[symbol]) * " | " * symbol
+        if length(symbol) > 1
+            Table *= " " * string(desc[symbol]) * " | " * symbol[1] * "~" * symbol[2] * "~"
+        else
+            Table *= " " * string(desc[symbol]) * " | " * symbol
+        end
         # Iterates over all phases
         for j = 1:parse(Int64, d["Name 1"][2])
             hit = 0
@@ -442,7 +468,13 @@ function Dict2MarkdownTable(d::Dict, refs::Dict)
                 # Checks if symbol matches the symbol in the pair and if phase matches phase of the pair
                 if symbol == dictpairs[i].second[2] && j == parse(Int64, dictpairs[i].second[4])
                     # put in the matched parameter value
-                    Table *= " | " * dictpairs[i].second[1]
+                    print(dictpairs[i].second[1])
+                    if floatdecimals(dictpairs[i].second[1]) <= rdigits 
+                        Table *= " | " * dictpairs[i].second[1]
+                    else
+                        # Problem ist das rdigits grade 1.106797181058933e-15 nicht runden kann da e-15 ja kleiner als 1 ist. Muss Zahl mal e15 nehmen round() machen und dann wieder mal e-15!!!!
+                        Table *= " | " * round(parse(Float64, dictpairs[i].second[1]), rdigits)
+                    end
                     hit += 1
                 end
             end
