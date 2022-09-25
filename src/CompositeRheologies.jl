@@ -1,4 +1,5 @@
 # This holds structures and computational routines for compositional rheologies
+using StaticArrays
 
 export CompositeRheology, Parallel, create_rheology_string, print_rheology_matrix
 export time_τII_0D
@@ -48,7 +49,7 @@ end
     Structure that holds composite rheologies (e.g., visco-elasto-viscoplastic),
     but also indicates (in the name) whether we need to perform non-linear iterations.
 """
-struct CompositeRheology{T, N, τ_it, P_it, λ_it} <: AbstractComposite
+struct CompositeRheology{T, N, Npar, is_parallel, τ_it, P_it, λ_it} <: AbstractComposite
     elements::T
 end
 
@@ -60,18 +61,32 @@ function CompositeRheology(v::T) where {T, N}
     P_it = false;
     λ_it = false;
 
-    return CompositeRheology{typeof(v), length(v), τ_it, P_it, λ_it}(v)
+    id_parallel =   findall(isa.(v, Parallel));
+    Npar        =   length(id_parallel)
+    n           =   length(v)
+    par         =   zeros(Bool,n)
+    if Npar>0
+        par[id_parallel] .= 1
+    end
+    is_parallel =    SVector{n,Bool}(par)
+
+    return CompositeRheology{typeof(v), n, Npar, is_parallel, τ_it, P_it, λ_it}(v)
 end
 CompositeRheology(a,b...) = CompositeRheology( (a,b...,)) 
 CompositeRheology(a::Parallel) = CompositeRheology( (a,)) 
 #CompositeRheology(v::Tuple) =  CompositeRheology(v...) 
 
 # Computes sum of dεII/dτII for all elements that are NOT parallel elements
-@inline @generated function dεII_dτII(
+"""
+    dεII_dτII_elements(v::CompositeRheology, TauII, args)
+
+Sums the derivative ∂εII/∂τII (strainrate vs. stress) of all non-parallel elements in a `CompositeRheology` structure. Mostly internally used for jacobian iterations.
+"""
+@inline @generated function dεII_dτII_elements(
     v::CompositeRheology{T,N}, 
     TauII::_T, 
     args
-) where {T,N, _T}
+) where {T, N, _T}
     quote
         out = zero(_T)
         Base.Cartesian.@nexprs $N i ->
@@ -84,8 +99,12 @@ CompositeRheology(a::Parallel) = CompositeRheology( (a,))
 end
 
 
-# Computes sum of εII for all elements that are NOT parallel elements
-@inline @generated function compute_εII(
+"""
+    compute_εII_elements(v::CompositeRheology, TauII, args)
+
+Sums the strainrate of all non-parallel elements in a `CompositeRheology` structure. Mostly internally used for jacobian iterations.
+"""
+@inline @generated function compute_εII_elements(
     v::CompositeRheology{T,N}, 
     TauII::_T, 
     args
@@ -100,6 +119,25 @@ end
             end
     end
 end
+
+"""
+    compute_invτ(v::CompositeRheology, TauII, args)
+
+Sums the strainrate of all non-parallel elements in a `CompositeRheology` structure. Mostly internally used for jacobian iterations.
+"""
+@inline @generated function compute_invτ(
+    v::CompositeRheology{T,N}, 
+    EpsII::_T, 
+    args
+) where {T,N, _T}
+    quote
+        out = zero(_T)
+        Base.Cartesian.@nexprs $N i ->
+            out += 1/compute_τII(v.elements[i], EpsII, args)
+        out = 1/out
+    end
+end
+
 
 # Print info 
 function show(io::IO, g::AbstractComposite)
@@ -520,6 +558,7 @@ function compute_τII(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
     return compute_τII(v.elements, εII, args; tol=1e-6, verbose=verbose)
 end
 
+
 @inline @generated function compute_viscosity_param(
     fn::F,
     MatParam::NTuple{N,AbstractMaterialParamsStruct},
@@ -553,6 +592,20 @@ end
     end
 end
 
+# For a CompositeRheology element, for a given entry
+@inline @generated  function compute_τII_i(
+    v::CompositeRheology{T,N}, 
+    εII::_T, 
+    args,
+    i::I; 
+    tol=1e-6, 
+    verbose=true
+) where {T,_T,N,I}
+    quote
+        #τII = zero(_T)
+        τII =  compute_τII(v.elements[i], εII, args)
+    end
+end
 
 # For a parallel element, εII for a given τII requires iterations
 function compute_εII(v::Parallel, τII, args; tol=1e-6, verbose=true)
@@ -822,6 +875,7 @@ Performs local iterations versus stress for a given strain rate
     return τII
 end
 
+#=
 """
 Performs local iterations versus stress for a given total strain rate 
 """
@@ -862,7 +916,7 @@ Performs local iterations versus stress for a given total strain rate
 =#
     return τII
 end
-
+=#
 
 """
 Performs local iterations versus strain rate for a given stress
@@ -896,6 +950,87 @@ Performs local iterations versus strain rate for a given stress
     return εII
 end
 
+
+"""
+    local_iterations_εII(c::CompositeRheology{T,N}, εII_total, args)
+
+This performs nonlinear Newton iterations for cases where we have both serial and parallel elements.
+"""
+@inline function local_iterations_εII(
+    c::CompositeRheology{T,N,Npar, is_par}, εII_total::_T, args; tol=1e-6, verbose=false
+) where {T,N,Npar,is_par, _T}
+    # Compute residual
+
+    n = Npar+1;       # total size of unknowns
+    x = zero(εII_total)
+
+    # Initial guess of stress & strainrate
+    τ_initial = compute_invτ(c,εII_total, args) # initial stress of all elements (harmonic average)
+    x    = @MVector ones(_T, n)
+    x   .= εII_total
+    x[1] = τ_initial
+
+    j = 1;
+    for i=1:N
+        if is_par[i]
+           x[j] = εII_total
+           j += 1
+        end
+    end
+
+    r = @MVector zeros(_T,n);
+    J = @MMatrix ones(_T, Npar+1,Npar+1)   # size depends on # of parallel objects (= likely plastic elements)
+    
+    # Local Iterations
+    iter = 0
+    ϵ = 2 * tol
+    while ϵ > tol
+        iter += 1
+
+        # Update part of jacobian related to serial elements
+        r[1]   = compute_εII_elements(c,x[1],args) - εII_total
+        J[1,1] = dεII_dτII_elements(c,x[1],args);
+        
+        # Deal with || elements
+        j=1;
+        for i=1:N
+            if is_par[i]
+                εII_parallel = x[j+1]
+                
+                τ_parallel = compute_τII(c.elements[i], εII_parallel, args)    # ALLOCATES
+                r[j+1]     = -(x[1] - τ_parallel);                             # residual (stress should be equal)
+                J[j+1,j+1] = dτII_dεII(c.elements[i], τ_parallel, args)        # ALLOCATES
+                j += 1
+            end
+        end
+        
+        # update solution
+        dx =  J\r 
+        x .-=   dx   
+
+        ϵ = abs(r[1]/εII_total)          # normalize by strain rate
+        for i=1:Npar
+            ϵ += abs(r[i+1]/x[1])        # normalize by stress
+        end
+        if verbose
+            println(" iter $(iter) $ϵ")
+        end
+
+        # debugging
+        #if iter>2
+        #    ϵ=0
+        #end
+
+    end
+    if verbose
+        println("---")
+    end
+    
+
+    τII = x[1]
+
+    return τII
+end
 
 
 

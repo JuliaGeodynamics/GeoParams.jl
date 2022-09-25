@@ -178,8 +178,8 @@ using GeoParams, ForwardDiff
 
 
     c9 = CompositeRheology(v2,v3,Parallel(v1,v2))
-    der = dεII_dτII(c9,1e6,args)         # this should compute dεII/dτII for serial elements that are NOT Parallel blocks
-    εII = compute_εII(c9,1e6,args)       # sums εII for serial elements that are NOT Parallel blocks
+    der = GeoParams.MaterialParameters.ConstitutiveRelationships.dεII_dτII_elements(c9,1e6,args)         # this should compute dεII/dτII for serial elements that are NOT Parallel blocks
+    εII = GeoParams.MaterialParameters.ConstitutiveRelationships.compute_εII_elements(c9,1e6,args)       # sums εII for serial elements that are NOT Parallel blocks
 
     # Check that the sum & derivatives only apply to non-parallel elements
     ε,dε = 0.0, 0.0
@@ -192,13 +192,14 @@ using GeoParams, ForwardDiff
     @test ε ≈ εII
     @test dε ≈ der
 
-    #J = ones(2,2)   # size depends on # of parallel objects (= likely plastic elements)
-    #J[1,1] = der;
-    #J[2,2] = 
+    εII= 3e-15
+    v1 = LinearViscous()
+    v2 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
+    v3 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
+    c  = CompositeRheology(v2,v1,Parallel(v2,v1))
+    τ  = local_iterations_εII(c, εII, args, verbose=true)
 
-
-
-    #εII = compute_εII(x, τII, args, verbose=true) 
+    @test τ ≈ 569147.233065495
 
 end
 
