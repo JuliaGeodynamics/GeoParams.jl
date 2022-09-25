@@ -984,7 +984,7 @@ This performs nonlinear Newton iterations for cases where we have both serial an
     # Local Iterations
     iter = 0
     ϵ = 2 * tol
-    while ϵ > tol
+    while (ϵ > tol) && (iter < 1000)
         iter += 1
 
         # Update part of jacobian related to serial elements
@@ -1024,6 +1024,9 @@ This performs nonlinear Newton iterations for cases where we have both serial an
     end
     if verbose
         println("---")
+    end
+    if iter==1000
+        error("iterations did not converge")
     end
     
 
