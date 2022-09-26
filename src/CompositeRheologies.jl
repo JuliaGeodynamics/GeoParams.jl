@@ -301,91 +301,6 @@ struct InverseCreepLaw{N} <: AbstractConstitutiveLaw{Float64}
     end
 end
 
-
-# do we still need this, given the Parallel struct?
-"""
-    struct KelvinVoigt{N, V1, V2} <: AbstractConstitutiveLaw{Float64}
-        v_el::V1
-        v_vis::V2
-    end
-
-    Elastic spring and viscous dashpot in parallel. 
-
-    τ = 2Gε + 2η̇ε
-"""
-struct KelvinVoigt{N1,N2,V1,V2} <: AbstractConstitutiveLaw{Float64}
-    spring::V1
-    dashpot::V2
-
-    function KelvinVoigt(v1::AbstractConstitutiveLaw, v2::AbstractConstitutiveLaw)
-        T1 = typeof(v1)
-        T2 = typeof(v2)
-        return new{1,1,T1,T2}(v1, v2)
-    end
-
-    function KelvinVoigt(
-        v1::NTuple{N,AbstractConstitutiveLaw}, v2::AbstractConstitutiveLaw
-    ) where {N}
-        T1 = typeof(v1)
-        T2 = typeof(v2)
-        return new{N,1,T1,T2}(v1, v2)
-    end
-
-    function KelvinVoigt(
-        v1::AbstractConstitutiveLaw, v2::NTuple{N,AbstractConstitutiveLaw}
-    ) where {N}
-        T1 = typeof(v1)
-        T2 = typeof(v2)
-        return new{1,N,T1,T2}(v1, v2)
-    end
-
-    function KelvinVoigt(
-        v1::NTuple{N1,AbstractConstitutiveLaw}, v2::NTuple{N2,AbstractConstitutiveLaw}
-    ) where {N1,N2}
-        T1 = typeof(v1)
-        T2 = typeof(v2)
-        return new{N1,N2,T1,T2}(v1, v2)
-    end
-end
-
-# COMPUTE STRAIN RATES
-
-"""
-    τ = 2Gε + η̇ε =  2G ̇ε Δt + η̇ε
-    ̇ε = τ/(2GΔt + 2η)
-"""
-function compute_εII(v::KelvinVoigt{1,1,V1,V2}, τII, args) where {V1,V2}
-    η = computeViscosity_τII(v.dashpot, τII, args)
-    G = v.spring.G
-    εII = τII / (2 * G * args.dt + 2η)
-
-    return εII
-end
-
-@generated function compute_εII(v::KelvinVoigt{N1,N2,V1,V2}, τII, args) where {N1,N2,V1,V2}
-    quote
-        η, G = 0.0, 0.0
-
-        # sum dashpot viscosities
-        if N2 > 1
-            η += Base.Cartesian.@nexprs $N2 i ->
-                computeViscosity_τII(v.dashpot[i], τII, args)
-        else
-            η = computeViscosity_τII(v.dashpot, τII, args)
-        end
-
-        # sum spring shear modulus
-        if N1 > 1
-            G += Base.Cartesian.@nexprs $N2 i -> v.spring[i].G
-        else
-            G += v.spring.G
-        end
-        εII = 0.5 * τII / (G * args.dt + η)
-
-        return εII
-    end
-end
-
 """
     compute_εII(v::NTuple{N, AbstractConstitutiveLaw},τII,  args)
     
@@ -440,20 +355,6 @@ function compute_τII(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
     return compute_τII(v.elements, εII, args; tol=1e-6, verbose=verbose)
 end
 
-# @generated function computeViscosity_τII_parallel(v::NTuple{N, AbstractConstitutiveLaw}, τII::T, args) where {T, N}
-#     quote
-#         η = zero($T)
-#         Base.Cartesian.@nexprs $N i ->
-#             η += computeViscosity_τII(v[i], τII, args)
-        
-#         return  η
-#     end
-# end
-
-# function compute_εII(v::Parallel, τII, args)
-#     0.5 * τII / computeViscosity_τII_parallel(v.elements, τII, args) 
-# end
-
 @generated function compute_εII(v::Parallel{V, N}, τII::T, args) where {V, T, N}
     quote
         η = zero($T)
@@ -463,16 +364,6 @@ end
         return  0.5 * τII / η
     end
 end
-
-# # For a parallel element, τII for a given εII is the sum of each component
-# function compute_τII(v::Parallel, εII, args; tol=1e-6, verbose=true)
-    
-#     τII = zero(εII)   
-#     for elem in v.elements
-#         τII += compute_τII(elem, εII, args)
-#     end
-#     return τII
-# end
 
 @inline function compute_τII!(
     τII::AbstractArray{T,nDim},
@@ -486,18 +377,6 @@ end
 end
 
 # COMPUTE VISCOSITY
-# @generated function computeViscosity_εII_parallel(v::NTuple{N, AbstractConstitutiveLaw}, εII::T, args) where {T, N}
-#     quote
-#         η = zero($T)
-#         Base.Cartesian.@nexprs $N i ->
-#             η += computeViscosity_εII(v[i], εII, args)
-#         return η
-#     end
-# end
-
-# function computeViscosity_εII(v::Parallel, εII::T, args) where T
-#     computeViscosity_εII_parallel(v.elements, εII, args) 
-# end
 
 @generated function computeViscosity_εII(v::Parallel{V, N}, εII::T, args) where {T,V,N}
     quote 
@@ -519,12 +398,6 @@ function computeViscosity(
 ) where {F,T}
     computeViscosity(fn, v.elements, CII, args)
 end
-
-# function computeViscosity(
-#     fn::F, v::NTuple{N,AbstractConstitutiveLaw}, CII::T, args::NamedTuple
-# ) where {F,T,N}
-#     return computeViscosity(fn, v, CII, args)
-# end
 
 function computeViscosity(
     fn::F, v::AbstractConstitutiveLaw, CII::T, args::NamedTuple
