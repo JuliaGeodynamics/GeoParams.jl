@@ -325,19 +325,17 @@ end
     end
 end
 
-# COMPUTE DEVIATORIC STRESS
-
-"""
-    τ = 2Gε + η̇ε =  2G ̇ε Δt + η̇ε
-"""
-function compute_τII(v::KelvinVoigt, εII, args)
-    η = computeViscosity_εII(v.dashpot, εII, args)
-    G = v.spring.G
-    τII = εII * (2 * G * args.dt + η)
-
-    return τII
+@generated function compute_εII(v::Parallel{V, N}, τII::T, args) where {V, T, N}
+    quote
+        η = zero($T)
+        Base.Cartesian.@nexprs $N i ->
+            η += computeViscosity_τII(v.elements[i], τII, args)
+        
+        return  0.5 * τII / η
+    end
 end
 
+# COMPUTE DEVIATORIC STRESS
 """
     compute_τII(v::NTuple{N, AbstractConstitutiveLaw}, εII, args; tol=1e-6, verbose=false)
     
@@ -355,15 +353,6 @@ function compute_τII(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
     return compute_τII(v.elements, εII, args; tol=1e-6, verbose=verbose)
 end
 
-@generated function compute_εII(v::Parallel{V, N}, τII::T, args) where {V, T, N}
-    quote
-        η = zero($T)
-        Base.Cartesian.@nexprs $N i ->
-            η += computeViscosity_τII(v.elements[i], τII, args)
-        
-        return  0.5 * τII / η
-    end
-end
 
 @inline function compute_τII!(
     τII::AbstractArray{T,nDim},
@@ -615,6 +604,8 @@ Performs local iterations versus stress for a given strain rate
     # Initial guess
     η_ve = computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess
     τII = 2 * η_ve * εII # deviatoric stress guess
+    
+    println("initial τII = $τII")
 
     # Local Iterations
     iter = 0
@@ -635,6 +626,9 @@ Performs local iterations versus stress for a given strain rate
     if verbose
         println("---")
     end
+
+    println("final τII = $τII")
+
     return τII
 end
 
@@ -688,7 +682,7 @@ end
 @inline function strain_rate_circuit(
     v::Parallel, TauII, args
 )
-    compute_εII(v.elements, TauII, args)
+    compute_εII(v, TauII, args)
 end
 
 @inline @generated function strain_rate_circuit(
