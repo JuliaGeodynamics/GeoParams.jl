@@ -800,11 +800,11 @@ end
 # RHEOLOGY CIRCUITS
 
 ## STRAIN RATE 
-@inline function strain_rate_circuit(
-    v::InverseCreepLaw, TauII, args
-)
-    strain_rate_circuit(v, TauII, args)
-end
+# @inline function strain_rate_circuit(
+#     v::InverseCreepLaw, TauII, args
+# )
+#     strain_rate_circuit(v, TauII, args)
+# end
 
 @inline function strain_rate_circuit(
     v::AbstractConstitutiveLaw, TauII, args

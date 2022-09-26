@@ -231,3 +231,41 @@ args = (T=1100.0, d=100e-6, τII_old=τII_old, dt = 1e8)
 τII_guess =  η_ve * (2 * εII + τII_old/e1.G.val/args.dt)
 τII_iters = compute_τII(c2, εII, args)
 τII_guess ≈ τII_iters
+
+
+damper = LinearViscous()
+dashpot = ConstantElasticity()
+composite = CompositeRheology(damper, dashpot)
+
+v = composite.elements
+@edit compute_τII(v, εII, args)
+
+
+@inline function local_iterations_εII(
+    v::NTuple{N,AbstractConstitutiveLaw}, εII, args; tol=1e-12, verbose=true
+) where {N}
+    # Initial guess
+    η_ve = computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess
+    τII = 2 * η_ve * εII # deviatoric stress guess
+
+    # Local Iterations
+    iter = 0
+    ϵ = 2 * tol
+    τII_prev = τII
+    while ϵ > tol
+        iter += 1
+        f = εII - strain_rate_circuit(v, τII, args)
+        dfdτII = - dεII_dτII(v, τII, args)
+        τII -= f / dfdτII
+
+        ϵ = abs(τII - τII_prev) / τII
+        τII_prev = τII
+        if verbose
+            println(" iter $(iter) $ϵ")
+        end
+    end
+    if verbose
+        println("---")
+    end
+    return τII
+end
