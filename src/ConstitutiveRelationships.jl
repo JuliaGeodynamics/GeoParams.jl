@@ -44,7 +44,6 @@ export param_info,
     computeViscosity,
     strain_rate_circuit,
     InverseCreepLaw,
-    KelvinVoigt,
     Parallel
 
 # add methods programatically 
