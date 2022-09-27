@@ -39,7 +39,11 @@ where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the
 """
 @with_kw_noshow struct DruckerPrager{T, U, U1} <: AbstractPlasticity{T}
     ϕ::GeoUnit{T,U} = 30NoUnits # Friction angle
-    Ψ::GeoUnit{T,U} = 1NoUnits # Dilation angle
+    Ψ::GeoUnit{T,U} = 0NoUnits # Dilation angle
+    sinϕ::GeoUnit{T,U} = sind(ϕ)NoUnits # Friction angle
+    cosϕ::GeoUnit{T,U} = cosd(ϕ)NoUnits # Friction angle
+    sinΨ::GeoUnit{T,U} = sind(Ψ)NoUnits # Dilation angle
+    cosΨ::GeoUnit{T,U} = cosd(Ψ)NoUnits # Dilation angle
     C::GeoUnit{T,U1} = 10e6Pa # Cohesion
 end
 DruckerPrager(args...) = DruckerPrager(convert.(GeoUnit, args)...)
@@ -54,8 +58,7 @@ end
 function (s::DruckerPrager{_T,U,U1})(;
     P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), kwargs...
 ) where {_T,U,U1}
-    @unpack_val ϕ, C = s
-    sinϕ, cosϕ = sincosd(ϕ)
+    @unpack_val sinϕ, cosϕ, ϕ, C = s
 
     F = τII - cosϕ * C - sinϕ * (P - Pf)   # with fluid pressure (set to zero by default)
 
