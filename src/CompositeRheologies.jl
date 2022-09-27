@@ -99,6 +99,20 @@ Sums the derivative ∂εII/∂τII (strainrate vs. stress) of all non-parallel 
 end
 
 
+@generated function compute_εII(
+    v::Parallel{T,N}, 
+    TauII::_T, 
+    args
+) where {T,N, _T}
+    quote
+        out = zero($_T)
+        Base.Cartesian.@nexprs $N i ->
+            out += inv(compute_εII(v.elements[i], TauII, args))
+        return inv(out)
+    end
+end
+
+
 """
     compute_εII_elements(v::CompositeRheology, TauII, args)
 
@@ -117,6 +131,10 @@ Sums the strainrate of all non-parallel elements in a `CompositeRheology` struct
             else
                 zero(_T)
             end
+
+        # out = zero(_T)
+        # Base.Cartesian.@nexprs $N i ->
+        #     out += compute_εII(v.elements[i], TauII, args)
     end
 end
 
@@ -567,13 +585,8 @@ end
     args::NamedTuple,
 ) where {F,N,T}
     quote
-        out = zero(T)
         Base.Cartesian.@nexprs $N i ->
-            out += if MatParam[i].Phase == Phase
-                computeViscosity(fn, MatParam[i].CreepLaws, CII, args)
-            else
-                zero(T)
-            end
+            MatParam[i].Phase == Phase && return computeViscosity(fn, MatParam[i].CreepLaws, CII, args)
     end
 end
 
@@ -581,14 +594,12 @@ end
 @inline @generated  function compute_τII(
     v::Parallel{T,N}, 
     εII::_T, 
-    args; 
-    tol=1e-6, 
-    verbose=true
+    args
 ) where {T,_T,N}
     quote
         τII = zero(_T)
         Base.Cartesian.@nexprs $N i ->
-            τII +=  compute_τII(v.elements[i], εII, args)
+            τII += compute_τII(v.elements[i], εII, args)
     end
 end
 
@@ -597,9 +608,7 @@ end
     v::CompositeRheology{T,N}, 
     εII::_T, 
     args,
-    i::I; 
-    tol=1e-6, 
-    verbose=true
+    i::I
 ) where {T,_T,N,I}
     quote
         #τII = zero(_T)
@@ -608,15 +617,12 @@ end
 end
 
 # For a parallel element, εII for a given τII requires iterations
-function compute_εII(v::Parallel, τII, args; tol=1e-6, verbose=true)
+# function compute_εII(v::Parallel, τII, args; tol=1e-6, verbose=true)
     
-    εII = local_iterations_τII(v.elements, τII, args; tol=tol, verbose=verbose)
+#     εII = local_iterations_τII(v.elements, τII, args; tol=tol, verbose=verbose)
 
-    return εII
-end
-
-
-
+#     return εII
+# end
 
 @inline function compute_τII!(
     τII::AbstractArray{T,nDim},
@@ -632,6 +638,23 @@ end
 
 
 # COMPUTE VISCOSITY
+
+@generated function computeViscosity_εII(v::Parallel{V, N}, εII::T, args) where {T,V,N}
+    quote 
+        η = zero($T)
+        Base.Cartesian.@nexprs $N i ->
+            η += computeViscosity_εII(v.elements[i], εII, args)
+        return η
+    end
+end
+
+function computeViscosity(
+    fn::F, v::Parallel, CII::T, args::NamedTuple
+) where {F,T}
+    fn(v, CII, args)
+end
+
+
 function _computeViscosity(
     fn::F, v::NTuple{N,AbstractConstitutiveLaw}, CII::T, args::NamedTuple
 ) where {F,T,N}
@@ -965,30 +988,38 @@ This performs nonlinear Newton iterations for cases where we have both serial an
     x = zero(εII_total)
 
     # Initial guess of stress & strainrate
-    τ_initial = compute_invτ(c,εII_total, args) # initial stress of all elements (harmonic average)
+    # τ_initial = compute_invτ(c,εII_total, args) # initial stress of all elements (harmonic average)
+
+    η_ve = computeViscosity(computeViscosity_εII, c.elements, εII_total, args) # viscosity guess
+    τ_initial = η_ve * εII_total # deviatoric stress guess
+
+    verbose && println("τII guess = $τ_initial")
+
     x    = @MVector ones(_T, n)
     x   .= εII_total
     x[1] = τ_initial
-
+    
     j = 1;
     for i=1:N
         if is_par[i]
-           x[j] = εII_total
+           x[j+1] = εII_total
            j += 1
         end
     end
 
     r = @MVector zeros(_T,n);
     J = @MMatrix ones(_T, Npar+1,Npar+1)   # size depends on # of parallel objects (= likely plastic elements)
+    J[2,1] = -1.0
     
     # Local Iterations
     iter = 0
     ϵ = 2 * tol
-    while (ϵ > tol) && (iter < 1000)
+
+    while (ϵ > tol) && (iter < 1000000)
         iter += 1
 
         # Update part of jacobian related to serial elements
-        r[1]   = compute_εII_elements(c,x[1],args) - εII_total
+        r[1]   = compute_εII_elements(c,x[1],args) + x[2] - εII_total
         J[1,1] = dεII_dτII_elements(c,x[1],args);
         
         # Deal with || elements
@@ -1005,8 +1036,8 @@ This performs nonlinear Newton iterations for cases where we have both serial an
         end
         
         # update solution
-        dx =  J\r 
-        x .-=   dx   
+        dx  = J\r 
+        x .-= 1e-3*dx   
 
         ϵ = abs(r[1]/εII_total)          # normalize by strain rate
         for i=1:Npar
