@@ -201,5 +201,35 @@ using GeoParams, ForwardDiff
 
     @test τ ≈ 569147.233065495
 
+    # AD composite tests 
+    εII = 1e-15
+    v1, v2 = LinearViscous(;η=1e23Pas), LinearViscous(;η=1e20Pas)
+    e1 = ConstantElasticity()
+    p1 = Parallel(v1, v2)
+    p2 = Parallel(v1, v2, v1)
+
+    # Case 1: visco + visco-visco 
+    c1 = CompositeRheology(v1, p1) # put elements in parallel
+    args = (T=1100.0, d=100e-6, τII_old=0.0, dt = 1e8)
+    η_eff = inv(1/1e23 + 1/((1e23 + 1e20))) 
+    τII_guess = 2 * η_eff * εII
+    τII_iters = compute_τII_AD(c1, εII, args)
+    @test τII_guess ≈ τII_iters
+
+    # Case 2: elastovisco + visco-visco
+    c2 = CompositeRheology(e1, v1, p1) # put elements in parallel
+    τII_old = 0.0
+    args = (T=1100.0, d=100e-6, τII_old=τII_old, dt = 1e8)
+    η_ve = inv(1/e1.G.val/args.dt + 1/1e23 + 1/((1e23 + 1e20))) 
+    τII_guess =  η_ve * (2 * εII - τII_old/e1.G.val/args.dt)
+    τII_iters = compute_τII_AD(c2, εII, args)
+    @test τII_guess ≈ τII_iters
+
+    τII_old = τII_iters
+    args = (T=1100.0, d=100e-6, τII_old=τII_old, dt = 1e8)
+    τII_guess =  η_ve * (2 * εII + τII_old/e1.G.val/args.dt)
+    τII_iters = compute_τII_AD(c2, εII, args)
+    @test τII_guess ≈ τII_iters
+
 end
 
