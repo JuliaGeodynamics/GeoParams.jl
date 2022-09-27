@@ -353,7 +353,6 @@ function compute_τII(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
     return compute_τII(v.elements, εII, args; tol=1e-6, verbose=verbose)
 end
 
-
 @inline function compute_τII!(
     τII::AbstractArray{T,nDim},
     v::NTuple{N,AbstractConstitutiveLaw},
@@ -419,7 +418,8 @@ Compute viscosity given strain rate 2nd invariant for a given rheological elemen
     lower_cutoff, upper_cutoff = cutoff
     τII = compute_τII(v, εII, args)
     η = 0.5 * τII / εII
-    η = max(min(upper_cutoff, η), lower_cutoff)
+    η = clamp(η, lower_cutoff, upper_cutoff)
+    
     return η
 end
 
@@ -442,7 +442,7 @@ function computeViscosity_εII(
     lower_cutoff, upper_cutoff = cutoff
     τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose)
     η = 0.5 * τII / εII
-    η = max(min(upper_cutoff, η), lower_cutoff)
+    η = clamp(η, lower_cutoff, upper_cutoff)
     return η
 end
 
@@ -465,7 +465,7 @@ function computeViscosity_εII!(
         argsi = (; zip(keys(args), getindex.(values(args), I))...)
         τII = local_iterations_εII(v, εII[I], argsi; tol=tol, verbose=verbose)
         ηi = 0.5 * τII / εII[I]
-        η[I] = max(min(lower_cutoff, ηi), upper_cutoff)
+        η[I] = clamp(ηi, lower_cutoff, upper_cutoff)
     end
     return nothing
 end
@@ -514,13 +514,6 @@ end
     args::NamedTuple,
 ) where {F,N,T}
     quote
-        # out = zero(T)
-        # Base.Cartesian.@nexprs $N i ->
-        #     out += if MatParam[i].Phase == Phase
-        #         computeViscosity(fn, MatParam[i].CreepLaws, CII, args)
-        #     else
-        #         zero(T)
-        #     end
         Base.Cartesian.@nexprs $N i ->
             MatParam[i].Phase == Phase && return computeViscosity(fn, MatParam[i].CreepLaws, CII, args)
     end
@@ -599,35 +592,38 @@ end
 Performs local iterations versus stress for a given strain rate 
 """
 @inline function local_iterations_εII(
-    v::NTuple{N,AbstractConstitutiveLaw}, εII, args; tol=1e-12, verbose=true
-) where {N}
+    v::NTuple{N,AbstractConstitutiveLaw}, εII::T, args; tol=1e-12, verbose=true
+) where {N, T}
     # Initial guess
     η_ve = computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess
-    τII = 2 * η_ve * εII # deviatoric stress guess
+    τII = T(2) * η_ve * εII # deviatoric stress guess
     
-    println("initial τII = $τII")
+    verbose && println("initial τII = $τII")
 
     # Local Iterations
     iter = 0
-    ϵ = 2 * tol
+    ϵ = 2.0 * tol
     τII_prev = τII
     while ϵ > tol
         iter += 1
-        f = εII - strain_rate_circuit(v, τII, args)
-        dfdτII = - dεII_dτII(v, τII, args)
-        τII -= f / dfdτII
+        #= 
+            Newton scheme -> τII = τII - f(τII)/dfdτII. 
+            Therefore,
+                f(τII) = εII - strain_rate_circuit(v, τII, args) = 0
+                dfdτII = - dεII_dτII(v, τII, args) 
+                τII -= f / dfdτII
+        =#
+        τII = muladd(εII - strain_rate_circuit(v, τII, args), inv(dεII_dτII(v, τII, args)), τII)
 
-        ϵ = abs(τII - τII_prev) / τII
+        ϵ = abs(τII - τII_prev) * inv(τII)
         τII_prev = τII
-        if verbose
-            println(" iter $(iter) $ϵ")
-        end
+        verbose && println(" iter $(iter) $ϵ")
+        
     end
     if verbose
+        println("final τII = $τII")
         println("---")
     end
-
-    println("final τII = $τII")
 
     return τII
 end
