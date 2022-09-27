@@ -197,75 +197,34 @@ using GeoParams, ForwardDiff
     #J[2,2] = 
 
 
+    # AD composite tests 
+    εII = 1e-15
+    v1, v2 = LinearViscous(;η=1e23Pas), LinearViscous(;η=1e20Pas)
+    e1 = ConstantElasticity()
+    p1 = Parallel(v1, v2)
+    p2 = Parallel(v1, v2, v1)
 
-    #εII = compute_εII(x, τII, args, verbose=true) 
+    # Case 1: visco + visco-visco 
+    c1 = CompositeRheology(v1, p1) # put elements in parallel
+    args = (T=1100.0, d=100e-6, τII_old=0.0, dt = 1e8)
+    η_eff = inv(1/1e23 + 1/((1e23 + 1e20))) 
+    τII_guess = 2 * η_eff * εII
+    τII_iters = compute_τII(c1, εII, args)
+    τII_guess ≈ τII_iters
 
-end
+    # Case 2: elastovisco + visco-visco
+    c2 = CompositeRheology(e1, v1, p1) # put elements in parallel
+    τII_old = 0.0
+    args = (T=1100.0, d=100e-6, τII_old=τII_old, dt = 1e8)
+    η_ve = inv(1/e1.G.val/args.dt + 1/1e23 + 1/((1e23 + 1e20))) 
+    τII_guess =  η_ve * (2 * εII - τII_old/e1.G.val/args.dt)
+    τII_iters = compute_τII(c2, εII, args)
+    τII_guess ≈ τII_iters
 
+    τII_old = τII_iters
+    args = (T=1100.0, d=100e-6, τII_old=τII_old, dt = 1e8)
+    τII_guess =  η_ve * (2 * εII + τII_old/e1.G.val/args.dt)
+    τII_iters = compute_τII(c2, εII, args)
+    τII_guess ≈ τII_iters
 
-εII = 1e-15
-v1, v2 = LinearViscous(;η=1e23Pas), LinearViscous(;η=1e20Pas)
-e1 = ConstantElasticity()
-p1 = Parallel(v1, v2)
-p2 = Parallel(v1, v2, v1)
-
-# Case 1: visco + visco-visco 
-c1 = CompositeRheology(v1, p1) # put elements in parallel
-args = (T=1100.0, d=100e-6, τII_old=0.0, dt = 1e8)
-η_eff = inv(1/1e23 + 1/((1e23 + 1e20))) 
-τII_guess = 2 * η_eff * εII
-τII_iters = compute_τII(c1, εII, args)
-τII_guess ≈ τII_iters
-
-# Case 2: elastovisco + visco-visco
-c2 = CompositeRheology(e1, v1, p1) # put elements in parallel
-τII_old = 0.0
-args = (T=1100.0, d=100e-6, τII_old=τII_old, dt = 1e8)
-η_ve = inv(1/e1.G.val/args.dt + 1/1e23 + 1/((1e23 + 1e20))) 
-τII_guess =  η_ve * (2 * εII - τII_old/e1.G.val/args.dt)
-τII_iters = compute_τII(c2, εII, args)
-τII_guess ≈ τII_iters
-
-τII_old = τII_iters
-args = (T=1100.0, d=100e-6, τII_old=τII_old, dt = 1e8)
-τII_guess =  η_ve * (2 * εII + τII_old/e1.G.val/args.dt)
-τII_iters = compute_τII(c2, εII, args)
-τII_guess ≈ τII_iters
-
-
-damper = LinearViscous()
-dashpot = ConstantElasticity()
-composite = CompositeRheology(damper, dashpot)
-
-v = composite.elements
-@edit compute_τII(v, εII, args)
-
-
-@inline function local_iterations_εII(
-    v::NTuple{N,AbstractConstitutiveLaw}, εII, args; tol=1e-12, verbose=true
-) where {N}
-    # Initial guess
-    η_ve = computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess
-    τII = 2 * η_ve * εII # deviatoric stress guess
-
-    # Local Iterations
-    iter = 0
-    ϵ = 2 * tol
-    τII_prev = τII
-    while ϵ > tol
-        iter += 1
-        f = εII - strain_rate_circuit(v, τII, args)
-        dfdτII = - dεII_dτII(v, τII, args)
-        τII -= f / dfdτII
-
-        ϵ = abs(τII - τII_prev) / τII
-        τII_prev = τII
-        if verbose
-            println(" iter $(iter) $ϵ")
-        end
-    end
-    if verbose
-        println("---")
-    end
-    return τII
 end
