@@ -4,6 +4,9 @@ using StaticArrays
 export CompositeRheology, Parallel, create_rheology_string, print_rheology_matrix
 export time_τII_0D
 
+import Base.getindex
+
+
 """
     Put rheological elements in parallel 
 """
@@ -67,6 +70,13 @@ end
 CompositeRheology(a,b...) = CompositeRheology( (a,b...,)) 
 CompositeRheology(a::Parallel) = CompositeRheology( (a,)) 
 #CompositeRheology(v::Tuple) =  CompositeRheology(v...) 
+
+@generated function getindex(p::CompositeRheology{T, N}, I::Int64) where {T,N}
+    quote
+        Base.@_inline_meta
+        Base.Cartesian.@nexprs $N i -> I == i && return p.elements[i]
+    end
+end
 
 # Computes sum of dεII/dτII for all elements that are NOT parallel elements
 """
@@ -795,6 +805,7 @@ for fn in (:computeViscosity_εII, :computeViscosity_τII)
     end
 end
 
+<<<<<<< HEAD
 # @inline @generated function compute_viscosity_param(
 #     fn::F,
 #     MatParam::NTuple{N,AbstractMaterialParamsStruct},
@@ -812,6 +823,27 @@ end
 #             end
 #     end
 # end
+=======
+#=
+@inline @generated function compute_viscosity_param(
+    fn::F,
+    MatParam::NTuple{N,AbstractMaterialParamsStruct},
+    Phase::Integer,
+    CII::T,
+    args::NamedTuple,
+) where {F,N,T}
+    quote
+        out = zero(T)
+        Base.Cartesian.@nexprs $N i ->
+            out += if MatParam[i].Phase == Phase
+                computeViscosity(fn, MatParam[i].CreepLaws, CII, args)
+            else
+                zero(T)
+            end
+    end
+end
+=#
+>>>>>>> bab8d412f81168ff773bb9412ff36646be12ac4c
 
 @inline function computeViscosity_τII!(
     η::AbstractArray{T,nDim},
@@ -1037,7 +1069,7 @@ end
 This performs nonlinear Newton iterations for cases where we have both serial and parallel elements.
 """
 @inline function local_iterations_εII(
-    c::CompositeRheology{T,N,Npar, is_par}, εII_total::_T, args; tol=1e-6, verbose=false
+    c::CompositeRheology{T,N,Npar, is_par}, εII_total::_T, args; tol=1e-6, verbose=false, τ_initial=nothing, ε_init=nothing
 ) where {T,N,Npar,is_par, _T}
     # Compute residual
 
@@ -1064,6 +1096,8 @@ This performs nonlinear Newton iterations for cases where we have both serial an
         end
     end
 
+ 
+
     r = @MVector zeros(_T,n);
     J = @MMatrix ones(_T, Npar+1,Npar+1)   # size depends on # of parallel objects (= likely plastic elements)
     J[2,1] = -1.0
@@ -1075,6 +1109,8 @@ This performs nonlinear Newton iterations for cases where we have both serial an
     while (ϵ > tol) && (iter < 1000000)
         iter += 1
 
+        τ = x[1]*τ_char
+
         # Update part of jacobian related to serial elements
         r[1]   = compute_εII_elements(c,x[1],args) + x[2] - εII_total
         J[1,1] = dεII_dτII_elements(c,x[1],args);
@@ -1083,26 +1119,33 @@ This performs nonlinear Newton iterations for cases where we have both serial an
         j=1;
         for i=1:N
             if is_par[i]
-                εII_parallel = x[j+1]
+                εII_parallel = x[j+1]*ε_char
+                if εII_parallel<0
+                    εII_parallel = 0.0
+                end
+
+                r[1] += εII_parallel/ε_char
                 
-                τ_parallel = compute_τII(c.elements[i], εII_parallel, args)    # ALLOCATES
-                r[j+1]     = -(x[1] - τ_parallel);                             # residual (stress should be equal)
-                J[j+1,j+1] = dτII_dεII(c.elements[i], τ_parallel, args)        # ALLOCATES
+                τ_parallel = compute_τII(c[i], εII_parallel, args)    # ALLOCATES
+                r[j+1]     = -(τ/τ_char - τ_parallel/τ_char);                             # residual (stress should be equal)
+                J[j+1,j+1] = dτII_dεII(c.elements[i], τ_parallel, args)/(τ_char/ε_char)        # ALLOCATES
                 j += 1
             end
         end
-        
+        J[2,1] = -1
+
         # update solution
         dx  = J\r 
         x .-= 1e-3*dx   
 
-        ϵ = abs(r[1]/εII_total)          # normalize by strain rate
+        ϵ = abs(r[1])          # normalize by strain rate
         for i=1:Npar
-            ϵ += abs(r[i+1]/x[1])        # normalize by stress
+            ϵ += abs(r[i+1])        # normalize by stress
         end
         if verbose
             println(" iter $(iter) $ϵ")
         end
+        @show x r dx J
 
         # debugging
         #if iter>2
@@ -1118,7 +1161,7 @@ This performs nonlinear Newton iterations for cases where we have both serial an
     end
     
 
-    τII = x[1]
+    τII = x[1]*τ_char
 
     return τII
 end
