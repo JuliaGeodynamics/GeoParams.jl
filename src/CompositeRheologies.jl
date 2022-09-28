@@ -679,7 +679,7 @@ end
 end
 
 # For a parallel element, εII for a given τII requires iterations
-function compute_εII(v::Parallel, τII, args; tol=1e-6, verbose=true)
+function compute_εII(v::Parallel, τII, args; tol=1e-6, verbose=false)
     
     εII = local_iterations_τII(v, τII, args; tol=tol, verbose=verbose)
 
@@ -933,7 +933,7 @@ end
 Performs local iterations versus stress for a given strain rate 
 """
 @inline function local_iterations_εII(
-    v::NTuple{N,AbstractConstitutiveLaw}, εII, args; tol=1e-12, verbose=true
+    v::NTuple{N,AbstractConstitutiveLaw}, εII, args; tol=1e-12, verbose=false
 ) where {N}
     # Initial guess
     η_ve = computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess
@@ -1058,8 +1058,9 @@ end
     v::Parallel, τII::T, args; tol=1e-12, verbose=false
 ) where {T}
     # Initial guess
-    η_ve = computeViscosity(computeViscosity_τII, v, τII, args)# viscosity guess
-    εII = τII / (2.0*η_ve) # deviatoric stress guess
+    # η_ve = computeViscosity(computeViscosity_τII, v, τII, args)# viscosity guess
+    # εII = τII / (2.0*η_ve) # deviatoric stress guess
+    εII = compute_invε(v, τII, args) # no allocations 
 
     verbose && println("initial εII = $εII")
 
