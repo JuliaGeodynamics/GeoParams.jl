@@ -168,13 +168,13 @@ DiffusionCreep_info = Dict([
         MaterialParamsInfo(;
             Comment="Values checked (NM)",
             BibTex_Reference="
-                @article{hier2005water,
-                title={Water weakening of clinopyroxenite in diffusion creep},
-                author={Hier-Majumder, Saswata and Mei, Shenghua and Kohlstedt, David L},
+                @article{rybacki2006influence,
+                title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates},
+                author={Rybacki, Erik and Gottschalk, Matthias and Wirth, Richard and Dresen, Georg},
                 journal={Journal of Geophysical Research: Solid Earth},
-                volume={110},
-                number={B7},
-                year={2005},
+                volume={111},
+                number={B3},
+                year={2006},
                 publisher={Wiley Online Library}
                 }
         "),
@@ -321,4 +321,120 @@ DiffusionCreep_info = Dict([
         "),
     ),
 )
+(
+    "Dry Anorthite | Rybacki & Dresen (2000)",
+    (
+        DiffusionCreep(;
+            Name="Dry Anorthite | Rybacki & Dresen (2000)",
+            n=1.0NoUnits,                         # power-law exponent
+            r=0.0NoUnits,                         # exponent of water-fugacity
+            p=-3.0NoUnits,                        # grain size exponent
+            A=(10^12.1)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            E=467.0kJ / mol,                        # activation energy
+            V=0.0m^3 / mol,                       # activation Volume
+            Apparatus=AxialCompression,
+        ),
+        MaterialParamsInfo(;
+            Comment="Values checked (NM)",
+            BibTex_Reference="
+                @article{rybacki2000dislocation,
+                title={Dislocation and diffusion creep of synthetic anorthite aggregates},
+                author={Rybacki, Erik and Dresen, Georg},
+                journal={Journal of Geophysical Research: Solid Earth},
+                volume={105},
+                number={B11},
+                pages={26017--26036},
+                year={2000},
+                publisher={Wiley Online Library}
+                }
+        "),
+    ),
+)
+(
+    "Wet Anorthite | Rybacki & Dresen (2000)",
+    (
+        DiffusionCreep(;
+            Name="Wet Anorthite | Rybacki & Dresen (2000)",
+            n=1.0NoUnits,                         # power-law exponent
+            r=0.0NoUnits,                         # exponent of water-fugacity
+            p=-3.0NoUnits,                        # grain size exponent
+            A=(10^1.7)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            E=170.0kJ / mol,                        # activation energy
+            V=0.0m^3 / mol,                       # activation Volume
+            Apparatus=AxialCompression,
+        ),
+        MaterialParamsInfo(;
+            Comment="Values checked (NM)",
+            BibTex_Reference="
+                @article{rybacki2000dislocation,
+                title={Dislocation and diffusion creep of synthetic anorthite aggregates},
+                author={Rybacki, Erik and Dresen, Georg},
+                journal={Journal of Geophysical Research: Solid Earth},
+                volume={105},
+                number={B11},
+                pages={26017--26036},
+                year={2000},
+                publisher={Wiley Online Library}
+                }
+        "),
+    ),
+)
+(
+    "Wet Anorthite | Rybacki et al. (2006)",
+    (
+        DiffusionCreep(;
+            Name="Wet Anorthite | Rybacki et al. (2006)",
+            n=1.0NoUnits,                         # power-law exponent
+            r=1.0NoUnits,                         # exponent of water-fugacity
+            p=-3.0NoUnits,                        # grain size exponent
+            A=(10^-0.7)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            E=159.0kJ / mol,                        # activation energy
+            V=38.0m^3 / mol,                       # activation Volume
+            Apparatus=AxialCompression,
+        ),
+        MaterialParamsInfo(;
+            Comment="Values checked (NM)",
+            BibTex_Reference="
+                @article{rybacki2006influence,
+                title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates},
+                author={Rybacki, Erik and Gottschalk, Matthias and Wirth, Richard and Dresen, Georg},
+                journal={Journal of Geophysical Research: Solid Earth},
+                volume={111},
+                number={B3},
+                year={2006},
+                publisher={Wiley Online Library}
+                }
+        "),
+    ),
+)
+(
+    "Wet Quartzite | Rutter & Brodie (2004)",
+    (
+        DiffusionCreep(;
+            Name="Wet Quartz | Rutter & Brodie (2004)",
+            n=1.0NoUnits,                         # power-law exponent
+            r=0.0NoUnits,                         # exponent of water-fugacity
+            p=-2.0NoUnits,                        # grain size exponent
+            A=(10^-0.4)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            E=220.0kJ / mol,                        # activation energy
+            V=0.0m^3 / mol,                       # activation Volume
+            Apparatus=AxialCompression,
+        ),
+        MaterialParamsInfo(;
+            Comment="Values checked (NM)",
+            BibTex_Reference="
+                @article{rutter2004experimental,
+                title={Experimental grain size-sensitive flow of hot-pressed Brazilian quartz aggregates},
+                author={Rutter, EH and Brodie, KH},
+                journal={Journal of Structural Geology},
+                volume={26},
+                number={11},
+                pages={2011--2023},
+                year={2004},
+                publisher={Elsevier}
+                }
+        "),
+    ),
+)
+
 ])  # end of list

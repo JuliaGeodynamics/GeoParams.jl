@@ -886,5 +886,172 @@ DislocationCreep_info = Dict(
                 "),
             ),
         )
+
+        #Wet Omphacite rheology
+        ("Wet Omphacite | Zhang et al. (2006)", 
+            #  Zhang et al. (2006), equation (4)
+            (
+                DislocationCreep(
+                Name = "Wet Omphacite | Zhang et al. (2006)",
+                n = 3.5NoUnits,
+                A = (10^-2)MPa^(-3.5)/s,
+                E = 310.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{zhang2006rheology,
+                    title={Rheology of omphacite at high temperature and pressure and significance of its lattice preferred orientations},
+                    author={Zhang, Junfeng and Green II, Harry W and Bozhilov, Krassimir N},
+                    journal={Earth and Planetary Science Letters},
+                    volume={246},
+                    number={3-4},
+                    pages={432--443},
+                    year={2006},
+                    publisher={Elsevier}
+                    }
+                "),
+            ),
+        )
+
+        #Wet Jadeit rheology
+        ("Wet Jadeit | Orzol et al. (2006)", 
+            #  Orzol et al. (2006), page 11
+            (
+                DislocationCreep(
+                Name = "Wet Jadeit | Orzol et al. (2006)",
+                n = 3.7NoUnits,
+                A = (10^-3.3)MPa^(-3.7)/s,
+                E = 326.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{orzol2006experimental,
+                    title={Experimental deformation of synthetic wet jadeite aggregates},
+                    author={Orzol, J and St{\"o}ckhert, B and Trepmann, CA and Rummel, F},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={111},
+                    number={B6},
+                    year={2006},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
+
+        #Dry Anorthite rheology
+        ("Dry Anorthite | Rybacki & Dresen (2000)", 
+            #  Rybacki & Dresen (2000), table 5
+            (
+                DislocationCreep(
+                Name = "Dry Anorthite | Rybacki & Dresen (2000)",
+                n = 3.0NoUnits,
+                A = (10^12.7)MPa^(-3)/s,
+                E = 648.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{rybacki2000dislocation,
+                    title={Dislocation and diffusion creep of synthetic anorthite aggregates},
+                    author={Rybacki, Erik and Dresen, Georg},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={105},
+                    number={B11},
+                    pages={26017--26036},
+                    year={2000},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
+
+        #Wet Anorthite rheology
+        ("Wet Anorthite | Rybacki & Dresen (2000)", 
+            #  Rybacki & Dresen (2000), table 5
+            (
+                DislocationCreep(
+                Name = "Wet Anorthite | Rybacki & Dresen (2000)",
+                n = 3.0NoUnits,
+                A = (10^0.2)MPa^(-3)/s,
+                E = 356.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{rybacki2000dislocation,
+                    title={Dislocation and diffusion creep of synthetic anorthite aggregates},
+                    author={Rybacki, Erik and Dresen, Georg},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={105},
+                    number={B11},
+                    pages={26017--26036},
+                    year={2000},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
+
+        #Wet Quartzite rheology
+        ("Wet Quartzite | Rutter & Brodie (2004)", 
+            #  Rutter & Brodie (2004), table 5
+            (
+                DislocationCreep(
+                Name = "Wet Quartzite | Rutter & Brodie (2004)",
+                n = 3.0NoUnits,
+                A = (10^-4.9)MPa^(-3)/s,
+                E = 242.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 1.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{rutter2004experimental,
+                    title={Experimental intracrystalline plastic flow in hot-pressed synthetic quartzite prepared from Brazilian quartz crystals},
+                    author={Rutter, EH and Brodie, KH},
+                    journal={Journal of Structural Geology},
+                    volume={26},
+                    number={2},
+                    pages={259--270},
+                    year={2004},
+                    publisher={Elsevier}
+                    }
+                "),
+            ),
+        )
+
+        #Wet Quartzite rheology
+        ("Wet Quartzite | Hirth et al. (2001)", 
+            #  Hirth et al. (2001), table 5
+            (
+                DislocationCreep(
+                Name = "Wet Quartzite | Hirth et al. (2001)",
+                n = 4.0NoUnits,
+                A = (10^-11.2)MPa^(-4)/s,
+                E = 135.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 1.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{hirth2001evaluation,
+                    title={An evaluation of quartzite flow laws based on comparisons between experimentally and naturally deformed rocks},
+                    author={Hirth, Greg and Teyssier, Christian and Dunlap, James W},
+                    journal={International Journal of Earth Sciences},
+                    volume={90},
+                    number={1},
+                    pages={77--87},
+                    year={2001},
+                    publisher={Springer}
+                    }
+                "),
+            ),
+        )
     ],
 ); # end of setting pre-defined creep laws
