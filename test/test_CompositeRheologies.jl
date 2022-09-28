@@ -241,9 +241,8 @@ using GeoParams, ForwardDiff
     τII_old = τII_iters
     args = (T=1100.0, d=100e-6, τII_old=τII_old, dt = 1e8)
     τII_guess =  η_ve * (2 * εII + τII_old/e1.G.val/args.dt)
-   # τII_iters = compute_τII_AD(c2, εII, args)
-  #  @test τII_guess ≈ τII_iters
-
+    τII_iters = compute_τII_AD(c2, εII, args)
+    @test τII_guess ≈ τII_iters
 
     # check computations for simple serial element (with no || components) by hand
     c2  = CompositeRheology(v2,v3,v1)
@@ -271,6 +270,7 @@ using GeoParams, ForwardDiff
         τ    += τ_el
     end
     @test τ ≈ compute_τII(p, εII, args)             # 
+    @test τ ≈ compute_τII_AD(p, εII, args, verbose=false)
 
     # Check that we obtain the correct strainrates 
     
@@ -283,4 +283,3 @@ using GeoParams, ForwardDiff
 
      
 end
-
