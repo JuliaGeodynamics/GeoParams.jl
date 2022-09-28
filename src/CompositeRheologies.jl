@@ -2,7 +2,7 @@
 using StaticArrays
 
 export CompositeRheology, Parallel, create_rheology_string, print_rheology_matrix
-export time_τII_0D
+export time_τII_0D, compute_εII_harmonic, compute_τII_AD
 
 import Base.getindex
 
@@ -108,11 +108,12 @@ Sums the derivative ∂εII/∂τII (strainrate vs. stress) of all non-parallel 
     end
 end
 
-
-@generated function compute_εII(
+# This computes the total strainrate of a parallel element as a harmonic average
+@generated function compute_εII_harmonic(
     v::Parallel{T,N}, 
     TauII::_T, 
-    args
+    args;
+    verbose=false
 ) where {T,N, _T}
     quote
         out = zero($_T)
@@ -131,7 +132,8 @@ Sums the strainrate of all non-parallel elements in a `CompositeRheology` struct
 @inline @generated function compute_εII_elements(
     v::CompositeRheology{T,N}, 
     TauII::_T, 
-    args
+    args;
+    verbose=false
 ) where {T,N, _T}
     quote
         out = zero(_T)
@@ -166,6 +168,21 @@ Sums the strainrate of all non-parallel elements in a `CompositeRheology` struct
     end
 end
 
+"""
+    compute_invε(v::Parallel, TauII, args)
+"""
+@inline @generated function compute_invε(
+    v::Parallel{T,N}, 
+    TauII::_T, 
+    args
+) where {T,N, _T}
+    quote
+        out = zero(_T)
+        Base.Cartesian.@nexprs $N i ->
+            out += 1/compute_εII(v.elements[i], TauII, args)
+        out = 1/out
+    end
+end
 
 # Print info 
 function show(io::IO, g::AbstractComposite)
@@ -536,14 +553,19 @@ function compute_εII(
     return εII
 end
 
-#=
+
+"""
+    compute_εII(v::Parallel{T,N}, τII, args; tol=1e-6, verbose=false, n=1)
+
+Computing `εII` as a function of `τII` for a Parallel elements is (usually) a nonlinear problem
+"""
 function compute_εII(
-    v::Parallel, τII, args; tol=1e-6, verbose=false, n=1
-) where {N}
+    v::Parallel{T,N}, τII, args; tol=1e-6, verbose=false, n=1
+) where {T,N}
     εII = local_iterations_τII(v, τII, args; tol=tol, verbose=verbose, n=n)
     return εII
 end
-=#
+
 
 @inline function compute_εII!(
     εII::AbstractArray{T,nDim},
@@ -553,6 +575,16 @@ end
 ) where {T,nDim,N}
     for I in eachindex(εII)
         εII[I] = compute_εII(v, τII[I], (; zip(keys(args), getindex.(values(args), I))...))
+    end
+end
+
+@generated function compute_εII_viscosity(v::Parallel{V, N}, τII::T, args) where {V, T, N}
+    quote
+        η = zero($T)
+        Base.Cartesian.@nexprs $N i ->
+            η += computeViscosity_τII(v.elements[i], τII, args)
+        
+        return  0.5 * τII / η
     end
 end
 
@@ -960,13 +992,13 @@ Performs local iterations versus stress for a given total strain rate
 end
 =#
 
-function compute_τII_AD(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
+function compute_τII_AD(v::Union{CompositeRheology,Parallel}, εII, args; tol=1e-6, verbose=false)
     τII = local_iterations_εII_AD(v.elements, εII, args; tol=tol, verbose=verbose)
     return τII
 end
 
 """
-Performs local iterations versus stress for a given strain rate 
+Performs local iterations versus stress for a given strain rate using AD
 """
 @inline function local_iterations_εII_AD(
     v::NTuple{N,AbstractConstitutiveLaw}, εII::T, args; tol=1e-12, verbose=true
@@ -990,7 +1022,7 @@ Performs local iterations versus stress for a given strain rate
                 dfdτII = - dεII_dτII(v, τII, args) 
                 τII -= f / dfdτII
         =#
-        τII = muladd(εII - strain_rate_circuit(v, τII, args), inv(dεII_dτII(v, τII, args)), τII)
+        τII = muladd(εII - strain_rate_circuit(v, τII, args), inv(dεII_dτII_AD(v, τII, args)), τII)
 
         ϵ = abs(τII - τII_prev) * inv(τII)
         τII_prev = τII
@@ -1016,6 +1048,42 @@ Performs local iterations versus strain rate for a given stress
     η_ve = computeViscosity(computeViscosity_τII, v, τII, args) # viscosity guess
     εII = τII / (2 * η_ve)  # deviatoric strain rate guess
 
+    
+    # Local Iterations
+    iter = 0
+    ϵ = 2 * tol
+    εII_prev = εII
+    while ϵ > tol
+        iter += 1
+        f = τII - stress_circuit(v, εII, args; n=n)
+        dfdεII = -dτII_dεII(v, εII, args)
+        εII -= f / dfdεII
+
+        ϵ = abs(εII - εII_prev) / abs(εII)
+        εII_prev = εII
+        if verbose
+            println(" iter $(iter) $ϵ")
+        end
+    end
+    if verbose
+        println("---")
+    end
+    return εII
+end
+
+"""
+Performs local iterations versus strain rate for a given stress
+"""
+@inline function local_iterations_τII(
+    v::Parallel{T,N}, 
+    τII, 
+    args; 
+    tol=1e-6, 
+    verbose=false, n=1
+) where {T,N}
+    # Initial guess
+    εII = compute_invε(v, τII, args)
+    
     # Local Iterations
     iter = 0
     ϵ = 2 * tol
@@ -1039,6 +1107,7 @@ Performs local iterations versus strain rate for a given stress
 end
 
 
+
 """
     local_iterations_εII(c::CompositeRheology{T,N}, εII_total, args)
 
@@ -1051,12 +1120,16 @@ This performs nonlinear Newton iterations for cases where we have both serial an
 
     n = Npar+1;       # total size of unknowns
     x = zero(εII_total)
-
+    
     # Initial guess of stress & strainrate
     # τ_initial = compute_invτ(c,εII_total, args) # initial stress of all elements (harmonic average)
 
     η_ve = computeViscosity(computeViscosity_εII, c.elements, εII_total, args) # viscosity guess
     τ_initial = η_ve * εII_total # deviatoric stress guess
+    
+    τ_char = 1 #τ_initial
+    ε_char = 1 #εII_total
+
 
     verbose && println("τII guess = $τ_initial")
 
@@ -1096,9 +1169,9 @@ This performs nonlinear Newton iterations for cases where we have both serial an
         for i=1:N
             if is_par[i]
                 εII_parallel = x[j+1]*ε_char
-                if εII_parallel<0
-                    εII_parallel = 0.0
-                end
+               ## if εII_parallel<0
+               #     εII_parallel = 0.0
+               # end
 
                 r[1] += εII_parallel/ε_char
                 
@@ -1112,7 +1185,7 @@ This performs nonlinear Newton iterations for cases where we have both serial an
 
         # update solution
         dx  = J\r 
-        x .-= 1e-3*dx   
+        x .-= 1e-1*dx   
 
         ϵ = abs(r[1])          # normalize by strain rate
         for i=1:Npar
@@ -1263,6 +1336,10 @@ end
         return val
     end
 end
+
+dεII_dτII_AD(v::Union{Parallel,CompositeRheology,Tuple}, τII, args) = ForwardDiff.derivative(x->compute_εII(v, x, args), τII)
+dτII_dεII_AD(v::Union{Parallel,CompositeRheology,Tuple}, εII, args) = ForwardDiff.derivative(x->compute_τII(v, x, args), εII)
+
 
 @generated function dτII_dεII(
     v::NTuple{N,AbstractConstitutiveLaw}, εII::_T, args

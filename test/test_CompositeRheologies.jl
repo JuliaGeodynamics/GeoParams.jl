@@ -122,14 +122,14 @@ using GeoParams, ForwardDiff
     τII_2 = compute_τII(v2, εII, args)
     
     τII   = compute_τII(pa2, εII, args)       # this allocates!
-    @test τII == (τII_1+τII_2)
+    @test τII ≈ (τII_1+τII_2)
 
     # Local iterations for a Parallel object for a given stress
     pa3 = Parallel(LinearViscous(η=1e23Pas), LinearViscous(η=5e22Pas))    # parallel object with 1 component/level
     τII = 1e6
     εII = compute_εII(pa3, τII, args, verbose=false)       # the strainrate of the parallel object (constant for all elements)
     τII_check = compute_τII(pa3, εII, args)
-    @test τII == τII_check
+    @test τII ≈ τII_check
 
 
     pa4 = Parallel( (LinearViscous(η=1e23Pas), v2), LinearViscous(η=5e22Pas))    # parallel object with 2 
@@ -137,7 +137,7 @@ using GeoParams, ForwardDiff
 
     # test stress circuit implementations
     τII = GeoParams.MaterialParameters.ConstitutiveRelationships.stress_circuit(pa3, εII, args)
-    @test τII == 1e6
+    @test τII ≈ 1e6
 
     τII1 = GeoParams.MaterialParameters.ConstitutiveRelationships.stress_circuit(pa4, εII, args)
     @test τII1 ≈ 345408.7183763343
@@ -153,8 +153,8 @@ using GeoParams, ForwardDiff
     # 
     ε = 1e-15
     Δε = 1e-6*ε
-    τ0 = compute_τII(pa6, ε, args, verbose=false)
-    τ1 = compute_τII(pa6, ε+Δε, args, verbose=false)
+    τ0 = compute_τII(pa6, ε, args)
+    τ1 = compute_τII(pa6, ε+Δε, args)
     dτ_dε_FD = (τ1-τ0)/Δε
 
     dτII_dεII(pa6, ε, args)
@@ -197,15 +197,22 @@ using GeoParams, ForwardDiff
     v2 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
     v3 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
     c  = CompositeRheology(v2,v1,Parallel(v2,v3))
-    τ  = local_iterations_εII(c, εII, args, verbose=true)
+    #τ  = local_iterations_εII(c, εII, args, verbose=true)
 
-    p = Parallel(v3,v1)
-    #c  = CompositeRheology(v2,v1,p)
-    #x = [569147.5347440551, 1.5148671381288114e-18]
+    # test a bunch of rheologies (AD vs. analytical)
+    c1  = CompositeRheology(v2,v3)
+    c2  = CompositeRheology(v2,v3,v1)
+    p1  = Parallel(v1, LinearViscous(η=1e23Pa*s))
+    c3  = CompositeRheology(v2,v3,p1)
+    p2  = Parallel(v1, v2)
+    
+    for c in [c1, c2, c3]
+        τ = compute_τII(c, εII, args)            # use analytical jacobian
+        τAD = compute_τII_AD(c, εII, args)       # use AD
+        @test τ ≈ τAD
+    end
 
-
-    @test τ ≈ 569147.233065495
-
+      
     # AD composite tests 
     εII = 1e-15
     v1, v2 = LinearViscous(;η=1e23Pas), LinearViscous(;η=1e20Pas)
@@ -236,5 +243,43 @@ using GeoParams, ForwardDiff
     τII_iters = compute_τII_AD(c2, εII, args)
     @test τII_guess ≈ τII_iters
 
+
+    # check computations for simple serial element (with no || components) by hand
+    c2  = CompositeRheology(v2,v3,v1)
+    ε, τ = 0.0, 1e6
+    for i=1:length(c2.elements)
+        ε_el   = compute_εII(c2.elements[i], τ, args) 
+        ε     += ε_el
+        τ_el   = compute_τII(c2.elements[i], ε_el, args)
+        @test τ ≈ τ_el      # local stress of each element agrees with total
+    end
+    @test τ ≈ compute_τII(c2, ε, args)  # total stress with nonlinear iterations agrees
+    
+    # this routine sums up strainrate of non-|| elements
+    @test ε ≈ GeoParams.MaterialParameters.ConstitutiveRelationships.compute_εII_elements(c2, τ, args) 
+    
+    # check computations for parallel elements by hand
+    v2 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
+    v3 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
+    p = Parallel(v3,LinearViscous(η=1e21Pa*s), v2)
+    
+    # stress given strainrate 
+    τ,εII = 0.0, 1e-15
+    for i=1:length(p.elements)
+        τ_el  = compute_τII(p.elements[i], εII, args) 
+        τ    += τ_el
+    end
+    @test τ ≈ compute_τII(p, εII, args)             # 
+
+    # Check that we obtain the correct strainrates 
+    
+    # Albert's routine
+    ε_viscosity =  GeoParams.MaterialParameters.ConstitutiveRelationships.compute_εII_viscosity(p, τ, args)
+   # @test εII ≈ ε_viscosity # fails
+
+    # Do the same with local iterations
+    @test εII ≈ compute_εII(p, τ, args)     
+
+     
 end
 
