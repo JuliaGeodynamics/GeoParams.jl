@@ -538,12 +538,12 @@ end
 Compute deviatoric strain rate given deviatoric stress invariant
 
 """
-function compute_εII(
-    v::NTuple{N,AbstractConstitutiveLaw}, τII, args; tol=1e-6, verbose=false, n=1
-) where {N}
-    εII = local_iterations_τII(v, τII, args; tol=tol, verbose=verbose, n=n)
-    return εII
-end
+# function compute_εII(
+#     v::NTuple{N,AbstractConstitutiveLaw}, τII, args; tol=1e-6, verbose=false, n=1
+# ) where {N}
+#     εII = local_iterations_τII(v, τII, args; tol=tol, verbose=verbose, n=n)
+#     return εII
+# end
 
 
 """
@@ -551,12 +551,12 @@ end
 
 Computing `εII` as a function of `τII` for a Parallel elements is (usually) a nonlinear problem
 """
-function compute_εII(
-    v::Parallel{T,N}, τII, args; tol=1e-6, verbose=false, n=1
-) where {T,N}
-    εII = local_iterations_τII(v, τII, args; tol=tol, verbose=verbose, n=n)
-    return εII
-end
+# function compute_εII(
+#     v::Parallel{T,N}, τII, args; tol=1e-6, verbose=false, n=1
+# ) where {T,N}
+#     εII = local_iterations_τII(v, τII, args; tol=tol, verbose=verbose, n=n)
+#     return εII
+# end
 
 
 @inline function compute_εII!(
@@ -570,15 +570,27 @@ end
     end
 end
 
-@generated function compute_εII_viscosity(v::Parallel{V, N}, τII::T, args) where {V, T, N}
+
+@generated function compute_εII(v::Parallel{V, N}, τII::T, args) where {V, T, N}
     quote
         η = zero($T)
         Base.Cartesian.@nexprs $N i ->
             η += computeViscosity_τII(v.elements[i], τII, args)
+            # η += computeViscosity_τII(v.elements[i], τII, args, cutoff=(1e16, 1e24))
         
         return  0.5 * τII / η
     end
 end
+
+# @generated function compute_εII_viscosity(v::Parallel{V, N}, τII::T, args) where {V, T, N}
+#     quote
+#         η = zero($T)
+#         Base.Cartesian.@nexprs $N i ->
+#             η += computeViscosity_τII(v.elements[i], τII, args)
+        
+#         return  0.5 * τII / η
+#     end
+# end
 
 # COMPUTE DEVIATORIC STRESS
 
@@ -610,10 +622,10 @@ function compute_τII(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
     return compute_τII(v.elements, εII, args; tol=1e-6, verbose=verbose)
 end
 
-function compute_τII_AD(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
-    τII = local_iterations_εII_AD(v.elements, εII, args; tol=tol, verbose=verbose)
-    return τII
-end
+# function compute_τII_AD(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
+#     τII = local_iterations_εII_AD(v.elements, εII, args; tol=tol, verbose=verbose)
+#     return τII
+# end
 
 @generated function compute_viscosity_param(
     fn::F,
@@ -690,6 +702,7 @@ end
     end
 end
 
+
 function computeViscosity(
     fn::F, v::Parallel, CII::T, args::NamedTuple
 ) where {F,T}
@@ -702,18 +715,11 @@ function computeViscosity(
     computeViscosity(fn, v.elements, CII, args)
 end
 
-function _computeViscosity(
-    fn::F, v::NTuple{N,AbstractConstitutiveLaw}, CII::T, args::NamedTuple
-) where {F,T,N}
-    return computeViscosity(fn, v, CII, args)
-end
-
-function _computeViscosity(
+function computeViscosity(
     fn::F, v::AbstractConstitutiveLaw, CII::T, args::NamedTuple
 ) where {F,T}
-    return inv(fn(v, CII, args))
+    return fn(v, CII, args)
 end
-
 
 @generated function computeViscosity(
     fn::F, v::NTuple{N,AbstractConstitutiveLaw}, CII::T, args::NamedTuple
@@ -722,8 +728,8 @@ end
         Base.@_inline_meta
         η = zero(T)
         Base.Cartesian.@nexprs $N i ->
-            η += _computeViscosity(fn, v[i], CII, args) # viscosities in parallel → ηeff = 1/(η1 + η2)
-        return inv(η) # Do we need a two here?
+            η += inv(computeViscosity(fn, v[i], CII, args)) # viscosities in parallel → ηeff = 1/(η1 + η2)
+        return inv(η)
     end
 end
 
@@ -990,7 +996,7 @@ end
 =#
 
 function compute_τII_AD(v::Union{CompositeRheology,Parallel}, εII, args; tol=1e-6, verbose=false)
-    τII = local_iterations_εII_AD(v.elements, εII, args; tol=tol, verbose=verbose)
+    τII = local_iterations_εII_AD(v, εII, args; tol=tol, verbose=verbose)
     return τII
 end
 
@@ -998,7 +1004,7 @@ end
 Performs local iterations versus stress for a given strain rate using AD
 """
 @inline function local_iterations_εII_AD(
-    v::NTuple{N,AbstractConstitutiveLaw}, εII::T, args; tol=1e-12, verbose=true
+    v, εII::T, args; tol=1e-12, verbose=false
 ) where {N, T}
     # Initial guess
     η_ve = computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess
@@ -1019,12 +1025,12 @@ Performs local iterations versus stress for a given strain rate using AD
                 dfdτII = - dεII_dτII(v, τII, args) 
                 τII -= f / dfdτII
         =#
-        τII = muladd(εII - strain_rate_circuit(v, τII, args), inv(dεII_dτII_AD(v, τII, args)), τII)
+        τII = muladd(εII - strain_rate_circuit(v, τII, args), inv(dεII_dτII(v, τII, args)), τII)
 
         ϵ = abs(τII - τII_prev) * inv(τII)
         τII_prev = τII
+
         verbose && println(" iter $(iter) $ϵ")
-        
     end
     if verbose
         println("final τII = $τII")
@@ -1034,6 +1040,45 @@ Performs local iterations versus stress for a given strain rate using AD
     return τII
 end
 
+@inline function local_iterations_τII_AD(
+    v::Parallel, τII::T, args; tol=1e-12, verbose=false
+) where {T}
+    # Initial guess
+    η_ve = computeViscosity(computeViscosity_τII, v, τII, args)# viscosity guess
+    εII = τII / (2.0*η_ve) # deviatoric stress guess
+
+    verbose && println("initial εII = $εII")
+
+    # Local Iterations
+    iter = 0
+    ϵ = 2.0 * tol
+    εII_prev = εII
+    while ϵ > tol
+        iter += 1
+        #= 
+            Newton scheme -> τII = τII - f(τII)/dfdτII. 
+            Therefore,
+                f(τII) = εII - strain_rate_circuit(v, τII, args) = 0
+                dfdτII = - dεII_dτII(v, τII, args) 
+                τII -= f / dfdτII
+        =#
+        # f = τII - stress_circuit(v, εII, args)
+        # dfdεII = -dτII_dεII(v, εII, args) 
+        # εII -= f / dfdεII
+        εII = muladd(τII - stress_circuit(v, εII, args), inv(dτII_dεII(v, εII, args)), εII)
+
+        ϵ = abs(εII - εII_prev) * inv(εII)
+        εII_prev = εII
+        verbose && println(" iter $(iter) $ϵ")
+        
+    end
+    if verbose
+        println("final εII = $εII")
+        println("---")
+    end
+
+    return εII
+end
 
 """
 Performs local iterations versus strain rate for a given stress
@@ -1245,26 +1290,25 @@ end
 #     end
 # end
 
-# @inline function strain_rate_circuit(
-#     v::Union{AbstractConstitutiveLaw, Parallel} , TauII, args
-# )
-#     compute_εII(v, TauII, args)
-# end
+@inline function strain_rate_circuit(
+    v::AbstractConstitutiveLaw, TauII, args
+)
+    return compute_εII(v, TauII, args)
+end
 
-# @inline function strain_rate_circuit(
-#     v::Parallel, TauII, args
-# )
-#     compute_εII(v, TauII, args)
-# end
+@inline function strain_rate_circuit(
+    v::Parallel, TauII, args
+)
+    return local_iterations_τII_AD(v, TauII, args, verbose=false)
+end
 
 @generated function strain_rate_circuit(
-    v::NTuple{N,AbstractConstitutiveLaw}, TauII::T, args
+    v::NTuple{N,AbstractConstitutiveLaw}, τII::T, args
 ) where {N, T}
     quote
         Base.@_inline_meta
         εII = zero($T)
-        # Base.Cartesian.@nexprs $N i -> εII += strain_rate_circuit(v[i], TauII, args)
-        Base.Cartesian.@nexprs $N i -> εII += compute_εII(v[i], TauII, args)
+        Base.Cartesian.@nexprs $N i -> εII += strain_rate_circuit(v[i], τII, args)
         return εII
     end
 end
@@ -1282,31 +1326,43 @@ end
 
 ## DEVIATORIC STRESS 
 
-@generated function stress_circuit(
-    v::NTuple{N,AbstractConstitutiveLaw}, EpsII::T, args; n=1
-) where {N,T}
-    quote
-        Base.@_inline_meta
-        c = zero(T)
-        Base.Cartesian.@nexprs $N i ->
-            c += if v[i] isa Tuple
-                inv(stress_circuit(v[i], TauII, args; n=-1))
-            else
-                compute_τII(v[i], EpsII, args)^n
-            end
-        return c
-    end
-end
+# @generated function stress_circuit(
+#     v::NTuple{N,AbstractConstitutiveLaw}, EpsII::T, args; n=1
+# ) where {N,T}
+#     quote
+#         Base.@_inline_meta
+#         c = zero(T)
+#         Base.Cartesian.@nexprs $N i ->
+#             c += if v[i] isa Tuple
+#                 inv(stress_circuit(v[i], TauII, args; n=-1))
+#             else
+#                 compute_τII(v[i], EpsII, args)^n
+#             end
+#         return c
+#     end
+# end
+
+# @generated function stress_circuit(
+#     v::Union{Parallel{T,N}, CompositeRheology{T,N}}, EpsII, args; n=1
+# ) where {T,N}
+#     quote
+#         Base.@_inline_meta
+#         c = 0.0
+#         Base.Cartesian.@nexprs $N i ->
+#             c += compute_τII(v.elements[i], EpsII, args)^n
+#         return c
+#     end
+# end
 
 @generated function stress_circuit(
-    v::Union{Parallel{T,N}, CompositeRheology{T,N}}, EpsII, args; n=1
-) where {T,N}
+    v::Parallel{T, N}, εII::_T, args
+) where {N,T,_T}
     quote
         Base.@_inline_meta
-        c = 0.0
+        τ = zero(_T)
         Base.Cartesian.@nexprs $N i ->
-            c += compute_τII(v.elements[i], EpsII, args)^n
-        return c
+            τ += compute_τII(v.elements[i], εII, args)
+        return τ
     end
 end
 
@@ -1334,9 +1390,8 @@ end
     end
 end
 
+dεII_dτII(v::Parallel, τII, args) = ForwardDiff.derivative(x->compute_εII(v, x, args), τII)
 dεII_dτII_AD(v::Union{Parallel,CompositeRheology,Tuple}, τII, args) = ForwardDiff.derivative(x->compute_εII(v, x, args), τII)
-dτII_dεII_AD(v::Union{Parallel,CompositeRheology,Tuple}, εII, args) = ForwardDiff.derivative(x->compute_τII(v, x, args), εII)
-
 
 @generated function dτII_dεII(
     v::NTuple{N,AbstractConstitutiveLaw}, εII::_T, args
@@ -1348,6 +1403,9 @@ dτII_dεII_AD(v::Union{Parallel,CompositeRheology,Tuple}, εII, args) = Forward
         return val
     end
 end
+
+dτII_dεII(v::Parallel, εII, args) = ForwardDiff.derivative(x->compute_τII(v, x, args), εII)
+dτII_dεII_AD(v::Union{Parallel,CompositeRheology,Tuple}, εII, args) = ForwardDiff.derivative(x->compute_τII(v, x, args), εII)
 
 # Helper functions to create 0D rheology experiments
 """
