@@ -15,14 +15,6 @@ struct Parallel{T, N} <: AbstractConstitutiveLaw{T}
 end
 Parallel(v...) = Parallel{typeof( (v...,)), length(v)}((v...,))
 
-function dεII_dτII(v::Parallel{T,N}, TauII, args) where {T,N, _T}
-    dεII_dτII_der = 0.
-    for i=1:N
-        dεII_dτII_der += dεII_dτII(v.elements[i], TauII, args)
-    end
-    return dεII_dτII_der
-end
-
 
 #=
 function dεII_dτII(v::CompositeRheology{T,N}, TauII::_T, args) where {T,N, _T}
@@ -39,14 +31,14 @@ end
 =#
 
 
-function dτII_dεII(v::Parallel{T,N}, TauII::_T, args) where {T,N, _T}
-    dτII_dεII_der = 0
-    for i=1:N
-#        @show dτII_dεII(v.elements[i], TauII, args)
-        dτII_dεII_der += dτII_dεII(v.elements[i], TauII, args)
-    end
-    return dτII_dεII_der
-end
+# function dτII_dεII(v::Parallel{T,N}, TauII::_T, args) where {T,N, _T}
+#     dτII_dεII_der = 0
+#     for i=1:N
+# #        @show dτII_dεII(v.elements[i], TauII, args)
+#         dτII_dεII_der += dτII_dεII(v.elements[i], TauII, args)
+#     end
+#     return dτII_dεII_der
+# end
 
 """
     Structure that holds composite rheologies (e.g., visco-elasto-viscoplastic),
@@ -618,8 +610,12 @@ function compute_τII(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
     return compute_τII(v.elements, εII, args; tol=1e-6, verbose=verbose)
 end
 
+function compute_τII_AD(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
+    τII = local_iterations_εII_AD(v.elements, εII, args; tol=tol, verbose=verbose)
+    return τII
+end
 
-@inline @generated function compute_viscosity_param(
+@generated function compute_viscosity_param(
     fn::F,
     MatParam::NTuple{N,AbstractMaterialParamsStruct},
     Phase::Integer,
@@ -627,13 +623,14 @@ end
     args::NamedTuple,
 ) where {F,N,T}
     quote
+        Base.@_inline_meta
         Base.Cartesian.@nexprs $N i ->
             MatParam[i].Phase == Phase && return computeViscosity(fn, MatParam[i].CreepLaws, CII, args)
     end
 end
 
 # For a parallel element, τII for a given εII is the sum of each component
-@inline @generated  function compute_τII(
+@generated  function compute_τII(
     v::Parallel{T,N}, 
     εII::_T, 
     args
@@ -685,6 +682,7 @@ end
 
 @generated function computeViscosity_εII(v::Parallel{V, N}, εII::T, args) where {T,V,N}
     quote 
+        Base.@_inline_meta
         η = zero($T)
         Base.Cartesian.@nexprs $N i ->
             η += computeViscosity_εII(v.elements[i], εII, args)
@@ -696,6 +694,12 @@ function computeViscosity(
     fn::F, v::Parallel, CII::T, args::NamedTuple
 ) where {F,T}
     fn(v, CII, args)
+end
+
+function computeViscosity(
+    fn::F, v::CompositeRheology, CII::T, args::NamedTuple
+) where {F,T}
+    computeViscosity(fn, v.elements, CII, args)
 end
 
 function _computeViscosity(
@@ -710,11 +714,6 @@ function _computeViscosity(
     return inv(fn(v, CII, args))
 end
 
-function computeViscosity(
-    fn::F, v::CompositeRheology, CII::T, args::NamedTuple
-) where {F,T}
-    computeViscosity(fn, v.elements, CII, args)
-end
 
 @generated function computeViscosity(
     fn::F, v::NTuple{N,AbstractConstitutiveLaw}, CII::T, args::NamedTuple
@@ -828,25 +827,23 @@ for fn in (:computeViscosity_εII, :computeViscosity_τII)
     end
 end
 
-#=
-@inline @generated function compute_viscosity_param(
-    fn::F,
-    MatParam::NTuple{N,AbstractMaterialParamsStruct},
-    Phase::Integer,
-    CII::T,
-    args::NamedTuple,
-) where {F,N,T}
-    quote
-        out = zero(T)
-        Base.Cartesian.@nexprs $N i ->
-            out += if MatParam[i].Phase == Phase
-                computeViscosity(fn, MatParam[i].CreepLaws, CII, args)
-            else
-                zero(T)
-            end
-    end
-end
-=#
+# @inline @generated function compute_viscosity_param(
+#     fn::F,
+#     MatParam::NTuple{N,AbstractMaterialParamsStruct},
+#     Phase::Integer,
+#     CII::T,
+#     args::NamedTuple,
+# ) where {F,N,T}
+#     quote
+#         out = zero(T)
+#         Base.Cartesian.@nexprs $N i ->
+#             out += if MatParam[i].Phase == Phase
+#                 computeViscosity(fn, MatParam[i].CreepLaws, CII, args)
+#             else
+#                 zero(T)
+#             end
+#     end
+# end
 
 @inline function computeViscosity_τII!(
     η::AbstractArray{T,nDim},
