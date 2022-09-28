@@ -1350,6 +1350,19 @@ dεII_dτII_AD(v::Union{Parallel,CompositeRheology,Tuple}, τII, args) = Forward
 dτII_dεII_AD(v::Union{Parallel,CompositeRheology,Tuple}, εII, args) = ForwardDiff.derivative(x->compute_τII(v, x, args), εII)
 
 
+@generated function dεII_dτII(
+    v::Parallel{T,N}, τII::_T, args
+) where {T,N,_T}
+    quote
+        Base.@_inline_meta
+        val = zero(_T)
+        Base.Cartesian.@nexprs $N i -> val += inv(dεII_dτII(v.elements[i], τII, args))
+        return inv(val)
+    end
+end
+
+
+
 @generated function dτII_dεII(
     v::NTuple{N,AbstractConstitutiveLaw}, εII::_T, args
 ) where {_T,N}
