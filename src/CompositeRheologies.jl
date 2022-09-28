@@ -31,14 +31,14 @@ end
 =#
 
 
-# function dτII_dεII(v::Parallel{T,N}, TauII::_T, args) where {T,N, _T}
-#     dτII_dεII_der = 0
-#     for i=1:N
-# #        @show dτII_dεII(v.elements[i], TauII, args)
-#         dτII_dεII_der += dτII_dεII(v.elements[i], TauII, args)
-#     end
-#     return dτII_dεII_der
-# end
+function dτII_dεII(v::Parallel{T,N}, TauII::_T, args) where {T,N, _T}
+    dτII_dεII_der = 0
+    for i=1:N
+#        @show dτII_dεII(v.elements[i], TauII, args)
+        dτII_dεII_der += dτII_dεII(v.elements[i], TauII, args)
+    end
+    return dτII_dεII_der
+end
 
 """
     Structure that holds composite rheologies (e.g., visco-elasto-viscoplastic),
