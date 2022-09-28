@@ -142,13 +142,16 @@ using GeoParams, ForwardDiff
     τII1 = GeoParams.MaterialParameters.ConstitutiveRelationships.stress_circuit(pa4, εII, args)
     @test τII1 ≈ 345408.7183763343
 
-    # Check derivatives with FD
-    pa6 = Parallel(v1,v2)
+    # Check derivatives with FD and AD
+    pa6 = Parallel(v1,v2);
     Δτ  = τII*1e-6;
-    ε0  = compute_εII(pa6, τII, args, verbose=false)
-    ε1  = compute_εII(pa6, τII + Δτ, args, verbose=false)
+    ε0  = compute_εII(pa6, τII, args, verbose=false);
+    ε1  = compute_εII(pa6, τII + Δτ, args, verbose=false);
     dε_dτ_FD = (ε1-ε0)/Δτ
-    #dεII_dτII(pa6, τII, args)
+    dε_dτ_AD = GeoParams.MaterialParameters.ConstitutiveRelationships.dεII_dτII_AD(pa6, τII, args)
+    dε_dτ    = dεII_dτII(pa6, τII, args)       
+    @test dε_dτ ≈ dε_dτ_FD  ≈ dε_dτ_AD  
+
 
     # 
     ε = 1e-15
@@ -279,7 +282,9 @@ using GeoParams, ForwardDiff
    # @test εII ≈ ε_viscosity # fails
 
     # Do the same with local iterations
-    @test εII ≈ compute_εII(p, τ, args)     
+    @test εII ≈ compute_εII(p, τ, args)     # allocates
 
-     
+    c3  = CompositeRheology(v2,v3,v1, p)
+
+
 end

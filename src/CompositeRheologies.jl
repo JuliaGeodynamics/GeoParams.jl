@@ -30,15 +30,24 @@ function dεII_dτII(v::CompositeRheology{T,N}, TauII::_T, args) where {T,N, _T}
 end
 =#
 
+"""
+    dτII_dεII(v::Parallel{T,N}, TauII::_T, args)
 
-function dτII_dεII(v::Parallel{T,N}, TauII::_T, args) where {T,N, _T}
-    dτII_dεII_der = 0
-    for i=1:N
-#        @show dτII_dεII(v.elements[i], TauII, args)
-        dτII_dεII_der += dτII_dεII(v.elements[i], TauII, args)
+Computes the derivative of `τII` vs `εII` for parallel elements   
+"""
+@generated function dτII_dεII(
+    v::Parallel{T,N}, 
+    TauII::_T, 
+    args
+) where {T,N, _T}
+    quote
+        dτII_dεII_der = zero($_T)
+        Base.Cartesian.@nexprs $N i ->
+            dτII_dεII_der += dτII_dεII(v.elements[i], TauII, args)
+        return dτII_dεII_der
     end
-    return dτII_dεII_der
 end
+
 
 """
     Structure that holds composite rheologies (e.g., visco-elasto-viscoplastic),
@@ -1118,18 +1127,20 @@ Performs local iterations versus strain rate for a given stress
 """
 @inline function local_iterations_τII(
     v::Parallel{T,N}, 
-    τII, 
+    τII::_T, 
     args; 
     tol=1e-6, 
     verbose=false, n=1
-) where {T,N}
-    # Initial guess
-    εII = compute_invε(v, τII, args)
+) where {T,N, _T}
+
+    # Initial guess (harmonic average of ε of each element)
+    εII = compute_invε(v, τII, args) # no allocations 
     
-    # Local Iterations
+    # Local iterations
     iter = 0
     ϵ = 2 * tol
     εII_prev = εII
+
     while ϵ > tol
         iter += 1
         f = τII - stress_circuit(v, εII, args; n=n)
@@ -1145,6 +1156,7 @@ Performs local iterations versus strain rate for a given stress
     if verbose
         println("---")
     end
+
     return εII
 end
 
@@ -1392,6 +1404,19 @@ end
 
 dεII_dτII(v::Parallel, τII, args) = ForwardDiff.derivative(x->compute_εII(v, x, args), τII)
 dεII_dτII_AD(v::Union{Parallel,CompositeRheology,Tuple}, τII, args) = ForwardDiff.derivative(x->compute_εII(v, x, args), τII)
+
+@generated function dεII_dτII(
+    v::Parallel{T,N}, τII::_T, args
+) where {T,N,_T}
+    quote
+        Base.@_inline_meta
+        val = zero(_T)
+        Base.Cartesian.@nexprs $N i -> val += inv(dεII_dτII(v.elements[i], τII, args))
+        return inv(val)
+    end
+end
+
+
 
 @generated function dτII_dεII(
     v::NTuple{N,AbstractConstitutiveLaw}, εII::_T, args
