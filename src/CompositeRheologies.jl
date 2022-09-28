@@ -805,7 +805,6 @@ for fn in (:computeViscosity_εII, :computeViscosity_τII)
     end
 end
 
-<<<<<<< HEAD
 # @inline @generated function compute_viscosity_param(
 #     fn::F,
 #     MatParam::NTuple{N,AbstractMaterialParamsStruct},
@@ -823,27 +822,6 @@ end
 #             end
 #     end
 # end
-=======
-#=
-@inline @generated function compute_viscosity_param(
-    fn::F,
-    MatParam::NTuple{N,AbstractMaterialParamsStruct},
-    Phase::Integer,
-    CII::T,
-    args::NamedTuple,
-) where {F,N,T}
-    quote
-        out = zero(T)
-        Base.Cartesian.@nexprs $N i ->
-            out += if MatParam[i].Phase == Phase
-                computeViscosity(fn, MatParam[i].CreepLaws, CII, args)
-            else
-                zero(T)
-            end
-    end
-end
-=#
->>>>>>> bab8d412f81168ff773bb9412ff36646be12ac4c
 
 @inline function computeViscosity_τII!(
     η::AbstractArray{T,nDim},
