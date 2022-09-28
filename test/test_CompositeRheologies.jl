@@ -196,8 +196,13 @@ using GeoParams, ForwardDiff
     v1 = LinearViscous()
     v2 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
     v3 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
-    c  = CompositeRheology(v2,v1,Parallel(v2,v1))
+    c  = CompositeRheology(v2,v1,Parallel(v2,v3))
     τ  = local_iterations_εII(c, εII, args, verbose=true)
+
+    p = Parallel(v3,v1)
+    #c  = CompositeRheology(v2,v1,p)
+    #x = [569147.5347440551, 1.5148671381288114e-18]
+
 
     @test τ ≈ 569147.233065495
 
