@@ -195,7 +195,10 @@ end
 """
     lambda(F::T, p::DruckerPrager, ηve::T, ηvp::T; K=zero(T), dt=zero(T), h=zero(T), τij=(one(T), one(T), one(T)))
     
-    Compute the plastic multiplier λ for a Drucker-Prager yield surface. Equations from Duretz et al. 2019 G3
+    Compute the plastic multiplier λ for a Drucker-Prager yield surface. `F` is the trial yield surface, 
+    `ηve` is the visco-elastic effective viscosity (i.e. `(1/G/dt + 1/η)⁻¹`), `ηvp` is a regularization term,
+    `K` is the elastic bulk modulus, h is the harderning, and `τij`` is the stress tensor in Voigt notation.
+    Equations from Duretz et al. 2019 G3
 """
 @inline function lambda(F::T, p::DruckerPrager, ηve::T, ηvp::T; K=zero(T), dt=zero(T), h=zero(T), τij=(one(T), one(T), one(T))) where T
     F * inv(ηve + ηvp + K * dt * p.sinΨ * p.sinϕ + h * p.cosϕ * plastic_strain(p, τij, zero(T)))
