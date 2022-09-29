@@ -78,8 +78,6 @@ function show(io::IO, a::Parallel)
     return nothing
 end
 
-
-
 # COMPUTE STRAIN RATE
 """
     compute_εII(v::Parallel{T,N}, τII, args; tol=1e-6, verbose=false, n=1)
@@ -452,7 +450,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
                 r[1] -= εII_parallel
                 
                 τ_parallel = compute_τII(c[i], εII_parallel, args)          # ALLOCATES
-                r[j+1]     = (τ - τ_parallel);                             # residual (stress should be equal)
+                r[j+1]     = (τ - τ_parallel);                              # residual (stress should be equal)
                 J[j+1,j+1] = dτII_dεII(c.elements[i], τ_parallel, args)     # ALLOCATES
                 j += 1
             end
@@ -522,13 +520,12 @@ Sums the derivative ∂εII/∂τII (strainrate vs. stress) of all non-parallel 
     quote
         out = zero(_T)
         Base.Cartesian.@nexprs $N i ->
-            out += if !isa(v.elements[i], Parallel)
-                dεII_dτII(v.elements[i], TauII, args)
-            else
-                zero(_T)
-            end
+            out += dεII_dτII_nonparallel(v.elements[i], TauII, args)
     end
 end
+dεII_dτII_nonparallel(v::Any, TauII, args) =   dεII_dτII(v, TauII, args)
+dεII_dτII_nonparallel(v::Parallel, TauII::_T, args) where _T =    zero(_T)
+
 
 
 """
@@ -631,14 +628,12 @@ Sums the strainrate of all non-parallel elements in a `CompositeRheology` struct
     quote
         out = zero(_T)
         Base.Cartesian.@nexprs $N i ->
-            out += if !isa(v.elements[i], Parallel)
-                compute_εII(v.elements[i], TauII, args)
-            else
-                zero(_T)
-            end
+            out += compute_εII_nonparallel(v.elements[i], TauII, args)
     end
 end
 
+compute_εII_nonparallel(v::Any, TauII::_T, args) where {_T} = compute_εII(v, TauII, args)
+compute_εII_nonparallel(v::Parallel, TauII::_T, args) where {_T} = zero(_T)
 
 
 # 0D RHEOLOGY functions
