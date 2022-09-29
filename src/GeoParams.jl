@@ -155,10 +155,12 @@ export dεII_dτII,
     DiffusionCreep_info,
 
     #       Elasticity
+    AbstractElasticity,
     ConstantElasticity,
     SetConstantElasticity,
 
     #       Plasticity
+    AbstractPlasticity,
     compute_yieldfunction,
     compute_yieldfunction!,
     DruckerPrager,
