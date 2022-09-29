@@ -167,4 +167,11 @@ using GeoParams, ForwardDiff
     @test err ≈ 0.0900844333898483
 
 
+    # Specify a composite rheology in the MaterialParam struct 
+    CharDim = GEO_units()
+    MatParam = SetMaterialParams(Name="Viscous Matrix", Phase=2,
+                Density   = ConstantDensity(),
+                CompositeRheology   = c5, CharDim=CharDim)
+
+
 end

@@ -169,6 +169,7 @@ export dεII_dτII,
     ∂Q∂P,
     
     #       Composite rheologies
+    AbstractComposite,
     strain_rate_circuit,
     computeViscosity_τII,
     computeViscosity_εII,
@@ -184,7 +185,7 @@ export dεII_dτII,
     KelvinVoigt,
     CompositeRheology,
     Parallel,
-    create_rheology_string, print_rheology_matrix,
+    create_rheology_string, print_rheology_matrix, print_composite,
     time_τII_0D,
     compute_εII_harmonic, compute_τII_AD
     

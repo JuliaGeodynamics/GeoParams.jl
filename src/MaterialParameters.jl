@@ -10,7 +10,8 @@ using ..Units
 
 import Base.show, Base.convert
 using GeoParams:
-    AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
+    AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct, AbstractComposite, print_composite
+
 
 # Define an "empty" Material parameter structure
 struct No_MaterialParam{_T} <: AbstractMaterialParam end
@@ -63,6 +64,7 @@ Structure that holds all material parameters for a given phase
     Vcreep<:Tuple,
     Velastic<:Tuple,
     Vplastic<:Tuple,
+    Vcomposite<:Tuple,
     Vcond<:Tuple,
     Vheatc<:Tuple,
     Vradioact<:Tuple,
@@ -71,21 +73,22 @@ Structure that holds all material parameters for a given phase
     Vmelting<:Tuple,
     Vseismvel<:Tuple,
 } <: AbstractMaterialParamsStruct
-    Name::NTuple{N,Char}                            #       The name is encoded as a NTuple{Char} (to make it isbits and the whole MaterialParams isbits as well; required to use this on the GPU)
-    Phase::Int64 = 1             #       Number of the phase (optional)
-    Nondimensional::Bool = false         #       Are all fields non-dimensionalized or not?
+    Name::NTuple{N,Char}               #       The name is encoded as a NTuple{Char} (to make it isbits and the whole MaterialParams isbits as well; required to use this on the GPU)
+    Phase::Int64 = 1                   #       Number of the phase (optional)
+    Nondimensional::Bool = false       #       Are all fields non-dimensionalized or not?
     Density::Vdensity = ()             #       Density equation of state
     Gravity::Vgravity = ()             #       Gravitational acceleration (set automatically)
     CreepLaws::Vcreep = ()             #       Creep laws
-    Elasticity::Velastic = ()             #       Elastic parameters
-    Plasticity::Vplastic = ()             #       Plasticity
-    Conductivity::Vcond = ()             #       Parameters related to the energy equation 
-    HeatCapacity::Vheatc = ()             #       Heat capacity 
-    RadioactiveHeat::Vradioact = ()             #       Radioactive heating source terms in energy conservation equation
-    LatentHeat::Vlatent = ()             #       Latent heating source terms in energy conservation equation
-    ShearHeat::Vshearheat = ()             #       Shear heating source terms in energy conservation equation
+    Elasticity::Velastic = ()          #       Elastic parameters
+    Plasticity::Vplastic = ()          #       Plasticity
+    CompositeRheology::Vcomposite = () #       Composite (combined) rheologies 
+    Conductivity::Vcond = ()           #       Parameters related to the energy equation 
+    HeatCapacity::Vheatc = ()          #       Heat capacity 
+    RadioactiveHeat::Vradioact = ()    #       Radioactive heating source terms in energy conservation equation
+    LatentHeat::Vlatent = ()           #       Latent heating source terms in energy conservation equation
+    ShearHeat::Vshearheat = ()         #       Shear heating source terms in energy conservation equation
     Melting::Vmelting = ()             #       Melting model
-    SeismicVelocity::Vseismvel = ()             #       Seismic velocity
+    SeismicVelocity::Vseismvel = ()    #       Seismic velocity
 end
 
 """
@@ -95,6 +98,7 @@ end
                         CreepLaws           =   nothing, 
                         Elasticity          =   nothing, 
                         Plasticity          =   nothing, 
+                        CompositeRheology   =   nothing,
                         Conductivity        =   nothing, 
                         HeatCapacity        =   nothing, 
                         RadioactiveHeat     =   nothing,
@@ -181,6 +185,7 @@ function SetMaterialParams(;
     CreepLaws=nothing,
     Elasticity=nothing,
     Plasticity=nothing,
+    CompositeRheology=nothing,
     Conductivity=nothing,
     HeatCapacity=nothing,
     RadioactiveHeat=nothing,
@@ -206,6 +211,7 @@ function SetMaterialParams(;
         ConvField(CreepLaws, :Creeplaws),
         ConvField(Elasticity, :Elasticity; maxAllowedFields=1),
         ConvField(Plasticity, :Plasticity),
+        ConvField(CompositeRheology,  :CompositeRheology; maxAllowedFields=1),
         ConvField(Conductivity, :Conductivity; maxAllowedFields=1),
         ConvField(HeatCapacity, :HeatCapacity; maxAllowedFields=1),
         ConvField(RadioactiveHeat, :RadioactiveHeat; maxAllowedFields=1),
@@ -253,11 +259,18 @@ function Print_MaterialParam(io::IO, name::Symbol, Data)
         if typeof(Data[1]) <: AbstractMaterialParam
             print(io, "        |-- $(rpad(name,18)):")
             for i in 1:length(Data)
-                if i == 1
-                    print(io, " $(Data[1]) \n")
-                else
-                    print(io, "        |  $(rpad("     ",18))   $(Data[i]) \n")
+                str = Data[i]
+                if isa(str, AbstractComposite)
+                    # The CompositeRheology object is formatted a bit different
+                    str = print_composite(Data[i],32)   
                 end
+
+                if i == 1
+                    print(io, " $str \n")
+                else
+                    print(io, "        |  $(rpad("     ",18))   $str \n")
+                end
+
             end
         end
     end

@@ -54,7 +54,8 @@ export param_info,
     stress_circuit,
     InverseCreepLaw,
     KelvinVoigt,
-    Parallel
+    Parallel,
+    AbstractComposite
 
 # add methods programatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity)

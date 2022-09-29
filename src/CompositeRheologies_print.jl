@@ -1,5 +1,5 @@
 # Pretty printing for CompositeRheologies
-
+export print_composite
 
 # returns a matrix wuth strings in the right order
 function print_rheology_matrix(v::Tuple)
@@ -245,3 +245,15 @@ struct InverseCreepLaw{N} <: AbstractConstitutiveLaw{Float64}
     end
 end
 
+function print_composite(a, spaces=10)
+    str = print_rheology_matrix(a)
+    str = str.*"\n"
+    for i=2:length(str)
+        for j=1:spaces
+            str[i] = " "*str[i] 
+        end
+    end
+    str = join(str)
+
+    return str
+end

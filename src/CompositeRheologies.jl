@@ -64,13 +64,16 @@ end
 # Print info in the REPL
 include("CompositeRheologies_print.jl")
 
+
+
 function show(io::IO, g::AbstractComposite)
-    println(io,"Composite rheology:   ")
+    #println(io,"Composite rheology:   ")
 
     # Compose a string with rheological elements, so we have an overview in the REPL
     #str = create_rheology_string("",g)
     str = print_rheology_matrix(g)
-    println.(str)
+    #str = join(str.*"\n")
+    println(io,str[1],"\n",str[2])
 
     return nothing
 end
