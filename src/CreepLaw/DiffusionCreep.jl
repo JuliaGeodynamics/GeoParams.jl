@@ -153,16 +153,16 @@ Returns diffusion creep strainrate as a function of 2nd invariant of the stress 
            exp(-(E + P * V) / (R * T)) / FE
 end
 
-@inline function compute_εII(
-    a::DiffusionCreep, TauII::Quantity; T=1K, P=0Pa, f=1NoUnits, d=1e-3m, args...
-)
-    @unpack_units n, r, p, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+# @inline function compute_εII(
+#     a::DiffusionCreep, TauII::Quantity; T=1K, P=0Pa, f=1NoUnits, d=1e-3m, args...
+# )
+#     @unpack_units n, r, p, A, E, V, R = a
+#     FT, FE = a.FT, a.FE
 
-    ε = A * (TauII * FT)^n * f^(r) * d^(p) * exp(-(E + P * V) / (R * T)) / FE
+#     ε = A * (TauII * FT)^n * f^(r) * d^(p) * exp(-(E + P * V) / (R * T)) / FE
 
-    return ε
-end
+#     return ε
+# end
 
 """
     compute_εII!(EpsII::AbstractArray{_T,N}, a, TauII::AbstractArray{_T,N}; T, P, f,d,kwargs...)
@@ -197,12 +197,10 @@ returns the derivative of strainrate versus stress
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    return fastpow(FT * TauII, -1 + n) *
+    return n * FT * fastpow(FT * TauII, -1 + n) *
            fastpow(f, r) *
            fastpow(d, p) *
            A *
-           FT *
-           n *
            exp((-E - P * V) / (R * T)) *
            (1 / FE)
 end

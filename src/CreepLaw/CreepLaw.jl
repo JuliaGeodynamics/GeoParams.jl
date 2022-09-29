@@ -8,7 +8,8 @@
 # here are implemented. Please add tests as well!
 
 abstract type AbstractCreepLaw{T} <: AbstractConstitutiveLaw{T} end
-precision(v::AbstractCreepLaw) = (typeof(v).super).parameters[1]
+# precision(v::AbstractCreepLaw) = (typeof(v).super).parameters[1]
+precision(v::AbstractCreepLaw{T}) where T = T
 
 export LinearViscous, PowerlawViscous, CorrectionFactor, AbstractCreepLaw
 
@@ -118,7 +119,7 @@ Returns second invariant of the stress tensor given a 2nd invariant of strain ra
 function compute_τII(a::LinearViscous, EpsII; kwargs...)
     @unpack η = a
 
-    return 2 * (η * EpsII)
+    return 2 * η.val * EpsII
 end
 
 function compute_τII!(

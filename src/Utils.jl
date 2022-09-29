@@ -39,3 +39,7 @@ function fastpow(x::Number, n::AbstractFloat)
     x > 0 && return exp(log(x) * n)
     return x^n
 end
+
+function fastpow(x, n::AbstractFloat)
+    return x^n
+end

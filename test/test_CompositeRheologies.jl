@@ -199,6 +199,16 @@ using GeoParams, ForwardDiff
     c  = CompositeRheology(v2,v1,Parallel(v2,v1))
     τ  = local_iterations_εII(c, εII, args, verbose=true)
 
+
+    εII= 3e-15
+    v1 = LinearViscous()
+    v2 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
+    v3 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
+    c  = CompositeRheology(v2,v1,Parallel(v2,v3))
+    τ  = local_iterations_εII(c, εII, args, verbose=true)
+
+    τII_iters = compute_τII_AD(c, εII, args, verbose=true)
+
     @test τ ≈ 569147.233065495
 
     # AD composite tests 
@@ -232,3 +242,195 @@ using GeoParams, ForwardDiff
     τII_guess ≈ τII_iters
 
 end
+
+εII= 3e-15
+v1 = LinearViscous()
+v1 = ConstantElasticity()
+v2 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
+v3 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
+c  = CompositeRheology(v2,v1,Parallel(v2,v3))
+τ  = local_iterations_εII(c, εII, args, verbose=true)
+τII_iters = compute_τII_AD(c, εII, args, verbose=true)
+
+v=c.elements
+v=p
+
+@inline function foo(
+    v::Parallel, εII::T, args; tol=1e-12, verbose=false
+    # v::Union{Parallel, NTuple{N,Any}}, εII::T, args; tol=1e-12, verbose=false
+) where {T}
+    # Initial guess
+    η_ve = computeViscosity(computeViscosity_εII, v, εII, args)# viscosity guess
+    # η_ve = computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess
+    τII = 2.0 * η_ve * εII # deviatoric stress guess
+
+    verbose && println("initial τII = $τII")
+
+    # Local Iterations
+    iter = 0
+    ϵ = 2.0 * tol
+    τII_prev = τII
+    while ϵ > tol
+        iter += 1
+        #= 
+            Newton scheme -> τII = τII - f(τII)/dfdτII. 
+            Therefore,
+                f(τII) = εII - strain_rate_circuit(v, τII, args) = 0
+                dfdτII = - dεII_dτII(v, τII, args) 
+                τII -= f / dfdτII
+        =#
+        f = εII - strain_rate_circuit(v, τII, args)
+        dfdτII = - dεII_dτII(v, τII, args) 
+        τII -= f / dfdτII
+        # τII = muladd(εII - strain_rate_circuit(v, τII, args), inv(dεII_dτII(v, τII, args)), τII)
+
+        dual_stress = strain_rate_circuit(v, Dual(τII), args)
+        f, dfdτII = dual_stress.val, dual_stress.partial
+        τII = muladd(εII-f, inv(dfdτII), τII)
+
+        ϵ = abs(τII - τII_prev) * inv(τII)
+        τII_prev = τII
+        verbose && println(" iter $(iter) $ϵ")
+        
+    end
+    if verbose
+        println("final τII = $τII")
+        println("---")
+    end
+
+    return τII
+end
+
+@btime foo($v, $εII, $args)
+@btime strain_rate_circuit($v, $τII, $args)
+
+@inline function local_iterations_τII_AD(
+    v::Parallel, τII::T, args; tol=1e-12, verbose=false
+) where {T}
+    # Initial guess
+    η_ve = computeViscosity(computeViscosity_τII, v, τII, args)# viscosity guess
+    εII = τII / (2.0*η_ve) # deviatoric stress guess
+
+    verbose && println("initial εII = $εII")
+
+    # Local Iterations
+    iter = 0
+    ϵ = 2.0 * tol
+    εII_prev = εII
+    while ϵ > tol
+        iter += 1
+        #= 
+            Newton scheme -> τII = τII - f(τII)/dfdτII. 
+            Therefore,
+                f(τII) = εII - strain_rate_circuit(v, τII, args) = 0
+                dfdτII = - dεII_dτII(v, τII, args) 
+                τII -= f / dfdτII
+        =#
+        # f = τII - stress_circuit(v, εII, args)
+        # dfdεII = -dτII_dεII(v, εII, args) 
+        # εII -= f / dfdεII
+        # εII = muladd(τII - stress_circuit(v, εII, args), inv(dτII_dεII(v, εII, args)), εII)
+
+        dual_strain = stress_circuit(v, Dual(εII), args)
+        f, dfdεII = dual_strain.val, dual_strain.partial
+        εII = muladd(τII-f, inv(dfdεII), εII)
+
+        ϵ = abs(εII - εII_prev) * inv(εII)
+        εII_prev = εII
+        verbose && println(" iter $(iter) $ϵ")
+        
+    end
+    if verbose
+        println("final εII = $εII")
+        println("---")
+    end
+
+    return εII
+end
+    
+# Initial guess
+εII = 1e-15
+η_ve = computeViscosity(computeViscosity_εII, v, εII, args)# viscosity guess
+# η_ve = computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess
+τII = 2.0*η_ve * εII # deviatoric stress guess
+
+local_iterations_τII_AD(v, τII, args, verbose=true)
+@btime local_iterations_τII_AD($v, $τII, $args)
+
+
+ # check computations for parallel elements by hand
+ args = (T = 1100.0, d = 0.0001, τII_old = 1.0004997501249374e8, dt = 1.0e8)
+ εII = 1e-15
+ v1 = LinearViscous(η=1e21Pa*s)
+ v2 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
+ v3 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
+ p = Parallel(v3, v1, v2)
+ c = CompositeRheology(v1, p)
+ v=p
+
+
+ compute_τII_AD(p, εII, args, verbose=true)
+ εII=Dual(εII)
+ compute_τII_AD(p, a, args, verbose=true)
+
+ compute_εII(p, τII, args)
+
+ compute_εII(p, τII, args)     
+
+  # stress given strainrate 
+  τ,εII = 0.0, 1e-15
+  for i=1:length(p.elements)
+        τ_el  = compute_τII(p.elements[i], εII, args) 
+        τ    += τ_el
+  end
+  τ_AD = compute_τII_AD(p, εII, args, verbose=false)
+  τ_AD ≈ τ
+
+  @btime compute_τII_AD($p, $εII, $args)
+  @code_warntype compute_τII_AD(p, εII, args)
+
+  τ_AD = compute_τII_AD(c, εII, args, verbose=false)
+
+
+  compute_τII(p, εII, args) 
+  compute_εII(p, τ, args)    
+
+# Initial guess
+η_ve = computeViscosity(computeViscosity_εII, v, εII, args)# viscosity guess
+# η_ve = computeViscosity(computeViscosity_εII, v, εII, args) # viscosity guess
+τII = 2 * η_ve * εII # deviatoric stress guess
+
+τ1  = compute_τII(p.elements[1], εII, args) 
+τ2  = compute_τII(p.elements[2], εII, args) 
+τ3  = compute_τII(p.elements[3], εII, args) 
+
+compute_εII(v, τII, args)
+
+
+v1 = LinearViscous(η=1e20Pa*s)
+v2 = LinearViscous(η=1e21Pa*s)
+v3 = LinearViscous(η=1e22Pa*s)
+p = Parallel(v3, v1, v2)
+v=p
+
+τ1  = compute_τII(p.elements[1], εII, args) 
+τ2  = compute_τII(p.elements[2], εII, args) 
+τ3  = compute_τII(p.elements[3], εII, args) 
+τ1 + τ2 + τ3
+
+e1=compute_εII(v.elements[1], τII, args)
+e2=compute_εII(v.elements[2], τII, args)
+e3=compute_εII(v.elements[3], τII, args)
+e1+e2+e3
+
+a=computeViscosity(computeViscosity_εII, v.elements[1], εII, args)# viscosity guess
+b=computeViscosity(computeViscosity_εII, v.elements[2], εII, args)# viscosity guess
+c=computeViscosity(computeViscosity_εII, v.elements[3], εII, args)# viscosity guess
+ηeff = (a+b+c)
+τII/ηeff/2
+
+2(a+b+c)εII
+
+
+computeViscosity(computeViscosity_τII, v.elements[1], a, args)# viscosity guess
+compute_εII(v.elements[1], a, args)
