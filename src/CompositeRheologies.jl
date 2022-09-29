@@ -16,6 +16,14 @@ struct Parallel{T, N} <: AbstractConstitutiveLaw{T}
 end
 Parallel(v...) = Parallel{typeof( (v...,)), length(v)}((v...,))
 
+@generated function getindex(p::Parallel{T, N}, I::Int64) where {T,N}
+    quote
+        Base.@_inline_meta
+        Base.Cartesian.@nexprs $N i -> I == i && return p.elements[i]
+    end
+end
+
+
 """
     Structure that holds composite rheologies (e.g., visco-elasto-viscoplastic),
     but also indicates (in the name) whether we need to perform non-linear iterations.
