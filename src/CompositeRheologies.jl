@@ -431,29 +431,29 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     x    = @MVector ones(_T, n)
     x   .= εII_total
     x[1] = τ_initial
-    
+
     j = 1;
     for i=1:N
         if is_par[i]
-           x[j+1] = compute_εII_harmonic_i(c, τ_initial, args,i)   
-           j += 1
+            j += 1
+            x[j] = compute_εII_harmonic_i(c, τ_initial, args,i)   
         end
     end
     
     r = @MVector zeros(_T,n);
-    J = @MMatrix ones(_T, Npar+1,Npar+1)   # size depends on # of parallel objects (+ likely plastic elements)
+    J = @MMatrix zeros(_T, Npar+1,Npar+1)   # size depends on # of parallel objects (+ likely plastic elements)
     
     # Local Iterations
     iter = 0
     ϵ = 2 * tol
     τII_prev = τ_initial
     τ_parallel = _T(0)
-    max_iter = 100000
+    max_iter = 1000
     while (ϵ > tol) && (iter < max_iter)
         iter += 1
 
         τ   = x[1]
-        
+  
         # Update part of jacobian related to serial elements
         r[1]   = εII_total - compute_εII_elements(c,τ,args)
         J[1,1] = dεII_dτII_elements(c,x[1],args);
@@ -463,26 +463,24 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         for i=1:N
             
             if is_par[i]
-                εII_parallel = x[j+1]
-                r[1] -= εII_parallel
-                
-                τ_parallel = compute_τII_i(c, εII_parallel, args, i)        
-                r[j+1]     = (τ - τ_parallel);                              # residual (stress should be equal)
-                J[j+1,j+1] = dτII_dεII_i(c, τ_parallel, args, i)    
-               
                 j += 1
+                εII_p = x[j]
+                r[1] -= εII_p
+                τ_parallel = compute_τII_i(c, εII_p, args, i)        
+                r[j]       =  (τ - τ_parallel);                              # residual (stress should be equal)
+                J[j,j]     = -dτII_dεII_i(c, εII_p, args, i)    
+                
+                J[j,1]     =  1.0
+                J[1,j]     =  1.0
             end
-            
         end
-     
+
         # update solution
         dx  = J\r 
         x .+= dx   
 
         ϵ    = sum(abs.(dx)./(abs.(x)))
-     
         verbose && println(" iter $(iter) $ϵ")
-
     end
     verbose && println("---")
     

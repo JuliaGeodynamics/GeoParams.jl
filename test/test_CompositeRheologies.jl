@@ -112,7 +112,7 @@ using GeoParams, ForwardDiff
 
     # CompositeRheology cases with parallel elements
     εII =  3e-15
-    for v in [c4 c5]    # c6 only works with AD (for now)
+    for v in [c4 c5 c6]    
 
         τ_AD = compute_τII_AD(v, εII, args)     # using AD
        
@@ -134,7 +134,7 @@ using GeoParams, ForwardDiff
 
         @test εII ≈ compute_εII(v,τ_AD,args)    # sum of ε
 
-        # Check with anaytical jacobian
+        # Check with analytical jacobian
         τ    = compute_τII(v, εII, args)        # using analytical jacobians (expanded for || elements)
         @test τ_AD ≈ τ
 
