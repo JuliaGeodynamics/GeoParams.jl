@@ -161,8 +161,6 @@ using GeoParams, ForwardDiff
     err             =   sum(abs.(τ_vec .- analytical_sol))/length(t_vec)
     @test err ≈ 0.0900844333898483
 
-    c_nonlin=  CompositeRheology(v1,ConstantElasticity(G=G*Pa)) # linear VE
-
 
 
 end

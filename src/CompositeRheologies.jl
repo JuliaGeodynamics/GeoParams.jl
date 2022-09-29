@@ -178,7 +178,6 @@ end
 
 
 # NONLINEAR ITERATION SCHEMES
-#=
 """
     τII =local_iterations_εII_AD(v::CompositeRheology{N,T,0}, εII::_T, args; tol=1e-12, verbose=false)
 
@@ -223,7 +222,6 @@ Performs local iterations versus stress for a given total strain rate for a give
 
     return τII
 end
-=#
 
 """
     τII = local_iterations_εII_AD(v::CompositeRheology{N,T}, εII::_T, args; tol=1e-12, verbose=false)
