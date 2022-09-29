@@ -103,6 +103,10 @@ using GeoParams, ForwardDiff
             @test ε_check ≈ ε
         end
 
+        # Viscosity calculation routines
+        η    =  computeViscosity_εII(v, εII, args)
+        η_AD =  computeViscosity_εII_AD(v, εII, args)
+        @test η ≈ η_AD
     end
 
     # CompositeRheology cases with parallel elements
@@ -160,7 +164,6 @@ using GeoParams, ForwardDiff
     analytical_sol  =   @. 2.0*η*(1.0-exp(-t_vec/t_M))*εII
     err             =   sum(abs.(τ_vec .- analytical_sol))/length(t_vec)
     @test err ≈ 0.0900844333898483
-
 
 
 end

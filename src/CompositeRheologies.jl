@@ -3,6 +3,7 @@ using StaticArrays
 
 export CompositeRheology, Parallel, create_rheology_string, print_rheology_matrix
 export time_τII_0D, compute_εII_harmonic, compute_τII_AD
+export computeViscosity_εII, computeViscosity_εII_AD
 
 import Base.getindex
 
@@ -176,6 +177,49 @@ end
     end
 end
 
+# VISCOSITY COMPUTATIONS
+
+""" 
+    η = computeViscosity_εII(v::Union{Parallel{T,N}, CompositeRheology{T,N}, AbstractConstitutiveLaw}, εII::_T, args; tol=1e-12, verbose=false)
+
+This computes the effective viscosity for a given input rheology `v` and strainrate `εII`
+"""
+function computeViscosity_εII(
+    v::Union{Parallel{T,N}, CompositeRheology{T,N}}, 
+    εII::_T, 
+    args;
+    tol=1e-12, verbose=false
+) where {T,N,_T}
+    τII = compute_τII(v, εII, args; tol=tol, verbose=verbose)
+    η   = _T(0.5) * τII * inv(εII)
+    return η
+end
+
+function computeViscosity_εII(v::T, εII::_T, args; tol=1e-12, verbose=false) where {T<:AbstractConstitutiveLaw,_T}
+    τII = compute_τII(v, εII, args)
+    η   = _T(0.5) * τII * inv(εII)
+    return η
+end
+
+""" 
+    η = computeViscosity_εII_AD(v::Union{Parallel{T,N}, CompositeRheology{T,N}, AbstractConstitutiveLaw}, εII::_T, args; tol=1e-12, verbose=false)
+
+This computes the effective viscosity for a given input rheology `v` and strainrate `εII`, while using AD if necessary
+"""
+function computeViscosity_εII_AD(
+    v::Union{Parallel{T,N}, CompositeRheology{T,N}, AbstractConstitutiveLaw}, 
+    εII::_T, 
+    args;
+    tol=1e-12, verbose=false
+) where {T,N,_T}
+    τII = compute_τII_AD(v, εII, args; tol=tol, verbose=verbose)
+    η   = _T(0.5) * τII * inv(εII)
+    return η
+end
+
+function computeViscosity_εII_AD(v::T, εII::_T, args; tol=1e-12, verbose=false) where {T<:AbstractConstitutiveLaw,_T}
+    return computeViscosity_εII(v, εII, args) 
+end
 
 # NONLINEAR ITERATION SCHEMES
 """
