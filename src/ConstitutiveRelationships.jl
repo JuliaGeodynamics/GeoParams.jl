@@ -19,6 +19,7 @@ const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 
 abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
 abstract type AbstractComposite <: AbstractMaterialParam end
+precision(v::AbstractConstitutiveLaw) = (typeof(v).super).parameters[1]
 
 
 include("Computations.jl")
@@ -72,11 +73,11 @@ for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElas
             return compute_τII!(τ, s, EpsII; args...)
         end
 
-        if Symbol($myType) !== :ConstantElasticity
-            dτII_dεII(a::$(myType), EpsII, args) = dτII_dεII(a, EpsII; args...)
-            dεII_dτII(a::$(myType), TauII, args) = dεII_dτII(a, TauII; args...)
-        end
-
+        # Expand derivatives
+        dτII_dεII(a::$(myType), EpsII, args) = dτII_dεII(a, EpsII; args...)
+        dεII_dτII(a::$(myType), TauII, args) = dεII_dτII(a, TauII; args...)
+        
+    
     end
 end
 
