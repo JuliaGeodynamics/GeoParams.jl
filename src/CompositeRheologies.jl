@@ -113,6 +113,7 @@ Computing `εII` as a function of `τII` for a composite element is the sum of t
     end
 end
 
+
 # As we don't do iterations, this is the same
 function compute_εII_AD(v::CompositeRheology, τII, args; tol=1e-6, verbose=false)
     return  compute_εII(v, τII, args)
@@ -156,6 +157,19 @@ end
     end
 end
 compute_τII_AD(v::Parallel{T,N}, εII::_T, args; tol=1e-12, verbose=false) where {T,N,_T} = compute_τII(v, εII, args) 
+
+
+@generated  function compute_τII_i(
+    v::CompositeRheology{T,N}, 
+    εII::_T, 
+    args, I::Int64;
+    tol=1e-12, verbose=false
+) where {T,_T,N}
+    quote
+        Base.@_inline_meta
+        Base.Cartesian.@nexprs $N i -> I == i && return compute_τII(v.elements[i], εII, args)
+    end
+end
 
 function compute_τII_AD(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
      τII = local_iterations_εII_AD(v, εII, args; tol=tol, verbose=verbose)
@@ -421,11 +435,11 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     j = 1;
     for i=1:N
         if is_par[i]
-           x[j+1] = compute_εII_harmonic(c.elements[i], τ_initial, args)
+           x[j+1] = compute_εII_harmonic_i(c, τ_initial, args,i)   
            j += 1
         end
     end
-
+    
     r = @MVector zeros(_T,n);
     J = @MMatrix ones(_T, Npar+1,Npar+1)   # size depends on # of parallel objects (+ likely plastic elements)
     
@@ -433,10 +447,12 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     iter = 0
     ϵ = 2 * tol
     τII_prev = τ_initial
-    while (ϵ > tol) && (iter < 1000000)
+    τ_parallel = _T(0)
+    max_iter = 100000
+    while (ϵ > tol) && (iter < max_iter)
         iter += 1
 
-        τ = x[1]
+        τ   = x[1]
         
         # Update part of jacobian related to serial elements
         r[1]   = εII_total - compute_εII_elements(c,τ,args)
@@ -445,22 +461,24 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         # Add contributions from || elements
         j=1;
         for i=1:N
+            
             if is_par[i]
                 εII_parallel = x[j+1]
                 r[1] -= εII_parallel
                 
-                τ_parallel = compute_τII(c[i], εII_parallel, args)          # ALLOCATES
+                τ_parallel = compute_τII_i(c, εII_parallel, args, i)        
                 r[j+1]     = (τ - τ_parallel);                              # residual (stress should be equal)
-                J[j+1,j+1] = dτII_dεII(c.elements[i], τ_parallel, args)     # ALLOCATES
+                J[j+1,j+1] = dτII_dεII_i(c, τ_parallel, args, i)    
+               
                 j += 1
             end
+            
         end
      
         # update solution
         dx  = J\r 
         x .+= dx   
 
-        τII = x[1]
         ϵ    = sum(abs.(dx)./(abs.(x)))
      
         verbose && println(" iter $(iter) $ϵ")
@@ -469,7 +487,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     if verbose
         println("---")
     end
-    if iter==1000
+    if (iter == max_iter)
         error("iterations did not converge")
     end
 
@@ -492,12 +510,14 @@ end
     end
 end
 
+
 function dεII_dτII(
     v::Parallel{T,N}, τII::_T, args
 ) where {T,N,_T}
     ε  = compute_εII(v, τII, args)
     return inv(dτII_dεII(v, ε, args))
 end
+
 
 """
     dεII_dτII_AD(v::Union{Parallel,CompositeRheology}, τII, args) 
@@ -539,6 +559,20 @@ function dτII_dεII(
     τ  = compute_τII(v, εII, args)
     return inv(dεII_dτII(v, τ, args))
 end
+
+
+@generated  function dτII_dεII_i(
+    v::CompositeRheology{T,N}, 
+    εII::_T, 
+    args, I::Int64;
+    tol=1e-12, verbose=false
+) where {T,_T,N}
+    quote
+        Base.@_inline_meta
+        Base.Cartesian.@nexprs $N i -> I == i && return dτII_dεII(v.elements[i], εII, args)
+    end
+end
+
 
 """
     dτII_dεII(v::Parallel{T,N}, TauII::_T, args)
@@ -613,6 +647,19 @@ end
         return inv(out)
     end
 end
+
+@generated  function compute_εII_harmonic_i(
+    v::CompositeRheology{T,N}, 
+    TauII::_T, 
+    args, I::Int64;
+    tol=1e-12, verbose=false
+) where {T,_T,N}
+    quote
+        Base.@_inline_meta
+        Base.Cartesian.@nexprs $N i -> I == i && return compute_εII(v.elements[i], TauII, args)
+    end
+end
+
 
 """
     compute_εII_elements(v::CompositeRheology, TauII, args)
