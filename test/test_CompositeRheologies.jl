@@ -22,6 +22,7 @@ using GeoParams, ForwardDiff
     c3 = CompositeRheology(v1,v2, e1)   # with elasticity
     c4 = CompositeRheology(v1,v3, p1)   # with linear || element
     c5 = CompositeRheology(v1,v4, p2)   # with nonlinear || element
+    c6 = CompositeRheology(v1,v4,p1,p2) # with 2 || elements
     p4 = Parallel(c3,v3)                # Parallel element with composite one as well    
 
     # Check that we can construct complicated rheological elements
@@ -38,7 +39,7 @@ using GeoParams, ForwardDiff
     εII, τII = 2e-15, 2e6
 
     # Check derivatives 
-    vec = [c1 c2 c3 p1 p2 p3] 
+    vec = [c1 c2 c3 c4 c5 p1 p2 p3] 
     for v in vec   # problem with c3 (elasticity) and c4 (that has || elements) 
         τII = 1e9
         Δτ  = τII*1e-6;
@@ -111,31 +112,31 @@ using GeoParams, ForwardDiff
 
     # CompositeRheology cases with parallel elements
     εII =  3e-15
-    for v in [c4 c5]
+    for v in [c4 c5]    # c6 only works with AD (for now)
 
         τ_AD = compute_τII_AD(v, εII, args)     # using AD
-        τ    = compute_τII(v, εII, args)        # using analytical jacobians (expanded for || elements)
-        @test τ_AD ≈ τ
-
+       
         # check result. For a parallel element we should satisfy the following equations:
         #   τ_parallel == τ_AD 
         #   sum(ε) = εII
-        ε_parallel,τ_parallel = εII, 0.0
+        ε_vec = [compute_εII(v.elements[i], τ_AD, args) for i=1:length(v.elements)]
+        @test sum(ε_vec) ≈ εII
+
+        ε_parallel,τ_parallel = 0.0, 0.0
         for i=1:length(v.elements)
-            # ε of || element
-            if !isa(v.elements[i], Parallel)
-                ε_parallel -= compute_εII(v.elements[i], τ_AD, args)
-            end
-        end
-        for i=1:length(v.elements)
-             # τ of || element
+            # Check that the stress of each || element is the same as the total one
             if isa(v.elements[i], Parallel)
+                ε_parallel = ε_vec[i]      # parallel strainrate
                 τ_parallel = compute_τII_AD(v.elements[i], ε_parallel, args) 
+                @test τ_parallel  ≈ τ_AD
             end
         end
 
-        @test τ_parallel ≈ τ_AD                 # Stress of || element is equal
         @test εII ≈ compute_εII(v,τ_AD,args)    # sum of ε
+
+        # Check with anaytical jacobian
+        τ    = compute_τII(v, εII, args)        # using analytical jacobians (expanded for || elements)
+        @test τ_AD ≈ τ
 
     end
 

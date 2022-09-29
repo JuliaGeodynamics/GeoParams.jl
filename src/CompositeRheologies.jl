@@ -484,9 +484,8 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         verbose && println(" iter $(iter) $ϵ")
 
     end
-    if verbose
-        println("---")
-    end
+    verbose && println("---")
+    
     if (iter == max_iter)
         error("iterations did not converge")
     end
