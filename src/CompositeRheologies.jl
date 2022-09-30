@@ -1,4 +1,4 @@
-e# This holds structures and computational routines for compositional rheologies
+# This holds structures and computational routines for compositional rheologies
 using StaticArrays
 using Setfield
 
