@@ -502,6 +502,9 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         J[1,1] = dεII_dτII_elements(c,x[1],args);
         
         # Add contributions from || elements
+        fill_J_parallel!(J, r, x, c, τ, args)
+        
+        #=
         j=1;
         for i=1:N
             
@@ -517,6 +520,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
                 J[1,j]     =  1.0
             end
         end
+        =#
 
         # update solution
         dx  = J\r 
@@ -534,6 +538,31 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     τII = x[1]
 
     return τII
+end
+
+# Helper function
+@generated function fill_J_parallel!(J, r, x, c::CompositeRheology{T, N, Npar, is_par, τ_it, P_it, λ_it}, τ, args) where {T, N, Npar, is_par, τ_it, P_it, λ_it}
+    quote
+        Base.@_inline_meta
+        j = 1
+        Base.Cartesian.@nexprs $N i -> j = @inbounds _fill_J_parallel!(J, r, x, c.elements[i], τ, args, $(is_par)[i], j)
+        return nothing
+    end
+end
+
+function _fill_J_parallel!(J, r, x, elements, τ, args, is_par, j)
+    !is_par && return j
+
+    j += 1
+    εII_p = x[j]
+    r[1] -= εII_p
+    τ_parallel = compute_τII(elements, εII_p, args)    
+    r[j]       =  (τ - τ_parallel) # residual (stress should be equal)
+    J[j,j]     = -dτII_dεII(elements, εII_p, args)
+    J[j,1]     =  1.0
+    J[1,j]     =  1.0
+    
+    return j
 end
 
 
