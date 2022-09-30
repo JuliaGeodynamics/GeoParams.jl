@@ -146,7 +146,7 @@ Computing `εII` as a function of `τII` for a composite element is the sum of t
     v::CompositeRheology{T,N}, 
     τII::_T, 
     args; 
-    tol=1e-12, verbose=false
+    tol=1e-6, verbose=false
 ) where {T,_T,N}
     quote
         Base.@_inline_meta
@@ -190,7 +190,7 @@ end
     v::Parallel{T,N}, 
     εII::_T, 
     args;
-    tol=1e-12, verbose=false
+    tol=1e-6, verbose=false
 ) where {T,_T,N}
     quote
         Base.@_inline_meta
@@ -199,14 +199,14 @@ end
             τII += compute_τII(v.elements[i], εII, args)
     end
 end
-compute_τII_AD(v::Parallel{T,N}, εII::_T, args; tol=1e-12, verbose=false) where {T,N,_T} = compute_τII(v, εII, args) 
+compute_τII_AD(v::Parallel{T,N}, εII::_T, args; tol=1e-6, verbose=false) where {T,N,_T} = compute_τII(v, εII, args) 
 
 
 @generated  function compute_τII_i(
     v::CompositeRheology{T,N}, 
     εII::_T, 
     args, I::Int64;
-    tol=1e-12, verbose=false
+    tol=1e-6, verbose=false
 ) where {T,_T,N}
     quote
         Base.@_inline_meta
@@ -225,7 +225,7 @@ end
     v::NTuple{N,AbstractConstitutiveLaw},
     εII::AbstractArray{T,nDim},
     args;
-    tol=1e-12, verbose=false
+    tol=1e-6, verbose=false
     ) where {T,nDim,N}
     for I in eachindex(τII)
         τII[I] = compute_τII(v, εII[I], (; zip(keys(args), getindex.(values(args), I))...))
@@ -235,7 +235,7 @@ end
 # VISCOSITY COMPUTATIONS
 
 """ 
-    η = computeViscosity_εII(v::Union{Parallel{T,N}, CompositeRheology{T,N}, AbstractConstitutiveLaw}, εII::_T, args; tol=1e-12, verbose=false)
+    η = computeViscosity_εII(v::Union{Parallel{T,N}, CompositeRheology{T,N}, AbstractConstitutiveLaw}, εII::_T, args; tol=1e-6, verbose=false)
 
 This computes the effective viscosity for a given input rheology `v` and strainrate `εII`
 """
@@ -243,21 +243,21 @@ function computeViscosity_εII(
     v::Union{Parallel{T,N}, CompositeRheology{T,N}}, 
     εII::_T, 
     args;
-    tol=1e-12, verbose=false
+    tol=1e-6, verbose=false
 ) where {T,N,_T}
     τII = compute_τII(v, εII, args; tol=tol, verbose=verbose)
     η   = _T(0.5) * τII * inv(εII)
     return η
 end
 
-function computeViscosity_εII(v::T, εII::_T, args; tol=1e-12, verbose=false) where {T<:AbstractConstitutiveLaw,_T}
+function computeViscosity_εII(v::T, εII::_T, args; tol=1e-6, verbose=false) where {T<:AbstractConstitutiveLaw,_T}
     τII = compute_τII(v, εII, args)
     η   = _T(0.5) * τII * inv(εII)
     return η
 end
 
 """ 
-    η = computeViscosity_εII_AD(v::Union{Parallel{T,N}, CompositeRheology{T,N}, AbstractConstitutiveLaw}, εII::_T, args; tol=1e-12, verbose=false)
+    η = computeViscosity_εII_AD(v::Union{Parallel{T,N}, CompositeRheology{T,N}, AbstractConstitutiveLaw}, εII::_T, args; tol=1e-6, verbose=false)
 
 This computes the effective viscosity for a given input rheology `v` and strainrate `εII`, while using AD if necessary
 """
@@ -265,20 +265,20 @@ function computeViscosity_εII_AD(
     v::Union{Parallel{T,N}, CompositeRheology{T,N}, AbstractConstitutiveLaw}, 
     εII::_T, 
     args;
-    tol=1e-12, verbose=false
+    tol=1e-6, verbose=false
 ) where {T,N,_T}
     τII = compute_τII_AD(v, εII, args; tol=tol, verbose=verbose)
     η   = _T(0.5) * τII * inv(εII)
     return η
 end
 
-function computeViscosity_εII_AD(v::T, εII::_T, args; tol=1e-12, verbose=false) where {T<:AbstractConstitutiveLaw,_T}
+function computeViscosity_εII_AD(v::T, εII::_T, args; tol=1e-6, verbose=false) where {T<:AbstractConstitutiveLaw,_T}
     return computeViscosity_εII(v, εII, args) 
 end
 
 # NONLINEAR ITERATION SCHEMES
 """
-    τII =local_iterations_εII_AD(v::CompositeRheology{N,T,0}, εII::_T, args; tol=1e-12, verbose=false)
+    τII =local_iterations_εII_AD(v::CompositeRheology{N,T,0}, εII::_T, args; tol=1e-6, verbose=false)
 
 Performs local iterations versus stress for a given total strain rate for a given `CompositeRheology` element that does NOT include `Parallel` elements
 """
@@ -286,7 +286,7 @@ Performs local iterations versus stress for a given total strain rate for a give
     v::CompositeRheology{N,T,0}, 
     εII::_T, 
     args; 
-    tol=1e-12, verbose=false
+    tol=1e-6, verbose=false
 ) where {N, T, _T}
 
     # Initial guess
@@ -323,7 +323,7 @@ Performs local iterations versus stress for a given total strain rate for a give
 end
 
 """
-    τII = local_iterations_εII_AD(v::CompositeRheology{N,T}, εII::_T, args; tol=1e-12, verbose=false)
+    τII = local_iterations_εII_AD(v::CompositeRheology{N,T}, εII::_T, args; tol=1e-6, verbose=false)
 
 Performs local iterations versus stress for a given strain rate using AD
 """
@@ -331,7 +331,7 @@ Performs local iterations versus stress for a given strain rate using AD
     v::CompositeRheology{N,T}, 
     εII::_T, 
     args; 
-    tol=1e-12, verbose=false
+    tol=1e-6, verbose=false
 ) where {N, T, _T}
 
     # Initial guess
@@ -368,7 +368,7 @@ Performs local iterations versus stress for a given strain rate using AD
 end
 
 @inline function local_iterations_τII_AD(
-    v::Parallel, τII::T, args; tol=1e-12, verbose=false
+    v::Parallel, τII::T, args; tol=1e-6, verbose=false
 ) where {T}
     # Initial guess
     εII = compute_εII_harmonic(v, τII, args)
@@ -634,7 +634,7 @@ end
     v::CompositeRheology{T,N}, 
     εII::_T, 
     args, I::Int64;
-    tol=1e-12, verbose=false
+    tol=1e-6, verbose=false
 ) where {T,_T,N}
     quote
         Base.@_inline_meta
@@ -721,7 +721,7 @@ end
     v::CompositeRheology{T,N}, 
     TauII::_T, 
     args, I::Int64;
-    tol=1e-12, verbose=false
+    tol=1e-6, verbose=false
 ) where {T,_T,N}
     quote
         Base.@_inline_meta
