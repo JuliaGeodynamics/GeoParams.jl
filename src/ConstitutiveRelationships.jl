@@ -6,7 +6,7 @@ module ConstitutiveRelationships
 using Base: Float64
 using Parameters, LaTeXStrings, Unitful
 using ..Units
-using GeoParams: AbstractMaterialParam
+using GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
 import GeoParams: param_info, fastpow
 import GeoParams: second_invariant, second_invariant_staggered
 using BibTeX
@@ -17,8 +17,9 @@ using StaticArrays
 
 const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 
-abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
-abstract type AbstractComposite <: AbstractMaterialParam end
+#abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
+#abstract type AbstractComposite <: AbstractMaterialParam end
+
 precision(v::AbstractConstitutiveLaw) = (typeof(v).super).parameters[1]
 
 
@@ -55,7 +56,9 @@ export param_info,
     InverseCreepLaw,
     KelvinVoigt,
     Parallel,
-    AbstractComposite
+    CompositeRheology,
+    AbstractComposite,
+    AbstractConstitutiveLaw
 
 # add methods programatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity)

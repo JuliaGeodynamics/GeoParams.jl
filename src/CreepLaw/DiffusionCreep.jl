@@ -47,6 +47,7 @@ struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     )
 
         # Rheology name
+        Name = String(join(Name))
         N = length(Name)
         NameU = NTuple{N,Char}(collect.(Name))
         # Corrections from lab experiments

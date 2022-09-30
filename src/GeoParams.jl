@@ -80,6 +80,9 @@ export AbstractGeoUnit1, GeoUnit1
 abstract type AbstractMaterialParam end                                    # structure that holds material parmeters (density, elasticity, viscosity)          
 abstract type AbstractMaterialParamsStruct end                             # will hold all info for a phase       
 abstract type AbstractPhaseDiagramsStruct <: AbstractMaterialParam end    # will hold all info for phase diagrams 
+abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
+abstract type AbstractComposite <: AbstractMaterialParam end
+
 function PerpleX_LaMEM_Diagram end                                         # necessary as we already use this function in Units, but only define it later in PhaseDiagrams
 function param_info end
 export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
@@ -169,6 +172,7 @@ export dεII_dτII,
     ∂Q∂P,
     
     #       Composite rheologies
+    AbstractConstitutiveLaw,
     AbstractComposite,
     strain_rate_circuit,
     computeViscosity_τII,
@@ -185,7 +189,7 @@ export dεII_dτII,
     KelvinVoigt,
     CompositeRheology,
     Parallel,
-    create_rheology_string, print_rheology_matrix, print_composite,
+    create_rheology_string, print_rheology_matrix,
     time_τII_0D,
     compute_εII_harmonic, compute_τII_AD
     

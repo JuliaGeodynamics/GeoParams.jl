@@ -39,8 +39,8 @@ using GeoParams, ForwardDiff
     εII, τII = 2e-15, 2e6
 
     # Check derivatives 
-    vec = [c1 c2 c3 c4 c5 p1 p2 p3] 
-    for v in vec   # problem with c3 (elasticity) and c4 (that has || elements) 
+    vec1 = [c1 c2 c3 c4 c5 p1 p2 p3] 
+    for v in vec1   # problem with c3 (elasticity) and c4 (that has || elements) 
         τII = 1e9
         Δτ  = τII*1e-6;
         ε0  = compute_εII(v, τII, args, verbose=false);
@@ -66,7 +66,7 @@ using GeoParams, ForwardDiff
     end
 
     # Check computational routines for strainrate & stress
-    for v in vec
+    for v in vec1
 
         # Check computational routines if total strainrate is given
         τ    = compute_τII(v, εII, args)   
@@ -166,9 +166,30 @@ using GeoParams, ForwardDiff
     err             =   sum(abs.(τ_vec .- analytical_sol))/length(t_vec)
     @test err ≈ 0.0900844333898483
 
+    # test non-dimensionalisation
+    CharDim = GEO_units()
+    for (ind,v) in enumerate(vec1)
+        p_nd  = nondimensionalize(v,CharDim)
+        p_dim = dimensionalize(p_nd,CharDim)
+
+        # check
+        for (i,v_local) in enumerate(v.elements)
+            names = fieldnames(typeof(v_local))
+            p_local = p_dim[i]
+            for name in names
+                d_dim = getfield(p_local, name)
+                v_dim = getfield(v_local, name)
+                if isa(d_dim,GeoUnit)
+                    if !isnan(NumValue(v_dim))
+                        @test NumValue(v_dim) ≈ NumValue(d_dim)
+                    end
+                end
+            end
+        end
+
+    end
 
     # Specify a composite rheology in the MaterialParam struct 
-    CharDim = GEO_units()
     MatParam = SetMaterialParams(Name="Viscous Matrix", Phase=2,
                 Density   = ConstantDensity(),
                 CompositeRheology   = c5, CharDim=CharDim)

@@ -1,12 +1,13 @@
 # This holds structures and computational routines for compositional rheologies
 using StaticArrays
+using Setfield
 
 export CompositeRheology, Parallel, create_rheology_string, print_rheology_matrix
 export time_τII_0D, compute_εII_harmonic, compute_τII_AD
 export computeViscosity_εII, computeViscosity_εII_AD
-
 import Base.getindex
 
+import GeoParams.Units: nondimensionalize, dimensionalize
 
 """
     Put rheological elements in parallel 
@@ -14,7 +15,13 @@ import Base.getindex
 struct Parallel{T, N} <: AbstractConstitutiveLaw{T}
     elements::T
 end
-Parallel(v...) = Parallel{typeof( (v...,)), length(v)}((v...,))
+
+function Parallel(v::T) where T
+    v = tuple(v...)
+    return Parallel{typeof(v),length(v)}(v)
+end
+Parallel(a,b...) = Parallel((a,b...,)) 
+
 
 @generated function getindex(p::Parallel{T, N}, I::Int64) where {T,N}
     quote
@@ -61,6 +68,31 @@ CompositeRheology(a::Parallel) = CompositeRheology( (a,))
     end
 end
 
+# define rules to nondimensionalise this 
+function nondimensionalize(MatParam::Union{Parallel,CompositeRheology}, g::GeoUnits{TYPE}) where {TYPE}
+    field_new = ();
+    field = MatParam.elements;
+    for i=1:length(MatParam.elements)
+        field_nd  = nondimensionalize(field[i], g) 
+        field_new =  tuple(field_new..., field_nd)
+    end
+    MatParam = set(MatParam, Setfield.PropertyLens{:elements}(), field_new)
+
+    return MatParam
+end
+
+function dimensionalize(MatParam::Union{Parallel,CompositeRheology}, g::GeoUnits{TYPE}) where {TYPE}
+    field_new = ();
+    field = MatParam.elements;
+    for i=1:length(MatParam.elements)
+        field_nd  = dimensionalize(field[i], g) 
+        field_new =  tuple(field_new..., field_nd)
+    end
+    MatParam = set(MatParam, Setfield.PropertyLens{:elements}(), field_new)
+
+    return MatParam
+end
+
 # Print info in the REPL
 include("CompositeRheologies_print.jl")
 
@@ -72,8 +104,8 @@ function show(io::IO, g::AbstractComposite)
     # Compose a string with rheological elements, so we have an overview in the REPL
     #str = create_rheology_string("",g)
     str = print_rheology_matrix(g)
-    #str = join(str.*"\n")
-    println(io,str[1],"\n",str[2])
+    println.(str)
+    
 
     return nothing
 end

@@ -10,7 +10,7 @@ using ..Units
 
 import Base.show, Base.convert
 using GeoParams:
-    AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct, AbstractComposite, print_composite
+    AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct, AbstractComposite 
 
 
 # Define an "empty" Material parameter structure
@@ -50,6 +50,8 @@ include("./Energy/Shearheating.jl")
 include("./SeismicVelocity/SeismicVelocity.jl")
 
 using .Density: AbstractDensity
+using .ConstitutiveRelationships: print_rheology_matrix
+
 
 """
     MaterialParams
@@ -304,6 +306,19 @@ function fill_tup(v::NTuple{N,Tuple{Vararg{AbstractMaterialParam}}}, n) where {N
     return ntuple(
         i -> ntuple(j -> j <= length(v[i]) ? v[i][j] : No_MaterialParam(), Val(n)), Val(N)
     )
+end
+
+function print_composite(a, spaces=10)
+    str = print_rheology_matrix(a)
+    str = str.*"\n"
+    for i=2:length(str)
+        for j=1:spaces
+            str[i] = " "*str[i] 
+        end
+    end
+    str = join(str)
+
+    return str
 end
 
 end

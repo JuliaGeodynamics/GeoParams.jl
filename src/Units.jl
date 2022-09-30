@@ -566,6 +566,9 @@ function nondimensionalize(param::GeoUnit{T,U}, g::GeoUnits{TYPE}) where {T,U,TY
     return param_ND
 end
 
+# in case the parameter is already non-dimensional:
+nondimensionalize(param::String, g::GeoUnits{TYPE}) where {TYPE} = param
+
 # in case it is a unitful quantity
 function nondimensionalize(
     param::Union{Unitful.Quantity{T,K,M},AbstractArray{<:Quantity{T,K,M}}},
@@ -612,19 +615,20 @@ function nondimensionalize(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) w
     for param in fieldnames(typeof(MatParam))
         if isa(getfield(MatParam, param), GeoUnit)
             z = getfield(MatParam, param)
-            typeof(z).types[1] <: Function && continue
-            typeof(z).types[1] isa Nothing && continue
+            #typeof(z).types[1] <: Function && continue
+            #typeof(z).types[1] isa Nothing && continue
             
             # non-dimensionalize:
             z = nondimensionalize(z, g)
-
+          
             # Replace field (using Setfield package):
             MatParam = set(MatParam, Setfield.PropertyLens{param}(), z)
+
         elseif isa(getfield(MatParam, param), AbstractMaterialParam)
             # The field contains another AbstractMaterialParam
             z = getfield(MatParam, param)
-            typeof(z).types[1] <: Function && continue
-            typeof(z).types[1] isa Nothing && continue
+            #typeof(z).types[1] <: Function && continue
+            #typeof(z).types[1] isa Nothing && continue
              
             z = nondimensionalize(z, g)
             MatParam = set(MatParam, Setfield.PropertyLens{param}(), z)
@@ -708,7 +712,6 @@ function dimensionalize(
 ) where {TYPE}
     char_val = compute_units(GeoUnit(1.0 * param_dim), g)         # Determine characteristic units
     param = uconvert.(param_dim, param_ND * char_val)
-
     return param
 end
 
