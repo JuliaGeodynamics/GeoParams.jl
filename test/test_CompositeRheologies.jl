@@ -190,9 +190,15 @@ using GeoParams, ForwardDiff
     end
 
     # Specify a composite rheology in the MaterialParam struct 
-    MatParam = SetMaterialParams(Name="Viscous Matrix", Phase=2,
+    MatParam_nd = SetMaterialParams(Name="Viscous Matrix", Phase=2,
                 Density   = ConstantDensity(),
                 CompositeRheology   = c5, CharDim=CharDim)
+    @test NumValue(MatParam_nd.CompositeRheology[1][2].η) ≈ 100
 
+    MatParam   = SetMaterialParams(Name="Viscous Matrix", Phase=2,
+                Density   = ConstantDensity(),
+                CompositeRheology   = c5)
+    
+    @test NumValue(MatParam.CompositeRheology[1][2].η) ≈ 1e22
 
 end
