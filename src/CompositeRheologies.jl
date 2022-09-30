@@ -1,4 +1,4 @@
-# This holds structures and computational routines for compositional rheologies
+e# This holds structures and computational routines for compositional rheologies
 using StaticArrays
 using Setfield
 
@@ -761,7 +761,7 @@ This performs a 0D constant strainrate experiment for a composite rheology struc
 The initial stress `τ0`, the time range `t` and the number of timesteps `nt` can be modified 
 """
 function time_τII_0D(v::Union{CompositeRheology,Tuple, Parallel}, εII::Number, args; t=(0.,100.), τ0=0., nt::Int64=100, verbose=true)
-    t_vec    = range(t[1],t[2], nt)
+    t_vec    = range(t[1], t[2], length=nt)
     τ_vec    = zero(t_vec)
     εII_vec  = zero(t_vec) .+ εII
     τ_vec[1] = τ0;
