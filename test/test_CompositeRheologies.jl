@@ -108,6 +108,18 @@ using GeoParams, ForwardDiff
         η    =  computeViscosity_εII(v, εII, args)
         η_AD =  computeViscosity_εII_AD(v, εII, args)
         @test η ≈ η_AD
+
+
+        args_dim = (T=900.0K, d=100e-6m, τII_old=1e6Pa)
+        εII_dim, τII_dim = 2e-15/s, 2e6Pa
+
+        # Do calculations with values that have units (currently only works for single creep laws)
+#        τ_dim = compute_τII(v, εII_dim, args_dim)
+#        ε_dim = compute_εII(v, τ_dim,   args_dim)
+#        @test ε_dim ≈ εII_dim
+#        η_dim = computeViscosity_εII(v,εII_dim,args_dim)
+
+
     end
 
     # CompositeRheology cases with parallel elements
