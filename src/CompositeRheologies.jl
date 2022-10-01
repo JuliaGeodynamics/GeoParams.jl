@@ -237,7 +237,7 @@ end
 
 function computeViscosity_εII(v::T, εII::_T, args; tol=1e-6, verbose=false) where {T<:AbstractConstitutiveLaw,_T}
     τII = compute_τII(v, εII, args)
-    η   = _T(0.5) * τII * inv(εII)
+    η   = 0.5 * τII * inv(εII)
     return η
 end
 
