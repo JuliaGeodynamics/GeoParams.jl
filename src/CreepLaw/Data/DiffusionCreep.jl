@@ -16,7 +16,6 @@ const DiffusionCreep_info = Dict([
     (
         DiffusionCreep(;
             Name="Dry Anorthite | Rybacki et al. (2006)",
-            n=1.0NoUnits,                         # power-law exponent
             r=0.0NoUnits,                         # exponent of water-fugacity
             p=-3.0NoUnits,                        # grain size exponent
             A=(10^12.1)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter

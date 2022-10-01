@@ -40,7 +40,8 @@ export param_info,
     computeViscosity,
     strain_rate_circuit,
     InverseCreepLaw,
-    KelvinVoigt
+    KelvinVoigt,
+    AxialCompression, SimpleShear, Invariant 
 
 # add methods programatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity)
