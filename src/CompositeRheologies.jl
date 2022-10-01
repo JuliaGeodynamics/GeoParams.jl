@@ -699,7 +699,7 @@ Sums the strainrate of all non-parallel elements in a `CompositeRheology` struct
     end
 end
 
-_compute_εII_nonparallel(v::Any, TauII::_T, args) where {_T} = compute_εII(v, TauII, args)
+_compute_εII_nonparallel(v, TauII::_T, args) where {_T} = compute_εII(v, TauII, args)
 _compute_εII_nonparallel(v::Parallel, TauII::_T, args) where {_T} = zero(_T)
 
 
