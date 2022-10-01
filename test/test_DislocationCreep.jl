@@ -64,7 +64,6 @@ using GeoParams
     Ad = 2.5e-17Pa^-3.5 * s^-1
     n = 3.5NoUnits
     Ea = 532e3J / mol
-    m = 0
     V = 0m^3 / mol
     R = 8.3145J / K / mol
     T = (1200 + 273.15)K
