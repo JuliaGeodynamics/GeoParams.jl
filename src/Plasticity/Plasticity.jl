@@ -104,7 +104,7 @@ end
 
 # Derivatives w.r.t pressure
 
-∂Q∂P(p::DruckerPrager; kwargs...) = -sind(p.Ψ.val)
+∂Q∂P(p::DruckerPrager; kwargs...) = -p.sinΨ
 ∂Q∂P(p::DruckerPrager, args) = ∂Q∂P(p; args...)
 
 # Derivatives w.r.t stress tensor
@@ -169,6 +169,45 @@ function ∂Q∂τ(p::DruckerPrager{T}, args::NamedTuple{N,T}; kwargs...) where 
 end
 #-------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------
+
+# Plastic finite strain and strain rate
+
+"""
+    plastic_strain(εvp::T, p::AbstractPlasticity{T}, τij, λ::T, dt::T)
+    
+    Integrate the finite plastic strain. Equations from Duretz et al. 2019 G3
+"""
+function plastic_strain(εvp::T, p::AbstractPlasticity{T}, τij, λ::T, dt::T) where T
+    εvp += plastic_strain(p, τij, λ) * dt  
+end
+
+@inline function plastic_strain(p::AbstractPlasticity{T}, τij::T, λ::T) where T
+    εvp_ij = plastic_strain_rate(p, τij, λ)
+    εvp = √((2.0/3.0) * dot(εvp_ij, εvp_ij))
+    return εvp
+end
+
+@inline plastic_strain_rate(p::AbstractPlasticity{T}, τij::T, λ::T) where T = ∂Q∂τ(p, τij) .* λ 
+#-------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------
+
+# Plastic multiplier
+
+"""
+    lambda(F::T, p::DruckerPrager, ηve::T, ηvp::T; K=zero(T), dt=zero(T), h=zero(T), τij=(one(T), one(T), one(T)))
+    
+    Compute the plastic multiplier λ for a Drucker-Prager yield surface. `F` is the trial yield surface, 
+    `ηve` is the visco-elastic effective viscosity (i.e. `(1/G/dt + 1/η)⁻¹`), `ηvp` is a regularization term,
+    `K` is the elastic bulk modulus, h is the harderning, and `τij`` is the stress tensor in Voigt notation.
+    Equations from Duretz et al. 2019 G3
+"""
+@inline function lambda(F::T, p::DruckerPrager, ηve::T, ηvp::T; K=zero(T), dt=zero(T), h=zero(T), τij=(one(T), one(T), one(T))) where T
+    F * inv(ηve + ηvp + K * dt * p.sinΨ * p.sinϕ + h * p.cosϕ * plastic_strain(p, τij, zero(T)))
+end
+#-------------------------------------------------------------------------
+
 # Computational routines needed for computations with the MaterialParams structure 
 function compute_yieldfunction(s::AbstractMaterialParamsStruct, args)
     if isempty(s.Plasticity)
@@ -207,3 +246,7 @@ end
 function ∂Q∂P(p::AbstractMaterialParamsStruct, args)
     return ∂Q∂P(p.Plasticity[1], args)
 end
+
+lambda(args...) = compute_param(lambda, args...)
+plastic_strain_rate(args...) = compute_param(plastic_strain_rate, args...)
+plastic_strain(args...) = compute_param(plastic_strain, args...)

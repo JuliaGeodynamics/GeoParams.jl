@@ -60,6 +60,7 @@ export param_info,
     CompositeRheology,
     AbstractComposite,
     AbstractConstitutiveLaw
+    AxialCompression, SimpleShear, Invariant 
 
 # add methods programatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity)

@@ -16,22 +16,27 @@ export DislocationCreep,
 
 # Dislocation Creep ------------------------------------------------
 """
-    DislocationCreep(n = 1.0NoUnits, r = 0.00.0NoUnits, A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
+    DislocationCreep(n = 1.0NoUnits, r = 0.0NoUnits, A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
     
-Defines the flow law parameter of a dislocation creep law 
-The (isotropic) dislocation creep law, as used by experimtalists, is given by  
+Defines the flow law parameter of a dislocation creep law.
+
+The (isotropic) dislocation creep law, as used by experimentalists, is given by  
 ```math  
-     \\dot{\\gamma} = A \\sigma_\\mathrm{d}^n f_\\mathrm{H2O}^r \\exp(-\\frac{E+PV}{RT})
+     \\dot{\\gamma} = A \\sigma_\\mathrm{d}^n f_\\mathrm{H2O}^r \\exp\\left(-\\frac{E+PV}{RT}\\right)
 ```
-where ``n`` is the power law exponent,  
-``r`` is the exponent of fugacity dependence, 
-``A`` is a pre-exponential factor [MPa^(n+r)] (if manually defined, n and r must be either pre-defined or substituted),  
-``E`` is the activation energy [kJ/mol], ``V`` is the activation volume [m^3/mol]. ``\\dot{\\gamma}`` is the ordinary strain rate [1/s], 
-and ``\\sigma_\\mathrm{d}`` is the differential stress which are converted into second invariants using the apparatus type that can be
-either AxialCompression, SimpleShear or Invariant.
-If the flow law paramters are already given as a function of second invariants, choose apparatus = "Invariant"
+where 
+- ``n`` is the power law exponent  
+- ``r`` is the exponent of fugacity dependence 
+- ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` and ``r`` must be either pre-defined or substituted) 
+- ``E`` is the activation energy ``\\mathrm{[kJ/mol]}`` 
+- ``V`` is the activation volume ``\\mathrm{[m^3/mol]}`` 
+- ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}`` 
+- ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[MPa]}`` which are converted into second invariants using the `Apparatus` variable that can be
+either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law paramters are already given as a function of second invariants, choose `Apparatus=Invariant`.
+
+# Example
 ```julia-repl 
-julia> x2      =   DislocationCreep(n=3)
+julia> x2 = DislocationCreep(n=3)
 DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3 mol^-1, Apparatus=AxialCompression
 ```
 """
@@ -51,7 +56,7 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         Name="",
         n=1.0NoUnits,
         r=0.0NoUnits,
-        A=1.5MPa^(-n - r) / s,
+        A=1.5MPa^(-n ) / s,
         E=476.0kJ / mol,
         V=6e-6m^3 / mol,
         R=8.3145J / mol / K,
@@ -190,7 +195,7 @@ end
            A *
            FT *
            n *
-           exp((-E - P * V) / (R * T)) *
+           exp(-(E + P * V) / (R * T)) *
            (1 / FE)
 end
 
