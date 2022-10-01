@@ -20,7 +20,8 @@ const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 #abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
 #abstract type AbstractComposite <: AbstractMaterialParam end
 
-precision(v::AbstractConstitutiveLaw) = (typeof(v).super).parameters[1]
+precision(v::AbstractConstitutiveLaw{T}) where T = T
+
 
 
 include("Computations.jl")
