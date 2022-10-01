@@ -5,7 +5,7 @@
 Sets predefined dislocation creep data from a dictionary
 
 """
-SetDislocationCreep(name::String) = Transform_DislocationCreep(name)
+SetDislocationCreep(name::String; kwargs...) = Transform_DislocationCreep(name; kwargs)
 
 const DislocationCreep_info = Dict(
     [

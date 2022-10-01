@@ -105,4 +105,10 @@ using GeoParams
     τ_vec = zero(ε_vec)
     compute_τII!(τ_vec, p, ε_vec, args)
     η_vec = τ_vec ./ (2 * ε_vec)
+
+
+    # test overriding the default values
+    a =  SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)", V=1e-6m^3/mol)
+    @test Value(a.V) == 1e-6m^3/mol
+
 end
