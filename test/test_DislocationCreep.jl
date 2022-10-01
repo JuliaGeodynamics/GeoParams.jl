@@ -108,7 +108,7 @@ using GeoParams
 
 
     # test overriding the default values
-    a =  SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)", V=1e-6m^3/mol)
+    a =  SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)", V=1e-6m^3/mol)
     @test Value(a.V) == 1e-6m^3/mol
 
 end
