@@ -229,6 +229,24 @@ returns the derivative of strainrate versus stress
            (1 / FE)
 end
 
+
+@inline function dεII_dτII(
+    a::DiffusionCreep, TauII::Quantity; T=1K, P=0Pa, f=1NoUnits, d=1m, kwargs...
+) where {_T}
+    @unpack_units r, p, A, E, V, R = a
+    FT, FE = a.FT, a.FE
+
+    return FT  *
+           f^r *
+           d^p *
+           A *
+           FT *
+           exp((-E - P * V) / (R * T)) *
+           (1 / FE)
+end
+
+
+
 """
     computeCreepLaw_TauII(EpsII::_T, a::DiffusionCreep; T::_T, P=zero(_T), f=one(_T), d=one(_T), kwargs...)
 
@@ -266,6 +284,7 @@ end
     return τ
 end
 
+
 function compute_τII!(
     TauII::AbstractArray{_T,N},
     a::DiffusionCreep,
@@ -287,6 +306,23 @@ end
     a::DiffusionCreep, EpsII::_T; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), d=one(precision(a)), kwargs...
 ) where {_T}
     @unpack_val r, p, A, E, V, R = a
+    FT, FE = a.FT, a.FE
+
+    # computed symbolically:
+    return (
+        FE *
+        (A^(-1 )) *
+        (d^((-p) )) *
+        (f^((-r) )) *
+        ((EpsII * FE)^(0)) *
+        exp((E + P * V) / (R * T ))
+    ) / (FT )
+end
+
+@inline function dτII_dεII(
+    a::DiffusionCreep, EpsII::Quantity; T=1K, P=0Pa, f=1NoUnits, d=1e-6m, kwargs...
+)
+    @unpack_units r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
     # computed symbolically:

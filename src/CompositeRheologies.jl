@@ -154,6 +154,19 @@ Computing `εII` as a function of `τII` for a composite element is the sum of t
     end
 end
 
+@generated  function compute_εII(
+    v::CompositeRheology{T,N}, 
+    τII::Quantity, 
+    args; 
+    tol=1e-6, verbose=false
+) where {T,N}
+    quote
+        Base.@_inline_meta
+        εII = 0/s
+        Base.Cartesian.@nexprs $N i ->
+            εII += compute_εII(v.elements[i], τII, args)
+    end
+end
 
 # As we don't do iterations, this is the same
 function compute_εII_AD(v::CompositeRheology, τII, args; tol=1e-6, verbose=false)
@@ -198,6 +211,21 @@ end
     end
 end
 compute_τII_AD(v::Parallel{T,N}, εII::_T, args; tol=1e-6, verbose=false) where {T,N,_T} = compute_τII(v, εII, args) 
+
+# make it work for dimensional cases
+@generated  function compute_τII(
+    v::Parallel{T,N}, 
+    εII::Quantity, 
+    args;
+    tol=1e-6, verbose=false
+) where {T,_T,N}
+    quote
+        Base.@_inline_meta
+        τII = 0Pa
+        Base.Cartesian.@nexprs $N i ->
+            τII += compute_τII(v.elements[i], εII, args)
+    end
+end
 
 
 function compute_τII_AD(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
