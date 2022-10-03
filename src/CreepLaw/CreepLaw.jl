@@ -9,7 +9,7 @@
 
 abstract type AbstractCreepLaw{T} <: AbstractConstitutiveLaw{T} end
 
-export LinearViscous, PowerlawViscous, CorrectionFactor, strain_rate_circuit
+export LinearViscous, PowerlawViscous, CorrectionFactor, AbstractCreepLaw
 
 # This computes correction factors to go from experimental data to tensor format
 function CorrectionFactor(a::AbstractCreepLaw{_T}) where {_T}
@@ -72,13 +72,13 @@ where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\
 end
 LinearViscous(args...) = LinearViscous(convert(GeoUnit, args[1]), args[2])
 
-@inline function param_info(s::LinearViscous) # info about the struct
+function param_info(a::LinearViscous) # info about the struct
     return MaterialParamsInfo(; Equation=L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}")
 end
 
 # Calculation routines for linear viscous rheologies
-@inline function compute_εII(s::LinearViscous, TauII; kwargs...)
-    @unpack η = s
+function compute_εII(a::LinearViscous, TauII; kwargs...)
+    @unpack η = a
 
     return (TauII / η) * 0.5
 end
@@ -88,23 +88,23 @@ end
     compute_εII!(EpsII::AbstractArray{_T,N}, s::LinearViscous, TauII::AbstractArray{_T,N})
 """
 function compute_εII!(
-    EpsII::AbstractArray{_T,N}, s::LinearViscous, TauII::AbstractArray{_T,N}; kwargs...
+    EpsII::AbstractArray{_T,N}, a::LinearViscous, TauII::AbstractArray{_T,N}; kwargs...
 ) where {N,_T}
     if TauII[1] isa Quantity
-        @unpack_units η = s
+        @unpack_units η = a
     else
-        @unpack_val η = s
+        @unpack_val η = a
     end
 
     @inbounds for i in eachindex(EpsII)
-        EpsII[i] = compute_εII(s, TauII[i])
+        EpsII[i] = compute_εII(a, TauII[i])
     end
 
     return nothing
 end
 
-@inline function dεII_dτII(s::LinearViscous, TauII; kwargs...)
-    @unpack η = s
+function dεII_dτII(a::LinearViscous, TauII; kwargs...)
+    @unpack η = a
 
     return 0.5*(1.0/η)
 end
@@ -114,30 +114,30 @@ end
 
 Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor 
 """
-@inline function compute_τII(s::LinearViscous, EpsII; kwargs...)
-    @unpack η = s
+function compute_τII(a::LinearViscous, EpsII; kwargs...)
+    @unpack η = a
 
     return 2 * (η * EpsII)
 end
 
 function compute_τII!(
-    TauII::AbstractArray{_T,N}, s::LinearViscous, EpsII::AbstractArray{_T,N}; kwargs...
+    TauII::AbstractArray{_T,N}, a::LinearViscous, EpsII::AbstractArray{_T,N}; kwargs...
 ) where {N,_T}
     if EpsII[1] isa Quantity
-        @unpack_units η = s
+        @unpack_units η = a
     else
-        @unpack_val η = s
+        @unpack_val η = a
     end
 
     @inbounds for i in eachindex(EpsII)
-        TauII[i] = compute_τII(s, EpsII[i])
+        TauII[i] = compute_τII(a, EpsII[i])
     end
 
     return nothing
 end
 
-@inline function dτII_dεII(a::LinearViscous, EpsII; kwargs...)
-    @unpack η = s
+function dτII_dεII(a::LinearViscous, EpsII; kwargs...)
+    @unpack η = a
 
     return 2 * η
 end
