@@ -117,7 +117,7 @@ function Transform_DiffusionCreep(name; kwargs)
     v_kwargs = values(kwargs)
     val = GeoUnit.(values(v_kwargs))
     
-    args = (Name=pp_in.Name, p=pp_in.p, r=pp_in.r, A=pp_in.A, E=pp_in.E, V=pp_in.V, Apparatus=pp_in.Apparatus)
+    args = (Name=pp_in.Name, n = pp_in.n, p=pp_in.p, r=pp_in.r, A=pp_in.A, E=pp_in.E, V=pp_in.V, Apparatus=pp_in.Apparatus)
     pp = merge(args, NamedTuple{keys(v_kwargs)}(val))
     
      
