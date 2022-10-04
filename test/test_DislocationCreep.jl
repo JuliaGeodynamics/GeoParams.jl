@@ -64,7 +64,6 @@ using GeoParams
     Ad = 2.5e-17Pa^-3.5 * s^-1
     n = 3.5NoUnits
     Ea = 532e3J / mol
-    m = 0
     V = 0m^3 / mol
     R = 8.3145J / K / mol
     T = (1200 + 273.15)K
@@ -129,6 +128,11 @@ using GeoParams
         τ      =   compute_τII(p,ε,args)
         ε_test =   compute_εII(p,τ,args)
         @test ε ≈ ε_test
+
+
+        # test overriding the default values
+        a =  SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)", V=1e-6m^3/mol)
+        @test Value(a.V) == 1e-6m^3/mol
 
     end
 

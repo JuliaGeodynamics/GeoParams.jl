@@ -101,9 +101,16 @@ end
     Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 """
 
-function Transform_DislocationCreep(name)
-    p = DislocationCreep_info[name][1]
+function Transform_DislocationCreep(name; kwargs)
+    p_in = DislocationCreep_info[name][1]
 
+    # Take optional arguments 
+    v_kwargs = values(kwargs)
+    val = GeoUnit.(values(v_kwargs))
+    
+    args = (Name=p_in.Name, n=p_in.n, r=p_in.r, A=p_in.A, E=p_in.E, V=p_in.V, Apparatus=p_in.Apparatus)
+    p = merge(args, NamedTuple{keys(v_kwargs)}(val))
+    
     Name = String(collect(p.Name))
     n = Value(p.n)
     A_Pa = uconvert(Pa^(-NumValue(p.n)) / s, Value(p.A))
@@ -113,9 +120,10 @@ function Transform_DislocationCreep(name)
     Apparatus = p.Apparatus
     r = Value(p.r)
 
-    return DislocationCreep(;
-        Name=Name, n=n, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus
-    )
+    # args from database
+    args = (Name=Name, n=n, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+    
+    return DislocationCreep(; args...)
 end
 
 """

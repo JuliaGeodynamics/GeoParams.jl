@@ -110,9 +110,17 @@ end
     Transform_DiffusionCreep(name)
 Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 """
-function Transform_DiffusionCreep(name)
-    pp = DiffusionCreep_info[name][1]
-
+function Transform_DiffusionCreep(name; kwargs)
+    pp_in = DiffusionCreep_info[name][1]
+    
+    # Take optional arguments 
+    v_kwargs = values(kwargs)
+    val = GeoUnit.(values(v_kwargs))
+    
+    args = (Name=pp_in.Name, n = pp_in.n, p=pp_in.p, r=pp_in.r, A=pp_in.A, E=pp_in.E, V=pp_in.V, Apparatus=pp_in.Apparatus)
+    pp = merge(args, NamedTuple{keys(v_kwargs)}(val))
+    
+     
     Name = String(collect(pp.Name))
     n = Value(pp.n)
     r = Value(pp.r)
@@ -125,9 +133,9 @@ function Transform_DiffusionCreep(name)
 
     Apparatus = pp.Apparatus
 
-    return DiffusionCreep(;
-        Name=Name, n=n, r=r, p=p, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus
-    )
+    args = (Name=Name, p=p, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+    
+    return DiffusionCreep(; args...)
 end
 
 """
