@@ -8,6 +8,7 @@ using GeoParams
 
     # Define a linear viscous creep law ---------------------------------
     x1 = DiffusionCreep()
+    @test Value(x1.n) == 1.0
     @test Value(x1.p) == -3.0
     @test Value(x1.A) == 1.5MPa^-1.0 * s^-1 * m^(3.0)
 
@@ -159,7 +160,9 @@ using GeoParams
         compute_εII!(εII_vec, pp, τII_vec, args)
     end
 
-    
+    # test overriding the default values
+    a =  SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)", V=1e-6m^3/mol)
+    @test Value(a.V) == 1e-6m^3/mol
 
 
     # --- debugging
@@ -172,5 +175,33 @@ using GeoParams
     #τ = A^(-1/n)*(EpsII*FE)^(1/n)*f^(-r/n)*exp((E + P*V)/(n * R*T))/FT
 
     # ----
+
+
+
+    # Do some basic checks on all creeplaws in the DB
+    CharDim = GEO_units()
+    creeplaw_list = DiffusionCreep_info       # all creeplaws in database
+    for (key, val) in creeplaw_list
+        p     = SetDiffusionCreep(key)        # original creep law
+        p_nd  = nondimensionalize(p,CharDim)    # non-dimensionalized
+        p_dim = dimensionalize(p,CharDim)       # dimensionalized
+
+        # Check that values are the same after non-dimensionalisation & dimensionalisation
+        for field in fieldnames(typeof(p_dim))
+            val_original = getfield(p,    field)
+            val_final    = getfield(p_dim,field)
+            if isa(val_original, GeoUnit)
+                @test Value(val_original) == Value(val_final)        
+            end
+        end
+        
+        # Perform computations with the rheology
+        args   = (T=900.0, d=100e-6, τII_old=1e6);
+        ε      = 1e-15
+        τ      = compute_τII(p,ε,args)
+        ε_test = compute_εII(p,τ,args)
+        @test ε ≈ ε_test
+
+    end
 
 end
