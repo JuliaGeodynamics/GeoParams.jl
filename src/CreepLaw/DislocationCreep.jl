@@ -240,7 +240,6 @@ Computes the stress for a Dislocation creep law given a certain strain rate
            exp((E + P * V) / (n * R * T)) / FT
 end
 
-
 @inline function compute_τII(
     a::DislocationCreep, EpsII::Quantity; P=0Pa, T=1K, f=1NoUnits, args...
 ) where {_T}

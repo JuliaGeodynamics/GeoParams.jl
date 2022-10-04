@@ -30,6 +30,7 @@ end
 
 ConstantElasticity(args...) = ConstantElasticity(convert.(GeoUnit, args)...)
 
+
 # Add multiple dispatch here to allow specifying combinations of 2 elastic parameters (say ν & E), to compute the others
 """
     SetConstantElasticity(; G=nothing, ν=nothing, E=nothing, Kb=nothing)
