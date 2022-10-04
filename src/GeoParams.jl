@@ -80,6 +80,9 @@ export AbstractGeoUnit1, GeoUnit1
 abstract type AbstractMaterialParam end                                    # structure that holds material parmeters (density, elasticity, viscosity)          
 abstract type AbstractMaterialParamsStruct end                             # will hold all info for a phase       
 abstract type AbstractPhaseDiagramsStruct <: AbstractMaterialParam end    # will hold all info for phase diagrams 
+abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
+abstract type AbstractComposite <: AbstractMaterialParam end
+
 function PerpleX_LaMEM_Diagram end                                         # necessary as we already use this function in Units, but only define it later in PhaseDiagrams
 function param_info end
 export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
@@ -131,15 +134,21 @@ export AxialCompression, SimpleShear, Invariant
 #       Calculation routines
 export dεII_dτII,
     dτII_dεII,
+    dεII_dτII_AD,
+    dτII_dεII_AD,
     compute_εII!,
     compute_εII,
+    compute_εII_AD,
     compute_τII!,
     compute_τII,
+    compute_τII_AD,
     strain_rate_circuit,
+    stress_circuit,
     CorrectionFactor,
     remove_tensor_correction,
 
     #       Viscous creep laws
+    AbstractCreepLaw,
     LinearViscous,
     PowerlawViscous,
     DislocationCreep,
@@ -150,10 +159,12 @@ export dεII_dτII,
     DiffusionCreep_info,
 
     #       Elasticity
+    AbstractElasticity,
     ConstantElasticity,
     SetConstantElasticity,
 
     #       Plasticity
+    AbstractPlasticity,
     compute_yieldfunction,
     compute_yieldfunction!,
     DruckerPrager,
@@ -162,16 +173,28 @@ export dεII_dτII,
     ∂Q∂P,
     
     #       Composite rheologies
+    AbstractConstitutiveLaw,
+    AbstractComposite,
     strain_rate_circuit,
     computeViscosity_τII,
     computeViscosity_εII,
     computeViscosity_τII!,
     computeViscosity_εII!,
-    dεII_dτII,
-    local_iterations_εII,
+    computeViscosity_εII_AD,
+    local_iterations_εII,    
+    local_iterations_εII_AD,
+    local_iterations_τII,
+    local_iterations_τII_AD,
     computeViscosity,
     InverseCreepLaw,
-    KelvinVoigt
+    KelvinVoigt,
+    CompositeRheology,
+    Parallel,
+    create_rheology_string, print_rheology_matrix,
+    time_τII_0D,
+    compute_εII_harmonic, compute_τII_AD
+    
+    
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration

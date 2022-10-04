@@ -64,8 +64,11 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     )
 
         # Rheology name
+        Name = String(join(Name))
+        
         N = length(Name)
         NameU = NTuple{N,Char}(collect.(Name))
+        
         # Corrections from lab experiments
         FT, FE = CorrectionFactor(Apparatus)
         # Convert to GeoUnits
@@ -153,7 +156,7 @@ end
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
 @inline function compute_εII(
-    a::DislocationCreep, TauII::_T; T::_T, P::_T=zero(_T), f::_T=one(_T), args...
+    a::DislocationCreep, TauII::_T; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), args...
 ) where {_T}
     @unpack_val n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
@@ -190,7 +193,7 @@ function compute_εII!(
 end
 
 @inline function dεII_dτII(
-    a::DislocationCreep, TauII::_T; T::_T=one(_T), P::_T=zero(_T), f::_T=one(_T), args...
+    a::DislocationCreep, TauII::_T; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), args...
 ) where {_T}
     @unpack_val n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
@@ -204,6 +207,22 @@ end
            (1 / FE)
 end
 
+@inline function dεII_dτII(
+    a::DislocationCreep, TauII::Quantity; T=1K, P=0Pa, f=1NoUnits, args...
+)
+    @unpack_units n, r, A, E, V, R = a
+    FT, FE = a.FT, a.FE
+
+    return (FT * TauII)^(-1 + n) *
+           f^r *
+           A *
+           FT *
+           n *
+           exp(-(E + P * V) / (R * T)) *
+           (1 / FE)
+end
+
+
 """
     compute_τII(a::DislocationCreep, EpsII; P, T, f, args...)
 
@@ -211,7 +230,8 @@ Computes the stress for a Dislocation creep law given a certain strain rate
 
 """
 @inline function compute_τII(
-    a::DislocationCreep, EpsII::_T; T::_T=one(_T), P::_T=zero(_T), f::_T=one(_T), args...
+    a::DislocationCreep, EpsII::_T; T=one(precision(a)), P=zero(precision(a)), 
+    f=one(precision(a)), args...
 ) where {_T}
     local n, r, A, E, V, R
     if EpsII isa Quantity
@@ -227,6 +247,7 @@ Computes the stress for a Dislocation creep law given a certain strain rate
            fastpow(f, -r / n) *
            exp((E + P * V) / (n * R * T)) / FT
 end
+
 
 @inline function compute_τII(
     a::DislocationCreep, EpsII::Quantity; P=0Pa, T=1K, f=1NoUnits, args...
@@ -245,7 +266,7 @@ end
         T = ones(size(TauII))::AbstractArray{_T,N}, 
         f = ones(size(TauII))::AbstractArray{_T,N})
 
-Computes the stress for a Dislocation creep law
+Computes the deviatoric stress invariant for a dislocation creep law
 """
 function compute_τII!(
     TauII::AbstractArray{_T,N},
@@ -264,9 +285,24 @@ function compute_τII!(
 end
 
 @inline function dτII_dεII(
-    a::DislocationCreep, EpsII::_T; T::_T=one(_T), P::_T=zero(_T), f::_T=one(_T), args...
+    a::DislocationCreep, EpsII::_T; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), args...
 ) where {_T}
     @unpack_val n, r, A, E, V, R = a
+    FT, FE = a.FT, a.FE
+
+    return (
+        FE *
+        (A^(-1 / n)) *
+        (f^((-r) / n)) *
+        ((EpsII * FE)^(1 / n - 1)) *
+        exp((E + P * V) / (R * T * n))
+    ) / (FT * n)
+end
+
+@inline function dτII_dεII(
+    a::DislocationCreep, EpsII::Quantity; P=0Pa, T=1K, f=1NoUnits, args...
+)
+    @unpack_units n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
     return (
