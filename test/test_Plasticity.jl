@@ -146,14 +146,76 @@ using GeoParams
 
     # try elastic element
     e1 = ConstantElasticity(G=10Pa)           # elasticity
-    pl1 = DruckerPrager(ϕ=0, C=25)                # plasticity
+    pl1 = DruckerPrager(ϕ=0, C=15)                # plasticity
 
-    args = (τII_old=5, dt=1)
     
-    compute_τII(e1,1, args)
+    τ_new  = compute_τII(e1,1, args)
     
-    compute_yieldfunction(pl1, args)
+    args = (τII_old=5.0, dt=1.0, τII=5.0)
+    F_old = compute_yieldfunction(pl1, args)
 
+    args = (τII_old=5.0, dt=1.0, τII=τ_new)
+    F_new = compute_yieldfunction(pl1, args)
 
+    ε_pl =  compute_εII(pl1, 1.0, τ_new, args)  # plastic strian rate
+    
+    
+    J[1,1] =  GeoParams.MaterialParameters.ConstitutiveRelationships.dεII_dτII_elements(e1,τ,args);
+
+    # ===
+    # Local Iterations
+    τ_initial = 5.0
+    εII_total = 1.0
+
+    x = [τ_new; 0.0]
+    
+    verbose=true
+    tol=1e-6
+    iter = 0
+    ϵ = 2 * tol
+    τII_prev = τ_initial
+    τ_parallel = 0
+    max_iter = 10
+    J = zeros(2,2)
+    r = zeros(2)
+    while (ϵ > tol) && (iter < max_iter)
+        iter += 1
+
+        τ   = x[1]
+        λ̇   = x[2]
+
+        args = merge(args, (τII=τ,))
+        
+        # Update part of jacobian related to serial elements
+        c = e1
+        r[1]   = εII_total - GeoParams.MaterialParameters.ConstitutiveRelationships.compute_εII(c,τ,args)
+        J[1,1] = GeoParams.MaterialParameters.ConstitutiveRelationships.dεII_dτII(c,x[1],args);
+        
+        r[1]   -=  λ̇*∂Q∂τII(pl1, τ)         # add plastis strainrate
+
+        # Add contributions from || elements
+        F = compute_yieldfunction(pl1,args);
+#        J[2,2] = 1
+
+        J[1,2] = ∂Q∂τII(pl1, τ)     
+        J[2,1] = ∂F∂τII(pl1, τ)    
+        #J[2,2] = F
+
+        r[2] =  -F 
+#        r[2] = 0.0
+        
+        #fill_J_parallel!(J, r, x, c, τ, args)
+    
+        # update solution
+        dx  = J\r 
+        x .+= dx   
+
+        ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
+        verbose && println(" iter $(iter) $ϵ")
+        @show x
+    end
+    verbose && println("---")
+    # ===
+    
 
 end

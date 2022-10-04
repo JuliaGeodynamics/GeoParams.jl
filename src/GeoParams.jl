@@ -170,7 +170,8 @@ export dεII_dτII,
     DruckerPrager,
     compute_plasticpotentialDerivative,
     ∂Q∂τ,
-    ∂Q∂P,
+    ∂Q∂P,∂Q∂τII,
+    ∂F∂τII,
     
     #       Composite rheologies
     AbstractConstitutiveLaw,

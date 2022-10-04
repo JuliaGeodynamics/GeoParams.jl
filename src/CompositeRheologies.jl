@@ -40,13 +40,14 @@ struct CompositeRheology{T, N, Npar, is_parallel, τ_it, P_it, λ_it} <: Abstrac
 end
 
 # Defines tuples of composite rheologies, while also checking which type of iterations need to be performed
-function CompositeRheology(v::T) where {T, N}
+function CompositeRheology(v::T) where {T}
 
     # These three variables will indicate later which type of non-linear iterations are required
     τ_it = false;
     P_it = false;
     λ_it = false;
 
+    # determine if we have parallel elements & if yes: where
     id_parallel =   findall(isa.(v, Parallel));
     Npar        =   length(id_parallel)
     n           =   length(v)
@@ -55,6 +56,7 @@ function CompositeRheology(v::T) where {T, N}
         par[id_parallel] .= 1
     end
     is_parallel =    SVector{n,Bool}(par)
+
 
     return CompositeRheology{typeof(v), n, Npar, is_parallel, τ_it, P_it, λ_it}(v)
 end
