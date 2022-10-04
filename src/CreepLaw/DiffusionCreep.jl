@@ -284,7 +284,7 @@ end
     
     τ =
         fastpow(A, -n_inv) *
-        fastpow(EpsII * FE, n_inv) *
+        fastpow(EpsII * FE, 1) *
         fastpow(f, -r * n_inv) *
         fastpow(d, -p * n_inv) *
         exp((E + P * V) / (n * R * T)) / FT
