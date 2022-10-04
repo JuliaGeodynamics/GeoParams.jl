@@ -26,7 +26,8 @@ export PlotStrainrateStress,
     PlotMeltFraction,
     PlotPhaseDiagram,
     Plot_TAS_diagram,
-    Plot_ZirconAge_PDF
+    Plot_ZirconAge_PDF,
+    PlotStressTime_0D
 
 """
     fig, ax, εII,τII = PlotStrainrateStress(x; Strainrate=(1e-18,1e-12), args =(T=1000.0, P=0.0, d=1e-3, f=1.0), 
@@ -132,7 +133,10 @@ function PlotStrainrateStress(
         Tau_II = zeros(size(Eps_II))
 
         # Compute stress
-        compute_τII!(Tau_II, p, Eps_II, args_in)
+        #compute_τII!(Tau_II, p, Eps_II, args_in)
+        for j in eachindex(Tau_II)
+            Tau_II[j] = compute_τII(p, Eps_II[j], args)
+        end
 
         Tau_II_MPa = Tau_II ./ 1e6
 
@@ -183,12 +187,16 @@ function ObtainPlotArgs(i, p, args_in, linewidth, linestyle, color, label_in)
         Type = ""
         label = "$Type: $Name $args_in"
     else
-        Name = String(collect(p.Name))
-
-        # determine type of creeplaw 
-        Type = "$(typeof(p))"           # full name of type
-        id = findfirst("{", Type)
-        Type = Type[1:(id[1] - 1)]
+        #if haskey(p,"Name")
+        #    Name = String(collect(p.Name))
+        #    # determine type of creeplaw 
+        #    Type = "$(typeof(p))"           # full name of type
+        #else
+            Name = "";
+            Type = ""
+        #end
+        #id = findfirst("{", Type)
+        #Type = Type[1:(id[1] - 1)]
 
         label = "$Type: $Name $args_in"
     end
@@ -279,7 +287,12 @@ function PlotStressStrainrate(
         Tau_II = Tau_II_MPa .* 1e6
         Eps_II = zeros(size(Tau_II))
 
-        compute_εII!(Eps_II, p, Tau_II, args_in)       # Compute strainrate
+        
+        # Compute stress
+        #compute_εII!(Eps_II, p, Tau_II, args_in)       # Compute strainrate
+        for j in eachindex(Tau_II)
+            Eps_II[j] = compute_εII(p, Tau_II[j], args)
+        end
 
         η = Tau_II ./ (2 * Eps_II)                        # effective viscosity
 
@@ -371,7 +384,11 @@ function PlotStrainrateViscosity(
             )
         Tau_II = zeros(size(Eps_II))
 
-        compute_τII!(Tau_II, p, Eps_II, args_in)       # Compute stress
+        # Compute stress
+        #compute_τII!(Tau_II, p, Eps_II, args_in)
+        for j in eachindex(Tau_II)
+            Tau_II[j] = compute_τII(p, Eps_II[j], args)
+        end
 
         η = Tau_II ./ (2 * Eps_II)                        # effective viscosity
 
@@ -466,7 +483,10 @@ function PlotStressViscosity(
         Tau_II = Tau_II_MPa .* 1e6
         Eps_II = zeros(size(Tau_II))
 
-        compute_εII!(Eps_II, p, Tau_II, args_in)       # Compute strainrate
+        #compute_εII!(Eps_II, p, Tau_II, args_in)       # Compute strainrate
+        for j in eachindex(Tau_II)
+            Eps_II[j] = compute_εII(p, Tau_II[j], args)
+        end
 
         η = Tau_II ./ (2 * Eps_II)                        # effective viscosity
 
@@ -794,4 +814,93 @@ function Plot_TAS_diagram(displayLabel=nothing)
     display(plt)
 
     return plt
+end
+
+
+"""
+    fig,ax,τII,η =  PlotStressTime_0D(x;    args=(T=1000.0, P=0.0, d=1e-3, f=1.0),  
+                                            εII::Union{Number, AbstractVector}, 
+                                            τ0=0,
+                                            Time=(1e0,1e8), nt=100,
+                                            t_vec=nothing,
+                                            linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="", 
+                                            fig=nothing, filename=nothing, res=(1200, 1200), legendsize=15, labelsize=35)
+
+
+Creates a plot of stress vs. time, or stress vs. strain (in)
+"""
+function PlotStressTime_0D(
+    x;
+    args=(T=1000.0, P=0.0, d=1e-3, f=1.0),
+    εII=1e-15,
+    τ0=0,τ_scale=1e6,
+    Time=(1e0, 1e8), nt=100,
+    t_vec=nothing, t_scale=3600*24*365.25*1e6,
+    verbose=false,
+    linestyle=:solid,
+    linewidth=1,
+    color=nothing,
+    label=nothing,
+    title="",
+    fig=nothing,
+    filename=nothing,
+    res=(1200, 1200),
+    legendsize=15,
+    labelsize=35,
+)
+    n = 1
+    if isa(x, Tuple)
+        n = length(x)
+    end
+
+    if isnothing(fig)
+        fig = Figure(; fontsize=25, resolution=res)
+    end
+    ax = Axis(
+        fig[1, 1];
+        ylabel=L"Deviatoric stress $\tau_{II}$ [MPa]",
+        xlabel="Time [Myrs]",
+        xlabelsize=labelsize,
+        ylabelsize=labelsize,
+        title=title,
+    )
+
+    t_vec=[]
+    Tau_II_MPa = []
+    for i in 1:n
+        if isa(x, Tuple)
+            p = x[i]
+        else
+            p = x
+        end
+        if isa(args, Tuple)
+            args_in = args[i]
+        else
+            args_in = args
+        end
+
+        # Compute 
+        t_vec, τ_vec = time_τII_0D(p, εII, args; t=Time, nt=nt, verbose=verbose)
+        Tau_II_MPa = τ_vec/τ_scale;
+
+        # Retrieve plot arguments (label, color etc.)
+        plot_args = ObtainPlotArgs(i, p, args_in, linewidth, linestyle, color, label)
+
+        # Create plot:
+        li = lines!(t_vec/t_scale, Tau_II_MPa)    # plot line
+
+        
+        # Customize plot:
+        customize_plot!(li, plot_args)
+    end
+
+    axislegend(ax; labelsize=legendsize)
+
+    if !isnothing(filename)
+        save(filename, fig)
+    else
+        display(fig)
+    end
+
+    return fig, ax, Tau_II_MPa, t_vec
 end
