@@ -15,7 +15,6 @@ end
 function compute_param(
     fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, args
 ) where {F,N}
-    println("inside")
     return map(x -> fn(x, args), MatParam)
 end
 
