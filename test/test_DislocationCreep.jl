@@ -133,42 +133,6 @@ using GeoParams
     end
 
 
-    CharDim = GEO_units()
-    p_nd = nondimensionalize(p, CharDim)
-
-    # Same but using GeoParams & dimensional values:
-    p       =   SetDislocationCreep("Dry Olivine | Gerya (2019)")
-    args    =   (; T=T)
-    τ       =   compute_τII(p, ε, args)        # compute stress
-    @test τ ≈ τ_book
-
-    ε1      =   compute_εII(p, τ, args)
-    @test ε1 ≈  ε
-
-    # Do the same, but using Floats as input
-    args1   =   (;T=ustrip(T))
-    τ1      =   compute_τII(p, 1e-14, args1)    # only using Floats
-    @test ustrip(τ) ≈ τ1
-
-    # compute devatoric stress & viscosity profiles (as in book)
-    Tvec    =   (400+273.15):10:(1200+273.15)
-    εvec    =   ones(size(Tvec))*1e-14;
-    τvec    =   zero(εvec)
-    args2   =   (;T=Tvec)
-    compute_τII!(τvec, p, εvec, args2)    # only using Floats
-    ηvec    =   τvec./(2*εvec)
-    @test  sum(ηvec)/length(ηvec) ≈ 4.124658696991946e24
-
-
-    p = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
-    #p = SetDislocationCreep("Wet Anorthite | Rybecki and Dresen (2000)")
-    p = SetDislocationCreep("Dry Olivine | Hirth & Kohlstedt (2003)")
-    
-    args = (; T=(650+273.15))
-    ε_vec = exp10.(-22:-12);
-    τ_vec = zero(ε_vec);
-    compute_τII!(τ_vec, p, ε_vec, args) 
-    η_vec = τ_vec./(2*ε_vec)
-
+   
 
 end
