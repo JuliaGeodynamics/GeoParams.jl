@@ -8,6 +8,7 @@ using GeoParams
 
     # Define a linear viscous creep law ---------------------------------
     x1 = DiffusionCreep()
+    @test Value(x1.n) == 1.0
     @test Value(x1.p) == -3.0
     @test Value(x1.A) == 1.5MPa^-1.0 * s^-1 * m^(3.0)
 
