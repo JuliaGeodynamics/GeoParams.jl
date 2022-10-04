@@ -186,7 +186,7 @@ end
     @unpack_units n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    ε = A * (TauII * FT)^(n) * f^(r) * d^(p) * exp(-(E + P * V) / (R * T)) / FE
+    ε = A * fastpow(TauII * FT, n) * fastpow(f, r) * fastpow(d, p) * exp(-(E + P * V) / (R * T)) / FE
 
     return ε
 end
@@ -241,8 +241,8 @@ end
     FT, FE = a.FT, a.FE
 
     return FT  *
-           f^r *
-           d^p *
+           fastpow(f, r) *
+           fastpow(d, p) *
            A *
            FT *
            exp((-E - P * V) / (R * T)) *
@@ -261,12 +261,14 @@ Returns diffusion creep stress as a function of 2nd invariant of the strain rate
 ) where {_T}
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
-
+    
+    n_inv = inv(n)
+    
     τ =
-        fastpow(A, -1 / n) *
-        fastpow(EpsII * FE, 1 / n) *
-        fastpow(f, -r / n) *
-        fastpow(d, -p / n) *
+        fastpow(A, -n_inv) *
+        fastpow(EpsII * FE, n_inv) *
+        fastpow(f, -r * n_inv) *
+        fastpow(d, -p * n_inv) *
         exp((E + P * V) / (n * R * T)) / FT
 
     return τ
@@ -278,11 +280,13 @@ end
     @unpack_units n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
+    n_inv = inv(n)
+    
     τ =
-        A^(-1 / n) *
-        (EpsII * FE)^(1) *
-        f^(-r / n) *
-        d^(-p / n) *
+        fastpow(A, -n_inv) *
+        fastpow(EpsII * FE, n_inv) *
+        fastpow(f, -r * n_inv) *
+        fastpow(d, -p * n_inv) *
         exp((E + P * V) / (n * R * T)) / FT
 
     return τ
@@ -311,13 +315,15 @@ end
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
+    n_inv = inv(n)
+    
     # computed symbolically:
     return (
         FE *
-        (A^(-1 / n)) *
-        (d^((-p) / n)) *
-        (f^((-r) / n)) *
-        ((EpsII * FE)^(1 / n - 1)) *
+        (fastpow(A, -n_inv)) *
+        (fastpow(d, -p * n_inv)) *
+        (fastpow(f, -r * n_inv)) *
+        (fastpow(EpsII * FE, n_inv - 1)) *
         exp((E + P * V) / (n * R * T ))
     ) / (FT )
 end
@@ -331,10 +337,10 @@ end
     # computed symbolically:
     return (
         FE *
-        (A^(-1 )) *
-        (d^((-p) )) *
-        (f^((-r) )) *
-        ((EpsII * FE)^(0)) *
+        (fastpow(A, -1 )) *
+        (fastpow(d, (-p) )) *
+        (fastpow(f, (-r) )) *
+        (fastpow(EpsII * FE, 0)) *
         exp((E + P * V) / (R * T ))
     ) / (FT )
 end
