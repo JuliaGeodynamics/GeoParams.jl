@@ -12,7 +12,6 @@ export DiffusionCreep,
 #=----Diffusion Creep---
 Defines diffusion creep law parameters
 
-n is the power-law exponent
 r is the water-fugacity exponent
 p is the negative defined grain size exponent (value is set negative in the calculation of σ and ε)
 A is a   material specific rheological parameter
@@ -21,9 +20,36 @@ V is the activation volume
 R is the universal gas constant
 Apparatus defines the appartus type that shall be recreated (Axial Compression, Simple Shear, Invariant)
 =#
+"""
+    DiffusionCreep(r = 0NoUnits, p = A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
+    
+Defines the flow law parameter of a dislocation creep law.
+
+The (isotropic) diffusion creep law, as used by experimentalists, is given by  
+```math  
+     \\dot{\\gamma} = A \\sigma_\\mathrm{d} d^{\\mathrm{p}} f_\\mathrm{H2O}^r \\exp\\left(-\\frac{E+PV}{RT}\\right)
+```
+where 
+- ``r`` is the exponent of fugacity dependence 
+- ``p`` is the exponent of grain size
+- ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` and ``r`` must be either pre-defined or substituted) 
+- ``E`` is the activation energy ``\\mathrm{[kJ/mol]}`` 
+- ``V`` is the activation volume ``\\mathrm{[m^3/mol]}`` 
+- ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}`` 
+- ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[MPa]}``
+
+The experimental paramaters are converted into second invariants using the `Apparatus` variable that can be
+either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law paramters are already given as a function of second invariants, choose `Apparatus=Invariant`.
+
+# Example
+```julia-repl 
+julia> x2 = DiffusionCreep(Name="test")
+DiffusionCreep: Name = test, n=1.0, r=0.0, p=-3.0, A=1.5 m³·⁰ MPa⁻¹·⁰ s⁻¹·⁰, E=500.0 kJ mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517)
+```
+"""
 struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     Name::NTuple{N,Char}
-    n::GeoUnit{T,U1} # power-law exponent
+    n::GeoUnit{T,U1} # powerlaw exponent
     r::GeoUnit{T,U1} # exponent of water-fugacity
     p::GeoUnit{T,U1} # grain size exponent
     A::GeoUnit{T,U2} # material specific rheological parameter
@@ -39,7 +65,7 @@ struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         n=1.0NoUnits,
         r=0.0NoUnits,
         p=-3.0NoUnits,
-        A=1.5MPa^(-n - r) * s^(-1) * m^(-p),
+        A=1.5MPa^(-n - r ) * s^(-1) * m^(3.0 ),
         E=500kJ / mol,
         V=24e-6m^3 / mol,
         R=8.3145J / mol / K,
@@ -61,8 +87,8 @@ struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         VU = V isa GeoUnit ? V : convert(GeoUnit, V)
         RU = R isa GeoUnit ? R : convert(GeoUnit, R)
         # Extract struct types
-        T = typeof(nU).types[1]
-        U1 = typeof(nU).types[2]
+        T = typeof(rU).types[1]
+        U1 = typeof(rU).types[2]
         U2 = typeof(AU).types[2]
         U3 = typeof(EU).types[2]
         U4 = typeof(VU).types[2]
@@ -84,24 +110,32 @@ end
     Transform_DiffusionCreep(name)
 Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 """
-function Transform_DiffusionCreep(name)
-    pp = DiffusionCreep_info[name][1]
-
+function Transform_DiffusionCreep(name; kwargs)
+    pp_in = DiffusionCreep_info[name][1]
+    
+    # Take optional arguments 
+    v_kwargs = values(kwargs)
+    val = GeoUnit.(values(v_kwargs))
+    
+    args = (Name=pp_in.Name, n = pp_in.n, p=pp_in.p, r=pp_in.r, A=pp_in.A, E=pp_in.E, V=pp_in.V, Apparatus=pp_in.Apparatus)
+    pp = merge(args, NamedTuple{keys(v_kwargs)}(val))
+    
+     
     Name = String(collect(pp.Name))
     n = Value(pp.n)
     r = Value(pp.r)
     p = Value(pp.p)
     A_Pa = uconvert(
-        Pa^(-NumValue(pp.n) - NumValue(pp.r)) * m^(-NumValue(p)) / s, Value(pp.A)
+        Pa^(-NumValue(pp.n)) * m^(-NumValue(p)) / s, Value(pp.A)
     )
     E_J = uconvert(J / mol, Value(pp.E))
     V_m3 = uconvert(m^3 / mol, Value(pp.V))
 
     Apparatus = pp.Apparatus
 
-    return DiffusionCreep(;
-        Name=Name, n=n, r=r, p=p, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus
-    )
+    args = (Name=Name, p=p, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+    
+    return DiffusionCreep(; args...)
 end
 
 """
@@ -160,7 +194,7 @@ end
     @unpack_units n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    ε = A * (TauII * FT)^n * f^(r) * d^(p) * exp(-(E + P * V) / (R * T)) / FE
+    ε = A * fastpow(TauII * FT, n) * fastpow(f, r) * fastpow(d, p) * exp(-(E + P * V) / (R * T)) / FE
 
     return ε
 end
@@ -203,10 +237,27 @@ returns the derivative of strainrate versus stress
            fastpow(d, p) *
            A *
            FT *
-           n *
            exp((-E - P * V) / (R * T)) *
            (1 / FE)
 end
+
+
+@inline function dεII_dτII(
+    a::DiffusionCreep, TauII::Quantity; T=1K, P=0Pa, f=1NoUnits, d=1m, kwargs...
+) where {_T}
+    @unpack_units n, r, p, A, E, V, R = a
+    FT, FE = a.FT, a.FE
+
+    return FT  *
+           fastpow(f, r) *
+           fastpow(d, p) *
+           A *
+           FT *
+           exp((-E - P * V) / (R * T)) *
+           (1 / FE)
+end
+
+
 
 """
     computeCreepLaw_TauII(EpsII::_T, a::DiffusionCreep; T::_T, P=zero(_T), f=one(_T), d=one(_T), kwargs...)
@@ -218,12 +269,14 @@ Returns diffusion creep stress as a function of 2nd invariant of the strain rate
 ) where {_T}
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
-
+    
+    n_inv = inv(n)
+    
     τ =
-        fastpow(A, -1 / n) *
-        fastpow(EpsII * FE, 1 / n) *
-        fastpow(f, -r / n) *
-        fastpow(d, -p / n) *
+        fastpow(A, -n_inv) *
+        fastpow(EpsII * FE, n_inv) *
+        fastpow(f, -r * n_inv) *
+        fastpow(d, -p * n_inv) *
         exp((E + P * V) / (n * R * T)) / FT
 
     return τ
@@ -235,11 +288,13 @@ end
     @unpack_units n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
+    n_inv = inv(n)
+    
     τ =
-        A^(-1 / n) *
-        (EpsII * FE)^(1 / n) *
-        f^(-r / n) *
-        d^(-p / n) *
+        fastpow(A, -n_inv) *
+        fastpow(EpsII * FE, 1) *
+        fastpow(f, -r * n_inv) *
+        fastpow(d, -p * n_inv) *
         exp((E + P * V) / (n * R * T)) / FT
 
     return τ
@@ -268,15 +323,34 @@ end
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
+    n_inv = inv(n)
+    
     # computed symbolically:
     return (
         FE *
-        (A^(-1 / n)) *
-        (d^((-p) / n)) *
-        (f^((-r) / n)) *
-        ((EpsII * FE)^(1 / n - 1)) *
-        exp((E + P * V) / (R * T * n))
-    ) / (FT * n)
+        (fastpow(A, -n_inv)) *
+        (fastpow(d, -p * n_inv)) *
+        (fastpow(f, -r * n_inv)) *
+        (fastpow(EpsII * FE, n_inv - 1)) *
+        exp((E + P * V) / (n * R * T ))
+    ) / (FT )
+end
+
+@inline function dτII_dεII(
+    a::DiffusionCreep, EpsII::Quantity; T=1K, P=0Pa, f=1NoUnits, d=1e-6m, kwargs...
+)
+    @unpack_units r, p, A, E, V, R = a
+    FT, FE = a.FT, a.FE
+
+    # computed symbolically:
+    return (
+        FE *
+        (fastpow(A, -1 )) *
+        (fastpow(d, (-p) )) *
+        (fastpow(f, (-r) )) *
+        (fastpow(EpsII * FE, 0)) *
+        exp((E + P * V) / (R * T ))
+    ) / (FT )
 end
 
 # Print info 

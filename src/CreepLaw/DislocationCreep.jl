@@ -16,22 +16,27 @@ export DislocationCreep,
 
 # Dislocation Creep ------------------------------------------------
 """
-    DislocationCreep(n = 1.0NoUnits, r = 0.00.0NoUnits, A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
+    DislocationCreep(n = 1.0NoUnits, r = 0.0NoUnits, A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
     
-Defines the flow law parameter of a dislocation creep law 
-The (isotropic) dislocation creep law, as used by experimtalists, is given by  
+Defines the flow law parameter of a dislocation creep law.
+
+The (isotropic) dislocation creep law, as used by experimentalists, is given by  
 ```math  
-     \\dot{\\gamma} = A \\sigma_\\mathrm{d}^n f_\\mathrm{H2O}^r \\exp(-\\frac{E+PV}{RT})
+     \\dot{\\gamma} = A \\sigma_\\mathrm{d}^n f_\\mathrm{H2O}^r \\exp\\left(-\\frac{E+PV}{RT}\\right)
 ```
-where ``n`` is the power law exponent,  
-``r`` is the exponent of fugacity dependence, 
-``A`` is a pre-exponential factor [MPa^(n+r)] (if manually defined, n and r must be either pre-defined or substituted),  
-``E`` is the activation energy [kJ/mol], ``V`` is the activation volume [m^3/mol]. ``\\dot{\\gamma}`` is the ordinary strain rate [1/s], 
-and ``\\sigma_\\mathrm{d}`` is the differential stress which are converted into second invariants using the apparatus type that can be
-either AxialCompression, SimpleShear or Invariant.
-If the flow law paramters are already given as a function of second invariants, choose apparatus = "Invariant"
+where 
+- ``n`` is the power law exponent  
+- ``r`` is the exponent of fugacity dependence 
+- ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` and ``r`` must be either pre-defined or substituted) 
+- ``E`` is the activation energy ``\\mathrm{[kJ/mol]}`` 
+- ``V`` is the activation volume ``\\mathrm{[m^3/mol]}`` 
+- ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}`` 
+- ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[MPa]}`` which are converted into second invariants using the `Apparatus` variable that can be
+either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law paramters are already given as a function of second invariants, choose `Apparatus=Invariant`.
+
+# Example
 ```julia-repl 
-julia> x2      =   DislocationCreep(n=3)
+julia> x2 = DislocationCreep(n=3)
 DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3 mol^-1, Apparatus=AxialCompression
 ```
 """
@@ -51,7 +56,7 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         Name="",
         n=1.0NoUnits,
         r=0.0NoUnits,
-        A=1.5MPa^(-n - r) / s,
+        A=1.5MPa^(-n) / s,
         E=476.0kJ / mol,
         V=6e-6m^3 / mol,
         R=8.3145J / mol / K,
@@ -60,7 +65,6 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
 
         # Rheology name
         Name = String(join(Name))
-        
         N = length(Name)
         NameU = NTuple{N,Char}(collect.(Name))
         
@@ -97,21 +101,29 @@ end
     Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 """
 
-function Transform_DislocationCreep(name)
-    p = DislocationCreep_info[name][1]
+function Transform_DislocationCreep(name; kwargs)
+    p_in = DislocationCreep_info[name][1]
 
+    # Take optional arguments 
+    v_kwargs = values(kwargs)
+    val = GeoUnit.(values(v_kwargs))
+    
+    args = (Name=p_in.Name, n=p_in.n, r=p_in.r, A=p_in.A, E=p_in.E, V=p_in.V, Apparatus=p_in.Apparatus)
+    p = merge(args, NamedTuple{keys(v_kwargs)}(val))
+    
     Name = String(collect(p.Name))
     n = Value(p.n)
-    A_Pa = uconvert(Pa^(-NumValue(p.n) - NumValue(p.r)) / s, Value(p.A))
+    A_Pa = uconvert(Pa^(-NumValue(p.n)) / s, Value(p.A))
     E_J = uconvert(J / mol, Value(p.E))
     V_m3 = uconvert(m^3 / mol, Value(p.V))
 
     Apparatus = p.Apparatus
     r = Value(p.r)
 
-    return DislocationCreep(;
-        Name=Name, n=n, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus
-    )
+    # args from database
+    args = (Name=Name, n=n, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+    
+    return DislocationCreep(; args...)
 end
 
 """
@@ -190,7 +202,22 @@ end
            A *
            FT *
            n *
-           exp((-E - P * V) / (R * T)) *
+           exp(-(E + P * V) / (R * T)) *
+           (1 / FE)
+end
+
+@inline function dεII_dτII(
+    a::DislocationCreep, TauII::Quantity; T=1K, P=0Pa, f=1NoUnits, args...
+)
+    @unpack_units n, r, A, E, V, R = a
+    FT, FE = a.FT, a.FE
+
+    return (FT * TauII)^(-1 + n) *
+           f^r *
+           A *
+           FT *
+           n *
+           exp(-(E + P * V) / (R * T)) *
            (1 / FE)
 end
 
@@ -220,7 +247,6 @@ Computes the stress for a Dislocation creep law given a certain strain rate
            exp((E + P * V) / (n * R * T)) / FT
 end
 
-
 @inline function compute_τII(
     a::DislocationCreep, EpsII::Quantity; P=0Pa, T=1K, f=1NoUnits, args...
 ) where {_T}
@@ -238,7 +264,7 @@ end
         T = ones(size(TauII))::AbstractArray{_T,N}, 
         f = ones(size(TauII))::AbstractArray{_T,N})
 
-Computes the stress for a Dislocation creep law
+Computes the deviatoric stress invariant for a dislocation creep law
 """
 function compute_τII!(
     TauII::AbstractArray{_T,N},
@@ -260,6 +286,21 @@ end
     a::DislocationCreep, EpsII::_T; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), args...
 ) where {_T}
     @unpack_val n, r, A, E, V, R = a
+    FT, FE = a.FT, a.FE
+
+    return (
+        FE *
+        (A^(-1 / n)) *
+        (f^((-r) / n)) *
+        ((EpsII * FE)^(1 / n - 1)) *
+        exp((E + P * V) / (R * T * n))
+    ) / (FT * n)
+end
+
+@inline function dτII_dεII(
+    a::DislocationCreep, EpsII::Quantity; P=0Pa, T=1K, f=1NoUnits, args...
+)
+    @unpack_units n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
     return (

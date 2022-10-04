@@ -129,6 +129,7 @@ export compute_density,                                # computational routines
 
 # Constitutive relationships laws
 using .MaterialParameters.ConstitutiveRelationships
+export AxialCompression, SimpleShear, Invariant 
 
 #       Calculation routines
 export dεII_dτII,
