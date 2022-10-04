@@ -56,7 +56,7 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         Name="",
         n=1.0NoUnits,
         r=0.0NoUnits,
-        A=1.5MPa^(-n ) / s,
+        A=1.5MPa^(-n) / s,
         E=476.0kJ / mol,
         V=6e-6m^3 / mol,
         R=8.3145J / mol / K,
@@ -65,7 +65,6 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
 
         # Rheology name
         Name = String(join(Name))
-        
         N = length(Name)
         NameU = NTuple{N,Char}(collect.(Name))
         

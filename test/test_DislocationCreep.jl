@@ -105,43 +105,38 @@ using GeoParams
     compute_τII!(τ_vec, p, ε_vec, args)
     η_vec = τ_vec ./ (2 * ε_vec)
 
-    # test overriding the default values
-    a =  SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)", V=1e-6m^3/mol)
-    @test Value(a.V) == 1e-6m^3/mol
+    # Do some basic checks on all creeplaws in the DB
+    CharDim = GEO_units()
+    creeplaw_list = DislocationCreep_info       # all creeplaws in database
+    for (key, val) in creeplaw_list
+        p     = SetDislocationCreep(key)        # original creep law
+        p_nd  = nondimensionalize(p,CharDim)    # non-dimensionalized
+        p_dim = dimensionalize(p,CharDim)       # dimensionalized
 
-    # Same but using GeoParams & dimensional values:
-    p       =   SetDislocationCreep("Dry Olivine | Gerya (2019)")
-    args    =   (; T=T)
-    τ       =   compute_τII(p, ε, args)        # compute stress
-    @test τ ≈ τ_book
-
-    ε1      =   compute_εII(p, τ, args)
-    @test ε1 ≈  ε
-
-    # Do the same, but using Floats as input
-    args1   =   (;T=ustrip(T))
-    τ1      =   compute_τII(p, 1e-14, args1)    # only using Floats
-    @test ustrip(τ) ≈ τ1
-
-    # compute devatoric stress & viscosity profiles (as in book)
-    Tvec    =   (400+273.15):10:(1200+273.15)
-    εvec    =   ones(size(Tvec))*1e-14;
-    τvec    =   zero(εvec)
-    args2   =   (;T=Tvec)
-    compute_τII!(τvec, p, εvec, args2)    # only using Floats
-    ηvec    =   τvec./(2*εvec)
-    @test  sum(ηvec)/length(ηvec) ≈ 4.124658696991946e24
+        # Check that values are the same after non-dimensionalisation & dimensionalisation
+        for field in fieldnames(typeof(p_dim))
+            val_original = getfield(p,    field)
+            val_final    = getfield(p_dim,field)
+            if isa(val_original, GeoUnit)
+                @test Value(val_original) == Value(val_final)        
+            end
+        end
+        
+        # Perform computations with the rheology
+        args = (T=900.0, d=100e-6, τII_old=1e6);
+        ε = 1e-15
+        τ      =   compute_τII(p,ε,args)
+        ε_test =   compute_εII(p,τ,args)
+        @test ε ≈ ε_test
 
 
-    p = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
-    #p = SetDislocationCreep("Wet Anorthite | Rybecki and Dresen (2000)")
-    p = SetDislocationCreep("Dry Olivine | Hirth & Kohlstedt (2003)")
-    
-    args = (; T=(650+273.15))
-    ε_vec = exp10.(-22:-12);
-    τ_vec = zero(ε_vec);
-    compute_τII!(τ_vec, p, ε_vec, args) 
-    η_vec = τ_vec./(2*ε_vec)
+        # test overriding the default values
+        a =  SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)", V=1e-6m^3/mol)
+        @test Value(a.V) == 1e-6m^3/mol
 
+    end
+
+
+   
 
 end

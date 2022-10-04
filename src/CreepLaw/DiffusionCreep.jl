@@ -126,7 +126,7 @@ function Transform_DiffusionCreep(name; kwargs)
     r = Value(pp.r)
     p = Value(pp.p)
     A_Pa = uconvert(
-        Pa^(-NumValue(pp.n) - NumValue(pp.r)) * m^(-NumValue(p)) / s, Value(pp.A)
+        Pa^(-NumValue(pp.n)) * m^(-NumValue(p)) / s, Value(pp.A)
     )
     E_J = uconvert(J / mol, Value(pp.E))
     V_m3 = uconvert(m^3 / mol, Value(pp.V))
