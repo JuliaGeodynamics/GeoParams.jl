@@ -8,8 +8,8 @@ GeoParams.LinearViscous
 GeoParams.PowerlawViscous
 GeoParams.DislocationCreep
 GeoParams.SetDislocationCreep
-GeoParams.DiffusionCreep
-GeoParams.SetDiffusionCreep
+GeoParams.MaterialParameters.ConstitutiveRelationships.DiffusionCreep
+GeoParams.MaterialParameters.ConstitutiveRelationships.SetDiffusionCreep
 ```
 
 # Computational routines for creep laws

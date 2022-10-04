@@ -1,89 +1,108 @@
 using Test
 using GeoParams
+
 @testset "SeismicVelocity.jl" begin
+    # This tests the MaterialParameters structure
+    CharUnits_GEO = GEO_units(; viscosity=1e19, length=10km)
 
-#Make sure structure is isbits
-x = ConstantSeismicVelocity()
-isbits(x)
+    # Constant seismic velocity capacity
+    x = ConstantSeismicVelocity()
+    @test isbits(x) == true
+    info = param_info(x)
 
-# This tests the MaterialParameters structure
-CharUnits_GEO   =   GEO_units(viscosity=1e19, length=1000km);
-                
-# Define constant velocities 
-x1      =   ConstantSeismicVelocity(Vp=8.05km/s, Vs=3.5km/s)
-@test  Value(x1.Vp)==8.05km/s
-@test  Value(x1.Vs)==3.5km/s
+    x_nd = x
+    x_nd = nondimensionalize(x_nd, CharUnits_GEO)
 
-x1 = nondimensionalize(x1,CharUnits_GEO)
-@test NumValue(x1.Vp) ≈ 8.050000000000001e9
-@test NumValue(x1.Vs) ≈ 3.5e9
+    @test Value(x.Vp) ≈ 8.1km / s
+    @test Value(x.Vs) ≈ 4.5km / s
+    @test UnitValue(x_nd.Vp) ≈ 8.1e11
+    @test UnitValue(x_nd.Vs) ≈ 4.5e11
 
-# Compute
-@test compute_pwave_velocity(1.0,1.0, x1) ≈ 8.050000000000001e9
-@test compute_swave_velocity(1.0,1.0, x1) ≈ 3.5e9
+    @test UnitValue(compute_wave_velocity(x_nd, (; wave=:Vp))) ≈ 8.1e11
+    @test UnitValue(compute_wave_velocity(x_nd, (; wave=:Vs))) ≈ 4.5e11
+    @test UnitValue(compute_wave_velocity(x_nd, (; wave=:VpVs))) ≈ 1.8
 
-# Read Phase diagram interpolation object
-fname   =   "./test_data/Peridotite.in"
-PD_data =   PerpleX_LaMEM_Diagram(fname);
-@test PD_data.Vp(1500,1e7) ≈ 6.5290725233303935
-@test PD_data.Vs(1500,1e7) ≈ 2.4874400647487658
+    # Check that it works if we give a phase array
+    MatParam = Array{MaterialParams,1}(undef, 2)
+    MatParam[1] = SetMaterialParams(;
+        Name="Mantle", Phase=1, SeismicVelocity=ConstantSeismicVelocity()
+    )
 
-@test compute_pwave_velocity(1e7, 1500, PD_data) ≈  6.5290725233303935
-@test compute_swave_velocity(1e7, 1500, PD_data) ≈  2.4874400647487658
+    MatParam[2] = SetMaterialParams(;
+        Name="Crust",
+        Phase=2,
+        SeismicVelocity=PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in"),
+    )
 
-# Do the same but non-dimensionalize the result
-CharDim  =  GEO_units();
-PD_data1 =  PerpleX_LaMEM_Diagram(fname, CharDim=CharDim);
+    Mat_tup = Tuple(MatParam)
 
-rho_ND   =  PD_data1.Rho(nondimensionalize(1500K,CharDim), nondimensionalize(1e8*Pa,CharDim)) 
-Vp_ND    =  PD_data1.Vp(nondimensionalize(1500K,CharDim),  nondimensionalize(1e8*Pa,CharDim)) 
-Vs_ND    =  PD_data1.Vs(nondimensionalize(1500K,CharDim),  nondimensionalize(1e8*Pa,CharDim)) 
+    # test computing material properties
+    n = 100
+    Phases = ones(Int64, n, n, n)
+    Phases[:, :, 20:end] .= 2
 
-# redimensionalize and check with value from original structure that did not use non-dimensionalization 
-@test   ustrip(dimensionalize(rho_ND,kg/m^3,CharDim)) ≈ PD_data.Rho(1500,1e8) 
-@test   ustrip(dimensionalize(Vp_ND, km/s,  CharDim)) ≈ PD_data.Vp(1500,1e8) 
-@test   ustrip(dimensionalize(Vs_ND, km/s,  CharDim)) ≈ PD_data.Vs(1500,1e8) 
+    Vp = zeros(size(Phases))
+    Vs = zeros(size(Phases))
+    VpVs = zeros(size(Phases))
+    T = ones(size(Phases)) * 1500
+    P = zeros(size(Phases))
 
+    args = (; T=T, P=P, wave=:Vp)
+    compute_wave_velocity!(Vp, Mat_tup, Phases, args)
 
-# Test computation of velocity for the whole computational domain, using arrays 
-MatParam    =   Array{MaterialParams, 1}(undef, 3);
-MatParam[1] =   SetMaterialParams(Name="Mantle", Phase=0,
-                        SeismicVelocity   = PerpleX_LaMEM_Diagram("test_data/Peridotite.in"));
+    args = (; T=T, P=P, wave=:Vs)
+    compute_wave_velocity!(Vs, Mat_tup, Phases, args)
 
-MatParam[2] =   SetMaterialParams(Name="Crust", Phase=1,
-                        SeismicVelocity   = ConstantSeismicVelocity());
+    args = (; T=T, P=P, wave=:VpVs)
+    compute_wave_velocity!(VpVs, Mat_tup, Phases, args)
 
-MatParam[3] =   SetMaterialParams(Name="UpperCrust", Phase=2,
-                        SeismicVelocity   = ConstantSeismicVelocity(Vp=10km/s, Vs=3km/s));
+    @test Vp[1] == 8.1
+    @test Vp[1, 1, end] ≈ 5.500887338991992
+    @test Vs[1] == 4.5
+    @test Vs[1, 1, end] ≈ 2.68
 
-# test computing material properties
-Phases              = ones(Int64,400,400)*0;
-Phases[:,20:end] .= 1
-Phases[:,300:end] .= 2
+    @test VpVs[1] ≈ 1.8
+    @test VpVs[1, 1, end] ≈ 2.05
 
-Vp      = zeros(size(Phases))
-Vs      = zeros(size(Phases))
-T       =  ones(size(Phases))
-P       =  ones(size(Phases))*10
+    # NOTE: This will be made obsolete by melt_correction_Takei  
+    #    Vp_cor, Vs_cor = melt_correction(
+    #        26.0, 94.5, 61.0, 2802.0, 3198.0, 7.4, 4.36, 0.01, 0.15
+    #    )
+    #    @test [Vp_cor, Vs_cor] ≈  [7.331657177397843, 4.314027804335563]
 
-compute_pwave_velocity!(Vp, Phases, P,T, MatParam)
-@test sum(Vp)/400^2 ≈ 8.541562850000005
+    # NOTE: This will be made obsolete by melt_correction_Takei  
+    #  Vs_cor = porosity_correction(
+    #       94.5, 61.0, 1000.0, 3198.0, 4.36, 0.25, 0.25
+    #  )
+    #  @test [Vs_cor] ≈ [2.226167083352012]
 
-# test computing material properties when we have PhaseRatios, instead of Phase numbers
-PhaseRatio  = zeros(size(Phases)...,length(MatParam));
-for i in CartesianIndices(Phases)
-    iz = Phases[i]
-    I = CartesianIndex(i,iz+1)
-    PhaseRatio[I] = 1.0  
-end
+    Vs_anel = anelastic_correction(0, 4.36734, 5.0, 1250.0)
+    @test Vs_anel ≈ 4.343623758644558
 
-compute_swave_velocity!(Vs, PhaseRatio, P,T, MatParam)
-@test sum(Vs)/400^2 ≈ 4.0739837
+    # testing the new seismic velocity correction for partial melt
+    ρL = 2000.0
+    ρS = 3300.0
+    Vs0 = 3000.0
+    Vp0 = 6000.0
+    α = 0.4
+    ϕ = 0.7
+    Kb_S = 250.0
+    Ks_S = 162.0
+    Kb_L = 200.0
+    R = 0.1
 
-Vp_cor,Vs_cor = melt_correction(26.0,94.5,61.0,2802.0,3198.0,7.4,4.36,0.01,0.15) 
-@test  [Vp_cor,Vs_cor] ≈ [7.336238790906285, 4.314027804335563];
+    melt_correction_Takei(Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
 
-Vs_anel = anelastic_correction(0,4.36734,5.0,1250.0)
-@test  Vs_anel ≈ 4.1182815519599325;
+    ϕ_vec = 0:0.01:1
+    Vs_new = zero(ϕ_vec)
+    Vp_new = zero(ϕ_vec)
 
+    for i in eachindex(ϕ_vec)
+        Vs_new[i], Vp_new[i] = melt_correction_Takei(
+            Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ_vec[i], α
+        )
+    end
+
+    @test Vs_new[10] ≈ 2750.713407744307
+    @test Vp_new[10] ≈ 0.0
 end

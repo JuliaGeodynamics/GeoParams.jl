@@ -1,19 +1,19 @@
 # If you want to add a new method here, feel free to do so. 
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
-
 abstract type AbstractElasticity{T} <: AbstractConstitutiveLaw{T} end
 
-export  compute_εII,            # calculation routines
-        compute_εII!,
-        compute_τII,
-        compute_τII!,
-        dεII_dτII,
-        dτII_dεII,
-        param_info,
-        ConstantElasticity,     # constant
-        SetConstantElasticity   # helper function
-       
+export compute_εII,            # calculation routines
+    compute_εII!,
+    compute_τII,
+    compute_τII!,
+    dεII_dτII,
+    dτII_dεII,
+    param_info,
+    ConstantElasticity,     # constant
+    SetConstantElasticity,  # helper function
+    AbstractElasticity
+
 # ConstantElasticity  -------------------------------------------------------
 
 """
@@ -21,14 +21,14 @@ export  compute_εII,            # calculation routines
 
 Structure that holds parameters for constant, isotropic, linear elasticity.
 """
-@with_kw_noshow struct ConstantElasticity{T,U,U1} <: AbstractElasticity{T} 
-    G::GeoUnit{T,U}     =   5e10Pa                                             # Elastic shear modulus
-    ν::GeoUnit{T,U1}    =   0.5NoUnits                                         # Poisson ratio
-    Kb::GeoUnit{T,U}    =   2*G*(1 + ν)/(3*(1 - 2*ν))                          # Elastic bulk modulus
-    E::GeoUnit{T,U}     =   9*Kb*G/(3*Kb + G)                                  # Elastic Young's modulus
+@with_kw_noshow struct ConstantElasticity{T,U,U1} <: AbstractElasticity{T}
+    G::GeoUnit{T,U} = 5e10Pa                                             # Elastic shear modulus
+    ν::GeoUnit{T,U1} = 0.5NoUnits                                         # Poisson ratio
+    Kb::GeoUnit{T,U} = 2 * G * (1 + ν) / (3 * (1 - 2 * ν))                          # Elastic bulk modulus
+    E::GeoUnit{T,U} = 9 * Kb * G / (3 * Kb + G)                                  # Elastic Young's modulus
 end
 
-ConstantElasticity(args...) = ConstantElasticity(convert.(GeoUnit,args)...)
+ConstantElasticity(args...) = ConstantElasticity(convert.(GeoUnit, args)...)
 
 
 # Add multiple dispatch here to allow specifying combinations of 2 elastic parameters (say ν & E), to compute the others
@@ -38,31 +38,38 @@ ConstantElasticity(args...) = ConstantElasticity(convert.(GeoUnit,args)...)
 This allows setting elastic parameters by specifying 2 out of the 4 elastic parameters `G` (Elastic shear modulus), `ν` (Poisson's ratio), `E` (Young's modulus), or `Kb` (bulk modulus).
 """
 function SetConstantElasticity(; G=nothing, ν=nothing, E=nothing, Kb=nothing)
-    if      (!isnothing(G) && !isnothing(ν))
-        Kb = 2*G*(1 + ν)/(3*(1 - 2*ν));     # Bulk modulus
-        E  = 9*Kb*G/(3*Kb + G)              # Youngs modulus
+    if (!isnothing(G) && !isnothing(ν))
+        Kb = 2 * G * (1 + ν) / (3 * (1 - 2 * ν))     # Bulk modulus
+        E = 9 * Kb * G / (3 * Kb + G)              # Youngs modulus
     elseif (!isnothing(Kb) && !isnothing(ν))
-        G   = (3*Kb*(1 - 2*ν))/(2*(1 + ν));
-        E  = 9*Kb*G/(3*Kb + G)              # Youngs modulus
+        G = (3 * Kb * (1 - 2 * ν)) / (2 * (1 + ν))
+        E = 9 * Kb * G / (3 * Kb + G)              # Youngs modulus
     elseif (!isnothing(E) && !isnothing(ν))
-        Kb  = E/(3*(1 - 2*ν));              # Bulk modulus
-        G   = E/(2*(1 + ν));                # Shear modulus
+        Kb = E / (3 * (1 - 2 * ν))              # Bulk modulus
+        G = E / (2 * (1 + ν))                # Shear modulus
     elseif (!isnothing(Kb) && !isnothing(G))
-        E   = 9*Kb*G/(3*Kb + G);
-        ν   = (3*Kb - 2*G)/(2*(3*Kb + G));  # Poisson's ratio
+        E = 9 * Kb * G / (3 * Kb + G)
+        ν = (3 * Kb - 2 * G) / (2 * (3 * Kb + G))  # Poisson's ratio
     end
-    
-    if !isa(G, Quantity)     G  = G*Pa;         end
-    if !isa(ν, Quantity)     ν  = ν*NoUnits;    end
-    if !isa(E, Quantity)     E  = E*Pa;         end
-    if !isa(Kb,Quantity)     Kb = Kb*Pa;        end
-    
+
+    if !isa(G, Quantity)
+        G = G * Pa
+    end
+    if !isa(ν, Quantity)
+        ν = ν * NoUnits
+    end
+    if !isa(E, Quantity)
+        E = E * Pa
+    end
+    if !isa(Kb, Quantity)
+        Kb = Kb * Pa
+    end
+
     return ConstantElasticity(GeoUnit(G), GeoUnit(ν), GeoUnit(Kb), GeoUnit(E))
 end
 
-
 function param_info(s::ConstantElasticity) # info about the struct
-    return MaterialParamsInfo(Equation = L"Constant elasticity")
+    return MaterialParamsInfo(; Equation=L"Constant elasticity")
 end
 
 # Calculation routines
@@ -81,26 +88,33 @@ Note that we here solve the scalar equation, which is sufficient for isotropic c
 here ``\\tilde{{\\tau_{ij}}}^{old}`` is the rotated old deviatoric stress tensor to ensure objectivity (this can be done with Jaumann derivative, or also by using the full rotational formula).
 
 """
-function compute_εII(s::ConstantElasticity, τII::_T;  τII_old::_T=zero(_T),  dt::_T=1.0, kwargs...) where _T
-    @unpack_val G   = s
-    ε_el = (τII-τII_old)/(2.0 * G * dt)    
+@inline function compute_εII(
+    a::ConstantElasticity, τII::_T; τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+) where {_T}
+    @unpack_val G = a
+    ε_el = 0.5 * (τII - τII_old) / (G * dt)
     return ε_el
 end
 
-function dεII_dτII(s::ConstantElasticity{_T}, τII::_T; dt::_T=1.0, kwargs...) where _T
-    @unpack_val G   = s
-    return one(_T)/(2*one(_T)*G*dt)
+@inline function dεII_dτII(a::ConstantElasticity{_T}, τII::_T; τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+    ) where {_T}
+    @unpack_val G = a
+    return 0.5 * inv(G * dt)
 end
 
-function compute_τII(s::ConstantElasticity, εII::_T;  τII_old::_T=zero(_T),  dt::_T=1.0, kwargs...) where _T
-    @unpack_val G   = s
-    τII = 2.0*G*dt*εII + τII_old
+@inline function compute_τII(
+    a::ConstantElasticity, εII::_T; τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+) where {_T}
+    @unpack_val G = a
+    τII = _T(2) * G * dt * εII + τII_old
+
     return τII
 end
 
-function dτII_dεII(s::ConstantElasticity{_T}, εII::_T; dt::_T=1.0, kwargs...) where _T
-    @unpack_val G   = s
-    return 2*one(_T)*G*dt
+@inline function dτII_dεII(a::ConstantElasticity{_T}, τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+    ) where {_T}
+    @unpack_val G = a
+    return _T(2) * G * dt
 end
 
 """
@@ -113,13 +127,19 @@ In-place computation of the elastic shear strainrate for given deviatoric stress
 ```
 
 """
-function compute_εII!(ε_el::AbstractArray{_T,N}, p::ConstantElasticity{_T}, τII::AbstractArray{_T,N}; τII_old::AbstractArray{_T,N}, dt::_T, kwargs...) where {N,_T}
+function compute_εII!(
+    ε_el::AbstractArray{_T,N},
+    p::ConstantElasticity{_T},
+    τII::AbstractArray{_T,N};
+    τII_old::AbstractArray{_T,N},
+    dt::_T,
+    kwargs...,
+) where {N,_T}
     @inbounds for i in eachindex(τII)
-      ε_el[i] = compute_εII(p, τII[i], τII_old=τII_old[i], dt=dt)
+        ε_el[i] = compute_εII(p, τII[i]; τII_old=τII_old[i], dt=dt)
     end
     return nothing
 end
-
 
 """
     compute_τII!(τII::AbstractArray{_T,N}, s::ConstantElasticity{_T}. ε_el::AbstractArray{_T,N}; τII_old::AbstractArray{_T,N}, dt::_T, kwargs...) 
@@ -131,22 +151,31 @@ In-place update of the elastic stress for given deviatoric strainrate invariants
 ```
 
 """
-function compute_τII!(τII::AbstractArray{_T,N}, p::ConstantElasticity{_T}, ε_el::AbstractArray{_T,N}; τII_old::AbstractArray{_T,N}, dt::_T, kwargs...) where {N,_T}
+function compute_τII!(
+    τII::AbstractArray{_T,N},
+    p::ConstantElasticity{_T},
+    ε_el::AbstractArray{_T,N};
+    τII_old::AbstractArray{_T,N},
+    dt::_T,
+    kwargs...,
+) where {N,_T}
     @inbounds for i in eachindex(ε_el)
-        τII[i] = compute_τII(p, ε_el[i], τII_old=τII_old[i], dt=dt)
+        τII[i] = compute_τII(p, ε_el[i]; τII_old=τII_old[i], dt=dt)
     end
     return nothing
 end
 
 # Print info 
-function show(io::IO, g::ConstantElasticity) 
-    print(io, "Linear elasticity with shear modulus: G = $(UnitValue(g.G)), Poisson's ratio: ν = $(UnitValue(g.ν)), bulk modulus: Kb = $(UnitValue(g.Kb)) and Young's module: E=$(UnitValue(g.E))")  
-end   
+function show(io::IO, g::ConstantElasticity)
+    return print(
+        io,
+        "Linear elasticity with shear modulus: G = $(UnitValue(g.G)), Poisson's ratio: ν = $(UnitValue(g.ν)), bulk modulus: Kb = $(UnitValue(g.Kb)) and Young's module: E=$(UnitValue(g.E))",
+    )
+end
 #-------------------------------------------------------------------------
 
-
 # Computational routines needed for computations with the MaterialParams structure 
-function compute_εII(s::AbstractMaterialParamsStruct, args) 
+function compute_εII(s::AbstractMaterialParamsStruct, args)
     if isempty(s.Elasticity)
         return isempty(args) ? 0.0 : zero(typeof(args).types[1])  # return zero if not specified
     else
@@ -166,6 +195,5 @@ for myType in (:ConstantElasticity,)
 end
 =#
 
-compute_εII(args...)  = compute_param(compute_εII, args...)
+compute_εII(args...) = compute_param(compute_εII, args...)
 compute_εII!(args...) = compute_param!(compute_εII, args...)
-

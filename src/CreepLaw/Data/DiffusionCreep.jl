@@ -1,4 +1,6 @@
 # Add a list of pre-defined diffusion creep law values
+export DiffusionCreep_info
+
 """
     SetDiffusionCreep["Name of Diffusion Creep"]
 This is a dictionary with pre-defined creep laws    
@@ -6,7 +8,7 @@ This is a dictionary with pre-defined creep laws
 SetDiffusionCreep(name::String) = Transform_DiffusionCreep(name)
 
 # predefined diffusion creep laws are to be added in the dictionary as it is done for dislocation creep laws (see 'DislocationCreep.jl')!
-DiffusionCreep_info = Dict([
+const DiffusionCreep_info = Dict([
 
 # Dry Plagioclase rheology 
 (
@@ -38,7 +40,6 @@ DiffusionCreep_info = Dict([
         "),
     ),
 )
-
 (
     "Wet Olivine | Mei & Kohlstedt (2000a)",
     (

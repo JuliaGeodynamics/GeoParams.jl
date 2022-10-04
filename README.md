@@ -3,19 +3,18 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliageodynamics.github.io/GeoParams.jl/dev/)
 [![Build Status](https://github.com/JuliaGeodynamics/GeoParams.jl/workflows/CI/badge.svg)](https://github.com/JuliaGeodynamics/GeoParams.jl/actions)
 
-Typical geodynamic simulations involve a large number of material parameters that have units that are often inconvenient to be directly used in numerical models
-This package has three main features that help with this:
-- Create a nondimensionalization object, which can be used to transfer dimensional to non-dimensional parameters (usually better for numerical solvers)
-- Create an object in which you can specify material parameters employed in the geodynamic simulations
-- Provide allocation-free computational routinesfor GPU and CPUs, that can be integrated in solvers, which replaces all point wise operations (done to compute material parameter, or equations of state).
+Typical geodynamic simulations involve a large number of material parameters and nonlinear constitutive relationships. A large part of the work in writing a new code is benchmarking and debugging the implementation of such material parameters, which involve *point-wise* calculations that are independent of the discretisation method (finite difference, finite element, finite volume).
 
-The material parameter object is designed to be extensible and can be passed on to the solvers, such that new creep laws or features can be readily added. if you use the computational routines we provide, these new features are immediately available in all your codes. 
+This package has three main objectives:
+- Create a nondimensionalization object, which can be used to transfer dimensional to non-dimensional parameters (helps numerical solvers)
+- Create an object in which you can specify material parameters employed in the geodynamic simulations
+- Provide allocation-free computational routines for GPU and CPUs, that can be integrated in solvers, which replaces all point-wise calculations (to compute material parameters or equations of state, for example).
+
+The material parameter object is designed to be extensible and can be passed on to the solvers, such that new creep laws or features can be readily added. If you use the computational routines we provide, these new features are immediately available in all your codes (finite element, finite difference, AMR codes, etc.). 
 
 We also implement some typically used creep law parameters, together with tools to plot them versus and compare our results with those of published papers (to minimize mistakes).  
 
-
-
-NOTE: As of now (version 0.3.6), the package remains under development and the API is not yet fully fixed (even though we did add it to the Julia registry already, mainly in order to add `GeophysicalModelGenerator.jl` ). Therefore feel free to look at it, but we do not suggest to incorporate it into your code (yet). Comments/ideas/suggestions are highly apprecciated!
+NOTE: The package remains under development and the API is not yet fully fixed. Therefore feel free to look at it, but be aware that things may still change when you incorporate it into your codes. Comments/ideas/suggestions are highly apprecciated!
 
 ### Contents
 * [1. Nondimensionalization](#1-nondimensionalization) 
