@@ -9,7 +9,8 @@ export compute_yieldfunction,      # calculation routines
     AbstractPlasticity,
     compute_plasticpotentialDerivative,
     ∂Q∂τ,
-    ∂Q∂P
+    ∂Q∂P,
+    compute_εII
 
 
 # DruckerPrager  -------------------------------------------------------
@@ -36,7 +37,7 @@ Plasticity is activated when ``F(\\tau_{II}^{trial})`` (the yield function compu
 ```math  
     \\dot{\\varepsilon}^{pl}_{ij} =\\dot{\\lambda} {\\partial Q \\over \\partial \\sigma_{ij}}
 ```
-where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the resuling stress gives ``F(\\tau_{II}^{final})=0``, and ``\\sigma_{ij}=-P + \\tau_{ij}`` denotes the total stress tensor.   
+where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the resulting stress gives ``F(\\tau_{II}^{final})=0``, and ``\\sigma_{ij}=-P + \\tau_{ij}`` denotes the total stress tensor.   
         
 """
 @with_kw_noshow struct DruckerPrager{T, U, U1} <: AbstractPlasticity{T}
@@ -126,6 +127,25 @@ for t in (:NTuple,:SVector)
     end
 end
 
+∂Q∂τII(p::DruckerPrager, τII::T) where T = 0.5
+
+"""
+    compute_εII(p::DruckerPrager{_T,U,U1}, λdot::_T, τII::_T,  P) 
+
+This computes plastic strain rate invariant for a given ``λdot``
+"""
+function compute_εII(p::DruckerPrager{_T,U,U1}, λdot::_T, τII::_T; kwargs... ) where {_T, U, U1}
+    F = compute_yieldfunction(p, args)
+    if F>0
+        ε_pl = λdot*∂Q∂τII(p, τII)
+
+    else
+        ε_pl = 0.0
+    end 
+
+    return ε_pl
+end
+
 # Print info 
 function show(io::IO, g::DruckerPrager)
     return print(
@@ -174,21 +194,21 @@ end
 # Plastic finite strain and strain rate
 
 """
-    plastic_strain(εvp::T, p::AbstractPlasticity{T}, τij, λ::T, dt::T)
+    plastic_strain(εvp::T, p::AbstractPlasticity{T}, τij, λ̇::T, dt::T)
     
     Integrate the finite plastic strain. Equations from Duretz et al. 2019 G3
 """
-function plastic_strain(εvp::T, p::AbstractPlasticity{T}, τij, λ::T, dt::T) where T
-    εvp += plastic_strain(p, τij, λ) * dt  
+function plastic_strain(εvp::T, p::AbstractPlasticity{T}, τij, λ̇::T, dt::T) where T
+    εvp += plastic_strain(p, τij, λ̇) * dt  
 end
 
-@inline function plastic_strain(p::AbstractPlasticity{T}, τij::T, λ::T) where T
-    εvp_ij = plastic_strain_rate(p, τij, λ)
+@inline function plastic_strain(p::AbstractPlasticity{T}, τij::T, λ̇::T) where T
+    εvp_ij = plastic_strain_rate(p, τij, λ̇)
     εvp = √((2.0/3.0) * dot(εvp_ij, εvp_ij))
     return εvp
 end
 
-@inline plastic_strain_rate(p::AbstractPlasticity{T}, τij::T, λ::T) where T = ∂Q∂τ(p, τij) .* λ 
+@inline plastic_strain_rate(p::AbstractPlasticity{T}, τij::T, λ̇::T) where T = ∂Q∂τ(p, τij) .* λ̇ 
 #-------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------
