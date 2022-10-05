@@ -3,7 +3,8 @@
 abstract type AbstractPlasticity{T} <: AbstractConstitutiveLaw{T} end
 abstract type AbstractPlasticPotential{Float64}  <: AbstractConstitutiveLaw{Float64} end
 
-export compute_yieldfunction,      # calculation routines
+export isvolumetric,
+    compute_yieldfunction,      # calculation routines
     compute_yieldfunction!,
     DruckerPrager,               # constant
     AbstractPlasticity,
@@ -49,6 +50,11 @@ where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the
     C::GeoUnit{T,U1} = 10e6Pa # Cohesion
 end
 DruckerPrager(args...) = DruckerPrager(convert.(GeoUnit, args)...)
+
+function isvolumetric(s::DruckerPrager)
+    @unpack_val Ψ = s
+    return Ψ == 0 ? false : true
+end
 
 function param_info(s::DruckerPrager) # info about the struct
     return MaterialParamsInfo(;
