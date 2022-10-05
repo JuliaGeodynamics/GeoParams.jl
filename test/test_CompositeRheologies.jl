@@ -23,6 +23,7 @@ using GeoParams, ForwardDiff
     c4 = CompositeRheology(v1,v3, p1)   # with linear || element
     c5 = CompositeRheology(v1,v4, p2)   # with nonlinear || element
     c6 = CompositeRheology(v1,v4,p1,p2) # with 2 || elements
+    c7 = CompositeRheology(v3,e1,pl1)   # with plastic element
     p4 = Parallel(c3,v3)                # Parallel element with composite one as well    
 
     # Check that we can construct complicated rheological elements
@@ -35,7 +36,7 @@ using GeoParams, ForwardDiff
     c = Parallel((v2,v3,e1, Parallel(v2,v3),v2, Parallel(v2,(v3, v2))),v3,(e1,p1))
     @test isa(c.elements[2], AbstractCreepLaw)
     
-    args = (T=900.0, d=100e-6, τII_old=1e6)
+    args = (T=900.0, d=100e-6, τII_old=1e6, dt=1e8)
     εII, τII = 2e-15, 2e6
 
     # Check derivatives 
@@ -64,6 +65,7 @@ using GeoParams, ForwardDiff
         @test dτ_dε_AD ≈ dτ_dε_FD  rtol=1e-5 
         
     end
+
 
     # Check computational routines for strainrate & stress
     for v in vec1
@@ -165,6 +167,24 @@ using GeoParams, ForwardDiff
 
         @test τ_AD ≈ τ ≈ τ_par
         
+    end
+
+    # Composite cases with plasticity 
+    for v in [c7]
+        #τ_AD = compute_τII_AD(v, εII, args)     
+        τ    = compute_τII(v, εII, args)   
+        args = merge(args, (τII=τ,P=1e9))  
+        F    = compute_yieldfunction(v.elements[3],args)
+
+        # Check that F==0    
+        F = 0.
+        for i=1:length(v.elements)
+            if isa(v.elements,AbstractPlasticity)
+                F  += compute_τII(v.elements[i], args)  
+            end
+        end
+        @test F ≈ 0.0
+
     end
 
     # 0D rheology tests

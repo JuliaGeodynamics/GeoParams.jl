@@ -144,16 +144,4 @@ using GeoParams
     # -----------------------
 
 
-    # try elastic element
-    e1 = ConstantElasticity(G=10Pa)           # elasticity
-    pl1 = DruckerPrager(ϕ=0, C=25)                # plasticity
-
-    args = (τII_old=5, dt=1)
-    
-    compute_τII(e1,1, args)
-    
-    compute_yieldfunction(pl1, args)
-
-
-
 end

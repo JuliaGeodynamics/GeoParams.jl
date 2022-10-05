@@ -8,8 +8,9 @@ export compute_yieldfunction,      # calculation routines
     DruckerPrager,               # constant
     AbstractPlasticity,
     compute_plasticpotentialDerivative,
-    ∂Q∂τ,
+    ∂Q∂τ,∂Q∂τII,
     ∂Q∂P,
+    ∂F∂τII,
     compute_εII
 
 
@@ -69,9 +70,9 @@ function (s::DruckerPrager{_T,U,U1})(;
 end
 
 """
-    compute_yieldfunction(s::DruckerPrager; P, τII_old, Pf, kwargs...) 
+    compute_yieldfunction(s::DruckerPrager; P, τII, Pf, kwargs...) 
 
-Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` the pressure, and `Pf` fluid pressure.
+Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` pressure, and `Pf` fluid pressure.
 """
 function compute_yieldfunction(
     s::DruckerPrager{_T}; P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T)
@@ -108,6 +109,9 @@ end
 ∂Q∂P(p::DruckerPrager; kwargs...) = -p.sinΨ
 ∂Q∂P(p::DruckerPrager, args) = ∂Q∂P(p; args...)
 
+∂F∂τII(p::DruckerPrager, τII::T) where T  = 1.0
+
+
 # Derivatives w.r.t stress tensor
 
 # Hard-coded partial derivatives of the plastic potential Q
@@ -134,8 +138,9 @@ end
 
 This computes plastic strain rate invariant for a given ``λdot``
 """
-function compute_εII(p::DruckerPrager{_T,U,U1}, λdot::_T, τII::_T; kwargs... ) where {_T, U, U1}
-    F = compute_yieldfunction(p, args)
+function compute_εII(p::DruckerPrager{_T,U,U1}, λdot::_T, τII::_T, kwargs...) where {_T, U, U1}
+    F = compute_yieldfunction(p, kwargs)
+    @show F, kwargs
     if F>0
         ε_pl = λdot*∂Q∂τII(p, τII)
 
@@ -156,7 +161,7 @@ end
 #-------------------------------------------------------------------------
 
 
-# Thin convinience wrappers
+# Thin convenience wrappers
 # 3D
 function ∂Q∂τ(p::AbstractPlasticity{T}, τij::SVector{6,T}; kwargs...) where {T}
     @SVector [∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τzz(p, τij), ∂Q∂τyz(p, τij), ∂Q∂τxz(p, τij), ∂Q∂τxy(p, τij)]
@@ -243,6 +248,8 @@ for myType in (:DruckerPrager,)
         (p::$(myType))(args) = p(; args...)
         ∂Q∂τ(p::$(myType), args, kwargs) = ∂Q∂τ(p, args; kwargs...)
         compute_yieldfunction(p::$(myType), args) = p(args)
+        compute_εII(p::$(myType), args) = compute_εII(p,args...)
+        
         function compute_yieldfunction!(
             H::AbstractArray{_T,N}, p::$(myType){_T}, args
         ) where {_T,N}
@@ -270,3 +277,4 @@ end
 lambda(args...) = compute_param(lambda, args...)
 plastic_strain_rate(args...) = compute_param(plastic_strain_rate, args...)
 plastic_strain(args...) = compute_param(plastic_strain, args...)
+
