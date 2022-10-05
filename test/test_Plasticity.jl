@@ -164,6 +164,6 @@ using GeoParams
     
     args = merge(args, (τII=τ1,))
     F_check = compute_yieldfunction(c_pl.elements[3],args)
-    @test F_check ≈ 0.0
+    @test abs(F_check) < 1e-12
 
 end
