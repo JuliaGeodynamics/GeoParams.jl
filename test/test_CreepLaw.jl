@@ -69,7 +69,13 @@ using GeoParams
     T   =   1.0
     # and stress 
     τ1  =   1.0
-    compute_εII(x3,τ1;T,args)
+    eps = compute_εII(x3,τ1;T,args)
+    @test eps ≈ 0.5
+
+    args = (T=T,)
+    eps = compute_εII(x3,τ1,args)
+    @test eps ≈ 0.5
+
     # and strain rate
     ε1  =   0.5
     compute_τII(x3,ε1;T,args)
