@@ -140,32 +140,52 @@ end
 
 Computing `εII` as a function of `τII` for a composite element is the sum of the individual contributions
 """
-@generated  function compute_εII(
+# @generated  function compute_εII(
+#     v::CompositeRheology{T,N}, 
+#     τII::_T, 
+#     args; 
+#     tol=1e-6, verbose=false
+# ) where {T,_T,N}
+#     quote
+#         Base.@_inline_meta
+#         εII = zero(_T)
+#         Base.Cartesian.@nexprs $N i ->
+#             εII += compute_εII(v.elements[i], τII, args)
+#     end
+# end
+
+function compute_εII(
     v::CompositeRheology{T,N}, 
     τII::_T, 
     args; 
     tol=1e-6, verbose=false
 ) where {T,_T,N}
-    quote
-        Base.@_inline_meta
-        εII = zero(_T)
-        Base.Cartesian.@nexprs $N i ->
-            εII += compute_εII(v.elements[i], τII, args)
-    end
+    εII = SVector{N,_T}(compute_εII(v.elements[i], τII, args) for i in 1:N)
+    return sum(εII)
 end
 
-@generated  function compute_εII(
+# @generated  function compute_εII(
+#     v::CompositeRheology{T,N}, 
+#     τII::Quantity, 
+#     args; 
+#     tol=1e-6, verbose=false
+# ) where {T,N}
+#     quote
+#         Base.@_inline_meta
+#         εII = 0/s
+#         Base.Cartesian.@nexprs $N i ->
+#             εII += compute_εII(v.elements[i], τII, args)
+#     end
+# end
+
+function compute_εII(
     v::CompositeRheology{T,N}, 
     τII::Quantity, 
     args; 
     tol=1e-6, verbose=false
-) where {T,N}
-    quote
-        Base.@_inline_meta
-        εII = 0/s
-        Base.Cartesian.@nexprs $N i ->
-            εII += compute_εII(v.elements[i], τII, args)
-    end
+) where {T,_T,N}
+    εII = SVector{N,_T}(compute_εII(v.elements[i], τII, args) for i in 1:N)
+    return sum(εII) / s
 end
 
 # As we don't do iterations, this is the same
@@ -197,36 +217,56 @@ function compute_τII(v::CompositeRheology, εII, args; tol=1e-6, verbose=false,
 end
 
 # For a parallel element, τII for a given εII is the sum of each component
-@generated  function compute_τII(
+# @generated  function compute_τII(
+#     v::Parallel{T,N}, 
+#     εII::_T, 
+#     args;
+#     tol=1e-6, verbose=false
+# ) where {T,_T,N}
+#     quote
+#         Base.@_inline_meta
+#         τII = zero(_T)
+#         Base.Cartesian.@nexprs $N i ->
+#             τII += compute_τII(v.elements[i], εII, args)
+#     end
+# end
+
+function compute_τII(
     v::Parallel{T,N}, 
     εII::_T, 
     args;
     tol=1e-6, verbose=false
 ) where {T,_T,N}
-    quote
-        Base.@_inline_meta
-        τII = zero(_T)
-        Base.Cartesian.@nexprs $N i ->
-            τII += compute_τII(v.elements[i], εII, args)
-    end
+    τII = SVector{N,_T}(compute_τII(v.elements[i], εII, args) for i in 1:N)
+    return sum(τII)
 end
+
 compute_τII_AD(v::Parallel{T,N}, εII::_T, args; tol=1e-6, verbose=false) where {T,N,_T} = compute_τII(v, εII, args) 
 
 # make it work for dimensional cases
-@generated  function compute_τII(
+# @generated  function compute_τII(
+#     v::Parallel{T,N}, 
+#     εII::Quantity, 
+#     args;
+#     tol=1e-6, verbose=false
+# ) where {T,_T,N}
+#     quote
+#         Base.@_inline_meta
+#         τII = 0Pa
+#         Base.Cartesian.@nexprs $N i ->
+#             τII += compute_τII(v.elements[i], εII, args)
+#     end
+# end
+
+function compute_τII(
     v::Parallel{T,N}, 
     εII::Quantity, 
     args;
     tol=1e-6, verbose=false
 ) where {T,_T,N}
-    quote
-        Base.@_inline_meta
-        τII = 0Pa
-        Base.Cartesian.@nexprs $N i ->
-            τII += compute_τII(v.elements[i], εII, args)
-    end
+    τII = SVector{N,_T}(compute_τII(v.elements[i], εII, args) for i in 1:N)
+    return sum(τII)Pa
 end
-
 
 function compute_τII_AD(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
      τII = local_iterations_εII_AD(v, εII, args; tol=tol, verbose=verbose)
@@ -571,6 +611,12 @@ end
     end
 end
 
+# function dεII_dτII(
+#     v::CompositeRheology{T,N}, τII::_T, args
+# ) where {T,_T,N}
+#     val = SVector{N,_T}(dεII_dτII(v.elements[i], τII, args) for i in 1:N)
+#     return sum(val)
+# end
 
 function dεII_dτII(
     v::Parallel{T,N}, τII::_T, args
@@ -593,17 +639,27 @@ dεII_dτII_AD(v::Union{Parallel,CompositeRheology}, τII, args) = ForwardDiff.d
 
 Sums the derivative ∂εII/∂τII (strainrate vs. stress) of all non-parallel elements in a `CompositeRheology` structure. Internally used for jacobian iterations.
 """
-@inline @generated function dεII_dτII_elements(
+# @inline @generated function dεII_dτII_elements(
+#     v::CompositeRheology{T,N}, 
+#     TauII::_T, 
+#     args
+# ) where {T, N, _T}
+#     quote
+#         out = zero(_T)
+#         Base.Cartesian.@nexprs $N i ->
+#             out += dεII_dτII_nonparallel(v.elements[i], TauII, args)
+#     end
+# end
+
+@inline function dεII_dτII_elements(
     v::CompositeRheology{T,N}, 
     TauII::_T, 
     args
 ) where {T, N, _T}
-    quote
-        out = zero(_T)
-        Base.Cartesian.@nexprs $N i ->
-            out += dεII_dτII_nonparallel(v.elements[i], TauII, args)
-    end
+    out = SVector{N,_T}(dεII_dτII_nonparallel(v.elements[i], TauII, args) for i in 1:N)
+    return sum(out)
 end
+
 dεII_dτII_nonparallel(v::Any, TauII, args) =   dεII_dτII(v, TauII, args)
 dεII_dτII_nonparallel(v::Parallel, TauII::_T, args) where _T =    zero(_T)
 
@@ -640,21 +696,27 @@ end
 
 Computes the derivative of `τII` vs `εII` for parallel elements   
 """
-@generated function dτII_dεII(
+# @generated function dτII_dεII(
+#     v::Parallel{T,N}, 
+#     TauII::_T, 
+#     args
+# ) where {T,N, _T}
+#     quote
+#         dτII_dεII_der = zero($_T)
+#         Base.Cartesian.@nexprs $N i ->
+#             dτII_dεII_der += dτII_dεII(v.elements[i], TauII, args)
+#         return dτII_dεII_der
+#     end
+# end
+function dτII_dεII(
     v::Parallel{T,N}, 
     TauII::_T, 
     args
 ) where {T,N, _T}
-    quote
-        dτII_dεII_der = zero($_T)
-        Base.Cartesian.@nexprs $N i ->
-            dτII_dεII_der += dτII_dεII(v.elements[i], TauII, args)
-        return dτII_dεII_der
-    end
+    dτII_dεII_der = SVector{N,_T}(dτII_dεII(v.elements[i], TauII, args) for i in 1:N)
+    return sum(dτII_dεII_der)
 end
-
 dτII_dεII_AD(v::Union{Parallel,CompositeRheology}, εII, args) = ForwardDiff.derivative(x->compute_τII_AD(v, x, args), εII)
-
 
 
 # HARMONIC AVERAGES (mostly used as initial guesses)
@@ -664,17 +726,26 @@ dτII_dεII_AD(v::Union{Parallel,CompositeRheology}, εII, args) = ForwardDiff.d
 
 Harmonic average of stress of all elements in a `CompositeRheology` structure.
 """
-@inline @generated function compute_τII_harmonic(
+# @inline @generated function compute_τII_harmonic(
+#     v::CompositeRheology{T,N}, 
+#     EpsII::_T, 
+#     args
+# ) where {T,N, _T}
+#     quote
+#         out = zero(_T)
+#         Base.Cartesian.@nexprs $N i ->
+#             out += 1/compute_τII(v.elements[i], EpsII, args)
+#         out = 1/out
+#     end
+# end
+
+@inline function compute_τII_harmonic(
     v::CompositeRheology{T,N}, 
     EpsII::_T, 
     args
 ) where {T,N, _T}
-    quote
-        out = zero(_T)
-        Base.Cartesian.@nexprs $N i ->
-            out += 1/compute_τII(v.elements[i], EpsII, args)
-        out = 1/out
-    end
+    out = SVector{N,_T}( inv(compute_τII(v.elements[i], EpsII, args)) for i in 1:N)
+    return inv(sum(out))
 end
 
 
@@ -683,17 +754,26 @@ end
 
 Computes the harmonic average of strainrate for a parallel element
 """
-@generated function compute_εII_harmonic(
+# @generated function compute_εII_harmonic(
+#     v::Union{Parallel{T,N},CompositeRheology{T,N}}, 
+#     TauII::_T, 
+#     args
+# ) where {T,N, _T}
+#     quote
+#         out = zero($_T)
+#         Base.Cartesian.@nexprs $N i ->
+#             out += inv(compute_εII(v.elements[i], TauII, args))
+#         return inv(out)
+#     end
+# end
+
+function compute_εII_harmonic(
     v::Union{Parallel{T,N},CompositeRheology{T,N}}, 
     TauII::_T, 
     args
 ) where {T,N, _T}
-    quote
-        out = zero($_T)
-        Base.Cartesian.@nexprs $N i ->
-            out += inv(compute_εII(v.elements[i], TauII, args))
-        return inv(out)
-    end
+    out = SVector{N,_T}(inv(compute_εII(v.elements[i], TauII, args)) for i in 1:N)
+    return inv(sum(out))
 end
 
 @generated  function compute_εII_harmonic_i(
@@ -714,17 +794,27 @@ end
 
 Sums the strainrate of all non-parallel elements in a `CompositeRheology` structure. Mostly internally used for jacobian iterations.
 """
-@inline @generated function compute_εII_elements(
+# @inline @generated function compute_εII_elements(
+#     v::CompositeRheology{T,N}, 
+#     TauII::_T, 
+#     args;
+#     verbose=false
+# ) where {T,N, _T}
+#     quote
+#         out = zero(_T)
+#         Base.Cartesian.@nexprs $N i ->
+#             out += _compute_εII_nonparallel(v.elements[i], TauII, args)
+#     end
+# end
+
+function compute_εII_elements(
     v::CompositeRheology{T,N}, 
     TauII::_T, 
     args;
     verbose=false
 ) where {T,N, _T}
-    quote
-        out = zero(_T)
-        Base.Cartesian.@nexprs $N i ->
-            out += _compute_εII_nonparallel(v.elements[i], TauII, args)
-    end
+    out = SVector{N,_T}(_compute_εII_nonparallel(v.elements[i], TauII, args) for i in 1:N)
+    return sum(out)
 end
 
 _compute_εII_nonparallel(v, TauII::_T, args) where {_T} = compute_εII(v, TauII, args)
