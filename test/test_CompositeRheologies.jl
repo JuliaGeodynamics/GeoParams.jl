@@ -15,6 +15,7 @@ using GeoParams, ForwardDiff
     p1 = Parallel(v3,v4)                # linear elements
     p2 = Parallel(v1,v2)                # includes nonlinear viscous elements
     p3 = Parallel(v1,v2,v3)             # includes nonlinear viscous elements
+    p4 = Parallel(pl1, LinearViscous(η=1e22Pa*s)) # viscoplastic regularisation
 
     # CompositeRheologies
     c1 = CompositeRheology(v1,v2)
@@ -24,6 +25,8 @@ using GeoParams, ForwardDiff
     c5 = CompositeRheology(v1,v4, p2)   # with nonlinear || element
     c6 = CompositeRheology(v1,v4,p1,p2) # with 2 || elements
     c7 = CompositeRheology(v3,e1,pl1)   # with plastic element
+    c7 = CompositeRheology(v3,e1,p4)   # with plastic element
+    
     p4 = Parallel(c3,v3)                # Parallel element with composite one as well    
 
     # Check that we can construct complicated rheological elements
