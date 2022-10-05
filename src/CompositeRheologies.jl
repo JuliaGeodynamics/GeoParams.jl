@@ -153,7 +153,8 @@ isplastic(v) = false;
 isplastic(v::Parallel{T, N,  0, is_plastic}) where {T,N,is_plastic} = false;
 isplastic(v::Parallel{T, N,  Nplast, is_plastic}) where {T,N,Nplast,is_plastic} = true;
 isplastic(v::AbstractPlasticity) = true;
-
+isplastic(v::CompositeRheology{T, N,  Npar, is_parallel, Nplast, is_plastic}) where {T, N,  Npar, is_parallel, Nplast, is_plastic} = true;
+isplastic(v::CompositeRheology{T, N,  Npar, is_parallel, 0, is_plastic}) where {T, N,  Npar, is_parallel, is_plastic} = false;
 
 
 
