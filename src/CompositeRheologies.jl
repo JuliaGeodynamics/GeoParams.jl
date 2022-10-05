@@ -3,7 +3,7 @@ using StaticArrays
 using Setfield
 
 export CompositeRheology, Parallel, create_rheology_string, print_rheology_matrix
-export time_τII_0D, compute_εII_harmonic, compute_τII_AD
+export time_τII_0D, compute_εII_harmonic, compute_τII_AD, isplastic
 export computeViscosity_εII, computeViscosity_εII_AD
 import Base.getindex
 
@@ -17,10 +17,9 @@ struct Parallel{T, N,  Nplast, is_plastic} <: AbstractConstitutiveLaw{T}
 end
 
 function Parallel(v::T) where T
-    v = tuple(v...)
-    
+    v           = tuple(v...)
     n           =   length(v)
-    
+
     # Is one of the elements a plastic element?
     id_plastic  =   findall(isa.(v, AbstractPlasticity))
     Nplast      =   length(id_plastic)
@@ -70,12 +69,13 @@ function CompositeRheology(v::T) where {T}
 
     # determine if we have plastic elements 
     # NOTE: we likely have to expand this to include parallel elements that have plasticity
-    id_plastic  =   findall(isa.(v, AbstractPlasticity))
-    Nplast      =   length(id_plastic)
     plastic     =   zeros(Bool,n)
-    if Nplast>0
-        plastic[id_plastic] .= 1
+    for i=1:n
+        if isplastic(v[i])
+            plastic[i] = 1
+        end
     end
+    Nplast      =   sum(plastic)
     is_plastic  =   SVector{n,Bool}(plastic)
     
     # determine if we have elements that have volumetric deformation
@@ -124,8 +124,6 @@ end
 # Print info in the REPL
 include("CompositeRheologies_print.jl")
 
-
-
 function show(io::IO, g::AbstractComposite)
     #println(io,"Composite rheology:   ")
 
@@ -146,6 +144,20 @@ function show(io::IO, a::Parallel)
 
     return nothing
 end
+
+
+# HELPER FUNCTIONS
+
+# determine if an element is plastic or not
+isplastic(v) = false;
+isplastic(v::Parallel{T, N,  0, is_plastic}) where {T,N,is_plastic} = false;
+isplastic(v::Parallel{T, N,  Nplast, is_plastic}) where {T,N,Nplast,is_plastic} = true;
+isplastic(v::AbstractPlasticity) = true;
+
+
+
+
+
 
 # COMPUTE STRAIN RATE
 """
@@ -271,6 +283,9 @@ end
         τII[I] = compute_τII(v, εII[I], (; zip(keys(args), getindex.(values(args), I))...))
     end
 end
+
+
+
 
 # VISCOSITY COMPUTATIONS
 
