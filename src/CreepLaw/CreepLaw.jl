@@ -152,7 +152,8 @@ end
 """
     ArrheniusType()
     
-Defines an Arrhenius-type linear viscous creeplaw 
+Defines an Arrhenius-type linear viscosity in the form of 
+    \\eta = \\eta_{0} * \\exp\\left(\\frac{E_{\\eta}{T+T_{0}}-\\frac{E_{\\eta}{T_{\\eta}+T_{0}}\\right) 
 
 The (isotropic) linear viscous rheology is given by  
 ```math  
@@ -176,16 +177,14 @@ end
 ArrheniusType(args...) = ArrheniusType(convert(GeoUnit, args[1]), convert(GeoUnit, args[2]),convert(GeoUnit, args[3]),convert(GeoUnit, args[4]))
 
 function param_info(a::ArrheniusType) # info about the struct
-    return MaterialParamsInfo(; Equation=L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}")
+    return MaterialParamsInfo(; Equation=L"\tau_{ij} = 2 \eta_0 exp( E_η/(T + T_O) + E_η/(T_η + T_O))  \dot{\varepsilon}_{ij}")
 end
 # Calculation routines for linear viscous rheologies
 function compute_εII(
     a::ArrheniusType, TauII::_T; T=one(precision(a)), kwargs...
     ) where {_T}
         @unpack_val η_0, E_η, T_O, T_η = a
-
         η = η_0 * exp( E_η / (T + T_O) - E_η / (T_η + T_O))
-
         return (TauII / η) * 0.5
 end
 
@@ -207,12 +206,14 @@ function compute_εII!(
     return nothing
 end
 
-function dεII_dτII(a::ArrheniusType, TauII; kwargs...)
-    @unpack_val η_0, E_η, T_O, T_η  = a
-
-    η = η_0 * exp( E_η / (T + T_O) - E_η / (T_η + T_O))
-
-    return 0.5* inv(η)
+function dεII_dτII(a::ArrheniusType, 
+    TauII::_T; 
+    T=one(precision(a)),
+    kwargs...
+    ) where {_T}
+        @unpack_val η_0, E_η, T_O, T_η  = a
+        η = η_0 * exp( E_η / (T + T_O) - E_η / (T_η + T_O))
+        return 0.5* inv(η)
 end
 
 """
@@ -221,7 +222,8 @@ end
 Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor 
 """
 function compute_τII(a::ArrheniusType, EpsII::_T; 
-    T=one(precision(a)), kwargs...
+    T=one(precision(a)), 
+    kwargs...
     ) where {_T}
         @unpack_val η_0, E_η, T_O, T_η  = a
 
@@ -244,11 +246,15 @@ function compute_τII!(
     return nothing
 end
 
-function dτII_dεII(a::ArrheniusType, EpsII; kwargs...)
-    @unpack_val η_0, E_η, T_O, T_η  = a
-    η = η_0 * exp( E_η / (T + T_O) - E_η / (T_η + T_O))
+function dτII_dεII(a::ArrheniusType, 
+    EpsII::_T; 
+    T=one(precision(a)), 
+    kwargs...
+    ) where {_T}
+        @unpack_val η_0, E_η, T_O, T_η  = a
+        η = η_0 * exp( E_η / (T + T_O) - E_η / (T_η + T_O))
 
-    return 2 * η
+        return 2 * η
 end
 
 # Print info 

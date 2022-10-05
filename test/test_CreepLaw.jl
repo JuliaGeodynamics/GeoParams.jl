@@ -63,4 +63,28 @@ using GeoParams
     @test x2.ε0.val == 0.001                                 # powerlaw 
     # -------------------------------------------------------------------
 
+    # ArrheniusType rheology --------------------------------------------
+    x3  =   ArrheniusType()
+    # For a given temperature
+    T   =   1.0
+    # and stress 
+    τ1  =   1.0
+    compute_εII(x3,τ1;T,args)
+    # and strain rate
+    ε1  =   0.5
+    compute_τII(x3,ε1;T,args)
+    # using a vector input ------------------
+    T2      =   [1.0;0.9;0.8]
+    # and stress 
+    ε21     =   [0.0;0.0;0.0]
+    τ21     =   [1.0;0.8;0.9]    
+    compute_εII!(ε21,x3,τ21;T2,args)
+    # and strain rate
+    τ22     =   [0.0;0.0;0.0]
+    ε22     =   [0.5;1.0;0.2]
+    compute_τII!(τ22,x3,ε22;T2,args)
+    # derivatives
+    dεII_dτII(x3,τ22)
+    dτII_dεII(x3,ε21)
+
 end
