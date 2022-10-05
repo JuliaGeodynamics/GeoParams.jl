@@ -53,11 +53,7 @@ DruckerPrager(args...) = DruckerPrager(convert.(GeoUnit, args)...)
 
 function isvolumetric(s::DruckerPrager)
     @unpack_val Ψ = s
-    if Ψ == 0
-        return false
-    else
-        return true
-    end
+    return Ψ == 0 ? false : true
 end
 
 function param_info(s::DruckerPrager) # info about the struct

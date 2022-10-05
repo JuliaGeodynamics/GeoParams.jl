@@ -81,11 +81,7 @@ end
 
 function isvolumetric(a::ConstantElasticity)
     @unpack_val ν = a
-    if ν == 0.5
-        return false
-    else
-        return true
-    end
+    return ν == 0.5 ? false : true
 end
 
 # Calculation routines
