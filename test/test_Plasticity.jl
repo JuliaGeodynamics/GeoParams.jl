@@ -11,6 +11,7 @@ using GeoParams
     info = param_info(p)
     @test isbits(p)
     @test NumValue(p.ϕ) == 30
+    @test isvolumetric(p) == false
 
     p_nd = p
     p_nd = nondimensionalize(p_nd, CharUnits_GEO)
