@@ -35,17 +35,12 @@ end
     Structure that holds composite rheologies (e.g., visco-elasto-viscoplastic),
     but also indicates (in the name) whether we need to perform non-linear iterations.
 """
-struct CompositeRheology{T, N, Npar, is_parallel, τ_it, P_it, λ_it} <: AbstractComposite
+struct CompositeRheology{T, N, Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol} <: AbstractComposite
     elements::T
 end
 
 # Defines tuples of composite rheologies, while also checking which type of iterations need to be performed
 function CompositeRheology(v::T) where {T}
-
-    # These three variables will indicate later which type of non-linear iterations are required
-    τ_it = false;
-    P_it = false;
-    λ_it = false;
 
     # determine if we have parallel elements & if yes: where
     id_parallel =   findall(isa.(v, Parallel));
@@ -55,10 +50,26 @@ function CompositeRheology(v::T) where {T}
     if Npar>0
         par[id_parallel] .= 1
     end
-    is_parallel =    SVector{n,Bool}(par)
+    is_parallel =   SVector{n,Bool}(par)
 
+    # determine if we have plastic elements 
+    # NOTE: we likely have to expand this to include parallel elements that have plasticity
+    id_plastic  =   findall(isa.(v, AbstractPlasticity))
+    Nplast      =   length(id_plastic)
+    plastic     =   zeros(Bool,n)
+    if Nplast>0
+        plastic[id_plastic] .= 1
+    end
+    is_plastic  =   SVector{n,Bool}(plastic)
+    
+    # determine if we have elements that have volumetric deformation
+    # TO BE EXPANDED 
+    Nvol        =   0;
+    volumetric  =   zeros(Bool,n)
+    is_vol      =   SVector{n,Bool}(volumetric)
+     
 
-    return CompositeRheology{typeof(v), n, Npar, is_parallel, τ_it, P_it, λ_it}(v)
+    return CompositeRheology{typeof(v), n, Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol}(v)
 end
 CompositeRheology(a,b...) = CompositeRheology( (a,b...,)) 
 CompositeRheology(a::Parallel) = CompositeRheology( (a,)) 
@@ -534,8 +545,86 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     return τII
 end
 
+
+# NOTE: we should dispatch on plasticity flag in CompositeRheology struct
+"""
+    local_iterations_εII(c::CompositeRheology{T,N}, εII_total, args)
+
+This performs nonlinear Newton iterations for `τII` with given `εII_total` for cases where we have both serial and parallel elements.
+"""
+@inline function local_iterations_εII_plastic(
+    c::CompositeRheology{T,N,Npar,is_par}, 
+    εII_total::_T, 
+    args; 
+    tol=1e-6, 
+    verbose=false, τ_initial=nothing, ε_init=nothing
+) where {T,N,Npar,is_par, _T}
+    
+    # Compute residual
+    n = Npar+1;             # total size of unknowns
+    x = zero(εII_total)
+    
+    # Initial guess of stress & strainrate
+    if isnothing(τ_initial)
+        τ_initial = compute_τII_harmonic(c, εII_total, args)
+    end
+
+    verbose && println("τII guess = $τ_initial")
+
+    x    = @MVector ones(_T, n)
+    x   .= εII_total
+    x[1] = τ_initial
+
+    j = 1;
+    for i=1:N
+        if is_par[i]
+            j += 1
+            x[j] = compute_εII_harmonic_i(c, τ_initial, args,i)   
+        end
+    end
+    
+    r = @MVector zeros(_T,n);
+    J = @MMatrix zeros(_T, Npar+1,Npar+1)   # size depends on # of parallel objects (+ likely plastic elements)
+    
+    # Local Iterations
+    iter = 0
+    ϵ = 2 * tol
+    τII_prev = τ_initial
+    τ_parallel = _T(0)
+    max_iter = 1000
+    while (ϵ > tol) && (iter < max_iter)
+        iter += 1
+
+        τ   = x[1]
+  
+        # Update part of jacobian related to serial elements
+        r[1]   = εII_total - compute_εII_elements(c,τ,args)
+        J[1,1] = dεII_dτII_elements(c,x[1],args);
+        
+        # Add contributions from || elements
+        fill_J_parallel!(J, r, x, c, τ, args)
+      
+        # update solution
+        dx  = J\r 
+        x .+= dx   
+
+        ϵ    = sum(abs.(dx)./(abs.(x)))
+        verbose && println(" iter $(iter) $ϵ")
+    end
+    verbose && println("---")
+    
+    if (iter == max_iter)
+        error("iterations did not converge")
+    end
+
+    τII = x[1]
+
+    return τII
+end
+
+
 # Helper function
-@generated function fill_J_parallel!(J, r, x, c::CompositeRheology{T, N, Npar, is_par, τ_it, P_it, λ_it}, τ, args) where {T, N, Npar, is_par, τ_it, P_it, λ_it}
+@generated function fill_J_parallel!(J, r, x, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plast}, τ, args) where {T, N, Npar, is_par, Nplast, is_plast}
     quote
         Base.@_inline_meta
         j = 1
