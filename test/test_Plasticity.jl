@@ -158,8 +158,8 @@ using GeoParams
     F_old = compute_yieldfunction(c_pl.elements[3],args)
 
     # 
-    τ1 =  local_iterations_εII(c_pl,εII, args, verbose=true, max_iter=10)
-    τ2 =   compute_τII(c_pl,εII, args, verbose=true)
+    τ1 =  local_iterations_εII(c_pl,εII, args, verbose=false, max_iter=10)
+    τ2 =   compute_τII(c_pl,εII, args, verbose=false)
     @test τ1 == τ2
     
     args = merge(args, (τII=τ1,))
