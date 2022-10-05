@@ -194,8 +194,8 @@ using GeoParams, ForwardDiff
     args = (;)
     pl2  =  DruckerPrager(C=η, ϕ=0)                # plasticity
 
-    c_lin=  CompositeRheology((LinearViscous(η=η*Pa*s),ConstantElasticity(G=G*Pa))) # linear VE
-    t_vec, τ_vec    =   time_τII_0D(c_lin, εII, args; t=(0.,t_M*4), nt=100, verbose=false)
+    c_lin =  CompositeRheology(LinearViscous(η=η*Pa*s),ConstantElasticity(G=G*Pa)) # linear VE
+    t_vec, τ_vec    =   time_τII_0D(c_lin, εII, args; t=(0.,t_M*4), nt=100, verbose=true)
     analytical_sol  =   @. 2.0*η*(1.0-exp(-t_vec/t_M))*εII
     err             =   sum(abs.(τ_vec .- analytical_sol))/length(t_vec)
     @test err ≈ 0.0900844333898483
@@ -208,6 +208,10 @@ using GeoParams, ForwardDiff
         F[i] = compute_yieldfunction(pl2,args)
     end
 
+    # VEP calculation
+    c_pl  =  CompositeRheology(LinearViscous(η=η*Pa*s),ConstantElasticity(G=G*Pa),pl2) # linear VEP
+    t_vec, τ_vec    =   time_τII_0D(c_pl, εII, args; t=(0.,t_M*4), nt=100, verbose=false)
+    
 
     # test non-dimensionalisation
     CharDim = GEO_units()

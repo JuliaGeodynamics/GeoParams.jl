@@ -228,7 +228,7 @@ end
 compute_τII_AD(v::Parallel{T,N}, εII::_T, args; tol=1e-6, verbose=false) where {T,N,_T} = compute_τII(v, εII, args) 
 
 # make it work for dimensional cases
-@generated  function compute_τII(
+@generated  function compute_τII_P(
     v::Parallel{T,N}, 
     εII::Quantity, 
     args;
@@ -561,16 +561,17 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
 @inline function local_iterations_εII(
     c::CompositeRheology{T,N,
                         0,is_par,               # no ||
-                        Nplast, is_plastic,     # with plastic
+                        Nplast, is_plastic,     # with plasticity
                         0,is_vol},              # no volumetric
     εII_total::_T, 
     args; 
     tol = 1e-6, 
     verbose = false, 
     τ_initial = nothing, 
-    ε_init = nothing
+    ε_init = nothing,
+    max_iter = 1000
 ) where {T,N,is_par, _T, Nplast, is_plastic, is_vol}
-    
+
     # Compute residual
     n = Nplast+1;             # total size of unknowns
     x = zero(εII_total)
@@ -607,13 +608,12 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     ϵ = 2 * tol
     τII_prev = τ_initial
     τ_parallel = _T(0)
-    max_iter = 1000
-     while (ϵ > tol) && (iter < max_iter)
+    while (ϵ > tol) && (iter < max_iter)
         iter += 1
 
         τ   = x[1]
 
-        args = merge(args, (τII=τ,))
+        args = merge(args, (τII=τ,))    # update
 
         # Update part of jacobian related to serial, non-plastic, elements
         r[1]   = εII_total - compute_εII_elements(c,τ,args)     
@@ -621,11 +621,11 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         
         # Add contributions from plastic elements
         fill_J_plastic!(J, r, x, c, τ, args)
-    
+        
         # update solution
         dx  = J\r 
         x .+= dx   
-
+        
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
         verbose && println(" iter $(iter) $ϵ")
     end
@@ -684,8 +684,8 @@ end
     if F>0
         J[1,j] = ∂Q∂τII(element, τ)     
         J[j,1] = ∂F∂τII(element, τ)    
-       # J[j,j] = -F
-        r[j] =  -F
+        J[j,j] = 0 #-F
+        r[j] =  -F #-  λ̇*F
     else
         J[j,j] = 1.0
         r[2] = 0.0
