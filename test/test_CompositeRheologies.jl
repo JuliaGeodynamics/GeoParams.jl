@@ -1,5 +1,7 @@
-using Test
-using GeoParams, ForwardDiff
+using Test, ForwardDiff
+@time using GeoParams 
+# [precompilation] 15.648579 seconds (6.75 M allocations: 441.514 MiB, 0.65% gc time, 7.59% compilation time: 70% of which was recompilation)
+# 3.429574 seconds (6.12 M allocations: 409.542 MiB, 4.73% gc time, 36.54% compilation time: 74% of which was recompilation)
 
 @testset "CompositeRheologies" begin
 
