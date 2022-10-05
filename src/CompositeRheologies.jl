@@ -12,13 +12,25 @@ import GeoParams.Units: nondimensionalize, dimensionalize
 """
     Put rheological elements in parallel 
 """
-struct Parallel{T, N} <: AbstractConstitutiveLaw{T}
+struct Parallel{T, N,  Nplast, is_plastic} <: AbstractConstitutiveLaw{T}
     elements::T
 end
 
 function Parallel(v::T) where T
     v = tuple(v...)
-    return Parallel{typeof(v),length(v)}(v)
+    
+    n           =   length(v)
+    
+    # Is one of the elements a plastic element?
+    id_plastic  =   findall(isa.(v, AbstractPlasticity))
+    Nplast      =   length(id_plastic)
+    plastic     =   zeros(Bool,n)
+    if Nplast>0
+        plastic[id_plastic] .= 1
+    end
+    is_plastic  =   SVector{n,Bool}(plastic)
+
+    return Parallel{typeof(v),n, Nplast, is_plastic}(v)
 end
 Parallel(a,b...) = Parallel((a,b...,)) 
 
@@ -380,7 +392,7 @@ Performs local iterations versus stress for a given strain rate using AD
         #= 
             Newton scheme -> τII = τII - f(τII)/dfdτII. 
             Therefore,
-                f(τII) = εII - strain_rate_circuit(v, τII, args) = 0
+                f(τII) = εII - compute_εII(v, τII, args) = 0
                 dfdτII = - dεII_dτII(v, τII, args) 
                 τII -= f / dfdτII
         =#
@@ -482,7 +494,11 @@ end
 This performs nonlinear Newton iterations for `τII` with given `εII_total` for cases where we have both serial and parallel elements.
 """
 @inline function local_iterations_εII(
-    c::CompositeRheology{T,N,Npar,is_par,0,is_plastic,0,is_vol}, 
+    c::CompositeRheology{T,
+    N,
+    Npar,is_par,
+    0,is_plastic,
+    0,is_vol}, 
     εII_total::_T, 
     args; 
     tol=1e-6, 
@@ -552,7 +568,6 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
 end
 
 
-# NOTE: we should dispatch on plasticity flag in CompositeRheology struct
 """
     local_iterations_εII(c::CompositeRheology{T,N}, εII_total, args)
 
