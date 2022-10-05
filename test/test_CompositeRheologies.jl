@@ -9,7 +9,7 @@ using GeoParams, ForwardDiff
     v3 = LinearViscous()
     v4 = LinearViscous(η=1e22Pa*s)
     e1 = ConstantElasticity()           # elasticity
-    pl1= DruckerPrager()                # plasticity
+    pl1= DruckerPrager(C=1e6)                # plasticity
 
     # Parallel elements
     p1 = Parallel(v3,v4)                # linear elements
@@ -24,8 +24,9 @@ using GeoParams, ForwardDiff
     c4 = CompositeRheology(v1,v3, p1)   # with linear || element
     c5 = CompositeRheology(v1,v4, p2)   # with nonlinear || element
     c6 = CompositeRheology(v1,v4,p1,p2) # with 2 || elements
-    c7 = CompositeRheology(v3,e1,pl1)   # with plastic element
-    c7 = CompositeRheology(v3,e1,p4)   # with plastic element
+    c7 = CompositeRheology(v4,e1)       # viscoelastic with linear viscosity
+    c8 = CompositeRheology(v4,e1,pl1)   # with plastic element
+    c9 = CompositeRheology(v4,e1,p4)    # with visco-plastic parallel element
     
     p4 = Parallel(c3,v3)                # Parallel element with composite one as well    
 
@@ -173,11 +174,17 @@ using GeoParams, ForwardDiff
     end
 
     # Composite cases with plasticity 
-    for v in [c7]
+    εII =  3e-15
+    args = merge(args, (τII_old=7e5,P=0.0, dt=8e8))
+    for v in [c8]
         #τ_AD = compute_τII_AD(v, εII, args)     
-        τ    = compute_τII(v, εII, args)   
-        args = merge(args, (τII=τ,P=1e9))  
-        F    = compute_yieldfunction(v.elements[3],args)
+        τ    = compute_τII(v, εII, args, verbose=true)   
+
+        args_old = merge(args, (τII=args.τII_old,))  
+        Fold = compute_yieldfunction(c8.elements[3],args_old)
+
+        args = merge(args, (τII=τ,))  
+        F    = compute_yieldfunction(c8.elements[3],args)
 
         # Check that F==0    
         F = 0.
