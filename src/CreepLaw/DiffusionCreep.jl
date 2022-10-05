@@ -232,7 +232,7 @@ end
 
 @inline function dεII_dτII(
     a::DiffusionCreep, TauII::Quantity; T=1K, P=0Pa, f=1NoUnits, d=1m, kwargs...
-) where {_T}
+)
     @unpack_units r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
