@@ -903,4 +903,126 @@ function PlotStressTime_0D(
     end
 
     return fig, ax, Tau_II_MPa, t_vec
+
+
+"""
+	fig = PlotDeformationMap(Phase::Tuple;    σ_lower::Quantity=1e-2MPa,
+                                              σ_upper::Quantity=1e8MPa,
+                                              T_lower::Quantity=10C,
+                                              T_upper::Quantity=910C,
+                                              d::Quantity=1mm,
+                                              f::Quantity=1MPa,
+                                              P::Quantity=0MPa,
+                                              fig=nothing,
+                                              filename=nothing,
+                                              res=(1200, 900),)
+
+Creates a Deformation mechanism map (temperature vs. stress) for the given creep law with strain rate contours.
+"""
+function PlotDeformationMap(
+    Phase::Tuple;
+    σ_lower::Quantity=1e-2MPa,
+    σ_upper::Quantity=1e8MPa,
+    T_lower::Quantity=10C,
+    T_upper::Quantity=910C,
+    d::Quantity=1mm,
+    f::Quantity=1MPa,
+    P::Quantity=0MPa,
+    fig=nothing,
+    filename=nothing,
+    res=(1200, 900),
+)
+
+    # Parameters
+    σ = 10.0 .^ [log10(σ_lower.val) + x * ((log10(σ_upper.val) - log10(σ_lower.val)) / 90) for x = 1 : 90] .* MPa
+    T = [x * ((T_upper.val - T_lower.val) / 89) + T_lower.val for x = 0 : 89].*C
+
+    CharDim = GEO_units(
+        length=1000km,
+        temperature=1000C,
+        stress=10MPa,
+        viscosity=1e20Pas)
+    strainrate_disl = zeros(length(T), length(σ))
+    strainrate_diff = zeros(length(T), length(σ))
+    combined_strainrates_D = zeros(length(T), length(σ))
+    log_strainrates_D = zeros(length(T), length(σ))
+    whichcreep = zeros(length(T), length(σ))                    # 1 = DislocationCreep, 2 = DiffusionCreep
+
+    # Nondimensionalizing
+    σ_ND = nondimensionalize(σ, CharDim)
+    T_ND = nondimensionalize(T, CharDim)
+    d_ND = nondimensionalize(d, CharDim)
+    f_ND = nondimensionalize(f, CharDim)
+    P_ND = nondimensionalize(P, CharDim)
+
+    # Computations
+    # Goes through all stress
+    for i = 1:length(σ)
+        # Goes through all temperatures
+        for j = 1:length(T)
+            # Going through all Diffusion and Dislocation CreepLaws in given the Phase
+            for l = 1:length(Phase[1].CreepLaws)
+                if typeof(Phase[1].CreepLaws[l]) <: DislocationCreep
+                    strainrate_disl[j, i] = compute_εII(Phase[1].CreepLaws[l], σ_ND[i], (;T=T_ND[j], f=f_ND, P=P_ND))
+                elseif typeof(Phase[1].CreepLaws[l]) <: DiffusionCreep
+                    strainrate_diff[j, i] = compute_εII(Phase[1].CreepLaws[l], σ_ND[i], (;T=T_ND[j], d=d_ND, f=f_ND, P=P_ND))
+                end
+                if strainrate_disl[j, i] >= strainrate_diff[j, i]
+                    whichcreep[j, i] = 1
+                    a = GeoUnit(strainrate_disl[j, i], s^-1, false)
+                    dim = dimensionalize(a, CharDim)
+                    combined_strainrates_D[j, i] = dim
+                    log_strainrates_D[j, i] = log10(dim.val)
+                else
+                    whichcreep[j, i] = 2
+                    a = GeoUnit(strainrate_diff[j, i], s^-1, false)
+                    dim = dimensionalize(a, CharDim)
+                    combined_strainrates_D[j, i] = dim
+                    log_strainrates_D[j, i] = log10(dim.val)
+                end
+            end
+        end
+    end
+
+    # Adjust arrays for plotting (get rid of units)
+    log_σ = [log10(σ[i].val) for i = 1:length(σ)]
+    T_plot = [T[i].val for i = 1:length(T)]
+
+    # Plotting with Makie
+    if isnothing(fig)
+        fig = Figure(; fontsize=25, resolution=res)
+    end
+    
+    ax = Axis(
+        fig[1,1],
+        title="Deformation mechanism map",
+        xlabel="T [°C]",
+        ylabel="log10(σ) [MPa]",
+        )
+    c1 = contourf!(
+        ax,
+        T_plot, log_σ,
+        log_strainrates_D,
+        levels=11
+        )
+    contour!(
+        T_plot,
+        log_σ,
+        log_strainrates_D,
+        color=:black,
+        levels=20
+        )
+    Colorbar(
+        fig[1,2], 
+        c1,
+        label="log10(εII) [1/s]"
+        )
+
+    if !isnothing(filename)
+        save(filename, fig)
+    else
+        display(fig)
+    end
+
+    return fig
 end
