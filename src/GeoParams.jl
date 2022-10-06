@@ -200,7 +200,10 @@ export dεII_dτII,
     Parallel,
     create_rheology_string, print_rheology_matrix,
     time_τII_0D,
-    compute_εII_harmonic, compute_τII_AD
+    compute_εII_harmonic, compute_τII_AD,
+    compute_p_τII, 
+    local_iterations_εvol, 
+    compute_p_harmonic
     
     
 

@@ -3,7 +3,7 @@ using StaticArrays
 using Setfield
 
 export CompositeRheology, Parallel, create_rheology_string, print_rheology_matrix
-export time_τII_0D, compute_εII_harmonic, compute_τII_AD
+export time_τII_0D, compute_εII_harmonic, compute_τII_AD, compute_p_τII, local_iterations_εvol, compute_p_harmonic 
 export computeViscosity_εII, computeViscosity_εII_AD
 import Base.getindex
 
@@ -45,6 +45,7 @@ end
 
 # Defines tuples of composite rheologies, while also checking which type of iterations need to be performed
 function CompositeRheology(v::T) where {T}
+    @show typeof(v)
 
     # determine if we have parallel elements & if yes: where
     id_parallel =   findall(isa.(v, Parallel));
@@ -68,9 +69,15 @@ function CompositeRheology(v::T) where {T}
     
     # determine if we have elements that have volumetric deformation
     # TO BE EXPANDED 
-    Nvol        =   0;
-    volumetric  =   zeros(Bool,n)
-    is_vol      =   SVector{n,Bool}(volumetric)
+
+    #Base.Cartesian.@nexprs $N i -> isvolumetric(v.elements[i])
+    id_vol      =   findall(isvolumetric(v))
+    Nvol        =   length(id_vol)
+    volum       =   zeros(Bool,n)
+    if Nvol>0
+        volum[id_vol] .= 1
+    end
+    is_vol      =   SVector{n,Bool}(volum)
      
     return CompositeRheology{typeof(v), n, Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol}(v)
 end
@@ -135,6 +142,10 @@ function show(io::IO, a::Parallel)
     return nothing
 end
 
+function isvolumetric(c::NTuple{N,Any}) where {N}
+    ntuple(i-> isvolumetric(c[i]), Val(N))
+end
+
 # COMPUTE STRAIN RATE
 """
     compute_εII(v::Parallel{T,N}, τII, args; tol=1e-6, verbose=false, n=1)
@@ -194,11 +205,85 @@ function compute_εII_AD(v::Parallel, τII, args; tol=1e-6, verbose=false)
     return local_iterations_τII_AD(v, τII, args; tol=tol, verbose=verbose)
 end
 
-# COMPUTE DEVIATORIC STRESS
+#COMPUTE VOLUMETRIC STRAIN-RATE
+
+"""
+    compute_εvol(v::CompositeRheology{T,N}, p, args; tol=1e-6, verbose=false, n=1)
+
+Computing `εvol` as a function of `p` for a composite element is the sum of the individual contributions
+"""
+@generated  function compute_εvol(
+    v::CompositeRheology{T,N}, 
+    p::_T, 
+    args; 
+    tol=1e-6, verbose=false
+) where {T,_T,N}
+    quote
+        Base.@_inline_meta
+        εvol = zero(_T)
+        Base.Cartesian.@nexprs $N i ->
+            if isvolumetric(v.elements[i])
+                εvol += compute_εvol(v.elements[i], p, args)
+            end    
+        return εvol
+    end
+end
+
+
+@generated  function compute_εvol(
+    v::CompositeRheology{T,N}, 
+    p::Quantity, 
+    args; 
+    tol=1e-6, verbose=false
+) where {T,_T,N}
+    quote
+        Base.@_inline_meta
+        εvol = 0/s
+        Base.Cartesian.@nexprs $N i ->
+            if isvolumetric(v.elements[i])
+                εvol += compute_εvol(v.elements[i], p, args)
+            end
+        return εvol
+    end
+end
+
+# COMPUTE DEVIATORIC STRESS AND PRESSURE
 function compute_τII(v::CompositeRheology{T,N,0}, εII, args; tol=1e-6, verbose=false) where {T,N}
     # A composite rheology case with no parallel element; iterations for τII
     τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose)
     return τII
+end
+
+function compute_p_τII(
+    v::CompositeRheology{T,N,
+                    0,is_parallel,
+                    0,is_plastic,
+                    Nvol,is_vol}, 
+        εII::_T, 
+        εvol,
+        args; 
+        tol=1e-6, verbose=false
+    ) where {T, N, _T, is_parallel, is_plastic, Nvol, is_vol}
+    # A composite rheology case with no parallel element; iterations for τII
+    τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose)
+    p   = local_iterations_εvol(v, εvol, args; tol=tol, verbose=verbose)
+    return p,τII
+end
+
+function compute_p_τII(
+    v::CompositeRheology{T,N,
+                    0,is_parallel,
+                    0,is_plastic,
+                    0,is_vol}, 
+        εII::_T, 
+        εvol,
+        args;
+        tol=1e-6, verbose=false
+    ) where {T, N, _T, is_parallel, is_plastic, Nvol, is_vol}
+    # A composite rheology case with no parallel element; iterations for τII
+    τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose)
+    p = any(keys(args) .=== :p_old) ? args.p_old : 0
+    return p,τII
 end
 
 """
@@ -228,7 +313,7 @@ end
 compute_τII_AD(v::Parallel{T,N}, εII::_T, args; tol=1e-6, verbose=false) where {T,N,_T} = compute_τII(v, εII, args) 
 
 # make it work for dimensional cases
-@generated  function compute_τII_P(
+@generated  function compute_τII(
     v::Parallel{T,N}, 
     εII::Quantity, 
     args;
@@ -312,14 +397,51 @@ Performs local iterations versus stress for a given total strain rate for a give
 """
 
 @inline function local_iterations_εII(
-    v::CompositeRheology{T,N,
-                    0,is_parallel,
-                    0,is_plastic,
-                    0,is_vol}, 
+    v::CompositeRheology{T,N,0,is_par,0,is_plastic,0,is_vol}, 
     εII::_T, 
     args; 
     tol=1e-6, verbose=false
-) where {N, T, _T, is_parallel, is_plastic, is_vol}
+) where {T,N,_T,is_par, is_plastic, is_vol}
+
+    # Initial guess
+    τII = compute_τII_harmonic(v, εII, args)
+    
+    verbose && println("initial τII = $τII")
+
+    # Local Iterations
+    iter = 0
+    ϵ = 2.0 * tol
+    τII_prev = τII
+    while ϵ > tol
+        iter += 1
+        #= 
+            Newton scheme -> τII = τII - f(τII)/dfdτII. 
+            Therefore,
+                f(τII) = εII - strain_rate_circuit(v, τII, args) = 0
+                dfdτII = - dεII_dτII(v, τII, args) 
+                τII -= f / dfdτII
+        =#
+        τII = muladd(εII - compute_εII(v, τII, args), inv(dεII_dτII(v, τII, args)), τII)
+
+        ϵ = abs(τII - τII_prev) * inv(abs(τII))
+        τII_prev = τII
+
+        verbose && println(" iter $(iter) $ϵ")
+    end
+    if verbose
+        println("final τII = $τII")
+        println("---")
+    end
+
+    return τII
+end
+
+@inline function local_iterations_εII(
+    v::CompositeRheology{T,N,0,is_par,0,is_plastic, Nvol,is_vol}, 
+    εII::_T, 
+    args; 
+    tol=1e-6, verbose=false
+) where {T,N,_T,is_par, is_plastic,Nvol, is_vol}
 
     # Initial guess
     τII = compute_τII_harmonic(v, εII, args)
@@ -433,6 +555,54 @@ end
     end
 
     return εII
+end
+
+"""
+    p =local_iterations_εvol(v::CompositeRheology{T,N,0}, εvol::_T, args; tol=1e-6, verbose=false)
+
+Performs local iterations versus pressure for a given total volumetric strain rate for a given `CompositeRheology` element that does NOT include `Parallel` elements
+"""
+@inline function local_iterations_εvol(
+    v::CompositeRheology{T,N,
+                    0,is_parallel,
+                    0,is_plastic,
+                    Nvol,is_vol}, 
+    εvol::_T, 
+    args; 
+    tol=1e-6, verbose=false
+) where {N, T, _T, is_parallel, is_plastic, Nvol, is_vol}
+
+    # Initial guess
+    p = compute_p_harmonic(v, εvol, args)
+    
+    verbose && println("initial p = $p")
+
+    # Local Iterations
+    iter = 0
+    ϵ = 2.0 * tol
+    p_prev = p
+    while ϵ > tol
+        iter += 1
+        #= 
+            Newton scheme -> τII = τII - f(τII)/dfdτII. 
+            Therefore,
+                f(τII) = εII - strain_rate_circuit(v, τII, args) = 0
+                dfdτII = - dεII_dτII(v, τII, args) 
+                τII -= f / dfdτII
+        =#
+        p = muladd(εvol - compute_εvol(v, p, args), inv(dεvol_dp(v, p, args)), p)
+
+        ϵ = abs(p - p_prev) * inv(abs(p))
+        p_prev = p
+
+        verbose && println(" iter $(iter) $ϵ")
+    end
+    if verbose
+        println("final p = $p")
+        println("---")
+    end
+
+    return p
 end
 
 
@@ -746,7 +916,19 @@ dεII_dτII_nonparallel(v::Any, TauII, args) =   dεII_dτII(v, TauII, args)
 dεII_dτII_nonparallel(v::Parallel, TauII::_T, args) where _T =    zero(_T)
 dεII_dτII_nonparallel(v::AbstractPlasticity, TauII::_T, args) where _T =    zero(_T)
 
-
+@generated function dεvol_dp(
+    v::CompositeRheology{T,N}, p::_T, args
+) where {T,_T,N}
+    quote
+        Base.@_inline_meta
+        val = zero(_T)
+        Base.Cartesian.@nexprs $N i -> 
+        if isvolumetric(v.elements[i])
+            val += dεvol_dp(v.elements[i], p, args)
+        end
+        return val
+    end
+end
 
 """
     dτII_dεII(v::CompositeRheology, TauII::_T, args)
@@ -819,6 +1001,28 @@ end
 _compute_τII_harmonic_element(v, EpsII, args) = inv(compute_τII(v, EpsII, args))
 _compute_τII_harmonic_element(v::AbstractPlasticity, EpsII, args) = 0.0
 
+"""
+    compute_p_harmonic(v::CompositeRheology, EpsVol, args)
+
+Harmonic average of stress of all elements in a `CompositeRheology` structure that are not || elements
+"""
+@inline @generated function compute_p_harmonic(
+    v::CompositeRheology{T,N}, 
+    EpsVol::_T, 
+    args
+) where {T,N, _T}
+    quote
+        out = zero(_T)
+        Base.Cartesian.@nexprs $N i ->
+            if isvolumetric(v.elements[i])
+                out += _compute_p_harmonic_element(v.elements[i], EpsVol, args)
+            end
+        out = 1/out
+    end
+end
+
+_compute_p_harmonic_element(v, EpsVol, args) = inv(compute_p(v, EpsVol, args))
+_compute_p_harmonic_element(v::AbstractPlasticity, EpsVol, args) = 0.0
 
 """
     compute_εII_harmonic(v::Parallel{T,N}, TauII::_T, args)
