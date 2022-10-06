@@ -158,7 +158,7 @@ using GeoParams
     F_old = compute_yieldfunction(c_pl.elements[3],args)
 
     # 
-    τ1 =  local_iterations_εII(c_pl,εII, args, verbose=false, max_iter=10)
+    τ1 =  local_iterations_εII(c_pl,εII, args, verbose=false, max_iter=10, full_output=false)
     τ2 =   compute_τII(c_pl,εII, args, verbose=false)
     @test τ1 == τ2
     
@@ -167,5 +167,5 @@ using GeoParams
     @test abs(F_check) < 1e-12
 
 
-    
+
 end

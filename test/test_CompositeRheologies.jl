@@ -129,8 +129,10 @@ using GeoParams, ForwardDiff
     end
 
     # CompositeRheology cases with parallel elements
-    εII =  3e-15
-    for v in [c4 c5 c6]    
+    εII =  1e-15
+#    for v in [c4 c5 c6]    
+    for v in [c4 c5]    
+
 
         τ_AD = compute_τII_AD(v, εII, args)     # using AD
        
@@ -176,8 +178,9 @@ using GeoParams, ForwardDiff
     # Composite cases with plasticity 
     εII =  3e-15
     args = merge(args, (τII_old=7e5,P=0.0, dt=8e8))
-    for v in [c8]
+#    for v in [c8]
         #τ_AD = compute_τII_AD(v, εII, args)     
+        v = c8
         τ    = compute_τII(v, εII, args, verbose=true)   
 
         args_old = merge(args, (τII=args.τII_old,))  
@@ -195,7 +198,27 @@ using GeoParams, ForwardDiff
         end
         @test F ≈ 0.0
 
-    end
+ #   end
+
+
+        v = c9
+        τ    = compute_τII(v, εII, args, verbose=true)   
+
+        #args_old = merge(args, (τII=args.τII_old,))  
+        #Fold = compute_yieldfunction(v[3],args_old)
+
+        #args = merge(args, (τII=τ,))  
+        #F    = compute_yieldfunction(v[3],args)
+
+        # Check that F==0    
+        F = 0.
+        for i=1:length(v.elements)
+            if isa(v.elements,AbstractPlasticity)
+                F  += compute_τII(v.elements[i], args)  
+            end
+        end
+        @test F ≈ 0.0
+
 
     # 0D rheology tests
     η,G  =  10, 1;

@@ -368,7 +368,6 @@ Performs local iterations versus stress for a given total strain rate for a give
 
         ϵ = abs(τII - τII_prev) * inv(abs(τII))
         τII_prev = τII
-
         verbose && println(" iter $(iter) $ϵ")
     end
     if verbose
@@ -413,6 +412,7 @@ Performs local iterations versus stress for a given strain rate using AD
 
         ϵ = abs(τII - τII_prev) * inv(abs(τII))
         τII_prev = τII
+        @show τII
 
         verbose && println(" iter $(iter) $ϵ")
     end
@@ -515,7 +515,8 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     εII_total::_T, 
     args; 
     tol=1e-6, 
-    verbose=false, τ_initial=nothing, ε_init=nothing
+    verbose=false, full_output=false,
+    τ_initial=nothing, ε_init=nothing
 ) where {T,N,Npar,is_par, _T, is_plastic, is_vol}
     
     # Compute residual
@@ -565,7 +566,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         # update solution
         dx  = J\r 
         x .+= dx   
-
+        
         ϵ    = sum(abs.(dx)./(abs.(x)))
         verbose && println(" iter $(iter) $ϵ")
     end
@@ -575,9 +576,12 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         error("iterations did not converge")
     end
 
-    τII = x[1]
-
-    return τII
+    if full_output
+        return (x...,)
+    else
+        τII = x[1]
+        return τII
+    end
 end
 
 
@@ -588,19 +592,20 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
 """
 @inline function local_iterations_εII(
     c::CompositeRheology{T,N,
-                        Npar,is_par,               # no ||
+                        Npar,is_par,            # no ||
                         Nplast, is_plastic,     # with plasticity
                         0,is_vol},              # no volumetric
     εII_total::_T, 
     args; 
     tol = 1e-6, 
-    verbose = false, 
+    verbose = false, full_output=false,
     τ_initial = nothing, 
     ε_init = nothing,
     max_iter = 1000
 ) where {T,N,Npar,is_par, _T, Nplast, is_plastic, is_vol}
 
-    println("plastic")
+    #println("plastic")
+  
     # Compute residual
     n = 1 + Nplast + Npar;             # total size of unknowns
     x = zero(εII_total)
@@ -612,8 +617,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     
     verbose && println("τII guess = $τ_initial")
     
-    x    = @MVector ones(_T, n)
-    x   .= εII_total
+    x    = @MVector zeros(_T, n)
     x[1] = τ_initial
 
     j = 1;
@@ -664,7 +668,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         # update solution
         dx  = J\r 
         x .+= dx   
-        @show J x r 
+        #@show J x r dx
         
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
         verbose && println(" iter $(iter) $ϵ F=$(r[2])")
@@ -676,7 +680,12 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
 
     τII = x[1]
 
-    return τII
+    if full_output
+        return (x...,)
+    else
+        τII = x[1]
+        return τII
+    end
 end
 
 
@@ -734,7 +743,6 @@ end
     ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
     r[1]   -=  ε̇_pl                     #  add plastic strainrate
 
-    @show ∂Q∂τII(element, τ_pl), j, F 
     if F>0
         J[1,j] = ∂Q∂τII(element, τ_pl)     
         
