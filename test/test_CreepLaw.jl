@@ -65,33 +65,38 @@ using GeoParams
     # -------------------------------------------------------------------
 
     # ArrheniusType rheology --------------------------------------------
-    x3  =   ArrheniusType()
+    args    =   (;)
+    x3      =   ArrheniusType()
     # For a given temperature
-    T   =   1.0
+    T       =   1.0
     # and stress 
-    τ1  =   1.0
-    eps = compute_εII(x3,τ1;T,args)
-    @test eps ≈ 0.5
+    τ1      =   1.0
+    #eps     =   compute_εII(x3,τ1;T,args)
+    #@test   eps ≈ 0.5
 
-    args = (T=T,)
-    eps = compute_εII(x3,τ1,args)
+    args    =   (T=T,)
+    eps     =   compute_εII(x3,τ1,args)
     @test eps ≈ 0.5
 
     # and strain rate
-    ε1  =   0.5
-    compute_τII(x3,ε1;T,args)
-    # using a vector input ------------------
+    ε1      =   0.5
+    tau     =   compute_τII(x3,ε1,args)
+    @test tau ≈ 1.0
+    # using a vector input ------------------    
     T2      =   [1.0;0.9;0.8]
     # and stress 
     ε21     =   [0.0;0.0;0.0]
     τ21     =   [1.0;0.8;0.9]    
-    compute_εII!(ε21,x3,τ21;T2,args)
+    args    =   (T=T2,)
+    compute_εII!(ε21,x3,τ21,args)
     # and strain rate
     τ22     =   [0.0;0.0;0.0]
     ε22     =   [0.5;1.0;0.2]
-    compute_τII!(τ22,x3,ε22;T2,args)
+    compute_τII!(τ22,x3,ε22,args)
     # derivatives
-    dεII_dτII(x3,τ22)
-    dτII_dεII(x3,ε21)
+    sol1    =   dεII_dτII(x3,τ22)
+    @test sol1 ≈ 0.5    
+    sol2    =   dτII_dεII(x3,ε21)
+    @test sol2 ≈ 2.0
 
 end
