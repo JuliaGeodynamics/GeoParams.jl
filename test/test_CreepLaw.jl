@@ -6,6 +6,7 @@ using GeoParams
     #Make sure structs are isbits
     x = LinearViscous()
     @test isbits(x)
+    @test isvolumetric(x) == false
 
     x = PowerlawViscous()
     @test isbits(x)

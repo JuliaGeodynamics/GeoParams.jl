@@ -9,7 +9,15 @@ using GeoParams, ForwardDiff
     v3 = LinearViscous()
     v4 = LinearViscous(η=1e22Pa*s)
     e1 = ConstantElasticity()           # elasticity
+    e2 = SetConstantElasticity(; G=5e10, Kb=1e11)
     pl1= DruckerPrager(C=1e6)                # plasticity
+    pl2= DruckerPrager(; Ψ=10)                # plasticity
+
+    test_vec = [v1 v2 v3 v4 e1 e2 pl1 pl2]
+    sol      = [false false false false false true false true]
+    for i = 1:length(sol)
+        @test isvolumetric(test_vec[i]) == sol[i]
+    end
 
     # Parallel elements
     p1 = Parallel(v3,v4)                # linear elements
