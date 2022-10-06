@@ -207,7 +207,7 @@ end
 end
 
 # As we don't do iterations, this is the same
-function compute_εII_AD(v::CompositeRheology, τII, args; tol=1e-6, verbose=false)
+function compute_εII_AD(v::CompositeRheology, τII, args; tol=1e-6, verbose=false, full_output=false)
     return  compute_εII(v, τII, args)
 end
 
@@ -217,9 +217,9 @@ function compute_εII_AD(v::Parallel, τII, args; tol=1e-6, verbose=false)
 end
 
 # COMPUTE DEVIATORIC STRESS
-function compute_τII(v::CompositeRheology{T,N,0}, εII, args; tol=1e-6, verbose=false) where {T,N}
+function compute_τII(v::CompositeRheology{T,N,0}, εII, args; tol=1e-6, verbose=false,full_output=false) where {T,N}
     # A composite rheology case with no parallel element; iterations for τII
-    τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose)
+    τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose, full_output=full_output)
     return τII
 end
 
@@ -227,9 +227,9 @@ end
     τII = compute_τII(v::CompositeRheology{T,N}, εII, args; tol=1e-6, verbose=false)
     
 """
-function compute_τII(v::CompositeRheology, εII, args; tol=1e-6, verbose=false, τ_initial=nothing, ε_init=nothing)
+function compute_τII(v::CompositeRheology, εII, args; tol=1e-6, verbose=false, τ_initial=nothing, ε_init=nothing,full_output=false)
     # A composite rheology case with parallel elements
-    τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose, τ_initial=τ_initial, ε_init=ε_init)
+    τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose, τ_initial=τ_initial, ε_init=ε_init, full_output=full_output)
     return τII
 end
 
@@ -275,7 +275,7 @@ end
     v::NTuple{N,AbstractConstitutiveLaw},
     εII::AbstractArray{T,nDim},
     args;
-    tol=1e-6, verbose=false
+    tol=1e-6, verbose=false,full_output=false
     ) where {T,nDim,N}
     for I in eachindex(τII)
         τII[I] = compute_τII(v, εII[I], (; zip(keys(args), getindex.(values(args), I))...))
@@ -343,7 +343,7 @@ Performs local iterations versus stress for a given total strain rate for a give
                     0,is_vol}, 
     εII::_T, 
     args; 
-    tol=1e-6, verbose=false
+    tol=1e-6, verbose=false, full_output=false
 ) where {N, T, _T, is_parallel, is_plastic, is_vol}
 
     # Initial guess
@@ -375,7 +375,10 @@ Performs local iterations versus stress for a given total strain rate for a give
         println("---")
     end
 
+
+    
     return τII
+    
 end
 
 """
@@ -387,7 +390,7 @@ Performs local iterations versus stress for a given strain rate using AD
     v::CompositeRheology{T,N}, 
     εII::_T, 
     args; 
-    tol=1e-6, verbose=false
+    tol=1e-6, verbose=false, full_output=false
 ) where {N, T, _T}
 
     # Initial guess
@@ -412,8 +415,7 @@ Performs local iterations versus stress for a given strain rate using AD
 
         ϵ = abs(τII - τII_prev) * inv(abs(τII))
         τII_prev = τII
-        @show τII
-
+        
         verbose && println(" iter $(iter) $ϵ")
     end
     if verbose
@@ -425,7 +427,7 @@ Performs local iterations versus stress for a given strain rate using AD
 end
 
 @inline function local_iterations_τII_AD(
-    v::Parallel, τII::T, args; tol=1e-6, verbose=false
+    v::Parallel, τII::T, args; tol=1e-6, verbose=false, full_output=false
 ) where {T}
     # Initial guess
     εII = compute_εII_harmonic(v, τII, args)
@@ -469,7 +471,7 @@ Performs local iterations versus strain rate for a given stress
     τII::_T, 
     args; 
     tol=1e-6, 
-    verbose=false, n=1
+    verbose=false, n=1, full_output=false
 ) where {T,N, _T}
 
     # Initial guess (harmonic average of ε of each element)

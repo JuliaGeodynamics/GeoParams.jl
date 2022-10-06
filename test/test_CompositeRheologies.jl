@@ -181,7 +181,7 @@ using GeoParams, ForwardDiff
 #    for v in [c8]
         #τ_AD = compute_τII_AD(v, εII, args)     
         v = c8
-        τ    = compute_τII(v, εII, args, verbose=true)   
+        τ    = compute_τII(v, εII, args, verbose=false)   
 
         args_old = merge(args, (τII=args.τII_old,))  
         Fold = compute_yieldfunction(c8.elements[3],args_old)
@@ -200,25 +200,57 @@ using GeoParams, ForwardDiff
 
  #   end
 
+    # cases with plastic elements that have parallel elements as well    
+    for v in [c8, c9]
+        
+        v_pl = v[3];
+        if isa(v_pl,Parallel)
+            v_pl = v_pl[1]
+            τ,λ,τ_plastic = compute_τII(v, εII, args, verbose=false, full_output=true)   
+        else
+            τ,λ           = compute_τII(v, εII, args, verbose=false, full_output=true)  
+            τ_plastic = τ
+        end
 
-        v = c9
-        τ    = compute_τII(v, εII, args, verbose=true)   
-
-        #args_old = merge(args, (τII=args.τII_old,))  
-        #Fold = compute_yieldfunction(v[3],args_old)
-
-        #args = merge(args, (τII=τ,))  
-        #F    = compute_yieldfunction(v[3],args)
-
-        # Check that F==0    
-        F = 0.
+        # check that the sum of strainrates is correct 
+        ε_check = 0.0
         for i=1:length(v.elements)
-            if isa(v.elements,AbstractPlasticity)
-                F  += compute_τII(v.elements[i], args)  
+            if !isplastic(v[i])
+                ε_check += compute_εII(v[i],τ,args)
+            else
+                # plastic element
+                ε_check += ∂Q∂τII(v_pl, τ_plastic)*λ
             end
         end
-        @test F ≈ 0.0
+        @test ε_check ≈ εII
 
+        # in case we have a || plastic element, check that the sum(τ_parallel)==τ
+        if  isa(v[3],Parallel)
+            τ_check = 0.0
+            v_par = v[3]
+            ε_pl = ∂Q∂τII(v_pl, τ_plastic)*λ        # plastic stranrate of || element
+            for i=1:length(v_par.elements)
+                if !isplastic(v_par[i])
+    
+                    τ_check += compute_τII(v_par[i],ε_pl,args)
+                else
+                    # plastic element
+                    τ_check += τ_plastic
+                end
+            end
+            @test τ_check ≈ τ       # sum of stress of || element should be the same as 
+
+        end
+
+        args_new = merge(args, (τII=τ_plastic,))
+        
+        F = compute_yieldfunction(v_pl,args_new)
+        @test abs(F)<1e-10
+
+
+    end
+      
+       
 
     # 0D rheology tests
     η,G  =  10, 1;
