@@ -9,7 +9,7 @@
 
 abstract type AbstractCreepLaw{T} <: AbstractConstitutiveLaw{T} end
 
-export LinearViscous, PowerlawViscous, CorrectionFactor, AbstractCreepLaw, ArrheniusType
+export isvolumetric, LinearViscous, PowerlawViscous, CorrectionFactor, AbstractCreepLaw, ArrheniusType
 
 # This computes correction factors to go from experimental data to tensor format
 function CorrectionFactor(a::AbstractCreepLaw{_T}) where {_T}
@@ -28,6 +28,8 @@ function CorrectionFactor(a::AbstractCreepLaw{_T}) where {_T}
         return FT, FE
     end
 end
+
+isvolumetric(a::AbstractCreepLaw) = false
 
 function CorrectionFactor(a::_T) where {_T}
     if a == AxialCompression

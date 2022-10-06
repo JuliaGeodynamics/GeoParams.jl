@@ -56,7 +56,7 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         Name="",
         n=1.0NoUnits,
         r=0.0NoUnits,
-        A=1.5MPa^(-n ) / s,
+        A=1.5MPa^(-n) / s,
         E=476.0kJ / mol,
         V=6e-6m^3 / mol,
         R=8.3145J / mol / K,
@@ -65,7 +65,6 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
 
         # Rheology name
         Name = String(join(Name))
-        
         N = length(Name)
         NameU = NTuple{N,Char}(collect.(Name))
         
@@ -102,21 +101,29 @@ end
     Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 """
 
-function Transform_DislocationCreep(name)
-    p = DislocationCreep_info[name][1]
+function Transform_DislocationCreep(name; kwargs)
+    p_in = DislocationCreep_info[name][1]
 
+    # Take optional arguments 
+    v_kwargs = values(kwargs)
+    val = GeoUnit.(values(v_kwargs))
+    
+    args = (Name=p_in.Name, n=p_in.n, r=p_in.r, A=p_in.A, E=p_in.E, V=p_in.V, Apparatus=p_in.Apparatus)
+    p = merge(args, NamedTuple{keys(v_kwargs)}(val))
+    
     Name = String(collect(p.Name))
     n = Value(p.n)
-    A_Pa = uconvert(Pa^(-NumValue(p.n) - NumValue(p.r)) / s, Value(p.A))
+    A_Pa = uconvert(Pa^(-NumValue(p.n)) / s, Value(p.A))
     E_J = uconvert(J / mol, Value(p.E))
     V_m3 = uconvert(m^3 / mol, Value(p.V))
 
     Apparatus = p.Apparatus
     r = Value(p.r)
 
-    return DislocationCreep(;
-        Name=Name, n=n, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus
-    )
+    # args from database
+    args = (Name=Name, n=n, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+    
+    return DislocationCreep(; args...)
 end
 
 """
@@ -239,7 +246,6 @@ Computes the stress for a Dislocation creep law given a certain strain rate
            fastpow(f, -r / n) *
            exp((E + P * V) / (n * R * T)) / FT
 end
-
 
 @inline function compute_τII(
     a::DislocationCreep, EpsII::Quantity; P=0Pa, T=1K, f=1NoUnits, args...
