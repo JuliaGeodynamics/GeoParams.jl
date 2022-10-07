@@ -3,7 +3,7 @@
 Most parameters have physical units (100km, 9.81 ms⁻²). Yet, within numerical solvers it is usually not a good idea to compute with the actual SI units as they (at least in geosciences) tend to result in very large/small numbers, which can cause in roundoff errors. 
 Therefore, we usually convert the dimensional units into non-dimensional ones befeore starting computations. The results can than be converted back to more convenient units for us when we generate the output (plots, for example).
 
-This requires a wauy to store the dimensions of a parameter, but also, once they are made nondimensional, the original units (otherwise we can't convert them back to dimensional values).
+This requires a way to store the dimensions of a parameter, but also, once they are made nondimensional, the original units (otherwise we can't convert them back to dimensional values).
 
 For that reason, we use the `GeoUnit` structure, defined as 
 ```julia
