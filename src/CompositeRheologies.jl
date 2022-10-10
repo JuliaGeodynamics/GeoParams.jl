@@ -728,10 +728,9 @@ end
 @inline _fill_J_plastic!(J, r, x, element, args, ::False, is_par, j) = j
 
 @inline function _fill_J_plastic!(J, r, x, element, args, ::True, is_par, j)
-    # !is_plast && return j
 
-    j       += 1
-    λ̇       = x[j]
+    j += 1
+    λ̇  = x[j]
 
     function __fill_J_plastic!(::True, j, args)
         τ       = x[1]
