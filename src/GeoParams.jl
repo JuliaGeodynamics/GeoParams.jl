@@ -266,12 +266,17 @@ export compute_meltfraction,
     SmoothMelting
 
 # Add plotting routines - only activated if the "Plots.jl" package is loaded 
-function __init__()
-    @require GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a" begin
-        print("Adding plotting routines of GeoParams through GLMakie")
-        @eval include("./Plotting.jl")
-    end
-end
+#function __init__()
+  #  @require GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a" begin
+   #     print("Adding plotting routines of GeoParams through GLMakie")
+   #     @eval include("./Plotting.jl")
+    #end
+#end
+
+using GLMakie
+include("./Plotting.jl")
+include("./Plotting/StrengthEnvelope.jl")
+
 
 #Set functions aliases using @use
 include("aliases.jl")

@@ -7,6 +7,7 @@ version = "0.3.18"
 BibTeX = "7b0aa2c9-049f-5cec-894a-2b6b781bb25e"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 KernelDensitySJ = "49dc5b4e-6806-4504-b2cc-a81764e7a38b"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
@@ -24,6 +25,7 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
 BibTeX = "0.1"
+ForwardDiff = "0.10"
 Interpolations = "0.13, 0.14"
 KernelDensitySJ = "0.2"
 LaTeXStrings = "1.2"
@@ -37,7 +39,6 @@ StatsBase = "0.1 - 0.32, 0.33"
 UnPack = "1.0"
 Unidecode = "1.0"
 Unitful = "1.0"
-ForwardDiff = "0.10"
 julia = "1.7"
 
 [extras]
