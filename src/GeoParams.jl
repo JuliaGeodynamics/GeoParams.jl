@@ -279,6 +279,11 @@ function __init__()
         print("Adding plotting routines of GeoParams through GLMakie")
         @eval include("./Plotting.jl")
     end
+
+    @require CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba" begin
+        print("Adding CUDA")
+        Base.eval(MaterialParameters.ConstitutiveRelationships, Meta.parse("using CUDA"))
+    end
 end
 
 #Set functions aliases using @use
