@@ -276,7 +276,7 @@ export compute_meltfraction,
 # Add plotting routines - only activated if the "Plots.jl" package is loaded 
 function __init__()
     @require GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a" begin
-        print("Adding plotting routines of GeoParams through GLMakie")
+        print("Adding plotting routines of GeoParams through GLMakie \n")
         @eval include("Plotting/Plotting.jl")
         @eval include("Plotting/StrengthEnvelope.jl")
     end
