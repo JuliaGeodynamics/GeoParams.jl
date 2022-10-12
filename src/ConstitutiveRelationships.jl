@@ -63,25 +63,41 @@ export param_info,
     AxialCompression, SimpleShear, Invariant 
 
 # add methods programatically 
-for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity)
+for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :ArrheniusType)
     @eval begin
         compute_εII(a::$(myType), TauII, args) = compute_εII(a, TauII; args...)
+        compute_εvol(a::$(myType), P, args) = compute_εvol(a, P; args...)
+        
         function compute_εII!(
             ε::AbstractArray{_T,N}, s::$(myType){_T}, TauII::AbstractArray{_T,N}, args
         ) where {_T,N}
             return compute_εII!(ε, s, TauII; args...)
         end
 
+        function compute_εvol!(
+            ε::AbstractArray{_T,N}, s::$(myType){_T}, P::AbstractArray{_T,N}, args
+        ) where {_T,N}
+            return compute_εvol!(ε, s, P; args...)
+        end
+
         compute_τII(a::$(myType), EpsII, args) = compute_τII(a, EpsII; args...)
+        compute_p(a::$(myType), EpsVol, args) = compute_p(a, EpsVol; args...)
         function compute_τII!(
             τ::AbstractArray{_T,N}, s::$(myType){_T}, EpsII::AbstractArray{_T,N}, args
         ) where {_T,N}
             return compute_τII!(τ, s, EpsII; args...)
         end
+        function compute_p!(
+            p::AbstractArray{_T,N}, s::$(myType){_T}, EpsVol::AbstractArray{_T,N}, args
+        ) where {_T,N}
+            return compute_p!(p, s, EpsVol; args...)
+        end
 
         # Expand derivatives
         dτII_dεII(a::$(myType), EpsII, args) = dτII_dεII(a, EpsII; args...)
         dεII_dτII(a::$(myType), TauII, args) = dεII_dτII(a, TauII; args...)
+        dp_dεvol(a::$(myType), EpsVol, args) = dp_dεvol(a, EpsVol; args...)
+        dεvol_dp(a::$(myType), P, args) = dεvol_dp(a, P; args...)
         
     
     end

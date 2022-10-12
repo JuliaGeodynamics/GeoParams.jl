@@ -136,21 +136,29 @@ export dεII_dτII,
     dτII_dεII,
     dεII_dτII_AD,
     dτII_dεII_AD,
+    dεvol_dp,
+    dp_dεvol,
     compute_εII!,
     compute_εII,
     compute_εII_AD,
     compute_τII!,
     compute_τII,
     compute_τII_AD,
+    compute_εvol!,
+    compute_εvol,
+    compute_p!,
+    compute_p,
     strain_rate_circuit,
     stress_circuit,
     CorrectionFactor,
     remove_tensor_correction,
+    isvolumetric,
 
     #       Viscous creep laws
     AbstractCreepLaw,
     LinearViscous,
     PowerlawViscous,
+    ArrheniusType,
     DislocationCreep,
     SetDislocationCreep,
     DiffusionCreep,
@@ -266,17 +274,17 @@ export compute_meltfraction,
     SmoothMelting
 
 # Add plotting routines - only activated if the "Plots.jl" package is loaded 
-#function __init__()
-  #  @require GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a" begin
-   #     print("Adding plotting routines of GeoParams through GLMakie")
-   #     @eval include("./Plotting.jl")
-    #end
-#end
+function __init__()
+    @require GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a" begin
+        print("Adding plotting routines of GeoParams through GLMakie")
+        @eval include("./Plotting.jl")
+    end
 
-using GLMakie
-include("./Plotting.jl")
-include("./Plotting/StrengthEnvelope.jl")
-
+    @require CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba" begin
+        print("Adding CUDA")
+        Base.eval(MaterialParameters.ConstitutiveRelationships, Meta.parse("using CUDA"))
+    end
+end
 
 #Set functions aliases using @use
 include("aliases.jl")
