@@ -314,6 +314,6 @@ function StrengthEnvelope(MatParam::NTuple{N, AbstractMaterialParamsStruct}, Thi
     if mode == "normal"
         return fig
     elseif mode == "test"
-        return τ_plot
+        return τ_plot.val
     end
 end
