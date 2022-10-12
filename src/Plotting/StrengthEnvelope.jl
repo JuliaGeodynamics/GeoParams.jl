@@ -1,5 +1,6 @@
 using Parameters
 using SpecialFunctions: erfc
+using .GLMakie
 
 export StrengthEnvelope, ConstantTemp, LinearTemp, HalfspaceCoolingTemp, GP_Compute_ThermalStructure, LithPres
 
@@ -167,8 +168,19 @@ Parameters:
 - MatParam:  a tuple of materials (including the following properties: Phase, Density, CreepLaws, Plasticity)
 - Thickness: a vector listing the thicknesses of the respective layers (should carry units)
 - TempType:  the type of temperature profile (LinearTemp=default, HalfspaceCoolingTemp, ConstantTemp)
+
+# Example:
+```julia-repl
+julia> using GLMakie
+julia> MatParam = (SetMaterialParams(Name="UC", Phase=1, Density=ConstantDensity(ρ=2700kg/m^3), CreepLaws = SetDislocationCreep("Wet Quartzite | Ueda et al. (2008)"), Plasticity = DruckerPrager(ϕ=30.0, C=10MPa)),
+                   SetMaterialParams(Name="MC", Phase=2, Density=Density=ConstantDensity(ρ=2900kg/m^3), CreepLaws = SetDislocationCreep("Plagioclase An75 | Ji and Zhao (1993)"), Plasticity = DruckerPrager(ϕ=20.0, C=10MPa)),
+                   SetMaterialParams(Name="LC", Phase=3, Density=PT_Density(ρ0=2900kg/m^3, α=3e-5/K, β=1e-10/Pa), CreepLaws = SetDislocationCreep("Maryland strong diabase | Mackwell et al. (1998)"), Plasticity = DruckerPrager(ϕ=30.0, C=10MPa)));
+julia> Thickness = [15,10,15]*km;
+
+julia> StrengthEnvelope(MatParam, Thickness, LinearTemp())
+```
 """
-function StrengthEnvelope(MatParam::NTuple{N, AbstractMaterialParamsStruct}, Thickness::Vector{U}, TempType::AbstractThermalStructure=LinearTemp(), showFig::Bool=true) where {N, U}
+function StrengthEnvelope(MatParam::NTuple{N, AbstractMaterialParamsStruct}, Thickness::Vector{U}, TempType::AbstractThermalStructure=LinearTemp(), mode::String="normal") where {N, U}
 
     # hardcoded input
     nz        = 101
@@ -299,9 +311,9 @@ function StrengthEnvelope(MatParam::NTuple{N, AbstractMaterialParamsStruct}, Thi
     xlims!(ax2, (0, 1350))
 
     # show figure
-    if showFig
+    if mode == "normal"
         return fig
-    else
-        return
+    elseif mode == "test"
+        return τ_plot
     end
 end

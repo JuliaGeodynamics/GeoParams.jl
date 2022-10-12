@@ -277,7 +277,8 @@ export compute_meltfraction,
 function __init__()
     @require GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a" begin
         print("Adding plotting routines of GeoParams through GLMakie")
-        @eval include("./Plotting.jl")
+        @eval include("Plotting/Plotting.jl")
+        @eval include("Plotting/StrengthEnvelope.jl")
     end
 
     @require CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba" begin
