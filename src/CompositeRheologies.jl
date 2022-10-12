@@ -1,7 +1,6 @@
 # This holds structures and computational routines for compositional rheologies
 using StaticArrays
 using Setfield
-using Requires
 
 export CompositeRheology, Parallel, create_rheology_string, print_rheology_matrix
 export time_τII_0D, compute_εII_harmonic, compute_τII_AD
@@ -10,7 +9,7 @@ import Base.getindex
 
 import GeoParams.Units: nondimensionalize, dimensionalize
 
-@inline isCUDA() =  isdefined(@__MODULE__,:CUDA) 
+@inline isCUDA() =  isdefined(Main,:CUDA) 
 
 """
     Put rheological elements in parallel 
