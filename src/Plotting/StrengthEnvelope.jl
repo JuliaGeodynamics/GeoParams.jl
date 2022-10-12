@@ -160,7 +160,7 @@ function redimensionalize(x, nz, param_dim::Unitful.FreeUnits, CharDim)
 end
 
 """
-    StrengthEnvelopeSliders(MatParam, Thickness, TempType=LinearTemp()::AbstractThermalStructure)
+    StrengthEnvelopeSliders(MatParam, Thickness, TempType=LinearTemp()::AbstractThermalStructure; nz::Int64)
 
 Creates a GUI that plots a 1D strength envelope. In the GUI, temperature profile and strain rate can be adjusted. The Drucker-Prager plasticity uses lithostatic pressure.
 
@@ -168,6 +168,7 @@ Parameters:
 - MatParam:  a tuple of materials (including the following properties: Phase, Density, CreepLaws, Plasticity)
 - Thickness: a vector listing the thicknesses of the respective layers (should carry units)
 - TempType:  the type of temperature profile (LinearTemp=default, HalfspaceCoolingTemp, ConstantTemp)
+- nz:        optional argument controlling the number of points along the profile (default = 101)
 
 # Example:
 ```julia-repl
@@ -180,10 +181,9 @@ julia> Thickness = [15,10,15]*km;
 julia> StrengthEnvelope(MatParam, Thickness, LinearTemp())
 ```
 """
-function StrengthEnvelope(MatParam::NTuple{N, AbstractMaterialParamsStruct}, Thickness::Vector{U}, TempType::AbstractThermalStructure=LinearTemp(), mode::String="normal") where {N, U}
+function StrengthEnvelope(MatParam::NTuple{N, AbstractMaterialParamsStruct}, Thickness::Vector{U}, TempType::AbstractThermalStructure=LinearTemp(), mode::String="normal"; nz::Int64=101) where {N, U}
 
     # hardcoded input
-    nz        = 101
     g         = 9.81m/s^2
 
     # nondimensionalize
