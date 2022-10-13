@@ -720,64 +720,125 @@ end
     quote
         Base.@_inline_meta
         j = 1
-        Base.Cartesian.@nexprs $N i -> j = @inbounds _fill_J_plastic!(J, r, x, c.elements[i], args, $(is_plastic)[i], $(is_par)[i], j)
+        Base.Cartesian.@nexprs $N i -> j = @inbounds _fill_J_plastic!(J, r, x, c.elements[i], args, static($(is_plastic)[i]), $(is_par)[i], j)
         return nothing
     end
 end
 
-@inline function _fill_J_plastic!(J, r, x, element, args, is_plast, is_par, j)
-    !is_plast && return j
+@inline _fill_J_plastic!(J, r, x, element, args, ::False, is_par, j) = j
 
-    j       += 1
-    λ̇       = x[j]
-    id_par  = findall(is_par);
+@inline function _fill_J_plastic!(J, r, x, element, args, ::True, is_par, j)
 
-    if !is_par
-        τ_pl    = x[1]      # in case we have a non-parallel element  
-    else
+    j += 1
+    λ̇  = x[j]
+
+    function __fill_J_plastic!(::True, j, args)
         τ       = x[1]
-        τ_pl    = x[j+1]    # if the plastic element is in || with other elements, need to explicitly solve for this  
+        τ_pl    = x[j+1]    # if the plastic element is in || with other elements, need to explicitly solve for this
+
+        args    = merge(args, (τII=τ_pl,))
+        F       = compute_yieldfunction(element,args);  # yield function applied to plastic element
+    
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
+        r[1]   -=  ε̇_pl                     #  add plastic strainrate
+
+        if F>0
+            J[1,j] = ∂Q∂τII(element, τ_pl)     
+            J[j,j+1]   = ∂F∂τII(element.elements[1], τ_pl)    
+            J[j+1,1]   = -1.0;
+            J[j+1,2]   = dτII_dεII_nonplastic(element, τ_pl, args)*∂Q∂τII(element, τ_pl) ;
+            J[j+1,j+1] = 1.0;
+            r[j] = -F
+            r[j+1] = τ - compute_τII_nonplastic(element, ε̇_pl, args) - τ_pl                
+        else
+            J[j,j] =  J[j+1,j+1] = 1.0
+            r[j] = r[j+1] = 0.0
+        end
     end
 
-    args    = merge(args, (τII=τ_pl,))
-    F       = compute_yieldfunction(element,args);  # yield function applied to plastic element
+    function __fill_J_plastic!(::False, j, args)
+        τ_pl    = x[1]    # if the plastic element is in || with other elements, need to explicitly solve for this
 
-    ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
-    r[1]   -=  ε̇_pl                     #  add plastic strainrate
+        args    = merge(args, (τII=τ_pl,))
+        F       = compute_yieldfunction(element,args);  # yield function applied to plastic element
+    
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
+        r[1]   -=  ε̇_pl                     #  add plastic strainrate
 
-    if F>0
-        J[1,j] = ∂Q∂τII(element, τ_pl)     
-        
-        if !is_par
+        if F>0
+            J[1,j] = ∂Q∂τII(element, τ_pl)     
             # plasticity is not in a parallel element    
             J[j,1] = ∂F∂τII(element, τ_pl)    
-            J[j,j] = 0 
-            r[j] =  -F 
-
+            J[j,j] = 0.0
+            r[j] =  -F      
         else
-            J[j,j+1]   = ∂F∂τII(element.elements[id_par[1]], τ_pl)    
-            J[j+1,1]   = -1;
-            J[j+1,2]   = dτII_dεII_nonplastic(element, τ_pl, args)*∂Q∂τII(element, τ_pl) ;
-            J[j+1,j+1] = 1;
-            
-            r[j] = -F
-            r[j+1] = τ - compute_τII_nonplastic(element, ε̇_pl, args) - τ_pl
-            
-        end
-    else
-        J[j,j] = 1.0
-        r[j] = 0.0
-
-        if is_par
-            J[j+1,j+1] = 1.0
-            r[j+1] = 0.
+            J[j,j] = 1.0
+            r[j] = 0.0
         end
     end
+
+    @inline __fill_J_plastic!(static(is_par), j, args)
 
     return j
 end
 
 
+# @inline function _fill_J_plastic!(J, r, x, element, args, is_plast::True, is_par, j)
+#     # !is_plast && return j
+
+#     @show is_par
+#     j       += 1
+#     λ̇       = x[j]
+#     # id_par  = findall(is_par);
+
+#     function foo(is_par::True)
+
+#     end
+
+#     if !is_par
+#         τ_pl    = x[1]      # in case we have a non-parallel element  
+#     else
+#         τ       = x[1]
+#         τ_pl    = x[j+1]    # if the plastic element is in || with other elements, need to explicitly solve for this  
+#     end
+
+#     args    = merge(args, (τII=τ_pl,))
+#     F       = compute_yieldfunction(element,args);  # yield function applied to plastic element
+
+#     ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
+#     r[1]   -=  ε̇_pl                     #  add plastic strainrate
+
+#     if F>0
+#         J[1,j] = ∂Q∂τII(element, τ_pl)     
+        
+#         if !is_par
+#             # plasticity is not in a parallel element    
+#             J[j,1] = ∂F∂τII(element, τ_pl)    
+#             J[j,j] = 0 
+#             r[j] =  -F 
+
+#         else
+#             J[j,j+1]   = ∂F∂τII(element.elements[id_par[1]], τ_pl)    
+#             J[j+1,1]   = -1;
+#             J[j+1,2]   = dτII_dεII_nonplastic(element, τ_pl, args)*∂Q∂τII(element, τ_pl) ;
+#             J[j+1,j+1] = 1;
+            
+#             r[j] = -F
+#             r[j+1] = τ - compute_τII_nonplastic(element, ε̇_pl, args) - τ_pl
+            
+#         end
+#     else
+#         J[j,j] = 1.0
+#         r[j] = 0.0
+
+#         if is_par
+#             J[j+1,j+1] = 1.0
+#             r[j+1] = 0.
+#         end
+#     end
+
+#     return j
+# end
 
 @generated function ∂Q∂τII(
     v::Parallel{T, N,  Nplast, is_plastic}, τ::_T
