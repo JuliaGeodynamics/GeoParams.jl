@@ -209,6 +209,7 @@ using GeoParams, ForwardDiff
  #   end
 
     # cases with plastic elements that have parallel elements as well    
+    args = (T = 900.0, d = 0.0001, τII_old = 700000.0, dt = 8.0e8, P = 0.0)
     for v in [c8, c9]
         
         v_pl = v[3];
@@ -236,7 +237,7 @@ using GeoParams, ForwardDiff
         if  isa(v[3],Parallel)
             τ_check = 0.0
             v_par = v[3]
-            ε_pl = ∂Q∂τII(v_pl, τ_plastic)*λ        # plastic stranrate of || element
+            ε_pl = ∂Q∂τII(v_pl, τ_plastic)*λ        # plastic strainrate of || element
             for i=1:length(v_par.elements)
                 if !isplastic(v_par[i])
     
@@ -254,6 +255,19 @@ using GeoParams, ForwardDiff
         
         F = compute_yieldfunction(v_pl,args_new)
         @test abs(F)<1e-10
+
+        # check that if we start @ the yield stress, we stay @ the same stress
+        τ_old = τ
+        args_after_yieldstress = merge(args, (τII_old = τ_old,))
+        if isa(v_pl,Parallel)
+            v_pl = v_pl[1]
+            τ,λ,τ_plastic = compute_τII(v, εII, args_after_yieldstress, verbose=false, full_output=true)   
+        else
+            τ,λ           = compute_τII(v, εII, args_after_yieldstress, verbose=false, full_output=true)  
+            τ_plastic = τ
+        end
+
+        @test τ ≈ τ_old
 
 
     end
@@ -283,6 +297,7 @@ using GeoParams, ForwardDiff
 
     # VEP calculation
     c_pl  =  CompositeRheology(LinearViscous(η=η*Pa*s),ConstantElasticity(G=G*Pa),pl2) # linear VEP
+
     t_vec, τ_vec    =   time_τII_0D(c_pl, εII, args; t=(0.,t_M*4), nt=100, verbose=false)
     
 
