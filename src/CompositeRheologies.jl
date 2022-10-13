@@ -733,7 +733,7 @@ end
     j += 1
     λ̇  = x[j]
 
-    function __fill_J_plastic!(::True, j, args)
+    @inline function __fill_J_plastic!(::True, j, args)
         τ       = x[1]
         τ_pl    = x[j+1]    # if the plastic element is in || with other elements, need to explicitly solve for this
 
@@ -757,7 +757,7 @@ end
         end
     end
 
-    function __fill_J_plastic!(::False, j, args)
+    @inline function __fill_J_plastic!(::False, j, args)
         τ_pl    = x[1]    # if the plastic element is in || with other elements, need to explicitly solve for this
 
         args    = merge(args, (τII=τ_pl,))
@@ -780,7 +780,7 @@ end
         end
     end
 
-    @inline __fill_J_plastic!(static(is_par), j, args)
+    __fill_J_plastic!(static(is_par), j, args)
 
     return j
 end
