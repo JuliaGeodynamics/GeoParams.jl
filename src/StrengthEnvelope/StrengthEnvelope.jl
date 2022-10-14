@@ -68,13 +68,10 @@ function GP_Compute_ThermalStructure(Z, t::HalfspaceCoolingTemp)
 
     Temp  = zeros(Float64, length(Z))K
 
-    Age   = uconvert(s, Age)
-    Z     = uconvert.(m, Z)
-
     MantleAdiabaticT    =   Tmantle .+ Adiabat*abs.(Z);   # Adiabatic temperature of mantle
     
     for i in eachindex(Temp)
-        Temp[i] =   (Tsurface .- Tmantle)*erfc((abs.(Z[i]))./(2*sqrt(kappa*Age))) + MantleAdiabaticT[i];
+        Temp[i] =   (Tsurface .- Tmantle)*erfc(NoUnits.((abs.(Z[i]))./(2*sqrt(kappa*Age)))) + MantleAdiabaticT[i];
     end
     return Temp
 end
