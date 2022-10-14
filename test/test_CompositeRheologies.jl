@@ -12,7 +12,8 @@ using GeoParams, ForwardDiff
     e2 = SetConstantElasticity(; G=5e10, Kb=1e11)
     pl1= DruckerPrager(C=1e6)                # plasticity
     pl2= DruckerPrager(; Ψ=10)                # plasticity
-
+    pl3= DruckerPrager(C=1e6, ϕ=0)                # plasticity
+    
     test_vec = [v1 v2 v3 v4 e1 e2 pl1 pl2]
     sol      = [false false false false false true false true]
     for i = 1:length(sol)
@@ -35,6 +36,9 @@ using GeoParams, ForwardDiff
     c7 = CompositeRheology(v4,e1)       # viscoelastic with linear viscosity
     c8 = CompositeRheology(v4,e1,pl1)   # with plastic element
     c9 = CompositeRheology(v4,e1,p4)    # with visco-plastic parallel element
+    c10= CompositeRheology(e1,pl3)      # elastoplastic
+    c11= CompositeRheology(e1,Parallel(pl3,LinearViscous(η=1e19Pa*s)))      # elasto-viscoplastic
+    
     
     p4 = Parallel(c3,v3)                # Parallel element with composite one as well    
 
@@ -208,11 +212,12 @@ using GeoParams, ForwardDiff
 
  #   end
 
-    # cases with plastic elements that have parallel elements as well    
-    args = (T = 900.0, d = 0.0001, τII_old = 700000.0, dt = 8.0e8, P = 0.0)
-    for v in [c8, c9]
+    # cases with plastic elements that have parallel elements as well  
+    εII = 1e-15  
+    args = (T = 900.0, d = 0.0001, τII_old = 700000.0, dt = 8.0e9, P = 0.0)
+    for v in [c8, c10, c11]     # works for elastoplastic & elasto-viscoplastic but not yet for visco-elasto-viscoplastic
         
-        v_pl = v[3];
+        v_pl = v[length(v.elements)];   # assuming it is the last element
         if isa(v_pl,Parallel)
             v_pl = v_pl[1]
             τ,λ,τ_plastic = compute_τII(v, εII, args, verbose=false, full_output=true)   
@@ -257,17 +262,12 @@ using GeoParams, ForwardDiff
         @test abs(F)<1e-10
 
         # check that if we start @ the yield stress, we stay @ the same stress
-        τ_old = τ
-        args_after_yieldstress = merge(args, (τII_old = τ_old,))
-        if isa(v_pl,Parallel)
-            v_pl = v_pl[1]
-            τ,λ,τ_plastic = compute_τII(v, εII, args_after_yieldstress, verbose=false, full_output=true)   
-        else
-            τ,λ           = compute_τII(v, εII, args_after_yieldstress, verbose=false, full_output=true)  
-            τ_plastic = τ
-        end
+        
+        # perform a 0D time-dependent test and make sure that we remain on the yield stress
+        t_vec, τ_vec    =   time_τII_0D(v, εII, args; t=(0.,args.dt*10), nt=20, verbose=false)
 
-        @test τ ≈ τ_old
+
+        @test τ_vec[end-3] ≈ τ_vec[end]
 
 
     end

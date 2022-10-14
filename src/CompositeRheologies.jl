@@ -635,7 +635,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
             x[j] = 0    # λ̇  
             
             j += 1
-            x[j] = 866025.4037844386 ; #τ_initial    # τ_plastic initial guess  
+            x[j] = τ_initial    # τ_plastic initial guess  
 
         elseif !is_plastic[i] & is_par[i]
             # normal plastic element
@@ -644,7 +644,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         end
 
     end
-    @show x
+    #@show x
     
     r = @MVector zeros(_T,n);
     J = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
@@ -671,7 +671,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         # update solution
         dx  = J\r 
         x .+= dx   
-        @show J x r dx
+        #@show J x r dx
         
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
         verbose && println(" iter $(iter) $ϵ F=$(r[2])")
@@ -742,7 +742,8 @@ end
     
         ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
         r[1]   -=  ε̇_pl                     #  add plastic strainrate
-
+        
+      #  @show F, τ_pl, ε̇_pl
         if F>0
             J[1,j] = ∂Q∂τII(element, τ_pl)     
             J[j,j+1]   = ∂F∂τII(element.elements[1], τ_pl)    
@@ -766,7 +767,7 @@ end
         ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
         r[1]   -=  ε̇_pl                     #  add plastic strainrate
         
-        @show F, τ_pl, ε̇_pl
+        #@show F, τ_pl, ε̇_pl
         if F>0
             J[1,j] = ∂Q∂τII(element, τ_pl)     
 
