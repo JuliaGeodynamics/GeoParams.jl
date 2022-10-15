@@ -9,6 +9,8 @@ import Base.getindex
 
 import GeoParams.Units: nondimensionalize, dimensionalize
 
+@inline isCUDA() =  isdefined(Main,:CUDA) 
+
 """
     Put rheological elements in parallel 
 """
@@ -352,7 +354,7 @@ Performs local iterations versus stress for a given total strain rate for a give
     # Initial guess
     τII = compute_τII_harmonic(v, εII, args)
     
-    verbose && println("initial τII = $τII")
+    !isCUDA() && verbose && println("initial stress_II = $τII")
 
     # Local Iterations
     iter = 0
@@ -371,9 +373,10 @@ Performs local iterations versus stress for a given total strain rate for a give
 
         ϵ = abs(τII - τII_prev) * inv(abs(τII))
         τII_prev = τII
-        verbose && println(" iter $(iter) $ϵ")
+
+        !isCUDA() && verbose && println(" iter $(iter) $ϵ")
     end
-    if verbose
+    if !isCUDA() && verbose
         println("final τII = $τII")
         println("---")
     end
@@ -399,7 +402,7 @@ Performs local iterations versus stress for a given strain rate using AD
     # Initial guess
     τII = compute_τII_harmonic(v, εII, args)
     
-    verbose && println("initial τII = $τII")
+    !isCUDA() && verbose && println("initial τII = $τII")
 
     # Local Iterations
     iter = 0
@@ -418,10 +421,9 @@ Performs local iterations versus stress for a given strain rate using AD
 
         ϵ = abs(τII - τII_prev) * inv(abs(τII))
         τII_prev = τII
-        
-        verbose && println(" iter $(iter) $ϵ")
+        !isCUDA() && verbose && println(" iter $(iter) $ϵ")
     end
-    if verbose
+    if !isCUDA() && verbose
         println("final τII = $τII")
         println("---")
     end
@@ -435,7 +437,7 @@ end
     # Initial guess
     εII = compute_εII_harmonic(v, τII, args)
 
-    verbose && println("initial εII = $εII")
+    !isCUDA() && verbose && println("initial εII = $εII")
 
     # Local Iterations
     iter = 0
@@ -454,10 +456,10 @@ end
 
         ϵ = abs(εII - εII_prev) * inv(εII)
         εII_prev = εII
-        verbose && println(" iter $(iter) $ϵ")
+        !isCUDA() && verbose && println(" iter $(iter) $ϵ")
         
     end
-    if verbose
+    if !isCUDA() && verbose
         println("final εII = $εII")
         println("---")
     end
@@ -493,11 +495,11 @@ Performs local iterations versus strain rate for a given stress
 
         ϵ = abs(εII - εII_prev) / abs(εII)
         εII_prev = εII
-        if verbose
+        if !isCUDA() && verbose
             println(" iter $(iter) $ϵ")
         end
     end
-    if verbose
+    if !isCUDA() && verbose
         println("---")
     end
 
@@ -533,7 +535,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         τ_initial = compute_τII_harmonic(c, εII_total, args)
     end
 
-    verbose && println("τII guess = $τ_initial")
+    !isCUDA() && verbose && println("τII guess = $τ_initial")
 
     x    = @MVector ones(_T, n)
     x   .= εII_total
@@ -573,9 +575,9 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         x .+= dx   
         
         ϵ    = sum(abs.(dx)./(abs.(x)))
-        verbose && println(" iter $(iter) $ϵ")
+        !isCUDA() && verbose && println(" iter $(iter) $ϵ")
     end
-    verbose && println("---")
+    !isCUDA() && verbose && println("---")
     
     if (iter == max_iter)
         error("iterations did not converge")

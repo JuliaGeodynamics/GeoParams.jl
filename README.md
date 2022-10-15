@@ -1,4 +1,4 @@
-# GeoParams.jl
+<h1> <img src="docs/src/assets/logo.png" alt="GeoParams.jl" width="50"> GeoParams.jl </h1>
 
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliageodynamics.github.io/GeoParams.jl/dev/)
 [![Build Status](https://github.com/JuliaGeodynamics/GeoParams.jl/workflows/CI/badge.svg)](https://github.com/JuliaGeodynamics/GeoParams.jl/actions)
