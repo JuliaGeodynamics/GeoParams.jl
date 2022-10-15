@@ -22,16 +22,8 @@ function Parallel(v::T) where T
     v           = tuple(v...)
     n           =   length(v)
 
-    # Is one of the elements a plastic element?
-    #id_plastic  =   findall(isa.(v, AbstractPlasticity))
-    #Nplast      =   length(id_plastic)
-    #plastic     =   zeros(Bool,n)
-    #if Nplast>0
-    #    plastic[id_plastic] .= 1
-    #end
-    #is_plastic  =   SVector{n,Bool}(plastic)
-    is_plastic = isa.(v,AbstractPlasticity)
-    Nplast     = count(is_plastic)
+    is_plastic = isa.(v,AbstractPlasticity)     # Is one of the elements a plastic element?
+    Nplast = count(is_plastic)
 
     return Parallel{typeof(v),n, Nplast, is_plastic}(v)
 end
