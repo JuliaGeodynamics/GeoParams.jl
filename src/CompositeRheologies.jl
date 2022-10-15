@@ -269,11 +269,7 @@ end
     end
 end
 
-
-
-
 # VISCOSITY COMPUTATIONS
-
 """ 
     η = computeViscosity_εII(v::Union{Parallel{T,N}, CompositeRheology{T,N}, AbstractConstitutiveLaw}, εII::_T, args; tol=1e-6, verbose=false)
 
