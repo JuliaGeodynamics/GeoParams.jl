@@ -23,13 +23,15 @@ function Parallel(v::T) where T
     n           =   length(v)
 
     # Is one of the elements a plastic element?
-    id_plastic  =   findall(isa.(v, AbstractPlasticity))
-    Nplast      =   length(id_plastic)
-    plastic     =   zeros(Bool,n)
-    if Nplast>0
-        plastic[id_plastic] .= 1
-    end
-    is_plastic  =   SVector{n,Bool}(plastic)
+    #id_plastic  =   findall(isa.(v, AbstractPlasticity))
+    #Nplast      =   length(id_plastic)
+    #plastic     =   zeros(Bool,n)
+    #if Nplast>0
+    #    plastic[id_plastic] .= 1
+    #end
+    #is_plastic  =   SVector{n,Bool}(plastic)
+    is_plastic = isa.(v,AbstractPlasticity)
+    Nplast     = count(is_plastic)
 
     return Parallel{typeof(v),n, Nplast, is_plastic}(v)
 end
@@ -61,31 +63,19 @@ end
 function CompositeRheology(v::T) where {T}
 
     # determine if we have parallel elements & if yes: where
-    id_parallel =   findall(isa.(v, Parallel));
-    Npar        =   length(id_parallel)
-    n           =   length(v)
-    par         =   zeros(Bool,n)
-    if Npar>0
-        par[id_parallel] .= 1
-    end
-    is_parallel =   SVector{n,Bool}(par)
+    n = length(v)
+    is_parallel = isa.(v,Parallel)
+    Npar = count(is_parallel)
 
     # determine if we have plastic elements 
-    # NOTE: we likely have to expand this to include parallel elements that have plasticity
-    plastic     =   zeros(Bool,n)
-    for i=1:n
-        if isplastic(v[i])
-            plastic[i] = 1
-        end
-    end
-    Nplast      =   sum(plastic)
-    is_plastic  =   SVector{n,Bool}(plastic)
-    
+    is_plastic = isplastic.(v) 
+    Nplast = count(is_plastic)
+
     # determine if we have elements that have volumetric deformation
     # TO BE EXPANDED 
     Nvol        =   0;
     volumetric  =   zeros(Bool,n)
-    is_vol      =   SVector{n,Bool}(volumetric)
+    is_vol      =   (volumetric...,)
      
     return CompositeRheology{typeof(v), n, Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol}(v)
 end
