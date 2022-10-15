@@ -69,9 +69,7 @@ function (s::DruckerPrager{_T,U,U1})(;
     P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), kwargs...
 ) where {_T,U,U1}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
-
     F = τII - cosϕ * C - sinϕ * (P - Pf)   # with fluid pressure (set to zero by default)
-
     return F
 end
 

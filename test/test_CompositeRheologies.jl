@@ -10,7 +10,8 @@ using GeoParams, ForwardDiff
     v4 = LinearViscous(η=1e22Pa*s)
     e1 = ConstantElasticity()           # elasticity
     e2 = SetConstantElasticity(; G=5e10, Kb=1e11)
-    pl1= DruckerPrager(C=1e6)                # plasticity
+    #pl1= DruckerPrager(C=1e6)                # plasticity
+    pl1= DruckerPrager(C=1e6/cosd(30))        # plasticity which ends up with the same yield stress as pl3
     pl2= DruckerPrager(; Ψ=10)                # plasticity
     pl3= DruckerPrager(C=1e6, ϕ=0)                # plasticity
     
@@ -24,7 +25,7 @@ using GeoParams, ForwardDiff
     p1 = Parallel(v3,v4)                # linear elements
     p2 = Parallel(v1,v2)                # includes nonlinear viscous elements
     p3 = Parallel(v1,v2,v3)             # includes nonlinear viscous elements
-    p4 = Parallel(pl1, LinearViscous(η=1e22Pa*s)) # viscoplastic regularisation
+    p4 = Parallel(pl1, LinearViscous(η=1e20Pa*s)) # viscoplastic regularisation
 
     # CompositeRheologies
     c1 = CompositeRheology(v1,v2)
@@ -190,9 +191,8 @@ using GeoParams, ForwardDiff
     # Composite cases with plasticity 
     εII =  3e-15
     args = merge(args, (τII_old=7e5,P=0.0, dt=8e8))
-#    for v in [c8]
+    for v in [c8]
         #τ_AD = compute_τII_AD(v, εII, args)     
-        v = c8
         τ    = compute_τII(v, εII, args, verbose=false)   
 
         args_old = merge(args, (τII=args.τII_old,))  
@@ -210,13 +210,13 @@ using GeoParams, ForwardDiff
         end
         @test F ≈ 0.0
 
- #   end
+    end
 
     # cases with plastic elements that have parallel elements as well  
     εII = 1e-15  
     args = (T = 900.0, d = 0.0001, τII_old = 700000.0, dt = 8.0e9, P = 0.0)
-    for v in [c8, c10, c11]     # works for elastoplastic & elasto-viscoplastic but not yet for visco-elasto-viscoplastic
-        
+    for v in [c8, c9, c10, c11]     
+
         v_pl = v[length(v.elements)];   # assuming it is the last element
         if isa(v_pl,Parallel)
             v_pl = v_pl[1]
@@ -264,11 +264,9 @@ using GeoParams, ForwardDiff
         # check that if we start @ the yield stress, we stay @ the same stress
         
         # perform a 0D time-dependent test and make sure that we remain on the yield stress
-        t_vec, τ_vec    =   time_τII_0D(v, εII, args; t=(0.,args.dt*10), nt=20, verbose=false)
-
+        t_vec, τ_vec    =   time_τII_0D(v, εII, args; t=(0.,args.dt*10), nt=50, verbose=false)
 
         @test τ_vec[end-3] ≈ τ_vec[end]
-
 
     end
       

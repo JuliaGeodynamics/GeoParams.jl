@@ -606,8 +606,6 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     max_iter = 1000
 ) where {T,N,Npar,is_par, _T, Nplast, is_plastic, is_vol}
 
-    #println("plastic")
-  
     # Compute residual
     n = 1 + Nplast + Npar;             # total size of unknowns
     x = zero(εII_total)
@@ -644,8 +642,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         end
 
     end
-    #@show x
-    
+
     r = @MVector zeros(_T,n);
     J = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
     
@@ -671,10 +668,9 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         # update solution
         dx  = J\r 
         x .+= dx   
-        #@show J x r dx
         
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
-        verbose && println(" iter $(iter) $ϵ F=$(r[2])")
+        verbose && println(" iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
     end
     verbose && println("---")
     if (iter == max_iter)
@@ -743,7 +739,6 @@ end
         ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
         r[1]   -=  ε̇_pl                     #  add plastic strainrate
         
-      #  @show F, τ_pl, ε̇_pl
         if F>0
             J[1,j] = ∂Q∂τII(element, τ_pl)     
             J[j,j+1]   = ∂F∂τII(element.elements[1], τ_pl)    
@@ -767,7 +762,6 @@ end
         ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
         r[1]   -=  ε̇_pl                     #  add plastic strainrate
         
-        #@show F, τ_pl, ε̇_pl
         if F>0
             J[1,j] = ∂Q∂τII(element, τ_pl)     
 
