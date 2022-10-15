@@ -239,21 +239,23 @@ using GeoParams, ForwardDiff
         @test ε_check ≈ εII
 
         # in case we have a || plastic element, check that the sum(τ_parallel)==τ
-        if  isa(v[3],Parallel)
-            τ_check = 0.0
-            v_par = v[3]
-            ε_pl = ∂Q∂τII(v_pl, τ_plastic)*λ        # plastic strainrate of || element
-            for i=1:length(v_par.elements)
-                if !isplastic(v_par[i])
-    
-                    τ_check += compute_τII(v_par[i],ε_pl,args)
-                else
-                    # plastic element
-                    τ_check += τ_plastic
+        if length(v.elements)>2
+            if  isa(v[3],Parallel)
+                τ_check = 0.0
+                v_par = v[3]
+                ε_pl = ∂Q∂τII(v_pl, τ_plastic)*λ        # plastic strainrate of || element
+                for i=1:length(v_par.elements)
+                    if !isplastic(v_par[i])
+        
+                        τ_check += compute_τII(v_par[i],ε_pl,args)
+                    else
+                        # plastic element
+                        τ_check += τ_plastic
+                    end
                 end
-            end
-            @test τ_check ≈ τ       # sum of stress of || element should be the same as 
+                @test τ_check ≈ τ       # sum of stress of || element should be the same as 
 
+            end
         end
 
         args_new = merge(args, (τII=τ_plastic,))

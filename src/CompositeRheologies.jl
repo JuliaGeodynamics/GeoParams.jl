@@ -37,6 +37,7 @@ Parallel(a,b...) = Parallel((a,b...,))
 @generated function getindex(p::Parallel{T, N}, I::Int64) where {T,N}
     quote
         Base.@_inline_meta
+        @assert I ≤ $N
         Base.Cartesian.@nexprs $N i -> I == i && return p.elements[i]
     end
 end
@@ -96,6 +97,7 @@ CompositeRheology(a::Parallel) = CompositeRheology( (a,))
         Base.Cartesian.@nexprs $N i -> I == i && return p.elements[i]
     end
 end
+
 
 # define rules to nondimensionalise this 
 function nondimensionalize(MatParam::Union{Parallel,CompositeRheology}, g::GeoUnits{TYPE}) where {TYPE}
@@ -634,7 +636,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
             x[j] = 0    # λ̇  
             
             j += 1
-            x[j] = 866025.4037844386 ; #τ_initial    # τ_plastic initial guess  
+            x[j] = τ_initial    # τ_plastic initial guess  
 
         elseif !is_plastic[i] & is_par[i]
             # normal plastic element
