@@ -72,8 +72,8 @@ using GeoParams, ForwardDiff
         
         εII = 1e-12 #2e-18
         Δε  = εII*1e-6;
-        τ0  = compute_τII(v, εII, args, verbose=false);
-        τ1  = compute_τII(v, εII + Δε, args, verbose=false);
+        τ0, = compute_τII(v, εII, args, verbose=false);
+        τ1, = compute_τII(v, εII + Δε, args, verbose=false);
         dτ_dε_FD = (τ1-τ0)/Δε
         dτ_dε_AD = dτII_dεII_AD(v, εII, args)
         dτ_dε    = dτII_dεII(v, εII, args)       
@@ -88,10 +88,10 @@ using GeoParams, ForwardDiff
     for v in vec1
 
         # Check computational routines if total strainrate is given
-        τ    = compute_τII(v, εII, args)   
-        τ_AD = compute_τII_AD(v, εII, args)   
-        ε    = compute_εII(v, τ,   args)   
-        ε_AD = compute_εII_AD(v, τ,   args)   
+        τ,    = compute_τII(v, εII, args)   
+        τ_AD, = compute_τII_AD(v, εII, args)   
+        ε     = compute_εII(v, τ,   args)   
+        ε_AD  = compute_εII_AD(v, τ,   args)   
         
         @test ε ≈ εII ≈ ε_AD 
         @test τ ≈ τ_AD
@@ -100,16 +100,16 @@ using GeoParams, ForwardDiff
             # check; for || elements, ε is constant and τ is the sum
             τ_check = 0;
             for i=1:length(v.elements)
-                τ_check += compute_τII(v.elements[i], εII, args)   
+                τ_check += compute_τII(v.elements[i], εII, args)[1]   
             end
             @test τ_check ≈ τ
         end
         
         # Check computational routines if stress is given
-        ε    = compute_εII(v, τII, args)   
-        ε_AD = compute_εII_AD(v, τII, args)   
-        τ    = compute_τII(v, ε,   args)   
-        τ_AD = compute_τII_AD(v, ε,   args)   
+        ε,    = compute_εII(v, τII, args)   
+        ε_AD, = compute_εII_AD(v, τII, args)   
+        τ,    = compute_τII(v, ε,   args)   
+        τ_AD, = compute_τII_AD(v, ε,   args)   
         
         @test τ ≈ τII ≈ τ_AD
         @test ε ≈ ε_AD
@@ -118,7 +118,7 @@ using GeoParams, ForwardDiff
             # check; for serial elements, ε is constant and τ is the sum
             ε_check = 0;
             for i=1:length(v.elements)
-                ε_check += compute_εII(v.elements[i], τII, args)   
+                ε_check += compute_εII(v.elements[i], τII, args)[1]   
             end
             @test ε_check ≈ ε
         end
@@ -147,7 +147,7 @@ using GeoParams, ForwardDiff
     for v in [c4 c5]    
 
 
-        τ_AD = compute_τII_AD(v, εII, args)     # using AD
+        τ_AD, = compute_τII_AD(v, εII, args)     # using AD
        
         # check result. For a parallel element we should satisfy the following equations:
         #   τ_parallel == τ_AD 
@@ -159,8 +159,8 @@ using GeoParams, ForwardDiff
         for i=1:length(v.elements)
             # Check that the stress of each || element is the same as the total one
             if isa(v.elements[i], Parallel)
-                ε_parallel = ε_vec[i]      # parallel strainrate
-                τ_parallel = compute_τII_AD(v.elements[i], ε_parallel, args) 
+                ε_parallel  = ε_vec[i]      # parallel strainrate
+                τ_parallel, = compute_τII_AD(v.elements[i], ε_parallel, args) 
                 @test τ_parallel  ≈ τ_AD
             end
         end
@@ -168,7 +168,7 @@ using GeoParams, ForwardDiff
         @test εII ≈ compute_εII(v,τ_AD,args)    # sum of ε
 
         # Check with analytical jacobian
-        τ    = compute_τII(v, εII, args)        # using analytical jacobians (expanded for || elements)
+        τ,   = compute_τII(v, εII, args)        # using analytical jacobians (expanded for || elements)
         @test τ_AD ≈ τ
 
     end
@@ -176,12 +176,12 @@ using GeoParams, ForwardDiff
     # Test Parallel rheology with a CompositeRheology branch
     εII =  3e-15
     for v in [p4]
-        τ_AD = compute_τII_AD(v, εII, args)     
-        τ    = compute_τII(v, εII, args)     
+        τ_AD, = compute_τII_AD(v, εII, args)     
+        τ,    = compute_τII(v, εII, args)     
 
         τ_par = 0.
         for i=1:length(v.elements)
-            τ_par  += compute_τII(v.elements[i], εII, args)  
+            τ_par  += compute_τII(v.elements[i], εII, args)[1]  
         end
 
         @test τ_AD ≈ τ ≈ τ_par
@@ -193,7 +193,7 @@ using GeoParams, ForwardDiff
     args = merge(args, (τII_old=7e5,P=0.0, dt=8e8))
     for v in [c8]
         #τ_AD = compute_τII_AD(v, εII, args)     
-        τ    = compute_τII(v, εII, args, verbose=false)   
+        τ,    = compute_τII(v, εII, args, verbose=false)   
 
         args_old = merge(args, (τII=args.τII_old,))  
         Fold = compute_yieldfunction(c8.elements[3],args_old)
@@ -205,7 +205,7 @@ using GeoParams, ForwardDiff
         F = 0.
         for i=1:length(v.elements)
             if isa(v.elements,AbstractPlasticity)
-                F  += compute_τII(v.elements[i], args)  
+                F  += compute_τII(v.elements[i], args)[1]  
             end
         end
         @test F ≈ 0.0
@@ -220,9 +220,9 @@ using GeoParams, ForwardDiff
         v_pl = v[length(v.elements)];   # assuming it is the last element
         if isa(v_pl,Parallel)
             v_pl = v_pl[1]
-            τ,λ,τ_plastic = compute_τII(v, εII, args, verbose=false, full_output=true)   
+            τ,λ,τ_plastic = compute_τII(v, εII, args, verbose=false)   
         else
-            τ,λ           = compute_τII(v, εII, args, verbose=false, full_output=true)  
+            τ,λ           = compute_τII(v, εII, args, verbose=false)  
             τ_plastic = τ
         end
 
@@ -247,7 +247,7 @@ using GeoParams, ForwardDiff
                 for i=1:length(v_par.elements)
                     if !isplastic(v_par[i])
         
-                        τ_check += compute_τII(v_par[i],ε_pl,args)
+                        τ_check += compute_τII(v_par[i],ε_pl,args)[1]
                     else
                         # plastic element
                         τ_check += τ_plastic
