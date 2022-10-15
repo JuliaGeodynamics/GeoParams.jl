@@ -92,6 +92,7 @@ CompositeRheology(a::Parallel) = CompositeRheology( (a,))
 @generated function getindex(p::CompositeRheology{T, N}, I::Int64) where {T,N}
     quote
         Base.@_inline_meta
+        @assert I ≤ $N
         Base.Cartesian.@nexprs $N i -> I == i && return p.elements[i]
     end
 end
@@ -633,7 +634,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
             x[j] = 0    # λ̇  
             
             j += 1
-            x[j] = τ_initial    # τ_plastic initial guess  
+            x[j] = 866025.4037844386 ; #τ_initial    # τ_plastic initial guess  
 
         elseif !is_plastic[i] & is_par[i]
             # normal plastic element
