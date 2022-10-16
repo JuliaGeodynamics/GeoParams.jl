@@ -231,10 +231,10 @@ end
         Base.@_inline_meta
         τII = zero(_T)
         Base.Cartesian.@nexprs $N i ->
-            τII += compute_τII(v.elements[i], εII, args)[1]
+            τII += first(compute_τII(v.elements[i], εII, args))
     end
 end
-compute_τII_AD(v::Parallel{T,N}, εII::_T, args; tol=1e-6, verbose=false) where {T,N,_T} = compute_τII(v, εII, args)[1] 
+compute_τII_AD(v::Parallel{T,N}, εII::_T, args; tol=1e-6, verbose=false) where {T,N,_T} = first(compute_τII(v, εII, args)) 
 
 # make it work for dimensional cases
 @generated  function compute_τII(
@@ -247,7 +247,7 @@ compute_τII_AD(v::Parallel{T,N}, εII::_T, args; tol=1e-6, verbose=false) where
         Base.@_inline_meta
         τII = 0Pa
         Base.Cartesian.@nexprs $N i ->
-            τII += compute_τII(v.elements[i], εII, args)[1]
+            τII += first(compute_τII(v.elements[i], εII, args))
     end
 end
 
@@ -265,7 +265,7 @@ end
     tol=1e-6, verbose=false
     ) where {T,nDim,N}
     for I in eachindex(τII)
-        τII[I] = compute_τII(v, εII[I], (; zip(keys(args), getindex.(values(args), I))...))[1]
+        τII[I] = first(compute_τII(v, εII[I], (; zip(keys(args), getindex.(values(args), I))...)))
     end
 end
 
@@ -427,7 +427,7 @@ end
                 dfdτII = - dεII_dτII(v, τII, args) 
                 τII -= f / dfdτII
         =#
-        εII = muladd(τII - compute_τII(v, εII, args)[1], inv(dτII_dεII(v, εII, args)), εII)
+        εII = muladd(τII - first(compute_τII(v, εII, args)), inv(dτII_dεII(v, εII, args)), εII)
 
         ϵ = abs(εII - εII_prev) * inv(εII)
         εII_prev = εII
@@ -464,7 +464,7 @@ Performs local iterations versus strain rate for a given stress
 
     while ϵ > tol
         iter += 1
-        f = τII - compute_τII(v, εII, args)[1]
+        f = τII - first(compute_τII(v, εII, args))
         dfdεII = -dτII_dεII(v, εII, args)
         εII -= f / dfdεII
 
@@ -913,7 +913,7 @@ Harmonic average of stress of all elements in a `CompositeRheology` structure th
     end
 end
 
-_compute_τII_nonplastic(v, EpsII, args) = compute_τII(v, EpsII, args)[1]
+_compute_τII_nonplastic(v, EpsII, args) = first(compute_τII(v, EpsII, args))
 _compute_τII_nonplastic(v::AbstractPlasticity, EpsII, args) = 0.0
 
 
@@ -935,7 +935,7 @@ Harmonic average of stress of all elements in a `CompositeRheology` structure th
     end
 end
 
-_compute_τII_harmonic_element(v, EpsII, args) = inv(compute_τII(v, EpsII, args)[1])
+_compute_τII_harmonic_element(v, EpsII, args) = inv(first(compute_τII(v, EpsII, args)))
 _compute_τII_harmonic_element(v::AbstractPlasticity, EpsII, args) = 0.0
 _compute_τII_harmonic_element(v::Parallel{T, N,  Nplast, is_plastic}, EpsII, args) where {T, N,  Nplast, is_plastic}  = 0.0
 
@@ -954,7 +954,7 @@ Computes the harmonic average of strainrate for a parallel element
     quote
         out = zero($_T)
         Base.Cartesian.@nexprs $N i ->
-            out += inv(compute_εII(v.elements[i], TauII, args)[1])
+            out += inv(first(compute_εII(v.elements[i], TauII, args)))
         return inv(out)
     end
 end
