@@ -624,8 +624,6 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     # Local Iterations
     iter = 0
     ϵ = 2 * tol
-    τII_prev = τ_initial
-    τ_parallel = _T(0)
     while (ϵ > tol) && (iter < max_iter)
         iter += 1
 
