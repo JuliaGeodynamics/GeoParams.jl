@@ -693,6 +693,17 @@ function nondimensionalize(
 end
 
 """
+    MatParam_ND = nondimensionalize(MatParam::NTuple{N, AbstractMaterialParamsStruct}, CharUnits::GeoUnits)
+
+Non-dimensionalizes a tuple of material parameter structures (e.g., Density, CreepLaw)
+
+"""
+function nondimensionalize(MatParam::NTuple{N, AbstractMaterialParamsStruct}, g::GeoUnits) where N
+    ntuple(i->nondimensionalize(MatParam[i], g), Val(N) )
+end
+
+
+"""
     dimensionalize(param, param_dim::Unitful.FreeUnits, CharUnits::GeoUnits{TYPE})
 
 Dimensionalizes `param` into the dimensions `param_dim` using the characteristic values specified in `CharUnits`.  
@@ -775,6 +786,16 @@ function dimensionalize(
     phase_mat = set(phase_mat, Setfield.PropertyLens{:Nondimensional}(), false)
 
     return phase_mat
+end
+
+"""
+    dimensionalize(MatParam::NTuple{N, AbstractMaterialParamsStruct}, CharUnits::GeoUnits)
+
+dimensionalizes a tuple of material parameter structures (e.g., Density, CreepLaw)
+
+"""
+function dimensionalize(MatParam::NTuple{N, AbstractMaterialParamsStruct}, g::GeoUnits) where N
+    ntuple(i->dimensionalize(MatParam[i], g), Val(N) )
 end
 
 """
