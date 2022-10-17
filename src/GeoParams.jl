@@ -200,11 +200,11 @@ export dεII_dτII,
     CompositeRheology,
     Parallel,
     create_rheology_string, print_rheology_matrix,
-    time_τII_0D,
     compute_εII_harmonic, compute_τII_AD,
     isplastic
     
-    
+include("Rheology_Utils.jl")
+export time_τII_0D
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration
