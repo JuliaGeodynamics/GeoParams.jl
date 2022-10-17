@@ -843,6 +843,7 @@ end
 ) where {T,_T,N}
     quote
         Base.@_inline_meta
+        @assert I ≤ $N
         Base.Cartesian.@nexprs $N i -> I == i && return dτII_dεII(v.elements[i], εII, args)
     end
 end
@@ -967,6 +968,7 @@ end
 ) where {T,_T,N}
     quote
         Base.@_inline_meta
+        @assert I ≤ $N
         Base.Cartesian.@nexprs $N i -> I == i && return compute_εII(v.elements[i], TauII, args)
     end
 end
