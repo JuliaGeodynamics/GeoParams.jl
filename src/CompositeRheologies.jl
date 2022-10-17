@@ -242,7 +242,7 @@ compute_τII_AD(v::Parallel{T,N}, εII::_T, args; tol=1e-6, verbose=false) where
     εII::Quantity, 
     args;
     tol=1e-6, verbose=false
-) where {T,_T,N}
+) where {T,N}
     quote
         Base.@_inline_meta
         τII = 0Pa

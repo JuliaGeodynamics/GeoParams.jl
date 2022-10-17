@@ -144,7 +144,7 @@ function GeoUnit(fun::F) where F <: Function
     )
 end
 
-function GeoUnit{T}(val) where {T,U}
+function GeoUnit{T}(val) where {T}
     return GeoUnit{T,typeof(unit(val[1]))}(
         T.(ustrip.(val)),
         unit(val[1]),

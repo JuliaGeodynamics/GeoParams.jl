@@ -249,7 +249,7 @@ end
 
 @inline function compute_τII(
     a::DislocationCreep, EpsII::Quantity; P=0Pa, T=1K, f=1NoUnits, args...
-) where {_T}
+)
     @unpack_units n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
