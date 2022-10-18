@@ -34,7 +34,7 @@ Parameters
     Tbot = 1350
 end
 
-function CompTempStructompute_ThermalStructure(Z, s::LinTemp)
+function CompTempStruct(Z, s::LinTemp)
     @unpack Ttop, Tbot  = s
 
     dz    = Z[end]-Z[1];
