@@ -198,6 +198,9 @@ function compute_εII_AD(v::CompositeRheology, τII, args; tol=1e-6, verbose=fal
     return  compute_εII(v, τII, args)
 end
 
+
+#compute_εII_AD(v, τII, args; tol=1e-6, verbose=false) = compute_εII(v, τII, args, tol=tol, verbose=verbose)
+
 # Here we do need to do iterations
 function compute_εII_AD(v::Parallel, τII, args; tol=1e-6, verbose=false)
     return local_iterations_τII_AD(v, τII, args; tol=tol, verbose=verbose)
@@ -368,22 +371,37 @@ end
 Performs local iterations versus stress for a given strain rate using AD
 """
 @inline function local_iterations_εII_AD(
-    v::CompositeRheology{T,N}, 
+    v::CompositeRheology{T,
+            N,
+            Npar,is_par,
+            Nplast,is_plastic,
+            Nvol,is_vol},
     εII::_T, 
     args; 
     tol=1e-6, verbose=false
-) where {N, T, _T}
-
+) where {N, T, _T, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}
+    
     # Initial guess
     τII = compute_τII_harmonic(v, εII, args)
     
     !isCUDA() && verbose && println("initial τII = $τII")
 
+    # extract plastic element if it exists
+    v_pl = v[1]
+    if Nplast>0
+        for i=1:N
+            if is_plastic[i]
+                v_pl =  v[i]
+            end
+        end
+    end
+
     # Local Iterations
     iter = 0
     ϵ = 2.0 * tol
     τII_prev = τII
-    while ϵ > tol
+    ε_pl = 0.0;
+    while (ϵ > tol) && (iter<10)
         iter += 1
         #= 
             Newton scheme -> τII = τII - f(τII)/dfdτII. 
@@ -392,11 +410,31 @@ Performs local iterations versus stress for a given strain rate using AD
                 dfdτII = - dεII_dτII(v, τII, args) 
                 τII -= f / dfdτII
         =#
-        τII = muladd(εII - compute_εII(v, τII, args), inv(dεII_dτII_AD(v, τII, args)), τII)
+        
+        ε_np = compute_εII_nonplastic(v, τII, args)
+        dεII_dτII = dεII_dτII_AD(v, τII, args)
+
+        f = εII - ε_np      # non-plastic contributions
+        
+        if Nplast>0
+           
+            # in case of plasticity, iterate for λ, ε_pl
+            ε_pl += localiterations_εpl(v_pl, τII, ε_np, args, tol=tol, verbose=verbose)
+
+            # add contributions to dεII_dτII:
+            if ε_pl>0.0
+                # in fact dε_pl/dτII = d(λ*∂Q∂τII(v_pl, τII))/dτII = 0 for DP
+                dεII_dτII += 0
+            end
+        end
+        f -= ε_pl
+
+
+        τII = muladd(f, inv(dεII_dτII), τII)
 
         ϵ = abs(τII - τII_prev) * inv(abs(τII))
         τII_prev = τII
-        !isCUDA() && verbose && println(" iter $(iter) $ϵ")
+        !isCUDA() && verbose && println(" iter $(iter) $ϵ τII=$τII")
     end
     if !isCUDA() && verbose
         println("final τII = $τII")
@@ -406,9 +444,46 @@ Performs local iterations versus stress for a given strain rate using AD
     return τII
 end
 
+"""
+Performs local iterations for λ in case we have plasticity
+"""
+function localiterations_εpl(v::AbstractPlasticity, τII::_T, ε_np, args; tol=1e-6, verbose=true) where _T
+
+    η_np  = (τII - args.τII_old)/(2.0*ε_np)
+           
+    F    = compute_yieldfunction(v, merge(args, (τII=τII,)))
+
+    iter = 0
+    λ = 0.0
+    ϵ = 2.0 * tol
+    τII_pl = τII
+    while (ϵ > tol) && (iter<100) && (F>0.0)
+        #   τII_pl = τII -  2*η_np*λ*∂Q∂τII
+        #   F(τII_pl)
+        #   dF/dλ = (dF/dτII)*(dτII/dλ) = (dF/dτII)*(2*η_np*∂Q∂τII)
+        
+        iter += 1
+        τII_pl = τII -  2*η_np*λ*∂Q∂τII(v,τII_pl)       # update stress
+        F      = compute_yieldfunction(v, merge(args, (τII=τII_pl,)))
+        
+        dFdλ = ∂F∂τII(v, τII_pl)*(2*η_np*∂Q∂τII(v,τII_pl))
+        λ -= -F / dFdλ
+
+        ϵ = F
+
+        !isCUDA() && verbose && println("    plastic iter $(iter) ϵ=$ϵ λ=$λ, F=$F")
+    end
+
+    ε_pl = λ*∂Q∂τII(v,τII_pl)
+    
+    return ε_pl
+end
+
+
 @inline function local_iterations_τII_AD(
     v::Parallel, τII::T, args; tol=1e-6, verbose=false
 ) where {T}
+
     # Initial guess
     εII = compute_εII_harmonic(v, τII, args)
 
@@ -530,8 +605,6 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     # Local Iterations
     iter = 0
     ϵ = 2 * tol
-    τII_prev = τ_initial
-    τ_parallel = _T(0)
     max_iter = 1000
     while (ϵ > tol) && (iter < max_iter)
         iter += 1
@@ -602,7 +675,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         #    x[j] = compute_εII_harmonic_i(c, τ_initial, args,i)   
         #end
 
-        if is_plastic[i] & is_par[i]
+        if is_plastic[i] && is_par[i]
             # parallel plastic element
             j += 1
             x[j] = 0    # λ̇  
@@ -610,7 +683,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
             j += 1
             x[j] = τ_initial    # τ_plastic initial guess  
 
-        elseif !is_plastic[i] & is_par[i]
+        elseif !is_plastic[i] && is_par[i]
             # normal plastic element
             j += 1
             x[j] = 0    # λ̇  
@@ -705,7 +778,7 @@ end
         ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
         r[1]   -=  ε̇_pl                     #  add plastic strainrate
         
-        if F>0
+        if F>0.0
             J[1,j] = ∂Q∂τII(element, τ_pl)     
             J[j,j+1]   = ∂F∂τII(element.elements[1], τ_pl)    
             J[j+1,1]   = -1.0;
@@ -728,7 +801,7 @@ end
         ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
         r[1]   -=  ε̇_pl                     #  add plastic strainrate
         
-        if F>0
+        if F>0.0
             J[1,j] = ∂Q∂τII(element, τ_pl)     
 
             # plasticity is not in a parallel element    
@@ -892,7 +965,28 @@ dτII_dεII_AD(v::Union{Parallel,CompositeRheology}, εII, args) = ForwardDiff.d
 
 
 
-# HARMONIC AVERAGES (mostly used as initial guesses)
+# AVERAGES (mostly used as initial guesses)
+
+"""
+    compute_εII_nonplastic(v::CompositeRheology, TauII, args)
+
+Harmonic average of stress of all elements in a `CompositeRheology` structure that are not plastic elements
+"""
+@inline @generated function compute_εII_nonplastic(
+    v::CompositeRheology{T,N}, 
+    TauII::_T, 
+    args
+) where {T,N, _T}
+    quote
+        out = zero(_T)
+        Base.Cartesian.@nexprs $N i ->
+            out += _compute_εII_nonplastic(v.elements[i], TauII, args)
+        out = out
+    end
+end
+
+_compute_εII_nonplastic(v, TauII, args) = first(compute_εII(v, TauII, args))
+_compute_εII_nonplastic(v::AbstractPlasticity, TauII, args) = 0.0
 
 """
     compute_τII_nonplastic(v::Parallel, EpsII, args)

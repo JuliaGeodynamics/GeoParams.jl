@@ -70,6 +70,7 @@ using GeoParams, ForwardDiff
         @test dε_dτ ≈ dε_dτ_FD  rtol=1e-6 
         @test dε_dτ_AD ≈ dε_dτ_FD  rtol=1e-6 
         
+        
         εII = 1e-12 #2e-18
         Δε  = εII*1e-6;
         τ0, = compute_τII(v, εII, args, verbose=false);
@@ -188,13 +189,13 @@ using GeoParams, ForwardDiff
         
     end
 
-    # Composite cases with plasticity 
+    # Composite cases with (non-parallel) plasticity 
     εII =  3e-15
     args = merge(args, (τII_old=7e5,P=0.0, dt=8e8))
-    for v in [c8]
-        #τ_AD = compute_τII_AD(v, εII, args)     
+    for v in [c10 c8]
+       # τ_AD, = compute_τII_AD(v, εII, args)     
         τ,    = compute_τII(v, εII, args, verbose=false)   
-
+        
         args_old = merge(args, (τII=args.τII_old,))  
         Fold = compute_yieldfunction(c8.elements[3],args_old)
 
