@@ -18,8 +18,8 @@ using GeoParams
     @test isapprox(z[34].val,  13.2000, atol=1e-4)
     @test isapprox(T[89].val, 704.0000, atol=1e-4)
 
-    # Use HalfspaceCoolingTemp and user-defined strain rate
-    z, τ, T   = StrengthEnvelopeComp(MatParam, Thickness, HalfspaceCoolingTemp(0C, 1350C, 10Myrs, 0K/km, 1e-6m^2/s), 1e-10/s);
+    # Use HalfspaceCool profile and user-defined strain rate
+    z, τ, T   = StrengthEnvelopeComp(MatParam, Thickness, HalfspaceCoolTemp(0C, 1350C, 10Myrs, 0K/km, 1e-6m^2/s), 1e-10/s);
 
     @test isapprox(τ[25].val, 135.7978, atol=1e-4)
     @test isapprox(τ[38].val,   9.3200, atol=1e-4)

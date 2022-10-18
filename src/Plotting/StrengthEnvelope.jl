@@ -11,7 +11,7 @@ Creates a GUI that plots a 1D strength envelope. In the GUI, temperature profile
 Parameters:
 - MatParam:  a tuple of materials (including the following properties: Phase, Density, CreepLaws, Plasticity)
 - Thickness: a vector listing the thicknesses of the respective layers (should carry units)
-- TempType:  the type of temperature profile (LinearTemp=default, HalfspaceCoolingTemp, ConstantTemp)
+- TempType:  the type of temperature profile (LinTemp=default, HalfspaceCoolTemp, ConstTemp)
 - nz:        optional argument controlling the number of points along the profile (default = 101)
 
 # Example:
@@ -22,18 +22,18 @@ julia> MatParam = (SetMaterialParams(Name="UC", Phase=1, Density=ConstantDensity
                    SetMaterialParams(Name="LC", Phase=3, Density=PT_Density(ρ0=2900kg/m^3, α=3e-5/K, β=1e-10/Pa), CreepLaws = SetDislocationCreep("Maryland strong diabase | Mackwell et al. (1998)"), Plasticity = DruckerPrager(ϕ=30.0, C=10MPa)));
 julia> Thickness = [15,10,15]*km;
 
-julia> StrengthEnvelopePlot(MatParam, Thickness, LinearTemp())
+julia> StrengthEnvelopePlot(MatParam, Thickness, LinTemp())
 ```
 """
-function StrengthEnvelopePlot(MatParam::NTuple{N, AbstractMaterialParamsStruct}, Thickness::Vector{U}; TempType::AbstractThermalStructure=LinearTemp(), nz::Int64=101) where {N, U}
+function StrengthEnvelopePlot(MatParam::NTuple{N, AbstractMaterialParamsStruct}, Thickness::Vector{U}; TempType::AbstractTempStruct=LinTemp(), nz::Int64=101) where {N, U}
 
     # check temperature structure
-    if typeof(TempType) == LinearTemp
+    if typeof(TempType) == LinTemp
         Ttype     = 1
         title     = "1D Strength Envelope (Linear T-profile, Ttop = 0C)"
         Ttop      = 0C
         # Tbot controlled by slider
-    elseif typeof(TempType) == HalfspaceCoolingTemp
+    elseif typeof(TempType) == HalfspaceCoolTemp
         Ttype     = 2
         title     = "1D Strength Envelope (Halfspace-cooling T-profile, Ttop = 0C, Tmantle = 1350C)"
         Ttop      = 0C
@@ -41,7 +41,7 @@ function StrengthEnvelopePlot(MatParam::NTuple{N, AbstractMaterialParamsStruct},
         Adiabat   = 0K/km
         kappa     = 1e-6m^2/s
         # Age controlled by slider
-    elseif typeof(TempType) == ConstantTemp
+    elseif typeof(TempType) == ConstTemp
         Ttype     = 3
         title     = "1D Strength Envelope (Constant T)"
         # Temp controlled by slider
@@ -93,13 +93,13 @@ function StrengthEnvelopePlot(MatParam::NTuple{N, AbstractMaterialParamsStruct},
     # build temperature structure
     if Ttype == 1
         Tbot     = @lift($T_slider*C)
-        Temp     = @lift(LinearTemp(Ttop, $Tbot))
+        Temp     = @lift(LinTemp(Ttop, $Tbot))
     elseif Ttype == 2
         Age      = @lift($T_slider*Myrs)
-        Temp     = @lift(HalfspaceCoolingTemp(Ttop, Tbot, $Age, Adiabat, kappa))
+        Temp     = @lift(HalfspaceCoolTemp(Ttop, Tbot, $Age, Adiabat, kappa))
     elseif Ttype == 3
         Tcon     = @lift($T_slider*C)
-        Temp     = @lift(ConstantTemp($Tcon))
+        Temp     = @lift(ConstTemp($Tcon))
     end
 
     # get results from computational routine

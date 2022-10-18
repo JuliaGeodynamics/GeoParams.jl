@@ -1,27 +1,27 @@
 using Parameters
 using SpecialFunctions: erfc
 
-export StrengthEnvelopeComp, ConstantTemp, LinearTemp, HalfspaceCoolingTemp, GP_Compute_ThermalStructure, LithPres
+export StrengthEnvelopeComp, ConstTemp, LinTemp, HalfspaceCoolTemp, CompTempStruct, LithPres
 
-abstract type AbstractThermalStructure end  
+abstract type AbstractTempStruct end  
 
 """
-    ConstantTemp(T=1000)
+    ConstTemp(T=1000)
     
 Sets a constant temperature inside the box
 Parameters
 ===
 - T : the value
 """
-@with_kw_noshow struct ConstantTemp <: AbstractThermalStructure
+@with_kw_noshow struct ConstTemp <: AbstractTempStruct
     T = 1000
 end
 
-GP_Compute_ThermalStructure(Z, s::ConstantTemp) = fill(s.T, length(Z))
+CompTempStruct(Z, s::ConstTemp) = fill(s.T, length(Z))
 
 
 """
-    LinearTemp(Ttop=0, Tbot=1000)
+    LinTemp(Ttop=0, Tbot=1000)
     
 Set a linear temperature structure from top to bottom
 Parameters
@@ -29,12 +29,12 @@ Parameters
 - Ttop : the value @ the top
 - Tbot : the value @ the bottom
 """
-@with_kw_noshow struct LinearTemp <: AbstractThermalStructure
+@with_kw_noshow struct LinTemp <: AbstractTempStruct
     Ttop = 0
     Tbot = 1350
 end
 
-function GP_Compute_ThermalStructure(Z, s::LinearTemp)
+function CompTempStructompute_ThermalStructure(Z, s::LinTemp)
     @unpack Ttop, Tbot  = s
 
     dz    = Z[end]-Z[1];
@@ -45,7 +45,7 @@ function GP_Compute_ThermalStructure(Z, s::LinearTemp)
 end
 
 """
-    HalfspaceCoolingTemp(Tsurface=0, Tmantle=1350, Age=60, Adiabat=0)
+    HalfspaceCoolTemp(Tsurface=0, Tmantle=1350, Age=60, Adiabat=0)
     
 Sets a halfspace temperature structure in plate
 Parameters
@@ -55,7 +55,7 @@ Parameters
 - Age : Thermal Age of plate [Myrs]
 - Adiabat : Mantle Adiabat [K/km]
 """
-@with_kw_noshow struct HalfspaceCoolingTemp <: AbstractThermalStructure
+@with_kw_noshow struct HalfspaceCoolTemp <: AbstractTempStruct
     Tsurface = 0        # top T
     Tmantle  = 1350     # bottom T
     Age      = 60       # thermal age of plate [in Myrs]
@@ -63,7 +63,7 @@ Parameters
     kappa    = 1e-6     # thermal diffusivity
 end
 
-function GP_Compute_ThermalStructure(Z, t::HalfspaceCoolingTemp)
+function CompTempStruct(Z, t::HalfspaceCoolTemp)
     @unpack Tsurface, Tmantle, Age, Adiabat, kappa  = t    
 
     Temp  = zeros(Float64, length(Z))K
@@ -77,15 +77,17 @@ function GP_Compute_ThermalStructure(Z, t::HalfspaceCoolingTemp)
 end
 
 """
-    LithPres(MatParam, Phases, ρ, T, nz, dz, g)
+    LithPres(MatParam, Phases, ρ, T, dz, g)
 
 Iteratively solves a 1D lithostatic pressure profile (compatible with temperature- and pressure-dependent densities)
 Parameters
 ========
-- ρ:  density vector for initial guess(can be zeros)
-- T:  temperature vector
-- dz: grid spacing
-- g:  gravitational accelaration
+- MatParam: a tuple of materials (including the following properties: Phase, Density)
+- Phases:   vector with the distribtion of phases
+- ρ:        density vector for initial guess(can be zeros)
+- T:        temperature vector
+- dz:       grid spacing
+- g:        gravitational accelaration
 """
 function LithPres(MatParam, Phases, ρ, T, dz, g)
     nz   = length(T)
@@ -151,14 +153,14 @@ function extractFromResult(res, ind, nz)
 end
 
 """
-    StrengthEnvelopeComp(MatParam::NTuple{N, AbstractMaterialParamsStruct}, Thickness::Vector{U}, TempType::AbstractThermalStructure=LinearTemp(0C, 800C), ε=1e-15/s, nz::Int64=101) where {N, U}
+    StrengthEnvelopeComp(MatParam::NTuple{N, AbstractMaterialParamsStruct}, Thickness::Vector{U}, TempType::AbstractTempStruct=LinTemp(0C, 800C), ε=1e-15/s, nz::Int64=101) where {N, U}
 
-Calculates a 1D strength envelope.
+Calculates a 1D strength envelope. Pressure used for Drucker Prager plasticity is lithostatic. To visualize the results in a GUI, use StrengthEnvelopePlot.
 
 Parameters:
 - MatParam:  a tuple of materials (including the following properties: Phase, Density, CreepLaws, Plasticity)
 - Thickness: a vector listing the thicknesses of the respective layers (should carry units)
-- TempType:  the type of temperature profile (ConstantTemp(), LinearTemp(), HalfspaceCoolingTemp())
+- TempType:  the type of temperature profile (ConstTemp(), LinTemp(), HalfspaceCoolTemp())
 - ε:         background strainrate
 - nz:        optional argument controlling the number of points along the profile (default = 101)
 
@@ -170,10 +172,10 @@ julia> MatParam = (SetMaterialParams(Name="UC", Phase=1, Density=ConstantDensity
                    SetMaterialParams(Name="LC", Phase=3, Density=PT_Density(ρ0=2900kg/m^3, α=3e-5/K, β=1e-10/Pa), CreepLaws = SetDislocationCreep("Maryland strong diabase | Mackwell et al. (1998)"), Plasticity = DruckerPrager(ϕ=30.0, C=10MPa)));
 julia> Thickness = [15,10,15]*km;
 
-julia> StrengthEnvelopeComp(MatParam, Thickness, LinearTemp(), ε=1e-15/s)
+julia> StrengthEnvelopeComp(MatParam, Thickness, LinTemp(), ε=1e-15/s)
 ```
 """
-function StrengthEnvelopeComp(MatParam::NTuple{N, AbstractMaterialParamsStruct}, Thickness::Vector{U}, TempType::AbstractThermalStructure=LinearTemp(0C, 800C), ε=1e-15/s, nz::Int64=101) where {N, U}
+function StrengthEnvelopeComp(MatParam::NTuple{N, AbstractMaterialParamsStruct}, Thickness::Vector{U}, TempType::AbstractTempStruct=LinTemp(0C, 800C), ε=1e-15/s, nz::Int64=101) where {N, U}
 
     # hardcoded input
     g         = 9.81m/s^2
@@ -198,7 +200,7 @@ function StrengthEnvelopeComp(MatParam::NTuple{N, AbstractMaterialParamsStruct},
     end
 
     # build temperature structure
-    T         = GP_Compute_ThermalStructure(dimensionalize(z, km, CharDim), TempType)
+    T         = CompTempStruct(dimensionalize(z, km, CharDim), TempType)
     T         = nondimensionalize(T, CharDim)
 
     # pressure and density
