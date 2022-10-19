@@ -413,13 +413,17 @@ Performs local iterations versus stress for a given strain rate using AD
         
         ε_np = compute_εII_nonplastic(v, τII, args)
         dεII_dτII = dεII_dτII_AD(v, τII, args)
+        
+        dεII_dτII1 = dεII_dτII_elements(v,τII,args)
+        
 
-        f = εII - ε_np      # non-plastic contributions
+        f = εII - ε_np      # non-plastic contributions to residual
         
         if Nplast>0
            
-            # in case of plasticity, iterate for λ, ε_pl
-            ε_pl += localiterations_εpl(v_pl, τII, ε_np, args, tol=tol, verbose=verbose)
+            # in case of plasticity, iterate for ε_pl
+            args = merge(args, (ε_np=ε_np,f=f))
+            ε_pl += compute_εII(v_pl, τII, args, tol=tol, verbose=verbose)
 
             # add contributions to dεII_dτII:
             if ε_pl>0.0
@@ -445,16 +449,19 @@ Performs local iterations versus stress for a given strain rate using AD
 end
 
 """
-Performs local iterations for λ in case we have plasticity
-"""
-function localiterations_εpl(v::AbstractPlasticity, τII::_T, ε_np, args; tol=1e-6, verbose=true) where _T
+    compute_εII(v::AbstractPlasticity, τII::_T, args; tol=1e-6, verbose=true)
 
-    η_np  = (τII - args.τII_old)/(2.0*ε_np)
+Performs local iterations to compute the plastic strainrate. Note that the non-plastic strainrate, ε_np, should be part of `args`
+"""
+function compute_εII(v::AbstractPlasticity, τII::_T, args; tol=1e-6, verbose=true) where _T
+
+    
+    η_np  = (τII - args.τII_old)/(2.0*args.ε_np)
            
     F    = compute_yieldfunction(v, merge(args, (τII=τII,)))
 
     iter = 0
-    λ = 0.0
+    λ = 0.0 
     ϵ = 2.0 * tol
     τII_pl = τII
     while (ϵ > tol) && (iter<100) && (F>0.0)
@@ -466,7 +473,8 @@ function localiterations_εpl(v::AbstractPlasticity, τII::_T, ε_np, args; tol=
         τII_pl = τII -  2*η_np*λ*∂Q∂τII(v,τII_pl)       # update stress
         F      = compute_yieldfunction(v, merge(args, (τII=τII_pl,)))
         
-        dFdλ = ∂F∂τII(v, τII_pl)*(2*η_np*∂Q∂τII(v,τII_pl))
+        dFdλ = ∂F∂τII(v, τII)*(2*η_np*∂Q∂τII(v,τII))
+      
         λ -= -F / dFdλ
 
         ϵ = F
@@ -653,7 +661,8 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     ε_init = nothing,
     max_iter = 1000
 ) where {T,N,Npar,is_par, _T, Nplast, is_plastic, is_vol}
- 
+    
+println("local plastic iter")
     # Compute residual
     n = 1 + Nplast + Npar;             # total size of unknowns
     x = zero(εII_total)
@@ -714,6 +723,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         # update solution
         dx  = J\r 
         x .+= dx   
+        @show dx x r J
         
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
         verbose && println(" iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
@@ -868,7 +878,7 @@ end
 
 Uses AD to compute the derivative of `εII` vs. `τII`
 """
-dεII_dτII_AD(v::Union{Parallel,CompositeRheology}, τII, args) = ForwardDiff.derivative(x->compute_εII_AD(v, x, args), τII)
+dεII_dτII_AD(v::Union{Parallel,CompositeRheology}, τII, args) = ForwardDiff.derivative(x->compute_εII_nonplastic(v, x, args), τII)
 
 # Computes sum of dεII/dτII for all elements that are NOT parallel elements
 """
