@@ -412,10 +412,7 @@ Performs local iterations versus stress for a given strain rate using AD
         =#
         
         ε_np = compute_εII_nonplastic(v, τII, args)
-        dεII_dτII = dεII_dτII_AD(v, τII, args)
-        
-        dεII_dτII1 = dεII_dτII_elements(v,τII,args)
-        
+        dεII_dτII = dεII_dτII_nonplastic_AD(v, τII, args)
 
         f = εII - ε_np      # non-plastic contributions to residual
         
@@ -662,7 +659,6 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     max_iter = 1000
 ) where {T,N,Npar,is_par, _T, Nplast, is_plastic, is_vol}
     
-println("local plastic iter")
     # Compute residual
     n = 1 + Nplast + Npar;             # total size of unknowns
     x = zero(εII_total)
@@ -723,7 +719,7 @@ println("local plastic iter")
         # update solution
         dx  = J\r 
         x .+= dx   
-        @show dx x r J
+        #@show dx x r J
         
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
         verbose && println(" iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
@@ -878,7 +874,9 @@ end
 
 Uses AD to compute the derivative of `εII` vs. `τII`
 """
-dεII_dτII_AD(v::Union{Parallel,CompositeRheology}, τII, args) = ForwardDiff.derivative(x->compute_εII_nonplastic(v, x, args), τII)
+dεII_dτII_AD(v::Union{Parallel,CompositeRheology}, τII, args) = ForwardDiff.derivative(x->compute_εII(v, x, args), τII)
+
+dεII_dτII_nonplastic_AD(v::Union{Parallel,CompositeRheology}, τII, args) = ForwardDiff.derivative(x->compute_εII_nonplastic(v, x, args), τII)
 
 # Computes sum of dεII/dτII for all elements that are NOT parallel elements
 """
