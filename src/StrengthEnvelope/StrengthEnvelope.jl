@@ -1,7 +1,7 @@
 using Parameters
 using SpecialFunctions: erfc
 
-export StrengthEnvelopeComp, ConstTemp, LinTemp, HalfspaceCoolTemp, CompTempStruct, LithPres
+export StrengthEnvelopeComp, StrengthEnvelopePlot, ConstTemp, LinTemp, HalfspaceCoolTemp, CompTempStruct, LithPres
 
 abstract type AbstractTempStruct end  
 
@@ -9,25 +9,35 @@ abstract type AbstractTempStruct end
     ConstTemp(T=1000)
     
 Sets a constant temperature inside the box
-Parameters
-===
+
+Parameters:
 - T : the value
 """
 @with_kw_noshow struct ConstTemp <: AbstractTempStruct
     T = 1000
 end
 
+
+"""
+    CompTempStruct(Z, s::AbstractTempStruct)
+
+Returns a temperature vector that matches the coordinate vector and temperature structure that were passed in
+
+Parameters:
+- Z: vector with depth coordinates
+- s: Temperature structure (CostTemp, LinTemp, HalfspaceCoolTemp)
+"""
 CompTempStruct(Z, s::ConstTemp) = fill(s.T, length(Z))
 
 
 """
     LinTemp(Ttop=0, Tbot=1000)
     
-Set a linear temperature structure from top to bottom
-Parameters
-===
-- Ttop : the value @ the top
-- Tbot : the value @ the bottom
+Sets a linear temperature structure from top to bottom
+
+Parameters:
+- Ttop: the value @ the top
+- Tbot: the value @ the bottom
 """
 @with_kw_noshow struct LinTemp <: AbstractTempStruct
     Ttop = 0
@@ -48,12 +58,12 @@ end
     HalfspaceCoolTemp(Tsurface=0, Tmantle=1350, Age=60, Adiabat=0)
     
 Sets a halfspace temperature structure in plate
-Parameters
-========
-- Tsurface : surface temperature [C]
-- Tmantle : mantle temperature [C]
-- Age : Thermal Age of plate [Myrs]
-- Adiabat : Mantle Adiabat [K/km]
+
+Parameters:
+- Tsurface: surface temperature [C]
+- Tmantle:  mantle temperature [C]
+- Age:      Thermal Age of plate [Myrs]
+- Adiabat:  Mantle Adiabat [K/km]
 """
 @with_kw_noshow struct HalfspaceCoolTemp <: AbstractTempStruct
     Tsurface = 0        # top T
@@ -80,8 +90,8 @@ end
     LithPres(MatParam, Phases, ρ, T, dz, g)
 
 Iteratively solves a 1D lithostatic pressure profile (compatible with temperature- and pressure-dependent densities)
-Parameters
-========
+
+Parameters:
 - MatParam: a tuple of materials (including the following properties: Phase, Density)
 - Phases:   vector with the distribtion of phases
 - ρ:        density vector for initial guess(can be zeros)
@@ -216,4 +226,33 @@ function StrengthEnvelopeComp(MatParam::NTuple{N, AbstractMaterialParamsStruct},
     T         = dimensionalize(T, C,   CharDim)
 
     return z, τ, T
+end
+
+
+"""
+    StrengthEnvelopePlot(MatParam, Thickness; TempType, nz)
+
+Requires GLMakie
+
+Creates a GUI that plots a 1D strength envelope. In the GUI, temperature profile and strain rate can be adjusted. The Drucker-Prager plasticity uses lithostatic pressure.
+
+Parameters:
+- MatParam:  a tuple of materials (including the following properties: Phase, Density, CreepLaws, Plasticity)
+- Thickness: a vector listing the thicknesses of the respective layers (should carry units)
+- TempType:  the type of temperature profile (LinTemp=default, HalfspaceCoolTemp, ConstTemp)
+- nz:        optional argument controlling the number of points along the profile (default = 101)
+
+# Example:
+```julia-repl
+julia> using GLMakie
+julia> MatParam = (SetMaterialParams(Name="UC", Phase=1, Density=ConstantDensity(ρ=2700kg/m^3), CreepLaws = SetDislocationCreep("Wet Quartzite | Ueda et al. (2008)"), Plasticity = DruckerPrager(ϕ=30.0, C=10MPa)),
+                   SetMaterialParams(Name="MC", Phase=2, Density=Density=ConstantDensity(ρ=2900kg/m^3), CreepLaws = SetDislocationCreep("Plagioclase An75 | Ji and Zhao (1993)"), Plasticity = DruckerPrager(ϕ=20.0, C=10MPa)),
+                   SetMaterialParams(Name="LC", Phase=3, Density=PT_Density(ρ0=2900kg/m^3, α=3e-5/K, β=1e-10/Pa), CreepLaws = SetDislocationCreep("Maryland strong diabase | Mackwell et al. (1998)"), Plasticity = DruckerPrager(ϕ=30.0, C=10MPa)));
+julia> Thickness = [15,10,15]*km;
+
+julia> StrengthEnvelopePlot(MatParam, Thickness, LinTemp())
+```
+"""
+function StrengthEnvelopePlot()
+    println("Load GLMakie to use this function: \n julia> using GLMakie") 
 end
