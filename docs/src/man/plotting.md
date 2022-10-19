@@ -9,6 +9,4 @@ GeoParams.PlotHeatCapacity
 GeoParams.PlotConductivity
 GeoParams.PlotMeltFraction
 GeoParams.PlotPhaseDiagram
-GeoParams.StrengthEnvelopePlot
-![XMasTree](../assets/XMasTree.png)
 ```
