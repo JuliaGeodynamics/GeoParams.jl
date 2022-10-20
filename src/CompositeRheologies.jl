@@ -979,8 +979,11 @@ end
         r[1]   -=  ε̇_pl                     #  add plastic strainrate
         
         if F>0.0
-            J[1,j] = ∂Q∂τII(element, τ_pl)     
+            J[1,j] = ∂Q∂τII(element, τ_pl)    
+
+            J[j,j]     = ∂F∂λ(element.elements[1], τ_pl)        # derivative of F vs. λ
             J[j,j+1]   = ∂F∂τII(element.elements[1], τ_pl)    
+            
             J[j+1,1]   = -1.0;
             J[j+1,2]   = dτII_dεII_nonplastic(element, τ_pl, args)*∂Q∂τII(element, τ_pl) ;
             J[j+1,j+1] = 1.0;
@@ -1009,6 +1012,7 @@ end
             J[1,j]   = ∂Q∂τII(element, τ_pl)     
             J[j+2,j] = ∂Q∂P(element, P)     
             
+            J[j,j]     = ∂F∂λ(element.elements[1], τ_pl)        # derivative of F vs. λ
             J[j,j+1]   = ∂F∂τII(element.elements[1], τ_pl)    
             J[j,j+2]   = ∂F∂P(element, P)           # derivative of F vs. P
             
@@ -1037,8 +1041,8 @@ end
             J[1,j] = ∂Q∂τII(element, τ_pl)     
 
             # plasticity is not in a parallel element    
-            J[j,1] = ∂F∂τII(element, τ_pl)    
-            J[j,j] = 0.0
+            J[j,1] = ∂F∂τII(element, τ_pl)  
+            J[j,j] = ∂F∂λ(element, τ_pl)        # derivative of F vs. λ
             r[j] =  -F      
         else
             J[j,j] = 1.0
@@ -1065,9 +1069,10 @@ end
             
             # plasticity is not in a parallel element    
             J[j,1] = ∂F∂τII(element, τ_pl)      # derivative of F vs. τ
+            J[j,2] = ∂F∂λ(element, τ_pl)        # derivative of F vs. λ
             J[j,3] = ∂F∂P(element, P)           # derivative of F vs. P
             J[j,j] = 0.0
-
+            
             r[j] =  -F                          # residual
         else
             J[j,j] = 1.0

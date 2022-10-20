@@ -10,7 +10,7 @@ export isvolumetric,
     AbstractPlasticity,
     compute_plasticpotentialDerivative,
     ∂Q∂τ,∂Q∂τII,∂Q∂P,
-    ∂F∂τII,∂F∂P,
+    ∂F∂τII,∂F∂P,∂F∂λ,
     compute_εII
 
 
@@ -113,8 +113,10 @@ end
 #∂Q∂P(p::DruckerPrager, args) = ∂Q∂P(p; args...)
 ∂Q∂P(p::DruckerPrager, args) = -NumValue(p.sinΨ)
 
-∂F∂τII(p::DruckerPrager, τII)   = 1.0
-∂F∂P(p::DruckerPrager, P)  = -NumValue(p.sinϕ)
+# Derivatives of yield function
+∂F∂τII(p::DruckerPrager, τII::_T) where _T  = _T(1)
+∂F∂P(p::DruckerPrager, P::_T) where _T      = -NumValue(p.sinϕ)
+∂F∂λ(p::DruckerPrager, τII::_T) where _T    = _T(0)
 
 
 # Derivatives w.r.t stress tensor
