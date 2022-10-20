@@ -346,9 +346,12 @@ function compute_p_τII(
 
     # A composite rheology case that may have volumetric elements, but the are not 
     # tightly coupled, so we do NOT perform coupled iterations.
-    P, τII = local_iterations_εvol_εII(v, εII, εvol, args; tol=tol, verbose=verbose)
-    
-    return P,τII
+    out = local_iterations_εvol_εII(v, εII, εvol, args; tol=tol, verbose=verbose)
+
+    τII = out[1]
+    P = out[N+1]
+
+    return P,τII, out[2:N]
 end
 
 
@@ -1011,6 +1014,34 @@ end
         end
     end
 
+    @inline function __fill_J_plastic!(::False, ::True, j, args) #non-parallel, dilatant
+        τ_pl    = x[1]    # if the plastic element is in || with other elements, need to explicitly solve for this
+        P       = x[3]
+
+        args    = merge(args, (τII=τ_pl,P=P))
+        F       = compute_yieldfunction(element,args);  # yield function applied to plastic element
+    
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
+        ε̇vol_pl =  λ̇*∂Q∂P(element, P)  
+        
+        r[1]   -=  ε̇_pl                     #  contribution of plastic strainrate to residual
+        r[3]   -=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
+        
+        if F>0.0
+            J[1,j] = ∂Q∂τII(element, τ_pl)     
+            J[3,j] = ∂Q∂P(element, P)     
+            
+            # plasticity is not in a parallel element    
+            J[j,1] = ∂F∂τII(element, τ_pl)      # derivative of F vs. τ
+            J[j,3] = ∂F∂P(element, P)           # derivative of F vs. P
+            J[j,j] = 0.0
+            r[j] =  -F                          # residual
+        else
+            J[j,j] = 1.0
+            r[j] = 0.0
+        end
+    end
+
     __fill_J_plastic!(static(is_par), static(is_vol), j, args)
 
     return j
@@ -1039,7 +1070,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     ε_init = nothing,
     max_iter = 1000
 ) where {T,N,Npar,is_par, _T, Nplast, is_plastic, Nvol, is_vol}
-    println("local iterations for εvol_εII")    
+   # println("local iterations for εvol_εII")    
 
     # Compute residual
     n = 1 + Nplast + Npar + 1;             # total size of unknowns (one added for volumetric plasticity)
@@ -1097,20 +1128,20 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         J[1,1] = dεII_dτII_elements(c,τ,args);               
         
         r[n]   = εvol_total - compute_εvol_elements(c,P,args)     
-        J[n,n] = dεvol_dp_elements(c,P,args);               
+        J[n,n] = dεvol_dp(c,P,args);               
         
         # Add contributions from plastic elements
         fill_J_plastic!(J, r, x, c, args)
 
-        @show x r J
-        error("stop here")
+        #@show x r J
+        #error("stop here")
 
         # update solution
         dx  = J\r 
         x .+= dx   
         
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
-        verbose && println(" iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
+        verbose && println(" iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3])")
     end
     verbose && println("---")
     if (iter == max_iter)

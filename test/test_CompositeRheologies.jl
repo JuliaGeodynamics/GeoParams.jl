@@ -349,14 +349,14 @@ using GeoParams, ForwardDiff
     εII = 1e-15  
     εvol = -1e-18;
     args = (T = 900.0, d = 0.0001, τII_old = 700000.0, dt = 8.0e9, P = 0.0, P_old = 1e6)
-    for v in [c8 c3 c12]     
+    for v in [c8 c3 c12 c13]     
 
         p, τII = compute_p_τII(v, εII, εvol, args, verbose=false)
         if !isvolumetric(v)
             @test p == args.P_old
         end
 
-        # 0D rheology functions 
+        # 0D rheology functions p
         t_max = args.dt*2;
         t_vec, P_vec, τ_vec    =   time_p_τII_0D(v, εII, εvol, args; t=(0.,t_max), nt=20, verbose=false)
         if !isvolumetric(v)
@@ -368,6 +368,8 @@ using GeoParams, ForwardDiff
             if isa(v[1],AbstractElasticity)
                 @test Kb_computed  ≈  NumValue(v[1].Kb)
             end
+            
+        elseif isvolumetricplastic(v)
 
         end
 

@@ -9,9 +9,8 @@ export isvolumetric,
     DruckerPrager,               # constant
     AbstractPlasticity,
     compute_plasticpotentialDerivative,
-    ∂Q∂τ,∂Q∂τII,
-    ∂Q∂P,
-    ∂F∂τII,
+    ∂Q∂τ,∂Q∂τII,∂Q∂P,
+    ∂F∂τII,∂F∂P,
     compute_εII
 
 
@@ -110,10 +109,12 @@ end
 
 # Derivatives w.r.t pressure
 
-∂Q∂P(p::DruckerPrager; kwargs...) = -p.sinΨ
-∂Q∂P(p::DruckerPrager, args) = ∂Q∂P(p; args...)
+#∂Q∂P(p::DruckerPrager; kwargs...) = -p.sinΨ
+#∂Q∂P(p::DruckerPrager, args) = ∂Q∂P(p; args...)
+∂Q∂P(p::DruckerPrager, args) = -NumValue(p.sinΨ)
 
-∂F∂τII(p::DruckerPrager, τII::T) where T  = 1.0
+∂F∂τII(p::DruckerPrager, τII)   = 1.0
+∂F∂P(p::DruckerPrager, P)  = -NumValue(p.sinϕ)
 
 
 # Derivatives w.r.t stress tensor
