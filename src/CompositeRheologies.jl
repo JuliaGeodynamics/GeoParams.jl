@@ -992,6 +992,38 @@ end
         end
     end
 
+    @inline function __fill_J_plastic!(::True, ::True, j, args) # parallel, dilatant element 
+        τ       = x[1]
+        τ_pl    = x[j+1]    # if the plastic element is in || with other elements, need to explicitly solve for this
+        P       = P[j+2]    # pressure
+
+        args    = merge(args, (τII=τ_pl,P=P))
+        F       = compute_yieldfunction(element,args);  # yield function applied to plastic element
+    
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
+        ε̇vol_pl =  λ̇*∂Q∂P(element, P)  
+        r[1]   -=  ε̇_pl                     #  contribution of plastic strainrate to residual
+        r[j+2] -=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
+        
+        if F>0.0
+            J[1,j]   = ∂Q∂τII(element, τ_pl)     
+            J[j+2,j] = ∂Q∂P(element, P)     
+            
+            J[j,j+1]   = ∂F∂τII(element.elements[1], τ_pl)    
+            J[j,j+2]   = ∂F∂P(element, P)           # derivative of F vs. P
+            
+            J[j+1,1]   = -1.0;
+            J[j+1,2]   = dτII_dεII_nonplastic(element, τ_pl, args)*∂Q∂τII(element, τ_pl) ;
+            J[j+1,j+1] = 1.0;
+
+            r[j] = -F
+            r[j+1] = τ - compute_τII_nonplastic(element, ε̇_pl, args) - τ_pl                
+        else
+            J[j,j] =  J[j+1,j+1] = 1.0
+            r[j] = r[j+1] = 0.0
+        end
+    end
+
     @inline function __fill_J_plastic!(::False, ::False, j, args) #non-parallel, non-dilatant
         τ_pl    = x[1]    # if the plastic element is in || with other elements, need to explicitly solve for this
 
@@ -1025,7 +1057,7 @@ end
         ε̇vol_pl =  λ̇*∂Q∂P(element, P)  
         
         r[1]   -=  ε̇_pl                     #  contribution of plastic strainrate to residual
-        r[3]   -=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
+        r[j+1] -=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
         
         if F>0.0
             J[1,j] = ∂Q∂τII(element, τ_pl)     
@@ -1035,6 +1067,7 @@ end
             J[j,1] = ∂F∂τII(element, τ_pl)      # derivative of F vs. τ
             J[j,3] = ∂F∂P(element, P)           # derivative of F vs. P
             J[j,j] = 0.0
+
             r[j] =  -F                          # residual
         else
             J[j,j] = 1.0
