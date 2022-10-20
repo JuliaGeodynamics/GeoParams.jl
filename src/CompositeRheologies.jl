@@ -49,7 +49,8 @@ end
 struct CompositeRheology{T, N, 
                         Npar, is_parallel, 
                         Nplast, is_plastic, 
-                        Nvol, is_vol
+                        Nvol, is_vol,
+                        vol_plastic
                         } <: AbstractComposite
     elements::T
 end
@@ -69,8 +70,11 @@ function CompositeRheology(v::T) where {T}
     # determine if we have elements that have volumetric deformation
     is_vol = isvolumetric.(v);
     Nvol   =   count(is_vol);
-     
-    return CompositeRheology{typeof(v), n, Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol}(v)
+
+    # determine if we have a volumetric plastic element
+    vol_plastic = any(is_plastic .& is_vol)
+    
+    return CompositeRheology{typeof(v), n, Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol, vol_plastic}(v)
 end
 CompositeRheology(a,b...) = CompositeRheology( (a,b...,)) 
 CompositeRheology(a::Parallel) = CompositeRheology( (a,)) 
@@ -266,36 +270,56 @@ function compute_τII(v::CompositeRheology{T,N,0}, εII, args; tol=1e-6, verbose
     return τII
 end
 
+"""
+    p,τII = compute_p_τII(v::CompositeRheology, εII, εvol, args; tol=1e-6, verbose=false) 
+
+This updates pressure `p` and deviatoric stress invariant `τII` in case the composite rheology structure has volumetric components, but does not contain plastic or parallel elements.
+The 'old' pressure should be stored in `args` as `args.P_old`   
+"""
 function compute_p_τII(
     v::CompositeRheology{T,N,
-                    0,is_parallel,
-                    0,is_plastic,
-                    Nvol,is_vol}, 
+                    Npar,is_parallel,
+                    Nplastic,is_plastic,
+                    Nvol,is_vol,
+                    false}, 
         εII::_T, 
-        εvol,
+        εvol::_T,
         args; 
         tol=1e-6, verbose=false
-    ) where {T, N, _T, is_parallel, is_plastic, Nvol, is_vol}
-    # A composite rheology case with no parallel element; iterations for τII
+    ) where {T, N, _T, Npar, is_parallel, Nplastic, is_plastic, Nvol, is_vol}
+
+    # A composite rheology case that may have volumetric elements, but the are not 
+    # tightly coupled, so we do NOT perform coupled iterations.
     τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose)
-    p   = local_iterations_εvol(v, εvol, args; tol=tol, verbose=verbose)
-    return p,τII
+    P   = local_iterations_εvol(v, εvol, args; tol=tol, verbose=verbose)
+
+    return P,τII
 end
 
+
+"""
+    p,τII = compute_p_τII(v::CompositeRheology, εII, εvol, args; tol=1e-6, verbose=false) 
+
+This updates pressure `p` and deviatoric stress invariant `τII` in case the composite rheology structure has no volumetric elemnts, but may contain plastic or parallel elements. 
+In that case, pressure is not updated (`args.P` is used instead).     
+"""
 function compute_p_τII(
     v::CompositeRheology{T,N,
-                    0,is_parallel,
-                    0,is_plastic,
-                    0,is_vol}, 
+                    Npar,is_parallel,
+                    Nplast,is_plastic,
+                    0,is_vol, false}, 
         εII::_T, 
-        εvol,
+        εvol::_T,
         args;
         tol=1e-6, verbose=false
-    ) where {T, N, _T, is_parallel, is_plastic, Nvol, is_vol}
+    ) where {T, N, _T, Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol}
+    
     # A composite rheology case with no parallel element; iterations for τII
-    τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose)
-    p = any(keys(args) .=== :p_old) ? args.p_old : 0
-    return p,τII
+    τII, = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose)
+    
+    P = any(keys(args) .=== :P_old) ? args.P_old : 0.0
+
+    return P, τII
 end
 
 """
@@ -411,11 +435,12 @@ Performs local iterations versus stress for a given total strain rate for a give
     v::CompositeRheology{T,N,
                     0,is_parallel,
                     0,is_plastic,
-                    0,is_vol}, 
+                    Nvol,is_vol,
+                    false},         # no volumetric plasticity
     εII::_T, 
     args; 
     tol=1e-6, verbose=false
-) where {N, T, _T, is_parallel, is_plastic, is_vol}
+) where {N, T, _T, is_parallel, is_plastic, Nvol, is_vol}
 
     # Initial guess
     τII = compute_τII_harmonic(v, εII, args)
@@ -460,7 +485,8 @@ Performs local iterations versus stress for a given strain rate using AD
             N,
             Npar,is_par,
             Nplast,is_plastic,
-            Nvol,is_vol},
+            Nvol,is_vol,
+            false},
     εII::_T, 
     args; 
     tol=1e-6, verbose=false

@@ -15,18 +15,6 @@ using GeoParams, ForwardDiff
     pl2= DruckerPrager(; Ψ=10)                # plasticity
     pl3= DruckerPrager(C=1e6, ϕ=0)            # plasticity
     
-    test_vec = [v1 v2 v3 v4 e1 e2 pl1 pl2]
-    sol      = [false false false false false true false true]
-    for i = 1:length(sol)
-        @test isvolumetric(test_vec[i]) == sol[i]
-    end
-
-    test_vec = [v1 v2 v3 v4 e1 e2 pl1 pl2]
-    sol      = [false false false false false true false true]
-    for i = 1:length(sol)
-        @test isvolumetric(test_vec[i]) == sol[i]
-    end
-
     # Parallel elements
     p1 = Parallel(v3,v4)                # linear elements
     p2 = Parallel(v1,v2)                # includes nonlinear viscous elements
@@ -46,6 +34,8 @@ using GeoParams, ForwardDiff
     c10= CompositeRheology(e1,pl3)      # elastoplastic
     c11= CompositeRheology(e1,Parallel(pl3,LinearViscous(η=1e19Pa*s)))      # elasto-viscoplastic
     
+    c12= CompositeRheology(e2,v3)       # viscoelasticity with volumetric elasticity
+    c13= CompositeRheology(e2,pl2)      # volumetric elastoplastic
     
     p4 = Parallel(c3,v3)                # Parallel element with composite one as well    
 
@@ -61,6 +51,13 @@ using GeoParams, ForwardDiff
     
     args = (T=900.0, d=100e-6, τII_old=1e6, dt=1e8)
     εII, τII = 2e-15, 2e6
+
+    # test volumetric parts
+    test_vec = [v1 v2 v3 v4 e1 e2 pl1 pl2]
+    sol      = [false false false false false true false true]
+    for i = 1:length(sol)
+        @test isvolumetric(test_vec[i]) == sol[i]
+    end
 
     # Check derivatives 
     vec1 = [c1 c2 c3 c4 c5 p1 p2 p3] 
@@ -342,5 +339,26 @@ using GeoParams, ForwardDiff
                 CompositeRheology   = c5)
     
     @test NumValue(MatParam.CompositeRheology[1][2].η) ≈ 1e22
+
+
+    
+    # Test cases with/without volumetric elements
+    # Note that the only 'special' case implemented one where we have 
+    # volumetric plasticity, which requires iterations. 
+    # In all other cases we assume the coupling  
+    εII = 1e-15  
+    εvol = -1e-18;
+    args = (T = 900.0, d = 0.0001, τII_old = 700000.0, dt = 8.0e9, P = 0.0, P_old = 1e6)
+    for v in [c8 c3 c12]     
+
+        p, τII = compute_p_τII(v, εII, εvol, args, verbose=false)
+        if !isvolumetric(v)
+            @test p == args.P_old
+        end
+
+    end
+    
+
+
 
 end
