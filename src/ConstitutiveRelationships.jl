@@ -14,6 +14,7 @@ using ..MaterialParameters: MaterialParamsInfo
 import Base.show
 using ForwardDiff
 using StaticArrays
+using Static
 
 const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 
