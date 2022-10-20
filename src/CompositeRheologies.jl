@@ -327,6 +327,32 @@ function compute_p_τII(
 end
 
 """
+    p,τII = compute_p_τII(v::CompositeRheology, εII, εvol, args; tol=1e-6, verbose=false) 
+
+This updates pressure `p` and deviatoric stress invariant `τII` in case the composite rheology structure has volumetric components and has volumetric plasticity
+The 'old' pressure should be stored in `args` as `args.P_old`   
+"""
+function compute_p_τII(
+    v::CompositeRheology{T,N,
+                    Npar,is_parallel,
+                    Nplastic,is_plastic,
+                    Nvol,is_vol,
+                    true}, 
+        εII::_T, 
+        εvol::_T,
+        args; 
+        tol=1e-6, verbose=false
+    ) where {T, N, _T, Npar, is_parallel, Nplastic, is_plastic, Nvol, is_vol}
+
+    # A composite rheology case that may have volumetric elements, but the are not 
+    # tightly coupled, so we do NOT perform coupled iterations.
+    P, τII = local_iterations_εvol_εII(v, εII, εvol, args; tol=tol, verbose=verbose)
+    
+    return P,τII
+end
+
+
+"""
     τII = compute_τII(v::CompositeRheology{T,N}, εII, args; tol=1e-6, verbose=false)
     
 """
@@ -923,23 +949,23 @@ end
     return j
 end
 
-@generated function fill_J_plastic!(J, r, x, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plastic}, args) where {T, N, Npar, is_par, Nplast, is_plastic}
+@generated function fill_J_plastic!(J, r, x, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}, args) where {T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}
     quote
         Base.@_inline_meta
         j = 1
-        Base.Cartesian.@nexprs $N i -> j = @inbounds _fill_J_plastic!(J, r, x, c.elements[i], args, static($(is_plastic)[i]), $(is_par)[i], j)
+        Base.Cartesian.@nexprs $N i -> j = @inbounds _fill_J_plastic!(J, r, x, c.elements[i], args, static($(is_plastic)[i]), $(is_par)[i], $(is_vol)[i], j)
         return nothing
     end
 end
 
-@inline _fill_J_plastic!(J, r, x, element, args, ::False, is_par, j) = j
+@inline _fill_J_plastic!(J, r, x, element, args, ::False, is_par, is_vol, j) = j
 
-@inline function _fill_J_plastic!(J, r, x, element, args, ::True, is_par, j)
+@inline function _fill_J_plastic!(J, r, x, element, args, ::True, is_par, is_vol, j)
 
     j += 1
     λ̇  = x[j]
 
-    @inline function __fill_J_plastic!(::True, j, args)
+    @inline function __fill_J_plastic!(::True, ::False, j, args) # parallel, non-dilatant element 
         τ       = x[1]
         τ_pl    = x[j+1]    # if the plastic element is in || with other elements, need to explicitly solve for this
 
@@ -963,7 +989,7 @@ end
         end
     end
 
-    @inline function __fill_J_plastic!(::False, j, args)
+    @inline function __fill_J_plastic!(::False, ::False, j, args) #non-parallel, non-dilatant
         τ_pl    = x[1]    # if the plastic element is in || with other elements, need to explicitly solve for this
 
         args    = merge(args, (τII=τ_pl,))
@@ -985,9 +1011,113 @@ end
         end
     end
 
-    __fill_J_plastic!(static(is_par), j, args)
+    __fill_J_plastic!(static(is_par), static(is_vol), j, args)
 
     return j
+end
+
+
+
+"""
+    local_iterations_εII(c::CompositeRheology{T,N}, εII_total, εvol_total, args)
+
+This performs nonlinear Newton iterations for `τII` with given `εII_total` for cases where we plastic elements
+"""
+@inline function local_iterations_εvol_εII(
+    c::CompositeRheology{T,N,
+                        Npar,is_par,            # no ||
+                        Nplast, is_plastic,     # with plasticity
+                        Nvol,is_vol,            # with volumetric    
+                        true},                  # with volumetric plasticity        
+    εII_total::_T, 
+    εvol_total::_T, 
+    args; 
+    tol = 1e-6, 
+    verbose = false,
+    τ_initial = nothing, 
+    p_initial = nothing, 
+    ε_init = nothing,
+    max_iter = 1000
+) where {T,N,Npar,is_par, _T, Nplast, is_plastic, Nvol, is_vol}
+    println("local iterations for εvol_εII")    
+
+    # Compute residual
+    n = 1 + Nplast + Npar + 1;             # total size of unknowns (one added for volumetric plasticity)
+
+    # Initial guess of stress & strainrate
+    if isnothing(τ_initial)
+        τ_initial = compute_τII_harmonic(c, εII_total, args)
+    end
+    if isnothing(p_initial)
+        p_initial = compute_p_harmonic(c, εvol_total, args)
+    end    
+    verbose && println("τII guess = $τ_initial \n  P guess = $p_initial")
+    
+    x    = @MVector zeros(_T, n)
+    x[1] = τ_initial
+
+    j = 1;
+    for i=1:N
+        if is_plastic[i] 
+           # plastic element 
+           j += 1
+           x[j] = 0    # λ̇  
+
+            j += 1
+            x[j] = p_initial    # initial guess for pressure
+        end
+        if is_par[i] 
+            j += 1
+            x[j] = τ_initial    # τ_plastic initial guess  
+        end
+       # if is_vol[i]
+       #     # dilatant element
+       #     j += 1
+       #     x[j] = p_initial    # initial guess for pressure
+       # end
+
+    end
+
+    r = @MVector zeros(_T,n);
+    J = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
+    
+    # Local Iterations
+    iter = 0
+    ϵ = 2 * tol
+    while (ϵ > tol) && (iter < max_iter)
+        iter += 1
+
+        τ   = x[1]
+        P   = x[n]
+        
+        args = merge(args, (τII=τ, P=P))    # update (to compute yield function)
+
+        # Update part of jacobian related to serial, non-plastic, elements
+        r[1]   = εII_total - compute_εII_elements(c,τ,args)     
+        J[1,1] = dεII_dτII_elements(c,τ,args);               
+        
+        r[n]   = εvol_total - compute_εvol_elements(c,P,args)     
+        J[n,n] = dεvol_dp_elements(c,P,args);               
+        
+        # Add contributions from plastic elements
+        fill_J_plastic!(J, r, x, c, args)
+
+        @show x r J
+        error("stop here")
+
+        # update solution
+        dx  = J\r 
+        x .+= dx   
+        
+        ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
+        verbose && println(" iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
+    end
+    verbose && println("---")
+    if (iter == max_iter)
+        error("iterations did not converge")
+    end
+
+    return (x...,)
 end
 
 @generated function ∂Q∂τII(
@@ -1043,7 +1173,7 @@ dεII_dτII_AD(v::Union{Parallel,CompositeRheology}, τII, args) = ForwardDiff.d
 
 dεII_dτII_nonplastic_AD(v::Union{Parallel,CompositeRheology}, τII, args) = ForwardDiff.derivative(x->compute_εII_nonplastic(v, x, args), τII)
 
-# Computes sum of dεII/dτII for all elements that are NOT parallel elements
+# Computes sum of dεII/dτII for all elements that are NOT parallel and NOT plastic elements
 """
     dεII_dτII_elements(v::CompositeRheology, TauII, args)
 
@@ -1072,11 +1202,15 @@ dεII_dτII_nonparallel(v::AbstractPlasticity, TauII::_T, args) where _T =    ze
         val = zero(_T)
         Base.Cartesian.@nexprs $N i -> 
         if isvolumetric(v.elements[i])
-            val += dεvol_dp(v.elements[i], p, args)
+            val += dεvol_dp_nonparallel_nonplastic(v.elements[i], p, args)
         end
         return val
     end
 end
+dεvol_dp_nonparallel_nonplastic(v::Any, P, args) =   dεvol_dp(v, P, args)
+dεvol_dp_nonparallel_nonplastic(v::Parallel, P::_T, args) where _T =    zero(_T)
+dεvol_dp_nonparallel_nonplastic(v::AbstractPlasticity, P::_T, args) where _T =    zero(_T)
+
 
 """
     dτII_dεII(v::CompositeRheology, TauII::_T, args)
@@ -1294,3 +1428,26 @@ _compute_εII_nonparallel(v, TauII::_T, args) where {_T} = compute_εII(v, TauII
 _compute_εII_nonparallel(v::Parallel, TauII::_T, args) where {_T} = zero(_T)
 _compute_εII_nonparallel(v::AbstractPlasticity, TauII::_T, args) where {_T} = zero(_T)
 
+
+
+"""
+    compute_εvol_elements(v::CompositeRheology, TauII, args)
+
+Sums the strainrate of all non-parallel and non-plastic elements in a `CompositeRheology` structure. Mostly internally used for jacobian iterations.
+"""
+@inline @generated function compute_εvol_elements(
+    v::CompositeRheology{T,N}, 
+    P::_T, 
+    args;
+    verbose=false
+) where {T,N, _T}
+    quote
+        out = zero(_T)
+        Base.Cartesian.@nexprs $N i ->
+            out += _compute_εvol_elements(v.elements[i], P, args)
+    end
+end
+
+_compute_εvol_elements(v, P::_T, args) where {_T} = compute_εvol(v, P, args)
+_compute_εvol_elements(v::Parallel, P::_T, args) where {_T} = zero(_T)
+_compute_εvol_elements(v::AbstractPlasticity, P::_T, args) where {_T} = zero(_T)

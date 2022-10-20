@@ -12,7 +12,7 @@ using GeoParams, ForwardDiff
     e2 = SetConstantElasticity(; G=5e10, Kb=1e11)
     #pl1= DruckerPrager(C=1e6)                # plasticity
     pl1= DruckerPrager(C=1e6/cosd(30))        # plasticity which ends up with the same yield stress as pl3
-    pl2= DruckerPrager(; Ψ=10)                # plasticity
+    pl2= DruckerPrager(C=1e6, ϕ=0, Ψ=10)      # plasticity
     pl3= DruckerPrager(C=1e6, ϕ=0)            # plasticity
     
     # Parallel elements
