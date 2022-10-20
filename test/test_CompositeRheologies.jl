@@ -53,10 +53,10 @@ using GeoParams, ForwardDiff
     c = CompositeRheology( (v1, v2, v3, e1, Parallel(p1, v1, v2),v2, Parallel(p1, v1), v2,v3 ))   
     @test isa(c.elements[1], AbstractCreepLaw)
 
-    c = CompositeRheology( (v1, v2, v3, e1, Parallel(p1, e1, Parallel( (v1, v2), v3) ), v2,v3) )   
+    c = CompositeRheology( (v1, v2, v3, e1, Parallel(p1, e1, Parallel( CompositeRheology(v1, v2), v3) ), v2,v3) )   
     @test isa(c.elements[3], AbstractCreepLaw)
     
-    c = Parallel((v2,v3,e1, Parallel(v2,v3),v2, Parallel(v2,(v3, v2))),v3,(e1,p1))
+    c = Parallel(CompositeRheology(v2,v3,e1, Parallel(v2,v3),v2, Parallel(v2,CompositeRheology(v3, v2))),v3,CompositeRheology(e1,p1))
     @test isa(c.elements[2], AbstractCreepLaw)
     
     args = (T=900.0, d=100e-6, τII_old=1e6, dt=1e8)
