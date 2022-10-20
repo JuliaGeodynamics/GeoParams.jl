@@ -3,28 +3,6 @@ using .GLMakie
 
 export StrengthEnvelopePlot
 
-"""
-    StrengthEnvelopePlot(MatParam, Thickness; TempType, nz)
-
-Creates a GUI that plots a 1D strength envelope. In the GUI, temperature profile and strain rate can be adjusted. The Drucker-Prager plasticity uses lithostatic pressure.
-
-Parameters:
-- MatParam:  a tuple of materials (including the following properties: Phase, Density, CreepLaws, Plasticity)
-- Thickness: a vector listing the thicknesses of the respective layers (should carry units)
-- TempType:  the type of temperature profile (LinTemp=default, HalfspaceCoolTemp, ConstTemp)
-- nz:        optional argument controlling the number of points along the profile (default = 101)
-
-# Example:
-```julia-repl
-julia> using GLMakie
-julia> MatParam = (SetMaterialParams(Name="UC", Phase=1, Density=ConstantDensity(ρ=2700kg/m^3), CreepLaws = SetDislocationCreep("Wet Quartzite | Ueda et al. (2008)"), Plasticity = DruckerPrager(ϕ=30.0, C=10MPa)),
-                   SetMaterialParams(Name="MC", Phase=2, Density=Density=ConstantDensity(ρ=2900kg/m^3), CreepLaws = SetDislocationCreep("Plagioclase An75 | Ji and Zhao (1993)"), Plasticity = DruckerPrager(ϕ=20.0, C=10MPa)),
-                   SetMaterialParams(Name="LC", Phase=3, Density=PT_Density(ρ0=2900kg/m^3, α=3e-5/K, β=1e-10/Pa), CreepLaws = SetDislocationCreep("Maryland strong diabase | Mackwell et al. (1998)"), Plasticity = DruckerPrager(ϕ=30.0, C=10MPa)));
-julia> Thickness = [15,10,15]*km;
-
-julia> StrengthEnvelopePlot(MatParam, Thickness, LinTemp())
-```
-"""
 function StrengthEnvelopePlot(MatParam::NTuple{N, AbstractMaterialParamsStruct}, Thickness::Vector{U}; TempType::AbstractTempStruct=LinTemp(), nz::Int64=101) where {N, U}
 
     # check temperature structure
