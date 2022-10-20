@@ -30,10 +30,7 @@ function ntuple_idx(args::NamedTuple, I::Vararg{Integer,N}) where {N}
 end
 
 # fast exponential
-@inline function fastpow(x::Number, n::Integer)
-    n > 3 && x > 0 && return exp(log(x) * n)
-    return x^n
-end
+@inline fastpow(x::Number, n::Integer) = x^n
 
 @inline function fastpow(x::Number, n::AbstractFloat)
     x > 0 && return exp(log(x) * n)
