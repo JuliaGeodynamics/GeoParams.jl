@@ -13,7 +13,7 @@ using GeoParams, ForwardDiff
     #pl1= DruckerPrager(C=1e6)                # plasticity
     pl1= DruckerPrager(C=1e6/cosd(30))        # plasticity which ends up with the same yield stress as pl3
     pl2= DruckerPrager(; Ψ=10)                # plasticity
-    pl3= DruckerPrager(C=1e6, ϕ=0)                # plasticity
+    pl3= DruckerPrager(C=1e6, ϕ=0)            # plasticity
     
     test_vec = [v1 v2 v3 v4 e1 e2 pl1 pl2]
     sol      = [false false false false false true false true]

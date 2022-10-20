@@ -14,7 +14,7 @@ import GeoParams.Units: nondimensionalize, dimensionalize
 """
     Put rheological elements in parallel 
 """
-struct Parallel{T, N,  Nplast, is_plastic} <: AbstractConstitutiveLaw{T}
+struct Parallel{T, N,  Nplast, is_plastic, Nvol, is_vol} <: AbstractConstitutiveLaw{T}
     elements::T
 end
 
@@ -25,7 +25,10 @@ function Parallel(v::T) where T
     is_plastic = isa.(v,AbstractPlasticity)     # Is one of the elements a plastic element?
     Nplast = count(is_plastic)
 
-    return Parallel{typeof(v),n, Nplast, is_plastic}(v)
+    is_vol = isvolumetric.(v);
+    Nvol   =   count(is_vol);
+   
+    return Parallel{typeof(v),n, Nplast, is_plastic, Nvol, is_vol}(v)
 end
 Parallel(a,b...) = Parallel((a,b...,)) 
 
@@ -64,10 +67,8 @@ function CompositeRheology(v::T) where {T}
     Nplast = count(is_plastic)
 
     # determine if we have elements that have volumetric deformation
-    # TO BE EXPANDED 
-    Nvol        =   0;
-    volumetric  =   zeros(Bool,n)
-    is_vol      =   (volumetric...,)
+    is_vol = isvolumetric.(v);
+    Nvol   =   count(is_vol);
      
     return CompositeRheology{typeof(v), n, Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol}(v)
 end
@@ -142,6 +143,12 @@ isplastic(v::Parallel{T, N,  Nplast, is_plastic}) where {T,N,Nplast,is_plastic} 
 isplastic(v::AbstractPlasticity) = true;
 isplastic(v::CompositeRheology{T, N,  Npar, is_parallel, Nplast, is_plastic}) where {T, N,  Npar, is_parallel, Nplast, is_plastic} = true;
 isplastic(v::CompositeRheology{T, N,  Npar, is_parallel, 0, is_plastic}) where {T, N,  Npar, is_parallel, is_plastic} = false;
+
+isvolumetric(v) = false;
+isvolumetric(v::Parallel{T, N,  Nplast, is_plastic, 0, is_vol}) where {T,N, Nplast,is_plastic, is_vol} = false;
+isvolumetric(v::Parallel{T, N,  Nplast, is_plastic, Nvol, is_vol}) where {T,N, Nplast,is_plastic, Nvol, is_vol} = true;
+isvolumetric(v::CompositeRheology{T, N,  Npar, is_parallel, Nplast, is_plastic, 0, is_vol}) where {T,N,Npar, is_parallel, Nplast,is_plastic, is_vol} = false;
+isvolumetric(v::CompositeRheology{T, N,  Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol}) where {T,N,Npar, is_parallel, Nplast,is_plastic, Nvol, is_vol} = true;
 
 
 # COMPUTE STRAIN RATE
