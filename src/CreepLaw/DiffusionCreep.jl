@@ -284,7 +284,7 @@ end
 
 @inline function compute_τII(
     a::DiffusionCreep, EpsII::Quantity; T=1K, P=0Pa, f=1NoUnits, d=1m, kwargs...
-) where {_T}
+)
     @unpack_units n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 

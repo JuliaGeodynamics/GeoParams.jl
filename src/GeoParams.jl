@@ -178,7 +178,8 @@ export dεII_dτII,
     DruckerPrager,
     compute_plasticpotentialDerivative,
     ∂Q∂τ,
-    ∂Q∂P,
+    ∂Q∂P,∂Q∂τII,
+    ∂F∂τII,
     
     #       Composite rheologies
     AbstractConstitutiveLaw,
@@ -199,10 +200,11 @@ export dεII_dτII,
     CompositeRheology,
     Parallel,
     create_rheology_string, print_rheology_matrix,
-    time_τII_0D,
-    compute_εII_harmonic, compute_τII_AD
+    compute_εII_harmonic, compute_τII_AD,
+    isplastic
     
-    
+include("Rheology_Utils.jl")
+export time_τII_0D
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration
