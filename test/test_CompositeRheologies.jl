@@ -356,9 +356,21 @@ using GeoParams, ForwardDiff
             @test p == args.P_old
         end
 
+        # 0D rheology functions 
+        t_max = args.dt*2;
+        t_vec, P_vec, τ_vec    =   time_p_τII_0D(v, εII, εvol, args; t=(0.,t_max), nt=20, verbose=false)
+        if !isvolumetric(v)
+            @test sum(P_vec) == 0.0
+        
+        elseif isvolumetric(v) && !isvolumetricplastic(v)
+            # 'uncoupled' volumetric deformation
+            Kb_computed = (P_vec[end] - P_vec[1])/(-t_max*εvol)
+            if isa(v[1],AbstractElasticity)
+                @test Kb_computed  ≈  NumValue(v[1].Kb)
+            end
+
+        end
+
     end
     
-
-
-
 end
