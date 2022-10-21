@@ -808,7 +808,7 @@ end
     end
 
     @inline function __fill_J_plastic!(::False, j, args)
-        τ_pl    = x[1]    # if the plastic element is in || with other elements, need to explicitly solve for this
+        τ_pl    = x[1]    # if the plastic element is NOT in || with other elements, need to explicitly solve for this
 
         args    = merge(args, (τII=τ_pl,))
         F       = compute_yieldfunction(element,args);  # yield function applied to plastic element

@@ -323,9 +323,12 @@ using GeoParams, ForwardDiff
     c_vep_reg = CompositeRheology(LinearViscous(η=1e22),ConstantElasticity(),DruckerPrager_regularised(η_vp=1e20) ) 
     c_ve_vp = CompositeRheology(LinearViscous(η=1e22),ConstantElasticity(),Parallel(DruckerPrager(),LinearViscous(η=1e20)) ) 
     
+    _, τ_vec  =   time_τII_0D(c_vep, εII, args; t=(0.,t_max), nt=10, verbose=true)
     _, τ_vec1 =   time_τII_0D(c_ve_vp, εII, args; t=(0.,t_max), nt=10, verbose=true)
     _, τ_vec2 =   time_τII_0D(c_vep_reg, εII, args; t=(0.,t_max), nt=10, verbose=true)
-    
+    @test τ_vec1[end] ≈  τ_vec2[end]
+    @test τ_vec1[end] > τ_vec[end] 
+
 
 
     # test non-dimensionalisation
