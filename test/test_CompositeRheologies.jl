@@ -37,6 +37,10 @@ using GeoParams, ForwardDiff
     c12= CompositeRheology(e2,v3)       # viscoelasticity with volumetric elasticity
     c13= CompositeRheology(e2,pl2)      # volumetric elastoplastic
     
+    c14= CompositeRheology(SetConstantElasticity(G=1e10, Kb=2e11), LinearViscous(η=1e20), DruckerPrager(C=3e5, Ψ=10))   # case A
+#    c14= CompositeRheology(SetConstantElasticity(G=1e10, Kb=2e11), LinearViscous(η=1e20))   # case A
+
+
     p4 = Parallel(c3,v3)                # Parallel element with composite one as well    
 
     # Check that we can construct complicated rheological elements
@@ -346,8 +350,13 @@ using GeoParams, ForwardDiff
     # Note that the only 'special' case implemented one where we have 
     # volumetric plasticity, which requires iterations. 
     # In all other cases we assume the coupling  
-    εII = 1e-15  
-    εvol = -1e-18;
+#    εII = 1e-15  
+#    εvol = -1e-18;
+
+    εxx,εzz  = 6.8e-15, -7e-15
+    εII  = sqrt(0.5*(εxx^2 + εzz^2))
+    εvol = εxx + εzz
+
     args = (T = 900.0, d = 0.0001, τII_old = 700000.0, dt = 8.0e9, P = 0.0, P_old = 1e6)
     for v in [c8 c3 c12 c13]     
 
@@ -368,7 +377,7 @@ using GeoParams, ForwardDiff
             if isa(v[1],AbstractElasticity)
                 @test Kb_computed  ≈  NumValue(v[1].Kb)
             end
-            
+
         elseif isvolumetricplastic(v)
 
         end

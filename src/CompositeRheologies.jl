@@ -349,7 +349,7 @@ function compute_p_τII(
     out = local_iterations_εvol_εII(v, εII, εvol, args; tol=tol, verbose=verbose)
 
     τII = out[1]
-    P = out[N+1]
+    P = out[end]
 
     return P,τII, out[2:N]
 end
@@ -1061,11 +1061,11 @@ end
         ε̇vol_pl =  λ̇*∂Q∂P(element, P)  
         
         r[1]   -=  ε̇_pl                     #  contribution of plastic strainrate to residual
-        r[j+1] -=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
+        r[j+1] +=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
         
         if F>0.0
             J[1,j] = ∂Q∂τII(element, τ_pl)     
-            J[3,j] = ∂Q∂P(element, P)     
+            J[3,j] = -∂Q∂P(element, P)     
             
             # plasticity is not in a parallel element    
             J[j,1] = ∂F∂τII(element, τ_pl)      # derivative of F vs. τ
@@ -1520,3 +1520,5 @@ end
 _compute_εvol_elements(v, P::_T, args) where {_T} = compute_εvol(v, P, args)
 _compute_εvol_elements(v::Parallel, P::_T, args) where {_T} = zero(_T)
 _compute_εvol_elements(v::AbstractPlasticity, P::_T, args) where {_T} = zero(_T)
+
+compute_εvol(v::Any, P::_T; kwargs...) where _T = _T(0) # in case nothing more specific is defined
