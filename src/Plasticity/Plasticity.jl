@@ -3,17 +3,19 @@
 abstract type AbstractPlasticity{T} <: AbstractConstitutiveLaw{T} end
 abstract type AbstractPlasticPotential{Float64}  <: AbstractConstitutiveLaw{Float64} end
 
-export isvolumetric,
-    compute_yieldfunction,      # calculation routines
-    compute_yieldfunction!,
-    AbstractPlasticity,
-    ∂Q∂τ,∂Q∂τII,∂Q∂P,
-    ∂F∂τII,∂F∂P,∂F∂λ,
-    compute_plasticpotentialDerivative,
-    compute_εII
+export AbstractPlasticity,
+        isvolumetric,
+        compute_yieldfunction,      # calculation routines
+        compute_yieldfunction!,
+        compute_plasticpotentialDerivative,
+        ∂Q∂τ,∂Q∂τII,∂Q∂P,
+        ∂F∂τII,∂F∂P,∂F∂λ,
+        compute_εII
 
 include("DruckerPrager.jl")
 
+include("DruckerPrager.jl")    # DP plasticity
+include("DruckerPrager_regularised.jl")    # regularized DP plasticity
 
 
 # Thin convenience wrappers
@@ -44,7 +46,7 @@ function ∂Q∂τ(Q::F, args::NTuple{N,T}; kwargs...) where {N,T, F<:Function}
 end
 
 # Wrapper for arbitrary args in the form of a NamedTuple
-function ∂Q∂τ(p::DruckerPrager{T}, args::NamedTuple{N,T}; kwargs...) where {N,T} 
+function ∂Q∂τ(p::AbstractPlasticity{T}, args::NamedTuple{N,T}; kwargs...) where {N,T} 
      ∂Q∂τ(Q, args.τij, kwargs...)
 end
 #-------------------------------------------------------------------------
@@ -82,7 +84,7 @@ function compute_yieldfunction(s::AbstractMaterialParamsStruct, args)
 end
 
 # add methods programmatically
-for myType in (:DruckerPrager,)
+for myType in (:DruckerPrager, :DruckerPrager_regularised)
     @eval begin
         (p::$(myType))(args) = p(; args...)
         ∂Q∂τ(p::$(myType), args, kwargs) = ∂Q∂τ(p, args; kwargs...)

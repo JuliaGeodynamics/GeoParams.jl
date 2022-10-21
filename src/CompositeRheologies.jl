@@ -869,25 +869,11 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
 
     j = 1;
     for i=1:N
-        #if is_par[i]
-        #    j += 1
-        #    x[j] = compute_εII_harmonic_i(c, τ_initial, args,i)   
-        #end
-
         if is_plastic[i] && is_par[i]
             # parallel plastic element
-            j += 1
-            x[j] = 0    # λ̇  
-            
-            j += 1
-            x[j] = τ_initial    # τ_plastic initial guess  
-
-        elseif !is_plastic[i] && is_par[i]
-            # normal plastic element
-            j += 1
-            x[j] = 0    # λ̇  
+            j=j+2
+            x[j] = τ_initial    # τ_plastic initial guess     
         end
-
     end
 
     r = @MVector zeros(_T,n);
@@ -900,10 +886,10 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         iter += 1
 
         τ   = x[1]
-        λ   = x[2];
-        
-        args = merge(args, (τII=τ,λ=λ))    # update
-        
+        λ   = x[2]
+
+        args = merge(args, (τII=τ, λ=λ))    # update
+
         # Update part of jacobian related to serial, non-plastic, elements
         r[1]   = εII_total - compute_εII_elements(c,τ,args)     
         J[1,1] = dεII_dτII_elements(c,x[1],args);               
@@ -914,7 +900,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         # update solution
         dx  = J\r 
         x .+= dx   
-        #@show dx x r J
+       # @show dx x r J
         
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
         verbose && println(" iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
@@ -923,6 +909,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     if (iter == max_iter)
         error("iterations did not converge")
     end
+    
 
     return (x...,)
 end
@@ -978,20 +965,25 @@ end
     
         ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
         r[1]   -=  ε̇_pl                     #  add plastic strainrate
-        
-        if F>0.0
-            J[1,j] = ∂Q∂τII(element, τ_pl)    
+
+        if F>=0.0
+            J[1,j] = ∂Q∂τII(element, τ_pl)     
 
             J[j,j]     = ∂F∂λ(element.elements[1], τ_pl)        # derivative of F vs. λ
             J[j,j+1]   = ∂F∂τII(element.elements[1], τ_pl)    
-            
+        
             J[j+1,1]   = -1.0;
             J[j+1,2]   = dτII_dεII_nonplastic(element, τ_pl, args)*∂Q∂τII(element, τ_pl) ;
             J[j+1,j+1] = 1.0;
             r[j] = -F
             r[j+1] = τ - compute_τII_nonplastic(element, ε̇_pl, args) - τ_pl                
         else
-            J[j,j] =  J[j+1,j+1] = 1.0
+            J[j,j] =  1.0
+            
+            # In this case set τ_pl=τ
+            J[j+1,j+1] = 1.0
+            J[j+1,1] = -1.0
+            
             r[j] = r[j+1] = 0.0
         end
     end
@@ -1038,7 +1030,7 @@ end
         ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
         r[1]   -=  ε̇_pl                     #  add plastic strainrate
         
-        if F>0.0
+        if F>=0.0
             J[1,j] = ∂Q∂τII(element, τ_pl)     
 
             # plasticity is not in a parallel element    

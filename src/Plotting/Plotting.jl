@@ -825,7 +825,7 @@ end
                                             Time=(1e0,1e8), nt=100,
                                             t_vec=nothing,
                                             linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="", 
-                                            fig=nothing, filename=nothing, res=(1200, 1200), legendsize=15, labelsize=35)
+                                            fig=nothing, filename=nothing, res=(1200, 1200), legendsize=15, labelsize=35, position=:rt)
 
 
 Creates a plot of stress vs. time, or stress vs. strain (in)
@@ -848,6 +848,7 @@ function PlotStressTime_0D(
     res=(1200, 1200),
     legendsize=15,
     labelsize=35,
+    position=:rt
 )
     n = 1
     if isa(x, Tuple)
@@ -890,12 +891,11 @@ function PlotStressTime_0D(
         # Create plot:
         li = lines!(t_vec/t_scale, Tau_II_MPa)    # plot line
 
-        
         # Customize plot:
         customize_plot!(li, plot_args)
     end
 
-    axislegend(ax; labelsize=legendsize)
+    axislegend(ax; labelsize=legendsize, position=position)
 
     if !isnothing(filename)
         save(filename, fig)
