@@ -706,8 +706,9 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         iter += 1
 
         τ   = x[1]
-        
-        args = merge(args, (τII=τ,))    # update
+        λ   = x[2]
+
+        args = merge(args, (τII=τ, λ=λ))    # update
 
         # Update part of jacobian related to serial, non-plastic, elements
         r[1]   = εII_total - compute_εII_elements(c,τ,args)     

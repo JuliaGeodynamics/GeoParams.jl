@@ -14,6 +14,7 @@ export AbstractPlasticity,
 
 
 include("DruckerPrager.jl")    # DP plasticity
+include("DruckerPrager_regularised.jl")    # regularized DP plasticity
 
 
 # Thin convenience wrappers
@@ -81,7 +82,7 @@ function compute_yieldfunction(s::AbstractMaterialParamsStruct, args)
 end
 
 # add methods programmatically
-for myType in (:DruckerPrager,)
+for myType in (:DruckerPrager, :DruckerPrager_regularised)
     @eval begin
         (p::$(myType))(args) = p(; args...)
         ∂Q∂τ(p::$(myType), args, kwargs) = ∂Q∂τ(p, args; kwargs...)
