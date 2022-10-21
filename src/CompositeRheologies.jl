@@ -720,7 +720,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         # update solution
         dx  = J\r 
         x .+= dx   
-        #@show dx x r J
+       # @show dx x r J
         
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
         verbose && println(" iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
@@ -784,8 +784,8 @@ end
     
         ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
         r[1]   -=  ε̇_pl                     #  add plastic strainrate
-        
-        if F>0.0
+
+        if F>=0.0
             J[1,j] = ∂Q∂τII(element, τ_pl)     
 
             J[j,j]     = ∂F∂λ(element.elements[1], τ_pl)        # derivative of F vs. λ
@@ -797,7 +797,12 @@ end
             r[j] = -F
             r[j+1] = τ - compute_τII_nonplastic(element, ε̇_pl, args) - τ_pl                
         else
-            J[j,j] =  J[j+1,j+1] = 1.0
+            J[j,j] =  1.0
+            
+            # In this case set τ_pl=τ
+            J[j+1,j+1] = 1.0
+            J[j+1,1] = -1.0
+            
             r[j] = r[j+1] = 0.0
         end
     end
@@ -811,7 +816,7 @@ end
         ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
         r[1]   -=  ε̇_pl                     #  add plastic strainrate
         
-        if F>0.0
+        if F>=0.0
             J[1,j] = ∂Q∂τII(element, τ_pl)     
 
             # plasticity is not in a parallel element 
