@@ -611,10 +611,10 @@ function compute_εII(v::AbstractPlasticity, τII::_T, args; tol=1e-6, verbose=t
         #   dF/dλ = (dF/dτII)*(dτII/dλ) = (dF/dτII)*(2*η_np*∂Q∂τII)
         
         iter += 1
-        τII_pl = τII -  2*η_np*λ*∂Q∂τII(v,τII_pl)       # update stress
+        τII_pl = τII -  2*η_np*λ*∂Q∂τII(v, τII_pl, args)       # update stress
         F      = compute_yieldfunction(v, merge(args, (τII=τII_pl,)))
         
-        dFdλ = ∂F∂τII(v, τII)*(2*η_np*∂Q∂τII(v,τII))
+        dFdλ = ∂F∂τII(v, τII, args)*(2*η_np*∂Q∂τII(v, τII, args))
       
         λ -= -F / dFdλ
 
@@ -623,7 +623,7 @@ function compute_εII(v::AbstractPlasticity, τII::_T, args; tol=1e-6, verbose=t
         !isCUDA() && verbose && println("    plastic iter $(iter) ϵ=$ϵ λ=$λ, F=$F")
     end
 
-    ε_pl = λ*∂Q∂τII(v,τII_pl)
+    ε_pl = λ*∂Q∂τII(v, τII_pl, args)
     
     return ε_pl
 end
@@ -961,19 +961,19 @@ end
         τ_pl    = x[j+1]    # if the plastic element is in || with other elements, need to explicitly solve for this
 
         args    = merge(args, (τII=τ_pl,))
-        F       = compute_yieldfunction(element,args);  # yield function applied to plastic element
+        F       = compute_yieldfunction(element, args);  # yield function applied to plastic element
     
-        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl, args)  
         r[1]   -=  ε̇_pl                     #  add plastic strainrate
 
         if F>=0.0
-            J[1,j] = ∂Q∂τII(element, τ_pl)     
+            J[1,j] = ∂Q∂τII(element, τ_pl, args)     
 
-            J[j,j]     = ∂F∂λ(element.elements[1], τ_pl)        # derivative of F vs. λ
-            J[j,j+1]   = ∂F∂τII(element.elements[1], τ_pl)    
+            J[j,j]     = ∂F∂λ(element.elements[1], τ_pl, args)        # derivative of F vs. λ
+            J[j,j+1]   = ∂F∂τII(element.elements[1], τ_pl, args)    
         
             J[j+1,1]   = -1.0;
-            J[j+1,2]   = dτII_dεII_nonplastic(element, τ_pl, args)*∂Q∂τII(element, τ_pl) ;
+            J[j+1,2]   = dτII_dεII_nonplastic(element, τ_pl, args)*∂Q∂τII(element, τ_pl, args) ;
             J[j+1,j+1] = 1.0;
             r[j] = -F
             r[j+1] = τ - compute_τII_nonplastic(element, ε̇_pl, args) - τ_pl                
@@ -996,21 +996,21 @@ end
         args    = merge(args, (τII=τ_pl,P=P))
         F       = compute_yieldfunction(element,args);  # yield function applied to plastic element
     
-        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
-        ε̇vol_pl =  λ̇*∂Q∂P(element, P)  
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl, args)  
+        ε̇vol_pl =  λ̇*∂Q∂P(element, P, args)  
         r[1]   -=  ε̇_pl                     #  contribution of plastic strainrate to residual
         r[j+2] +=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
         
         if F>=0.0
-            J[1,j]   =  ∂Q∂τII(element, τ_pl)     
-            J[j+2,j] = -∂Q∂P(element, P)     
+            J[1,j]   =  ∂Q∂τII(element, τ_pl, args)     
+            J[j+2,j] = -∂Q∂P(element, P, args)     
             
-            J[j,j]     = ∂F∂λ(element.elements[1], τ_pl)        # derivative of F vs. λ
-            J[j,j+1]   = ∂F∂τII(element.elements[1], τ_pl)    
-            J[j,j+2]   = ∂F∂P(element, P)           # derivative of F vs. P
+            J[j,j]     = ∂F∂λ(element.elements[1], τ_pl, args)        # derivative of F vs. λ
+            J[j,j+1]   = ∂F∂τII(element.elements[1], τ_pl, args)    
+            J[j,j+2]   = ∂F∂P(element, P, args)           # derivative of F vs. P
             
             J[j+1,1]   = -1.0;
-            J[j+1,2]   = dτII_dεII_nonplastic(element, τ_pl, args)*∂Q∂τII(element, τ_pl) ;
+            J[j+1,2]   = dτII_dεII_nonplastic(element, τ_pl, args)*∂Q∂τII(element, τ_pl, args) ;
             J[j+1,j+1] = 1.0;
 
             r[j] = -F
@@ -1036,11 +1036,11 @@ end
         r[1]   -=  ε̇_pl                     #  add plastic strainrate
         
         if F>=0.0
-            J[1,j] = ∂Q∂τII(element, τ_pl)     
+            J[1,j] = ∂Q∂τII(element, τ_pl, args)     
 
             # plasticity is not in a parallel element    
-            J[j,1] = ∂F∂τII(element, τ_pl)  
-            J[j,j] = ∂F∂λ(element, τ_pl)        # derivative of F vs. λ
+            J[j,1] = ∂F∂τII(element, τ_pl, args)  
+            J[j,j] = ∂F∂λ(element, τ_pl, args)        # derivative of F vs. λ
             r[j] =  -F      
         else
             J[j,j] = 1.0
@@ -1055,20 +1055,20 @@ end
         args    = merge(args, (τII=τ_pl,P=P))
         F       = compute_yieldfunction(element,args);  # yield function applied to plastic element
     
-        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
-        ε̇vol_pl =  λ̇*∂Q∂P(element, P)  
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl, args)  
+        ε̇vol_pl =  λ̇*∂Q∂P(element, P, args)  
         
         r[1]   -=  ε̇_pl                     #  contribution of plastic strainrate to residual
         r[j+1] +=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
         
         if F>=0.0
-            J[1,j] = ∂Q∂τII(element, τ_pl)     
-            J[3,j] = -∂Q∂P(element, P)      # minus sign because of P sign convention
+            J[1,j] = ∂Q∂τII(element, τ_pl, args)     
+            J[3,j] = -∂Q∂P(element, P, args)      # minus sign because of P sign convention
             
             # plasticity is not in a parallel element    
-            J[j,1] = ∂F∂τII(element, τ_pl)      # derivative of F vs. τ
-            J[j,2] = ∂F∂λ(element, τ_pl)        # derivative of F vs. λ
-            J[j,3] = ∂F∂P(element, P)           # derivative of F vs. P
+            J[j,1] = ∂F∂τII(element, τ_pl, args)      # derivative of F vs. τ
+            J[j,2] = ∂F∂λ(element, τ_pl, args)        # derivative of F vs. λ
+            J[j,3] = ∂F∂P(element, P, args)           # derivative of F vs. P
             J[j,j] = 0.0
             
             r[j] =  -F                          # residual
@@ -1205,11 +1205,11 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
 end
 
 @generated function ∂Q∂τII(
-    v::Parallel{T, N,  Nplast, is_plastic}, τ::_T
+    v::Parallel{T, N,  Nplast, is_plastic}, τ::_T, args
 ) where {_T,T, N,  Nplast, is_plastic}
     quote
         Base.@_inline_meta
-        Base.Cartesian.@nexprs $N i -> is_plastic[i] == true && return ∂Q∂τII(v[i],τ)
+        Base.Cartesian.@nexprs $N i -> is_plastic[i] == true && return ∂Q∂τII(v[i],τ, args)
     end
 end
 

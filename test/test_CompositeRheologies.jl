@@ -380,7 +380,9 @@ using GeoParams, ForwardDiff
 #    εII = 1e-15  
 #    εvol = -1e-18;
 
-    εxx,εzz  = 6.8e-15, -7e-15
+#    εxx,εzz  = 6.8e-15, -7e-15
+    εxx,εzz  = 7e-15, -6.8e-15
+
     εII  = sqrt(0.5*(εxx^2 + εzz^2))
     εvol = εxx + εzz
 
