@@ -675,25 +675,11 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
 
     j = 1;
     for i=1:N
-        #if is_par[i]
-        #    j += 1
-        #    x[j] = compute_εII_harmonic_i(c, τ_initial, args,i)   
-        #end
-
         if is_plastic[i] && is_par[i]
             # parallel plastic element
-            j += 1
-            x[j] = 0    # λ̇  
-            
-            j += 1
-            x[j] = τ_initial    # τ_plastic initial guess  
-
-        elseif !is_plastic[i] && is_par[i]
-            # normal plastic element
-            j += 1
-            x[j] = 0    # λ̇  
+            j=j+2
+            x[j] = τ_initial    # τ_plastic initial guess     
         end
-
     end
 
     r = @MVector zeros(_T,n);
@@ -729,6 +715,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     if (iter == max_iter)
         error("iterations did not converge")
     end
+    
 
     return (x...,)
 end

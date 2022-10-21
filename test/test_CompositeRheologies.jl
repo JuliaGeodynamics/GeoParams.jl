@@ -302,15 +302,15 @@ using GeoParams, ForwardDiff
     t_vec, τ_vec    =   time_τII_0D(c_pl, εII, args; t=(0.,t_M*4), nt=100, verbose=false)
     
     # Compare regularised DP vs. doing the same with a Parallel element
-    εII = 1e-15  
-    args = (T = 900.0, d = 0.0001, τII_old = 700000.0, dt = 8.0e9, P = 0.0)
-    t_max = 8e11
+    εII = 1e-15;  
+    args = (T = 900.0, d = 0.0001, τII_old = 700000.0, dt = 8.0e9, P = 0.0);
+    t_max = 8e11;
     
     # Test elasto-plastic combinations with regularisations 
     # (either done explicitly using a Parallel element or doing the same with DruckerPrager_regularised)
-    c_ep   = CompositeRheology(ConstantElasticity(),DruckerPrager() ) 
-    c_ep_reg = CompositeRheology(ConstantElasticity(),DruckerPrager_regularised(η_vp=1e20) ) 
-    c_e_vp = CompositeRheology(ConstantElasticity(),Parallel(DruckerPrager(),LinearViscous(η=1e20)) ) 
+    c_ep   = CompositeRheology(ConstantElasticity(),DruckerPrager() ); 
+    c_ep_reg = CompositeRheology(ConstantElasticity(),DruckerPrager_regularised(η_vp=1e20) ); 
+    c_e_vp = CompositeRheology(ConstantElasticity(),Parallel(DruckerPrager(),LinearViscous(η=1e20)) ); 
     
     _, τ_vec  =   time_τII_0D(c_ep,     εII, args; t=(0.,t_max), verbose=false)
     _, τ_vec1 =   time_τII_0D(c_e_vp,   εII, args; t=(0.,t_max), verbose=false)
@@ -319,17 +319,15 @@ using GeoParams, ForwardDiff
     @test τ_vec1[end] > τ_vec[end] 
 
     # Note: we currently have problems with viscoelastoplasticity if adding a parallel element
-    c_vep = CompositeRheology(LinearViscous(η=1e22),ConstantElasticity(),DruckerPrager())  
-    c_vep_reg = CompositeRheology(LinearViscous(η=1e22),ConstantElasticity(),DruckerPrager_regularised(η_vp=1e20) ) 
-    c_ve_vp = CompositeRheology(LinearViscous(η=1e22),ConstantElasticity(),Parallel(DruckerPrager(),LinearViscous(η=1e20)) ) 
+    c_vep = CompositeRheology(LinearViscous(η=1e22),ConstantElasticity(),DruckerPrager());  
+    c_vep_reg = CompositeRheology(LinearViscous(η=1e22),ConstantElasticity(),DruckerPrager_regularised(η_vp=1e20) ); 
+    c_ve_vp = CompositeRheology(LinearViscous(η=1e22),ConstantElasticity(),Parallel(DruckerPrager(),LinearViscous(η=1e20)) ); 
     
-    _, τ_vec  =   time_τII_0D(c_vep, εII, args; t=(0.,t_max), nt=10, verbose=true)
-    _, τ_vec1 =   time_τII_0D(c_ve_vp, εII, args; t=(0.,t_max), nt=10, verbose=true)
-    _, τ_vec2 =   time_τII_0D(c_vep_reg, εII, args; t=(0.,t_max), nt=10, verbose=true)
+    _, τ_vec  =   time_τII_0D(c_vep, εII, args; t=(0.,t_max), nt=10, verbose=false)
+    _, τ_vec1 =   time_τII_0D(c_ve_vp, εII, args; t=(0.,t_max), nt=10, verbose=false)
+    _, τ_vec2 =   time_τII_0D(c_vep_reg, εII, args; t=(0.,t_max), nt=10, verbose=false)
     @test τ_vec1[end] ≈  τ_vec2[end]
     @test τ_vec1[end] > τ_vec[end] 
-
-
 
     # test non-dimensionalisation
     CharDim = GEO_units()

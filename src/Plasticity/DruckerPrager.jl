@@ -99,7 +99,7 @@ end
 # Derivatives of yield function
 ∂F∂τII(p::DruckerPrager, τII::_T) where _T  = _T(1)
 ∂F∂P(p::DruckerPrager, P::_T) where _T      = -NumValue(p.sinϕ)
-∂F∂λ(p::DruckerPrager, τII::_T) where _T    = _T(0)
+@inline ∂F∂λ(p::DruckerPrager, τII::_T) where _T    = _T(0)
 
 
 # Derivatives w.r.t stress tensor
