@@ -900,9 +900,10 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         iter += 1
 
         τ   = x[1]
+        λ   = x[2];
         
-        args = merge(args, (τII=τ,))    # update
-
+        args = merge(args, (τII=τ,λ=λ))    # update
+        
         # Update part of jacobian related to serial, non-plastic, elements
         r[1]   = εII_total - compute_εII_elements(c,τ,args)     
         J[1,1] = dεII_dτII_elements(c,x[1],args);               
@@ -1179,7 +1180,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         x .+= dx   
         
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
-        verbose && println(" iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3])")
+        verbose && println(" iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3]) hello")
     end
     verbose && println("---")
     if (iter == max_iter)
