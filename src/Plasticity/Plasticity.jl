@@ -11,9 +11,7 @@ export AbstractPlasticity,
         ∂Q∂τ,∂Q∂τII,∂Q∂P,
         ∂F∂τII,∂F∂P,∂F∂λ,
         compute_εII
-
-include("DruckerPrager.jl")
-
+        
 include("DruckerPrager.jl")    # DP plasticity
 include("DruckerPrager_regularised.jl")    # regularized DP plasticity
 

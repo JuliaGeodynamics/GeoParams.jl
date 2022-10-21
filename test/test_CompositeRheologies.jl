@@ -325,7 +325,7 @@ using GeoParams, ForwardDiff
     @test τ_vec1[end] ≈  τ_vec2[end]
     @test τ_vec1[end] > τ_vec[end] 
 
-    # Note: we currently have problems with viscoelastoplasticity if adding a parallel element
+    # Test this with various flavors of viscoelastoplasticity if adding a parallel element
     c_vep = CompositeRheology(LinearViscous(η=1e22),ConstantElasticity(),DruckerPrager());  
     c_vep_reg = CompositeRheology(LinearViscous(η=1e22),ConstantElasticity(),DruckerPrager_regularised(η_vp=1e20) ); 
     c_ve_vp = CompositeRheology(LinearViscous(η=1e22),ConstantElasticity(),Parallel(DruckerPrager(),LinearViscous(η=1e20)) ); 
