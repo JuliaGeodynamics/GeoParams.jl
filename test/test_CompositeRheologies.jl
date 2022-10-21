@@ -385,7 +385,7 @@ using GeoParams, ForwardDiff
     εvol = εxx + εzz
 
     args = (T = 900.0, d = 0.0001, τII_old = 700000.0, dt = 8.0e9, P = 0.0, P_old = 1e6)
-    for v in [c8 c3 c12 c13]     
+    for v in [c8 c3 c12 c13 c14]     
 
         p, τII = compute_p_τII(v, εII, εvol, args, verbose=false)
         if !isvolumetric(v)

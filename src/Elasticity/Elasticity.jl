@@ -220,7 +220,7 @@ end
 @inline function dp_dεvol(a::ConstantElasticity{_T}, P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
     ) where {_T}
     @unpack_val Kb = a
-    return - Kb * dt
+    return -Kb * dt
 end
 
 """

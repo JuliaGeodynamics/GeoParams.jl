@@ -999,11 +999,11 @@ end
         ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
         ε̇vol_pl =  λ̇*∂Q∂P(element, P)  
         r[1]   -=  ε̇_pl                     #  contribution of plastic strainrate to residual
-        r[j+2] -=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
+        r[j+2] +=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
         
-        if F>0.0
-            J[1,j]   = ∂Q∂τII(element, τ_pl)     
-            J[j+2,j] = ∂Q∂P(element, P)     
+        if F>=0.0
+            J[1,j]   =  ∂Q∂τII(element, τ_pl)     
+            J[j+2,j] = -∂Q∂P(element, P)     
             
             J[j,j]     = ∂F∂λ(element.elements[1], τ_pl)        # derivative of F vs. λ
             J[j,j+1]   = ∂F∂τII(element.elements[1], τ_pl)    
@@ -1016,7 +1016,12 @@ end
             r[j] = -F
             r[j+1] = τ - compute_τII_nonplastic(element, ε̇_pl, args) - τ_pl                
         else
-            J[j,j] =  J[j+1,j+1] = 1.0
+            J[j,j] = 1.0
+            
+            # In this case set τ_pl=τ
+            J[j+1,j+1] = 1.0
+            J[j+1,1] = -1.0
+            
             r[j] = r[j+1] = 0.0
         end
     end
@@ -1056,9 +1061,9 @@ end
         r[1]   -=  ε̇_pl                     #  contribution of plastic strainrate to residual
         r[j+1] +=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
         
-        if F>0.0
+        if F>=0.0
             J[1,j] = ∂Q∂τII(element, τ_pl)     
-            J[3,j] = -∂Q∂P(element, P)     
+            J[3,j] = -∂Q∂P(element, P)      # minus sign because of P sign convention
             
             # plasticity is not in a parallel element    
             J[j,1] = ∂F∂τII(element, τ_pl)      # derivative of F vs. τ
@@ -1120,9 +1125,25 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
 
     j = 1;
     for i=1:N
+
+        if is_plastic[i] && is_par[i]
+            # parallel plastic element
+            j=j+1
+            x[j] = τ_initial    # τ_plastic initial guess     
+        end
+        if is_plastic[i] && !is_par[i]
+            # parallel plastic element
+            j += 1
+            x[j] = 0    # λ̇  
+            j += 1
+            x[j] = p_initial    # initial guess for pressure
+        end
+            
+    end
+#=    
         if is_plastic[i] 
            # plastic element 
-           j += 1
+           j += 2
            x[j] = 0    # λ̇  
 
             j += 1
@@ -1137,8 +1158,8 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
        #     j += 1
        #     x[j] = p_initial    # initial guess for pressure
        # end
-
-    end
+=#
+#end
 
     r = @MVector zeros(_T,n);
     J = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
@@ -1150,9 +1171,10 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         iter += 1
 
         τ   = x[1]
+        λ   = x[2]
         P   = x[n]
         
-        args = merge(args, (τII=τ, P=P))    # update (to compute yield function)
+        args = merge(args, (τII=τ, P=P, λ=λ))    # update (to compute yield function)
 
         # Update part of jacobian related to serial, non-plastic, elements
         r[1]   = εII_total - compute_εII_elements(c,τ,args)     
@@ -1172,7 +1194,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         x .+= dx   
         
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
-        verbose && println(" iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3]) hello")
+        verbose && println(" iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3])")
     end
     verbose && println("---")
     if (iter == max_iter)
