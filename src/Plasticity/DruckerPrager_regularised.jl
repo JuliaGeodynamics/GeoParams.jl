@@ -102,7 +102,7 @@ end
 # Derivatives of yield function
 ∂F∂τII(p::DruckerPrager_regularised, τII::_T; P=zero(_T), kwargs...) where _T  = _T(1)
 ∂F∂P(p::DruckerPrager_regularised, P::_T; τII=zero(_T), kwargs...) where _T    = -NumValue(p.sinϕ)
-∂F∂λ(p::DruckerPrager_regularised, τII::_T; P=zero(_T), kwargs...) where _T    = -2*NumValue(p.η_vp)*∂Q∂τII(p, τII) 
+∂F∂λ(p::DruckerPrager_regularised, τII::_T; P=zero(_T), kwargs...) where _T    = -2*NumValue(p.η_vp)*∂Q∂τII(p, τII, P=P) 
 
 
 # Derivatives w.r.t stress tensor
@@ -148,7 +148,7 @@ end
 function show(io::IO, g::DruckerPrager_regularised)
     return print(
         io,
-        "Regularized Drucker-Prager plasticity with: C = $(UnitValue(g.C)), ϕ = $(UnitValue(g.ϕ))ᵒ, Ψ = $(UnitValue(g.Ψ))ᵒ, η_vp=UnitValue(g.η_vp)",
+        "Regularized Drucker-Prager plasticity with: C = $(UnitValue(g.C)), ϕ = $(UnitValue(g.ϕ))ᵒ, Ψ = $(UnitValue(g.Ψ))ᵒ, η_vp=$(UnitValue(g.η_vp))",
     )
 end
 #-------------------------------------------------------------------------

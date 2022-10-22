@@ -381,6 +381,8 @@ end
 end
 compute_τII_AD(v::Parallel{T,N}, εII::_T, args; tol=1e-6, verbose=false) where {T,N,_T} = first(compute_τII(v, εII, args)) 
 
+
+
 # make it work for dimensional cases
 @generated  function compute_τII(
     v::Parallel{T,N}, 
@@ -395,6 +397,22 @@ compute_τII_AD(v::Parallel{T,N}, εII::_T, args; tol=1e-6, verbose=false) where
             τII += first(compute_τII(v.elements[i], εII, args))
     end
 end
+
+# For a parallel element, p for a given εvol is the sum of each component
+@generated  function compute_p(
+    v::Parallel{T,N}, 
+    εvol::_T, 
+    args;
+    tol=1e-6, verbose=false
+) where {T,_T,N}
+    quote
+        Base.@_inline_meta
+        τII = zero(_T)
+        Base.Cartesian.@nexprs $N i ->
+            τII += first(compute_p(v.elements[i], εvol, args))
+    end
+end
+
 
 
 function compute_τII_AD(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
@@ -900,7 +918,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         # update solution
         dx  = J\r 
         x .+= dx   
-        @show dx x r J
+       # @show dx x r J
         
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
         verbose && println(" iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
@@ -959,7 +977,6 @@ end
     @inline function __fill_J_plastic!(::True, ::False, j, args) # parallel, non-dilatant element 
         τ       = x[1]
         τ_pl    = x[j+1]    # if the plastic element is in || with other elements, need to explicitly solve for this
-
         args    = merge(args, (τII=τ_pl,))
         F       = compute_yieldfunction(element, args);  # yield function applied to plastic element
     
@@ -991,9 +1008,9 @@ end
     @inline function __fill_J_plastic!(::True, ::True, j, args) # parallel, dilatant element 
         τ       = x[1]
         τ_pl    = x[j+1]    # if the plastic element is in || with other elements, need to explicitly solve for this
-        P       = P[j+2]    # pressure
+        P       = x[j+2]    # pressure
 
-        args    = merge(args, (τII=τ_pl,P=P))
+        args    = merge(args, (τII=τ_pl, P=P))
         F       = compute_yieldfunction(element,args);  # yield function applied to plastic element
     
         ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl, args)  
@@ -1007,7 +1024,7 @@ end
             
             J[j,j]     = ∂F∂λ(element.elements[1], τ_pl, args)        # derivative of F vs. λ
             J[j,j+1]   = ∂F∂τII(element.elements[1], τ_pl, args)    
-            J[j,j+2]   = ∂F∂P(element, P, args)           # derivative of F vs. P
+            J[j,j+2]   = ∂F∂P(element.elements[1], P, args)           # derivative of F vs. P
             
             J[j+1,1]   = -1.0;
             J[j+1,2]   = dτII_dεII_nonplastic(element, τ_pl, args)*∂Q∂τII(element, τ_pl, args) ;
@@ -1052,7 +1069,7 @@ end
         τ_pl    = x[1]    # if the plastic element is in || with other elements, need to explicitly solve for this
         P       = x[3]
 
-        args    = merge(args, (τII=τ_pl,P=P))
+        args    = merge(args, (τII=τ_pl, P=P))
         F       = compute_yieldfunction(element,args);  # yield function applied to plastic element
     
         ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl, args)  
@@ -1060,17 +1077,14 @@ end
         
         r[1]   -=  ε̇_pl                     #  contribution of plastic strainrate to residual
         r[j+1] +=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
-        
         if F>=0.0
             J[1,j] = ∂Q∂τII(element, τ_pl, args)     
             J[3,j] = -∂Q∂P(element, P, args)      # minus sign because of P sign convention
             
             # plasticity is not in a parallel element    
             J[j,1] = ∂F∂τII(element, τ_pl, args)      # derivative of F vs. τ
-            J[j,2] = ∂F∂λ(element, τ_pl, args)        # derivative of F vs. λ
+            J[j,j] = ∂F∂λ(element, τ_pl, args)        # derivative of F vs. λ
             J[j,3] = ∂F∂P(element, P, args)           # derivative of F vs. P
-            J[j,j] = 0.0
-            
             r[j] =  -F                          # residual
         else
             J[j,j] = 1.0
@@ -1128,8 +1142,10 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
 
         if is_plastic[i] && is_par[i]
             # parallel plastic element
-            j=j+1
+            j=j+2
             x[j] = τ_initial    # τ_plastic initial guess     
+            j += 1
+            x[j] = p_initial    # initial guess for pressure
         end
         if is_plastic[i] && !is_par[i]
             # parallel plastic element
@@ -1209,6 +1225,15 @@ end
     quote
         Base.@_inline_meta
         Base.Cartesian.@nexprs $N i -> is_plastic[i] == true && return ∂Q∂τII(v[i],τ, args)
+    end
+end
+
+@generated function ∂Q∂P(
+    v::Parallel{T, N,  Nplast, is_plastic}, P::_T, args
+) where {_T,T, N,  Nplast, is_plastic}
+    quote
+        Base.@_inline_meta
+        Base.Cartesian.@nexprs $N i -> is_plastic[i] == true && return ∂Q∂P(v[i],P, args)
     end
 end
 
@@ -1456,6 +1481,7 @@ end
 
 _compute_p_harmonic_element(v, EpsVol, args) = inv(compute_p(v, EpsVol, args))
 _compute_p_harmonic_element(v::AbstractPlasticity, EpsVol, args) = 0.0
+_compute_p_harmonic_element(v::Parallel, EpsVol, args) = 0.0
 
 """
     compute_εII_harmonic(v::Parallel{T,N}, TauII::_T, args)

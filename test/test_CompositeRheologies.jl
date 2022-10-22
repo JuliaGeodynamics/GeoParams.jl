@@ -38,8 +38,8 @@ using GeoParams, ForwardDiff
     c13= CompositeRheology(e2,pl2)      # volumetric elastoplastic
     
     c14= CompositeRheology(SetConstantElasticity(G=1e10, Kb=2e11), LinearViscous(η=1e20), DruckerPrager(C=3e5, Ψ=10))   # case A
-#    c14= CompositeRheology(SetConstantElasticity(G=1e10, Kb=2e11), LinearViscous(η=1e20))   # case A
-
+    c15= CompositeRheology(SetConstantElasticity(G=1e10, Kb=2e11), LinearViscous(η=1e20), Parallel(DruckerPrager(C=3e5, Ψ=10),LinearViscous(η=1e19Pa*s)))   # case A
+    c16= CompositeRheology(SetConstantElasticity(G=1e10, Kb=2e11), LinearViscous(η=1e20), DruckerPrager_regularised(C=3e5, Ψ=10, η_vp=1e19))   # case A
 
     p4 = Parallel(c3,v3)                # Parallel element with composite one as well    
 
@@ -407,10 +407,26 @@ using GeoParams, ForwardDiff
                 @test Kb_computed  ≈  NumValue(v[1].Kb)
             end
 
-        elseif isvolumetricplastic(v)
-
         end
 
     end
+
+    # case with dilatant plasticity
+    εxx,εzz  = 7e-15, -6.8e-15
+    εII  = sqrt(0.5*(εxx^2 + εzz^2))
+    εvol = εxx + εzz
+    args = (T = 900.0, d = 0.0001, τII_old = 700000.0, dt = 8.0e9, P = 0.0, P_old = 1e6)
     
+    t_max = args.dt*2;
+    _, P_vec, τ_vec    =   time_p_τII_0D(c14, εII, εvol, args; t=(0.,t_max), nt=20, verbose=false)
+    #@test  sum(P_vec) ≈ 1.1803339314328427e6
+    #@test  sum(τ_vec) ≈ 4.742438875602647e6
+    
+    # dilatant plasticity in || with viscous element
+    _, P_vec1, τ_vec1  =   time_p_τII_0D(c15, εII, εvol, args; t=(0.,t_max), nt=20, verbose=false)
+    _, P_vec2, τ_vec2  =   time_p_τII_0D(c16, εII, εvol, args; t=(0.,t_max), nt=20, verbose=false)
+
+    @test τ_vec1[end] ≈  τ_vec2[end]
+    @test τ_vec1[end] > τ_vec[end] 
+
 end
