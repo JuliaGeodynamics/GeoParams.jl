@@ -900,7 +900,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         # update solution
         dx  = J\r 
         x .+= dx   
-       # @show dx x r J
+        @show dx x r J
         
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
         verbose && println(" iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
@@ -1032,7 +1032,7 @@ end
         args    = merge(args, (τII=τ_pl,))
         F       = compute_yieldfunction(element,args);  # yield function applied to plastic element
     
-        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl)  
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl, args)  
         r[1]   -=  ε̇_pl                     #  add plastic strainrate
         
         if F>=0.0
@@ -1187,8 +1187,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         fill_J_plastic!(J, r, x, c, args)
 
         #@show x r J
-        #error("stop here")
-
+        
         # update solution
         dx  = J\r 
         x .+= dx   
