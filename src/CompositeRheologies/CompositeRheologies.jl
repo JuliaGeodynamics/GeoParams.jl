@@ -12,36 +12,8 @@ import GeoParams.Units: nondimensionalize, dimensionalize
 
 @inline isCUDA() =  isdefined(Main,:CUDA) 
 
-"""
-    Put rheological elements in parallel 
-"""
-struct Parallel{T, N,  Nplast, is_plastic, Nvol, is_vol} <: AbstractConstitutiveLaw{T}
-    elements::T
-end
 
-function Parallel(v::T) where T
-    v           = tuple(v...)
-    n           =   length(v)
-
-    is_plastic = isa.(v,AbstractPlasticity)     # Is one of the elements a plastic element?
-    Nplast = count(is_plastic)
-
-    is_vol = isvolumetric.(v);
-    Nvol   =   count(is_vol);
-   
-    return Parallel{typeof(v),n, Nplast, is_plastic, Nvol, is_vol}(v)
-end
-Parallel(a,b...) = Parallel((a,b...,)) 
-
-
-@generated function getindex(p::Parallel{T, N}, I::Int64) where {T,N}
-    quote
-        Base.@_inline_meta
-        @assert I ≤ $N
-        Base.Cartesian.@nexprs $N i -> I == i && return p.elements[i]
-    end
-end
-
+include("Parallel.jl")
 
 """
     Structure that holds composite rheologies (e.g., visco-elasto-viscoplastic),
@@ -124,33 +96,20 @@ function show(io::IO, g::AbstractComposite)
     str = print_rheology_matrix(g)
     println.(str)
     
-
     return nothing
 end
 
-function show(io::IO, a::Parallel)
-    println(io,"Parallel:   ")  
 
-    # Compose a string with rheological elements, so we have an overview in the REPL
-    str = print_rheology_matrix(a)
-    println.(str)
-
-    return nothing
-end
 
 # HELPER FUNCTIONS
 
 # determine if 3 element is plastic or not
 isplastic(v) = false;
-isplastic(v::Parallel{T, N,  0, is_plastic}) where {T,N,is_plastic} = false;
-isplastic(v::Parallel{T, N,  Nplast, is_plastic}) where {T,N,Nplast,is_plastic} = true;
 isplastic(v::AbstractPlasticity) = true;
 isplastic(v::CompositeRheology{T, N,  Npar, is_parallel, Nplast, is_plastic}) where {T, N,  Npar, is_parallel, Nplast, is_plastic} = true;
 isplastic(v::CompositeRheology{T, N,  Npar, is_parallel, 0, is_plastic}) where {T, N,  Npar, is_parallel, is_plastic} = false;
 
 isvolumetric(v) = false;
-isvolumetric(v::Parallel{T, N,  Nplast, is_plastic, 0, is_vol}) where {T,N, Nplast,is_plastic, is_vol} = false;
-isvolumetric(v::Parallel{T, N,  Nplast, is_plastic, Nvol, is_vol}) where {T,N, Nplast,is_plastic, Nvol, is_vol} = true;
 isvolumetric(v::CompositeRheology{T, N,  Npar, is_parallel, Nplast, is_plastic, 0, is_vol}) where {T,N,Npar, is_parallel, Nplast,is_plastic, is_vol} = false;
 isvolumetric(v::CompositeRheology{T, N,  Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol}) where {T,N,Npar, is_parallel, Nplast,is_plastic, Nvol, is_vol} = true;
 
@@ -159,20 +118,7 @@ isvolumetricplastic(v::CompositeRheology{T, N,  Npar, is_parallel, Nplast, is_pl
 
 
 # COMPUTE STRAIN RATE
-"""
-    compute_εII(v::Parallel{T,N}, τII, args; tol=1e-6, verbose=false, n=1)
 
-Computing `εII` as a function of `τII` for a Parallel elements is (usually) a nonlinear problem
-"""
-function compute_εII(
-    v::Parallel{T,N}, 
-    τII::_T, 
-    args; 
-    tol=1e-6, verbose=false, n=1
-) where {T,N,_T}
-    εII = local_iterations_τII(v, τII, args; tol=tol, verbose=verbose, n=n)
-    return εII
-end
 
 """
     compute_εII(v::CompositeRheology{T,N}, τII, args; tol=1e-6, verbose=false, n=1)
@@ -215,10 +161,6 @@ end
 
 #compute_εII_AD(v, τII, args; tol=1e-6, verbose=false) = compute_εII(v, τII, args, tol=tol, verbose=verbose)
 
-# Here we do need to do iterations
-function compute_εII_AD(v::Parallel, τII, args; tol=1e-6, verbose=false)
-    return local_iterations_τII_AD(v, τII, args; tol=tol, verbose=verbose)
-end
 
 #COMPUTE VOLUMETRIC STRAIN-RATE
 
@@ -360,55 +302,6 @@ function compute_τII(v::CompositeRheology, εII, args; tol=1e-6, verbose=false,
     τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose, τ_initial=τ_initial, ε_init=ε_init)
     return τII
 end
-
-# For a parallel element, τII for a given εII is the sum of each component
-@generated  function compute_τII(
-    v::Parallel{T,N}, 
-    εII::_T, 
-    args;
-    tol=1e-6, verbose=false
-) where {T,_T,N}
-    quote
-        Base.@_inline_meta
-        τII = zero(_T)
-        Base.Cartesian.@nexprs $N i ->
-            τII += first(compute_τII(v.elements[i], εII, args))
-    end
-end
-compute_τII_AD(v::Parallel{T,N}, εII::_T, args; tol=1e-6, verbose=false) where {T,N,_T} = first(compute_τII(v, εII, args)) 
-
-
-
-# make it work for dimensional cases
-@generated  function compute_τII(
-    v::Parallel{T,N}, 
-    εII::Quantity, 
-    args;
-    tol=1e-6, verbose=false
-) where {T,N}
-    quote
-        Base.@_inline_meta
-        τII = 0Pa
-        Base.Cartesian.@nexprs $N i ->
-            τII += first(compute_τII(v.elements[i], εII, args))
-    end
-end
-
-# For a parallel element, p for a given εvol is the sum of each component
-@generated  function compute_p(
-    v::Parallel{T,N}, 
-    εvol::_T, 
-    args;
-    tol=1e-6, verbose=false
-) where {T,_T,N}
-    quote
-        Base.@_inline_meta
-        τII = zero(_T)
-        Base.Cartesian.@nexprs $N i ->
-            τII += first(compute_p(v.elements[i], εvol, args))
-    end
-end
-
 
 
 function compute_τII_AD(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
@@ -1193,35 +1086,6 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     return (x...,)
 end
 
-@generated function ∂Q∂τII(
-    v::Parallel{T, N,  Nplast, is_plastic}, τ::_T, args
-) where {_T,T, N,  Nplast, is_plastic}
-    quote
-        Base.@_inline_meta
-        Base.Cartesian.@nexprs $N i -> is_plastic[i] == true && return ∂Q∂τII(v[i],τ, args)
-    end
-end
-
-@generated function ∂Q∂P(
-    v::Parallel{T, N,  Nplast, is_plastic}, P::_T, args
-) where {_T,T, N,  Nplast, is_plastic}
-    quote
-        Base.@_inline_meta
-        Base.Cartesian.@nexprs $N i -> is_plastic[i] == true && return ∂Q∂P(v[i],P, args)
-    end
-end
-
-@generated function compute_yieldfunction(
-    v::Parallel{T, N,  Nplast, is_plastic}, args
-) where {T, N,  Nplast, is_plastic}
-    quote
-        Base.@_inline_meta
-        Base.Cartesian.@nexprs $N i -> is_plastic[i] == true && return compute_yieldfunction(v[i],args)
-    end
-end
-
-compute_yieldfunction(v::Parallel{T, N,  0, is_plastic}, args) where {T, N,  is_plastic} = NaN
-
  
 # STRESS AND STRAIN RATE DERIVATIVES
 
@@ -1237,12 +1101,6 @@ compute_yieldfunction(v::Parallel{T, N,  0, is_plastic}, args) where {T, N,  is_
 end
 
 
-function dεII_dτII(
-    v::Parallel{T,N}, τII::_T, args
-) where {T,N,_T}
-    ε  = compute_εII(v, τII, args)
-    return inv(dτII_dεII(v, ε, args))
-end
 
 
 """
@@ -1320,45 +1178,9 @@ end
 end
 
 
-"""
-    dτII_dεII(v::Parallel{T,N}, TauII::_T, args)
-
-Computes the derivative of `τII` vs `εII` for parallel elements   
-"""
-@generated function dτII_dεII(
-    v::Parallel{T,N}, 
-    TauII::_T, 
-    args
-) where {T,N, _T}
-    quote
-        dτII_dεII_der = zero($_T)
-        Base.Cartesian.@nexprs $N i ->
-            dτII_dεII_der += dτII_dεII(v.elements[i], TauII, args)
-        return dτII_dεII_der
-    end
-end
 
 
-"""
-    dτII_dεII_nonplastic(v::Parallel{T,N}, TauII::_T, args)
 
-Computes the derivative of `τII` vs `εII` for parallel elements that are non-plastic  
-"""
-@generated function dτII_dεII_nonplastic(
-    v::Parallel{T,N}, 
-    TauII::_T, 
-    args
-) where {T,N, _T}
-    quote
-        dτII_dεII_der = zero($_T)
-        Base.Cartesian.@nexprs $N i ->
-            dτII_dεII_der += dτII_dεII_nonplastic(v.elements[i], TauII, args)
-        return dτII_dεII_der
-    end
-end
-
-dτII_dεII_nonplastic(v, TauII, args)  = dτII_dεII(v, TauII, args)
-dτII_dεII_nonplastic(v::AbstractPlasticity, TauII, args)  = 0.0
 
 
 dτII_dεII_AD(v::Union{Parallel,CompositeRheology}, εII, args) = ForwardDiff.derivative(x->compute_τII_AD(v, x, args), εII)
@@ -1388,26 +1210,6 @@ end
 _compute_εII_nonplastic(v, TauII, args) = first(compute_εII(v, TauII, args))
 _compute_εII_nonplastic(v::AbstractPlasticity, TauII, args) = 0.0
 
-"""
-    compute_τII_nonplastic(v::Parallel, EpsII, args)
-
-Harmonic average of stress of all elements in a `CompositeRheology` structure that are not || elements
-"""
-@inline @generated function compute_τII_nonplastic(
-    v::Parallel{T,N}, 
-    EpsII::_T, 
-    args
-) where {T,N, _T}
-    quote
-        out = zero(_T)
-        Base.Cartesian.@nexprs $N i ->
-            out += _compute_τII_nonplastic(v.elements[i], EpsII, args)
-        out = out
-    end
-end
-
-_compute_τII_nonplastic(v, EpsII, args) = first(compute_τII(v, EpsII, args))
-_compute_τII_nonplastic(v::AbstractPlasticity, EpsII, args) = 0.0
 
 
 """
