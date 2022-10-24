@@ -41,3 +41,13 @@ end
 @inline function fastpow(x::Quantity, n::AbstractFloat)
     return x^n
 end
+
+# Tuple iterators
+
+@generated function nreduce(f::F, v::NTuple{N, Any}) where {N, F}
+    quote
+        val = 0.0
+        Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i])
+        return val
+    end
+end
