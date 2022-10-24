@@ -659,25 +659,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     x    = @MVector zeros(_T, n)
     x[1] = τ_initial
 
-    j = 1;
-    for i=1:N
-
-        if is_plastic[i] && is_par[i]
-            # parallel plastic element
-            j=j+2
-            x[j] = τ_initial    # τ_plastic initial guess     
-            j += 1
-            x[j] = p_initial    # initial guess for pressure
-        end
-        if is_plastic[i] && !is_par[i]
-            # parallel plastic element
-            j += 1
-            x[j] = 0    # λ̇  
-            j += 1
-            x[j] = p_initial    # initial guess for pressure
-        end
-            
-    end
+    set_initial_values!(x, c, τ_initial, p_initial)
 
     r = @MVector zeros(_T,n);
     J = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
@@ -720,3 +702,43 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
 end
 
 
+
+# These lines of code are added as they are slightly faster
+@generated function set_initial_values!(x, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plast}, τ_initial, p_initial) where {T, N, Npar, is_par, Nplast, is_plast}
+    quote
+        Base.@_inline_meta
+        j = 1
+        Base.Cartesian.@nexprs $N i -> j = @inbounds _set_initial_values!(x, static($(is_plast)[i]),  $(is_par)[i], τ_initial, p_initial, j)
+        return nothing
+    end
+end
+
+@inline _set_initial_values!(x, ::False, is_par, τ_initial, p_initial, j) = j
+
+@inline function _set_initial_values!(x, ::True, is_par, τ_initial, p_initial, j)
+
+    @inline function __set_initial_values!(x, ::True, τ_initial, p_initial, j)
+      # parallel plastic element
+      j=j+2
+      x[j] = τ_initial    # τ_plastic initial guess     
+      j += 1
+      x[j] = p_initial    # initial guess for pressure
+
+      return nothing
+    end
+
+    @inline function __set_initial_values!(x, ::False, τ_initial, p_initial, j)
+        # parallel plastic element
+        j += 1
+        x[j] = 0    # λ̇  
+        j += 1
+        x[j] = p_initial    # initial guess for pressure
+
+        return nothing
+      end
+
+    __set_initial_values!(x, static(is_par),  τ_initial, p_initial, j)
+
+    return j
+
+end
