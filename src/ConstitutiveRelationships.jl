@@ -31,7 +31,7 @@ include("CreepLaw/CreepLaw.jl")              # viscous Creeplaws
 include("Elasticity/Elasticity.jl")          # elasticity
 include("Plasticity/Plasticity.jl")          # plasticity
 #include("CreepLaw/Viscosity.jl")             # composite creeplaws
-include("CompositeRheologies.jl")            # composite constitutive relationships
+include("CompositeRheologies/CompositeRheologies.jl")            # composite constitutive relationships
 
 export param_info,
     dεII_dτII,
