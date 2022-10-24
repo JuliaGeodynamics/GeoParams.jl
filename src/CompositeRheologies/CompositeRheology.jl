@@ -119,16 +119,19 @@ end
 Computing `εvol` as a function of `p` for a composite element is the sum of the individual contributions
 """
 @generated  function compute_εvol(
-    v::CompositeRheology{T,N}, 
+    v::CompositeRheology{T,N,
+                        Npar,is_par,            # no ||
+                        Nplast, is_plastic,     # with plasticity
+                        Nvol,is_vol}, 
     p::_T, 
     args; 
     tol=1e-6, verbose=false
-) where {T,_T,N}
+) where {T,_T,N, Npar,is_par, Nplast, is_plastic, Nvol, is_vol}
     quote
         Base.@_inline_meta
         εvol = zero(_T)
         Base.Cartesian.@nexprs $N i ->
-            if isvolumetric(v.elements[i])
+            if is_vol[i]
                 εvol += compute_εvol(v.elements[i], p, args)
             end    
         return εvol
@@ -136,22 +139,24 @@ Computing `εvol` as a function of `p` for a composite element is the sum of the
 end
 
 @generated  function compute_εvol(
-    v::CompositeRheology{_T,N}, 
+    v::CompositeRheology{_T,N,
+                        Npar,is_par,            # no ||
+                        Nplast, is_plastic,     # with plasticity
+                        Nvol,is_vol},  
     p::Quantity, 
     args; 
     tol=1e-6, verbose=false
-) where {_T,N}
+) where {_T,N, Npar,is_par, Nplast, is_plastic, Nvol, is_vol}
     quote
         Base.@_inline_meta
         εvol = zero(_T)/s
         Base.Cartesian.@nexprs $N i ->
-            if isvolumetric(v.elements[i])
+            if is_vol[i]
                 εvol += compute_εvol(v.elements[i], p, args)
             end
         return εvol
     end
 end
-
 
 
 
@@ -222,11 +227,11 @@ This updates pressure `p` and deviatoric stress invariant `τII` in case the com
 The 'old' pressure should be stored in `args` as `args.P_old`   
 """
 function compute_p_τII(
-    v::CompositeRheology{T,N,
-                    Npar,is_parallel,
-                    Nplastic,is_plastic,
-                    Nvol,is_vol,
-                    true}, 
+        v::CompositeRheology{T,N,
+                        Npar,is_parallel,
+                        Nplastic,is_plastic,
+                        Nvol,is_vol,
+                        true}, 
         εII::_T, 
         εvol::_T,
         args; 
@@ -257,15 +262,12 @@ function compute_τII(v::CompositeRheology, εII, args; tol=1e-6, verbose=false,
     return τII
 end
 
-
 function compute_τII_AD(v::CompositeRheology, εII, args; tol=1e-6, verbose=false)
      τII = local_iterations_εII_AD(v, εII, args; tol=tol, verbose=verbose)
      return τII
 end
 
-
 # STRESS AND STRAIN RATE DERIVATIVES
-
 @generated function dεII_dτII(
     v::CompositeRheology{T,N}, τII::_T, args
 ) where {T,_T,N}
