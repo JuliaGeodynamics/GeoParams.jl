@@ -138,11 +138,6 @@ function show(io::IO, a::Parallel)
     return nothing
 end
 
-function isvolumetric(c::NTuple{N,Any}) where {N}
-    ntuple(i-> isvolumetric(c[i]), Val(N))
-end
-
-
 # HELPER FUNCTIONS
 
 # determine if 3 element is plastic or not
@@ -251,14 +246,14 @@ end
 
 
 @generated  function compute_εvol(
-    v::CompositeRheology{T,N}, 
+    v::CompositeRheology{_T,N}, 
     p::Quantity, 
     args; 
     tol=1e-6, verbose=false
-) where {T,_T,N}
+) where {_T,N}
     quote
         Base.@_inline_meta
-        εvol = 0/s
+        εvol = zero(_T)/s
         Base.Cartesian.@nexprs $N i ->
             if isvolumetric(v.elements[i])
                 εvol += compute_εvol(v.elements[i], p, args)
@@ -281,7 +276,7 @@ This updates pressure `p` and deviatoric stress invariant `τII` in case the com
 The 'old' pressure should be stored in `args` as `args.P_old`   
 """
 function compute_p_τII(
-    v::CompositeRheology{T,N,
+        v::CompositeRheology{T,N,
                     Npar,is_parallel,
                     Nplastic,is_plastic,
                     Nvol,is_vol,
@@ -308,10 +303,11 @@ This updates pressure `p` and deviatoric stress invariant `τII` in case the com
 In that case, pressure is not updated (`args.P` is used instead).     
 """
 function compute_p_τII(
-    v::CompositeRheology{T,N,
+        v::CompositeRheology{T,N,
                     Npar,is_parallel,
                     Nplast,is_plastic,
-                    0,is_vol, false}, 
+                    0,is_vol, 
+                    false}, 
         εII::_T, 
         εvol::_T,
         args;
@@ -1156,26 +1152,6 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         end
             
     end
-#=    
-        if is_plastic[i] 
-           # plastic element 
-           j += 2
-           x[j] = 0    # λ̇  
-
-            j += 1
-            x[j] = p_initial    # initial guess for pressure
-        end
-        if is_par[i] 
-            j += 1
-            x[j] = τ_initial    # τ_plastic initial guess  
-        end
-       # if is_vol[i]
-       #     # dilatant element
-       #     j += 1
-       #     x[j] = p_initial    # initial guess for pressure
-       # end
-=#
-#end
 
     r = @MVector zeros(_T,n);
     J = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
@@ -1202,8 +1178,6 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         # Add contributions from plastic elements
         fill_J_plastic!(J, r, x, c, args)
 
-        #@show x r J
-        
         # update solution
         dx  = J\r 
         x .+= dx   
@@ -1249,7 +1223,6 @@ end
 compute_yieldfunction(v::Parallel{T, N,  0, is_plastic}, args) where {T, N,  is_plastic} = NaN
 
  
-
 # STRESS AND STRAIN RATE DERIVATIVES
 
 @generated function dεII_dτII(
