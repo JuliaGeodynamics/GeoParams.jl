@@ -97,12 +97,12 @@ end
 # Plastic Potential 
 
 # Derivatives w.r.t pressure
-∂Q∂P(p::DruckerPrager_regularised, args) = -NumValue(p.sinΨ)
+∂Q∂P(p::DruckerPrager_regularised, args; kwargs...) = -NumValue(p.sinΨ)
 
 # Derivatives of yield function
-∂F∂τII(p::DruckerPrager_regularised, τII::_T) where _T  = _T(1)
-∂F∂P(p::DruckerPrager_regularised, P::_T) where _T      = -NumValue(p.sinϕ)
-∂F∂λ(p::DruckerPrager_regularised, τII::_T) where _T    = -2*NumValue(p.η_vp)*∂Q∂τII(p, τII) 
+∂F∂τII(p::DruckerPrager_regularised, τII::_T; P=zero(_T), kwargs...) where _T  = _T(1)
+∂F∂P(p::DruckerPrager_regularised, P::_T; τII=zero(_T), kwargs...) where _T    = -NumValue(p.sinϕ)
+∂F∂λ(p::DruckerPrager_regularised, τII::_T; P=zero(_T), kwargs...) where _T    = -2*NumValue(p.η_vp)*∂Q∂τII(p, τII, P=P) 
 
 
 # Derivatives w.r.t stress tensor
@@ -124,7 +124,7 @@ for t in (:NTuple,:SVector)
     end
 end
 
-∂Q∂τII(p::DruckerPrager_regularised, τII::T) where T = 0.5
+∂Q∂τII(p::DruckerPrager_regularised, τII::_T; P=zero(_T), kwargs...) where _T = 0.5
 
 """
     compute_εII(p::DruckerPrager_regularised{_T,U,U1}, λdot::_T, τII::_T,  P) 
@@ -148,7 +148,7 @@ end
 function show(io::IO, g::DruckerPrager_regularised)
     return print(
         io,
-        "Regularized Drucker-Prager plasticity with: C = $(UnitValue(g.C)), ϕ = $(UnitValue(g.ϕ))ᵒ, Ψ = $(UnitValue(g.Ψ))ᵒ, η_vp=UnitValue(g.η_vp)",
+        "Regularized Drucker-Prager plasticity with: C = $(UnitValue(g.C)), ϕ = $(UnitValue(g.ϕ))ᵒ, Ψ = $(UnitValue(g.Ψ))ᵒ, η_vp=$(UnitValue(g.η_vp))",
     )
 end
 #-------------------------------------------------------------------------

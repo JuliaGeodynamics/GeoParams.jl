@@ -27,7 +27,8 @@ export PlotStrainrateStress,
     PlotPhaseDiagram,
     Plot_TAS_diagram,
     Plot_ZirconAge_PDF,
-    PlotStressTime_0D
+    PlotStressTime_0D,
+    PlotPressureStressTime_0D
 
 """
     fig, ax, εII,τII = PlotStrainrateStress(x; Strainrate=(1e-18,1e-12), args =(T=1000.0, P=0.0, d=1e-3, f=1.0), 
@@ -1004,4 +1005,123 @@ function PlotDeformationMap(
     end
 
     return fig
+end
+
+"""
+    fig, ax1, ax2, P_MPa, Tau_II_MPa, t_vec =  PlotPressureStressTime_0D(x;    args=(T=1000.0, P=0.0, d=1e-3, f=1.0),  εII::Union{Number, AbstractVector}, εvol::Union{Number, AbstractVector}, 
+                                            τ0=0,
+                                            P0=0,
+                                            Time=(1e0,1e8), nt=100,
+                                            t_vec=nothing,
+                                            linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="", 
+                                            fig=nothing, filename=nothing, res=(1200, 1200), legendsize=15, labelsize=35)
+
+
+Creates a plot of Pressure and stress vs. time
+"""
+function PlotPressureStressTime_0D(
+    x;
+    args=(T=1000.0, P=0.0, d=1e-3, f=1.0),
+    εII=1e-15,
+    εvol=-1e-18,
+    τ0=0,P0=0, τ_scale=1e6,
+    Time=(1e0, 1e8), nt=100,
+    t_vec=nothing, t_scale=3600*24*365.25*1e6,
+    verbose=false,
+    linestyle=:solid,
+    linewidth=1,
+    color=nothing,
+    label=nothing,
+    title="",
+    fig=nothing,
+    filename=nothing,
+    res=(1200, 1200),
+    legendsize=15,
+    labelsize=35,
+)
+    n = 1
+    if isa(x, Tuple)
+        n = length(x)
+    end
+
+    if isnothing(fig)
+        fig = Figure(; fontsize=25, resolution=res)
+    end
+    if τ_scale == 1.0
+        ylabel_str = "Deviatoric stress";
+    else
+        ylabel_str = L"Deviatoric stress $\tau_{II}$ [MPa]";
+    end
+    if t_scale == 1.0
+        xlabel_str = "Time";
+    else
+        xlabel_str = "Time [Myrs]";
+    end
+    
+    ax1 = Axis(
+        fig[1, 1];
+        ylabel=ylabel_str,
+        xlabel=xlabel_str,
+        xlabelsize=labelsize,
+        ylabelsize=labelsize,
+        title=title,
+    )
+
+    if τ_scale == 1.0
+        ylabel_str = "Pressure";
+    else
+        ylabel_str = "Pressure [MPa]";
+    end
+
+    ax2 = Axis(
+        fig[2, 1];
+        ylabel=ylabel_str,
+        xlabel=xlabel_str,
+        xlabelsize=labelsize,
+        ylabelsize=labelsize,
+        title=title,
+    )
+
+    t_vec=[]
+    Tau_II_MPa = []
+    P_MPa = []
+    for i in 1:n
+        if isa(x, Tuple)
+            p = x[i]
+        else
+            p = x
+        end
+        if isa(args, Tuple)
+            args_in = args[i]
+        else
+            args_in = args
+        end
+
+        # Compute 
+        t_vec, p_vec, τ_vec = time_p_τII_0D(p, εII, εvol, args; t=Time, nt=nt, verbose=verbose)
+        Tau_II_MPa = τ_vec/τ_scale;
+        P_MPa      = p_vec/τ_scale;
+        
+        # Retrieve plot arguments (label, color etc.)
+        plot_args = ObtainPlotArgs(i, p, args_in, linewidth, linestyle, color, label)
+
+        # Create plot:
+        li_1 = lines!(ax1, t_vec/t_scale, Tau_II_MPa)    
+        li_2 = lines!(ax2, t_vec/t_scale, P_MPa)    
+        
+        # Customize plot:
+        customize_plot!(li_1, plot_args)
+        customize_plot!(li_2, plot_args)
+        
+    end
+
+    axislegend(ax2; labelsize=legendsize)
+    
+    if !isnothing(filename)
+        save(filename, fig)
+    else
+        display(fig)
+    end
+
+    return fig, ax1, ax2, P_MPa, Tau_II_MPa, t_vec
 end
