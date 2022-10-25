@@ -932,16 +932,14 @@ julia> v2 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
 julia> v=CompositeRheology(v1,v2)
 julia> PlotDeformationMap(v, levels=100, colormap=:roma)
 ```
-Next, lets plot viscosity and flip x & y axis:
+Next, let's plot viscosity and flip x & y axis:
 ```julia
 julia> PlotDeformationMap(v, viscosity=true, rotate_axes=true)
 ```
-
 Instead of plotting stress vs. T and computing strainrate, we can also provide strainrate/T and compute stress:
 ```julia
 julia> PlotDeformationMap(v, strainrate=false)
 ```
-
 Or plot viscosity but only add contours in a certain range:
 ```julia
 julia> PlotDeformationMap(v,  strainrate=false, viscosity=true, levels=Vector(18:.25:24))
