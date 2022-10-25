@@ -28,6 +28,7 @@ makedocs(;
             "Zircon Ages" => "man/zirconages.md",
             "Phase Diagrams" => "man/phasediagrams.md",
             "Seismic Velocity" => "man/seismicvelocity.md",
+            "1D Strength Envelope" => "man/strengthenvelope.md"
         ],
         "Plotting" => "man/plotting.md",
         "List of functions" => "man/listfunctions.md",

@@ -136,21 +136,29 @@ export dεII_dτII,
     dτII_dεII,
     dεII_dτII_AD,
     dτII_dεII_AD,
+    dεvol_dp,
+    dp_dεvol,
     compute_εII!,
     compute_εII,
     compute_εII_AD,
     compute_τII!,
     compute_τII,
     compute_τII_AD,
+    compute_εvol!,
+    compute_εvol,
+    compute_p!,
+    compute_p,
     strain_rate_circuit,
     stress_circuit,
     CorrectionFactor,
     remove_tensor_correction,
+    isvolumetric,
 
     #       Viscous creep laws
     AbstractCreepLaw,
     LinearViscous,
     PowerlawViscous,
+    ArrheniusType,
     DislocationCreep,
     SetDislocationCreep,
     DiffusionCreep,
@@ -168,9 +176,11 @@ export dεII_dτII,
     compute_yieldfunction,
     compute_yieldfunction!,
     DruckerPrager,
+    DruckerPrager_regularised,
     compute_plasticpotentialDerivative,
     ∂Q∂τ,
-    ∂Q∂P,
+    ∂Q∂P,∂Q∂τII,
+    ∂F∂τII,
     
     #       Composite rheologies
     AbstractConstitutiveLaw,
@@ -191,10 +201,11 @@ export dεII_dτII,
     CompositeRheology,
     Parallel,
     create_rheology_string, print_rheology_matrix,
-    time_τII_0D,
-    compute_εII_harmonic, compute_τII_AD
+    compute_εII_harmonic, compute_τII_AD,
+    isplastic
     
-    
+include("Rheology_Utils.jl")
+export time_τII_0D
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration
@@ -265,11 +276,15 @@ export compute_meltfraction,
     MeltingParam_Assimilation,
     SmoothMelting
 
-# Add plotting routines - only activated if the "Plots.jl" package is loaded 
+# Add 1D Strength Envelope
+include("./StrengthEnvelope/StrengthEnvelope.jl")
+
+# Add plotting routines - only activated if the "GLMakie.jl" package is loaded 
 function __init__()
     @require GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a" begin
-        print("Adding plotting routines of GeoParams through GLMakie")
-        @eval include("./Plotting.jl")
+        print("Adding plotting routines of GeoParams through GLMakie \n")
+        @eval include("Plotting/Plotting.jl")
+        @eval include("Plotting/StrengthEnvelope.jl")
     end
 end
 
