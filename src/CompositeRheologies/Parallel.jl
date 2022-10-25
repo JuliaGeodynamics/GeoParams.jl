@@ -66,51 +66,15 @@ function compute_εII_AD(v::Parallel, τII, args; tol=1e-6, verbose=false)
     return local_iterations_τII_AD(v, τII, args; tol=tol, verbose=verbose)
 end
 
-# For a parallel element, τII for a given εII is the sum of each component
-@generated  function compute_τII(
-    v::Parallel{T,N}, 
-    εII::_T, 
-    args;
-    tol=1e-6, verbose=false
-) where {T,_T,N}
-    quote
-        Base.@_inline_meta
-        τII = zero(_T)
-        Base.Cartesian.@nexprs $N i ->
-            τII += first(compute_τII(v.elements[i], εII, args))
-    end
-end
+# Sum τII of parallel elements (with & w/out quantities)
+compute_τII(v::Parallel{T,N}, εII::_T, args; tol=1e-6, verbose=false) where {T,_T,N} = nreduce(vi -> first(compute_τII(vi, εII, args)), v.elements)
+compute_τII(v::Parallel{T,N}, εII::Quantity, args; tol=1e-6, verbose=false) where {T,_T,N} = nreduce(vi -> first(compute_τII(vi, εII, args)), v.elements)
+
 compute_τII_AD(v::Parallel{T,N}, εII::_T, args; tol=1e-6, verbose=false) where {T,N,_T} = first(compute_τII(v, εII, args)) 
 
-# make it work for dimensional cases
-@generated  function compute_τII(
-    v::Parallel{T,N}, 
-    εII::Quantity, 
-    args;
-    tol=1e-6, verbose=false
-) where {T,N}
-    quote
-        Base.@_inline_meta
-        τII = 0Pa
-        Base.Cartesian.@nexprs $N i ->
-            τII += first(compute_τII(v.elements[i], εII, args))
-    end
-end
+# sum P for parallel elements:
+compute_p(v::Parallel{T,N}, εvol::_T, args; tol=1e-6, verbose=false) where {T,_T,N} = nreduce(vi -> first(compute_p(vi, εvol, args)), v.elements)
 
-# For a parallel element, p for a given εvol is the sum of each component
-@generated  function compute_p(
-    v::Parallel{T,N}, 
-    εvol::_T, 
-    args;
-    tol=1e-6, verbose=false
-) where {T,_T,N}
-    quote
-        Base.@_inline_meta
-        τII = zero(_T)
-        Base.Cartesian.@nexprs $N i ->
-            τII += first(compute_p(v.elements[i], εvol, args))
-    end
-end
 
 @generated function ∂Q∂τII(
     v::Parallel{T, N,  Nplast, is_plastic}, τ::_T, args
@@ -153,36 +117,14 @@ end
 
 Computes the derivative of `τII` vs `εII` for parallel elements   
 """
-@generated function dτII_dεII(
-    v::Parallel{T,N}, 
-    TauII::_T, 
-    args
-) where {T,N, _T}
-    quote
-        dτII_dεII_der = zero($_T)
-        Base.Cartesian.@nexprs $N i ->
-            dτII_dεII_der += dτII_dεII(v.elements[i], TauII, args)
-        return dτII_dεII_der
-    end
-end
+dτII_dεII(v::Parallel{T,N}, τII::_T, args) where {T,_T,N} = nreduce(vi -> first(dτII_dεII(vi, τII, args)), v.elements)
 
 """
     dτII_dεII_nonplastic(v::Parallel{T,N}, TauII::_T, args)
 
 Computes the derivative of `τII` vs `εII` for parallel elements that are non-plastic  
 """
-@generated function dτII_dεII_nonplastic(
-    v::Parallel{T,N}, 
-    TauII::_T, 
-    args
-) where {T,N, _T}
-    quote
-        dτII_dεII_der = zero($_T)
-        Base.Cartesian.@nexprs $N i ->
-            dτII_dεII_der += dτII_dεII_nonplastic(v.elements[i], TauII, args)
-        return dτII_dεII_der
-    end
-end
+dτII_dεII_nonplastic(v::Parallel{T,N}, τII::_T, args) where {T,_T,N} = nreduce(vi -> first(dτII_dεII_nonplastic(vi, τII, args)), v.elements)
 dτII_dεII_nonplastic(v, TauII, args)  = dτII_dεII(v, TauII, args)
 dτII_dεII_nonplastic(v::AbstractPlasticity, TauII, args)  = 0.0
 
@@ -191,18 +133,6 @@ dτII_dεII_nonplastic(v::AbstractPlasticity, TauII, args)  = 0.0
 
 Harmonic average of stress of all elements in a `CompositeRheology` structure that are not || elements
 """
-@inline @generated function compute_τII_nonplastic(
-    v::Parallel{T,N}, 
-    EpsII::_T, 
-    args
-) where {T,N, _T}
-    quote
-        out = zero(_T)
-        Base.Cartesian.@nexprs $N i ->
-            out += _compute_τII_nonplastic(v.elements[i], EpsII, args)
-        out = out
-    end
-end
-
+compute_τII_nonplastic(v::Parallel{T,N}, τII::_T, args) where {T,_T,N} = nreduce(vi -> first(_compute_τII_nonplastic(vi, τII, args)), v.elements)
 _compute_τII_nonplastic(v, EpsII, args) = first(compute_τII(v, EpsII, args))
 _compute_τII_nonplastic(v::AbstractPlasticity, EpsII, args) = 0.0
