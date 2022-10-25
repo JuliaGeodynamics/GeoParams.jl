@@ -186,70 +186,70 @@ function show(io::IO, g::ConstantElasticity)
 end
 
 """
-    compute_εvol(s::ConstantElasticity{_T}, p; p_old, dt) 
+    compute_εvol(s::ConstantElasticity{_T}, P; P_old, dt) 
 
-Computes elastic volumetric strainrate given the pressure at the current (`p`) and old timestep (`p_old`), for a timestep `dt`:
+Computes elastic volumetric strainrate given the pressure at the current (`P`) and old timestep (`P_old`), for a timestep `dt`:
 ```math  
-    \\dot{\\vartheta}^{el} = {1 \\over Kb} {D p \\over Dt } ≈ {1 \\over Kb} {p- \\tilde{p^{old} \\over dt }
+    \\dot{\\vartheta}^{el} = {1 \\over Kb} {D P \\over Dt } ≈ {1 \\over Kb} {P - \\tilde{P^{old} \\over dt }
 ```
 
 """
 @inline function compute_εvol(
-    a::ConstantElasticity, p::_T; p_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+    a::ConstantElasticity, P::_T; P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
 ) where {_T}
     @unpack_val Kb = a
-    εvol_el = - (p - p_old) / (Kb * dt)
+    εvol_el = - (P - P_old) / (Kb * dt)
     return εvol_el
 end
 
-@inline function dεvol_dp(a::ConstantElasticity{_T}, p::_T; p_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+@inline function dεvol_dp(a::ConstantElasticity{_T}, P::_T; P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
     ) where {_T}
     @unpack_val Kb = a
     return - inv(Kb * dt)
 end
 
 @inline function compute_p(
-    a::ConstantElasticity, εvol::_T; p_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+    a::ConstantElasticity, εvol::_T; P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
 ) where {_T}
     @unpack_val Kb = a
-    p = - Kb * dt * εvol + p_old
+    P = - Kb * dt * εvol + P_old
 
-    return p
+    return P
 end
 
-@inline function dp_dεvol(a::ConstantElasticity{_T}, p_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+@inline function dp_dεvol(a::ConstantElasticity{_T}, P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
     ) where {_T}
     @unpack_val Kb = a
-    return - Kb * dt
+    return -Kb * dt
 end
 
 """
-    compute_εvol!(s::ConstantElasticity{_T}, p; p_old, dt) 
+    compute_εvol!(s::ConstantElasticity{_T}, P; P_old, dt) 
 
-    In-place computation of the elastic volumetric strainrate given the pressure at the current (`p`) and old timestep (`p_old`), for a timestep `dt`:
+    In-place computation of the elastic volumetric strainrate given the pressure at the current (`P`) and old timestep (`P_old`), for a timestep `dt`:
 ```math  
-    \\dot{\\vartheta}^{el} = {1 \\over Kb} {D p \\over Dt } ≈ {1 \\over Kb} {p- \\tilde{p^{old} \\over dt }
+    \\dot{\\vartheta}^{el} = {1 \\over Kb} {D P \\over Dt } ≈ {1 \\over Kb} {P - \\tilde{P^{old} \\over dt }
 ```
 
 """
 function compute_εvol!(
     εvol_el::AbstractArray{_T,N},
     a::ConstantElasticity{_T},
-    p::AbstractArray{_T,N};
-    p_old::AbstractArray{_T,N},
+    P::AbstractArray{_T,N};
+    P_old::AbstractArray{_T,N},
     dt::_T,
     kwargs...,
 ) where {N,_T}
-    @inbounds for i in eachindex(p)
-        εvol_el[i] = compute_εvol(a, p[i]; p_old=p_old[i], dt=dt)
+    @inbounds for i in eachindex(P)
+        εvol_el[i] = compute_εvol(a, P[i]; P_old=P_old[i], dt=dt)
     end
     return nothing
 end
 
 """
-    compute_p!(p::AbstractArray{_T,N}, s::ConstantElasticity{_T}. εvol_el::AbstractArray{_T,N}; p_old::AbstractArray{_T,N}, dt::_T, kwargs...) 
+    compute_p!(p::AbstractArray{_T,N}, s::ConstantElasticity{_T}. εvol_el::AbstractArray{_T,N}; P_old::AbstractArray{_T,N}, dt::_T, kwargs...) 
 
-In-place update of the elastic pressure for given volumetric strainrate and pressure at the old (`p_old`) timestep, as well as the timestep `dt`  
+In-place update of the elastic pressure for given volumetric strainrate and pressure at the old (`P_old`) timestep, as well as the timestep `dt`  
 
 ```math  
     \\p = Kb dt \\dot{\\vartheta}^{el} + \\p^{old}
@@ -257,15 +257,15 @@ In-place update of the elastic pressure for given volumetric strainrate and pres
 
 """
 function compute_p!(
-    p::AbstractArray{_T,N},
+    P::AbstractArray{_T,N},
     a::ConstantElasticity{_T},
     εvol_el::AbstractArray{_T,N};
-    p_old::AbstractArray{_T,N},
+    P_old::AbstractArray{_T,N},
     dt::_T,
     kwargs...,
 ) where {N,_T}
     @inbounds for i in eachindex(εvol_el)
-        p[i] = compute_p(a, εvol_el[i]; p_old=p_old[i], dt=dt)
+        P[i] = compute_p(a, εvol_el[i]; P_old=P_old[i], dt=dt)
     end
     return nothing
 end
