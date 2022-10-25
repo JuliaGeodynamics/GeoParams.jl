@@ -27,6 +27,7 @@ export PlotStrainrateStress,
     PlotPhaseDiagram,
     Plot_TAS_diagram,
     Plot_ZirconAge_PDF,
+    PlotDeformationMap
     PlotStressTime_0D,
     PlotPressureStressTime_0D
 
@@ -904,44 +905,69 @@ function PlotStressTime_0D(
     end
 
     return fig, ax, Tau_II_MPa, t_vec
-
+end
 
 """
-	fig = PlotDeformationMap(Phase::Tuple;    σ_lower::Quantity=1e-2MPa,
-                                              σ_upper::Quantity=1e8MPa,
-                                              T_lower::Quantity=10C,
-                                              T_upper::Quantity=910C,
-                                              d::Quantity=1mm,
-                                              f::Quantity=1MPa,
-                                              P::Quantity=0MPa,
-                                              fig=nothing,
-                                              filename=nothing,
-                                              res=(1200, 900),)
+	fig = PlotDeformationMap(v;    args=(P=0.0, d=1e-3, f=1.0),  
+                                σ = (1e-2, 1e8),                # in MPa
+                                T = (10, 1000),                 # in C
+                                ε = (1e-22, 1e-8),              # in 1/s
+                                n = 400,                        # number of points
+                                rotate_axes = false,            # flip x & y axes
+                                strainrate = true,              # strainrate (otherwise stress)
+                                viscosity = false,              # plot viscosity instead of strainrate/stress
+                                boundaries = true,              # plot deformation boundaries
+                                levels = 20,                    # number of contour levels
+                                colormap=:viridis,              # colormap
+                                filename=nothing,               # if you want to save this to file
+                                fontsize=40,                    # fontsize of labels
+                                res=(1200, 900))                # resolution in pixels
 
-Creates a Deformation mechanism map (temperature vs. stress) for the given creep law with strain rate contours.
+Creates a deformation mechanism map (T/εII vs. stress/viscosity or T/τII vs. strainrate/viscosity) for given (composite) rheology `v`
 
 # Example
 ```julia
 julia> v1 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
 julia> v2 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
 julia> v=CompositeRheology(v1,v2)
-
+julia> PlotDeformationMap(v, levels=100, colormap=:roma)
 ```
+Next, lets plot viscosity and flip x & y axis:
+```julia
+julia> PlotDeformationMap(v, viscosity=true, rotate_axes=true)
+```
+
+Instead of plotting stress vs. T and computing strainrate, we can also provide strainrate/T and compute stress:
+```julia
+julia> PlotDeformationMap(v, strainrate=false)
+```
+
+Or plot viscosity but only add contours in a certain range:
+```julia
+julia> PlotDeformationMap(v,  strainrate=false, viscosity=true, levels=Vector(18:.25:24))
+```
+
 """
 function PlotDeformationMap(
     v;
     args=(P=0.0, d=1e-3, f=1.0),  
     σ = (1e-2, 1e8),                # in MPa
     T = (10, 1000),                 # in C
-    n = 100                         # number of poinst
-    fig=nothing,
+    ε = (1e-22, 1e-8),                 # in 1/s
+    n = 400,                        # number of points
+    rotate_axes = false,
+    strainrate = true,              # strainrate (otherwise stress)
+    viscosity = false,              # plot viscosity instead of strainrate/stress
+    boundaries = true,              # plot deformation boundaries
+    levels = 20,                    # number of contour levels
+    colormap=:viridis,
     filename=nothing,
+    fontsize=40,
     res=(1200, 900),
 )
 
     # Parameters
-    σ_vec = 10.0.^Vector(range(log10(σ[1]* 1e6), log10(σ[2]*1e6), n))        # in Pa, equally spaced in log10 space
-    T_vec = Vector(range(T[1], T[2], n))    .+ 273.15   # in K
+    T_vec = Vector(range(T[1], T[2], n+1))    .+ 273.15   # in K
 
     # this is used to determine the main deformation mechanism (and color that later)
     n_components = 1
@@ -951,52 +977,96 @@ function PlotDeformationMap(
         n_components = length(v)
     end
     
-    εII = zeros(n,n)
-    ε_main = zeros(n,n)     # indicates the main components
-    for i in CartesianIndices(εII)
-        Tlocal = T_vec[i[2]]
-        τlocal = σ_vec[i[1]]
-        args_local = merge(args, (T=Tlocal,))
+    if strainrate
+        # compute ε as a function of τ and T
 
-        εII[i] = compute_εII(v, τlocal, args_local)       # compute strainrate (1/s)
+        σ_vec = 10.0.^Vector(range(log10(σ[1]* 1e6), log10(σ[2]*1e6), n))        # in Pa, equally spaced in log10 space
+        εII = zeros(n+1,n)
+        η   = zeros(n+1,n)
+        mainDef = zeros(n+1,n)     # indicates the main components
+        for i in CartesianIndices(εII)
+            Tlocal = T_vec[i[1]]
+            τlocal = σ_vec[i[2]]
+            args_local = merge(args, (T=Tlocal,))
 
-        ε_components =  [ compute_εII(v[i], τlocal, args_local) for i=1:n_components];
-        ε_components = ε_components./sum(ε_components) 
+            εII[i] = compute_εII(v, τlocal, args_local)       # compute strainrate (1/s)
+            η[i]   = computeViscosity_εII(v, τlocal, args_local) 
 
+            ε_components =  [ compute_εII(v[i], τlocal, args_local) for i=1:n_components];
+            ε_components = ε_components./sum(ε_components) 
+            mainDef[i] = argmax(ε_components)                 # index of max. strainrate 
+        end
+
+        log_σ = log10.(σ_vec./1e6)
+    else
+        # compute τ as a function of ε and T
+
+        ε_vec = 10.0.^Vector(range(log10(ε[1]), log10(ε[2]), n))        # in Pa, equally spaced in log10 space
+
+        τII = zeros(n+1,n)
+        η   = zeros(n+1,n)
+        mainDef = zeros(n+1,n)     # indicates the main components
+        for i in CartesianIndices(τII)
+            Tlocal = T_vec[i[1]]
+            εlocal = ε_vec[i[2]]
+            args_local = merge(args, (T=Tlocal,))
+
+            τII[i] = compute_τII(v, εlocal, args_local)       # compute strainrate (1/s)
+            η[i]   = τII[i] / (2 * εlocal)
+
+            τ_components =  [ compute_τII(v[i],  εlocal, args_local) for i=1:n_components];
+            τ_components = τ_components./sum(τ_components) 
+            mainDef[i] = argmin(τ_components)                 # index of max. strainrate 
+        end
+        log_ε = log10.(ε_vec)
     end
-
-    log_σ = log10.(σ_vec./1e6)
     T_plot = T_vec .- 273.15;
 
-    # Plotting with Makie
-    if isnothing(fig)
-        fig = Figure(; fontsize=25, resolution=res)
+    # determine axis of plot
+    if strainrate
+        x = T_plot
+        xlabel = "T [°C]"
+        y = log_σ
+        ylabel = L"\log_{10}(\tau_{II}) [MPa]";
+        label = L"\log_{10}(\varepsilon_{II}) [s^{-1}]"
+        data = log10.(εII)
+    else
+        x = T_plot
+        xlabel = "T [°C]"
+        y = log_ε
+        ylabel = L"\log_{10}({\varepsilon}_{II}) [s^{-1}]";
+        label = L"\log_{10}(\tau_{II}) [MPa]"
+        data = log10.(τII/1e6)
     end
+    if viscosity
+        label = L"\log_{10}(\eta_{eff}) [Pa s]"
+        data = log10.(η)
+    end
+
+    if rotate_axes 
+        x,y = y,x
+        xlabel,ylabel = ylabel,xlabel
+        data,mainDef = data', mainDef'
+    end
+
+    # Plotting with Makie
+    fig = Figure(; fontsize=fontsize, resolution=res)
     
     ax = Axis(
         fig[1,1],
         title="Deformation mechanism map",
-        xlabel="T [°C]",
-        ylabel=L"\log_{10}(σ_{II}) [MPa]",
+        xlabel=xlabel, xlabelsize=fontsize,
+        ylabel=ylabel, ylabelsize=fontsize,
         )
-    c1 = contourf!(
-        ax,
-        T_plot, log_σ,
-        log10.(εII),
-        levels=11
-        )
-    contour!(
-        T_plot,
-        log_σ,
-        log10.(εII),
-        color=:black,
-        levels=20
-        )
-    Colorbar(
-        fig[1,2], 
-        c1,
-        label=L"\log_{10}(ε_{II}) [s^{-1}]"
-        )
+    c1 = heatmap!(ax,x,y,data, colormap = colormap)
+    contour!(ax,x,y,data, color=:black, levels=levels)
+
+    if boundaries
+        # plot boundaries between deformation regimes    
+        contour!(ax,x,y,mainDef, color=:red, linewidth=2, linestyle=:solid, levels=n_components-1)
+    end
+
+    Colorbar(fig[1,2], c1, label=label, labelsize=fontsize )
 
     if !isnothing(filename)
         save(filename, fig)
