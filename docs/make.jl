@@ -1,4 +1,4 @@
-using Documenter, GeoParams, Plots
+using Documenter, GeoParams, GLMakie
 push!(LOAD_PATH, "../src/")
 
 @info "Making documentation..."

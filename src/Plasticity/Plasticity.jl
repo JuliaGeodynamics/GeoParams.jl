@@ -12,7 +12,6 @@ export AbstractPlasticity,
         ∂F∂τII,∂F∂P,∂F∂λ,
         compute_εII
 
-
 include("DruckerPrager.jl")    # DP plasticity
 include("DruckerPrager_regularised.jl")    # regularized DP plasticity
 
@@ -50,6 +49,7 @@ function ∂Q∂τ(p::AbstractPlasticity{T}, args::NamedTuple{N,T}; kwargs...) w
 end
 #-------------------------------------------------------------------------
 
+
 #-------------------------------------------------------------------------
 
 # Plastic finite strain and strain rate
@@ -86,6 +86,13 @@ for myType in (:DruckerPrager, :DruckerPrager_regularised)
     @eval begin
         (p::$(myType))(args) = p(; args...)
         ∂Q∂τ(p::$(myType), args, kwargs) = ∂Q∂τ(p, args; kwargs...)
+        ∂Q∂P(p::$(myType), args, kwargs) = ∂Q∂P(p, args; kwargs...)
+        ∂Q∂τII(p::$(myType), args, kwargs) = ∂Q∂τII(p, args; kwargs...)
+        
+        ∂F∂P(p::$(myType), args, kwargs) = ∂F∂P(p, args; kwargs...)
+        ∂F∂λ(p::$(myType), args, kwargs) = ∂F∂λ(p, args; kwargs...)
+        ∂F∂τII(p::$(myType), args, kwargs) = ∂F∂τII(p, args; kwargs...)
+        
         compute_yieldfunction(p::$(myType), args) = p(args)
         compute_εII(p::$(myType), args) = compute_εII(p,args...)
         
@@ -102,6 +109,7 @@ compute_yieldfunction!(args...) = compute_param!(compute_yieldfunction, args...)
 compute_plasticpotentialDerivative(args...) = compute_param(∂Q∂τ, args...)
 ∂Q∂τ(p::AbstractMaterialParamsStruct, args) = compute_plasticpotentialDerivative(p, args)
 ∂Q∂τ(args...) = compute_param(∂Q∂τ, args...)
+∂Q∂τII(args...) = compute_param(∂Q∂τII, args...)
 
 function compute_plasticpotentialDerivative(p::AbstractMaterialParamsStruct, args)
     return ∂Q∂τ(p.Plasticity[1], args)
