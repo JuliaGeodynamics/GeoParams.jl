@@ -44,7 +44,6 @@ end
 end
 
 # Tuple iterators
-
 @generated function nreduce(f::F, v::NTuple{N, Any}) where {N, F}
     quote
         val = 0.0
