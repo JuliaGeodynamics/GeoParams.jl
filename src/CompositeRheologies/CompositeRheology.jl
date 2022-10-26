@@ -186,8 +186,6 @@ end
 
 
 # COMPUTE STRAIN RATE
-
-
 """
     τII = compute_τII(v::CompositeRheology{T,N}, εII, args; tol=1e-6, verbose=false)
     
@@ -225,18 +223,14 @@ dεII_dτII_nonparallel(v::Any, TauII, args) =   dεII_dτII(v, TauII, args)
 dεII_dτII_nonparallel(v::Parallel, TauII::_T, args) where _T =    zero(_T)
 dεII_dτII_nonparallel(v::AbstractPlasticity, TauII::_T, args) where _T =    zero(_T)
 
-@generated function dεvol_dp(
-    v::CompositeRheology{T,N}, p::_T, args
-) where {T,_T,N}
-    quote
-        Base.@_inline_meta
-        val = zero(_T)
-        Base.Cartesian.@nexprs $N i -> 
-        if isvolumetric(v.elements[i])
-            val += dεvol_dp_nonparallel_nonplastic(v.elements[i], p, args)
-        end
-        return val
+dεvol_dp(v::CompositeRheology{T,N}, p::_T, args) where {T,_T,N} = nreduce(vi -> first(_dεvol_dp(vi, p, args)), v.elements)
+function _dεvol_dp(v, p::_T, args) where {T,_T,N}
+    if isvolumetric(v)
+        val = dεvol_dp_nonparallel_nonplastic(v, p, args)
+    else
+        val = 0.0
     end
+    return val
 end
 dεvol_dp_nonparallel_nonplastic(v::Any, P, args) =   dεvol_dp(v, P, args)
 dεvol_dp_nonparallel_nonplastic(v::Parallel, P::_T, args) where _T =    zero(_T)
@@ -300,22 +294,18 @@ _compute_τII_harmonic_element(v::Parallel{T, N,  Nplast, is_plastic}, EpsII, ar
 
 Harmonic average of stress of all elements in a `CompositeRheology` structure that are not || elements
 """
-@inline @generated function compute_p_harmonic(
-    v::CompositeRheology{T,N}, 
-    EpsVol::_T, 
-    args
-) where {T,N, _T}
-    quote
-        out = zero(_T)
-        Base.Cartesian.@nexprs $N i ->
-            if isvolumetric(v.elements[i])
-                out += _compute_p_harmonic_element(v.elements[i], EpsVol, args)
-            end
-        out = 1/out
-    end
+function compute_p_harmonic(v::CompositeRheology{T,N}, EpsVol::_T, args; tol=1e-6, verbose=false) where {T,_T,N} 
+    out = inv(nreduce(vi -> first(_compute_p_harmonic_element(vi, EpsVol, args)), v.elements))
+    return out
 end
-
-_compute_p_harmonic_element(v, EpsVol, args) = inv(compute_p(v, EpsVol, args))
+function _compute_p_harmonic_element(v, EpsVol, args) 
+    if isvolumetric(v)
+       out = inv(compute_p(v, EpsVol, args))
+    else
+        out = 0.0
+    end
+    return out
+end
 _compute_p_harmonic_element(v::AbstractPlasticity, EpsVol, args) = 0.0
 _compute_p_harmonic_element(v::Parallel, EpsVol, args) = 0.0
 
@@ -324,19 +314,10 @@ _compute_p_harmonic_element(v::Parallel, EpsVol, args) = 0.0
 
 Computes the harmonic average of strainrate for a parallel element
 """
-@generated function compute_εII_harmonic(
-    v::Union{Parallel{T,N},CompositeRheology{T,N}}, 
-    TauII::_T, 
-    args
-) where {T,N, _T}
-    quote
-        out = zero($_T)
-        Base.Cartesian.@nexprs $N i ->
-            out += inv(first(compute_εII(v.elements[i], TauII, args)))
-        return inv(out)
-    end
+function compute_εII_harmonic(v::Union{Parallel{T,N},CompositeRheology{T,N}}, TauII::_T, args; tol=1e-6, verbose=false) where {T,_T,N} 
+    out = inv(nreduce(vi -> inv(first(compute_εII(vi, TauII, args))), v.elements))
+    return out
 end
-
 
 @generated  function compute_εII_harmonic_i(
     v::CompositeRheology{T,N}, 
