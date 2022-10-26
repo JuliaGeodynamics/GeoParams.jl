@@ -23,9 +23,9 @@ function max_length_tuple(t::NTuple{N,Tuple}) where {N}
 end
 
 # broadcast getindex() to NamedTuples
-function ntuple_idx(args::NamedTuple, I::Vararg{Integer,N}) where {N}
+@inline function ntuple_idx(args::NamedTuple, I::Vararg{Integer,N}) where {N}
     k = keys(args)
-    v = getindex.(values(args), Tuple(I)...)
+    v = getindex.(values(args), I)
     return (; zip(k, v)...)
 end
 
@@ -39,6 +39,7 @@ end
 end
 
 @inline function fastpow(x::Quantity, n::AbstractFloat)
+    isinteger(n) && return x^Int(n)
     return x^n
 end
 
