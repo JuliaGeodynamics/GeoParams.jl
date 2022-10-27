@@ -13,26 +13,26 @@ export Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2MarkdownTable
 #           SetMaterialParams(Name="Viscous Bottom", Phase=3, Density= PT_Density(),CreepLaws = SetDislocationCreep("Diabase | Caristan (1982)")))
 
 """ 
-floatdecimals() returns the number of float decimals after the comma as Integer. 
-If expon is True the function also returns the exponent as Integer.
+detachFloatfromExponent() returns the number of float decimals after the comma as Integer, the float number without the exponent as string 
+and the exponent after the "e" as string.
+The argument output returns "1" for ex if the input number has no.
 
 """
 
-function floatdecimals(str::String, expon::Bool=false)
+function detachFloatfromExponent(str::String)
     s = lowercase(str)
     if 'e' in s
         s, ex = split(s, "e")
-        expdig = parse(Int, ex)
     else
-        expdig = 0
+        ex = "1"
     end
+
     dig = something(findfirst('.', reverse(s)), 1) - 1
-    if expon == false
-        return dig
-    else
-        return dig, expdig
-    end
+    
+    return dig, s, ex
+
 end
+
 
 """
 Phase2Dict() puts all parameters of a phase in a dict.
@@ -107,7 +107,7 @@ function Phase2Dict(s)
     return fds, refs
 end
 
-function Dict2LatexTable(d::Dict, refs::Dict)
+function Dict2LatexTable(d::Dict; refs::Dict, rdigits=4)
     dictkeys = keys(d)
     symbs = []
 
@@ -227,7 +227,16 @@ function Dict2LatexTable(d::Dict, refs::Dict)
                 if symbol == dictpairs[i].second[2] &&
                     j == parse(Int64, dictpairs[i].second[4])
                     # put in the matched parameter value
-                    Table *= " & " * dictpairs[i].second[1]
+                    dig, num, expo = detachFloatfromExponent(dictpairs[i].second[1])
+                    if  dig <= rdigits && expo != "1" 
+                        Table *= " & " * "$num \\cross 10^{$expo}"
+                    elseif dig <= rdigits && expo == "1"
+                        Table *= " & " * "$num"
+                    elseif dig > rdigits && expo != "1"
+                        Table *= " & " * string(round(parse(Float64, num); digits=rdigits)) * " \\cross 10^{$expo}"
+                    elseif dig > rdigits && expo == "1"
+                        Table *= " & " * string(round(parse(Float64, num); digits=rdigits))
+                    end
                     hit += 1
                 end
             end
@@ -362,7 +371,7 @@ function Phase2DictMd(s)
 end
 
 
-function Dict2MarkdownTable(d::Dict, refs::Dict, rdigits::Int64=4)
+function Dict2MarkdownTable(d::Dict; refs=nothing, rdigits=4)
     dictkeys = keys(d)
     symbs = []
 
@@ -468,12 +477,15 @@ function Dict2MarkdownTable(d::Dict, refs::Dict, rdigits::Int64=4)
                 # Checks if symbol matches the symbol in the pair and if phase matches phase of the pair
                 if symbol == dictpairs[i].second[2] && j == parse(Int64, dictpairs[i].second[4])
                     # put in the matched parameter value
-                    print(dictpairs[i].second[1])
-                    if floatdecimals(dictpairs[i].second[1]) <= rdigits 
-                        Table *= " | " * dictpairs[i].second[1]
-                    else
-                        # Problem ist das rdigits grade 1.106797181058933e-15 nicht runden kann da e-15 ja kleiner als 1 ist. Muss Zahl mal e15 nehmen round() machen und dann wieder mal e-15!!!!
-                        Table *= " | " * round(parse(Float64, dictpairs[i].second[1]), rdigits)
+                    dig, num, expo = detachFloatfromExponent(dictpairs[i].second[1])
+                    if  dig <= rdigits && expo != "1" 
+                        Table *= " | " * "$num x 10^$expo^"
+                    elseif dig <= rdigits && expo == "1"
+                        Table *= " | " * "$num"
+                    elseif dig > rdigits && expo != "1"
+                        Table *= " | " * string(round(parse(Float64, num); digits=rdigits)) * " x 10^$expo^"
+                    elseif dig > rdigits && expo == "1"
+                        Table *= " | " * string(round(parse(Float64, num); digits=rdigits))
                     end
                     hit += 1
                 end
