@@ -105,4 +105,8 @@ using GeoParams
     τ_vec = zero(ε_vec)
     compute_τII!(τ_vec, p, ε_vec, args)
     η_vec = τ_vec ./ (2 * ε_vec)
+
+    CharDim = GEO_units()
+    p_nd = nondimensionalize(p, CharDim)
+
 end

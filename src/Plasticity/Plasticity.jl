@@ -1,10 +1,16 @@
 # If you want to add a new method here, feel free to do so. 
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 abstract type AbstractPlasticity{T} <: AbstractConstitutiveLaw{T} end
+abstract type AbstractPlasticPotential{Float64}  <: AbstractConstitutiveLaw{Float64} end
 
 export compute_yieldfunction,      # calculation routines
     compute_yieldfunction!,
-    DruckerPrager               # constant
+    DruckerPrager,               # constant
+    AbstractPlasticity,
+    compute_plasticpotentialDerivative,
+    ∂Q∂τ,
+    ∂Q∂P
+
 
 # DruckerPrager  -------------------------------------------------------
 """
@@ -33,9 +39,13 @@ Plasticity is activated when ``F(\\tau_{II}^{trial})`` (the yield function compu
 where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the resuling stress gives ``F(\\tau_{II}^{final})=0``, and ``\\sigma_{ij}=-P + \\tau_{ij}`` denotes the total stress tensor.   
         
 """
-@with_kw_noshow struct DruckerPrager{T,U,U1} <: AbstractPlasticity{T}
+@with_kw_noshow struct DruckerPrager{T, U, U1} <: AbstractPlasticity{T}
     ϕ::GeoUnit{T,U} = 30NoUnits # Friction angle
     Ψ::GeoUnit{T,U} = 0NoUnits # Dilation angle
+    sinϕ::GeoUnit{T,U} = sind(ϕ)NoUnits # Friction angle
+    cosϕ::GeoUnit{T,U} = cosd(ϕ)NoUnits # Friction angle
+    sinΨ::GeoUnit{T,U} = sind(Ψ)NoUnits # Dilation angle
+    cosΨ::GeoUnit{T,U} = cosd(Ψ)NoUnits # Dilation angle
     C::GeoUnit{T,U1} = 10e6Pa # Cohesion
 end
 DruckerPrager(args...) = DruckerPrager(convert.(GeoUnit, args)...)
@@ -50,8 +60,7 @@ end
 function (s::DruckerPrager{_T,U,U1})(;
     P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), kwargs...
 ) where {_T,U,U1}
-    @unpack_val ϕ, C = s
-    sinϕ, cosϕ = sincosd(ϕ)
+    @unpack_val sinϕ, cosϕ, ϕ, C = s
 
     F = τII - cosϕ * C - sinϕ * (P - Pf)   # with fluid pressure (set to zero by default)
 
@@ -91,12 +100,111 @@ function compute_yieldfunction!(
     return nothing
 end
 
+# Plastic Potential 
+
+# Derivatives w.r.t pressure
+
+∂Q∂P(p::DruckerPrager; kwargs...) = -p.sinΨ
+∂Q∂P(p::DruckerPrager, args) = ∂Q∂P(p; args...)
+
+# Derivatives w.r.t stress tensor
+
+# Hard-coded partial derivatives of the plastic potential Q
+for t in (:NTuple,:SVector)
+    @eval begin
+        ## 3D derivatives 
+        ∂Q∂τxx(p::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[1] / second_invariant(τij)
+        ∂Q∂τyy(p::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[2] / second_invariant(τij)
+        ∂Q∂τzz(p::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[3] / second_invariant(τij)
+        ∂Q∂τyz(p::DruckerPrager, τij::$(t){6, T}) where T = τij[4] / second_invariant(τij)
+        ∂Q∂τxz(p::DruckerPrager, τij::$(t){6, T}) where T = τij[5] / second_invariant(τij)
+        ∂Q∂τxy(p::DruckerPrager, τij::$(t){6, T}) where T = τij[6] / second_invariant(τij) 
+        ## 2D derivatives 
+        ∂Q∂τxx(p::DruckerPrager, τij::$(t){3, T}) where T = 0.5 * τij[1] / second_invariant(τij)
+        ∂Q∂τyy(p::DruckerPrager, τij::$(t){3, T}) where T = 0.5 * τij[2] / second_invariant(τij)
+        ∂Q∂τxy(p::DruckerPrager, τij::$(t){3, T}) where T = τij[3] / second_invariant(τij) 
+    end
+end
+
 # Print info 
 function show(io::IO, g::DruckerPrager)
     return print(
         io,
         "Drucker-Prager plasticity with: C = $(UnitValue(g.C)), ϕ = $(UnitValue(g.ϕ))ᵒ, Ψ = $(UnitValue(g.Ψ))ᵒ",
     )
+end
+#-------------------------------------------------------------------------
+
+
+# Thin convinience wrappers
+# 3D
+function ∂Q∂τ(p::AbstractPlasticity{T}, τij::SVector{6,T}; kwargs...) where {T}
+    @SVector [∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τzz(p, τij), ∂Q∂τyz(p, τij), ∂Q∂τxz(p, τij), ∂Q∂τxy(p, τij)]
+end
+
+function ∂Q∂τ(p::AbstractPlasticity{T}, τij::NTuple{6,T}; kwargs...) where {T}
+    return ∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τzz(p, τij), ∂Q∂τyz(p, τij), ∂Q∂τxz(p, τij), ∂Q∂τxy(p, τij)
+end
+
+# 2D
+function ∂Q∂τ(p::AbstractPlasticity{T}, τij::SVector{3,T}; kwargs...) where {T}
+    @SVector [∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τxy(p, τij)]
+end
+
+function ∂Q∂τ(p::AbstractPlasticity{T}, τij::NTuple{3,T}; kwargs...) where {T}
+    return ∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τxy(p, τij)
+end
+
+# Compute partial derivatives of a generic user-defined Q using AD
+∂Q∂τ(Q::F, args::SVector{N, T}; kwargs...) where {N, T, F<:Function} = ForwardDiff.gradient(Q, args)
+∂Q∂τ(Q::F, args::Vector{T}; kwargs...) where {T, F<:Function} = ForwardDiff.gradient(Q, args)
+function ∂Q∂τ(Q::F, args::NTuple{N,T}; kwargs...) where {N,T, F<:Function}
+    tmp = ∂Q∂τ(Q, SVector{N}(args...))
+    return ntuple(i -> tmp[i], Val(N))
+end
+
+# Wrapper for arbitrary args in the form of a NamedTuple
+function ∂Q∂τ(p::DruckerPrager{T}, args::NamedTuple{N,T}; kwargs...) where {N,T} 
+     ∂Q∂τ(Q, args.τij, kwargs...)
+end
+#-------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------
+
+# Plastic finite strain and strain rate
+
+"""
+    plastic_strain(εvp::T, p::AbstractPlasticity{T}, τij, λ::T, dt::T)
+    
+    Integrate the finite plastic strain. Equations from Duretz et al. 2019 G3
+"""
+function plastic_strain(εvp::T, p::AbstractPlasticity{T}, τij, λ::T, dt::T) where T
+    εvp += plastic_strain(p, τij, λ) * dt  
+end
+
+@inline function plastic_strain(p::AbstractPlasticity{T}, τij::T, λ::T) where T
+    εvp_ij = plastic_strain_rate(p, τij, λ)
+    εvp = √((2.0/3.0) * dot(εvp_ij, εvp_ij))
+    return εvp
+end
+
+@inline plastic_strain_rate(p::AbstractPlasticity{T}, τij::T, λ::T) where T = ∂Q∂τ(p, τij) .* λ 
+#-------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------
+
+# Plastic multiplier
+
+"""
+    lambda(F::T, p::DruckerPrager, ηve::T, ηvp::T; K=zero(T), dt=zero(T), h=zero(T), τij=(one(T), one(T), one(T)))
+    
+    Compute the plastic multiplier λ for a Drucker-Prager yield surface. `F` is the trial yield surface, 
+    `ηve` is the visco-elastic effective viscosity (i.e. `(1/G/dt + 1/η)⁻¹`), `ηvp` is a regularization term,
+    `K` is the elastic bulk modulus, h is the harderning, and `τij`` is the stress tensor in Voigt notation.
+    Equations from Duretz et al. 2019 G3
+"""
+@inline function lambda(F::T, p::DruckerPrager, ηve::T, ηvp::T; K=zero(T), dt=zero(T), h=zero(T), τij=(one(T), one(T), one(T))) where T
+    F * inv(ηve + ηvp + K * dt * p.sinΨ * p.sinϕ + h * p.cosϕ * plastic_strain(p, τij, zero(T)))
 end
 #-------------------------------------------------------------------------
 
@@ -112,15 +220,33 @@ end
 # add methods programmatically
 for myType in (:DruckerPrager,)
     @eval begin
-        (s::$(myType))(args) = s(; args...)
-        compute_yieldfunction(s::$(myType), args) = s(args)
+        (p::$(myType))(args) = p(; args...)
+        ∂Q∂τ(p::$(myType), args, kwargs) = ∂Q∂τ(p, args; kwargs...)
+        compute_yieldfunction(p::$(myType), args) = p(args)
         function compute_yieldfunction!(
-            H::AbstractArray{_T,N}, s::$(myType){_T}, args
+            H::AbstractArray{_T,N}, p::$(myType){_T}, args
         ) where {_T,N}
-            return compute_yieldfunction!(H, s; args...)
+            return compute_yieldfunction!(H, p; args...)
         end
     end
 end
 
 compute_yieldfunction(args...) = compute_param(compute_yieldfunction, args...)
 compute_yieldfunction!(args...) = compute_param!(compute_yieldfunction, args...)
+compute_plasticpotentialDerivative(args...) = compute_param(∂Q∂τ, args...)
+∂Q∂τ(p::AbstractMaterialParamsStruct, args) = compute_plasticpotentialDerivative(p, args)
+∂Q∂τ(args...) = compute_param(∂Q∂τ, args...)
+
+function compute_plasticpotentialDerivative(p::AbstractMaterialParamsStruct, args)
+    return ∂Q∂τ(p.Plasticity[1], args)
+end
+
+∂Q∂P(args...) = compute_param(∂Q∂P, args...)
+
+function ∂Q∂P(p::AbstractMaterialParamsStruct, args)
+    return ∂Q∂P(p.Plasticity[1], args)
+end
+
+lambda(args...) = compute_param(lambda, args...)
+plastic_strain_rate(args...) = compute_param(plastic_strain_rate, args...)
+plastic_strain(args...) = compute_param(plastic_strain, args...)

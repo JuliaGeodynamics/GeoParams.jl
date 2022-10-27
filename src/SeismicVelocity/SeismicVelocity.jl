@@ -386,13 +386,13 @@ function anelastic_correction(water::Int64, Vs0::Float64, Pref::Float64, Tref::F
     α = 0.27
     B0 = 1.28e8               # m/s
     dref = 1.24e-5              # m
-    COHref = 50.0 / 1e6             # 50H/1e6Si
+    COHref = 50.0 * 1e-6             # 50H/1e6Si
 
     Gref = 1.09
     Eref = 505.0e3              # J/mol
     Vref = 1.2e-5               # m3*mol
 
-    G = 1.00
+    G = 1
     E = 420.0e3              # J/mol (activation energy)
     V = 1.2e-5               # m3*mol (activation volume)
 
@@ -401,14 +401,14 @@ function anelastic_correction(water::Int64, Vs0::Float64, Pref::Float64, Tref::F
     d = 1e-2                 # m (grain size)
 
     if water == 0
-        COH = 50.0 / 1e6     # for dry mantle
-        r = 0.0              # for dry mantle
+        COH = 50.0 * 1e-6     # for dry mantle
+        r = 0              # for dry mantle
     elseif water == 1
-        COH = 1000.0 / 1e6   # for damp mantle    
-        r = 1.0              # for damp mantle
+        COH = 1000.0 * 1e-6   # for damp mantle    
+        r = 1              # for damp mantle
     elseif water == 2
-        COH = 3000.0 / 1e6   # for wet mantle (saturated water)
-        r = 2.0              # for wet mantle
+        COH = 3000.0 * 1e-6   # for wet mantle (saturated water)
+        r = 2              # for wet mantle
     else
         print(
             "water mode is not implemented. Valid values are 0 (dry),1 (dampened) and 2 (wet)",
@@ -417,13 +417,13 @@ function anelastic_correction(water::Int64, Vs0::Float64, Pref::Float64, Tref::F
 
     B =
         B0 *
-        dref^(G - Gref) *
+        fastpow(dref, G - Gref) *
         (COH / COHref)^r *
-        exp(((E + Pref * V) - (Eref + Pref * Vref)) / (R * Tref))
+        exp((muladd(Pref, V, E) - muladd(Pref, Vref, Eref)) / (R * Tref))
 
-    Qinv = (B * d^(-G) * ω^(-1.0) * exp(-(E + Pref * V) / (R * Tref)))^α
+    Qinv = fastpow(B * d^(-G) * inv(ω) * exp(-muladd(Pref, V, E) / (R * Tref)), α)
 
-    Vs_anel = Vs0 * (1.0 - (Qinv) / (2.0 * tan(π * α / 2.0)))
+    Vs_anel = Vs0 * (1.0 - (Qinv) / (2.0 * tan(π * α *0.5)))
 
     return Vs_anel
 end
@@ -692,8 +692,8 @@ end
 function P0_func(α::_T, R::_T) where {_T}
     f = f_func(α)
     θ = θ_func(α)
-    F1 = 1 - 3 / 2 * (f + θ) + R * (3 / 2 * f + 5 / 2 * θ - 4 / 3)
-    F2 = R * (2 * θ - 2 * f - 3 * θ^2 + 2R * (f - θ + 2θ^2))
+    F1 = 1.0 - 3.0 / 2.0 * (f + θ) + R * (3.0 / 2.0 * f + 5.0 / 2.0 * θ - 4.0 / 3.0)
+    F2 = R * (2.0 * θ - 2.0 * f - 3.0 * θ^2 + 2R * (f - θ + 2.0*θ^2))
     return F1 / F2
 end
 

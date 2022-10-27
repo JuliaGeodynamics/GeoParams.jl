@@ -6,39 +6,61 @@ module ConstitutiveRelationships
 using Base: Float64
 using Parameters, LaTeXStrings, Unitful
 using ..Units
-using GeoParams: AbstractMaterialParam
+using GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
 import GeoParams: param_info, fastpow
+import GeoParams: second_invariant, second_invariant_staggered
 using BibTeX
 using ..MaterialParameters: MaterialParamsInfo
 import Base.show
+using ForwardDiff
+using StaticArrays
 
 const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 
-abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
+#abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
+#abstract type AbstractComposite <: AbstractMaterialParam end
 
-export param_info,
-    dεII_dτII,
-    dτII_dεII,
-    compute_εII!,
-    compute_εII,
-    compute_τII!,
-    compute_τII,
-    computeViscosity_τII,
-    computeViscosity_εII,
-    computeViscosity_τII!,
-    computeViscosity_εII!,
-    local_iterations_εII,
-    computeViscosity,
-    strain_rate_circuit,
-    InverseCreepLaw,
-    KelvinVoigt
+precision(v::AbstractConstitutiveLaw{T}) where T = T
+
+
 
 include("Computations.jl")
 
 include("CreepLaw/CreepLaw.jl")              # viscous Creeplaws
 include("Elasticity/Elasticity.jl")          # elasticity
 include("Plasticity/Plasticity.jl")          # plasticity
-include("CreepLaw/Viscosity.jl")             # composite creeplaws
+#include("CreepLaw/Viscosity.jl")             # composite creeplaws
+include("CompositeRheologies.jl")            # composite constitutive relationships
+
+export param_info,
+    dεII_dτII,
+    dτII_dεII,
+    dεII_dτII_AD,
+    dτII_dεII_AD,
+    compute_εII!,
+    compute_εII,
+    compute_εII_AD,
+    compute_τII!,
+    compute_τII,
+    compute_τII_AD,
+    computeViscosity_τII,
+    computeViscosity_τII!,
+    computeViscosity_εII,
+    computeViscosity_εII!,
+    local_iterations_εII,
+    local_iterations_εII_AD,
+    local_iterations_τII,
+    local_iterations_τII_AD,
+    computeViscosity,
+    strain_rate_circuit,
+    stress_circuit,
+    InverseCreepLaw,
+    KelvinVoigt,
+    Parallel,
+    CompositeRheology,
+    AbstractComposite,
+    AbstractConstitutiveLaw
+    AxialCompression, SimpleShear, Invariant 
 
 # add methods programatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity)
@@ -57,10 +79,11 @@ for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElas
             return compute_τII!(τ, s, EpsII; args...)
         end
 
-        if Symbol($myType) !== :ConstantElasticity
-            dτII_dεII(a::$(myType), EpsII, args) = dτII_dεII(a, EpsII; args...)
-            dεII_dτII(a::$(myType), TauII, args) = dεII_dτII(a, TauII; args...)
-        end
+        # Expand derivatives
+        dτII_dεII(a::$(myType), EpsII, args) = dτII_dεII(a, EpsII; args...)
+        dεII_dτII(a::$(myType), TauII, args) = dεII_dτII(a, TauII; args...)
+        
+    
     end
 end
 

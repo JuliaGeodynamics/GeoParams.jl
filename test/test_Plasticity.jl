@@ -81,6 +81,66 @@ using GeoParams
     @test maximum(F[1, 1, :]) ≈ 839745.962155614
     # @test num_alloc <= 32
 
+    # Test plastic potential derivatives
+    ## 2D
+    τij = (1.0, 2.0, 3.0)
+    fxx(τij) = 0.5 * τij[1]/second_invariant(τij)
+    fyy(τij) = 0.5 * τij[2]/second_invariant(τij)
+    fxy(τij) = τij[3]/second_invariant(τij)
+    solution2D = [fxx(τij), fyy(τij), fxy(τij)]
+ 
+    # # using StaticArrays
+    # τij_static = @SVector [1.0, 2.0, 3.0]
+    # out1 = ∂Q∂τ(p, τij_static)
+    # @test out1 == solution2D
+    # @test compute_plasticpotentialDerivative(p, τij_static) == ∂Q∂τ(p, τij_static)
+
+    # using tuples
+    τij_tuple = (1.0, 2.0, 3.0)
+    out2 = ∂Q∂τ(p, τij_tuple)
+    @test out2 == Tuple(solution2D)
+    @test compute_plasticpotentialDerivative(p, τij_tuple) == ∂Q∂τ(p, τij_tuple)
+
+    # using AD
+    Q = second_invariant # where second_invariant is a function
+    # ad1 = ∂Q∂τ(Q, τij_static)
+    # @test out1 == solution2D
+    # @test compute_plasticpotentialDerivative(p, τij_static) == ∂Q∂τ(p, τij_static)
+    ad2 = ∂Q∂τ(Q, τij_tuple)
+    @test out2 == Tuple(solution2D)
+    @test compute_plasticpotentialDerivative(p, τij_tuple) == ∂Q∂τ(p, τij_tuple)
+
+    ## 3D
+    τij = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
+    gxx(τij) = 0.5 * τij[1]/second_invariant(τij)
+    gyy(τij) = 0.5 * τij[2]/second_invariant(τij)
+    gzz(τij) = 0.5 * τij[3]/second_invariant(τij)
+    gyz(τij) = τij[4]/second_invariant(τij)
+    gxz(τij) = τij[5]/second_invariant(τij)
+    gxy(τij) = τij[6]/second_invariant(τij)
+    solution3D = [gxx(τij), gyy(τij), gzz(τij), gyz(τij), gxz(τij), gxy(τij)]
+
+    # # using StaticArrays
+    # τij_static = @SVector [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+    # out3 = ∂Q∂τ(p, τij_static)
+    # @test out3 == solution3D
+    # @test compute_plasticpotentialDerivative(p, τij_static) == ∂Q∂τ(p, τij_static)
+
+    # using tuples
+    τij_tuple = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
+    out4 = ∂Q∂τ(p, τij_tuple)
+    @test out4 == Tuple(solution3D)
+    @test compute_plasticpotentialDerivative(p, τij_tuple) == ∂Q∂τ(p, τij_tuple)
+
+    # using AD
+    Q = second_invariant # where second_invariant is a function
+    # ad3 = ∂Q∂τ(Q, τij_static)
+    # @test out3 == solution3D
+    # @test compute_plasticpotentialDerivative(p, τij_static) == ∂Q∂τ(p, τij_static)
+    ad4 = ∂Q∂τ(Q, τij_tuple)
+    @test out4 == Tuple(solution3D)
+    @test compute_plasticpotentialDerivative(p, τij_tuple) == ∂Q∂τ(p, τij_tuple)
+
     # -----------------------
 
 end
