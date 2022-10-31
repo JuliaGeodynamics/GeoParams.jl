@@ -573,6 +573,7 @@ function ParameterTable(
     Phase;
     filename=nothing,
     format="latex",
+    rdigits=4
     )
 
     if format == "latex"
