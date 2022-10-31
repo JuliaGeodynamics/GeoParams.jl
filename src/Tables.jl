@@ -5,7 +5,7 @@ using GeoParams: AbstractMaterialParam, param_info
 using ..Units
 using ..MaterialParameters: MaterialParamsInfo
 
-export Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2MarkdownTable
+export detachFloatfromExponent, Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2MarkdownTable, ParameterTable
 
 # was tested with:
 # TestPh = (SetMaterialParams(Name="Viscous Matrix", Phase=1, Density=ConstantDensity(),CreepLaws = SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)")),
@@ -15,7 +15,7 @@ export Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2MarkdownTable
 """ 
 detachFloatfromExponent() returns the number of float decimals after the comma as Integer, the float number without the exponent as string 
 and the exponent after the "e" as string.
-The argument output returns "1" for ex if the input number has no.
+The argument output returns "1" for "ex" if the input number has no exponent.
 
 """
 
@@ -36,7 +36,6 @@ end
 
 """
 Phase2Dict() puts all parameters of a phase in a dict.
-Dict2LatexTable() writes .tex file with all parameters from Phase2Dict() output in a table.
 
 """
 
@@ -107,7 +106,12 @@ function Phase2Dict(s)
     return fds, refs
 end
 
-function Dict2LatexTable(d::Dict; refs::Dict, rdigits=4)
+"""
+Dict2LatexTable() writes a .tex file with all parameters from the Phase2Dict() output in a LaTeX table.
+
+"""
+
+function Dict2LatexTable(d::Dict, refs::Dict; filename=nothing, rdigits=4)
     dictkeys = keys(d)
     symbs = []
 
@@ -125,7 +129,7 @@ function Dict2LatexTable(d::Dict; refs::Dict, rdigits=4)
         "g" => "Gravity \$(m/s^{2})\$",
         "\\eta" => "Viscosity \$(Pa \\cdot s)\$",
         "P" => "Pressure (MPa)",
-        "T" => "Temperature (C)",
+        "T" => "Temperature (\$^{\\circ}\$C)",
         "V" => "Volume \$(m^{3})\$",
         "d" => "Grain size (cm)",
         "f" => "Water fugacity (MPa)",
@@ -149,7 +153,7 @@ function Dict2LatexTable(d::Dict; refs::Dict, rdigits=4)
         "C" => "Cohesion (Pa)",
         "Vp" => "P-wave velocity (km/s)",
         "Vs" => "S-wave velocity (km/s)",
-        "T0" => "Reference temperature (C)",
+        "T0" => "Reference temperature (\$^{\\circ}\$C)",
         "P0" => "Reference pressure (Pa)",
         "\\beta" => "Compressibility (1/Pa)",
         "\\alpha" => "Thermal expansion coeff. (1/K)",
@@ -201,7 +205,7 @@ function Dict2LatexTable(d::Dict; refs::Dict, rdigits=4)
 
     # Latex formating and comment
     Table *= "\\\\\n"
-    Table *= "\\hline \n"
+    Table *= "\\midrule \n"
     Table *= "% Table body\n"
 
     # Get vector with all unique symbols without phasenames
@@ -217,7 +221,7 @@ function Dict2LatexTable(d::Dict; refs::Dict, rdigits=4)
     # Creates columnwise output for all parameters of the input phase
     for symbol in symbs
         # Sets parametername and variable
-        Table *= " " * string(desc[symbol]) * " & " * "\$" * symbol * "\$"
+        Table *= " " * string(desc[symbol]) * " & " * "\$" * symbol[1:end-1] * "_" * symbol[end] *"\$"
         # Iterates over all phases
         for j in 1:parse(Int64, d["Name 1"][2])
             hit = 0
@@ -229,11 +233,11 @@ function Dict2LatexTable(d::Dict; refs::Dict, rdigits=4)
                     # put in the matched parameter value
                     dig, num, expo = detachFloatfromExponent(dictpairs[i].second[1])
                     if  dig <= rdigits && expo != "1" 
-                        Table *= " & " * "$num \\cross 10^{$expo}"
+                        Table *= " & " * "$num \\times 10^{$expo}"
                     elseif dig <= rdigits && expo == "1"
                         Table *= " & " * "$num"
                     elseif dig > rdigits && expo != "1"
-                        Table *= " & " * string(round(parse(Float64, num); digits=rdigits)) * " \\cross 10^{$expo}"
+                        Table *= " & " * string(round(parse(Float64, num); digits=rdigits)) * " \\times 10^{$expo}"
                     elseif dig > rdigits && expo == "1"
                         Table *= " & " * string(round(parse(Float64, num); digits=rdigits))
                     end
@@ -259,14 +263,14 @@ function Dict2LatexTable(d::Dict; refs::Dict, rdigits=4)
 
             Table *=
                 "\\rule[-5pt]{-3pt}{20pt} Dislocation Creep: & " *
-                "\\multicolumn{4}{l}{\$ \\dot{\\gamma} = A \\sigma^n f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) \$}\n"
+                "\\multicolumn{4}{l}{\$ \\dot{\\gamma} = A \\tau^n f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) \$}\n"
             Table *= " \\\\\n"
             DislCreep += 1
         end
         if dictpairs[i].second[3] == "DiffCreep" && DiffCreep == 0
             Table *=
                 "\\rule[-5pt]{-3pt}{20pt} Diffusion Creep: & " *
-                "\\multicolumn{4}{l}{\$ \\dot{\\gamma} = A \\sigma^n d^p f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) \$}\n"
+                "\\multicolumn{4}{l}{\$ \\dot{\\gamma} = A \\tau^n d^p f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) \$}\n"
             Table *= " \\\\\n"
             DiffCreep += 1
         end
@@ -304,8 +308,13 @@ function Dict2LatexTable(d::Dict; refs::Dict, rdigits=4)
     Table *= "\\end{document}\n"
 
     # Writes BibTex sources in to .bib file and Table string into .tex file
-    return write("References.bib", References), write("MaterialParameters.tex", Table)
+    return write("References.bib", References), write("$filename.tex", Table)
 end
+
+"""
+Phase2DictMd() puts all parameters of a phase in a dict.
+
+"""
 
 function Phase2DictMd(s)
     # Dict has Key with Fieldname and Value with Tuple(value, symbol, unit)
@@ -367,27 +376,32 @@ function Phase2DictMd(s)
             end
         end
     end
-    return fds, refs
+    return fds
 end
 
+"""
+Dict2MarkdownTable() writes a .md file with all parameters from the Phase2DictMd() output in a Markdown table.
 
-function Dict2MarkdownTable(d::Dict; refs=nothing, rdigits=4)
+"""
+
+function Dict2MarkdownTable(d::Dict; filename=nothing, rdigits=4)
     dictkeys = keys(d)
     symbs = []
+    #refs = Dict{}()
 
     # Creates vectors of type Pairs (can be iterated over, sorted, etc.)
     dictpairs = sort(collect(pairs(d)))
-    refpair = sort(collect(pairs(refs)))
+    #refpair = sort(collect(pairs(refs)))
 
-    References = ""
-    InTextRef = ""
+    #References = ""
+    #InTextRef = ""
 
     # Descriptions for every parameter that could occur in the table and their corresponding variable name(s) that is used in GeoParams
     desc = Dict(
         "ρ"=>"Density (kg/m^3^)",
         "ρ0"=>"Reference density (kg/m^3^)",
         "g"=>"Gravity (m/s^2^)","η"=>"Viscosity (Pa s)",
-        "P"=>"Pressure (MPa)","T"=>"Temperature (C)",
+        "P"=>"Pressure (MPa)","T"=>"Temperature (°C)",
         "V"=>"Volume (m^3^)" ,"d"=>"Grain size (cm)",
         "f"=>"Water fugacity (MPa)",
         "n"=>"Power-law exponent (-)",
@@ -410,7 +424,7 @@ function Dict2MarkdownTable(d::Dict; refs=nothing, rdigits=4)
         "C"=>"Cohesion (Pa)",
         "Vp"=>"P-wave velocity (km/s)",
         "Vs"=>"S-wave velocity (km/s)",
-        "T0"=>"Reference temperature (C)",
+        "T0"=>"Reference temperature (°C)",
         "P0"=>"Reference pressure (Pa)",
         "β"=>"Compressibility (1/Pa)",
         "α"=>"Thermal expansion coeff. (1/K)"
@@ -423,11 +437,12 @@ function Dict2MarkdownTable(d::Dict; refs=nothing, rdigits=4)
     counter = 1
     for i = 1:parse(Int64, d["Name 1"][2])
         Table *=  d["Name $i"][1] * " | "
-        for j = 1:length(refs)
-            if parse(Int64, refpair[j].second[3]) == i
-                Table *= "(" * "*" ^ counter * ") |"
+        # Ab hier sinds die References für am Ende -> Später machen!
+        #for j = 1:length(refs)
+            #if parse(Int64, refpair[j].second[3]) == i
+                #Table *= "(" * "*" ^ counter * ") |"
 
-                # Ab hier sinds die References für am Ende -> Später machen!
+                
                 #currentbib = refpair[j].second[1]
                 #startidx = first(findfirst("{", currentbib))
                 #endidx = first(findfirst(",", currentbib))
@@ -436,10 +451,10 @@ function Dict2MarkdownTable(d::Dict; refs=nothing, rdigits=4)
                 #    InTextRef *= ", "
                 #end
                 #counter += 1
-            else
-                Table *= " | "
-            end
-        end
+            #else
+                #Table *= " | "
+            #end
+        #end
     end
 
     Table *= "\n"
@@ -465,7 +480,12 @@ function Dict2MarkdownTable(d::Dict; refs=nothing, rdigits=4)
     for symbol in symbs
         # Sets parametername and variable
         if length(symbol) > 1
-            Table *= " " * string(desc[symbol]) * " | " * symbol[1] * "~" * symbol[2] * "~"
+            #checks if Unicode chars in combination with a number etc. (e.g "α0") are used which apparently do not have a second index but only first and third
+            if length(unidecode(symbol)) > 2
+                Table *= " " * string(desc[symbol]) * " | " * symbol[1] * "~" * symbol[3] * "~"
+            else
+                Table *= " " * string(desc[symbol]) * " | " * symbol[1] * "~" * symbol[2] * "~"
+            end
         else
             Table *= " " * string(desc[symbol]) * " | " * symbol
         end
@@ -541,7 +561,28 @@ function Dict2MarkdownTable(d::Dict; refs=nothing, rdigits=4)
 
     # Writes BibTex sources in to .bib file and Table string into .m file
     #write("References.bib", References)
-    return write("MaterialParameters.md", Table)
+    return write("$filename.md", Table)
+end
+
+
+"""
+ParameterTable() creates a table with all parameters saved in the Phase struct. It lets you choose between "latex" and "markdown" as table formats with LaTeX as default.
+Creates a filename.tex or filename.md file as output. If "latex" is chosen a "Reference.bib" file will automatically be produced with all your references.
+"""
+function ParameterTable(
+    Phase;
+    filename=nothing,
+    format="latex",
+    )
+
+    if format == "latex"
+        d, ref = Phase2Dict(Phase)
+        Dict2LatexTable(d, ref, filename=filename)
+    elseif format == "markdown"
+        d = Phase2DictMd(Phase)
+        Dict2MarkdownTable(d)
+    end
+    return nothing
 end
 
 end

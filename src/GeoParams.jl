@@ -108,7 +108,7 @@ export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo
 # Define Table output functions
 include("Tables.jl")
 using .Tables
-export Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2MarkdownTable
+export detachFloatfromExponent, Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2MarkdownTable, ParameterTable
 
 # Phase Diagrams
 using .MaterialParameters.PhaseDiagrams
