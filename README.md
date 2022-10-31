@@ -167,7 +167,7 @@ That is why we provide routines that fully automatizes this process:
 julia> MatParam = (SetMaterialParams(Name="Viscous Matrix", Phase=1, Density=ConstantDensity(),CreepLaws = SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)")),
                    SetMaterialParams(Name="Viscous Sinker", Phase=2, Density= PT_Density(),CreepLaws = LinearViscous(η=1e21Pa*s)),
                    SetMaterialParams(Name="Viscous Bottom", Phase=3, Density= PT_Density(),CreepLaws = SetDislocationCreep("Diabase | Caristan (1982)")))
-julia> ParameterTable(MatParam, filename="ParamterTable", format="latex", rdigits=3)
+julia> ParameterTable(MatParam, filename="ParameterTable", format="latex", rdigits=3)
 ```
 
 ### 4. Computational engine
