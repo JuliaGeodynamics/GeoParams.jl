@@ -164,10 +164,10 @@ to be added to `GeoParams`.
 When writing scientific papers that describes numerical modelling results, it is usually necessary to include tables that lists all model parameters employed. Doing this is error-prone and usually not a very interesting job to do. 
 That is why we provide routines that fully automatizes this process:
 ```julia
-julia> TestPh = (SetMaterialParams(Name="Viscous Matrix", Phase=1, Density=ConstantDensity(),CreepLaws = SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)")),
-                 SetMaterialParams(Name="Viscous Sinker", Phase=2, Density= PT_Density(),CreepLaws = LinearViscous(η=1e21Pa*s)),
-                 SetMaterialParams(Name="Viscous Bottom", Phase=3, Density= PT_Density(),CreepLaws = SetDislocationCreep("Diabase | Caristan (1982)")))
-julia> ParameterTable(TestPh, filename="ParamterTable", format="latex", rdigits=3)
+julia> MatParam = (SetMaterialParams(Name="Viscous Matrix", Phase=1, Density=ConstantDensity(),CreepLaws = SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)")),
+                   SetMaterialParams(Name="Viscous Sinker", Phase=2, Density= PT_Density(),CreepLaws = LinearViscous(η=1e21Pa*s)),
+                   SetMaterialParams(Name="Viscous Bottom", Phase=3, Density= PT_Density(),CreepLaws = SetDislocationCreep("Diabase | Caristan (1982)")))
+julia> ParameterTable(MatParam, filename="ParamterTable", format="latex", rdigits=3)
 ```
 
 ### 4. Computational engine
