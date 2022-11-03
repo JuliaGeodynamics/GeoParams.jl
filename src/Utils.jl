@@ -41,3 +41,13 @@ end
 @inline function fastpow(x::Quantity, n::AbstractFloat)
     return x^n
 end
+
+# Macros
+
+macro print(a1, a2)
+    quote
+        $(a1) === false && return nothing 
+        println($a2) 
+    end
+    return nothing
+end

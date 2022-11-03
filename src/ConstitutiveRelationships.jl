@@ -7,7 +7,7 @@ using Base: Float64
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
-import GeoParams: param_info, fastpow
+import GeoParams: param_info, fastpow, @print
 import GeoParams: second_invariant, second_invariant_staggered
 using BibTeX
 using ..MaterialParameters: MaterialParamsInfo
@@ -22,7 +22,6 @@ const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 #abstract type AbstractComposite <: AbstractMaterialParam end
 
 precision(v::AbstractConstitutiveLaw{T}) where T = T
-
 
 
 include("Computations.jl")
