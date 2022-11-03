@@ -4,8 +4,7 @@
 
 Performs local iterations versus stress for a given total strain rate for a given `CompositeRheology` element that does NOT include `Parallel` elements
 """
-
-@inline function local_iterations_εII(
+function local_iterations_εII(
     v::CompositeRheology{T,N,
                     0,is_parallel,
                     0,is_plastic,
@@ -18,9 +17,7 @@ Performs local iterations versus stress for a given total strain rate for a give
 
     # Initial guess
     τII = compute_τII_harmonic(v, εII, args)
-    
-    isDevice = isCUDA()
-    !isDevice && verbose && println("initial stress_II = $τII")
+    @print(verbose, "initial stress_II = $τII")
 
     # Local Iterations
     iter = 0
@@ -40,12 +37,10 @@ Performs local iterations versus stress for a given total strain rate for a give
         ϵ = abs(τII - τII_prev) * inv(abs(τII))
         τII_prev = τII
 
-        !isDevice && verbose && println(" iter $(iter) $ϵ")
+        @print(verbose, " iter $(iter) $ϵ")
     end
-    if !isDevice && verbose
-        println("final τII = $τII")
-        println("---")
-    end
+    @print(verbose, "final τII = $τII")
+    @print(verbose, "---")
 
     return τII
 end
@@ -70,8 +65,7 @@ Performs local iterations versus stress for a given strain rate using AD
     # Initial guess
     τII = compute_τII_harmonic(v, εII, args)
     
-    isDevice = isCUDA()
-    !isDevice && verbose && println("initial τII = $τII")
+    @print(verbose, "initial stress_II = $τII")
 
     # extract plastic element if it exists
     v_pl = v[1]
@@ -122,12 +116,10 @@ Performs local iterations versus stress for a given strain rate using AD
 
         ϵ = abs(τII - τII_prev) * inv(abs(τII))
         τII_prev = τII
-        !isDevice && verbose && println(" iter $(iter) $ϵ τII=$τII")
+        @print(verbose, " iter $(iter) $ϵ τII=$τII")
     end
-    if !isDevice && verbose
-        println("final τII = $τII")
-        println("---")
-    end
+    @print(verbose, "final τII = $τII")
+    @print(verbose, "---")
 
     return τII
 end
@@ -137,9 +129,8 @@ end
 
 Performs local iterations to compute the plastic strainrate. Note that the non-plastic strainrate, ε_np, should be part of `args`
 """
-function compute_εII(v::AbstractPlasticity, τII::_T, args; tol=1e-6, verbose=true) where _T
+function compute_εII(v::AbstractPlasticity, τII::_T, args; tol=1e-6, verbose=false) where _T
 
-    
     η_np  = (τII - args.τII_old)/(2.0*args.ε_np)
            
     F    = compute_yieldfunction(v, merge(args, (τII=τII,)))
@@ -163,7 +154,7 @@ function compute_εII(v::AbstractPlasticity, τII::_T, args; tol=1e-6, verbose=t
 
         ϵ = F
 
-        !isDevice && verbose && println("    plastic iter $(iter) ϵ=$ϵ λ=$λ, F=$F")
+        @print(verbose, "    plastic iter $(iter) ϵ=$ϵ λ=$λ, F=$F")
     end
 
     ε_pl = λ*∂Q∂τII(v, τII_pl, args)
@@ -179,8 +170,7 @@ end
     # Initial guess
     εII = compute_εII_harmonic(v, τII, args)
 
-    isDevice = isCUDA()
-    !isDevice && verbose && println("initial εII = $εII")
+    @print(verbose, "initial εII = $εII")
 
     # Local Iterations
     iter = 0
@@ -199,14 +189,13 @@ end
 
         ϵ = abs(εII - εII_prev) * inv(εII)
         εII_prev = εII
-        !isDevice && verbose && println(" iter $(iter) $ϵ")
+        @print(verbose," iter $(iter) $ϵ")
         
     end
-    if !isDevice && verbose
-        println("final εII = $εII")
-        println("---")
-    end
-
+    
+    @print(verbose,"final εII = $εII")
+    @print(verbose,"---")
+    
     return εII
 end
 
@@ -228,7 +217,7 @@ Performs local iterations versus pressure for a given total volumetric strain ra
     # Initial guess
     p = compute_p_harmonic(v, εvol, args)
     
-    verbose && println("initial p = $p")
+    @print(verbose,"initial p = $p")
 
     # Local Iterations
     iter = 0
@@ -248,13 +237,12 @@ Performs local iterations versus pressure for a given total volumetric strain ra
         ϵ = abs(p - p_prev) * inv(abs(p))
         p_prev = p
 
-        verbose && println(" iter $(iter) $ϵ")
+        @print(verbose," iter $(iter) $ϵ")
     end
-    if verbose
-        println("final p = $p")
-        println("---")
-    end
-
+    
+    @print(verbose,"final p = $p")
+    @print(verbose,"---")
+    
     return p
 end
 
@@ -277,8 +265,6 @@ Performs local iterations versus strain rate for a given stress
     ϵ = 2 * tol
     εII_prev = εII
 
-    isDevice = isCUDA()
-
     while ϵ > tol
         iter += 1
         f = τII - first(compute_τII(v, εII, args))
@@ -287,14 +273,10 @@ Performs local iterations versus strain rate for a given stress
 
         ϵ = abs(εII - εII_prev) / abs(εII)
         εII_prev = εII
-        if !isDevice && verbose
-            println(" iter $(iter) $ϵ")
-        end
+        @print(verbose," iter $(iter) $ϵ")
     end
-    if !isDevice && verbose
-        println("---")
-    end
-
+    @print(verbose,"---")
+    
     return εII
 end
 
@@ -327,8 +309,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         τ_initial = compute_τII_harmonic(c, εII_total, args)
     end
 
-    isDevice = isCUDA()
-    !isDevice && verbose && println("τII guess = $τ_initial")
+    @print(verbose,"τII guess = $τ_initial")
 
     x    = @MVector ones(_T, n)
     x   .= εII_total
@@ -367,10 +348,10 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         dx  = J\r 
         x .+= dx   
         
-        ϵ    = sum(abs.(dx)./(abs.(x)))
-        !isDevice && verbose && println(" iter $(iter) $ϵ")
+        ϵ = sum(abs.(dx)./(abs.(x)))
+        @print(verbose," iter $(iter) $ϵ")
     end
-    !isDevice && verbose && println("---")
+    @print(verbose,"---")
     
     if (iter == max_iter)
         error("iterations did not converge")
@@ -408,7 +389,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         τ_initial = compute_τII_harmonic(c, εII_total, args)
     end
     
-    verbose && println("τII guess = $τ_initial")
+    @print(verbose,"τII guess = $τ_initial")
     
     x    = @MVector zeros(_T, n)
     x[1] = τ_initial
@@ -449,9 +430,9 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
        # @show dx x r J
         
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
-        verbose && println(" iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
+        @print(verbose," iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
     end
-    verbose && println("---")
+    @print(verbose,"---")
     if (iter == max_iter)
         error("iterations did not converge")
     end
@@ -648,7 +629,6 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     ε_init = nothing,
     max_iter = 1000
 ) where {T,N,Npar,is_par, _T, Nplast, is_plastic, Nvol, is_vol}
-   # println("local iterations for εvol_εII")    
 
     # Compute residual
     n = 1 + Nplast + Npar + 1;             # total size of unknowns (one added for volumetric plasticity)
@@ -660,7 +640,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     if isnothing(p_initial)
         p_initial = compute_p_harmonic(c, εvol_total, args)
     end    
-    verbose && println("τII guess = $τ_initial \n  P guess = $p_initial")
+    @print(verbose,"τII guess = $τ_initial \n  P guess = $p_initial")
     
     x    = @MVector zeros(_T, n)
     x[1] = τ_initial
@@ -697,9 +677,9 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         x .+= dx   
         
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
-        verbose && println(" iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3])")
+        @print(verbose," iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3])")
     end
-    verbose && println("---")
+    @print(verbose,"---")
     if (iter == max_iter)
         error("iterations did not converge")
     end
