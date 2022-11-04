@@ -43,11 +43,6 @@ end
 end
 
 # Macros
-
 macro print(a1, a2)
-    quote
-        $(a1) === false && return nothing 
-        println($a2) 
-    end
-    return nothing
+    :($(esc(a1)) == true ? println( $(esc(a2))) : nothing)
 end
