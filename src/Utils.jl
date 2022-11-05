@@ -44,7 +44,7 @@ end
 end
 
 # Tuple iterators
-@generated function nreduce(f::F, v::NTuple{N, Any}) where {N, F}
+@generated function nreduce(f::F, v::NTuple{N,Any}) where {N,F}
     quote
         val = 0.0
         Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i])
@@ -52,15 +52,17 @@ end
     end
 end
 
-@generated function nreduce(f::F, v::NTuple{N, Any}, id_args::NTuple{N,T}, args::NTuple{NT,Any}) where {N, T<:Integer, NT, F} 
+@generated function nreduce(
+    f::F, v::NTuple{N,Any}, id_args::NTuple{N,T}, args::NTuple{NT,Any}
+) where {N,T<:Integer,NT,F}
     quote
-       val = 0.0
-       Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i], args[id_args[i]] )
-       return val
+        val = 0.0
+        Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i], args[id_args[i]])
+        return val
     end
 end
 
-@generated function nphase(f::F, phase::Int64, v::NTuple{N, Any}) where {N, F}
+@generated function nphase(f::F, phase::Int64, v::NTuple{N,Any}) where {N,F}
     quote
         Base.@_inline_meta
         Base.Cartesian.@nexprs $N i -> @inbounds v[i].Phase === phase && return f(v[i])
@@ -70,5 +72,5 @@ end
 
 # Macros 
 macro print(a1, a2)
-    :($(esc(a1)) == true ? println( $(esc(a2))) : nothing)
+    return :($(esc(a1)) == true ? println($(esc(a2))) : nothing)
 end
