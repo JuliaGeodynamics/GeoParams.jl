@@ -79,12 +79,13 @@ Computing `εII` as a function of `τII` for a composite element is the sum of t
 """
 compute_εII(v::CompositeRheology{T,N}, τII::_T, args; tol=1e-6, verbose=false) where {T,_T,N} = nreduce(vi -> first(compute_εII(vi, τII, args)), v.elements)
 compute_εII(v::CompositeRheology{T,N}, τII::Quantity, args; tol=1e-6, verbose=false) where {T,N} = nreduce(vi -> first(compute_εII(vi, τII, args)), v.elements)
-
+compute_εII(v::AbstractMaterialParamsStruct, τII, args) = compute_εII(v.CompositeRheology[1], τII, args)
 
 # As we don't do iterations, this is the same
 function compute_εII_AD(v::CompositeRheology, τII, args; tol=1e-6, verbose=false)
     return  compute_εII(v, τII, args)
 end
+compute_εII_AD(v::AbstractMaterialParamsStruct, τII, args) = compute_εII_AD(v.CompositeRheology[1], τII, args)
 
 #COMPUTE VOLUMETRIC STRAIN-RATE
 """
@@ -184,7 +185,6 @@ function compute_p_τII(
     return P,τII, out[2:N]
 end
 
-
 # COMPUTE STRAIN RATE
 """
     τII = compute_τII(v::CompositeRheology{T,N}, εII, args; tol=1e-6, verbose=false)
@@ -200,6 +200,9 @@ function compute_τII_AD(v::CompositeRheology, εII, args; tol=1e-6, verbose=fal
      τII = local_iterations_εII_AD(v, εII, args; tol=tol, verbose=verbose)
      return τII
 end
+
+compute_τII_AD(v::AbstractMaterialParamsStruct, εII, args) = compute_τII_AD(v.CompositeRheology[1], εII, args)
+compute_τII(v::AbstractMaterialParamsStruct, εII, args) = compute_τII(v.CompositeRheology[1], εII, args)
 
 # STRESS AND STRAIN RATE DERIVATIVES
 dεII_dτII(v::CompositeRheology{T,N}, τII::_T, args; tol=1e-6, verbose=false) where {T,_T,N} = nreduce(vi -> first(dεII_dτII(vi, τII, args)), v.elements)
