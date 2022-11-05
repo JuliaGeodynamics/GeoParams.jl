@@ -63,11 +63,10 @@ end
 @generated function nphase(f::F, phase::Int64, v::NTuple{N, Any}) where {N, F}
     quote
         Base.@_inline_meta
-        Base.Cartesian.@nexprs $N i -> i == phase && return @inbounds f(v[i])
+        Base.Cartesian.@nexprs $N i -> @inbounds v[i].Phase === phase && return f(v[i])
         return 0.0
     end
 end
-
 
 # Macros 
 macro print(a1, a2)
