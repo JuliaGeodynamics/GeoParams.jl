@@ -51,3 +51,23 @@ end
         return val
     end
 end
+
+@generated function nphase(f::F, phase::Int64, field::Symbol, v::NTuple{N, Any}) where {N, F}
+    quote
+        Base.Cartesian.@nexprs $N i -> i == phase && return @inbounds f(getfield(v[i], field)[1])
+        return 0.0
+    end
+end
+
+@generated function nreduce(f::F, v::NTuple{N, Any}, id_args::NTuple{N,T}, args::NTuple{NT,Any}) where {N, T<:Integer, NT, F} 
+    quote
+       val = 0.0
+       Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i], args[id_args[i]] )
+       return val
+    end
+ end
+
+# Macros 
+macro print(a1, a2)
+    :($(esc(a1)) == true ? println( $(esc(a2))) : nothing)
+end
