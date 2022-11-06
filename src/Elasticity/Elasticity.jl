@@ -101,14 +101,14 @@ here ``\\tilde{{\\tau_{ij}}}^{old}`` is the rotated old deviatoric stress tensor
 
 """
 @inline function compute_εII(
-    a::ConstantElasticity, τII::_T;  τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+    a::ConstantElasticity, τII::_T; τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
 ) where {_T}
     @unpack_val G = a
-    ε_el = 0.5 * (τII - τII_old)/ (G * dt)
+    ε_el = 0.5 * (τII - τII_old) / (G * dt)
     return ε_el
 end
 
-@inline function dεII_dτII(a::ConstantElasticity{_T}, τII::_T; dt=one(precision(a)), kwargs...
+@inline function dεII_dτII(a::ConstantElasticity{_T}, τII::_T; τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
     ) where {_T}
     @unpack_val G = a
     return 0.5 * inv(G * dt)
@@ -118,12 +118,12 @@ end
     a::ConstantElasticity, εII::_T; τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
 ) where {_T}
     @unpack_val G = a
-    τII = _T(2) * G * dt * εII + τII_old # do we still need τII_old here?
+    τII = _T(2) * G * dt * εII + τII_old
 
     return τII
 end
 
-@inline function dτII_dεII(a::ConstantElasticity{_T}, dt=one(precision(a)), kwargs...
+@inline function dτII_dεII(a::ConstantElasticity{_T}, τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
     ) where {_T}
     @unpack_val G = a
     return _T(2) * G * dt
