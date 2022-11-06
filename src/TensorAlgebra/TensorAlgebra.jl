@@ -1,6 +1,6 @@
 import Base: (:)
 
-import .MaterialParameters.ConstitutiveRelationships: ConstantElasticity, CompositeRheology, Parallel
+#import .MaterialParameters.ConstitutiveRelationships: ConstantElasticity, CompositeRheology, Parallel
 
 @inline average_pow2(x::NTuple{N,T}) where {N,T} = sum(xi^2 for xi in x) / N
 
@@ -118,101 +118,3 @@ end
     return second_invariant_staggered(Axx, Ayy, Azz, Ayz, Axz, Axy)
 end
 
-## Kernels for effective strain (Eij_eff = Eij + Tij/(2 G dt) ) 
-
-@inline _elastic_ε(v::ConstantElasticity, τij_old, dt) = τij_old / (2 * v.G * dt)
-@inline _elastic_ε(v::Vararg{Any,N}) where {N} = 0.0
-
-# @inline function elastic_ε(v::CompositeRheology, τij_old, dt)
-@inline function elastic_ε(v::Union{CompositeRheology, Parallel}, τij_old, dt)
-    return nreduce(vi -> _elastic_ε(vi, τij_old, dt), v.elements)
-end
-
-@inline effective_ε(εij::T, v, τij_old::T, dt) where {T} = εij + elastic_ε(v, τij_old, dt)
-
-# By letting ::NTuple{N, Any} it can recursively call itself when 
-# strain and stress are nested NamedTuples i.e. in staggered grids
-# NOTE: ::NTuple{N, Union{T,Any}} makes type unstable (need fix?)
-@inline function effective_ε(
-    εij::NTuple{N,Union{T,Any}}, v, τij_old::NTuple{N,Any}, dt
-) where {N,T}
-    return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt), Val(N))
-end
-
-@inline function effective_ε(
-    εij::NTuple{N,Union{T,Any}}, v, τij_old::NTuple{N,T}, dt
-) where {N,T}
-    return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt), Val(N))
-end
-
-# 2D wrapper 
-function effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
-    return effective_ε((εxx, εyy, εxy), v, (τxx_old, τyy_old, τxy_old), dt)
-end
-
-function effective_εII(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
-    εxx, εyy, εxy = effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
-    εII = second_invariant(εxx, εyy, εxy)
-    return εII
-end
-
-# 3D wrapper 
-function effective_ε(
-    εxx,
-    εyy,
-    εzz,
-    εyz,
-    εxz,
-    εxy,
-    v,
-    τxx_old,
-    τyy_old,
-    τzz_old,
-    τyz_old,
-    τxz_old,
-    τxy_old,
-    dt,
-)
-    return effective_ε(
-        (εxx, εyy, εzz, εyz, εxz, εxy),
-        v,
-        (τxx_old, τyy_old, τzz_old, τyz_old, τxz_old, τxy_old),
-        dt,
-    )
-end
-
-function effective_εII(
-    εxx,
-    εyy,
-    εzz,
-    εyz,
-    εxz,
-    εxy,
-    v,
-    τxx_old,
-    τyy_old,
-    τzz_old,
-    τyz_old,
-    τxz_old,
-    τxy_old,
-    dt,
-)
-    εxx, εyy, εzz, εyz, εxz, εxy = effective_ε(
-        εxx,
-        εyy,
-        εzz,
-        εyz,
-        εxz,
-        εxy,
-        v,
-        τxx_old,
-        τyy_old,
-        τzz_old,
-        τyz_old,
-        τxz_old,
-        τxy_old,
-        dt,
-    )
-    εII = second_invariant(εxx, εyy, εzz, εyz, εxz, εxy)
-    return εII
-end

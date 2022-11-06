@@ -89,6 +89,8 @@ export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagram
 
 include("Utils.jl")
 
+include("TensorAlgebra/TensorAlgebra.jl")
+export second_invariant, second_invariant_staggered
 
 # note that this throws a "Method definition warning regarding superscript"; that is expected & safe 
 #  as we add a nicer way to create output of superscripts. I have been unable to get rid of this warning,
@@ -112,8 +114,6 @@ export Phase2Dict, Dict2LatexTable
 using .MaterialParameters.PhaseDiagrams
 export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
 
-include("TensorAlgebra/TensorAlgebra.jl")
-export second_invariant, second_invariant_staggered
 
 # Density
 using .MaterialParameters.Density
@@ -149,8 +149,6 @@ export dεII_dτII,
     compute_εvol,
     compute_p!,
     compute_p,
-    strain_rate_circuit,
-    stress_circuit,
     CorrectionFactor,
     remove_tensor_correction,
     isvolumetric,
@@ -171,6 +169,7 @@ export dεII_dτII,
     AbstractElasticity,
     ConstantElasticity,
     SetConstantElasticity,
+    effective_εII,
 
     #       Plasticity
     AbstractPlasticity,
@@ -186,7 +185,6 @@ export dεII_dτII,
     #       Composite rheologies
     AbstractConstitutiveLaw,
     AbstractComposite,
-    strain_rate_circuit,
     computeViscosity_τII,
     computeViscosity_εII,
     computeViscosity_τII!,
@@ -208,8 +206,6 @@ export dεII_dτII,
     local_iterations_εvol, 
     compute_p_harmonic
     
-include("TensorAlgebra/TensorAlgebra.jl")
-export second_invariant, second_invariant_staggered, effective_εII
 
 # Constitutive relationships laws
 include("StressComputations/StressComputations.jl")

@@ -97,3 +97,8 @@ end
 function computeViscosity_εII_AD(v::T, εII::_T, args; tol=1e-6, verbose=false) where {T<:AbstractConstitutiveLaw,_T}
     return computeViscosity_εII(v, εII, args) 
 end
+
+
+@inline function elastic_ε(v::Union{CompositeRheology, Parallel}, τij_old, dt)
+    return nreduce(vi -> _elastic_ε(vi, τij_old, dt), v.elements)
+end

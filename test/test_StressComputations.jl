@@ -6,7 +6,7 @@ using GeoParams
     # use a (linear) viscoelastic setup
     η,G  =  10.0, 1.0;
     t_M  =  η/G
-    εxx,εyy,εxy  =  1.0, -1.1, 0.3; # predefined strainrates 
+    εxx,εyy,εxy  =  1.0, -1.1, 2.3; # predefined strainrates 
     ε = (εxx,εyy,εxy)
     args = (;)
     c_lin =  CompositeRheology(LinearViscous(η=η),ConstantElasticity(G=G)) # linear VE

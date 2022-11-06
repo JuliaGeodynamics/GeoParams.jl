@@ -16,6 +16,7 @@ using ForwardDiff
 using StaticArrays
 using Static
 
+
 const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 
 #abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
@@ -25,7 +26,7 @@ precision(v::AbstractConstitutiveLaw{T}) where T = T
 
 
 include("Computations.jl")
-
+#include("TensorAlgebra/TensorAlgebra.jl")
 include("CreepLaw/CreepLaw.jl")              # viscous Creeplaws
 include("Elasticity/Elasticity.jl")          # elasticity
 include("Plasticity/Plasticity.jl")          # plasticity
@@ -60,8 +61,8 @@ export param_info,
     CompositeRheology,
     AbstractComposite,
     AbstractConstitutiveLaw
-    AxialCompression, SimpleShear, Invariant 
-
+    AxialCompression, SimpleShear, Invariant ,
+    
 # add methods programatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType)
     @eval begin
