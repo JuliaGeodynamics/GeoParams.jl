@@ -1,5 +1,7 @@
 import Base: (:)
 
+import .MaterialParameters.ConstitutiveRelationships: ConstantElasticity, CompositeRheology, Parallel
+
 @inline average_pow2(x::NTuple{N,T}) where {N,T} = sum(xi^2 for xi in x) / N
 
 @inline function (:)(

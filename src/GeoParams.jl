@@ -89,6 +89,7 @@ export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagram
 
 include("Utils.jl")
 
+
 # note that this throws a "Method definition warning regarding superscript"; that is expected & safe 
 #  as we add a nicer way to create output of superscripts. I have been unable to get rid of this warning,
 #  as I am indeed redefining a method originally defined in Unitful
@@ -110,6 +111,9 @@ export Phase2Dict, Dict2LatexTable
 # Phase Diagrams
 using .MaterialParameters.PhaseDiagrams
 export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
+
+include("TensorAlgebra/TensorAlgebra.jl")
+export second_invariant, second_invariant_staggered
 
 # Density
 using .MaterialParameters.Density
@@ -207,8 +211,6 @@ export dεII_dτII,
 include("TensorAlgebra/TensorAlgebra.jl")
 export second_invariant, second_invariant_staggered, effective_εII
 
-    
-
 # Constitutive relationships laws
 include("StressComputations/StressComputations.jl")
 export compute_τij
@@ -301,7 +303,5 @@ end
 #Set functions aliases using @use
 include("aliases.jl")
 export ntuple_idx
-
-
 
 end # module

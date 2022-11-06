@@ -24,9 +24,7 @@ const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 precision(v::AbstractConstitutiveLaw{T}) where T = T
 
 
-
 include("Computations.jl")
-include("Utils.jl")
 
 include("CreepLaw/CreepLaw.jl")              # viscous Creeplaws
 include("Elasticity/Elasticity.jl")          # elasticity
