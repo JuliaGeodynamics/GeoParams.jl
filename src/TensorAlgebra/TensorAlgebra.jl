@@ -127,8 +127,8 @@ end
 
 @inline effective_ε(εij::T, v, τij_old::T, dt) where {T} = εij + elastic_ε(v, τij_old, dt)
 
-# By letting ::NTuple{N, Union{T, Any}} it can recursively call itself when strain and stress are nested NamedTuples
-# i.e. in staggered grids
+# By letting ::NTuple{N, Union{T, Any}} it can recursively call itself when 
+# strain and stress are nested NamedTuples i.e. in staggered grids
 @inline function effective_ε(
     εij::NTuple{N,Union{T,Any}}, v, τij_old::NTuple{N,Union{T,Any}}, dt
 ) where {N,T}
