@@ -12,7 +12,6 @@ import GeoParams.Units: nondimensionalize, dimensionalize
 
 @inline isCUDA() =  isdefined(Main,:CUDA) 
 
-
 include("Parallel.jl")              # all related to the Parallel struct
 include("CompositeRheology.jl")     # all related to CompositeRheology struct
 include("NonlinearIterations.jl")   # nonlinear local iterations
