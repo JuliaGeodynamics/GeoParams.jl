@@ -101,10 +101,10 @@ here ``\\tilde{{\\tau_{ij}}}^{old}`` is the rotated old deviatoric stress tensor
 
 """
 @inline function compute_εII(
-    a::ConstantElasticity, τII::_T; dt=one(precision(a)), kwargs...
+    a::ConstantElasticity, τII::_T;  τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
 ) where {_T}
     @unpack_val G = a
-    ε_el = 0.5 * τII / (G * dt)
+    ε_el = 0.5 * (τII - τII_old)/ (G * dt)
     return ε_el
 end
 
