@@ -9,4 +9,5 @@ GeoParams.PlotHeatCapacity
 GeoParams.PlotConductivity
 GeoParams.PlotMeltFraction
 GeoParams.PlotPhaseDiagram
+GeoParams.PlotDeformationMap
 ```
