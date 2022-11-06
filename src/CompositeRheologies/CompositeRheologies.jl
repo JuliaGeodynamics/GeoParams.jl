@@ -9,6 +9,7 @@ export isvolumetricplastic
 import Base.getindex
 
 import GeoParams.Units: nondimensionalize, dimensionalize
+import GeoParams: nreduce
 
 @inline isCUDA() =  isdefined(Main,:CUDA) 
 
