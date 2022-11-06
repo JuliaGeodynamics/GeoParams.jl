@@ -47,7 +47,7 @@ using GeoParams
         Gval = (G,G, G)
         args = (dt=dt,)
         ε = (εxx,εyy,εxy)
-        τij, τII = compute_τij(c_lin, ε, args, τ_o, Gval)
+        τij, τII = compute_τij(c_lin, ε, args, τ_o)
         τxx_vec[i] = τij[1]
         τyy_vec[i] = τij[2]
         τxy_vec[i] = τij[3]
