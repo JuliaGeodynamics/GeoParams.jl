@@ -123,16 +123,24 @@ end
 @inline _elastic_ε(v::ConstantElasticity, τij_old, dt) = τij_old / (2 * v.G * dt)
 @inline _elastic_ε(v::Vararg{Any,N}) where {N} = 0.0
 
+# @inline function elastic_ε(v::CompositeRheology, τij_old, dt)
 @inline function elastic_ε(v::Union{CompositeRheology, Parallel}, τij_old, dt)
     return nreduce(vi -> _elastic_ε(vi, τij_old, dt), v.elements)
 end
 
 @inline effective_ε(εij::T, v, τij_old::T, dt) where {T} = εij + elastic_ε(v, τij_old, dt)
 
-# By letting ::NTuple{N, Union{T, Any}} it can recursively call itself when 
+# By letting ::NTuple{N, Any} it can recursively call itself when 
 # strain and stress are nested NamedTuples i.e. in staggered grids
+# NOTE: ::NTuple{N, Union{T,Any}} makes type unstable (need fix?)
 @inline function effective_ε(
-    εij::NTuple{N,Union{T,Any}}, v, τij_old::NTuple{N,Union{T,Any}}, dt
+    εij::NTuple{N,Union{T,Any}}, v, τij_old::NTuple{N,Any}, dt
+) where {N,T}
+    return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt), Val(N))
+end
+
+@inline function effective_ε(
+    εij::NTuple{N,Union{T,Any}}, v, τij_old::NTuple{N,T}, dt
 ) where {N,T}
     return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt), Val(N))
 end
