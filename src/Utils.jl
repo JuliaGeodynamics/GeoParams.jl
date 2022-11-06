@@ -72,6 +72,16 @@ end
     end
 end
 
+@generated function nphase_ratio(f::F, phase_ratio::v::NTuple{N,T}, v::NTuple{N,Any}) where {N,F,T}
+    Base.@_inline_meta
+    quote
+        val = 0.0
+        Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i]) * phase_ratio[i]
+        return val
+    end
+end
+
+
 # Macros 
 macro print(a1, a2)
     return :($(esc(a1)) == true ? println($(esc(a2))) : nothing)
