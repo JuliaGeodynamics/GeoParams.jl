@@ -20,7 +20,7 @@ export compute_εII,            # calculation routines
     SetConstantElasticity,  # helper function
     AbstractElasticity,
     isvolumetric, 
-    effective_εII
+    effective_εII, effective_ε
 
 # ConstantElasticity  -------------------------------------------------------
 
