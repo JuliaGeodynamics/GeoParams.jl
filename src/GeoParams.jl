@@ -208,8 +208,14 @@ include("TensorAlgebra/TensorAlgebra.jl")
 export second_invariant, second_invariant_staggered, effective_εII
 
     
+
+# Constitutive relationships laws
+include("StressComputations/StressComputations.jl")
+export compute_τij
+
 include("Rheology_Utils.jl")
 export time_τII_0D, time_τII_0D!, time_p_τII_0D, time_p_τII_0D!
+
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration
