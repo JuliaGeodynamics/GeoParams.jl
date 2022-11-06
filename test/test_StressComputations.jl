@@ -7,6 +7,7 @@ using GeoParams
     η,G  =  10.0, 1.0;
     t_M  =  η/G
     εxx,εyy,εxy  =  1.0, -1.1, 0.3; # predefined strainrates 
+    ε = (εxx,εyy,εxy)
     args = (;)
     c_lin =  CompositeRheology(LinearViscous(η=η),ConstantElasticity(G=G)) # linear VE
     
@@ -37,6 +38,9 @@ using GeoParams
     # 0D solution assuming this to be a scalar (wrong!)
     t_vec, τ0D_vec  =  time_τII_0D(c_lin, εII, args; t=(0.,t_M*4), nt=100, verbose=false)
 
+    # 0D solution with tensor input:
+    t_vec, τij_vec, τII_vec   =  time_τII_0D(c_lin, ε, args; t=(0.,t_M*4), nt=100, verbose=false)
+
     # Time-dependent (correct) solution
     τxx_vec = zeros(size(τxx))
     τyy_vec = zeros(size(τyy))
@@ -44,9 +48,7 @@ using GeoParams
     τ_vec   = zeros(size(τxx))
     for i=2:length(τxx_vec)
         τ_o = (τxx_vec[i-1],τyy_vec[i-1],τxy_vec[i-1])
-        Gval = (G,G, G)
         args = (dt=dt,)
-        ε = (εxx,εyy,εxy)
         τij, τII = compute_τij(c_lin, ε, args, τ_o)
         τxx_vec[i] = τij[1]
         τyy_vec[i] = τij[2]
@@ -59,7 +61,9 @@ using GeoParams
     @test abs(sum( τyy_n .- τyy_vec)) < 1e-10
     @test abs(sum( τxy_n .- τxy_vec)) < 1e-10
     @test abs(sum( τII_n .- τ_vec)) < 1e-10
+    @test abs(sum( τII_n .- τII_vec)) < 1e-10
+    
 
     # using 0D does not give the same result
-    @test abs(sum(τ0D_vec .- τ_vec)) > 1e-10
+    @test abs(sum(τ0D_vec .- τ_vec)) > 1e-14
 end
