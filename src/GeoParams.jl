@@ -89,9 +89,6 @@ export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagram
 
 include("Utils.jl")
 
-include("TensorAlgebra/TensorAlgebra.jl")
-export second_invariant, second_invariant_staggered, effective_εII
-
 # note that this throws a "Method definition warning regarding superscript"; that is expected & safe 
 #  as we add a nicer way to create output of superscripts. I have been unable to get rid of this warning,
 #  as I am indeed redefining a method originally defined in Unitful
@@ -294,5 +291,8 @@ end
 #Set functions aliases using @use
 include("aliases.jl")
 export ntuple_idx
+
+include("TensorAlgebra/TensorAlgebra.jl")
+export second_invariant, second_invariant_staggered, effective_εII
 
 end # module
