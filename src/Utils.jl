@@ -45,6 +45,7 @@ end
 
 # Tuple iterators
 @generated function nreduce(f::F, v::NTuple{N,Any}) where {N,F}
+    Base.@_inline_meta
     quote
         val = 0.0
         Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i])
@@ -55,6 +56,7 @@ end
 @generated function nreduce(
     f::F, v::NTuple{N,Any}, id_args::NTuple{N,T}, args::NTuple{NT,Any}
 ) where {N,T<:Integer,NT,F}
+    Base.@_inline_meta
     quote
         val = 0.0
         Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i], args[id_args[i]])
@@ -63,8 +65,8 @@ end
 end
 
 @generated function nphase(f::F, phase::Int64, v::NTuple{N,Any}) where {N,F}
+    Base.@_inline_meta
     quote
-        Base.@_inline_meta
         Base.Cartesian.@nexprs $N i -> @inbounds v[i].Phase === phase && return f(v[i])
         return 0.0
     end
