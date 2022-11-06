@@ -204,6 +204,10 @@ export dεII_dτII,
     local_iterations_εvol, 
     compute_p_harmonic
     
+include("TensorAlgebra/TensorAlgebra.jl")
+export second_invariant, second_invariant_staggered, effective_εII
+
+    
 include("Rheology_Utils.jl")
 export time_τII_0D, time_τII_0D!, time_p_τII_0D, time_p_τII_0D!
 
@@ -292,7 +296,6 @@ end
 include("aliases.jl")
 export ntuple_idx
 
-include("TensorAlgebra/TensorAlgebra.jl")
-export second_invariant, second_invariant_staggered, effective_εII
+
 
 end # module
