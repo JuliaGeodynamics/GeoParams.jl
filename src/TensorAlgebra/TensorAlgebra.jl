@@ -123,7 +123,7 @@ end
 @inline _elastic_ε(v::ConstantElasticity, τij_old, dt) = τij_old / (2 * v.G * dt)
 @inline _elastic_ε(v::Vararg{Any,N}) where {N} = 0.0
 
-@inline function elastic_ε(v::CompositeRheology, τij_old, dt)
+@inline function elastic_ε(v::Union{CompositeRheology, Parallel}, τij_old, dt)
     return nreduce(vi -> _elastic_ε(vi, τij_old, dt), v.elements)
 end
 
