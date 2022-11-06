@@ -72,7 +72,8 @@ end
     end
 end
 
-@generated function nphase_ratio(f::F, phase_ratio::v::NTuple{N,T}, v::NTuple{N,Any}) where {N,F,T}
+
+@generated function nphase_ratio(f::F, phase_ratio::NTuple{N,T}, v::NTuple{N,Any}) where {N,F,T}
     Base.@_inline_meta
     quote
         val = 0.0
