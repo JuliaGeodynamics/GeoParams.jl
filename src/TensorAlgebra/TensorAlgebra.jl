@@ -7,14 +7,14 @@ import Base: (:)
 @inline function (:)(
     A::Union{SVector{3,T},NTuple{3,T}}, B::Union{SVector{3,T},NTuple{3,T}}
 ) where {T}
-    return (A[1] * B[1] + A[2] * B[2]) + T(2) * (A[3] * B[3])
+    return (A[1] * B[1] + A[2] * B[2]) + T(2.0) * (A[3] * B[3])
 end
 
 @inline function (:)(
     A::Union{SVector{6,T},NTuple{6,T}}, B::Union{SVector{6,T},NTuple{6,T}}
 ) where {T}
     return (A[1] * B[1] + A[2] * B[2] + A[3] * B[3]) +
-           T(2) * (A[4] * B[4] + A[5] * B[5] + A[6] * B[6])
+           T(2.0) * (A[4] * B[4] + A[5] * B[5] + A[6] * B[6])
 end
 
 @inline (:)(A::SMatrix{M,M,T,N}, B::SMatrix{M,M,T,N}) where {M,N,T} = sum(A .* B)

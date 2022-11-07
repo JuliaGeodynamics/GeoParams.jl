@@ -119,7 +119,7 @@ end
     a::ConstantElasticity, εII::_T; τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
 ) where {_T}
     @unpack_val G = a
-    τII = _T(2) * G * dt * εII + τII_old
+    τII = _T(2.0) * G * dt * εII + τII_old
 
     return τII
 end
@@ -127,7 +127,7 @@ end
 @inline function dτII_dεII(a::ConstantElasticity{_T}, τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
     ) where {_T}
     @unpack_val G = a
-    return _T(2) * G * dt
+    return _T(2.0) * G * dt
 end
 
 """
