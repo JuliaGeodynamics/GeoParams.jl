@@ -62,8 +62,29 @@ using GeoParams
     @test abs(sum( τxy_n .- τxy_vec)) < 1e-10
     @test abs(sum( τII_n .- τ_vec)) < 1e-10
     @test abs(sum( τII_n .- τII_vec)) < 1e-10
-    
 
-    # using 0D does not give the same result
-    @test abs(sum(τ0D_vec .- τ_vec)) > 1e-14
+    # Time-dependent (correct) solution for multiple material phases
+    MatParam = (
+        SetMaterialParams(Name="Matrix"   , Phase=1, CompositeRheology = c_lin), 
+        SetMaterialParams(Name="Inclusion", Phase=2, CompositeRheology = c_lin),
+    )
+    for phase_i in 1:2
+        for i=2:length(τxx_vec)
+            τ_o = (τxx_vec[i-1],τyy_vec[i-1],τxy_vec[i-1])
+            args = (dt=dt,)
+            τij, τII = compute_τij(MatParam, ε, args, τ_o, phase_i)
+            τxx_vec[i] = τij[1]
+            τyy_vec[i] = τij[2]
+            τxy_vec[i] = τij[3]
+            τ_vec[i] = τII
+        end
+        
+        # check
+        @test abs(sum( τxx_n .- τxx_vec)) < 1e-10
+        @test abs(sum( τyy_n .- τyy_vec)) < 1e-10
+        @test abs(sum( τxy_n .- τxy_vec)) < 1e-10
+        @test abs(sum( τII_n .- τ_vec)) < 1e-10
+        @test abs(sum( τII_n .- τII_vec)) < 1e-10
+    end
+
 end
