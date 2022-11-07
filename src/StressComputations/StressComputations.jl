@@ -34,5 +34,5 @@ function compute_τij(v::NTuple{N1, AbstractMaterialParamsStruct}, εij::NTuple{
     η_eff = 0.5*τII/εII
     τij   = 2*η_eff.*ε_eff
 
-    return τij, τII
+    return τij, τII, η_eff
 end
