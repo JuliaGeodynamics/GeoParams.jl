@@ -34,7 +34,7 @@ function local_iterations_εII(
         =#
         τII = muladd(εII - compute_εII(v, τII, args), inv(dεII_dτII(v, τII, args)), τII)
 
-        ϵ = abs(τII - τII_prev) * inv(abs(τII))
+        ϵ = abs(τII - τII_prev) * inv(τII)
         τII_prev = τII
 
         @print(verbose, " iter $(iter) $ϵ")
@@ -114,7 +114,7 @@ Performs local iterations versus stress for a given strain rate using AD
 
         τII = muladd(f, inv(dεII_dτII), τII)
 
-        ϵ = abs(τII - τII_prev) * inv(abs(τII))
+        ϵ = abs(τII - τII_prev) * inv(τII)
         τII_prev = τII
         @print(verbose, " iter $(iter) $ϵ τII=$τII")
     end
@@ -271,7 +271,7 @@ Performs local iterations versus strain rate for a given stress
         dfdεII = -dτII_dεII(v, εII, args)
         εII -= f / dfdεII
 
-        ϵ = abs(εII - εII_prev) / abs(εII)
+        ϵ = abs(εII - εII_prev) / εII
         εII_prev = εII
         @print(verbose," iter $(iter) $ϵ")
     end
