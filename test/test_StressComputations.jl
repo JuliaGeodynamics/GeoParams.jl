@@ -11,7 +11,7 @@ using GeoParams
     args = (;)
     c_lin =  CompositeRheology(LinearViscous(η=η),ConstantElasticity(G=G)) # linear VE
     
-    t    = range(0, 4*t_M, 100)
+    t    = LinRange(0, 4*t_M, 100)
     dt   = t[2]-t[1]
         
     # Analytical solution
