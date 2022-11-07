@@ -64,7 +64,7 @@ end
     end
 end
 
-@generated function nphase(f::F, phase::Int64, v::NTuple{N,Any}) where {N,F}
+@generated function nphase(f::F, phase::Int64, v::NTuple{N,AbstractMaterialParamsStruct}) where {N,F}
     Base.@_inline_meta
     quote
         Base.Cartesian.@nexprs $N i -> @inbounds v[i].Phase === phase && return f(v[i])
@@ -72,8 +72,7 @@ end
     end
 end
 
-
-@generated function nphase_ratio(f::F, phase_ratio::NTuple{N,T}, v::NTuple{N,Any}) where {N,F,T}
+@generated function nphase_ratio(f::F, phase_ratio::NTuple{N,T}, v::NTuple{N,AbstractMaterialParamsStruct}) where {N,F,T}
     Base.@_inline_meta
     quote
         val = 0.0
@@ -81,7 +80,6 @@ end
         return val
     end
 end
-
 
 # Macros 
 macro print(a1, a2)
