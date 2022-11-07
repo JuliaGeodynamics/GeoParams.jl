@@ -299,13 +299,14 @@ end
 
 @inline effective_ε(εij::T, v, τij_old::T, dt) where {T} = εij + elastic_ε(v, τij_old, dt)
 
-# By letting ::NTuple{N, Any} it can recursively call itself when 
-# strain and stress are nested NamedTuples i.e. in staggered grids
-# NOTE: ::NTuple{N, Union{T,Any}} makes type unstable (need fix?)
+# Method for staggered grids
 @inline function effective_ε(
-    εij::NTuple{N, Any}, v, τij_old::NTuple{N, Any}, dt
-) where N
-    return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt), Val(N))
+    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T,NTuple{4,T}}}, dt
+) where {N,T}
+    ntuple(Val(N)) do i
+        Base.@_inline_meta
+        @inbounds effective_ε(εij[i], v, τij_old[i], dt)
+    end
 end
 
 @inline function effective_ε(
@@ -390,13 +391,14 @@ end
 
 @inline effective_ε(εij::T, v, τij_old::T, dt, phase::Int64) where {T} = εij + elastic_ε(v, τij_old, dt, phase)
 
-# By letting ::NTuple{N, Any} it can recursively call itself when 
-# strain and stress are nested NamedTuples i.e. in staggered grids
-# NOTE: ::NTuple{N, Union{T,Any}} makes type unstable (need fix?)
+# Method for staggered grids
 @inline function effective_ε(
-    εij::NTuple{N, Any}, v, τij_old::NTuple{N, Any}, dt, phase::Int64
-) where N
-    return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt, phase), Val(N))
+    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T,NTuple{4,T}}}, dt, phase::Int64
+) where {N,T}
+    ntuple(Val(N)) do i
+        Base.@_inline_meta
+        @inbounds effective_ε(εij[i], v, τij_old[i], dt, phase)
+    end
 end
 
 @inline function effective_ε(
