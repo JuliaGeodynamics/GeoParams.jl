@@ -22,7 +22,7 @@ function compute_τij(v, εij::NTuple{N,T}, args, τij_old::NTuple{N,T}) where {
     return τij, τII
 end
 
-function compute_τij(v, εij::NTuple{N,T}, args, τij_old::NTuple{N,T}, phase::I) where {T,N,I<:Integer}
+function compute_τij(v::NTuple{N1, AbstractMaterialParamsStruct}, εij::NTuple{N2,T}, args, τij_old::NTuple{N2,T}, phase::I) where {T,N1,N2,I<:Integer}
 
     # Second invariant of effective strainrate (taking elasticity into account)
     #ε_eff = εij .+ 0.5.*τij_old./(1.0*args.dt)
@@ -30,7 +30,7 @@ function compute_τij(v, εij::NTuple{N,T}, args, τij_old::NTuple{N,T}, phase::
     εII   = second_invariant(ε_eff)
     
     args  = merge(args, (τII_old=0,))    
-    τII   = compute_τII(v, εII, args)
+    τII   = nphase(vi -> compute_τII(vi, εII, args), phase, v)
     η_eff = 0.5*τII/εII
     τij   = 2*η_eff.*ε_eff
 
