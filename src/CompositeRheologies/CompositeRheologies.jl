@@ -98,7 +98,22 @@ function computeViscosity_εII_AD(v::T, εII::_T, args; tol=1e-6, verbose=false)
     return computeViscosity_εII(v, εII, args) 
 end
 
-
 @inline function elastic_ε(v::Union{CompositeRheology, Parallel}, τij_old, dt)
     return nreduce(vi -> _elastic_ε(vi, τij_old, dt), v.elements)
+end
+
+@inline function elastic_ε(v::NTuple{N,AbstractMaterialParamsStruct}, τij_old, dt, phase::Int64) where N
+    return nphase(vi -> _phase_elastic_ε(vi.CompositeRheology[1].elements, τij_old, dt), phase, v)
+end
+
+# we do need this kernel because one can't have nested generators/closures in a
+# @generated function (i.e. a nreduce call inside nphase breaks the function 
+# purity and doesnt work)
+@generated function _phase_elastic_ε(v::NTuple{N,Any}, τij_old, dt) where {N}
+    Base.@_inline_meta
+    quote
+        val = 0.0
+        Base.Cartesian.@nexprs $N i -> @inbounds val += _elastic_ε(v[i], τij_old, dt)
+        return val
+    end
 end

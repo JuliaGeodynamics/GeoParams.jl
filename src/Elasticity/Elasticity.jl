@@ -294,28 +294,36 @@ end
 ## Kernels for effective strain rate (Eij_eff = Eij + Tij/(2 G dt) ) 
 
 @inline _elastic_ε(v::ConstantElasticity, τij_old, dt) = τij_old / (2 * v.G * dt)
-@inline _elastic_ε(v::Vararg{Any,N}) where {N} = 0.0
-
-# @inline function elastic_ε(v::CompositeRheology, τij_old, dt)
-#@inline function elastic_ε(v::Union{CompositeRheology, Parallel}, τij_old, dt)
-#    return nreduce(vi -> _elastic_ε(vi, τij_old, dt), v.elements)
-#end
+@inline _elastic_ε(v::Vararg{Any, N}) where {N} = 0.0
 
 @inline effective_ε(εij::T, v, τij_old::T, dt) where {T} = εij + elastic_ε(v, τij_old, dt)
+@inline effective_ε(εij::T, v, τij_old::T, dt, phase::Int64) where {T} = εij + elastic_ε(v, τij_old, dt, phase)
 
 # By letting ::NTuple{N, Any} it can recursively call itself when 
 # strain and stress are nested NamedTuples i.e. in staggered grids
 # NOTE: ::NTuple{N, Union{T,Any}} makes type unstable (need fix?)
 @inline function effective_ε(
-    εij::NTuple{N,Union{T,Any}}, v, τij_old::NTuple{N,Any}, dt
+    εij::NTuple{N, Any}, v, τij_old::NTuple{N, Any}, dt
+) where N
+    return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt), Val(N))
+end
+
+@inline function effective_ε(
+    εij::NTuple{N, Any}, v, τij_old::NTuple{N, Any}, dt, phase::Int64
+) where N
+    return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt, phase), Val(N))
+end
+
+@inline function effective_ε(
+    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt
 ) where {N,T}
     return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt), Val(N))
 end
 
 @inline function effective_ε(
-    εij::NTuple{N,Union{T,Any}}, v, τij_old::NTuple{N,T}, dt
+    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt, phase::Int64
 ) where {N,T}
-    return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt), Val(N))
+    return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt, phase), Val(N))
 end
 
 # 2D wrapper 
@@ -323,8 +331,18 @@ function effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
     return effective_ε((εxx, εyy, εxy), v, (τxx_old, τyy_old, τxy_old), dt)
 end
 
+function effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt, phase::Int64)
+    return effective_ε((εxx, εyy, εxy), v, (τxx_old, τyy_old, τxy_old), dt, phase)
+end
+
 function effective_εII(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
     εxx, εyy, εxy = effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
+    εII = second_invariant(εxx, εyy, εxy)
+    return εII
+end
+
+function effective_εII(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt, phase::Int64)
+    εxx, εyy, εxy = effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt, phase)
     εII = second_invariant(εxx, εyy, εxy)
     return εII
 end
