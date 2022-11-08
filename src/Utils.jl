@@ -83,5 +83,5 @@ end
 
 # Macros 
 macro print(a1, a2)
-    return :($(esc(a1)) == true ? println($(esc(a2))) : nothing)
+    return :($(esc(a1)) === true ? println($(esc(a2))) : nothing)
 end
