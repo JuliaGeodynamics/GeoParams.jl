@@ -27,7 +27,7 @@ export PlotStrainrateStress,
     PlotPhaseDiagram,
     Plot_TAS_diagram,
     Plot_ZirconAge_PDF,
-    PlotDeformationMap
+    PlotDeformationMap,
     PlotStressTime_0D,
     PlotPressureStressTime_0D
 
