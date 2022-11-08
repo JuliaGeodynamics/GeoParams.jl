@@ -408,11 +408,11 @@ end
 end
 
 # 2D wrapper 
-function effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt, phase::Int64)
+function effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt, phase)
     return effective_ε((εxx, εyy, εxy), v, (τxx_old, τyy_old, τxy_old), dt, phase)
 end
 
-function effective_εII(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt, phase::Int64)
+function effective_εII(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt, phase)
     εxx, εyy, εxy = effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt, phase)
     εII = second_invariant(εxx, εyy, εxy)
     return εII
@@ -434,7 +434,7 @@ function effective_ε(
     τxz_old,
     τxy_old,
     dt,
-    phase::Int64
+    phase
 )
     return effective_ε(
         (εxx, εyy, εzz, εyz, εxz, εxy),
@@ -460,7 +460,7 @@ function effective_εII(
     τxz_old,
     τxy_old,
     dt,
-    phase::Int64
+    phase
 )
     εxx, εyy, εzz, εyz, εxz, εxy = effective_ε(
         εxx,
@@ -481,4 +481,20 @@ function effective_εII(
     )
     εII = second_invariant(εxx, εyy, εzz, εyz, εxz, εxy)
     return εII
+end
+
+## Expand methods for multiple phases in staggered grids
+@inline function effective_ε(
+    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T,NTuple{4,T}}}, dt, phases::NTuple{N,Union{I,NTuple{4,I}}}
+) where {N,T,I<:Integer}
+    ntuple(Val(N)) do i
+        Base.@_inline_meta
+        @inbounds effective_ε(εij[i], v, τij_old[i], dt, phases[i])
+    end
+end
+
+@inline function effective_ε(
+    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt, phases::NTuple{N,Union{I,NTuple{4,I}}}
+) where {N,T,I<:Integer}
+    return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt, phases[i]), Val(N))
 end
