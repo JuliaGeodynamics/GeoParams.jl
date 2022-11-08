@@ -15,7 +15,7 @@ function compute_τij(v, εij::NTuple{N,T}, args, τij_old::NTuple{N,T}) where {
     ε_eff = effective_ε(εij, v, τij_old, args.dt)
     εII = second_invariant(ε_eff)
 
-    args = merge(args, (τII_old=0,))
+    # args = merge(args, (τII_old=0,))
     τII = first(compute_τII(v, εII, args))
     η_eff = 0.5 * τII / εII
     τij = 2 * η_eff .* ε_eff
@@ -31,7 +31,7 @@ function compute_τij(v, εij::NTuple{N,Union{T,NTuple{4,T}}}, args, τij_old::N
     εII = second_invariant(ε_eff...)
     ε_eff_averaged = staggered_tensor_average(ε_eff)
 
-    args = merge(args, (τII_old=0,))
+    # args = merge(args, (τII_old=0,))
     τII = first(compute_τII(v, εII, args))
     η_eff = 0.5 * τII / εII
     τij = 2 * η_eff .* ε_eff_averaged
@@ -52,7 +52,7 @@ function compute_τij(
     ε_eff = effective_ε(εij, v, τij_old, args.dt, phase)
     εII = second_invariant(ε_eff)
 
-    args = merge(args, (τII_old=0,))
+    # args = merge(args, (τII_old=0,))
     τII = nphase(vi -> first(compute_τII(vi, εII, args)), phase, v)
     η_eff = 0.5 * τII / εII
     τij = 2 * η_eff .* ε_eff
