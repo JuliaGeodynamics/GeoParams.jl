@@ -1,13 +1,13 @@
 # Stress tensor computations
 using StaticArrays
-export compute_τij
+export compute_τij, compute_p_τij
 
 """
-    τij = compute_τij(εij::NTuple{3,T}, τij_old::NTuple{3,T}, v, args)
+    τij,τII = compute_τij(v, εij::NTuple{n,T}, args, τij_old::NTuple{N,T})
 
-computes `τij` for given strain rate values `εij`
+Computes deviatoric stress `τij` for given deviatoric strain rate `εij`, old stress `τij_old`, rheology `v` and arguments `args`.
+This is for a case that all points are collocated and we have a single phase. 
 """
-# Single material phase, collocated grid
 function compute_τij(v, εij::NTuple{N,T}, args, τij_old::NTuple{N,T}) where {T,N}
 
     # Second invariant of effective strainrate (taking elasticity into account)
@@ -23,7 +23,34 @@ function compute_τij(v, εij::NTuple{N,T}, args, τij_old::NTuple{N,T}) where {
     return τij, τII
 end
 
-# Single material phase, staggered grid
+"""
+    p,τij,τII = compute_p_τij(v, εij::NTuple{n,T}, P_old::T, args,  τij_old::NTuple{N,T})
+
+Computes pressure `p` and deviatoric stress `τij` for given deviatoric strain rate `εij`, old stress `τij_old`, rheology `v` and arguments `args`.
+This is for a case that all points are collocated and we have a single phase. 
+"""
+function compute_p_τij(v, εij::NTuple{N,T}, P_old::T, args, τij_old::NTuple{N,T}) where {T,N}
+
+    # Second invariant of effective strainrate (taking elasticity into account)
+    ε_eff = effective_ε(εij, v, τij_old, args.dt)
+    εII = second_invariant(ε_eff)
+    εvol = volumetric_strainrate(εij)    # Volumetric strainrate
+
+    args = merge(args, (τII_old=0,P_old=P_old))
+    P,τII = compute_p_τII(v, εII, εvol, args)
+    η_eff = 0.5 * τII / εII
+    τij = 2 * η_eff .* ε_eff
+
+    return P,τij, τII
+end
+
+
+"""
+    τij, τII = compute_τij(v, εij::NTuple{N,Union{T,NTuple{4,T}}}, args, τij_old::NTuple{3,T})
+
+Computes deviatoric stress `τij` for given deviatoric strain rate `εij`, old stress `τij_old`, rheology `v` and arguments `args`.
+This is for a staggered grid case with a single phase. 
+"""
 function compute_τij(
     v, εij::NTuple{N,Union{T,NTuple{4,T}}}, args, τij_old::NTuple{N,Union{T,NTuple{4,T}}}
 ) where {N,T}
@@ -41,7 +68,38 @@ function compute_τij(
     return τij, τII
 end
 
+"""
+    p, τij, τII = compute_p_τij(v, εij::NTuple{N,Union{T,NTuple{4,T}}}, P_old::T, args, τij_old::NTuple{3,T})
+
+Computes deviatoric stress `τij` for given deviatoric strain rate `εij`, old stress `τij_old`, rheology `v` and arguments `args`.
+This is for a staggered grid case with a single phase. 
+"""
+function compute_p_τij(
+    v, εij::NTuple{N,Union{T,NTuple{4,T}}}, P_old::T, args, τij_old::NTuple{N,Union{T,NTuple{4,T}}}
+) where {N,T}
+
+    # Second invariant of effective strainrate (taking elasticity into account)
+    ε_eff = effective_ε(εij, v, τij_old, args.dt)
+    εII = second_invariant(ε_eff...)
+    ε_eff_averaged = staggered_tensor_average(ε_eff)
+    εvol = volumetric_strainrate(εij)    
+
+    args = merge(args, (P_old=P_old, τII_old=0.0))
+    P,τII, = compute_p_τII(v, εII, εvol, args)
+    η_eff = 0.5 * τII / εII
+    τij = 2 * η_eff .* ε_eff_averaged
+
+    return P,τij, τII
+end
+
+
 # Multiple material phases, collocated grid
+"""
+    τij, τII = compute_τij(v::NTuple{N1,AbstractMaterialParamsStruct}, εij::NTuple{N2,T}, args, τij_old::NTuple{3,T}, phase::I)
+
+Computes deviatoric stress `τij` for given deviatoric strain rate `εij`, old stress `τij_old`, rheology `v` and arguments `args`.
+This is for a collocated grid case with a single phase `phase`. 
+"""
 function compute_τij(
     v::NTuple{N1,AbstractMaterialParamsStruct},
     εij::NTuple{N2,T},
@@ -62,7 +120,41 @@ function compute_τij(
     return τij, τII, η_eff
 end
 
+"""
+    P,τij, τII = compute_p_τij(v::NTuple{N1,AbstractMaterialParamsStruct}, εij::NTuple{N2,T}, P_old::T, args, τij_old::NTuple{3,T}, phase::I)
+
+Computes deviatoric stress `τij` for given deviatoric strain rate `εij`, old stress `τij_old`, rheology `v` and arguments `args`.
+This is for a collocated grid case with a single phase `phase`. 
+"""
+function compute_p_τij(
+    v::NTuple{N1,AbstractMaterialParamsStruct},
+    εij::NTuple{N2,T},
+    P_old::T,
+    args,
+    τij_old::NTuple{N2,T},
+    phase::I,
+) where {T,N1,N2,I<:Integer}
+
+    # Second invariant of effective strainrate (taking elasticity into account)
+    ε_eff = effective_ε(εij, v, τij_old, args.dt, phase)
+    εII = second_invariant(ε_eff)
+    εvol = volumetric_strainrate(εij) 
+
+    args = merge(args, (τII_old=0,P_old=P_old))
+    P,τII = nphase(vi -> compute_p_τII(vi.CompositeRheology[1], εII, εvol, args), phase, v)
+    η_eff = 0.5 * τII / εII
+    τij = 2 * η_eff .* ε_eff
+
+    return P, τij, τII
+end
+
 # Multiple material phases, staggered grid
+"""
+    τij, τII, η_eff = compute_τij(v::NTuple{N1,AbstractMaterialParamsStruct}, εij::NTuple, args, τij_old::NTuple, phases::NTuple)
+
+This computes deviatoric stress components `τij`, their second invariant `τII`, and effective viscosity `η_eff` for given deviatoric strainrates `εij`, old stresses `τij_old`, `phases` (integer) for every point and arguments `args`.
+It handles both collocated and 
+"""
 function compute_τij(
     v::NTuple{N1,AbstractMaterialParamsStruct},
     εij::NTuple{N2,Union{T,NTuple{4,T}}},
@@ -86,6 +178,15 @@ end
 # in-place stress calculation routines
 
 # collocated grid
+"""
+    compute_τij!(Txx, Tyy, Txy, Tii, Txx_o, Tyy_o, Txy_o, Exx, Eyy, Exy, η_vep, P, phase, MatParam, dt)
+
+Computes 2D deviatoric stress components `(Txx,Tyy,Txy)` given deviatoric strainrate components `(Exx,Eyy,Exy)` and old deviatoric stresses `(Txx_o, Tyy_o, Txy_o)` (only used for viscoelastic cases).
+Also returned are `Tii` (second invariant of the deviatoric stress tensor), and `η_vep` the viscoelastoplastic effective viscosity. 
+Also required as input is `MatParam`, the material parameters for every phase and `phase`, an integer array of `size(Exx)` that indicates the phase of every point.
+
+This function assumes that strainrate points are collocated and that `Exx`,`Eyy`,`Exy` are at the same points.
+"""
 function compute_τij!(
     Txx, Tyy, Txy, Tii, Txx_o, Tyy_o, Txy_o, Exx, Eyy, Exy, η_vep, P, phase, MatParam, dt
 )
@@ -107,6 +208,7 @@ function compute_τij!(
     end
 end
 
+# # Internal computation array
 function _compute_τij(Txx_o, Tyy_o, Txy_o, Exx, Eyy, Exy, P, phase, MatParam, dt)
     args = (; dt=dt, P=P, τII_old=0.0)
     εij = (Exx, Eyy, Exy)
@@ -176,7 +278,7 @@ end
 
 # ----------------------------------------------------------------------------------------
 
-## Hellper functions
+## Helper functions
 @inline function staggered_tensor_average(x::NTuple{N,Union{T,NTuple{4,T}}}) where {N,T}
     ntuple(Val(N)) do i
         Base.@_inline_meta
@@ -186,3 +288,12 @@ end
 
 staggered_tensor_average(x::NTuple{N,T}) where {N,T} = sum(x) / N
 staggered_tensor_average(x::T) where {T<:Number} = x
+
+@inline function volumetric_strainrate(x::NTuple{3,Union{T,NTuple{4,T}}}) where {T}
+   vol = x[1]+x[2]  #2D
+end
+
+@inline function volumetric_strainrate(x::NTuple{6,Union{T,NTuple{4,T}}}) where {T}
+    vol = x[1]+x[2]+x[3] #3D
+ end
+

@@ -147,7 +147,7 @@ function compute_p_τII(
         εvol::_T,
         args;
         tol=1e-6, verbose=false
-    ) where {T, N, _T, Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol}
+    ) where {T, N, _T, Npar, is_parallel, Nplast, is_plastic, is_vol}
     
     # A composite rheology case with no parallel element; iterations for τII
     τII, = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose)
@@ -227,7 +227,7 @@ dεII_dτII_nonparallel(v::Parallel, TauII::_T, args) where _T =    zero(_T)
 dεII_dτII_nonparallel(v::AbstractPlasticity, TauII::_T, args) where _T =    zero(_T)
 
 dεvol_dp(v::CompositeRheology{T,N}, p::_T, args) where {T,_T,N} = nreduce(vi -> first(_dεvol_dp(vi, p, args)), v.elements)
-function _dεvol_dp(v, p::_T, args) where {T,_T,N}
+function _dεvol_dp(v, p::_T, args) where {_T}
     if isvolumetric(v)
         val = dεvol_dp_nonparallel_nonplastic(v, p, args)
     else

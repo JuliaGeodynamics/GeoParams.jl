@@ -113,4 +113,25 @@ using GeoParams
         @test abs(sum(τII_n .- τ_vec)) < 1e-10
         @test abs(sum(τII_n .- τII_vec)) < 1e-10
     end
+
+
+    # Test individual stress computations
+    case_1 = ((1.0, -1.1, 2.3), (1.0,-1.0,2.0), (1,1,1), 1.0)       # collocated ε, τ_o, phase, P_o
+
+    v = MatParam[1].CompositeRheology[1]
+    for case_i in (case_1,)
+        ε, τ_o, phase, P_o = case_i[1],case_i[2], case_i[3], case_i[4]
+        
+        τij, τII = compute_τij(v, ε, args, τ_o)                                 # collocated, single phase 
+        τij_1, τII_1 = compute_τij(MatParam, ε, args, τ_o, 1)                   # collocated, specify phases          
+        P_2, τij_2, τII_2 = compute_p_τij(v, ε, P_o, args, τ_o)                 # collocated single phase + pressure
+        P_3, τij_3, τII_3 = compute_p_τij(MatParam, ε, P_o, args, τ_o, 1)       # collocated specify phase + pressure
+
+        @test τII ≈ τII_1 ≈ τII_2 ≈ τII_3
+        @test P_o ≈ P_2 ≈ P_3
+
+    end
+
+
+
 end

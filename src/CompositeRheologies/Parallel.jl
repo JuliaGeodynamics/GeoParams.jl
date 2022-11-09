@@ -68,7 +68,7 @@ end
 
 # Sum τII of parallel elements (with & w/out quantities)
 compute_τII(v::Parallel{T,N}, εII::_T, args; tol=1e-6, verbose=false) where {T,_T,N} = nreduce(vi -> first(compute_τII(vi, εII, args)), v.elements)
-compute_τII(v::Parallel{T,N}, εII::Quantity, args; tol=1e-6, verbose=false) where {T,_T,N} = nreduce(vi -> first(compute_τII(vi, εII, args)), v.elements)
+compute_τII(v::Parallel{T,N}, εII::Quantity, args; tol=1e-6, verbose=false) where {T,N} = nreduce(vi -> first(compute_τII(vi, εII, args)), v.elements)
 
 compute_τII_AD(v::Parallel{T,N}, εII::_T, args; tol=1e-6, verbose=false) where {T,N,_T} = first(compute_τII(v, εII, args)) 
 
