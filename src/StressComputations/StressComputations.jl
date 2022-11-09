@@ -13,7 +13,7 @@ function compute_τij(v, εij::NTuple{N,T}, args, τij_old::NTuple{N,T}) where {
     # Second invariant of effective strainrate (taking elasticity into account)
     #ε_eff = εij .+ 0.5.*τij_old./(1.0*args.dt)
     ε_eff = effective_ε(εij, v, τij_old, args.dt)
-    εII = second_invariant(ε_eff)
+    εII = second_invariant(ε_eff...)
 
     # args = merge(args, (τII_old=0,))
     τII = first(compute_τII(v, εII, args))
@@ -52,7 +52,7 @@ function compute_τij(
 
     # Second invariant of effective strainrate (taking elasticity into account)
     ε_eff = effective_ε(εij, v, τij_old, args.dt, phase)
-    εII = second_invariant(ε_eff)
+    εII = second_invariant(ε_eff...)
 
     # args = merge(args, (τII_old=0,))
     τII = nphase(vi -> first(compute_τII(vi, εII, args)), phase, v)
@@ -83,7 +83,7 @@ function compute_τij(
     return τij, τII, η_eff
 end
 
-# full stress calculation routines
+# in-place stress calculation routines
 
 # collocated grid
 function compute_τij!(
