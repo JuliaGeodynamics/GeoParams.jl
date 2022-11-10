@@ -117,23 +117,48 @@ using GeoParams
 
     # Test individual stress computations
     Tu, TuI = Tuple(ones(4)), Tuple(ones(Int64,4))
-    case_1 = ((1.0, -1.1, 2.3),     (1.0,-1.0,2.0),             1  , 1.0)   # collocated ε, τ_o, single phase, P_o
+    case_1 = ((1.0, -1.1, 2.3),     (1.0,-1.0,2.0),             1  , 1.0)   # 2D collocated ε, τ_o, single phase, P_o
     case_2 = ((1.0, -1.1, 2.3.*Tu), (1.0,-1.0,2.0.*Tu), (1,1,TuI)  , 1.0)   # 2D staggered ε, τ_o, phase, P_o around center points
     case_3 = ((Tu,  -1.1.*Tu, 2.3), (Tu,-1.0.*Tu,2.0), (TuI,TuI,1),  1.0)   # 2D staggered ε, τ_o, phase, P_o around vertex points
 
+    case_4 = ((1.0, -1.1, 2.3, 3.0, 4.1, 5.3),  (1.0,-1.0,2.0,2.1,3.2,4.3), 1  , 1.0)                                                       # 3D collocated ε, τ_o, single phase, P_o
+    case_5 = ((1.0, -1.1, 2.3, 3.0.*Tu, 4.1.*Tu, 5.3.*Tu),  (1.0,-1.0,2.0,2.1.*Tu,3.2.*Tu,4.3.*Tu), (1,1,1,TuI,TuI,TuI)  , 1.0)             # 3D staggered ε, τ_o, phase, P_o around center points
+    case_6 = ((1.0.*Tu, -1.1.*Tu, 2.3.*Tu, 3.0, 4.1, 5.3),  (1.0.*Tu,-1.0.*Tu,2.0.*Tu,2.1,3.2,4.3), (TuI,TuI,TuI,1,1,1)  , 1.0)             # 3D staggered ε, τ_o, phase, P_o around vertex points
+
     v = MatParam[1].CompositeRheology[1]
-    for case_i in (case_1,case_2, case_3)
+    for case_i in (case_1,case_2, case_3, case_4, case_5, case_6)
         ε, τ_o, phase, P_o = case_i[1],case_i[2], case_i[3], case_i[4]
         
         τij, τII = compute_τij(v, ε, args, τ_o)                                 # collocated, single phase 
-        τij_1, τII_1 = compute_τij(MatParam, ε, args, τ_o, phase)                   # collocated, specify phases          
+        τij_1, τII_1 = compute_τij(MatParam, ε, args, τ_o, phase)               # collocated, specify phases          
         P_2, τij_2, τII_2 = compute_p_τij(v, ε, P_o, args, τ_o)                 # collocated single phase + pressure
-        P_3, τij_3, τII_3 = compute_p_τij(MatParam, ε, P_o, args, τ_o, phase)       # collocated specify phase + pressure
+        P_3, τij_3, τII_3 = compute_p_τij(MatParam, ε, P_o, args, τ_o, phase)   # collocated specify phase + pressure
 
         @test τII ≈ τII_1 ≈ τII_2 ≈ τII_3
         @test P_o ≈ P_2 ≈ P_3
 
     end
+
+    # Cases with arrays
+    nx,ny = 31,31
+    Exx,Eyy,Exy,Txx,Tyy,Txy = ones(nx  ,ny  ), ones(nx  ,ny  ), ones(nx  ,ny  ), zeros(nx  ,ny  ), zeros(nx  ,ny  ), zeros(nx  ,ny  )
+    Tii,η_vep,P             = zeros(nx, ny  ), zeros(nx  ,ny  ),  zeros(nx  ,ny  )
+    Txx_o,Tyy_o,Txy_o       = zeros(nx  ,ny  ), zeros(nx  ,ny  ), zeros(nx  ,ny  )
+    Exyv,Txyv_o = ones(nx+1,ny+1), zeros(nx+1,ny+1)
+
+    dt = 0.1
+    phase_center = ones(Int64,nx,ny)
+    phase_vertex = ones(Int64,nx+1,ny+1)
+
+    # Collocated case:  60.028 μs (6 allocations: 928 bytes)
+    compute_τij!(Txx, Tyy, Txy, Tii, η_vep, Exx, Eyy, Exy, P, Txx_o, Tyy_o, Txy_o, phase, MatParam, dt) 
+    @test sum(Txx) ≈ sum(Tyy) ≈ sum(Txy) ≈ 190.2970297029704
+    @test sum(η_vep) ≈ 95.1485148514852
+
+    # Staggered case around center:
+    compute_τij_stagcenter!(Txx, Tyy, Txy, Tii, η_vep, Exx, Eyy, Exyv, P, Txx_o, Tyy_o, Txyv_o, phase_center, phase_vertex, MatParam, dt) 
+    @test sum(Txx) ≈ sum(Tyy) ≈ sum(Txy) ≈ 190.2970297029704
+    @test sum(η_vep) ≈ 95.1485148514852
 
 
 
