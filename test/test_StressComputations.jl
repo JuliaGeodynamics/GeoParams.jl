@@ -116,16 +116,19 @@ using GeoParams
 
 
     # Test individual stress computations
-    case_1 = ((1.0, -1.1, 2.3), (1.0,-1.0,2.0), (1,1,1), 1.0)       # collocated ε, τ_o, phase, P_o
+    Tu, TuI = Tuple(ones(4)), Tuple(ones(Int64,4))
+    case_1 = ((1.0, -1.1, 2.3),     (1.0,-1.0,2.0),             1  , 1.0)   # collocated ε, τ_o, single phase, P_o
+    case_2 = ((1.0, -1.1, 2.3.*Tu), (1.0,-1.0,2.0.*Tu), (1,1,TuI)  , 1.0)   # 2D staggered ε, τ_o, phase, P_o around center points
+    case_3 = ((Tu,  -1.1.*Tu, 2.3), (Tu,-1.0.*Tu,2.0), (TuI,TuI,1),  1.0)   # 2D staggered ε, τ_o, phase, P_o around vertex points
 
     v = MatParam[1].CompositeRheology[1]
-    for case_i in (case_1,)
+    for case_i in (case_1,case_2, case_3)
         ε, τ_o, phase, P_o = case_i[1],case_i[2], case_i[3], case_i[4]
         
         τij, τII = compute_τij(v, ε, args, τ_o)                                 # collocated, single phase 
-        τij_1, τII_1 = compute_τij(MatParam, ε, args, τ_o, 1)                   # collocated, specify phases          
+        τij_1, τII_1 = compute_τij(MatParam, ε, args, τ_o, phase)                   # collocated, specify phases          
         P_2, τij_2, τII_2 = compute_p_τij(v, ε, P_o, args, τ_o)                 # collocated single phase + pressure
-        P_3, τij_3, τII_3 = compute_p_τij(MatParam, ε, P_o, args, τ_o, 1)       # collocated specify phase + pressure
+        P_3, τij_3, τII_3 = compute_p_τij(MatParam, ε, P_o, args, τ_o, phase)       # collocated specify phase + pressure
 
         @test τII ≈ τII_1 ≈ τII_2 ≈ τII_3
         @test P_o ≈ P_2 ≈ P_3
