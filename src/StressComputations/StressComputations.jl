@@ -1,6 +1,6 @@
 # Stress tensor computations
 using StaticArrays
-export compute_τij, compute_p_τij, compute_τij!, compute_τij_stagcenter!
+export compute_τij, compute_p_τij, compute_τij!, compute_p_τij!, compute_τij_stagcenter!, compute_p_τij_stagcenter!
 
 """
     τij,τII = compute_τij(v, εij::NTuple{n,T}, args, τij_old::NTuple{N,T})
@@ -262,6 +262,62 @@ function _compute_τij_2D(Exx, Eyy, Exy, P, Txx_o, Tyy_o, Txy_o,  phase, MatPara
 end
 
 """
+    compute_p_τij!(Txx, Tyy, Txy, Tii, η_vep, P, Exx, Eyy, Exy, P_o, Txx_o, Tyy_o, Txy_o, phase, MatParam, dt)
+
+Computes 2D deviatoric stress components `(Txx,Tyy,Txy)` and pressure `P` given deviatoric strainrate components `(Exx,Eyy,Exy)` and old deviatoric stresses `(Txx_o, Tyy_o, Txy_o)` and old pressure `P_o` (only used for viscoelastic cases).
+Also returned are `Tii` (second invariant of the deviatoric stress tensor), and `η_vep` the viscoelastoplastic effective viscosity. 
+Also required as input is `MatParam`, the material parameters for every phase and `phase`, an integer array of `size(Exx)` that indicates the phase of every point.
+
+This function assumes that strainrate points are collocated and that `Exx`,`Eyy`,`Exy` are at the same points.
+"""
+function compute_p_τij!(
+    Txx::AbstractArray{_T}, 
+    Tyy::AbstractArray{_T}, 
+    Txy::AbstractArray{_T}, 
+    Tii::AbstractArray{_T}, 
+    η_vep::AbstractArray{_T}, 
+    P::AbstractArray{_T}, 
+    Exx::AbstractArray{_T}, 
+    Eyy::AbstractArray{_T}, 
+    Exy::AbstractArray{_T}, 
+    P_o::AbstractArray{_T}, 
+    Txx_o::AbstractArray{_T}, 
+    Tyy_o::AbstractArray{_T}, 
+    Txy_o::AbstractArray{_T}, 
+    phase::AbstractArray{I}, 
+    MatParam::NTuple{N,AbstractMaterialParamsStruct}, 
+    dt::_T
+) where {_T<:Number, I<:Integer, N}
+    Threads.@threads for j in axes(Exx, 2)
+        for i in axes(Exx, 1)
+            @inbounds P[i,j], Txx[i, j], Tyy[i, j], Txy[i, j], Tii[i, j], η_vep[i, j] = _compute_p_τij_2D(
+                Exx[i,j],
+                Eyy[i,j],
+                Exy[i,j],
+                P[i,j],
+                Txx_o[i,j],
+                Tyy_o[i,j],
+                Txy_o[i,j],
+                P_o[i,j],
+                phase[i,j],
+                MatParam,
+                dt,
+            )
+        end
+    end
+end
+
+# Internal computation array
+function _compute_p_τij_2D(Exx, Eyy, Exy, P, Txx_o, Tyy_o, Txy_o,  P_o, phase, MatParam, dt)
+    args = (; dt=dt, P=P, τII_old=0.0)
+    εij = (Exx, Eyy, Exy)
+    τij_o = (Txx_o, Tyy_o, Txy_o)
+    P, Tij, Tii, η_vep = compute_p_τij(MatParam, εij, P_o, args, τij_o, phase)
+
+    return P, Tij[1], Tij[2], Tij[3], Tii, η_vep
+end
+
+"""
     compute_τij_stagcenter!(Txx, Tyy, Txy, Tii, η_vep,  Exx, Eyy, Exyv, P, Txx_o, Tyy_o, Txyv_o, phase_center, phase_vertex, MatParam, dt)
 
 Updates deviatoric stresses on a staggered grid in a centered based manner (averages strainrates/old stresses from vertices -> centers).
@@ -347,6 +403,100 @@ function _compute_τij_stagcenter(
     Tij, Tii, η_vep = compute_τij(MatParam, εij, args, τij_o, phases)
 
     return Tij[1], Tij[2], Tij[3], Tii, η_vep
+
+end
+
+
+
+"""
+    compute_τij_stagcenter!(Txx, Tyy, Txy, Tii, η_vep,  Exx, Eyy, Exyv, P, Txx_o, Tyy_o, Txyv_o, phase_center, phase_vertex, MatParam, dt)
+
+Updates deviatoric stresses on a staggered grid in a centered based manner (averages strainrates/old stresses from vertices -> centers).
+Take care of the sizes of the input matrixes:
+- `Txx`,`Tyy`,`Txy`,`Tii`: 2D matrixes of size (nx,ny) which describe updated deviatoric stress components (x,y,xy, 2nd invariant) at the center point
+- `η_vep`: viscoelastoplastic viscosity @ center (nx,ny)
+- `Exx`,`Eyy`,`P`: deviatoric strain rate components & pressure @ center 
+- `Exy`: shear strain rate @ vertices (nx+1,ny+1)
+- `Txx_o`, `Tyy_o`: deviatoric stress normal components of last timestep at center (nx,ny)
+- `Txy_o`: deviatoric stress shear components at vertices (nx+1,ny+1)
+- `phase_center`: integer array with phase at center points (nx,ny)
+- `phase_vertex`: integer array with phase at vertex points (nx+1,ny+1)
+- `MatParam`: material parameter array that includes a `CompositeRheology` field which specifies the rheology for different phases
+- `dt`: timestep 
+"""
+function compute_p_τij_stagcenter!(
+    Txx::AbstractArray{_T},  
+    Tyy::AbstractArray{_T},  
+    Txy::AbstractArray{_T},  
+    Tii::AbstractArray{_T},  
+    η_vep::AbstractArray{_T},  
+    P::AbstractArray{_T},  
+    Exx::AbstractArray{_T},  
+    Eyy::AbstractArray{_T},  
+    Exyv::AbstractArray{_T},  
+    P_o::AbstractArray{_T},  
+    Txx_o::AbstractArray{_T},  
+    Tyy_o::AbstractArray{_T},  
+    Txyv_o::AbstractArray{_T},   
+    phase_center::AbstractArray{I},  
+    phase_vertex::AbstractArray{I},  
+    MatParam::NTuple{N,AbstractMaterialParamsStruct}, 
+    dt::_T
+) where {_T<:Number, I<:Integer, N}
+    Threads.@threads for j in axes(Exx, 2)
+        for i in axes(Exx, 1)
+            @inbounds P[i, j], Txx[i, j], Tyy[i, j], Txy[i, j], Tii[i, j], η_vep[i, j] = _compute_p_τij_stagcenter(
+                Exx[i,j],
+                Eyy[i,j],
+                Exyv,
+                P[i,j],
+                Txx_o[i,j],
+                Tyy_o[i,j],
+                Txyv_o,
+                P_o[i,j],
+                phase_center,
+                phase_vertex,
+                MatParam,
+                dt,
+                i,
+                j
+            )
+        end
+    end
+end
+
+function _compute_p_τij_stagcenter(
+    Exx,
+    Eyy,
+    Exyv,
+    P,
+    Txx_o,
+    Tyy_o,
+    Txyv_o,
+    P_o,
+    phase_center,
+    phase_vertex,
+    MatParam,
+    dt,
+    i,
+    j
+)
+
+    args = (; dt=dt, P=P, τII_old=0.0)
+    # gather strain rate
+    εij_v = (Exyv[i, j], Exyv[i + 1, j], Exyv[i, j + 1], Exyv[i + 1, j + 1]) # gather vertices around ij center
+    εij = (Exx, Eyy, εij_v)
+    # gather old deviatoric stress
+    τij_v = (Txyv_o[i, j], Txyv_o[i + 1, j], Txyv_o[i, j + 1], Txyv_o[i + 1, j + 1]) # gather vertices around ij center
+    τij_o = (Txx_o, Tyy_o, τij_v)
+    # gather material phases
+    phases_v = (phase_vertex[i, j], phase_vertex[i + 1, j], phase_vertex[i, j + 1], phase_vertex[i + 1, j + 1]) # gather vertices around ij center
+    phases = (phase_center[i, j], phase_center[i, j], phases_v)
+
+    # update stress and effective viscosity
+    P, Tij, Tii, η_vep = compute_p_τij(MatParam, εij, P_o, args, τij_o, phases)
+
+    return P, Tij[1], Tij[2], Tij[3], Tii, η_vep
 
 end
 

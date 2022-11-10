@@ -209,7 +209,7 @@ export dεII_dτII,
 
 # Constitutive relationships laws
 include("StressComputations/StressComputations.jl")
-export compute_τij, compute_p_τij, compute_τij_stagcenter!, compute_τij!
+export compute_τij, compute_p_τij, compute_τij_stagcenter!, compute_p_τij_stagcenter!, compute_τij!, compute_p_τij!
 
 include("Rheology_Utils.jl")
 export time_τII_0D, time_τII_0D!, time_p_τII_0D, time_p_τII_0D!

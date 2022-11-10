@@ -143,7 +143,7 @@ using GeoParams
     nx,ny = 31,31
     Exx,Eyy,Exy,Txx,Tyy,Txy = ones(nx  ,ny  ), ones(nx  ,ny  ), ones(nx  ,ny  ), zeros(nx  ,ny  ), zeros(nx  ,ny  ), zeros(nx  ,ny  )
     Tii,η_vep,P             = zeros(nx, ny  ), zeros(nx  ,ny  ),  zeros(nx  ,ny  )
-    Txx_o,Tyy_o,Txy_o       = zeros(nx  ,ny  ), zeros(nx  ,ny  ), zeros(nx  ,ny  )
+    Txx_o,Tyy_o,Txy_o,P_o   = zeros(nx  ,ny  ), zeros(nx  ,ny  ), zeros(nx  ,ny  ), zeros(nx  ,ny  )
     Exyv,Txyv_o = ones(nx+1,ny+1), zeros(nx+1,ny+1)
 
     dt = 0.1
@@ -155,11 +155,20 @@ using GeoParams
     @test sum(Txx) ≈ sum(Tyy) ≈ sum(Txy) ≈ 190.2970297029704
     @test sum(η_vep) ≈ 95.1485148514852
 
+    compute_p_τij!(Txx, Tyy, Txy, Tii, η_vep, P, Exx, Eyy, Exy, P_o, Txx_o, Tyy_o, Txy_o, phase, MatParam, dt) 
+    @test sum(Txx) ≈ sum(Tyy) ≈ sum(Txy) ≈ 190.2970297029704
+    @test sum(η_vep) ≈ 95.1485148514852
+
     # Staggered case around center:
     compute_τij_stagcenter!(Txx, Tyy, Txy, Tii, η_vep, Exx, Eyy, Exyv, P, Txx_o, Tyy_o, Txyv_o, phase_center, phase_vertex, MatParam, dt) 
     @test sum(Txx) ≈ sum(Tyy) ≈ sum(Txy) ≈ 190.2970297029704
     @test sum(η_vep) ≈ 95.1485148514852
 
+    compute_p_τij_stagcenter!(Txx, Tyy, Txy, Tii, η_vep, P, Exx, Eyy, Exyv, P_o, Txx_o, Tyy_o, Txyv_o, phase_center, phase_vertex, MatParam, dt) 
+    @test sum(Txx) ≈ sum(Tyy) ≈ sum(Txy) ≈ 190.2970297029704
+    @test sum(η_vep) ≈ 95.1485148514852
+
+    
 
 
 end
