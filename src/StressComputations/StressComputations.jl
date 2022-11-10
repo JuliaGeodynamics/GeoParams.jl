@@ -113,7 +113,7 @@ function compute_τij(
     εII = second_invariant(ε_eff...)
 
     # args = merge(args, (τII_old=0,))
-    τII = nphase(vi -> first(compute_τII(vi, εII, args)), phase, v)
+    τII = nphase(vi -> first(compute_τII(vi.CompositeRheology[1], εII, args)), phase, v)
     η_eff = 0.5 * τII / εII
     τij = 2 * η_eff .* ε_eff
 
@@ -168,7 +168,7 @@ function compute_τij(
     εII = second_invariant(ε_eff...)
     ε_eff_averaged = staggered_tensor_average(ε_eff)
 
-    τII = nphase(vi -> first(compute_τII(vi, εII, args)), phases[1], v)
+    τII = nphase(vi -> first(compute_τII(vi.CompositeRheology[1], εII, args)), phases[1], v)
     η_eff = 0.5 * τII / εII
     τij = 2 * η_eff .* ε_eff_averaged
 
