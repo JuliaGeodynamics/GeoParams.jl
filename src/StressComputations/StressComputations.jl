@@ -1,6 +1,11 @@
 # Stress tensor computations
 using StaticArrays
-export compute_τij, compute_p_τij, compute_τij!, compute_p_τij!, compute_τij_stagcenter!, compute_p_τij_stagcenter!
+export compute_τij,
+    compute_p_τij,
+    compute_τij!,
+    compute_p_τij!,
+    compute_τij_stagcenter!,
+    compute_p_τij_stagcenter!
 
 """
     τij,τII = compute_τij(v, εij::NTuple{n,T}, args, τij_old::NTuple{N,T})
@@ -29,21 +34,22 @@ end
 Computes pressure `p` and deviatoric stress `τij` for given deviatoric strain rate `εij`, old stress `τij_old`, rheology `v` and arguments `args`.
 This is for a case that all points are collocated and we have a single phase. 
 """
-function compute_p_τij(v, εij::NTuple{N,T}, P_old::T, args, τij_old::NTuple{N,T}) where {T,N}
+function compute_p_τij(
+    v, εij::NTuple{N,T}, P_old::T, args, τij_old::NTuple{N,T}
+) where {T,N}
 
     # Second invariant of effective strainrate (taking elasticity into account)
-    ε_eff = effective_ε(εij, v, τij_old, args.dt)
-    εII = second_invariant(ε_eff)
-    εvol = volumetric_strainrate(εij)    # Volumetric strainrate
+    return ε_eff = effective_ε(εij, v, τij_old, args.dt)
+    # εII = second_invariant(ε_eff)
+    # εvol = volumetric_strainrate(εij)    # Volumetric strainrate
 
-    args = merge(args, (τII_old=0,P_old=P_old))
-    P,τII = compute_p_τII(v, εII, εvol, args)
-    η_eff = 0.5 * τII / εII
-    τij = 2 * η_eff .* ε_eff
+    # args = merge(args, (τII_old=0,P_old=P_old))
+    # P,τII = compute_p_τII(v, εII, εvol, args)
+    # η_eff = 0.5 * τII / εII
+    # τij = 2 * η_eff .* ε_eff
 
-    return P, τij, τII, η_eff
+    # return P, τij, τII, η_eff
 end
-
 
 """
     τij, τII = compute_τij(v, εij::NTuple{N,Union{T,NTuple{4,T}}}, args, τij_old::NTuple{3,T})
@@ -75,23 +81,26 @@ Computes deviatoric stress `τij` for given deviatoric strain rate `εij`, old s
 This is for a staggered grid case with a single phase. 
 """
 function compute_p_τij(
-    v, εij::NTuple{N,Union{T,NTuple{4,T}}}, P_old::T, args, τij_old::NTuple{N,Union{T,NTuple{4,T}}}
+    v,
+    εij::NTuple{N,Union{T,NTuple{4,T}}},
+    P_old::T,
+    args,
+    τij_old::NTuple{N,Union{T,NTuple{4,T}}},
 ) where {N,T}
 
     # Second invariant of effective strainrate (taking elasticity into account)
     ε_eff = effective_ε(εij, v, τij_old, args.dt)
     εII = second_invariant_staggered(ε_eff...)
     ε_eff_averaged = staggered_tensor_average(ε_eff)
-    εvol = volumetric_strainrate(staggered_tensor_average(εij))    
+    εvol = volumetric_strainrate(staggered_tensor_average(εij))
 
     args = merge(args, (P_old=P_old, τII_old=0.0))
-    P,τII, = compute_p_τII(v, εII, εvol, args)
+    P, τII, = compute_p_τII(v, εII, εvol, args)
     η_eff = 0.5 * τII / εII
     τij = 2 * η_eff .* ε_eff_averaged
 
     return P, τij, τII, η_eff
 end
-
 
 # Multiple material phases, collocated grid
 """
@@ -138,10 +147,10 @@ function compute_p_τij(
     # Second invariant of effective strainrate (taking elasticity into account)
     ε_eff = effective_ε(εij, v, τij_old, args.dt, phase)
     εII = second_invariant(ε_eff)
-    εvol = volumetric_strainrate(εij) 
+    εvol = volumetric_strainrate(εij)
 
-    args = merge(args, (τII_old=0,P_old=P_old))
-    P,τII = nphase(vi -> compute_p_τII(vi.CompositeRheology[1], εII, εvol, args), phase, v)
+    args = merge(args, (τII_old=0, P_old=P_old))
+    P, τII = nphase(vi -> compute_p_τII(vi.CompositeRheology[1], εII, εvol, args), phase, v)
     η_eff = 0.5 * τII / εII
     τij = 2 * η_eff .* ε_eff
 
@@ -168,7 +177,9 @@ function compute_τij(
     εII = second_invariant_staggered(ε_eff...)
     ε_eff_averaged = staggered_tensor_average(ε_eff)
 
-    τII = nphase(vi -> first(compute_τII(vi.CompositeRheology[1], εII, args)), phases[1][1], v)
+    τII = nphase(
+        vi -> first(compute_τII(vi.CompositeRheology[1], εII, args)), phases[1][1], v
+    )
     η_eff = 0.5 * τII / εII
     τij = 2 * η_eff .* ε_eff_averaged
 
@@ -194,10 +205,12 @@ function compute_p_τij(
     ε_eff = effective_ε(εij, v, τij_old, args.dt, phases)
     εII = second_invariant_staggered(ε_eff...)
     ε_eff_averaged = staggered_tensor_average(ε_eff)
-    εvol = volumetric_strainrate(staggered_tensor_average(εij)) 
+    εvol = volumetric_strainrate(staggered_tensor_average(εij))
 
-    args = merge(args, (τII_old=0,P_old=P_old))
-    P,τII = nphase(vi -> compute_p_τII(vi.CompositeRheology[1], εII, εvol, args), phases[1][1], v)  # note: assumes phases of all staggered points to be the same! 
+    args = merge(args, (τII_old=0, P_old=P_old))
+    P, τII = nphase(
+        vi -> compute_p_τII(vi.CompositeRheology[1], εII, εvol, args), phases[1][1], v
+    )  # note: assumes phases of all staggered points to be the same! 
     η_eff = 0.5 * τII / εII
     τij = 2 * η_eff .* ε_eff_averaged
 
@@ -215,44 +228,43 @@ Also returned are `Tii` (second invariant of the deviatoric stress tensor), and 
 Also required as input is `MatParam`, the material parameters for every phase and `phase`, an integer array of `size(Exx)` that indicates the phase of every point.
 
 This function assumes that strainrate points are collocated and that `Exx`,`Eyy`,`Exy` are at the same points.
-"""
+# """
+
 function compute_τij!(
-    Txx::AbstractArray{_T}, 
-    Tyy::AbstractArray{_T}, 
-    Txy::AbstractArray{_T}, 
-    Tii::AbstractArray{_T}, 
-    η_vep::AbstractArray{_T}, 
-    Exx::AbstractArray{_T}, 
-    Eyy::AbstractArray{_T}, 
-    Exy::AbstractArray{_T}, 
-    P::AbstractArray{_T}, 
-    Txx_o::AbstractArray{_T}, 
-    Tyy_o::AbstractArray{_T}, 
-    Txy_o::AbstractArray{_T}, 
-    phase::AbstractArray{I}, 
-    MatParam::NTuple{N,AbstractMaterialParamsStruct}, 
-    dt::_T
-) where {_T<:Number, I<:Integer, N}
-    Threads.@threads for j in axes(Exx, 2)
-        for i in axes(Exx, 1)
-            @inbounds Txx[i, j], Tyy[i, j], Txy[i, j], Tii[i, j], η_vep[i, j] = _compute_τij_2D(
-                Exx[i,j],
-                Eyy[i,j],
-                Exy[i,j],
-                P[i,j],
-                Txx_o[i,j],
-                Tyy_o[i,j],
-                Txy_o[i,j],
-                phase[i,j],
-                MatParam,
-                dt,
-            )
-        end
+    Txx::AbstractArray{_T},
+    Tyy::AbstractArray{_T},
+    Txy::AbstractArray{_T},
+    Tii::AbstractArray{_T},
+    η_vep::AbstractArray{_T},
+    Exx::AbstractArray{_T},
+    Eyy::AbstractArray{_T},
+    Exy::AbstractArray{_T},
+    P::AbstractArray{_T},
+    Txx_o::AbstractArray{_T},
+    Tyy_o::AbstractArray{_T},
+    Txy_o::AbstractArray{_T},
+    phase::AbstractArray{I},
+    MatParam::NTuple{N,AbstractMaterialParamsStruct},
+    dt::_T,
+) where {_T<:Number,I<:Integer,N}
+    Threads.@threads for i in eachindex(Exx)
+        @inbounds Txx[i], Tyy[i], Txy[i], Tii[i], η_vep[i] = _compute_τij_2D(
+            Exx[i],
+            Eyy[i],
+            Exy[i],
+            P[i],
+            Txx_o[i],
+            Tyy_o[i],
+            Txy_o[i],
+            phase[i],
+            MatParam,
+            dt,
+        )
     end
 end
 
 # # Internal computation array
-function _compute_τij_2D(Exx, Eyy, Exy, P, Txx_o, Tyy_o, Txy_o,  phase, MatParam, dt)
+function _compute_τij_2D(Exx, Eyy, Exy, P, Txx_o, Tyy_o, Txy_o, phase, MatParam, dt)
     args = (; dt=dt, P=P, τII_old=0.0)
     εij = (Exx, Eyy, Exy)
     τij_o = (Txx_o, Tyy_o, Txy_o)
@@ -271,44 +283,42 @@ Also required as input is `MatParam`, the material parameters for every phase an
 This function assumes that strainrate points are collocated and that `Exx`,`Eyy`,`Exy` are at the same points.
 """
 function compute_p_τij!(
-    Txx::AbstractArray{_T}, 
-    Tyy::AbstractArray{_T}, 
-    Txy::AbstractArray{_T}, 
-    Tii::AbstractArray{_T}, 
-    η_vep::AbstractArray{_T}, 
-    P::AbstractArray{_T}, 
-    Exx::AbstractArray{_T}, 
-    Eyy::AbstractArray{_T}, 
-    Exy::AbstractArray{_T}, 
-    P_o::AbstractArray{_T}, 
-    Txx_o::AbstractArray{_T}, 
-    Tyy_o::AbstractArray{_T}, 
-    Txy_o::AbstractArray{_T}, 
-    phase::AbstractArray{I}, 
-    MatParam::NTuple{N,AbstractMaterialParamsStruct}, 
-    dt::_T
-) where {_T<:Number, I<:Integer, N}
-    Threads.@threads for j in axes(Exx, 2)
-        for i in axes(Exx, 1)
-            @inbounds P[i,j], Txx[i, j], Tyy[i, j], Txy[i, j], Tii[i, j], η_vep[i, j] = _compute_p_τij_2D(
-                Exx[i,j],
-                Eyy[i,j],
-                Exy[i,j],
-                P[i,j],
-                Txx_o[i,j],
-                Tyy_o[i,j],
-                Txy_o[i,j],
-                P_o[i,j],
-                phase[i,j],
-                MatParam,
-                dt,
-            )
-        end
+    Txx::AbstractArray{_T},
+    Tyy::AbstractArray{_T},
+    Txy::AbstractArray{_T},
+    Tii::AbstractArray{_T},
+    η_vep::AbstractArray{_T},
+    P::AbstractArray{_T},
+    Exx::AbstractArray{_T},
+    Eyy::AbstractArray{_T},
+    Exy::AbstractArray{_T},
+    P_o::AbstractArray{_T},
+    Txx_o::AbstractArray{_T},
+    Tyy_o::AbstractArray{_T},
+    Txy_o::AbstractArray{_T},
+    phase::AbstractArray{I},
+    MatParam::NTuple{N,AbstractMaterialParamsStruct},
+    dt::_T,
+) where {_T<:Number,I<:Integer,N}
+    Threads.@threads for i in eachindex(Exx)
+        @inbounds P[i], Txx[i], Tyy[i], Txy[i], Tii[i], η_vep[i] = _compute_p_τij_2D(
+            Exx[i],
+            Eyy[i],
+            Exy[i],
+            P[i],
+            Txx_o[i],
+            Tyy_o[i],
+            Txy_o[i],
+            P_o[i],
+            phase[i],
+            MatParam,
+            dt,
+        )
     end
 end
 
 # Internal computation array
-function _compute_p_τij_2D(Exx, Eyy, Exy, P, Txx_o, Tyy_o, Txy_o,  P_o, phase, MatParam, dt)
+function _compute_p_τij_2D(Exx, Eyy, Exy, P, Txx_o, Tyy_o, Txy_o, P_o, phase, MatParam, dt)
     args = (; dt=dt, P=P, τII_old=0.0)
     εij = (Exx, Eyy, Exy)
     τij_o = (Txx_o, Tyy_o, Txy_o)
@@ -334,26 +344,26 @@ Take care of the sizes of the input matrixes:
 - `dt`: timestep 
 """
 function compute_τij_stagcenter!(
-    Txx::AbstractArray{_T},  
-    Tyy::AbstractArray{_T},  
-    Txy::AbstractArray{_T},  
-    Tii::AbstractArray{_T},  
-    η_vep::AbstractArray{_T},  
-    Exx::AbstractArray{_T},  
-    Eyy::AbstractArray{_T},  
-    Exyv::AbstractArray{_T},  
-    P::AbstractArray{_T},  
-    Txx_o::AbstractArray{_T},  
-    Tyy_o::AbstractArray{_T},  
-    Txyv_o::AbstractArray{_T},   
-    phase_center::AbstractArray{I},  
-    phase_vertex::AbstractArray{I},  
-    MatParam::NTuple{N,AbstractMaterialParamsStruct}, 
-    dt::_T
-) where {_T<:Number, I<:Integer, N}
-    Threads.@threads for j in axes(Exx, 2)
-        for i in axes(Exx, 1)
-            @inbounds Txx[i, j], Tyy[i, j], Txy[i, j], Tii[i, j], η_vep[i, j] = _compute_τij_stagcenter(
+    Txx::AbstractArray{_T},
+    Tyy::AbstractArray{_T},
+    Txy::AbstractArray{_T},
+    Tii::AbstractArray{_T},
+    η_vep::AbstractArray{_T},
+    Exx::AbstractArray{_T},
+    Eyy::AbstractArray{_T},
+    Exyv::AbstractArray{_T},
+    P::AbstractArray{_T},
+    Txx_o::AbstractArray{_T},
+    Tyy_o::AbstractArray{_T},
+    Txyv_o::AbstractArray{_T},
+    phase_center::AbstractArray{I},
+    phase_vertex::AbstractArray{I},
+    MatParam::NTuple{N,AbstractMaterialParamsStruct},
+    dt::_T,
+) where {_T<:Number,I<:Integer,N}
+    Threads.@threads for j in axes(Exx,2)
+        for i in axes(Exx,1)
+            @inbounds Txx[i,j], Tyy[i,j], Txy[i,j], Tii[i,j], η_vep[i,j] = _compute_τij_stagcenter(
                 Exx[i,j],
                 Eyy[i,j],
                 Exyv,
@@ -366,28 +376,15 @@ function compute_τij_stagcenter!(
                 MatParam,
                 dt,
                 i,
-                j
+                j,
             )
         end
     end
 end
 
 function _compute_τij_stagcenter(
-    Exx,
-    Eyy,
-    Exyv,
-    Pt,
-    Txx_o,
-    Tyy_o,
-    Txyv_o,
-    phase_center,
-    phase_vertex,
-    MatParam,
-    dt,
-    i,
-    j
+    Exx, Eyy, Exyv, Pt, Txx_o, Tyy_o, Txyv_o, phase_center, phase_vertex, MatParam, dt, i, j
 )
-
     args = (; dt=dt, P=Pt, τII_old=0.0)
     # gather strain rate
     εij_v = (Exyv[i, j], Exyv[i + 1, j], Exyv[i, j + 1], Exyv[i + 1, j + 1]) # gather vertices around ij center
@@ -396,17 +393,19 @@ function _compute_τij_stagcenter(
     τij_v = (Txyv_o[i, j], Txyv_o[i + 1, j], Txyv_o[i, j + 1], Txyv_o[i + 1, j + 1]) # gather vertices around ij center
     τij_o = (Txx_o, Tyy_o, τij_v)
     # gather material phases
-    phases_v = (phase_vertex[i, j], phase_vertex[i + 1, j], phase_vertex[i, j + 1], phase_vertex[i + 1, j + 1]) # gather vertices around ij center
+    phases_v = (
+        phase_vertex[i, j],
+        phase_vertex[i + 1, j],
+        phase_vertex[i, j + 1],
+        phase_vertex[i + 1, j + 1],
+    ) # gather vertices around ij center
     phases = (phase_center[i, j], phase_center[i, j], phases_v)
 
     # update stress and effective viscosity
     Tij, Tii, η_vep = compute_τij(MatParam, εij, args, τij_o, phases)
 
     return Tij[1], Tij[2], Tij[3], Tii, η_vep
-
 end
-
-
 
 """
     compute_τij_stagcenter!(Txx, Tyy, Txy, Tii, η_vep,  Exx, Eyy, Exyv, P, Txx_o, Tyy_o, Txyv_o, phase_center, phase_vertex, MatParam, dt)
@@ -425,27 +424,27 @@ Take care of the sizes of the input matrixes:
 - `dt`: timestep 
 """
 function compute_p_τij_stagcenter!(
-    Txx::AbstractArray{_T},  
-    Tyy::AbstractArray{_T},  
-    Txy::AbstractArray{_T},  
-    Tii::AbstractArray{_T},  
-    η_vep::AbstractArray{_T},  
-    P::AbstractArray{_T},  
-    Exx::AbstractArray{_T},  
-    Eyy::AbstractArray{_T},  
-    Exyv::AbstractArray{_T},  
-    P_o::AbstractArray{_T},  
-    Txx_o::AbstractArray{_T},  
-    Tyy_o::AbstractArray{_T},  
-    Txyv_o::AbstractArray{_T},   
-    phase_center::AbstractArray{I},  
-    phase_vertex::AbstractArray{I},  
-    MatParam::NTuple{N,AbstractMaterialParamsStruct}, 
-    dt::_T
-) where {_T<:Number, I<:Integer, N}
-    Threads.@threads for j in axes(Exx, 2)
-        for i in axes(Exx, 1)
-            @inbounds P[i, j], Txx[i, j], Tyy[i, j], Txy[i, j], Tii[i, j], η_vep[i, j] = _compute_p_τij_stagcenter(
+    Txx::AbstractArray{_T},
+    Tyy::AbstractArray{_T},
+    Txy::AbstractArray{_T},
+    Tii::AbstractArray{_T},
+    η_vep::AbstractArray{_T},
+    P::AbstractArray{_T},
+    Exx::AbstractArray{_T},
+    Eyy::AbstractArray{_T},
+    Exyv::AbstractArray{_T},
+    P_o::AbstractArray{_T},
+    Txx_o::AbstractArray{_T},
+    Tyy_o::AbstractArray{_T},
+    Txyv_o::AbstractArray{_T},
+    phase_center::AbstractArray{I},
+    phase_vertex::AbstractArray{I},
+    MatParam::NTuple{N,AbstractMaterialParamsStruct},
+    dt::_T,
+) where {_T<:Number,I<:Integer,N}
+    Threads.@threads for j in axes(Exx,2)
+        for i in axes(Exx,1)
+            @inbounds Txx[i,j], Tyy[i,j], Txy[i,j], Tii[i,j], η_vep[i,j]  = _compute_p_τij_stagcenter(
                 Exx[i,j],
                 Eyy[i,j],
                 Exyv,
@@ -459,7 +458,7 @@ function compute_p_τij_stagcenter!(
                 MatParam,
                 dt,
                 i,
-                j
+                j,
             )
         end
     end
@@ -479,9 +478,8 @@ function _compute_p_τij_stagcenter(
     MatParam,
     dt,
     i,
-    j
+    j,
 )
-
     args = (; dt=dt, P=P, τII_old=0.0)
     # gather strain rate
     εij_v = (Exyv[i, j], Exyv[i + 1, j], Exyv[i, j + 1], Exyv[i + 1, j + 1]) # gather vertices around ij center
@@ -490,14 +488,18 @@ function _compute_p_τij_stagcenter(
     τij_v = (Txyv_o[i, j], Txyv_o[i + 1, j], Txyv_o[i, j + 1], Txyv_o[i + 1, j + 1]) # gather vertices around ij center
     τij_o = (Txx_o, Tyy_o, τij_v)
     # gather material phases
-    phases_v = (phase_vertex[i, j], phase_vertex[i + 1, j], phase_vertex[i, j + 1], phase_vertex[i + 1, j + 1]) # gather vertices around ij center
+    phases_v = (
+        phase_vertex[i, j],
+        phase_vertex[i + 1, j],
+        phase_vertex[i, j + 1],
+        phase_vertex[i + 1, j + 1],
+    ) # gather vertices around ij center
     phases = (phase_center[i, j], phase_center[i, j], phases_v)
 
     # update stress and effective viscosity
     P, Tij, Tii, η_vep = compute_p_τij(MatParam, εij, P_o, args, τij_o, phases)
 
     return P, Tij[1], Tij[2], Tij[3], Tii, η_vep
-
 end
 
 # ----------------------------------------------------------------------------------------
@@ -514,10 +516,9 @@ staggered_tensor_average(x::NTuple{N,T}) where {N,T} = sum(x) / N
 staggered_tensor_average(x::T) where {T<:Number} = x
 
 @inline function volumetric_strainrate(x::NTuple{3,Union{T,NTuple{4,T}}}) where {T}
-   vol = x[1]+x[2]  #2D
+    return vol = x[1] + x[2]  #2D
 end
 
 @inline function volumetric_strainrate(x::NTuple{6,Union{T,NTuple{4,T}}}) where {T}
-    vol = x[1]+x[2]+x[3] #3D
- end
-
+    return vol = x[1] + x[2] + x[3] #3D
+end
