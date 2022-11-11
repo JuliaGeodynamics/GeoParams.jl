@@ -39,16 +39,16 @@ function compute_p_τij(
 ) where {T,N}
 
     # Second invariant of effective strainrate (taking elasticity into account)
-    return ε_eff = effective_ε(εij, v, τij_old, args.dt)
-    # εII = second_invariant(ε_eff)
-    # εvol = volumetric_strainrate(εij)    # Volumetric strainrate
+    ε_eff = effective_ε(εij, v, τij_old, args.dt)
+    εII = second_invariant(ε_eff)
+    εvol = volumetric_strainrate(εij)    # Volumetric strainrate
 
-    # args = merge(args, (τII_old=0,P_old=P_old))
-    # P,τII = compute_p_τII(v, εII, εvol, args)
-    # η_eff = 0.5 * τII / εII
-    # τij = 2 * η_eff .* ε_eff
+    args = merge(args, (τII_old=0,P_old=P_old))
+    P,τII = compute_p_τII(v, εII, εvol, args)
+    η_eff = 0.5 * τII / εII
+    τij = 2 * η_eff .* ε_eff
 
-    # return P, τij, τII, η_eff
+    return P, τij, τII, η_eff
 end
 
 """
