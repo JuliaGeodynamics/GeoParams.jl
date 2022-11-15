@@ -308,7 +308,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename=nothing, rdigits=4)
     Table *= "\\end{document}\n"
 
     # Writes BibTex sources in to .bib file and Table string into .tex file
-    return write("References.bib", References), write("$filename.tex", Table)
+    return write("$filename.bib", References), write("$filename.tex", Table)
 end
 
 """
@@ -571,17 +571,17 @@ Creates a filename.tex or filename.md file as output. If "latex" is chosen a "Re
 """
 function ParameterTable(
     Phase;
-    filename=nothing,
+    filename="ParameterTable",
     format="latex",
     rdigits=4
     )
 
     if format == "latex"
         d, ref = Phase2Dict(Phase)
-        Dict2LatexTable(d, ref, filename=filename)
+        Dict2LatexTable(d, ref, filename=filename, rdigits=rdigits)
     elseif format == "markdown"
         d = Phase2DictMd(Phase)
-        Dict2MarkdownTable(d)
+        Dict2MarkdownTable(d, filename=filename, rdigits=rdigits)
     end
     return nothing
 end
