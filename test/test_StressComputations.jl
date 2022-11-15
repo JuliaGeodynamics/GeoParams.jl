@@ -172,23 +172,3 @@ using GeoParams
 
 
 end
-
-ProfileCanvas.@profview for i in 1:10000000
-    compute_p_τij(MatParam, ε, P_o, args, τ_o, phase)   # collocated specify phase + pressure
-end
-# we do need this kernel because one can't have nested generators/closures in a
-# @generated function (i.e. a nreduce call inside nphase breaks the function 
-# purity and doesnt work)
-@generated function _phase_elastic_ε(v::NTuple{N,Any}, τij_old, dt) where {N}
-    Base.@_inline_meta
-    quote
-        val = 0.0
-        Base.Cartesian.@nexprs $N i -> @inbounds val += _elastic_ε(v[i], τij_old, dt)
-        return val
-    end
-end
-# Single material phase
-@inline _elastic_ε(v::ConstantElasticity, τij_old, dt) = τij_old / (2 * v.G * dt)
-@inline _elastic_ε(v::Vararg{Any, N}) where {N} = 0.0
-
-nphase(vi -> _phase_elastic_ε(vi.CompositeRheology[1].elements, τ_o[1], dt), phase, MatParam)
