@@ -444,7 +444,7 @@ function compute_p_τij_stagcenter!(
 ) where {_T<:Number,I<:Integer,N}
     Threads.@threads for j in axes(Exx,2)
         for i in axes(Exx,1)
-            @inbounds Txx[i,j], Tyy[i,j], Txy[i,j], Tii[i,j], η_vep[i,j]  = _compute_p_τij_stagcenter(
+            @inbounds P[i, j], Txx[i,j], Tyy[i,j], Txy[i,j], Tii[i,j], η_vep[i,j]  = _compute_p_τij_stagcenter(
                 Exx[i,j],
                 Eyy[i,j],
                 Exyv,
