@@ -7,6 +7,7 @@ using Unitful: Energy
 using Unitful
 using Parameters, LaTeXStrings, BibTeX
 using ..Units
+using Static
 
 import Base.show, Base.convert
 using GeoParams:
@@ -197,9 +198,9 @@ function SetMaterialParams(;
     SeismicVelocity=nothing,
     CharDim=nothing,
 )
-
+    Name_GP = str2char(Name)
     return SetMaterialParams(
-        str2char(Name),
+        Name_GP,
         Phase,
         ConvField(Density, :Density; maxAllowedFields=1),
         ConvField(set_gravity(Gravity, Density), :Gravity; maxAllowedFields=1),
@@ -270,9 +271,13 @@ function SetMaterialParams(
     return phase
 end
 
-str2char(str::String) = str2char(str, Val(length(str)))
-@inline str2char(str, ::Val{N}) where N = ntuple(i->str[i], Val(N))
-@inline str2char(str, ::Val{0}) = ()
+# str2char(str::String) = str2char(str, Val(length(str)))
+# @inline str2char(str, ::Val{N}) where N = ntuple(i->str[i], Val(N))
+# @inline str2char(str, ::Val{0}) = ()
+
+str2char(str::String) = str2char(str, static(length(str)))
+@inline str2char(str, ::StaticInt{N}) where N = ntuple(i->str[i], Val(N))
+@inline str2char(str, ::StaticInt{0}) = ()
 
 # In case density is defined and gravity not, set gravity to default value
 function set_gravity(Gravity::Nothing, Density::AbstractMaterialParam)
