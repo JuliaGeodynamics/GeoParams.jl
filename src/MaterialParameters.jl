@@ -179,6 +179,7 @@ julia> MatParam
 
 
 """
+
 function SetMaterialParams(;
     Name::String="",         # this makes the struct !isbits(); as that sucks for portability we change that later to NTuple(Char)
     Phase=1,
@@ -198,6 +199,30 @@ function SetMaterialParams(;
     CharDim=nothing,
 )
 
+    Name_GP = Tuple(Name_i for Name_i in Name)
+    SetMaterialParams(Name_GP, Phase, Density, Gravity, CreepLaws, Elasticity, Plasticity, CompositeRheology, Conductivity, HeatCapacity, RadioactiveHeat, LatentHeat, ShearHeat, Melting, SeismicVelocity, CharDim)
+
+end
+
+function SetMaterialParams(
+    Name,         # this makes the struct !isbits(); as that sucks for portability we change that later to NTuple(Char)
+    Phase,
+    Density,
+    Gravity,
+    CreepLaws,
+    Elasticity,
+    Plasticity,
+    CompositeRheology,
+    Conductivity,
+    HeatCapacity,
+    RadioactiveHeat,
+    LatentHeat,
+    ShearHeat,
+    Melting,
+    SeismicVelocity,
+    CharDim,
+)
+
     # In case density is defined and gravity not, set gravity to default value
     if ~isnothing(Density) & isnothing(Gravity)
         Gravity = GravitationalAcceleration.ConstantGravity()
@@ -205,7 +230,7 @@ function SetMaterialParams(;
 
     # define struct for phase, while also specifying the maximum number of definitions for every field   
     phase = MaterialParams(
-        NTuple{length(Name),Char}(collect.(Name)),
+        Name,
         Phase,
         false,
         ConvField(Density, :Density; maxAllowedFields=1),
@@ -238,18 +263,11 @@ end
 # Helper function that converts a field to a Tuple, provided it is not nothing
 # This also checks for the maximum allowed number of definitions 
 # (some rheological phases may allow for an arbitrary combination per phase; others like density EoS not) 
-function ConvField(field, fieldname::Symbol; maxAllowedFields=1e6)
-    if ~isnothing(field)
-        if typeof(field) <: AbstractMaterialParam
-            field = (field,)       # transform to tuple
-        end
-        if typeof(field[1]) <: AbstractMaterialParam
-            if length(field) > maxAllowedFields
-                error("Maximum $(maxAllowedFields) field allowed for: $fieldname")
-            end
-        end
-    else
-        field = ()  # empty tuple
+ConvField(::Nothing, fieldname::Symbol; maxAllowedFields=1e6) = ()
+ConvField(field::AbstractMaterialParam, fieldname::Symbol; maxAllowedFields=1e6) = (field, )
+function ConvField(field::NTuple{N, Any}, fieldname::Symbol; maxAllowedFields=1e6) where N 
+    if length(field) > maxAllowedFields
+        error("Maximum $(maxAllowedFields) field allowed for: $fieldname")
     end
     return field
 end
