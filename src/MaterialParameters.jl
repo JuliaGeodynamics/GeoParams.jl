@@ -182,19 +182,19 @@ julia> MatParam
 function SetMaterialParams(;
     Name::String="",         # this makes the struct !isbits(); as that sucks for portability we change that later to NTuple(Char)
     Phase=1,
-    Density=(nothing,),
-    Gravity=(nothing,),
-    CreepLaws=(nothing,),
-    Elasticity=(nothing,),
-    Plasticity=(nothing,),
-    CompositeRheology=(nothing,),
-    Conductivity=(nothing,),
-    HeatCapacity=(nothing,),
-    RadioactiveHeat=(nothing,),
-    LatentHeat=(nothing,),
-    ShearHeat=(nothing,),
-    Melting=(nothing,),
-    SeismicVelocity=(nothing,),
+    Density=nothing,
+    Gravity=nothing,
+    CreepLaws=nothing,
+    Elasticity=nothing,
+    Plasticity=nothing,
+    CompositeRheology=nothing,
+    Conductivity=nothing,
+    HeatCapacity=nothing,
+    RadioactiveHeat=nothing,
+    LatentHeat=nothing,
+    ShearHeat=nothing,
+    Melting=nothing,
+    SeismicVelocity=nothing,
     CharDim=nothing,
 )
 
@@ -278,7 +278,7 @@ str2char(str::String) = str2char(str, Val(length(str)))
 function set_gravity(Gravity::Nothing, Density::AbstractMaterialParam)
     GravitationalAcceleration.ConstantGravity()
 end
-set_gravity(Gravity::T, Density::AbstractMaterialParam) where T = Gravity
+set_gravity(Gravity, Density) = Gravity
 
 # Helper function that converts a field to a Tuple, provided it is not nothing
 # This also checks for the maximum allowed number of definitions 
