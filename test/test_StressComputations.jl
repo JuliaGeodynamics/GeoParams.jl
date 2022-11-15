@@ -150,8 +150,8 @@ using GeoParams
     phase_center = ones(Int64,nx,ny)
     phase_vertex = ones(Int64,nx+1,ny+1)
 
-    # Collocated case:  60.028 μs (6 allocations: 928 bytes)
-    @edit compute_τij!(Txx, Tyy, Txy, Tii, η_vep, Exx, Eyy, Exy, P, Txx_o, Tyy_o, Txy_o, phase_center, MatParam, dt) 
+    # Collocated case
+    compute_τij!(Txx, Tyy, Txy, Tii, η_vep, Exx, Eyy, Exy, P, Txx_o, Tyy_o, Txy_o, phase_center, MatParam, dt) 
     @test sum(Txx) ≈ sum(Tyy) ≈ sum(Txy) ≈ 190.2970297029704
     @test sum(η_vep) ≈ 95.1485148514852
 
