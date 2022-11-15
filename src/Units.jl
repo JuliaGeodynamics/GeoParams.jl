@@ -588,7 +588,12 @@ nondimensionalize(param::AbstractArray{<:Number}, g::GeoUnits{TYPE}) where {TYPE
 
 nondimensionalizes a tuple of parameters    
 """
-nondimensionalize(param::NTuple{N,Union{Quantity,GeoUnit}}, g::GeoUnits{TYPE}) where {N,TYPE}  = Tuple(nondimensionalize.(param,fill(g,2)))
+function nondimensionalize(param::NTuple{N,Union{Quantity,GeoUnit}}, g::GeoUnits{TYPE}) where {N,TYPE}
+    ntuple(Val(N)) do i
+        Base.@_inline_meta
+        nondimensionalize(param[i], g)
+    end
+end
 
 
 # This computes the characteristic value
