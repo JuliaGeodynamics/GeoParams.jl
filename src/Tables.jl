@@ -362,9 +362,9 @@ function Phase2DictMd(s)
                             unit = string(getproperty(b, :unit))
                             value = string(getproperty(b, :val))
                             # Gives back variablename 
-                            latexvar = "$var"
+                            mdvar = "$var"
                             # Put value, LaTex name and units in a Dict
-                            fds["$var $label $i"] = (value, latexvar, "", "$i") # 3te Stelle sollte sein: "$flowlaw" statt ""
+                            fds["$var $label $i"] = (value, mdvar, "", "$i") # 3te Stelle sollte sein: "$flowlaw" statt ""
                         end
                         k += 1
                     end
