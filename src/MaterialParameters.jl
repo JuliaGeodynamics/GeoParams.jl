@@ -179,7 +179,6 @@ julia> MatParam
 
 
 """
-
 function SetMaterialParams(;
     Name::String="",         # this makes the struct !isbits(); as that sucks for portability we change that later to NTuple(Char)
     Phase=1,
@@ -199,13 +198,28 @@ function SetMaterialParams(;
     CharDim=nothing,
 )
 
-    Name_GP = Tuple(Name_i for Name_i in Name)
-    SetMaterialParams(Name_GP, Phase, Density, Gravity, CreepLaws, Elasticity, Plasticity, CompositeRheology, Conductivity, HeatCapacity, RadioactiveHeat, LatentHeat, ShearHeat, Melting, SeismicVelocity, CharDim)
-
+    return SetMaterialParams(
+        str2char(Name),
+        Phase,
+        ConvField(Density, :Density; maxAllowedFields=1),
+        ConvField(set_gravity(Gravity, Density), :Gravity; maxAllowedFields=1),
+        ConvField(CreepLaws, :Creeplaws),
+        ConvField(Elasticity, :Elasticity; maxAllowedFields=1),
+        ConvField(Plasticity, :Plasticity),
+        ConvField(CompositeRheology,  :CompositeRheology; maxAllowedFields=1),
+        ConvField(Conductivity, :Conductivity; maxAllowedFields=1),
+        ConvField(HeatCapacity, :HeatCapacity; maxAllowedFields=1),
+        ConvField(RadioactiveHeat, :RadioactiveHeat; maxAllowedFields=1),
+        ConvField(LatentHeat, :LatentHeat; maxAllowedFields=1),
+        ConvField(ShearHeat, :ShearHeat; maxAllowedFields=1),
+        ConvField(Melting, :Melting; maxAllowedFields=1),
+        ConvField(SeismicVelocity, :SeismicVelocity; maxAllowedFields=1),
+        CharDim,
+    )
 end
 
 function SetMaterialParams(
-    Name,         # this makes the struct !isbits(); as that sucks for portability we change that later to NTuple(Char)
+    Name, # this makes the struct !isbits(); as that sucks for portability we change that later to NTuple(Char)
     Phase,
     Density,
     Gravity,
@@ -223,29 +237,25 @@ function SetMaterialParams(
     CharDim,
 )
 
-    # In case density is defined and gravity not, set gravity to default value
-    if ~isnothing(Density) & isnothing(Gravity)
-        Gravity = GravitationalAcceleration.ConstantGravity()
-    end
-
     # define struct for phase, while also specifying the maximum number of definitions for every field   
+    # phase = MaterialParams(
     phase = MaterialParams(
         Name,
         Phase,
         false,
-        ConvField(Density, :Density; maxAllowedFields=1),
-        ConvField(Gravity, :Gravity; maxAllowedFields=1),
-        ConvField(CreepLaws, :Creeplaws),
-        ConvField(Elasticity, :Elasticity; maxAllowedFields=1),
-        ConvField(Plasticity, :Plasticity),
-        ConvField(CompositeRheology,  :CompositeRheology; maxAllowedFields=1),
-        ConvField(Conductivity, :Conductivity; maxAllowedFields=1),
-        ConvField(HeatCapacity, :HeatCapacity; maxAllowedFields=1),
-        ConvField(RadioactiveHeat, :RadioactiveHeat; maxAllowedFields=1),
-        ConvField(LatentHeat, :LatentHeat; maxAllowedFields=1),
-        ConvField(ShearHeat, :ShearHeat; maxAllowedFields=1),
-        ConvField(Melting, :Melting; maxAllowedFields=1),
-        ConvField(SeismicVelocity, :SeismicVelocity; maxAllowedFields=1),
+        Density,
+        Gravity,
+        CreepLaws,
+        Elasticity,
+        Plasticity,
+        CompositeRheology,
+        Conductivity,
+        HeatCapacity,
+        RadioactiveHeat,
+        LatentHeat,
+        ShearHeat,
+        Melting,
+        SeismicVelocity,
     )
 
     # [optionally] non-dimensionalize the struct
@@ -259,6 +269,16 @@ function SetMaterialParams(
 
     return phase
 end
+
+str2char(str::String) = str2char(str, Val(length(str)))
+@inline str2char(str, ::Val{N}) where N = ntuple(i->str[i], Val(N))
+@inline str2char(str, ::Val{0}) = ()
+
+# In case density is defined and gravity not, set gravity to default value
+function set_gravity(Gravity::Nothing, Density::AbstractMaterialParam)
+    GravitationalAcceleration.ConstantGravity()
+end
+set_gravity(Gravity::T, Density::AbstractMaterialParam) where T = Gravity
 
 # Helper function that converts a field to a Tuple, provided it is not nothing
 # This also checks for the maximum allowed number of definitions 
