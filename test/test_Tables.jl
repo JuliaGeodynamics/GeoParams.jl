@@ -1,5 +1,6 @@
 using Test
 using GeoParams
+using Unidecode
 
 @testset "Tables.jl" begin
 MatParam = (SetMaterialParams(Name="Viscous Matrix", Phase=1, Density=ConstantDensity(),CreepLaws = SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)")),
@@ -30,25 +31,27 @@ dig, num, ex = detachFloatfromExponent(n4)
 
 #test Phase2Dict()
 dict, ref = Phase2Dict(MatParam)
-dict["ρ Density 1"][1] == "$(MatParam[1].Density[1].ρ.val)"
-dict["ρ Density 1"][2] == "$(unicdecode("ρ"))"
-dict["ρ Density 1"][3] == ""
-dict["ρ Density 1"][4] == "1"
-dict["Name 1"][1] == "$(join(MatParam[1].Name))"
-dict["Name 1"][1] == "$(length(MatParam))"
-dict["Name 1"][1] == "1"
-dict["Name 1"][4] == ""
+dval = MatParam[1].Density[1].ρ.val
+@test dict["ρ Density 1"][1] == "$dval"
+@test dict["ρ Density 1"][2] == "\\" * "$(unidecode("ρ"))"
+@test dict["ρ Density 1"][3] == ""
+@test dict["ρ Density 1"][4] == "1"
+@test dict["Name 1"][1] == "$(join(MatParam[1].Name))"
+@test dict["Name 1"][2] == "$(length(MatParam))"
+@test dict["Name 1"][3] == "1"
+@test dict["Name 1"][4] == ""
 
-#test Phase2Dict()
-dict, ref = Phase2DictMd(MatParam)
-dict["ρ Density 1"][1] == "$(MatParam[1].Density[1].ρ.val)"
-dict["ρ Density 1"][2] == "ρ)"
-dict["ρ Density 1"][3] == ""
-dict["ρ Density 1"][4] == "1"
-dict["Name 1"][1] == "$(join(MatParam[1].Name))"
-dict["Name 1"][1] == "$(length(MatParam))"
-dict["Name 1"][1] == "1"
-dict["Name 1"][4] == ""
+#test Phase2DictMd()
+dictMd = Phase2DictMd(MatParam)
+dvalMd = MatParam[1].Density[1].ρ.val
+@test dictMd["ρ Density 1"][1] == "$dvalMd"
+@test dictMd["ρ Density 1"][2] == "ρ"
+@test dictMd["ρ Density 1"][3] == ""
+@test dictMd["ρ Density 1"][4] == "1"
+@test dictMd["Name 1"][1] == "$(join(MatParam[1].Name))"
+@test dictMd["Name 1"][2] == "$(length(MatParam))"
+@test dictMd["Name 1"][3] == "1"
+@test dictMd["Name 1"][4] == ""
 
 #test Dict2LatexTable()
 
