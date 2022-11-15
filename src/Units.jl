@@ -583,6 +583,19 @@ end
 # If it is an array, but has no units we cannot know how to nondimensionalize it
 nondimensionalize(param::AbstractArray{<:Number}, g::GeoUnits{TYPE}) where {TYPE} = param
 
+"""
+    param = nondimensionalize(param::NTuple{N,Quantity}, g::GeoUnits{TYPE})
+
+nondimensionalizes a tuple of parameters    
+"""
+function nondimensionalize(param::NTuple{N,Union{Quantity,GeoUnit}}, g::GeoUnits{TYPE}) where {N,TYPE}
+    ntuple(Val(N)) do i
+        Base.@_inline_meta
+        nondimensionalize(param[i], g)
+    end
+end
+
+
 # This computes the characteristic value
 function compute_units(
     param::GeoUnit{<:Union{T,AbstractArray{T}},U}, g::GeoUnits{TYPE}
