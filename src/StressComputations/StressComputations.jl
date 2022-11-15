@@ -409,13 +409,13 @@ end
 
 
 """
-    compute_τij_stagcenter!(Txx, Tyy, Txy, Tii, η_vep,  Exx, Eyy, Exyv, P, Txx_o, Tyy_o, Txyv_o, phase_center, phase_vertex, MatParam, dt)
+    compute_τij_stagcenter!(Txx, Tyy, Txy, Tii, η_vep,  P, Exx, Eyy, Exyv, P_o, Txx_o, Tyy_o, Txyv_o, phase_center, phase_vertex, MatParam, dt)
 
 Updates deviatoric stresses on a staggered grid in a centered based manner (averages strainrates/old stresses from vertices -> centers).
 Take care of the sizes of the input matrixes:
-- `Txx`,`Tyy`,`Txy`,`Tii`: 2D matrixes of size (nx,ny) which describe updated deviatoric stress components (x,y,xy, 2nd invariant) at the center point
+- `Txx`,`Tyy`,`Txy`,`Tii`,`P`: 2D matrixes of size (nx,ny) which describe updated deviatoric stress components (x,y,xy, 2nd invariant) at the center point
 - `η_vep`: viscoelastoplastic viscosity @ center (nx,ny)
-- `Exx`,`Eyy`,`P`: deviatoric strain rate components & pressure @ center 
+- `Exx`,`Eyy`,`P_o`: deviatoric strain rate components & old pressure @ center
 - `Exy`: shear strain rate @ vertices (nx+1,ny+1)
 - `Txx_o`, `Tyy_o`: deviatoric stress normal components of last timestep at center (nx,ny)
 - `Txy_o`: deviatoric stress shear components at vertices (nx+1,ny+1)
