@@ -595,6 +595,7 @@ function nondimensionalize(param::NTuple{N,Union{Quantity,GeoUnit}}, g::GeoUnits
     end
 end
 
+nondimensionalize(args...) =  nondimensionalize(Tuple(args[1:end-1]), args[end])
 
 # This computes the characteristic value
 function compute_units(
