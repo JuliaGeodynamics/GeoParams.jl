@@ -17,7 +17,7 @@ function local_iterations_εII(
 
     # Initial guess
     τII = compute_τII_harmonic(v, εII, args)
-    @print(verbose, "initial stress_II = $τII")
+    # @print(verbose, "initial stress_II = $τII")
 
     # Local Iterations
     iter = 0
@@ -34,13 +34,13 @@ function local_iterations_εII(
         =#
         τII = muladd(εII - compute_εII(v, τII, args), inv(dεII_dτII(v, τII, args)), τII)
 
-        ϵ = abs(τII - τII_prev) * inv(abs(τII))
+        ϵ = abs(τII - τII_prev) * inv(τII)
         τII_prev = τII
 
-        @print(verbose, " iter $(iter) $ϵ")
+        # @print(verbose, " iter $(iter) $ϵ")
     end
-    @print(verbose, "final τII = $τII")
-    @print(verbose, "---")
+    # @print(verbose, "final τII = $τII")
+    # @print(verbose, "---")
 
     return τII
 end
@@ -65,7 +65,7 @@ Performs local iterations versus stress for a given strain rate using AD
     # Initial guess
     τII = compute_τII_harmonic(v, εII, args)
     
-    @print(verbose, "initial stress_II = $τII")
+    # @print(verbose, "initial stress_II = $τII")
 
     # extract plastic element if it exists
     v_pl = v[1]
@@ -114,12 +114,12 @@ Performs local iterations versus stress for a given strain rate using AD
 
         τII = muladd(f, inv(dεII_dτII), τII)
 
-        ϵ = abs(τII - τII_prev) * inv(abs(τII))
+        ϵ = abs(τII - τII_prev) * inv(τII)
         τII_prev = τII
-        @print(verbose, " iter $(iter) $ϵ τII=$τII")
+        # @print(verbose, " iter $(iter) $ϵ τII=$τII")
     end
-    @print(verbose, "final τII = $τII")
-    @print(verbose, "---")
+    # @print(verbose, "final τII = $τII")
+    # @print(verbose, "---")
 
     return τII
 end
@@ -154,7 +154,7 @@ function compute_εII(v::AbstractPlasticity, τII::_T, args; tol=1e-6, verbose=f
 
         ϵ = F
 
-        @print(verbose, "    plastic iter $(iter) ϵ=$ϵ λ=$λ, F=$F")
+        # @print(verbose, "    plastic iter $(iter) ϵ=$ϵ λ=$λ, F=$F")
     end
 
     ε_pl = λ*∂Q∂τII(v, τII_pl, args)
@@ -170,7 +170,7 @@ end
     # Initial guess
     εII = compute_εII_harmonic(v, τII, args)
 
-    @print(verbose, "initial εII = $εII")
+    # @print(verbose, "initial εII = $εII")
 
     # Local Iterations
     iter = 0
@@ -189,12 +189,12 @@ end
 
         ϵ = abs(εII - εII_prev) * inv(εII)
         εII_prev = εII
-        @print(verbose," iter $(iter) $ϵ")
+        # @print(verbose," iter $(iter) $ϵ")
         
     end
     
-    @print(verbose,"final εII = $εII")
-    @print(verbose,"---")
+    # @print(verbose,"final εII = $εII")
+    # @print(verbose,"---")
     
     return εII
 end
@@ -217,7 +217,7 @@ Performs local iterations versus pressure for a given total volumetric strain ra
     # Initial guess
     p = compute_p_harmonic(v, εvol, args)
     
-    @print(verbose,"initial p = $p")
+    # @print(verbose,"initial p = $p")
 
     # Local Iterations
     iter = 0
@@ -237,11 +237,11 @@ Performs local iterations versus pressure for a given total volumetric strain ra
         ϵ = abs(p - p_prev) * inv(abs(p))
         p_prev = p
 
-        @print(verbose," iter $(iter) $ϵ")
+        # @print(verbose," iter $(iter) $ϵ")
     end
     
-    @print(verbose,"final p = $p")
-    @print(verbose,"---")
+    # @print(verbose,"final p = $p")
+    # @print(verbose,"---")
     
     return p
 end
@@ -271,11 +271,11 @@ Performs local iterations versus strain rate for a given stress
         dfdεII = -dτII_dεII(v, εII, args)
         εII -= f / dfdεII
 
-        ϵ = abs(εII - εII_prev) / abs(εII)
+        ϵ = abs(εII - εII_prev) / εII
         εII_prev = εII
-        @print(verbose," iter $(iter) $ϵ")
+        # @print(verbose," iter $(iter) $ϵ")
     end
-    @print(verbose,"---")
+    # @print(verbose,"---")
     
     return εII
 end
@@ -309,7 +309,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         τ_initial = compute_τII_harmonic(c, εII_total, args)
     end
 
-    @print(verbose,"τII guess = $τ_initial")
+    # @print(verbose,"τII guess = $τ_initial")
 
     x    = @MVector ones(_T, n)
     x   .= εII_total
@@ -349,9 +349,9 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         x .+= dx   
         
         ϵ = sum(abs.(dx)./(abs.(x)))
-        @print(verbose," iter $(iter) $ϵ")
+        # @print(verbose," iter $(iter) $ϵ")
     end
-    @print(verbose,"---")
+    # @print(verbose,"---")
     
     if (iter == max_iter)
         error("iterations did not converge")
@@ -389,7 +389,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         τ_initial = compute_τII_harmonic(c, εII_total, args)
     end
     
-    @print(verbose,"τII guess = $τ_initial")
+    # @print(verbose,"τII guess = $τ_initial")
     
     x    = @MVector zeros(_T, n)
     x[1] = τ_initial
@@ -430,9 +430,9 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
        # @show dx x r J
         
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
-        @print(verbose," iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
+        # @print(verbose," iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
     end
-    @print(verbose,"---")
+    # @print(verbose,"---")
     if (iter == max_iter)
         error("iterations did not converge")
     end
@@ -640,7 +640,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     if isnothing(p_initial)
         p_initial = compute_p_harmonic(c, εvol_total, args)
     end    
-    @print(verbose,"τII guess = $τ_initial \n  P guess = $p_initial")
+    # @print(verbose,"τII guess = $τ_initial \n  P guess = $p_initial")
     
     x    = @MVector zeros(_T, n)
     x[1] = τ_initial
@@ -677,9 +677,9 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         x .+= dx   
         
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
-        @print(verbose," iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3])")
+        # @print(verbose," iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3])")
     end
-    @print(verbose,"---")
+    # @print(verbose,"---")
     if (iter == max_iter)
         error("iterations did not converge")
     end

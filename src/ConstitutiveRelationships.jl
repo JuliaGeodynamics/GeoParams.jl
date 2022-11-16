@@ -7,7 +7,7 @@ using Base: Float64
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
-import GeoParams: param_info, fastpow, @print
+import GeoParams: param_info, fastpow, nphase, @print
 import GeoParams: second_invariant, second_invariant_staggered
 using BibTeX
 using ..MaterialParameters: MaterialParamsInfo
@@ -15,6 +15,7 @@ import Base.show
 using ForwardDiff
 using StaticArrays
 using Static
+
 
 const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 
@@ -25,7 +26,7 @@ precision(v::AbstractConstitutiveLaw{T}) where T = T
 
 
 include("Computations.jl")
-
+#include("TensorAlgebra/TensorAlgebra.jl")
 include("CreepLaw/CreepLaw.jl")              # viscous Creeplaws
 include("Elasticity/Elasticity.jl")          # elasticity
 include("Plasticity/Plasticity.jl")          # plasticity
@@ -60,8 +61,8 @@ export param_info,
     CompositeRheology,
     AbstractComposite,
     AbstractConstitutiveLaw
-    AxialCompression, SimpleShear, Invariant 
-
+    AxialCompression, SimpleShear, Invariant ,
+    
 # add methods programatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType)
     @eval begin

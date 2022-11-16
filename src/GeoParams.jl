@@ -114,6 +114,7 @@ export Phase2Dict, Dict2LatexTable
 using .MaterialParameters.PhaseDiagrams
 export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
 
+
 # Density
 using .MaterialParameters.Density
 export compute_density,                                # computational routines
@@ -148,8 +149,6 @@ export dεII_dτII,
     compute_εvol,
     compute_p!,
     compute_p,
-    strain_rate_circuit,
-    stress_circuit,
     CorrectionFactor,
     remove_tensor_correction,
     isvolumetric,
@@ -170,6 +169,7 @@ export dεII_dτII,
     AbstractElasticity,
     ConstantElasticity,
     SetConstantElasticity,
+    effective_εII,
 
     #       Plasticity
     AbstractPlasticity,
@@ -185,7 +185,6 @@ export dεII_dτII,
     #       Composite rheologies
     AbstractConstitutiveLaw,
     AbstractComposite,
-    strain_rate_circuit,
     computeViscosity_τII,
     computeViscosity_εII,
     computeViscosity_τII!,
@@ -207,8 +206,14 @@ export dεII_dτII,
     local_iterations_εvol, 
     compute_p_harmonic
     
+
+# Constitutive relationships laws
+include("StressComputations/StressComputations.jl")
+export compute_τij, compute_p_τij, compute_τij_stagcenter!, compute_p_τij_stagcenter!, compute_τij!, compute_p_τij!
+
 include("Rheology_Utils.jl")
 export time_τII_0D, time_τII_0D!, time_p_τII_0D, time_p_τII_0D!
+
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration

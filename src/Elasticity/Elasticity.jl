@@ -19,7 +19,8 @@ export compute_εII,            # calculation routines
     ConstantElasticity,     # constant
     SetConstantElasticity,  # helper function
     AbstractElasticity,
-    isvolumetric
+    isvolumetric, 
+    effective_εII, effective_ε
 
 # ConstantElasticity  -------------------------------------------------------
 
@@ -118,7 +119,7 @@ end
     a::ConstantElasticity, εII::_T; τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
 ) where {_T}
     @unpack_val G = a
-    τII = _T(2) * G * dt * εII + τII_old
+    τII = _T(2.0) * G * dt * εII + τII_old
 
     return τII
 end
@@ -126,7 +127,7 @@ end
 @inline function dτII_dεII(a::ConstantElasticity{_T}, τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
     ) where {_T}
     @unpack_val G = a
-    return _T(2) * G * dt
+    return _T(2.0) * G * dt
 end
 
 """
@@ -290,21 +291,210 @@ function compute_εvol(s::AbstractMaterialParamsStruct, args)
     end
 end
 
-#=
-# add methods programmatically
-for myType in (:ConstantElasticity,)
-    @eval begin
-        (s::$(myType))(args)= s(; args...)
-        compute_εII(s::$(myType), args) = s(args)
-        compute_εII!(ε_el::AbstractArray{_T,N}, s::$(myType){_T}, args) where {_T,N} = compute_εII!(ε_el, s; args...)
-        dεII_dτII(s::ConstantElasticity, args) = dεII_dτII(s; args...)
+## EFFECTIVE STRAIN RATE (Eij_eff = Eij + Tij/(2 G dt) ) 
+
+# Single material phase
+@inline _elastic_ε(v::ConstantElasticity, τij_old, dt) = τij_old / (2 * v.G * dt)
+@inline _elastic_ε(v::Vararg{Any, N}) where {N} = 0.0
+
+@inline effective_ε(εij::T, v, τij_old::T, dt) where {T} = εij + elastic_ε(v, τij_old, dt)
+
+# Method for staggered grids
+@inline function effective_ε(
+    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T,NTuple{4,T}}}, dt
+) where {N,T}
+    ntuple(Val(N)) do i
+        Base.@_inline_meta
+        @inbounds effective_ε(εij[i], v, τij_old[i], dt)
     end
 end
-=#
 
-#compute_εII(args...) = compute_param(compute_εII, args...)
-#compute_εII!(args...) = compute_param!(compute_εII, args...)
-#compute_εvol(args...) = compute_param(compute_εvol, args...)
-#3ompute_εvol!(args...) = compute_param!(compute_εvol, args...)
-#compute_p(args...) = compute_param(compute_p, args...)
-#compute_p!(args...) = compute_param!(compute_p, args...)
+@inline function effective_ε(
+    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt
+) where {N,T}
+    return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt), Val(N))
+end
+
+# 2D wrapper 
+function effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
+    return effective_ε((εxx, εyy, εxy), v, (τxx_old, τyy_old, τxy_old), dt)
+end
+
+function effective_εII(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
+    εxx, εyy, εxy = effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
+    εII = second_invariant(εxx, εyy, εxy)
+    return εII
+end
+
+# 3D wrapper 
+function effective_ε(
+    εxx,
+    εyy,
+    εzz,
+    εyz,
+    εxz,
+    εxy,
+    v,
+    τxx_old,
+    τyy_old,
+    τzz_old,
+    τyz_old,
+    τxz_old,
+    τxy_old,
+    dt,
+)
+    return effective_ε(
+        (εxx, εyy, εzz, εyz, εxz, εxy),
+        v,
+        (τxx_old, τyy_old, τzz_old, τyz_old, τxz_old, τxy_old),
+        dt,
+    )
+end
+
+function effective_εII(
+    εxx,
+    εyy,
+    εzz,
+    εyz,
+    εxz,
+    εxy,
+    v,
+    τxx_old,
+    τyy_old,
+    τzz_old,
+    τyz_old,
+    τxz_old,
+    τxy_old,
+    dt,
+)
+    εxx, εyy, εzz, εyz, εxz, εxy = effective_ε(
+        εxx,
+        εyy,
+        εzz,
+        εyz,
+        εxz,
+        εxy,
+        v,
+        τxx_old,
+        τyy_old,
+        τzz_old,
+        τyz_old,
+        τxz_old,
+        τxy_old,
+        dt,
+    )
+    εII = second_invariant(εxx, εyy, εzz, εyz, εxz, εxy)
+    return εII
+end
+
+# Multiple material phases (collocated grid)
+
+@inline effective_ε(εij::T, v, τij_old::T, dt, phase::Int64) where {T} = εij + elastic_ε(v, τij_old, dt, phase)
+
+# Method for staggered grids
+@inline function effective_ε(
+    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T,NTuple{4,T}}}, dt, phase::Int64
+) where {N,T}
+    ntuple(Val(N)) do i
+        Base.@_inline_meta
+        @inbounds effective_ε(εij[i], v, τij_old[i], dt, phase)
+    end
+end
+
+@inline function effective_ε(
+    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt, phase::Int64
+) where {N,T}
+    return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt, phase), Val(N))
+end
+
+# 2D wrapper 
+function effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt, phase)
+    return effective_ε((εxx, εyy, εxy), v, (τxx_old, τyy_old, τxy_old), dt, phase)
+end
+
+function effective_εII(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt, phase)
+    εxx, εyy, εxy = effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt, phase)
+    εII = second_invariant(εxx, εyy, εxy)
+    return εII
+end
+
+# 3D wrapper 
+function effective_ε(
+    εxx,
+    εyy,
+    εzz,
+    εyz,
+    εxz,
+    εxy,
+    v,
+    τxx_old,
+    τyy_old,
+    τzz_old,
+    τyz_old,
+    τxz_old,
+    τxy_old,
+    dt,
+    phase
+)
+    return effective_ε(
+        (εxx, εyy, εzz, εyz, εxz, εxy),
+        v,
+        (τxx_old, τyy_old, τzz_old, τyz_old, τxz_old, τxy_old),
+        dt,
+        phase
+    )
+end
+
+function effective_εII(
+    εxx,
+    εyy,
+    εzz,
+    εyz,
+    εxz,
+    εxy,
+    v,
+    τxx_old,
+    τyy_old,
+    τzz_old,
+    τyz_old,
+    τxz_old,
+    τxy_old,
+    dt,
+    phase
+)
+    εxx, εyy, εzz, εyz, εxz, εxy = effective_ε(
+        εxx,
+        εyy,
+        εzz,
+        εyz,
+        εxz,
+        εxy,
+        v,
+        τxx_old,
+        τyy_old,
+        τzz_old,
+        τyz_old,
+        τxz_old,
+        τxy_old,
+        dt,
+        phase
+    )
+    εII = second_invariant(εxx, εyy, εzz, εyz, εxz, εxy)
+    return εII
+end
+
+## Expand methods for multiple phases in staggered grids
+@inline function effective_ε(
+    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T,NTuple{4,T}}}, dt, phases::NTuple{N,Union{I,NTuple{4,I}}}
+) where {N,T,I<:Integer}
+    ntuple(Val(N)) do i
+        Base.@_inline_meta
+        @inbounds effective_ε(εij[i], v, τij_old[i], dt, phases[i])
+    end
+end
+
+@inline function effective_ε(
+    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt, phases::NTuple{N,Union{I,NTuple{4,I}}}
+) where {N,T,I<:Integer}
+    return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt, phases[i]), Val(N))
+end

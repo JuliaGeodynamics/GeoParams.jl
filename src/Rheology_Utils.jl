@@ -20,6 +20,23 @@ function time_τII_0D(v::Union{CompositeRheology,Tuple, Parallel}, εII::Number,
 end
 
 """
+    t_vec, τ_vec = time_τII_0D(v::CompositeRheology, ε::NTuple{N,T}, args; t=(0.,100.), τ0=NTuple{N,T}, nt::Int64=100)
+
+This performs a 0D constant strainrate experiment for a composite rheology structure `v`, and a given, constant, strainrate tensor `ε` and rheology arguments `args`.
+The initial deviatoric stress tensor `τ`, the time range `t` and the number of timesteps `nt` can be modified 
+"""
+function time_τII_0D(v::Union{CompositeRheology,Tuple, Parallel}, ε::NTuple{N,T}, args; t=(0.,100.), τ0::NTuple{N,T}=Tuple(zeros(N)), nt::Int64=100, verbose=true) where {N,T}
+    t_vec    = range(t[1], t[2], length=nt)
+    τII_vec  = zero(t_vec)
+    ε_vec  = [ε for i = 1:nt]
+    τ_vec  = [τ0 for i = 1:nt]
+
+    time_τII_0D!(τ_vec, τII_vec, v, ε_vec, args, t_vec, verbose=verbose);
+
+    return t_vec, τ_vec, τII_vec
+end
+
+"""
     time_τII_0D!(τ_vec::Vector{T}, v::CompositeRheology, εII_vec::Vector{T}, args, t_vec::AbstractVector{T}) where {T}
 
 Computes stress-time evolution for a 0D (homogeneous) setup with given strainrate vector (which can vary with time).
@@ -41,6 +58,27 @@ function time_τII_0D!(τ_vec::Vector{T}, v::Union{CompositeRheology,Tuple, Para
 end
 
 
+"""
+    time_τII_0D!(τ_vec::Vector{NTuple{N,T}}, τII_vec::Vector{T}, v::Union{CompositeRheology,Tuple, Parallel}, ε_vec::Vector{NTuple{N,T}}, args, t_vec::AbstractVector{T}; verbose=false) where {N,T}
+
+Computes stress-time evolution for a 0D (homogeneous) setup with given strainrate tensor (which can vary with time).
+"""
+function time_τII_0D!(τ_vec::Vector{NTuple{N,T}}, τII_vec::Vector{T}, v::Union{CompositeRheology,Tuple, Parallel}, ε_vec::Vector{NTuple{N,T}}, args, t_vec::AbstractVector{T}; verbose=false) where {N,T}
+
+    nt  = length(τ_vec)
+    τII = τ_vec[1]
+
+    for i=2:nt  
+        dt      = t_vec[i]-t_vec[i-1]
+        args    = merge(args, (; τII_old=0, dt=dt))
+        τij,τII = compute_τij(v, ε_vec[i-1], args, τ_vec[i-1])
+        
+        τ_vec[i] = τij
+        τII_vec[i] = τII
+    end
+
+    return nothing
+end
 
 """
     t_vec, P_vec, τ_vec = time_p_τII_0D(v::CompositeRheology, εII::Number, εvol::Number, args; t=(0.,100.), τ0=0., nt::Int64=100)
