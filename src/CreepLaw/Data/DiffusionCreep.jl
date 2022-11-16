@@ -438,4 +438,25 @@ const DiffusionCreep_info = Dict([
     ),
 )
 
+("HK03gd - Hirth and Kohlstedt, 2003, dry olivine, diffusion creep",
+     # autoconverted from Laurent Montesi's RHEOL_GUI matlab package 
+     (
+          DiffusionCreep(
+          Name = "HK03gd - Hirth and Kohlstedt, 2003, dry olivine, diffusion creep",
+          n = 1.000000NoUnits, 
+          p = -3.00NoUnits, 
+          A = 1.500000e-15Pa^(-1)*m^3.000000/s, 
+          E = 375.00kJ/mol, 
+          V = 0.000000e+00m^3/mol, 
+          r = 0.00NoUnits, 
+          Apparatus = Invariant), 
+          MaterialParamsInfo(Comment = "From Laurent Montesi's RHEOL_GUI package; not checked yet", 
+          BibTex_Reference = ", 
+             Hirth and Kohlstedt, 2003, dry olivine, diffusion creep 
+          "), 
+     ),
+)
+
+
+
 ])  # end of list

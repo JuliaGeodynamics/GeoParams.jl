@@ -52,13 +52,13 @@ const DislocationCreep_info = Dict(
 
         # Olivine rheology, constant water fugacity
         (
-            "1. Wet Olivine | Hirth & Kohlstedt (2003)",
+            "Wet Olivine 1 | Hirth & Kohlstedt (2003)",
             # After Hirth, G. & Kohlstedt (2003), D. Rheology of the upper mantle and the mantle wedge: A view from the experimentalists.
             #   Inside the subduction Factory 83?105. Table 1, "wet dislocation" parameters
             #  Note that this assumes C_OH=1000
             (
                 DislocationCreep(;
-                    Name="1. Wet Olivine | Hirth & Kohlstedt (2003)",
+                    Name="Wet Olivine 1 | Hirth & Kohlstedt (2003)",
                     n=3.5NoUnits,
                     A=90MPa^(-3.5) / s,
                     E=480kJ / mol,
@@ -92,11 +92,11 @@ const DislocationCreep_info = Dict(
         )
 
         # Wet olivine rheology, 5th creep law in table 1 of Hirth & Kohlstedt (2003)
-        ("2. Wet Olivine | Hirth & Kohlstedt (2003)", 
+        ("Wet Olivine 2 | Hirth & Kohlstedt (2003)", 
             #  Hirth & Kohlstedt (2003), table 1
             (
                 DislocationCreep(
-                Name = "2. Wet Olivine | Hirth & Kohlstedt (2003)",
+                Name = "Wet Olivine 2 | Hirth & Kohlstedt (2003)",
                 n = 3.0NoUnits,
                 A = 1600MPa^(-3.0)/s, 
                 E = 520.0kJ/mol,
@@ -1075,5 +1075,10 @@ const DislocationCreep_info = Dict(
                 "),
             ),
         )
+    
+
+
+
+
     ],
 ); # end of setting pre-defined creep laws
