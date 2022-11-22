@@ -437,24 +437,6 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
     counter = 1
     for i = 1:parse(Int64, d["Name 1"][2])
         Table *=  d["Name $i"][1] * " | "
-        # Ab hier sinds die References für am Ende -> Später machen!
-        #for j = 1:length(refs)
-            #if parse(Int64, refpair[j].second[3]) == i
-                #Table *= "(" * "*" ^ counter * ") |"
-
-                
-                #currentbib = refpair[j].second[1]
-                #startidx = first(findfirst("{", currentbib))
-                #endidx = first(findfirst(",", currentbib))
-                #InTextRef *= "(" * "*" ^ counter * ") \\cite{" * currentbib[startidx+1:endidx-1] * "}"
-                #if counter != length(refs)
-                #    InTextRef *= ", "
-                #end
-                #counter += 1
-            #else
-                #Table *= " | "
-            #end
-        #end
     end
 
     Table *= "\n"
@@ -521,46 +503,6 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
         Table *= " \n"
     end
 
-    #=
-
-    # Adds equations for flow laws underneath the parameters
-    DislCreep = 0
-    DiffCreep = 0
-    LinVisc = 0
-    for i = 1:length(dictpairs)
-        if dictpairs[i].second[3] == "DislCreep" && DislCreep == 0
-            Table *= "\\rule[-5pt]{-3pt}{20pt} Dislocation Creep: & " * "\\multicolumn{4}{l}{ \\dot{\\gamma} = A \\sigma^n f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) }\n"
-            Table *= " \\\\\n"
-            DislCreep += 1
-        end
-        if dictpairs[i].second[3] == "DiffCreep" && DiffCreep == 0
-            Table *= "\\rule[-5pt]{-3pt}{20pt} Diffusion Creep: & " * "\\multicolumn{4}{l}{ \\dot{\\gamma} = A \\sigma^n d^p f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) }\n"
-            Table *= " \\\\\n"
-            DiffCreep += 1
-        end
-        if dictpairs[i].second[3] == "LinVisc" && LinVisc == 0
-            Table *= "\\rule[-5pt]{-3pt}{20pt} Linear Viscous: & " * "\\multicolumn{4}{l}{ \\eta  = \\frac{\\tau_{II} }{ 2\\dot{\\varepsilon_{II}}} }\n"
-            Table *= " \\\\\n"
-            LinVisc += 1
-        end
-    end
-    
-    
-    # Creates References string which is later written to References.bib 
-    for i = 1:parse(Int64, d["Name 1"][2])
-        for j = 1:length(refs)
-            if parse(Int64, refpair[j].second[2]) == i
-                References *= refpair[j].second[1]
-            end
-        end
-    end
-
-    # Adds in text citation for all BibTex sources to LaTEx code. InTextRef is created simultaneously with table headers
-    Table *= InTextRef * "\n"
-    =#
-
-    # Writes BibTex sources in to .bib file and Table string into .m file
-    #write("References.bib", References)
     return write("$filename.md", Table)
 end
 
