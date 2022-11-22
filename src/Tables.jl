@@ -387,14 +387,10 @@ Dict2MarkdownTable() writes a .md file with all parameters from the Phase2DictMd
 function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
     dictkeys = keys(d)
     symbs = []
-    #refs = Dict{}()
 
     # Creates vectors of type Pairs (can be iterated over, sorted, etc.)
     dictpairs = sort(collect(pairs(d)))
-    #refpair = sort(collect(pairs(refs)))
 
-    #References = ""
-    #InTextRef = ""
 
     # Descriptions for every parameter that could occur in the table and their corresponding variable name(s) that is used in GeoParams
     desc = Dict(
