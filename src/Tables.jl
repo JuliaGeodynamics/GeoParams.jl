@@ -111,7 +111,7 @@ Dict2LatexTable() writes a .tex file with all parameters from the Phase2Dict() o
 
 """
 
-function Dict2LatexTable(d::Dict, refs::Dict; filename=nothing, rdigits=4)
+function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits=4)
     dictkeys = keys(d)
     symbs = []
 
@@ -384,7 +384,7 @@ Dict2MarkdownTable() writes a .md file with all parameters from the Phase2DictMd
 
 """
 
-function Dict2MarkdownTable(d::Dict; filename=nothing, rdigits=4)
+function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
     dictkeys = keys(d)
     symbs = []
     #refs = Dict{}()
