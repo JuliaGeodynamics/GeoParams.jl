@@ -576,10 +576,12 @@ function ParameterTable(
     rdigits=4
     )
 
-    if format == "latex"
+    format = lowercase(format)
+
+    if (format == "latex") || (format = "tex")
         d, ref = Phase2Dict(Phase)
         Dict2LatexTable(d, ref, filename=filename, rdigits=rdigits)
-    elseif format == "markdown"
+    elseif (format == "markdown") || (format == "md")
         d = Phase2DictMd(Phase)
         Dict2MarkdownTable(d, filename=filename, rdigits=rdigits)
     end
