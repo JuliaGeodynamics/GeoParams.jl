@@ -36,7 +36,6 @@ end
 
 """
 Phase2Dict() puts all parameters of a phase in a dict.
-
 """
 
 function Phase2Dict(s)
@@ -107,7 +106,10 @@ function Phase2Dict(s)
 end
 
 """
-Dict2LatexTable() writes a .tex file with all parameters from the Phase2Dict() output in a LaTeX table.
+Dict2LatexTable() writes a .tex file with all parameters from the Phase2Dict() output in a LaTeX table. rdigits will round numbers with more decimals than rdigits
+including numbers to power of 10 for representation purposes. For the exact numbers use the original impemented numbers from the creeplaws of the dict in src/CreepLaw/Data/DiffusionCreep.jl
+or src/CreepLaw/Data/DislocationCreep.jl.
+
 
 """
 
@@ -380,7 +382,9 @@ function Phase2DictMd(s)
 end
 
 """
-Dict2MarkdownTable() writes a .md file with all parameters from the Phase2DictMd() output in a Markdown table.
+Dict2MarkdownTable() writes a .md file with all parameters from the Phase2DictMd() output in a Markdown table. rdigits will round numbers with more decimals than rdigits
+including numbers to power of 10 for representation purposes. For the exact numbers use the original impemented numbers from the creeplaws of the dict in src/CreepLaw/Data/DiffusionCreep.jl
+or src/CreepLaw/Data/DislocationCreep.jl.
 
 """
 
