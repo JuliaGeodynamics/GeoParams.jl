@@ -54,6 +54,48 @@ dvalMd = MatParam[1].Density[1].ρ.val
 @test dictMd["Name 1"][4] == ""
 
 #test Dict2LatexTable()
+Dict2LatexTable(dict, ref)
+@test "ParameterTable.tex" in readdir()
+@test "ParameterTable.bib" in readdir()
 
+rm("ParameterTable.tex", force=true)
+rm("ParameterTable.bib", force=true)
+
+#test Dict2MarkdownTable()
+Dict2MarkdownTable(dictMd)
+@test "ParameterTable.md" in readdir()
+
+rm("ParameterTable.md", force=true)
+
+#test ParamterTable()
+#for Latex
+ParameterTable(MatParam)
+@test "ParameterTable.tex" in readdir()
+@test "ParameterTable.bib" in readdir()
+
+ParameterTable(MatParam, format="TEX")
+@test "ParameterTable.tex" in readdir()
+@test "ParameterTable.bib" in readdir()
+rm("ParameterTable.tex", force=true)
+rm("ParameterTable.bib", force=true)
+
+filename = "TestTable"
+ParameterTable(MatParam, format="LaTeX", filename="TestTable")
+@test "TestTable.tex" in readdir()
+rm("TestTable.tex", force=true)
+rm("TestTable.bib", force=true)
+
+#for Markdown
+ParameterTable(MatParam, format="Markdown")
+@test "ParameterTable.md" in readdir()
+
+ParameterTable(MatParam, format="MD")
+@test "ParameterTable.md" in readdir()
+rm("ParameterTable.md", force=true)
+
+filename = "TestTable"
+ParameterTable(MatParam, format="MaRkDoWn", filename="TestTable")
+@test "TestTable.md" in readdir()
+rm("TestTable.md", force=true)
 
 end
