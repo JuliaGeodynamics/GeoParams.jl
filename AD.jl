@@ -94,11 +94,10 @@ end
 end
 
 compute_εII_AD_all(v, τII, args) = compute_II_AD_all(v, λ_εII, τII, args)
-compute_εII_AD_all(v::CompositeRheology, τII, args) = compute_εII_AD_all(v.elements, τII, args)
+compute_εII_AD_all(v::Union{Parallel, CompositeRheology}, τII, args) = compute_εII_AD_all(v.elements, τII, args)
 
-compute_τII_AD_all(v, εII, args) = compute_II_AD_all(v, εII, λ_τII, args)
-compute_τII_AD_all(v::CompositeRheology, εII, args) = compute_εII_AD_all(v.elements, εII, args)
-
+compute_τII_AD_all(v, εII, args) = compute_II_AD_all(v, λ_τII, εII, args)
+compute_τII_AD_all(v::Union{Parallel, CompositeRheology}, εII, args) = compute_τII_AD_all(v.elements, εII, args)
 
 function compute_τII_AD(
     v::CompositeRheology{T,N,
@@ -106,10 +105,10 @@ function compute_τII_AD(
         0,is_plastic,
         Nvol,is_vol,
         false},
-    εII::_T, 
+    εII, 
     args; 
     tol=1e-6
-) where {N, T, _T, is_parallel, is_plastic, Nvol, is_vol}
+) where {N, T, is_parallel, is_plastic, Nvol, is_vol}
 
     # Initial guess
     τII = compute_τII_harmonic(v, εII, args)
@@ -120,23 +119,44 @@ function compute_τII_AD(
     τII_prev = τII
     while ϵ > tol
         iter += 1
-        #= 
-            Newton scheme -> τII = τII - f(τII)/dfdτII. 
-            Therefore,
-                f(τII) = εII - strain_rate_circuit(v, τII, args) = 0
-                dfdτII = - dεII_dτII(v, τII, args) 
-                τII -= f / dfdτII
-        =#
+        # Newton scheme -> τII = τII - f(τII)/dfdτII. Therefore,
+        #   f(τII) = εII - strain_rate_circuit(v, τII, args) = 0
+        #   dfdτII = - dεII_dτII(v, τII, args) 
+        #   τII -= f / dfdτII 
         εII_n, dεII_dτII_n = compute_εII_AD_all(v, τII, args)
-
         τII = muladd(εII - εII_n, inv(dεII_dτII_n), τII)
 
         ϵ = abs(τII - τII_prev) * inv(τII)
         τII_prev = τII
-
     end
 
     return τII
+end
+
+@inline function local_iterations_τII_AD_all(
+    v::Parallel, τII, args; tol=1e-6
+)
+    # Initial guess
+    εII = compute_εII_harmonic(v, τII, args)
+
+    # Local Iterations
+    iter = 0
+    ϵ = 2.0 * tol
+    εII_prev = εII
+    while ϵ > tol
+        iter += 1
+        # Newton scheme -> τII = τII - f(τII)/dfdτII. Therefore,
+        #   f(τII) = εII - strain_rate_circuit(v, τII, args) = 0
+        #   dfdτII = - dεII_dτII(v, τII, args) 
+        #   τII -= f / dfdτII 
+        τII_n, dτII_dεII_n = compute_τII_AD_all(v, εII, args)
+        εII = muladd(τII - τII_n, inv(dτII_dεII_n), εII)
+
+        ϵ = abs(εII - εII_prev) * inv(εII)
+        εII_prev = εII
+    end
+    
+    return εII
 end
 
 
@@ -151,9 +171,14 @@ compute_τII_AD(c, εII, args) == compute_τII(c, εII, args)
 @btime compute_τII_AD($c, $εII, $args)
 @btime compute_τII($c, $εII, $args)
 
+@btime compute_τII_AD($c7, $εII, $args)
+@btime compute_τII($c7, $εII, $args)
 
-# ProfileCanvas.@profview for i in 1:1000000
-#     compute_τII_AD(v, εII, args)
-# end
+ProfileCanvas.@profview for i in 1:1000000
+    local_iterations_τII_AD_all(p, εII, args)
+end
+@edit compute_τII(c4, εII, args)
 
-# @btime compute_τII_harmonic($v, $εII, $args)
+p=c4.elements[3]
+@btime local_iterations_τII_AD_all($p, $εII, $args)
+@btime        local_iterations_τII($p, $εII, $args)
