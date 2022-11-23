@@ -104,5 +104,5 @@ using GeoParams
     end
 
     @test Vs_new[10] ≈ 2750.713407744307
-    @test Vp_new[10] ≈ 0.0
+    @test Vp_new[10] ≈ 5792.937134183798
 end
