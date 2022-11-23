@@ -39,15 +39,53 @@ args = (T=900.0, d=100e-6, τII_old=1e6, dt=1e8)
 
 v = c3   # problem with c3 (elasticity) and c4 (that has || elements) 
 
-@generated function compute_εII_AD_all(v::NTuple{N, AbstractConstitutiveLaw},
-    τII, 
+@inline function derivative_all(f::F, x::R) where {F,R<:Real}
+    T = typeof(ForwardDiff.Tag(f, R))
+    res = f(ForwardDiff.Dual{T}(x, one(x)))
+    return res.value, res.partials.values[1]
+end
+
+# function λ_εII(vi, τII, args)
+#     # trick with nested lambdas so that it works with @generated
+#     # It'd work with one lambda, but for some reason this is
+#     # slightly more optimal
+#     @inline λ(vi, τII) = begin
+#         _λ = τII -> compute_εII(vi, τII, args)
+#         derivative_all(_λ, τII)
+#     end
+
+#     λ(vi, τII)
+# end
+
+# im lazy so we define both functions here
+for tensor in (:εII, :τII)
+    fun1 = Symbol("λ_$(tensor)")
+    fun2 = Symbol("compute_$(tensor)")
+    @eval begin
+        function $(fun1)(vi, II, args)
+            # trick with nested lambdas so that it works with @generated
+            # It'd work with one lambda, but for some reason this is
+            # slightly more optimal
+            @inline λ(vi, II) = begin
+                _λ = II -> $(fun2)(vi, II, args)
+                derivative_all(_λ, II)
+            end
+        
+            λ(vi, II)
+        end
+    end
+end
+
+@generated function compute_II_AD_all(v::NTuple{N, AbstractConstitutiveLaw},
+    λ::F,
+    II,
     args
-) where N
+) where {N,F}
     quote
         Base.@_inline_meta
         εII, dεII_dτII = 0.0, 0.0
         Base.@nexprs $N i -> (
-            V = λ_εII(v[i], τII, args);
+            V = λ(v[i], II, args);
             εII += V[1];
             dεII_dτII += V[2];
         )
@@ -55,19 +93,12 @@ v = c3   # problem with c3 (elasticity) and c4 (that has || elements)
     end
 end
 
-function λ_εII(vi, τII, args)
-    # trick with nested lambdas so that it works with @generated
-    # It'd work with one lambda, but for some reason this is
-    # slightly more optimal
-    @inline λ(vi, τII) = begin
-        _λ = τII -> compute_εII(vi, τII, args)
-        derivative_all(_λ, τII)
-    end
-
-    λ(vi, τII)
-end
-
+compute_εII_AD_all(v, τII, args) = compute_II_AD_all(v, λ_εII, τII, args)
 compute_εII_AD_all(v::CompositeRheology, τII, args) = compute_εII_AD_all(v.elements, τII, args)
+
+compute_τII_AD_all(v, εII, args) = compute_II_AD_all(v, εII, λ_τII, args)
+compute_τII_AD_all(v::CompositeRheology, εII, args) = compute_εII_AD_all(v.elements, εII, args)
+
 
 function compute_τII_AD(
     v::CompositeRheology{T,N,
@@ -108,7 +139,21 @@ function compute_τII_AD(
     return τII
 end
 
-@btime compute_τII_AD($c3, $εII, $args)
-@btime compute_τII($c3, $εII, $args)
 
-compute_τII_AD(v, εII, args) == compute_τII(v, εII, args)
+# Define a range of rheological components
+v1 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
+v2 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
+e1 = ConstantElasticity()           # elasticity
+c = CompositeRheology(v1, v2, e1)   # with elasticity
+
+compute_τII_AD(c, εII, args) == compute_τII(c, εII, args)
+
+@btime compute_τII_AD($c, $εII, $args)
+@btime compute_τII($c, $εII, $args)
+
+
+# ProfileCanvas.@profview for i in 1:1000000
+#     compute_τII_AD(v, εII, args)
+# end
+
+# @btime compute_τII_harmonic($v, $εII, $args)
