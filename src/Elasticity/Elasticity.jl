@@ -196,8 +196,8 @@ Computes elastic volumetric strainrate given the pressure at the current (`P`) a
 
 """
 @inline function compute_εvol(
-    a::ConstantElasticity, P::_T; P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
-) where {_T}
+    a::ConstantElasticity, P; P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+)
     @unpack_val Kb = a
     εvol_el = - (P - P_old) / (Kb * dt)
     return εvol_el
