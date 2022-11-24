@@ -278,29 +278,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     
 end
 
-@btime foo_AD($c, $εII, $args) # original non-AD version 402.00 ns
-
-function fa(w::AbstractVector{T}) where {T}
-    t = norm(w)
-    if t == 0
-        (@SVector [1.0, 0.0, 0.0]) * one(T)
-    else
-        (@SVector [w[1], -w[2], w[3]]) / t
-    end
-end
-pp = (@SVector [0.2, -0.1, 0.1])
-ForwardDiff.jacobian(fa, pp)
-
-f1(x, y) = 2.1*x + 1.2*y
-f2(x, y) = x + y - 3.3
-
-function f(x)
-    @SVector [
-        f1(x[1], x[2]),
-        f2(x[1], x[2]),
-    ]
-end
-@btime ForwardDiff.jacobian($f, $input)
+## PROTOTYPES
 
 # create a Static Vector of a vector of evaluated functions
 @generated function SInput(funs::NTuple{N1, Function}, inputs::SVector{N2, T}) where {N1, N2, T}
@@ -319,21 +297,15 @@ end
 end
 
 input = @SVector [1.0, 2.0]
-function _foo(input::T) where T
+function foo(input::T) where T
     fs = (f1, f2)
-    # result = DiffResults.JacobianResult(input)
-    # result = ForwardDiff.jacobian!(result, x-> SInput(fs, x), input)
     myjacobian(x-> SInput(fs, x), input)
-
-    # DiffResults.value(result), DiffResults.jacobian(result)
 end
-
-foo() = _foo( @SVector [1.0, 2.0])
-val1, J1 = _foo(input)
 
 f1(x, y) = sin(exp(x)) + cos(y)/log10(x+y)
 f2(x, y) = cos(x + y) * tanh(x*y)
 
+#from symbolics
 df1dx(x, y) = exp(x)*cos(exp(x)) - 0.43429448190325176((x + y)^-1)*(cos(y) / (log10(x + y)^2))
 df1dy(x, y) = (-sin(y)) / log10(x + y) - 0.43429448190325176((x + y)^-1)*(cos(y) / (log10(x + y)^2))
 df2dx(x, y) = y*(1 - (tanh(x*y)^2))*cos(x + y) - sin(x + y)*tanh(x*y)
@@ -354,13 +326,6 @@ end
 @btime bar($input)
 val2, J2 = bar(input)
 
-@variables x y
-J=Symbolics.jacobian([f1(x, y), f2(x, y)],[x, y])
-
-
-@edit ForwardDiff.jacobian( x-> SInput(fs, x), input)
-
-
 @inline myjacobian(f, x::StaticArray) = myvector_mode_jacobian(f, x)
 
 @inline function myvector_mode_jacobian(f, x::StaticArray)
@@ -371,18 +336,9 @@ J=Symbolics.jacobian([f1(x, y), f2(x, y)],[x, y])
     return f, J
 end
 
-res = myjacobian( x-> SInput(fs, x), input)
-
-ForwardDiff.extract_jacobian(T, ForwardDiff.static_dual_eval(T, f, x), x)
-
-SVector{N, ForwardDiff.Dual{Tag, T, N}}
-
 @generated function myvalue(result::SVector{N, ForwardDiff.Dual{Tag, T, N}}) where {N,T,Tag}
     quote
         Base.Cartesian.@nexprs $N i -> result_i = result[i].value
         Base.Cartesian.@ncall  $N SVector{$N, $T} result
     end
 end
-
-
-myvalue(res)
