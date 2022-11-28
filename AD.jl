@@ -1,5 +1,5 @@
 using GeoParams, ForwardDiff
-import GeoParams.MaterialParameters.ConstitutiveRelationships: compute_τII_harmonic
+import GeoParams.MaterialParameters.ConstitutiveRelationships: compute_τII_harmonic, compute_εII_elements, compute_τII_elements
 
 # Define a range of rheological components
 v1 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
@@ -38,7 +38,13 @@ vec1 = [c1 c2 c3 c4 c5 p1 p2 p3]
 args = (T=900.0, d=100e-6, τII_old=1e6, dt=1e8)
 εII, τII = 2e-15, 2e6
 
-v = c3   # problem with c3 (elasticity) and c4 (that has || elements) 
+v = c4   # problem with c3 (elasticity) and c4 (that has || elements) 
+
+@edit compute_εII(v, τII, args)
+
+ProfileCanvas.@profview for i in 1:1000000
+    compute_εII(v, τII, args)
+end
 
 @inline function derivative_all(f::F, x::R) where {F,R<:Real}
     T = typeof(ForwardDiff.Tag(f, R))
@@ -280,26 +286,58 @@ end
 
 ## PROTOTYPES
 
-# create a Static Vector of a vector of evaluated functions
-@generated function SInput(funs::NTuple{N1, Function}, inputs::SVector{N2, T}) where {N1, N2, T}
-    quote
-        Base.Cartesian.@nexprs $N1 i -> f_i = funs[i](inputs...)
-        Base.Cartesian.@ncall $N1 SVector{$N1, $T} f
-    end
+# # create a Static Vector of a vector of evaluated functions
+# @generated function SInput(funs::NTuple{N1, Function}, inputs::SVector{N2, T}) where {N1, N2, T}
+#     quote
+#         Base.Cartesian.@nexprs $N1 i -> f_i = funs[i](inputs...)
+#         Base.Cartesian.@ncall $N1 SVector{$N1, $T} f
+#     end
+# end
+
+
+# # create a Mutable Vector of a vector of evaluated functions
+# @generated function MInput(funs::NTuple{N1, Function}, inputs::MVector{N2, T}) where {N1, N2, T}
+#     quote
+#         Base.Cartesian.@nexprs $N1 i -> f_i = funs[i](inputs...)
+#         Base.Cartesian.@ncall  $N1 MVector{$N1, $T} f
+#     end
+# end
+
+SInput(funs::NTuple{N1, Function}, x::SVector{N2, T}) where {N1, N2, T} = SVector{N1,T}(funs[i](x) for i in 1:N1)
+# SInput(funs::NTuple{N1, Function}, inputs::SVector{N2, T}, args) where {N1, N2, T} = SVector{N1,T}(funs[i](inputs, args) for i in 1:N1)
+
+function SInput(funs::NTuple{N1, Function}, x::SVector{N2, T}, args) where {N1, N2, T} 
+    SVector{N1,T}(
+        funs[i](
+            i == 1 ?  SVector{2, T}(sum(x[i] for i in 1:N2-1), x[end]) : SVector{2, T}(x[1], x[end]), 
+            args
+        ) 
+        for i in 1:N1
+    )
 end
 
-# create a Mutable Vector of a vector of evaluated functions
-@generated function MInput(funs::NTuple{N1, Function}, inputs::MVector{N2, T}) where {N1, N2, T}
-    quote
-        Base.Cartesian.@nexprs $N1 i -> f_i = funs[i](inputs...)
-        Base.Cartesian.@ncall  $N1 MVector{$N1, $T} f
-    end
+MInput(funs::NTuple{N1, Function}, x::MVector{N2, T}) where {N1, N2, T} = MVector{N1,T}(funs[i](x) for i in 1:N1)
+MInput(funs::NTuple{N1, Function}, x::MVector{N2, T}, args) where {N1, N2, T} = MVector{N1,T}(funs[i](x, args) for i in 1:N1)
+
+
+@inline function jacobian(f, x::StaticArray)
+    T = typeof(ForwardDiff.Tag(f, eltype(x)))
+    result = ForwardDiff.static_dual_eval(T, f, x)
+    J = ForwardDiff.extract_jacobian(T, result, x)
+    f = extract_value(result)
+    return f, J
 end
 
-input = @SVector [1.0, 2.0]
+
+SVector{2}(funs[i](inputs, args) for i in 1:2)
+
+jacobian(input -> SInput(funs, input, args_n), x)
+
+extract_value(result::SVector{N, ForwardDiff.Dual{Tag, T, N}}) where {N,T,Tag} = SVector{N,T}(result[i].value for i in 1:N)
+
 function foo(input::T) where T
     fs = (f1, f2)
-    myjacobian(x-> SInput(fs, x), input)
+    jacobian(x-> SInput(fs, x), input)
 end
 
 f1(x, y) = sin(exp(x)) + cos(y)/log10(x+y)
@@ -323,22 +361,102 @@ function bar(x)
     ]
     f, df
 end
+
+input = @SVector [1.0, 2.0]
+
 @btime bar($input)
-val2, J2 = bar(input)
+@btime foo($input);
+@code_warntype foo(input);
 
-@inline myjacobian(f, x::StaticArray) = myvector_mode_jacobian(f, x)
 
-@inline function myvector_mode_jacobian(f, x::StaticArray)
-    T = typeof(ForwardDiff.Tag(f, eltype(x)))
-    result = ForwardDiff.static_dual_eval(T, f, x)
-    J = ForwardDiff.extract_jacobian(T, result, x)
-    f = myvalue(result)
-    return f, J
+@code_typed  extract_value(result)
+@code_typed extract_value2(result)
+
+########################################################################################################################################## 
+##########################################################################################################################################
+c=c4
+
+function compute_τII_par(
+    c::CompositeRheology{
+        T,    N,
+        Npar, is_par,
+        0,    is_plastic,
+        0,    is_vol
+    },
+    εII, 
+    args; 
+    tol = 1e-6
+) where {T, N, Npar, is_par, is_plastic, is_vol}
+    
+    # number of unknowns  
+    n = 1 + Npar; 
+
+    # initial guesses for stress and strain
+    εII_total = εII
+    εp_n = εII_total 
+    τ_n = compute_τII_harmonic(c, εII_total, args)
+
+    # x[1:end-1] = strain rate of parallel element, x[end] = total stress invariant
+    x = SVector{n,Float64}(i ==1 ? εp_n : τ_n for i in 1:n)
+
+    # define closures to be differentiated
+    f1(x, args) = εII_total - compute_εII_elements(c, x[2], args) - x[1]
+    f2(x, args) = x[2] - compute_τII_parallel(c, x[1], args)
+    funs = f1, f2
+
+    # Local Iterations
+    iter = 0
+    ϵ = 2 * tol
+    max_iter = 20
+    while (ϵ > tol) && (iter < max_iter)
+        iter += 1
+
+        x_n = x
+        args_n = merge(args, (τII = x[2], )) # we define a new arguments tuple to maintain type stability 
+        r, J = jacobian(input -> SInput(funs, input, args_n), x)
+
+        # update solution
+        dx  = J\r 
+        x  -= dx   
+        
+        ϵ = norm(@. abs(x-x_n))
+        # println(" iter $(iter) $ϵ τ=$(x[1]) εp=$(x[2])")
+    end
+    return x[2], x[1]
 end
 
-@generated function myvalue(result::SVector{N, ForwardDiff.Dual{Tag, T, N}}) where {N,T,Tag}
-    quote
-        Base.Cartesian.@nexprs $N i -> result_i = result[i].value
-        Base.Cartesian.@ncall  $N SVector{$N, $T} result
+@btime compute_τII_par($c, $εII, $args)
+
+compute_τII_par(c, εII, args)
+
+compute_εII(c, τII, args)
+compute_τII(c, εII, args)
+
+@btime compute_τII($v, $εII, $args)
+
+
+fp = ntuple()
+
+ntuple(Val(2)) do i
+    if i == 1
+        (x, args) -> εII_total - compute_εII_elements(c, x[2], args) - sum(x[i] for i in 1:(2-1))
+    else        
+        (x, args) -> x[i+1] - compute_τII_parallel(c, x[1], args)
     end
 end
+
+macro foos(x, args)
+
+    esc(
+        quote
+            # Tuple(
+                (x,args) -> x[1] 
+            #     for i in length(x)
+            # )
+        end
+    )
+        
+end
+
+@btime  @foos($x, $args)
+f = @foos(x, args)
