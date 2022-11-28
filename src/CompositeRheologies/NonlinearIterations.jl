@@ -65,61 +65,41 @@ Performs local iterations versus stress for a given strain rate using AD
     # Initial guess
     τII = compute_τII_harmonic(v, εII, args)
     
-    # @print(verbose, "initial stress_II = $τII")
-
-    # extract plastic element if it exists
-    v_pl = v[1]
-    if Nplast>0
-        for i=1:N
-            if is_plastic[i]
-                v_pl =  v[i]
-            end
-        end
-    end
-
     # Local Iterations
     iter = 0
     ϵ = 2.0 * tol
     τII_prev = τII
-    ε_pl = 0.0;
+    ε_pl = 0.0
+
     while (ϵ > tol) && (iter<10)
         iter += 1
-        #= 
-            Newton scheme -> τII = τII - f(τII)/dfdτII. 
-            Therefore,
-                f(τII) = εII - compute_εII(v, τII, args) = 0
-                dfdτII = - dεII_dτII(v, τII, args) 
-                τII -= f / dfdτII
-        =#
+        #  Newton scheme -> τII = τII - f(τII)/dfdτII. 
+        #  Therefore,
+        #      f(τII) = εII - compute_εII(v, τII, args) = 0
+        #      dfdτII = - dεII_dτII(v, τII, args) 
+        #      τII -= f / dfdτII
         
-        ε_np = compute_εII_nonplastic(v, τII, args)
-        dεII_dτII = dεII_dτII_nonplastic_AD(v, τII, args)
-
+        ε_np, dεII_dτII = compute_εII_AD_nonplastic_all(v, τII, args)
         f = εII - ε_np      # non-plastic contributions to residual
         
-        if Nplast>0
-           
+        if Nplast>0      
             # in case of plasticity, iterate for ε_pl
-            args = merge(args, (ε_np=ε_np,f=f))
-            ε_pl += compute_εII(v_pl, τII, args, tol=tol, verbose=verbose)
+            args = merge(args, (ε_np=ε_np,f=f))            
+            ε_pl += compute_εII_plastic(v, τII, args, tol)
 
             # add contributions to dεII_dτII:
-            if ε_pl>0.0
+            if ε_pl > 0.0
                 # in fact dε_pl/dτII = d(λ*∂Q∂τII(v_pl, τII))/dτII = 0 for DP
                 dεII_dτII += 0
             end
         end
         f -= ε_pl
 
-
         τII = muladd(f, inv(dεII_dτII), τII)
 
         ϵ = abs(τII - τII_prev) * inv(τII)
         τII_prev = τII
-        # @print(verbose, " iter $(iter) $ϵ τII=$τII")
     end
-    # @print(verbose, "final τII = $τII")
-    # @print(verbose, "---")
 
     return τII
 end
@@ -129,7 +109,7 @@ end
 
 Performs local iterations to compute the plastic strainrate. Note that the non-plastic strainrate, ε_np, should be part of `args`
 """
-function compute_εII(v::AbstractPlasticity, τII::_T, args; tol=1e-6, verbose=false) where _T
+function compute_εII(v::AbstractPlasticity, τII, args, tol)
 
     η_np  = (τII - args.τII_old)/(2.0*args.ε_np)
            
@@ -146,11 +126,12 @@ function compute_εII(v::AbstractPlasticity, τII::_T, args; tol=1e-6, verbose=f
         
         iter += 1
         τII_pl = τII -  2*η_np*λ*∂Q∂τII(v, τII_pl, args)       # update stress
-        F      = compute_yieldfunction(v, merge(args, (τII=τII_pl,)))
+        args   = merge(args, (τII=τII_pl,))
+        F      = compute_yieldfunction(v, args)
         
         dFdλ = ∂F∂τII(v, τII, args)*(2*η_np*∂Q∂τII(v, τII, args))
       
-        λ -= -F / dFdλ
+        λ -=  -F / dFdλ
 
         ϵ = F
 
@@ -161,7 +142,6 @@ function compute_εII(v::AbstractPlasticity, τII::_T, args; tol=1e-6, verbose=f
     
     return ε_pl
 end
-
 
 @inline function local_iterations_τII_AD(
     v::Parallel, τII::T, args; tol=1e-6, verbose=false
@@ -268,7 +248,7 @@ Performs local iterations versus strain rate for a given stress
     while ϵ > tol
         iter += 1
         f = τII - first(compute_τII(v, εII, args))
-        dfdεII = -dτII_dεII(v, εII, args)
+        dfdεII = - dτII_dεII(v, εII, args)
         εII -= f / dfdεII
 
         ϵ = abs(εII - εII_prev) / εII
