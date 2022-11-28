@@ -350,11 +350,10 @@ end
 
 Sums the strainrate of all non-parallel and non-plastic elements in a `CompositeRheology` structure. Mostly internally used for jacobian iterations.
 """
-compute_εII_elements(v::CompositeRheology{T,N}, τII::_T, args; tol=1e-6, verbose=false) where {T,_T,N} = nreduce(vi -> first(_compute_εII_nonparallel(vi, τII, args)), v.elements)
-_compute_εII_nonparallel(v, TauII::_T, args) where {_T} = compute_εII(v, TauII, args)
+compute_εII_elements(v::CompositeRheology{T,N}, τII, args) where {T,N} = nreduce(vi -> first(_compute_εII_nonparallel(vi, τII, args)), v.elements)
+_compute_εII_nonparallel(v, TauII, args) = compute_εII(v, TauII, args)
 _compute_εII_nonparallel(v::Parallel, TauII::_T, args) where {_T} = zero(_T)
 _compute_εII_nonparallel(v::AbstractPlasticity, TauII::_T, args) where {_T} = zero(_T)
-
 
 """
     compute_εvol_elements(v::CompositeRheology, TauII, args)
@@ -366,3 +365,25 @@ compute_εvol(v::Any, P::_T; kwargs...) where _T =  zero(_T) # in case nothing m
 _compute_εvol_elements(v, P::_T, args) where {_T} = compute_εvol(v, P, args)
 _compute_εvol_elements(v::Parallel, P::_T, args) where {_T} = zero(_T)
 _compute_εvol_elements(v::AbstractPlasticity, P::_T, args) where {_T} = zero(_T)
+
+"""
+    compute_τII_elements(v::CompositeRheology, TauII, args)
+
+Sums the stress of all non-parallel and non-plastic elements in a `CompositeRheology` structure. Mostly internally used for jacobian iterations.
+"""
+compute_τII_elements(v::CompositeRheology{T,N}, εII, args) where {T,N} = nreduce(vi -> first(_compute_τII_nonparallel(vi, εII, args)), v.elements)
+_compute_τII_nonparallel(v, εII, args) = compute_τII(v, εII, args)
+_compute_τII_nonparallel(v::Parallel, εII::_T, args) where {_T} = zero(_T)
+_compute_τII_nonparallel(v::AbstractPlasticity, εII::_T, args) where {_T} = zero(_T)
+
+
+"""
+    compute_τII_parallel(v::CompositeRheology, TauII, args)
+
+Sums the stress of all non-parallel and non-plastic elements in a `CompositeRheology` structure. Mostly internally used for jacobian iterations.
+"""
+compute_τII_parallel(v::CompositeRheology{T,N}, εII, args) where {T,N} = nreduce(vi -> first(_compute_τII_parallel(vi, εII, args)), v.elements)
+_compute_τII_parallel(v, εII::_T, args) where {_T} = zero(_T)
+_compute_τII_parallel(v::Parallel, εII, args) = compute_τII(v, εII, args)
+_compute_τII_parallel(v::AbstractPlasticity, εII::_T, args) where {_T} = zero(_T)
+
