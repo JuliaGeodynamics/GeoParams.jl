@@ -267,7 +267,7 @@ end
 
 This performs nonlinear Newton iterations for `τII` with given `εII_total` for cases where we have both serial and parallel elements.
 """
-@inline function local_iterations_εII(
+function local_iterations_εII(
     c::CompositeRheology{T,
     N,
     Npar,is_par,
@@ -291,8 +291,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
 
     # @print(verbose,"τII guess = $τ_initial")
 
-    x    = @MVector ones(_T, n)
-    x   .= εII_total
+    x    = @MVector fill(εII_total, n)
     x[1] = τ_initial
 
     j = 1;
@@ -303,14 +302,12 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         end
     end
     
-    r = @MVector zeros(_T,n);
-    J = @MMatrix zeros(_T, Npar+1,Npar+1)   # size depends on # of parallel objects (+ likely plastic elements)
+    r = @MVector zeros(_T,n)
+    J = @MMatrix zeros(_T, n, n)   # size depends on # of parallel objects (+ likely plastic elements)
     
     # Local Iterations
     iter = 0
     ϵ = 2 * tol
-    τII_prev = τ_initial
-    τ_parallel = _T(0)
     max_iter = 1000
     while (ϵ > tol) && (iter < max_iter)
         iter += 1

@@ -33,6 +33,7 @@ c10 = CompositeRheology(e1, pl3)      # elastoplastic
 c11 = CompositeRheology(e1, Parallel(pl3, LinearViscous(; η=1e19Pa * s)))      # elasto-viscoplastic
 c14 = CompositeRheology(SetConstantElasticity(G=1e10, Kb=1e10), LinearViscous(η=1e20), DruckerPrager(C=3e5, Ψ=1))   # case A
 
+
 # Check derivatives 
 vec1 = [c1 c2 c3 c4 c5 p1 p2 p3]
 args = (T=900.0, d=100e-6, τII_old=1e6, dt=1e8)
@@ -174,151 +175,25 @@ end
     return εII
 end
 
-
-# Define a range of rheological components
-v1 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
-v2 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
-e1 = ConstantElasticity()           # elasticity
-c = CompositeRheology(v1, v2, e1)   # with elasticity
-
-compute_τII_AD(c, εII, args) == compute_τII(c, εII, args)
-
-@btime compute_τII_AD($c, $εII, $args)
-@btime compute_τII($c, $εII, $args)
-
-@btime compute_τII_AD($c7, $εII, $args)
-@btime compute_τII($c7, $εII, $args)
-
-ProfileCanvas.@profview for i in 1:1000000
-    local_iterations_τII_AD_all(p, εII, args)
-end
-@edit compute_τII(c4, εII, args)
-
-p=c4.elements[3]
-@btime local_iterations_τII_AD_all($p, $εII, $args)
-@btime        local_iterations_τII($p, $εII, $args)
-
-
-p=rand()
-derivative_all(p -> compute_εvol(c14, p, args), p)
-
-c = CompositeRheology((v1,  e1, Parallel(pl1, v1, v2)))
-
-ProfileCanvas.@profview for i in 1:100000
-    compute_τII(c, εII, args)
-end
-
-"""
-    local_iterations_εII(c::CompositeRheology{T,N}, εII_total, args)
-
-This performs nonlinear Newton iterations for `τII` with given `εII_total` for cases where we have both serial and parallel elements.
-"""
-@inline function foo_AD(
-    c::CompositeRheology{T,N,
-                        Npar,is_par,            # no ||
-                        Nplast, is_plastic,     # with plasticity
-                        0,is_vol},              # no volumetric
-    εII_total::_T, 
-    args; 
-    tol = 1e-6, 
-    τ_initial = nothing, 
-    max_iter = 1000
-) where {T,N,Npar,is_par, _T, Nplast, is_plastic, is_vol}
-    
-    # Compute residual
-    n = 1 + Nplast + Npar;             # total size of unknowns
-    x = zero(_T)
-
-    # Initial guess of stress & strainrate
-    if isnothing(τ_initial)
-        τ_initial = compute_τII_harmonic(c, εII_total, args)
-    end
-    
-    # @print(verbose,"τII guess = $τ_initial")
-    
-    x    = @MVector zeros(_T, n)
-    x[1] = τ_initial
-
-    j = 1;
-    for i=1:N
-        if is_plastic[i] && is_par[i]
-            # parallel plastic element
-            j=j+2
-            x[j] = τ_initial    # τ_plastic initial guess     
-        end
-    end
-
-    r = @MVector zeros(_T,n);
-    J = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
-    
-    # Local Iterations
-    iter = 0
-    ϵ = 2 * tol
-    while (ϵ > tol) && (iter < max_iter)
-        iter += 1
-
-        τ   = x[1]
-        λ   = x[2]
-
-        args = merge(args, (τII=τ, λ=λ))    # update
-
-        # Update part of jacobian related to serial, non-plastic, elements
-        r[1]   = εII_total - compute_εII_elements(c,τ,args)     
-        J[1,1] = dεII_dτII_elements(c,x[1],args);               
-        
-        # Add contributions from plastic elements
-        fill_J_plastic!(J, r, x, c, args)
-        
-        # update solution
-        dx  = J\r 
-        x .+= dx   
-       # @show dx x r J
-        
-        ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
-        # @print(verbose," iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
-    end
-    # @print(verbose,"---")
-    if (iter == max_iter)
-        error("iterations did not converge")
-    end
-    
-end
-
 ## PROTOTYPES
-
-# # create a Static Vector of a vector of evaluated functions
-# @generated function SInput(funs::NTuple{N1, Function}, inputs::SVector{N2, T}) where {N1, N2, T}
-#     quote
-#         Base.Cartesian.@nexprs $N1 i -> f_i = funs[i](inputs...)
-#         Base.Cartesian.@ncall $N1 SVector{$N1, $T} f
-#     end
-# end
-
-
-# # create a Mutable Vector of a vector of evaluated functions
-# @generated function MInput(funs::NTuple{N1, Function}, inputs::MVector{N2, T}) where {N1, N2, T}
-#     quote
-#         Base.Cartesian.@nexprs $N1 i -> f_i = funs[i](inputs...)
-#         Base.Cartesian.@ncall  $N1 MVector{$N1, $T} f
-#     end
-# end
-
 SInput(funs::NTuple{N1, Function}, x::SVector{N2, T}) where {N1, N2, T} = SVector{N1,T}(funs[i](x) for i in 1:N1)
 # SInput(funs::NTuple{N1, Function}, inputs::SVector{N2, T}, args) where {N1, N2, T} = SVector{N1,T}(funs[i](inputs, args) for i in 1:N1)
 
+# Since this function is unreadable... EXAMPLE:
+# if ε = ε1 + ε2 + ε3  where ε2 and ε3 are unknowns (i.e. parallel bodies)
+# and τ = τ2_1 + τ2_2 ; τ = τ3_1 + τ3_2
+# The vector x = (ε2, ε3, τ); then:
+#   SVector{2, T}(sum(x[i] for i in 1:N2-1), x[end])
+#   SVector{2, T}(x[i-1], x[end]) where (x[i-1], x[end]) -> (ε_parallel_i, τ_total)
 function SInput(funs::NTuple{N1, Function}, x::SVector{N2, T}, args) where {N1, N2, T} 
     SVector{N1,T}(
         funs[i](
-            i == 1 ?  SVector{2, T}(sum(x[i] for i in 1:N2-1), x[end]) : SVector{2, T}(x[1], x[end]), 
+            i == 1 ? SVector{2, T}(sum(x[i] for i in 1:N2-1), x[end]) : SVector{2, T}(x[i-1], x[end]), 
             args
         ) 
         for i in 1:N1
     )
 end
-
-MInput(funs::NTuple{N1, Function}, x::MVector{N2, T}) where {N1, N2, T} = MVector{N1,T}(funs[i](x) for i in 1:N1)
-MInput(funs::NTuple{N1, Function}, x::MVector{N2, T}, args) where {N1, N2, T} = MVector{N1,T}(funs[i](x, args) for i in 1:N1)
-
 
 @inline function jacobian(f, x::StaticArray)
     T = typeof(ForwardDiff.Tag(f, eltype(x)))
@@ -328,49 +203,7 @@ MInput(funs::NTuple{N1, Function}, x::MVector{N2, T}, args) where {N1, N2, T} = 
     return f, J
 end
 
-
-SVector{2}(funs[i](inputs, args) for i in 1:2)
-
-jacobian(input -> SInput(funs, input, args_n), x)
-
 extract_value(result::SVector{N, ForwardDiff.Dual{Tag, T, N}}) where {N,T,Tag} = SVector{N,T}(result[i].value for i in 1:N)
-
-function foo(input::T) where T
-    fs = (f1, f2)
-    jacobian(x-> SInput(fs, x), input)
-end
-
-f1(x, y) = sin(exp(x)) + cos(y)/log10(x+y)
-f2(x, y) = cos(x + y) * tanh(x*y)
-
-#from symbolics
-df1dx(x, y) = exp(x)*cos(exp(x)) - 0.43429448190325176((x + y)^-1)*(cos(y) / (log10(x + y)^2))
-df1dy(x, y) = (-sin(y)) / log10(x + y) - 0.43429448190325176((x + y)^-1)*(cos(y) / (log10(x + y)^2))
-df2dx(x, y) = y*(1 - (tanh(x*y)^2))*cos(x + y) - sin(x + y)*tanh(x*y)
-df2dy(x, y) = x*(1 - (tanh(x*y)^2))*cos(x + y) - sin(x + y)*tanh(x*y)
-
-function bar(x)
-    f = @SVector [
-        f1(x[1], x[2]),
-        f2(x[1], x[2]),
-    ]
-
-    df = @SMatrix [
-        df1dx(x[1], x[2]) df1dy(x[1], x[2])
-        df2dx(x[1], x[2]) df2dy(x[1], x[2])
-    ]
-    f, df
-end
-
-input = @SVector [1.0, 2.0]
-
-@btime bar($input)
-@btime foo($input);
-@code_warntype foo(input);
-
-
-@code_typed  extract_value(result)
-@code_typed extract_value2(result)
 
 ########################################################################################################################################## 
 ##########################################################################################################################################
@@ -397,9 +230,9 @@ function compute_τII_par(
     τ_n = compute_τII_harmonic(c, εII_total, args)
 
     # x[1:end-1] = strain rate of parallel element, x[end] = total stress invariant
-    x = SVector{n,Float64}(i ==1 ? εp_n : τ_n for i in 1:n)
+    x = SVector{n,Float64}(i == 1 ? εp_n : τ_n for i in 1:n)
 
-    # define closures to be differentiated
+    # define closures that will be differentiated
     f1(x, args) = εII_total - compute_εII_elements(c, x[2], args) - x[1]
     f2(x, args) = x[2] - compute_τII_parallel(c, x[1], args)
     funs = f1, f2
@@ -414,7 +247,6 @@ function compute_τII_par(
         x_n = x
         args_n = merge(args, (τII = x[2], )) # we define a new arguments tuple to maintain type stability 
         r, J = jacobian(input -> SInput(funs, input, args_n), x)
-
         # update solution
         dx  = J\r 
         x  -= dx   
@@ -422,41 +254,31 @@ function compute_τII_par(
         ϵ = norm(@. abs(x-x_n))
         # println(" iter $(iter) $ϵ τ=$(x[1]) εp=$(x[2])")
     end
-    return x[2], x[1]
+    return x[2]
 end
 
 @btime compute_τII_par($c, $εII, $args)
+@btime compute_τII($c, $εII, $args)
 
 compute_τII_par(c, εII, args)
+compute_τII(c, εII, args)
 
 compute_εII(c, τII, args)
 compute_τII(c, εII, args)
 
-@btime compute_τII($v, $εII, $args)
+p0 = CompositeRheology(v3, Parallel(v3, v3) )
+p1_2 = Parallel((p0, ))                # linear elements
+c4_2 = CompositeRheology(v1, v3, p1_2)   # with linear || element
 
 
-fp = ntuple()
-
-ntuple(Val(2)) do i
-    if i == 1
-        (x, args) -> εII_total - compute_εII_elements(c, x[2], args) - sum(x[i] for i in 1:(2-1))
-    else        
-        (x, args) -> x[i+1] - compute_τII_parallel(c, x[1], args)
-    end
+ProfileCanvas.@profview for i in 1:1000000
+    compute_τII(c4_2, εII, args)
+    # compute_τII_par(c4_2, εII, args)
 end
 
-macro foos(x, args)
+@btime compute_τII_par($c4_2, $εII, $args)
+@btime     compute_τII($c4_2, $εII, $args)
 
-    esc(
-        quote
-            # Tuple(
-                (x,args) -> x[1] 
-            #     for i in length(x)
-            # )
-        end
-    )
-        
-end
+compute_τII_par(c4_2, εII, args)
+compute_τII(c4_2, εII, args)
 
-@btime  @foos($x, $args)
-f = @foos(x, args)

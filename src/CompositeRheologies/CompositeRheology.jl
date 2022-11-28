@@ -351,9 +351,9 @@ end
 Sums the strainrate of all non-parallel and non-plastic elements in a `CompositeRheology` structure. Mostly internally used for jacobian iterations.
 """
 compute_εII_elements(v::CompositeRheology{T,N}, τII, args) where {T,N} = nreduce(vi -> first(_compute_εII_nonparallel(vi, τII, args)), v.elements)
-_compute_εII_nonparallel(v, TauII, args) = compute_εII(v, TauII, args)
-_compute_εII_nonparallel(v::Parallel, TauII::_T, args) where {_T} = zero(_T)
-_compute_εII_nonparallel(v::AbstractPlasticity, TauII::_T, args) where {_T} = zero(_T)
+_compute_εII_nonparallel(v, τII, args) = compute_εII(v, τII, args)
+_compute_εII_nonparallel(v::Parallel, τII::_T, args) where {_T} = zero(_T)
+_compute_εII_nonparallel(v::AbstractPlasticity, τII::_T, args) where {_T} = zero(_T)
 
 """
     compute_εvol_elements(v::CompositeRheology, TauII, args)
