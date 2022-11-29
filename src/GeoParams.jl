@@ -15,6 +15,7 @@ using Unitful           # Units
 using BibTeX            # references of creep laws
 using Requires          # To only add plotting routines if Plots is loaded
 using StaticArrays
+using ForwardDiff
 
 import Base: getindex
 
