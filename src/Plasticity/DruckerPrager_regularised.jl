@@ -100,8 +100,8 @@ end
 ∂Q∂P(p::DruckerPrager_regularised, args; kwargs...) = -NumValue(p.sinΨ)
 
 # Derivatives of yield function
-∂F∂τII(p::DruckerPrager_regularised, τII::_T; P=zero(_T), kwargs...) where _T  = _T(1)
-∂F∂P(p::DruckerPrager_regularised, P::_T; τII=zero(_T), kwargs...) where _T    = -NumValue(p.sinϕ)
+∂F∂τII(p::DruckerPrager_regularised, τII::_T; kwargs...) where _T  = _T(1)
+∂F∂P(p::DruckerPrager_regularised, P::_T; kwargs...) where _T    = -NumValue(p.sinϕ)
 ∂F∂λ(p::DruckerPrager_regularised, τII::_T; P=zero(_T), kwargs...) where _T    = -2*NumValue(p.η_vp)*∂Q∂τII(p, τII, P=P) 
 
 
@@ -111,16 +111,16 @@ end
 for t in (:NTuple,:SVector)
     @eval begin
         ## 3D derivatives 
-        ∂Q∂τxx(p::DruckerPrager_regularised, τij::$(t){6, T}) where T = 0.5 * τij[1] / second_invariant(τij)
-        ∂Q∂τyy(p::DruckerPrager_regularised, τij::$(t){6, T}) where T = 0.5 * τij[2] / second_invariant(τij)
-        ∂Q∂τzz(p::DruckerPrager_regularised, τij::$(t){6, T}) where T = 0.5 * τij[3] / second_invariant(τij)
-        ∂Q∂τyz(p::DruckerPrager_regularised, τij::$(t){6, T}) where T = τij[4] / second_invariant(τij)
-        ∂Q∂τxz(p::DruckerPrager_regularised, τij::$(t){6, T}) where T = τij[5] / second_invariant(τij)
-        ∂Q∂τxy(p::DruckerPrager_regularised, τij::$(t){6, T}) where T = τij[6] / second_invariant(τij) 
+        ∂Q∂τxx(::DruckerPrager_regularised, τij::$(t){6, T}) where T = 0.5 * τij[1] / second_invariant(τij)
+        ∂Q∂τyy(::DruckerPrager_regularised, τij::$(t){6, T}) where T = 0.5 * τij[2] / second_invariant(τij)
+        ∂Q∂τzz(::DruckerPrager_regularised, τij::$(t){6, T}) where T = 0.5 * τij[3] / second_invariant(τij)
+        ∂Q∂τyz(::DruckerPrager_regularised, τij::$(t){6, T}) where T = τij[4] / second_invariant(τij)
+        ∂Q∂τxz(::DruckerPrager_regularised, τij::$(t){6, T}) where T = τij[5] / second_invariant(τij)
+        ∂Q∂τxy(::DruckerPrager_regularised, τij::$(t){6, T}) where T = τij[6] / second_invariant(τij) 
         ## 2D derivatives 
-        ∂Q∂τxx(p::DruckerPrager_regularised, τij::$(t){3, T}) where T = 0.5 * τij[1] / second_invariant(τij)
-        ∂Q∂τyy(p::DruckerPrager_regularised, τij::$(t){3, T}) where T = 0.5 * τij[2] / second_invariant(τij)
-        ∂Q∂τxy(p::DruckerPrager_regularised, τij::$(t){3, T}) where T = τij[3] / second_invariant(τij) 
+        ∂Q∂τxx(::DruckerPrager_regularised, τij::$(t){3, T}) where T = 0.5 * τij[1] / second_invariant(τij)
+        ∂Q∂τyy(::DruckerPrager_regularised, τij::$(t){3, T}) where T = 0.5 * τij[2] / second_invariant(τij)
+        ∂Q∂τxy(::DruckerPrager_regularised, τij::$(t){3, T}) where T = τij[3] / second_invariant(τij) 
     end
 end
 
@@ -131,16 +131,10 @@ end
 
 This computes plastic strain rate invariant for a given ``λdot``
 """
-function compute_εII(p::DruckerPrager_regularised{_T,U,U1}, λdot::_T, τII::_T, kwargs...) where {_T, U, U1}
+function compute_εII(p::DruckerPrager_regularised, λdot, τII, kwargs...)
     args = merge(kwargs, (λ=λdot,))
     F = compute_yieldfunction(p, args)
-    if F>0
-        ε_pl = λdot*∂Q∂τII(p, τII)
-
-    else
-        ε_pl = 0.0
-    end 
-
+    ε_pl = F > 0.0 ? λdot*∂Q∂τII(p, τII) : 0.0
     return ε_pl
 end
 
