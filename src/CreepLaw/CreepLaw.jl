@@ -147,82 +147,81 @@ end
 
 # Strain rate
 
-@inline function compute_εij!(
+@inline function compute_ε!(
     v::LinearViscous, εij::AbstractArray, τij::AbstractArray, args
 )
     return compute_εII!(v, εij, τij; args)
 end
 
-@inline function compute_εij(v::LinearViscous, τij::AbstractArray, args)
+@inline function compute_ε(v::LinearViscous, τij::AbstractArray, args)
     εij = similar(τij)
-    compute_εij!(v, εij, τij, args)
+    compute_ε!(v, εij, τij, args)
     return εij
 end
 
-@inline function compute_εij(v::LinearViscous, τij::NTuple{N,T}, args) where {N,T}
+@inline function compute_ε(v::LinearViscous, τij::NTuple{N,T}, args) where {N,T}
     return εij = ntuple(Val(N)) do i
         compute_εII(v, τij[i]; args...)
     end
 end
 
-@inline function compute_εij(v::LinearViscous, τij::SVector{N,T}, args) where {N,T}
-    # εij = SVector{N,T}(compute_εII(v, τij[i]; args...) for i in 1:N)
-    εij = SVector(x -> compute_εII(v, x; args...), τij)
+@inline function compute_ε(v::LinearViscous, τij::SVector{N,T}, args) where {N,T}
+    εij = map(x -> compute_εII(v, x; args...), τij)
     return εij
 end
 
-function compute_dεijdτij(v::LinearViscous, τij::SVector{N,T}, args) where {N,T}
-    return εij, J = GeoParams.jacobian(x -> compute_εij(v, x, args), τij)
+function compute_dεdτ(v::LinearViscous, τij::SVector{N,T}, args) where {N,T}
+    return εij, J = jacobian(x -> compute_ε(v, x, args), τij)
 end
 
-function compute_dεijdτij(v::LinearViscous, τij::NTuple{N,T}, args) where {N,T}
+function compute_dεdτ(v::LinearViscous, τij::NTuple{N,T}, args) where {N,T}
     Sτij = SVector{N,T}(τij)
-    εij, J = compute_dεijdτij(v, Sτij, args)
+    εij, J = compute_dεdτ(v, Sτij, args)
     return ntuple(i -> εij[i], Val(N)), J
 end
 
-function compute_dεijdτij(v::LinearViscous, τij::Array, args)
+function compute_dεdτ(v::LinearViscous, τij::Array, args)
     εij = similar(τij)
-    ForwardDiff.jacobian((x, y) -> compute_εij!(v, x, y, args), εij, τij)
+    ForwardDiff.jacobian((x, y) -> compute_ε!(v, x, y, args), εij, τij)
     return εij, J
 end
 
 # Deviatoric stress
 
-@inline function compute_τij(v::LinearViscous, εij::NTuple, args)
+@inline function compute_τ(v::LinearViscous, εij::NTuple{N,T}, args) where {N,T}
     return τij = ntuple(Val(N)) do i
         compute_εII(v, εij[i]; args...)
     end
 end
 
-@inline function compute_τij(v::LinearViscous, εij::SVector{N,T}, args) where {N,T}
-    return τij = SVector(x -> compute_εII(v, x; args...), εij)
+@inline function compute_τ(v::LinearViscous, εij::SVector{N,T}, args) where {N,T}
+    return τij = map(x -> compute_εII(v, x; args...), εij)
 end
 
-@inline function compute_τij(v::LinearViscous, εij::Array, args)
+@inline function compute_τ(v::LinearViscous, εij::Array, args)
     τij = similar(εij)
-    compute_τij!(v, τij, εij, τij_old; args...)
+    compute_τ!(v, τij, εij, τij_old; args...)
     return τij
 end
 
-@inline function compute_τij!(v::LinearViscous, εij::Array, τij::Array, args)
+@inline function compute_τ!(v::LinearViscous, εij::Array, τij::Array, args)
     return compute_τII!(v, τij, εij; args)
 end
 
-function compute_dτijdεij(v::LinearViscous, εij::SVector{N,T}, args) where {N,T}
-    return τij, J = GeoParams.jacobian(x -> compute_τij(v, x, args), εij)
+function compute_dτdε(v::LinearViscous, εij::SVector{N,T}, args) where {N,T}
+    return τij, J = jacobian(x -> compute_τ(v, x, args), εij)
 end
 
-function compute_dτijdεij(v::LinearViscous, εij::NTuple{N,T}, args) where {N,T}
+function compute_dτdε(v::LinearViscous, εij::NTuple{N,T}, args) where {N,T}
     Sεij = SVector{N,T}(εij)
-    τij, J = compute_dεijdτij(v, Sεij, args)
+    τij, J = compute_dεdτ(v, Sεij, args)
 
     return ntuple(i -> τij[i], Val(N)), J
 end
 
-function compute_dτijdεij(v::ConstantElasticity, εij::Array, args)
+function compute_dτdε(v::LinearViscous, εij::Array, args)
     τij = similar(εij)
-    ForwardDiff.jacobian((x, y) -> compute_τij!(v, x, y, args), τij, εij)
+    ForwardDiff.jacobian((x, y) -> compute_τ!(v, x, y, args), τij, εij)
     return τij, J
 end
 
