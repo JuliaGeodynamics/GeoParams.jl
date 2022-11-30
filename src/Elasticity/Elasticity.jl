@@ -484,6 +484,7 @@ function effective_εII(
 end
 
 ## Expand methods for multiple phases in staggered grids
+
 @inline function effective_ε(
     εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T,NTuple{4,T}}}, dt, phases::NTuple{N,Union{I,NTuple{4,I}}}
 ) where {N,T,I<:Integer}
@@ -497,4 +498,118 @@ end
     εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt, phases::NTuple{N,Union{I,NTuple{4,I}}}
 ) where {N,T,I<:Integer}
     return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt, phases[i]), Val(N))
+end
+
+## Tensor methods (fully AD compatible)
+
+# Strain rate
+
+@inline function compute_εij!(
+    v::ConstantElasticity, εij::AbstractArray, τij::AbstractArray, τij_old::AbstractArray; dt=1.0, kwargs...
+)
+    @unpack_val G = v
+    @. εij =  0.5 * (τij - τij_old) / (G * dt)
+    return εij
+end
+
+@inline function compute_εij(
+    v::ConstantElasticity,  τij::AbstractArray, τij_old::AbstractArray, args
+)
+    εij = similar(τij)
+    compute_εij!(v, εij, τij, τij_old; args...)
+    return εij
+end
+
+@inline function compute_εij(
+    v::ConstantElasticity,  τij::NTuple, τij_old::NTuple; dt=1.0, kwargs...
+)
+    @unpack_val G = v
+    εij = @. 0.5 * (τij - τij_old) / (G * dt)
+    return εij
+end
+
+@inline function compute_εij(
+    v::ConstantElasticity,  τij::SVector{N,T}, τij_old::SVector{N,T}; dt=one(T), kwargs...
+) where {N,T}
+    @unpack_val G = v
+    εij = SVector{N,T}(0.5 * (τij[i] - τij_old[i]) / (G * dt) for i in 1:N)
+    return εij
+end
+
+function compute_dεijdτij(
+    v::ConstantElasticity,  τij::SVector{N,T}, τij_old::SVector{N,T}, args
+) where {N,T}
+    εij, J = GeoParams.jacobian( x-> compute_εij(v, x, τij_old, args), τij)
+end
+
+function compute_dεijdτij(
+    v::ConstantElasticity, τij::NTuple{N,T}, τij_old::NTuple{N,T}, args
+) where {N,T}
+
+    Sτij, Sτij_old = SVector{N,T}(τij), SVector{N,T}(τij_old)
+    εij, J = compute_dεijdτij(v, Sτij, Sτij_old, args)
+    return ntuple(i -> εij[i], Val(N)) , J
+end
+
+function compute_dεijdτij(
+    v::ConstantElasticity, τij::Array, τij_old::Array, args
+)
+    εij = similar(τij)
+    ForwardDiff.jacobian( (x, y) -> compute_εij!(v, x, y, τij_old; args), εij, τij)
+    return εij, J
+end
+
+# Deviatoric stress
+
+@inline function compute_τij(
+    v::ConstantElasticity,  εij::NTuple, τij_old::NTuple; dt=1.0, kwargs...
+)
+    @unpack_val G = v
+    τij = @. 2.0 * G * dt * εij + τij_old
+end
+
+@inline function compute_τij(
+    v::ConstantElasticity,  εij::SVector{N,T}, τij_old::SVector{N,T}; dt=1.0, kwargs...
+) where {N,T}
+    @unpack_val G = v
+    τij = SVector{N,T}(2.0 * G * dt * εij[i] + τij_old[i] for i in 1:N)
+end
+
+@inline function compute_τij(
+    v::ConstantElasticity,  εij::Array, τij_old::Array, args
+)
+    τij = similar(εij)
+    compute_τij!(v, τij, εij, τij_old; args...)
+    return τij
+end
+
+@inline function compute_τij!(
+    v::ConstantElasticity, τij::Array,  εij::Array, τij_old::Array; dt=1.0, kwargs...
+)
+    @unpack_val G = v
+    @. τij = 2.0 * G * dt * εij + τij_old
+end
+
+function compute_dτijdεij(
+    v::ConstantElasticity,  εij::SVector{N,T}, τij_old::SVector{N,T}, args
+) where {N,T}
+    τij, J = GeoParams.jacobian( x -> compute_τij(v, x, τij_old; args), εij)
+end
+
+function compute_dτijdεij(
+    v::ConstantElasticity, εij::NTuple{N,T}, τij_old::NTuple{N,T}, args
+) where {N,T}
+
+    Sεij, Sτij_old = SVector{N,T}(εij), SVector{N,T}(τij_old)
+    τij, J = compute_dεijdτij(v, Sεij, Sτij_old, args)
+    
+    return ntuple(i -> τij[i], Val(N)) , J
+end
+
+function compute_dτijdεij(
+    v::ConstantElasticity, εij::Array, τij_old::Array, args
+)
+    τij = similar(εij)
+    ForwardDiff.jacobian( (x, y) -> compute_τij!(v, x, y, τij_old; args), τij, εij)
+    return τij, J
 end
