@@ -94,13 +94,12 @@ end
 # Plastic Potential 
 
 # Derivatives w.r.t pressure
-∂Q∂P(p::DruckerPrager, P=zero(_T); τII=zero(_T), kwargs...) = -NumValue(p.sinΨ)
+∂Q∂P(p::DruckerPrager, P; kwargs...) = -NumValue(p.sinΨ)
 
 # Derivatives of yield function
-∂F∂τII(p::DruckerPrager, τII::_T; P=zero(_T), kwargs...) where _T  = _T(1)
-∂F∂P(p::DruckerPrager, P::_T; τII=zero(_T), kwargs...) where _T    = -NumValue(p.sinϕ)
-∂F∂λ(p::DruckerPrager, τII::_T; P=zero(_T), kwargs...) where _T    = _T(0) 
-
+∂F∂τII(p::DruckerPrager, τII::_T; kwargs...) where _T = one(_T)
+∂F∂P(p::DruckerPrager, P::_T; kwargs...) where _T     = -NumValue(p.sinϕ)
+∂F∂λ(p::DruckerPrager, τII::_T; kwargs...) where _T   = zero(_T )
 
 # Derivatives w.r.t stress tensor
 
@@ -108,35 +107,29 @@ end
 for t in (:NTuple,:SVector)
     @eval begin
         ## 3D derivatives 
-        ∂Q∂τxx(p::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[1] / second_invariant(τij)
-        ∂Q∂τyy(p::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[2] / second_invariant(τij)
-        ∂Q∂τzz(p::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[3] / second_invariant(τij)
-        ∂Q∂τyz(p::DruckerPrager, τij::$(t){6, T}) where T = τij[4] / second_invariant(τij)
-        ∂Q∂τxz(p::DruckerPrager, τij::$(t){6, T}) where T = τij[5] / second_invariant(τij)
-        ∂Q∂τxy(p::DruckerPrager, τij::$(t){6, T}) where T = τij[6] / second_invariant(τij) 
+        ∂Q∂τxx(::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[1] / second_invariant(τij)
+        ∂Q∂τyy(::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[2] / second_invariant(τij)
+        ∂Q∂τzz(::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[3] / second_invariant(τij)
+        ∂Q∂τyz(::DruckerPrager, τij::$(t){6, T}) where T = τij[4] / second_invariant(τij)
+        ∂Q∂τxz(::DruckerPrager, τij::$(t){6, T}) where T = τij[5] / second_invariant(τij)
+        ∂Q∂τxy(::DruckerPrager, τij::$(t){6, T}) where T = τij[6] / second_invariant(τij) 
         ## 2D derivatives 
-        ∂Q∂τxx(p::DruckerPrager, τij::$(t){3, T}) where T = 0.5 * τij[1] / second_invariant(τij)
-        ∂Q∂τyy(p::DruckerPrager, τij::$(t){3, T}) where T = 0.5 * τij[2] / second_invariant(τij)
-        ∂Q∂τxy(p::DruckerPrager, τij::$(t){3, T}) where T = τij[3] / second_invariant(τij) 
+        ∂Q∂τxx(::DruckerPrager, τij::$(t){3, T}) where T = 0.5 * τij[1] / second_invariant(τij)
+        ∂Q∂τyy(::DruckerPrager, τij::$(t){3, T}) where T = 0.5 * τij[2] / second_invariant(τij)
+        ∂Q∂τxy(::DruckerPrager, τij::$(t){3, T}) where T = τij[3] / second_invariant(τij) 
     end
 end
 
-∂Q∂τII(p::DruckerPrager, τII::_T; P=zero(_T), kwargs...) where _T = 0.5
+∂Q∂τII(::DruckerPrager, τII::_T; kwargs...) where _T = 0.5
 
 """
     compute_εII(p::DruckerPrager{_T,U,U1}, λdot::_T, τII::_T,  P) 
 
 This computes plastic strain rate invariant for a given ``λdot``
 """
-function compute_εII(p::DruckerPrager{_T,U,U1}, λdot::_T, τII::_T, kwargs...) where {_T, U, U1}
+function compute_εII(p::DruckerPrager, λdot, τII, kwargs...)
     F = compute_yieldfunction(p, kwargs)
-    @show F, kwargs
-    if F>0
-        ε_pl = λdot*∂Q∂τII(p, τII)
-
-    else
-        ε_pl = 0.0
-    end 
+    ε_pl = F > 0.0 ? λdot*∂Q∂τII(p, τII) : 0.0
 
     return ε_pl
 end
