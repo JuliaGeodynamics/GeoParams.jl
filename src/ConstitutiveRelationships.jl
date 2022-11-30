@@ -6,8 +6,8 @@ module ConstitutiveRelationships
 using Base: Float64
 using Parameters, LaTeXStrings, Unitful
 using ..Units
-using GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
-import GeoParams: param_info, fastpow, nphase, @print
+import GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
+import GeoParams: param_info, fastpow, nphase, @print, jacobian
 import GeoParams: second_invariant, second_invariant_staggered
 using BibTeX
 using ..MaterialParameters: MaterialParamsInfo
@@ -44,6 +44,10 @@ export param_info,
     compute_τII!,
     compute_τII,
     compute_τII_AD,
+    compute_τ,
+    compute_ε,
+    compute_dτdε,
+    compute_dεdτ,
     computeViscosity_τII,
     computeViscosity_τII!,
     computeViscosity_εII,

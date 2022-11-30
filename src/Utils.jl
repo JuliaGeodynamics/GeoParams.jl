@@ -1,4 +1,5 @@
 using StaticArrays, ForwardDiff
+export jacobian
 # Various helper functions (mostly for internal use)
 
 # Finds index in an allocation-free manner
@@ -101,7 +102,12 @@ end
     return f, ∂f∂x
 end
 
-@inline function jacobian(f, x::StaticArray)
+@inline function jacobian(f, x::NTuple{N, T}) where {N,T}
+    Sx = SVector{N,T}(x...)
+    jacobian(f, Sx)
+end
+
+@inline function jacobian(f, x)
     T = typeof(ForwardDiff.Tag(f, eltype(x)))
     result = ForwardDiff.static_dual_eval(T, f, x)
     J = ForwardDiff.extract_jacobian(T, result, x)
@@ -110,3 +116,6 @@ end
 end
 
 extract_value(result::SVector{N, ForwardDiff.Dual{Tag, T, N}}) where {N,T,Tag} = SVector{N,T}(result[i].value for i in 1:N)
+extract_value(result::MVector{N, ForwardDiff.Dual{Tag, T, N}}) where {N,T,Tag} = SVector{N,T}(result[i].value for i in 1:N)
+extract_value(result::Array) = [result[i].value for i in 1:N]
+extract_value(result::NTuple{N,T}) where {N,T} = ntuple(i -> result[i].value, Val(N))
