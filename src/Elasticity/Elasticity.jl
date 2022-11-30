@@ -155,11 +155,11 @@ In-place computation of the elastic shear strainrate for given deviatoric stress
 
 """
 function compute_εII!(
-    ε_el::AbstractArray{_T,N},
+    ε_el::AbstractArray,
     p::ConstantElasticity{_T},
-    τII::AbstractArray{_T,N};
-    τII_old::AbstractArray{_T,N},
-    dt::_T,
+    τII::AbstractArray;
+    τII_old = zeros(_T, size(τII)),
+    dt = one(_T),
     kwargs...,
 ) where {N,_T}
     @inbounds for i in eachindex(τII)
@@ -179,11 +179,11 @@ In-place update of the elastic stress for given deviatoric strainrate invariants
 
 """
 function compute_τII!(
-    τII::AbstractArray{_T,N},
+    τII::AbstractArray,
     p::ConstantElasticity{_T},
-    ε_el::AbstractArray{_T,N};
-    τII_old::AbstractArray{_T,N},
-    dt::_T,
+    ε_el::AbstractArray;
+    τII_old = zeros(_T, size(τII)),
+    dt = one(_T),
     kwargs...,
 ) where {N,_T}
     @inbounds for i in eachindex(ε_el)
@@ -540,101 +540,99 @@ end
     v::ConstantElasticity,
     εij::AbstractArray,
     τij::AbstractArray,
-    τij_old::AbstractArray;
-    dt,
-    args,
+    args
 )
-    compute_εII!(εij, v, τij, τij_old, dt, args...)
+    compute_εII!(εij, v, τij; args...)
 end
 
 @inline function compute_ε(
-    v::ConstantElasticity, τij::AbstractArray, τij_old::AbstractArray, args
+    v::ConstantElasticity, τij::AbstractArray, args
 )
     εij = similar(τij)
-    compute_ε!(v, εij, τij, τij_old, args.dt, args)
+    compute_ε!(v, εij, τij, args)
     return εij
 end
 
 @inline function compute_ε(
-    v::ConstantElasticity, τij::NTuple{N,T}, τij_old::NTuple{N,T}, args
+    v::ConstantElasticity, τij::NTuple{N,T}, args
 ) where {N,T}    
     ntuple(Val(N)) do i
-        compute_εII(v, τij[i]; merge(args, (; τII_old = τij_old[i]))...)
+        compute_εII(v, τij[i]; merge(args, (; τII_old = args.τij_old[i]))...)
     end
 end
 
 @inline function compute_ε(
-    v::ConstantElasticity, τij::SVector, τij_old::SVector, args
+    v::ConstantElasticity, τij::SVector, args
 )
-    εij = map((x,y)->compute_εII(v, x; merge(args, (; τII_old = y))...), τij, τij_old)
+    εij = map((x,y)->compute_εII(v, x; merge(args, (; τII_old = y))...), τij, args.τij_old)
     return εij
 end
 
 function compute_dεdτ(
-    v::ConstantElasticity, τij::SVector{N,T}, τij_old::SVector{N,T}, args
+    v::ConstantElasticity, τij::SVector{N,T}, args
 ) where {N,T}
-    return εij, J = jacobian(x -> compute_ε(v, x, τij_old, args), τij)
+    return εij, J = jacobian(x -> compute_ε(v, x, args), τij)
 end
 
 function compute_dεdτ(
-    v::ConstantElasticity, τij::NTuple{N,T}, τij_old::NTuple{N,T}, args
+    v::ConstantElasticity, τij::NTuple{N,T}, args
 ) where {N,T}
-    Sτij, Sτij_old = SVector{N,T}(τij), SVector{N,T}(τij_old)
-    εij, J = compute_dεdτ(v, Sτij, Sτij_old, args)
+    Sτij= SVector{N,T}(τij)
+    εij, J = compute_dεdτ(v, Sτij, args)
     return ntuple(i -> εij[i], Val(N)), J
 end
 
-function compute_dεdτ(v::ConstantElasticity, τij::Array, τij_old::Array, args)
+function compute_dεdτ(v::ConstantElasticity, τij::Array, args)
     εij = similar(τij)
-    ForwardDiff.jacobian((x, y) -> compute_ε!(v, x, y, τij_old; args), εij, τij)
+    ForwardDiff.jacobian((x, y) -> compute_ε!(v, x, y, args), εij, τij)
     return εij, J
 end
 
 # Deviatoric stress
 
 @inline function compute_τ(
-    v::ConstantElasticity, εij::NTuple{N,T}, τij_old::NTuple{N,T}, args
+    v::ConstantElasticity, εij::NTuple{N,T}, args
 ) where {N,T}
     ntuple(Val(N)) do i
-        compute_τII(v, εij[i];  merge(args, (; τII_old = τij_old[i]))...)
+        compute_τII(v, εij[i];  merge(args, (; τII_old = args.τij_old[i]))...)
     end
 end
 
 @inline function compute_τ(
-    v::ConstantElasticity, εij::SVector, τij_old::SVector, args
+    v::ConstantElasticity, εij::SVector, args
 )
-    return τij = map( (x, y) -> compute_τII(v, x; merge(args, (; τII_old = y))...), εij, τij_old)
+    return τij = map( (x, y) -> compute_τII(v, x; merge(args, (; τII_old = y))...), εij, args.τij_old)
 end
 
-@inline function compute_τ(v::ConstantElasticity, εij::Array, τij_old::Array, args)
+@inline function compute_τ(v::ConstantElasticity, εij::Array, args)
     τij = similar(εij)
-    compute_τ!(v, τij, εij, τij_old, args)
+    compute_τ!(v, τij, εij, args)
     return τij
 end
 
 @inline function compute_τ!(
-    v::ConstantElasticity, τij::Array, εij::Array, τij_old::Array, args
+    v::ConstantElasticity, τij::Array, εij::Array, args
 )
-    compute_τII!(v, τij, εij, τij_old; args...)
+    compute_τII!(τij, v, εij; args...)
 end
 
 function compute_dτdε(
-    v::ConstantElasticity, εij::SVector, τij_old::SVector, args
+    v::ConstantElasticity, εij::SVector, args
 )
-    return τij, J = jacobian(x -> compute_τ(v, x, τij_old, args), εij)
+    return τij, J = jacobian(x -> compute_τ(v, x, args), εij)
 end
 
 function compute_dτdε(
-    v::ConstantElasticity, εij::NTuple{N,T}, τij_old::NTuple{N,T}, args
+    v::ConstantElasticity, εij::NTuple{N,T}, args
 ) where {N,T}
-    Sεij, Sτij_old = SVector{N,T}(εij), SVector{N,T}(τij_old)
-    τij, J = compute_dεdτ(v, Sεij, Sτij_old, args)
+    Sεij = SVector{N,T}(εij)
+    τij, J = compute_dεdτ(v, Sεij, args)
 
     return ntuple(i -> τij[i], Val(N)), J
 end
 
-function compute_dτdε(v::ConstantElasticity, εij::Array, τij_old::Array, args)
+function compute_dτdε(v::ConstantElasticity, εij::Array, args)
     τij = similar(εij)
-    ForwardDiff.jacobian((x, y) -> compute_τ!(v, x, y, τij_old, args), τij, εij)
+    ForwardDiff.jacobian((x, y) -> compute_τ!(v, x, y, args), τij, εij)
     return τij, J
 end
