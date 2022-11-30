@@ -19,8 +19,9 @@ export compute_εII,            # calculation routines
     ConstantElasticity,     # constant
     SetConstantElasticity,  # helper function
     AbstractElasticity,
-    isvolumetric, 
-    effective_εII, effective_ε
+    isvolumetric,
+    effective_εII,
+    effective_ε
 
 # ConstantElasticity  -------------------------------------------------------
 
@@ -37,7 +38,6 @@ Structure that holds parameters for constant, isotropic, linear elasticity.
 end
 
 ConstantElasticity(args...) = ConstantElasticity(convert.(GeoUnit, args)...)
-
 
 # Add multiple dispatch here to allow specifying combinations of 2 elastic parameters (say ν & E), to compute the others
 """
@@ -102,21 +102,34 @@ here ``\\tilde{{\\tau_{ij}}}^{old}`` is the rotated old deviatoric stress tensor
 
 """
 @inline function compute_εII(
-    a::ConstantElasticity, τII::_T; τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+    a::ConstantElasticity,
+    τII::_T;
+    τII_old=zero(precision(a)),
+    dt=one(precision(a)),
+    kwargs...,
 ) where {_T}
     @unpack_val G = a
     ε_el = 0.5 * (τII - τII_old) / (G * dt)
     return ε_el
 end
 
-@inline function dεII_dτII(a::ConstantElasticity{_T}, τII::_T; τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
-    ) where {_T}
+@inline function dεII_dτII(
+    a::ConstantElasticity{_T},
+    τII::_T;
+    τII_old=zero(precision(a)),
+    dt=one(precision(a)),
+    kwargs...,
+) where {_T}
     @unpack_val G = a
     return 0.5 * inv(G * dt)
 end
 
 @inline function compute_τII(
-    a::ConstantElasticity, εII::_T; τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+    a::ConstantElasticity,
+    εII::_T;
+    τII_old=zero(precision(a)),
+    dt=one(precision(a)),
+    kwargs...,
 ) where {_T}
     @unpack_val G = a
     τII = _T(2.0) * G * dt * εII + τII_old
@@ -124,8 +137,9 @@ end
     return τII
 end
 
-@inline function dτII_dεII(a::ConstantElasticity{_T}, τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
-    ) where {_T}
+@inline function dτII_dεII(
+    a::ConstantElasticity{_T}, τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+) where {_T}
     @unpack_val G = a
     return _T(2.0) * G * dt
 end
@@ -199,27 +213,37 @@ Computes elastic volumetric strainrate given the pressure at the current (`P`) a
     a::ConstantElasticity, P::_T; P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
 ) where {_T}
     @unpack_val Kb = a
-    εvol_el = - (P - P_old) / (Kb * dt)
+    εvol_el = -(P - P_old) / (Kb * dt)
     return εvol_el
 end
 
-@inline function dεvol_dp(a::ConstantElasticity{_T}, P::_T; P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
-    ) where {_T}
+@inline function dεvol_dp(
+    a::ConstantElasticity{_T},
+    P::_T;
+    P_old=zero(precision(a)),
+    dt=one(precision(a)),
+    kwargs...,
+) where {_T}
     @unpack_val Kb = a
-    return - inv(Kb * dt)
+    return -inv(Kb * dt)
 end
 
 @inline function compute_p(
-    a::ConstantElasticity, εvol::_T; P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+    a::ConstantElasticity,
+    εvol::_T;
+    P_old=zero(precision(a)),
+    dt=one(precision(a)),
+    kwargs...,
 ) where {_T}
     @unpack_val Kb = a
-    P = - Kb * dt * εvol + P_old
+    P = -Kb * dt * εvol + P_old
 
     return P
 end
 
-@inline function dp_dεvol(a::ConstantElasticity{_T}, P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
-    ) where {_T}
+@inline function dp_dεvol(
+    a::ConstantElasticity{_T}, P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+) where {_T}
     @unpack_val Kb = a
     return -Kb * dt
 end
@@ -295,7 +319,7 @@ end
 
 # Single material phase
 @inline _elastic_ε(v::ConstantElasticity, τij_old, dt) = τij_old / (2 * v.G * dt)
-@inline _elastic_ε(v::Vararg{Any, N}) where {N} = 0.0
+@inline _elastic_ε(v::Vararg{Any,N}) where {N} = 0.0
 
 @inline effective_ε(εij::T, v, τij_old::T, dt) where {T} = εij + elastic_ε(v, τij_old, dt)
 
@@ -309,9 +333,7 @@ end
     end
 end
 
-@inline function effective_ε(
-    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt
-) where {N,T}
+@inline function effective_ε(εij::NTuple{N,T}, v, τij_old::NTuple{N,T}, dt) where {N,T}
     return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt), Val(N))
 end
 
@@ -389,11 +411,17 @@ end
 
 # Multiple material phases (collocated grid)
 
-@inline effective_ε(εij::T, v, τij_old::T, dt, phase::Int64) where {T} = εij + elastic_ε(v, τij_old, dt, phase)
+@inline function effective_ε(εij::T, v, τij_old::T, dt, phase::Int64) where {T}
+    return εij + elastic_ε(v, τij_old, dt, phase)
+end
 
 # Method for staggered grids
 @inline function effective_ε(
-    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T,NTuple{4,T}}}, dt, phase::Int64
+    εij::NTuple{N,Union{T,NTuple{4,T}}},
+    v,
+    τij_old::NTuple{N,Union{T,NTuple{4,T}}},
+    dt,
+    phase::Int64,
 ) where {N,T}
     ntuple(Val(N)) do i
         Base.@_inline_meta
@@ -402,7 +430,7 @@ end
 end
 
 @inline function effective_ε(
-    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt, phase::Int64
+    εij::NTuple{N,T}, v, τij_old::NTuple{N,T}, dt, phase::Int64
 ) where {N,T}
     return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt, phase), Val(N))
 end
@@ -434,14 +462,14 @@ function effective_ε(
     τxz_old,
     τxy_old,
     dt,
-    phase
+    phase,
 )
     return effective_ε(
         (εxx, εyy, εzz, εyz, εxz, εxy),
         v,
         (τxx_old, τyy_old, τzz_old, τyz_old, τxz_old, τxy_old),
         dt,
-        phase
+        phase,
     )
 end
 
@@ -460,7 +488,7 @@ function effective_εII(
     τxz_old,
     τxy_old,
     dt,
-    phase
+    phase,
 )
     εxx, εyy, εzz, εyz, εxz, εxy = effective_ε(
         εxx,
@@ -477,7 +505,7 @@ function effective_εII(
         τxz_old,
         τxy_old,
         dt,
-        phase
+        phase,
     )
     εII = second_invariant(εxx, εyy, εzz, εyz, εxz, εxy)
     return εII
@@ -486,7 +514,11 @@ end
 ## Expand methods for multiple phases in staggered grids
 
 @inline function effective_ε(
-    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T,NTuple{4,T}}}, dt, phases::NTuple{N,Union{I,NTuple{4,I}}}
+    εij::NTuple{N,Union{T,NTuple{4,T}}},
+    v,
+    τij_old::NTuple{N,Union{T,NTuple{4,T}}},
+    dt,
+    phases::NTuple{N,Union{I,NTuple{4,I}}},
 ) where {N,T,I<:Integer}
     ntuple(Val(N)) do i
         Base.@_inline_meta
@@ -495,7 +527,7 @@ end
 end
 
 @inline function effective_ε(
-    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt, phases::NTuple{N,Union{I,NTuple{4,I}}}
+    εij::NTuple{N,T}, v, τij_old::NTuple{N,T}, dt, phases::NTuple{N,Union{I,NTuple{4,I}}}
 ) where {N,T,I<:Integer}
     return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt, phases[i]), Val(N))
 end
@@ -505,15 +537,20 @@ end
 # Strain rate
 
 @inline function compute_εij!(
-    v::ConstantElasticity, εij::AbstractArray, τij::AbstractArray, τij_old::AbstractArray; dt=1.0, kwargs...
+    v::ConstantElasticity,
+    εij::AbstractArray,
+    τij::AbstractArray,
+    τij_old::AbstractArray;
+    dt=1.0,
+    kwargs...,
 )
     @unpack_val G = v
-    @. εij =  0.5 * (τij - τij_old) / (G * dt)
+    @. εij = 0.5 * (τij - τij_old) / (G * dt)
     return εij
 end
 
 @inline function compute_εij(
-    v::ConstantElasticity,  τij::AbstractArray, τij_old::AbstractArray, args
+    v::ConstantElasticity, τij::AbstractArray, τij_old::AbstractArray, args
 )
     εij = similar(τij)
     compute_εij!(v, εij, τij, τij_old; args...)
@@ -521,7 +558,7 @@ end
 end
 
 @inline function compute_εij(
-    v::ConstantElasticity,  τij::NTuple, τij_old::NTuple; dt=1.0, kwargs...
+    v::ConstantElasticity, τij::NTuple, τij_old::NTuple; dt=1.0, kwargs...
 )
     @unpack_val G = v
     εij = @. 0.5 * (τij - τij_old) / (G * dt)
@@ -529,7 +566,7 @@ end
 end
 
 @inline function compute_εij(
-    v::ConstantElasticity,  τij::SVector{N,T}, τij_old::SVector{N,T}; dt=one(T), kwargs...
+    v::ConstantElasticity, τij::SVector{N,T}, τij_old::SVector{N,T}; dt=one(T), kwargs...
 ) where {N,T}
     @unpack_val G = v
     εij = SVector{N,T}(0.5 * (τij[i] - τij_old[i]) / (G * dt) for i in 1:N)
@@ -537,79 +574,71 @@ end
 end
 
 function compute_dεijdτij(
-    v::ConstantElasticity,  τij::SVector{N,T}, τij_old::SVector{N,T}, args
+    v::ConstantElasticity, τij::SVector{N,T}, τij_old::SVector{N,T}, args
 ) where {N,T}
-    εij, J = GeoParams.jacobian( x-> compute_εij(v, x, τij_old, args), τij)
+    return εij, J = GeoParams.jacobian(x -> compute_εij(v, x, τij_old, args), τij)
 end
 
 function compute_dεijdτij(
     v::ConstantElasticity, τij::NTuple{N,T}, τij_old::NTuple{N,T}, args
 ) where {N,T}
-
     Sτij, Sτij_old = SVector{N,T}(τij), SVector{N,T}(τij_old)
     εij, J = compute_dεijdτij(v, Sτij, Sτij_old, args)
-    return ntuple(i -> εij[i], Val(N)) , J
+    return ntuple(i -> εij[i], Val(N)), J
 end
 
-function compute_dεijdτij(
-    v::ConstantElasticity, τij::Array, τij_old::Array, args
-)
+function compute_dεijdτij(v::ConstantElasticity, τij::Array, τij_old::Array, args)
     εij = similar(τij)
-    ForwardDiff.jacobian( (x, y) -> compute_εij!(v, x, y, τij_old; args), εij, τij)
+    ForwardDiff.jacobian((x, y) -> compute_εij!(v, x, y, τij_old; args), εij, τij)
     return εij, J
 end
 
 # Deviatoric stress
 
 @inline function compute_τij(
-    v::ConstantElasticity,  εij::NTuple, τij_old::NTuple; dt=1.0, kwargs...
+    v::ConstantElasticity, εij::NTuple, τij_old::NTuple; dt=1.0, kwargs...
 )
     @unpack_val G = v
-    τij = @. 2.0 * G * dt * εij + τij_old
+    return τij = @. 2.0 * G * dt * εij + τij_old
 end
 
 @inline function compute_τij(
-    v::ConstantElasticity,  εij::SVector{N,T}, τij_old::SVector{N,T}; dt=1.0, kwargs...
+    v::ConstantElasticity, εij::SVector{N,T}, τij_old::SVector{N,T}; dt=1.0, kwargs...
 ) where {N,T}
     @unpack_val G = v
-    τij = SVector{N,T}(2.0 * G * dt * εij[i] + τij_old[i] for i in 1:N)
+    return τij = SVector{N,T}(2.0 * G * dt * εij[i] + τij_old[i] for i in 1:N)
 end
 
-@inline function compute_τij(
-    v::ConstantElasticity,  εij::Array, τij_old::Array, args
-)
+@inline function compute_τij(v::ConstantElasticity, εij::Array, τij_old::Array, args)
     τij = similar(εij)
     compute_τij!(v, τij, εij, τij_old; args...)
     return τij
 end
 
 @inline function compute_τij!(
-    v::ConstantElasticity, τij::Array,  εij::Array, τij_old::Array; dt=1.0, kwargs...
+    v::ConstantElasticity, τij::Array, εij::Array, τij_old::Array; dt=1.0, kwargs...
 )
     @unpack_val G = v
     @. τij = 2.0 * G * dt * εij + τij_old
 end
 
 function compute_dτijdεij(
-    v::ConstantElasticity,  εij::SVector{N,T}, τij_old::SVector{N,T}, args
+    v::ConstantElasticity, εij::SVector{N,T}, τij_old::SVector{N,T}, args
 ) where {N,T}
-    τij, J = GeoParams.jacobian( x -> compute_τij(v, x, τij_old; args), εij)
+    return τij, J = GeoParams.jacobian(x -> compute_τij(v, x, τij_old; args), εij)
 end
 
 function compute_dτijdεij(
     v::ConstantElasticity, εij::NTuple{N,T}, τij_old::NTuple{N,T}, args
 ) where {N,T}
-
     Sεij, Sτij_old = SVector{N,T}(εij), SVector{N,T}(τij_old)
     τij, J = compute_dεijdτij(v, Sεij, Sτij_old, args)
-    
-    return ntuple(i -> τij[i], Val(N)) , J
+
+    return ntuple(i -> τij[i], Val(N)), J
 end
 
-function compute_dτijdεij(
-    v::ConstantElasticity, εij::Array, τij_old::Array, args
-)
+function compute_dτijdεij(v::ConstantElasticity, εij::Array, τij_old::Array, args)
     τij = similar(εij)
-    ForwardDiff.jacobian( (x, y) -> compute_τij!(v, x, y, τij_old; args), τij, εij)
+    ForwardDiff.jacobian((x, y) -> compute_τij!(v, x, y, τij_old; args), τij, εij)
     return τij, J
 end
