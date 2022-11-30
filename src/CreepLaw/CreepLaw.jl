@@ -150,7 +150,7 @@ end
 @inline function compute_ε!(
     v::LinearViscous, εij::AbstractArray, τij::AbstractArray, args
 )
-    return compute_εII!(v, εij, τij; args)
+    return compute_εII!(εij, v, τij; args)
 end
 
 @inline function compute_ε(v::LinearViscous, τij::AbstractArray, args)
@@ -200,12 +200,12 @@ end
 
 @inline function compute_τ(v::LinearViscous, εij::Array, args)
     τij = similar(εij)
-    compute_τ!(v, τij, εij, τij_old; args...)
+    compute_τ!(v, τij, εij, args)
     return τij
 end
 
 @inline function compute_τ!(v::LinearViscous, εij::Array, τij::Array, args)
-    return compute_τII!(v, τij, εij; args)
+    return compute_τII!(τij, v, εij; args)
 end
 
 function compute_dτdε(v::LinearViscous, εij::SVector{N,T}, args) where {N,T}
