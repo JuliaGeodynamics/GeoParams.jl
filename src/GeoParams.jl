@@ -105,11 +105,6 @@ include("MaterialParameters.jl")
 using .MaterialParameters
 export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo
 
-# Define Table output functions
-include("Tables.jl")
-using .Tables
-export detachFloatfromExponent, Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2MarkdownTable, ParameterTable
-
 # Phase Diagrams
 using .MaterialParameters.PhaseDiagrams
 export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
@@ -264,6 +259,11 @@ export compute_meltfraction,
     MeltingParam_Quadratic,
     MeltingParam_Assimilation,
     SmoothMelting
+
+# Define Table output functions
+include("Tables.jl")
+using .Tables
+export detachFloatfromExponent, Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2MarkdownTable, ParameterTable
 
 # Add plotting routines - only activated if the "Plots.jl" package is loaded 
 function __init__()
