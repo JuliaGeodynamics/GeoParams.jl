@@ -1,6 +1,6 @@
 using Test, GeoParams, StaticArrays
 
-@testset "Density.jl" begin
+@testset "TensorAlgebra.jl" begin
 
     # J2 TENSOR INVARIANT: 2D TESTS 
     τ_xx, τ_yy, τ_xy = 1.0, 2.0, 3.0
@@ -49,4 +49,33 @@ using Test, GeoParams, StaticArrays
     τII = √( 0.5*(τ_xx2_av + τ_yy2_av + τ_zz2_av) + τ_yz^2 + τ_xz^2 + τ_xy^2)
 
     @test τII == second_invariant_staggered(τ_xx_ij, τ_yy_ij, τ_zz_ij, τ_yz, τ_xz, τ_xy)
+
+    ## ELASTIC STRESS ROTATIONS
+    dt = 1.0
+
+    # 2D
+    ω = 0.5
+    # collocated grid
+    τ = 1.0, 1.5, 2.0
+    τ_rot = rotate_elastic_stress(ω, τ, dt)
+    @test τ_rot == (2.797866393148758, -0.29786639314875807, 1.2909723579382537)
+    # staggered grid
+    τ = 1.0, 1.5, (1.5, 1.5, 2.5, 2.5)
+    τ_rot = rotate_elastic_stress(ω, τ, dt)
+    @test τ_rot == (2.797866393148758, -0.29786639314875807, 1.2909723579382537)
+
+    # 3D
+    ω = 0.25, 0.5, 0.75
+    # collocated grid
+    τ = 1.0, 1.5, 2.0, 3.0, 4.0, 5.0
+    τ_rot = rotate_elastic_stress(ω, τ, dt)
+    @test τ_rot == (-0.6334717907929696, 4.273905166156677, -0.20099577924964246, 2.887805442158729, 3.6907829352928045, 4.26279476637992)
+    # staggered grid
+    τyz = 2.5, 2.5, 3.5, 3.5
+    τxz = 3.5, 3.5, 4.5, 4.5
+    τxy = 4.5, 4.5, 5.5, 5.5
+    τ = 1.0, 1.5, 2.0, τyz, τxz, τxy
+    τ_rot = rotate_elastic_stress(ω, τ, dt)
+    @test τ_rot == (-0.6334717907929696, 4.273905166156677, -0.20099577924964246, 2.887805442158729, 3.6907829352928045, 4.26279476637992)
+
 end
