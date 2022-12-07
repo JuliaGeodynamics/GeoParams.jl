@@ -51,8 +51,8 @@ function param_info(s::DruckerPrager_regularised) # info about the struct
 end
 
 # Calculation routines
-function (s::DruckerPrager_regularised{_T,U,U1})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T),kwargs...
+function (s::DruckerPrager_regularised{_T})(;
+    P=zero(_T), τII=zero(_T), Pf=zero(_T), λ= zero(_T),kwargs...
 ) where {_T,U,U1}
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
     ε̇II_pl = λ*∂Q∂τII(s, τII)  # plastic strainrate
@@ -66,7 +66,7 @@ end
 Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` pressure, and `Pf` fluid pressure.
 """
 function compute_yieldfunction(
-    s::DruckerPrager_regularised{_T}; P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T=zero(_T)
+    s::DruckerPrager_regularised{_T}; P=zero(_T), τII=zero(_T), Pf=zero(_T), λ=zero(_T)
 ) where {_T}
     return s(; P=P, τII=τII, Pf=Pf, λ=λ)
 end
@@ -81,8 +81,8 @@ You can optionally provide an array with fluid pressure `Pf` as well.
 function compute_yieldfunction!(
     F::AbstractArray{_T,N},
     s::DruckerPrager_regularised{_T};
-    P::AbstractArray{_T,N},
-    τII::AbstractArray{_T,N},
+    P::AbstractArray,
+    τII::AbstractArray,
     Pf=zero(P)::AbstractArray{_T,N},
     λ=zero(P)::AbstractArray{_T,N},
     kwargs...,

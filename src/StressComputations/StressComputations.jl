@@ -1,7 +1,6 @@
 # Stress tensor computations
 using StaticArrays
 export compute_τij,
-    compute_dτijdεij,
     compute_p_τij,
     compute_τij!,
     compute_p_τij!,
@@ -107,22 +106,22 @@ function compute_τij(
     return τij, τII, η_eff
 end
 
-function compute_dτijdεij(
-    v, εij::NTuple{N,Union{T,NTuple{4,T}}}, args, τij_old::NTuple{N,Union{T,NTuple{4,T}}}
-) where {N,T}
+# function compute_dτijdεij(
+#     v, εij::NTuple{N,Union{T,NTuple{4,T}}}, args, τij_old::NTuple{N,Union{T,NTuple{4,T}}}
+# ) where {N,T}
 
-    # Second invariant of effective strainrate (taking elasticity into account)
-    ε_eff = effective_ε(εij, v, τij_old, args.dt)
-    εII = second_invariant_staggered(ε_eff...)
-    ε_eff_averaged = staggered_tensor_average(ε_eff)
+#     # Second invariant of effective strainrate (taking elasticity into account)
+#     ε_eff = effective_ε(εij, v, τij_old, args.dt)
+#     εII = second_invariant_staggered(ε_eff...)
+#     ε_eff_averaged = staggered_tensor_average(ε_eff)
 
-    # args = merge(args, (τII_old=0,))
-    τII = first(compute_τII(v, εII, args))
-    η_eff = 0.5 * τII / εII
-    τij, J = jacobian(εij -> (2 * η_eff) .* εij, SVector{N,T}(ε_eff_averaged))
+#     # args = merge(args, (τII_old=0,))
+#     τII = first(compute_τII(v, εII, args))
+#     η_eff = 0.5 * τII / εII
+#     τij, J = jacobian(εij -> (2 * η_eff) .* εij, SVector{N,T}(ε_eff_averaged))
 
-    return τij, τII, η_eff, J
-end
+#     return τij, τII, η_eff, J
+# end
 
 """
     p, τij, τII = compute_p_τij(v, εij::NTuple{N,Union{T,NTuple{4,T}}}, P_old::T, args, τij_old::NTuple{3,T})
@@ -152,27 +151,27 @@ function compute_p_τij(
     return P, τij, τII, η_eff
 end
 
-function compute_dτijdεij(
-    v,
-    εij::NTuple{N,Union{T,NTuple{4,T}}},
-    P_old::T,
-    args,
-    τij_old::NTuple{N,Union{T,NTuple{4,T}}},
-) where {N,T}
+# function compute_dτijdεij(
+#     v,
+#     εij::NTuple{N,Union{T,NTuple{4,T}}},
+#     P_old::T,
+#     args,
+#     τij_old::NTuple{N,Union{T,NTuple{4,T}}},
+# ) where {N,T}
 
-    # Second invariant of effective strainrate (taking elasticity into account)
-    ε_eff = effective_ε(εij, v, τij_old, args.dt)
-    εII = second_invariant_staggered(ε_eff...)
-    ε_eff_averaged = staggered_tensor_average(ε_eff)
-    εvol = volumetric_strainrate(staggered_tensor_average(εij))
+#     # Second invariant of effective strainrate (taking elasticity into account)
+#     ε_eff = effective_ε(εij, v, τij_old, args.dt)
+#     εII = second_invariant_staggered(ε_eff...)
+#     ε_eff_averaged = staggered_tensor_average(ε_eff)
+#     εvol = volumetric_strainrate(staggered_tensor_average(εij))
 
-    args2 = merge(args, (P_old=P_old, τII_old=0.0))
-    P, τII, = compute_p_τII(v, εII, εvol, args2)
-    η_eff = 0.5 * τII / εII
-    τij, J = jacobian(εij -> (2 * η_eff) .* εij, SVector{N,T}(ε_eff_averaged))
+#     args2 = merge(args, (P_old=P_old, τII_old=0.0))
+#     P, τII, = compute_p_τII(v, εII, εvol, args2)
+#     η_eff = 0.5 * τII / εII
+#     τij, J = jacobian(εij -> (2 * η_eff) .* εij, SVector{N,T}(ε_eff_averaged))
 
-    return P, τij, τII, η_eff, J
-end
+#     return P, τij, τII, η_eff, J
+# end
 
 # Multiple material phases, collocated grid
 """
@@ -201,25 +200,25 @@ function compute_τij(
     return τij, τII, η_eff
 end
 
-function compute_dτijdεij(
-    v::NTuple{N1,AbstractMaterialParamsStruct},
-    εij::NTuple{N2,T},
-    args,
-    τij_old::NTuple{N2,T},
-    phase::I,
-) where {T,N1,N2,I<:Integer}
+# function compute_dτijdεij(
+#     v::NTuple{N1,AbstractMaterialParamsStruct},
+#     εij::NTuple{N2,T},
+#     args,
+#     τij_old::NTuple{N2,T},
+#     phase::I,
+# ) where {T,N1,N2,I<:Integer}
 
-    # Second invariant of effective strainrate (taking elasticity into account)
-    ε_eff = effective_ε(εij, v, τij_old, args.dt, phase)
-    εII = second_invariant(ε_eff...)
+#     # Second invariant of effective strainrate (taking elasticity into account)
+#     ε_eff = effective_ε(εij, v, τij_old, args.dt, phase)
+#     εII = second_invariant(ε_eff...)
 
-    # args = merge(args, (τII_old=0,))
-    τII = nphase(vi -> first(compute_τII(vi.CompositeRheology[1], εII, args)), phase, v)
-    η_eff = 0.5 * τII / εII
-    τij, J = jacobian(εij -> (2 * η_eff) .* εij, SVector{N2,T}(ε_eff))
+#     # args = merge(args, (τII_old=0,))
+#     τII = nphase(vi -> first(compute_τII(vi.CompositeRheology[1], εII, args)), phase, v)
+#     η_eff = 0.5 * τII / εII
+#     τij, J = jacobian(εij -> (2 * η_eff) .* εij, SVector{N2,T}(ε_eff))
 
-    return τij, τII, η_eff, J
-end
+#     return τij, τII, η_eff, J
+# end
 
 """
     P,τij, τII = compute_p_τij(v::NTuple{N1,AbstractMaterialParamsStruct}, εij::NTuple{N2,T}, P_old::T, args, τij_old::NTuple{3,T}, phase::I)
@@ -249,27 +248,27 @@ function compute_p_τij(
     return P, τij, τII, η_eff
 end
 
-function compute_dτijdεij(
-    v::NTuple{N1,AbstractMaterialParamsStruct},
-    εij::NTuple{N2,T},
-    P_old::T,
-    args,
-    τij_old::NTuple{N2,T},
-    phase::I,
-) where {T,N1,N2,I<:Integer}
+# function compute_dτijdεij(
+#     v::NTuple{N1,AbstractMaterialParamsStruct},
+#     εij::NTuple{N2,T},
+#     P_old::T,
+#     args,
+#     τij_old::NTuple{N2,T},
+#     phase::I,
+# ) where {T,N1,N2,I<:Integer}
 
-    # Second invariant of effective strainrate (taking elasticity into account)
-    ε_eff = effective_ε(εij, v, τij_old, args.dt, phase)
-    εII = second_invariant(ε_eff)
-    εvol = volumetric_strainrate(εij)
+#     # Second invariant of effective strainrate (taking elasticity into account)
+#     ε_eff = effective_ε(εij, v, τij_old, args.dt, phase)
+#     εII = second_invariant(ε_eff)
+#     εvol = volumetric_strainrate(εij)
 
-    args2 = merge(args, (τII_old=0, P_old=P_old))
-    P, τII = nphase(vi -> compute_p_τII(vi.CompositeRheology[1], εII, εvol, args2), phase, v)
-    η_eff = 0.5 * τII / εII
-    τij, J = jacobian(εij -> (2 * η_eff) .* εij, SVector{N2,T}(ε_eff))
+#     args2 = merge(args, (τII_old=0, P_old=P_old))
+#     P, τII = nphase(vi -> compute_p_τII(vi.CompositeRheology[1], εII, εvol, args2), phase, v)
+#     η_eff = 0.5 * τII / εII
+#     τij, J = jacobian(εij -> (2 * η_eff) .* εij, SVector{N2,T}(ε_eff))
 
-    return P, τij, τII, η_eff, J
-end
+#     return P, τij, τII, η_eff, J
+# end
 
 # Multiple material phases, staggered grid
 """
@@ -353,31 +352,31 @@ function compute_p_τij(
     return P, τij, τII, η_eff
 end
 
-function compute_dτijdεij(
-    v::NTuple{N1,AbstractMaterialParamsStruct},
-    εij::NTuple{N2,Union{T,NTuple{4,T}}},
-    P_old::T,
-    args,
-    τij_old::NTuple{N2,Union{T,NTuple{4,T}}},
-    phases::NTuple{N2,Union{I,NTuple{4,I}}},
-) where {T,N1,N2,I<:Integer}
+# function compute_dτijdεij(
+#     v::NTuple{N1,AbstractMaterialParamsStruct},
+#     εij::NTuple{N2,Union{T,NTuple{4,T}}},
+#     P_old::T,
+#     args,
+#     τij_old::NTuple{N2,Union{T,NTuple{4,T}}},
+#     phases::NTuple{N2,Union{I,NTuple{4,I}}},
+# ) where {T,N1,N2,I<:Integer}
 
-    # Second invariant of effective strainrate (taking elasticity into account)
-    ε_eff = effective_ε(εij, v, τij_old, args.dt, phases)
-    εII = second_invariant_staggered(ε_eff...)
-    ε_eff_averaged = staggered_tensor_average(ε_eff)
-    εvol = volumetric_strainrate(staggered_tensor_average(εij))
+#     # Second invariant of effective strainrate (taking elasticity into account)
+#     ε_eff = effective_ε(εij, v, τij_old, args.dt, phases)
+#     εII = second_invariant_staggered(ε_eff...)
+#     ε_eff_averaged = staggered_tensor_average(ε_eff)
+#     εvol = volumetric_strainrate(staggered_tensor_average(εij))
 
-    args2 = merge(args, (τII_old=0, P_old=P_old))
-    P, τII = nphase(
-        vi -> compute_p_τII(vi.CompositeRheology[1], εII, εvol, args2), phases[1][1], v
-    )  # note: assumes phases of all staggered points to be the same! 
-    η_eff = 0.5 * τII / εII
-    τij = 2 * η_eff .* ε_eff_averaged
-    τij, J = jacobian(εij -> (2 * η_eff) .* εij, SVector{N2,T}(ε_eff_averaged))
+#     args2 = merge(args, (τII_old=0, P_old=P_old))
+#     P, τII = nphase(
+#         vi -> compute_p_τII(vi.CompositeRheology[1], εII, εvol, args2), phases[1][1], v
+#     )  # note: assumes phases of all staggered points to be the same! 
+#     η_eff = 0.5 * τII / εII
+#     τij = 2 * η_eff .* ε_eff_averaged
+#     τij, J = jacobian(εij -> (2 * η_eff) .* εij, SVector{N2,T}(ε_eff_averaged))
 
-    return P, τij, τII, η_eff, J
-end
+#     return P, τij, τII, η_eff, J
+# end
 
 # in-place stress calculation routines
 
