@@ -95,7 +95,7 @@ Performs local iterations versus stress for a given strain rate using AD
         ε_np = compute_εII_nonplastic(v, τII, args)
         dεII_dτII = dεII_dτII_nonplastic_AD(v, τII, args)
 
-        f = εII - ε_np      # non-plastic contributions to residual
+        f = εII - ε_np # non-plastic contributions to residual
         
         if Nplast>0
            

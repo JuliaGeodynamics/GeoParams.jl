@@ -15,6 +15,7 @@ using Unitful           # Units
 using BibTeX            # references of creep laws
 using Requires          # To only add plotting routines if Plots is loaded
 using StaticArrays
+using ForwardDiff
 
 import Base: getindex
 
@@ -145,6 +146,10 @@ export dεII_dτII,
     compute_τII!,
     compute_τII,
     compute_τII_AD,
+    compute_τ,
+    compute_ε,
+    compute_dτdε,
+    compute_dεdτ,
     compute_εvol!,
     compute_εvol,
     compute_p!,

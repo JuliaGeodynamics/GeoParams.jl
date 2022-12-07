@@ -19,8 +19,9 @@ export compute_εII,            # calculation routines
     ConstantElasticity,     # constant
     SetConstantElasticity,  # helper function
     AbstractElasticity,
-    isvolumetric, 
-    effective_εII, effective_ε
+    isvolumetric,
+    effective_εII,
+    effective_ε
 
 # ConstantElasticity  -------------------------------------------------------
 
@@ -37,7 +38,6 @@ Structure that holds parameters for constant, isotropic, linear elasticity.
 end
 
 ConstantElasticity(args...) = ConstantElasticity(convert.(GeoUnit, args)...)
-
 
 # Add multiple dispatch here to allow specifying combinations of 2 elastic parameters (say ν & E), to compute the others
 """
@@ -102,21 +102,34 @@ here ``\\tilde{{\\tau_{ij}}}^{old}`` is the rotated old deviatoric stress tensor
 
 """
 @inline function compute_εII(
-    a::ConstantElasticity, τII::_T; τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+    a::ConstantElasticity,
+    τII::_T;
+    τII_old=zero(precision(a)),
+    dt=one(precision(a)),
+    kwargs...,
 ) where {_T}
     @unpack_val G = a
     ε_el = 0.5 * (τII - τII_old) / (G * dt)
     return ε_el
 end
 
-@inline function dεII_dτII(a::ConstantElasticity{_T}, τII::_T; τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
-    ) where {_T}
+@inline function dεII_dτII(
+    a::ConstantElasticity{_T},
+    τII::_T;
+    τII_old=zero(precision(a)),
+    dt=one(precision(a)),
+    kwargs...,
+) where {_T}
     @unpack_val G = a
     return 0.5 * inv(G * dt)
 end
 
 @inline function compute_τII(
-    a::ConstantElasticity, εII::_T; τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+    a::ConstantElasticity,
+    εII::_T;
+    τII_old=zero(precision(a)),
+    dt=one(precision(a)),
+    kwargs...,
 ) where {_T}
     @unpack_val G = a
     τII = _T(2.0) * G * dt * εII + τII_old
@@ -124,8 +137,9 @@ end
     return τII
 end
 
-@inline function dτII_dεII(a::ConstantElasticity{_T}, τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
-    ) where {_T}
+@inline function dτII_dεII(
+    a::ConstantElasticity{_T}, τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+) where {_T}
     @unpack_val G = a
     return _T(2.0) * G * dt
 end
@@ -141,11 +155,11 @@ In-place computation of the elastic shear strainrate for given deviatoric stress
 
 """
 function compute_εII!(
-    ε_el::AbstractArray{_T,N},
+    ε_el::AbstractArray,
     p::ConstantElasticity{_T},
-    τII::AbstractArray{_T,N};
-    τII_old::AbstractArray{_T,N},
-    dt::_T,
+    τII::AbstractArray;
+    τII_old = zeros(_T, size(τII)),
+    dt = one(_T),
     kwargs...,
 ) where {N,_T}
     @inbounds for i in eachindex(τII)
@@ -165,11 +179,11 @@ In-place update of the elastic stress for given deviatoric strainrate invariants
 
 """
 function compute_τII!(
-    τII::AbstractArray{_T,N},
+    τII::AbstractArray,
     p::ConstantElasticity{_T},
-    ε_el::AbstractArray{_T,N};
-    τII_old::AbstractArray{_T,N},
-    dt::_T,
+    ε_el::AbstractArray;
+    τII_old = zeros(_T, size(τII)),
+    dt = one(_T),
     kwargs...,
 ) where {N,_T}
     @inbounds for i in eachindex(ε_el)
@@ -199,27 +213,37 @@ Computes elastic volumetric strainrate given the pressure at the current (`P`) a
     a::ConstantElasticity, P::_T; P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
 ) where {_T}
     @unpack_val Kb = a
-    εvol_el = - (P - P_old) / (Kb * dt)
+    εvol_el = -(P - P_old) / (Kb * dt)
     return εvol_el
 end
 
-@inline function dεvol_dp(a::ConstantElasticity{_T}, P::_T; P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
-    ) where {_T}
+@inline function dεvol_dp(
+    a::ConstantElasticity{_T},
+    P::_T;
+    P_old=zero(precision(a)),
+    dt=one(precision(a)),
+    kwargs...,
+) where {_T}
     @unpack_val Kb = a
-    return - inv(Kb * dt)
+    return -inv(Kb * dt)
 end
 
 @inline function compute_p(
-    a::ConstantElasticity, εvol::_T; P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+    a::ConstantElasticity,
+    εvol::_T;
+    P_old=zero(precision(a)),
+    dt=one(precision(a)),
+    kwargs...,
 ) where {_T}
     @unpack_val Kb = a
-    P = - Kb * dt * εvol + P_old
+    P = -Kb * dt * εvol + P_old
 
     return P
 end
 
-@inline function dp_dεvol(a::ConstantElasticity{_T}, P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
-    ) where {_T}
+@inline function dp_dεvol(
+    a::ConstantElasticity{_T}, P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+) where {_T}
     @unpack_val Kb = a
     return -Kb * dt
 end
@@ -295,7 +319,7 @@ end
 
 # Single material phase
 @inline _elastic_ε(v::ConstantElasticity, τij_old, dt) = τij_old / (2 * v.G * dt)
-@inline _elastic_ε(v::Vararg{Any, N}) where {N} = 0.0
+@inline _elastic_ε(v::Vararg{Any,N}) where {N} = 0.0
 
 @inline effective_ε(εij::T, v, τij_old::T, dt) where {T} = εij + elastic_ε(v, τij_old, dt)
 
@@ -309,9 +333,7 @@ end
     end
 end
 
-@inline function effective_ε(
-    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt
-) where {N,T}
+@inline function effective_ε(εij::NTuple{N,T}, v, τij_old::NTuple{N,T}, dt) where {N,T}
     return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt), Val(N))
 end
 
@@ -389,11 +411,17 @@ end
 
 # Multiple material phases (collocated grid)
 
-@inline effective_ε(εij::T, v, τij_old::T, dt, phase::Int64) where {T} = εij + elastic_ε(v, τij_old, dt, phase)
+@inline function effective_ε(εij::T, v, τij_old::T, dt, phase::Int64) where {T}
+    return εij + elastic_ε(v, τij_old, dt, phase)
+end
 
 # Method for staggered grids
 @inline function effective_ε(
-    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T,NTuple{4,T}}}, dt, phase::Int64
+    εij::NTuple{N,Union{T,NTuple{4,T}}},
+    v,
+    τij_old::NTuple{N,Union{T,NTuple{4,T}}},
+    dt,
+    phase::Int64,
 ) where {N,T}
     ntuple(Val(N)) do i
         Base.@_inline_meta
@@ -402,7 +430,7 @@ end
 end
 
 @inline function effective_ε(
-    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt, phase::Int64
+    εij::NTuple{N,T}, v, τij_old::NTuple{N,T}, dt, phase::Int64
 ) where {N,T}
     return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt, phase), Val(N))
 end
@@ -434,14 +462,14 @@ function effective_ε(
     τxz_old,
     τxy_old,
     dt,
-    phase
+    phase,
 )
     return effective_ε(
         (εxx, εyy, εzz, εyz, εxz, εxy),
         v,
         (τxx_old, τyy_old, τzz_old, τyz_old, τxz_old, τxy_old),
         dt,
-        phase
+        phase,
     )
 end
 
@@ -460,7 +488,7 @@ function effective_εII(
     τxz_old,
     τxy_old,
     dt,
-    phase
+    phase,
 )
     εxx, εyy, εzz, εyz, εxz, εxy = effective_ε(
         εxx,
@@ -477,15 +505,20 @@ function effective_εII(
         τxz_old,
         τxy_old,
         dt,
-        phase
+        phase,
     )
     εII = second_invariant(εxx, εyy, εzz, εyz, εxz, εxy)
     return εII
 end
 
 ## Expand methods for multiple phases in staggered grids
+
 @inline function effective_ε(
-    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T,NTuple{4,T}}}, dt, phases::NTuple{N,Union{I,NTuple{4,I}}}
+    εij::NTuple{N,Union{T,NTuple{4,T}}},
+    v,
+    τij_old::NTuple{N,Union{T,NTuple{4,T}}},
+    dt,
+    phases::NTuple{N,Union{I,NTuple{4,I}}},
 ) where {N,T,I<:Integer}
     ntuple(Val(N)) do i
         Base.@_inline_meta
@@ -494,7 +527,112 @@ end
 end
 
 @inline function effective_ε(
-    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt, phases::NTuple{N,Union{I,NTuple{4,I}}}
+    εij::NTuple{N,T}, v, τij_old::NTuple{N,T}, dt, phases::NTuple{N,Union{I,NTuple{4,I}}}
 ) where {N,T,I<:Integer}
     return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt, phases[i]), Val(N))
+end
+
+## Tensor methods (fully AD compatible)
+
+# Strain rate
+
+@inline function compute_ε!(
+    v::ConstantElasticity,
+    εij::AbstractArray,
+    τij::AbstractArray,
+    args
+)
+    compute_εII!(εij, v, τij; args...)
+end
+
+@inline function compute_ε(
+    v::ConstantElasticity, τij::AbstractArray, args
+)
+    εij = similar(τij)
+    compute_ε!(v, εij, τij, args)
+    return εij
+end
+
+@inline function compute_ε(
+    v::ConstantElasticity, τij::NTuple{N,T}, args
+) where {N,T}    
+    ntuple(Val(N)) do i
+        compute_εII(v, τij[i]; merge(args, (; τII_old = args.τij_old[i]))...)
+    end
+end
+
+@inline function compute_ε(
+    v::ConstantElasticity, τij::SVector, args
+)
+    εij = map((x,y)->compute_εII(v, x; merge(args, (; τII_old = y))...), τij, args.τij_old)
+    return εij
+end
+
+function compute_dεdτ(
+    v::ConstantElasticity, τij::SVector{N,T}, args
+) where {N,T}
+    return εij, J = jacobian(x -> compute_ε(v, x, args), τij)
+end
+
+function compute_dεdτ(
+    v::ConstantElasticity, τij::NTuple{N,T}, args
+) where {N,T}
+    Sτij= SVector{N,T}(τij)
+    εij, J = compute_dεdτ(v, Sτij, args)
+    return ntuple(i -> εij[i], Val(N)), J
+end
+
+function compute_dεdτ(v::ConstantElasticity, τij::Array, args)
+    εij = similar(τij)
+    ForwardDiff.jacobian((x, y) -> compute_ε!(v, x, y, args), εij, τij)
+    return εij, J
+end
+
+# Deviatoric stress
+
+@inline function compute_τ(
+    v::ConstantElasticity, εij::NTuple{N,T}, args
+) where {N,T}
+    ntuple(Val(N)) do i
+        compute_τII(v, εij[i];  merge(args, (; τII_old = args.τij_old[i]))...)
+    end
+end
+
+@inline function compute_τ(
+    v::ConstantElasticity, εij::SVector, args
+)
+    return τij = map( (x, y) -> compute_τII(v, x; merge(args, (; τII_old = y))...), εij, args.τij_old)
+end
+
+@inline function compute_τ(v::ConstantElasticity, εij::Array, args)
+    τij = similar(εij)
+    compute_τ!(v, τij, εij, args)
+    return τij
+end
+
+@inline function compute_τ!(
+    v::ConstantElasticity, τij::Array, εij::Array, args
+)
+    compute_τII!(τij, v, εij; args...)
+end
+
+function compute_dτdε(
+    v::ConstantElasticity, εij::SVector, args
+)
+    return τij, J = jacobian(x -> compute_τ(v, x, args), εij)
+end
+
+function compute_dτdε(
+    v::ConstantElasticity, εij::NTuple{N,T}, args
+) where {N,T}
+    Sεij = SVector{N,T}(εij)
+    τij, J = compute_dεdτ(v, Sεij, args)
+
+    return ntuple(i -> τij[i], Val(N)), J
+end
+
+function compute_dτdε(v::ConstantElasticity, εij::Array, args)
+    τij = similar(εij)
+    ForwardDiff.jacobian((x, y) -> compute_τ!(v, x, y, args), τij, εij)
+    return τij, J
 end

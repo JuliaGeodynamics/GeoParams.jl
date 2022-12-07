@@ -1,3 +1,5 @@
+using StaticArrays, ForwardDiff
+export jacobian
 # Various helper functions (mostly for internal use)
 
 # Finds index in an allocation-free manner
@@ -85,3 +87,35 @@ end
 macro print(a1, a2)
     return :($(esc(a1)) === true ? println($(esc(a2))) : nothing)
 end
+
+
+# AutoDiff tools
+
+@inline function derivative(f::F, x::R) where {F,R<:Real}
+    T = typeof(ForwardDiff.Tag(f, R))
+    res = f(ForwardDiff.Dual{T}(x, one(x)))
+    f, ∂f∂x = if res != 0.0
+        res.value, res.partials.values[1]
+    else
+        0.0, 0.0
+    end
+    return f, ∂f∂x
+end
+
+@inline function jacobian(f, x::NTuple{N, T}) where {N,T}
+    Sx = SVector{N,T}(x...)
+    jacobian(f, Sx)
+end
+
+@inline function jacobian(f, x)
+    T = typeof(ForwardDiff.Tag(f, eltype(x)))
+    result = ForwardDiff.static_dual_eval(T, f, x)
+    J = ForwardDiff.extract_jacobian(T, result, x)
+    f = extract_value(result)
+    return f, J
+end
+
+extract_value(result::SVector{N, ForwardDiff.Dual{Tag, T, N}}) where {N,T,Tag} = SVector{N,T}(result[i].value for i in 1:N)
+extract_value(result::MVector{N, ForwardDiff.Dual{Tag, T, N}}) where {N,T,Tag} = SVector{N,T}(result[i].value for i in 1:N)
+extract_value(result::Array) = [result[i].value for i in 1:N]
+extract_value(result::NTuple{N,T}) where {N,T} = ntuple(i -> result[i].value, Val(N))
