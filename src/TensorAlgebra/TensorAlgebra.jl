@@ -37,15 +37,15 @@ end
 @inline average_pow2(x::Union{NTuple{N,T}, SVector{N,T}}) where {N,T} = mapreduce(x->x^2, +, x) / N
 
 @inline staggered_tensor_average(x) = x
-@inline function staggered_tensor_average(x::NTuple{N,Union{T,NTuple{4,T}}}) where {N,T}
+function staggered_tensor_average(x::NTuple{N,Union{T,NTuple{4,T}}}) where {N,T}
     ntuple(Val(N)) do i
         Base.@_inline_meta
         _staggered_tensor_average(x[i])
     end
 end
 
-_staggered_tensor_average(x::NTuple{N,T}) where {N,T} = sum(x) / N
-_staggered_tensor_average(x::T) where {T<:Number} = x
+@inline _staggered_tensor_average(x::NTuple{N,T}) where {N,T} = sum(x) / N
+@inline _staggered_tensor_average(x::T) where {T<:Number} = x
 
 # Methods to compute the invariant of a tensor
 
@@ -167,9 +167,8 @@ end
 
 rotate_elastic_stress(ω, τ, dt) = _rotate_elastic_stress(ω, staggered_tensor_average(τ), dt)
 
-_rotate_elastic_stress(ω::Union{AbstractVector, NTuple}, τ, dt) = rotate_elastic_stress3D(ω, τ, dt)
-_rotate_elastic_stress(ω, τ, dt) = rotate_elastic_stress2D(ω, τ, dt)
-
+@inline _rotate_elastic_stress(ω::Union{AbstractVector, NTuple}, τ, dt) = rotate_elastic_stress3D(ω, τ, dt)
+@inline _rotate_elastic_stress(ω, τ, dt) = rotate_elastic_stress2D(ω, τ, dt)
 
 """
     rotate_elastic_stress2D(ω, τ::T, dt) where T
@@ -178,21 +177,23 @@ Bi-dimensional rotation of the elastic stress where τ is in the Voig notation
 and ω = 1/2(dux/dy - duy/dx)
 """
 @inline Base.@propagate_inbounds function rotate_elastic_stress2D(ω, τ::T, dt) where T
-    # NOTE: I guess this could be manually-unrolled/done-on-Voigt-notation if we need extra performance?
-    # rotation angle
     θ = ω * dt
-    sinθ, cosθ = sincos(θ)
-    # rotation matrix
-    R = @SMatrix [
-        cosθ -sinθ
-        sinθ  cosθ
-    ]
-    # rotate stress tensor
-    τij = voigt2tensor(τ)
-    @show τij
-    τij_rot = R' * τij * R 
-    tensor2voigt(T, τij_rot)
+    # NOTE: inlining sincos speeds up considerably this kernel but breaks for <1.8
+    sinθ, cosθ = @inline sincos(θ) 
+    # rotate tensor
+    tensor_rotation(τ, cosθ, sinθ)
 end
+
+@inline function tensor_rotation(A, cosθ, sinθ)
+    A11 = A[1]
+    A22 = A[2]
+    A12 = A[3]
+    xx  = muladd( sinθ, muladd( sinθ, A22, cosθ * A12), cosθ * muladd( sinθ, A12, cosθ * A11))
+    yy  = muladd(-sinθ, muladd(-sinθ, A11, cosθ * A12), cosθ * muladd(-sinθ, A12, cosθ * A22))
+    xy  = muladd(-sinθ, muladd( sinθ, A12, cosθ * A11), cosθ * muladd( sinθ, A22, cosθ * A12))
+    return xx, yy, xy
+end
+
 
 """
     rotate_elastic_stress3D(ω, τ::T, dt) where T
@@ -203,7 +204,7 @@ Trii-dimensional rotation of the elastic stress where τ is in the Voig notation
 # from Anton's talk
 @inline Base.@propagate_inbounds function rotate_elastic_stress3D(ωi, τ::T, dt) where T
     # vorticity
-    ω = √(mapreduce(x->x^2, +, ωi))
+    ω = √(sum(x^2 for x in ωi))
     # unit rotation axis
     n = inv(ω) .* ωi
     # integrate rotation angle
@@ -225,6 +226,7 @@ end
         n[3]   0     -n[1]
        -n[3]   n[1]   0
     ])
-    R3 = SMatrix{3, 3, Float64}((1-cosθ)*n[i]*n[j] for i in 1:3, j in 1:3)
+    c = (1-cosθ)
+    R3 = SMatrix{3, 3, Float64}(c*n[i]*n[j] for i in 1:3, j in 1:3)
     return R1 + R2 + R3
 end
