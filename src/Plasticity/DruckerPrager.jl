@@ -50,8 +50,8 @@ function param_info(s::DruckerPrager) # info about the struct
 end
 
 # Calculation routines
-function (s::DruckerPrager{_T,U,U1})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), kwargs...
+@inline function (s::DruckerPrager{_T,U,U1})(;
+    P=zero(_T), τII=zero(_T), Pf=zero(_T), kwargs...
 ) where {_T,U,U1}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
     F = τII - cosϕ * C - sinϕ * (P - Pf)   # with fluid pressure (set to zero by default)
@@ -64,7 +64,7 @@ end
 Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` pressure, and `Pf` fluid pressure.
 """
 function compute_yieldfunction(
-    s::DruckerPrager{_T}; P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T)
+    s::DruckerPrager{_T}; P=zero(_T), τII=zero(_T), Pf=zero(_T)
 ) where {_T}
     return s(; P=P, τII=τII, Pf=Pf)
 end
