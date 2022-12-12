@@ -1,10 +1,3 @@
-# Hack into ForwardDiff.jl to return both the f'(x) and f(x)
-@inline function derivative_all(f::F, x::R) where {F,R<:Real}
-    T = typeof(ForwardDiff.Tag(f, R))
-    res = f(ForwardDiff.Dual{T}(x, one(x)))
-    return res.value, res.partials.values[1]
-end
-
 # i'm lazy so let's define both functions programatically
 for tensor in (:εII, :τII)
     fun1 = Symbol("λ_$(tensor)")
@@ -294,6 +287,66 @@ function local_iterations_τII_AD(v::Parallel, τII::T, args; tol=1e-6)
     
     return εII
 end
+
+# NOTE; not working for general composites, only for one single parallel element
+function compute_τII_par(
+    c::CompositeRheology{
+        T,    N,
+        Npar, is_par,
+        0,    is_plastic,
+        0,    is_vol
+    },
+    εII, 
+    args; 
+    tol = 1e-6
+) where {T, N, Npar, is_par, is_plastic, is_vol}
+    
+    # number of unknowns  
+    n = 1 + Npar; 
+
+    # initial guesses for stress and strain
+    εII_total = εII
+    εp_n = εII_total 
+    τ_n = compute_τII_harmonic(c, εII_total, args)
+
+    # x[1:end-1] = strain rate of parallel(s) element, x[end] = total stress invariant
+    x = SVector{n,Float64}(i != n ? εp_n : τ_n for i in 1:n)
+
+    # define closures to be differentiated
+    f1(x, args) = εII_total - compute_εII_elements(c, x[2], args) - x[1]
+    f2(x, args) = x[2] - compute_τII_parallel(c, x[1], args)
+    funs = f1, f2
+
+    # funs = ntuple(Val(n)) do i
+    #     f = if i ==1
+    #         (x, args) -> εII_total - compute_εII_elements(c, x[end], args) - sum(x[i] for i in 1:Npar)
+    #     else
+    #         (x, args) -> x[end] - compute_τII_parallel(c.elements, x[i-1], args)
+    #     end
+    # end
+
+    # Local Iterations
+    iter = 0
+    ϵ = 2 * tol
+    max_iter = 20
+    while (ϵ > tol) && (iter < max_iter)
+        iter += 1
+
+        x_n = x
+        args_n = merge(args, (τII = x[end], )) # we define a new arguments tuple to maintain type stability 
+        r, J = jacobian(input -> SInput(funs, input, args_n), x)
+
+        # update solution
+        dx  = J\r 
+        x  -= dx   
+        
+        ϵ = norm(@. abs(x-x_n))
+    end
+    
+    return x[end]
+
+end
+
 
 """
     p =local_iterations_εvol(v::CompositeRheology{T,N,0}, εvol::_T, args; tol=1e-6, verbose=false)

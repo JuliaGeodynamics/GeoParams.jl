@@ -383,6 +383,8 @@ _compute_τII_nonparallel(v::AbstractPlasticity, εII::_T, args) where {_T} = ze
 Sums the stress of all non-parallel and non-plastic elements in a `CompositeRheology` structure. Mostly internally used for jacobian iterations.
 """
 compute_τII_parallel(v::CompositeRheology{T,N}, εII, args) where {T,N} = nreduce(vi -> first(_compute_τII_parallel(vi, εII, args)), v.elements)
+compute_τII_parallel(v::Parallel{T,N}, εII, args) where {T,N} = nreduce(vi -> first(_compute_τII_parallel(vi, εII, args)), v.elements)
+compute_τII_parallel(v, εII::_T, args) where {_T} = zero(_T)
 _compute_τII_parallel(v, εII::_T, args) where {_T} = zero(_T)
 _compute_τII_parallel(v::Parallel, εII, args) = compute_τII(v, εII, args)
 _compute_τII_parallel(v::AbstractPlasticity, εII::_T, args) where {_T} = zero(_T)

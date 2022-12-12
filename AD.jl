@@ -1,5 +1,5 @@
-using GeoParams, ForwardDiff
-import GeoParams.MaterialParameters.ConstitutiveRelationships: compute_τII_harmonic, compute_εII_elements, compute_τII_elements
+using GeoParams, ForwardDiff, StaticArrays, LinearAlgebra
+import GeoParams.MaterialParameters.ConstitutiveRelationships: compute_τII_parallel, compute_τII_harmonic, compute_εII_elements, compute_τII_elements
 
 # Define a range of rheological components
 v1 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
@@ -25,7 +25,7 @@ c2 = CompositeRheology(v3, v4)       # two linear rheologies
 c3 = CompositeRheology(v1, v2, e1)   # with elasticity
 c4 = CompositeRheology(v1, v3, p1)   # with linear || element
 c5 = CompositeRheology(v1, v4, p2)   # with nonlinear || element
-c6 = CompositeRheology(v1, v4, p1, p2) # with 2 || elements
+c6 = CompositeRheology(v1, v4, p1, p1) # with 2 || elements
 c7 = CompositeRheology(v4, e1)       # viscoelastic with linear viscosity
 c8 = CompositeRheology(v4, e1, pl1)   # with plastic element
 c9 = CompositeRheology(v4, e1, p4)    # with visco-plastic parallel element
@@ -41,7 +41,8 @@ args = (T=900.0, d=100e-6, τII_old=1e6, dt=1e8)
 
 v = c4   # problem with c3 (elasticity) and c4 (that has || elements) 
 
-@edit compute_εII(v, τII, args)
+compute_εII(c6, τII, args)
+compute_τII(c6, εII, args)
 
 ProfileCanvas.@profview for i in 1:1000000
     compute_εII(v, τII, args)
@@ -176,24 +177,40 @@ end
 end
 
 ## PROTOTYPES
+
+# # create a Static Vector of a vector of evaluated functions
+# @generated function SInput(funs::NTuple{N1, Function}, inputs::SVector{N2, T}) where {N1, N2, T}
+#     quote
+#         Base.Cartesian.@nexprs $N1 i -> f_i = funs[i](inputs...)
+#         Base.Cartesian.@ncall $N1 SVector{$N1, $T} f
+#     end
+# end
+
+
+# # create a Mutable Vector of a vector of evaluated functions
+# @generated function MInput(funs::NTuple{N1, Function}, inputs::MVector{N2, T}) where {N1, N2, T}
+#     quote
+#         Base.Cartesian.@nexprs $N1 i -> f_i = funs[i](inputs...)
+#         Base.Cartesian.@ncall  $N1 MVector{$N1, $T} f
+#     end
+# end
+
 SInput(funs::NTuple{N1, Function}, x::SVector{N2, T}) where {N1, N2, T} = SVector{N1,T}(funs[i](x) for i in 1:N1)
 # SInput(funs::NTuple{N1, Function}, inputs::SVector{N2, T}, args) where {N1, N2, T} = SVector{N1,T}(funs[i](inputs, args) for i in 1:N1)
 
-# Since this function is unreadable... EXAMPLE:
-# if ε = ε1 + ε2 + ε3  where ε2 and ε3 are unknowns (i.e. parallel bodies)
-# and τ = τ2_1 + τ2_2 ; τ = τ3_1 + τ3_2
-# The vector x = (ε2, ε3, τ); then:
-#   SVector{2, T}(sum(x[i] for i in 1:N2-1), x[end])
-#   SVector{2, T}(x[i-1], x[end]) where (x[i-1], x[end]) -> (ε_parallel_i, τ_total)
 function SInput(funs::NTuple{N1, Function}, x::SVector{N2, T}, args) where {N1, N2, T} 
     SVector{N1,T}(
         funs[i](
-            i == 1 ? SVector{2, T}(sum(x[i] for i in 1:N2-1), x[end]) : SVector{2, T}(x[i-1], x[end]), 
+            i == 1 ?  SVector{2, T}(sum(x[i] for i in 1:N2-1), x[end]) : SVector{2, T}(x[1], x[end]), 
             args
         ) 
         for i in 1:N1
     )
 end
+
+MInput(funs::NTuple{N1, Function}, x::MVector{N2, T}) where {N1, N2, T} = MVector{N1,T}(funs[i](x) for i in 1:N1)
+MInput(funs::NTuple{N1, Function}, x::MVector{N2, T}, args) where {N1, N2, T} = MVector{N1,T}(funs[i](x, args) for i in 1:N1)
+
 
 @inline function jacobian(f, x::StaticArray)
     T = typeof(ForwardDiff.Tag(f, eltype(x)))
@@ -209,6 +226,7 @@ extract_value(result::SVector{N, ForwardDiff.Dual{Tag, T, N}}) where {N,T,Tag} =
 ##########################################################################################################################################
 c=c4
 
+# NOTE; not working for general composites, only for one single parallel element
 function compute_τII_par(
     c::CompositeRheology{
         T,    N,
@@ -237,6 +255,14 @@ function compute_τII_par(
     f2(x, args) = x[2] - compute_τII_parallel(c, x[1], args)
     funs = f1, f2
 
+    # funs = ntuple(Val(n)) do i
+    #     f = if i ==1
+    #         (x, args) -> εII_total - compute_εII_elements(c, x[end], args) - sum(x[i] for i in 1:Npar)
+    #     else
+    #         (x, args) -> x[end] - compute_τII_parallel(c.elements, x[i-1], args)
+    #     end
+    # end
+
     # Local Iterations
     iter = 0
     ϵ = 2 * tol
@@ -245,40 +271,47 @@ function compute_τII_par(
         iter += 1
 
         x_n = x
-        args_n = merge(args, (τII = x[2], )) # we define a new arguments tuple to maintain type stability 
+        args_n = merge(args, (τII = x[end], )) # we define a new arguments tuple to maintain type stability 
         r, J = jacobian(input -> SInput(funs, input, args_n), x)
         # update solution
         dx  = J\r 
         x  -= dx   
         
         ϵ = norm(@. abs(x-x_n))
-        # println(" iter $(iter) $ϵ τ=$(x[1]) εp=$(x[2])")
     end
-    return x[2]
+    return x[2], x[1]
 end
+compute_τII_par(c4, εII, args)
 
 @btime compute_τII_par($c, $εII, $args)
-@btime compute_τII($c, $εII, $args)
 
 compute_τII_par(c, εII, args)
-compute_τII(c, εII, args)
 
 compute_εII(c, τII, args)
 compute_τII(c, εII, args)
 
-p0 = CompositeRheology(v3, Parallel(v3, v3) )
-p1_2 = Parallel((p0, ))                # linear elements
-c4_2 = CompositeRheology(v1, v3, p1_2)   # with linear || element
+@btime compute_τII($v, $εII, $args)
 
 
-ProfileCanvas.@profview for i in 1:1000000
-    compute_τII(c4_2, εII, args)
-    # compute_τII_par(c4_2, εII, args)
+fp = ntuple()
+
+ntuple(Val(2)) do i
+    if i == 1
+        (x, args) -> εII_total - compute_εII_elements(c, x[2], args) - sum(x[i] for i in 1:(2-1))
+    else        
+        (x, args) -> x[i+1] - compute_τII_parallel(c, x[1], args)
+    end
 end
 
-@btime compute_τII_par($c4_2, $εII, $args)
-@btime     compute_τII($c4_2, $εII, $args)
+macro foos(x, args)
 
-compute_τII_par(c4_2, εII, args)
-compute_τII(c4_2, εII, args)
-
+    esc(
+        quote
+            # Tuple(
+                (x,args) -> x[1] 
+            #     for i in length(x)
+            # )
+        end
+    )
+        
+end
