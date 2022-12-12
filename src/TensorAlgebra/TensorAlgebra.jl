@@ -65,10 +65,12 @@ end
 @inline (:)(A::SMatrix{M,M,T,N}, B::SMatrix{M,M,T,N}) where {M,N,T} = sum(A .* B)
 
 @inline second_invariant(A::NTuple{N,T}) where {N,T} = √(0.5 * (A:A))
-@inline second_invariant(A::Vararg{N,T}) where {N,T} = second_invariant(A)
 @inline second_invariant(A::SMatrix) = √(0.5 * (A:A))
 @inline second_invariant(A::SVector) = √(0.5 * (A:A))
 @inline second_invariant(A::Matrix{T}) where {T} = √(0.5 * sum(Ai * Ai for Ai in A))
+# So that is differentiable...
+@inline second_invariant(xx, yy, xy) = √(0.5*(xx^2 + yy^2) + xy^2)
+@inline second_invariant(xx, yy, zz, yz, xz, xy) = √(0.5*(xx^2 + yy^2 + zz^2) + xy^2 + yz^2 + xz^2)
 
 """
     second_invariant_staggered(Aii::NTuple{2,T}, Axy::NTuple{4,T}) where {T} 
@@ -179,7 +181,7 @@ and ω = 1/2(dux/dy - duy/dx)
 @inline Base.@propagate_inbounds function rotate_elastic_stress2D(ω, τ::T, dt) where T
     θ = ω * dt
     # NOTE: inlining sincos speeds up considerably this kernel but breaks for <1.8
-    sinθ, cosθ = @inline sincos(θ) 
+    sinθ, cosθ = sincos(θ) 
     # rotate tensor
     tensor_rotation(τ, cosθ, sinθ)
 end
