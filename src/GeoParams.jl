@@ -15,6 +15,7 @@ using Unitful           # Units
 using BibTeX            # references of creep laws
 using Requires          # To only add plotting routines if Plots is loaded
 using StaticArrays
+using LinearAlgebra
 
 import Base: getindex
 
@@ -90,7 +91,7 @@ export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagram
 include("Utils.jl")
 
 include("TensorAlgebra/TensorAlgebra.jl")
-export second_invariant, second_invariant_staggered
+export second_invariant, second_invariant_staggered, rotate_elastic_stress
 
 # note that this throws a "Method definition warning regarding superscript"; that is expected & safe 
 #  as we add a nicer way to create output of superscripts. I have been unable to get rid of this warning,

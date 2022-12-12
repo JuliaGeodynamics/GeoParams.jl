@@ -505,15 +505,6 @@ end
 # ----------------------------------------------------------------------------------------
 
 ## Helper functions
-@inline function staggered_tensor_average(x::NTuple{N,Union{T,NTuple{4,T}}}) where {N,T}
-    ntuple(Val(N)) do i
-        Base.@_inline_meta
-        staggered_tensor_average(x[i])
-    end
-end
-
-staggered_tensor_average(x::NTuple{N,T}) where {N,T} = sum(x) / N
-staggered_tensor_average(x::T) where {T<:Number} = x
 
 @inline function volumetric_strainrate(x::NTuple{3,Union{T,NTuple{4,T}}}) where {T}
     return vol = x[1] + x[2]  #2D
