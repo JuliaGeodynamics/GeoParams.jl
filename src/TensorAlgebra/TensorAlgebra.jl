@@ -178,7 +178,7 @@ rotate_elastic_stress(ω, τ, dt) = _rotate_elastic_stress(ω, staggered_tensor_
 Bi-dimensional rotation of the elastic stress where τ is in the Voig notation 
 and ω = 1/2(dux/dy - duy/dx)
 """
-@inline Base.@propagate_inbounds function rotate_elastic_stress2D(ω, τ::T, dt) where T
+@inline Base.@propagate_inbounds function rotate_elastic_stress2D(ω, τ, dt)
     θ = ω * dt
     # NOTE: inlining sincos speeds up considerably this kernel but breaks for <1.8
     sinθ, cosθ = sincos(θ) 
