@@ -636,11 +636,12 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         "r" => "Water fugacity exponent (-)",
         "p" => "Grain size exponent (-)",
         "A" => "Coefficient \$(Pa^{-n}/s)\$",
-        "E" => "Activation energy (J/mol)",
+        "E" => "Activation energy (J/mol)", # can also be Elastic Young's modulus, maybe change symbol for that?
         "R" => "Gas constant (J/mol/K)",
         "G" => "Shear modulus (Pa)",
         "\\nu" => "Poisson ratio (-)",
         "K" => "Bulk modulus (Pa)",
+        "Kb" => "Elastic bulk modulus (Pa)",
         "Y" => "Young's modulus (Pa)",
         "k" => "Thermal conductivity (W/m/K)",
         "cp" => "Heat capacity (J/kg/K)",
@@ -677,7 +678,10 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
     Table *= "\\midrule[0.3pt]\n"
     Table *= " & "
 
-    # Creates table headers and in text citations
+    # Boris nach Layout für Tabellen mit CompositeRheologies fragen. 
+    # Wie soll z.B. der gleiche Parameter für allerdings verschiedene CreepLaws in einer Phase gehandhabt werden (zwei Mal Activation Energy z.B.)? 
+
+    # Creates table headers and in-text citations
     counter = 1
     for i in 1:parse(Int64, d["Name 1"][2])
         Table *= " & " * d["Name $i"][1]
@@ -909,7 +913,8 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
         "R"=>"Gas constant (J/mol/K)",
         "G"=>"Shear modulus (Pa)",
         "ν"=>"Poisson ratio (-)",
-        "K"=>"Bulk modulus (Pa)", 
+        "K"=>"Bulk modulus (Pa)",
+        "Kb"=>"Elastic bulk modulus (Pa)", 
         "Y"=>"Young's modulus (Pa)",
         "k"=>"Thermal conductivity (W/m/K)",
         "cp"=>"Heat capacity (J/kg/K)",
