@@ -40,7 +40,7 @@ Phase2Dict() puts all parameters of a phase in a dict.
 
 function Phase2Dict(s)
     # Dict has Key with Fieldname and Value with Tuple(value, symbol, flowlaw keyword, number of phases)
-    fds = Dict{String,Tuple{String,String,String,String}}()
+    fds = Dict{String,Tuple{String,String,String,String,String}}()
     refs = Dict{String,Tuple{String,String,String}}()
     if typeof(s) <: Tuple
         onephase = false
@@ -53,6 +53,8 @@ function Phase2Dict(s)
     flowlawcount = 0
     # Checks all Phases 
     for i in 1:phasecount
+        Diffcount = 0
+        Dislcount = 0
         # When s is of type Tuple{...}
         if !onephase
             fieldnames = propertynames(s[i])
@@ -69,6 +71,7 @@ function Phase2Dict(s)
                         flowpara = "Parallel"
                         # Checks what type the CreepLaw or CompositeRheology field has 
                         if typeof(a[j]) <: DislocationCreep
+                            Dislcount += 1
                             flowlawcount += 1
                             flowadd = flowdisl
                             flowlaw *= flowadd
@@ -78,6 +81,7 @@ function Phase2Dict(s)
                             refs["$name"] = (bib_disl, "$flowlawcount", "$i")
 
                         elseif typeof(a[j]) <: DiffusionCreep
+                            Diffcount += 1
                             flowlawcount += 1
                             flowadd = flowdiff
                             flowlaw *= flowadd
@@ -104,6 +108,7 @@ function Phase2Dict(s)
                                     namepre = fdsname * "Para "
                                     for v in 1:length(a[j][u].elements)
                                         if typeof(a[j][u][v]) <: DislocationCreep
+                                            Dislcount += 1
                                             flowlawcount += 1
                                             flowadd = flowdisl
                                             parallelrheo *= flowadd * ","
@@ -113,6 +118,7 @@ function Phase2Dict(s)
                                             refs["$name"] = (bib_disl, "$flowlawcount", "$i")
 
                                         elseif typeof(a[j][u][v]) <: DiffusionCreep
+                                            Diffcount += 1
                                             flowlawcount += 1
                                             flowadd = flowdiff
                                             parallelrheo *= flowadd * ","
@@ -142,13 +148,14 @@ function Phase2Dict(s)
                                                     latexvar = string("$var")
                                                 end
                                                 # Put value, LaTex variable name and creep law pattern in a Dict
-                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i")
+                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$flowlawcount")
                                             end
                                             k += 1
                                         end
                                     end
                                     comporheo *= parallelrheo * "),"
                                 elseif typeof(a[j][u]) <: DislocationCreep
+                                    Dislcount += 1
                                     flowlawcount += 1
                                     flowadd = flowdisl
                                     comporheo *= flowadd * ","
@@ -158,6 +165,7 @@ function Phase2Dict(s)
                                     refs["$name"] = (bib_disl, "$flowlawcount", "$i")
 
                                 elseif typeof(a[j][u]) <: DiffusionCreep
+                                    Diffcount += 1
                                     flowlawcount += 1
                                     flowadd = flowdiff
                                     comporheo *= flowadd * ","
@@ -186,7 +194,7 @@ function Phase2Dict(s)
                                             latexvar = string("$var")
                                         end
                                         # Put value, LaTex variable name and creep law pattern in a Dict
-                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i")
+                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$flowlawcount")
                                     end
                                     k += 1
                                 end
@@ -199,6 +207,7 @@ function Phase2Dict(s)
                             parallelrheo = flowadd * "("
                             for q in 1:length(a[j].elements)
                                 if typeof(a[j][q]) <: DislocationCreep
+                                    Dislcount += 1
                                     flowlawcount += 1
                                     flowadd = flowdisl
                                     parallelrheo *= flowadd * ","
@@ -208,6 +217,7 @@ function Phase2Dict(s)
                                     refs["$name"] = (bib_disl, "$flowlawcount", "$i")
 
                                 elseif typeof(a[j][q]) <: DiffusionCreep
+                                    Diffcount += 1
                                     flowlawcount += 1
                                     flowadd = flowdiff
                                     parallelrheo *= flowadd * ","
@@ -229,6 +239,7 @@ function Phase2Dict(s)
                                     comporheo = flowadd * "("
                                     for u in 1:num_rheologies
                                         if typeof(a[j][q][u]) <: DislocationCreep
+                                            Dislcount += 1
                                             flowlawcount += 1
                                             flowadd = flowdisl
                                             comporheo *= flowadd * ","
@@ -238,6 +249,7 @@ function Phase2Dict(s)
                                             refs["$name"] = (bib_disl, "$flowlawcount", "$i")
 
                                         elseif typeof(a[j][q][u]) <: DiffusionCreep
+                                            Diffcount += 1
                                             flowlawcount += 1
                                             flowadd = flowdiff
                                             comporheo *= flowadd * ","
@@ -266,7 +278,7 @@ function Phase2Dict(s)
                                                     latexvar = string("$var")
                                                 end
                                                 # Put value, LaTex variable name and creep law pattern in a Dict
-                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i")
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$flowlawcount")
                                             end
                                             k += 1
                                         end
@@ -289,7 +301,7 @@ function Phase2Dict(s)
                                             latexvar = string("$var")
                                         end
                                         # Put value, LaTex variable name and creep law pattern in a Dict
-                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i")
+                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$flowlawcount")
                                     end
                                     k += 1
                                 end
@@ -312,7 +324,7 @@ function Phase2Dict(s)
                                         latexvar = string("$var")
                                     end
                                     # Put value, LaTex variable name and creep law pattern in a Dict
-                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i")
+                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "")
                                 end
                                 k += 1
                             end
@@ -321,7 +333,7 @@ function Phase2Dict(s)
                     # Takes field "Name" and puts it in the first entry of the Tuple, takes Phasecount of all Phases and puts it in the second entry of the Dict
                 elseif !isempty(getproperty(s[i], label)) && label == :Name
                     phasename = join(getproperty(s[i], :Name))
-                    fds["$label $i"] = (phasename, "$phasecount", "$i", "")
+                    fds["$label $i"] = (phasename, "$phasecount", "$i", "", "")
                 end
             end
 
@@ -415,7 +427,7 @@ function Phase2Dict(s)
                                                     latexvar = string("$var")
                                                 end
                                                 # Put value, LaTex variable name and creep law pattern in a Dict
-                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i")
+                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$flowlawcount")
                                             end
                                             k += 1
                                         end
@@ -459,7 +471,7 @@ function Phase2Dict(s)
                                             latexvar = string("$var")
                                         end
                                         # Put value, LaTex variable name and creep law pattern in a Dict
-                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i")
+                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$flowlawcount")
                                     end
                                     k += 1
                                 end
@@ -539,7 +551,7 @@ function Phase2Dict(s)
                                                     latexvar = string("$var")
                                                 end
                                                 # Put value, LaTex variable name and creep law pattern in a Dict
-                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i")
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$flowlawcount")
                                             end
                                             k += 1
                                         end
@@ -562,7 +574,7 @@ function Phase2Dict(s)
                                             latexvar = string("$var")
                                         end
                                         # Put value, LaTex variable name and creep law pattern in a Dict
-                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i")
+                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$flowlawcount")
                                     end
                                     k += 1
                                 end
@@ -585,7 +597,7 @@ function Phase2Dict(s)
                                         latexvar = string("$var")
                                     end
                                     # Put value, LaTex variable name and creep law pattern in a Dict
-                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i")
+                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "")
                                 end
                                 k += 1
                             end
@@ -594,7 +606,7 @@ function Phase2Dict(s)
                     # Takes field "Name" and puts it in the first entry of the Tuple, takes Phasecount of all Phases and puts it in the second entry of the Dict
                 elseif !isempty(getproperty(s, label)) && label == :Name
                     phasename = join(getproperty(s, :Name))
-                    fds["$label $i"] = (phasename, "$phasecount", "$i", "")
+                    fds["$label $i"] = (phasename, "$phasecount", "$i", "", "")
                 end
             end
         end
@@ -724,7 +736,11 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
     # Creates columnwise output for all parameters of the input phase
     for symbol in symbs
         # Sets parametername and variable
-        Table *= " " * string(desc[symbol]) * " & " * "\$" * symbol[1:end-1] * "_" * symbol[end] *"\$"
+        if occursin("0", symbol) || (!occursin("\\", symbol) && length(symbol) > 1)
+            Table *= " " * string(desc[symbol]) * " & " * "\$" * symbol[1:end-1] * "_" * symbol[end] *"\$"
+        else
+            Table *= " " * string(desc[symbol]) * " & " * "\$" * symbol *"\$"
+        end
         # Iterates over all phases
         for j in 1:parse(Int64, d["Name 1"][2])
             hit = 0
