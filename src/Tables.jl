@@ -496,9 +496,16 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
     Table *= "% Table body\n"
 
     # Get vector with all unique symbols without phasenames
+    vec_dictkeys = collect(dictkeys)
+
     for key in dictkeys
+        key_12 = key[1:3]
         if occursin("Name", key)
             continue
+        # Checks if symbol is from field CompositeRheology and if the symbol occurs more often than once
+        elseif occursin("CompositeRheology", key) && sum(count.("$key_12", vec_dictkeys)) > 1
+            number = d[key][5]
+            push!(symbs, d[key][2] * "$number")
         else
             push!(symbs, d[key][2])
         end
@@ -508,8 +515,12 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
     # Creates columnwise output for all parameters of the input phase
     for symbol in symbs
         # Sets parametername and variable
-        if occursin("0", symbol) || (!occursin("\\", symbol) && length(symbol) > 1)
-            Table *= " " * string(desc[symbol]) *  " & " * "\$" * symbol[1:end-1] * "_" * symbol[end] *"\$"
+        if maximum(endswith.(symbol,["0","1","2","3","4","5","6","7","8","9"])) || (!occursin("\\", symbol) && length(symbol) > 1) 
+            if occursin("0", symbol)
+                Table *= " " * string(desc[symbol]) *  " & " * "\$" * symbol[1:end-1] * "_" * symbol[end] *"\$"
+            else
+                Table *= " " * string(desc[symbol[1:end-1]]) *  " & " * "\$" * symbol[1:end-1] * "_" * symbol[end] *"\$"
+            end
         else
             Table *= " " * string(desc[symbol]) *  " & " * "\$" * symbol *"\$"
         end
@@ -519,6 +530,10 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
             # Iterates over all pairs
             for i in 1:length(dictpairs)
                 # Checks if symbol matches the symbol in the pair and if phase matches phase of the pair
+                if maximum(endswith.(symbol,["1","2","3","4","5","6","7","8","9"]))
+                    symbol = symbol[1:end-1]
+                end
+                #--------------------------------------------- WORK IN PROGRESS FOR COMPOSITE RHEOLOGIES-------------------------------------------------------------
                 if symbol == dictpairs[i].second[2] && j == parse(Int64, dictpairs[i].second[4])
                     # put in the matched parameter value
                     dig, num, expo = detachFloatfromExponent(dictpairs[i].second[1])
