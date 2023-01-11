@@ -42,7 +42,7 @@ Phase2Dict() puts all parameters of a phase in a dict.
 
 function Phase2Dict(s)
     # Dict has Key with Fieldname and Value with Tuple(value, symbol, flowlaw keyword, number of phases)
-    fds = Dict{String,Tuple{String,String,String,String,String}}()
+    fds = Dict{String,Tuple{String,String,String,String,String,String}}()
     refs = Dict{String,Tuple{String,String,String}}()
     if !(typeof(s) <: Tuple)
         s = (s,)
@@ -53,6 +53,16 @@ function Phase2Dict(s)
     global Diff = 0
     global Disl = 0
     global Lin = 0
+    var_counter = Dict(
+        "A" => 0,
+        "E" => 0,
+        "R" => 0,
+        "V" => 0,
+        "η" => 0,
+        "n" => 0,
+        "p" => 0,
+        "r" => 0,
+    )
     # Checks all Phases 
     for i in 1:phasecount
         fieldnames = propertynames(s[i])
@@ -141,6 +151,9 @@ function Phase2Dict(s)
                                         # Checks if they are GeoUnit (Value and Unit exist then)
                                         if isa(b, GeoUnit)
                                             value = string(getproperty(b, :val))
+                                            if typeof(a[j]) <: CompositeRheology
+                                                var_counter["$var"] += 1
+                                            end
                                             # Gives back LaTex format string for the corresponding variable if it is longer than 2 chars
                                             if length(unidecode("$var")) > 2
                                                 latexvar = string("\\" * string(unidecode("$var")))
@@ -148,14 +161,15 @@ function Phase2Dict(s)
                                                 latexvar = string("$var")
                                             end
                                             # Put value, LaTex variable name, creep law pattern, phase id and current disl, diff or linvisc count in a Dict
+                                            counter = var_counter["$var"]
                                             if typeof(a[j][u][v]) <: DislocationCreep
-                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Disl")
+                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$counter", "$Disl")
                                             end
                                             if typeof(a[j][u][v]) <: DiffusionCreep
-                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Diff")
+                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$counter", "$Diff")
                                             end
                                             if typeof(a[j][u][v]) <: LinearViscous
-                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Lin")
+                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$counter", "$Lin")
                                             end
                                         end
                                         k += 1
@@ -199,6 +213,9 @@ function Phase2Dict(s)
                                 # Checks if they are GeoUnit (Value and Unit exist then)
                                 if isa(b, GeoUnit)
                                     value = string(getproperty(b, :val))
+                                    if typeof(a[j]) <: CompositeRheology
+                                        var_counter["$var"] += 1
+                                    end
                                     # Gives back LaTex format string for the corresponding variable if it is longer than 2 chars
                                     if length(unidecode("$var")) > 2
                                         latexvar = string("\\" * string(unidecode("$var")))
@@ -206,14 +223,15 @@ function Phase2Dict(s)
                                         latexvar = string("$var")
                                     end
                                     # Put value, LaTex variable name and creep law pattern in a Dict
+                                    counter = var_counter["$var"]
                                     if typeof(a[j][u]) <: DislocationCreep
-                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$Disl")
+                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$counter", "$Disl")
                                     end
                                     if typeof(a[j][u]) <: DiffusionCreep
-                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$Diff")
+                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$counter", "$Diff")
                                     end
                                     if typeof(a[j][u]) <: LinearViscous
-                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$Lin")
+                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$counter", "$Lin")
                                     end
                                 end
                                 k += 1
@@ -293,6 +311,9 @@ function Phase2Dict(s)
                                         # Checks if they are GeoUnit (Value and Unit exist then)
                                         if isa(b, GeoUnit)
                                             value = string(getproperty(b, :val))
+                                            if typeof(a[j]) <: Parallel
+                                                var_counter["$var"] += 1
+                                            end
                                             # Gives back LaTex format string for the corresponding variable if it is longer than 2 chars
                                             if length(unidecode("$var")) > 2
                                                 latexvar = string("\\" * string(unidecode("$var")))
@@ -300,14 +321,15 @@ function Phase2Dict(s)
                                                 latexvar = string("$var")
                                             end
                                             # Put value, LaTex variable name and creep law pattern in a Dict
+                                            counter = var_counter["$var"]
                                             if typeof(a[j][q][u]) <: DislocationCreep
-                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Disl")
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$counter", "$Disl")
                                             end
                                             if typeof(a[j][q][u]) <: DiffusionCreep
-                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Diff")
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$counter", "$Diff")
                                             end
                                             if typeof(a[j][q][u]) <: LinearViscous
-                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Lin")
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$counter", "$Lin")
                                             end
                                         end
                                         k += 1
@@ -324,6 +346,9 @@ function Phase2Dict(s)
                                 # Checks if they are GeoUnit (Value and Unit exist then)
                                 if isa(b, GeoUnit)
                                     value = string(getproperty(b, :val))
+                                    if typeof(a[j]) <: CompositeRheology
+                                        var_counter["$var"] += 1
+                                    end
                                     # Gives back LaTex format string for the corresponding variable if it is longer than 2 chars
                                     if length(unidecode("$var")) > 2
                                         latexvar = string("\\" * string(unidecode("$var")))
@@ -331,14 +356,15 @@ function Phase2Dict(s)
                                         latexvar = string("$var")
                                     end
                                     # Put value, LaTex variable name and creep law pattern in a Dict
+                                    counter = var_counter["$var"]
                                     if typeof(a[j][q]) <: DislocationCreep
-                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$Disl")
+                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$counter", "$Disl")
                                     end
                                     if typeof(a[j][q]) <: DiffusionCreep
-                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$Diff")
+                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$counter", "$Diff")
                                     end
                                     if typeof(a[j][q]) <: LinearViscous
-                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$Lin")
+                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$counter", "$Lin")
                                     end
                                 end
                                 k += 1
@@ -363,13 +389,13 @@ function Phase2Dict(s)
                                 end
                                 # Put value, LaTex variable name and creep law pattern in a Dict
                                 if typeof(a[j]) <: DislocationCreep
-                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Disl")
+                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "0", "$Disl")
                                 end
                                 if typeof(a[j]) <: DiffusionCreep
-                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Diff")
+                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "0" "$Diff")
                                 end
                                 if typeof(a[j]) <: LinearViscous
-                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Lin")
+                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "0" "$Lin")
                                 end
                             end
                             k += 1
@@ -449,16 +475,15 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
     Table *= "\\usepackage{booktabs}\n"
     Table *= "\\usepackage{graphicx}\n"
     Table *= "\\usepackage{multirow}\n"
-    Table *= "\\usepackage{natbib}\n"
     Table *= "\\usepackage[round, comma, sort, ]{natbib}\n"
     Table *= "\\bibliographystyle{abbrvnat}\n"
     Table *= "\\setcitestyle{authoryear,open={(},close={)}} %Citation-related commands\n"
     Table *= "\\begin{document}\n"
     Table *= "\\begin{table}[hbt]\n"
     Table *= "\\centering\n"
-    Table *= "\\resizebox{\\columnwidth}{!}{%\n"
-    Table *= "\\begin{tabular}{ " * "l " * "c "^(parse(Int64, d["Name 1"][2]) + 2) * "}\n"
-    Table *= "\\toprule[1pt]\n"
+    Table *= "\\resizebox{\\columnwidth}{!}{\n"
+    Table *= "\\begin{tabular}{ " * "l " * "c "^(parse(Int64, d["Name 1"][2]) + 2) * "}\n \\\\"
+    Table *= "\\toprule[1pt]\n \\\\"
     Table *= "\\midrule[0.3pt]\n"
     Table *= " & "
 
@@ -491,7 +516,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
     end
 
     # Latex formating and comment
-    Table *= "\\\\\n"
+    Table *= " \\\\\n"
     Table *= "\\midrule \n"
     Table *= "% Table body\n"
 
@@ -503,10 +528,12 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         if occursin("Name", key)
             continue
         # Checks if symbol is from field CompositeRheology and if the symbol occurs more often than once
-        elseif occursin("CompositeRheology", key) && sum(count.("$key_12", vec_dictkeys)) > 1
+        elseif (occursin("R",key[1:3]))
+            push!(symbs, d[key][2])
+        elseif occursin("CompositeRheology", key) && sum(count.("$key_12", vec_dictkeys)) > 1 && !(occursin("R",key[1:3]))
             number = d[key][5]
             push!(symbs, d[key][2] * "$number")
-        else
+        else 
             push!(symbs, d[key][2])
         end
     end
@@ -527,6 +554,8 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         # Iterates over all phases
         for j in 1:parse(Int64, d["Name 1"][2])
             hit = 0
+            hit_index = 0
+            i = 1
             # Iterates over all pairs
             for i in 1:length(dictpairs)
                 # Checks if symbol matches the symbol in the pair and if phase matches phase of the pair
@@ -534,19 +563,20 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
                     symbol = symbol[1:end-1]
                 end
                 #--------------------------------------------- WORK IN PROGRESS FOR COMPOSITE RHEOLOGIES-------------------------------------------------------------
-                if symbol == dictpairs[i].second[2] && j == parse(Int64, dictpairs[i].second[4])
+                if symbol == dictpairs[i].second[2] && j == parse(Int64, dictpairs[i].second[4]) && hit == 0
                     # put in the matched parameter value
                     dig, num, expo = detachFloatfromExponent(dictpairs[i].second[1])
                     if  dig <= rdigits && expo != "1" 
-                        Table *= " & " * "$num \\times 10^{$expo}"
+                        Table *= " & \$" * "$num \\times 10^{$expo} \$"
                     elseif dig <= rdigits && expo == "1"
-                        Table *= " & " * "$num"
+                        Table *= " & \$" * "$num\$"
                     elseif dig > rdigits && expo != "1"
-                        Table *= " & " * string(round(parse(Float64, num); digits=rdigits)) * " \\times 10^{$expo}"
+                        Table *= " & \$" * string(round(parse(Float64, num); digits=rdigits)) * " \\times 10^{$expo}\$"
                     elseif dig > rdigits && expo == "1"
-                        Table *= " & " * string(round(parse(Float64, num); digits=rdigits))
+                        Table *= " & \$" * string(round(parse(Float64, num); digits=rdigits)) * "\$"
                     end
                     hit += 1
+                    hit_index = i
                 end
             end
 
@@ -600,12 +630,13 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
     end
 
     # Adds in text citation for all BibTex sources to LaTEx code. InTextRef is created simultaneously with table headers
-    Table *= InTextRef * "\n"
+    Table *= InTextRef * "\\\\\n"
 
     # finishes latex table, closes all open formats and writes References beneath table
-    Table *= "\\midrule[0.3pt]\n"
+    Table *= "\\midrule[0.3pt] \\\\\n"
     Table *= "\\bottomrule[1pt]\n"
-    Table *= "\\end{tabular}}\n"
+    Table *= "\\end{tabular}\n"
+    Table *= "}\n"
     Table *= "\\caption{Parameter table}\n"
     Table *= "\\label{tab:para_table}\n"
     Table *= "\\end{table}\n"
