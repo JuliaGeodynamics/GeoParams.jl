@@ -7,6 +7,7 @@ using Unitful: Energy
 using Unitful
 using Parameters, LaTeXStrings, BibTeX
 using ..Units
+using Static
 
 import Base.show, Base.convert
 using GeoParams:
@@ -197,19 +198,12 @@ function SetMaterialParams(;
     SeismicVelocity=nothing,
     CharDim=nothing,
 )
-
-    # In case density is defined and gravity not, set gravity to default value
-    if ~isnothing(Density) & isnothing(Gravity)
-        Gravity = GravitationalAcceleration.ConstantGravity()
-    end
-
-    # define struct for phase, while also specifying the maximum number of definitions for every field   
-    phase = MaterialParams(
-        NTuple{length(Name),Char}(collect.(Name)),
+    Name_GP = str2char(Name)
+    return SetMaterialParams(
+        Name_GP,
         Phase,
-        false,
         ConvField(Density, :Density; maxAllowedFields=1),
-        ConvField(Gravity, :Gravity; maxAllowedFields=1),
+        ConvField(set_gravity(Gravity, Density), :Gravity; maxAllowedFields=1),
         ConvField(CreepLaws, :Creeplaws),
         ConvField(Elasticity, :Elasticity; maxAllowedFields=1),
         ConvField(Plasticity, :Plasticity),
@@ -221,6 +215,48 @@ function SetMaterialParams(;
         ConvField(ShearHeat, :ShearHeat; maxAllowedFields=1),
         ConvField(Melting, :Melting; maxAllowedFields=1),
         ConvField(SeismicVelocity, :SeismicVelocity; maxAllowedFields=1),
+        CharDim,
+    )
+end
+
+function SetMaterialParams(
+    Name, # this makes the struct !isbits(); as that sucks for portability we change that later to NTuple(Char)
+    Phase,
+    Density,
+    Gravity,
+    CreepLaws,
+    Elasticity,
+    Plasticity,
+    CompositeRheology,
+    Conductivity,
+    HeatCapacity,
+    RadioactiveHeat,
+    LatentHeat,
+    ShearHeat,
+    Melting,
+    SeismicVelocity,
+    CharDim,
+)
+
+    # define struct for phase, while also specifying the maximum number of definitions for every field   
+    # phase = MaterialParams(
+    phase = MaterialParams(
+        Name,
+        Phase,
+        false,
+        Density,
+        Gravity,
+        CreepLaws,
+        Elasticity,
+        Plasticity,
+        CompositeRheology,
+        Conductivity,
+        HeatCapacity,
+        RadioactiveHeat,
+        LatentHeat,
+        ShearHeat,
+        Melting,
+        SeismicVelocity,
     )
 
     # [optionally] non-dimensionalize the struct
@@ -235,21 +271,28 @@ function SetMaterialParams(;
     return phase
 end
 
+# str2char(str::String) = str2char(str, Val(length(str)))
+# @inline str2char(str, ::Val{N}) where N = ntuple(i->str[i], Val(N))
+# @inline str2char(str, ::Val{0}) = ()
+
+str2char(str::String) = str2char(str, static(length(str)))
+@inline str2char(str, ::StaticInt{N}) where N = ntuple(i->str[i], Val(N))
+@inline str2char(str, ::StaticInt{0}) = ()
+
+# In case density is defined and gravity not, set gravity to default value
+function set_gravity(Gravity::Nothing, Density::AbstractMaterialParam)
+    GravitationalAcceleration.ConstantGravity()
+end
+set_gravity(Gravity, Density) = Gravity
+
 # Helper function that converts a field to a Tuple, provided it is not nothing
 # This also checks for the maximum allowed number of definitions 
 # (some rheological phases may allow for an arbitrary combination per phase; others like density EoS not) 
-function ConvField(field, fieldname::Symbol; maxAllowedFields=1e6)
-    if ~isnothing(field)
-        if typeof(field) <: AbstractMaterialParam
-            field = (field,)       # transform to tuple
-        end
-        if typeof(field[1]) <: AbstractMaterialParam
-            if length(field) > maxAllowedFields
-                error("Maximum $(maxAllowedFields) field allowed for: $fieldname")
-            end
-        end
-    else
-        field = ()  # empty tuple
+ConvField(::Nothing, fieldname::Symbol; maxAllowedFields=1e6) = ()
+ConvField(field::AbstractMaterialParam, fieldname::Symbol; maxAllowedFields=1e6) = (field, )
+function ConvField(field::NTuple{N, Any}, fieldname::Symbol; maxAllowedFields=1e6) where N 
+    if length(field) > maxAllowedFields
+        error("Maximum $(maxAllowedFields) field allowed for: $fieldname")
     end
     return field
 end

@@ -9,10 +9,18 @@ export compute_εII,            # calculation routines
     compute_τII!,
     dεII_dτII,
     dτII_dεII,
+    compute_εvol,
+    compute_εvol!,
+    compute_p,
+    compute_p!,
+    dεvol_dp,
+    dp_dεvol,
     param_info,
     ConstantElasticity,     # constant
     SetConstantElasticity,  # helper function
-    AbstractElasticity
+    AbstractElasticity,
+    isvolumetric, 
+    effective_εII, effective_ε
 
 # ConstantElasticity  -------------------------------------------------------
 
@@ -29,6 +37,7 @@ Structure that holds parameters for constant, isotropic, linear elasticity.
 end
 
 ConstantElasticity(args...) = ConstantElasticity(convert.(GeoUnit, args)...)
+
 
 # Add multiple dispatch here to allow specifying combinations of 2 elastic parameters (say ν & E), to compute the others
 """
@@ -71,6 +80,11 @@ function param_info(s::ConstantElasticity) # info about the struct
     return MaterialParamsInfo(; Equation=L"Constant elasticity")
 end
 
+function isvolumetric(a::ConstantElasticity)
+    @unpack_val ν = a
+    return ν == 0.5 ? false : true
+end
+
 # Calculation routines
 """
     compute_εII(s::ConstantElasticity{_T}, τII; τII_old, dt) 
@@ -105,7 +119,7 @@ end
     a::ConstantElasticity, εII::_T; τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
 ) where {_T}
     @unpack_val G = a
-    τII = _T(2) * G * dt * εII + τII_old
+    τII = _T(2.0) * G * dt * εII + τII_old
 
     return τII
 end
@@ -113,7 +127,7 @@ end
 @inline function dτII_dεII(a::ConstantElasticity{_T}, τII_old=zero(precision(a)), dt=one(precision(a)), kwargs...
     ) where {_T}
     @unpack_val G = a
-    return _T(2) * G * dt
+    return _T(2.0) * G * dt
 end
 
 """
@@ -171,6 +185,92 @@ function show(io::IO, g::ConstantElasticity)
         "Linear elasticity with shear modulus: G = $(UnitValue(g.G)), Poisson's ratio: ν = $(UnitValue(g.ν)), bulk modulus: Kb = $(UnitValue(g.Kb)) and Young's module: E=$(UnitValue(g.E))",
     )
 end
+
+"""
+    compute_εvol(s::ConstantElasticity{_T}, P; P_old, dt) 
+
+Computes elastic volumetric strainrate given the pressure at the current (`P`) and old timestep (`P_old`), for a timestep `dt`:
+```math  
+    \\dot{\\vartheta}^{el} = {1 \\over Kb} {D P \\over Dt } ≈ {1 \\over Kb} {P - \\tilde{P^{old} \\over dt }
+```
+
+"""
+@inline function compute_εvol(
+    a::ConstantElasticity, P::_T; P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+) where {_T}
+    @unpack_val Kb = a
+    εvol_el = - (P - P_old) / (Kb * dt)
+    return εvol_el
+end
+
+@inline function dεvol_dp(a::ConstantElasticity{_T}, P::_T; P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+    ) where {_T}
+    @unpack_val Kb = a
+    return - inv(Kb * dt)
+end
+
+@inline function compute_p(
+    a::ConstantElasticity, εvol::_T; P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+) where {_T}
+    @unpack_val Kb = a
+    P = - Kb * dt * εvol + P_old
+
+    return P
+end
+
+@inline function dp_dεvol(a::ConstantElasticity{_T}, P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+    ) where {_T}
+    @unpack_val Kb = a
+    return -Kb * dt
+end
+
+"""
+    compute_εvol!(s::ConstantElasticity{_T}, P; P_old, dt) 
+
+    In-place computation of the elastic volumetric strainrate given the pressure at the current (`P`) and old timestep (`P_old`), for a timestep `dt`:
+```math  
+    \\dot{\\vartheta}^{el} = {1 \\over Kb} {D P \\over Dt } ≈ {1 \\over Kb} {P - \\tilde{P^{old} \\over dt }
+```
+
+"""
+function compute_εvol!(
+    εvol_el::AbstractArray{_T,N},
+    a::ConstantElasticity{_T},
+    P::AbstractArray{_T,N};
+    P_old::AbstractArray{_T,N},
+    dt::_T,
+    kwargs...,
+) where {N,_T}
+    @inbounds for i in eachindex(P)
+        εvol_el[i] = compute_εvol(a, P[i]; P_old=P_old[i], dt=dt)
+    end
+    return nothing
+end
+
+"""
+    compute_p!(p::AbstractArray{_T,N}, s::ConstantElasticity{_T}. εvol_el::AbstractArray{_T,N}; P_old::AbstractArray{_T,N}, dt::_T, kwargs...) 
+
+In-place update of the elastic pressure for given volumetric strainrate and pressure at the old (`P_old`) timestep, as well as the timestep `dt`  
+
+```math  
+    \\p = Kb dt \\dot{\\vartheta}^{el} + \\p^{old}
+```
+
+"""
+function compute_p!(
+    P::AbstractArray{_T,N},
+    a::ConstantElasticity{_T},
+    εvol_el::AbstractArray{_T,N};
+    P_old::AbstractArray{_T,N},
+    dt::_T,
+    kwargs...,
+) where {N,_T}
+    @inbounds for i in eachindex(εvol_el)
+        P[i] = compute_p(a, εvol_el[i]; P_old=P_old[i], dt=dt)
+    end
+    return nothing
+end
+
 #-------------------------------------------------------------------------
 
 # Computational routines needed for computations with the MaterialParams structure 
@@ -182,17 +282,219 @@ function compute_εII(s::AbstractMaterialParamsStruct, args)
     end
 end
 
-#=
-# add methods programmatically
-for myType in (:ConstantElasticity,)
-    @eval begin
-        (s::$(myType))(args)= s(; args...)
-        compute_εII(s::$(myType), args) = s(args)
-        compute_εII!(ε_el::AbstractArray{_T,N}, s::$(myType){_T}, args) where {_T,N} = compute_εII!(ε_el, s; args...)
-        dεII_dτII(s::ConstantElasticity, args) = dεII_dτII(s; args...)
+function compute_εvol(s::AbstractMaterialParamsStruct, args)
+    println("hllo")
+    if isempty(s.Elasticity)
+        return isempty(args) ? 0.0 : zero(typeof(args).types[1])  # return zero if not specified
+    else
+        return s.Elasticity[1](args)
     end
 end
-=#
 
-compute_εII(args...) = compute_param(compute_εII, args...)
-compute_εII!(args...) = compute_param!(compute_εII, args...)
+## EFFECTIVE STRAIN RATE (Eij_eff = Eij + Tij/(2 G dt) ) 
+
+# Single material phase
+@inline _elastic_ε(v::ConstantElasticity, τij_old, dt) = τij_old / (2 * v.G * dt)
+@inline _elastic_ε(v::Vararg{Any, N}) where {N} = 0.0
+
+@inline effective_ε(εij::T, v, τij_old::T, dt) where {T} = εij + elastic_ε(v, τij_old, dt)
+
+# Method for staggered grids
+@inline function effective_ε(
+    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T,NTuple{4,T}}}, dt
+) where {N,T}
+    ntuple(Val(N)) do i
+        Base.@_inline_meta
+        @inbounds effective_ε(εij[i], v, τij_old[i], dt)
+    end
+end
+
+@inline function effective_ε(
+    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt
+) where {N,T}
+    return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt), Val(N))
+end
+
+# 2D wrapper 
+function effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
+    return effective_ε((εxx, εyy, εxy), v, (τxx_old, τyy_old, τxy_old), dt)
+end
+
+function effective_εII(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
+    εxx, εyy, εxy = effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
+    εII = second_invariant(εxx, εyy, εxy)
+    return εII
+end
+
+# 3D wrapper 
+function effective_ε(
+    εxx,
+    εyy,
+    εzz,
+    εyz,
+    εxz,
+    εxy,
+    v,
+    τxx_old,
+    τyy_old,
+    τzz_old,
+    τyz_old,
+    τxz_old,
+    τxy_old,
+    dt,
+)
+    return effective_ε(
+        (εxx, εyy, εzz, εyz, εxz, εxy),
+        v,
+        (τxx_old, τyy_old, τzz_old, τyz_old, τxz_old, τxy_old),
+        dt,
+    )
+end
+
+function effective_εII(
+    εxx,
+    εyy,
+    εzz,
+    εyz,
+    εxz,
+    εxy,
+    v,
+    τxx_old,
+    τyy_old,
+    τzz_old,
+    τyz_old,
+    τxz_old,
+    τxy_old,
+    dt,
+)
+    εxx, εyy, εzz, εyz, εxz, εxy = effective_ε(
+        εxx,
+        εyy,
+        εzz,
+        εyz,
+        εxz,
+        εxy,
+        v,
+        τxx_old,
+        τyy_old,
+        τzz_old,
+        τyz_old,
+        τxz_old,
+        τxy_old,
+        dt,
+    )
+    εII = second_invariant(εxx, εyy, εzz, εyz, εxz, εxy)
+    return εII
+end
+
+# Multiple material phases (collocated grid)
+
+@inline effective_ε(εij::T, v, τij_old::T, dt, phase::Int64) where {T} = εij + elastic_ε(v, τij_old, dt, phase)
+
+# Method for staggered grids
+@inline function effective_ε(
+    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T,NTuple{4,T}}}, dt, phase::Int64
+) where {N,T}
+    ntuple(Val(N)) do i
+        Base.@_inline_meta
+        @inbounds effective_ε(εij[i], v, τij_old[i], dt, phase)
+    end
+end
+
+@inline function effective_ε(
+    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt, phase::Int64
+) where {N,T}
+    return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt, phase), Val(N))
+end
+
+# 2D wrapper 
+function effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt, phase)
+    return effective_ε((εxx, εyy, εxy), v, (τxx_old, τyy_old, τxy_old), dt, phase)
+end
+
+function effective_εII(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt, phase)
+    εxx, εyy, εxy = effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt, phase)
+    εII = second_invariant(εxx, εyy, εxy)
+    return εII
+end
+
+# 3D wrapper 
+function effective_ε(
+    εxx,
+    εyy,
+    εzz,
+    εyz,
+    εxz,
+    εxy,
+    v,
+    τxx_old,
+    τyy_old,
+    τzz_old,
+    τyz_old,
+    τxz_old,
+    τxy_old,
+    dt,
+    phase
+)
+    return effective_ε(
+        (εxx, εyy, εzz, εyz, εxz, εxy),
+        v,
+        (τxx_old, τyy_old, τzz_old, τyz_old, τxz_old, τxy_old),
+        dt,
+        phase
+    )
+end
+
+function effective_εII(
+    εxx,
+    εyy,
+    εzz,
+    εyz,
+    εxz,
+    εxy,
+    v,
+    τxx_old,
+    τyy_old,
+    τzz_old,
+    τyz_old,
+    τxz_old,
+    τxy_old,
+    dt,
+    phase
+)
+    εxx, εyy, εzz, εyz, εxz, εxy = effective_ε(
+        εxx,
+        εyy,
+        εzz,
+        εyz,
+        εxz,
+        εxy,
+        v,
+        τxx_old,
+        τyy_old,
+        τzz_old,
+        τyz_old,
+        τxz_old,
+        τxy_old,
+        dt,
+        phase
+    )
+    εII = second_invariant(εxx, εyy, εzz, εyz, εxz, εxy)
+    return εII
+end
+
+## Expand methods for multiple phases in staggered grids
+@inline function effective_ε(
+    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T,NTuple{4,T}}}, dt, phases::NTuple{N,Union{I,NTuple{4,I}}}
+) where {N,T,I<:Integer}
+    ntuple(Val(N)) do i
+        Base.@_inline_meta
+        @inbounds effective_ε(εij[i], v, τij_old[i], dt, phases[i])
+    end
+end
+
+@inline function effective_ε(
+    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt, phases::NTuple{N,Union{I,NTuple{4,I}}}
+) where {N,T,I<:Integer}
+    return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt, phases[i]), Val(N))
+end

@@ -225,7 +225,7 @@ function CreateInterpolationObject_PhaseDiagram(
     end
 
     # Create interpolation object
-    intp_data = LinearInterpolation((Tvec, Pvec), data; extrapolation_bc=Flat())
+    intp_data = linear_interpolation((Tvec, Pvec), data; extrapolation_bc=Flat())
 
     return intp_data
 end
@@ -262,7 +262,7 @@ function ComputeTotalField_withMeltFraction(
             # Create interpolation object of average
             Tvec = Struct_Fields[ind_meltFrac[1]].itp.knots[1]       # temperature data
             Pvec = Struct_Fields[ind_meltFrac[1]].itp.knots[2]       # pressure data
-            intp_Result = LinearInterpolation((Tvec, Pvec), Result; extrapolation_bc=Flat())
+            intp_Result = linear_interpolation((Tvec, Pvec), Result; extrapolation_bc=Flat())
 
             # assign
             Struct_Fields[ind_totalData[1]] = intp_Result

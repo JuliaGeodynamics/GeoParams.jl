@@ -7,42 +7,60 @@ using GeoParams
     CharUnits_GEO = GEO_units(; viscosity=1e19, length=10km)
 
     # ConstantElasticity ---------
-    p = ConstantElasticity()
-    info = param_info(p)
-    @test isbits(p)
-    @test NumValue(p.G) == 5e10
+    a = ConstantElasticity()
+    info = param_info(a)
+    @test isbits(a)
+    @test NumValue(a.G) == 5e10
 
-    p_nd = p
-    p_nd = nondimensionalize(p_nd, CharUnits_GEO)
-    @test p_nd.G.val ≈ 5000.0
+    a_nd = a
+    a_nd = nondimensionalize(a_nd, CharUnits_GEO)
+    @test a_nd.G.val ≈ 5000.0
 
-    p = SetConstantElasticity(; Kb=5e10, ν=0.43)
-    @test Value(p.E) ≈ 2.1e10Pa
+    a = SetConstantElasticity(; Kb=5e10, ν=0.43)
+    @test Value(a.E) ≈ 2.1e10Pa
 
-    p = SetConstantElasticity(; G=5e10, ν=0.43)
-    @test Value(p.E) ≈ 1.43e11Pa
+    a = SetConstantElasticity(; G=5e10, ν=0.43)
+    @test Value(a.E) ≈ 1.43e11Pa
 
-    p = SetConstantElasticity(; G=5e10, Kb=1e11)
-    @test Value(p.E) ≈ 1.2857142857142856e11Pa
+    a = SetConstantElasticity(; G=5e10, Kb=1e11)
+    @test Value(a.E) ≈ 1.2857142857142856e11Pa
+
+    @test isvolumetric(a) == true
 
     # Compute with Floats
     τII = 20e6
     τII_old = 15e6
+    p = 10e6
+    P_old = 5e6
     dt = 1e6
-    args = (τII_old=τII_old, dt=dt)
-    @test compute_εII(p, τII, args) ≈ 5.0e-11  # compute
-    @test compute_τII(p, 1e-15, args) ≈ 1.50001e7
+    argsτ = (τII_old=τII_old, dt=dt)
+    argsp = (P_old=P_old, dt=dt)
+    @test compute_εII(a, τII, argsτ) ≈ 5.0e-11  # compute
+    @test compute_τII(a, 1e-15, argsτ) ≈ 1.50001e7
+    @test compute_εvol(a, p, argsp) ≈ -5.0e-11  # compute
+    @test compute_p(a, 1e-15, argsp) ≈ 4.9999e6
+    @test dεII_dτII(a, τII, argsτ) ≈ 1e-17
+    @test dτII_dεII(a,τII_old,dt,argsτ) ≈ 1e17
+    @test dεvol_dp(a,p,argsp) ≈ -1e-17
+    @test dp_dεvol(a,P_old,dt,argsp) ≈ -1e17
 
     # Test with arrays
     τII_old_array = ones(10) * 15e6
     τII_array = ones(10) * 20e6
     ε_el_array = similar(τII_array)
-    args = (τII_old=τII_old_array, dt=dt)
-    compute_εII!(ε_el_array, p, τII_array, args)
+    p_old_array = ones(10) * 20e6
+    p_array = ones(10) * 26e6
+    εvol_el_array = similar(p_array)
+    argsτ = (τII_old=τII_old_array, dt=dt)
+    argsp = (P_old=p_old_array, dt=dt)
+    compute_εII!(ε_el_array, a, τII_array, argsτ)
     @test ε_el_array[1] ≈ 5.0e-11
-
-    compute_τII!(τII_array, p, ε_el_array, args)
+    compute_εvol!(εvol_el_array, a, p_array, argsp)
+    @test εvol_el_array[1] ≈ -6.0e-11
+    compute_τII!(τII_array, a, ε_el_array, argsτ)
     @test τII_array[1] ≈ 2e7
+    compute_p!(p_array, a, εvol_el_array, argsp)
+    @test p_array[1] ≈ 2.6e7
 
     #=
     # Check that it works if we give a phase array

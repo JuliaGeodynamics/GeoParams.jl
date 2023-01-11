@@ -5,7 +5,7 @@
 Sets predefined dislocation creep data from a dictionary
 
 """
-SetDislocationCreep(name::String) = Transform_DislocationCreep(name)
+SetDislocationCreep(name::String; kwargs...) = Transform_DislocationCreep(name; kwargs)
 
 const DislocationCreep_info = Dict(
     [
@@ -50,15 +50,15 @@ const DislocationCreep_info = Dict(
             ),
         )
 
-        # Olivine rheology 
+        # Olivine rheology, constant water fugacity
         (
-            "Wet Olivine | Hirth & Kohlstedt (2003)",
+            "1. Wet Olivine | Hirth & Kohlstedt (2003)",
             # After Hirth, G. & Kohlstedt (2003), D. Rheology of the upper mantle and the mantle wedge: A view from the experimentalists.
             #   Inside the subduction Factory 83?105. Table 1, "wet dislocation" parameters
             #  Note that this assumes C_OH=1000
             (
                 DislocationCreep(;
-                    Name="Wet Olivine | Hirth & Kohlstedt (2003)",
+                    Name="1. Wet Olivine | Hirth & Kohlstedt (2003)",
                     n=3.5NoUnits,
                     A=90MPa^(-3.5) / s,
                     E=480kJ / mol,
@@ -86,6 +86,42 @@ const DislocationCreep_info = Dict(
                         doi = {10.1029/138GM06},
                         pages = {83--105},
                         }
+                ",
+                ),
+            ),
+        )
+
+        # Wet olivine rheology, 5th creep law in table 1 of Hirth & Kohlstedt (2003)
+        ("2. Wet Olivine | Hirth & Kohlstedt (2003)", 
+            #  Hirth & Kohlstedt (2003), table 1
+            (
+                DislocationCreep(
+                Name = "2. Wet Olivine | Hirth & Kohlstedt (2003)",
+                n = 3.0NoUnits,
+                A = 1600MPa^(-3.0)/s, 
+                E = 520.0kJ/mol,
+                V = 22.0m^3/mol,
+                r = 1.2NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @incollection{eiler_rheology_2003,
+                    address = {Washington, D. C.},
+                    title = {Rheology of the upper mantle and the mantle wedge: {A} view from the experimentalists},
+                    volume = {138},
+                    isbn = {978-0-87590-997-4},
+                    shorttitle = {Rheology of the upper mantle and the mantle wedge},
+                    url = {http://www.agu.org/books/gm/v138/138GM06/138GM06.shtml},
+                    language = {en},
+                    urldate = {2019-10-09},
+                    booktitle = {Geophysical {Monograph} {Series}},
+                    publisher = {American Geophysical Union},
+                    author = {Hirth, Greg and Kohlstedt, David},
+                    editor = {Eiler, John},
+                    year = {2003},
+                    doi = {10.1029/138GM06},
+                    pages = {83--105},
+                    }
                 ",
                 ),
             ),
@@ -248,16 +284,16 @@ const DislocationCreep_info = Dict(
                 MaterialParamsInfo(;
                     Comment="Values checked (Wilks and Carter (1990))(NM), plots are not reproduced (NM).",
                     BibTex_Reference="
-                    @article{wilks1990rheology,
-                    title={Rheology of some continental lower crustal rocks},
-                    author={Wilks, Kenneth R and Carter, Neville L},
-                    journal={Tectonophysics},
-                    volume={182},
-                    number={1-2},
-                    pages={57--77},
-                    year={1990},
-                    publisher={Elsevier}
-                    }
+                        @article{wilks1990rheology,
+                        title={Rheology of some continental lower crustal rocks},
+                        author={Wilks, Kenneth R and Carter, Neville L},
+                        journal={Tectonophysics},
+                        volume={182},
+                        number={1-2},
+                        pages={57--77},
+                        year={1990},
+                        publisher={Elsevier}
+                        }
                 ",
                 ),
             ),
@@ -624,36 +660,420 @@ const DislocationCreep_info = Dict(
         )
 
         # Avery Island rock salt rheology
-        (
-            "Salado rock salt | Li & Urai (2016)",
+        ("Salado rock salt | Li & Urai (2016)", 
             #  Li & Urai (2016), table 1
             #  referes to Wawersik & Zeuch (1986), values can not be reproduced!
             (
-                DislocationCreep(;
-                    Name="Rock salt | Li & Urai (2016)",
-                    n=5.0NoUnits,
-                    A=7.26e-6MPa^(-5.0) / s,
-                    E=53.92kJ / mol,
-                    V=0.0m^3 / mol,
-                    r=0.0NoUnits,
-                    Apparatus=AxialCompression,
-                ),
-                MaterialParamsInfo(;
-                    Comment="Values checked in (Li & Urai, (2016)) are different from given source (Wawersik & Zeuch, (1986))(NM), plots are not reproduced (NM).",
-                    BibTex_Reference="
-                      @article{li2016rheology,
-                      title={Rheology of rock salt for salt tectonics modeling},
-                      author={Li, Shi-Yuan and Urai, Janos L},
-                      journal={Petroleum science},
-                      volume={13},
-                      number={4},
-                      pages={712--724},
-                      year={2016},
-                      publisher={Springer}
-                      }
-                  ",
-                ),
+                DislocationCreep(
+                Name = "Rock salt | Li & Urai (2016)",
+                n = 5.0NoUnits,
+                A = 7.26e-6MPa^(-5.0)/s, 
+                E = 53.92kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked in (Li & Urai, (2016)) are different from given source (Wawersik & Zeuch, (1986))(NM), plots are not reproduced (NM).",
+                BibTex_Reference = "
+                    @article{li2016rheology,
+                    title={Rheology of rock salt for salt tectonics modeling},
+                    author={Li, Shi-Yuan and Urai, Janos L},
+                    journal={Petroleum science},
+                    volume={13},
+                    number={4},
+                    pages={712--724},
+                    year={2016},
+                    publisher={Springer}
+                    }
+                "),
+            ),
+        )
+
+        # Wet olivine rheology
+        ("Wet Olivine | Mei & Kohlstedt (2000b)", 
+            #  Mei & Kohlstedt (2000b), table 1
+            (
+                DislocationCreep(
+                Name = "Wet Olivine | Mei & Kohlstedt (2000b)",
+                n = 3.0NoUnits,
+                A = (10^3.2)MPa^(-3.0)/s, 
+                E = 470.0kJ/mol,
+                V = 20.0m^3/mol,
+                r = 0.98NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "The A value is not exactly the same as in Mei & Kohlstedt (2000b) but is approximated (NM).",
+                BibTex_Reference = "
+                    @article{mei2000influence,
+                    title={Influence of water on plastic deformation of olivine aggregates: 2. Dislocation creep regime},
+                    author={Mei, S and Kohlstedt, DL},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={105},
+                    number={B9},
+                    pages={21471--21481},
+                    year={2000},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
+
+        # Dry olivine rheology
+        ("Dry Olivine | Karato & Jung (2003)", 
+            #  Mei & Kohlstedt (2000b), abstract
+            (
+                DislocationCreep(
+                Name = "Dry Olivine | Karato & Jung (2003)",
+                n = 3.0NoUnits,
+                A = (10^6.1)MPa^(-3.0)/s, 
+                E = 510.0kJ/mol,
+                V = 14.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{karato2003effects,
+                    title={Effects of pressure on high-temperature dislocation creep in olivine},
+                    author={Karato, Shun-Ichiro and Jung, Haemyeong},
+                    journal={Philosophical Magazine},
+                    volume={83},
+                    number={3},
+                    pages={401--414},
+                    year={2003},
+                    publisher={Taylor \\& Francis}
+                    }
+                "),
+            ),
+        )
+
+        # Wet olivine rheology
+        ("Wet Olivine | Karato & Jung (2003)", 
+            #  Karato & Jung (2003), abstract
+            (
+                DislocationCreep(
+                Name = "Wet Olivine | Karato & Jung (2003)",
+                n = 3.0NoUnits,
+                A = (10^2.9)MPa^(-3.0)/s, 
+                E = 510.0kJ/mol,
+                V = 24.0m^3/mol,
+                r = 1.2NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{karato2003effects,
+                    title={Effects of pressure on high-temperature dislocation creep in olivine},
+                    author={Karato, Shun-Ichiro and Jung, Haemyeong},
+                    journal={Philosophical Magazine},
+                    volume={83},
+                    number={3},
+                    pages={401--414},
+                    year={2003},
+                    publisher={Taylor \\& Francis}
+                    }
+                "),
+            ),
+        )
+
+        #Wet Clinopyroxene rheology
+        ("Wet Clinopyroxene | Chen et al. (2006)", 
+            #  Chen et al. (2006), section 4. Discussion, equation (3)
+            (
+                DislocationCreep(
+                Name = "Wet Clinopyroxene | Chen et al. (2006)",
+                n = 2.7NoUnits,
+                A = (10^6.7)MPa^(-2.7)/s, 
+                E = 670.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 3.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{chen2006water,
+                    title={Water weakening of clinopyroxene in the dislocation creep regime},
+                    author={Chen, S and Hiraga, T and Kohlstedt, David L},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={111},
+                    number={B8},
+                    year={2006},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
+
+        #Dry Clinopyroxene rheology
+        ("Dry Clinopyroxene | Bystricky & Mackwell (2001)", 
+            #  Bystricky & Mackwell (2001), section 4. Discussion, equation (3)
+            (
+                DislocationCreep(
+                Name = "Dry Clinopyroxene | Bystricky & Mackwell (2001)",
+                n = 4.7NoUnits,
+                A = (10^9.8)MPa^(-4.7)/s, 
+                E = 760.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{bystricky2001creep,
+                    title={Creep of dry clinopyroxene aggregates},
+                    author={Bystricky, Misha and Mackwell, Stephen},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={106},
+                    number={B7},
+                    pages={13443--13454},
+                    year={2001},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
+
+        #Dry Clinopyroxene rheology
+        ("Dry Clinopyroxene | Bystricky & Mackwell (2001)", 
+            #  Bystricky & Mackwell (2001), section 4. Discussion, equation (3)
+            (
+                DislocationCreep(
+                Name = "Dry Clinopyroxene | Bystricky & Mackwell (2001)",
+                n = 4.7NoUnits,
+                A = (10^10.8)MPa^(-4.7)/s, 
+                E = 760.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{bystricky2001creep,
+                    title={Creep of dry clinopyroxene aggregates},
+                    author={Bystricky, Misha and Mackwell, Stephen},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={106},
+                    number={B7},
+                    pages={13443--13454},
+                    year={2001},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
+
+        #Dry Diopside rheology
+        ("Dry Diopside | Dimanov & Dresen (2005)", 
+            #  Dimanov & Dresen (2005), table 3b
+            (
+                DislocationCreep(
+                Name = "Dry Diopside | Dimanov & Dresen (2005)",
+                n = 5.5NoUnits,
+                A = uconvert(MPa^(-5.5)/s, 3.01e-28Pa^(-5.5)/s),
+                E = 691.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{dimanov2005rheology,
+                    title={Rheology of synthetic anorthite-diopside aggregates: Implications for ductile shear zones},
+                    author={Dimanov, Alexandre and Dresen, Georg},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={110},
+                    number={B7},
+                    year={2005},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
+
+        #Wet Diopside rheology
+        ("Wet Diopside | Dimanov & Dresen (2005)", 
+            #  Dimanov & Dresen (2005), table 3b
+            (
+                DislocationCreep(
+                Name = "Wet Diopside | Dimanov & Dresen (2005)",
+                n = 5.5NoUnits,
+                A = uconvert(MPa^(-5.5)/s, 5.16e-33Pa^(-5.5)/s),
+                E = 534.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{dimanov2005rheology,
+                    title={Rheology of synthetic anorthite-diopside aggregates: Implications for ductile shear zones},
+                    author={Dimanov, Alexandre and Dresen, Georg},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={110},
+                    number={B7},
+                    year={2005},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
+
+        #Wet Omphacite rheology
+        ("Wet Omphacite | Zhang et al. (2006)", 
+            #  Zhang et al. (2006), equation (4)
+            (
+                DislocationCreep(
+                Name = "Wet Omphacite | Zhang et al. (2006)",
+                n = 3.5NoUnits,
+                A = (10^-2)MPa^(-3.5)/s,
+                E = 310.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{zhang2006rheology,
+                    title={Rheology of omphacite at high temperature and pressure and significance of its lattice preferred orientations},
+                    author={Zhang, Junfeng and Green II, Harry W and Bozhilov, Krassimir N},
+                    journal={Earth and Planetary Science Letters},
+                    volume={246},
+                    number={3-4},
+                    pages={432--443},
+                    year={2006},
+                    publisher={Elsevier}
+                    }
+                "),
+            ),
+        )
+
+        #Wet Jadeit rheology
+        ("Wet Jadeit | Orzol et al. (2006)", 
+            #  Orzol et al. (2006), page 11
+            (
+                DislocationCreep(
+                Name = "Wet Jadeit | Orzol et al. (2006)",
+                n = 3.7NoUnits,
+                A = (10^-3.3)MPa^(-3.7)/s,
+                E = 326.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{orzol2006experimental,
+                    title={Experimental deformation of synthetic wet jadeite aggregates},
+                    author={Orzol, J and St{\"o}ckhert, B and Trepmann, CA and Rummel, F},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={111},
+                    number={B6},
+                    year={2006},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
+
+        #Dry Anorthite rheology
+        ("Dry Anorthite | Rybacki & Dresen (2000)", 
+            #  Rybacki & Dresen (2000), table 5
+            (
+                DislocationCreep(
+                Name = "Dry Anorthite | Rybacki & Dresen (2000)",
+                n = 3.0NoUnits,
+                A = (10^12.7)MPa^(-3)/s,
+                E = 648.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{rybacki2000dislocation,
+                    title={Dislocation and diffusion creep of synthetic anorthite aggregates},
+                    author={Rybacki, Erik and Dresen, Georg},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={105},
+                    number={B11},
+                    pages={26017--26036},
+                    year={2000},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
+
+        #Wet Anorthite rheology
+        ("Wet Anorthite | Rybacki & Dresen (2000)", 
+            #  Rybacki & Dresen (2000), table 5
+            (
+                DislocationCreep(
+                Name = "Wet Anorthite | Rybacki & Dresen (2000)",
+                n = 3.0NoUnits,
+                A = (10^0.2)MPa^(-3)/s,
+                E = 356.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{rybacki2000dislocation,
+                    title={Dislocation and diffusion creep of synthetic anorthite aggregates},
+                    author={Rybacki, Erik and Dresen, Georg},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={105},
+                    number={B11},
+                    pages={26017--26036},
+                    year={2000},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
+
+        #Wet Quartzite rheology
+        ("Wet Quartzite | Rutter & Brodie (2004)", 
+            #  Rutter & Brodie (2004), table 5
+            (
+                DislocationCreep(
+                Name = "Wet Quartzite | Rutter & Brodie (2004)",
+                n = 3.0NoUnits,
+                A = (10^-4.9)MPa^(-3)/s,
+                E = 242.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 1.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{rutter2004experimental,
+                    title={Experimental intracrystalline plastic flow in hot-pressed synthetic quartzite prepared from Brazilian quartz crystals},
+                    author={Rutter, EH and Brodie, KH},
+                    journal={Journal of Structural Geology},
+                    volume={26},
+                    number={2},
+                    pages={259--270},
+                    year={2004},
+                    publisher={Elsevier}
+                    }
+                "),
+            ),
+        )
+
+        #Wet Quartzite rheology
+        ("Wet Quartzite | Hirth et al. (2001)", 
+            #  Hirth et al. (2001), table 5
+            (
+                DislocationCreep(
+                Name = "Wet Quartzite | Hirth et al. (2001)",
+                n = 4.0NoUnits,
+                A = (10^-11.2)MPa^(-4)/s,
+                E = 135.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 1.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{hirth2001evaluation,
+                    title={An evaluation of quartzite flow laws based on comparisons between experimentally and naturally deformed rocks},
+                    author={Hirth, Greg and Teyssier, Christian and Dunlap, James W},
+                    journal={International Journal of Earth Sciences},
+                    volume={90},
+                    number={1},
+                    pages={77--87},
+                    year={2001},
+                    publisher={Springer}
+                    }
+                "),
             ),
         )
     ],
-) # end of setting pre-defined creep laws
+); # end of setting pre-defined creep laws

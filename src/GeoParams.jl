@@ -15,6 +15,7 @@ using Unitful           # Units
 using BibTeX            # references of creep laws
 using Requires          # To only add plotting routines if Plots is loaded
 using StaticArrays
+using LinearAlgebra
 
 import Base: getindex
 
@@ -90,7 +91,7 @@ export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagram
 include("Utils.jl")
 
 include("TensorAlgebra/TensorAlgebra.jl")
-export second_invariant, second_invariant_staggered
+export second_invariant, second_invariant_staggered, rotate_elastic_stress
 
 # note that this throws a "Method definition warning regarding superscript"; that is expected & safe 
 #  as we add a nicer way to create output of superscripts. I have been unable to get rid of this warning,
@@ -108,6 +109,7 @@ export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo
 # Phase Diagrams
 using .MaterialParameters.PhaseDiagrams
 export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
+
 
 # Density
 using .MaterialParameters.Density
@@ -131,21 +133,27 @@ export dεII_dτII,
     dτII_dεII,
     dεII_dτII_AD,
     dτII_dεII_AD,
+    dεvol_dp,
+    dp_dεvol,
     compute_εII!,
     compute_εII,
     compute_εII_AD,
     compute_τII!,
     compute_τII,
     compute_τII_AD,
-    strain_rate_circuit,
-    stress_circuit,
+    compute_εvol!,
+    compute_εvol,
+    compute_p!,
+    compute_p,
     CorrectionFactor,
     remove_tensor_correction,
+    isvolumetric,
 
     #       Viscous creep laws
     AbstractCreepLaw,
     LinearViscous,
     PowerlawViscous,
+    ArrheniusType,
     DislocationCreep,
     SetDislocationCreep,
     DiffusionCreep,
@@ -157,20 +165,22 @@ export dεII_dτII,
     AbstractElasticity,
     ConstantElasticity,
     SetConstantElasticity,
+    effective_εII,
 
     #       Plasticity
     AbstractPlasticity,
     compute_yieldfunction,
     compute_yieldfunction!,
     DruckerPrager,
+    DruckerPrager_regularised,
     compute_plasticpotentialDerivative,
     ∂Q∂τ,
-    ∂Q∂P,
+    ∂Q∂P,∂Q∂τII,
+    ∂F∂τII,∂F∂P,∂F∂λ,
     
     #       Composite rheologies
     AbstractConstitutiveLaw,
     AbstractComposite,
-    strain_rate_circuit,
     computeViscosity_τII,
     computeViscosity_εII,
     computeViscosity_τII!,
@@ -186,10 +196,20 @@ export dεII_dτII,
     CompositeRheology,
     Parallel,
     create_rheology_string, print_rheology_matrix,
-    time_τII_0D,
-    compute_εII_harmonic, compute_τII_AD
+    compute_εII_harmonic, compute_τII_AD,
+    isplastic,isvolumetricplastic,
+    compute_p_τII, 
+    local_iterations_εvol, 
+    compute_p_harmonic
     
-    
+
+# Constitutive relationships laws
+include("StressComputations/StressComputations.jl")
+export compute_τij, compute_p_τij, compute_τij_stagcenter!, compute_p_τij_stagcenter!, compute_τij!, compute_p_τij!
+
+include("Rheology_Utils.jl")
+export time_τII_0D, time_τII_0D!, time_p_τII_0D, time_p_τII_0D!
+
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration
@@ -266,10 +286,15 @@ using .Tables
 export detachFloatfromExponent, Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2MarkdownTable, ParameterTable
 
 # Add plotting routines - only activated if the "Plots.jl" package is loaded 
+# Add 1D Strength Envelope
+include("./StrengthEnvelope/StrengthEnvelope.jl")
+
+# Add plotting routines - only activated if the "GLMakie.jl" package is loaded 
 function __init__()
     @require GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a" begin
-        print("Adding plotting routines of GeoParams through GLMakie")
-        @eval include("./Plotting.jl")
+        print("Adding plotting routines of GeoParams through GLMakie \n")
+        @eval include("Plotting/Plotting.jl")
+        @eval include("Plotting/StrengthEnvelope.jl")
     end
 end
 

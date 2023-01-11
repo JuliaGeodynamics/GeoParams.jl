@@ -144,7 +144,7 @@ function GeoUnit(fun::F) where F <: Function
     )
 end
 
-function GeoUnit{T}(val) where {T,U}
+function GeoUnit{T}(val) where {T}
     return GeoUnit{T,typeof(unit(val[1]))}(
         T.(ustrip.(val)),
         unit(val[1]),
@@ -583,6 +583,20 @@ end
 # If it is an array, but has no units we cannot know how to nondimensionalize it
 nondimensionalize(param::AbstractArray{<:Number}, g::GeoUnits{TYPE}) where {TYPE} = param
 
+"""
+    param = nondimensionalize(param::NTuple{N,Quantity}, g::GeoUnits{TYPE})
+
+nondimensionalizes a tuple of parameters    
+"""
+function nondimensionalize(param::NTuple{N,Union{Quantity,GeoUnit}}, g::GeoUnits{TYPE}) where {N,TYPE}
+    ntuple(Val(N)) do i
+        Base.@_inline_meta
+        nondimensionalize(param[i], g)
+    end
+end
+
+nondimensionalize(args...) =  nondimensionalize(Tuple(args[1:end-1]), args[end])
+
 # This computes the characteristic value
 function compute_units(
     param::GeoUnit{<:Union{T,AbstractArray{T}},U}, g::GeoUnits{TYPE}
@@ -693,6 +707,17 @@ function nondimensionalize(
 end
 
 """
+    MatParam_ND = nondimensionalize(MatParam::NTuple{N, AbstractMaterialParamsStruct}, CharUnits::GeoUnits)
+
+Non-dimensionalizes a tuple of material parameter structures (e.g., Density, CreepLaw)
+
+"""
+function nondimensionalize(MatParam::NTuple{N, AbstractMaterialParamsStruct}, g::GeoUnits) where N
+    ntuple(i->nondimensionalize(MatParam[i], g), Val(N) )
+end
+
+
+"""
     dimensionalize(param, param_dim::Unitful.FreeUnits, CharUnits::GeoUnits{TYPE})
 
 Dimensionalizes `param` into the dimensions `param_dim` using the characteristic values specified in `CharUnits`.  
@@ -775,6 +800,16 @@ function dimensionalize(
     phase_mat = set(phase_mat, Setfield.PropertyLens{:Nondimensional}(), false)
 
     return phase_mat
+end
+
+"""
+    dimensionalize(MatParam::NTuple{N, AbstractMaterialParamsStruct}, CharUnits::GeoUnits)
+
+dimensionalizes a tuple of material parameter structures (e.g., Density, CreepLaw)
+
+"""
+function dimensionalize(MatParam::NTuple{N, AbstractMaterialParamsStruct}, g::GeoUnits) where N
+    ntuple(i->dimensionalize(MatParam[i], g), Val(N) )
 end
 
 """
