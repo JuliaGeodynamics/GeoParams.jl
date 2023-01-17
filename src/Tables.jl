@@ -381,6 +381,10 @@ function Phase2Dict(s)
                             # Checks if they are GeoUnit (Value and Unit exist then)
                             if isa(b, GeoUnit)
                                 value = string(getproperty(b, :val))
+                                if (typeof(a[j]) <: DiffusionCreep || typeof(a[j]) <: DislocationCreep || typeof(a[j]) <: LinearViscous)
+                                    var_counter["$var"] += 1
+                                    counter = var_counter["$var"]
+                                end
                                 # Gives back LaTex format string for the corresponding variable if it is longer than 2 chars
                                 if length(unidecode("$var")) > 2
                                     latexvar = string("\\" * string(unidecode("$var")))
@@ -389,14 +393,15 @@ function Phase2Dict(s)
                                 end
                                 # Put value, LaTex variable name and creep law pattern in a Dict
                                 if typeof(a[j]) <: DislocationCreep
-                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "0", "$Disl")
+                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$counter", "$Disl")
+                                elseif typeof(a[j]) <: DiffusionCreep
+                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$counter", "$Diff")
+                                elseif typeof(a[j]) <: LinearViscous
+                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$counter", "$Lin")
+                                else
+                                    fds["$var $label $i"] = (value, latexvar, "", "$i", "", "")
                                 end
-                                if typeof(a[j]) <: DiffusionCreep
-                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "0" "$Diff")
-                                end
-                                if typeof(a[j]) <: LinearViscous
-                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "0" "$Lin")
-                                end
+                                
                             end
                             k += 1
                         end
@@ -405,7 +410,7 @@ function Phase2Dict(s)
                 # Takes field "Name" and puts it in the first entry of the Tuple, takes Phasecount of all Phases and puts it in the second entry of the Dict
             elseif !isempty(getproperty(s[i], label)) && label == :Name
                 phasename = join(getproperty(s[i], :Name))
-                fds["$label $i"] = (phasename, "$phasecount", "$i", "", "")
+                fds["$label $i"] = (phasename, "$phasecount", "$i", "", "", "")
             end
         end
     end
@@ -530,7 +535,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         # Checks if symbol is from field CompositeRheology and if the symbol occurs more often than once
         elseif (occursin("R",key[1:3]))
             push!(symbs, d[key][2])
-        elseif occursin("CompositeRheology", key) && sum(count.("$key_12", vec_dictkeys)) > 1 && !(occursin("R",key[1:3]))
+        elseif maximum(occursin.(["CompositeRheology", "CreepLaws"], key)) && sum(count.("$key_12", vec_dictkeys)) > parse(Int64, d["Name 1"][2]) && !(occursin("R",key[1:3]))
             number = d[key][5]
             push!(symbs, d[key][2] * "$number")
         else 
@@ -554,18 +559,17 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         # Iterates over all phases
         for j in 1:parse(Int64, d["Name 1"][2])
             hit = 0
-            hit_index = 0
-            i = 1
+            i_dictpairs = 1
             # Iterates over all pairs
-            for i in 1:length(dictpairs)
+            for element in dictpairs
                 # Checks if symbol matches the symbol in the pair and if phase matches phase of the pair
                 if maximum(endswith.(symbol,["1","2","3","4","5","6","7","8","9"]))
                     symbol = symbol[1:end-1]
                 end
                 #--------------------------------------------- WORK IN PROGRESS FOR COMPOSITE RHEOLOGIES-------------------------------------------------------------
-                if symbol == dictpairs[i].second[2] && j == parse(Int64, dictpairs[i].second[4]) && hit == 0
+                if symbol == dictpairs[i_dictpairs].second[2] && j == parse(Int64, dictpairs[i_dictpairs].second[4]) && hit == 0
                     # put in the matched parameter value
-                    dig, num, expo = detachFloatfromExponent(dictpairs[i].second[1])
+                    dig, num, expo = detachFloatfromExponent(dictpairs[i_dictpairs].second[1])
                     if  dig <= rdigits && expo != "1" 
                         Table *= " & \$" * "$num \\times 10^{$expo} \$"
                     elseif dig <= rdigits && expo == "1"
@@ -576,8 +580,9 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
                         Table *= " & \$" * string(round(parse(Float64, num); digits=rdigits)) * "\$"
                     end
                     hit += 1
-                    hit_index = i
+                    deleteat!(dictpairs, i_dictpairs)
                 end
+                i_dictpairs += 1
             end
 
             # checks if a parameter in a phase is not existing 
@@ -700,7 +705,7 @@ function Phase2DictMd(s)
                             # Gives back variablename 
                             mdvar = "$var"
                             # Put value, LaTex name and units in a Dict
-                            fds["$var $label $i"] = (value, mdvar, "", "$i") # 3te Stelle sollte sein: "$flowlaw" statt ""
+                            fds["$var $label $i"] = (value, mdvar, "", "$i") 
                         end
                         k += 1
                     end
