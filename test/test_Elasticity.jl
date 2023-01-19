@@ -27,6 +27,20 @@ using GeoParams
 
     @test isvolumetric(a) == true
 
+    v = SetMaterialParams(; Elasticity = ConstantElasticity())
+    vv=(
+        SetMaterialParams(; Phase=1, Elasticity = ConstantElasticity()),
+        SetMaterialParams(; Phase=2, Elasticity = ConstantElasticity()),
+    )
+
+    @test get_G(a) == a.G.val
+    @test get_G(v) == a.G.val
+    @test get_G(vv, 1) == get_G(vv, 2) == a.G.val # for multiple phases
+
+    @test get_Kb(a) == a.Kb.val
+    @test get_Kb(v) == a.Kb.val
+    @test get_Kb(vv, 1) == get_Kb(vv, 2) == a.Kb.val # for multiple phases
+
     # Compute with Floats
     τII = 20e6
     τII_old = 15e6
