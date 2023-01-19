@@ -5,9 +5,9 @@ import Base: (:)
 @inline average_pow2(x::NTuple{N,T}) where {N,T} = sum(xi^2 for xi in x) / N
 
 @inline function (:)(
-    A::Union{SVector{3,T},NTuple{3,T}}, B::Union{SVector{3,T},NTuple{3,T}}
-) where {T}
-    return (A[1] * B[1] + A[2] * B[2]) + T(2.0) * (A[3] * B[3])
+    A::Union{SVector{3,T1},NTuple{3,T1}}, B::Union{SVector{3,T2},NTuple{3,T2}}
+) where {T1, T2}
+    return (A[1] * B[1] + A[2] * B[2]) + 2.0 * (A[3] * B[3])
 end
 
 @inline function (:)(
@@ -20,10 +20,12 @@ end
 @inline (:)(A::SMatrix{M,M,T,N}, B::SMatrix{M,M,T,N}) where {M,N,T} = sum(A .* B)
 
 @inline second_invariant(A::NTuple{N,T}) where {N,T} = √(0.5 * (A:A))
-@inline second_invariant(A::Vararg{N,T}) where {N,T} = second_invariant(A)
+# @inline second_invariant(A::Vararg{N,T}) where {N,T} = second_invariant(A)
 @inline second_invariant(A::SMatrix) = √(0.5 * (A:A))
 @inline second_invariant(A::SVector) = √(0.5 * (A:A))
 @inline second_invariant(A::Matrix{T}) where {T} = √(0.5 * sum(Ai * Ai for Ai in A))
+
+@inline second_invariant(xx, yy, xy) = √( 0.5*(xx^2 + yy^2) + xy^2)
 
 """
     second_invariant_staggered(Aii::NTuple{2,T}, Axy::NTuple{4,T}) where {T} 

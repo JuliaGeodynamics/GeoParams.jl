@@ -1,6 +1,13 @@
 using Test
 using GeoParams, ForwardDiff
 
+using SnoopCompileCore
+invs = @snoopr using GeoParams
+tinf = @snoopi_deep SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)");
+using SnoopCompile
+trees = invalidation_trees(invs);
+taletrees = precompile_blockers(trees, tinf)
+
 @testset "CompositeRheologies" begin
 
     # Define a range of rheological components
