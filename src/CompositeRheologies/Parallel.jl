@@ -4,20 +4,20 @@
 Put rheological elements in parallel 
 """
 struct Parallel{T, N,  Nplast, is_plastic, Nvol, is_vol} <: AbstractConstitutiveLaw{T}
-elements::T
+    elements::T
 end
 
 function Parallel(v::T) where T
-v           = tuple(v...)
-n           =   length(v)
+    v           = tuple(v...)
+    n           =   length(v)
 
-is_plastic = isa.(v,AbstractPlasticity)     # Is one of the elements a plastic element?
-Nplast = count(is_plastic)
+    is_plastic = isa.(v,AbstractPlasticity)     # Is one of the elements a plastic element?
+    Nplast = count(is_plastic)
 
-is_vol = isvolumetric.(v);
-Nvol   =   count(is_vol);
+    is_vol = isvolumetric.(v);
+    Nvol   =   count(is_vol);
 
-return Parallel{typeof(v),n, Nplast, is_plastic, Nvol, is_vol}(v)
+    return Parallel{typeof(v),n, Nplast, is_plastic, Nvol, is_vol}(v)
 end
 Parallel(a,b...) = Parallel((a,b...,)) 
 

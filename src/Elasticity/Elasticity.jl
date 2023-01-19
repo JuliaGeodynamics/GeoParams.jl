@@ -196,8 +196,8 @@ Computes elastic volumetric strainrate given the pressure at the current (`P`) a
 
 """
 @inline function compute_εvol(
-    a::ConstantElasticity, P::_T; P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
-) where {_T}
+    a::ConstantElasticity, P; P_old=zero(precision(a)), dt=one(precision(a)), kwargs...
+)
     @unpack_val Kb = a
     εvol_el = - (P - P_old) / (Kb * dt)
     return εvol_el
@@ -295,9 +295,9 @@ end
 
 # Single material phase
 @inline _elastic_ε(v::ConstantElasticity, τij_old, dt) = τij_old / (2 * v.G * dt)
-@inline _elastic_ε(v::Vararg{Any, N}) where {N} = 0.0
+@inline _elastic_ε(v::Vararg) = 0.0
 
-@inline effective_ε(εij::T, v, τij_old::T, dt) where {T} = εij + elastic_ε(v, τij_old, dt)
+@inline effective_ε(εij, v, τij_old, dt) = εij + elastic_ε(v, τij_old, dt)
 
 # Method for staggered grids
 @inline function effective_ε(
@@ -310,8 +310,8 @@ end
 end
 
 @inline function effective_ε(
-    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt
-) where {N,T}
+    εij::NTuple{N, T1}, v, τij_old::NTuple{N,T2}, dt
+) where {N,T1,T2}
     return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt), Val(N))
 end
 
@@ -389,7 +389,7 @@ end
 
 # Multiple material phases (collocated grid)
 
-@inline effective_ε(εij::T, v, τij_old::T, dt, phase::Int64) where {T} = εij + elastic_ε(v, τij_old, dt, phase)
+@inline effective_ε(εij, v, τij_old, dt, phase::Int64) = εij + elastic_ε(v, τij_old, dt, phase)
 
 # Method for staggered grids
 @inline function effective_ε(
@@ -402,8 +402,8 @@ end
 end
 
 @inline function effective_ε(
-    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt, phase::Int64
-) where {N,T}
+    εij::NTuple{N, T1}, v, τij_old::NTuple{N,T2}, dt, phase::Int64
+) where {N,T1,T2}
     return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt, phase), Val(N))
 end
 

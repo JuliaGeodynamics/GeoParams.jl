@@ -50,9 +50,9 @@ function param_info(s::DruckerPrager) # info about the struct
 end
 
 # Calculation routines
-function (s::DruckerPrager{_T,U,U1})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), kwargs...
-) where {_T,U,U1}
+@inline function (s::DruckerPrager)(;
+    P=zero(_T), τII=zero(_T), Pf=zero(_T), kwargs...
+)
     @unpack_val sinϕ, cosϕ, ϕ, C = s
     F = τII - cosϕ * C - sinϕ * (P - Pf)   # with fluid pressure (set to zero by default)
     return F
@@ -64,7 +64,7 @@ end
 Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` pressure, and `Pf` fluid pressure.
 """
 function compute_yieldfunction(
-    s::DruckerPrager{_T}; P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T)
+    s::DruckerPrager{_T}; P=zero(_T), τII=zero(_T), Pf=zero(_T)
 ) where {_T}
     return s(; P=P, τII=τII, Pf=Pf)
 end
@@ -94,12 +94,12 @@ end
 # Plastic Potential 
 
 # Derivatives w.r.t pressure
-∂Q∂P(p::DruckerPrager, P=zero(_T); τII=zero(_T), kwargs...) = -NumValue(p.sinΨ)
+∂Q∂P(p::DruckerPrager; kwargs...) = -NumValue(p.sinΨ)
 
 # Derivatives of yield function
-∂F∂τII(p::DruckerPrager, τII::_T; P=zero(_T), kwargs...) where _T  = _T(1)
-∂F∂P(p::DruckerPrager, P::_T; τII=zero(_T), kwargs...) where _T    = -NumValue(p.sinϕ)
-∂F∂λ(p::DruckerPrager, τII::_T; P=zero(_T), kwargs...) where _T    = _T(0) 
+∂F∂τII(p::DruckerPrager, τII::_T; kwargs...) where _T = one(_T)
+∂F∂P(p::DruckerPrager, P::_T; kwargs...) where _T = -NumValue(p.sinϕ)
+∂F∂λ(p::DruckerPrager, τII::_T;  kwargs...) where _T = zero(_T) 
 
 
 # Derivatives w.r.t stress tensor
@@ -108,34 +108,32 @@ end
 for t in (:NTuple,:SVector)
     @eval begin
         ## 3D derivatives 
-        ∂Q∂τxx(p::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[1] / second_invariant(τij)
-        ∂Q∂τyy(p::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[2] / second_invariant(τij)
-        ∂Q∂τzz(p::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[3] / second_invariant(τij)
-        ∂Q∂τyz(p::DruckerPrager, τij::$(t){6, T}) where T = τij[4] / second_invariant(τij)
-        ∂Q∂τxz(p::DruckerPrager, τij::$(t){6, T}) where T = τij[5] / second_invariant(τij)
-        ∂Q∂τxy(p::DruckerPrager, τij::$(t){6, T}) where T = τij[6] / second_invariant(τij) 
+        ∂Q∂τxx(::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[1] / second_invariant(τij)
+        ∂Q∂τyy(::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[2] / second_invariant(τij)
+        ∂Q∂τzz(::DruckerPrager, τij::$(t){6, T}) where T = 0.5 * τij[3] / second_invariant(τij)
+        ∂Q∂τyz(::DruckerPrager, τij::$(t){6, T}) where T = τij[4] / second_invariant(τij)
+        ∂Q∂τxz(::DruckerPrager, τij::$(t){6, T}) where T = τij[5] / second_invariant(τij)
+        ∂Q∂τxy(::DruckerPrager, τij::$(t){6, T}) where T = τij[6] / second_invariant(τij) 
         ## 2D derivatives 
-        ∂Q∂τxx(p::DruckerPrager, τij::$(t){3, T}) where T = 0.5 * τij[1] / second_invariant(τij)
-        ∂Q∂τyy(p::DruckerPrager, τij::$(t){3, T}) where T = 0.5 * τij[2] / second_invariant(τij)
-        ∂Q∂τxy(p::DruckerPrager, τij::$(t){3, T}) where T = τij[3] / second_invariant(τij) 
+        ∂Q∂τxx(::DruckerPrager, τij::$(t){3, T}) where T = 0.5 * τij[1] / second_invariant(τij)
+        ∂Q∂τyy(::DruckerPrager, τij::$(t){3, T}) where T = 0.5 * τij[2] / second_invariant(τij)
+        ∂Q∂τxy(::DruckerPrager, τij::$(t){3, T}) where T = τij[3] / second_invariant(τij) 
     end
 end
 
-∂Q∂τII(p::DruckerPrager, τII::_T; P=zero(_T), kwargs...) where _T = 0.5
+∂Q∂τII(p::DruckerPrager, τII; kwargs...) = 0.5
 
 """
     compute_εII(p::DruckerPrager{_T,U,U1}, λdot::_T, τII::_T,  P) 
 
 This computes plastic strain rate invariant for a given ``λdot``
 """
-function compute_εII(p::DruckerPrager{_T,U,U1}, λdot::_T, τII::_T, kwargs...) where {_T, U, U1}
+function compute_εII(p::DruckerPrager, λdot, τII, kwargs...)
     F = compute_yieldfunction(p, kwargs)
-    @show F, kwargs
-    if F>0
-        ε_pl = λdot*∂Q∂τII(p, τII)
-
+    ε_pl = if F > 0.0
+        λdot*∂Q∂τII(p, τII)
     else
-        ε_pl = 0.0
+        0.0
     end 
 
     return ε_pl
@@ -164,7 +162,7 @@ end
     `K` is the elastic bulk modulus, h is the harderning, and `τij`` is the stress tensor in Voigt notation.
     Equations from Duretz et al. 2019 G3
 """
-@inline function lambda(F::T, p::DruckerPrager, ηve::T, ηvp::T; K=zero(T), dt=zero(T), h=zero(T), τij=(one(T), one(T), one(T))) where T
+@inline function lambda(F, p::DruckerPrager{_T,U,U1}, ηve, ηvp; K=0.0, dt=0.0, h=0.0, τij=(1.0,1.0,1.0)) where {_T,U,U1}
     F * inv(ηve + ηvp + K * dt * p.sinΨ * p.sinϕ + h * p.cosϕ * plastic_strain(p, τij, zero(T)))
 end
 #-------------------------------------------------------------------------
