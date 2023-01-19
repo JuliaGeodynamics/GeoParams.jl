@@ -27,6 +27,7 @@ using GeoParams
 
     @test isvolumetric(a) == true
 
+    a = ConstantElasticity()
     v = SetMaterialParams(; Elasticity = ConstantElasticity())
     vv=(
         SetMaterialParams(; Phase=1, Elasticity = ConstantElasticity()),
