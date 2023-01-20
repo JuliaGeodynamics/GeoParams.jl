@@ -42,7 +42,7 @@ Phase2Dict() puts all parameters of a phase in a dict.
 
 function Phase2Dict(s)
     # Dict has Key with Fieldname and Value with Tuple(value, symbol, flowlaw keyword, number of phases)
-    fds = Dict{String,Tuple{String,String,String,String,String,String}}()
+    fds = Dict{String,Tuple{String,String,String,String,String}}()
     refs = Dict{String,Tuple{String,String,String}}()
     if !(typeof(s) <: Tuple)
         s = (s,)
@@ -50,23 +50,12 @@ function Phase2Dict(s)
     phasecount = length(s)
     k = 1
     flowlawcount = 0
-    global Diff = 0
-    global Disl = 0
-    global Lin = 0
-    var_counter = Dict(
-        "A" => 0,
-        "E" => 0,
-        "R" => 0,
-        "V" => 0,
-        "η" => 0,
-        "n" => 0,
-        "p" => 0,
-        "r" => 0,
-    )
     # Checks all Phases 
     for i in 1:phasecount
         fieldnames = propertynames(s[i])
-        global num_rheologies = 0
+        global Diff = 0
+        global Disl = 0
+        global Lin = 0
         for label in fieldnames
             if !isempty(getproperty(s[i], label)) && label != :Name
                 # Goes through all components of all fields
@@ -81,7 +70,6 @@ function Phase2Dict(s)
                     # Checks what type the CreepLaw or CompositeRheology field has 
                     if typeof(a[j]) <: DislocationCreep
                         global Disl += 1
-                        global num_rheologies += 1
                         flowlawcount += 1
                         flowadd = flowdisl
                         flowlaw *= flowadd
@@ -92,7 +80,6 @@ function Phase2Dict(s)
 
                     elseif typeof(a[j]) <: DiffusionCreep
                         global Diff += 1
-                        global num_rheologies += 1
                         flowlawcount += 1
                         flowadd = flowdiff
                         flowlaw *= flowadd
@@ -103,14 +90,13 @@ function Phase2Dict(s)
 
                     elseif typeof(a[j]) <: LinearViscous
                         global Lin += 1
-                        global num_rheologies += 1
                         flowlawcount += 1
                         flowadd = flowlin
                         flowlaw *= flowadd
 
                     elseif typeof(a[j]) <: CompositeRheology
                         compos = getproperty(a[j], :elements)
-                        global num_rheologies += length(compos)
+                        num_rheologies += length(compos)
                         fdsname = "Comp "
                         flowadd = flowcomp
                         comporheo = flowadd * "("
@@ -156,9 +142,6 @@ function Phase2Dict(s)
                                         # Checks if they are GeoUnit (Value and Unit exist then)
                                         if isa(b, GeoUnit)
                                             value = string(getproperty(b, :val))
-                                            if typeof(a[j]) <: CompositeRheology
-                                                var_counter["$var"] += 1
-                                            end
                                             # Gives back LaTex format string for the corresponding variable if it is longer than 2 chars
                                             if length(unidecode("$var")) > 2
                                                 latexvar = string("\\" * string(unidecode("$var")))
@@ -166,22 +149,20 @@ function Phase2Dict(s)
                                                 latexvar = string("$var")
                                             end
                                             # Put value, LaTex variable name, creep law pattern, phase id and current disl, diff or linvisc count in a Dict
-                                            counter = var_counter["$var"]
                                             if typeof(a[j][u][v]) <: DislocationCreep
-                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$counter", "$num_rheologies")
+                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$(Disl+Diff)")
                                             end
                                             if typeof(a[j][u][v]) <: DiffusionCreep
-                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$counter", "$num_rheologies")
+                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$(Disl+Diff)")
                                             end
                                             if typeof(a[j][u][v]) <: LinearViscous
-                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$counter", "$num_rheologies")
+                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Lin")
                                             end
                                         end
                                         k += 1
                                     end
                                 end
                                 comporheo *= parallelrheo * "),"
-                                global num_rheologies += num_parallel - 1
 
                             elseif typeof(a[j][u]) <: DislocationCreep
                                 global Disl += 1
@@ -219,9 +200,6 @@ function Phase2Dict(s)
                                 # Checks if they are GeoUnit (Value and Unit exist then)
                                 if isa(b, GeoUnit)
                                     value = string(getproperty(b, :val))
-                                    if typeof(a[j]) <: CompositeRheology
-                                        var_counter["$var"] += 1
-                                    end
                                     # Gives back LaTex format string for the corresponding variable if it is longer than 2 chars
                                     if length(unidecode("$var")) > 2
                                         latexvar = string("\\" * string(unidecode("$var")))
@@ -229,15 +207,14 @@ function Phase2Dict(s)
                                         latexvar = string("$var")
                                     end
                                     # Put value, LaTex variable name and creep law pattern in a Dict
-                                    counter = var_counter["$var"]
                                     if typeof(a[j][u]) <: DislocationCreep
-                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$counter", "$num_rheologies")
+                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$(Disl+Diff)")
                                     end
                                     if typeof(a[j][u]) <: DiffusionCreep
-                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$counter", "$num_rheologies")
+                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$(Disl+Diff)")
                                     end
                                     if typeof(a[j][u]) <: LinearViscous
-                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$counter", "$num_rheologies")
+                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$Lin")
                                     end
                                 end
                                 k += 1
@@ -279,7 +256,7 @@ function Phase2Dict(s)
 
                             elseif typeof(a[j][q]) <: CompositeRheology
                                 compos = getproperty(a[j], :elements)
-                                global num_rheologies += length(compos)
+                                num_rheologies += length(compos)
                                 namepre = fdsname * "Comp "
                                 flowadd = flowcomp
                                 comporheo = flowadd * "("
@@ -318,9 +295,6 @@ function Phase2Dict(s)
                                         # Checks if they are GeoUnit (Value and Unit exist then)
                                         if isa(b, GeoUnit)
                                             value = string(getproperty(b, :val))
-                                            if typeof(a[j]) <: Parallel
-                                                var_counter["$var"] += 1
-                                            end
                                             # Gives back LaTex format string for the corresponding variable if it is longer than 2 chars
                                             if length(unidecode("$var")) > 2
                                                 latexvar = string("\\" * string(unidecode("$var")))
@@ -328,15 +302,14 @@ function Phase2Dict(s)
                                                 latexvar = string("$var")
                                             end
                                             # Put value, LaTex variable name and creep law pattern in a Dict
-                                            counter = var_counter["$var"]
                                             if typeof(a[j][q][u]) <: DislocationCreep
-                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$counter", "$num_rheologies")
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$(Disl+Diff)")
                                             end
                                             if typeof(a[j][q][u]) <: DiffusionCreep
-                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$counter", "$num_rheologies")
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$(Disl+Diff)")
                                             end
                                             if typeof(a[j][q][u]) <: LinearViscous
-                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$counter", "$num_rheologies")
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Lin")
                                             end
                                         end
                                         k += 1
@@ -344,7 +317,6 @@ function Phase2Dict(s)
 
                                 end
                                 parallelrheo *= comporheo * "),"
-                                global num_rheologies += num_parallel - 1
                             end
 
                             varnames = propertynames(a[j][q])
@@ -354,9 +326,6 @@ function Phase2Dict(s)
                                 # Checks if they are GeoUnit (Value and Unit exist then)
                                 if isa(b, GeoUnit)
                                     value = string(getproperty(b, :val))
-                                    if typeof(a[j]) <: CompositeRheology
-                                        var_counter["$var"] += 1
-                                    end
                                     # Gives back LaTex format string for the corresponding variable if it is longer than 2 chars
                                     if length(unidecode("$var")) > 2
                                         latexvar = string("\\" * string(unidecode("$var")))
@@ -364,15 +333,14 @@ function Phase2Dict(s)
                                         latexvar = string("$var")
                                     end
                                     # Put value, LaTex variable name and creep law pattern in a Dict
-                                    counter = var_counter["$var"]
                                     if typeof(a[j][q]) <: DislocationCreep
-                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$counter", "$num_rheologies")
+                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i","$(Disl+Diff)")
                                     end
                                     if typeof(a[j][q]) <: DiffusionCreep
-                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$counter", "$num_rheologies")
+                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$(Disl+Diff)")
                                     end
                                     if typeof(a[j][q]) <: LinearViscous
-                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$counter", "$num_rheologies")
+                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$Lin")
                                     end
                                 end
                                 k += 1
@@ -389,10 +357,6 @@ function Phase2Dict(s)
                             # Checks if they are GeoUnit (Value and Unit exist then)
                             if isa(b, GeoUnit)
                                 value = string(getproperty(b, :val))
-                                if (typeof(a[j]) <: DiffusionCreep || typeof(a[j]) <: DislocationCreep || typeof(a[j]) <: LinearViscous)
-                                    var_counter["$var"] += 1
-                                    counter = var_counter["$var"]
-                                end
                                 # Gives back LaTex format string for the corresponding variable if it is longer than 2 chars
                                 if length(unidecode("$var")) > 2
                                     latexvar = string("\\" * string(unidecode("$var")))
@@ -401,13 +365,13 @@ function Phase2Dict(s)
                                 end
                                 # Put value, LaTex variable name and creep law pattern in a Dict
                                 if typeof(a[j]) <: DislocationCreep
-                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$counter", "$num_rheologies")
+                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$(Disl+Diff)")
                                 elseif typeof(a[j]) <: DiffusionCreep
-                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$counter", "$num_rheologies")
+                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$(Disl+Diff)")
                                 elseif typeof(a[j]) <: LinearViscous
-                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$counter", "$num_rheologies")
+                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Lin")
                                 else
-                                    fds["$var $label $i"] = (value, latexvar, "", "$i", "", "")
+                                    fds["$var $label $i"] = (value, latexvar, "", "$i", "")
                                 end
                                 
                             end
@@ -418,7 +382,7 @@ function Phase2Dict(s)
                 # Takes field "Name" and puts it in the first entry of the Tuple, takes Phasecount of all Phases and puts it in the second entry of the Dict
             elseif !isempty(getproperty(s[i], label)) && label == :Name
                 phasename = join(getproperty(s[i], :Name))
-                fds["$label $i"] = (phasename, "$phasecount", "$i", "", "", "")
+                fds["$label $i"] = (phasename, "$phasecount", "$i", "", "")
             end
         end
     end
