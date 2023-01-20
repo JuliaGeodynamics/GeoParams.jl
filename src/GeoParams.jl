@@ -133,6 +133,9 @@ export compute_density,                                # computational routines
 using .MaterialParameters.ConstitutiveRelationships
 export AxialCompression, SimpleShear, Invariant 
 
+const get_shearmodulus = get_G
+const get_bulkmodulus = get_Kb
+
 #       Calculation routines
 export dεII_dτII,
     dτII_dεII,
@@ -171,6 +174,10 @@ export dεII_dτII,
     ConstantElasticity,
     SetConstantElasticity,
     effective_εII,
+    get_G, 
+    get_Kb,
+    get_shearmodulus, 
+    get_bulkmodulus, 
 
     #       Plasticity
     AbstractPlasticity,

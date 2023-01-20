@@ -20,7 +20,9 @@ export compute_εII,            # calculation routines
     SetConstantElasticity,  # helper function
     AbstractElasticity,
     isvolumetric, 
-    effective_εII, effective_ε
+    effective_εII, effective_ε,
+    get_G, 
+    get_Kb
 
 # ConstantElasticity  -------------------------------------------------------
 
@@ -83,6 +85,15 @@ end
 function isvolumetric(a::ConstantElasticity)
     @unpack_val ν = a
     return ν == 0.5 ? false : true
+end
+
+for modulus in (:G, :Kb)
+    fun = Symbol("get_$(string(modulus))")
+    @eval begin
+        @inline $(fun)(a::ConstantElasticity) = a.$(modulus).val
+        @inline $(fun)(a::AbstractMaterialParamsStruct) = $(fun)(a.Elasticity[1])
+        @inline $(fun)(a::NTuple{N, AbstractMaterialParamsStruct}, phase) where N = nphase($(fun), phase, a)
+    end
 end
 
 # Calculation routines
