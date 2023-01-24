@@ -41,8 +41,8 @@ Phase2Dict() puts all parameters of a phase in a dict.
 """
 
 function Phase2Dict(s)
-    # Dict has Key with Fieldname and Value with Tuple(value, symbol, flowlaw keyword, number of phases)
-    fds = Dict{String,Tuple{String,String,String,String,String}}()
+    # Dict has Key with Fieldname and Value with Tuple(value, symbol, flowlaw keyword, number of phases, (Disl+Diff) or Lin, Disl or Diff)
+    fds = Dict{String,Tuple{String,String,String,String,String,String}}()
     refs = Dict{String,Tuple{String,String,String}}()
     if !(typeof(s) <: Tuple)
         s = (s,)
@@ -150,13 +150,14 @@ function Phase2Dict(s)
                                             end
                                             # Put value, LaTex variable name, creep law pattern, phase id and current disl, diff or linvisc count in a Dict
                                             if typeof(a[j][u][v]) <: DislocationCreep
-                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$(Disl+Diff)")
+                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Disl", "$flowdisl")
                                             end
                                             if typeof(a[j][u][v]) <: DiffusionCreep
-                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$(Disl+Diff)")
+
+                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Diff", "$flowdiff")
                                             end
                                             if typeof(a[j][u][v]) <: LinearViscous
-                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Lin")
+                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Lin", "$flowlin")
                                             end
                                         end
                                         k += 1
@@ -208,13 +209,13 @@ function Phase2Dict(s)
                                     end
                                     # Put value, LaTex variable name and creep law pattern in a Dict
                                     if typeof(a[j][u]) <: DislocationCreep
-                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$(Disl+Diff)")
+                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$Disl", "$flowdisl")
                                     end
                                     if typeof(a[j][u]) <: DiffusionCreep
-                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$(Disl+Diff)")
+                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$Diff", "$flowdiff")
                                     end
                                     if typeof(a[j][u]) <: LinearViscous
-                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$Lin")
+                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$Lin", "$flowlin")
                                     end
                                 end
                                 k += 1
@@ -303,13 +304,13 @@ function Phase2Dict(s)
                                             end
                                             # Put value, LaTex variable name and creep law pattern in a Dict
                                             if typeof(a[j][q][u]) <: DislocationCreep
-                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$(Disl+Diff)")
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Disl", "$flowdisl")
                                             end
                                             if typeof(a[j][q][u]) <: DiffusionCreep
-                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$(Disl+Diff)")
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Diff", "$flowdiff")
                                             end
                                             if typeof(a[j][q][u]) <: LinearViscous
-                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Lin")
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Lin", "$flowlin")
                                             end
                                         end
                                         k += 1
@@ -334,13 +335,13 @@ function Phase2Dict(s)
                                     end
                                     # Put value, LaTex variable name and creep law pattern in a Dict
                                     if typeof(a[j][q]) <: DislocationCreep
-                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i","$(Disl+Diff)")
+                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i","$Disl", "$flowdisl")
                                     end
                                     if typeof(a[j][q]) <: DiffusionCreep
-                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$(Disl+Diff)")
+                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$Diff", "$flowdiff")
                                     end
                                     if typeof(a[j][q]) <: LinearViscous
-                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$Lin")
+                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$Lin", "$flowlin")
                                     end
                                 end
                                 k += 1
@@ -365,13 +366,13 @@ function Phase2Dict(s)
                                 end
                                 # Put value, LaTex variable name and creep law pattern in a Dict
                                 if typeof(a[j]) <: DislocationCreep
-                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$(Disl+Diff)")
+                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Disl", "$flowdisl")
                                 elseif typeof(a[j]) <: DiffusionCreep
-                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$(Disl+Diff)")
+                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Diff", "$flowdiff")
                                 elseif typeof(a[j]) <: LinearViscous
-                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Lin")
+                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Lin", "$flowlin")
                                 else
-                                    fds["$var $label $i"] = (value, latexvar, "", "$i", "")
+                                    fds["$var $label $i"] = (value, latexvar, "", "$i", "", "")
                                 end
                                 
                             end
@@ -382,7 +383,7 @@ function Phase2Dict(s)
                 # Takes field "Name" and puts it in the first entry of the Tuple, takes Phasecount of all Phases and puts it in the second entry of the Dict
             elseif !isempty(getproperty(s[i], label)) && label == :Name
                 phasename = join(getproperty(s[i], :Name))
-                fds["$label $i"] = (phasename, "$phasecount", "$i", "", "")
+                fds["$label $i"] = (phasename, "$phasecount", "$i", "", "", "")
             end
         end
     end
@@ -398,7 +399,6 @@ or src/CreepLaw/Data/DislocationCreep.jl.
 """
 
 function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits=4)
-    dictkeys = keys(d)
     symbs = []
 
     # Creates vectors of type Pairs (can be iterated over, sorted, etc.)
@@ -422,7 +422,8 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         "n" => "Power-law exponent (-)",
         "r" => "Water fugacity exponent (-)",
         "p" => "Grain size exponent (-)",
-        "A" => "Coefficient \$(Pa^{-n}/s)\$",
+        "A_diff" => "Coefficient \$(Pa^{-n - r} \\cdot m^{p}/s)\$", # DiffusionCreep
+        "A_disl" => "Coefficient \$(Pa^{-n}/s)\$", # DislocationCreep
         "E" => "Activation energy (J/mol)", # can also be Elastic Young's modulus, maybe change symbol for that?
         "R" => "Gas constant (J/mol/K)",
         "G" => "Shear modulus (Pa)",
@@ -506,8 +507,16 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         elseif (occursin("R", dictpairs_key[1:3]))
             push!(symbs, dictpairs[key].second[2])
         elseif maximum(occursin.(["CompositeRheology", "CreepLaws"], dictpairs_key)) && !(occursin("R", dictpairs_key[1:3]))
-            number = parse(Int64, dictpairs[key].second[5])
-            push!(symbs, dictpairs[key].second[2] * "$number")
+            if occursin("Disl", dictpairs[key].second[6])
+                number = parse(Int64, dictpairs[key].second[5])
+                push!(symbs, "A_disl" * "^$number")
+            elseif occursin("Diff", dictpairs[key].second[6])
+                number = parse(Int64, dictpairs[key].second[5])
+                push!(symbs, "A_diff" * "^$number")
+            else
+                number = parse(Int64, dictpairs[key].second[5])
+                push!(symbs, dictpairs[key].second[2] * "$number")
+            end
         else
             push!(symbs, dictpairs[key].second[2])
         end
@@ -516,13 +525,27 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
 
     # Creates columnwise output for all parameters of the input phase
     for symbol in symbs
-        # Sets parametername and variable
-        if maximum(endswith.(symbol,["0","1","2","3","4","5","6","7","8","9"])) || (!occursin("\\", symbol) && length(symbol) > 1) 
+        # Sets parametername and variable (symbol)
+        # Order of signs in symbol: 1. "_", if already "_" in there -> 2. "^"
+        # If no underscore in symbol
+        if (maximum(endswith.(symbol,["0","1","2","3","4","5","6","7","8","9"])) && !occursin("_", symbol)) || (!occursin("\\", symbol) && length(symbol) > 1 && !occursin("_", symbol)) 
+            # If "0" in symbol (0 in key for dict)
             if occursin("0", symbol)
                 Table *= " " * string(desc[symbol]) *  " & " * "\$" * symbol[1:end-1] * "_" * symbol[end] *"\$"
+            # If 1 to 9 in symbol (1:9 not in key for dict)
             else
                 Table *= " " * string(desc[symbol[1:end-1]]) *  " & " * "\$" * symbol[1:end-1] * "_" * symbol[end] *"\$"
             end
+        # If "_" AND "^" in symbol 
+        elseif occursin("_", symbol) && occursin("^", symbol)
+            occ_under = findfirst('_', symbol)
+            occ_roof = findfirst('^', symbol)
+            Table *= " " * string(desc[symbol[1:occ_roof-1]]) *  " & " * "\$" * symbol[1:occ_under] * "{" * symbol[occ_under+1:occ_roof-1] * "}" * symbol[occ_roof] * "{" * symbol[occ_roof+1:end] * "}" * "\$"
+        # If only "_" in symbol
+        elseif occursin("_", symbol)
+            occ_under = findfirst('_', symbol)
+            Table *= " " * string(desc[symbol]) *  " & " * "\$" * symbol[1:occ_under] * "{" * symbol[occ_under+1:end] * "}" * "\$"
+        # If neither a number nor one of the above signs in symbol, so just a normal symbol
         else
             Table *= " " * string(desc[symbol]) *  " & " * "\$" * symbol *"\$"
         end
@@ -533,11 +556,28 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
             # Iterates over all pairs
             for element in dictpairs
                 # Checks if symbol matches the symbol in the pair and if phase matches phase of the pair
-                if maximum(endswith.(symbol,["1","2","3","4","5","6","7","8","9"]))
+                if maximum(endswith.(string(symbol),["1","2","3","4","5","6","7","8","9"])) && !occursin("A_", symbol)
                     symbol = symbol[1:end-1]
+                elseif occursin("A_", string(symbol)) && ((occursin("diff", symbol) && (occursin("Diff", dictpairs[i_dictpairs].second[6]))) || (occursin("disl", symbol) && occursin("Disl", dictpairs[i_dictpairs].second[6])))
+                    symbol_A = string(symbol[1])
+                    if symbol_A == dictpairs[i_dictpairs].second[2] && j == parse(Int64, dictpairs[i_dictpairs].second[4]) && hit == 0
+                        # put in the matched parameter value
+                        dig, num, expo = detachFloatfromExponent(dictpairs[i_dictpairs].second[1])
+                        if  dig <= rdigits && expo != "1" 
+                            Table *= " & \$" * "$num \\times 10^{$expo} \$"
+                        elseif dig <= rdigits && expo == "1"
+                            Table *= " & \$" * "$num\$"
+                        elseif dig > rdigits && expo != "1"
+                            Table *= " & \$" * string(round(parse(Float64, num); digits=rdigits)) * " \\times 10^{$expo}\$"
+                        elseif dig > rdigits && expo == "1"
+                            Table *= " & \$" * string(round(parse(Float64, num); digits=rdigits)) * "\$"
+                        end
+                        hit += 1
+                        deleteat!(dictpairs, i_dictpairs)
+                    end
                 end
-                #--------------------------------------------- WORK IN PROGRESS FOR COMPOSITE RHEOLOGIES-------------------------------------------------------------
-                if symbol == dictpairs[i_dictpairs].second[2] && j == parse(Int64, dictpairs[i_dictpairs].second[4]) && hit == 0
+
+                if symbol == dictpairs[i_dictpairs].second[2] && j == parse(Int64, dictpairs[i_dictpairs].second[4]) && hit == 0 && !(occursin("A_", string(symbol)))
                     # put in the matched parameter value
                     dig, num, expo = detachFloatfromExponent(dictpairs[i_dictpairs].second[1])
                     if  dig <= rdigits && expo != "1" 
@@ -569,7 +609,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
     DiffCreep = 0
     LinVisc = 0
     for i in 1:length(dictpairs)
-        if dictpairs[i].second[3] == "DislCreep" && DislCreep == 0
+        if dictpairs[i].second[6] == "DislCreep" && DislCreep == 0
 
             Table *=
                 "\\rule[-5pt]{-3pt}{20pt} Dislocation Creep: & " *
@@ -577,14 +617,14 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
             Table *= " \\\\\n"
             DislCreep += 1
         end
-        if dictpairs[i].second[3] == "DiffCreep" && DiffCreep == 0
+        if dictpairs[i].second[6] == "DiffCreep" && DiffCreep == 0
             Table *=
                 "\\rule[-5pt]{-3pt}{20pt} Diffusion Creep: & " *
                 "\\multicolumn{4}{l}{\$ \\dot{\\gamma} = A \\tau^n d^p f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) \$}\n"
             Table *= " \\\\\n"
             DiffCreep += 1
         end
-        if dictpairs[i].second[3] == "LinVisc" && LinVisc == 0
+        if dictpairs[i].second[6] == "LinVisc" && LinVisc == 0
             Table *=
                 "\\rule[-5pt]{-3pt}{20pt} Linear Viscous: & " *
                 "\\multicolumn{4}{l}{\$ \\eta  = \\frac{\\tau_{II} }{ 2\\dot{\\varepsilon_{II}}} \$}\n"
