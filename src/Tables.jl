@@ -14,6 +14,11 @@ export detachFloatfromExponent, Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2
 #           SetMaterialParams(Name="Viscous Sinker", Phase=2, Density= PT_Density(),CompositeRheology = c1),
 #           SetMaterialParams(Name="Viscous Bottom", Phase=3, Density= PT_Density(),CreepLaws = SetDislocationCreep("Diabase | Caristan (1982)")))
 
+# STILL TO DO: 
+# - fix citations for latex
+# - bring changes also to Markdown table
+# ...
+
 """ 
 detachFloatfromExponent() returns the number of float decimals after the comma as Integer, the float number without the exponent as string 
 and the exponent after the "e" as string.
@@ -659,7 +664,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
     Table *= "\\end{document}\n"
 
     # Writes BibTex sources in to .bib file and Table string into .tex file
-    return write("$filename.bib", References), write("$filename.tex", Table)
+    return write("$filename.bib", References), write("References.tex", Table)
 end
 
 """
@@ -670,7 +675,7 @@ Phase2DictMd() puts all parameters of a phase in a dict.
 function Phase2DictMd(s)
 
     # Dict has Key with Fieldname and Value with Tuple(value, symbol, flowlaw keyword, number of phases)
-    fds = Dict{String,Tuple{String,String,String,String,String}}()
+    fds = Dict{String,Tuple{String,String,String,String,String,String}}()
     refs = Dict{String,Tuple{String,String,String}}()
     if !(typeof(s) <: Tuple)
         s = (s,)
@@ -774,13 +779,13 @@ function Phase2DictMd(s)
                                             mdvar = "$var"
                                             # Put value, LaTex variable name, creep law pattern, phase id and current disl, diff or linvisc count in a Dict
                                             if typeof(a[j][u][v]) <: DislocationCreep
-                                                fds["$var $label $flowadd $i.$u.$v"] = (value, mdvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$(Disl+Diff)")
+                                                fds["$var $label $flowadd $i.$u.$v"] = (value, mdvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Disl", "$flowdisl")
                                             end
                                             if typeof(a[j][u][v]) <: DiffusionCreep
-                                                fds["$var $label $flowadd $i.$u.$v"] = (value, mdvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$(Disl+Diff)")
+                                                fds["$var $label $flowadd $i.$u.$v"] = (value, mdvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Diff", "$flowdiff")
                                             end
                                             if typeof(a[j][u][v]) <: LinearViscous
-                                                fds["$var $label $flowadd $i.$u.$v"] = (value, mdvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Lin")
+                                                fds["$var $label $flowadd $i.$u.$v"] = (value, mdvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Lin", "$flowlin")
                                             end
                                         end
                                         k += 1
@@ -828,13 +833,13 @@ function Phase2DictMd(s)
                                     mdvar = "$var"
                                     # Put value, LaTex variable name and creep law pattern in a Dict
                                     if typeof(a[j][u]) <: DislocationCreep
-                                        fds["$var $label $flowadd $i.$u"] = (value, mdvar, "$flowlaw$comporheo)", "$i", "$(Disl+Diff)")
+                                        fds["$var $label $flowadd $i.$u"] = (value, mdvar, "$flowlaw$comporheo)", "$i", "$Disl", "$flowdisl")
                                     end
                                     if typeof(a[j][u]) <: DiffusionCreep
-                                        fds["$var $label $flowadd $i.$u"] = (value, mdvar, "$flowlaw$comporheo)", "$i", "$(Disl+Diff)")
+                                        fds["$var $label $flowadd $i.$u"] = (value, mdvar, "$flowlaw$comporheo)", "$i", "$Diff", "$flowdiff")
                                     end
                                     if typeof(a[j][u]) <: LinearViscous
-                                        fds["$var $label $flowadd $i.$u"] = (value, mdvar, "$flowlaw$comporheo)", "$i", "$Lin")
+                                        fds["$var $label $flowadd $i.$u"] = (value, mdvar, "$flowlaw$comporheo)", "$i", "$Lin", "$flowlin")
                                     end
                                 end
                                 k += 1
@@ -919,13 +924,13 @@ function Phase2DictMd(s)
                                             mdvar = "$var"
                                             # Put value, LaTex variable name and creep law pattern in a Dict
                                             if typeof(a[j][q][u]) <: DislocationCreep
-                                                fds["$var $label $flowadd $i.$q.$u"] = (value, mdvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$(Disl+Diff)")
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, mdvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Disl", "$flowdisl")
                                             end
                                             if typeof(a[j][q][u]) <: DiffusionCreep
-                                                fds["$var $label $flowadd $i.$q.$u"] = (value, mdvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$(Disl+Diff)")
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, mdvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Diff", "$flowdiff")
                                             end
                                             if typeof(a[j][q][u]) <: LinearViscous
-                                                fds["$var $label $flowadd $i.$q.$u"] = (value, mdvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Lin")
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, mdvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Lin", "$flowlin")
                                             end
                                         end
                                         k += 1
@@ -946,13 +951,13 @@ function Phase2DictMd(s)
                                     mdvar = "$var"
                                     # Put value, LaTex variable name and creep law pattern in a Dict
                                     if typeof(a[j][q]) <: DislocationCreep
-                                        fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i","$(Disl+Diff)")
+                                        fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i","$Disl", "$flowdisl")
                                     end
                                     if typeof(a[j][q]) <: DiffusionCreep
-                                        fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i", "$(Disl+Diff)")
+                                        fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i", "$Diff", "$flowdiff")
                                     end
                                     if typeof(a[j][q]) <: LinearViscous
-                                        fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i", "$Lin")
+                                        fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i", "$Lin", "$flowlin")
                                     end
                                 end
                                 k += 1
@@ -973,13 +978,13 @@ function Phase2DictMd(s)
                                 mdvar = "$var"
                                 # Put value, LaTex variable name and creep law pattern in a Dict
                                 if typeof(a[j]) <: DislocationCreep
-                                    fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$(Disl+Diff)")
+                                    fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$Disl", "$flowdisl")
                                 elseif typeof(a[j]) <: DiffusionCreep
-                                    fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$(Disl+Diff)")
+                                    fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$Diff", "$flowdiff")
                                 elseif typeof(a[j]) <: LinearViscous
-                                    fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$Lin")
+                                    fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$Lin", "$flowlin")
                                 else
-                                    fds["$var $label $i"] = (value, mdvar, "", "$i", "")
+                                    fds["$var $label $i"] = (value, mdvar, "", "$i", "", "")
                                 end
                                 
                             end
@@ -990,7 +995,7 @@ function Phase2DictMd(s)
                 # Takes field "Name" and puts it in the first entry of the Tuple, takes Phasecount of all Phases and puts it in the second entry of the Dict
             elseif !isempty(getproperty(s[i], label)) && label == :Name
                 phasename = join(getproperty(s[i], :Name))
-                fds["$label $i"] = (phasename, "$phasecount", "$i", "", "")
+                fds["$label $i"] = (phasename, "$phasecount", "$i", "", "", "")
             end
         end
     end
@@ -1005,49 +1010,48 @@ or src/CreepLaw/Data/DislocationCreep.jl.
 """
 
 function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
-    dictkeys = keys(d)
     symbs = []
 
     # Creates vectors of type Pairs (can be iterated over, sorted, etc.)
     dictpairs = sort(collect(pairs(d)))
 
-
     # Descriptions for every parameter that could occur in the table and their corresponding variable name(s) that is used in GeoParams
     desc = Dict(
-        "ρ"=>"Density (kg/m^3^)",
-        "ρ0"=>"Reference density (kg/m^3^)",
-        "g"=>"Gravity (m/s^2^)",
-        "η"=>"Viscosity (Pa s)",
-        "P"=>"Pressure (MPa)",
-        "T"=>"Temperature (°C)",
-        "V"=>"Volume (m^3^)" ,
-        "d"=>"Grain size (cm)",
-        "f"=>"Water fugacity (MPa)",
-        "n"=>"Power-law exponent (-)",
-        "r"=>"Water fugacity exponent (-)",
-        "p"=>"Grain size exponent (-)",
-        "A"=>"Coefficient (Pa^-n^/s)",
-        "E"=>"Activation energy (J/mol)",
-        "R"=>"Gas constant (J/mol/K)",
-        "G"=>"Shear modulus (Pa)",
-        "ν"=>"Poisson ratio (-)",
-        "K"=>"Bulk modulus (Pa)",
-        "Kb"=>"Elastic bulk modulus (Pa)", 
-        "Y"=>"Young's modulus (Pa)",
-        "k"=>"Thermal conductivity (W/m/K)",
-        "cp"=>"Heat capacity (J/kg/K)",
-        "Q_L"=>"Latent heat (kJ/kg)",
-        "H_r"=>"Radioactive heat (W/m^3^)",
-        "H_s"=>"Shear heating (-)",
-        "ϕ"=>"Friction angle (°)",
-        "ψ"=>"Dilation angle (°)",
-        "C"=>"Cohesion (Pa)",
-        "Vp"=>"P-wave velocity (km/s)",
-        "Vs"=>"S-wave velocity (km/s)",
-        "T0"=>"Reference temperature (°C)",
-        "P0"=>"Reference pressure (Pa)",
-        "β"=>"Compressibility (1/Pa)",
-        "α"=>"Thermal expansion coeff. (1/K)"
+        "ρ"=>"Density *(kg/m^3^)*",
+        "ρ0"=>"Reference density *(kg/m^3^)*",
+        "g"=>"Gravity *(m/s^2^)*",
+        "η"=>"Viscosity *(Pa s)*",
+        "P"=>"Pressure *(MPa)*",
+        "T"=>"Temperature *(°C)*",
+        "V"=>"Volume *(m^3^)*" ,
+        "d"=>"Grain size *(cm)*",
+        "f"=>"Water fugacity *(MPa)*",
+        "n"=>"Power-law exponent *(-)*",
+        "r"=>"Water fugacity exponent *(-)*",
+        "p"=>"Grain size exponent *(-)*",
+        "A_diff" => "Coefficient *(Pa^-n-r^ m^p^/s)*", # DiffusionCreep
+        "A_disl" => "Coefficient *(Pa^-n^/s)*", # DislocationCreep
+        "E"=>"Activation energy *(J/mol)*",
+        "R"=>"Gas constant *(J/mol/K)*",
+        "G"=>"Shear modulus *(Pa)*",
+        "ν"=>"Poisson ratio *(-)*",
+        "K"=>"Bulk modulus *(Pa)*",
+        "Kb"=>"Elastic bulk modulus *(Pa)*", 
+        "Y"=>"Young's modulus *(Pa)*",
+        "k"=>"Thermal conductivity *(W/m/K)*",
+        "cp"=>"Heat capacity *(J/kg/K)*",
+        "Q_L"=>"Latent heat *(kJ/kg)*",
+        "H_r"=>"Radioactive heat *(W/m^3^)*",
+        "H_s"=>"Shear heating *(-)*",
+        "ϕ"=>"Friction angle *(°)*",
+        "ψ"=>"Dilation angle *(°)*",
+        "C"=>"Cohesion *(Pa)*",
+        "Vp"=>"P-wave velocity *(km/s)*",
+        "Vs"=>"S-wave velocity *(km/s)*",
+        "T0"=>"Reference temperature *(°C)*",
+        "P0"=>"Reference pressure *(Pa)*",
+        "β"=>"Compressibility *(1/Pa)*",
+        "α"=>"Thermal expansion coeff. *(1/K)*"
         )
 
     # Generates latex preamble
@@ -1069,7 +1073,6 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
     Table *= "\n"
 
     # Get vector with all unique symbols without phasenames
-
     for key in 1:length(dictpairs)
         dictpairs_key = dictpairs[key].first
         if occursin("Name", dictpairs_key)
@@ -1078,8 +1081,16 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
         elseif (occursin("R", dictpairs_key[1:3]))
             push!(symbs, dictpairs[key].second[2])
         elseif maximum(occursin.(["CompositeRheology", "CreepLaws"], dictpairs_key)) && !(occursin("R", dictpairs_key[1:3]))
-            number = parse(Int64, dictpairs[key].second[5])
-            push!(symbs, dictpairs[key].second[2] * "$number")
+            if occursin("Disl", dictpairs[key].second[6])
+                number = parse(Int64, dictpairs[key].second[5])
+                push!(symbs, "A_disl" * "^$number")
+            elseif occursin("Diff", dictpairs[key].second[6])
+                number = parse(Int64, dictpairs[key].second[5])
+                push!(symbs, "A_diff" * "^$number")
+            else
+                number = parse(Int64, dictpairs[key].second[5])
+                push!(symbs, dictpairs[key].second[2] * "$number")
+            end
         else
             push!(symbs, dictpairs[key].second[2])
         end
@@ -1092,7 +1103,7 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
         if length(symbol) > 1
             # Checks if Unicode chars in combination with a number etc. (e.g "α0") are used which apparently do not have a second index but only first and third
             # and checks if symbol has another number in it than 0
-            if maximum(endswith.(symbol,["0","1","2","3","4","5","6","7","8","9"]))
+            if maximum(endswith.(symbol,["0","1","2","3","4","5","6","7","8","9"])) && !occursin("_", symbol)
                 if length(unidecode(symbol)) > 2 && occursin("0", symbol)
                     Table *= " " * string(desc[symbol]) * " | " * symbol[1] * "~" * symbol[3] * "~"
                 elseif length(unidecode(symbol)) <= 2 && occursin("0", symbol)
@@ -1104,7 +1115,17 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
                     symbol_1 = symbol[1:end-1]
                     Table *= " " * string(desc["$symbol_1"]) * " | " * symbol[1] * "~" * symbol[2] * "~"
                 end
+            # If "_" AND "^" in symbol 
+            elseif occursin("_", symbol) && occursin("^", symbol)
+                occ_under = findfirst('_', symbol)
+                occ_roof = findfirst('^', symbol)
+                Table *= " " * string(desc[symbol[1:occ_roof-1]]) *  " | " * symbol[1:occ_under-1] * symbol[occ_roof] * symbol[occ_roof+1:end] * "^" * "~" * symbol[occ_under+1:occ_roof-1] * "~"
+            # If only "_" in symbol
+            elseif occursin("_", symbol)
+                occ_under = findfirst('_', symbol)
+                Table *= " " * string(desc[symbol]) *  " | " * symbol[1:occ_under-1] * "~" * symbol[occ_under+1:end] * "~"
             end
+        # If neither a number nor one of the above signs in symbol, so just a normal symbol
         else
             Table *= " " * string(desc[symbol]) * " | " * symbol
         end
@@ -1115,11 +1136,28 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
             i_dictpairs = 1
             # Iterates over all pairs
             for element in dictpairs
-                if maximum(endswith.(symbol,["1","2","3","4","5","6","7","8","9"]))
+                if maximum(endswith.(string(symbol),["1","2","3","4","5","6","7","8","9"])) && !occursin("A_", string(symbol))
                     symbol = replace(symbol, symbol[end] => "")
+                elseif occursin("A_", string(symbol)) && ((occursin("diff", symbol) && (occursin("Diff", dictpairs[i_dictpairs].second[6]))) || (occursin("disl", symbol) && occursin("Disl", dictpairs[i_dictpairs].second[6])))
+                    symbol_A = string(symbol[1])
+                    if symbol_A == dictpairs[i_dictpairs].second[2] && j == parse(Int64, dictpairs[i_dictpairs].second[4]) && hit == 0
+                        # put in the matched parameter value
+                        dig, num, expo = detachFloatfromExponent(dictpairs[i_dictpairs].second[1])
+                        if  dig <= rdigits && expo != "1" 
+                            Table *= " | " * "$num x 10^$expo^"
+                        elseif dig <= rdigits && expo == "1"
+                            Table *= " | " * "$num"
+                        elseif dig > rdigits && expo != "1"
+                            Table *= " | " * string(round(parse(Float64, num); digits=rdigits)) * " x 10^$expo^"
+                        elseif dig > rdigits && expo == "1"
+                            Table *= " | " * string(round(parse(Float64, num); digits=rdigits))
+                        end
+                        hit += 1
+                        deleteat!(dictpairs, i_dictpairs)
+                    end
                 end
                 # Checks if symbol matches the symbol in the pair and if phase matches phase of the pair
-                if symbol == dictpairs[i_dictpairs].second[2] && j == parse(Int64, dictpairs[i_dictpairs].second[4]) && hit == 0
+                if symbol == dictpairs[i_dictpairs].second[2] && j == parse(Int64, dictpairs[i_dictpairs].second[4]) && hit == 0 && !(occursin("A_", string(symbol)))
                     # put in the matched parameter value
                     dig, num, expo = detachFloatfromExponent(dictpairs[i_dictpairs].second[1])
                     if  dig <= rdigits && expo != "1" 
