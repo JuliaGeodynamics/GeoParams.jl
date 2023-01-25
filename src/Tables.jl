@@ -1203,11 +1203,11 @@ function ParameterTable(
     if (format == "latex") || (format == "tex")
         d, ref = Phase2Dict(Phase)
         Dict2LatexTable(d, ref, filename=filename, rdigits=rdigits)
-        print("Created $filename.tex and References.bib files.")
+        print("Created $filename.tex and References.bib files. \n")
     elseif (format == "markdown") || (format == "md")
         d = Phase2DictMd(Phase)
         Dict2MarkdownTable(d, filename=filename, rdigits=rdigits)
-        print("Created $filename.md file.")
+        print("Created $filename.md file. \n")
     end
     return nothing
 end
