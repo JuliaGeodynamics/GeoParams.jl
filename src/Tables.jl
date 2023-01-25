@@ -7,13 +7,6 @@ using ..MaterialParameters: MaterialParamsInfo
 
 export detachFloatfromExponent, Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2MarkdownTable, ParameterTable
 
-# was tested with:
-# v1 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
-# c1 = CompositeRheology(v1, SetDislocationCreep("Diabase | Caristan (1982)"), LinearViscous())
-# TestPh = (SetMaterialParams(Name="Viscous Matrix", Phase=1, Density=ConstantDensity(),CreepLaws = SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)")),
-#           SetMaterialParams(Name="Viscous Sinker", Phase=2, Density= PT_Density(),CompositeRheology = c1),
-#           SetMaterialParams(Name="Viscous Bottom", Phase=3, Density= PT_Density(),CreepLaws = SetDislocationCreep("Diabase | Caristan (1982)")))
-
 
 """ 
 detachFloatfromExponent() returns the number of float decimals after the comma as Integer, the float number without the exponent as string 
