@@ -14,10 +14,6 @@ export detachFloatfromExponent, Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2
 #           SetMaterialParams(Name="Viscous Sinker", Phase=2, Density= PT_Density(),CompositeRheology = c1),
 #           SetMaterialParams(Name="Viscous Bottom", Phase=3, Density= PT_Density(),CreepLaws = SetDislocationCreep("Diabase | Caristan (1982)")))
 
-# STILL TO DO: 
-# - fix citations for latex
-# - bring changes also to Markdown table
-# ...
 
 """ 
 detachFloatfromExponent() returns the number of float decimals after the comma as Integer, the float number without the exponent as string 
@@ -25,7 +21,6 @@ and the exponent after the "e" as string.
 The argument output returns "1" for "ex" if the input number has no exponent.
 
 """
-
 function detachFloatfromExponent(str::String)
     s = lowercase(str)
     if 'e' in s
@@ -42,9 +37,8 @@ end
 
 
 """
-Phase2Dict() puts all parameters of a phase in a dict.
+Phase2Dict() puts all parameters of a phase s in a dict.
 """
-
 function Phase2Dict(s)
     # Dict has Key with Fieldname and Value with Tuple(value, symbol, flowlaw keyword, number of phases, (Disl+Diff) or Lin, Disl or Diff)
     fds = Dict{String,Tuple{String,String,String,String,String,String}}()
@@ -395,6 +389,7 @@ function Phase2Dict(s)
     return fds, refs
 end
 
+
 """
 Dict2LatexTable() writes a .tex file with all parameters from the Phase2Dict() output in a LaTeX table. rdigits will round numbers with more decimals than rdigits
 including numbers of 10 to power of n, n being an Integer, for representation purposes. For the exact numbers use the original impemented numbers from the creeplaws of the dict in src/CreepLaw/Data/DiffusionCreep.jl
@@ -402,7 +397,6 @@ or src/CreepLaw/Data/DislocationCreep.jl.
 
 
 """
-
 function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits=4)
     symbs = []
 
@@ -669,11 +663,11 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
     return write("References.bib", References), write("$filename.tex", Table)
 end
 
+
 """
 Phase2DictMd() puts all parameters of a phase in a dict.
 
 """
-
 function Phase2DictMd(s)
 
     # Dict has Key with Fieldname and Value with Tuple(value, symbol, flowlaw keyword, number of phases)
@@ -1004,13 +998,13 @@ function Phase2DictMd(s)
     return fds
 end
 
+
 """
 Dict2MarkdownTable() writes a .md file with all parameters from the Phase2DictMd() output in a Markdown table. rdigits will round numbers with more decimals than rdigits
 including numbers of 10 to power of n, n being an Integer, for representation purposes. For the exact numbers use the original impemented numbers from the creeplaws of the dict in src/CreepLaw/Data/DiffusionCreep.jl
 or src/CreepLaw/Data/DislocationCreep.jl.
 
 """
-
 function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
     symbs = []
 
@@ -1193,7 +1187,9 @@ end
 
 """
 ParameterTable() creates a table with all parameters saved in the Phase struct. It lets you choose between "latex" and "markdown" as table formats with LaTeX as default.
-Creates a filename.tex or filename.md file as output. If "latex" is chosen a "Reference.bib" file will automatically be produced with all your references.
+Creates a filename.tex or filename.md file as output. If "latex" is chosen a "Reference.bib" file will automatically be produced with all your references. Storage path
+by default is the GeoParams package folder. A specific storage path can be given as normal path with "\\filename" in the end as a string. Use double backslash for subfolders.
+There is no file extension needed to be given.
 """
 function ParameterTable(
     Phase;
@@ -1207,9 +1203,11 @@ function ParameterTable(
     if (format == "latex") || (format == "tex")
         d, ref = Phase2Dict(Phase)
         Dict2LatexTable(d, ref, filename=filename, rdigits=rdigits)
+        print("Created $filename.tex and References.bib files.")
     elseif (format == "markdown") || (format == "md")
         d = Phase2DictMd(Phase)
         Dict2MarkdownTable(d, filename=filename, rdigits=rdigits)
+        print("Created $filename.md file.")
     end
     return nothing
 end
