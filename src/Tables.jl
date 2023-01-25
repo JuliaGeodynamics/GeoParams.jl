@@ -610,6 +610,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
     end
 
     # Adds equations for flow laws underneath the parameters
+    dictpairs = sort(collect(pairs(d)))
     DislCreep = 0
     DiffCreep = 0
     LinVisc = 0
@@ -648,9 +649,10 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
             end
         end
     end
-
+    
     # Adds in text citation for all BibTex sources to LaTEx code. InTextRef is created simultaneously with table headers
-    Table *= InTextRef * "\\\\\n"
+    Table *= "\\multicolumn{5}{l}{"
+    Table *= InTextRef * "}\\\\\n"
 
     # finishes latex table, closes all open formats and writes References beneath table
     Table *= "\\midrule[0.3pt] \\\\\n"
@@ -660,11 +662,11 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
     Table *= "\\caption{Parameter table}\n"
     Table *= "\\label{tab:para_table}\n"
     Table *= "\\end{table}\n"
-    Table *= "\\bibliography{$filename}\n"
+    Table *= "\\bibliography{References}\n"
     Table *= "\\end{document}\n"
 
     # Writes BibTex sources in to .bib file and Table string into .tex file
-    return write("$filename.bib", References), write("References.tex", Table)
+    return write("References.bib", References), write("$filename.tex", Table)
 end
 
 """
