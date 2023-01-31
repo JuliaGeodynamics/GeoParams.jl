@@ -106,7 +106,7 @@ ParameterTable(MatParam, format="MaRkDoWn", filename="TestTable")
 rm("TestTable.md", force=true)
 
 # test phase with CompositeRheology field
-v1 = v1 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
+v1 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
 c1 = CompositeRheology(v1, SetDislocationCreep("Diabase | Caristan (1982)"), LinearViscous(η=1e21Pa*s), v1)
 MatParam = (SetMaterialParams(Name="Viscous Matrix", Phase=1, Density=ConstantDensity(),CreepLaws = SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)")),
             SetMaterialParams(Name="Viscous Sinker", Phase=2, Density= PT_Density(),CompositeRheology = c1),
