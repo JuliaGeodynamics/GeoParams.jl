@@ -520,7 +520,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         # Sets parametername and variable (symbol)
         # Order of signs in symbol: 1. "_", if already "_" in there -> 2. "^"
         # If no underscore in symbol
-        if (maximum(endswith.(symbol,["0","1","2","3","4","5","6","7","8","9"])) && !occursin("_", symbol)) || (!occursin("\\", symbol) && length(symbol) > 1 && !occursin("_", symbol)) 
+        if (maximum(endswith(symbol, string(i),) for i in 1:9) && !occursin("_", symbol)) || (!occursin("\\", symbol) && length(symbol) > 1 && !occursin("_", symbol)) 
             # If "0" in symbol (0 in key for dict)
             if occursin("0", symbol)
                 Table *= " " * string(desc[symbol]) *  " & " * "\$" * symbol[1:end-1] * "_" * symbol[end] *"\$"
@@ -548,7 +548,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
             # Iterates over all pairs
             for element in dictpairs
                 # Checks if symbol matches the symbol in the pair and if phase matches phase of the pair
-                if maximum(endswith.(string(symbol),["1","2","3","4","5","6","7","8","9"])) && !occursin("A_", symbol)
+                if maximum(endswith(symbol, string(i),) for i in 1:9) && !occursin("A_", symbol)
                     symbol = symbol[1:end-1]
                 elseif occursin("A_", string(symbol)) && ((occursin("diff", symbol) && (occursin("Diff", dictpairs[i_dictpairs].second[6]))) || (occursin("disl", symbol) && occursin("Disl", dictpairs[i_dictpairs].second[6])))
                     symbol_A = string(symbol[1])
@@ -619,7 +619,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         end
         if dictpairs[i].second[6] == "LinVisc" && LinVisc == 0
             Table *=
-                "\\rule[-5pt]{-3pt}{20pt} Linear Viscous: & " *
+                "\\rule[-5pt]{-3pt}{20pt} Linear viscosity: & " *
                 "\\multicolumn{4}{l}{\$ \\eta  = \\frac{\\tau_{II} }{ 2\\dot{\\varepsilon_{II}}} \$}\n"
             Table *= " \\\\\n"
             LinVisc += 1
@@ -1092,15 +1092,15 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
         if length(symbol) > 1
             # Checks if Unicode chars in combination with a number etc. (e.g "α0") are used which apparently do not have a second index but only first and third
             # and checks if symbol has another number in it than 0
-            if maximum(endswith.(symbol,["0","1","2","3","4","5","6","7","8","9"])) && !occursin("_", symbol)
+            if maximum(endswith(symbol, string(i),) for i in 1:9) && !occursin("_", symbol)
                 if length(unidecode(symbol)) > 2 && occursin("0", symbol)
                     Table *= " " * string(desc[symbol]) * " | " * symbol[1] * "~" * symbol[3] * "~"
                 elseif length(unidecode(symbol)) <= 2 && occursin("0", symbol)
                     Table *= " " * string(desc[symbol]) * " | " * symbol[1] * "~" * symbol[2] * "~"
-                elseif length(unidecode(symbol)) > 2 && maximum(occursin.(["1","2","3","4","5","6","7","8","9"], symbol))
+                elseif length(unidecode(symbol)) > 2 && maximum(occursin(string(i), symbol) for i in 1:9)
                     symbol_1 = symbol[1]
                     Table *= " " * string(desc["$symbol_1"]) * " | " * symbol[1] * "~" * symbol[3] * "~"
-                elseif length(unidecode(symbol)) <= 2 && maximum(occursin.(["1","2","3","4","5","6","7","8","9"], symbol))
+                elseif length(unidecode(symbol)) <= 2 && maximum(occursin(string(i), symbol) for i in 1:9)
                     symbol_1 = symbol[1:end-1]
                     Table *= " " * string(desc["$symbol_1"]) * " | " * symbol[1] * "~" * symbol[2] * "~"
                 end
@@ -1125,7 +1125,7 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
             i_dictpairs = 1
             # Iterates over all pairs
             for element in dictpairs
-                if maximum(endswith.(string(symbol),["1","2","3","4","5","6","7","8","9"])) && !occursin("A_", string(symbol))
+                if maximum(endswith.(string(symbol),[string(i) for i in 1:9])) && !occursin("A_", string(symbol))
                     symbol = replace(symbol, symbol[end] => "")
                 elseif occursin("A_", string(symbol)) && ((occursin("diff", symbol) && (occursin("Diff", dictpairs[i_dictpairs].second[6]))) || (occursin("disl", symbol) && occursin("Disl", dictpairs[i_dictpairs].second[6])))
                     symbol_A = string(symbol[1])
