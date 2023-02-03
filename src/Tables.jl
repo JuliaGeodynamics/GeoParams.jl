@@ -520,7 +520,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         # Sets parametername and variable (symbol)
         # Order of signs in symbol: 1. "_", if already "_" in there -> 2. "^"
         # If no underscore in symbol
-        if (maximum(endswith(symbol, string(i),) for i in 1:9) && !occursin("_", symbol)) || (!occursin("\\", symbol) && length(symbol) > 1 && !occursin("_", symbol)) 
+        if (maximum(endswith(symbol, string(i),) for i in 0:9) && !occursin("_", symbol)) || (!occursin("\\", symbol) && length(symbol) > 1 && !occursin("_", symbol)) 
             # If "0" in symbol (0 in key for dict)
             if occursin("0", symbol)
                 Table *= " " * string(desc[symbol]) *  " & " * "\$" * symbol[1:end-1] * "_" * symbol[end] *"\$"
