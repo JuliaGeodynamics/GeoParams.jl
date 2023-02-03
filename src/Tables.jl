@@ -1092,17 +1092,17 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
         if length(symbol) > 1
             # Checks if Unicode chars in combination with a number etc. (e.g "α0") are used which apparently do not have a second index but only first and third
             # and checks if symbol has another number in it than 0
-            if maximum(endswith(symbol, string(i),) for i in 1:9) && !occursin("_", symbol)
+            if maximum(endswith(symbol, string(i),) for i in 0:9) && !occursin("_", symbol)
                 if length(unidecode(symbol)) > 2 && occursin("0", symbol)
                     Table *= " " * string(desc[symbol]) * " | " * symbol[1] * "~" * symbol[3] * "~"
                 elseif length(unidecode(symbol)) <= 2 && occursin("0", symbol)
                     Table *= " " * string(desc[symbol]) * " | " * symbol[1] * "~" * symbol[2] * "~"
                 elseif length(unidecode(symbol)) > 2 && maximum(occursin(string(i), symbol) for i in 1:9)
                     symbol_1 = symbol[1]
-                    Table *= " " * string(desc["$symbol_1"]) * " | " * symbol[1] * "~" * symbol[3] * "~"
+                    Table *= " " * string(desc[symbol_1]) * " | " * symbol[1] * "~" * symbol[3] * "~"
                 elseif length(unidecode(symbol)) <= 2 && maximum(occursin(string(i), symbol) for i in 1:9)
                     symbol_1 = symbol[1:end-1]
-                    Table *= " " * string(desc["$symbol_1"]) * " | " * symbol[1] * "~" * symbol[2] * "~"
+                    Table *= " " * string(desc[symbol_1]) * " | " * symbol[1] * "~" * symbol[2] * "~"
                 end
             # If "_" AND "^" in symbol 
             elseif occursin("_", symbol) && occursin("^", symbol)
