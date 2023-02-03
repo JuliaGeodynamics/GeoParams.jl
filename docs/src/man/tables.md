@@ -17,13 +17,13 @@ julia> MatParam = SetMaterialParams(Name="Viscous Matrix", Phase=1,
 
 julia> ParameterTable(MatParam, format="tex", filename="ParameterTable", rdigits=4)
 ```
-![subet3](./assets/img/LaTeX_table.png)
+![latex](./assets/img/LaTeX_table.PNG)
 
 Example 2:
 ```julia
 julia> ParameterTable(MatParam, format="md", filename="ParameterTable", rdigits=4)
 ```
-![subet3](./assets/img/markdown_table.png)
+![markdown](./assets/img/markdown_table.PNG)
 
 
 ```@docs
