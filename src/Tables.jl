@@ -140,7 +140,7 @@ function Phase2Dict(s)
                                             else
                                                 latexvar = string("$var")
                                             end
-                                            # Put value, LaTex variable name, creep law pattern, phase id and current disl, diff or linvisc count in a Dict
+                                            # Put value, LaTex variable name, creep law pattern, phase id, current disl, diff or linvisc count and corresponding string for equation in a Dict
                                             if typeof(a[j][u][v]) <: DislocationCreep
                                                 fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Disl", "$flowdisl")
                                             end
@@ -199,7 +199,7 @@ function Phase2Dict(s)
                                     else
                                         latexvar = string("$var")
                                     end
-                                    # Put value, LaTex variable name and creep law pattern in a Dict
+                                    # Put value, LaTex variable name, creep law pattern, phase id, current disl, diff or linvisc count and corresponding string for equation in a Dict
                                     if typeof(a[j][u]) <: DislocationCreep
                                         fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$Disl", "$flowdisl")
                                     end
@@ -294,7 +294,7 @@ function Phase2Dict(s)
                                             else
                                                 latexvar = string("$var")
                                             end
-                                            # Put value, LaTex variable name and creep law pattern in a Dict
+                                            # Put value, LaTex variable name, creep law pattern, phase id, current disl, diff or linvisc count and corresponding string for equation in a Dict
                                             if typeof(a[j][q][u]) <: DislocationCreep
                                                 fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Disl", "$flowdisl")
                                             end
@@ -325,7 +325,7 @@ function Phase2Dict(s)
                                     else
                                         latexvar = string("$var")
                                     end
-                                    # Put value, LaTex variable name and creep law pattern in a Dict
+                                    # Put value, LaTex variable name, creep law pattern, phase id, current disl, diff or linvisc count and corresponding string for equation in a Dict
                                     if typeof(a[j][q]) <: DislocationCreep
                                         fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i","$Disl", "$flowdisl")
                                     end
@@ -356,13 +356,14 @@ function Phase2Dict(s)
                                 else
                                     latexvar = string("$var")
                                 end
-                                # Put value, LaTex variable name and creep law pattern in a Dict
+                                # Put value, LaTex variable name, creep law pattern, phase id, current disl, diff or linvisc count and corresponding string for equation in a Dict
                                 if typeof(a[j]) <: DislocationCreep
                                     fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Disl", "$flowdisl")
                                 elseif typeof(a[j]) <: DiffusionCreep
                                     fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Diff", "$flowdiff")
                                 elseif typeof(a[j]) <: LinearViscous
                                     fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Lin", "$flowlin")
+                                # If not a CreepLaw or CompositeRheology
                                 else
                                     fds["$var $label $i"] = (value, latexvar, "", "$i", "", "")
                                 end
@@ -372,7 +373,7 @@ function Phase2Dict(s)
                         end
                     end
                 end
-                # Takes field "Name" and puts it in the first entry of the Tuple, takes Phasecount of all Phases and puts it in the second entry of the Dict
+                # Takes field "Name", puts in Phasename, maximum phase count and current phase number in the Dict
             elseif !isempty(getproperty(s[i], label)) && label == :Name
                 phasename = join(getproperty(s[i], :Name))
                 fds["$label $i"] = (phasename, "$phasecount", "$i", "", "", "")
@@ -457,9 +458,6 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
     Table *= "\\midrule[0.3pt]\n"
     Table *= " & "
 
-    # Boris nach Layout für Tabellen mit CompositeRheologies fragen. 
-    # Wie soll z.B. der gleiche Parameter für allerdings verschiedene CreepLaws in einer Phase gehandhabt werden (zwei Mal Activation Energy z.B.)? 
-
     # Creates table headers and in-text citations
     counter = 1
     for i in 1:parse(Int64, d["Name 1"][2])
@@ -495,7 +493,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         dictpairs_key = dictpairs[key].first
         if occursin("Name", dictpairs_key)
             continue
-        # Checks if symbol is from field CompositeRheology and if the symbol occurs more often than once
+        # Checks if symbol is R or in generel from field CompositeRheology and if the symbol occurs more often than once
         elseif (occursin("R", dictpairs_key[1:3]))
             push!(symbs, dictpairs[key].second[2])
         elseif maximum(occursin.(["CompositeRheology", "CreepLaws"], dictpairs_key)) && !(occursin("R", dictpairs_key[1:3]))
@@ -550,6 +548,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
                 # Checks if symbol matches the symbol in the pair and if phase matches phase of the pair
                 if maximum(endswith(symbol, string(i),) for i in 1:9) && !occursin("A_", symbol)
                     symbol = symbol[1:end-1]
+                # Checks if "A_" is in symbol
                 elseif occursin("A_", string(symbol)) && ((occursin("diff", symbol) && (occursin("Diff", dictpairs[i_dictpairs].second[6]))) || (occursin("disl", symbol) && occursin("Disl", dictpairs[i_dictpairs].second[6])))
                     symbol_A = string(symbol[1])
                     if symbol_A == dictpairs[i_dictpairs].second[2] && j == parse(Int64, dictpairs[i_dictpairs].second[4]) && hit == 0
@@ -568,7 +567,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
                         deleteat!(dictpairs, i_dictpairs)
                     end
                 end
-
+                # If "A_" is not in symbol
                 if symbol == dictpairs[i_dictpairs].second[2] && j == parse(Int64, dictpairs[i_dictpairs].second[4]) && hit == 0 && !(occursin("A_", string(symbol)))
                     # put in the matched parameter value
                     dig, num, expo = detachFloatfromExponent(dictpairs[i_dictpairs].second[1])
@@ -641,7 +640,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
     Table *= "\\multicolumn{5}{l}{"
     Table *= InTextRef * "}\\\\\n"
 
-    # finishes latex table, closes all open formats and writes References beneath table
+    # Finishes latex table, closes all open formats and writes References beneath table
     Table *= "\\midrule[0.3pt] \\\\\n"
     Table *= "\\bottomrule[1pt]\n"
     Table *= "\\end{tabular}\n"
@@ -652,7 +651,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
     Table *= "\\bibliography{References}\n"
     Table *= "\\end{document}\n"
 
-    # Writes BibTex sources in to .bib file and Table string into .tex file
+    # Writes BibTex sources into .bib file and Table string into .tex file
     return write("References.bib", References), write("$filename.tex", Table)
 end
 
@@ -663,7 +662,7 @@ Phase2DictMd() puts all parameters of a phase in a dict.
 """
 function Phase2DictMd(s)
 
-    # Dict has Key with Fieldname and Value with Tuple(value, symbol, flowlaw keyword, number of phases)
+    # Dict has Key with Fieldname and Value with Tuple(value, symbol, creep law pattern, phase number, current disl, diff or linvisc count, corresponding string)
     fds = Dict{String,Tuple{String,String,String,String,String,String}}()
     refs = Dict{String,Tuple{String,String,String}}()
     if !(typeof(s) <: Tuple)
@@ -764,9 +763,8 @@ function Phase2DictMd(s)
                                         # Checks if they are GeoUnit (Value and Unit exist then)
                                         if isa(b, GeoUnit)
                                             value = string(getproperty(b, :val))
-                                            # Gives back LaTex format string for the corresponding variable if it is longer than 2 chars
                                             mdvar = "$var"
-                                            # Put value, LaTex variable name, creep law pattern, phase id and current disl, diff or linvisc count in a Dict
+                                            # Put value, LaTex variable name, creep law pattern, phase number, current disl, diff or linvisc count and corresponding string in a Dict
                                             if typeof(a[j][u][v]) <: DislocationCreep
                                                 fds["$var $label $flowadd $i.$u.$v"] = (value, mdvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Disl", "$flowdisl")
                                             end
@@ -818,9 +816,8 @@ function Phase2DictMd(s)
                                 # Checks if they are GeoUnit (Value and Unit exist then)
                                 if isa(b, GeoUnit)
                                     value = string(getproperty(b, :val))
-                                    # Gives back LaTex format string for the corresponding variable if it is longer than 2 chars
                                     mdvar = "$var"
-                                    # Put value, LaTex variable name and creep law pattern in a Dict
+                                    # Put value, LaTex variable name, creep law pattern, phase number, current disl, diff or linvisc count and corresponding string in a Dict
                                     if typeof(a[j][u]) <: DislocationCreep
                                         fds["$var $label $flowadd $i.$u"] = (value, mdvar, "$flowlaw$comporheo)", "$i", "$Disl", "$flowdisl")
                                     end
@@ -909,9 +906,8 @@ function Phase2DictMd(s)
                                         # Checks if they are GeoUnit (Value and Unit exist then)
                                         if isa(b, GeoUnit)
                                             value = string(getproperty(b, :val))
-                                            # Gives back LaTex format string for the corresponding variable if it is longer than 2 chars
                                             mdvar = "$var"
-                                            # Put value, LaTex variable name and creep law pattern in a Dict
+                                            # Put value, LaTex variable name, creep law pattern, phase number, current disl, diff or linvisc count and corresponding string in a Dict
                                             if typeof(a[j][q][u]) <: DislocationCreep
                                                 fds["$var $label $flowadd $i.$q.$u"] = (value, mdvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Disl", "$flowdisl")
                                             end
@@ -936,9 +932,8 @@ function Phase2DictMd(s)
                                 # Checks if they are GeoUnit (Value and Unit exist then)
                                 if isa(b, GeoUnit)
                                     value = string(getproperty(b, :val))
-                                    # Gives back LaTex format string for the corresponding variable if it is longer than 2 chars
                                     mdvar = "$var"
-                                    # Put value, LaTex variable name and creep law pattern in a Dict
+                                    # Put value, LaTex variable name, creep law pattern, phase number, current disl, diff or linvisc count and corresponding string in a Dict
                                     if typeof(a[j][q]) <: DislocationCreep
                                         fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i","$Disl", "$flowdisl")
                                     end
@@ -963,9 +958,8 @@ function Phase2DictMd(s)
                             # Checks if they are GeoUnit (Value and Unit exist then)
                             if isa(b, GeoUnit)
                                 value = string(getproperty(b, :val))
-                                # Gives back LaTex format string for the corresponding variable if it is longer than 2 chars
                                 mdvar = "$var"
-                                # Put value, LaTex variable name and creep law pattern in a Dict
+                                # Put value, LaTex variable name, creep law pattern, phase number, current disl, diff or linvisc count and corresponding string in a Dict
                                 if typeof(a[j]) <: DislocationCreep
                                     fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$Disl", "$flowdisl")
                                 elseif typeof(a[j]) <: DiffusionCreep
@@ -981,7 +975,7 @@ function Phase2DictMd(s)
                         end
                     end
                 end
-                # Takes field "Name" and puts it in the first entry of the Tuple, takes Phasecount of all Phases and puts it in the second entry of the Dict
+                # Takes field "Name" and puts phase name, maximum phase  count and current phase number in Dict 
             elseif !isempty(getproperty(s[i], label)) && label == :Name
                 phasename = join(getproperty(s[i], :Name))
                 fds["$label $i"] = (phasename, "$phasecount", "$i", "", "", "")
@@ -994,8 +988,8 @@ end
 
 """
 Dict2MarkdownTable() writes a .md file with all parameters from the Phase2DictMd() output in a Markdown table. rdigits will round numbers with more decimals than rdigits
-including numbers of 10 to power of n, n being an Integer, for representation purposes. For the exact numbers use the original impemented numbers from the creeplaws of the dict in src/CreepLaw/Data/DiffusionCreep.jl
-or src/CreepLaw/Data/DislocationCreep.jl.
+including numbers of 10 to power of n, n being an Integer, for representation purposes. For the exact numbers use the original impemented numbers from the creeplaws of the
+dict in src/CreepLaw/Data/DiffusionCreep.jl or src/CreepLaw/Data/DislocationCreep.jl.
 
 """
 function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
@@ -1047,7 +1041,6 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
     Table = " | Denotation | Variablename | "
 
     # Creates table headers
-    counter = 1
     for i = 1:parse(Int64, d["Name 1"][2])
         Table *=  d["Name $i"][1] * " | "
     end
@@ -1066,7 +1059,7 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
         dictpairs_key = dictpairs[key].first
         if occursin("Name", dictpairs_key)
             continue
-        # Checks if symbol is from field CompositeRheology and if the symbol occurs more often than once
+        # Checks if symbol is from field CompositeRheology or CreepLaws, if symbol is R and if the symbol occurs more often than once
         elseif (occursin("R", dictpairs_key[1:3]))
             push!(symbs, dictpairs[key].second[2])
         elseif maximum(occursin.(["CompositeRheology", "CreepLaws"], dictpairs_key)) && !(occursin("R", dictpairs_key[1:3]))
@@ -1091,7 +1084,7 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
         # Sets parametername and variable
         if length(symbol) > 1
             # Checks if Unicode chars in combination with a number etc. (e.g "α0") are used which apparently do not have a second index but only first and third
-            # and checks if symbol has another number in it than 0
+            # and checks if symbol has a number in it 
             if maximum(endswith(symbol, string(i),) for i in 0:9) && !occursin("_", symbol)
                 if length(unidecode(symbol)) > 2 && occursin("0", symbol)
                     Table *= " " * string(desc[symbol]) * " | " * symbol[1] * "~" * symbol[3] * "~"
