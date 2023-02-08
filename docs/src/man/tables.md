@@ -1,6 +1,6 @@
 # Tables
 
-There are two differnt formats of output tables that can be produced:
+There are two different formats of output tables that can be produced:
 - LaTeX (always comes with "References.bib" for citations)
 - Markdown
 # Producing output table
