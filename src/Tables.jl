@@ -664,9 +664,7 @@ function Phase2DictMd(s)
     # Dict has Key with Fieldname and Value with Tuple(value, symbol, creep law pattern, phase number, current disl, diff or linvisc count, corresponding string)
     fds = Dict{String,Tuple{String,String,String,String,String,String}}()
     refs = Dict{String,Tuple{String,String,String}}()
-    if !(typeof(s) <: Tuple)
-        s = (s,)
-    end
+    s = make_tuple(s)
     phasecount = length(s)
     k = 1
     flowlawcount = 0
