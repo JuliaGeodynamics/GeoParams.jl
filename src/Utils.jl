@@ -85,3 +85,12 @@ end
 macro print(a1, a2)
     return :($(esc(a1)) === true ? println($(esc(a2))) : nothing)
 end
+
+function make_tuple(x)
+    x  = (x,)
+    return x
+end
+
+function make_tuple(x::Tuple)
+    return x
+end
