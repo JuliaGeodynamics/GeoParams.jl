@@ -1,7 +1,7 @@
 module Tables
 
 using Unidecode
-using GeoParams: AbstractMaterialParam, param_info, LinearViscous, PowerlawViscous, DislocationCreep, DiffusionCreep, CompositeRheology, Parallel
+using GeoParams: AbstractMaterialParam, param_info, LinearViscous, PowerlawViscous, DislocationCreep, DiffusionCreep, CompositeRheology, Parallel, make_tuple
 using ..Units
 using ..MaterialParameters: MaterialParamsInfo
 
@@ -17,7 +17,7 @@ The argument output returns "1" for "ex" if the input number has no exponent.
 function detachFloatfromExponent(str::String)
     s = lowercase(str)
     if 'e' in s
-        s, ex = split(s, "e")
+        s, ex = string.(split(s, "e"))
     else
         ex = "1"
     end
@@ -36,9 +36,8 @@ function Phase2Dict(s)
     # Dict has Key with Fieldname and Value with Tuple(value, symbol, flowlaw keyword, number of phases, (Disl+Diff) or Lin, Disl or Diff)
     fds = Dict{String,Tuple{String,String,String,String,String,String}}()
     refs = Dict{String,Tuple{String,String,String}}()
-    if !(typeof(s) <: Tuple)
-        s = (s,)
-    end
+    # Makes sure phase is a tuple
+    s = make_tuple(s)
     phasecount = length(s)
     k = 1
     flowlawcount = 0
