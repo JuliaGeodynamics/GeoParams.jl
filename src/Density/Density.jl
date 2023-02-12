@@ -226,7 +226,8 @@ julia> Phases[:,20:end] .= 2
 julia> rho     = zeros(size(Phases))
 julia> T       =  ones(size(Phases))
 julia> P       =  ones(size(Phases))*10
-julia> compute_density!(rho, MatParam, Phases, P, T)
+julia> args = (P=P, T=T)
+julia> compute_density!(rho, MatParam, Phases, args)
 julia> rho
 400×400 Matrix{Float64}:
 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
