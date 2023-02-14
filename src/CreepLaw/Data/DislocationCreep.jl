@@ -1075,5 +1075,61 @@ const DislocationCreep_info = Dict(
                 "),
             ),
         )
+
+        #Dry Quartzite rheology
+        ("Dry Quartzite | Jaoul et al. (1984)", 
+            #  Jaoul et al. (1984), table 1, first entry
+            (
+                DislocationCreep(
+                Name = "Dry Quartzite | Jaoul et al. (1984)",
+                n = 2.8NoUnits,
+                A = (10^-5.415)MPa^(-2.8)/s,
+                E = 184.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{jaoul1984effect,
+                    title={The effect of varying water contents on the creep behavior of Heavitree quartzite},
+                    author={Jaoul, Olivier and Tullis, Jan and Kronenberg, Andreas},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={89},
+                    number={B6},
+                    pages={4298--4312},
+                    year={1984},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
+
+        #Wet Quartzite rheology
+        ("Wet Quartzite | Jaoul et al. (1984)", 
+            #  Jaoul et al. (1984), table 1, second entry
+            (
+                DislocationCreep(
+                Name = "Wet Quartzite | Jaoul et al. (1984)",
+                n = 2.8NoUnits,
+                A = (10^-5.045)MPa^(-2.8)/s,
+                E = 163.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{jaoul1984effect,
+                    title={The effect of varying water contents on the creep behavior of Heavitree quartzite},
+                    author={Jaoul, Olivier and Tullis, Jan and Kronenberg, Andreas},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={89},
+                    number={B6},
+                    pages={4298--4312},
+                    year={1984},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
     ],
 ); # end of setting pre-defined creep laws
