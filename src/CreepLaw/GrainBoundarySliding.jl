@@ -60,7 +60,7 @@ struct GrainBoundarySliding{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         Name="",
         n=3.5NoUnits,
         p=-2.0NoUnits,
-        A=1.5MPa^(-n - r ) * s^(-1) * m^(3.0 ),
+        A=1.5MPa^(-n) * s^(-1) * m^(3.0 ),
         E=500kJ / mol,
         V=24e-6m^3 / mol,
         R=8.3145J / mol / K,
