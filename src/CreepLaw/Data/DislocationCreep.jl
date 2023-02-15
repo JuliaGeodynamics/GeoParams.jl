@@ -401,11 +401,11 @@ const DislocationCreep_info = Dict(
 
         # Dry Anorthite rheology
         (
-            "Dry Anorthite | Rybacki, Gottschalk, Wirth and Dresen (2006)",
+            "Dry Anorthite | Rybacki et al. (2006)",
             # Rybacki, Gottschalk, Wirth and Dresen (2006), table 5
             (
                 DislocationCreep(;
-                    Name="Dry Anorthite | Rybacki, Gottschalk, Wirth and Dresen (2006)",
+                    Name="Dry Anorthite | Rybacki et al. (2006)",
                     n=3.0NoUnits,
                     A=(10^12.7)MPa^(-3.0) / s,
                     E=641kJ / mol,
@@ -432,11 +432,11 @@ const DislocationCreep_info = Dict(
 
         # Wet Anorthite rheology
         (
-            "Wet Anorthite | Rybacki, Gottschalk, Wirth and Dresen (2006)",
+            "Wet Anorthite | Rybacki et al. (2006)",
             # Rybacki, Gottschalk, Wirth and Dresen (2006), table 5
             (
                 DislocationCreep(;
-                    Name="Wet Anorthite | Rybacki, Gottschalk, Wirth and Dresen (2006)",
+                    Name="Wet Anorthite | Rybacki et al. (2006)",
                     n=3.0NoUnits,
                     A=(10^0.2)MPa^(-3.0) / s,
                     E=345kJ / mol,
