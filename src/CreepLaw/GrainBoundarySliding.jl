@@ -11,7 +11,7 @@ export GrainBoundarySliding,
 Defines grain boundary sliding parameters
 
 p is the negative defined grain size exponent (value is set negative in the calculation of σ and ε)
-A is a   material specific rheological parameter
+A is a material specific rheological parameter
 E is the activation energy
 V is the activation volume
 R is the universal gas constant
