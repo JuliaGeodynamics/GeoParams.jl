@@ -401,12 +401,13 @@ const DislocationCreep_info = Dict(
 
         # Dry Anorthite rheology
         (
-            "Dry Anorthite | Rybacki et al. (2006)",
+            "Dry Anorthite | Rybacki, Gottschalk, Wirth and Dresen (2006)",
+            # Rybacki, Gottschalk, Wirth and Dresen (2006), table 5
             (
                 DislocationCreep(;
-                    Name="Dry Anorthite | Rybacki et al. (2006)",
+                    Name="Dry Anorthite | Rybacki, Gottschalk, Wirth and Dresen (2006)",
                     n=3.0NoUnits,
-                    A=exp10(12.7)MPa^(-3.0) / s,
+                    A=(10^12.7)MPa^(-3.0) / s,
                     E=641kJ / mol,
                     V=24e-6m^3 / mol,
                     r=0NoUnits,
@@ -415,14 +416,13 @@ const DislocationCreep_info = Dict(
                 MaterialParamsInfo(;
                     Comment="Values taken from Bürgmann & Rybacki (2008) Supplementary table 1. (BK), plots are not reproduced (NM).",
                     BibTex_Reference="
-                        @article{rybacki2000dislocation,
-                        title={Dislocation and diffusion creep of synthetic anorthite aggregates},
-                        author={Rybacki, Erik and Dresen, Georg},
+                        @article{rybacki2006influence,
+                        title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates},
+                        author={Rybacki, Erik and Gottschalk, Matthias and Wirth, Richard and Dresen, Georg},
                         journal={Journal of Geophysical Research: Solid Earth},
-                        volume={105},
-                        number={B11},
-                        pages={26017--26036},
-                        year={2000},
+                        volume={111},
+                        number={B3},
+                        year={2006},
                         publisher={Wiley Online Library}
                         }
                 ",
@@ -432,29 +432,28 @@ const DislocationCreep_info = Dict(
 
         # Wet Anorthite rheology
         (
-            "Wet Anorthite | Rybacki et al. (2006)",
-            #  Rybecki and Dresen (2000), table 2 + table 3
+            "Wet Anorthite | Rybacki, Gottschalk, Wirth and Dresen (2006)",
+            # Rybacki, Gottschalk, Wirth and Dresen (2006), table 5
             (
                 DislocationCreep(;
-                    Name="Wet Anorthite | Rybecki et al. (2006)",
+                    Name="Wet Anorthite | Rybacki, Gottschalk, Wirth and Dresen (2006)",
                     n=3.0NoUnits,
-                    A=exp10(0.2)MPa^(-3.0) / s,
+                    A=(10^0.2)MPa^(-3.0) / s,
                     E=345kJ / mol,
-                    V=0m^3 / mol,
+                    V=38m^3 / mol,
                     r=1NoUnits,
                     Apparatus=AxialCompression,
                 ),
                 MaterialParamsInfo(;
-                    Comment="Values checked (Rybecki and Dresen (2000))(NM), plots are not reproduced (NM).",
+                    Comment="Values checked (Rybacki, Gottschalk, Wirth and Dresen (2006))(NM), plots are not reproduced (NM).",
                     BibTex_Reference="
-                        @article{rybacki2000dislocation,
-                        title={Dislocation and diffusion creep of synthetic anorthite aggregates},
-                        author={Rybacki, Erik and Dresen, Georg},
+                        @article{rybacki2006influence,
+                        title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates},
+                        author={Rybacki, Erik and Gottschalk, Matthias and Wirth, Richard and Dresen, Georg},
                         journal={Journal of Geophysical Research: Solid Earth},
-                        volume={105},
-                        number={B11},
-                        pages={26017--26036},
-                        year={2000},
+                        volume={111},
+                        number={B3},
+                        year={2006},
                         publisher={Wiley Online Library}
                         }
                 ",
