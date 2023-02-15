@@ -50,6 +50,7 @@ end
 
 include("DislocationCreep.jl")
 include("DiffusionCreep.jl")
+include("GrainBoundarySliding.jl")
 
 # Linear viscous rheology ------------------------------------------------
 """
