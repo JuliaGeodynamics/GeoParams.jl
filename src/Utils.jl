@@ -25,7 +25,7 @@ end
 # broadcast getindex() to NamedTuples
 @inline function ntuple_idx(args::NamedTuple, I::Vararg{Integer,N}) where {N}
     k = keys(args)
-    v = getindex.(values(args), I)
+    v = getindex.(values(args), I...)
     return (; zip(k, v)...)
 end
 
@@ -82,14 +82,8 @@ end
 end
 
 # Creates tuple without branching
-function make_tuple(x)
-    x  = (x,)
-    return x
-end
-
-function make_tuple(x::Tuple)
-    return x
-end
+make_tuple(x) = (x,)
+make_tuple(x::Tuple) = x
 
 # Macros 
 macro print(a1, a2)
