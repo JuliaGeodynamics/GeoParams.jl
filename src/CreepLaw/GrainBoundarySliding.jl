@@ -24,11 +24,11 @@ Defines the flow law parameter of a grain boundary sliding.
 
 The grain boundary sliding, as used by experimentalists, is given by  
 ```math  
-     \\dot{\\gamma} = A \\sigma_\\mathrm{d} d^{\\mathrm{p}} f_\\mathrm{H2O}^r \\exp\\left(-\\frac{E+PV}{RT}\\right) #ÄNDERN!!!!!!!!
+     \\dot{\\gamma} = A \\sigma_\\mathrm{d} d^{\\mathrm{p}} \\exp\\left(-\\frac{E+PV}{RT}\\right) #ÄNDERN!!!!!!!!
 ```
 where 
 - ``p`` is the exponent of grain size
-- ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` and ``r`` must be either pre-defined or substituted) 
+- ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` must be either pre-defined or substituted) 
 - ``E`` is the activation energy ``\\mathrm{[kJ/mol]}`` 
 - ``V`` is the activation volume ``\\mathrm{[m^3/mol]}`` 
 - ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}`` 
@@ -163,7 +163,7 @@ end
 
 Returns grain boundary sliding strainrate as a function of 2nd invariant of the stress tensor ``\\tau_{II}`` 
 ```math
-    \\dot{ε}_{II} = A τ_{II}^n d^{p} f_{H_2O}^r \\exp \\left(- {{E + PV} \\over RT} \\right)  #ÄNDERN!!!!!!!!
+    \\dot{ε}_{II} = A τ_{II}^n d^{p} \\exp \\left(- {{E + PV} \\over RT} \\right)  #ÄNDERN!!!!!!!!
 ```
 
 
