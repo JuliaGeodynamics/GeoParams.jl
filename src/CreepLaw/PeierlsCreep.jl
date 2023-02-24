@@ -13,10 +13,12 @@ Defines the flow law parameter of a peierls creep law.
 
 The peierls creep law, as used by experimentalists, is given by  
 ```math  
-     \\dot{\\gamma} = A \\sigma_\\mathrm{d}^2 \\exp\\left(-\\frac{E}{RT} \\left(1-\\sqrt{\\frac{\\sigma_\\mathrm{d}}{\\sigma_\\mathrm{p}}}}\\right)\\right)
+    \\dot{\\gamma} = A \\exp{\\left( -\\frac{E}{RT} \\left( 1 - \\left( \\frac{\\sigma_d}{\\sigma_p} \\right) ^o \\right)^q\\right)}
 ```
 where 
 - ``n`` is the power law exponent  
+- ``q`` is the stress relation exponent  
+- ``o`` is the stress relation exponent (normally called p) 
 - ``r`` is the exponent of fugacity dependence 
 - ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` must be either pre-defined or substituted) 
 - ``E`` is the activation energy ``\\mathrm{[kJ/mol]}`` 
@@ -35,6 +37,8 @@ PeierlsCreep: n=1, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, Apparatus=AxialCompress
 struct DislocationCreep{T,N,U1,U2,U3,U4} <: AbstractCreepLaw{T}
     Name::NTuple{N,Char}
     n::GeoUnit{T,U1} # power-law exponent
+    q::GeoUnit{T,U1} # stress relation exponent
+    o::GeoUnit{T,U1} # ... (normally called p but used as 'o' since p already exists)
     A::GeoUnit{T,U2} # material specific rheological parameter
     E::GeoUnit{T,U3} # activation energy
     R::GeoUnit{T,U4} # universal gas constant
@@ -45,6 +49,8 @@ struct DislocationCreep{T,N,U1,U2,U3,U4} <: AbstractCreepLaw{T}
     function PeierlsCreep(;
         Name="",
         n=1.0NoUnits,
+        q=2.0NoUnits,
+        o=1.0NoUnits,
         A=1.5MPa^(-n) / s,
         E=476.0kJ / mol,
         R=8.3145J / mol / K,
@@ -60,6 +66,8 @@ struct DislocationCreep{T,N,U1,U2,U3,U4} <: AbstractCreepLaw{T}
         FT, FE = CorrectionFactor(Apparatus)
         # Convert to GeoUnits
         nU = n isa GeoUnit ? n : convert(GeoUnit, n)
+        qU = q isa GeoUnit ? q : convert(GeoUnit, q)
+        oU = o isa GeoUnit ? o : convert(GeoUnit, o)
         AU = A isa GeoUnit ? A : convert(GeoUnit, A)
         EU = E isa GeoUnit ? E : convert(GeoUnit, E)
         RU = R isa GeoUnit ? R : convert(GeoUnit, R)
@@ -71,13 +79,13 @@ struct DislocationCreep{T,N,U1,U2,U3,U4} <: AbstractCreepLaw{T}
         U4 = typeof(RU).types[2]
         # Create struct
         return new{T,N,U1,U2,U3,U4}(
-            NameU, nU, AU, EU, RU, Int8(Apparatus), FT, FE
+            NameU, nU, qU, oU, AU, EU, RU, Int8(Apparatus), FT, FE
         )
     end
 
-    function PeierlsCreep(Name, n, A, E, R, Apparatus, FT, FE)
+    function PeierlsCreep(Name, n, q, o, A, E, R, Apparatus, FT, FE)
         return PeierlsCreep(;
-            Name=Name, n=n, A=A, E=E, R=R, Apparatus=Apparatus
+            Name=Name, n=n, q=q, o=o, A=A, E=E, R=R, Apparatus=Apparatus
         )
     end
 end
@@ -93,18 +101,20 @@ function Transform_PeierlsCreep(name; kwargs)
     v_kwargs = values(kwargs)
     val = GeoUnit.(values(v_kwargs))
     
-    args = (Name=p_in.Name, n=p_in.n, A=p_in.A, E=p_in.E, Apparatus=p_in.Apparatus)
+    args = (Name=p_in.Name, n=p_in.n, q=p_in.q, o=p_in.o, A=p_in.A, E=p_in.E, Apparatus=p_in.Apparatus)
     p = merge(args, NamedTuple{keys(v_kwargs)}(val))
     
     Name = String(collect(p.Name))
     n = Value(p.n)
+    q = Value(p.q)
+    o = Value(p.o)
     A_Pa = uconvert(Pa^(-NumValue(p.n)) / s, Value(p.A))
     E_J = uconvert(J / mol, Value(p.E))
 
     Apparatus = p.Apparatus
 
     # args from database
-    args = (Name=Name, n=n, A=A_Pa, E=E_J, Apparatus=Apparatus)
+    args = (Name=Name, n=n, q=q, o=o, A=A_Pa, E=E_J, Apparatus=Apparatus)
     
     return PeierlsCreep(; args...)
 end
@@ -119,7 +129,7 @@ function remove_tensor_correction(s::PeierlsCreep)
     name = String(collect(s.Name))
 
     return PeierlsCreep(;
-        Name=name, n=s.n, A=s.A, E=s.E, Apparatus=Invariant
+        Name=name, n=s.n, q=s.q, o=q.o, A=s.A, E=s.E, Apparatus=Invariant
     )
 end
 
@@ -140,22 +150,22 @@ end
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
 @inline function compute_εII(
-    a::PeierlsCreep, TauII::_T; T=one(precision(a)), args...
+    a::PeierlsCreep, TauII::_T, TauP::_T,; T=one(precision(a)), args...
 ) where {_T}
-    @unpack_val n, A, E, R = a
+    @unpack_val n, q, o, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    ε = A * fastpow(TauII * FT, n) * exp(-(E / (R * T))) / FE
+    ε = A * exp(-(E / (R * T)) * ((1 - (TauII / TauP)^o)^q)) / FE
     return ε
 end
 
 @inline function compute_εII(
-    a::PeierlsCreep, TauII::Quantity; T=1K, args...
+    a::PeierlsCreep, TauII::Quantity, TauP::Quantity,; T=1K, args...
 )
-    @unpack_units n, A, E, R = a
+    @unpack_units n, q, o, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    ε = A * (TauII * FT)^n * exp(-(E / (R * T))) / FE
+    ε = A * exp(-(E / (R * T)) * ((1 - (TauII / TauP)^o)^q)) / FE
 
     return ε
 end
@@ -163,21 +173,22 @@ end
 function compute_εII!(
     EpsII::AbstractArray{_T,N},
     a::PeierlsCreep,
-    TauII::AbstractArray{_T,N};
+    TauII::AbstractArray{_T,N},
+    TauP::AbstractArray{_T,N};
     T=ones(size(TauII))::AbstractArray{_T,N},
     kwargs...,
 ) where {N,_T}
     @inbounds for i in eachindex(EpsII)
-        EpsII[i] = compute_εII(a, TauII[i]; T=T[i])
+        EpsII[i] = compute_εII(a, TauII[i], TauP[i]; T=T[i])
     end
 
     return nothing
 end
-
+#=
 @inline function dεII_dτII(
-    a::PeierlsCreep, TauII::_T; T=one(precision(a)), args...
+    a::PeierlsCreep, TauII::_T, TauP::_T; T=one(precision(a)), args...
 ) where {_T}
-    @unpack_val n, A, E, R = a
+    @unpack_val n, q, o, A, E, R = a
     FT, FE = a.FT, a.FE
 
     return fastpow(FT * TauII, -1 + n) *
@@ -191,7 +202,7 @@ end
 @inline function dεII_dτII(
     a::PeierlsCreep, TauII::Quantity; T=1K, args...
 )
-    @unpack_units n, A, E, R = a
+    @unpack_units n, q, o, A, E, R = a
     FT, FE = a.FT, a.FE
 
     return (FT * TauII)^(-1 + n) *
@@ -201,38 +212,50 @@ end
            exp(-(E / (R * T))) *
            (1 / FE)
 end
-
+=#
 
 """
-    compute_τII(a::PeierlsCreep, EpsII; P, T, f, args...)
+    compute_τII(a::PeierlsCreep, EpsII, TauP; P, T, f, args...)
 
 Computes the stress for a peierls creep law given a certain strain rate
 
 """
 @inline function compute_τII(
-    a::PeierlsCreep, EpsII::_T; T=one(precision(a)), args...
+    a::PeierlsCreep, EpsII::_T, TauP::_T; T=one(precision(a)), args...
 ) where {_T}
-    local n, A, E, R
+    local n, q, o, A, E, R
     if EpsII isa Quantity
         @unpack_units n, A, E, R = a
     else
-        @unpack_val n, A, E, R = a
+        @unpack_val n, q, o, A, E, R = a
     end
 
     FT, FE = a.FT, a.FE
 
-    return fastpow(A, -1 / n) *
-           fastpow(EpsII * FE, 1 / n) *
-           exp((E / (n * R * T))) / FT
+    τ = TauP *
+        fastpow(1 - fastpow(-(Q / (R * T)) * 
+        log(fastpow(A, 1 / n) *
+        fastpow(2, -((1 + (3 / n) ) / 2)) *
+        EpsII),
+        1 / q),
+        1 / o)
+
+    return τ
 end
 
 @inline function compute_τII(
-    a::PeierlsCreep, EpsII::Quantity; T=1K, args...
+    a::PeierlsCreep, EpsII::Quantity, TauP::Quantity; T=1K, args...
 )
-    @unpack_units n, A, E, R = a
+    @unpack_units n, q, o, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    τ = A^(-1 / n) * (EpsII * FE)^(1 / n) * exp((E / (n * R * T))) / FT
+    τ = TauP *
+        fastpow(1 - fastpow(-(Q / (R * T)) * 
+        log(fastpow(A, 1 / n) *
+        fastpow(2, -((1 + (3 / n) ) / 2)) *
+        EpsII),
+        1 / q),
+        1 / o)
 
     return τ
 end
@@ -247,18 +270,17 @@ function compute_τII!(
     TauII::AbstractArray{_T,N},
     a::PeierlsCreep,
     EpsII::AbstractArray{_T,N};
+    TauP::AbstractArray{_T,N};
     T=ones(size(TauII))::AbstractArray{_T,N},
-    P=zero(TauII)::AbstractArray{_T,N},
-    f=ones(size(TauII))::AbstractArray{_T,N},
     kwargs...,
 ) where {N,_T}
     @inbounds for i in eachindex(TauII)
-        TauII[i] = compute_τII(a, EpsII[i]; T=T[i])
+        TauII[i] = compute_τII(a, EpsII[i], TauP[i]; T=T[i])
     end
 
     return nothing
 end
-
+#=
 @inline function dτII_dεII(
     a::PeierlsCreep, EpsII::_T; T=one(precision(a)), args...
 ) where {_T}
@@ -286,12 +308,12 @@ end
         exp((E / (R * T * n)))
     ) / (FT * n)
 end
-
+=#
 # Print info 
 function show(io::IO, g::PeierlsCreep)
     return print(
         io,
-        "PeierlsCreep: Name = $(String(collect(g.Name))), n=$(Value(g.n)), A=$(Value(g.A)), E=$(Value(g.E)), FT=$(g.FT), FE=$(g.FE), Apparatus=$(g.Apparatus)",
+        "PeierlsCreep: Name = $(String(collect(g.Name))), n=$(Value(g.n)), q=$(Value(g.q)), o=$(Value(g.o)), A=$(Value(g.A)), E=$(Value(g.E)), FT=$(g.FT), FE=$(g.FE), Apparatus=$(g.Apparatus)",
     )
 end
 #-------------------------------------------------------------------------
