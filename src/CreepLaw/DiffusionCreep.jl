@@ -232,7 +232,9 @@ returns the derivative of strainrate versus stress
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    return fastpow(FT * TauII, -1 + n) *
+    return 
+           n * 
+           fastpow(FT * TauII, -1 + n) *
            fastpow(f, r) *
            fastpow(d, p) *
            A *
@@ -248,7 +250,8 @@ end
     @unpack_units n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    return FT  *
+    return n * 
+           fastpow(FT  * TauII, -1 + n)
            fastpow(f, r) *
            fastpow(d, p) *
            A *
