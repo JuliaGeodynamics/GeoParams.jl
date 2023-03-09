@@ -145,8 +145,6 @@ function param_info(s::PeierlsCreep)
     )
 end
 
-#---------------------- All calculating equations are still wrong!!!! ---------------------------------#
-
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
 @inline function compute_εII(
@@ -184,19 +182,23 @@ function compute_εII!(
 
     return nothing
 end
-#=
+
 @inline function dεII_dτII(
     a::PeierlsCreep, TauII::_T, TauP::_T; T=one(precision(a)), args...
 ) where {_T}
     @unpack_val n, q, o, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    return fastpow(FT * TauII, -1 + n) *
+    return o * 
+           fastpow((FT * TauII) / TauP, o) *
+           fastpow(1 - fastpow((FT * TauII) / TauP, o), q) *
            A *
+           E *
+           q *
            FT *
            n *
-           exp(-(E / (R * T))) *
-           (1 / FE)
+           exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, o), q) / (R * T))) *
+           (1 / (FE * R * T * Tau * (1 - fastpow((FT * TauII) / TauP, o))))
 end
 
 @inline function dεII_dτII(
@@ -205,15 +207,20 @@ end
     @unpack_units n, q, o, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    return (FT * TauII)^(-1 + n) *
+    return o * 
+           fastpow((FT * TauII) / TauP, o) *
+           fastpow(1 - fastpow((FT * TauII) / TauP, o), q) *
            A *
+           E *
+           q *
            FT *
            n *
-           exp(-(E / (R * T))) *
-           (1 / FE)
+           exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, o), q) / (R * T))) *
+           (1 / (FE * R * T * Tau * (1 - fastpow((FT * TauII) / TauP, o))))
 end
-=#
 
+
+#### AB HIER NOCH MAL EQUATIONS CHECKEN!!!!!!!!!!!!! ####
 """
     compute_τII(a::PeierlsCreep, EpsII, TauP; P, T, f, args...)
 
