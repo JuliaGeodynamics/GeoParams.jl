@@ -240,12 +240,10 @@ Computes the stress for a peierls creep law given a certain strain rate
     FT, FE = a.FT, a.FE
 
     τ = TauP *
-        fastpow(1 - fastpow(-(Q / (R * T)) * 
-        log(fastpow(A, 1 / n) *
-        fastpow(2, -((1 + (3 / n) ) / 2)) *
-        EpsII),
-        1 / q),
-        1 / o)
+        fastpow(1 - fastpow(- (R * T * log((FE * EpsII) / A) /Q), 
+        1 / q), 
+        1 / o) / 
+        FT
 
     return τ
 end
@@ -257,12 +255,10 @@ end
     FT, FE = a.FT, a.FE
 
     τ = TauP *
-        fastpow(1 - fastpow(-(Q / (R * T)) * 
-        log(fastpow(A, 1 / n) *
-        fastpow(2, -((1 + (3 / n) ) / 2)) *
-        EpsII),
-        1 / q),
-        1 / o)
+        fastpow(1 - fastpow(- (R * T * log((FE * EpsII) / A) /Q), 
+        1 / q), 
+        1 / o) / 
+        FT
 
     return τ
 end
@@ -287,19 +283,20 @@ function compute_τII!(
 
     return nothing
 end
-#=
+#
 @inline function dτII_dεII(
     a::PeierlsCreep, EpsII::_T; T=one(precision(a)), args...
 ) where {_T}
     @unpack_val n, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    return (
-        FE *
-        (A^(-1 / n)) *
-        ((EpsII * FE)^(1 / n - 1)) *
-        exp((E / (R * T * n)))
-    ) / (FT * n)
+    # derived in WolframAlpha
+    return (TauP * exp(-1 / q) * 
+            R * 
+            T * 
+            fastpow(-R * T * log((FE * EpsII) / A)), (1 / q - 1)) * 
+            fastpow(1 - exp(-1 / q) * fastpow(-R * T * log((FE * EpsII) / A), (1 / q)), (1/o - 1)) / 
+            (FT * o * q *  EpsII)
 end
 
 @inline function dτII_dεII(
@@ -308,14 +305,15 @@ end
     @unpack_units n, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    return (
-        FE *
-        (A^(-1 / n)) *
-        ((EpsII * FE)^(1 / n - 1)) *
-        exp((E / (R * T * n)))
-    ) / (FT * n)
+    # derived in WolframAlpha
+    return (TauP * exp(-1 / q) * 
+            R * 
+            T * 
+            fastpow(-R * T * log((FE * EpsII) / A)), (1 / q - 1)) * 
+            fastpow(1 - exp(-1 / q) * fastpow(-R * T * log((FE * EpsII) / A), (1 / q)), (1/o - 1)) / 
+            (FT * o * q *  EpsII)
 end
-=#
+
 # Print info 
 function show(io::IO, g::PeierlsCreep)
     return print(
