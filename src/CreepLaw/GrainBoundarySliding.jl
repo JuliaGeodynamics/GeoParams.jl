@@ -174,10 +174,12 @@ Returns grain boundary sliding strainrate as a function of 2nd invariant of the 
     @unpack_val n, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    return A *
-           fastpow(TauII * FT, n) *
-           fastpow(d, p) *
-           exp(-(E + P * V) / (R * T)) / FE
+    ε = A *
+        fastpow(TauII * FT, n) *
+        fastpow(d, p) *
+        exp(-(E + P * V) / (R * T)) / FE
+
+    return ε 
 end
 
 @inline function compute_εII(
@@ -186,7 +188,10 @@ end
     @unpack_units n, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    ε = A * fastpow(TauII * FT, n) * fastpow(d, p) * exp(-(E + P * V) / (R * T)) / FE
+    ε = A * 
+        fastpow(TauII * FT, n) * 
+        fastpow(d, p) * 
+        exp(-(E + P * V) / (R * T)) / FE
 
     return ε
 end
@@ -212,6 +217,38 @@ function compute_εII!(
     return nothing
 end
 
+@inline function dεII_dτII(
+    a::GrainBoundarySliding, TauII::_T; T=one(precision(a)), P=zero(precision(a)), d=one(precision(a)), args...
+) where {_T}
+    @unpack_val n, p, A, E, V, R = a
+    FT, FE = a.FT, a.FE
+
+    # computed symbolically
+    return (A *
+            fastpow(d, p) *
+            n *
+            fastpow(FT * TauII, n) *
+            exp(-(E + P * V) / (R * T))) \
+            FE *
+            TauII
+end
+
+@inline function dεII_dτII(
+    a::GrainBoundarySliding, TauII::Quantity; T=1K, P=0Pa, d=1e-3m, args...
+)
+    @unpack_units n, p, A, E, V, R = a
+    FT, FE = a.FT, a.FE
+
+    #computed symbolically
+    return (A *
+            fastpow(d, p) *
+            n *
+            fastpow(FT * TauII, n) *
+            exp(-(E + P * V) / (R * T))) \
+            FE *
+            TauII
+end
+
 """
     computeCreepLaw_TauII(EpsII::_T, a::GrainBoundarySliding; T::_T, P=zero(_T), d=one(_T), kwargs...)
 
@@ -225,11 +262,10 @@ Returns grain boundary sliding stress as a function of 2nd invariant of the stra
     
     n_inv = inv(n)
     
-    τ =
-        fastpow(A, -n_inv) *
+    τ = fastpow(A, -n_inv) *
         fastpow(EpsII * FE, n_inv) *
         fastpow(d, -p * n_inv) *
-        exp((E + P * V) / (n * R * T)) / FT
+        fastpow(exp((Q + P * V) / (R * T)), n_inv) / FT
 
     return τ
 end
@@ -242,11 +278,10 @@ end
 
     n_inv = inv(n)
     
-    τ =
-        fastpow(A, -n_inv) *
-        fastpow(EpsII * FE, 1) *
+    τ = fastpow(A, -n_inv) *
+        fastpow(EpsII * FE, n_inv) *
         fastpow(d, -p * n_inv) *
-        exp((E + P * V) / (n * R * T)) / FT
+        fastpow(exp((Q + P * V) / (R * T)), n_inv) / FT
 
     return τ
 end
@@ -265,6 +300,38 @@ function compute_τII!(
     end
 
     return nothing
+end
+
+@inline function dτII_dεII(
+    a::GrainBoundarySliding, EpsII::_T; T=one(precision(a)), P=zero(precision(a)), d=one(precision(a)), args...
+) where {_T}
+    @unpack_val n, p, A, E, V, R = a
+    FT, FE = a.FT, a.FE
+
+    n_inv = inv(n)
+
+    # derived symbolically
+    return (fastpow(A, -n_inv) *
+            fastpow(d, -p * n_inv) *
+            fastpow(FE * EpsII, n_inv) *
+            fastpow(exp((E + P * V) / (R * T)), n_inv) / 
+            (EpsII * FT * n))
+end
+
+@inline function dτII_dεII(
+    a::GrainBoundarySliding, EpsII::Quantity; T=1K, P=0Pa, d=1e-3m, args...
+)
+    @unpack_units n, p, A, E, V, R = a
+    FT, FE = a.FT, a.FE
+
+    n_inv = inv(n)
+
+    # derived symbolically
+    return (fastpow(A, -n_inv) *
+            fastpow(d, -p * n_inv) *
+            fastpow(FE * EpsII, n_inv) *
+            fastpow(exp((E + P * V) / (R * T)), n_inv) / 
+            (EpsII * FT * n))
 end
 
 # Print info 
