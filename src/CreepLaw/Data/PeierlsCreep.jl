@@ -8,7 +8,7 @@ This is a dictionary with pre-defined creep laws
 SetPeierlsCreep(name::String; kwargs...) = Transform_PeierlsCreep(name; kwargs)
 
 # predefined peierls creep laws are to be added in the dictionary as it is done for dislocation creep laws (see 'DislocationCreep.jl')!
-const GrainBoundarySliding_info = Dict([
+const PeierlsCreep_info = Dict([
 
 # Dry Olivine rheology 
 (

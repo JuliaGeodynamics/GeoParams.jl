@@ -159,7 +159,8 @@ end
     @unpack_val n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    ε = A * exp(-(E / (R * T)) * ((1 - (TauII / TauP)^o)^q)) / FE
+    ε = A * fastpow(TauII, n) exp(-(E / (R * T)) * (fastpow(1 - fastpow(TauII / TauP, o), q))) / FE
+
     return ε
 end
 
@@ -169,7 +170,7 @@ end
     @unpack_units n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    ε = A * exp(-(E / (R * T)) * ((1 - (TauII / TauP)^o)^q)) / FE
+    ε = A * fastpow(TauII, n) exp(-(E / (R * T)) * (fastpow(1 - fastpow(TauII / TauP, o), q))) / FE
 
     return ε
 end
@@ -197,13 +198,18 @@ end
     return o * 
            fastpow((FT * TauII) / TauP, o) *
            fastpow(1 - fastpow((FT * TauII) / TauP, o), q) *
+           fastpow(TauII, n) * 
            A *
            E *
            q *
            FT *
            n *
            exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, o), q) / (R * T))) *
-           (1 / (FE * R * T * Tau * (1 - fastpow((FT * TauII) / TauP, o))))
+           (1 / (FE * R * T * Tau * (1 - fastpow((FT * TauII) / TauP, o)))) + 
+           (A * n * 
+           fastpow(TauII, n) * 
+           exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, o), q) / (R * T)))) / 
+           (FE * TauII)
 end
 
 @inline function dεII_dτII(
@@ -215,16 +221,22 @@ end
     return o * 
            fastpow((FT * TauII) / TauP, o) *
            fastpow(1 - fastpow((FT * TauII) / TauP, o), q) *
+           fastpow(TauII, n) * 
            A *
            E *
            q *
            FT *
            n *
            exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, o), q) / (R * T))) *
-           (1 / (FE * R * T * Tau * (1 - fastpow((FT * TauII) / TauP, o))))
+           (1 / (FE * R * T * Tau * (1 - fastpow((FT * TauII) / TauP, o)))) + 
+           (A * n * 
+           fastpow(TauII, n) * 
+           exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, o), q) / (R * T)))) / 
+           (FE * TauII)
 end
 
 
+####### Muss durch non linear iterations gelöst werden, weil quadratische Gleichung
 """
     compute_τII(a::PeierlsCreep, EpsII; P, T, f, args...)
 
