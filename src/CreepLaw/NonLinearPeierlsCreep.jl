@@ -236,7 +236,7 @@ end
 end
 
 
-####### Muss durch non linear iterations gelöst werden, weil quadratische Gleichung
+####### Needs to be solved non-linearly because of quadratic equation
 #=
 """
     compute_τII(a::NonLinearPeierlsCreep, EpsII; P, T, f, args...)
