@@ -10,12 +10,12 @@ SetPeierlsCreep(name::String; kwargs...) = Transform_PeierlsCreep(name; kwargs)
 # predefined peierls creep laws are to be added in the dictionary as it is done for dislocation creep laws (see 'DislocationCreep.jl')!
 const PeierlsCreep_info = Dict([
 
-# Dry Olivine rheology 
+# Wet Olivine rheology 
 (
-    "Dry Olivine | Goetze and Evans (1979)",
+    "Wet Olivine | Goetze and Evans (1979)",
     (
         DiffusionCreep(;
-            Name="Dry Olivine | Goetze and Evans (1979)",
+            Name="Wet Olivine | Goetze and Evans (1979)",
             n=1.0NoUnits,                         # power-law exponent
             q=2.0NoUnits,                         # exponent of water-fugacity
             o=1.0NoUnits,                        # grain size exponent
@@ -38,6 +38,26 @@ const PeierlsCreep_info = Dict([
                 publisher={Blackwell Publishing Ltd Oxford, UK}
                 }
         "),
+    ),
+)
+
+# Dry Olivine rheology 
+(
+    "Dry Olivine | Demouchy (2013)",
+    (
+        DiffusionCreep(;
+            Name="Dry Olivine | Demouchy (2013)",
+            n=1.0NoUnits,                         # power-law exponent
+            q=2.0NoUnits,                         # exponent of water-fugacity
+            o=0.5NoUnits,                        # grain size exponent
+            TauP=3.8e9Pa,                         # Peierls stress
+            A=(1e6)s^(-1),    # material specific rheological parameter
+            E=566.0kJ / mol,                        # activation energy
+            Apparatus=AxialCompression,
+        ),
+        MaterialParamsInfo(;
+            Comment="Paper not found; plots not checked (NM)",
+            BibTex_Reference=""),
     ),
 )
 
