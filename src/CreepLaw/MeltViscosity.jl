@@ -9,17 +9,13 @@ export MeltViscosity,
 Defines effective shear viscosity and effective bulk viscosity as a function of melt fraction and geometry of the pores following parameterization of *Schmeling, A., Kruse, J. P., Richard, G., Effective shear and bulk viscosity of partially molten rock based on elastic moduli theory of a fluid filled poroelastic medium, Geophysical Journal International, Volume 190, Issue 3, September 2012, Pages 1571–1578, https://doi.org/10.1111/j.1365-246X.2012.05596.x*
 
 α is the aspect ratio (between 1 and 0)
-a1
-a2
-b1
-b2
-k1
-k2
-k3
-c1
-c2
-c3
-
+a1 is a fitting constant
+a2 is a fitting constant
+b1 is a fitting constant
+b2 is a fitting constant
+k2 is a fitting constant
+k3 is a fitting constant
+c3 is a fitting constant
 
 =#
 
@@ -89,8 +85,6 @@ end
         η_melt = 0
     end
 
-    @show ϕ
-    @show η
     ε = TauII / (2*η_melt)
 
     return ε
@@ -112,19 +106,10 @@ end
 
     ε = TauII / (2*η_melt)
 
-    @show ϕ
-    @show η
-    @show c1
-    @show η_melt
-
     return ε
 end
 
-"""
-    compute_εII!(EpsII::AbstractArray{_T,N}, a, TauII::AbstractArray{_T,N}; η, ϕ, kwargs...)
 
-Computes strainrate as a function of stress
-"""
 function compute_εII!(
     EpsII::AbstractArray{_T,N},
     a::MeltViscosity,
@@ -140,11 +125,7 @@ function compute_εII!(
     return nothing
 end
 
-"""
-    computeCreepLaw_TauII(EpsII::_T, a::DiffusionCreep; T::_T, P=zero(_T), f=one(_T), d=one(_T), kwargs...)
 
-Returns diffusion creep stress as a function of 2nd invariant of the strain rate
-"""
 @inline function compute_τII(
     a::MeltViscosity, EpsII::_T;η=one(precision(a)), ϕ=zero(precision(a)), kwargs...
 ) where {_T}
@@ -181,6 +162,7 @@ end
     return τ
 end
 
+
 function compute_τII!(
     TauII::AbstractArray{_T,N},
     a::MeltViscosity,
@@ -201,7 +183,7 @@ end
 function show(io::IO, g::MeltViscosity)
     return print(
         io,
-        "MeltViscosity: Name = $(String(collect(g.Name))), α=$(Value(g.α))",
+        "MeltViscosity, α=$(Value(g.α))",
     )
 end
 
