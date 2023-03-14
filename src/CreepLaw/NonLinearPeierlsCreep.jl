@@ -106,7 +106,7 @@ function Transform_NonLinearPeierlsCreep(name; kwargs)
     v_kwargs = values(kwargs)
     val = GeoUnit.(values(v_kwargs))
     
-    args = (Name=p_in.Name, n=p_in.n, q=p_in.q, o=p_in.o, A=p_in.A, E=p_in.E, Apparatus=p_in.Apparatus)
+    args = (Name=p_in.Name, n=p_in.n, q=p_in.q, o=p_in.o, TauP=P_in.TauP, A=p_in.A, E=p_in.E, Apparatus=p_in.Apparatus)
     p = merge(args, NamedTuple{keys(v_kwargs)}(val))
     
     Name = String(collect(p.Name))
