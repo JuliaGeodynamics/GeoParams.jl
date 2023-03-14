@@ -168,7 +168,7 @@ export dεII_dτII,
     DislocationCreep_info,
     DiffusionCreep_info,
     GrainBoundarySliding_info,
-    PeierlsCreep_info
+    PeierlsCreep_info,
 
 
     #       Elasticity
