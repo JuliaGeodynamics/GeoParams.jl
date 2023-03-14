@@ -195,9 +195,7 @@ export dεII_dτII,
     #       Composite rheologies
     AbstractConstitutiveLaw,
     AbstractComposite,
-    computeViscosity_τII,
     computeViscosity_εII,
-    computeViscosity_τII!,
     computeViscosity_εII!,
     computeViscosity_εII_AD,
     local_iterations_εII,    
@@ -215,6 +213,9 @@ export dεII_dτII,
     compute_p_τII, 
     local_iterations_εvol, 
     compute_p_harmonic
+    
+    #computeViscosity_τII,
+    #computeViscosity_τII!,
     
 
 # Constitutive relationships laws

@@ -14,7 +14,7 @@ const PeierlsCreep_info = Dict([
 (
     "Wet Olivine | Goetze and Evans (1979)",
     (
-        DiffusionCreep(;
+        PeierlsCreep(;
             Name="Wet Olivine | Goetze and Evans (1979)",
             n=1.0NoUnits,                         # power-law exponent
             q=2.0NoUnits,                         # exponent of water-fugacity
@@ -45,7 +45,7 @@ const PeierlsCreep_info = Dict([
 (
     "Dry Olivine | Demouchy (2013)",
     (
-        DiffusionCreep(;
+        PeierlsCreep(;
             Name="Dry Olivine | Demouchy (2013)",
             n=1.0NoUnits,                         # power-law exponent
             q=2.0NoUnits,                         # exponent of water-fugacity
@@ -75,7 +75,7 @@ const PeierlsCreep_info = Dict([
 (
     "Dry Olivine | Idrissei (2016)",
     (
-        DiffusionCreep(;
+        PeierlsCreep(;
             Name="Dry Olivine | Idrissei (2016)",
             n=1.0NoUnits,                         # power-law exponent
             q=2.0NoUnits,                         # exponent of water-fugacity

@@ -60,13 +60,14 @@ export param_info,
     Parallel,
     CompositeRheology,
     AbstractComposite,
-    AbstractConstitutiveLaw
+    AbstractConstitutiveLaw,
     AxialCompression, SimpleShear, Invariant,
     get_G, 
     get_Kb
 
 # add methods programatically 
-for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType)
+for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType, 
+                :PeierlsCreep, :GrainBoundarySliding)
     @eval begin
         compute_εII(a::$(myType), TauII, args) = compute_εII(a, TauII; args...)
         compute_εvol(a::$(myType), P, args) = compute_εvol(a, P; args...)
