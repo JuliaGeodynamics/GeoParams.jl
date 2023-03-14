@@ -2,7 +2,7 @@ module HeatCapacity
 
 # This implements different methods to specify heat capacity
 #
-# If you want to add a new method here, feel free to do so. 
+# If you want to add a new method here, feel free to do so.
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
 using Parameters, LaTeXStrings, Unitful
@@ -25,9 +25,9 @@ include("../Computations.jl")
 # Constant Heat Capacity -------------------------------------------------------
 """
     ConstantHeatCapacity(cp=1050J/mol/kg)
-    
+
 Set a constant heat capacity:
-```math  
+```math
     cp  = cst
 ```
 where ``cp`` is the thermal heat capacity [``J/kg/K``].
@@ -49,7 +49,7 @@ end
 
 compute_heatcapacity(s::ConstantHeatCapacity{_T}; kwargs...) where {_T} = s()
 
-# Print info 
+# Print info
 function show(io::IO, g::ConstantHeatCapacity)
     return print(io, "Constant heat capacity: cp=$(UnitValue(g.cp))")
 end
@@ -58,20 +58,20 @@ end
 # Temperature dependent heat capacity -------------------------------
 """
     T_HeatCapacity_Whittington()
-    
+
 Sets a temperature-dependent heat capacity following the parameterization of Whittington et al. (2009), Nature:
-```math  
-    Cp = (a + b T - c/T^2)/m 
+```math
+    Cp = (a + b T - c/T^2)/m
 ```
 
-where ``Cp`` is the heat capacity [``J/kg/K``], and ``a,b,c`` are parameters that dependent on the temperature `T`:
+where ``Cp`` is the heat capacity [``J/kg/K``], and ``a,b,c`` are parameters that depend on the temperature `T`:
 - a = 199.50 J/mol/K    if T<= 846 K
-- a = 199.50 J/mol/K    if T> 846 K
+- a = 229.32 J/mol/K    if T> 846 K
 - b = 0.0857J/mol/K^2   if T<= 846 K
 - b = 0.0323J/mol/K^2   if T> 846 K
 - c = 5e6J/mol*K        if T<= 846 K
 - c = 47.9e-6J/mol*K    if T> 846 K
-- molmass =   0.22178kg/mol 
+- molmass =   0.22178kg/mol
 
 Note that this is slightly different than the equation in the manuscript, as Cp is in J/kg/K (rather than ``J/mol/K`` as in eq.3/4 of the paper)
 """
@@ -84,7 +84,7 @@ Note that this is slightly different than the equation in the manuscript, as Cp 
     b1::GeoUnit{T,U2} = 0.0323J / mol / K^2             # linear term for high T    (T>  846 K)
     c0::GeoUnit{T,U3} = 5e6J / mol * K                  # quadratic term for low T  (T<= 846 K)
     c1::GeoUnit{T,U3} = 47.9e-6J / mol * K              # quadratic term for high T (T>  846 K)
-    molmass::GeoUnit{T,U4} = 0.22178kg / mol               # average molar mass 
+    molmass::GeoUnit{T,U4} = 0.22178kg / mol               # average molar mass
     Tcutoff::GeoUnit{T,U5} = 846K                        # cutoff temperature
 end
 T_HeatCapacity_Whittington(args...) = T_HeatCapacity_Whittington(convert.(GeoUnit, args)...)
@@ -112,8 +112,8 @@ end
 
 """
     compute_heatcapacity!(cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}, T::_T=zero(_T), P::_T=zero(_T)) where {_T,N}
- 
-Computes T-dependent heat capacity in-place    
+
+Computes T-dependent heat capacity in-place
 """
 # function compute_heatcapacity!(cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}; T::AbstractArray{_T, N}, kwargs...) where {_T,N} end
 
@@ -125,7 +125,7 @@ for myType in (:ConstantHeatCapacity, :T_HeatCapacity_Whittington)
     end
 end
 
-# Print info 
+# Print info
 function show(io::IO, g::T_HeatCapacity_Whittington)
     return print(
         io,
@@ -151,7 +151,7 @@ Currently available:
 - ConstantHeatCapacity
 - T\\_HeatCapacity_Whittington
 
-# Example 
+# Example
 Using dimensional units
 ```julia
 julia> T  = (250:100:1250)*K;
@@ -189,7 +189,7 @@ Computes heat capacity if only temperature (and not pressure) is specified
 Returns heat capacity if we are sure that we will only employ constant heat capacity in the simulation
 """
 
-# Computational routines needed for computations with the MaterialParams structure 
+# Computational routines needed for computations with the MaterialParams structure
 function compute_heatcapacity(s::AbstractMaterialParamsStruct, args)
     return s.HeatCapacity[1](args)
 end

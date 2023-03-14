@@ -3,3 +3,7 @@ Manifest.toml
 Stress_Pressure.png
 
 Time_evolution.svg
+
+# add Vscode files
+workspace.code-workspace
+.vscode
