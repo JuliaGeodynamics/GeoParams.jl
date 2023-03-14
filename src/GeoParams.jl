@@ -163,9 +163,13 @@ export dεII_dτII,
     SetDiffusionCreep,
     GrainBoundarySliding,
     SetGrainBoundarySliding,
+    PeierlsCreep,
+    SetPeierlsCreep,
     DislocationCreep_info,
     DiffusionCreep_info,
     GrainBoundarySliding_info,
+    PeierlsCreep_info
+
 
     #       Elasticity
     AbstractElasticity,
