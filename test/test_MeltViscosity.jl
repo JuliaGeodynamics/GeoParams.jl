@@ -1,9 +1,6 @@
 using Test
 using GeoParams
 
-x1 = MeltViscosity()
-
-
 
 @testset "MeltViscosity.jl" begin
 
@@ -30,5 +27,21 @@ x1 = MeltViscosity()
     # check that value for TauII is the same that previously assumed
     TauII2 = compute_τII(x1, ε, args)
     @test TauII2 == TauII
+
+    # test for arrays
+    τII_array = ones(10) * 1e8
+    ϕ_array = ones(size(τII_array))* 0.05
+    η_array = ones(size(τII_array))* 1e18
+    ε_array = zeros(size(τII_array))
+
+    args_array = (; η=η_array, ϕ=ϕ_array)
+
+    compute_εII!(ε_array, x1, τII_array, args_array)
+    @test ε_array[1] ≈ ε
+
+    # compute when args are scalars
+    compute_εII!(ε_array, x1, τII_array, args)
+    @test ε_array[1] ≈ ε
+
 
 end
