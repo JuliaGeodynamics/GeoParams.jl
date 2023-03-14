@@ -50,6 +50,36 @@ const PeierlsCreep_info = Dict([
             n=1.0NoUnits,                         # power-law exponent
             q=2.0NoUnits,                         # exponent of water-fugacity
             o=0.5NoUnits,                        # grain size exponent
+            TauP=15.0e9Pa,                         # Peierls stress
+            A=(1e6)s^(-1),    # material specific rheological parameter
+            E=450.0kJ / mol,                        # activation energy
+            Apparatus=AxialCompression,
+        ),
+        MaterialParamsInfo(;
+            Comment="Paper not found; plots not checked (NM)",
+            BibTex_Reference="
+                @article{demouchy2013low,
+                title={Low strength of Earth’s uppermost mantle inferred from tri-axial deformation experiments on dry olivine crystals},
+                author={Demouchy, Sylvie and Tommasi, Andr{\'e}a and Ballaran, Tiziana Boffa and Cordier, Patrick},
+                journal={Physics of the Earth and Planetary Interiors},
+                volume={220},
+                pages={37--49},
+                year={2013},
+                publisher={Elsevier}
+                }
+        "),
+    ),
+)
+
+# Dry Olivine rheology 
+(
+    "Dry Olivine | Idrissei (2016)",
+    (
+        DiffusionCreep(;
+            Name="Dry Olivine | Idrissei (2016)",
+            n=1.0NoUnits,                         # power-law exponent
+            q=2.0NoUnits,                         # exponent of water-fugacity
+            o=0.5NoUnits,                        # grain size exponent
             TauP=3.8e9Pa,                         # Peierls stress
             A=(1e6)s^(-1),    # material specific rheological parameter
             E=566.0kJ / mol,                        # activation energy
