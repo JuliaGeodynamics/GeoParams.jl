@@ -106,7 +106,7 @@ function Transform_PeierlsCreep(name; kwargs)
     v_kwargs = values(kwargs)
     val = GeoUnit.(values(v_kwargs))
     
-    args = (Name=p_in.Name, n=p_in.n, q=p_in.q, o=p_in.o, A=p_in.A, E=p_in.E, Apparatus=p_in.Apparatus)
+    args = (Name=p_in.Name, n=p_in.n, q=p_in.q, o=p_in.o, TauP=p_in.TauP, A=p_in.A, E=p_in.E, Apparatus=p_in.Apparatus)
     p = merge(args, NamedTuple{keys(v_kwargs)}(val))
     
     Name = String(collect(p.Name))
@@ -159,7 +159,7 @@ end
     @unpack_val n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    ε = A * fastpow(TauII, n) exp(-(E / (R * T)) * (fastpow(1 - fastpow(TauII / TauP, o), q))) / FE
+    ε = A * exp(-(E / (R * T)) * (fastpow(1 - fastpow(TauII / TauP, o), q))) / FE
 
     return ε
 end
@@ -170,7 +170,7 @@ end
     @unpack_units n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    ε = A * fastpow(TauII, n) exp(-(E / (R * T)) * (fastpow(1 - fastpow(TauII / TauP, o), q))) / FE
+    ε = A * exp(-(E / (R * T)) * (fastpow(1 - fastpow(TauII / TauP, o), q))) / FE
 
     return ε
 end
@@ -202,14 +202,8 @@ end
            A *
            E *
            q *
-           FT *
-           n *
-           exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, o), q) / (R * T))) *
-           (1 / (FE * R * T * Tau * (1 - fastpow((FT * TauII) / TauP, o)))) + 
-           (A * n * 
-           fastpow(TauII, n) * 
-           exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, o), q) / (R * T)))) / 
-           (FE * TauII)
+           exp(-E * fastpow(1 - fastpow((FT * TauII) / TauP, o), q) / (R * T)) *
+           (1 / (FE * R * T * Tau * (1 - fastpow((FT * TauII) / TauP, o))))
 end
 
 @inline function dεII_dτII(
@@ -225,18 +219,11 @@ end
            A *
            E *
            q *
-           FT *
-           n *
-           exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, o), q) / (R * T))) *
-           (1 / (FE * R * T * Tau * (1 - fastpow((FT * TauII) / TauP, o)))) + 
-           (A * n * 
-           fastpow(TauII, n) * 
-           exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, o), q) / (R * T)))) / 
-           (FE * TauII)
+           exp(-E * fastpow(1 - fastpow((FT * TauII) / TauP, o), q) / (R * T)) *
+           (1 / (FE * R * T * Tau * (1 - fastpow((FT * TauII) / TauP, o))))
 end
 
 
-####### Muss durch non linear iterations gelöst werden, weil quadratische Gleichung
 """
     compute_τII(a::PeierlsCreep, EpsII; P, T, f, args...)
 
@@ -255,11 +242,10 @@ Computes the stress for a peierls creep law given a certain strain rate
 
     FT, FE = a.FT, a.FE
 
-    τ = TauP *
-        fastpow(1 - fastpow(- (R * T * log((FE * EpsII) / A) /Q), 
-        1 / q), 
-        1 / o) / 
-        FT
+    τ = (TauP * 
+        fastpow(
+        fastpow(- E, -1 / q ) * 
+        (fastpow(- R * T * log((FE * EpsII) / a), 1 / q) - fastpow(e, 1 / q)), 1 / o)) / FT
 
     return τ
 end
@@ -270,11 +256,10 @@ end
     @unpack_units n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    τ = TauP *
-        fastpow(1 - fastpow(- (R * T * log((FE * EpsII) / A) /Q), 
-        1 / q), 
-        1 / o) / 
-        FT
+    τ = (TauP * 
+        fastpow(
+        fastpow(- E, -1 / q ) * 
+        (fastpow(- R * T * log((FE * EpsII) / a), 1 / q) - fastpow(e, 1 / q)), 1 / o)) / FT
 
     return τ
 end
@@ -305,13 +290,17 @@ end
     @unpack_val n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    # derived in WolframAlpha
-    return (TauP * exp(-1 / q) * 
-            R * 
-            T * 
-            fastpow(-R * T * log((FE * EpsII) / A)), (1 / q - 1)) * 
-            fastpow(1 - exp(-1 / q) * fastpow(-R * T * log((FE * EpsII) / A), (1 / q)), (1/o - 1)) / 
-            (FT * o * q *  EpsII)
+    # derived in SymPy
+    return (TauP * fastpow(fastpow(E, -1 / q) * 
+            (-fastpow(e, 1 / q) + 
+            fastpow(-R * T * log((FE * EpsII) / A), 1 / q)), o) * 
+            fastpow(-R * T * log((FE * EpsII) / A), (1 / q))) / 
+            (FT * 
+            o * 
+            q * 
+            EpsII * 
+            (-fastpow(e, 1 / q) + fastpow(-R * T * log((FE * EpsII) / A), (1 / q))) * 
+            log((FE * EpsII) / A))
 end
 
 @inline function dτII_dεII(
@@ -321,12 +310,16 @@ end
     FT, FE = a.FT, a.FE
 
     # derived in WolframAlpha
-    return (TauP * exp(-1 / q) * 
-            R * 
-            T * 
-            fastpow(-R * T * log((FE * EpsII) / A)), (1 / q - 1)) * 
-            fastpow(1 - exp(-1 / q) * fastpow(-R * T * log((FE * EpsII) / A), (1 / q)), (1/o - 1)) / 
-            (FT * o * q *  EpsII)
+    return (TauP * fastpow(fastpow(E, -1 / q) * 
+            (-fastpow(e, 1 / q) + 
+            fastpow(-R * T * log((FE * EpsII) / A), 1 / q)), o) * 
+            fastpow(-R * T * log((FE * EpsII) / A), (1 / q))) / 
+            (FT * 
+            o * 
+            q * 
+            EpsII * 
+            (-fastpow(e, 1 / q) + fastpow(-R * T * log((FE * EpsII) / A), (1 / q))) * 
+            log((FE * EpsII) / A))
 end
 
 # Print info 
