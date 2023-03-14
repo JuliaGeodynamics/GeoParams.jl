@@ -2,11 +2,11 @@ using Test
 using GeoParams
 
 
-@testset "Density.jl" begin
+@testset "MeltViscosity.jl" begin
 
     x1 = MeltViscosity()
 
-    @test Value(x.α) == 1.0
+    @test Value(x1.α) == 1.0
 
     ϕ = 0.05
     η = 1e18
