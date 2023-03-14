@@ -62,15 +62,15 @@ export param_info,
     AbstractComposite,
     AbstractConstitutiveLaw
     AxialCompression, SimpleShear, Invariant,
-    get_G, 
+    get_G,
     get_Kb
 
-# add methods programatically 
-for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType)
+# add methods programatically
+for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType, :MeltingViscosity)
     @eval begin
         compute_εII(a::$(myType), TauII, args) = compute_εII(a, TauII; args...)
         compute_εvol(a::$(myType), P, args) = compute_εvol(a, P; args...)
-        
+
         function compute_εII!(
             ε::AbstractArray{_T,N}, s::$(myType){_T}, TauII::AbstractArray{_T,N}, args
         ) where {_T,N}
@@ -101,8 +101,8 @@ for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElas
         dεII_dτII(a::$(myType), TauII, args) = dεII_dτII(a, TauII; args...)
         dp_dεvol(a::$(myType), EpsVol, args) = dp_dεvol(a, EpsVol; args...)
         dεvol_dp(a::$(myType), P, args) = dεvol_dp(a, P; args...)
-        
-    
+
+
     end
 end
 
