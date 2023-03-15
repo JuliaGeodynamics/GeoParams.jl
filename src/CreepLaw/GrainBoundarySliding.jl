@@ -60,7 +60,7 @@ struct GrainBoundarySliding{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         Name="",
         n=3.5NoUnits,
         p=-2.0NoUnits,
-        A=1.5MPa^(-n) * s^(-1) * m^(3.0 ),
+        A=1.5MPa^(-3.5) * s^(-1.0) * µm^(2.0),
         E=500kJ / mol,
         V=24e-6m^3 / mol,
         R=8.3145J / mol / K,
@@ -126,7 +126,7 @@ function Transform_GrainBoundarySliding(name; kwargs)
 
     Apparatus = pp.Apparatus
 
-    args = (Name=Name, p=p, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+    args = (Name=Name, n=n, p=p, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
     
     return GrainBoundarySliding(; args...)
 end
@@ -229,8 +229,8 @@ end
             n *
             fastpow(FT * TauII, n) *
             exp(-(E + P * V) / (R * T))) \
-            FE *
-            TauII
+            (FE *
+            TauII)
 end
 
 @inline function dεII_dτII(
@@ -245,8 +245,8 @@ end
             n *
             fastpow(FT * TauII, n) *
             exp(-(E + P * V) / (R * T))) \
-            FE *
-            TauII
+            (FE *
+            TauII)
 end
 
 """
@@ -265,7 +265,7 @@ Returns grain boundary sliding stress as a function of 2nd invariant of the stra
     τ = fastpow(A, -n_inv) *
         fastpow(EpsII * FE, n_inv) *
         fastpow(d, -p * n_inv) *
-        fastpow(exp((Q + P * V) / (R * T)), n_inv) / FT
+        fastpow(exp((E + P * V) / (R * T)), n_inv) / FT
 
     return τ
 end
@@ -281,7 +281,7 @@ end
     τ = fastpow(A, -n_inv) *
         fastpow(EpsII * FE, n_inv) *
         fastpow(d, -p * n_inv) *
-        fastpow(exp((Q + P * V) / (R * T)), n_inv) / FT
+        fastpow(exp((E + P * V) / (R * T)), n_inv) / FT
 
     return τ
 end

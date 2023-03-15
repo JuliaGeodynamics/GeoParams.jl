@@ -114,7 +114,7 @@ function Transform_PeierlsCreep(name; kwargs)
     q = Value(p.q)
     o = Value(p.o)
     TauP = uconvert(Pa, Value(p.TauP))
-    A_Pa = uconvert(Pa^(-NumValue(p.n)) / s, Value(p.A))
+    A_Pa = uconvert(s^(-1.0), Value(p.A))
     E_J = uconvert(J / mol, Value(p.E))
 
     Apparatus = p.Apparatus
@@ -243,9 +243,8 @@ Computes the stress for a peierls creep law given a certain strain rate
     FT, FE = a.FT, a.FE
 
     τ = (TauP * 
-        fastpow(
-        fastpow(- E, -1 / q ) * 
-        (fastpow(- R * T * log((FE * EpsII) / a), 1 / q) - fastpow(e, 1 / q)), 1 / o)) / FT
+        fastpow(1 -  
+        (fastpow((-R * T * log((FE * EpsII) / A)) / E , 1 / q)), 1 / o)) / FT
 
     return τ
 end
@@ -257,9 +256,8 @@ end
     FT, FE = a.FT, a.FE
 
     τ = (TauP * 
-        fastpow(
-        fastpow(- E, -1 / q ) * 
-        (fastpow(- R * T * log((FE * EpsII) / a), 1 / q) - fastpow(e, 1 / q)), 1 / o)) / FT
+        fastpow(1 -  
+        (fastpow((-R * T * log((FE * EpsII) / A)) / E , 1 / q)), 1 / o)) / FT
 
     return τ
 end
@@ -292,14 +290,14 @@ end
 
     # derived in SymPy
     return (TauP * fastpow(fastpow(E, -1 / q) * 
-            (-fastpow(e, 1 / q) + 
+            (-fastpow(E, 1 / q) + 
             fastpow(-R * T * log((FE * EpsII) / A), 1 / q)), o) * 
             fastpow(-R * T * log((FE * EpsII) / A), (1 / q))) / 
             (FT * 
             o * 
             q * 
             EpsII * 
-            (-fastpow(e, 1 / q) + fastpow(-R * T * log((FE * EpsII) / A), (1 / q))) * 
+            (-fastpow(E, 1 / q) + fastpow(-R * T * log((FE * EpsII) / A), (1 / q))) * 
             log((FE * EpsII) / A))
 end
 
@@ -311,14 +309,14 @@ end
 
     # derived in WolframAlpha
     return (TauP * fastpow(fastpow(E, -1 / q) * 
-            (-fastpow(e, 1 / q) + 
+            (-fastpow(E, 1 / q) + 
             fastpow(-R * T * log((FE * EpsII) / A), 1 / q)), o) * 
             fastpow(-R * T * log((FE * EpsII) / A), (1 / q))) / 
             (FT * 
             o * 
             q * 
             EpsII * 
-            (-fastpow(e, 1 / q) + fastpow(-R * T * log((FE * EpsII) / A), (1 / q))) * 
+            (-fastpow(E, 1 / q) + fastpow(-R * T * log((FE * EpsII) / A), (1 / q))) * 
             log((FE * EpsII) / A))
 end
 

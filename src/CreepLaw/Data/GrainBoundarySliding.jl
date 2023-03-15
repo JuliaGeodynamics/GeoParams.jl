@@ -14,11 +14,11 @@ const GrainBoundarySliding_info = Dict([
 (
     "Dry Olivine < 1523K | Hirth and Kohlstedt (2003)",
     (
-        DiffusionCreep(;
+        GrainBoundarySliding(;
             Name="Dry Olivine < 1523K | Hirth and Kohlstedt (2003)",
             n=3.5NoUnits,                         # power-law exponent
             p=-2.0NoUnits,                        # grain size exponent
-            A=6500MPa^(-3.5) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            A=6500MPa^(-3.5) * μm^(2.0) * s^(-1),    # material specific rheological parameter
             E=400.0kJ / mol,                        # activation energy
             V=18e-6m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,
@@ -43,11 +43,11 @@ const GrainBoundarySliding_info = Dict([
 (
     "Dry Olivine >= 1523K | Hirth and Kohlstedt (2003)",
     (
-        DiffusionCreep(;
+        GrainBoundarySliding(;
             Name="Dry Olivine >= 1523K | Hirth and Kohlstedt (2003)",
             n=3.5NoUnits,                         # power-law exponent
             p=-2.0NoUnits,                        # grain size exponent
-            A=4.7e10MPa^(-3.5) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            A=4.7e10MPa^(-3.5) * μm^(2.0) * s^(-1),    # material specific rheological parameter
             E=600.0kJ / mol,                        # activation energy
             V=18e-6m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,

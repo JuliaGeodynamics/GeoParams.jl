@@ -1,16 +1,16 @@
 using Test
 using GeoParams
 
-@testset "GrainBoundarySliding" begin
+@testset "PeierlsCreep" begin
 
     # This tests the MaterialParameters structure
     CharUnits_GEO = GEO_units(; viscosity=1Pa * s, length=1m)
 
     # Define a linear viscous creep law ---------------------------------
-    x1 = GrainBoundarySliding()
-    @test Value(x1.n) == 3.5
-    @test Value(x1.p) == -2.0
-    @test Value(x1.A) == 1.5MPa^-3.5 * s^-1 * µm^(2.0)
+    x1 = PeierlsCreep()
+    @test Value(x1.n) == 1.0
+    @test Value(x1.q) == 2.0
+    @test Value(x1.A) == 5.7e11s^(-1.0)
 
     # perform a computation with the dislocation creep laws 
     # Calculate EpsII, using a set of pre-defined values
@@ -18,30 +18,27 @@ using GeoParams
         length=1000km, viscosity=1e19Pa * s, stress=100MPa, temperature=1000C
     )
     EpsII = GeoUnit(1.0s^-1.0)
-    TauII = GeoUnit(0.3MPa)
-    P = GeoUnit(1.0e9Pa)
-    T = GeoUnit(1400C)
-    d = GeoUnit(10mm)
-    d_nd = nondimensionalize(d, CharDim)
+    TauII = GeoUnit(1e6MPa)
+    T = GeoUnit(600C)
 
     # compute a pure diffusion creep rheology
-    p = SetGrainBoundarySliding("Dry Olivine < 1523K | Hirth and Kohlstedt (2003)")
+    p = SetPeierlsCreep("Dry Olivine | Goetze and Evans (1979)")
 
-    T = 650 + 273.15
+    T = 600 + 273.15
 
     args = (; T=T)
-    TauII = 1e6
+    TauII = 1e9
     ε = compute_εII(p, TauII, args)
-    @test ε ≈ 8.968730687982234e-31
+    @test ε ≈ 5.3668012964885067e-14
 
     # same but while removing the tensor correction
     ε_notensor = compute_εII(remove_tensor_correction(p), TauII, args)
-    @test ε_notensor ≈ 1.5143914737172087e-31
+    @test ε_notensor ≈ 6.197048346429745e-14
 
     # test with arrays
-    τII_array = ones(10) * 1e6
+    τII_array = ones(10) * 1e9
     ε_array = similar(τII_array)
-    T_array = ones(size(τII_array)) * (650.0 + 273.15)
+    T_array = ones(size(τII_array)) * (600.0 + 273.15)
 
     args_array = (; T=T_array)
 
@@ -55,12 +52,12 @@ using GeoParams
     # ===
 
     # dry olivine, stress-strainrate curve
-    p = SetGrainBoundarySliding("Dry Olivine < 1523K | Hirth and Kohlstedt (2003)")
-    εII = exp10.(-22:0.5:-12)
-    τII = zero(εII)                # preallocate array
-    T = 650 + 273.15
-    gsiz = 100e-6
-    args = (T=T, d=gsiz)
+    p = SetPeierlsCreep("Dry Olivine | Goetze and Evans (1979)")
+    εII = exp10.(-15:0.5:-11)
+    τII = zero(εII)                    # preallocate array
+    T = 600 + 273.15
+
+    args = (;T=T)
     compute_τII!(τII, p, εII, args)
 
     eta_array = @. 0.5 * τII / εII
@@ -70,9 +67,8 @@ using GeoParams
     eta_array1 = @. 0.5 * τII / εII
 
     # test overriding the default values
-    a =  SetGrainBoundarySliding("Dry Olivine >= 1523K | Hirth and Kohlstedt (2003)", V=1e-6m^3/mol)
-    @test Value(a.V) == 1e-6m^3/mol
-
+    a = SetPeierlsCreep("Dry Olivine | Goetze and Evans (1979)", E=535.0kJ / mol)
+    @test Value(a.E) == 535.0kJ / mol
 
     # --- debugging
 
@@ -85,13 +81,11 @@ using GeoParams
 
     # ----
 
-
-
     # Do some basic checks on all creeplaws in the DB
     CharDim = GEO_units()
-    creeplaw_list = GrainBoundarySliding_info       # all creeplaws in database
+    creeplaw_list = PeierlsCreep_info       # all creeplaws in database
     for (key, val) in creeplaw_list
-        p     = SetGrainBoundarySliding(key)        # original creep law
+        p     = SetPeierlsCreep(key)        # original creep law
         p_nd  = nondimensionalize(p,CharDim)    # non-dimensionalized
         p_dim = dimensionalize(p,CharDim)       # dimensionalized
 
@@ -103,9 +97,9 @@ using GeoParams
                 @test Value(val_original) == Value(val_final)        
             end
         end
-        
+############################## Ab hier nochmal gucken ######################################
         # Perform computations with the rheology
-        args   = (T=900.0, d=100e-6, τII_old=1e6);
+        args   = (T=600.0, τII_old=1e9);
         ε      = 1e-15
         τ      = compute_τII(p,ε,args)
         ε_test = compute_εII(p,τ,args)
