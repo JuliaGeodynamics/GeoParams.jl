@@ -1,0 +1,99 @@
+using Test
+using GeoParams
+
+@testset "NonLinearPeierlsCreepLaws" begin
+    
+    # This tests the MaterialParameters structure
+    CharUnits_GEO = GEO_units(; viscosity=1Pa * s, length=1m)
+
+    # Define a linear viscous creep law ---------------------------------
+    x1 = NonLinearPeierlsCreep()
+    @test Value(x1.n) == 2.0
+    @test Value(x1.q) == 1.0
+    @test Value(x1.o) == 0.5
+    @test Value(x1.A) == 5.7e11MPa^(-2.0) * s^(-1.0)
+    
+    # perform a computation with the peierls creep laws 
+    # Calculate EpsII, using a set of pre-defined values
+    CharDim = GEO_units(;
+        length=1000km, viscosity=1e19Pa * s, stress=100MPa, temperature=1000C
+    )
+    EpsII = GeoUnit(1.0s^-1.0)
+    TauII = GeoUnit(1.0e3MPa)
+    T = GeoUnit(600C)
+
+    # compute a pure non linear peierls creep rheology
+    p = SetNonLinearPeierlsCreep("Wet Olivine | Mei et al. (2010)")
+
+    T = 600 + 273.15
+
+    args = (; T=T)
+    TauII = 1e6
+    ε = compute_εII(p, TauII, args)
+    @test ε ≈ 6.304589599880289e-8
+
+    # same but while removing the tensor correction
+    ε_notensor = compute_εII(remove_tensor_correction(p), TauII, args)
+    @test ε_notensor ≈ 7.279913005242001e-8
+
+    # test with arrays
+    τII_array = ones(10) * 1e6
+    ε_array = similar(τII_array)
+    T_array = ones(size(τII_array)) * (600.0 + 273.15)
+
+    args_array = (; T=T_array)
+
+    compute_εII!(ε_array, p, τII_array, args_array)
+    @test ε_array[1] ≈ ε
+
+    # compute when args are scalars
+    compute_εII!(ε_array, p, τII_array, args)
+    @test ε_array[1] ≈ ε
+
+    # ===
+
+    # wet olivine, stress-strainrate curve
+    p = SetNonLinearPeierlsCreep("Wet Olivine | Mei et al. (2010)")
+    # εII = exp10.(-22:0.5:-12)
+    τII = exp10.(9:0.05:10)               # preallocate array
+    T = 600 + 273.15
+    args = (;T=T)
+    # compute_τII!(τII, p, εII, args)
+
+    # eta_array = @. 0.5 * τII / εII
+
+    εII = zero(τII)
+    compute_εII!(εII, p, τII, args)
+    # eta_array1 = @. 0.5 * τII / εII
+
+    # test overriding the default values
+    a =  SetNonLinearPeierlsCreep("Wet Olivine | Mei et al. (2010)", E=475.0kJ / mol)
+    @test Value(a.E) == 475.0kJ / mol
+
+    # Do some basic checks on all creeplaws in the DB
+    CharDim = GEO_units()
+    creeplaw_list = NonLinearPeierlsCreep_info       # all creeplaws in database
+    for (key, val) in creeplaw_list
+        p     = SetNonLinearPeierlsCreep(key)        # original creep law
+        p_nd  = nondimensionalize(p,CharDim)    # non-dimensionalized
+        p_dim = dimensionalize(p,CharDim)       # dimensionalized
+
+        # Check that values are the same after non-dimensionalisation & dimensionalisation
+        for field in fieldnames(typeof(p_dim))
+            val_original = getfield(p,    field)
+            val_final    = getfield(p_dim,field)
+            if isa(val_original, GeoUnit)
+                @test Value(val_original) == Value(val_final)        
+            end
+        end
+        
+        # Perform computations with the rheology
+        # args   = (T=900.0, d=100e-6, τII_old=1e6);
+        # ε      = 1e-15
+        # τ      = compute_τII(p,ε,args)
+        # ε_test = compute_εII(p,τ,args)
+        # @test ε ≈ ε_test
+
+    end
+    
+end

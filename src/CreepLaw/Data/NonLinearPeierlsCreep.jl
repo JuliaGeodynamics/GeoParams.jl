@@ -14,13 +14,13 @@ const NonLinearPeierlsCreep_info = Dict([
 (
     "Wet Olivine | Mei et al. (2010)",
     (
-        DiffusionCreep(;
+        NonLinearPeierlsCreep(;
             Name="Wet Olivine | Mei et al. (2010)",
             n=2.0NoUnits,                         # power-law exponent
             q=1.0NoUnits,                         # exponent of water-fugacity
             o=0.5NoUnits,                        # grain size exponent
             TauP=5.9e9Pa,                         # Peierls stress
-            A=(5.7e11)MPa^(-n) * s^(-1),    # material specific rheological parameter
+            A=(5.7e11)MPa^(-2.0) * s^(-1.0),    # material specific rheological parameter
             E=320.0kJ / mol,                        # activation energy
             Apparatus=AxialCompression,
         ),

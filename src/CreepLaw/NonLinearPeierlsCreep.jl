@@ -1,9 +1,8 @@
 export NonLinearPeierlsCreep,
-    NonLinearPeierls_info,
+    NonLinearPeierlsCreep_info,
     SetNonLinearPeierlsCreep,
     remove_tensor_correction,
-    dεII_dτII,
-    dτII_dεII
+    dεII_dτII
 
 # NonLinearPeierls Creep ------------------------------------------------
 """
@@ -49,11 +48,11 @@ struct NonLinearPeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
 
     function NonLinearPeierlsCreep(;
         Name="",
-        n=1.0NoUnits,
-        q=2.0NoUnits,
-        o=1.0NoUnits,
+        n=2.0NoUnits,
+        q=1.0NoUnits,
+        o=0.5NoUnits,
         TauP=8.5e9Pa,
-        A=5.7e11s^(-1.0),
+        A=5.7e11MPa^(-2.0) * s^(-1.0),
         E=476.0kJ / mol,
         R=8.3145J / mol / K,
         Apparatus=AxialCompression,
@@ -106,7 +105,7 @@ function Transform_NonLinearPeierlsCreep(name; kwargs)
     v_kwargs = values(kwargs)
     val = GeoUnit.(values(v_kwargs))
     
-    args = (Name=p_in.Name, n=p_in.n, q=p_in.q, o=p_in.o, TauP=P_in.TauP, A=p_in.A, E=p_in.E, Apparatus=p_in.Apparatus)
+    args = (Name=p_in.Name, n=p_in.n, q=p_in.q, o=p_in.o, TauP=p_in.TauP, A=p_in.A, E=p_in.E, Apparatus=p_in.Apparatus)
     p = merge(args, NamedTuple{keys(v_kwargs)}(val))
     
     Name = String(collect(p.Name))
@@ -141,7 +140,7 @@ end
 
 function param_info(s::NonLinearPeierlsCreep)
     name = String(collect(s.Name))
-    eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"
+    eq = ""
     if name == ""
         return MaterialParamsInfo(; Equation=eq)
     end
