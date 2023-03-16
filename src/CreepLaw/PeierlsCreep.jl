@@ -159,7 +159,7 @@ end
     @unpack_val n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    ε = A * exp(-(E / (R * T)) * (fastpow(1 - fastpow(TauII / TauP, o), q))) / FE
+    ε = (A * exp(-(E / (R * T)) * (fastpow(1 - fastpow((FT * TauII) / TauP, o), q)))) / FE
 
     return ε
 end
@@ -170,7 +170,7 @@ end
     @unpack_units n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    ε = A * exp(-(E / (R * T)) * (fastpow(1 - fastpow(TauII / TauP, o), q))) / FE
+    ε = (A * exp(-(E / (R * T)) * (fastpow(1 - fastpow((FT * TauII) / TauP, o), q)))) / FE
 
     return ε
 end
@@ -246,8 +246,8 @@ Computes the stress for a peierls creep law given a certain strain rate
     o_inv = inv(o)
 
     τ = (TauP * 
-        fastpow(1 -  
-        (fastpow((-(R * T * log((FE * EpsII) / A)) / E) , q_inv)), o_inv)) / FT
+        fastpow(1 - fastpow(-((R * T * log((FE * EpsII) / A)) / E) , q_inv), o_inv)) / 
+        FT
 
     return τ
 end
@@ -262,8 +262,8 @@ end
     o_inv = inv(o)
 
     τ = (TauP * 
-        fastpow(1 -  
-        (fastpow((-R * T * log((FE * EpsII) / A)) / E , q_inv)), o_inv)) / FT
+        fastpow(1 - fastpow(-((R * T * log((FE * EpsII) / A)) / E) , q_inv), o_inv)) / 
+        FT
 
     return τ
 end

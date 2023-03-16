@@ -29,7 +29,7 @@ using GeoParams
     args = (; T=T)
     TauII = 1e9
     ε = compute_εII(p, TauII, args)
-    @test ε ≈ 5.3668012964885067e-14
+    @test ε ≈ 2.3181145468270706e-9
 
     # same but while removing the tensor correction
     ε_notensor = compute_εII(remove_tensor_correction(p), TauII, args)
@@ -97,10 +97,10 @@ using GeoParams
                 @test Value(val_original) == Value(val_final)        
             end
         end
-############################## Ab hier nochmal gucken ######################################
+############################## Ab hier nochmal gucken ###################################### 
         # Perform computations with the rheology
-        args   = (T=600.0, τII_old=1e9);
-        ε      = 1e-15
+        args   = (T=500.0, τII_old=2.2e9);
+        ε      = 1e-7
         τ      = compute_τII(p,ε,args)
         ε_test = compute_εII(p,τ,args)
         @test ε ≈ ε_test
