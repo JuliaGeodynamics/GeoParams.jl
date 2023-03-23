@@ -8,6 +8,16 @@ struct CustomRheology{F1, F2, T} <: AbstractCreepLaw{Float64}
     strain::F1 # function to compute strain rate
     stress::F2 # function to compute deviatoric stress
     args::T # NamedTuple of parameters
+
+    function CustomRheology(strain::F1, stress::F2, args::T) where {F1, F2, T}
+        f_strain = has_kwargs(strain) ? strain : (a, TauII; kwargs...) -> a.strain(a, TauII)
+        f_stress = has_kwargs(stress) ? stress : (a, EpsII; kwargs...) -> a.stress(a, EpsII)
+        new{typeof(f_strain), typeof(f_stress), T}(f_strain, f_stress, args)
+    end
+end
+
+function has_kwargs(f) 
+    methods(f)[1].nkw == 0
 end
 
 function compute_εII(a::CustomRheology, TauII, args)
