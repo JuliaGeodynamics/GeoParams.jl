@@ -16,7 +16,6 @@ using ForwardDiff
 using StaticArrays
 using Static
 
-
 const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 
 #abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
@@ -66,7 +65,7 @@ export param_info,
     get_Kb
 
 # add methods programatically 
-for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType)
+for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType, :ArrheniusType2)
     @eval begin
         compute_εII(a::$(myType), TauII, args) = compute_εII(a, TauII; args...)
         compute_εvol(a::$(myType), P, args) = compute_εvol(a, P; args...)
@@ -101,8 +100,6 @@ for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElas
         dεII_dτII(a::$(myType), TauII, args) = dεII_dτII(a, TauII; args...)
         dp_dεvol(a::$(myType), EpsVol, args) = dp_dεvol(a, EpsVol; args...)
         dεvol_dp(a::$(myType), P, args) = dεvol_dp(a, P; args...)
-        
-    
     end
 end
 
