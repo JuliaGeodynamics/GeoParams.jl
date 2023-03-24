@@ -1,6 +1,6 @@
 # `User-defined rheology`
 
-`CustomReolgy` allows the user to interface with `GeoParams.jl` API for rheology calculations: 
+`CustomRheology` allows the user to interface with `GeoParams.jl` API for rheology calculations: 
 
 ```julia
 struct CustomRheology{F1, F2, T} <: AbstractCreepLaw
