@@ -10,8 +10,8 @@ struct CustomRheology{F1, F2, T} <: AbstractCreepLaw{Float64}
     args::T # NamedTuple of parameters
 
     function CustomRheology(strain::F1, stress::F2, args::T) where {F1, F2, T}
-        f_strain = has_kwargs(strain) ? strain : (a, TauII; kwargs...) -> a.strain(a, TauII)
-        f_stress = has_kwargs(stress) ? stress : (a, EpsII; kwargs...) -> a.stress(a, EpsII)
+        f_strain = has_kwargs(strain) ? strain : (a, τII; kwargs...) -> a.strain(a, τII)
+        f_stress = has_kwargs(stress) ? stress : (a, εII; kwargs...) -> a.stress(a, εII)
         new{typeof(f_strain), typeof(f_stress), T}(f_strain, f_stress, args)
     end
 end
@@ -20,30 +20,30 @@ function has_kwargs(f)
     first(methods(f)).nkw == 0
 end
 
-@inline function compute_εII(a::CustomRheology, TauII, args)
-    a.strain(a, TauII; args...)
+@inline function compute_εII(a::CustomRheology, τII, args)
+    a.strain(a, τII; args...)
 end
 
-function compute_εII!(EpsII::AbstractArray, a::CustomRheology, TauII::AbstractArray, args)
-    for i in eachindex(EpsII)
-        @inbounds EpsII[i] = a.strain(a, TauII[i]; ntuple_idx(args)...)
+function compute_εII!(εII::AbstractArray, a::CustomRheology, τII::AbstractArray, args)
+    for i in eachindex(εII)
+        @inbounds εII[i] = a.strain(a, τII[i]; ntuple_idx(args, i)...)
     end
 end
 
-@inline function compute_τII(a::CustomRheology, EpsII, args)
-    a.stress(a, EpsII; args...)
+@inline function compute_τII(a::CustomRheology, εII, args)
+    a.stress(a, εII; args...)
 end
 
-function compute_τII!(TauII::AbstractArray, a::CustomRheology, EpsII::AbstractArray, args)
-    for i in eachindex(EpsII)
-        @inbounds TauII[i] = a.stress(a, EpsII[i]; ntuple_idx(args)...)
+function compute_τII!(τII::AbstractArray, a::CustomRheology, εII::AbstractArray, args)
+    for i in eachindex(εII)
+        @inbounds τII[i] = a.stress(a, εII[i]; ntuple_idx(args, i)...)
     end
 end
 
-@inline function dεII_dτII(a::CustomRheology, TauII, args)
-    ForwardDiff.derivative(TauII -> a.strain(a, TauII; args...), TauII)
+@inline function dεII_dτII(a::CustomRheology, τII, args)
+    ForwardDiff.derivative(τII -> a.strain(a, τII; args...), τII)
 end
 
-@inline function dτII_dεII(a::CustomRheology, EpsII, args)
-    ForwardDiff.derivative(EpsII -> a.stress(a, EpsII; args...), EpsII)
+@inline function dτII_dεII(a::CustomRheology, εII, args)
+    ForwardDiff.derivative(εII -> a.stress(a, εII; args...), εII)
 end
