@@ -20,7 +20,7 @@ end
 @inline function custom_viscosity(
     a::CustomRheology; P=0.0, T=273.0, depth=0.0, kwargs...
 )
-    (; η0, Ea, Va, T0, R, cutoff) = a.args
+    η0, Ea, Va, T0, R, cutoff = a.args.η0 , a.args.Ea , a.args.Va , a.args.T0 , a.args.R , a.args.cutoff
     η = η0 * exp((Ea + P * Va) / (R * T) - Ea / (R * T0))
     correction = (depth ≤ 660e3) + (depth > 660e3) * 1e1 
     return  clamp(η * correction, cutoff...)
