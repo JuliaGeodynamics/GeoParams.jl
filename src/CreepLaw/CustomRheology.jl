@@ -17,7 +17,7 @@ struct CustomRheology{F1, F2, T} <: AbstractCreepLaw{Float64}
 end
 
 function has_kwargs(f) 
-    methods(f)[1].nkw == 0
+    first(methods(f)).nkw == 0
 end
 
 function compute_εII(a::CustomRheology, TauII, args)
