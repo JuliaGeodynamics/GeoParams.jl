@@ -269,33 +269,6 @@ function show(io::IO, g::ArrheniusType)
     )
 end
 
-"""
-    ArrheniusType2()
-    
-Defines an Arrhenius-type linear viscosity in the form of 
-    \\eta = \\eta_{0} * \\exp\\left(\\frac{E_{\\eta}{T+T_{0}}-\\frac{E_{\\eta}{T_{\\eta}+T_{0}}\\right) 
-
-The (isotropic) linear viscous rheology is given by  
-```math  
-    \\tau_{ij} = 2 \\eta \\dot{\\varepsilon}_{ij} 
-```
-or
-```math  
-    \\dot{\\varepsilon}_{ij}  = {\\tau_{ij}  \\over 2 \\eta }
-```
-
-where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\\dot{\\varepsilon}_0``[1/s], and ``n`` the power law exponent []. 
-From Gulcher et al 2022.
-"""
-@with_kw_noshow struct ArrheniusType2{_T,U1,U2,U3,U4,U5,N} <: AbstractCreepLaw{_T}
-    η0::GeoUnit{_T,U1} = 5e20 * Pa * s      # reference viscosity
-    Ea::GeoUnit{_T,U2} = 200e3 * J / mol     # activation energy
-    Va::GeoUnit{_T,U3} = 2.6e-6 * m^3 / mol   # activation volume
-    T0::GeoUnit{_T,U4} = 1.6e3 * K           # reference temperature
-    R::GeoUnit{_T,U5} = 8.3145 * J / mol / K # universal gas constant
-    cutoff::N = (1e16, 1e25)
-end
-
 # Powerlaw viscous rheology ----------------------------------------------
 """
     PowerlawViscous(η0=1e18Pa*s, n=2.0NoUnits, ε0=1e-15/s)
