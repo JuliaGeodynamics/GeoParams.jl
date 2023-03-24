@@ -20,7 +20,7 @@ function has_kwargs(f)
     first(methods(f)).nkw == 0
 end
 
-function compute_εII(a::CustomRheology, TauII, args)
+@inline function compute_εII(a::CustomRheology, TauII, args)
     a.strain(a, TauII; args...)
 end
 
@@ -30,7 +30,7 @@ function compute_εII!(EpsII::AbstractArray, a::CustomRheology, TauII::AbstractA
     end
 end
 
-function compute_τII(a::CustomRheology, EpsII, args)
+@inline function compute_τII(a::CustomRheology, EpsII, args)
     a.stress(a, EpsII; args...)
 end
 
@@ -40,10 +40,10 @@ function compute_τII!(TauII::AbstractArray, a::CustomRheology, EpsII::AbstractA
     end
 end
 
-function dεII_dτII(a::CustomRheology, TauII, args)
+@inline function dεII_dτII(a::CustomRheology, TauII, args)
     ForwardDiff.derivative(TauII -> a.strain(a, TauII; args...), TauII)
 end
 
-function dτII_dεII(a::CustomRheology, EpsII, args)
+@inline function dτII_dεII(a::CustomRheology, EpsII, args)
     ForwardDiff.derivative(EpsII -> a.stress(a, EpsII; args...), EpsII)
 end
