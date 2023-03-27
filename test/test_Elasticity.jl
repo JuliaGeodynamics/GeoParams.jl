@@ -27,14 +27,29 @@ using GeoParams
 
     @test isvolumetric(a) == true
 
+    b = ConstantElasticity()
+    v = SetMaterialParams(; Elasticity = ConstantElasticity())
+    vv=(
+        SetMaterialParams(; Phase=1, Elasticity = ConstantElasticity()),
+        SetMaterialParams(; Phase=2, Elasticity = ConstantElasticity()),
+    )
+
+    @test get_G(b) == b.G.val
+    @test get_G(v) == b.G.val
+    @test get_G(vv, 1) == get_G(vv, 2) == b.G.val # for multiple phases
+
+    @test get_Kb(b) == b.Kb.val
+    @test get_Kb(v) == b.Kb.val
+    @test get_Kb(vv, 1) == get_Kb(vv, 2) == b.Kb.val # for multiple phases
+
     # Compute with Floats
     τII = 20e6
     τII_old = 15e6
     p = 10e6
-    p_old = 5e6
+    P_old = 5e6
     dt = 1e6
     argsτ = (τII_old=τII_old, dt=dt)
-    argsp = (p_old=p_old, dt=dt)
+    argsp = (P_old=P_old, dt=dt)
     @test compute_εII(a, τII, argsτ) ≈ 5.0e-11  # compute
     @test compute_τII(a, 1e-15, argsτ) ≈ 1.50001e7
     @test compute_εvol(a, p, argsp) ≈ -5.0e-11  # compute
@@ -42,7 +57,7 @@ using GeoParams
     @test dεII_dτII(a, τII, argsτ) ≈ 1e-17
     @test dτII_dεII(a,τII_old,dt,argsτ) ≈ 1e17
     @test dεvol_dp(a,p,argsp) ≈ -1e-17
-    @test dp_dεvol(a,p_old,dt,argsp) ≈ -1e17
+    @test dp_dεvol(a,P_old,dt,argsp) ≈ -1e17
 
     # Test with arrays
     τII_old_array = ones(10) * 15e6
@@ -52,7 +67,7 @@ using GeoParams
     p_array = ones(10) * 26e6
     εvol_el_array = similar(p_array)
     argsτ = (τII_old=τII_old_array, dt=dt)
-    argsp = (p_old=p_old_array, dt=dt)
+    argsp = (P_old=p_old_array, dt=dt)
     compute_εII!(ε_el_array, a, τII_array, argsτ)
     @test ε_el_array[1] ≈ 5.0e-11
     compute_εvol!(εvol_el_array, a, p_array, argsp)

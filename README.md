@@ -150,7 +150,7 @@ A typical geodynamic simulation involves a lot of parameters. Creating data tabl
   2)  Provide tools to automatically generate data tables from the input parameters. This saves time and minimizes errors. 
 #### 3.1 Plotting 
 A few simple functions are provided to plot various parameters.
-Fpr example, in order to plot a melting parameterisation, do:
+For example, in order to plot a melting parameterisation, do:
 ```julia
 julia> using GeoParams, Plots
 Adding plotting routines of GeoParams
@@ -159,11 +159,22 @@ julia> PlotMeltFraction(p);
 ```
 
 #### 3.2 Automatically create data tables
-to be added to `GeoParams`. 
-
 When writing scientific papers that describes numerical modelling results, it is usually necessary to include tables that lists all model parameters employed. Doing this is error-prone and usually not a very interesting job to do. 
-That is why we provide routines that fully automatizes this process.
-
+That is why we provide routines that fully automatize this process:
+First, we need to define a phase.
+```julia
+julia> MatParam = (SetMaterialParams(Name="Viscous Matrix", Phase=1, Density=ConstantDensity(),CreepLaws = SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)")),
+                   SetMaterialParams(Name="Viscous Sinker", Phase=2, Density= PT_Density(),CreepLaws = LinearViscous(η=1e21Pa*s)),
+                   SetMaterialParams(Name="Viscous Bottom", Phase=3, Density= PT_Density(),CreepLaws = SetDislocationCreep("Diabase | Caristan (1982)")))
+```
+Next, you can create a LaTeX table for the defined phase ...
+```julia
+julia> ParameterTable(MatParam, filename="ParameterTable", format="latex", rdigits=3)
+```
+or a Markdown table.
+```julia
+julia> ParameterTable(MatParam, filename="ParameterTable", format="markdown", rdigits=3)
+```
 
 ### 4. Computational engine
 Once you have implemented a parameter in `GeoParams`, we provide allocation-free computational routines which can be called within your solver in the following manner:

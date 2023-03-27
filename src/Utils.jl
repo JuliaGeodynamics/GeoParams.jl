@@ -23,9 +23,9 @@ function max_length_tuple(t::NTuple{N,Tuple}) where {N}
 end
 
 # broadcast getindex() to NamedTuples
-function ntuple_idx(args::NamedTuple, I::Vararg{Integer,N}) where {N}
+@inline function ntuple_idx(args::NamedTuple, I::Vararg{Integer,N}) where {N}
     k = keys(args)
-    v = getindex.(values(args), Tuple(I)...)
+    v = getindex.(values(args), I...)
     return (; zip(k, v)...)
 end
 
@@ -39,5 +39,54 @@ end
 end
 
 @inline function fastpow(x::Quantity, n::AbstractFloat)
+    isinteger(n) && return x^Int(n)
     return x^n
 end
+
+# Tuple iterators
+@generated function nreduce(f::F, v::NTuple{N,Any}) where {N,F}
+    Base.@_inline_meta
+    quote
+        val = 0.0
+        Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i])
+        return val
+    end
+end
+
+@generated function nreduce(
+    f::F, v::NTuple{N,Any}, id_args::NTuple{N,T}, args::NTuple{NT,Any}
+) where {N,T<:Integer,NT,F}
+    Base.@_inline_meta
+    quote
+        val = 0.0
+        Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i], args[id_args[i]])
+        return val
+    end
+end
+
+@generated function nphase(f::F, phase::Int64, v::NTuple{N,AbstractMaterialParamsStruct}) where {N,F}
+    Base.@_inline_meta
+    quote
+        Base.Cartesian.@nexprs $N i -> @inbounds v[i].Phase === phase && return f(v[i])
+        return 0.0
+    end
+end
+
+@generated function nphase_ratio(f::F, phase_ratio::NTuple{N,T}, v::NTuple{N,AbstractMaterialParamsStruct}) where {N,F,T}
+    Base.@_inline_meta
+    quote
+        val = 0.0
+        Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i]) * phase_ratio[i]
+        return val
+    end
+end
+
+# Creates tuple without branching
+make_tuple(x) = (x,)
+make_tuple(x::Tuple) = x
+
+# Macros 
+macro print(a1, a2)
+    return :($(esc(a1)) === true ? println($(esc(a2))) : nothing)
+end
+

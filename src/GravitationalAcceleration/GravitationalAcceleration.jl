@@ -49,6 +49,8 @@ end
     end
 end
 
+compute_gravity(MatParam::AbstractMaterialParamsStruct) = compute_gravity(MatParam.Gravity[1])
+
 # Print info 
 function show(io::IO, d::ConstantGravity{_T}) where {_T}
     return print(io, "Gravitational acceleration: g=$(UnitValue(d.g))")

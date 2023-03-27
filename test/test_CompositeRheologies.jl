@@ -12,15 +12,9 @@ using GeoParams, ForwardDiff
     e2 = SetConstantElasticity(; G=5e10, Kb=1e11)
     #pl1= DruckerPrager(C=1e6)                # plasticity
     pl1= DruckerPrager(C=1e6/cosd(30))        # plasticity which ends up with the same yield stress as pl3
-    pl2= DruckerPrager(; Ψ=10)                # plasticity
-    pl3= DruckerPrager(C=1e6, ϕ=0)                # plasticity
+    pl2= DruckerPrager(C=1e6, ϕ=0, Ψ=10)      # plasticity
+    pl3= DruckerPrager(C=1e6, ϕ=0)            # plasticity
     
-    test_vec = [v1 v2 v3 v4 e1 e2 pl1 pl2]
-    sol      = [false false false false false true false true]
-    for i = 1:length(sol)
-        @test isvolumetric(test_vec[i]) == sol[i]
-    end
-
     # Parallel elements
     p1 = Parallel(v3,v4)                # linear elements
     p2 = Parallel(v1,v2)                # includes nonlinear viscous elements
@@ -40,21 +34,34 @@ using GeoParams, ForwardDiff
     c10= CompositeRheology(e1,pl3)      # elastoplastic
     c11= CompositeRheology(e1,Parallel(pl3,LinearViscous(η=1e19Pa*s)))      # elasto-viscoplastic
     
+    c12= CompositeRheology(e2,v3)       # viscoelasticity with volumetric elasticity
+    c13= CompositeRheology(e2,pl2)      # volumetric elastoplastic
     
+    c14= CompositeRheology(SetConstantElasticity(G=1e10, Kb=2e11), LinearViscous(η=1e20), DruckerPrager(C=3e5, Ψ=10))   # case A
+    c15= CompositeRheology(SetConstantElasticity(G=1e10, Kb=2e11), LinearViscous(η=1e20), Parallel(DruckerPrager(C=3e5, Ψ=10),LinearViscous(η=1e19Pa*s)))   # case A
+    c16= CompositeRheology(SetConstantElasticity(G=1e10, Kb=2e11), LinearViscous(η=1e20), DruckerPrager_regularised(C=3e5, Ψ=10, η_vp=1e19))   # case A
+
     p4 = Parallel(c3,v3)                # Parallel element with composite one as well    
 
     # Check that we can construct complicated rheological elements
     c = CompositeRheology( (v1, v2, v3, e1, Parallel(p1, v1, v2),v2, Parallel(p1, v1), v2,v3 ))   
     @test isa(c.elements[1], AbstractCreepLaw)
 
-    c = CompositeRheology( (v1, v2, v3, e1, Parallel(p1, e1, Parallel( (v1, v2), v3) ), v2,v3) )   
+    c = CompositeRheology( (v1, v2, v3, e1, Parallel(p1, e1, Parallel( CompositeRheology(v1, v2), v3) ), v2,v3) )   
     @test isa(c.elements[3], AbstractCreepLaw)
     
-    c = Parallel((v2,v3,e1, Parallel(v2,v3),v2, Parallel(v2,(v3, v2))),v3,(e1,p1))
+    c = Parallel(CompositeRheology(v2,v3,e1, Parallel(v2,v3),v2, Parallel(v2,CompositeRheology(v3, v2))),v3,CompositeRheology(e1,p1))
     @test isa(c.elements[2], AbstractCreepLaw)
     
     args = (T=900.0, d=100e-6, τII_old=1e6, dt=1e8)
     εII, τII = 2e-15, 2e6
+
+    # test volumetric parts
+    test_vec = [v1 v2 v3 v4 e1 e2 pl1 pl2]
+    sol      = [false false false false false true false true]
+    for i = 1:length(sol)
+        @test isvolumetric(test_vec[i]) == sol[i]
+    end
 
     # Check derivatives 
     vec1 = [c1 c2 c3 c4 c5 p1 p2 p3] 
@@ -318,7 +325,7 @@ using GeoParams, ForwardDiff
     @test τ_vec1[end] ≈  τ_vec2[end]
     @test τ_vec1[end] > τ_vec[end] 
 
-    # Note: we currently have problems with viscoelastoplasticity if adding a parallel element
+    # Test this with various flavors of viscoelastoplasticity if adding a parallel element
     c_vep = CompositeRheology(LinearViscous(η=1e22),ConstantElasticity(),DruckerPrager());  
     c_vep_reg = CompositeRheology(LinearViscous(η=1e22),ConstantElasticity(),DruckerPrager_regularised(η_vp=1e20) ); 
     c_ve_vp = CompositeRheology(LinearViscous(η=1e22),ConstantElasticity(),Parallel(DruckerPrager(),LinearViscous(η=1e20)) ); 
@@ -363,5 +370,63 @@ using GeoParams, ForwardDiff
                 CompositeRheology   = c5)
     
     @test NumValue(MatParam.CompositeRheology[1][2].η) ≈ 1e22
+
+
+    
+    # Test cases with/without volumetric elements
+    # Note that the only 'special' case implemented one where we have 
+    # volumetric plasticity, which requires iterations. 
+    # In all other cases we assume the coupling  
+#    εII = 1e-15  
+#    εvol = -1e-18;
+
+#    εxx,εzz  = 6.8e-15, -7e-15
+    εxx,εzz  = 7e-15, -6.8e-15
+
+    εII  = sqrt(0.5*(εxx^2 + εzz^2))
+    εvol = εxx + εzz
+
+    args = (T = 900.0, d = 0.0001, τII_old = 700000.0, dt = 8.0e9, P = 0.0, P_old = 1e6)
+    for v in [c8 c3 c12 c13 c14]     
+
+        p, τII = compute_p_τII(v, εII, εvol, args, verbose=false)
+        if !isvolumetric(v)
+            @test p == args.P_old
+        end
+
+        # 0D rheology functions p
+        t_max = args.dt*2;
+        t_vec, P_vec, τ_vec    =   time_p_τII_0D(v, εII, εvol, args; t=(0.,t_max), nt=20, verbose=false)
+        if !isvolumetric(v)
+            @test sum(P_vec) == 0.0
+        
+        elseif isvolumetric(v) && !isvolumetricplastic(v)
+            # 'uncoupled' volumetric deformation
+            Kb_computed = (P_vec[end] - P_vec[1])/(-t_max*εvol)
+            if isa(v[1],AbstractElasticity)
+                @test Kb_computed  ≈  NumValue(v[1].Kb)
+            end
+
+        end
+
+    end
+
+    # case with dilatant plasticity
+    εxx,εzz  = 7e-15, -6.8e-15
+    εII  = sqrt(0.5*(εxx^2 + εzz^2))
+    εvol = εxx + εzz
+    args = (T = 900.0, d = 0.0001, τII_old = 700000.0, dt = 8.0e9, P = 0.0, P_old = 1e6)
+    
+    t_max = args.dt*2;
+    _, P_vec, τ_vec    =   time_p_τII_0D(c14, εII, εvol, args; t=(0.,t_max), nt=20, verbose=false)
+    #@test  sum(P_vec) ≈ 1.1803339314328427e6
+    #@test  sum(τ_vec) ≈ 4.742438875602647e6
+    
+    # dilatant plasticity in || with viscous element
+    _, P_vec1, τ_vec1  =   time_p_τII_0D(c15, εII, εvol, args; t=(0.,t_max), nt=20, verbose=false)
+    _, P_vec2, τ_vec2  =   time_p_τII_0D(c16, εII, εvol, args; t=(0.,t_max), nt=20, verbose=false)
+
+    @test τ_vec1[end] ≈  τ_vec2[end]
+    @test τ_vec1[end] > τ_vec[end] 
 
 end

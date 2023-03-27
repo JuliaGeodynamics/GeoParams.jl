@@ -94,12 +94,12 @@ end
 # Plastic Potential 
 
 # Derivatives w.r.t pressure
-∂Q∂P(p::DruckerPrager, args) = -NumValue(p.sinΨ)
+∂Q∂P(p::DruckerPrager, P=zero(_T); τII=zero(_T), kwargs...) = -NumValue(p.sinΨ)
 
 # Derivatives of yield function
-∂F∂τII(p::DruckerPrager, τII::_T) where _T  = _T(1)
-∂F∂P(p::DruckerPrager, P::_T) where _T      = -NumValue(p.sinϕ)
-@inline ∂F∂λ(p::DruckerPrager, τII::_T) where _T    = _T(0)
+∂F∂τII(p::DruckerPrager, τII::_T; P=zero(_T), kwargs...) where _T  = _T(1)
+∂F∂P(p::DruckerPrager, P::_T; τII=zero(_T), kwargs...) where _T    = -NumValue(p.sinϕ)
+∂F∂λ(p::DruckerPrager, τII::_T; P=zero(_T), kwargs...) where _T    = _T(0) 
 
 
 # Derivatives w.r.t stress tensor
@@ -121,7 +121,7 @@ for t in (:NTuple,:SVector)
     end
 end
 
-∂Q∂τII(p::DruckerPrager, τII::T) where T = 0.5
+∂Q∂τII(p::DruckerPrager, τII::_T; P=zero(_T), kwargs...) where _T = 0.5
 
 """
     compute_εII(p::DruckerPrager{_T,U,U1}, λdot::_T, τII::_T,  P) 

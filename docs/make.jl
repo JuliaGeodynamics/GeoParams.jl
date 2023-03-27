@@ -1,4 +1,4 @@
-using Documenter, GeoParams, Plots
+using Documenter, GeoParams, GLMakie
 push!(LOAD_PATH, "../src/")
 
 @info "Making documentation..."
@@ -15,6 +15,7 @@ makedocs(;
             "Material Parameters" => "man/materialparameters.md",
             "Density" => "man/density.md",
             "Creep laws" => "man/creeplaws.md",
+            "Custom rheology" => "man/customrheology.md",
             "Elasticity" => "man/elasticity.md",
             "Plasticity" => "man/plasticity.md",
             "Heat Capacity" => "man/heatcapacity.md",

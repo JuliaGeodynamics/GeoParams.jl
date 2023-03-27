@@ -15,6 +15,7 @@ using Unitful           # Units
 using BibTeX            # references of creep laws
 using Requires          # To only add plotting routines if Plots is loaded
 using StaticArrays
+using LinearAlgebra
 
 import Base: getindex
 
@@ -90,7 +91,7 @@ export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagram
 include("Utils.jl")
 
 include("TensorAlgebra/TensorAlgebra.jl")
-export second_invariant, second_invariant_staggered
+export second_invariant, second_invariant_staggered, rotate_elastic_stress
 
 # note that this throws a "Method definition warning regarding superscript"; that is expected & safe 
 #  as we add a nicer way to create output of superscripts. I have been unable to get rid of this warning,
@@ -105,14 +106,10 @@ include("MaterialParameters.jl")
 using .MaterialParameters
 export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo
 
-# Define Table output functions
-include("Tables.jl")
-using .Tables
-export Phase2Dict, Dict2LatexTable
-
 # Phase Diagrams
 using .MaterialParameters.PhaseDiagrams
 export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
+
 
 # Density
 using .MaterialParameters.Density
@@ -131,6 +128,9 @@ export compute_density,                                # computational routines
 using .MaterialParameters.ConstitutiveRelationships
 export AxialCompression, SimpleShear, Invariant 
 
+const get_shearmodulus = get_G
+const get_bulkmodulus = get_Kb
+
 #       Calculation routines
 export dεII_dτII,
     dτII_dεII,
@@ -148,8 +148,6 @@ export dεII_dτII,
     compute_εvol,
     compute_p!,
     compute_p,
-    strain_rate_circuit,
-    stress_circuit,
     CorrectionFactor,
     remove_tensor_correction,
     isvolumetric,
@@ -159,6 +157,7 @@ export dεII_dτII,
     LinearViscous,
     PowerlawViscous,
     ArrheniusType,
+    CustomRheology,
     DislocationCreep,
     SetDislocationCreep,
     DiffusionCreep,
@@ -170,6 +169,11 @@ export dεII_dτII,
     AbstractElasticity,
     ConstantElasticity,
     SetConstantElasticity,
+    effective_εII,
+    get_G, 
+    get_Kb,
+    get_shearmodulus, 
+    get_bulkmodulus, 
 
     #       Plasticity
     AbstractPlasticity,
@@ -180,12 +184,11 @@ export dεII_dτII,
     compute_plasticpotentialDerivative,
     ∂Q∂τ,
     ∂Q∂P,∂Q∂τII,
-    ∂F∂τII,
+    ∂F∂τII,∂F∂P,∂F∂λ,
     
     #       Composite rheologies
     AbstractConstitutiveLaw,
     AbstractComposite,
-    strain_rate_circuit,
     computeViscosity_τII,
     computeViscosity_εII,
     computeViscosity_τII!,
@@ -202,10 +205,19 @@ export dεII_dτII,
     Parallel,
     create_rheology_string, print_rheology_matrix,
     compute_εII_harmonic, compute_τII_AD,
-    isplastic
+    isplastic,isvolumetricplastic,
+    compute_p_τII, 
+    local_iterations_εvol, 
+    compute_p_harmonic
     
+
+# Constitutive relationships laws
+include("StressComputations/StressComputations.jl")
+export compute_τij, compute_p_τij, compute_τij_stagcenter!, compute_p_τij_stagcenter!, compute_τij!, compute_p_τij!
+
 include("Rheology_Utils.jl")
-export time_τII_0D
+export time_τII_0D, time_τII_0D!, time_p_τII_0D, time_p_τII_0D!
+
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration
@@ -276,6 +288,12 @@ export compute_meltfraction,
     MeltingParam_Assimilation,
     SmoothMelting
 
+# Define Table output functions
+include("Tables.jl")
+using .Tables
+export detachFloatfromExponent, Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2MarkdownTable, ParameterTable
+
+# Add plotting routines - only activated if the "Plots.jl" package is loaded 
 # Add 1D Strength Envelope
 include("./StrengthEnvelope/StrengthEnvelope.jl")
 
