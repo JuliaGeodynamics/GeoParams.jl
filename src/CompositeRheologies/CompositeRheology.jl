@@ -81,6 +81,25 @@ compute_εII(v::CompositeRheology{T,N}, τII::_T, args; tol=1e-6, verbose=false)
 compute_εII(v::CompositeRheology{T,N}, τII::Quantity, args; tol=1e-6, verbose=false) where {T,N} = nreduce(vi -> first(compute_εII(vi, τII, args)), v.elements)
 compute_εII(v::AbstractMaterialParamsStruct, τII, args) = compute_εII(v.CompositeRheology[1], τII, args)
 
+# compute strain rate partitioning
+compute_elements_εII(v::CompositeRheology{T,N}, τII, args) where {T, N} = ntuple(i -> first(compute_εII( v.elements[i], τII, args)), Val(N));
+
+"""
+    ε_part = compute_elements_εII(v::NTuple{N1,AbstractMaterialParamsStruct}, τII::NTuple{N2,T}, args, phase::I)
+This returns the individual strainrate components of the `CompositeRheology` defined in `v`
+"""
+function compute_elements_εII(
+    v::NTuple{N1,AbstractMaterialParamsStruct},
+    τII::T,
+    args,
+    phase::I,
+) where {T,N1,I<:Integer}
+
+    ε_part = nphase(vi -> compute_elements_εII(vi.CompositeRheology[1], τII, args), phase, v)
+
+    return ε_part
+end
+
 # As we don't do iterations, this is the same
 function compute_εII_AD(v::CompositeRheology, τII, args; tol=1e-6, verbose=false)
     return  compute_εII(v, τII, args)
