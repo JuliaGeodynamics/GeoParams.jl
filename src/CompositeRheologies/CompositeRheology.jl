@@ -89,11 +89,11 @@ compute_elements_εII(v::CompositeRheology{T,N}, τII, args) where {T, N} = ntup
 This returns the individual strainrate components of the `CompositeRheology` defined in `v`
 """
 function compute_elements_εII(
-    v::NTuple{N1,AbstractMaterialParamsStruct},
-    τII::T,
+    v::NTuple{N,AbstractMaterialParamsStruct},
+    τII,
     args,
-    phase::I,
-) where {T,N1,I<:Integer}
+    phase::Int,
+) where N
 
     ε_part = nphase(vi -> compute_elements_εII(vi.CompositeRheology[1], τII, args), phase, v)
 
