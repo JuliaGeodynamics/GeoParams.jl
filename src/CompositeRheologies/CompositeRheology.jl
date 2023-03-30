@@ -153,7 +153,7 @@ end
 """
     p,τII = compute_p_τII(v::CompositeRheology, εII, εvol, args; tol=1e-6, verbose=false) 
 
-This updates pressure `p` and deviatoric stress invariant `τII` in case the composite rheology structure has no volumetric elemnts, but may contain plastic or parallel elements. 
+This updates pressure `p` and deviatoric stress invariant `τII` in case the composite rheology structure has no volumetric elements, but may contain plastic or parallel elements. 
 In that case, pressure is not updated (`args.P` is used instead).     
 """
 function compute_p_τII(

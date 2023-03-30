@@ -78,7 +78,7 @@ export @u_str,
 export AbstractGeoUnit1, GeoUnit1
 
 #         
-abstract type AbstractMaterialParam end                                    # structure that holds material parmeters (density, elasticity, viscosity)          
+abstract type AbstractMaterialParam end                                    # structure that holds material parameters (density, elasticity, viscosity)          
 abstract type AbstractMaterialParamsStruct end                             # will hold all info for a phase       
 abstract type AbstractPhaseDiagramsStruct <: AbstractMaterialParam end    # will hold all info for phase diagrams 
 abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end

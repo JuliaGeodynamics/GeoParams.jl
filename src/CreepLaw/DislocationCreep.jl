@@ -32,7 +32,7 @@ where
 - ``V`` is the activation volume ``\\mathrm{[m^3/mol]}`` 
 - ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}`` 
 - ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[MPa]}`` which are converted into second invariants using the `Apparatus` variable that can be
-either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law paramters are already given as a function of second invariants, choose `Apparatus=Invariant`.
+either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
 # Example
 ```julia-repl 
@@ -153,7 +153,7 @@ function param_info(s::DislocationCreep)
 end
 
 # Calculation routines for linear viscous rheologies
-# All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
+# All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
 @inline function compute_εII(
     a::DislocationCreep, TauII::_T; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), args...
 ) where {_T}

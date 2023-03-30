@@ -34,7 +34,7 @@ Struct that holds default parameters for the calculations
     Tmin::Float64 = 690.0 # [C] Minimum zircon saturation Temperature [C]
     Tsol::Float64 = 690.0# [C] Solidus temperature [C]
     Tcal_max::Float64 = 800.0# max temperature to calculate zircon fraction
-    Tcal_step::Float64 = 1.0# temperature step to caclulate zircon fraction (resolution of Zircon saturation curve discretization)
+    Tcal_step::Float64 = 1.0# temperature step to calculate zircon fraction (resolution of Zircon saturation curve discretization)
     max_x_zr::Float64 = 0.001# max fraction zircons at solidus
     zircon_number::Int64 = 100.0# number of required zircons 
     n_rep_ZPD::Int64 = 2000      # number of samples for Zircon Probability Distribution
@@ -112,7 +112,7 @@ Output:
 - `number_zircons` : 1D array of size `(nt,)`
 - `T_av_time`: vector of size `nt` that contains the average T of the paths
 - `T_sd_time`: vector of size `nt` that contains the standard deviation of the T of the paths
-- `cumPDF`: vector of size `nt` that contains the cummulative probability density function that we have an age of less than a certain one in the samples
+- `cumPDF`: vector of size `nt` that contains the cumulative probability density function that we have an age of less than a certain one in the samples
 
 This routine was developed based on an R-routine provided as electronic supplement in the paper:
 - Weber, G., Caricchi, L., Arce, J.L., Schmitt, A.K., 2020. Determining the current size and state of subvolcanic magma reservoirs. Nat Commun 11, 5477. https://doi.org/10.1038/s41467-020-19084-2
@@ -196,7 +196,7 @@ function compute_zircons_Ttpath(
     prob = prob[:, 1]
     number_zircons = number_zircons[:, 1]
 
-    # Compute cummulative PDF:
+    # Compute cumulative PDF:
     cumPDF = 1.0 .- cumsum(prob)
 
     return prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, cumPDF

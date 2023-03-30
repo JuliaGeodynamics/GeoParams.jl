@@ -666,7 +666,7 @@ The derivative is computed by finite differencing.
 
 # compute_dϕdT!( ϕ::AbstractArray, p::PhaseDiagram_LookupTable, args) = compute_dϕdT!(p; args...)
 
-# fill methods programatically
+# fill methods programmatically
 for myType in (
     :MeltingParam_Caricchi,
     :MeltingParam_5thOrder,

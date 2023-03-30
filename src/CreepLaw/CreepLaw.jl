@@ -294,7 +294,7 @@ end
 #-------------------------------------------------------------------------
 
 #=
-# add methods programatically 
+# add methods programmatically 
 #for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity)
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep)
 
