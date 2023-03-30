@@ -218,7 +218,7 @@ function ObtainPlotArgs(i, p, args_in, linewidth, linestyle, color, label_in)
     return args
 end
 
-# Internal fucntion that customizes the plot
+# Internal function that customizes the plot
 function customize_plot!(li, args)
 
     # Customize line:

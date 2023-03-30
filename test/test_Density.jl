@@ -219,7 +219,7 @@ using GeoParams
 
     # Test calling the routine with only pressure as input. 
     # This is ok for Mat_tup1, as it only has constant & P-dependent densities.
-    # Note, however, that if you have P & T dependent densities and do this it will use 0 as defualt value for T 
+    # Note, however, that if you have P & T dependent densities and do this it will use 0 as default value for T 
     compute_density!(rho, Mat_tup1, PhaseRatio, (; P=P))
     @test sum(rho) / 400^2 ≈ 2945.000013499999
 

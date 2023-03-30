@@ -76,7 +76,7 @@ function compute_latent_heat(s::AbstractMaterialParamsStruct, args)
     end
 end
 
-# add methods programatically
+# add methods programmatically
 for myType in (:ConstantLatentHeat,)
     @eval begin
         (s::$(myType))(args) = s(; args...)

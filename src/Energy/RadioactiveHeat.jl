@@ -155,7 +155,7 @@ In-place computation of radioactive heat `H_r`
 """
 #compute_radioactive_heat!()
 
-# add methods programatically
+# add methods programmatically
 for myType in (:ExpDepthDependentRadioactiveHeat, :ConstantRadioactiveHeat)
     @eval begin
         (s::$(myType))(args) = s(; args...)

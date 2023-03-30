@@ -64,7 +64,7 @@ export param_info,
     get_G, 
     get_Kb
 
-# add methods programatically 
+# add methods programmatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType)
     @eval begin
         compute_εII(a::$(myType), TauII, args) = compute_εII(a, TauII; args...)

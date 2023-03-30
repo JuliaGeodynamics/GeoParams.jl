@@ -220,7 +220,7 @@ end
     
 Sets a temperature-dependent conductivity that is  parameterization after *Whittington, et al.  2009* 
 
-The original parameterization involves quite a few parameters; this is a polynomial fit that is roughly valid from 0-1000Celcius
+The original parameterization involves quite a few parameters; this is a polynomial fit that is roughly valid from 0-1000 Celsius
 ```math
     k [W/m/K] = -2 10^{-9} (T-Ts)^3 + 6 10^{-6} (T-Ts)^2 - 0.0062 (T-Ts) + 4
 ```
@@ -465,7 +465,7 @@ end
 (s::TP_Conductivity)(P::AbstractArray, T::AbstractArray) = s(P, T)
 compute_conductivity(s::TP_Conductivity, P::AbstractArray, T::AbstractArray) = s(P, T)
 
-# add methods programatically
+# add methods programmatically
 for myType in (
     :T_Conductivity_Whittington_parameterised,
     :T_Conductivity_Whittington,

@@ -21,7 +21,7 @@ and the viscosity $\eta$ is temperature-dependant
 
 where $\eta_0$ and $T_{\eta}$ are the respective reference viscosity and temperature, $T_o$ is the offset temperature, $T$ is the local temperature, and $E$ is activation energy. 
 
-Before defining the functions to compute $\tau$ and $\dot{\varepsilon}$, it is convinient to define a helper function to compute the viscosity:
+Before defining the functions to compute $\tau$ and $\dot{\varepsilon}$, it is convenient to define a helper function to compute the viscosity:
 ```julia
 @inline function custom_viscosity(
     a::CustomRheology; T = 0.0, kwargs...

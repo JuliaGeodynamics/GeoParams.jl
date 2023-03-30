@@ -117,7 +117,7 @@ Computes T-dependent heat capacity in-place
 """
 # function compute_heatcapacity!(cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}; T::AbstractArray{_T, N}, kwargs...) where {_T,N} end
 
-# add methods programatically
+# add methods programmatically
 for myType in (:ConstantHeatCapacity, :T_HeatCapacity_Whittington)
     @eval begin
         (s::$(myType))(args) = s(; args...)
