@@ -167,7 +167,7 @@ end
 
 # Methods to rotate the elastic stress
 
-rotate_elastic_stress(ω, τ, dt) = _rotate_elastic_stress(ω, staggered_tensor_average(τ), dt)
+@inline rotate_elastic_stress(ω, τ, dt) = _rotate_elastic_stress(ω, staggered_tensor_average(τ), dt)
 
 @inline _rotate_elastic_stress(ω::Union{AbstractVector, NTuple}, τ, dt) = rotate_elastic_stress3D(ω, τ, dt)
 @inline _rotate_elastic_stress(ω, τ, dt) = rotate_elastic_stress2D(ω, τ, dt)
@@ -180,7 +180,7 @@ and ω = 1/2(dux/dy - duy/dx)
 """
 @inline Base.@propagate_inbounds function rotate_elastic_stress2D(ω, τ, dt)
     θ = ω * dt
-    # NOTE: inlining sincos speeds up considerably this kernel but breaks for <1.8
+    # NOTE: inlining sincos speeds up considerably this kernel but breaks for < 1.8
     sinθ, cosθ = sincos(θ) 
     # rotate tensor
     tensor_rotation(τ, cosθ, sinθ)
