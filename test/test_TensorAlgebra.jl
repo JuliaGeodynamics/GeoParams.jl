@@ -79,8 +79,3 @@ using Test, GeoParams, StaticArrays
     @test all(τ_rot .≈ (-0.6143577436901275, 1.6484955994263788, -0.18038260522189242, 1.1484743866149105, 0.9772764618714452, 0.8223748669094381))
 
 end
-
-@btime  rotate_elastic_stress($ω, $τ, $dt)
-ProfileCanvas.@profview for i in 1:1000000
-    rotate_elastic_stress(ω, τ, dt)
-end
