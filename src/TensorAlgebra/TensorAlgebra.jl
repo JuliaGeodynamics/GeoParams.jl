@@ -167,7 +167,7 @@ end
 
 # Methods to rotate the elastic stress
 
-rotate_elastic_stress(ω, τ, dt) = _rotate_elastic_stress(ω, staggered_tensor_average(τ), dt)
+@inline rotate_elastic_stress(ω, τ, dt) = _rotate_elastic_stress(ω, staggered_tensor_average(τ), dt)
 
 @inline _rotate_elastic_stress(ω::Union{AbstractVector, NTuple}, τ, dt) = rotate_elastic_stress3D(ω, τ, dt)
 @inline _rotate_elastic_stress(ω, τ, dt) = rotate_elastic_stress2D(ω, τ, dt)
@@ -208,27 +208,30 @@ Trii-dimensional rotation of the elastic stress where τ is in the Voig notation
     # vorticity
     ω = √(sum(x^2 for x in ωi))
     # unit rotation axis
-    n = inv(ω) .* ωi
+    # n = inv(ω) .* ωi
+    n = SVector{3,  Float64}(inv(ω) * ωi[i] for i in 1:3)
     # integrate rotation angle
     θ = dt * 0.5 * ω
     # Euler Rodrigues rotation matrix
     R = rodrigues_euler(θ, n)
     # rotate tensor
     τij = voigt2tensor(τ)
-    τij_rot = R * τij * R'
+    τij_rot = R * (τij * R')
     tensor2voigt(T, τij_rot)
 end
 
 # Euler Rodrigues rotation matrix
 @inline function rodrigues_euler(θ, n)
     sinθ, cosθ = sincos(θ)
-    R1 = cosθ*I
-    R2 = sinθ.*(@SMatrix [
-        0     -n[3]   n[2]
-        n[3]   0     -n[1]
-       -n[3]   n[1]   0
+    c0 = sinθ*cosθ
+    c1 = sinθ*n[1]
+    c2 = sinθ*n[2]
+    c3 = sinθ*n[3]
+    R1 = (@SMatrix [
+        c0  -c3   c2
+        c3   c0  -c1
+       -c2   c1   c0
     ])
-    c = (1-cosθ)
-    R3 = SMatrix{3, 3, Float64}(c*n[i]*n[j] for i in 1:3, j in 1:3)
-    return R1 + R2 + R3
+    R2 = (1.0 - cosθ).*(n*n')
+    return R1 + R2
 end
