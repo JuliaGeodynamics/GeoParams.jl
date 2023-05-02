@@ -42,6 +42,7 @@ CompositeRheology(a::Parallel) = CompositeRheology( (a,))
         Base.@_inline_meta
         @assert I ≤ $N
         Base.Cartesian.@nexprs $N i -> I == i && return p.elements[i]
+        return 0
     end
 end
 
@@ -77,8 +78,8 @@ isvolumetricplastic(v::CompositeRheology{T, N,  Npar, is_parallel, Nplast, is_pl
 
 Computing `εII` as a function of `τII` for a composite element is the sum of the individual contributions
 """
-compute_εII(v::CompositeRheology{T,N}, τII::_T, args; tol=1e-6, verbose=false) where {T,_T,N} = nreduce(vi -> first(compute_εII(vi, τII, args)), v.elements)
-compute_εII(v::CompositeRheology{T,N}, τII::Quantity, args; tol=1e-6, verbose=false) where {T,N} = nreduce(vi -> first(compute_εII(vi, τII, args)), v.elements)
+compute_εII(v::CompositeRheology, τII, args; tol=1e-6, verbose=false) = nreduce(vi -> first(compute_εII(vi, τII, args)), v.elements)
+compute_εII(v::CompositeRheology, τII::Quantity, args; tol=1e-6, verbose=false) = nreduce(vi -> first(compute_εII(vi, τII, args)), v.elements)
 compute_εII(v::AbstractMaterialParamsStruct, τII, args) = compute_εII(v.CompositeRheology[1], τII, args)
 
 # compute strain rate partitioning
@@ -112,9 +113,8 @@ compute_εII_AD(v::AbstractMaterialParamsStruct, τII, args) = compute_εII_AD(v
 
 Computing `εvol` as a function of `p` for a composite element is the sum of the individual contributions
 """
-compute_εvol(v::CompositeRheology{T,N}, p::_T, args; tol=1e-6, verbose=false) where {T,_T,N} = nreduce(vi -> first(compute_εvol(vi, p, args)), v.elements)
-compute_εvol(v::CompositeRheology{T,N}, p::Quantity, args; tol=1e-6, verbose=false) where {T,N} = nreduce(vi -> first(compute_εvol(vi, p, args)), v.elements)
-
+compute_εvol(v::CompositeRheology, p, args; tol=1e-6, verbose=false) = nreduce(vi -> first(compute_εvol(vi, p, args)), v.elements)
+compute_εvol(v::CompositeRheology, p::Quantity, args; tol=1e-6, verbose=false) = nreduce(vi -> first(compute_εvol(vi, p, args)), v.elements)
 
 # COMPUTE DEVIATORIC STRESS AND PRESSURE
 function compute_τII(v::CompositeRheology{T,N,0}, εII, args; tol=1e-6, verbose=false) where {T,N}
@@ -135,11 +135,11 @@ function compute_p_τII(
                     Nplastic,is_plastic,
                     Nvol,is_vol,
                     false}, 
-        εII::_T, 
-        εvol::_T,
+        εII, 
+        εvol,
         args; 
         tol=1e-6, verbose=false
-    ) where {T, N, _T, Npar, is_parallel, Nplastic, is_plastic, Nvol, is_vol}
+    ) where {T, N, Npar, is_parallel, Nplastic, is_plastic, Nvol, is_vol}
 
     # A composite rheology case that may have volumetric elements, but the are not 
     # tightly coupled, so we do NOT perform coupled iterations.
@@ -162,11 +162,11 @@ function compute_p_τII(
                     Nplast,is_plastic,
                     0,is_vol, 
                     false}, 
-        εII::_T, 
-        εvol::_T,
+        εII,
+        εvol,
         args;
         tol=1e-6, verbose=false
-    ) where {T, N, _T, Npar, is_parallel, Nplast, is_plastic, is_vol}
+    ) where {T, N, Npar, is_parallel, Nplast, is_plastic, is_vol}
     
     # A composite rheology case with no parallel element; iterations for τII
     τII, = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose)
@@ -188,11 +188,11 @@ function compute_p_τII(
                         Nplastic,is_plastic,
                         Nvol,is_vol,
                         true}, 
-        εII::_T, 
-        εvol::_T,
+        εII, 
+        εvol,
         args; 
         tol=1e-6, verbose=false
-    ) where {T, N, _T, Npar, is_parallel, Nplastic, is_plastic, Nvol, is_vol}
+    ) where {T, N, Npar, is_parallel, Nplastic, is_plastic, Nvol, is_vol}
 
     # A composite rheology case that may have volumetric elements, but the are not 
     # tightly coupled, so we do NOT perform coupled iterations.
@@ -224,7 +224,7 @@ compute_τII_AD(v::AbstractMaterialParamsStruct, εII, args) = compute_τII_AD(v
 compute_τII(v::AbstractMaterialParamsStruct, εII, args) = compute_τII(v.CompositeRheology[1], εII, args)
 
 # STRESS AND STRAIN RATE DERIVATIVES
-dεII_dτII(v::CompositeRheology{T,N}, τII::_T, args; tol=1e-6, verbose=false) where {T,_T,N} = nreduce(vi -> first(dεII_dτII(vi, τII, args)), v.elements)
+dεII_dτII(v::CompositeRheology, τII, args; tol=1e-6, verbose=false) = nreduce(vi -> first(dεII_dτII(vi, τII, args)), v.elements)
 
 """
     dεII_dτII_AD(v::Union{Parallel,CompositeRheology}, τII, args) 
@@ -240,13 +240,13 @@ dεII_dτII_nonplastic_AD(v::Union{Parallel,CompositeRheology}, τII, args) = Fo
 
 Sums the derivative ∂εII/∂τII (strainrate vs. stress) of all non-parallel elements in a `CompositeRheology` structure. Internally used for jacobian iterations.
 """
-dεII_dτII_elements(v::CompositeRheology{T,N}, τII::_T, args; tol=1e-6, verbose=false) where {T,_T,N} = nreduce(vi -> first(dεII_dτII_nonparallel(vi, τII, args)), v.elements)
+dεII_dτII_elements(v::CompositeRheology, τII, args; tol=1e-6, verbose=false) = nreduce(vi -> first(dεII_dτII_nonparallel(vi, τII, args)), v.elements)
 dεII_dτII_nonparallel(v::Any, TauII, args) =   dεII_dτII(v, TauII, args)
-dεII_dτII_nonparallel(v::Parallel, TauII::_T, args) where _T =    zero(_T)
-dεII_dτII_nonparallel(v::AbstractPlasticity, TauII::_T, args) where _T =    zero(_T)
+dεII_dτII_nonparallel(v::Parallel, TauII, args) = zero(TauII)
+dεII_dτII_nonparallel(v::AbstractPlasticity, TauII, args) = zero(TauII)
 
-dεvol_dp(v::CompositeRheology{T,N}, p::_T, args) where {T,_T,N} = nreduce(vi -> first(_dεvol_dp(vi, p, args)), v.elements)
-function _dεvol_dp(v, p::_T, args) where {_T}
+dεvol_dp(v::CompositeRheology, p, args) = nreduce(vi -> first(_dεvol_dp(vi, p, args)), v.elements)
+function _dεvol_dp(v, p, args)
     if isvolumetric(v)
         val = dεvol_dp_nonparallel_nonplastic(v, p, args)
     else
@@ -254,9 +254,9 @@ function _dεvol_dp(v, p::_T, args) where {_T}
     end
     return val
 end
-dεvol_dp_nonparallel_nonplastic(v::Any, P, args) =   dεvol_dp(v, P, args)
-dεvol_dp_nonparallel_nonplastic(v::Parallel, P::_T, args) where _T =    zero(_T)
-dεvol_dp_nonparallel_nonplastic(v::AbstractPlasticity, P::_T, args) where _T =    zero(_T)
+dεvol_dp_nonparallel_nonplastic(v, P, args) = dεvol_dp(v, P, args)
+dεvol_dp_nonparallel_nonplastic(v::Parallel, P, args) = zero(P)
+dεvol_dp_nonparallel_nonplastic(v::AbstractPlasticity, P, args) = zero(P)
 
 
 """
@@ -264,9 +264,7 @@ dεvol_dp_nonparallel_nonplastic(v::AbstractPlasticity, P::_T, args) where _T = 
 
 Computes the derivative of `τII` vs `εII` for `CompositeRheology`   
 """
-function dτII_dεII(
-    v::CompositeRheology{T,N}, εII::_T, args
-) where {T,N,_T}
+function dτII_dεII(v::CompositeRheology, εII, args)
     τ,  = compute_τII(v, εII, args)
     return inv(dεII_dτII(v, τ, args))
 end
@@ -274,10 +272,10 @@ end
 
 @generated  function dτII_dεII_i(
     v::CompositeRheology{T,N}, 
-    εII::_T, 
+    εII, 
     args, I::Int64;
     tol=1e-6, verbose=false
-) where {T,_T,N}
+) where {T,N}
     quote
         Base.@_inline_meta
         @assert I ≤ $N
@@ -295,7 +293,7 @@ dτII_dεII_AD(v::Union{Parallel,CompositeRheology}, εII, args) = ForwardDiff.d
 
 Harmonic average of stress of all elements in a `CompositeRheology` structure that are not plastic elements
 """
-compute_εII_nonplastic(v::CompositeRheology{T,N}, τII::_T, args; tol=1e-6, verbose=false) where {T,_T,N} = nreduce(vi -> first(_compute_εII_nonplastic(vi, τII, args)), v.elements)
+compute_εII_nonplastic(v::CompositeRheology, τII, args; tol=1e-6, verbose=false) = nreduce(vi -> first(_compute_εII_nonplastic(vi, τII, args)), v.elements)
 _compute_εII_nonplastic(v, TauII, args) = first(compute_εII(v, TauII, args))
 _compute_εII_nonplastic(v::AbstractPlasticity, TauII, args) = 0.0
 
@@ -304,7 +302,7 @@ _compute_εII_nonplastic(v::AbstractPlasticity, TauII, args) = 0.0
 
 Harmonic average of stress of all elements in a `CompositeRheology` structure that are not || elements
 """
-function compute_τII_harmonic(v::CompositeRheology{T,N}, EpsII::_T, args; tol=1e-6, verbose=false) where {T,_T,N} 
+function compute_τII_harmonic(v::CompositeRheology, EpsII, args; tol=1e-6, verbose=false)
     return inv(nreduce(vi -> first(_compute_τII_harmonic_element(vi, EpsII, args)), v.elements))
 end
 _compute_τII_harmonic_element(v, EpsII, args) = inv(first(compute_τII(v, EpsII, args)))
@@ -316,7 +314,7 @@ _compute_τII_harmonic_element(v::Parallel{T, N,  Nplast, is_plastic}, EpsII, ar
 
 Harmonic average of stress of all elements in a `CompositeRheology` structure that are not || elements
 """
-function compute_p_harmonic(v::CompositeRheology{T,N}, EpsVol::_T, args; tol=1e-6, verbose=false) where {T,_T,N} 
+function compute_p_harmonic(v::CompositeRheology, EpsVol, args; tol=1e-6, verbose=false)
     out = inv(nreduce(vi -> first(_compute_p_harmonic_element(vi, EpsVol, args)), v.elements))
     return out
 end
@@ -336,17 +334,17 @@ _compute_p_harmonic_element(v::Parallel, EpsVol, args) = 0.0
 
 Computes the harmonic average of strainrate for a parallel element
 """
-function compute_εII_harmonic(v::Union{Parallel{T,N},CompositeRheology{T,N}}, TauII::_T, args; tol=1e-6, verbose=false) where {T,_T,N} 
+function compute_εII_harmonic(v::Union{Parallel, CompositeRheology}, TauII, args; tol=1e-6, verbose=false)
     out = inv(nreduce(vi -> inv(first(compute_εII(vi, TauII, args))), v.elements))
     return out
 end
 
 @generated  function compute_εII_harmonic_i(
     v::CompositeRheology{T,N}, 
-    TauII::_T, 
+    TauII, 
     args, I::Int64;
     tol=1e-6, verbose=false
-) where {T,_T,N}
+) where {T, N}
     quote
         Base.@_inline_meta
         @assert I ≤ $N
@@ -360,10 +358,10 @@ end
 
 Sums the strainrate of all non-parallel and non-plastic elements in a `CompositeRheology` structure. Mostly internally used for jacobian iterations.
 """
-compute_εII_elements(v::CompositeRheology{T,N}, τII::_T, args; tol=1e-6, verbose=false) where {T,_T,N} = nreduce(vi -> first(_compute_εII_nonparallel(vi, τII, args)), v.elements)
-_compute_εII_nonparallel(v, TauII::_T, args) where {_T} = compute_εII(v, TauII, args)
-_compute_εII_nonparallel(v::Parallel, TauII::_T, args) where {_T} = zero(_T)
-_compute_εII_nonparallel(v::AbstractPlasticity, TauII::_T, args) where {_T} = zero(_T)
+compute_εII_elements(v::CompositeRheology, τII, args; tol=1e-6, verbose=false) = nreduce(vi -> first(_compute_εII_nonparallel(vi, τII, args)), v.elements)
+_compute_εII_nonparallel(v, TauII, args) = compute_εII(v, TauII, args)
+_compute_εII_nonparallel(v::Parallel, TauII, args) = zero(TauII)
+_compute_εII_nonparallel(v::AbstractPlasticity, TauII, args) = zero(TauII)
 
 
 """
@@ -371,8 +369,8 @@ _compute_εII_nonparallel(v::AbstractPlasticity, TauII::_T, args) where {_T} = z
 
 Sums the strainrate of all non-parallel and non-plastic elements in a `CompositeRheology` structure. Mostly internally used for jacobian iterations.
 """
-compute_εvol_elements(v::CompositeRheology{T,N}, p::_T, args; tol=1e-6, verbose=false) where {T,_T,N} = nreduce(vi -> first(_compute_εvol_elements(vi, p, args)), v.elements)
-compute_εvol(v::Any, P::_T; kwargs...) where _T = _T(0) # in case nothing more specific is defined
-_compute_εvol_elements(v, P::_T, args) where {_T} = compute_εvol(v, P, args)
-_compute_εvol_elements(v::Parallel, P::_T, args) where {_T} = zero(_T)
-_compute_εvol_elements(v::AbstractPlasticity, P::_T, args) where {_T} = zero(_T)
+compute_εvol_elements(v::CompositeRheology, p, args; tol=1e-6, verbose=false) = nreduce(vi -> first(_compute_εvol_elements(vi, p, args)), v.elements)
+compute_εvol(v::Any, P; kwargs...)= zero(P) # in case nothing more specific is defined
+_compute_εvol_elements(v, P, args) = compute_εvol(v, P, args)
+_compute_εvol_elements(v::Parallel, P, args) = zero(P)
+_compute_εvol_elements(v::AbstractPlasticity, P, args) = zero(P)
