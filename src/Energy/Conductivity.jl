@@ -45,22 +45,21 @@ function param_info(s::ConstantConductivity) # info about the struct
 end
 
 # Calculation routine
-function (s::ConstantConductivity{_T})(; kwargs...) where {_T}
+function (s::ConstantConductivity)(; kwargs...)
     @unpack_val k = s
 
     return k
 end
 
-# (s::ConstantConductivity{_T})(args) where _T = s(;args...)
-compute_conductivity(s::ConstantConductivity{_T}; kwargs...) where {_T} = s()
+compute_conductivity(s::ConstantConductivity; kwargs...) = s()
 
-function (s::ConstantConductivity{_T})(I::Integer...) where {_T}
+function (s::ConstantConductivity)(I::Integer...)
     @unpack_val k = s
 
     return fill(k, I...)
 end
 
-compute_conductivity(s::ConstantConductivity{_T}, I::Integer...) where {_T} = s(I...)
+compute_conductivity(s::ConstantConductivity, I::Integer...) = s(I...)
 
 """
     compute_conductivity(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::ConstantConductivity) where N
@@ -68,8 +67,8 @@ compute_conductivity(s::ConstantConductivity{_T}, I::Integer...) where {_T} = s(
 In-place routine to compute constant conductivity    
 """
 function compute_conductivity!(
-    k_array::AbstractArray{_T,N}, s::ConstantConductivity{_T}; kwargs...
-) where {_T,N} end
+    k_array::AbstractArray{_T,N}, s::ConstantConductivity; kwargs...
+) where {_T, N} end
 
 # Print info 
 function show(io::IO, g::ConstantConductivity)
@@ -549,7 +548,7 @@ compute_conductivity!(k::AbstractArray{T,N}, PhaseRatios::AbstractArray{T, M}, P
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 """
-compute_conductivity(args...) = compute_param(compute_conductivity, args...)
-compute_conductivity!(args...) = compute_param!(compute_conductivity, args...)
+compute_conductivity(args::Vararg{Any, N}) where N = compute_param(compute_conductivity, args...)
+compute_conductivity!(args::Vararg{Any, N}) where N = compute_param!(compute_conductivity, args...)
 
 end

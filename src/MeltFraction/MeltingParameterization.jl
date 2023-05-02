@@ -91,7 +91,8 @@ function compute_dϕdT(p::MeltingParam_Caricchi; T, kwargs...)
         @unpack_val a, b, c = p
     end
 
-    dϕdT = exp((a + c - T) / b) / (b * ((1.0 + exp((a + c - T) / b))^2))
+    _b = inv(b)
+    dϕdT = exp((a + c - T) * _b) / (b * ((1.0 + exp((a + c - T) * _b))^2))
 
     return dϕdT
 end
@@ -163,7 +164,7 @@ function (p::MeltingParam_5thOrder)(; T, kwargs...)
     return ϕ
 end
 
-function compute_dϕdT(p::MeltingParam_5thOrder; T::Real, kwargs...)
+function compute_dϕdT(p::MeltingParam_5thOrder; T, kwargs...)
     if T isa Quantity
         @unpack_units a, b, c, d, e, T_s, T_l = p
     else
@@ -226,7 +227,7 @@ function param_info(s::MeltingParam_4thOrder) # info about the struct
 end
 
 # Calculation routines
-function (p::MeltingParam_4thOrder)(; T::Real, kwargs...)
+function (p::MeltingParam_4thOrder)(; T, kwargs...)
     if T isa Quantity
         @unpack_units b, c, d, e, f, T_s, T_l = p
     else
@@ -245,7 +246,7 @@ function (p::MeltingParam_4thOrder)(; T::Real, kwargs...)
     return ϕ
 end
 
-function compute_dϕdT(p::MeltingParam_4thOrder; T::Real, kwargs...)
+function compute_dϕdT(p::MeltingParam_4thOrder; T, kwargs...)
     if T isa Quantity
         @unpack_units b, c, d, e, T_s, T_l = p
     else
@@ -404,7 +405,7 @@ function param_info(s::MeltingParam_Assimilation) # info about the struct
 end
 
 # Calculation routines
-function (p::MeltingParam_Assimilation)(; T::Real, kwargs...)
+function (p::MeltingParam_Assimilation)(; T, kwargs...)
     if T isa Quantity
         @unpack_units T_s, T_l, a = p
     else
@@ -428,7 +429,7 @@ function (p::MeltingParam_Assimilation)(; T::Real, kwargs...)
     return ϕ
 end
 
-function compute_dϕdT(p::MeltingParam_Assimilation; T::Real, kwargs...)
+function compute_dϕdT(p::MeltingParam_Assimilation; T, kwargs...)
     if T isa Quantity
         @unpack_units T_s, T_l, a = p
     else
@@ -633,7 +634,7 @@ Computes derivative of melt fraction vs T in case we use a phase diagram lookup 
 The derivative is computed by finite differencing.
 """
 function compute_dϕdT(p::PhaseDiagram_LookupTable; P::_T, T::_T, kwargs...) where {_T}
-    dT = (maximum(T) - minimum(T)) / 2.0 * 1e-6 + 1e-6   # 1e-6 of the average T value
+    dT = (maximum(T) - minimum(T)) * 0.5 * 1e-6 + 1e-6   # 1e-6 of the average T value
     ϕ1 = p.meltFrac.(T .+ dT, P)
     ϕ0 = p.meltFrac.(T, P)
     dϕdT = (ϕ1 - ϕ0) / dT
@@ -704,14 +705,14 @@ end
 
 Computation of melt fraction ϕ for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 """
-compute_meltfraction(args...) = compute_param(compute_meltfraction, args...)
+compute_meltfraction(args::Vararg{Any, N}) where N = compute_param(compute_meltfraction, args...)
 
 """
     compute_meltfraction(ϕ::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
 
 In-place computation of melt fraction ϕ for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 """
-compute_meltfraction!(args...) = compute_param!(compute_meltfraction, args...)
+compute_meltfraction!(args::Vararg{Any, N}) where N = compute_param!(compute_meltfraction, args...)
 
 """
     ϕ = compute_dϕdT(Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
@@ -719,7 +720,7 @@ compute_meltfraction!(args...) = compute_param!(compute_meltfraction, args...)
 Computates the derivative of melt fraction ϕ versus temperature `T` for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This is employed in computing latent heat terms in an implicit manner, for example
 """
-compute_dϕdT(args...) = compute_param(compute_dϕdT, args...)
+compute_dϕdT(args::Vararg{Any, N}) where N = compute_param(compute_dϕdT, args...)
 
 """
     compute_dϕdT!(ϕ::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
@@ -727,6 +728,6 @@ compute_dϕdT(args...) = compute_param(compute_dϕdT, args...)
 Computates the derivative of melt fraction `ϕ` versus temperature `T`, ``{\\partial \\phi} \\over {\\partial T}`` for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This is employed, for example, in computing latent heat terms in an implicit manner.
 """
-compute_dϕdT!(args...) = compute_param!(compute_dϕdT, args...)
+compute_dϕdT!(args::Vararg{Any, N}) where N = compute_param!(compute_dϕdT, args...)
 
 end
