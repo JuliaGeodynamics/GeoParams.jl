@@ -272,7 +272,7 @@ ________________________________________________________________________________
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 """
-compute_density!(args...) = compute_param!(compute_density, args...) #Multiple dispatch to rest of routines found in Computations.jl
-compute_density(args...) = compute_param(compute_density, args...)
+compute_density!(args::Vararg{Any, N}) where N = compute_param!(compute_density, args...) #Multiple dispatch to rest of routines found in Computations.jl
+compute_density(args::Vararg{Any, N}) where N = compute_param(compute_density, args...)
 
 end

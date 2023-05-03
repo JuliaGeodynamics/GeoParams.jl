@@ -208,7 +208,6 @@ Trii-dimensional rotation of the elastic stress where τ is in the Voig notation
     # vorticity
     ω = √(sum(x^2 for x in ωi))
     # unit rotation axis
-    # n = inv(ω) .* ωi
     n = SVector{3,  Float64}(inv(ω) * ωi[i] for i in 1:3)
     # integrate rotation angle
     θ = dt * 0.5 * ω
@@ -224,14 +223,12 @@ end
 @inline function rodrigues_euler(θ, n)
     sinθ, cosθ = sincos(θ)
     c0 = sinθ*cosθ
-    c1 = sinθ*n[1]
-    c2 = sinθ*n[2]
-    c3 = sinθ*n[3]
-    R1 = (@SMatrix [
-        c0  -c3   c2
-        c3   c0  -c1
-       -c2   c1   c0
-    ])
+    Base.@nexprs 3 i -> c_i = sinθ*n[i]
+    R1 = @SMatrix [
+        c0   -c_3   c_2
+        c_3    c0  -c_1
+       -c_2   c_1    c0
+    ]
     R2 = (1.0 - cosθ).*(n*n')
     return R1 + R2
 end

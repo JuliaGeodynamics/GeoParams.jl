@@ -39,15 +39,15 @@ function param_info(s::ConstantRadioactiveHeat) # info about the struct
 end
 
 # Calculation routine
-function (s::ConstantRadioactiveHeat{_T})(; kwargs...) where {_T}
+function (s::ConstantRadioactiveHeat)(; kwargs...)
     @unpack_val H_r = s
 
     return H_r
 end
 
-compute_radioactive_heat(s::ConstantRadioactiveHeat{_T}; kwargs...) where {_T} = s()
+compute_radioactive_heat(s::ConstantRadioactiveHeat; kwargs...)= s()
 
-function (s::ConstantRadioactiveHeat{_T})(I::Integer...) where {_T}
+function (s::ConstantRadioactiveHeat)(I::Integer...)
     @unpack_val H_r = s
 
     return fill(H_r, I...)
@@ -75,7 +75,7 @@ where ``H_0`` is the radioactive heat source [``Watt/m^3``] at ``z=z_0`` which d
     h_r::GeoUnit{T,U1} = 10e3m
     z_0::GeoUnit{T,U1} = 0m
 end
-function ExpDepthDependentRadioactiveHeat(args...)
+function ExpDepthDependentRadioactiveHeat(args::Vararg{Any, N}) where N
     return ExpDepthDependentRadioactiveHeat(convert.(GeoUnit, args)...)
 end
 
@@ -99,7 +99,7 @@ function compute_radioactive_heat(
 end
 
 # Calculation routine
-function (s::ExpDepthDependentRadioactiveHeat{_T})(
+function (s::ExpDepthDependentRadioactiveHeat)(
     z::AbstractArray{_T,N}; kwargs...
 ) where {_T,N}
     Hr = similar(z)
@@ -109,13 +109,13 @@ function (s::ExpDepthDependentRadioactiveHeat{_T})(
     return Hr
 end
 
-function (s::ExpDepthDependentRadioactiveHeat{_T})(
+function (s::ExpDepthDependentRadioactiveHeat)(
     z::AbstractArray{_T,N}, args...
 ) where {_T,N}
     return s(z; args...)
 end
 function compute_radioactive_heat(
-    s::ExpDepthDependentRadioactiveHeat{_T}, z::AbstractArray{_T,N}, args...
+    s::ExpDepthDependentRadioactiveHeat, z::AbstractArray{_T,N}, args...
 ) where {_T,N}
     return s(z; args...)
 end
@@ -163,7 +163,7 @@ for myType in (:ExpDepthDependentRadioactiveHeat, :ConstantRadioactiveHeat)
     end
 end
 
-compute_radioactive_heat(args...) = compute_param(compute_radioactive_heat, args...)
-compute_radioactive_heat!(args...) = compute_param!(compute_radioactive_heat, args...)
+compute_radioactive_heat(args::Vararg{Any, N}) where N = compute_param(compute_radioactive_heat, args...)
+compute_radioactive_heat!(args::Vararg{Any, N}) where N = compute_param!(compute_radioactive_heat, args...)
 
 end

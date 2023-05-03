@@ -47,7 +47,7 @@ function (s::ConstantHeatCapacity)(; kwargs...)
     return cp
 end
 
-compute_heatcapacity(s::ConstantHeatCapacity{_T}; kwargs...) where {_T} = s()
+compute_heatcapacity(s::ConstantHeatCapacity; kwargs...) = s()
 
 # Print info 
 function show(io::IO, g::ConstantHeatCapacity)
@@ -202,8 +202,8 @@ This assumes that the `Phase` of every point is specified as an Integer in the `
 """
 compute_heatcapacity!()
 
-compute_heatcapacity(args...) = compute_param(compute_heatcapacity, args...)
-compute_heatcapacity!(args...) = compute_param!(compute_heatcapacity, args...)
+compute_heatcapacity(args::Vararg{Any, N}) where N = compute_param(compute_heatcapacity, args...)
+compute_heatcapacity!(args::Vararg{Any, N}) where N = compute_param!(compute_heatcapacity, args...)
 
 # In case just temperature is provided
 function compute_heatcapacity!(
