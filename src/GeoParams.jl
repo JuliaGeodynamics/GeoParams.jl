@@ -115,6 +115,7 @@ export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
 using .MaterialParameters.Density
 export compute_density,                                # computational routines
     compute_density!,
+    compute_density_ratio,
     param_info,
     AbstractDensity,
     No_Density,

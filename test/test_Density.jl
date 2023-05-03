@@ -231,4 +231,25 @@ using GeoParams
     #Test computation of density given a single phase and P,T as scalars
     Phase, P, T = 0, 1.0, 1.0
     @test compute_density(Mat_tup1, Phase, (P=P[1], T=T[1])) == 2900.0
+
+    # Local phase ratio density calculation
+    args = (P=0.0, T=20.0)
+    rheologies = (
+        SetMaterialParams(;
+            Name="Crust",
+            Phase=0,
+            CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e23Pas)),
+            Density=ConstantDensity(; ρ=2900kg / m^3),
+        ),
+        SetMaterialParams(;
+            Name="Lower Crust",
+            Phase=1,
+            CreepLaws=(PowerlawViscous(; n=5.0), LinearViscous(; η=1e21Pas)),
+            Density=Compressible_Density(; ρ0=3000kg / m^3),
+        )
+    )
+
+    PhaseRatio = (0.5, 0.5)
+    @test 2950e0 == compute_density_ratio(PhaseRatio, rheologies, args)
+
 end
