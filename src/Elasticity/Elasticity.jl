@@ -91,7 +91,7 @@ for modulus in (:G, :Kb)
     fun = Symbol("get_$(string(modulus))")
     @eval begin
         @inline $(fun)(a::ConstantElasticity) = a.$(modulus).val
-        @inline $(fun)(a::AbstractMaterialParamsStruct) = $(fun)(a.Elasticity[1])
+        @inline $(fun)(a::AbstractMaterialParamsStruct) = isempty(a.Elasticity) ? Inf : $(fun)(a.Elasticity[1])
         @inline $(fun)(a::NTuple{N, AbstractMaterialParamsStruct}, phase) where N = nphase($(fun), phase, a)
     end
 end
