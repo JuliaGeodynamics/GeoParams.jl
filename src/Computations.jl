@@ -1,6 +1,7 @@
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 using ..Units
 using Parameters, Unitful
+using StaticArrays
 
 # Computational routines needed for computations with the MaterialParams structure 
 
