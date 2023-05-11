@@ -170,7 +170,7 @@ end
     @unpack_units n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    ε = A * (TauII * FT)^n * f^r * exp(-(E + P * V) / (R * T)) / FE
+    ε = A * fastpow(TauII * FT, n) * fastpow(f, r) * exp(-(E + P * V) / (R * T)) / FE
 
     return ε
 end
@@ -212,13 +212,13 @@ end
     @unpack_units n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    return (FT * TauII)^(-1 + n) *
-           f^r *
+    return fastpow(FT * TauII, -1 + n) *
+           fastpow(f, r)*
            A *
            FT *
            n *
            exp(-(E + P * V) / (R * T)) *
-           (1 / FE)
+           inv(FE)
 end
 
 
@@ -240,10 +240,11 @@ Computes the stress for a Dislocation creep law given a certain strain rate
     end
 
     FT, FE = a.FT, a.FE
+    _n = inv(n)
 
-    return fastpow(A, -1 / n) *
-           fastpow(EpsII * FE, 1 / n) *
-           fastpow(f, -r / n) *
+    return fastpow(A, -_n) *
+           fastpow(EpsII * FE, _n) *
+           fastpow(f, -r * _n) *
            exp((E + P * V) / (n * R * T)) / FT
 end
 
@@ -252,10 +253,12 @@ end
 )
     @unpack_units n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
+    _n = inv(n)
 
-    τ = A^(-1 / n) * (EpsII * FE)^(1 / n) * f^(-r / n) * exp((E + P * V) / (n * R * T)) / FT
-
-    return τ
+    return fastpow(A, -_n) *
+           fastpow(EpsII * FE, _n) *
+           fastpow(f, -r * _n) *
+           exp((E + P * V) / (n * R * T)) / FT
 end
 
 """
@@ -287,12 +290,13 @@ end
 )
     @unpack_val n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
+    _n = inv(n)
 
     return (
         FE *
-        (A^(-1 / n)) *
-        (f^((-r) / n)) *
-        ((EpsII * FE)^(1 / n - 1)) *
+        fastpow(A, - _n) *
+        fastpow(f, -r * _n) *
+        fastpow(EpsII * FE, _n - 1) *
         exp((E + P * V) / (R * T * n))
     ) / (FT * n)
 end
@@ -305,9 +309,9 @@ end
 
     return (
         FE *
-        (A^(-1 / n)) *
-        (f^((-r) / n)) *
-        ((EpsII * FE)^(1 / n - 1)) *
+        fastpow(A, - _n) *
+        fastpow(f, -r * _n) *
+        fastpow(EpsII * FE, _n - 1) *
         exp((E + P * V) / (R * T * n))
     ) / (FT * n)
 end
