@@ -39,5 +39,5 @@ function compute_viscosity_τij(v::AbstractCreepLaw, xx, yy, xy::NTuple, args::V
 end
 
 # compute effective "visco-elastic" viscosity
-@inline compute_elastoviscosity_τII(v::ConstantElasticity, η, dt) = inv(inv(η) + inv(v.G.val, dt))
-@inline compute_elastoviscosity_τII(v::ConstantElasticity, η, args::NamedTuple) = compute_elastoviscosity_τII(v, η, args.dt)
+@inline compute_elastoviscosity(v::ConstantElasticity, η, dt) = inv(inv(η) + inv(v.G.val, dt))
+@inline compute_elastoviscosity(v::ConstantElasticity, η, args::NamedTuple) = compute_elastoviscosity(v, η, args.dt)
