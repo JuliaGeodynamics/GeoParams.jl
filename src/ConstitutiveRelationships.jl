@@ -62,7 +62,8 @@ export param_info,
     AbstractConstitutiveLaw
     AxialCompression, SimpleShear, Invariant,
     get_G, 
-    get_Kb
+    get_Kb,
+    iselastic
 
 # add methods programmatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType)
