@@ -129,7 +129,7 @@ end
     s = remove_tensor_correction(s::PeierlsCreep)
 
 Removes the tensor correction of the creeplaw, which is useful to compare the implemented creeplaws
-with the curves of the original publications, as those publications usually do not transfer their data to tensor format
+with the curves of the original publications, as those publications usually do not transfer their data to tensor format.
 """
 function remove_tensor_correction(s::PeierlsCreep)
     name = String(collect(s.Name))
@@ -159,7 +159,7 @@ end
     @unpack_val n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    ε = (A * exp(-(E / (R * T)) * (fastpow(1 - fastpow((FT * TauII) / TauP, o), q)))) / FE
+    ε = (A * exp(-(E / (R * T)) * (fastpow(1 - fastpow((FT * TauII) / TauP, q), o)))) / FE
 
     return ε
 end
@@ -170,7 +170,7 @@ end
     @unpack_units n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    ε = (A * exp(-(E / (R * T)) * (fastpow(1 - fastpow((FT * TauII) / TauP, o), q)))) / FE
+    ε = (A * exp(-(E / (R * T)) * (fastpow(1 - fastpow((FT * TauII) / TauP, q), o)))) / FE
 
     return ε
 end
@@ -195,15 +195,14 @@ end
     @unpack_val n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    return o * 
-           fastpow((FT * TauII) / TauP, o) *
-           fastpow(1 - fastpow((FT * TauII) / TauP, o), q) *
-           fastpow(TauII, n) * 
+    return q * 
+           fastpow((FT * TauII) / TauP, q) *
+           fastpow(1 - fastpow((FT * TauII) / TauP, q), o) *
            A *
            E *
-           q *
-           exp(-E * fastpow(1 - fastpow((FT * TauII) / TauP, o), q) / (R * T)) *
-           (1 / (FE * R * T * Tau * (1 - fastpow((FT * TauII) / TauP, o))))
+           o *
+           exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, q), o)) / (R * T)) /
+           (FE * R * T * TauII)
 end
 
 @inline function dεII_dτII(
@@ -213,21 +212,20 @@ end
     FT, FE = a.FT, a.FE
 
     return o * 
-           fastpow((FT * TauII) / TauP, o) *
-           fastpow(1 - fastpow((FT * TauII) / TauP, o), q) *
-           fastpow(TauII, n) * 
+           fastpow((FT * TauII) / TauP, q) *
+           fastpow(1 - fastpow((FT * TauII) / TauP, q), o) *
            A *
            E *
            q *
-           exp(-E * fastpow(1 - fastpow((FT * TauII) / TauP, o), q) / (R * T)) *
-           (1 / (FE * R * T * Tau * (1 - fastpow((FT * TauII) / TauP, o))))
+           exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, q), o)) / (R * T)) /
+           (FE * R * T * TauII)
 end
 
 
 """
     compute_τII(a::PeierlsCreep, EpsII; P, T, f, args...)
 
-Computes the stress for a peierls creep law given a certain strain rate
+Computes the stress for a peierls creep law given a certain strain rate.
 
 """
 @inline function compute_τII(
@@ -246,7 +244,7 @@ Computes the stress for a peierls creep law given a certain strain rate
     o_inv = inv(o)
 
     τ = (TauP * 
-        fastpow(1 - fastpow(-((R * T * log((FE * EpsII) / A)) / E) , q_inv), o_inv)) / 
+        fastpow(1 - fastpow(abs(-((R * T * log((FE * EpsII) / A)) / E)) , o_inv), q_inv)) / 
         FT
 
     return τ
@@ -262,7 +260,7 @@ end
     o_inv = inv(o)
 
     τ = (TauP * 
-        fastpow(1 - fastpow(-((R * T * log((FE * EpsII) / A)) / E) , q_inv), o_inv)) / 
+        fastpow(1 - fastpow(-((R * T * log((FE * EpsII) / A)) / E) , o_inv), q_inv)) / 
         FT
 
     return τ
@@ -270,9 +268,10 @@ end
 
 """
     compute_τII!(TauII::AbstractArray{_T,N}, a::PeierlsCreep, EpsII::AbstractArray{_T,N}; 
-        T = ones(size(TauII))::AbstractArray{_T,N}, 
+        T = ones(size(TauII))::AbstractArray{_T,N}, args...)
 
-Computes the deviatoric stress invariant for a peierls creep law
+Computes the deviatoric stress invariant for a peierls creep law.
+
 """
 function compute_τII!(
     TauII::AbstractArray{_T,N},
@@ -287,50 +286,29 @@ function compute_τII!(
 
     return nothing
 end
-#
-@inline function dτII_dεII(
-    a::PeierlsCreep, EpsII::_T; T=one(precision(a)), args...
-) where {_T}
-    @unpack_val n, q, o, TauP, A, E, R = a
-    FT, FE = a.FT, a.FE
 
-    q_inv = inv(q)
-    o_inv = inv(o)
+"""
+    dτII_dεII(v::PeierlsCreep, EpsII; args...)
 
-    # derived in SymPy
-    return (TauP * fastpow(fastpow(E, -q_inv) * 
-            (-fastpow(E, q_inv) + 
-            fastpow(-R * T * log((FE * EpsII) / A), q_inv)), o) * 
-            fastpow(-R * T * log((FE * EpsII) / A), q_inv)) / 
-            (FT * 
-            o * 
-            q * 
-            EpsII * 
-            (-fastpow(E, q_inv) + fastpow(-R * T * log((FE * EpsII) / A), q_inv)) * 
-            log((FE * EpsII) / A))
-end
+Computes the derivative `dτII/dεII` for a peierls creep law using automatic differentiation.
+    
+"""
 
-@inline function dτII_dεII(
-    a::PeierlsCreep, EpsII::Quantity; T=1K, args...
-)
-    @unpack_units n, q, o, TauP, A, E, R = a
-    FT, FE = a.FT, a.FE
+dτII_dεII(v::PeierlsCreep, EpsII; args...) = ForwardDiff.derivative(x -> compute_τII(v, x; args...), EpsII)
 
-    q_inv = inv(q)
-    o_inv = inv(o)
+# Derivative of τII:
 
-    # derived in WolframAlpha
-    return (TauP * fastpow(fastpow(E, -q_inv) * 
-            (-fastpow(E, q_inv) + 
-            fastpow(-R * T * log((FE * EpsII) / A), q_inv)), o) * 
-            fastpow(-R * T * log((FE * EpsII) / A), q_inv)) / 
-            (FT * 
-            o * 
-            q * 
-            EpsII * 
-            (-fastpow(E, q_inv) + fastpow(-R * T * log((FE * EpsII) / A), q_inv)) * 
-            log((FE * EpsII) / A))
-end
+#(TauP * fastpow(fastpow(E, -o_inv) * 
+#(-fastpow(E, o_inv) + 
+#fastpow(-R * T * log((FE * EpsII) / A), o_inv)), q) * 
+#fastpow(-R * T * log((FE * EpsII) / A), o_inv)) / 
+#(FT * 
+#o * 
+#q * 
+#EpsII * 
+#(-fastpow(E, o_inv) + fastpow(-R * T * log((FE * EpsII) / A), o_inv)) * 
+#log((FE * EpsII) / A))
+
 
 # Print info 
 function show(io::IO, g::PeierlsCreep)
