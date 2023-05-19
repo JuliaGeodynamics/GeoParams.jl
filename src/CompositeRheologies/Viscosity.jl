@@ -1,5 +1,5 @@
 # extract elements from composite rheology
-@inline elements(v::CompositeRheology) = v.elements
+@inline elements(v::Union{CompositeRheology, Parallel}) = v.elements
 
 # compute viscosity given second invariants of strain rate and deviatoric stress tensors
 @inline _viscosity(τII, εII) = τII / (2  * εII)
@@ -65,5 +65,27 @@ end
         η = 0.0
         Base.@nexprs $N1 i -> η += inv(fun(v[i], II, args...))
         return inv(η)
+    end
+end
+
+# compute effective "creep" viscosity from strain rate tensor given a composite rheology
+@inline function compute_viscosity_εII(v::Parallel, εII, args::Vararg{T, N}) where {T, N}
+    e = elements(v)
+    compute_viscosity_II_parallel(e, compute_viscosity_εII, εII, args...)
+end
+
+# compute effective "creep" viscosity from deviatoric stress tensor given a composite rheology
+@inline function compute_viscosity_τII(v::Parallel, τII, args::Vararg{T, N}) where {T, N}
+    e = elements(v)
+    compute_viscosity_II_parallel(e, compute_viscosity_τII, τII, args...)
+end
+
+# compute effective "creep" for a composite rheology where elements are in parallel
+@generated function compute_viscosity_II_parallel(v::NTuple{N1, AbstractCreepLaw}, fun::F, II, args::Vararg{T, N2}) where {T, N1, N2, F}
+    quote
+        Base.@_inline_meta
+        η = 0.0
+        Base.@nexprs $N1 i -> η += fun(v[i], II, args...)
+        return η
     end
 end
