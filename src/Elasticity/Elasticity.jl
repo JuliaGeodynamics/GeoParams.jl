@@ -88,8 +88,8 @@ end
     return ν == 0.5 ? false : true
 end
 
-@inline iselastic(v::AbstractCreepLaw) = false
 @inline iselastic(v::AbstractElasticity) = true
+@inline iselastic(v) = false
 
 for modulus in (:G, :Kb)
     fun = Symbol("get_$(string(modulus))")
