@@ -16,12 +16,6 @@ function compute_viscosity_εij(v::AbstractCreepLaw, xx, yy, xy, args::Vararg{T,
     η = compute_viscosity_εII(v, εII, args...)
     return η
 end
-
-function compute_viscosity_εij(v::AbstractCreepLaw, xx, yy, xy::NTuple, args::Vararg{T, N}) where {T, N}
-    εII = second_invariant_staggered(xx, yy, xy)
-    η = compute_viscosity_εII(v, εII, args...)
-    return η
-end
    
 # compute effective "creep" viscosity from deviatoric stress tensor
 function compute_viscosity_τII(v::AbstractCreepLaw, τII, args::Vararg{T, N}) where {T, N}
@@ -32,12 +26,6 @@ end
 
 function compute_viscosity_τij(v::AbstractCreepLaw, xx, yy, xy, args::Vararg{T, N}) where {T, N}
     τII = second_invariant(xx, yy, xy)
-    η = compute_viscosity_τII(v, τII, args...)
-    return η
-end
-
-function compute_viscosity_τij(v::AbstractCreepLaw, xx, yy, xy::NTuple, args::Vararg{T, N}) where {T, N}
-    τII = second_invariant_staggered(xx, yy, xy)
     η = compute_viscosity_τII(v, τII, args...)
     return η
 end
@@ -59,11 +47,11 @@ end
 end
 
 # compute effective "creep" for a composite rheology where elements are in series
-@generated function compute_viscosity_II(v::NTuple{N1, Union{AbstractCreepLaw, Parallel}}, fun::F, II, args::Vararg{T, N2}) where {T, N1, N2, F}
+@generated function compute_viscosity_II(v::NTuple{N1, Union{AbstractCreepLaw, Parallel}}, fn::F, II, args::Vararg{T, N2}) where {T, N1, N2, F}
     quote
         Base.@_inline_meta
         η = 0.0
-        Base.@nexprs $N1 i -> η += inv(fun(v[i], II, args...)) * !iselastic(v[i]) * !isplastic(v[i])
+        Base.@nexprs $N1 i -> η += inv(fn(v[i], II, args...)) * !iselastic(v[i]) * !isplastic(v[i])
         return inv(η)
     end
 end
@@ -81,11 +69,11 @@ end
 end
 
 # compute effective "creep" for a composite rheology where elements are in parallel
-@generated function compute_viscosity_II_parallel(v::NTuple{N1, AbstractCreepLaw}, fun::F, II, args::Vararg{T, N2}) where {T, N1, N2, F}
+@generated function compute_viscosity_II_parallel(v::NTuple{N1, AbstractCreepLaw}, fn::F, II, args::Vararg{T, N2}) where {T, N1, N2, F}
     quote
         Base.@_inline_meta
         η = 0.0
-        Base.@nexprs $N1 i -> η += fun(v[i], II, args...)
+        Base.@nexprs $N1 i -> η += fn(v[i], II, args...)
         return η
     end
 end
