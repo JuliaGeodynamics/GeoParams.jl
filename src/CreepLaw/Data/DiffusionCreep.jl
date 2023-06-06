@@ -161,21 +161,21 @@ const DiffusionCreep_info = Dict([
             n=1.0NoUnits,                         # power-law exponent
             r=0.0NoUnits,                         # exponent of water-fugacity
             p=-3.0NoUnits,                        # grain size exponent
-            A=((10^25.3)/64.9)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            A=((10^25.3)/64.9e3)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
             E=760.0kJ / mol,                        # activation energy
             V=0.0m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,
         ),
         MaterialParamsInfo(;
-            Comment="Values checked (NM)",
+            Comment="Values checked (NM), dividend at A is the shear modulus of diorite (see paper)",
             BibTex_Reference="
-                @article{rybacki2006influence,
-                title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates},
-                author={Rybacki, Erik and Gottschalk, Matthias and Wirth, Richard and Dresen, Georg},
+                @article{hier2005water,
+                title={Water weakening of clinopyroxenite in diffusion creep},
+                author={Hier-Majumder, Saswata and Mei, Shenghua and Kohlstedt, David L},
                 journal={Journal of Geophysical Research: Solid Earth},
-                volume={111},
-                number={B3},
-                year={2006},
+                volume={110},
+                number={B7},
+                year={2005},
                 publisher={Wiley Online Library}
                 }
         "),
@@ -189,13 +189,13 @@ const DiffusionCreep_info = Dict([
             n=1.0NoUnits,                         # power-law exponent
             r=1.4NoUnits,                         # exponent of water-fugacity
             p=-3.0NoUnits,                        # grain size exponent
-            A=((10^7.9)/64.9)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            A=((10^7.9)/64.9e3)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
             E=340.0kJ / mol,                        # activation energy
             V=14e-6m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,
         ),
         MaterialParamsInfo(;
-            Comment="Values checked (NM)",
+            Comment="Values checked (NM), dividend at A is the shear modulus of diorite (see paper)",
             BibTex_Reference="
                 @article{hier2005water,
                 title={Water weakening of clinopyroxenite in diffusion creep},
