@@ -60,9 +60,9 @@ struct GrainBoundarySliding{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         Name="",
         n=3.5NoUnits,
         p=-2.0NoUnits,
-        A=1.5MPa^(-3.5) * s^(-1.0) * µm^(2.0),
-        E=500kJ / mol,
-        V=24e-6m^3 / mol,
+        A=6500MPa^(-3.5) * s^(-1.0) * µm^(2.0),
+        E=400kJ / mol,
+        V=18e-6m^3 / mol,
         R=8.3145J / mol / K,
         Apparatus=AxialCompression,
     )
@@ -169,7 +169,7 @@ Returns grain boundary sliding strainrate as a function of 2nd invariant of the 
 
 """
 @inline function compute_εII(
-    a::GrainBoundarySliding, TauII::_T; T=one(precision(a)), P=zero(precision(a)), d=one(precision(a)), kwargs...
+    a::GrainBoundarySliding, TauII::_T; T=one(precision(a)), P=zero(precision(a)), d=one(precision(a)), args...
 ) where {_T}
     @unpack_val n, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
