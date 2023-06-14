@@ -158,7 +158,11 @@ end
     @unpack_val n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    ε = A * fastpow(TauII, n) * exp(-(E / (R * T)) * (fastpow(1 - fastpow(TauII / TauP, o), q))) / FE
+    ε = A * 
+        fastpow(FT * TauII, n) * 
+        exp(-(E / (R * T)) * 
+        (fastpow(1 - fastpow((FT * TauII) / TauP, o), q))) / 
+        FE
 
     return ε
 end
@@ -169,7 +173,11 @@ end
     @unpack_units n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    ε = A * fastpow(TauII, n) * exp(-(E / (R * T)) * (fastpow(1 - fastpow(TauII / TauP, o), q))) / FE
+    ε = A * 
+        fastpow(FT * TauII, n) * 
+        exp(-(E / (R * T)) * 
+        (fastpow(1 - fastpow((FT* TauII) / TauP, o), q))) / 
+        FE
 
     return ε
 end
