@@ -4,7 +4,7 @@ using GeoParams
 @testset "NonLinearPeierlsCreepLaws" begin
     
     # This tests the MaterialParameters structure
-    CharUnits_GEO = GEO_units(; viscosity=1Pa * s, length=1m)
+    CharUnits_GEO = GEO_units(; viscosity=1.0Pa * s, length=1.0m)
 
     # Define a linear viscous creep law ---------------------------------
     x1 = NonLinearPeierlsCreep()
@@ -16,28 +16,28 @@ using GeoParams
     # perform a computation with the peierls creep laws 
     # Calculate EpsII, using a set of pre-defined values
     CharDim = GEO_units(;
-        length=1000km, viscosity=1e19Pa * s, stress=100MPa, temperature=1000C
+        length=1000.0km, viscosity=1.0e19Pa * s, stress=100.0MPa, temperature=1000.0C
     )
     EpsII = GeoUnit(1.0s^-1.0)
     TauII = GeoUnit(1.0e3MPa)
-    T = GeoUnit(600C)
+    T = GeoUnit(600.0C)
 
     # compute a pure non linear peierls creep rheology
     p = SetNonLinearPeierlsCreep("Wet Olivine | Mei et al. (2010)")
 
-    T = 600 + 273.15
+    T = 600.0 + 273.15
 
     args = (; T=T)
-    TauII = 1e6
+    TauII = 1.0e6
     ε = compute_εII(p, TauII, args)
-    @test ε ≈ 6.304589599880289e-8
+    @test ε ≈ 5.569334377736908e-26
 
-    # same but while removing the tensor correction
+    # same but with removing the tensor correction
     ε_notensor = compute_εII(remove_tensor_correction(p), TauII, args)
-    @test ε_notensor ≈ 7.279913005242001e-8
+    @test ε_notensor ≈ 1.788048808305053e-26
 
     # test with arrays
-    τII_array = ones(10) * 1e6
+    τII_array = ones(10) * 1.0e6
     ε_array = similar(τII_array)
     T_array = ones(size(τII_array)) * (600.0 + 273.15)
 
@@ -56,7 +56,7 @@ using GeoParams
     p = SetNonLinearPeierlsCreep("Wet Olivine | Mei et al. (2010)")
     # εII = exp10.(-22:0.5:-12)
     τII = exp10.(9:0.05:10)               # preallocate array
-    T = 600 + 273.15
+    T = 600.0 + 273.15
     args = (;T=T)
     # compute_τII!(τII, p, εII, args)
 
@@ -96,4 +96,7 @@ using GeoParams
 
     end
     
+    # check that derivative calculation is correct
+    depsdtau = dεII_dτII(p, TauII, args)
+    @test depsdtau ≈ 1.324173323292431e-31
 end
