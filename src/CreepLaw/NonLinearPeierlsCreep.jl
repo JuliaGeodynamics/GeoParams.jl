@@ -187,7 +187,7 @@ function compute_εII!(
     a::NonLinearPeierlsCreep,
     TauII::AbstractArray{_T,N};
     T=ones(size(TauII))::AbstractArray{_T,N},
-    kwargs...,
+    args...,
 ) where {N,_T}
     @inbounds for i in eachindex(EpsII)
         EpsII[i] = compute_εII(a, TauII[i]; T=T[i])
@@ -196,51 +196,7 @@ function compute_εII!(
     return nothing
 end
 
-@inline function dεII_dτII(
-    a::NonLinearPeierlsCreep, TauII::_T; T=one(precision(a)), args...
-) where {_T}
-    @unpack_val n, q, o, TauP, A, E, R = a
-    FT, FE = a.FT, a.FE
-
-    return o * 
-           fastpow((FT * TauII) / TauP, o) *
-           fastpow(1 - fastpow((FT * TauII) / TauP, o), q) *
-           fastpow(TauII, n) * 
-           A *
-           E *
-           q *
-           FT *
-           n *
-           exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, o), q) / (R * T))) *
-           (1 / (FE * R * T * Tau * (1 - fastpow((FT * TauII) / TauP, o)))) + 
-           (A * n * 
-           fastpow(TauII, n) * 
-           exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, o), q) / (R * T)))) / 
-           (FE * TauII)
-end
-
-@inline function dεII_dτII(
-    a::NonLinearPeierlsCreep, TauII::Quantity; T=1K, args...
-)
-    @unpack_units n, q, o, TauP, A, E, R = a
-    FT, FE = a.FT, a.FE
-
-    return o * 
-           fastpow((FT * TauII) / TauP, o) *
-           fastpow(1 - fastpow((FT * TauII) / TauP, o), q) *
-           fastpow(TauII, n) * 
-           A *
-           E *
-           q *
-           FT *
-           n *
-           exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, o), q) / (R * T))) *
-           (1 / (FE * R * T * Tau * (1 - fastpow((FT * TauII) / TauP, o)))) + 
-           (A * n * 
-           fastpow(TauII, n) * 
-           exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, o), q) / (R * T)))) / 
-           (FE * TauII)
-end
+dεII_dτII(a::NonLinearPeierlsCreep, TauII; args...) = ForwardDiff.derivative(x -> compute_εII(a, x; args...), TauII)
 
 
 ####### Needs to be solved non-linearly because of quadratic equation
