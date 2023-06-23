@@ -11,11 +11,10 @@ import Base.getindex
 import GeoParams.Units: nondimensionalize, dimensionalize
 import GeoParams: nreduce
 
-@inline isCUDA() =  isdefined(Main,:CUDA) 
-
 include("Parallel.jl")              # all related to the Parallel struct
 include("CompositeRheology.jl")     # all related to CompositeRheology struct
 include("NonlinearIterations.jl")   # nonlinear local iterations
+include("Viscosity.jl")             # viscosity computations
 
 # Define rules to nondimensionalise this 
 function nondimensionalize(MatParam::Union{Parallel,CompositeRheology}, g::GeoUnits{TYPE}) where {TYPE}

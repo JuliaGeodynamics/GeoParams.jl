@@ -104,7 +104,14 @@ export compute_units
 # Define Material Parameter structure
 include("MaterialParameters.jl")
 using .MaterialParameters
-export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo
+export MaterialParams,
+    SetMaterialParams,
+    No_MaterialParam,
+    MaterialParamsInfo,
+    compute_viscosity_εII,
+    compute_viscosity_εij, 
+    compute_viscosity_τII, 
+    compute_viscosity_τij
 
 # Phase Diagrams
 using .MaterialParameters.PhaseDiagrams
@@ -211,7 +218,12 @@ export dεII_dτII,
     isplastic,isvolumetricplastic,
     compute_p_τII, 
     local_iterations_εvol, 
-    compute_p_harmonic
+    compute_p_harmonic,
+    compute_viscosity_εII,
+    compute_viscosity_εij,
+    compute_viscosity_τII,
+    compute_viscosity_τij,
+    compute_elastoviscosity
     
 
 # Constitutive relationships laws

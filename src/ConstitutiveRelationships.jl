@@ -63,7 +63,12 @@ export param_info,
     AxialCompression, SimpleShear, Invariant,
     get_G, 
     get_Kb,
-    iselastic
+    iselastic,
+    compute_viscosity_εII,
+    compute_viscosity_εij,
+    compute_viscosity_τII,
+    compute_viscosity_τij,
+    compute_elastoviscosity
 
 # add methods programmatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType)
