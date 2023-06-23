@@ -13,7 +13,7 @@ export compute_τij,
 Computes deviatoric stress `τij` for given deviatoric strain rate `εij`, old stress `τij_old`, rheology `v` and arguments `args`.
 This is for a case that all points are collocated and we have a single phase. 
 """
-function compute_τij(v, εij::NTuple{N,T}, args, τij_old::NTuple{N,T}) where {T,N}
+function compute_τij(v, εij::NTuple, args, τij_old::NTuple)
 
     # Second invariant of effective strainrate (taking elasticity into account)
     #ε_eff = εij .+ 0.5.*τij_old./(1.0*args.dt)
@@ -169,8 +169,8 @@ function compute_τij(
     εij::NTuple{N2,Union{T,NTuple{4,T}}},
     args,
     τij_old::NTuple{N2,Union{T,NTuple{4,T}}},
-    phases::NTuple{N2,Union{I,NTuple{4,I}}},
-) where {T,N1,N2,I<:Integer}
+    phases::NTuple{N2,Union{Integer,NTuple{4, Integer}}},
+) where {T,N1,N2}
 
     # Second invariant of effective strainrate (taking elasticity into account)
     ε_eff = effective_ε(εij, v, τij_old, args.dt, phases)
