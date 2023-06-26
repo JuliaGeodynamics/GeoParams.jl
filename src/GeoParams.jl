@@ -107,11 +107,7 @@ using .MaterialParameters
 export MaterialParams,
     SetMaterialParams,
     No_MaterialParam,
-    MaterialParamsInfo,
-    compute_viscosity_εII,
-    compute_viscosity_εij, 
-    compute_viscosity_τII, 
-    compute_viscosity_τij
+    MaterialParamsInfo
 
 # Phase Diagrams
 using .MaterialParameters.PhaseDiagrams
@@ -218,13 +214,7 @@ export dεII_dτII,
     isplastic,isvolumetricplastic,
     compute_p_τII, 
     local_iterations_εvol, 
-    compute_p_harmonic,
-    compute_viscosity_εII,
-    compute_viscosity_εij,
-    compute_viscosity_τII,
-    compute_viscosity_τij,
-    compute_elastoviscosity
-    
+    compute_p_harmonic 
 
 # Constitutive relationships laws
 include("StressComputations/StressComputations.jl")
@@ -233,6 +223,10 @@ export compute_τij, compute_p_τij, compute_τij_stagcenter!, compute_p_τij_st
 include("Rheology_Utils.jl")
 export time_τII_0D, time_τII_0D!, time_p_τII_0D, time_p_τII_0D!
 
+include("Viscosity/Viscosity.jl")
+export compute_viscosity_εII,
+    compute_viscosity_τII,
+    compute_elastoviscosity
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration

@@ -21,11 +21,10 @@ No_MaterialParam() = No_MaterialParam{Float64}()
 export MaterialParams,
     SetMaterialParams,
     No_MaterialParam,
-    MaterialParamsInfo,
-    compute_viscosity_εII,
-    compute_viscosity_εij, 
-    compute_viscosity_τII, 
-    compute_viscosity_τij
+    MaterialParamsInfo
+    # ,
+    # compute_viscosity_εII,
+    # compute_viscosity_τII
 
 """
     MaterialParamsInfo
@@ -371,21 +370,20 @@ function print_composite(a, spaces=10)
     return str
 end
 
+# for fn in (:compute_viscosity_εII, :compute_viscosity_τII)
+#     @eval begin
+#         # single phase version
+#         $fn(v::MaterialParams, args::Vararg{Any, N}) where {N} = $fn(v.CompositeRheology[1], args...)
 
-for fn in (:compute_viscosity_εII, :compute_viscosity_εij, :compute_viscosity_τII, :compute_viscosity_τij)
-    @eval begin
-        # single phase version
-        $fn(v::MaterialParams, args::Vararg{Any, N}) where {N} = $fn(v.CompositeRheology[1], args...)
-
-        # multi-phase version
-        @generated function $fn(v::NTuple{N1, AbstractMaterialParamsStruct}, phase, args::Vararg{Any, N2}) where {N1, N2}
-            quote
-                Base.@nexprs $N1 i -> i == phase && (return $fn(v.CompositeRheology[i], args...))
-                return 0.0
-            end
-        end
-    end
-end
+#         # multi-phase version
+#         @generated function $fn(v::NTuple{N1, AbstractMaterialParamsStruct}, phase, args::Vararg{Any, N2}) where {N1, N2}
+#             quote
+#                 Base.@nexprs $N1 i -> i == phase && (return $fn(v.CompositeRheology[i], args...))
+#                 return 0.0
+#             end
+#         end
+#     end
+# end
 
 end
 
