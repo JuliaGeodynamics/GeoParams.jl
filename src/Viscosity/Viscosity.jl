@@ -9,26 +9,26 @@ export compute_viscosity_εII,
 @inline _viscosity(τII, εII) = τII / (2  * εII)
 
 # compute effective "creep" viscosity from strain rate tensor
-function compute_viscosity_εII(v::AbstractCreepLaw, εII, args)
+function compute_viscosity_εII(v::AbstractConstitutiveLaw, εII, args)
     τII = compute_τII(v, εII, args)
     η = _viscosity(τII, εII)
     return η
 end
 
-function compute_viscosity_εII(v::AbstractCreepLaw, xx, yy, xy, args)
+function compute_viscosity_εII(v::AbstractConstitutiveLaw, xx, yy, xy, args)
     εII = second_invariant(xx, yy, xy)
     η = compute_viscosity_εII(v, εII, args)
     return η
 end
    
 # compute effective "creep" viscosity from deviatoric stress tensor
-function compute_viscosity_τII(v::AbstractCreepLaw, τII, args)
+function compute_viscosity_τII(v::AbstractConstitutiveLaw, τII, args)
     εII = compute_εII(v, τII, args)
     η = _viscosity(τII, εII)
     return η
 end
 
-function compute_viscosity_τII(v::AbstractCreepLaw, xx, yy, xy, args)
+function compute_viscosity_τII(v::AbstractConstitutiveLaw, xx, yy, xy, args)
     τII = second_invariant(xx, yy, xy)
     η = compute_viscosity_τII(v, τII, args)
     return η
@@ -66,7 +66,7 @@ end
 end
 
 # compute effective "creep" for a composite rheology where elements are in series
-@generated function compute_viscosity_II(v::NTuple{N, Any}, fn::F, II, args) where {F, N}
+@generated function compute_viscosity_II(v::NTuple{N, AbstractConstitutiveLaw}, fn::F, II, args) where {F, N}
     quote
         Base.@_inline_meta
         η = 0.0
@@ -88,7 +88,7 @@ end
 end
 
 # compute effective "creep" for a composite rheology where elements are in parallel
-@generated function compute_viscosity_II_parallel(v::NTuple{N, AbstractCreepLaw}, fn::F, II, args) where {F, N}
+@generated function compute_viscosity_II_parallel(v::NTuple{N, AbstractConstitutiveLaw}, fn::F, II, args) where {F, N}
     quote
         Base.@_inline_meta
         η = 0.0
