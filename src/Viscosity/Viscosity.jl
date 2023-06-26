@@ -62,7 +62,7 @@ end
 end
 
 # compute effective "creep" for a composite rheology where elements are in series
-@generated function compute_viscosity_II(v::NTuple{N, Union{AbstractCreepLaw, Parallel}}, fn::F, II, args) where {F, N}
+@generated function compute_viscosity_II(v::NTuple{N, Any}, fn::F, II, args) where {F, N}
     quote
         Base.@_inline_meta
         η = 0.0
