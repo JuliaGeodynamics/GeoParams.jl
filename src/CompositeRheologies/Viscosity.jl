@@ -36,25 +36,16 @@ function compute_viscosity_τII(v::AbstractCreepLaw, xx, yy, xy, args)
     return η
 end
 
-# compute effective "visco-elastic" viscosity
-@inline compute_elastoviscosity(v::ConstantElasticity, η, dt) = (inv(η) + inv(v.G.val, dt)) |> inv
-@inline compute_elastoviscosity(v::ConstantElasticity, η, args::NamedTuple) = compute_elastoviscosity(v, η, args.dt)
-
 # compute effective "creep" viscosity from strain rate tensor given a composite rheology
-@inline function compute_viscosity_εII(v::CompositeRheology, εII, args)
+@inline function compute_viscosity_εII(v::CompositeRheology, εII, args::Vararg{T, N} where {T, N})
     e = elements(v)
-    compute_viscosity_II(e, compute_viscosity_εII, εII, args)
-end
-
-@inline function compute_viscosity_εII(v::CompositeRheology, εII, args)
-    e = elements(v)
-    compute_viscosity_II(e, compute_viscosity_εII, εII, args)
+    compute_viscosity_II(e, compute_viscosity_εII, εII, args...)
 end
 
 # compute effective "creep" viscosity from deviatoric stress tensor given a composite rheology
-@inline function compute_viscosity_τII(v::CompositeRheology, τII, args)
+@inline function compute_viscosity_τII(v::CompositeRheology, τII, args::Vararg{T, N} where {T, N})
     e = elements(v)
-    compute_viscosity_II(e, compute_viscosity_τII, τII, args)
+    compute_viscosity_II(e, compute_viscosity_τII, τII, args...)
 end
 
 # compute effective "creep" for a composite rheology where elements are in series
@@ -89,7 +80,8 @@ end
     end
 end
 
-# compute_viscosity_εII(v::MaterialParams, εII, args) = compute_viscosity_εII(v.CompositeRheology, εII, args)
-# compute_viscosity_εij(v::MaterialParams, εII, args) = compute_viscosity_εij(v.CompositeRheology, εII, args)
-# compute_viscosity_τII(v::MaterialParams, τII, args) = compute_viscosity_τII(v.CompositeRheology, τII, args)
-# compute_viscosity_τij(v::MaterialParams, τII, args) = compute_viscosity_τij(v.CompositeRheology, τII, args)
+# compute effective "visco-elastic" viscosity
+@inline compute_elastoviscosity(v::ConstantElasticity, η, dt) = (inv(η) + inv(v.G.val * dt)) |> inv
+@inline compute_elastoviscosity(G, η, dt) = (inv(η) + inv(G * dt)) |> inv
+@inline compute_elastoviscosity(v::ConstantElasticity, η, args::NamedTuple) = compute_elastoviscosity(v, η, args.dt)
+@inline compute_elastoviscosity(G, η, args::NamedTuple) = compute_elastoviscosity(G, η, args.dt)
