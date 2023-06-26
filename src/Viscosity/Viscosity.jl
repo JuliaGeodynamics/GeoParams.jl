@@ -34,18 +34,22 @@ function compute_viscosity_τII(v::AbstractCreepLaw, xx, yy, xy, args)
     return η
 end
 
-for fn in (:compute_viscosity_εII, :compute_viscosity_τII)
-    @eval begin
-        # single phase version
-        $fn(v::MaterialParams, args::Vararg{Any, N}) where {N} = $fn(v.CompositeRheology[1], args...)
+# single phase versions
+compute_viscosity_εII(v::MaterialParams, args::Vararg{Any, N}) where {N} = compute_viscosity_εII(v.CompositeRheology[1], args...)
+compute_viscosity_τII(v::MaterialParams, args::Vararg{Any, N}) where {N} = compute_viscosity_τII(v.CompositeRheology[1], args...)
 
-        # multi-phase version
-        @generated function $fn(v::NTuple{N1, AbstractMaterialParamsStruct}, phase, args::Vararg{Any, N2}) where {N1, N2}
-            quote
-                Base.@nexprs $N1 i -> i == phase && (return $fn(v.CompositeRheology[i], args...))
-                return 0.0
-            end
-        end
+# multi-phase versions
+@generated function compute_viscosity_εII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase, args::Vararg{Any, N2}) where {N1, N2}
+    quote
+        Base.@nexprs $N1 i -> i == phase && (return compute_viscosity_εII(v.CompositeRheology[i], args...))
+        return 0.0
+    end
+end
+
+@generated function compute_viscosity_τII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase, args::Vararg{Any, N2}) where {N1, N2}
+    quote
+        Base.@nexprs $N1 i -> i == phase && (return compute_viscosity_τII(v.CompositeRheology[i], args...))
+        return 0.0
     end
 end
 
