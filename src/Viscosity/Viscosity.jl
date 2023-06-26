@@ -100,13 +100,6 @@ end
 
 for fn in (:compute_elastoviscosity_εII, :compute_elastoviscosity_τII)
     @eval begin
-        
-        # compute effective "creep" viscosity from strain rate tensor given a composite rheology
-        @inline function $fn(v::CompositeRheology, εII, args)
-            e = elements(v)
-            $fn(e, compute_viscosity_εII, εII, args)
-        end
-
         # single phase versions
         $fn(v::MaterialParams, args::Vararg{Any, N}) where {N} = $fn(v.CompositeRheology[1], args...)
 
@@ -126,8 +119,19 @@ for fn in (:compute_elastoviscosity_εII, :compute_elastoviscosity_τII)
                 return 0.0
             end
         end
-
     end
+end
+
+# compute effective "creep" viscosity from strain rate tensor given a composite rheology
+@inline function compute_elastoviscosity_εII(v::CompositeRheology, εII, args)
+    e = elements(v)
+    compute_elastoviscosity_II(e, compute_viscosity_εII, εII, args)
+end
+
+# compute effective "creep" viscosity from deviatoric stress tensor given a composite rheology
+@inline function compute_elastoviscosity_τII(v::CompositeRheology, τII, args)
+    e = elements(v)
+    compute_elastoviscosity_II(e, compute_viscosity_τII, τII, args)
 end
 
 @generated function compute_elastoviscosity_II(v::NTuple{N, AbstractConstitutiveLaw}, fn::F, II, args) where {F, N}
