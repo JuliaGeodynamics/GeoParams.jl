@@ -65,9 +65,7 @@ export param_info,
     get_Kb,
     iselastic,
     compute_viscosity_εII,
-    compute_viscosity_εij,
     compute_viscosity_τII,
-    compute_viscosity_τij,
     compute_elastoviscosity
 
 # add methods programmatically 
