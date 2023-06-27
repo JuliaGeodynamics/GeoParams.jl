@@ -29,6 +29,7 @@ include("Computations.jl")
 include("CreepLaw/CreepLaw.jl")              # viscous Creeplaws
 include("Elasticity/Elasticity.jl")          # elasticity
 include("Plasticity/Plasticity.jl")          # plasticity
+# include("CompositeRheologies/Viscosity.jl")             # composite creeplaws
 #include("CreepLaw/Viscosity.jl")             # composite creeplaws
 include("CompositeRheologies/CompositeRheologies.jl")            # composite constitutive relationships
 
@@ -62,7 +63,8 @@ export param_info,
     AbstractConstitutiveLaw
     AxialCompression, SimpleShear, Invariant,
     get_G, 
-    get_Kb
+    get_Kb,
+    iselastic
 
 # add methods programmatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType)

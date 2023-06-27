@@ -1,6 +1,6 @@
 export CustomRheology, dεII_dτII, dτII_dεII, compute_εII, compute_τII
 
-struct CustomRheology{F1,F2,T} <: AbstractCreepLaw{Float64}
+struct CustomRheology{F1,F2,T} <: AbstractConstitutiveLaw{Float64}
     strain::F1 # function to compute strain rate
     stress::F2 # function to compute deviatoric stress
     args::T # NamedTuple of parameters

@@ -104,7 +104,10 @@ export compute_units
 # Define Material Parameter structure
 include("MaterialParameters.jl")
 using .MaterialParameters
-export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo
+export MaterialParams,
+    SetMaterialParams,
+    No_MaterialParam,
+    MaterialParamsInfo
 
 # Phase Diagrams
 using .MaterialParameters.PhaseDiagrams
@@ -172,6 +175,7 @@ export dεII_dτII,
     ConstantElasticity,
     SetConstantElasticity,
     effective_εII,
+    iselastic,
     get_G, 
     get_Kb,
     get_shearmodulus, 
@@ -210,8 +214,7 @@ export dεII_dτII,
     isplastic,isvolumetricplastic,
     compute_p_τII, 
     local_iterations_εvol, 
-    compute_p_harmonic
-    
+    compute_p_harmonic 
 
 # Constitutive relationships laws
 include("StressComputations/StressComputations.jl")
@@ -220,6 +223,12 @@ export compute_τij, compute_p_τij, compute_τij_stagcenter!, compute_p_τij_st
 include("Rheology_Utils.jl")
 export time_τII_0D, time_τII_0D!, time_p_τII_0D, time_p_τII_0D!
 
+include("Viscosity/Viscosity.jl")
+export compute_viscosity_εII,
+    compute_viscosity_τII,
+    compute_elastoviscosity,
+    compute_elastoviscosity_εII,
+    compute_elastoviscosity_τII
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration

@@ -54,8 +54,8 @@ end
 end
 
 @generated function nreduce(
-    f::F, v::NTuple{N,Any}, id_args::NTuple{N,T}, args::NTuple{NT,Any}
-) where {N,T<:Integer,NT,F}
+    f::F, v::NTuple{N,Any}, id_args::NTuple{N,Integer}, args::NTuple{NT,Any}
+) where {N,NT,F<:Function}
     Base.@_inline_meta
     quote
         val = 0.0
@@ -64,7 +64,7 @@ end
     end
 end
 
-@generated function nphase(f::F, phase::Int64, v::NTuple{N,AbstractMaterialParamsStruct}) where {N,F}
+@generated function nphase(f::F, phase::Integer, v::NTuple{N,AbstractMaterialParamsStruct}) where {N,F<:Function}
     Base.@_inline_meta
     quote
         Base.Cartesian.@nexprs $N i -> @inbounds v[i].Phase === phase && return f(v[i])
@@ -89,4 +89,3 @@ make_tuple(x::Tuple) = x
 macro print(a1, a2)
     return :($(esc(a1)) === true ? println($(esc(a2))) : nothing)
 end
-

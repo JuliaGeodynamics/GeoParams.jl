@@ -345,10 +345,10 @@ end
     # computed symbolically:
     return (
         FE *
-        (fastpow(A, -1 )) *
-        (fastpow(d, (-p) )) *
-        (fastpow(f, (-r) )) *
-        (fastpow(EpsII * FE, 0)) *
+        inv(A) *
+        fastpow(d, -p ) *
+        fastpow(f, -r ) *
+        fastpow(EpsII * FE, 0) *
         exp((E + P * V) / (R * T ))
     ) / (FT )
 end

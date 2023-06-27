@@ -20,6 +20,7 @@ export compute_εII,            # calculation routines
     SetConstantElasticity,  # helper function
     AbstractElasticity,
     isvolumetric, 
+    iselastic,
     effective_εII, effective_ε,
     get_G, 
     get_Kb
@@ -82,10 +83,13 @@ function param_info(s::ConstantElasticity) # info about the struct
     return MaterialParamsInfo(; Equation=L"Constant elasticity")
 end
 
-function isvolumetric(a::ConstantElasticity)
+@inline function isvolumetric(a::ConstantElasticity)
     @unpack_val ν = a
     return ν == 0.5 ? false : true
 end
+
+@inline iselastic(v::AbstractElasticity) = true
+@inline iselastic(v) = false
 
 for modulus in (:G, :Kb)
     fun = Symbol("get_$(string(modulus))")
