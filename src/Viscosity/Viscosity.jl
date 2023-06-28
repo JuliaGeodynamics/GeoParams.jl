@@ -65,7 +65,7 @@ end
     quote
         Base.@_inline_meta
         η = 0.0
-        Base.@nexprs $N i -> η += inv(fn(v[i], II, args)) * !iselastic(v[i]) * !isplastic(v[i])
+        Base.@nexprs $N i -> !isplastic(v[i]) && (η += inv(fn(v[i], II, args)) * !iselastic(v[i]))
         return inv(η)
     end
 end
@@ -138,7 +138,7 @@ end
     quote
         Base.@_inline_meta
         η = 0.0
-        Base.@nexprs $N i -> η += inv(fn(v[i], II, args)) * !isplastic(v[i])
+        Base.@nexprs $N i -> !isplastic(v[i]) && (η += inv(fn(v[i], II, args)))
         return η
     end
 end
