@@ -948,24 +948,32 @@ julia> PlotDeformationMap(v,  strainrate=false, viscosity=true, levels=Vector(18
 """
 function PlotDeformationMap(
     v;
-    args=(P=0.0, d=1e-3, f=1.0),  
+    args=(P=0.0, T=1250, d=3e-3, f=1.0),  
+    d = (1e-6, 1e-1),               # in m
     σ = (1e-2, 1e8),                # in MPa
     T = (10, 1000),                 # in C
-    ε = (1e-22, 1e-8),                 # in 1/s
+    ε = (1e-22, 1e-8),              # in 1/s
     n = 400,                        # number of points
     rotate_axes = false,
     strainrate = true,              # strainrate (otherwise stress)
     viscosity = false,              # plot viscosity instead of strainrate/stress
+    grainsize = false,              # plot strainrate with grainsize as x-axis
+    depth = false,                  # plot strainrate with depth as x-axis
     boundaries = true,              # plot deformation boundaries
-    levels = 20,                    # number of contour levels
+    levels = 30,                    # number of contour levels
     colormap=:viridis,
     filename=nothing,
     fontsize=40,
     res=(1200, 900),
 )
 
+    # allocating ticks
+    xtick = 0
+
     # Parameters
     T_vec = Vector(range(T[1], T[2], n+1))    .+ 273.15   # in K
+    d_vec = 10.0.^Vector(range(log10(d[1]), log10(d[2]), n+1))
+    # Depth to be done
 
     # this is used to determine the main deformation mechanism (and color that later)
     n_components = 1
@@ -983,12 +991,19 @@ function PlotDeformationMap(
         η   = zeros(n+1,n)
         mainDef = zeros(n+1,n)     # indicates the main components
         for i in CartesianIndices(εII)
-            Tlocal = T_vec[i[1]]
             τlocal = σ_vec[i[2]]
-            args_local = merge(args, (T=Tlocal,))
-
+            if grainsize
+                Tlocal = 1250
+                dlocal = d_vec[i[1]]
+                args_local = merge(args, (T=Tlocal, d=dlocal,))
+                xtick = log10(d[1]):0.1:log10(d[2]).+3.0
+            else
+                dlocal = 3e-3
+                Tlocal = T_vec[i[1]]
+                args_local = merge(args, (T=Tlocal, d=dlocal))
+            end
             εII[i] = compute_εII(v, τlocal, args_local)       # compute strainrate (1/s)
-            η[i]   = computeViscosity_εII(v, τlocal, args_local) 
+            #η[i]   = computeViscosity_εII(v, τlocal, args_local) 
 
             ε_components =  [ compute_εII(v[i], τlocal, args_local) for i=1:n_components];
             ε_components = ε_components./sum(ε_components) 
@@ -1006,10 +1021,11 @@ function PlotDeformationMap(
         mainDef = zeros(n+1,n)     # indicates the main components
         for i in CartesianIndices(τII)
             Tlocal = T_vec[i[1]]
+            dlocal = d_vec[i[1]]
             εlocal = ε_vec[i[2]]
-            args_local = merge(args, (T=Tlocal,))
+            args_local = merge(args, (T=Tlocal, d=dlocal,))
 
-            τII[i] = compute_τII(v, εlocal, args_local)       # compute strainrate (1/s)
+            τII[i] = compute_τII(v, εlocal, args_local)       # compute stress (Pa)
             η[i]   = τII[i] / (2 * εlocal)
 
             τ_components =  [ compute_τII(v[i],  εlocal, args_local) for i=1:n_components];
@@ -1019,7 +1035,6 @@ function PlotDeformationMap(
         log_ε = log10.(ε_vec)
     end
     T_plot = T_vec .- 273.15;
-
     # determine axis of plot
     if strainrate
         x = T_plot
@@ -1040,6 +1055,22 @@ function PlotDeformationMap(
         label = L"\log_{10}(\eta_{eff}) [Pa s]"
         data = log10.(η)
     end
+    if strainrate && grainsize
+        x = log10.(d_vec./1e-3)
+        xlabel = L"\log_{10}(d) [mm]"
+        y = log_σ
+        ylabel = L"\log_{10}(\tau_{II}) [MPa]";
+        label = L"\log_{10}(\varepsilon_{II}) [s^{-1}]"
+        data = log10.(εII)
+    end
+    if strainrate && depth
+        x = 1# to be defined
+        xlabel = "depth [km]"
+        y = log_σ
+        ylabel = L"\log_{10}(\tau_{II}) [MPa]";
+        label = L"\log_{10}(\varepsilon_{II}) [s^{-1}]"
+        data = log10.(εII)
+    end
 
     if rotate_axes 
         x,y = y,x
@@ -1054,15 +1085,22 @@ function PlotDeformationMap(
         fig[1,1],
         title="Deformation mechanism map",
         xlabel=xlabel, xlabelsize=fontsize,
+        xticks = -3:0.5:2,
+        xminorticks = IntervalsBetween(5),
+        xminorticksvisible = true,
         ylabel=ylabel, ylabelsize=fontsize,
+        yticks = -1:0.5:4,
+        yminorticks = IntervalsBetween(5),
+        yminorticksvisible = true
         )
     c1 = heatmap!(ax,x,y,data, colormap = colormap)
-    contour!(ax,x,y,data, color=:black, levels=levels)
 
     if boundaries
         # plot boundaries between deformation regimes    
         contour!(ax,x,y,mainDef, color=:red, linewidth=2, linestyle=:solid, levels=n_components-1)
     end
+    
+    contour!(ax,x,y,data; color=:black, levels=-20:1:-2, labels = true, labelsize = 25, labelfont = :bold, labelcolor = :black)
 
     Colorbar(fig[1,2], c1, label=label, labelsize=fontsize )
 
