@@ -12,15 +12,15 @@ const NonLinearPeierlsCreep_info = Dict([
 
 # Wet Olivine rheology of Mei 2010
 (
-    "Wet Olivine | Mei et al. (2010)",
+    "Dry Olivine | Mei et al. (2010)",
     (
         NonLinearPeierlsCreep(;
-            Name="Wet Olivine | Mei et al. (2010)",
+            Name="Dry Olivine | Mei et al. (2010)",
             n=2.0NoUnits,                         # power-law exponent
             q=1.0NoUnits,                         # exponent of water-fugacity
             o=0.5NoUnits,                        # grain size exponent
             TauP=5.9e9Pa,                         # Peierls stress
-            A=(1.4e-7)MPa^(-2.0) * s^(-1.0),    # material specific rheological parameter
+            A=(1.4e-7)*(2.0^((1.0+(3.0/2.0))/2.0))MPa^(-2.0) * s^(-1.0),    # material specific rheological parameter
             E=320.0kJ / mol,                        # activation energy
             Apparatus=AxialCompression,
         ),
@@ -37,6 +37,26 @@ const NonLinearPeierlsCreep_info = Dict([
                 publisher={Wiley Online Library}
                 }
         "),
+    ),
+)
+
+# Wet Olivine rheology of Mei 2010 TEST
+(
+    "TEST PEIERLS",
+    (
+        NonLinearPeierlsCreep(;
+            Name="TEST PEIERLS",
+            n=2.0NoUnits,                         # power-law exponent
+            q=1.0NoUnits,                         # exponent of water-fugacity
+            o=0.5NoUnits,                        # grain size exponent
+            TauP=5.9e9Pa,                         # Peierls stress
+            A=6.35657940893437e-9MPa^(-2.0) * s^(-1.0),    # material specific rheological parameter
+            E=320.0kJ / mol,                        # activation energy
+            Apparatus=AxialCompression,
+        ),
+        MaterialParamsInfo(;
+            Comment="Law to check Thorsten Beckers book rheology and its conversion of the A factor",
+            BibTex_Reference=""),
     ),
 )
 
