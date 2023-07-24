@@ -76,7 +76,7 @@ end
     second_invariant_staggered(Aii::NTuple{2,T}, Axy::NTuple{4,T}) where {T} 
 
 Computes the second invariant of the 2D tensor `A` when its off-diagonal components 
-need to be maped from cell center to cell vertex.  `Aii` is a tuple containinig the diagonal
+need to be mapped from cell center to cell vertex.  `Aii` is a tuple containinig the diagonal
 terms of `A` at the i-th vertex, and `Axy` is a tuple that contains `A_xy` at the cell centers
 around the i-th vertex.
 """
@@ -95,7 +95,7 @@ end
     second_invariant_staggered(Aii::NTuple{3,T}, Ayz::NTuple{4,T}, Axz::NTuple{4,T}, Axy::NTuple{4,T}) where {T} 
 
 Computes the second invariant of the 2D tensor `A` when its off-diagonal components 
-need to be maped from cell center to cell vertex. `Aii` is a tuple containinig the diagonal
+need to be mapped from cell center to cell vertex. `Aii` is a tuple containinig the diagonal
 terms of `A` at the i-th vertex, and `Ayz`, `Axz`, and `Axy` are tuples that contain the off-diagonal components of the tensor
 at the cell centers around the i-th vertex.
 """
@@ -125,7 +125,7 @@ end
     second_invariant_staggered(Axx::NTuple{4,T}, Ayy::NTuple{4,T}, Axy::Number) where {T} 
 
 Computes the second invariant of the 2D tensor `A` when its diagonal components 
-need to be maped from cell center to cell vertex. `Axx`, and `Ayy` are tuples containinig the diagonal
+need to be mapped from cell center to cell vertex. `Axx`, and `Ayy` are tuples containinig the diagonal
 terms of `A` at the cell centers around the i-th vertex., and `Axy` is the xy component at the i-th vertex.
 """
 @inline function second_invariant_staggered(
@@ -138,7 +138,7 @@ end
     second_invariant_staggered(Axx::NTuple{4,T}, Ayy::NTuple{4,T}, Azz::NTuple{4,T}, Aij::NTuple{3,T}) where {T} 
 
 Computes the second invariant of the 2D tensor `A` when its diagonal components 
-need to be maped from cell center to cell vertex. `Axx`, `Ayy`, and `Azz` are tuples containinig the diagonal
+need to be mapped from cell center to cell vertex. `Axx`, `Ayy`, and `Azz` are tuples containinig the diagonal
 terms of `A` at the cell centers around the i-th vertex., and `Aij` is a tuple that contains the off-diagonal
 components at the i-th vertex.
 """
@@ -167,7 +167,7 @@ end
 
 # Methods to rotate the elastic stress
 
-rotate_elastic_stress(ω, τ, dt) = _rotate_elastic_stress(ω, staggered_tensor_average(τ), dt)
+@inline rotate_elastic_stress(ω, τ, dt) = _rotate_elastic_stress(ω, staggered_tensor_average(τ), dt)
 
 @inline _rotate_elastic_stress(ω::Union{AbstractVector, NTuple}, τ, dt) = rotate_elastic_stress3D(ω, τ, dt)
 @inline _rotate_elastic_stress(ω, τ, dt) = rotate_elastic_stress2D(ω, τ, dt)
@@ -180,7 +180,7 @@ and ω = 1/2(dux/dy - duy/dx)
 """
 @inline Base.@propagate_inbounds function rotate_elastic_stress2D(ω, τ, dt)
     θ = ω * dt
-    # NOTE: inlining sincos speeds up considerably this kernel but breaks for <1.8
+    # NOTE: inlining sincos speeds up considerably this kernel but breaks for < 1.8
     sinθ, cosθ = sincos(θ) 
     # rotate tensor
     tensor_rotation(τ, cosθ, sinθ)
@@ -208,27 +208,27 @@ Trii-dimensional rotation of the elastic stress where τ is in the Voig notation
     # vorticity
     ω = √(sum(x^2 for x in ωi))
     # unit rotation axis
-    n = inv(ω) .* ωi
+    n = SVector{3,  Float64}(inv(ω) * ωi[i] for i in 1:3)
     # integrate rotation angle
     θ = dt * 0.5 * ω
     # Euler Rodrigues rotation matrix
     R = rodrigues_euler(θ, n)
     # rotate tensor
     τij = voigt2tensor(τ)
-    τij_rot = R * τij * R'
+    τij_rot = R * (τij * R')
     tensor2voigt(T, τij_rot)
 end
 
 # Euler Rodrigues rotation matrix
 @inline function rodrigues_euler(θ, n)
     sinθ, cosθ = sincos(θ)
-    R1 = cosθ*I
-    R2 = sinθ.*(@SMatrix [
-        0     -n[3]   n[2]
-        n[3]   0     -n[1]
-       -n[3]   n[1]   0
-    ])
-    c = (1-cosθ)
-    R3 = SMatrix{3, 3, Float64}(c*n[i]*n[j] for i in 1:3, j in 1:3)
-    return R1 + R2 + R3
+    c0 = sinθ*cosθ
+    Base.@nexprs 3 i -> c_i = sinθ*n[i]
+    R1 = @SMatrix [
+        c0   -c_3   c_2
+        c_3    c0  -c_1
+       -c_2   c_1    c0
+    ]
+    R2 = (1.0 - cosθ).*(n*n')
+    return R1 + R2
 end

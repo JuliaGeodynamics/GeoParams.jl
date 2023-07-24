@@ -142,6 +142,7 @@ end
 # Print the individual rheological elements in the REPL
 print_rheology_matrix(v::String)             = ["         "]
 print_rheology_matrix(v::AbstractCreepLaw)   = ["--⟦▪̲̅▫̲̅▫̲̅▫̲̅--"]
+print_rheology_matrix(v::CustomRheology)   = ["--?????--"]
 print_rheology_matrix(v::AbstractElasticity) = ["--/\\/\\/--"]
 print_rheology_matrix(v::AbstractPlasticity) = ["--▬▬▬__--"]
 #print_rheology_matrix(v::DruckerPrager)      = ["-dp▬▬__--"] # we can further 

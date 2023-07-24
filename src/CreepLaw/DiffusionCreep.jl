@@ -38,8 +38,8 @@ where
 - ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}`` 
 - ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[MPa]}``
 
-The experimental paramaters are converted into second invariants using the `Apparatus` variable that can be
-either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law paramters are already given as a function of second invariants, choose `Apparatus=Invariant`.
+The experimental parameters are converted into second invariants using the `Apparatus` variable that can be
+either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
 # Example
 ```julia-repl 
@@ -176,8 +176,8 @@ Returns diffusion creep strainrate as a function of 2nd invariant of the stress 
 
 """
 @inline function compute_εII(
-    a::DiffusionCreep, TauII::_T; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), d=one(precision(a)), kwargs...
-) where {_T}
+    a::DiffusionCreep, TauII; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), d=one(precision(a)), kwargs...
+)
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
@@ -227,8 +227,8 @@ end
 returns the derivative of strainrate versus stress 
 """
 @inline function dεII_dτII(
-    a::DiffusionCreep, TauII::_T; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), d=one(precision(a)), kwargs...
-) where {_T}
+    a::DiffusionCreep, TauII; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), d=one(precision(a)), kwargs...
+)
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
@@ -269,8 +269,8 @@ end
 Returns diffusion creep stress as a function of 2nd invariant of the strain rate 
 """
 @inline function compute_τII(
-    a::DiffusionCreep, EpsII::_T; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), d=one(precision(a)), kwargs...
-) where {_T}
+    a::DiffusionCreep, EpsII; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), d=one(precision(a)), kwargs...
+)
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
     
@@ -322,8 +322,8 @@ function compute_τII!(
 end
 
 @inline function dτII_dεII(
-    a::DiffusionCreep, EpsII::_T; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), d=one(precision(a)), kwargs...
-) where {_T}
+    a::DiffusionCreep, EpsII; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), d=one(precision(a)), kwargs...
+)
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
@@ -349,10 +349,10 @@ end
     # computed symbolically:
     return (
         FE *
-        (fastpow(A, -1 )) *
-        (fastpow(d, (-p) )) *
-        (fastpow(f, (-r) )) *
-        (fastpow(EpsII * FE, 0)) *
+        inv(A) *
+        fastpow(d, -p ) *
+        fastpow(f, -r ) *
+        fastpow(EpsII * FE, 0) *
         exp((E + P * V) / (R * T ))
     ) / (FT )
 end

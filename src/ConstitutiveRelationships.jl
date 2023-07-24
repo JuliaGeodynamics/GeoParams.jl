@@ -7,7 +7,7 @@ using Base: Float64
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
-import GeoParams: param_info, fastpow, nphase, @print
+import GeoParams: param_info, fastpow, nphase, ntuple_idx, @print
 import GeoParams: second_invariant, second_invariant_staggered
 using BibTeX
 using ..MaterialParameters: MaterialParamsInfo
@@ -15,7 +15,6 @@ import Base.show
 using ForwardDiff
 using StaticArrays
 using Static
-
 
 const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 
@@ -30,6 +29,7 @@ include("Computations.jl")
 include("CreepLaw/CreepLaw.jl")              # viscous Creeplaws
 include("Elasticity/Elasticity.jl")          # elasticity
 include("Plasticity/Plasticity.jl")          # plasticity
+# include("CompositeRheologies/Viscosity.jl")             # composite creeplaws
 #include("CreepLaw/Viscosity.jl")             # composite creeplaws
 include("CompositeRheologies/CompositeRheologies.jl")            # composite constitutive relationships
 
@@ -63,7 +63,8 @@ export param_info,
     AbstractConstitutiveLaw,
     AxialCompression, SimpleShear, Invariant,
     get_G, 
-    get_Kb
+    get_Kb,
+    iselastic
 
 # add methods programatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType, 
@@ -102,8 +103,6 @@ for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElas
         dεII_dτII(a::$(myType), TauII, args) = dεII_dτII(a, TauII; args...)
         dp_dεvol(a::$(myType), EpsVol, args) = dp_dεvol(a, EpsVol; args...)
         dεvol_dp(a::$(myType), P, args) = dεvol_dp(a, P; args...)
-        
-    
     end
 end
 

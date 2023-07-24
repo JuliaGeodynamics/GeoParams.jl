@@ -33,7 +33,7 @@ function param_info(s::ConstantGravity) # info about the struct
 end
 
 # Calculation routine
-function compute_gravity(s::ConstantGravity{_T}) where {_T}
+function compute_gravity(s::ConstantGravity)
     @unpack_val g = s
 
     return g
@@ -49,8 +49,10 @@ end
     end
 end
 
+compute_gravity(MatParam::AbstractMaterialParamsStruct) = compute_gravity(MatParam.Gravity[1])
+
 # Print info 
-function show(io::IO, d::ConstantGravity{_T}) where {_T}
+function show(io::IO, d::ConstantGravity)
     return print(io, "Gravitational acceleration: g=$(UnitValue(d.g))")
 end
 #-------------------------------------------------------------------------

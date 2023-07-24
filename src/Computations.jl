@@ -1,6 +1,7 @@
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 using ..Units
 using Parameters, Unitful
+using StaticArrays
 
 # Computational routines needed for computations with the MaterialParams structure 
 
@@ -111,7 +112,7 @@ end
 
 #Multiplies parameter with the fraction of a phase
 @generated function compute_param_times_frac(
-    fn::F, PhaseRatios::NTuple{N,T}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, argsi
+    fn::F, PhaseRatios::Union{NTuple{N,T}, SVector{N,T}}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, argsi
 ) where {F,N,T}
     # # Unrolled dot product
     quote
