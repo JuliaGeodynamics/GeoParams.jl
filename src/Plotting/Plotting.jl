@@ -1093,6 +1093,7 @@ function PlotDeformationMap(
         yminorticks = IntervalsBetween(5),
         yminorticksvisible = true
         )
+
     c1 = heatmap!(ax,x,y,data, colormap = colormap)
 
     if boundaries
