@@ -50,7 +50,7 @@ const NonLinearPeierlsCreep_info = Dict([
             q=1.0NoUnits,                         # exponent of water-fugacity
             o=0.5NoUnits,                        # grain size exponent
             TauP=5.9e9Pa,                         # Peierls stress
-            A=6.35657940893437e-9MPa^(-2.0) * s^(-1.0),    # material specific rheological parameter
+            A=6.35657940893437e-8MPa^(-2.0) * s^(-1.0),    # material specific rheological parameter
             E=320.0kJ / mol,                        # activation energy
             Apparatus=AxialCompression,
         ),

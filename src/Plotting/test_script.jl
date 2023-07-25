@@ -5,7 +5,8 @@ using GLMakie
 using CairoMakie
 
 #x1 = SetGrainBoundarySliding("Dry Olivine < 1523K | Hirth and Kohlstedt (2003)")
-x1 = SetGrainBoundarySliding("Dry Olivine >= 1523K | Hirth and Kohlstedt (2003)")
+#x1 = SetGrainBoundarySliding("Dry Olivine >= 1523K | Hirth and Kohlstedt (2003)")
+x1 = SetGrainBoundarySliding("TEST GBS")
 x1 = remove_tensor_correction(x1)
 #x2 = SetNonLinearPeierlsCreep("Dry Olivine | Mei et al. (2010)")
 x2 = SetNonLinearPeierlsCreep("TEST PEIERLS")
