@@ -1,3 +1,19 @@
+
+
+
+
+
+
+
+### Als nächstes versuchen die Farben in Thorstens plot nach zu bilden
+### ODER die A values zurück umrechnen und gucken ob sie zu Thorstens values passen oder nicht
+
+
+
+
+
+
+
 using Pkg
 Pkg.activate(".")
 using GeoParams
@@ -26,7 +42,7 @@ T = (0.0,1523.0)
 σ = (1.0e-1, 1.0e4)
 d = (1.0e-6, 1.0e-1)
 
-PlotDeformationMap(c2, args=args, d=d, σ=σ, T=T, grainsize=true)
+p = PlotDeformationMap(c2, args=args, d=d, σ=σ, T=T, grainsize=true)
 
 #=
 function compute_εtestnoinvar(
