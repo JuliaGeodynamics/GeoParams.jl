@@ -1031,6 +1031,7 @@ function PlotDeformationMap(
             τ_components =  [ compute_τII(v[i],  εlocal, args_local) for i=1:n_components];
             τ_components = τ_components./sum(τ_components) 
             mainDef[i] = argmin(τ_components)                 # index of max. strainrate 
+            @show mainDef
         end
         log_ε = log10.(ε_vec)
     end
