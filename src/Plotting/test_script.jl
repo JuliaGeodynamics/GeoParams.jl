@@ -21,28 +21,36 @@ using GLMakie
 using CairoMakie
 
 #x1 = SetGrainBoundarySliding("Dry Olivine < 1523K | Hirth and Kohlstedt (2003)")
-#x1 = SetGrainBoundarySliding("Dry Olivine >= 1523K | Hirth and Kohlstedt (2003)")
 x1 = SetGrainBoundarySliding("TEST GBS")
+#x1 = SetGrainBoundarySliding("THORSTEN GBS")
 x1 = remove_tensor_correction(x1)
 #x2 = SetNonLinearPeierlsCreep("Dry Olivine | Mei et al. (2010)")
 x2 = SetNonLinearPeierlsCreep("TEST PEIERLS")
+#x2 = SetNonLinearPeierlsCreep("THORSTEN PEIERLS")
 x2 = remove_tensor_correction(x2)
 #x3 = SetDislocationCreep("Dry Olivine | Hirth & Kohlstedt (2003)")
 x3 = SetDislocationCreep("TEST DISL")
+#x3 = SetDislocationCreep("THORSTEN DISL")
 x3 = remove_tensor_correction(x3)
 #x4 = SetDiffusionCreep("Dry Olivine | Hirth & Kohlstedt (2003)")
 x4 = SetDiffusionCreep("TEST DIFF")
+#x4 = SetDiffusionCreep("THORSTEN DIFF")
 x4 = remove_tensor_correction(x4)
 c2 = CompositeRheology(x1, x2, x3, x4)
 
 # angepasste values damit der plot UNGEFÄHR passt. rausbekommen wie man von ursprünglichen values auf angepasste values kommt und warum.
 
 args = (P=1.0e9,)
+#args = (P=1.0e9, d=3.0)
 T = (0.0,1523.0)
+#T = (0.0,1623.0)
 σ = (1.0e-1, 1.0e4)
 d = (1.0e-6, 1.0e-1)
 
-p = PlotDeformationMap(c2, args=args, d=d, σ=σ, T=T, grainsize=true)
+p = PlotDeformationMap(c2, args=args, d=d, σ=σ, T=T, grainsize=true, colormap=:sienna, boundaries=false,
+                       categorical_cbar=true, categorical_cbar_labels=["GBS", "Peierls", "Dislocation", "Diffusion"])
+#p = PlotDeformationMap(c2, args=args, σ=σ, T=T, colormap=:sienna, boundaries=false,
+#                       categorical_cbar=true, categorical_cbar_labels=["Peierls", "Dislocation", "Diffusion"])
 
 #=
 function compute_εtestnoinvar(
@@ -65,3 +73,5 @@ function compute_εtestnoinvar(
 
     return ε 
 end=#
+
+
