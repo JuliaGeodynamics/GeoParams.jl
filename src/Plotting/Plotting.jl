@@ -954,7 +954,7 @@ function PlotDeformationMap(
     T = (10, 1000),                 # in C
     ε = (1e-22, 1e-8),              # in 1/s
     n = 400,                        # number of points
-    rotate_axes = false,
+    rotate_axes = false,            # flip x & y axes
     strainrate = true,              # strainrate (otherwise stress)
     viscosity = false,              # plot viscosity instead of strainrate/stress
     grainsize = false,              # plot strainrate with grainsize as x-axis
@@ -962,6 +962,8 @@ function PlotDeformationMap(
     boundaries = true,              # plot deformation boundaries
     levels = 30,                    # number of contour levels
     colormap=:viridis,
+    categorical_cbar=false,
+    categorical_cbar_labels::Vector{String}=nothing,
     filename=nothing,
     fontsize=40,
     res=(1200, 900),
@@ -972,7 +974,11 @@ function PlotDeformationMap(
 
     # Parameters
     T_vec = Vector(range(T[1], T[2], n+1))    .+ 273.15   # in K
-    d_vec = 10.0.^Vector(range(log10(d[1]), log10(d[2]), n+1))
+
+    if grainsize
+        d_vec = 10.0.^Vector(range(log10(d[1]), log10(d[2]), n+1))
+    end
+
     # Depth to be done
 
     # this is used to determine the main deformation mechanism (and color that later)
@@ -1008,8 +1014,7 @@ function PlotDeformationMap(
             ε_components =  [ compute_εII(v[i], τlocal, args_local) for i=1:n_components];
             ε_components = ε_components./sum(ε_components) 
             mainDef[i] = argmax(ε_components)                 # index of max. strainrate 
-        end
-
+        end 
         log_σ = log10.(σ_vec./1e6)
     else
         # compute τ as a function of ε and T
@@ -1031,11 +1036,12 @@ function PlotDeformationMap(
             τ_components =  [ compute_τII(v[i],  εlocal, args_local) for i=1:n_components];
             τ_components = τ_components./sum(τ_components) 
             mainDef[i] = argmin(τ_components)                 # index of max. strainrate 
-            @show mainDef
         end
         log_ε = log10.(ε_vec)
     end
     T_plot = T_vec .- 273.15;
+    cbar_phasenums = sort(unique(mainDef))
+
     # determine axis of plot
     if strainrate
         x = T_plot
@@ -1081,21 +1087,52 @@ function PlotDeformationMap(
 
     # Plotting with Makie
     fig = Figure(; fontsize=fontsize, resolution=res)
-    
-    ax = Axis(
-        fig[1,1],
-        title="Deformation mechanism map",
-        xlabel=xlabel, xlabelsize=fontsize,
-        xticks = -3:0.5:2,
-        xminorticks = IntervalsBetween(5),
-        xminorticksvisible = true,
-        ylabel=ylabel, ylabelsize=fontsize,
-        yticks = -1:0.5:4,
-        yminorticks = IntervalsBetween(5),
-        yminorticksvisible = true
-        )
+    if grainsize
+        ax = Axis(
+            fig[1,1],
+            title="Deformation mechanism map",
+            xlabel=xlabel, xlabelsize=fontsize,
+            xticks = -3:0.5:2,
+            xminorticks = IntervalsBetween(5),
+            xminorticksvisible = true,
+            ylabel=ylabel, ylabelsize=fontsize,
+            yticks = -1:0.5:4,
+            yminorticks = IntervalsBetween(5),
+            yminorticksvisible = true
+            )
+    else
+        ax = Axis(
+            fig[1,1],
+            title="Deformation mechanism map",
+            xlabel=xlabel, xlabelsize=fontsize,
+            #xticks = -3:0.5:2,
+            xminorticks = IntervalsBetween(5),
+            xminorticksvisible = true,
+            ylabel=ylabel, ylabelsize=fontsize,
+            yticks = -1:0.5:4,
+            yminorticks = IntervalsBetween(5),
+            yminorticksvisible = true
+            )
+    end
 
-    c1 = heatmap!(ax,x,y,data, colormap = colormap)
+    if categorical_cbar
+        # colors for Thorsten Beckers plots
+        col1 = [colorant"#732726"    # redish brown, 
+                colorant"#a26a59"    # skin colored
+                colorant"#b5a57c"    # light brown
+                colorant"#d7d7d3"    # grey
+        ]
+        #col = [col1,col2,col3,col4] 
+        col = [col1[i] for i in 1:length(cbar_phasenums)]
+        colmap = cgrad(col, length(cbar_phasenums); categorical=true)    # creating custom :sienna like colormap 
+        c1 = heatmap!(ax,x,y,mainDef, colormap = colmap)
+        cbar = Colorbar(fig[1,2], c1)
+        cbar.ticks = (cbar_phasenums, categorical_cbar_labels)
+    else
+        c1 = heatmap!(ax,x,y,data, colormap = colormap)
+        Colorbar(fig[1,2], c1, label=label, labelsize=fontsize)
+    end
+
 
     if boundaries
         # plot boundaries between deformation regimes    
@@ -1103,8 +1140,6 @@ function PlotDeformationMap(
     end
     
     contour!(ax,x,y,data; color=:black, levels=-20:1:-2, labels = true, labelsize = 25, labelfont = :bold, labelcolor = :black)
-
-    Colorbar(fig[1,2], c1, label=label, labelsize=fontsize )
 
     if !isnothing(filename)
         save(filename, fig)
