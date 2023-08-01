@@ -28,6 +28,26 @@ const DiffusionCreep_info = Dict([
             BibTex_Reference=""),
     ),
 )
+
+(
+    "THORSTEN DIFF",
+    (
+        DiffusionCreep(;
+            Name="THORSTEN DIFF",
+            n=1.0NoUnits,                         # power-law exponent
+            r=0.0NoUnits,                         # exponent of water-fugacity
+            p=-3.0NoUnits,                        # grain size exponent
+            A=2^((1.0+(3.0/3.5))/2.0) * 1.5e9MPa^(-1.0) * m^3.0 * s^(-1.0),    # material specific rheological parameter
+            E=375.0kJ / mol,                        # activation energy
+            V=6.0e-6m^3 / mol,                       # activation Volume
+            Apparatus=AxialCompression,
+        ),
+        MaterialParamsInfo(;
+            Comment="Law to check Thorsten Beckers book rheology and its conversion of the A factor",
+            BibTex_Reference=""),
+    ),
+)
+
 # Dry Plagioclase rheology 
 (
     "Dry Anorthite | Rybacki et al. (2006)",

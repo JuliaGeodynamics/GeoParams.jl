@@ -72,6 +72,28 @@ const DislocationCreep_info = Dict(
             ),
         )
 
+        # Olivine rheology TEST
+        (
+            "THORSTEN DISL",
+            # after Hirth, G. & Kohlstedt (2003), D. Rheology of the upper mantle and the mantle wedge: A view from the experimentalists.
+            # Inside the subduction Factory 83?105. Table 1, "dry dislocation" parameters
+            (
+                DislocationCreep(;
+                    Name="THORSTEN DISL",
+                    n=3.5NoUnits,
+                    r=0.0NoUnits,
+                    A=2^((1.0+(3.0/3.5))/2.0) * 1.1e5MPa^(-3.5) / s,
+                    E=530.0kJ / mol,
+                    V=18.0e-6m^3 / mol,
+                    Apparatus=AxialCompression,
+                ),
+                MaterialParamsInfo(;
+                    Comment="Law to check Thorsten Beckers book rheology and its conversion of the A factor",
+                    BibTex_Reference="",
+                ),
+            ),
+        )
+
         # Olivine rheology, constant water fugacity
         (
             "1. Wet Olivine | Hirth & Kohlstedt (2003)",
