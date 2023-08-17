@@ -1,5 +1,4 @@
-using Test
-using GeoParams
+using Test, GeoParams, StaticArrays
 
 @testset "Density.jl" begin
 
