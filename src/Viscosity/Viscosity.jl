@@ -1,5 +1,6 @@
 export compute_viscosity_εII,
     compute_viscosity_τII,
+    compute_viscosity_II,
     compute_elastoviscosity
 
 # extract elements from composite rheology
@@ -34,29 +35,44 @@ for fn in (:compute_viscosity_εII, :compute_viscosity_τII)
         # For single phase versions MaterialParams
         $fn(v::MaterialParams, args::Vararg{Any, N}) where {N} = $fn(v.CompositeRheology[1], args...)
 
-        # For multi phases given the i-th phase
-        @generated function $fn(v::NTuple{N1, AbstractMaterialParamsStruct}, phase::Int, args::Vararg{Any, N2}) where {N1, N2}
-            quote
-                Base.@nexprs $N1 i -> i == phase && (return $fn(v[i].CompositeRheology[1], args...))
-                return 0.0
-            end
-        end
-        
-        # For multi phases given phase ratios
-        @generated function $fn(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::NTuple{N1, T}, args::Vararg{Any, N2}) where {N1, N2, T}
-            quote
-                val = 0.0
-                Base.@nexprs $N1 i -> val += $fn(v[i].CompositeRheology[1], args...) * phase_ratio[i]
-                return 0.0
-            end
-        end
-
        # compute effective "creep" viscosity from strain rate tensor given a composite rheology
         @inline function $fn(v::CompositeRheology, II, args::Vararg{T, N} where {T, N})
             e = elements(v)
             compute_viscosity_II(e, $fn, II, args...)
         end
 
+    end
+end
+
+# For multi phases given the i-th phase
+@generated function compute_viscosity_εII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase::Int, args::Vararg{Any, N2}) where {N1, N2}
+    quote
+        Base.@nexprs $N1 i -> i == phase && (return compute_viscosity_εII(v[i], args...))
+        return 0.0
+    end
+end
+
+@generated function compute_viscosity_τII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase::Int, args::Vararg{Any, N2}) where {N1, N2}
+    quote
+        Base.@nexprs $N1 i -> i == phase && (return compute_viscosity_τII(v[i], args...))
+        return 0.0
+    end
+end
+        
+# For multi phases given phase ratios
+@generated function compute_viscosity_εII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::NTuple{N1, T}, args::Vararg{Any, N2}) where {N1, N2, T}
+    quote
+        val = 0.0
+        Base.@nexprs $N1 i -> val += compute_viscosity_εII(v[i], args...) * phase_ratio[i]
+        return 0.0
+    end
+end
+
+@generated function compute_viscosity_τII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::NTuple{N1, T}, args::Vararg{Any, N2}) where {N1, N2, T}
+    quote
+        val = 0.0
+        Base.@nexprs $N1 i -> val += compute_viscosity_τII(v[i], args...) * phase_ratio[i]
+        return 0.0
     end
 end
 
