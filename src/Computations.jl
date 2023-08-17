@@ -20,21 +20,34 @@ function compute_param(
 end
 
 #---------------------------------------------------------------------------------------------------------------------------#
-#Computational routines for Phases
+# Computational routines for Phases
 
 # performs computation given a single Phase
-@inline @generated function compute_param(
+@generated function compute_param(
     fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Int64, args
 ) where {F,N}
     quote
+        Base.@_inline_meta
         Base.Cartesian.@nexprs $N i ->
             @inbounds (MatParam[i].Phase == Phase) && return fn(MatParam[i], args)
         return 0.0
     end
 end
 
+@generated function compute_param(
+    fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, phase_ratios::Union{SVector{N,T}, NTuple{N,T}}, args
+) where {F,N,T}
+    quote
+        Base.@_inline_meta
+        x = zero($T)
+        Base.Cartesian.@nexprs $N i ->
+            @inbounds  x+= fn(MatParam[i], args) * phase_ratios[i]
+        return x
+    end
+end
+
 function compute_param(
-    fn::F, MatParam::AbstractVector{AbstractMaterialParamsStruct}, Phase::Int64, args
+    fn::F, MatParam::AbstractVector{AbstractMaterialParamsStruct}, Phase::Union{SArray, Int64}, args
 ) where {F}
     return compute_param(fn, Tuple(MatParam), Phase, args)
 end
