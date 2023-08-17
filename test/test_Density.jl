@@ -251,5 +251,10 @@ using GeoParams
 
     PhaseRatio = (0.5, 0.5)
     @test 2950e0 == compute_density_ratio(PhaseRatio, rheologies, args)
+    @test 2950e0 == compute_density(rheologies, PhaseRatio, args)
+    
+    SvPhaseRatio = SA[0.5, 0.5]
+    @test 2950e0 == compute_density_ratio(SvPhaseRatio, rheologies, args)
+    @test 2950e0 == compute_density(rheologies, SvPhaseRatio, args)
 
 end
