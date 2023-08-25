@@ -62,28 +62,28 @@ end
 # HELPER FUNCTIONS
 
 # determine if 3 element is plastic or not
-isplastic(v) = false;
-isplastic(v::AbstractPlasticity) = true;
-isplastic(v::CompositeRheology{T, N,  Npar, is_parallel, Nplast, is_plastic}) where {T, N,  Npar, is_parallel, Nplast, is_plastic} = true;
-isplastic(v::CompositeRheology{T, N,  Npar, is_parallel, 0, is_plastic}) where {T, N,  Npar, is_parallel, is_plastic} = false;
+@inline isplastic(v) = false;
+@inline isplastic(v::AbstractPlasticity) = true;
+@inline isplastic(v::CompositeRheology{T, N,  Npar, is_parallel, Nplast, is_plastic}) where {T, N,  Npar, is_parallel, Nplast, is_plastic} = true;
+@inline isplastic(v::CompositeRheology{T, N,  Npar, is_parallel, 0, is_plastic}) where {T, N,  Npar, is_parallel, is_plastic} = false;
 
-isvolumetric(v) = false;
-isvolumetric(v::CompositeRheology{T, N,  Npar, is_parallel, Nplast, is_plastic, 0, is_vol}) where {T,N,Npar, is_parallel, Nplast,is_plastic, is_vol} = false;
-isvolumetric(v::CompositeRheology{T, N,  Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol}) where {T,N,Npar, is_parallel, Nplast,is_plastic, Nvol, is_vol} = true;
+@inline isvolumetric(v) = false;
+@inline isvolumetric(v::CompositeRheology{T, N,  Npar, is_parallel, Nplast, is_plastic, 0, is_vol}) where {T,N,Npar, is_parallel, Nplast,is_plastic, is_vol} = false;
+@inline isvolumetric(v::CompositeRheology{T, N,  Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol}) where {T,N,Npar, is_parallel, Nplast,is_plastic, Nvol, is_vol} = true;
 
-isvolumetricplastic(v::CompositeRheology{T, N,  Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol, volumetricplasticity}) where {T,N,Npar, is_parallel, Nplast,is_plastic, Nvol, is_vol, volumetricplasticity} = volumetricplasticity;
+@inline isvolumetricplastic(v::CompositeRheology{T, N,  Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol, volumetricplasticity}) where {T,N,Npar, is_parallel, Nplast,is_plastic, Nvol, is_vol, volumetricplasticity} = volumetricplasticity;
 
 """
     compute_εII(v::CompositeRheology{T,N}, τII, args; tol=1e-6, verbose=false, n=1)
 
 Computing `εII` as a function of `τII` for a composite element is the sum of the individual contributions
 """
-compute_εII(v::CompositeRheology, τII, args; tol=1e-6, verbose=false) = nreduce(vi -> first(compute_εII(vi, τII, args)), v.elements)
-compute_εII(v::CompositeRheology, τII::Quantity, args; tol=1e-6, verbose=false) = nreduce(vi -> first(compute_εII(vi, τII, args)), v.elements)
-compute_εII(v::AbstractMaterialParamsStruct, τII, args) = compute_εII(v.CompositeRheology[1], τII, args)
+@inline compute_εII(v::CompositeRheology, τII, args; tol=1e-6, verbose=false) = nreduce(vi -> first(compute_εII(vi, τII, args)), v.elements)
+@inline compute_εII(v::CompositeRheology, τII::Quantity, args; tol=1e-6, verbose=false) = nreduce(vi -> first(compute_εII(vi, τII, args)), v.elements)
+@inline compute_εII(v::AbstractMaterialParamsStruct, τII, args) = compute_εII(v.CompositeRheology[1], τII, args)
 
 # compute strain rate partitioning
-compute_elements_εII(v::CompositeRheology{T,N}, τII, args) where {T, N} = ntuple(i -> first(compute_εII( v.elements[i], τII, args)), Val(N));
+@inline compute_elements_εII(v::CompositeRheology{T,N}, τII, args) where {T, N} = ntuple(i -> first(compute_εII( v.elements[i], τII, args)), Val(N));
 
 """
     ε_part = compute_elements_εII(v::NTuple{N1,AbstractMaterialParamsStruct}, τII::NTuple{N2,T}, args, phase::I)
