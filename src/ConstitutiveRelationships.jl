@@ -21,7 +21,7 @@ const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 #abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
 #abstract type AbstractComposite <: AbstractMaterialParam end
 
-precision(v::AbstractConstitutiveLaw{T}) where T = T
+@inline precision(v::AbstractConstitutiveLaw{T}) where T = T
 
 
 include("Computations.jl")
@@ -69,8 +69,8 @@ export param_info,
 # add methods programmatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType)
     @eval begin
-        compute_εII(a::$(myType), TauII, args) = compute_εII(a, TauII; args...)
-        compute_εvol(a::$(myType), P, args) = compute_εvol(a, P; args...)
+        @inline compute_εII(a::$(myType), TauII, args) = compute_εII(a, TauII; args...)
+        @inline compute_εvol(a::$(myType), P, args) = compute_εvol(a, P; args...)
         
         function compute_εII!(
             ε::AbstractArray{_T,N}, s::$(myType){_T}, TauII::AbstractArray{_T,N}, args
@@ -84,8 +84,8 @@ for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElas
             return compute_εvol!(ε, s, P; args...)
         end
 
-        compute_τII(a::$(myType), EpsII, args) = compute_τII(a, EpsII; args...)
-        compute_p(a::$(myType), EpsVol, args) = compute_p(a, EpsVol; args...)
+        @inline compute_τII(a::$(myType), EpsII, args) = compute_τII(a, EpsII; args...)
+        @inline compute_p(a::$(myType), EpsVol, args) = compute_p(a, EpsVol; args...)
         function compute_τII!(
             τ::AbstractArray{_T,N}, s::$(myType){_T}, EpsII::AbstractArray{_T,N}, args
         ) where {_T,N}
@@ -98,10 +98,10 @@ for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElas
         end
 
         # Expand derivatives
-        dτII_dεII(a::$(myType), EpsII, args) = dτII_dεII(a, EpsII; args...)
-        dεII_dτII(a::$(myType), TauII, args) = dεII_dτII(a, TauII; args...)
-        dp_dεvol(a::$(myType), EpsVol, args) = dp_dεvol(a, EpsVol; args...)
-        dεvol_dp(a::$(myType), P, args) = dεvol_dp(a, P; args...)
+        @inline dτII_dεII(a::$(myType), EpsII, args) = dτII_dεII(a, EpsII; args...)
+        @inline dεII_dτII(a::$(myType), TauII, args) = dεII_dτII(a, TauII; args...)
+        @inline dp_dεvol(a::$(myType), EpsVol, args) = dp_dεvol(a, EpsVol; args...)
+        @inline dεvol_dp(a::$(myType), P, args) = dεvol_dp(a, P; args...)
     end
 end
 
