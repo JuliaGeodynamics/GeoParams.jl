@@ -4,14 +4,12 @@ using Setfield
 
 export CompositeRheology, Parallel, create_rheology_string, print_rheology_matrix
 export time_τII_0D, compute_εII_harmonic, compute_τII_AD, isplastic, compute_p_τII, local_iterations_εvol, compute_p_harmonic
-export computeViscosity_εII, computeViscosity_εII_AD, compute_yieldfunction
+export computeViscosity_εII, computeViscosity_εII_AD, compute_yieldfunction, compute_elements_εII
 export isvolumetricplastic
 import Base.getindex
 
 import GeoParams.Units: nondimensionalize, dimensionalize
 import GeoParams: nreduce
-
-@inline isCUDA() =  isdefined(Main,:CUDA) 
 
 include("Parallel.jl")              # all related to the Parallel struct
 include("CompositeRheology.jl")     # all related to CompositeRheology struct

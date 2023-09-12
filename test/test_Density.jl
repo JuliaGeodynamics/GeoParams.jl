@@ -1,5 +1,4 @@
-using Test
-using GeoParams
+using Test, GeoParams, StaticArrays
 
 @testset "Density.jl" begin
 
@@ -219,7 +218,7 @@ using GeoParams
 
     # Test calling the routine with only pressure as input. 
     # This is ok for Mat_tup1, as it only has constant & P-dependent densities.
-    # Note, however, that if you have P & T dependent densities and do this it will use 0 as defualt value for T 
+    # Note, however, that if you have P & T dependent densities and do this it will use 0 as default value for T 
     compute_density!(rho, Mat_tup1, PhaseRatio, (; P=P))
     @test sum(rho) / 400^2 ≈ 2945.000013499999
 
@@ -231,4 +230,30 @@ using GeoParams
     #Test computation of density given a single phase and P,T as scalars
     Phase, P, T = 0, 1.0, 1.0
     @test compute_density(Mat_tup1, Phase, (P=P[1], T=T[1])) == 2900.0
+
+    # Local phase ratio density calculation
+    args = (P=0.0, T=20.0)
+    rheologies = (
+        SetMaterialParams(;
+            Name="Crust",
+            Phase=0,
+            CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e23Pas)),
+            Density=ConstantDensity(; ρ=2900kg / m^3),
+        ),
+        SetMaterialParams(;
+            Name="Lower Crust",
+            Phase=1,
+            CreepLaws=(PowerlawViscous(; n=5.0), LinearViscous(; η=1e21Pas)),
+            Density=Compressible_Density(; ρ0=3000kg / m^3),
+        )
+    )
+
+    PhaseRatio = (0.5, 0.5)
+    @test 2950e0 == compute_density_ratio(PhaseRatio, rheologies, args)
+    @test 2950e0 == compute_density(rheologies, PhaseRatio, args)
+    
+    SvPhaseRatio = SA[0.5, 0.5]
+    @test 2950e0 == compute_density_ratio(SvPhaseRatio, rheologies, args)
+    @test 2950e0 == compute_density(rheologies, SvPhaseRatio, args)
+
 end

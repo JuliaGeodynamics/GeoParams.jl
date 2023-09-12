@@ -47,7 +47,7 @@ function (s::ConstantHeatCapacity)(; kwargs...)
     return cp
 end
 
-compute_heatcapacity(s::ConstantHeatCapacity{_T}; kwargs...) where {_T} = s()
+compute_heatcapacity(s::ConstantHeatCapacity; kwargs...) = s()
 
 # Print info 
 function show(io::IO, g::ConstantHeatCapacity)
@@ -117,7 +117,7 @@ Computes T-dependent heat capacity in-place
 """
 # function compute_heatcapacity!(cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}; T::AbstractArray{_T, N}, kwargs...) where {_T,N} end
 
-# add methods programatically
+# add methods programmatically
 for myType in (:ConstantHeatCapacity, :T_HeatCapacity_Whittington)
     @eval begin
         (s::$(myType))(args) = s(; args...)
@@ -202,8 +202,8 @@ This assumes that the `Phase` of every point is specified as an Integer in the `
 """
 compute_heatcapacity!()
 
-compute_heatcapacity(args...) = compute_param(compute_heatcapacity, args...)
-compute_heatcapacity!(args...) = compute_param!(compute_heatcapacity, args...)
+compute_heatcapacity(args::Vararg{Any, N}) where N = compute_param(compute_heatcapacity, args...)
+compute_heatcapacity!(args::Vararg{Any, N}) where N = compute_param!(compute_heatcapacity, args...)
 
 # In case just temperature is provided
 function compute_heatcapacity!(

@@ -36,8 +36,8 @@ function ∂Q∂τ(p::AbstractPlasticity{T}, τij::NTuple{3,T}; kwargs...) where
 end
 
 # Compute partial derivatives of a generic user-defined Q using AD
-∂Q∂τ(Q::F, args::SVector{N, T}; kwargs...) where {N, T, F<:Function} = ForwardDiff.gradient(Q, args)
-∂Q∂τ(Q::F, args::Vector{T}; kwargs...) where {T, F<:Function} = ForwardDiff.gradient(Q, args)
+∂Q∂τ(Q::F, args::SVector; kwargs...) where F<:Function = ForwardDiff.gradient(Q, args)
+∂Q∂τ(Q::F, args::Vector; kwargs...) where F<:Function = ForwardDiff.gradient(Q, args)
 function ∂Q∂τ(Q::F, args::NTuple{N,T}; kwargs...) where {N,T, F<:Function}
     tmp = ∂Q∂τ(Q, SVector{N}(args...))
     return ntuple(i -> tmp[i], Val(N))
