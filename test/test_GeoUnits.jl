@@ -141,7 +141,7 @@ using GeoParams
 
     # test various calculations (using arrays with and without units)
     T_vec = (273K):(10K):(500K)        # using units
-    T = 400.0K               # Unitful quanity
+    T = 400.0K               # Unitful quantity
     T_nd = 10:10:200            # no units  
     α = GeoUnit(3e-5 / K)
     T₀ = GeoUnit(293K)

@@ -12,7 +12,7 @@ function compute_param!(
     return rho .= map(x -> fn(x, P, T), MatParam)
 end
 
-# each individual calcuation 
+# each individual calculation 
 function compute_param(
     fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, args
 ) where {F,N}
