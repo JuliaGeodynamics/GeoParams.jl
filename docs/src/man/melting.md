@@ -24,11 +24,11 @@ GeoParams.MeltingParam.compute_dϕdT!
 GeoParams.MeltingParam.compute_dϕdT
 ```
 
-Also note that phase diagrams can be imported using `PerpleX_LaMEM_Diagram`, which may also have melt content information. 
+Also note that phase diagrams can be imported using `PerpleX_LaMEM_Diagram`, which may also have melt content information.
 The computational routines work with that as well.
 
 # Plotting routines
-You can use the routine `PlotMeltFraction` to create a plot, provided that the `Plots` package has been loaded
+You can use the routine `PlotMeltFraction` to create a plot, provided that the `GLMakie` package has been loaded
 ```@docs
 GeoParams.PlotMeltFraction
 ```

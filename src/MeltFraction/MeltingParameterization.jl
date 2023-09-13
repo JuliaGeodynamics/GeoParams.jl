@@ -1,6 +1,6 @@
 module MeltingParam
 
-# If you want to add a new method here, feel free to do so. 
+# If you want to add a new method here, feel free to do so.
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
 using Parameters, LaTeXStrings, Unitful
@@ -15,7 +15,7 @@ abstract type AbstractMeltingParam{T} <: AbstractMaterialParam end
 
 export compute_meltfraction,
     compute_meltfraction!,    # calculation routines
-    compute_dϕdT,             # derivative of melt fraction versus 
+    compute_dϕdT,             # derivative of melt fraction versus
     compute_dϕdT!,
     param_info,
     MeltingParam_Caricchi,
@@ -31,12 +31,12 @@ include("../Computations.jl")
 # Caricchi  -------------------------------------------------------
 """
     MeltingParam_Caricchi()
-    
-Implements the T-dependent melting parameterisation used by Caricchi, Simpson et al. (as for example described in Simpson) 
-```math  
-    \\theta = {(a - (T + c)) \\over b} 
+
+Implements the T-dependent melting parameterisation used by Caricchi, Simpson et al. (as for example described in Simpson)
+```math
+    \\theta = {(a - (T + c)) \\over b}
 ```
-```math  
+```math
     \\phi_{melt} = {1.0 \\over (1.0 + e^\\theta)}
 ```
 
@@ -97,7 +97,7 @@ function compute_dϕdT(p::MeltingParam_Caricchi; T, kwargs...)
     return dϕdT
 end
 
-# Print info 
+# Print info
 function show(io::IO, g::MeltingParam_Caricchi)
     return print(io, "Caricchi et al. melting parameterization")
 end
@@ -106,15 +106,15 @@ end
 # MeltingParam_5thOrder  -------------------------------------------------------
 """
     MeltingParam_5thOrder(a,b,c,d,e,f,T_s,T_l)
-    
+
 Uses a 5th order polynomial to describe the melt fraction `phi` between solidus temperature `T_s` and liquidus temperature `T_l`
-```math  
+```math
     \\phi = a T^5 + b T^4 + c T^3 + d T^2 + e T + f  \\textrm{   for   } T_s ≤ T ≤ T_l
 ```
-```math  
+```math
     \\phi = 1  \\textrm{   if   } T>T_l
 ```
-```math  
+```math
     \\phi = 0  \\textrm{   if   } T<T_s
 ```
 Temperature `T` is in Kelvin.
@@ -179,7 +179,7 @@ function compute_dϕdT(p::MeltingParam_5thOrder; T, kwargs...)
     return dϕdT
 end
 
-# Print info 
+# Print info
 function show(io::IO, g::MeltingParam_5thOrder)
     return print(
         io,
@@ -191,15 +191,15 @@ end
 # MeltingParam_4thOrder  -------------------------------------------------------
 """
     MeltingParam_4thOrder(b,c,d,e,f,T_s,T_l)
-    
+
 Uses a 4th order polynomial to describe the melt fraction `phi` between solidus temperature `T_s` and liquidus temperature `T_l`
-```math  
+```math
     \\phi = b T^4 + c T^3 + d T^2 + e T + f  \\textrm{   for   } T_s ≤ T ≤ T_l
 ```
-```math  
+```math
     \\phi = 1 \\textrm{   if   } T>T_l
 ```
-```math  
+```math
     \\phi = 0  \\textrm{   if   } T<T_s
 ```
 Temperature `T` is in Kelvin.
@@ -270,7 +270,7 @@ function compute_dϕdT!(
     return nothing
 end
 
-# Print info 
+# Print info
 function show(io::IO, g::MeltingParam_4thOrder)
     return print(
         io,
@@ -282,16 +282,16 @@ end
 # MeltingParam_Quadratic  -------------------------------------------------------
 """
     MeltingParam_Quadratic(T_s,T_l)
-    
+
 Quadratic melt fraction parameterisation where melt fraction ``\\phi`` depends only on solidus (``T_s``) and liquidus (``T_l``) temperature:
-```math  
+```math
     \\phi = 1.0 - \\left( {T_l - T} \\over {T_l - T_s} \\right)^2
 ```
-```math  
-    \\phi = 1.0 \\textrm{ if } T>T_l 
+```math
+    \\phi = 1.0 \\textrm{ if } T>T_l
 ```
-```math  
-    \\phi = 0.0 \\textrm{ if } T<T_s 
+```math
+    \\phi = 0.0 \\textrm{ if } T<T_s
 ```
 Temperature `T` is in Kelvin.
 
@@ -344,7 +344,7 @@ function compute_dϕdT(p::MeltingParam_Quadratic; T, kwargs...)
     return dϕdT
 end
 
-# Print info 
+# Print info
 function show(io::IO, g::MeltingParam_Quadratic)
     return print(
         io,
@@ -356,31 +356,31 @@ end
 # MeltingParam_Assimilation  -------------------------------------------------------
 """
     MeltingParam_Assimilation(T_s,T_l,a)
-    
+
 Melt fraction parameterisation that takes the assimilation of crustal host rocks into account, as used by Tierney et al. (2016) based upon a parameterisation of Spera and Bohrson (2001)
 
 Here, the fraction of molten and assimilated host rocks ``\\phi`` depends on the solidus (``T_s``) and liquidus (``T_l``) temperatures of the rocks, as well as on a parameter ``a=0.005``
-```math  
+```math
     X = \\left( {T - T_s} \\over {T_l - T_s} \\right)
 ```
-```math  
+```math
     \\phi = a \\cdot \\left( \\exp^{2ln(100)X} - 1.0 \\right) \\textrm{ if } X ≤ 0.5
 ```
-```math  
+```math
     \\phi = 1- a \\cdot \\exp^{2ln(100)(1-X)}  \\textrm{ if } X > 0.5
 ```
-```math  
-    \\phi = 1.0 \\textrm{ if } T>T_l 
+```math
+    \\phi = 1.0 \\textrm{ if } T>T_l
 ```
-```math  
-    \\phi = 0.0 \\textrm{ if } T<T_s 
+```math
+    \\phi = 0.0 \\textrm{ if } T<T_s
 ```
 Temperature `T` is in Kelvin.
 
 ![MeltingParam_Assimilation](./assets/img/MeltingParam_Assimilation.png)
 
 This was used, among others, in Tierney et al. (2016), who employed as default parameters:
-```math  
+```math
    T_s=973.15, T_l=1173.15, a=0.005
 ```
 
@@ -461,7 +461,7 @@ function compute_dϕdT(p::MeltingParam_Assimilation; T, kwargs...)
     return dϕdT
 end
 
-# Print info 
+# Print info
 function show(io::IO, g::MeltingParam_Assimilation)
     return print(
         io, "Quadratic melting assimilation parameterisation after Spera & Bohrson (2001)"
@@ -473,22 +473,22 @@ end
 # Smooth melting function ------------------------------------------------
 
 """
-    SmoothMelting(; p=MeltingParam_4thOrder(), k_sol=0.2/K,  k_liq=0.2/K) 
+    SmoothMelting(; p=MeltingParam_4thOrder(), k_sol=0.2/K,  k_liq=0.2/K)
 
 This smoothens the melting parameterisation ``p`` around the solidus ``T_{sol}`` and liquidus ``T_{liq}``
 using a smoothened Heaviside step functions for the solidus:
-        
-```math  
+
+```math
     H_{sol} =  {1.0 \\over { 1 + \\exp( -2 k_{sol} (T - T_{sol} - {2 \\over k_{sol}}) )  }}
-```        
-and liquidus:        
-```math  
+```
+and liquidus:
+```math
     H_{liq} =  1.0 - {1.0 \\over { 1 + \\exp( -2 k_{liq} (T - T_{liq} + {2 \\over k_{liq}}) )  }}
-```  
+```
 The resulting melt fraction ``\\phi`` is computed from the original melt fraction ``\\phi_0`` (computed using one of the methods above) as:
-```math  
+```math
     \\phi =  \\phi_0 H_{sol} H_{liq} + 1.0 - H_{liq}
-``` 
+```
 The width of the smoothening zones is controlled by ``k_{sol}, k_{liq}`` (larger values = sharper boundary).
 
 This is important, as jumps in the derivative ``dϕ/dT`` can cause numerical instabilities in latent heat computations, which is prevented with this smoothening.
@@ -498,7 +498,7 @@ Example
 
 Let's consider a 4th order parameterisation:
 ```julia
-julia> using GeoParams, Plots
+julia> using GLMakie, GeoParams
 julia> p = MeltingParam_4thOrder();
 julia> T= collect(650.0:1:1050.) .+ 273.15;
 julia> T,phi,dϕdT =  PlotMeltFraction(p,T=T);
@@ -585,7 +585,7 @@ function compute_dϕdT(param::SmoothMelting; T, kwargs...)
         (-1.0 / ((1.0 + exp(-2k_liq * (T + 2 / k_liq - T_l)))^2)) *
         exp(-2k_liq * (T + 2 / k_liq - T_l))
 
-    # melt fraction & derivative 
+    # melt fraction & derivative
     dϕdT = compute_dϕdT(param.p; T=T)
     ϕ = param.p(; T, kwargs...)
 
@@ -598,7 +598,7 @@ function compute_dϕdT(param::SmoothMelting; T, kwargs...)
     return dϕdT_tot
 end
 
-# Print info 
+# Print info
 function show(io::IO, g::SmoothMelting)
     param = show(io, g.p)
     return print(
@@ -683,7 +683,7 @@ for myType in (
     end
 end
 
-# Computational routines needed for computations with the MaterialParams structure 
+# Computational routines needed for computations with the MaterialParams structure
 function compute_meltfraction(s::AbstractMaterialParamsStruct, args)
     if isempty(s.Melting) #in case there is a phase with no melting parametrization
         return zero(typeof(args).types[1])
