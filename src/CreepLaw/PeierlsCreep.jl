@@ -230,13 +230,8 @@ Computes the stress for a peierls creep law given a certain strain rate.
 """
 @inline function compute_τII(
     a::PeierlsCreep, EpsII::_T; T=one(precision(a)), args...
-) where {_T}
-    local n, q, o, TauP, A, E, R
-    if EpsII isa Quantity
-        @unpack_units n, q, o, TauP, A, E, R = a
-    else
-        @unpack_val n, q, o, TauP, A, E, R = a
-    end
+) where {_T}    
+    @unpack_val n, q, o, TauP, A, E, R = a
 
     FT, FE = a.FT, a.FE
 
