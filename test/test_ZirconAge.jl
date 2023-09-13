@@ -13,7 +13,7 @@ using GeoParams, LinearAlgebra, DelimitedFiles
     filename = "Data/Tt15_st_Bl_rad5_0.0126.txt"# path to input file 
     Tt_paths = readdlm(filename, ',')
     n_paths = size(Tt_paths, 2) - 1# -1 ro remove first column that corresponds to the time
-    time_years = Tt_paths[:, 1] ./ s2y# time fron seconds to years
+    time_years = Tt_paths[:, 1] ./ s2y# time from seconds to years
 
     # Here a matrix is constructed that only contains the temperature information:
     Tt_paths_Temp = Tt_paths[:, 2:end]
@@ -72,7 +72,7 @@ using GeoParams, LinearAlgebra, DelimitedFiles
 
     #=	
         # Plot Zircon age probability distribution
-    	# these are the ploting routines using Makie, which is currently not a dependency of GeoParams (but may become one @ some stage)
+    	# these are the plotting routines using Makie, which is currently not a dependency of GeoParams (but may become one @ some stage)
 
     	f = Figure()
     	Axis(f[1, 1], xlabel = "Age [Myr]", ylabel = "Kernel density [ ]", title = "Zircon age probability distribution")

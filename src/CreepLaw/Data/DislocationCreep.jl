@@ -235,7 +235,7 @@ const DislocationCreep_info = Dict(
         # Maryland strong diabase rheology
         (
             "Maryland strong diabase | Mackwell et al. (1998)",
-            #  After Mackwell et al. (1998), 'High-temperatur deformation of dry diabase with application to tectonics on Venus'
+            #  After Mackwell et al. (1998), 'High-temperature deformation of dry diabase with application to tectonics on Venus'
             #  Mackwell et al. (1998), page 980, equation in text
             (
                 DislocationCreep(;
@@ -336,7 +336,7 @@ const DislocationCreep_info = Dict(
             "Granite | Carter and Tsenn (1987)",
             #  Huismans et al. (2001), table 2
             #  referring to Carter and Tsenn (1987), 'Flow properties of continental lithosphere', table 4, Westerly Granite (dry)
-            #  referring to Hansen and Carter (1983), 'Semibrittle Creep Of Dry And Wet Westerly Granite At 1000 MPa', not accessable
+            #  referring to Hansen and Carter (1983), 'Semibrittle Creep Of Dry And Wet Westerly Granite At 1000 MPa', not accessible
             (
                 DislocationCreep(;
                     Name="Granite | Carter and Tsenn (1987)",
@@ -370,7 +370,7 @@ const DislocationCreep_info = Dict(
             "Plagioclase An75 | Ji and Zhao (1993)",
             #  Ranalli (1995), page 334, table 10.3
             #  referring to Ji and Zhao (1993), 'Flow laws of multiphase rocks calculated from experimental data on the constituent phases', table 2 , plagioclase (Ab25An75)
-            #  referring to Shelton and Tullis (1981), 'Experimental flow laws for crustal rocks', not accessable
+            #  referring to Shelton and Tullis (1981), 'Experimental flow laws for crustal rocks', not accessible
             (
                 DislocationCreep(;
                     Name="Plagioclase An75 | Ji and Zhao (1993)",
@@ -629,7 +629,7 @@ const DislocationCreep_info = Dict(
         (
             "Rock salt | Li & Urai (2016)",
             #  Li & Urai (2016), table 1
-            #  referes to Wawersik & Zeuch (1986), values can not be reproduced!
+            #  refers to Wawersik & Zeuch (1986), values can not be reproduced!
             (
                 DislocationCreep(;
                     Name="Rock salt | Li & Urai (2016)",
@@ -661,7 +661,7 @@ const DislocationCreep_info = Dict(
         # Avery Island rock salt rheology
         ("Salado rock salt | Li & Urai (2016)", 
             #  Li & Urai (2016), table 1
-            #  referes to Wawersik & Zeuch (1986), values can not be reproduced!
+            #  refers to Wawersik & Zeuch (1986), values can not be reproduced!
             (
                 DislocationCreep(
                 Name = "Rock salt | Li & Urai (2016)",

@@ -385,7 +385,7 @@ end
 
 """
 Dict2LatexTable() writes a .tex file with all parameters from the Phase2Dict() output in a LaTeX table. rdigits will round numbers with more decimals than rdigits
-including numbers of 10 to power of n, n being an Integer, for representation purposes. For the exact numbers use the original impemented numbers from the creeplaws of the dict in src/CreepLaw/Data/DiffusionCreep.jl
+including numbers of 10 to power of n, n being an Integer, for representation purposes. For the exact numbers use the original implemented numbers from the creeplaws of the dict in src/CreepLaw/Data/DiffusionCreep.jl
 or src/CreepLaw/Data/DislocationCreep.jl.
 
 
@@ -482,7 +482,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         end
     end
 
-    # Latex formating and comment
+    # Latex formatting and comment
     Table *= " \\\\\n"
     Table *= "\\midrule \n"
     Table *= "% Table body\n"
@@ -985,7 +985,7 @@ end
 
 """
 Dict2MarkdownTable() writes a .md file with all parameters from the Phase2DictMd() output in a Markdown table. rdigits will round numbers with more decimals than rdigits
-including numbers of 10 to power of n, n being an Integer, for representation purposes. For the exact numbers use the original impemented numbers from the creeplaws of the
+including numbers of 10 to power of n, n being an Integer, for representation purposes. For the exact numbers use the original implemented numbers from the creeplaws of the
 dict in src/CreepLaw/Data/DiffusionCreep.jl or src/CreepLaw/Data/DislocationCreep.jl.
 
 """

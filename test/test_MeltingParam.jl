@@ -30,7 +30,7 @@ using GeoParams
     compute_meltfraction!(phi_nd, p_nd, args)
 
     # Do this computation manually, using the actual expression of Caricchi
-    T_C = collect(250:100:1250)    # in celcius
+    T_C = collect(250:100:1250)    # in celsius
     Phi_solid = 1.0 .- 1.0 ./ (1.0 .+ exp.((800.0 .- T_C) ./ 23.0))
     Phi_anal = 1.0 .- Phi_solid
 

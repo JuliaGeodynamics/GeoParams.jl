@@ -93,11 +93,11 @@ Iteratively solves a 1D lithostatic pressure profile (compatible with temperatur
 
 Parameters:
 - MatParam: a tuple of materials (including the following properties: Phase, Density)
-- Phases:   vector with the distribtion of phases
+- Phases:   vector with the distribution of phases
 - ρ:        density vector for initial guess(can be zeros)
 - T:        temperature vector
 - dz:       grid spacing
-- g:        gravitational accelaration
+- g:        gravitational acceleration
 """
 function LithPres(MatParam, Phases, ρ, T, dz, g)
     nz   = length(T)

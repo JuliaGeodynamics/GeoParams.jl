@@ -25,7 +25,7 @@ end
 # broadcast getindex() to NamedTuples
 @inline function ntuple_idx(args::NamedTuple, I::Vararg{Integer,N}) where {N}
     k = keys(args)
-    v = getindex.(values(args), I)
+    v = getindex.(values(args), I...)
     return (; zip(k, v)...)
 end
 
@@ -54,8 +54,8 @@ end
 end
 
 @generated function nreduce(
-    f::F, v::NTuple{N,Any}, id_args::NTuple{N,T}, args::NTuple{NT,Any}
-) where {N,T<:Integer,NT,F}
+    f::F, v::NTuple{N,Any}, id_args::NTuple{N,Integer}, args::NTuple{NT,Any}
+) where {N,NT,F<:Function}
     Base.@_inline_meta
     quote
         val = 0.0
@@ -64,7 +64,7 @@ end
     end
 end
 
-@generated function nphase(f::F, phase::Int64, v::NTuple{N,AbstractMaterialParamsStruct}) where {N,F}
+@generated function nphase(f::F, phase::Integer, v::NTuple{N,AbstractMaterialParamsStruct}) where {N,F<:Function}
     Base.@_inline_meta
     quote
         Base.Cartesian.@nexprs $N i -> @inbounds v[i].Phase === phase && return f(v[i])
@@ -82,14 +82,8 @@ end
 end
 
 # Creates tuple without branching
-function make_tuple(x)
-    x  = (x,)
-    return x
-end
-
-function make_tuple(x::Tuple)
-    return x
-end
+make_tuple(x) = (x,)
+make_tuple(x::Tuple) = x
 
 # Macros 
 macro print(a1, a2)
