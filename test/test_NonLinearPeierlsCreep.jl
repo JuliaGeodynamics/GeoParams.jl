@@ -50,8 +50,6 @@ using GeoParams
     compute_εII!(ε_array, p, τII_array, args)
     @test ε_array[1] ≈ ε
 
-    # ===
-
     # wet olivine, stress-strainrate curve
     p = SetNonLinearPeierlsCreep("Wet Olivine | Mei et al. (2010)")
     # εII = exp10.(-22:0.5:-12)

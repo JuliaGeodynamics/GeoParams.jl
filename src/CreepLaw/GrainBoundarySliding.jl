@@ -244,7 +244,7 @@ end
             fastpow(d, p) *
             n *
             fastpow(FT * TauII, n) *
-            exp(-(E + P * V) / (R * T))) \
+            exp(-(E + P * V) / (R * T))) /
             (FE *
             TauII)
 end

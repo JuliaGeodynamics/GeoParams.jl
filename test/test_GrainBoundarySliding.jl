@@ -74,19 +74,6 @@ using GeoParams
     @test Value(a.V) == 1.0e-6m^3/mol
 
 
-    # --- debugging
-
-    #@unpack_units n,A,E,V,R = pp
-
-    #FT, FE = CorrectionFactor(pp);    
-    #FT=0.5; FE=1;
-
-    #τ = A^(-1/n)*(EpsII*FE)^(1/n)*exp((E + P*V)/(n * R*T))/FT
-
-    # ----
-
-
-
     # Do some basic checks on all creeplaws in the DB
     CharDim = GEO_units()
     creeplaw_list = GrainBoundarySliding_info       # all creeplaws in database
