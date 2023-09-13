@@ -46,24 +46,24 @@ function param_info(s::ConstantShearheating) # info about the struct
 end
 
 # In-place routine (H_s can't take new value)
-function compute_shearheating!(H_s, s::ConstantShearheating{_T}, τ, ε, ε_el) where {_T}
+function compute_shearheating!(H_s, s::ConstantShearheating, τ, ε, ε_el)
     @unpack_val Χ = s
 
     if isnothing(ε_el)
-        H_s = Χ * sum(τ .* ε)
+        H_s = Χ * sum(τi * εi for (τi, εi) in zip(τ, ε))
     else
-        H_s = Χ * sum(τ .* (ε .- ε_el))
+        H_s = Χ * sum(τi * (εi - εi_el) for (τi, εi, εi_el) in zip(τ, ε, ε_el))
     end
 end
 
 # Calculation routine
-function compute_shearheating(s::ConstantShearheating{_T}, τ, ε, ε_el) where {_T}
+function compute_shearheating(s::ConstantShearheating, τ, ε, ε_el)
     @unpack_val Χ = s
 
     if isnothing(ε_el)
-        H_s = Χ * sum(τ .* ε)
+        H_s = Χ * sum(τi * εi for (τi, εi) in zip(τ, ε))
     else
-        H_s = Χ * sum(τ .* (ε .- ε_el))
+        H_s = Χ * sum(τi * (εi - εi_el) for (τi, εi, εi_el) in zip(τ, ε, ε_el))
     end
 
     return H_s
@@ -140,7 +140,7 @@ The shear heating terms require the full deviatoric stress & strain rate tensors
 ```
 Since ``\\tau_{zx}=\\tau_{xz}``, most geodynamic codes only take one of the terms into account; shear heating requires all components to be used! 
 """
-compute_shearheating!(H_s, s::AbstractShearheating{_T}, τ, ε, ε_el) where {_T}
+compute_shearheating!(H_s, s::AbstractShearheating, τ, ε, ε_el)
 
 """
     compute_shearheating!(H_s, s:<AbstractShearheating, τ, ε)
@@ -156,9 +156,7 @@ H_s = \\Chi \\cdot \\tau_{ij}  \\dot{\\varepsilon}_{ij}
 - ``\\tau_{ij}`` : The full deviatoric stress tensor [4 components in 2D; 9 in 3D]
 - ``\\dot{\\varepsilon}_{ij}`` : The full deviatoric strainrate tensor
 """
-function compute_shearheating!(
-    H_s::Any, s::AbstractShearheating{_T}, τ::Any, ε::Any
-) where {_T}
+function compute_shearheating!(H_s, s::AbstractShearheating, τ, ε)
     return compute_shearheating!(H_s, s, τ, ε, nothing)
 end
 

@@ -18,6 +18,8 @@ jobs:
           - '1.6'
           - '1.7'
           - '1.8'
+          - '1.9'
+          - '~1.10.0-0'
           - 'nightly'
         os:
           - ubuntu-latest
@@ -26,12 +28,12 @@ jobs:
         arch:
           - x64
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - uses: actions/cache@v1
+      - uses: actions/cache@v3
         env:
           cache-name: cache-artifacts
         with:
@@ -46,7 +48,7 @@ jobs:
   build_docs:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@latest
         with:
           version: '1.6'

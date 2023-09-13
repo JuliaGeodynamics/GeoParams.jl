@@ -78,7 +78,7 @@ export @u_str,
 export AbstractGeoUnit1, GeoUnit1
 
 #         
-abstract type AbstractMaterialParam end                                    # structure that holds material parmeters (density, elasticity, viscosity)          
+abstract type AbstractMaterialParam end                                    # structure that holds material parameters (density, elasticity, viscosity)          
 abstract type AbstractMaterialParamsStruct end                             # will hold all info for a phase       
 abstract type AbstractPhaseDiagramsStruct <: AbstractMaterialParam end    # will hold all info for phase diagrams 
 abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
@@ -104,7 +104,10 @@ export compute_units
 # Define Material Parameter structure
 include("MaterialParameters.jl")
 using .MaterialParameters
-export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo
+export MaterialParams,
+    SetMaterialParams,
+    No_MaterialParam,
+    MaterialParamsInfo
 
 # Phase Diagrams
 using .MaterialParameters.PhaseDiagrams
@@ -115,6 +118,7 @@ export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
 using .MaterialParameters.Density
 export compute_density,                                # computational routines
     compute_density!,
+    compute_density_ratio,
     param_info,
     AbstractDensity,
     No_Density,
@@ -141,6 +145,7 @@ export dεII_dτII,
     compute_εII!,
     compute_εII,
     compute_εII_AD,
+    compute_elements_εII,
     compute_τII!,
     compute_τII,
     compute_τII_AD,
@@ -157,6 +162,7 @@ export dεII_dτII,
     LinearViscous,
     PowerlawViscous,
     ArrheniusType,
+    CustomRheology,
     DislocationCreep,
     SetDislocationCreep,
     DiffusionCreep,
@@ -169,6 +175,7 @@ export dεII_dτII,
     ConstantElasticity,
     SetConstantElasticity,
     effective_εII,
+    iselastic,
     get_G, 
     get_Kb,
     get_shearmodulus, 
@@ -207,8 +214,7 @@ export dεII_dτII,
     isplastic,isvolumetricplastic,
     compute_p_τII, 
     local_iterations_εvol, 
-    compute_p_harmonic
-    
+    compute_p_harmonic 
 
 # Constitutive relationships laws
 include("StressComputations/StressComputations.jl")
@@ -217,6 +223,12 @@ export compute_τij, compute_p_τij, compute_τij_stagcenter!, compute_p_τij_st
 include("Rheology_Utils.jl")
 export time_τII_0D, time_τII_0D!, time_p_τII_0D, time_p_τII_0D!
 
+include("Viscosity/Viscosity.jl")
+export compute_viscosity_εII,
+    compute_viscosity_τII,
+    compute_elastoviscosity,
+    compute_elastoviscosity_εII,
+    compute_elastoviscosity_τII
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration

@@ -44,9 +44,9 @@ function (s::ConstantLatentHeat{_T})(; kwargs...) where {_T}
     return Q_L
 end
 
-compute_latent_heat(s::ConstantLatentHeat{_T}; kwargs...) where {_T} = s()
+compute_latent_heat(s::ConstantLatentHeat; kwargs...) = s()
 
-function (s::ConstantLatentHeat{_T})(I::Integer...) where {_T}
+function (s::ConstantLatentHeat)(I::Integer...)
     @unpack_val Q_L = s
 
     return fill(Q_L, I...)
@@ -76,7 +76,7 @@ function compute_latent_heat(s::AbstractMaterialParamsStruct, args)
     end
 end
 
-# add methods programatically
+# add methods programmatically
 for myType in (:ConstantLatentHeat,)
     @eval begin
         (s::$(myType))(args) = s(; args...)
@@ -84,7 +84,7 @@ for myType in (:ConstantLatentHeat,)
     end
 end
 
-compute_latent_heat(args...) = compute_param(compute_latent_heat, args...)
-compute_latent_heat!(args...) = compute_param!(compute_latent_heat, args...)
+compute_latent_heat(args::Vararg{Any, N}) where N = compute_param(compute_latent_heat, args...)
+compute_latent_heat!(args::Vararg{Any, N}) where N = compute_param!(compute_latent_heat, args...)
 
 end

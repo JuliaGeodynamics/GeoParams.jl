@@ -92,12 +92,12 @@ function PerpleX_LaMEM_Diagram(fname::String; CharDim=nothing)
     header = open(readlines, fname)[1:55]
     header_text = header[1:49]
 
-    # Parse the names of the collumns in the data file 
-    fields = split(header[49], "[")[2:end]      # this line should contain the names and units of the collumns in the file 
+    # Parse the names of the columns in the data file 
+    fields = split(header[49], "[")[2:end]      # this line should contain the names and units of the columns in the file 
 
     # Throw error message if fields are not specified
     if length(fields) == 0
-        error("Line 49 in the phase diagram file should contain the names of the collums")
+        error("Line 49 in the phase diagram file should contain the names of the columns")
     end
 
     fields_keys = Vector{Union{Missing,Symbol}}(missing, length(fields))
@@ -106,7 +106,7 @@ function PerpleX_LaMEM_Diagram(fname::String; CharDim=nothing)
         # error catch
         if length(split(fields[i], ",")) != 3
             error(
-                "Error parsing collumn: $(fields[i]). Should have 3 fields (name, symbol, units)",
+                "Error parsing column: $(fields[i]). Should have 3 fields (name, symbol, units)",
             )
         end
 
@@ -203,7 +203,7 @@ function show(io::IO, d::PhaseDiagram_LookupTable)
     return println(io, str)
 end
 
-# Internal routine that creates an interpolation object from a collumn of the data
+# Internal routine that creates an interpolation object from a column of the data
 function CreateInterpolationObject_PhaseDiagram(
     data_vec::Vector{Float64}, Tvec, Pvec, siz::Tuple{Int64,Int64}, units, CharDim
 )

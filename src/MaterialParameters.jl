@@ -18,7 +18,10 @@ using GeoParams:
 struct No_MaterialParam{_T} <: AbstractMaterialParam end
 No_MaterialParam() = No_MaterialParam{Float64}()
 
-export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo
+export MaterialParams,
+    SetMaterialParams,
+    No_MaterialParam,
+    MaterialParamsInfo
 
 """
     MaterialParamsInfo
@@ -271,11 +274,7 @@ function SetMaterialParams(
     return phase
 end
 
-# str2char(str::String) = str2char(str, Val(length(str)))
-# @inline str2char(str, ::Val{N}) where N = ntuple(i->str[i], Val(N))
-# @inline str2char(str, ::Val{0}) = ()
-
-str2char(str::String) = str2char(str, static(length(str)))
+@inline str2char(str::String) = str2char(str, static(length(str)))
 @inline str2char(str, ::StaticInt{N}) where N = ntuple(i->str[i], Val(N))
 @inline str2char(str, ::StaticInt{0}) = ()
 
@@ -365,3 +364,4 @@ function print_composite(a, spaces=10)
 end
 
 end
+
