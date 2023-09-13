@@ -78,7 +78,7 @@ using Test, GeoParams, StaticArrays
     # @test num_alloc ≤ 32
 
     # Read Phase diagram interpolation object
-    fname = "test_data/Peridotite_dry.in"
+    fname = "test\\test_data\\Peridotite_dry.in"
     PD_data = PerpleX_LaMEM_Diagram(fname)
     @test PD_data.meltFrac(1500, 1e7) ≈ 0.2538048323727155
     @test PD_data.Rho(1500, 1e7) ≈ 3054.8671154189938
@@ -115,7 +115,7 @@ using Test, GeoParams, StaticArrays
         Name="Mantle",
         Phase=0,
         CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e23Pa * s)),
-        Density=PerpleX_LaMEM_Diagram("test_data/sediments_1.in"),
+        Density=PerpleX_LaMEM_Diagram("test\\test_data\\sediments_1.in"),
     )
 
     MatParam[2] = SetMaterialParams(;
