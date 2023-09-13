@@ -52,17 +52,14 @@ using GeoParams
 
     # wet olivine, stress-strainrate curve
     p = SetNonLinearPeierlsCreep("Wet Olivine | Mei et al. (2010)")
-    # εII = exp10.(-22:0.5:-12)
+    εII = exp10.(-22:0.5:-12)
     τII = exp10.(9:0.05:10)               # preallocate array
-    T = 600.0 + 273.15
+    T = 200.0 + 273.15
     args = (;T=T)
-    # compute_τII!(τII, p, εII, args)
-
-    # eta_array = @. 0.5 * τII / εII
 
     εII = zero(τII)
     compute_εII!(εII, p, τII, args)
-    # eta_array1 = @. 0.5 * τII / εII
+    eta_array1 = @. 0.5 * τII / εII
 
     # test overriding the default values
     a =  SetNonLinearPeierlsCreep("Wet Olivine | Mei et al. (2010)", E=475.0kJ / mol)
@@ -86,15 +83,18 @@ using GeoParams
         end
         
         # Perform computations with the rheology
-        # args   = (T=900.0, d=100e-6, τII_old=1e6);
-        # ε      = 1e-15
-        # τ      = compute_τII(p,ε,args)
-        # ε_test = compute_εII(p,τ,args)
-        # @test ε ≈ ε_test
+        args   = (T=273 + 200.0, d=100e-6, τII_old=1e6);
+        ε      = 1.0e-15
+        τ_ini  = 1.75e9                                      # initial guess for stress iterations
+        τ      = Peierls_stress_iterations(p,τ_ini,ε,args)
+        ε_test = compute_εII(p,τ;args...)
+        @test ε ≈ ε_test
 
     end
     
     # check that derivative calculation is correct
-    depsdtau = dεII_dτII(p, TauII, args)
-    @test depsdtau ≈ 1.324173323292431e-31
+    TauII  = 1.0e9
+    args   = (;T=273 + 200.0)
+    depsdtau = dεII_dτII(p, TauII; args...)
+    @test depsdtau ≈ 5.633292966430465e-25
 end
