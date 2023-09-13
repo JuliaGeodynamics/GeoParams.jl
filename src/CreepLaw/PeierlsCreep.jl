@@ -26,7 +26,7 @@ where
 - ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}`` 
 - ``\\sigma_\\mathrm{p}`` is the peierls stress ``\\mathrm{[MPa]}``
 - ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[MPa]}`` which are converted into second invariants using the `Apparatus` variable that can be
-either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law paramters are already given as a function of second invariants, choose `Apparatus=Invariant`.
+either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
 # Example
 ```julia-repl 

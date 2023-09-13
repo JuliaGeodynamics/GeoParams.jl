@@ -34,8 +34,8 @@ where
 - ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}`` 
 - ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[MPa]}``
 
-The experimental paramaters are converted into second invariants using the `Apparatus` variable that can be
-either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law paramters are already given as a function of second invariants, choose `Apparatus=Invariant`.
+The experimental parameters are converted into second invariants using the `Apparatus` variable that can be
+either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
 # Example
 ```julia-repl 

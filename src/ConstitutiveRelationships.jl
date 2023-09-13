@@ -32,7 +32,7 @@ include("Plasticity/Plasticity.jl")          # plasticity
 # include("CompositeRheologies/Viscosity.jl")             # composite creeplaws
 #include("CreepLaw/Viscosity.jl")             # composite creeplaws
 include("CompositeRheologies/CompositeRheologies.jl")            # composite constitutive relationships
-#include("Utils.jl")                          # derivate function loaded for Peierls_stress_iterations()
+#include("Utils.jl")                          # derivative function loaded for Peierls_stress_iterations()
 
 export param_info,
     dεII_dτII,
@@ -68,7 +68,7 @@ export param_info,
     iselastic
 
 
-# add methods programatically 
+# add methods programmatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType, 
                 :GrainBoundarySliding, :PeierlsCreep, :NonLinearPeierlsCreep)
 
