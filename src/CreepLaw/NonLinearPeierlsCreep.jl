@@ -162,7 +162,7 @@ end
     ε = A * 
         fastpow(FT * TauII, n) * 
         exp(-(E / (R * T)) * 
-        (fastpow(1 - fastpow((FT * TauII) / TauP, o), q))) / 
+        (fastpow(1.0 - fastpow((FT * TauII) / TauP, o), q))) / 
         FE
 
     return ε
@@ -177,7 +177,7 @@ end
     ε = A * 
         fastpow(FT * TauII, n) * 
         exp(-(E / (R * T)) * 
-        (fastpow(1 - fastpow((FT* TauII) / TauP, o), q))) / 
+        (fastpow(1.0 - fastpow((FT* TauII) / TauP, o), q))) / 
         FE
 
     return ε
@@ -203,21 +203,32 @@ dεII_dτII(a::NonLinearPeierlsCreep, TauII; args...) = ForwardDiff.derivative(x
     Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau::Float64, EpsII::Float64, args)
 
 Nonlinear iterations for Peierls creep stress using Newton-Raphson Iterations. Every number needs to be a child of type Real (don't use units here).
+The initial stress guess Tau should be at least in the same order of magnitude as the value of TauP is in the used creep law. Example: 1.75e9 is a 
+good initial guess for the preexisting "Wet Olivine | Mei et al. (2010)" creep law. Find the sweet spot in the Tau/TauP relation (initial guess/TauP)
+if the stress is diverging. Maximum iterations are by default 500 but can be changed as optional argument.
 """
-PeierlsResidual(rheo::NonLinearPeierlsCreep, TauII, EpsII; T=473, args...) = EpsII - compute_εII(rheo, TauII; T=T, args...)
+PeierlsResidual(rheo::NonLinearPeierlsCreep, TauII, EpsII, args) = EpsII - compute_εII(rheo, TauII; args...)
 
 # implement nonlinear iterations function to iterate until stable stress value
-function Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau, EpsII; T=473, args...)
+function Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau, EpsII, args; max_iter=500)
     err = 1.0
     dfdtau = 0.0
     i = 0
-    while err > 1.0e-3
+    while err > 1.0e-6
         i += 1
+        if i > max_iter
+            print("Stress iterations did not converge.\n")
+            break
+        end
         Tau_old = Tau
         
-        fTau_n, dfdtau = dualDerivative(x->PeierlsResidual(rheo, x, EpsII; T=T, args...), Tau)
+        fTau_n, dfdtau = dualDerivative(x->PeierlsResidual(rheo, x, EpsII, args), Tau)
         Tau = Tau - (fTau_n / dfdtau)
-        err = (Tau_old - Tau) / Tau_old
+        err = abs(Tau_old - Tau)
+
+        if err < 1e-6
+            println("Converged in $i iterations with err = $err.")
+        end
     end
     return Tau
 end
