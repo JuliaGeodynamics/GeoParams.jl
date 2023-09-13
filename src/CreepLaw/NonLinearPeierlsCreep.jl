@@ -202,12 +202,12 @@ dεII_dτII(a::NonLinearPeierlsCreep, TauII; args...) = ForwardDiff.derivative(x
 """
     Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau::Float64, EpsII::Float64, args)
 
-Nonlinear iterations for Peierls creep stress using Newton-Raphson Iterations. 
+Nonlinear iterations for Peierls creep stress using Newton-Raphson Iterations. Every number needs to be a child of type Real (don't use units here).
 """
-PeierlsResidual(rheo::NonLinearPeierlsCreep, TauII, EpsII; args...) = EpsII - compute_εII(rheo, TauII; args...)
+PeierlsResidual(rheo::NonLinearPeierlsCreep, TauII, EpsII; T=473, args...) = EpsII - compute_εII(rheo, TauII; T=T, args...)
 
 # implement nonlinear iterations function to iterate until stable stress value
-function Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau, EpsII; args...)
+function Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau, EpsII; T=473, args...)
     err = 1.0
     dfdtau = 0.0
     i = 0
@@ -215,11 +215,13 @@ function Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau, EpsII; args
         i += 1
         Tau_old = Tau
         
-        dualDerivative(x->PeierlsResidual(rheo, x, EpsII; args...), Tau)
-
+        fTau_n, dfdtau = dualDerivative(x->PeierlsResidual(rheo, x, EpsII; T=T, args...), Tau)
+        @show fTau_n, dfdtau
         Tau = Tau - (fTau_n / dfdtau)
         err = (Tau_old - Tau) / Tau_old
+        @show Tau
     end
+    return Tau
 end
 
 # Print info 

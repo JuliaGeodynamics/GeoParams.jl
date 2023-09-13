@@ -16,6 +16,7 @@ using BibTeX            # references of creep laws
 using Requires          # To only add plotting routines if Plots is loaded
 using StaticArrays
 using LinearAlgebra
+using ForwardDiff
 
 import Base: getindex
 
@@ -89,6 +90,7 @@ function param_info end
 export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
 
 include("Utils.jl")
+export dualDerivative
 
 include("TensorAlgebra/TensorAlgebra.jl")
 export second_invariant, second_invariant_staggered, rotate_elastic_stress

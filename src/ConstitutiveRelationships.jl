@@ -7,7 +7,7 @@ using Base: Float64
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
-import GeoParams: param_info, fastpow, nphase, ntuple_idx, @print
+import GeoParams: param_info, fastpow, nphase, ntuple_idx, @print, dualDerivative
 import GeoParams: second_invariant, second_invariant_staggered
 using BibTeX
 using ..MaterialParameters: MaterialParamsInfo
@@ -32,6 +32,7 @@ include("Plasticity/Plasticity.jl")          # plasticity
 # include("CompositeRheologies/Viscosity.jl")             # composite creeplaws
 #include("CreepLaw/Viscosity.jl")             # composite creeplaws
 include("CompositeRheologies/CompositeRheologies.jl")            # composite constitutive relationships
+#include("Utils.jl")                          # derivate function loaded for Peierls_stress_iterations()
 
 export param_info,
     dεII_dτII,
