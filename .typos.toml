@@ -1,0 +1,11 @@
+[default.extend-words]
+# single words that shall be ignored
+Wirth = "Wirth"
+Commun = "Commun"
+siz = "siz" # common name of sizes
+nd = "nd" # suffix for non-dimensionalized data
+
+[default.extend-identifiers]
+# group of words that shall be ignored
+x_nd = "x_nd"
+FeOt = "FeOt"
