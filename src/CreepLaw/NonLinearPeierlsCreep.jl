@@ -2,7 +2,8 @@ export NonLinearPeierlsCreep,
     NonLinearPeierlsCreep_info,
     SetNonLinearPeierlsCreep,
     remove_tensor_correction,
-    dεII_dτII
+    dεII_dτII,
+    Peierls_stress_iterations
 
 # NonLinearPeierls Creep ------------------------------------------------
 """
@@ -151,7 +152,7 @@ function param_info(s::NonLinearPeierlsCreep)
 end
 
 # Calculation routines for linear viscous rheologies
-# All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
+# All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
 @inline function compute_εII(
     a::NonLinearPeierlsCreep, TauII::_T; T=one(precision(a)), args...
 ) where {_T}
@@ -198,101 +199,29 @@ end
 
 dεII_dτII(a::NonLinearPeierlsCreep, TauII; args...) = ForwardDiff.derivative(x -> compute_εII(a, x; args...), TauII)
 
-
-####### Needs to be solved non-linearly because of quadratic equation
-#=
 """
-    compute_τII(a::NonLinearPeierlsCreep, EpsII; P, T, f, args...)
+    Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau::Float64, EpsII::Float64, args)
 
-Computes the stress for a peierls creep law given a certain strain rate
-
+Nonlinear iterations for Peierls creep stress using Newton-Raphson Iterations. 
 """
-@inline function compute_τII(
-    a::NonLinearPeierlsCreep, EpsII::_T; T=one(precision(a)), args...
-) where {_T}
-    local n, q, o, TauP, A, E, R
-    if EpsII isa Quantity
-        @unpack_units n, q, o, TauP, A, E, R = a
-    else
-        @unpack_val n, q, o, TauP, A, E, R = a
+PeierlsResidual(rheo::NonLinearPeierlsCreep, TauII, EpsII; args...) = EpsII - compute_εII(rheo, TauII; args...)
+
+# implement nonlinear iterations function to iterate until stable stress value
+function Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau, EpsII; args...)
+    err = 1.0
+    dfdtau = 0.0
+    i = 0
+    while err > 1.0e-3
+        i += 1
+        Tau_old = Tau
+        
+        dualDerivative(x->PeierlsResidual(rheo, x, EpsII; args...), Tau)
+
+        Tau = Tau - (fTau_n / dfdtau)
+        err = (Tau_old - Tau) / Tau_old
     end
-
-    FT, FE = a.FT, a.FE
-
-    τ = TauP *
-        fastpow(1 - fastpow(- (R * T * log((FE * EpsII) / A) /Q), 
-        1 / q), 
-        1 / o) / 
-        FT
-
-    return τ
 end
 
-@inline function compute_τII(
-    a::NonLinearPeierlsCreep, EpsII::Quantity; T=1K, args...
-)
-    @unpack_units n, q, o, TauP, A, E, R = a
-    FT, FE = a.FT, a.FE
-
-    τ = TauP *
-        fastpow(1 - fastpow(- (R * T * log((FE * EpsII) / A) /Q), 
-        1 / q), 
-        1 / o) / 
-        FT
-
-    return τ
-end
-
-"""
-    compute_τII!(TauII::AbstractArray{_T,N}, a::NonLinearPeierlsCreep, EpsII::AbstractArray{_T,N}; 
-        T = ones(size(TauII))::AbstractArray{_T,N}, 
-
-Computes the deviatoric stress invariant for a peierls creep law
-"""
-function compute_τII!(
-    TauII::AbstractArray{_T,N},
-    a::NonLinearPeierlsCreep,
-    EpsII::AbstractArray{_T,N};
-    T=ones(size(TauII))::AbstractArray{_T,N},
-    kwargs...,
-) where {N,_T}
-    @inbounds for i in eachindex(TauII)
-        TauII[i] = compute_τII(a, EpsII[i]; T=T[i])
-    end
-
-    return nothing
-end
-#
-@inline function dτII_dεII(
-    a::NonLinearPeierlsCreep, EpsII::_T; T=one(precision(a)), args...
-) where {_T}
-    @unpack_val n, q, o, TauP, A, E, R = a
-    FT, FE = a.FT, a.FE
-
-    # derived in WolframAlpha
-    return (TauP * exp(-1 / q) * 
-            R * 
-            T * 
-            fastpow(-R * T * log((FE * EpsII) / A)), (1 / q - 1)) * 
-            fastpow(1 - exp(-1 / q) * fastpow(-R * T * log((FE * EpsII) / A), (1 / q)), (1/o - 1)) / 
-            (FT * o * q *  EpsII)
-end
-
-@inline function dτII_dεII(
-    a::NonLinearPeierlsCreep, EpsII::Quantity; T=1K, args...
-)
-    @unpack_units n, q, o, TauP, A, E, R = a
-    FT, FE = a.FT, a.FE
-
-    # derived in WolframAlpha
-    return (TauP * exp(-1 / q) * 
-            R * 
-            T * 
-            fastpow(-R * T * log((FE * EpsII) / A)), (1 / q - 1)) * 
-            fastpow(1 - exp(-1 / q) * fastpow(-R * T * log((FE * EpsII) / A), (1 / q)), (1/o - 1)) / 
-            (FT * o * q *  EpsII)
-end
-=#
 # Print info 
 function show(io::IO, g::NonLinearPeierlsCreep)
     return print(
