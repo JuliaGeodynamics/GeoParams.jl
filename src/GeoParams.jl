@@ -222,6 +222,8 @@ export dεII_dτII,
     local_iterations_εvol, 
     compute_p_harmonic 
 
+
+
 # Constitutive relationships laws
 include("StressComputations/StressComputations.jl")
 export compute_τij, compute_p_τij, compute_τij_stagcenter!, compute_p_τij_stagcenter!, compute_τij!, compute_p_τij!
@@ -229,6 +231,12 @@ export compute_τij, compute_p_τij, compute_τij_stagcenter!, compute_p_τij_st
 include("Rheology_Utils.jl")
 export time_τII_0D, time_τII_0D!, time_p_τII_0D, time_p_τII_0D!
 
+include("Viscosity/Viscosity.jl")
+export compute_viscosity_εII,
+    compute_viscosity_τII,
+    compute_elastoviscosity,
+    compute_elastoviscosity_εII,
+    compute_elastoviscosity_τII
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration
