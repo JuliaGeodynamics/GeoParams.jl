@@ -962,8 +962,6 @@ function PlotDeformationMap(
     boundaries = true,              # plot deformation boundaries
     levels = 30,                    # number of contour levels
     colormap=:viridis,
-    categorical_cbar=false,
-    categorical_cbar_labels::Vector{String}=nothing,
     filename=nothing,
     fontsize=40,
     res=(1200, 900),
@@ -974,12 +972,6 @@ function PlotDeformationMap(
 
     # Parameters
     T_vec = Vector(range(T[1], T[2], n+1))    .+ 273.15   # in K
-
-    if grainsize
-        d_vec = 10.0.^Vector(range(log10(d[1]), log10(d[2]), n+1))
-    end
-
-    # Depth to be done
 
     # this is used to determine the main deformation mechanism (and color that later)
     n_components = 1
@@ -1040,7 +1032,6 @@ function PlotDeformationMap(
         log_ε = log10.(ε_vec)
     end
     T_plot = T_vec .- 273.15;
-    cbar_phasenums = sort(unique(mainDef))
 
     # determine axis of plot
     if strainrate
@@ -1062,22 +1053,6 @@ function PlotDeformationMap(
         label = L"\log_{10}(\eta_{eff}) [Pa s]"
         data = log10.(η)
     end
-    if strainrate && grainsize
-        x = log10.(d_vec./1e-3)
-        xlabel = L"\log_{10}(d) [mm]"
-        y = log_σ
-        ylabel = L"\log_{10}(\tau_{II}) [MPa]";
-        label = L"\log_{10}(\varepsilon_{II}) [s^{-1}]"
-        data = log10.(εII)
-    end
-    if strainrate && depth
-        x = 1# to be defined
-        xlabel = "depth [km]"
-        y = log_σ
-        ylabel = L"\log_{10}(\tau_{II}) [MPa]";
-        label = L"\log_{10}(\varepsilon_{II}) [s^{-1}]"
-        data = log10.(εII)
-    end
 
     if rotate_axes 
         x,y = y,x
@@ -1087,52 +1062,21 @@ function PlotDeformationMap(
 
     # Plotting with Makie
     fig = Figure(; fontsize=fontsize, resolution=res)
-    if grainsize
-        ax = Axis(
-            fig[1,1],
-            title="Deformation mechanism map",
-            xlabel=xlabel, xlabelsize=fontsize,
-            xticks = -3:0.5:2,
-            xminorticks = IntervalsBetween(5),
-            xminorticksvisible = true,
-            ylabel=ylabel, ylabelsize=fontsize,
-            yticks = -1:0.5:4,
-            yminorticks = IntervalsBetween(5),
-            yminorticksvisible = true
-            )
-    else
-        ax = Axis(
-            fig[1,1],
-            title="Deformation mechanism map",
-            xlabel=xlabel, xlabelsize=fontsize,
-            #xticks = -3:0.5:2,
-            xminorticks = IntervalsBetween(5),
-            xminorticksvisible = true,
-            ylabel=ylabel, ylabelsize=fontsize,
-            yticks = -1:0.5:4,
-            yminorticks = IntervalsBetween(5),
-            yminorticksvisible = true
-            )
-    end
+   
+    ax = Axis(
+        fig[1,1],
+        title="Deformation mechanism map",
+        xlabel=xlabel, xlabelsize=fontsize,
+        xticks = -3:0.5:2,
+        xminorticks = IntervalsBetween(5),
+        xminorticksvisible = true,
+        ylabel=ylabel, ylabelsize=fontsize,
+        yticks = -1:0.5:4,
+        yminorticks = IntervalsBetween(5),
+        yminorticksvisible = true
+        )
 
-    if categorical_cbar
-        # colors for Thorsten Beckers plots
-        col1 = [colorant"#732726"    # redish brown, 
-                colorant"#a26a59"    # skin colored
-                colorant"#b5a57c"    # light brown
-                colorant"#d7d7d3"    # grey
-        ]
-        #col = [col1,col2,col3,col4] 
-        col = [col1[i] for i in 1:length(cbar_phasenums)]
-        colmap = cgrad(col, length(cbar_phasenums); categorical=true)    # creating custom :sienna like colormap 
-        c1 = heatmap!(ax,x,y,mainDef, colormap = colmap)
-        cbar = Colorbar(fig[1,2], c1)
-        cbar.ticks = (cbar_phasenums, categorical_cbar_labels)
-    else
-        c1 = heatmap!(ax,x,y,data, colormap = colormap)
-        Colorbar(fig[1,2], c1, label=label, labelsize=fontsize)
-    end
-
+    c1 = heatmap!(ax,x,y,data, colormap = colormap)
 
     if boundaries
         # plot boundaries between deformation regimes    
@@ -1140,6 +1084,8 @@ function PlotDeformationMap(
     end
     
     contour!(ax,x,y,data; color=:black, levels=-20:1:-2, labels = true, labelsize = 25, labelfont = :bold, labelcolor = :black)
+
+    Colorbar(fig[1,2], c1, label=label, labelsize=fontsize)
 
     if !isnothing(filename)
         save(filename, fig)
