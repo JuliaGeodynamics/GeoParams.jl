@@ -240,7 +240,7 @@ returns the derivative of strainrate versus stress
            A *
            FT *
            exp((-E - P * V) / (R * T)) *
-           (1 / FE)
+           inv(FE)
 end
 
 
@@ -258,7 +258,7 @@ end
            A *
            FT *
            exp((-E - P * V) / (R * T)) *
-           (1 / FE)
+           inv(FE)
 end
 
 
@@ -332,10 +332,10 @@ end
     # computed symbolically:
     return (
         FE *
-        (fastpow(A, -n_inv)) *
-        (fastpow(d, -p * n_inv)) *
-        (fastpow(f, -r * n_inv)) *
-        (fastpow(EpsII * FE, n_inv - 1)) *
+        fastpow(A, -n_inv) *
+        fastpow(d, -p * n_inv) *
+        fastpow(f, -r * n_inv) *
+        fastpow(EpsII * FE, n_inv - 1) *
         exp((E + P * V) / (n * R * T ))
     ) / (FT )
 end

@@ -451,7 +451,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Dry Anorthite | Rybacki et al. (2006)",
                     n=3.0NoUnits,
-                    A=(10^12.7)MPa^(-3.0) / s,
+                    A=exp10(12.7)MPa^(-3.0) / s,
                     E=641kJ / mol,
                     V=24e-6m^3 / mol,
                     r=0NoUnits,

@@ -232,16 +232,17 @@ Computes the stress for a Dislocation creep law given a certain strain rate
     a::DislocationCreep, EpsII; T=one(precision(a)), P=zero(precision(a)), 
     f=one(precision(a)), args...
 )
-    local n, r, A, E, V, R
-    if EpsII isa Quantity
+    n, r, A, E, V, R = if EpsII isa Quantity
         @unpack_units n, r, A, E, V, R = a
+        n, r, A, E, V, R
     else
         @unpack_val n, r, A, E, V, R = a
+        n, r, A, E, V, R
     end
 
     FT, FE = a.FT, a.FE
     _n = inv(n)
-
+    
     return fastpow(A, -_n) *
            fastpow(EpsII * FE, _n) *
            fastpow(f, -r * _n) *

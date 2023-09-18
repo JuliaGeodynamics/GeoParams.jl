@@ -2,7 +2,8 @@ export NonLinearPeierlsCreep,
     NonLinearPeierlsCreep_info,
     SetNonLinearPeierlsCreep,
     remove_tensor_correction,
-    dεII_dτII
+    dεII_dτII,
+    Peierls_stress_iterations
 
 # NonLinearPeierls Creep ------------------------------------------------
 """
@@ -25,7 +26,7 @@ where
 - ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}`` 
 - ``\\sigma_\\mathrm{p}`` is the peierls stress ``\\mathrm{[MPa]}``
 - ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[MPa]}`` which are converted into second invariants using the `Apparatus` variable that can be
-either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law paramters are already given as a function of second invariants, choose `Apparatus=Invariant`.
+either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
 # Example
 ```julia-repl 
@@ -151,7 +152,7 @@ function param_info(s::NonLinearPeierlsCreep)
 end
 
 # Calculation routines for linear viscous rheologies
-# All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
+# All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
 @inline function compute_εII(
     a::NonLinearPeierlsCreep, TauII::_T; T=one(precision(a)), args...
 ) where {_T}
@@ -161,7 +162,7 @@ end
     ε = A * 
         fastpow(FT * TauII, n) * 
         exp(-(E / (R * T)) * 
-        (fastpow(1 - fastpow((FT * TauII) / TauP, o), q))) / 
+        (fastpow(1.0 - fastpow((FT * TauII) / TauP, o), q))) / 
         FE
 
     return ε
@@ -176,7 +177,7 @@ end
     ε = A * 
         fastpow(FT * TauII, n) * 
         exp(-(E / (R * T)) * 
-        (fastpow(1 - fastpow((FT* TauII) / TauP, o), q))) / 
+        (fastpow(1.0 - fastpow((FT* TauII) / TauP, o), q))) / 
         FE
 
     return ε
@@ -198,101 +199,40 @@ end
 
 dεII_dτII(a::NonLinearPeierlsCreep, TauII; args...) = ForwardDiff.derivative(x -> compute_εII(a, x; args...), TauII)
 
-
-####### Needs to be solved non-linearly because of quadratic equation
-#=
 """
-    compute_τII(a::NonLinearPeierlsCreep, EpsII; P, T, f, args...)
+    Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau::Float64, EpsII::Float64, args)
 
-Computes the stress for a peierls creep law given a certain strain rate
-
+Nonlinear iterations for Peierls creep stress using Newton-Raphson Iterations. Every number needs to be a child of type Real (don't use units here).
+The initial stress guess Tau should be at least in the same order of magnitude as the value of TauP is in the used creep law. Example: 1.75e9 is a 
+good initial guess for the preexisting "Wet Olivine | Mei et al. (2010)" creep law. Find the sweet spot in the Tau/TauP relation (initial guess/TauP)
+if the stress is diverging. Maximum iterations are by default 500 but can be changed as optional argument.
 """
-@inline function compute_τII(
-    a::NonLinearPeierlsCreep, EpsII::_T; T=one(precision(a)), args...
-) where {_T}
-    local n, q, o, TauP, A, E, R
-    if EpsII isa Quantity
-        @unpack_units n, q, o, TauP, A, E, R = a
-    else
-        @unpack_val n, q, o, TauP, A, E, R = a
+PeierlsResidual(rheo::NonLinearPeierlsCreep, TauII, EpsII, args) = EpsII - compute_εII(rheo, TauII; args...)
+
+# implement nonlinear iterations function to iterate until stable stress value
+function Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau, EpsII, args; max_iter=500)
+    err = 1.0
+    dfdtau = 0.0
+    i = 0
+    while err > 1.0e-6
+        i += 1
+        if i > max_iter
+            print("Stress iterations did not converge.\n")
+            break
+        end
+        Tau_old = Tau
+        
+        fTau_n, dfdtau = dualDerivative(x->PeierlsResidual(rheo, x, EpsII, args), Tau)
+        Tau = Tau - (fTau_n / dfdtau)
+        err = abs(Tau_old - Tau)
+
+        if err < 1e-6
+            println("Converged in $i iterations with err = $err.")
+        end
     end
-
-    FT, FE = a.FT, a.FE
-
-    τ = TauP *
-        fastpow(1 - fastpow(- (R * T * log((FE * EpsII) / A) /Q), 
-        1 / q), 
-        1 / o) / 
-        FT
-
-    return τ
+    return Tau
 end
 
-@inline function compute_τII(
-    a::NonLinearPeierlsCreep, EpsII::Quantity; T=1K, args...
-)
-    @unpack_units n, q, o, TauP, A, E, R = a
-    FT, FE = a.FT, a.FE
-
-    τ = TauP *
-        fastpow(1 - fastpow(- (R * T * log((FE * EpsII) / A) /Q), 
-        1 / q), 
-        1 / o) / 
-        FT
-
-    return τ
-end
-
-"""
-    compute_τII!(TauII::AbstractArray{_T,N}, a::NonLinearPeierlsCreep, EpsII::AbstractArray{_T,N}; 
-        T = ones(size(TauII))::AbstractArray{_T,N}, 
-
-Computes the deviatoric stress invariant for a peierls creep law
-"""
-function compute_τII!(
-    TauII::AbstractArray{_T,N},
-    a::NonLinearPeierlsCreep,
-    EpsII::AbstractArray{_T,N};
-    T=ones(size(TauII))::AbstractArray{_T,N},
-    kwargs...,
-) where {N,_T}
-    @inbounds for i in eachindex(TauII)
-        TauII[i] = compute_τII(a, EpsII[i]; T=T[i])
-    end
-
-    return nothing
-end
-#
-@inline function dτII_dεII(
-    a::NonLinearPeierlsCreep, EpsII::_T; T=one(precision(a)), args...
-) where {_T}
-    @unpack_val n, q, o, TauP, A, E, R = a
-    FT, FE = a.FT, a.FE
-
-    # derived in WolframAlpha
-    return (TauP * exp(-1 / q) * 
-            R * 
-            T * 
-            fastpow(-R * T * log((FE * EpsII) / A)), (1 / q - 1)) * 
-            fastpow(1 - exp(-1 / q) * fastpow(-R * T * log((FE * EpsII) / A), (1 / q)), (1/o - 1)) / 
-            (FT * o * q *  EpsII)
-end
-
-@inline function dτII_dεII(
-    a::NonLinearPeierlsCreep, EpsII::Quantity; T=1K, args...
-)
-    @unpack_units n, q, o, TauP, A, E, R = a
-    FT, FE = a.FT, a.FE
-
-    # derived in WolframAlpha
-    return (TauP * exp(-1 / q) * 
-            R * 
-            T * 
-            fastpow(-R * T * log((FE * EpsII) / A)), (1 / q - 1)) * 
-            fastpow(1 - exp(-1 / q) * fastpow(-R * T * log((FE * EpsII) / A), (1 / q)), (1/o - 1)) / 
-            (FT * o * q *  EpsII)
-end
-=#
 # Print info 
 function show(io::IO, g::NonLinearPeierlsCreep)
     return print(

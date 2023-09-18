@@ -97,7 +97,7 @@ using GeoParams
                 @test Value(val_original) == Value(val_final)        
             end
         end
-############################## Ab hier nochmal gucken ###################################### 
+ 
         # Perform computations with the rheology
         args   = (T=500.0, τII_old=2.2e9);
         ε      = 1e-7

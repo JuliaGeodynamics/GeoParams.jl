@@ -26,12 +26,12 @@ where
 - ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}`` 
 - ``\\sigma_\\mathrm{p}`` is the peierls stress ``\\mathrm{[MPa]}``
 - ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[MPa]}`` which are converted into second invariants using the `Apparatus` variable that can be
-either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law paramters are already given as a function of second invariants, choose `Apparatus=Invariant`.
+either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
 # Example
 ```julia-repl 
 julia> x2 = PeierlsCreep(n=1)
-PeierlsCreep: n=1, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, Apparatus=AxialCompression
+PeierlsCreep: Name = , n=1.0, q=2.0, o=1.0, TauP=8.5e9 Pa, A=5.7e11 s^-1.0, E=476.0 kJ mol^-1.0, FT=1.7320508075688772, FE=1.1547005383792517, Apparatus=1
 ```
 """
 struct PeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
@@ -152,14 +152,14 @@ function param_info(s::PeierlsCreep)
 end
 
 # Calculation routines for linear viscous rheologies
-# All inputs must be non-dimensionalized (or converted to consitent units) GeoUnits
+# All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
 @inline function compute_εII(
     a::PeierlsCreep, TauII::_T; T=one(precision(a)), args...
 ) where {_T}
     @unpack_val n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    ε = (A * exp(-(E / (R * T)) * (fastpow(1 - fastpow((FT * TauII) / TauP, q), o)))) / FE
+    ε = (A * exp(-(E / (R * T)) * (fastpow(1.0 - fastpow((FT * TauII) / TauP, q), o)))) / FE
 
     return ε
 end
@@ -197,7 +197,7 @@ end
 
     return q * 
            fastpow((FT * TauII) / TauP, q) *
-           fastpow(1 - fastpow((FT * TauII) / TauP, q), o) *
+           fastpow(1.0 - fastpow((FT * TauII) / TauP, q), o) *
            A *
            E *
            o *
@@ -230,13 +230,8 @@ Computes the stress for a peierls creep law given a certain strain rate.
 """
 @inline function compute_τII(
     a::PeierlsCreep, EpsII::_T; T=one(precision(a)), args...
-) where {_T}
-    local n, q, o, TauP, A, E, R
-    if EpsII isa Quantity
-        @unpack_units n, q, o, TauP, A, E, R = a
-    else
-        @unpack_val n, q, o, TauP, A, E, R = a
-    end
+) where {_T}    
+    @unpack_val n, q, o, TauP, A, E, R = a
 
     FT, FE = a.FT, a.FE
 
@@ -244,7 +239,7 @@ Computes the stress for a peierls creep law given a certain strain rate.
     o_inv = inv(o)
 
     τ = (TauP * 
-        fastpow(1 - fastpow(abs(-((R * T * log((FE * EpsII) / A)) / E)) , o_inv), q_inv)) / 
+        fastpow(1.0 - fastpow(abs(-((R * T * log((FE * EpsII) / A)) / E)) , o_inv), q_inv)) / 
         FT
 
     return τ
@@ -260,7 +255,7 @@ end
     o_inv = inv(o)
 
     τ = (TauP * 
-        fastpow(1 - fastpow(-((R * T * log((FE * EpsII) / A)) / E) , o_inv), q_inv)) / 
+        fastpow(1.0 - fastpow(-((R * T * log((FE * EpsII) / A)) / E) , o_inv), q_inv)) / 
         FT
 
     return τ
