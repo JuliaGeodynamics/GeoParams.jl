@@ -23,7 +23,7 @@ using GeoParams
     T = GeoUnit(600.0C)
 
     # compute a pure non linear peierls creep rheology
-    p = SetNonLinearPeierlsCreep("Wet Olivine | Mei et al. (2010)")
+    p = SetNonLinearPeierlsCreep("Dry Olivine | Mei et al. (2010)")
 
     T = 600.0 + 273.15
 
@@ -51,7 +51,7 @@ using GeoParams
     @test ε_array[1] ≈ ε
 
     # wet olivine, stress-strainrate curve
-    p = SetNonLinearPeierlsCreep("Wet Olivine | Mei et al. (2010)")
+    p = SetNonLinearPeierlsCreep("Dry Olivine | Mei et al. (2010)")
     εII = exp10.(-22:0.5:-12)
     τII = exp10.(9:0.05:10)               # preallocate array
     T = 200.0 + 273.15
@@ -62,7 +62,7 @@ using GeoParams
     eta_array1 = @. 0.5 * τII / εII
 
     # test overriding the default values
-    a =  SetNonLinearPeierlsCreep("Wet Olivine | Mei et al. (2010)", E=475.0kJ / mol)
+    a =  SetNonLinearPeierlsCreep("Dry Olivine | Mei et al. (2010)", E=475.0kJ / mol)
     @test Value(a.E) == 475.0kJ / mol
 
     # Do some basic checks on all creeplaws in the DB
