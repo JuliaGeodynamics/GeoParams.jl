@@ -20,26 +20,26 @@ using GeoParams
     )
     EpsII = GeoUnit(1.0s^-1.0)
     TauII = GeoUnit(1.0e3MPa)
-    T = GeoUnit(600.0C)
+    T = GeoUnit(473.0C)
 
     # compute a pure non linear peierls creep rheology
     p = SetNonLinearPeierlsCreep("Dry Olivine | Mei et al. (2010)")
 
-    T = 600.0 + 273.15
+    T = 200.0 + 273.15
 
     args = (; T=T)
-    TauII = 1.0e6
+    TauII = 1.0e9
     ε = compute_εII(p, TauII, args)
-    @test ε ≈ 5.569334377736908e-26
+    @test ε ≈ 5.638821307626487e-17
 
     # same but with removing the tensor correction
     ε_notensor = compute_εII(remove_tensor_correction(p), TauII, args)
-    @test ε_notensor ≈ 1.788048808305053e-26
+    @test ε_notensor ≈ 5.491207069105064e-22
 
     # test with arrays
-    τII_array = ones(10) * 1.0e6
+    τII_array = ones(10) * 1.0e9
     ε_array = similar(τII_array)
-    T_array = ones(size(τII_array)) * (600.0 + 273.15)
+    T_array = ones(size(τII_array)) * (200.0 + 273.15)
 
     args_array = (; T=T_array)
 
@@ -93,8 +93,9 @@ using GeoParams
     end
     
     # check that derivative calculation is correct
+    p      = SetNonLinearPeierlsCreep("Dry Olivine | Mei et al. (2010)")
     TauII  = 1.0e9
     args   = (;T=273 + 200.0)
     depsdtau = dεII_dτII(p, TauII; args...)
-    @test depsdtau ≈ 5.633292966430465e-25
+    @test depsdtau ≈ 1.339830415314779e-24
 end
