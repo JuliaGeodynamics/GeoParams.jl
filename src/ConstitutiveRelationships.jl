@@ -67,7 +67,7 @@ export param_info,
     get_Kb,
     iselastic
 
-# add methods programatically 
+# add methods programmatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType, 
                 :GrainBoundarySliding, :PeierlsCreep, :NonLinearPeierlsCreep)
     @eval begin
