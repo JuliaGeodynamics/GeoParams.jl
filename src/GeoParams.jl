@@ -124,7 +124,8 @@ export compute_density,                                # computational routines
     PT_Density,
     Compressible_Density,
     PhaseDiagram_LookupTable,
-    Read_LaMEM_Perple_X_Diagram
+    Read_LaMEM_Perple_X_Diagram,
+    compute_density_ratio
 
 # Constitutive relationships laws
 using .MaterialParameters.ConstitutiveRelationships
