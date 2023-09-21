@@ -160,7 +160,10 @@ end
     @unpack_val n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    ε = A * fastpow(TauII * FT, n) * fastpow(f, r) * exp(-(E + P * V) / (R * T)) / FE
+    f_r = pow_check(f, r)
+    TauII_FT_n = pow_check(FT * TauII, n)
+
+    ε = A * TauII_FT_n * f_r * exp(-(E + P * V) / (R * T)) / FE
     return ε
 end
 
@@ -170,7 +173,10 @@ end
     @unpack_units n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    ε = A * fastpow(TauII * FT, n) * fastpow(f, r) * exp(-(E + P * V) / (R * T)) / FE
+    f_r = pow_check(f, r)
+    TauII_FT_n = pow_check(FT * TauII, n)
+
+    ε = A * TauII_FT_n * f_r * exp(-(E + P * V) / (R * T)) / FE
 
     return ε
 end
@@ -197,8 +203,11 @@ end
     @unpack_val n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    return fastpow(FT * TauII, -1 + n) *
-           fastpow(f, r) *
+    f_r = pow_check(f, r)
+    FT_TauII_n = pow_check(FT * TauII, -1 + n)
+
+    return FT_TauII_n *
+           f_r *
            A *
            FT *
            n *
@@ -211,9 +220,12 @@ end
 )
     @unpack_units n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
+    
+    f_r = pow_check(f, r)
+    FT_TauII_n = pow_check(FT * TauII, -1 + n)
 
-    return fastpow(FT * TauII, -1 + n) *
-           fastpow(f, r)*
+    return FT_TauII_n *
+           f_r *
            A *
            FT *
            n *
@@ -243,9 +255,13 @@ Computes the stress for a Dislocation creep law given a certain strain rate
     FT, FE = a.FT, a.FE
     _n = inv(n)
     
-    return fastpow(A, -_n) *
-           fastpow(EpsII * FE, _n) *
-           fastpow(f, -r * _n) *
+    A_n = pow_check(A, -_n)
+    f_r = pow_check(f, -r * _n)
+    EpsII_FE_n = pow_check(EpsII * FE, _n)
+
+    return A_n *
+           EpsII_FE_n *
+           f_r *
            exp((E + P * V) / (n * R * T)) / FT
 end
 
@@ -256,9 +272,13 @@ end
     FT, FE = a.FT, a.FE
     _n = inv(n)
 
-    return fastpow(A, -_n) *
-           fastpow(EpsII * FE, _n) *
-           fastpow(f, -r * _n) *
+    A_n = pow_check(A, -_n)
+    f_r = pow_check(f, -r * _n)
+    EpsII_FE_n = pow_check(EpsII * FE, _n)
+
+    return A_n*
+           f_r*
+           EpsII_FE_n*
            exp((E + P * V) / (n * R * T)) / FT
 end
 
@@ -293,11 +313,15 @@ end
     FT, FE = a.FT, a.FE
     _n = inv(n)
 
+    A_n = pow_check(A, -_n)
+    f_r = pow_check(f, -r * _n)
+    EpsII_FE_n = pow_check(EpsII * FE, _n-1)
+
     return (
         FE *
-        fastpow(A, - _n) *
-        fastpow(f, -r * _n) *
-        fastpow(EpsII * FE, _n - 1) *
+        A_n *
+        f_r *
+        EpsII_FE_n *
         exp((E + P * V) / (R * T * n))
     ) / (FT * n)
 end
@@ -308,11 +332,15 @@ end
     @unpack_units n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
+    A_n = pow_check(A, -_n)
+    f_r = pow_check(f, -r * _n)
+    EpsII_FE_n = pow_check(EpsII * FE, _n-1)
+
     return (
         FE *
-        fastpow(A, - _n) *
-        fastpow(f, -r * _n) *
-        fastpow(EpsII * FE, _n - 1) *
+        A_n *
+        f_r *
+        EpsII_FE_n *
         exp((E + P * V) / (R * T * n))
     ) / (FT * n)
 end
