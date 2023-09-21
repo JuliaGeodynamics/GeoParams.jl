@@ -25,14 +25,10 @@ const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 
 
 include("Computations.jl")
-#include("TensorAlgebra/TensorAlgebra.jl")
 include("CreepLaw/CreepLaw.jl")              # viscous Creeplaws
 include("Elasticity/Elasticity.jl")          # elasticity
 include("Plasticity/Plasticity.jl")          # plasticity
-# include("CompositeRheologies/Viscosity.jl")             # composite creeplaws
-#include("CreepLaw/Viscosity.jl")             # composite creeplaws
 include("CompositeRheologies/CompositeRheologies.jl")            # composite constitutive relationships
-#include("Utils.jl")                          # derivative function loaded for Peierls_stress_iterations()
 
 export param_info,
     dεII_dτII,
