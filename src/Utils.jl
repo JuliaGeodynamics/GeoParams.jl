@@ -92,7 +92,7 @@ end
 
 # Deriving the given function f with initial guess x using ForwardDiff 
 # while returning the value for the function and its derivative in df as Dual number
-@inline function dualDerivative(f::F, x::R) where {F, R<:Real}     
+@inline function value_and_partial(f::F, x::R) where {F, R<:Real}     
     T = typeof(ForwardDiff.Tag(f, R))     
     df =  f(ForwardDiff.Dual{T}(x, one(x)), )     
     return df.value, ForwardDiff.extract_derivative(T, df) 

@@ -222,7 +222,7 @@ function Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau, EpsII, args
         end
         Tau_old = Tau
         
-        fTau_n, dfdtau = dualDerivative(x->PeierlsResidual(rheo, x, EpsII, args), Tau)
+        fTau_n, dfdtau = value_and_partial(x->PeierlsResidual(rheo, x, EpsII, args), Tau)
         Tau = Tau - (fTau_n / dfdtau)
         err = abs(Tau_old - Tau)
 
