@@ -39,34 +39,15 @@ const GrainBoundarySliding_info = Dict([
     ),
 )
 
-# Dry Olivine rheology, T >= 1523 K
+# Test rheology
 (
-    "TEST GBS",
+    "Test GBS",
     (
         GrainBoundarySliding(;
-            Name="TEST GBS",
+            Name="Test GBS",
             n=3.5NoUnits,                         # power-law exponent
             p=-2.0NoUnits,                        # grain size exponent
             A=1.506190693026593e2MPa^(-3.5) * m^(2.0) * s^(-1.0),    # material specific rheological parameter
-            E=600.0kJ / mol,                        # activation energy
-            V=18.0e-6m^3 / mol,                       # activation Volume
-            Apparatus=AxialCompression,
-        ),
-        MaterialParamsInfo(;
-            Comment="Checked values; not yet plots (NM)",
-            BibTex_Reference=""),
-    ),
-)
-
-# Dry Olivine rheology, T >= 1523 K
-(
-    "THORSTEN GBS",
-    (
-        GrainBoundarySliding(;
-            Name="THORSTEN GBS",
-            n=3.5NoUnits,                         # power-law exponent
-            p=-2.0NoUnits,                        # grain size exponent
-            A=2^((1.0+(3.0/3.5))/2.0) * 4.7e10MPa^(-3.5) * m^(2.0) * s^(-1.0),    # material specific rheological parameter
             E=600.0kJ / mol,                        # activation energy
             V=18.0e-6m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,
