@@ -189,6 +189,7 @@ function compute_εII!(
     return nothing
 end
 
+
 @inline function dεII_dτII(
     a::PeierlsCreep, TauII::_T; T=one(precision(a)), args...
 ) where {_T}
@@ -220,7 +221,6 @@ end
            exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, q), o)) / (R * T)) /
            (FE * R * T * TauII)
 end
-
 
 """
     compute_τII(a::PeierlsCreep, EpsII; P, T, f, args...)
@@ -290,20 +290,6 @@ Computes the derivative `dτII/dεII` for a peierls creep law using automatic di
 """
 
 dτII_dεII(v::PeierlsCreep, EpsII; args...) = ForwardDiff.derivative(x -> compute_τII(v, x; args...), EpsII)
-
-# Derivative of τII:
-
-#(TauP * fastpow(fastpow(E, -o_inv) * 
-#(-fastpow(E, o_inv) + 
-#fastpow(-R * T * log((FE * EpsII) / A), o_inv)), q) * 
-#fastpow(-R * T * log((FE * EpsII) / A), o_inv)) / 
-#(FT * 
-#o * 
-#q * 
-#EpsII * 
-#(-fastpow(E, o_inv) + fastpow(-R * T * log((FE * EpsII) / A), o_inv)) * 
-#log((FE * EpsII) / A))
-
 
 # Print info 
 function show(io::IO, g::PeierlsCreep)
