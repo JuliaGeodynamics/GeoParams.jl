@@ -181,10 +181,14 @@ Returns diffusion creep strainrate as a function of 2nd invariant of the stress 
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
+    f_r = pow_check(f, r)
+    d_p = pow_check(d, p)
+    TauII_FT_n = pow_check(FT * TauII, n)
+
     return A *
-           fastpow(TauII * FT, n) *
-           fastpow(f, r) *
-           fastpow(d, p) *
+           TauII_FT_n *
+           f_r *
+           d_p *
            exp(-(E + P * V) / (R * T)) / FE
 end
 
@@ -194,7 +198,11 @@ end
     @unpack_units n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    ε = A * fastpow(TauII * FT, n) * fastpow(f, r) * fastpow(d, p) * exp(-(E + P * V) / (R * T)) / FE
+    f_r = pow_check(f, r)
+    d_p = pow_check(d, p)
+    TauII_FT_n = pow_check(FT * TauII, n)
+
+    ε = A * TauII_FT_n * f_r * d_p * exp(-(E + P * V) / (R * T)) / FE
 
     return ε
 end
@@ -231,16 +239,19 @@ returns the derivative of strainrate versus stress
 )
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
+    
+    f_r = pow_check(f, r)
+    d_p = pow_check(d, p)
+    TauII_FT_n = pow_check(FT * TauII, -1 + n)
 
-    return fastpow(FT * TauII, -1 + n) *
-           fastpow(f, r) *
-           fastpow(d, p) *
+    return TauII_FT_n *
+           f_r *
+           d_p *
            A *
            FT *
            exp((-E - P * V) / (R * T)) *
            inv(FE)
 end
-
 
 @inline function dεII_dτII(
     a::DiffusionCreep, TauII::Quantity; T=1K, P=0Pa, f=1NoUnits, d=1m, kwargs...
@@ -248,16 +259,17 @@ end
     @unpack_units n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
+    f_r = pow_check(f, r)
+    d_p = pow_check(d, p)
+
     return FT  *
-           fastpow(f, r) *
-           fastpow(d, p) *
+           f_r *
+           d_p *
            A *
            FT *
            exp((-E - P * V) / (R * T)) *
            inv(FE)
 end
-
-
 
 """
     computeCreepLaw_TauII(EpsII::_T, a::DiffusionCreep; T::_T, P=zero(_T), f=one(_T), d=one(_T), kwargs...)
@@ -272,11 +284,16 @@ Returns diffusion creep stress as a function of 2nd invariant of the strain rate
     
     n_inv = inv(n)
     
+    A_n = pow_check(A, -n_inv)
+    EpsII_FE_n = pow_check(EpsII * FE, n_inv)
+    f_r = pow_check(f, -r * n_inv)
+    d_p = pow_check(d, -p * n_inv)
+
     τ =
-        fastpow(A, -n_inv) *
-        fastpow(EpsII * FE, n_inv) *
-        fastpow(f, -r * n_inv) *
-        fastpow(d, -p * n_inv) *
+        A_n *
+        EpsII_FE_n *
+        f_r*
+        d_p*
         exp((E + P * V) / (n * R * T)) / FT
 
     return τ
@@ -290,11 +307,15 @@ end
 
     n_inv = inv(n)
     
+    A_n = pow_check(A, -n_inv)
+    f_r = pow_check(f, -r * n_inv)
+    d_p = pow_check(d, -p * n_inv)
+
     τ =
-        fastpow(A, -n_inv) *
-        fastpow(EpsII * FE, 1) *
-        fastpow(f, -r * n_inv) *
-        fastpow(d, -p * n_inv) *
+        A_n *
+        EpsII * FE *
+        f_r *
+        d_p *
         exp((E + P * V) / (n * R * T)) / FT
 
     return τ
@@ -325,15 +346,20 @@ end
 
     n_inv = inv(n)
     
+    A_n = pow_check(A, -n_inv)
+    EpsII_FE_n = pow_check(EpsII * FE, n_inv-1)
+    f_r = pow_check(f, -r * n_inv)
+    d_p = pow_check(d, -p * n_inv)
+
     # computed symbolically:
     return (
         FE *
-        fastpow(A, -n_inv) *
-        fastpow(d, -p * n_inv) *
-        fastpow(f, -r * n_inv) *
-        fastpow(EpsII * FE, n_inv - 1) *
+        A_n *
+        d_p *
+        f_r *
+        EpsII_FE_n *
         exp((E + P * V) / (n * R * T ))
-    ) / (FT )
+    ) / FT
 end
 
 @inline function dτII_dεII(
@@ -342,15 +368,17 @@ end
     @unpack_units r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
+    f_r = pow_check(f, -r)
+    d_p = pow_check(d, -p)
+
     # computed symbolically:
     return (
         FE *
         inv(A) *
-        fastpow(d, -p ) *
-        fastpow(f, -r ) *
-        fastpow(EpsII * FE, 0) *
+        d_p *
+        f_r *
         exp((E + P * V) / (R * T ))
-    ) / (FT )
+    ) / FT
 end
 
 # Print info 
