@@ -161,12 +161,12 @@ end
 
     TauII_FT_n = pow_check(TauII * FT, n)
     TauII_FT_TauP_o = pow_check((TauII * FT) / TauP, o)
-    one_minus_TauII_FT_TauP_o = pow_check(1.0 - TauII_FT_TauP_o, q)
+    one_minus_TauII_FT_TauP_o_q = pow_check(1.0 - TauII_FT_TauP_o, q)
 
     ε = A * 
         TauII_FT_n * 
         exp(-(E / (R * T)) * 
-        (one_minus_TauII_FT_TauP_o)) / 
+        (one_minus_TauII_FT_TauP_o_q)) / 
         FE
 
     return ε
@@ -180,12 +180,12 @@ end
 
     TauII_FT_n = pow_check(TauII * FT, n)
     TauII_FT_TauP_o = pow_check((TauII * FT) / TauP, o)
-    one_minus_TauII_FT_TauP_o = pow_check(1.0 - TauII_FT_TauP_o, q)
+    one_minus_TauII_FT_TauP_o_q = pow_check(1.0 - TauII_FT_TauP_o, q)
 
     ε = A * 
         TauII_FT_n * 
         exp(-(E / (R * T)) * 
-        (one_minus_TauII_FT_TauP_o)) / 
+        (one_minus_TauII_FT_TauP_o_q)) / 
         FE
 
     return ε
