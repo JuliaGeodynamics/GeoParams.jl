@@ -43,6 +43,16 @@ end
     return x^n
 end
 
+@inline function pow_check(x::T, n) where T
+    if isone(x) || isone(n)
+        x
+    elseif iszero(n)
+        one(T)
+    else
+        fastpow(x, n)
+    end
+end
+
 # Tuple iterators
 @generated function nreduce(f::F, v::NTuple{N,Any}) where {N,F}
     Base.@_inline_meta

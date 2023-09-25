@@ -66,21 +66,21 @@ end
 end
         
 # For multi phases given phase ratios
-@generated function compute_viscosity_εII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::NTuple{N1, T}, args::Vararg{Any, N2}) where {N1, N2, T}
+@generated function compute_viscosity_εII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1,T}, SVector{N1,T}}, args::Vararg{Any, N2}) where {N1, N2, T}
     quote
         Base.@_inline_meta
         val = 0.0
         Base.@nexprs $N1 i -> val += compute_viscosity_εII(v[i], args...) * phase_ratio[i]
-        return 0.0
+        return val
     end
 end
 
-@generated function compute_viscosity_τII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::NTuple{N1, T}, args::Vararg{Any, N2}) where {N1, N2, T}
+@generated function compute_viscosity_τII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1,T}, SVector{N1,T}}, args::Vararg{Any, N2}) where {N1, N2, T}
     quote
         Base.@_inline_meta
         val = 0.0
         Base.@nexprs $N1 i -> val += compute_viscosity_τII(v[i], args...) * phase_ratio[i]
-        return 0.0
+        return val
     end
 end
 
@@ -140,7 +140,7 @@ for fn in (:compute_elastoviscosity_εII, :compute_elastoviscosity_τII)
         end
 
         # For multi phases given the i-th phase
-        @generated function $fn(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::NTuple{N1, T}, args::Vararg{Any, N2}) where {N1, N2, T}
+        @generated function $fn(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1,T}, SVector{N1, T}}, args::Vararg{Any, N2}) where {N1, N2, T}
             quote
                 Base.@_inline_meta
                 val = 0.0
