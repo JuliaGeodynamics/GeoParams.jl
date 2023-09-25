@@ -746,78 +746,82 @@ end
 Creates a plot of the Zircon Age probability density function from the parameters in a simulation
 """
 function Plot_ZirconAge_PDF(time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average)
-    plt = Plots.plot(
-        time_Ma[1],
-        PDF_zircons[1];
-        color=:lightgray,
-        linewidth=0.1,
-        xlabel="Time [Ma]",
-        ylabel="probability []",
-        title="Zircon age probability distribution",
-        legend=:none,
-    )
-    for i in 2:length(PDF_zircons)
-        plt = Plots.plot!(time_Ma[i], PDF_zircons[i]; color=:lightgray, linewidth=0.1)
+    f = Figure()
+    Axis(f[1, 1], xlabel = "Age [Myr]", ylabel = "Kernel density [ ]", title = "Zircon age probability distribution")
+    for i in 1:length(PDF_zircons)
+        lines!(time_Ma[i]/1e6, PDF_zircons[i], color="gray66",linewidth=0.25)
     end
-    Plots.plot!(time_Ma_average, PDF_zircon_average; color=:black, linewidth=2.0)
+    lines!(time_Ma_average/1e6, PDF_zircon_average, color="grey0",linewidth=2.)
+    xlims!(-1e5/1e6,1.5e6/1e6)
 
-    display(plt)
+    display(f)
 
-    return plt
+    return f
 end
+
 
 """
 	plt = Plot_TAS_diagram()
 
 Creates a TAS diagram plot
 """
-function Plot_TAS_diagram(displayLabel=nothing)
-    if isnothing(displayLabel)
-        displayLabel = 1
-    end
-
+function Plot_TAS_diagram(; displayLabel=true)
     # get TAS diagram data from TASclassification routine
-    ClassTASdata = TASclassificationData()
+    ClassTASdata              = TASclassificationData()
     @unpack litho, n_ver, ver = ClassTASdata
 
-    plt = Plots.plot(
-        0, 0; xlabel="SiO2 [wt%]", ylabel="Na2O+K2O [wt%]", title="TAS Diagram"
+    f = Figure(resolution = (1100, 1100), fontsize = 18)
+    p1 = GridLayout(f[1, 1])
+    ax1 = Axis(
+        p1[1, 1], 
+        xlabel = "SiO2 [wt%]", 
+        ylabel = "Na2O+K2O [wt%]", 
+        title  = "TAS Diagram",
+        aspect = 1,
+        xticks = 35:5:100,
+        yticks = 0:2:16,
     )
-
     n_poly = size(litho, 2)
     shift = 1
     for poly in 1:n_poly
-        x = sum(ver[shift:(shift + n_ver[poly] - 1), 1]) / n_ver[poly]
-        y = sum(ver[shift:(shift + n_ver[poly] - 1), 2]) / n_ver[poly]
+        shift_poly = shift:(shift + n_ver[poly] - 1)
+        x          = sum(ver[i, 1] for i in shift_poly) / n_ver[poly]
+        y          = sum(ver[i, 2] for i in shift_poly) / n_ver[poly]
+        ps         = [Point2f(ver[i, :]) for i in shift_poly]
 
-        plt = Plots.plot!(
-            Shape(
-                ver[shift:(shift + n_ver[poly] - 1), 1],
-                ver[shift:(shift + n_ver[poly] - 1), 2],
-            );
-            c=:transparent,
-            xlims=(35, 100),
-            xticks=35:5:100,
-            ylims=(0, 16),
-            yticks=0:2:16,
-            legend=false,
-        )
-        if displayLabel == 1
-            annotate!(x, y, (poly, :topleft, :blue, 8))
+        poly!(ax1, ps, color = :white, strokecolor = :black, strokewidth = 1)
+        if displayLabel
+            text!(ax1, (x, y), text = "$poly")
         end
-
         shift += n_ver[poly]
     end
-    if displayLabel == 1
+    xlims!(ax1, 35, 100)
+    ylims!(ax1, 0, 16)
+
+    if displayLabel
+        p2 = GridLayout(f[1, 2])
+        ax2 = Axis(
+            p2[1, 1], 
+            bottomspinevisible = false,
+            xgridvisible       = false,
+            ygridvisible       = false,
+            rightspinevisible  = false,
+            leftspinevisible   = false,
+            topspinevisible    = false
+        )
         for i in 1:n_poly
-            annotate!(86, 16 - i * 3 / 4, (string(i) * ": " * litho[i], :left, :black, 6))
+            text!(ax2, 0, 16 - i * 3 / 4, text = (string(i) * ": " * litho[i]))
         end
+
+        xlims!(ax2, 0, 2)
+        hidedecorations!(ax2)
+        rowsize!(p2, 1, 700)
+        colsize!(p2, 1, 225)
     end
-    display(plt)
+    display(f)
 
-    return plt
+    return f
 end
-
 
 """
     fig,ax,τII,η =  PlotStressTime_0D(x;    args=(T=1000.0, P=0.0, d=1e-3, f=1.0),  
