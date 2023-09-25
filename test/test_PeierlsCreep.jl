@@ -29,11 +29,11 @@ using GeoParams
     args = (; T=T)
     TauII = 1e9
     ε = compute_εII(p, TauII, args)
-    @test ε ≈ 2.3181145468270706e-9
+    @test ε ≈ 9.127028135349583e-20
 
     # same but while removing the tensor correction
     ε_notensor = compute_εII(remove_tensor_correction(p), TauII, args)
-    @test ε_notensor ≈ 6.197048346429745e-14
+    @test ε_notensor ≈ 1.3652144989670166e-20
 
     # test with arrays
     τII_array = ones(10) * 1e9

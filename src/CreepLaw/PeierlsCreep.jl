@@ -159,7 +159,13 @@ end
     @unpack_val n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    ε = (A * exp(-(E / (R * T)) * (fastpow(1.0 - fastpow((FT * TauII) / TauP, q), o)))) / FE
+    TauII_FT_TauP_o = pow_check((FT * TauII) / TauP, o)
+    one_minus_TauII_FT_TauP_o_q = pow_check(1.0 - TauII_FT_TauP_o, q)
+
+    ε = (A *
+        exp(-(E / (R * T)) *
+        (one_minus_TauII_FT_TauP_o_q))) /
+        FE
 
     return ε
 end
@@ -170,7 +176,7 @@ end
     @unpack_units n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    ε = (A * exp(-(E / (R * T)) * (fastpow(1 - fastpow((FT * TauII) / TauP, q), o)))) / FE
+    ε = (A * exp(-(E / (R * T)) * (fastpow(1 - fastpow((FT * TauII) / TauP, o), q)))) / FE
 
     return ε
 end
@@ -189,38 +195,7 @@ function compute_εII!(
     return nothing
 end
 
-
-@inline function dεII_dτII(
-    a::PeierlsCreep, TauII::_T; T=one(precision(a)), args...
-) where {_T}
-    @unpack_val n, q, o, TauP, A, E, R = a
-    FT, FE = a.FT, a.FE
-
-    return q * 
-           fastpow((FT * TauII) / TauP, q) *
-           fastpow(1.0 - fastpow((FT * TauII) / TauP, q), o) *
-           A *
-           E *
-           o *
-           exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, q), o)) / (R * T)) /
-           (FE * R * T * TauII)
-end
-
-@inline function dεII_dτII(
-    a::PeierlsCreep, TauII::Quantity; T=1K, args...
-)
-    @unpack_units n, q, o, TauP, A, E, R = a
-    FT, FE = a.FT, a.FE
-
-    return o * 
-           fastpow((FT * TauII) / TauP, q) *
-           fastpow(1 - fastpow((FT * TauII) / TauP, q), o) *
-           A *
-           E *
-           q *
-           exp(-(E * fastpow(1 - fastpow((FT * TauII) / TauP, q), o)) / (R * T)) /
-           (FE * R * T * TauII)
-end
+dεII_dτII(a::PeierlsCreep, TauII; args...) = ForwardDiff.derivative(x -> compute_εII(a, x; args...), TauII)
 
 """
     compute_τII(a::PeierlsCreep, EpsII; P, T, f, args...)
@@ -238,8 +213,11 @@ Computes the stress for a peierls creep law given a certain strain rate.
     q_inv = inv(q)
     o_inv = inv(o)
 
+    R_T_logFE_EpsII_A_E_q_inv = pow_check(-((R * T * log((FE * EpsII) / A)) / E), q_inv)
+    one_minus_R_T_logFE_EpsII_A_E_q_inv_o_inv = pow_check(1.0 - R_T_logFE_EpsII_A_E_q_inv, o_inv)
+
     τ = (TauP * 
-        fastpow(1.0 - fastpow(abs(-((R * T * log((FE * EpsII) / A)) / E)) , o_inv), q_inv)) / 
+        one_minus_R_T_logFE_EpsII_A_E_q_inv_o_inv) / 
         FT
 
     return τ
@@ -254,8 +232,11 @@ end
     q_inv = inv(q)
     o_inv = inv(o)
 
+    R_T_logFE_EpsII_A_E_q_inv = pow_check(-((R * T * log((FE * EpsII) / A)) / E), q_inv)
+    one_minus_R_T_logFE_EpsII_A_E_q_inv_o_inv = pow_check(1.0 - R_T_logFE_EpsII_A_E_q_inv, o_inv)
+
     τ = (TauP * 
-        fastpow(1.0 - fastpow(-((R * T * log((FE * EpsII) / A)) / E) , o_inv), q_inv)) / 
+        one_minus_R_T_logFE_EpsII_A_E_q_inv_o_inv) / 
         FT
 
     return τ
