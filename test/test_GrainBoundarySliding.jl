@@ -92,7 +92,7 @@ using GeoParams
         end
         
         # Perform computations with the rheology
-        args   = (T=900.0, d=100.0e-6, τII_old=1.0e6);
+        args   = (T=900.0, d=100.0e-6)
         ε      = 1.0e-15
         τ      = compute_τII(p,ε,args)
         ε_test = compute_εII(p,τ,args)

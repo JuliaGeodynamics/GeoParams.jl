@@ -277,12 +277,13 @@ Returns grain boundary sliding stress as a function of 2nd invariant of the stra
     A_n_inv = pow_check(A, -n_inv)
     EpsII_FE_n_inv = pow_check(EpsII * FE, n_inv)
     d_p_n_inv = pow_check(d, -p * n_inv)
-    exp_n_inv = pow_check(exp(-(E + P * V) / (R * T)), n_inv)
+    exp_n_inv = pow_check(exp(-(E + P * V) / (R * T)), -n_inv)
 
-    τ = A_n_inv *
+    τ = (A_n_inv *
         EpsII_FE_n_inv *
         d_p_n_inv *
-        exp_n_inv / FT
+        exp_n_inv) /
+        FT
 
     return τ
 end
@@ -298,7 +299,7 @@ end
     A_n_inv = pow_check(A, -n_inv)
     EpsII_FE_n_inv = pow_check(EpsII * FE, n_inv)
     d_p_n_inv = pow_check(d, -p * n_inv)
-    exp_n_inv = pow_check(exp(-(E + P * V) / (R * T)), n_inv)
+    exp_n_inv = pow_check(exp(-(E + P * V) / (R * T)), -n_inv)
     
     τ = A_n_inv *
         EpsII_FE_n_inv *
