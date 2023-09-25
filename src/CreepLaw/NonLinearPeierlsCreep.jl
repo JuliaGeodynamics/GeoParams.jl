@@ -159,10 +159,14 @@ end
     @unpack_val n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
+    TauII_FT_n = pow_check(TauII * FT, n)
+    TauII_FT_TauP_o = pow_check((TauII * FT) / TauP, o)
+    one_minus_TauII_FT_TauP_o = pow_check(1.0 - TauII_FT_TauP_o, q)
+
     ε = A * 
-        fastpow(FT * TauII, n) * 
+        TauII_FT_n * 
         exp(-(E / (R * T)) * 
-        (fastpow(1.0 - fastpow((FT * TauII) / TauP, o), q))) / 
+        (one_minus_TauII_FT_TauP_o)) / 
         FE
 
     return ε
@@ -174,10 +178,14 @@ end
     @unpack_units n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
+    TauII_FT_n = pow_check(TauII * FT, n)
+    TauII_FT_TauP_o = pow_check((TauII * FT) / TauP, o)
+    one_minus_TauII_FT_TauP_o = pow_check(1.0 - TauII_FT_TauP_o, q)
+
     ε = A * 
-        fastpow(FT * TauII, n) * 
+        TauII_FT_n * 
         exp(-(E / (R * T)) * 
-        (fastpow(1.0 - fastpow((FT* TauII) / TauP, o), q))) / 
+        (one_minus_TauII_FT_TauP_o)) / 
         FE
 
     return ε
