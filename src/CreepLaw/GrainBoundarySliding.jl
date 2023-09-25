@@ -174,9 +174,12 @@ Returns grain boundary sliding strainrate as a function of 2nd invariant of the 
     @unpack_val n, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
+    TauII_FT_n = pow_check(TauII * FT, n)
+    d_p = pow_check(d, p)
+
     ε = A *
-        fastpow(TauII * FT, n) *
-        fastpow(d, p) *
+        TauII_FT_n *
+        d_p *
         exp(-(E + P * V) / (R * T)) / FE
 
     return ε 
@@ -188,9 +191,12 @@ end
     @unpack_units n, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
+    TauII_FT_n = pow_check(TauII * FT, n)
+    d_p = pow_check(d, p)
+
     ε = A * 
-        fastpow(TauII * FT, n) * 
-        fastpow(d, p) * 
+        TauII_FT_n * 
+        d_p * 
         exp(-(E + P * V) / (R * T)) / FE
 
     return ε
@@ -223,12 +229,15 @@ end
     @unpack_val n, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
+    d_p = pow_check(d, p)
+    TauII_FT_n = pow_check(TauII * FT, n)
+
     # computed symbolically
     return (A *
-            fastpow(d, p) *
+            d_p*
             n *
-            fastpow(FT * TauII, n) *
-            exp(-(E + P * V) / (R * T))) \
+            TauII_FT_n *
+            exp(-(E + P * V) / (R * T))) /
             (FE *
             TauII)
 end
@@ -239,11 +248,14 @@ end
     @unpack_units n, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
+    d_p = pow_check(d, p)
+    TauII_FT_n = pow_check(TauII * FT, n)
+
     #computed symbolically
     return (A *
-            fastpow(d, p) *
+            d_p *
             n *
-            fastpow(FT * TauII, n) *
+            TauII_FT_n *
             exp(-(E + P * V) / (R * T))) /
             (FE *
             TauII)
@@ -262,10 +274,15 @@ Returns grain boundary sliding stress as a function of 2nd invariant of the stra
     
     n_inv = inv(n)
     
-    τ = fastpow(A, -n_inv) *
-        fastpow(EpsII * FE, n_inv) *
-        fastpow(d, -p * n_inv) *
-        fastpow(exp((E + P * V) / (R * T)), n_inv) / FT
+    A_n_inv = pow_check(A, -n_inv)
+    EpsII_FE_n_inv = pow_check(EpsII * FE, n_inv)
+    d_p_n_inv = pow_check(d, -p * n_inv)
+    exp_n_inv = pow_check(exp(-(E + P * V) / (R * T)), n_inv)
+
+    τ = A_n_inv *
+        EpsII_FE_n_inv *
+        d_p_n_inv *
+        exp_n_inv / FT
 
     return τ
 end
@@ -277,11 +294,16 @@ end
     FT, FE = a.FT, a.FE
 
     n_inv = inv(n)
+
+    A_n_inv = pow_check(A, -n_inv)
+    EpsII_FE_n_inv = pow_check(EpsII * FE, n_inv)
+    d_p_n_inv = pow_check(d, -p * n_inv)
+    exp_n_inv = pow_check(exp(-(E + P * V) / (R * T)), n_inv)
     
-    τ = fastpow(A, -n_inv) *
-        fastpow(EpsII * FE, n_inv) *
-        fastpow(d, -p * n_inv) *
-        fastpow(exp((E + P * V) / (R * T)), n_inv) / FT
+    τ = A_n_inv *
+        EpsII_FE_n_inv *
+        d_p_n_inv *
+        exp_n_inv / FT
 
     return τ
 end
@@ -310,11 +332,16 @@ end
 
     n_inv = inv(n)
 
+    A_n_inv = pow_check(A, -n_inv)
+    d_p_n_inv = pow_check(d, -p * n_inv)
+    EpsII_FE_n_inv = pow_check(EpsII * FE, n_inv)
+    exp_n_inv = pow_check(exp(-(E + P * V) / (R * T)), n_inv)
+
     # derived symbolically
-    return (fastpow(A, -n_inv) *
-            fastpow(d, -p * n_inv) *
-            fastpow(FE * EpsII, n_inv) *
-            fastpow(exp((E + P * V) / (R * T)), n_inv) / 
+    return (A_n_inv *
+            d_p_n_inv *
+            EpsII_FE_n_inv *
+            exp_n_inv / 
             (EpsII * FT * n))
 end
 
@@ -325,12 +352,17 @@ end
     FT, FE = a.FT, a.FE
 
     n_inv = inv(n)
+    
+    A_n_inv = pow_check(A, -n_inv)
+    d_p_n_inv = pow_check(d, -p * n_inv)
+    EpsII_FE_n_inv = pow_check(EpsII * FE, n_inv)
+    exp_n_inv = pow_check(exp(-(E + P * V) / (R * T)), n_inv)
 
     # derived symbolically
-    return (fastpow(A, -n_inv) *
-            fastpow(d, -p * n_inv) *
-            fastpow(FE * EpsII, n_inv) *
-            fastpow(exp((E + P * V) / (R * T)), n_inv) / 
+    return (A_n_inv *
+            d_p_n_inv *
+            EpsII_FE_n_inv *
+            exp_n_inv / 
             (EpsII * FT * n))
 end
 
