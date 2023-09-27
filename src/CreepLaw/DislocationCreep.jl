@@ -318,7 +318,7 @@ end
     EpsII_FE_n = pow_check(EpsII * FE, _n - 1)
 
     return @pow (
-        FE * A^-n * f^(-r * _n) * (EpsII * FE)^(_n - 1) * exp((E + P * V) / (R * T * n))
+        FE * A^-_n * f^(-r * _n) * (EpsII * FE)^(_n - 1) * exp((E + P * V) / (R * T * n))
     ) / (FT * n)
 end
 
@@ -330,7 +330,7 @@ end
     _n = inv(n)
 
     return @pow (
-        FE * A^-n * f^(-r * _n) * (EpsII * FE)^(_n - 1) * exp((E + P * V) / (R * T * n))
+        FE * A^-_n * f^(-r * _n) * (EpsII * FE)^(_n - 1) * exp((E + P * V) / (R * T * n))
     ) / (FT * n)
 end
 
