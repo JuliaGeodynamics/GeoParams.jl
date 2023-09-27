@@ -53,6 +53,22 @@ end
     end
 end
 
+macro pow(ex)
+    substitute_walk(ex)
+    esc(:($ex))
+end
+
+@inline function substitute_walk(ex::Expr)
+    for (i, arg) in enumerate(ex.args)
+        new_arg = substitute_walk(arg)
+        if !isnothing(new_arg)
+            ex.args[i] = new_arg
+        end 
+    end
+end
+@inline substitute_walk(sym::Symbol) = sym == :(^) ? :(pow_check) : sym
+@inline substitute_walk(x) = x
+
 # Tuple iterators
 @generated function nreduce(f::F, v::NTuple{N,Any}) where {N,F}
     Base.@_inline_meta

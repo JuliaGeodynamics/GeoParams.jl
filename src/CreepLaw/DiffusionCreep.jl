@@ -181,14 +181,20 @@ Returns diffusion creep strainrate as a function of 2nd invariant of the stress 
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    f_r = pow_check(f, r)
-    d_p = pow_check(d, p)
-    TauII_FT_n = pow_check(FT * TauII, n)
+    # f_r = pow_check(f, r)
+    # d_p = pow_check(d, p)
+    # TauII_FT_n = pow_check(FT * TauII, n)
 
-    return A *
-           TauII_FT_n *
-           f_r *
-           d_p *
+    # return A *
+    #        TauII_FT_n *
+    #        f_r *
+    #        d_p *
+    #        exp(-(E + P * V) / (R * T)) / FE
+
+    return @pow A *
+           (TauII*FT)^n *
+           f^r *
+           d^p *
            exp(-(E + P * V) / (R * T)) / FE
 end
 
@@ -198,11 +204,12 @@ end
     @unpack_units n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    f_r = pow_check(f, r)
-    d_p = pow_check(d, p)
-    TauII_FT_n = pow_check(FT * TauII, n)
+    # f_r = pow_check(f, r)
+    # d_p = pow_check(d, p)
+    # TauII_FT_n = pow_check(FT * TauII, n)
 
-    ε = A * TauII_FT_n * f_r * d_p * exp(-(E + P * V) / (R * T)) / FE
+    # ε = A * TauII_FT_n * f_r * d_p * exp(-(E + P * V) / (R * T)) / FE
+    ε = @pow  A * (TauII*FT)^n * f^r * d^p * exp(-(E + P * V) / (R * T)) / FE
 
     return ε
 end
@@ -240,13 +247,21 @@ returns the derivative of strainrate versus stress
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
     
-    f_r = pow_check(f, r)
-    d_p = pow_check(d, p)
-    TauII_FT_n = pow_check(FT * TauII, -1 + n)
+    # f_r = pow_check(f, r)
+    # d_p = pow_check(d, p)
+    # TauII_FT_n = pow_check(FT * TauII, -1 + n)
 
-    return TauII_FT_n *
-           f_r *
-           d_p *
+    # return TauII_FT_n *
+    #        f_r *
+    #        d_p *
+    #        A *
+    #        FT *
+    #        exp((-E - P * V) / (R * T)) *
+    #        inv(FE)
+
+    return @pow (TauII * FT)^n *
+           f^r *
+           d^p *
            A *
            FT *
            exp((-E - P * V) / (R * T)) *
@@ -259,12 +274,20 @@ end
     @unpack_units n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    f_r = pow_check(f, r)
-    d_p = pow_check(d, p)
+    # f_r = pow_check(f, r)
+    # d_p = pow_check(d, p)
 
-    return FT  *
-           f_r *
-           d_p *
+    # return FT  *
+    #        f_r *
+    #        d_p *
+    #        A *
+    #        FT *
+    #        exp((-E - P * V) / (R * T)) *
+    #        inv(FE)
+
+    return @pow FT *
+           f^r *
+           d^p *
            A *
            FT *
            exp((-E - P * V) / (R * T)) *
@@ -284,16 +307,22 @@ Returns diffusion creep stress as a function of 2nd invariant of the strain rate
     
     n_inv = inv(n)
     
-    A_n = pow_check(A, -n_inv)
-    EpsII_FE_n = pow_check(EpsII * FE, n_inv)
-    f_r = pow_check(f, -r * n_inv)
-    d_p = pow_check(d, -p * n_inv)
+    # A_n = pow_check(A, -n_inv)
+    # EpsII_FE_n = pow_check(EpsII * FE, n_inv)
+    # f_r = pow_check(f, -r * n_inv)
+    # d_p = pow_check(d, -p * n_inv)
 
-    τ =
-        A_n *
-        EpsII_FE_n *
-        f_r*
-        d_p*
+    # τ =
+    #     A_n *
+    #     EpsII_FE_n *
+    #     f_r*
+    #     d_p*
+    #     exp((E + P * V) / (n * R * T)) / FT
+    
+    τ = @pow A^-n_inv *
+        (EpsII*FE)^-n_inv *
+        f^(-r * n_inv) *
+        d^(-p * n_inv) *
         exp((E + P * V) / (n * R * T)) / FT
 
     return τ
@@ -311,11 +340,17 @@ end
     f_r = pow_check(f, -r * n_inv)
     d_p = pow_check(d, -p * n_inv)
 
-    τ =
-        A_n *
+    # τ =
+    #     A_n *
+    #     EpsII * FE *
+    #     f_r *
+    #     d_p *
+    #     exp((E + P * V) / (n * R * T)) / FT
+
+    τ = @pow A^(-n_inv) *
         EpsII * FE *
-        f_r *
-        d_p *
+        f^(-r * n_inv) *
+        d^(-p * n_inv) *
         exp((E + P * V) / (n * R * T)) / FT
 
     return τ
@@ -346,20 +381,30 @@ end
 
     n_inv = inv(n)
     
-    A_n = pow_check(A, -n_inv)
-    EpsII_FE_n = pow_check(EpsII * FE, n_inv-1)
-    f_r = pow_check(f, -r * n_inv)
-    d_p = pow_check(d, -p * n_inv)
+    # A_n = pow_check(A, -n_inv)
+    # EpsII_FE_n = pow_check(EpsII * FE, n_inv-1)
+    # f_r = pow_check(f, -r * n_inv)
+    # d_p = pow_check(d, -p * n_inv)
 
-    # computed symbolically:
-    return (
+    # # computed symbolically:
+    # return (
+    #     FE *
+    #     A_n *
+    #     d_p *
+    #     f_r *
+    #     EpsII_FE_n *
+    #     exp((E + P * V) / (n * R * T ))
+    # ) / FT
+
+    return @pow (
         FE *
-        A_n *
-        d_p *
-        f_r *
-        EpsII_FE_n *
+        A^(-n_inv) *
+        f^(-r * n_inv) *
+        d^(-p * n_inv) *
+        (EpsII * FE)^-n_inv *
         exp((E + P * V) / (n * R * T ))
     ) / FT
+
 end
 
 @inline function dτII_dεII(
@@ -368,17 +413,26 @@ end
     @unpack_units r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    f_r = pow_check(f, -r)
-    d_p = pow_check(d, -p)
+    # f_r = pow_check(f, -r)
+    # d_p = pow_check(d, -p)
 
-    # computed symbolically:
+    # # computed symbolically:
+    # return (
+    #     FE *
+    #     inv(A) *
+    #     d_p *
+    #     f_r *
+    #     exp((E + P * V) / (R * T ))
+    # ) / FT
+
     return (
         FE *
         inv(A) *
-        d_p *
-        f_r *
+        f^(-r * n_inv) *
+        d^(-p * n_inv) *
         exp((E + P * V) / (R * T ))
     ) / FT
+
 end
 
 # Print info 
