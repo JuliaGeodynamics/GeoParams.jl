@@ -106,28 +106,33 @@ Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 """
 function Transform_GrainBoundarySliding(name; kwargs)
     pp_in = GrainBoundarySliding_info[name][1]
-    
+
     # Take optional arguments 
     v_kwargs = values(kwargs)
     val = GeoUnit.(values(v_kwargs))
-    
-    args = (Name=pp_in.Name, n = pp_in.n, p=pp_in.p, A=pp_in.A, E=pp_in.E, V=pp_in.V, Apparatus=pp_in.Apparatus)
+
+    args = (
+        Name=pp_in.Name,
+        n=pp_in.n,
+        p=pp_in.p,
+        A=pp_in.A,
+        E=pp_in.E,
+        V=pp_in.V,
+        Apparatus=pp_in.Apparatus,
+    )
     pp = merge(args, NamedTuple{keys(v_kwargs)}(val))
-    
-     
+
     Name = String(collect(pp.Name))
     n = Value(pp.n)
     p = Value(pp.p)
-    A_Pa = uconvert(
-        Pa^(-NumValue(pp.n)) * m^(-NumValue(p)) / s, Value(pp.A)
-    )
+    A_Pa = uconvert(Pa^(-NumValue(pp.n)) * m^(-NumValue(p)) / s, Value(pp.A))
     E_J = uconvert(J / mol, Value(pp.E))
     V_m3 = uconvert(m^3 / mol, Value(pp.V))
 
     Apparatus = pp.Apparatus
 
     args = (Name=Name, n=n, p=p, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
-    
+
     return GrainBoundarySliding(; args...)
 end
 
@@ -169,20 +174,19 @@ Returns grain boundary sliding strainrate as a function of 2nd invariant of the 
 
 """
 @inline function compute_εII(
-    a::GrainBoundarySliding, TauII::_T; T=one(precision(a)), P=zero(precision(a)), d=one(precision(a)), args...
+    a::GrainBoundarySliding,
+    TauII::_T;
+    T=one(precision(a)),
+    P=zero(precision(a)),
+    d=one(precision(a)),
+    args...,
 ) where {_T}
     @unpack_val n, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    TauII_FT_n = pow_check(TauII * FT, n)
-    d_p = pow_check(d, p)
+    ε = @pow A * (TauII * FT)^n * d^p * exp(-(E + P * V) / (R * T)) / FE
 
-    ε = A *
-        TauII_FT_n *
-        d_p *
-        exp(-(E + P * V) / (R * T)) / FE
-
-    return ε 
+    return ε
 end
 
 @inline function compute_εII(
@@ -191,13 +195,7 @@ end
     @unpack_units n, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    TauII_FT_n = pow_check(TauII * FT, n)
-    d_p = pow_check(d, p)
-
-    ε = A * 
-        TauII_FT_n * 
-        d_p * 
-        exp(-(E + P * V) / (R * T)) / FE
+    ε = @pow A * (TauII * FT)^n * d^p * exp(-(E + P * V) / (R * T)) / FE
 
     return ε
 end
@@ -224,22 +222,18 @@ function compute_εII!(
 end
 
 @inline function dεII_dτII(
-    a::GrainBoundarySliding, TauII::_T; T=one(precision(a)), P=zero(precision(a)), d=one(precision(a)), args...
+    a::GrainBoundarySliding,
+    TauII::_T;
+    T=one(precision(a)),
+    P=zero(precision(a)),
+    d=one(precision(a)),
+    args...,
 ) where {_T}
     @unpack_val n, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    d_p = pow_check(d, p)
-    TauII_FT_n = pow_check(TauII * FT, n)
-
     # computed symbolically
-    return (A *
-            d_p*
-            n *
-            TauII_FT_n *
-            exp(-(E + P * V) / (R * T))) /
-            (FE *
-            TauII)
+    return @pow (A * d^p * n * (TauII * FT)^n * exp(-(E + P * V) / (R * T))) / (FE * TauII)
 end
 
 @inline function dεII_dτII(
@@ -248,17 +242,8 @@ end
     @unpack_units n, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    d_p = pow_check(d, p)
-    TauII_FT_n = pow_check(TauII * FT, n)
-
     #computed symbolically
-    return (A *
-            d_p *
-            n *
-            TauII_FT_n *
-            exp(-(E + P * V) / (R * T))) /
-            (FE *
-            TauII)
+    return @pow (A * d^p * n * (TauII * FT)^n * exp(-(E + P * V) / (R * T))) / (FE * TauII)
 end
 
 """
@@ -267,23 +252,21 @@ end
 Returns grain boundary sliding stress as a function of 2nd invariant of the strain rate 
 """
 @inline function compute_τII(
-    a::GrainBoundarySliding, EpsII::_T; T=one(precision(a)), P=zero(precision(a)), d=one(precision(a)), kwargs...
+    a::GrainBoundarySliding,
+    EpsII::_T;
+    T=one(precision(a)),
+    P=zero(precision(a)),
+    d=one(precision(a)),
+    kwargs...,
 ) where {_T}
     @unpack_val n, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
-    
-    n_inv = inv(n)
-    
-    A_n_inv = pow_check(A, -n_inv)
-    EpsII_FE_n_inv = pow_check(EpsII * FE, n_inv)
-    d_p_n_inv = pow_check(d, -p * n_inv)
-    exp_n_inv = pow_check(exp(-(E + P * V) / (R * T)), -n_inv)
 
-    τ = (A_n_inv *
-        EpsII_FE_n_inv *
-        d_p_n_inv *
-        exp_n_inv) /
-        FT
+    n_inv = inv(n)
+
+    τ = @pow (
+        A^-n_inv * (EpsII * FE)^n_inv * d^(-p * n_inv) * exp(-(E + P * V) / (R * T))^-n_inv
+    ) / FT
 
     return τ
 end
@@ -296,15 +279,9 @@ end
 
     n_inv = inv(n)
 
-    A_n_inv = pow_check(A, -n_inv)
-    EpsII_FE_n_inv = pow_check(EpsII * FE, n_inv)
-    d_p_n_inv = pow_check(d, -p * n_inv)
-    exp_n_inv = pow_check(exp(-(E + P * V) / (R * T)), -n_inv)
-    
-    τ = A_n_inv *
-        EpsII_FE_n_inv *
-        d_p_n_inv *
-        exp_n_inv / FT
+    τ = @pow (
+        A^-n_inv * (EpsII * FE)^n_inv * d^(-p * n_inv) * exp(-(E + P * V) / (R * T))^-n_inv
+    ) / FT
 
     return τ
 end
@@ -326,24 +303,23 @@ function compute_τII!(
 end
 
 @inline function dτII_dεII(
-    a::GrainBoundarySliding, EpsII::_T; T=one(precision(a)), P=zero(precision(a)), d=one(precision(a)), args...
+    a::GrainBoundarySliding,
+    EpsII::_T;
+    T=one(precision(a)),
+    P=zero(precision(a)),
+    d=one(precision(a)),
+    args...,
 ) where {_T}
     @unpack_val n, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
     n_inv = inv(n)
 
-    A_n_inv = pow_check(A, -n_inv)
-    d_p_n_inv = pow_check(d, -p * n_inv)
-    EpsII_FE_n_inv = pow_check(EpsII * FE, n_inv)
-    exp_n_inv = pow_check(exp(-(E + P * V) / (R * T)), n_inv)
-
     # derived symbolically
-    return (A_n_inv *
-            d_p_n_inv *
-            EpsII_FE_n_inv *
-            exp_n_inv / 
-            (EpsII * FT * n))
+    return @pow (
+        A^-n_inv * d^(-p * n_inv) * (EpsII * FE)^n_inv * exp(-(E + P * V) / (R * T))^n_inv /
+        (EpsII * FT * n)
+    )
 end
 
 @inline function dτII_dεII(
@@ -353,18 +329,12 @@ end
     FT, FE = a.FT, a.FE
 
     n_inv = inv(n)
-    
-    A_n_inv = pow_check(A, -n_inv)
-    d_p_n_inv = pow_check(d, -p * n_inv)
-    EpsII_FE_n_inv = pow_check(EpsII * FE, n_inv)
-    exp_n_inv = pow_check(exp(-(E + P * V) / (R * T)), n_inv)
 
     # derived symbolically
-    return (A_n_inv *
-            d_p_n_inv *
-            EpsII_FE_n_inv *
-            exp_n_inv / 
-            (EpsII * FT * n))
+    return @pow (
+        A^-n_inv * d^(-p * n_inv) * (EpsII * FE)^n_inv * exp(-(E + P * V) / (R * T))^n_inv /
+        (EpsII * FT * n)
+    )
 end
 
 # Print info 

@@ -8,7 +8,7 @@ using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
 import GeoParams: param_info, fastpow, pow_check, nphase, ntuple_idx, @print, @pow
-import GeoParams: second_invariant, second_invariant_staggered
+import GeoParams: second_invariant, second_invariant_staggered, value_and_partial
 using BibTeX
 using ..MaterialParameters: MaterialParamsInfo
 import Base.show
@@ -58,7 +58,7 @@ export param_info,
     CompositeRheology,
     AbstractComposite,
     AbstractConstitutiveLaw,
-    AxialCompression, SimpleShear, Invariant,
+    AxialCompression, SimpleShear, Invariant, 
     get_G, 
     get_Kb,
     iselastic

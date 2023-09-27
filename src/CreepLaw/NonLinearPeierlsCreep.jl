@@ -39,7 +39,7 @@ struct NonLinearPeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     n::GeoUnit{T,U1} # power-law exponent
     q::GeoUnit{T,U1} # stress relation exponent
     o::GeoUnit{T,U1} # ... (normally called p but used as 'o' since p already exists)
-    TauP::GeoUnit{T, U2} # Peierls stress
+    TauP::GeoUnit{T,U2} # Peierls stress
     A::GeoUnit{T,U3} # material specific rheological parameter
     E::GeoUnit{T,U4} # activation energy
     R::GeoUnit{T,U5} # universal gas constant
@@ -63,7 +63,7 @@ struct NonLinearPeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         Name = String(join(Name))
         N = length(Name)
         NameU = NTuple{N,Char}(collect.(Name))
-        
+
         # Corrections from lab experiments
         FT, FE = CorrectionFactor(Apparatus)
         # Convert to GeoUnits
@@ -81,7 +81,7 @@ struct NonLinearPeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U3 = typeof(AU).types[2]
         U4 = typeof(EU).types[2]
         U5 = typeof(RU).types[2]
-        
+
         # Create struct
         return new{T,N,U1,U2,U3,U4,U5}(
             NameU, nU, qU, oU, TauPU, AU, EU, RU, Int8(Apparatus), FT, FE
@@ -105,10 +105,19 @@ function Transform_NonLinearPeierlsCreep(name; kwargs)
     # Take optional arguments 
     v_kwargs = values(kwargs)
     val = GeoUnit.(values(v_kwargs))
-    
-    args = (Name=p_in.Name, n=p_in.n, q=p_in.q, o=p_in.o, TauP=p_in.TauP, A=p_in.A, E=p_in.E, Apparatus=p_in.Apparatus)
+
+    args = (
+        Name=p_in.Name,
+        n=p_in.n,
+        q=p_in.q,
+        o=p_in.o,
+        TauP=p_in.TauP,
+        A=p_in.A,
+        E=p_in.E,
+        Apparatus=p_in.Apparatus,
+    )
     p = merge(args, NamedTuple{keys(v_kwargs)}(val))
-    
+
     Name = String(collect(p.Name))
     n = Value(p.n)
     q = Value(p.q)
@@ -121,7 +130,7 @@ function Transform_NonLinearPeierlsCreep(name; kwargs)
 
     # args from database
     args = (Name=Name, n=n, q=q, o=o, TauP=TauP, A=A_Pa, E=E_J, Apparatus=Apparatus)
-    
+
     return NonLinearPeierlsCreep(; args...)
 end
 
@@ -159,33 +168,17 @@ end
     @unpack_val n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    TauII_FT_n = pow_check(TauII * FT, n)
-    TauII_FT_TauP_o = pow_check((TauII * FT) / TauP, o)
-    one_minus_TauII_FT_TauP_o_q = pow_check(1.0 - TauII_FT_TauP_o, q)
-
-    ε = A * 
-        TauII_FT_n * 
-        exp(-(E / (R * T)) * 
-        (one_minus_TauII_FT_TauP_o_q)) / 
+    ε = @pow A * (TauII * FT)^n * exp(-(E / (R * T)) * (1.0 - ((TauII * FT) / TauP)^o)^q) /
         FE
 
     return ε
 end
 
-@inline function compute_εII(
-    a::NonLinearPeierlsCreep, TauII::Quantity; T=1K, args...
-)
+@inline function compute_εII(a::NonLinearPeierlsCreep, TauII::Quantity; T=1K, args...)
     @unpack_units n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    TauII_FT_n = pow_check(TauII * FT, n)
-    TauII_FT_TauP_o = pow_check((TauII * FT) / TauP, o)
-    one_minus_TauII_FT_TauP_o_q = pow_check(1.0 - TauII_FT_TauP_o, q)
-
-    ε = A * 
-        TauII_FT_n * 
-        exp(-(E / (R * T)) * 
-        (one_minus_TauII_FT_TauP_o_q)) / 
+    ε = @pow A * (TauII * FT)^n * exp(-(E / (R * T)) * (1.0 - ((TauII * FT) / TauP)^o)^q) /
         FE
 
     return ε
@@ -205,7 +198,9 @@ function compute_εII!(
     return nothing
 end
 
-dεII_dτII(a::NonLinearPeierlsCreep, TauII; args...) = ForwardDiff.derivative(x -> compute_εII(a, x; args...), TauII)
+function dεII_dτII(a::NonLinearPeierlsCreep, TauII; args...)
+    return ForwardDiff.derivative(x -> compute_εII(a, x; args...), TauII)
+end
 
 """
     Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau::Float64, EpsII::Float64, args)
@@ -215,10 +210,14 @@ The initial stress guess Tau should be at least in the same order of magnitude a
 good initial guess for the preexisting "Wet Olivine | Mei et al. (2010)" creep law. Find the sweet spot in the Tau/TauP relation (initial guess/TauP)
 if the stress is diverging. Maximum iterations are by default 500 but can be changed as optional argument.
 """
-PeierlsResidual(rheo::NonLinearPeierlsCreep, TauII, EpsII, args) = EpsII - compute_εII(rheo, TauII; args...)
+function PeierlsResidual(rheo::NonLinearPeierlsCreep, TauII, EpsII, args)
+    return EpsII - compute_εII(rheo, TauII; args...)
+end
 
 # implement nonlinear iterations function to iterate until stable stress value
-function Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau, EpsII, args; max_iter=500)
+function Peierls_stress_iterations(
+    rheo::NonLinearPeierlsCreep, Tau, EpsII, args; max_iter=500
+)
     err = 1.0
     dfdtau = 0.0
     i = 0
@@ -229,8 +228,8 @@ function Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau, EpsII, args
             break
         end
         Tau_old = Tau
-        
-        fTau_n, dfdtau = value_and_partial(x->PeierlsResidual(rheo, x, EpsII, args), Tau)
+
+        fTau_n, dfdtau = value_and_partial(x -> PeierlsResidual(rheo, x, EpsII, args), Tau)
         Tau = Tau - (fTau_n / dfdtau)
         err = abs(Tau_old - Tau)
 
