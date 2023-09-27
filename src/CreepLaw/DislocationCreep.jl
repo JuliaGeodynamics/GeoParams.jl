@@ -67,7 +67,7 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         Name = String(join(Name))
         N = length(Name)
         NameU = NTuple{N,Char}(collect.(Name))
-        
+
         # Corrections from lab experiments
         FT, FE = CorrectionFactor(Apparatus)
         # Convert to GeoUnits
@@ -107,10 +107,18 @@ function Transform_DislocationCreep(name; kwargs)
     # Take optional arguments 
     v_kwargs = values(kwargs)
     val = GeoUnit.(values(v_kwargs))
-    
-    args = (Name=p_in.Name, n=p_in.n, r=p_in.r, A=p_in.A, E=p_in.E, V=p_in.V, Apparatus=p_in.Apparatus)
+
+    args = (
+        Name=p_in.Name,
+        n=p_in.n,
+        r=p_in.r,
+        A=p_in.A,
+        E=p_in.E,
+        V=p_in.V,
+        Apparatus=p_in.Apparatus,
+    )
     p = merge(args, NamedTuple{keys(v_kwargs)}(val))
-    
+
     Name = String(collect(p.Name))
     n = Value(p.n)
     A_Pa = uconvert(Pa^(-NumValue(p.n)) / s, Value(p.A))
@@ -122,7 +130,7 @@ function Transform_DislocationCreep(name; kwargs)
 
     # args from database
     args = (Name=Name, n=n, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
-    
+
     return DislocationCreep(; args...)
 end
 
@@ -155,15 +163,17 @@ end
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
 @inline function compute_εII(
-    a::DislocationCreep, TauII; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), args...
+    a::DislocationCreep,
+    TauII;
+    T=one(precision(a)),
+    P=zero(precision(a)),
+    f=one(precision(a)),
+    args...,
 )
     @unpack_val n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    f_r = pow_check(f, r)
-    TauII_FT_n = pow_check(FT * TauII, n)
-
-    ε = A * TauII_FT_n * f_r * exp(-(E + P * V) / (R * T)) / FE
+    ε = @pow A * (TauII * FT)^n * f^r * exp(-(E + P * V) / (R * T)) / FE
     return ε
 end
 
@@ -173,10 +183,7 @@ end
     @unpack_units n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    f_r = pow_check(f, r)
-    TauII_FT_n = pow_check(FT * TauII, n)
-
-    ε = A * TauII_FT_n * f_r * exp(-(E + P * V) / (R * T)) / FE
+    ε = @pow A * (TauII * FT)^n * f^r * exp(-(E + P * V) / (R * T)) / FE
 
     return ε
 end
@@ -198,21 +205,23 @@ function compute_εII!(
 end
 
 @inline function dεII_dτII(
-    a::DislocationCreep, TauII; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), args...
+    a::DislocationCreep,
+    TauII;
+    T=one(precision(a)),
+    P=zero(precision(a)),
+    f=one(precision(a)),
+    args...,
 )
     @unpack_val n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    f_r = pow_check(f, r)
-    FT_TauII_n = pow_check(FT * TauII, -1 + n)
-
-    return FT_TauII_n *
-           f_r *
-           A *
-           FT *
-           n *
-           exp(-(E + P * V) / (R * T)) *
-           (1 / FE)
+    return @pow (FT * TauII)^(n - 1) *
+        f^r *
+        A *
+        FT *
+        n *
+        exp(-(E + P * V) / (R * T)) *
+        inv(FE)
 end
 
 @inline function dεII_dτII(
@@ -220,19 +229,15 @@ end
 )
     @unpack_units n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
-    
-    f_r = pow_check(f, r)
-    FT_TauII_n = pow_check(FT * TauII, -1 + n)
 
-    return FT_TauII_n *
-           f_r *
-           A *
-           FT *
-           n *
-           exp(-(E + P * V) / (R * T)) *
-           inv(FE)
+    return @pow (FT * TauII)^(n - 1) *
+        f^r *
+        A *
+        FT *
+        n *
+        exp(-(E + P * V) / (R * T)) *
+        inv(FE)
 end
-
 
 """
     compute_τII(a::DislocationCreep, EpsII; P, T, f, args...)
@@ -241,8 +246,12 @@ Computes the stress for a Dislocation creep law given a certain strain rate
 
 """
 @inline function compute_τII(
-    a::DislocationCreep, EpsII; T=one(precision(a)), P=zero(precision(a)), 
-    f=one(precision(a)), args...
+    a::DislocationCreep,
+    EpsII;
+    T=one(precision(a)),
+    P=zero(precision(a)),
+    f=one(precision(a)),
+    args...,
 )
     n, r, A, E, V, R = if EpsII isa Quantity
         @unpack_units n, r, A, E, V, R = a
@@ -254,15 +263,8 @@ Computes the stress for a Dislocation creep law given a certain strain rate
 
     FT, FE = a.FT, a.FE
     _n = inv(n)
-    
-    A_n = pow_check(A, -_n)
-    f_r = pow_check(f, -r * _n)
-    EpsII_FE_n = pow_check(EpsII * FE, _n)
 
-    return A_n *
-           EpsII_FE_n *
-           f_r *
-           exp((E + P * V) / (n * R * T)) / FT
+    return @pow A^-_n * (EpsII * FE)^_n * f^(-r * _n) * exp((E + P * V) / (n * R * T)) / FT
 end
 
 @inline function compute_τII(
@@ -272,14 +274,7 @@ end
     FT, FE = a.FT, a.FE
     _n = inv(n)
 
-    A_n = pow_check(A, -_n)
-    f_r = pow_check(f, -r * _n)
-    EpsII_FE_n = pow_check(EpsII * FE, _n)
-
-    return A_n*
-           f_r*
-           EpsII_FE_n*
-           exp((E + P * V) / (n * R * T)) / FT
+    return @pow A^-_n * f^(-r * _n) * (EpsII * FE)^_n * exp((E + P * V) / (n * R * T)) / FT
 end
 
 """
@@ -307,7 +302,12 @@ function compute_τII!(
 end
 
 @inline function dτII_dεII(
-    a::DislocationCreep, EpsII; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), args...
+    a::DislocationCreep,
+    EpsII;
+    T=one(precision(a)),
+    P=zero(precision(a)),
+    f=one(precision(a)),
+    args...,
 )
     @unpack_val n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
@@ -315,14 +315,10 @@ end
 
     A_n = pow_check(A, -_n)
     f_r = pow_check(f, -r * _n)
-    EpsII_FE_n = pow_check(EpsII * FE, _n-1)
+    EpsII_FE_n = pow_check(EpsII * FE, _n - 1)
 
-    return (
-        FE *
-        A_n *
-        f_r *
-        EpsII_FE_n *
-        exp((E + P * V) / (R * T * n))
+    return @pow (
+        FE * A^-n * f^(-r * _n) * (EpsII * FE)^(_n - 1) * exp((E + P * V) / (R * T * n))
     ) / (FT * n)
 end
 
@@ -331,17 +327,10 @@ end
 )
     @unpack_units n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
+    _n = inv(n)
 
-    A_n = pow_check(A, -_n)
-    f_r = pow_check(f, -r * _n)
-    EpsII_FE_n = pow_check(EpsII * FE, _n-1)
-
-    return (
-        FE *
-        A_n *
-        f_r *
-        EpsII_FE_n *
-        exp((E + P * V) / (R * T * n))
+    return @pow (
+        FE * A^-n * f^(-r * _n) * (EpsII * FE)^(_n - 1) * exp((E + P * V) / (R * T * n))
     ) / (FT * n)
 end
 

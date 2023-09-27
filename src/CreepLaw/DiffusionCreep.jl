@@ -65,7 +65,7 @@ struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         n=1.0NoUnits,
         r=0.0NoUnits,
         p=-3.0NoUnits,
-        A=1.5MPa^(-n - r ) * s^(-1) * m^(3.0 ),
+        A=1.5MPa^(-n - r) * s^(-1) * m^(3.0),
         E=500kJ / mol,
         V=24e-6m^3 / mol,
         R=8.3145J / mol / K,
@@ -112,29 +112,35 @@ Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 """
 function Transform_DiffusionCreep(name; kwargs)
     pp_in = DiffusionCreep_info[name][1]
-    
+
     # Take optional arguments 
     v_kwargs = values(kwargs)
     val = GeoUnit.(values(v_kwargs))
-    
-    args = (Name=pp_in.Name, n = pp_in.n, p=pp_in.p, r=pp_in.r, A=pp_in.A, E=pp_in.E, V=pp_in.V, Apparatus=pp_in.Apparatus)
+
+    args = (
+        Name=pp_in.Name,
+        n=pp_in.n,
+        p=pp_in.p,
+        r=pp_in.r,
+        A=pp_in.A,
+        E=pp_in.E,
+        V=pp_in.V,
+        Apparatus=pp_in.Apparatus,
+    )
     pp = merge(args, NamedTuple{keys(v_kwargs)}(val))
-    
-     
+
     Name = String(collect(pp.Name))
     n = Value(pp.n)
     r = Value(pp.r)
     p = Value(pp.p)
-    A_Pa = uconvert(
-        Pa^(-NumValue(pp.n)) * m^(-NumValue(p)) / s, Value(pp.A)
-    )
+    A_Pa = uconvert(Pa^(-NumValue(pp.n)) * m^(-NumValue(p)) / s, Value(pp.A))
     E_J = uconvert(J / mol, Value(pp.E))
     V_m3 = uconvert(m^3 / mol, Value(pp.V))
 
     Apparatus = pp.Apparatus
 
     args = (Name=Name, p=p, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
-    
+
     return DiffusionCreep(; args...)
 end
 
@@ -176,26 +182,18 @@ Returns diffusion creep strainrate as a function of 2nd invariant of the stress 
 
 """
 @inline function compute_εII(
-    a::DiffusionCreep, TauII; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), d=one(precision(a)), kwargs...
+    a::DiffusionCreep,
+    TauII;
+    T=one(precision(a)),
+    P=zero(precision(a)),
+    f=one(precision(a)),
+    d=one(precision(a)),
+    kwargs...,
 )
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    # f_r = pow_check(f, r)
-    # d_p = pow_check(d, p)
-    # TauII_FT_n = pow_check(FT * TauII, n)
-
-    # return A *
-    #        TauII_FT_n *
-    #        f_r *
-    #        d_p *
-    #        exp(-(E + P * V) / (R * T)) / FE
-
-    return @pow A *
-           (TauII*FT)^n *
-           f^r *
-           d^p *
-           exp(-(E + P * V) / (R * T)) / FE
+    return @pow A * (TauII * FT)^n * f^r * d^p * exp(-(E + P * V) / (R * T)) / FE
 end
 
 @inline function compute_εII(
@@ -204,12 +202,7 @@ end
     @unpack_units n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    # f_r = pow_check(f, r)
-    # d_p = pow_check(d, p)
-    # TauII_FT_n = pow_check(FT * TauII, n)
-
-    # ε = A * TauII_FT_n * f_r * d_p * exp(-(E + P * V) / (R * T)) / FE
-    ε = @pow  A * (TauII*FT)^n * f^r * d^p * exp(-(E + P * V) / (R * T)) / FE
+    ε = @pow A * (TauII * FT)^n * f^r * d^p * exp(-(E + P * V) / (R * T)) / FE
 
     return ε
 end
@@ -242,30 +235,24 @@ end
 returns the derivative of strainrate versus stress 
 """
 @inline function dεII_dτII(
-    a::DiffusionCreep, TauII; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), d=one(precision(a)), kwargs...
+    a::DiffusionCreep,
+    TauII;
+    T=one(precision(a)),
+    P=zero(precision(a)),
+    f=one(precision(a)),
+    d=one(precision(a)),
+    kwargs...,
 )
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
-    
-    # f_r = pow_check(f, r)
-    # d_p = pow_check(d, p)
-    # TauII_FT_n = pow_check(FT * TauII, -1 + n)
 
-    # return TauII_FT_n *
-    #        f_r *
-    #        d_p *
-    #        A *
-    #        FT *
-    #        exp((-E - P * V) / (R * T)) *
-    #        inv(FE)
-
-    return @pow (TauII * FT)^n *
-           f^r *
-           d^p *
-           A *
-           FT *
-           exp((-E - P * V) / (R * T)) *
-           inv(FE)
+    return @pow (TauII * FT)^(n - 1) *
+        f^r *
+        d^p *
+        A *
+        FT *
+        exp((-E - P * V) / (R * T)) *
+        inv(FE)
 end
 
 @inline function dεII_dτII(
@@ -274,24 +261,7 @@ end
     @unpack_units n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    # f_r = pow_check(f, r)
-    # d_p = pow_check(d, p)
-
-    # return FT  *
-    #        f_r *
-    #        d_p *
-    #        A *
-    #        FT *
-    #        exp((-E - P * V) / (R * T)) *
-    #        inv(FE)
-
-    return @pow FT *
-           f^r *
-           d^p *
-           A *
-           FT *
-           exp((-E - P * V) / (R * T)) *
-           inv(FE)
+    return @pow FT * f^r * d^p * A * FT * exp((-E - P * V) / (R * T)) * inv(FE)
 end
 
 """
@@ -300,30 +270,24 @@ end
 Returns diffusion creep stress as a function of 2nd invariant of the strain rate 
 """
 @inline function compute_τII(
-    a::DiffusionCreep, EpsII; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), d=one(precision(a)), kwargs...
+    a::DiffusionCreep,
+    EpsII;
+    T=one(precision(a)),
+    P=zero(precision(a)),
+    f=one(precision(a)),
+    d=one(precision(a)),
+    kwargs...,
 )
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
-    
-    n_inv = inv(n)
-    
-    # A_n = pow_check(A, -n_inv)
-    # EpsII_FE_n = pow_check(EpsII * FE, n_inv)
-    # f_r = pow_check(f, -r * n_inv)
-    # d_p = pow_check(d, -p * n_inv)
 
-    # τ =
-    #     A_n *
-    #     EpsII_FE_n *
-    #     f_r*
-    #     d_p*
-    #     exp((E + P * V) / (n * R * T)) / FT
-    
+    n_inv = inv(n)
+
     τ = @pow A^-n_inv *
-        (EpsII*FE)^-n_inv *
-        f^(-r * n_inv) *
-        d^(-p * n_inv) *
-        exp((E + P * V) / (n * R * T)) / FT
+             (EpsII * FE)^n_inv *
+             f^(-r * n_inv) *
+             d^(-p * n_inv) *
+             exp((E + P * V) / (n * R * T)) / FT
 
     return τ
 end
@@ -335,23 +299,13 @@ end
     FT, FE = a.FT, a.FE
 
     n_inv = inv(n)
-    
-    A_n = pow_check(A, -n_inv)
-    f_r = pow_check(f, -r * n_inv)
-    d_p = pow_check(d, -p * n_inv)
-
-    # τ =
-    #     A_n *
-    #     EpsII * FE *
-    #     f_r *
-    #     d_p *
-    #     exp((E + P * V) / (n * R * T)) / FT
 
     τ = @pow A^(-n_inv) *
-        EpsII * FE *
-        f^(-r * n_inv) *
-        d^(-p * n_inv) *
-        exp((E + P * V) / (n * R * T)) / FT
+             EpsII *
+             FE *
+             f^(-r * n_inv) *
+             d^(-p * n_inv) *
+             exp((E + P * V) / (n * R * T)) / FT
 
     return τ
 end
@@ -374,37 +328,27 @@ function compute_τII!(
 end
 
 @inline function dτII_dεII(
-    a::DiffusionCreep, EpsII; T=one(precision(a)), P=zero(precision(a)), f=one(precision(a)), d=one(precision(a)), kwargs...
+    a::DiffusionCreep,
+    EpsII;
+    T=one(precision(a)),
+    P=zero(precision(a)),
+    f=one(precision(a)),
+    d=one(precision(a)),
+    kwargs...,
 )
     @unpack_val n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
     n_inv = inv(n)
-    
-    # A_n = pow_check(A, -n_inv)
-    # EpsII_FE_n = pow_check(EpsII * FE, n_inv-1)
-    # f_r = pow_check(f, -r * n_inv)
-    # d_p = pow_check(d, -p * n_inv)
-
-    # # computed symbolically:
-    # return (
-    #     FE *
-    #     A_n *
-    #     d_p *
-    #     f_r *
-    #     EpsII_FE_n *
-    #     exp((E + P * V) / (n * R * T ))
-    # ) / FT
 
     return @pow (
         FE *
         A^(-n_inv) *
         f^(-r * n_inv) *
         d^(-p * n_inv) *
-        (EpsII * FE)^-n_inv *
-        exp((E + P * V) / (n * R * T ))
+        (EpsII * FE)^(n_inv - 1) *
+        exp((E + P * V) / (n * R * T))
     ) / FT
-
 end
 
 @inline function dτII_dεII(
@@ -413,26 +357,7 @@ end
     @unpack_units r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    # f_r = pow_check(f, -r)
-    # d_p = pow_check(d, -p)
-
-    # # computed symbolically:
-    # return (
-    #     FE *
-    #     inv(A) *
-    #     d_p *
-    #     f_r *
-    #     exp((E + P * V) / (R * T ))
-    # ) / FT
-
-    return (
-        FE *
-        inv(A) *
-        f^(-r * n_inv) *
-        d^(-p * n_inv) *
-        exp((E + P * V) / (R * T ))
-    ) / FT
-
+    return (FE * inv(A) * f^(-r * n_inv) * d^(-p * n_inv) * exp((E + P * V) / (R * T))) / FT
 end
 
 # Print info 
