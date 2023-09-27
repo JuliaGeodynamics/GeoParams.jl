@@ -10,6 +10,25 @@ SetDiffusionCreep(name::String; kwargs...) = Transform_DiffusionCreep(name; kwar
 # predefined diffusion creep laws are to be added in the dictionary as it is done for dislocation creep laws (see 'DislocationCreep.jl')!
 const DiffusionCreep_info = Dict([
 
+(
+    "Test Diff",
+    (
+        DiffusionCreep(;
+            Name="Test Diff",
+            n=1.0NoUnits,                         # power-law exponent
+            r=0.0NoUnits,                         # exponent of water-fugacity
+            p=-3.0NoUnits,                        # grain size exponent
+            A=2.070729911135297e-7MPa^(-1.0) * m^3.0 * s^(-1.0),    # material specific rheological parameter
+            E=375.0kJ / mol,                        # activation energy
+            V=6.0e-6m^3 / mol,                       # activation Volume
+            Apparatus=AxialCompression,
+        ),
+        MaterialParamsInfo(;
+            Comment="Law to check Thorsten Beckers book rheology and its conversion of the A factor",
+            BibTex_Reference=""),
+    ),
+)
+
 # Dry Plagioclase rheology 
 (
     "Dry Anorthite | Rybacki et al. (2006)",
@@ -19,7 +38,7 @@ const DiffusionCreep_info = Dict([
             n=1.0NoUnits,                         # power-law exponent
             r=0.0NoUnits,                         # exponent of water-fugacity
             p=-3.0NoUnits,                        # grain size exponent
-            A=(10^12.1)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            A=(10^12.1)MPa^(-1.0) * μm^3.0 * s^(-1.0),    # material specific rheological parameter
             E=460.0kJ / mol,                        # activation energy
             V=24e-6m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,
@@ -48,7 +67,7 @@ const DiffusionCreep_info = Dict([
             n=1.0NoUnits,                         # power-law exponent
             r=1.0NoUnits,                         # exponent of water-fugacity
             p=-3.0NoUnits,                        # grain size exponent
-            A=(10^4.7)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            A=(10^4.7)MPa^(-1.0) * μm^3.0 * s^(-1.0),    # material specific rheological parameter
             E=295.0kJ / mol,                        # activation energy
             V=20e-6m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,
@@ -77,7 +96,7 @@ const DiffusionCreep_info = Dict([
             n=1.0NoUnits,                         # power-law exponent
             r=1.0NoUnits,                         # exponent of water-fugacity
             p=-3.0NoUnits,                        # grain size exponent
-            A=(10^7.4)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            A=(10^7.4)MPa^(-1.0) * μm^3.0 * s^(-1.0),    # material specific rheological parameter
             E=375.0kJ / mol,                        # activation energy
             V=20e-6m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,
@@ -105,7 +124,7 @@ const DiffusionCreep_info = Dict([
             n=1.0NoUnits,                         # power-law exponent
             r=0.0NoUnits,                         # exponent of water-fugacity
             p=-3.0NoUnits,                        # grain size exponent
-            A=(10^9.2)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            A=(10^9.2)MPa^(-1.0) * μm^3.0 * s^(-1.0),    # material specific rheological parameter
             E=375.0kJ / mol,                        # activation energy
             V=10e-6m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,
@@ -133,7 +152,7 @@ const DiffusionCreep_info = Dict([
             n=1.4NoUnits,                         # power-law exponent
             r=0.0NoUnits,                         # exponent of water-fugacity
             p=-3.0NoUnits,                        # grain size exponent
-            A=(10^10.3)MPa^(-1.4) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            A=(10^10.3)MPa^(-1.4) * μm^3.0 * s^(-1.0),    # material specific rheological parameter
             E=484.0kJ / mol,                        # activation energy
             V=0.0m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,
@@ -161,21 +180,21 @@ const DiffusionCreep_info = Dict([
             n=1.0NoUnits,                         # power-law exponent
             r=0.0NoUnits,                         # exponent of water-fugacity
             p=-3.0NoUnits,                        # grain size exponent
-            A=((10^25.3)/64.9)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            A=((10^25.3)/64.9e3)MPa^(-1.0) * μm^3.0 * s^(-1.0),    # material specific rheological parameter
             E=760.0kJ / mol,                        # activation energy
             V=0.0m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,
         ),
         MaterialParamsInfo(;
-            Comment="Values checked (NM)",
+            Comment="Values checked (NM), dividend at A is the shear modulus of diorite (see paper)",
             BibTex_Reference="
-                @article{rybacki2006influence,
-                title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates},
-                author={Rybacki, Erik and Gottschalk, Matthias and Wirth, Richard and Dresen, Georg},
+                @article{hier2005water,
+                title={Water weakening of clinopyroxenite in diffusion creep},
+                author={Hier-Majumder, Saswata and Mei, Shenghua and Kohlstedt, David L},
                 journal={Journal of Geophysical Research: Solid Earth},
-                volume={111},
-                number={B3},
-                year={2006},
+                volume={110},
+                number={B7},
+                year={2005},
                 publisher={Wiley Online Library}
                 }
         "),
@@ -189,13 +208,13 @@ const DiffusionCreep_info = Dict([
             n=1.0NoUnits,                         # power-law exponent
             r=1.4NoUnits,                         # exponent of water-fugacity
             p=-3.0NoUnits,                        # grain size exponent
-            A=((10^7.9)/64.9)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            A=((10^7.9)/64.9e3)MPa^(-1.0) * μm^3.0 * s^(-1.0),    # material specific rheological parameter
             E=340.0kJ / mol,                        # activation energy
             V=14e-6m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,
         ),
         MaterialParamsInfo(;
-            Comment="Values checked (NM)",
+            Comment="Values checked (NM), dividend at A is the shear modulus of diorite (see paper)",
             BibTex_Reference="
                 @article{hier2005water,
                 title={Water weakening of clinopyroxenite in diffusion creep},
@@ -217,7 +236,7 @@ const DiffusionCreep_info = Dict([
             n=1.0NoUnits,                         # power-law exponent
             r=0.0NoUnits,                         # exponent of water-fugacity
             p=-3.0NoUnits,                        # grain size exponent
-            A=(10^15.1)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            A=(10^15.1)MPa^(-1.0) * μm^3.0 * s^(-1.0),    # material specific rheological parameter
             E=560.0kJ / mol,                        # activation energy
             V=0.0m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,
@@ -246,7 +265,7 @@ const DiffusionCreep_info = Dict([
             n=1.0NoUnits,                         # power-law exponent
             r=0.0NoUnits,                         # exponent of water-fugacity
             p=-3.0NoUnits,                        # grain size exponent
-            A=(10^14)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            A=(10^14)MPa^(-1.0) * μm^3.0 * s^(-1.0),    # material specific rheological parameter
             E=528.0kJ / mol,                        # activation energy
             V=0.0m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,
@@ -274,7 +293,7 @@ const DiffusionCreep_info = Dict([
             n=1.0NoUnits,                         # power-law exponent
             r=0.0NoUnits,                         # exponent of water-fugacity
             p=-3.0NoUnits,                        # grain size exponent
-            A=(10^8.1)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            A=(10^8.1)MPa^(-1.0) * μm^3.0 * s^(-1.0),    # material specific rheological parameter
             E=528.0kJ / mol,                        # activation energy
             V=0.0m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,
@@ -302,7 +321,7 @@ const DiffusionCreep_info = Dict([
             n=1.0NoUnits,                         # power-law exponent
             r=0.0NoUnits,                         # exponent of water-fugacity
             p=-3.0NoUnits,                        # grain size exponent
-            A=(10^8.1)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            A=(10^8.1)MPa^(-1.0) * μm^3.0 * s^(-1.0),    # material specific rheological parameter
             E=528.0kJ / mol,                        # activation energy
             V=0.0m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,
@@ -330,7 +349,7 @@ const DiffusionCreep_info = Dict([
             n=1.0NoUnits,                         # power-law exponent
             r=0.0NoUnits,                         # exponent of water-fugacity
             p=-3.0NoUnits,                        # grain size exponent
-            A=(10^12.1)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            A=(10^12.1)MPa^(-1.0) * μm^3.0 * s^(-1.0),    # material specific rheological parameter
             E=467.0kJ / mol,                        # activation energy
             V=0.0m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,
@@ -359,7 +378,7 @@ const DiffusionCreep_info = Dict([
             n=1.0NoUnits,                         # power-law exponent
             r=0.0NoUnits,                         # exponent of water-fugacity
             p=-3.0NoUnits,                        # grain size exponent
-            A=(10^1.7)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            A=(10^1.7)MPa^(-1.0) * μm^3.0 * s^(-1.0),    # material specific rheological parameter
             E=170.0kJ / mol,                        # activation energy
             V=0.0m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,
@@ -388,7 +407,7 @@ const DiffusionCreep_info = Dict([
             n=1.0NoUnits,                         # power-law exponent
             r=1.0NoUnits,                         # exponent of water-fugacity
             p=-3.0NoUnits,                        # grain size exponent
-            A=(10^-0.7)MPa^(-1) * μm^3.0 * s^(-1),    # material specific rheological parameter
+            A=(10^-0.7)MPa^(-1.0) * μm^3.0 * s^(-1.0),    # material specific rheological parameter
             E=159.0kJ / mol,                        # activation energy
             V=38.0m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,
@@ -416,7 +435,7 @@ const DiffusionCreep_info = Dict([
             n=1.0NoUnits,                         # power-law exponent
             r=0.0NoUnits,                         # exponent of water-fugacity
             p=-2.0NoUnits,                        # grain size exponent
-            A=(10^-0.4)MPa^(-1) * μm^2.0 * s^(-1),    # material specific rheological parameter
+            A=(10^-0.4)MPa^(-1.0) * μm^2.0 * s^(-1.0),    # material specific rheological parameter
             E=220.0kJ / mol,                        # activation energy
             V=0.0m^3 / mol,                       # activation Volume
             Apparatus=AxialCompression,

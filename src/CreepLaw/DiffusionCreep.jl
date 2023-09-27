@@ -65,7 +65,7 @@ struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         n=1.0NoUnits,
         r=0.0NoUnits,
         p=-3.0NoUnits,
-        A=1.5MPa^(-n - r ) * s^(-1) * m^(3.0 ),
+        A=1.5MPa^(-n - r ) * s^(-1) * m^(3.0),
         E=500kJ / mol,
         V=24e-6m^3 / mol,
         R=8.3145J / mol / K,
@@ -258,7 +258,6 @@ end
 )
     @unpack_units n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
-
     f_r = pow_check(f, r)
     d_p = pow_check(d, p)
 

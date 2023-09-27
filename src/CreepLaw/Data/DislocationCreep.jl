@@ -22,7 +22,7 @@ const DislocationCreep_info = Dict(
                     r=0.0NoUnits,
                     A=1.1e5MPa^(-3.5) / s,
                     E=530.0kJ / mol,
-                    V=15e-6m^3 / mol,
+                    V=14e-6m^3 / mol,
                     Apparatus=AxialCompression,
                 ),
                 MaterialParamsInfo(;
@@ -46,6 +46,28 @@ const DislocationCreep_info = Dict(
                         pages = {83--105},
                         }
                 ",
+                ),
+            ),
+        )
+
+        # Test rheology
+        (
+            "Test Disl",
+            # after Hirth, G. & Kohlstedt (2003), D. Rheology of the upper mantle and the mantle wedge: A view from the experimentalists.
+            # Inside the subduction Factory 83?105. Table 1, "dry dislocation" parameters
+            (
+                DislocationCreep(;
+                    Name="Test Disl",
+                    n=3.5NoUnits,
+                    r=0.0NoUnits,
+                    A=7.440446357925734e7MPa^(-3.5) / s,
+                    E=530.0kJ / mol,
+                    V=14e-6m^3 / mol,
+                    Apparatus=AxialCompression,
+                ),
+                MaterialParamsInfo(;
+                    Comment="Law to check Thorsten Beckers book rheology and its conversion of the A factor",
+                    BibTex_Reference="",
                 ),
             ),
         )
@@ -402,6 +424,7 @@ const DislocationCreep_info = Dict(
         # Dry Anorthite rheology
         (
             "Dry Anorthite | Rybacki et al. (2006)",
+            # Rybacki, Gottschalk, Wirth and Dresen (2006), table 5
             (
                 DislocationCreep(;
                     Name="Dry Anorthite | Rybacki et al. (2006)",
@@ -415,14 +438,13 @@ const DislocationCreep_info = Dict(
                 MaterialParamsInfo(;
                     Comment="Values taken from Bürgmann & Rybacki (2008) Supplementary table 1. (BK), plots are not reproduced (NM).",
                     BibTex_Reference="
-                        @article{rybacki2000dislocation,
-                        title={Dislocation and diffusion creep of synthetic anorthite aggregates},
-                        author={Rybacki, Erik and Dresen, Georg},
+                        @article{rybacki2006influence,
+                        title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates},
+                        author={Rybacki, Erik and Gottschalk, Matthias and Wirth, Richard and Dresen, Georg},
                         journal={Journal of Geophysical Research: Solid Earth},
-                        volume={105},
-                        number={B11},
-                        pages={26017--26036},
-                        year={2000},
+                        volume={111},
+                        number={B3},
+                        year={2006},
                         publisher={Wiley Online Library}
                         }
                 ",
@@ -433,28 +455,27 @@ const DislocationCreep_info = Dict(
         # Wet Anorthite rheology
         (
             "Wet Anorthite | Rybacki et al. (2006)",
-            #  Rybecki and Dresen (2000), table 2 + table 3
+            # Rybacki, Gottschalk, Wirth and Dresen (2006), table 5
             (
                 DislocationCreep(;
-                    Name="Wet Anorthite | Rybecki et al. (2006)",
+                    Name="Wet Anorthite | Rybacki et al. (2006)",
                     n=3.0NoUnits,
-                    A=exp10(0.2)MPa^(-3.0) / s,
+                    A=(10^0.2)MPa^(-3.0) / s,
                     E=345kJ / mol,
-                    V=0m^3 / mol,
+                    V=38m^3 / mol,
                     r=1NoUnits,
                     Apparatus=AxialCompression,
                 ),
                 MaterialParamsInfo(;
-                    Comment="Values checked (Rybecki and Dresen (2000))(NM), plots are not reproduced (NM).",
+                    Comment="Values checked (Rybacki, Gottschalk, Wirth and Dresen (2006))(NM), plots are not reproduced (NM).",
                     BibTex_Reference="
-                        @article{rybacki2000dislocation,
-                        title={Dislocation and diffusion creep of synthetic anorthite aggregates},
-                        author={Rybacki, Erik and Dresen, Georg},
+                        @article{rybacki2006influence,
+                        title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates},
+                        author={Rybacki, Erik and Gottschalk, Matthias and Wirth, Richard and Dresen, Georg},
                         journal={Journal of Geophysical Research: Solid Earth},
-                        volume={105},
-                        number={B11},
-                        pages={26017--26036},
-                        year={2000},
+                        volume={111},
+                        number={B3},
+                        year={2006},
                         publisher={Wiley Online Library}
                         }
                 ",
@@ -1071,6 +1092,201 @@ const DislocationCreep_info = Dict(
                     pages={77--87},
                     year={2001},
                     publisher={Springer}
+                    }
+                "),
+            ),
+        )
+
+        #Dry Quartzite rheology
+        ("Dry Quartzite | Jaoul et al. (1984)", 
+            #  Jaoul et al. (1984), table 1, first entry
+            (
+                DislocationCreep(
+                Name = "Dry Quartzite | Jaoul et al. (1984)",
+                n = 2.8NoUnits,
+                A = (10^-5.415)MPa^(-2.8)/s,
+                E = 184.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{jaoul1984effect,
+                    title={The effect of varying water contents on the creep behavior of Heavitree quartzite},
+                    author={Jaoul, Olivier and Tullis, Jan and Kronenberg, Andreas},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={89},
+                    number={B6},
+                    pages={4298--4312},
+                    year={1984},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
+
+        #Wet Quartzite rheology
+        ("Wet Quartzite | Jaoul et al. (1984)", 
+            #  Jaoul et al. (1984), table 1, second entry
+            (
+                DislocationCreep(
+                Name = "Wet Quartzite | Jaoul et al. (1984)",
+                n = 2.8NoUnits,
+                A = (10^-5.045)MPa^(-2.8)/s,
+                E = 163.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 0.0NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{jaoul1984effect,
+                    title={The effect of varying water contents on the creep behavior of Heavitree quartzite},
+                    author={Jaoul, Olivier and Tullis, Jan and Kronenberg, Andreas},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={89},
+                    number={B6},
+                    pages={4298--4312},
+                    year={1984},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
+
+        #Wet Quartzite rheology
+        ("Wet Quartzite | Tokle et al. (2019)", 
+            #  Tokle et al. (2019), table 1, 2nd extrapolated fit
+            (
+                DislocationCreep(
+                Name = "Wet Quartzite | Tokle et al. (2019)",
+                n = 3.0NoUnits,
+                A = (10^-11.959)MPa^(-3)/s,
+                E = 115.0kJ/mol,
+                V = 0.0m^3/mol,
+                r = 1.2NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{tokle2019flow,
+                    title={Flow laws and fabric transitions in wet quartzite},
+                    author={Tokle, Leif and Hirth, Greg and Behr, Whitney M},
+                    journal={Earth and Planetary Science Letters},
+                    volume={505},
+                    pages={152--161},
+                    year={2019},
+                    publisher={Elsevier}
+                    }
+                "),
+            ),
+        )
+
+        #Wet Quartzite rheology
+        ("Wet Quartzite | Lu and Jiang (2019)", 
+            #  Lu and Jiang (2019), section 3, equation (6)
+            (
+                DislocationCreep(
+                Name = "Wet Quartzite | Lu and Jiang (2019)",
+                n = 3.0NoUnits,
+                A = (10^-14.2218)MPa^(-3)/s,
+                E = 132.0kJ/mol,
+                V = 35.3e-6m^3/mol,
+                r = 2.7NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{lu2019quartz,
+                    title={Quartz flow law revisited: the significance of pressure dependence of the activation enthalpy},
+                    author={Lu, Lucy X and Jiang, Dazhi},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={124},
+                    number={1},
+                    pages={241--256},
+                    year={2019},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
+
+        #"Low pressure" wet quartzite rheology
+        ("low pressure wet Quartzite | Lusk et al. (2021)", 
+            #  Lusk et al. (2021), abstract, 1st law
+            (
+                DislocationCreep(
+                Name = "low pressure wet Quartzite | Lusk et al. (2021)",
+                n = 3.5NoUnits,
+                A = (10^-9.3)MPa^(-3.5)/s,
+                E = 118.0kJ/mol,
+                V = 2.59e-6m^3/mol,
+                r = 0.49NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{lusk2021natural,
+                    title={Natural and Experimental Constraints on a Flow Law for Dislocation-Dominated Creep in Wet Quartz},
+                    author={Lusk, Alexander DJ and Platt, John P and Platt, Jason A},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={126},
+                    number={5},
+                    pages={e2020JB021302},
+                    year={2021},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
+
+        #"High pressure" wet quartzite rheology
+        ("high pressure wet Quartzite | Lusk et al. (2021)", 
+            #  Lusk et al. (2021), abstract, 2nd law
+            (
+                DislocationCreep(
+                Name = "high pressure wet Quartzite | Lusk et al. (2021)",
+                n = 2.1NoUnits,
+                A = (10^-6.36)MPa^(-2.1)/s,
+                E = 94.0kJ/mol,
+                V = 1.44e-6m^3/mol,
+                r = 0.2NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{lusk2021natural,
+                    title={Natural and Experimental Constraints on a Flow Law for Dislocation-Dominated Creep in Wet Quartz},
+                    author={Lusk, Alexander DJ and Platt, John P and Platt, Jason A},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={126},
+                    number={5},
+                    pages={e2020JB021302},
+                    year={2021},
+                    publisher={Wiley Online Library}
+                    }
+                "),
+            ),
+        )
+
+        #Wet quartzite rheology
+        ("Wet Quartzite | Lusk et al. (2021)", 
+            #  Lusk et al. (2021), table 2, full data set
+            (
+                DislocationCreep(
+                Name = "Wet Quartzite | Lusk et al. (2021)",
+                n = 2.0NoUnits,
+                A = (10^-7.9)MPa^(-2)/s,
+                E = 77.0kJ/mol,
+                V = 2.59e-6m^3/mol,
+                r = 0.49NoUnits,
+                Apparatus = AxialCompression),
+                MaterialParamsInfo(Comment = "Values checked (NM).",
+                BibTex_Reference = "
+                    @article{lusk2021natural,
+                    title={Natural and Experimental Constraints on a Flow Law for Dislocation-Dominated Creep in Wet Quartz},
+                    author={Lusk, Alexander DJ and Platt, John P and Platt, Jason A},
+                    journal={Journal of Geophysical Research: Solid Earth},
+                    volume={126},
+                    number={5},
+                    pages={e2020JB021302},
+                    year={2021},
+                    publisher={Wiley Online Library}
                     }
                 "),
             ),

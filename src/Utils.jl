@@ -99,3 +99,11 @@ make_tuple(x::Tuple) = x
 macro print(a1, a2)
     return :($(esc(a1)) === true ? println($(esc(a2))) : nothing)
 end
+
+# Deriving the given function f with initial guess x using ForwardDiff 
+# while returning the value for the function and its derivative in df as Dual number
+@inline function value_and_partial(f::F, x::R) where {F, R<:Real}     
+    T = typeof(ForwardDiff.Tag(f, R))     
+    df =  f(ForwardDiff.Dual{T}(x, one(x)), )     
+    return df.value, ForwardDiff.extract_derivative(T, df) 
+end
