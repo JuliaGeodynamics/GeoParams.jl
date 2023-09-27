@@ -1,9 +1,5 @@
 export PeierlsCreep,
-    Peierls_info,
-    SetPeierlsCreep,
-    remove_tensor_correction,
-    dεII_dτII,
-    dτII_dεII
+    Peierls_info, SetPeierlsCreep, remove_tensor_correction, dεII_dτII, dτII_dεII
 
 # Peierls Creep ------------------------------------------------
 """
@@ -39,7 +35,7 @@ struct PeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     n::GeoUnit{T,U1} # power-law exponent
     q::GeoUnit{T,U1} # stress relation exponent
     o::GeoUnit{T,U1} # ... (normally called p but used as 'o' since p already exists)
-    TauP::GeoUnit{T, U2} # Peierls stress
+    TauP::GeoUnit{T,U2} # Peierls stress
     A::GeoUnit{T,U3} # material specific rheological parameter
     E::GeoUnit{T,U4} # activation energy
     R::GeoUnit{T,U5} # universal gas constant
@@ -63,7 +59,7 @@ struct PeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         Name = String(join(Name))
         N = length(Name)
         NameU = NTuple{N,Char}(collect.(Name))
-        
+
         # Corrections from lab experiments
         FT, FE = CorrectionFactor(Apparatus)
         # Convert to GeoUnits
@@ -81,7 +77,7 @@ struct PeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U3 = typeof(AU).types[2]
         U4 = typeof(EU).types[2]
         U5 = typeof(RU).types[2]
-        
+
         # Create struct
         return new{T,N,U1,U2,U3,U4,U5}(
             NameU, nU, qU, oU, TauPU, AU, EU, RU, Int8(Apparatus), FT, FE
@@ -105,10 +101,19 @@ function Transform_PeierlsCreep(name; kwargs)
     # Take optional arguments 
     v_kwargs = values(kwargs)
     val = GeoUnit.(values(v_kwargs))
-    
-    args = (Name=p_in.Name, n=p_in.n, q=p_in.q, o=p_in.o, TauP=p_in.TauP, A=p_in.A, E=p_in.E, Apparatus=p_in.Apparatus)
+
+    args = (
+        Name=p_in.Name,
+        n=p_in.n,
+        q=p_in.q,
+        o=p_in.o,
+        TauP=p_in.TauP,
+        A=p_in.A,
+        E=p_in.E,
+        Apparatus=p_in.Apparatus,
+    )
     p = merge(args, NamedTuple{keys(v_kwargs)}(val))
-    
+
     Name = String(collect(p.Name))
     n = Value(p.n)
     q = Value(p.q)
@@ -121,7 +126,7 @@ function Transform_PeierlsCreep(name; kwargs)
 
     # args from database
     args = (Name=Name, n=n, q=q, o=o, TauP=TauP, A=A_Pa, E=E_J, Apparatus=Apparatus)
-    
+
     return PeierlsCreep(; args...)
 end
 
@@ -159,24 +164,16 @@ end
     @unpack_val n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    TauII_FT_TauP_o = pow_check((FT * TauII) / TauP, o)
-    one_minus_TauII_FT_TauP_o_q = pow_check(1.0 - TauII_FT_TauP_o, q)
-
-    ε = (A *
-        exp(-(E / (R * T)) *
-        (one_minus_TauII_FT_TauP_o_q))) /
-        FE
+    ε = @pow (A * exp(-(E / (R * T)) * ((1.0 - ((FT * TauII) / TauP)^o)^q))) / FE
 
     return ε
 end
 
-@inline function compute_εII(
-    a::PeierlsCreep, TauII::Quantity; T=1K, args...
-)
+@inline function compute_εII(a::PeierlsCreep, TauII::Quantity; T=1K, args...)
     @unpack_units n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
-    ε = (A * exp(-(E / (R * T)) * (fastpow(1 - fastpow((FT * TauII) / TauP, o), q)))) / FE
+    ε = @pow (A * exp(-(E / (R * T)) * ((1 - (((FT * TauII) / TauP)^o))^q))) / FE
 
     return ε
 end
@@ -195,7 +192,9 @@ function compute_εII!(
     return nothing
 end
 
-dεII_dτII(a::PeierlsCreep, TauII; args...) = ForwardDiff.derivative(x -> compute_εII(a, x; args...), TauII)
+function dεII_dτII(a::PeierlsCreep, TauII; args...)
+    return ForwardDiff.derivative(x -> compute_εII(a, x; args...), TauII)
+end
 
 """
     compute_τII(a::PeierlsCreep, EpsII; P, T, f, args...)
@@ -205,7 +204,7 @@ Computes the stress for a peierls creep law given a certain strain rate.
 """
 @inline function compute_τII(
     a::PeierlsCreep, EpsII::_T; T=one(precision(a)), args...
-) where {_T}    
+) where {_T}
     @unpack_val n, q, o, TauP, A, E, R = a
 
     FT, FE = a.FT, a.FE
@@ -213,31 +212,19 @@ Computes the stress for a peierls creep law given a certain strain rate.
     q_inv = inv(q)
     o_inv = inv(o)
 
-    R_T_logFE_EpsII_A_E_q_inv = pow_check(-((R * T * log((FE * EpsII) / A)) / E), q_inv)
-    one_minus_R_T_logFE_EpsII_A_E_q_inv_o_inv = pow_check(1.0 - R_T_logFE_EpsII_A_E_q_inv, o_inv)
-
-    τ = (TauP * 
-        one_minus_R_T_logFE_EpsII_A_E_q_inv_o_inv) / 
-        FT
+    τ = @pow (TauP * (1.0 - (-((R * T * log((FE * EpsII) / A)) / E))^q_inv)^o_inv) / FT
 
     return τ
 end
 
-@inline function compute_τII(
-    a::PeierlsCreep, EpsII::Quantity; T=1K, args...
-)
+@inline function compute_τII(a::PeierlsCreep, EpsII::Quantity; T=1K, args...)
     @unpack_units n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
     q_inv = inv(q)
     o_inv = inv(o)
 
-    R_T_logFE_EpsII_A_E_q_inv = pow_check(-((R * T * log((FE * EpsII) / A)) / E), q_inv)
-    one_minus_R_T_logFE_EpsII_A_E_q_inv_o_inv = pow_check(1.0 - R_T_logFE_EpsII_A_E_q_inv, o_inv)
-
-    τ = (TauP * 
-        one_minus_R_T_logFE_EpsII_A_E_q_inv_o_inv) / 
-        FT
+    τ = @pow (TauP * (1.0 - (-((R * T * log((FE * EpsII) / A)) / E))^q_inv)^o_inv) / FT
 
     return τ
 end
@@ -270,7 +257,9 @@ Computes the derivative `dτII/dεII` for a peierls creep law using automatic di
     
 """
 
-dτII_dεII(v::PeierlsCreep, EpsII; args...) = ForwardDiff.derivative(x -> compute_τII(v, x; args...), EpsII)
+function dτII_dεII(v::PeierlsCreep, EpsII; args...)
+    return ForwardDiff.derivative(x -> compute_τII(v, x; args...), EpsII)
+end
 
 # Print info 
 function show(io::IO, g::PeierlsCreep)

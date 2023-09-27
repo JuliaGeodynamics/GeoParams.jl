@@ -10,11 +10,7 @@
 abstract type AbstractCreepLaw{T} <: AbstractConstitutiveLaw{T} end
 
 export isvolumetric,
-    LinearViscous,
-    PowerlawViscous,
-    CorrectionFactor,
-    AbstractCreepLaw,
-    ArrheniusType
+    LinearViscous, PowerlawViscous, CorrectionFactor, AbstractCreepLaw, ArrheniusType
 
 # This computes correction factors to go from experimental data to tensor format
 function CorrectionFactor(a::AbstractCreepLaw{_T}) where {_T}
