@@ -1161,197 +1161,225 @@ const DislocationCreep_info = Dict(
         )
 
         #Dry Quartzite rheology
-        ("Dry Quartzite | Jaoul et al. (1984)", 
+        (
+            "Dry Quartzite | Jaoul et al. (1984)",
             #  Jaoul et al. (1984), table 1, first entry
             (
-                DislocationCreep(
-                Name = "Dry Quartzite | Jaoul et al. (1984)",
-                n = 2.8NoUnits,
-                A = (10^-5.415)MPa^(-2.8)/s,
-                E = 184.0kJ/mol,
-                V = 0.0m^3/mol,
-                r = 0.0NoUnits,
-                Apparatus = AxialCompression),
-                MaterialParamsInfo(Comment = "Values checked (NM).",
-                BibTex_Reference = "
-                    @article{jaoul1984effect,
-                    title={The effect of varying water contents on the creep behavior of Heavitree quartzite},
-                    author={Jaoul, Olivier and Tullis, Jan and Kronenberg, Andreas},
-                    journal={Journal of Geophysical Research: Solid Earth},
-                    volume={89},
-                    number={B6},
-                    pages={4298--4312},
-                    year={1984},
-                    publisher={Wiley Online Library}
-                    }
-                "),
+                DislocationCreep(;
+                    Name="Dry Quartzite | Jaoul et al. (1984)",
+                    n=2.8NoUnits,
+                    A=(10^-5.415)MPa^(-2.8) / s,
+                    E=184.0kJ / mol,
+                    V=0.0m^3 / mol,
+                    r=0.0NoUnits,
+                    Apparatus=AxialCompression,
+                ),
+                MaterialParamsInfo(;
+                    Comment="Values checked (NM).",
+                    BibTex_Reference="
+                      @article{jaoul1984effect,
+                      title={The effect of varying water contents on the creep behavior of Heavitree quartzite},
+                      author={Jaoul, Olivier and Tullis, Jan and Kronenberg, Andreas},
+                      journal={Journal of Geophysical Research: Solid Earth},
+                      volume={89},
+                      number={B6},
+                      pages={4298--4312},
+                      year={1984},
+                      publisher={Wiley Online Library}
+                      }
+                  ",
+                ),
             ),
         )
 
         #Wet Quartzite rheology
-        ("Wet Quartzite | Jaoul et al. (1984)", 
+        (
+            "Wet Quartzite | Jaoul et al. (1984)",
             #  Jaoul et al. (1984), table 1, second entry
             (
-                DislocationCreep(
-                Name = "Wet Quartzite | Jaoul et al. (1984)",
-                n = 2.8NoUnits,
-                A = (10^-5.045)MPa^(-2.8)/s,
-                E = 163.0kJ/mol,
-                V = 0.0m^3/mol,
-                r = 0.0NoUnits,
-                Apparatus = AxialCompression),
-                MaterialParamsInfo(Comment = "Values checked (NM).",
-                BibTex_Reference = "
-                    @article{jaoul1984effect,
-                    title={The effect of varying water contents on the creep behavior of Heavitree quartzite},
-                    author={Jaoul, Olivier and Tullis, Jan and Kronenberg, Andreas},
-                    journal={Journal of Geophysical Research: Solid Earth},
-                    volume={89},
-                    number={B6},
-                    pages={4298--4312},
-                    year={1984},
-                    publisher={Wiley Online Library}
-                    }
-                "),
+                DislocationCreep(;
+                    Name="Wet Quartzite | Jaoul et al. (1984)",
+                    n=2.8NoUnits,
+                    A=(10^-5.045)MPa^(-2.8) / s,
+                    E=163.0kJ / mol,
+                    V=0.0m^3 / mol,
+                    r=0.0NoUnits,
+                    Apparatus=AxialCompression,
+                ),
+                MaterialParamsInfo(;
+                    Comment="Values checked (NM).",
+                    BibTex_Reference="
+                      @article{jaoul1984effect,
+                      title={The effect of varying water contents on the creep behavior of Heavitree quartzite},
+                      author={Jaoul, Olivier and Tullis, Jan and Kronenberg, Andreas},
+                      journal={Journal of Geophysical Research: Solid Earth},
+                      volume={89},
+                      number={B6},
+                      pages={4298--4312},
+                      year={1984},
+                      publisher={Wiley Online Library}
+                      }
+                  ",
+                ),
             ),
         )
 
         #Wet Quartzite rheology
-        ("Wet Quartzite | Tokle et al. (2019)", 
+        (
+            "Wet Quartzite | Tokle et al. (2019)",
             #  Tokle et al. (2019), table 1, 2nd extrapolated fit
             (
-                DislocationCreep(
-                Name = "Wet Quartzite | Tokle et al. (2019)",
-                n = 3.0NoUnits,
-                A = (10^-11.959)MPa^(-3)/s,
-                E = 115.0kJ/mol,
-                V = 0.0m^3/mol,
-                r = 1.2NoUnits,
-                Apparatus = AxialCompression),
-                MaterialParamsInfo(Comment = "Values checked (NM).",
-                BibTex_Reference = "
-                    @article{tokle2019flow,
-                    title={Flow laws and fabric transitions in wet quartzite},
-                    author={Tokle, Leif and Hirth, Greg and Behr, Whitney M},
-                    journal={Earth and Planetary Science Letters},
-                    volume={505},
-                    pages={152--161},
-                    year={2019},
-                    publisher={Elsevier}
-                    }
-                "),
+                DislocationCreep(;
+                    Name="Wet Quartzite | Tokle et al. (2019)",
+                    n=3.0NoUnits,
+                    A=(10^-11.959)MPa^(-3) / s,
+                    E=115.0kJ / mol,
+                    V=0.0m^3 / mol,
+                    r=1.2NoUnits,
+                    Apparatus=AxialCompression,
+                ),
+                MaterialParamsInfo(;
+                    Comment="Values checked (NM).",
+                    BibTex_Reference="
+                      @article{tokle2019flow,
+                      title={Flow laws and fabric transitions in wet quartzite},
+                      author={Tokle, Leif and Hirth, Greg and Behr, Whitney M},
+                      journal={Earth and Planetary Science Letters},
+                      volume={505},
+                      pages={152--161},
+                      year={2019},
+                      publisher={Elsevier}
+                      }
+                  ",
+                ),
             ),
         )
 
         #Wet Quartzite rheology
-        ("Wet Quartzite | Lu and Jiang (2019)", 
+        (
+            "Wet Quartzite | Lu and Jiang (2019)",
             #  Lu and Jiang (2019), section 3, equation (6)
             (
-                DislocationCreep(
-                Name = "Wet Quartzite | Lu and Jiang (2019)",
-                n = 3.0NoUnits,
-                A = (10^-14.2218)MPa^(-3)/s,
-                E = 132.0kJ/mol,
-                V = 35.3e-6m^3/mol,
-                r = 2.7NoUnits,
-                Apparatus = AxialCompression),
-                MaterialParamsInfo(Comment = "Values checked (NM).",
-                BibTex_Reference = "
-                    @article{lu2019quartz,
-                    title={Quartz flow law revisited: the significance of pressure dependence of the activation enthalpy},
-                    author={Lu, Lucy X and Jiang, Dazhi},
-                    journal={Journal of Geophysical Research: Solid Earth},
-                    volume={124},
-                    number={1},
-                    pages={241--256},
-                    year={2019},
-                    publisher={Wiley Online Library}
-                    }
-                "),
+                DislocationCreep(;
+                    Name="Wet Quartzite | Lu and Jiang (2019)",
+                    n=3.0NoUnits,
+                    A=(10^-14.2218)MPa^(-3) / s,
+                    E=132.0kJ / mol,
+                    V=35.3e-6m^3 / mol,
+                    r=2.7NoUnits,
+                    Apparatus=AxialCompression,
+                ),
+                MaterialParamsInfo(;
+                    Comment="Values checked (NM).",
+                    BibTex_Reference="
+                      @article{lu2019quartz,
+                      title={Quartz flow law revisited: the significance of pressure dependence of the activation enthalpy},
+                      author={Lu, Lucy X and Jiang, Dazhi},
+                      journal={Journal of Geophysical Research: Solid Earth},
+                      volume={124},
+                      number={1},
+                      pages={241--256},
+                      year={2019},
+                      publisher={Wiley Online Library}
+                      }
+                  ",
+                ),
             ),
         )
 
         #"Low pressure" wet quartzite rheology
-        ("low pressure wet Quartzite | Lusk et al. (2021)", 
+        (
+            "low pressure wet Quartzite | Lusk et al. (2021)",
             #  Lusk et al. (2021), abstract, 1st law
             (
-                DislocationCreep(
-                Name = "low pressure wet Quartzite | Lusk et al. (2021)",
-                n = 3.5NoUnits,
-                A = (10^-9.3)MPa^(-3.5)/s,
-                E = 118.0kJ/mol,
-                V = 2.59e-6m^3/mol,
-                r = 0.49NoUnits,
-                Apparatus = AxialCompression),
-                MaterialParamsInfo(Comment = "Values checked (NM).",
-                BibTex_Reference = "
-                    @article{lusk2021natural,
-                    title={Natural and Experimental Constraints on a Flow Law for Dislocation-Dominated Creep in Wet Quartz},
-                    author={Lusk, Alexander DJ and Platt, John P and Platt, Jason A},
-                    journal={Journal of Geophysical Research: Solid Earth},
-                    volume={126},
-                    number={5},
-                    pages={e2020JB021302},
-                    year={2021},
-                    publisher={Wiley Online Library}
-                    }
-                "),
+                DislocationCreep(;
+                    Name="low pressure wet Quartzite | Lusk et al. (2021)",
+                    n=3.5NoUnits,
+                    A=(10^-9.3)MPa^(-3.5) / s,
+                    E=118.0kJ / mol,
+                    V=2.59e-6m^3 / mol,
+                    r=0.49NoUnits,
+                    Apparatus=AxialCompression,
+                ),
+                MaterialParamsInfo(;
+                    Comment="Values checked (NM).",
+                    BibTex_Reference="
+                      @article{lusk2021natural,
+                      title={Natural and Experimental Constraints on a Flow Law for Dislocation-Dominated Creep in Wet Quartz},
+                      author={Lusk, Alexander DJ and Platt, John P and Platt, Jason A},
+                      journal={Journal of Geophysical Research: Solid Earth},
+                      volume={126},
+                      number={5},
+                      pages={e2020JB021302},
+                      year={2021},
+                      publisher={Wiley Online Library}
+                      }
+                  ",
+                ),
             ),
         )
 
         #"High pressure" wet quartzite rheology
-        ("high pressure wet Quartzite | Lusk et al. (2021)", 
+        (
+            "high pressure wet Quartzite | Lusk et al. (2021)",
             #  Lusk et al. (2021), abstract, 2nd law
             (
-                DislocationCreep(
-                Name = "high pressure wet Quartzite | Lusk et al. (2021)",
-                n = 2.1NoUnits,
-                A = (10^-6.36)MPa^(-2.1)/s,
-                E = 94.0kJ/mol,
-                V = 1.44e-6m^3/mol,
-                r = 0.2NoUnits,
-                Apparatus = AxialCompression),
-                MaterialParamsInfo(Comment = "Values checked (NM).",
-                BibTex_Reference = "
-                    @article{lusk2021natural,
-                    title={Natural and Experimental Constraints on a Flow Law for Dislocation-Dominated Creep in Wet Quartz},
-                    author={Lusk, Alexander DJ and Platt, John P and Platt, Jason A},
-                    journal={Journal of Geophysical Research: Solid Earth},
-                    volume={126},
-                    number={5},
-                    pages={e2020JB021302},
-                    year={2021},
-                    publisher={Wiley Online Library}
-                    }
-                "),
+                DislocationCreep(;
+                    Name="high pressure wet Quartzite | Lusk et al. (2021)",
+                    n=2.1NoUnits,
+                    A=(10^-6.36)MPa^(-2.1) / s,
+                    E=94.0kJ / mol,
+                    V=1.44e-6m^3 / mol,
+                    r=0.2NoUnits,
+                    Apparatus=AxialCompression,
+                ),
+                MaterialParamsInfo(;
+                    Comment="Values checked (NM).",
+                    BibTex_Reference="
+                      @article{lusk2021natural,
+                      title={Natural and Experimental Constraints on a Flow Law for Dislocation-Dominated Creep in Wet Quartz},
+                      author={Lusk, Alexander DJ and Platt, John P and Platt, Jason A},
+                      journal={Journal of Geophysical Research: Solid Earth},
+                      volume={126},
+                      number={5},
+                      pages={e2020JB021302},
+                      year={2021},
+                      publisher={Wiley Online Library}
+                      }
+                  ",
+                ),
             ),
         )
 
         #Wet quartzite rheology
-        ("Wet Quartzite | Lusk et al. (2021)", 
+        (
+            "Wet Quartzite | Lusk et al. (2021)",
             #  Lusk et al. (2021), table 2, full data set
             (
-                DislocationCreep(
-                Name = "Wet Quartzite | Lusk et al. (2021)",
-                n = 2.0NoUnits,
-                A = (10^-7.9)MPa^(-2)/s,
-                E = 77.0kJ/mol,
-                V = 2.59e-6m^3/mol,
-                r = 0.49NoUnits,
-                Apparatus = AxialCompression),
-                MaterialParamsInfo(Comment = "Values checked (NM).",
-                BibTex_Reference = "
-                    @article{lusk2021natural,
-                    title={Natural and Experimental Constraints on a Flow Law for Dislocation-Dominated Creep in Wet Quartz},
-                    author={Lusk, Alexander DJ and Platt, John P and Platt, Jason A},
-                    journal={Journal of Geophysical Research: Solid Earth},
-                    volume={126},
-                    number={5},
-                    pages={e2020JB021302},
-                    year={2021},
-                    publisher={Wiley Online Library}
-                    }
-                "),
+                DislocationCreep(;
+                    Name="Wet Quartzite | Lusk et al. (2021)",
+                    n=2.0NoUnits,
+                    A=(10^-7.9)MPa^(-2) / s,
+                    E=77.0kJ / mol,
+                    V=2.59e-6m^3 / mol,
+                    r=0.49NoUnits,
+                    Apparatus=AxialCompression,
+                ),
+                MaterialParamsInfo(;
+                    Comment="Values checked (NM).",
+                    BibTex_Reference="
+                      @article{lusk2021natural,
+                      title={Natural and Experimental Constraints on a Flow Law for Dislocation-Dominated Creep in Wet Quartz},
+                      author={Lusk, Alexander DJ and Platt, John P and Platt, Jason A},
+                      journal={Journal of Geophysical Research: Solid Earth},
+                      volume={126},
+                      number={5},
+                      pages={e2020JB021302},
+                      year={2021},
+                      publisher={Wiley Online Library}
+                      }
+                  ",
+                ),
             ),
         )
     ],
