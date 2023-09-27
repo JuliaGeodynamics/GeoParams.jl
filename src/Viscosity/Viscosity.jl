@@ -11,6 +11,7 @@ export compute_viscosity_εII,
 
 # compute effective "creep" viscosity from strain rate tensor
 @inline function compute_viscosity_εII(v::AbstractConstitutiveLaw, εII, args)
+
     τII = compute_τII(v, εII, args)
     η = _viscosity(τII, εII)
     return η
@@ -18,6 +19,7 @@ end
 
 # compute effective "creep" viscosity from deviatoric stress tensor
 @inline function compute_viscosity_τII(v::AbstractConstitutiveLaw, τII, args)
+
     εII = compute_εII(v, τII, args)
     η = _viscosity(τII, εII)
     return η
@@ -27,6 +29,7 @@ for fn in (:compute_viscosity_εII, :compute_viscosity_τII)
     @eval begin
 
         @inline function $fn(v::AbstractConstitutiveLaw, xx, yy, xy, args)
+
             II = second_invariant(xx, yy, xy)
             η = $fn(v, II, args)
             return η
@@ -43,6 +46,7 @@ for fn in (:compute_viscosity_εII, :compute_viscosity_τII)
 
     end
 end
+
 
 # For multi phases given the i-th phase
 @generated function compute_viscosity_εII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase::Int, args::Vararg{Any, N2}) where {N1, N2}

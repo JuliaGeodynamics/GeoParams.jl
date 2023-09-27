@@ -51,6 +51,9 @@ end
 
 include("DislocationCreep.jl")
 include("DiffusionCreep.jl")
+include("GrainBoundarySliding.jl")
+include("PeierlsCreep.jl")
+include("NonLinearPeierlsCreep.jl")
 include("CustomRheology.jl")
 
 # Linear viscous rheology ------------------------------------------------
