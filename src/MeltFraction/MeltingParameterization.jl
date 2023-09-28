@@ -148,7 +148,6 @@ function (p::MeltingParam_5thOrder)(; T, kwargs...)
 
     coeffs = f,e,d,c,b,a
     ϕ = @horner(T, coeffs...)
-    # a * T^5 + b * T^4 + c * T^3 + d * T^2 + e * T + f
     if p.apply_bounds
         if T < T_s
             ϕ = 0.0
@@ -171,7 +170,6 @@ function compute_dϕdT(p::MeltingParam_5thOrder; T, kwargs...)
 
     coeffs = e,2*d,3*c,4*b,5*a
     dϕdT = @horner(T, coeffs...)
-    # dϕdT = 5 * a * T^4 + 4 * b * T^3 + 3 * c * T^2 + 2 * d * T + e
     
     if p.apply_bounds && (T < T_s || T > T_l)
         dϕdT = 0.0
@@ -237,7 +235,6 @@ function (p::MeltingParam_4thOrder)(; T, kwargs...)
 
     coeffs = f,e,d,c,b
     ϕ = @horner(T, coeffs...)
-    # ϕ = b * T^4 + c * T^3 + d * T^2 + e * T + f
     if p.apply_bounds
         if T < T_s
             ϕ = 0.0
@@ -258,7 +255,6 @@ function compute_dϕdT(p::MeltingParam_4thOrder; T, kwargs...)
 
     coeffs = e,2*d,3*c,4*b
     dϕdT = @horner(T, coeffs...)
-    # dϕdT = 4 * b * T^3 + 3 * c * T^2 + 2 * d * T + e
     if p.apply_bounds && (T < T_s || T > T_l)
         dϕdT = 0.0
     end
