@@ -3,7 +3,7 @@ module MeltingParam
 # If you want to add a new method here, feel free to do so. 
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
-using Parameters, LaTeXStrings, Unitful
+using Parameters, LaTeXStrings, Unitful, ForwardDiff
 using ..Units
 using GeoParams:
     AbstractMaterialParam, PhaseDiagram_LookupTable, AbstractMaterialParamsStruct
