@@ -313,9 +313,6 @@ end
     FT, FE = a.FT, a.FE
     _n = inv(n)
 
-    A_n = pow_check(A, -_n)
-    f_r = pow_check(f, -r * _n)
-    EpsII_FE_n = pow_check(EpsII * FE, _n - 1)
 
     return @pow (
         FE * A^-_n * f^(-r * _n) * (EpsII * FE)^(_n - 1) * exp((E + P * V) / (R * T * n))
