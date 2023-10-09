@@ -7,7 +7,7 @@ This package has two main features that help with this:
 The material parameter object is designed to be extensible and can be passed on to the solvers, such that new creep laws or features can be readily added. 
 We also implement some typically used creep law parameters, together with tools to plot them versus and compare our results with those of published papers (to minimize mistakes). 
 """
-__precompile__()
+# __precompile__()
 module GeoParams
 
 using Parameters        # helps setting default parameters in structures
@@ -16,6 +16,7 @@ using BibTeX            # references of creep laws
 using Requires          # To only add plotting routines if Plots is loaded
 using StaticArrays
 using LinearAlgebra
+using ForwardDiff
 
 import Base: getindex
 
@@ -89,6 +90,7 @@ function param_info end
 export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
 
 include("Utils.jl")
+export value_and_partial
 
 include("TensorAlgebra/TensorAlgebra.jl")
 export second_invariant, second_invariant_staggered, rotate_elastic_stress
@@ -104,10 +106,7 @@ export compute_units
 # Define Material Parameter structure
 include("MaterialParameters.jl")
 using .MaterialParameters
-export MaterialParams,
-    SetMaterialParams,
-    No_MaterialParam,
-    MaterialParamsInfo
+export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo
 
 # Phase Diagrams
 using .MaterialParameters.PhaseDiagrams
@@ -118,7 +117,6 @@ export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
 using .MaterialParameters.Density
 export compute_density,                                # computational routines
     compute_density!,
-    compute_density_ratio,
     param_info,
     AbstractDensity,
     No_Density,
@@ -126,7 +124,8 @@ export compute_density,                                # computational routines
     PT_Density,
     Compressible_Density,
     PhaseDiagram_LookupTable,
-    Read_LaMEM_Perple_X_Diagram
+    Read_LaMEM_Perple_X_Diagram,
+    compute_density_ratio
 
 # Constitutive relationships laws
 using .MaterialParameters.ConstitutiveRelationships
@@ -145,7 +144,6 @@ export dεII_dτII,
     compute_εII!,
     compute_εII,
     compute_εII_AD,
-    compute_elements_εII,
     compute_τII!,
     compute_τII,
     compute_τII_AD,
@@ -167,15 +165,25 @@ export dεII_dτII,
     SetDislocationCreep,
     DiffusionCreep,
     SetDiffusionCreep,
+    GrainBoundarySliding,
+    SetGrainBoundarySliding,
+    PeierlsCreep,
+    SetPeierlsCreep,
+    NonLinearPeierlsCreep,
+    SetNonLinearPeierlsCreep,
     DislocationCreep_info,
     DiffusionCreep_info,
+    GrainBoundarySliding_info,
+    PeierlsCreep_info,
+    NonLinearPeierlsCreep_info,
+    Peierls_stress_iterations,
+
 
     #       Elasticity
     AbstractElasticity,
     ConstantElasticity,
     SetConstantElasticity,
     effective_εII,
-    iselastic,
     get_G, 
     get_Kb,
     get_shearmodulus, 
@@ -195,9 +203,7 @@ export dεII_dτII,
     #       Composite rheologies
     AbstractConstitutiveLaw,
     AbstractComposite,
-    computeViscosity_τII,
     computeViscosity_εII,
-    computeViscosity_τII!,
     computeViscosity_εII!,
     computeViscosity_εII_AD,
     local_iterations_εII,    
@@ -215,6 +221,8 @@ export dεII_dτII,
     compute_p_τII, 
     local_iterations_εvol, 
     compute_p_harmonic 
+
+
 
 # Constitutive relationships laws
 include("StressComputations/StressComputations.jl")

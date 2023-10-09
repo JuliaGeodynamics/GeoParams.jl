@@ -43,6 +43,32 @@ end
     return x^n
 end
 
+@inline function pow_check(x::T, n) where T
+    if isone(x) || isone(n)
+        x
+    elseif iszero(n)
+        one(T)
+    else
+        fastpow(x, n)
+    end
+end
+
+macro pow(ex)
+    substitute_walk(ex)
+    esc(:($ex))
+end
+
+@inline function substitute_walk(ex::Expr)
+    for (i, arg) in enumerate(ex.args)
+        new_arg = substitute_walk(arg)
+        if !isnothing(new_arg)
+            ex.args[i] = new_arg
+        end 
+    end
+end
+@inline substitute_walk(sym::Symbol) = sym == :(^) ? :(pow_check) : sym
+@inline substitute_walk(x) = x
+
 # Tuple iterators
 @generated function nreduce(f::F, v::NTuple{N,Any}) where {N,F}
     Base.@_inline_meta
@@ -88,4 +114,12 @@ make_tuple(x::Tuple) = x
 # Macros 
 macro print(a1, a2)
     return :($(esc(a1)) === true ? println($(esc(a2))) : nothing)
+end
+
+# Deriving the given function f with initial guess x using ForwardDiff 
+# while returning the value for the function and its derivative in df as Dual number
+@inline function value_and_partial(f::F, x::R) where {F, R<:Real}     
+    T = typeof(ForwardDiff.Tag(f, R))     
+    df =  f(ForwardDiff.Dual{T}(x, one(x)), )     
+    return df.value, ForwardDiff.extract_derivative(T, df) 
 end

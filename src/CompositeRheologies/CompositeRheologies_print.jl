@@ -1,6 +1,6 @@
 # Pretty printing for CompositeRheologies
 
-# returns a matrix wuth strings in the right order
+# returns a matrix with strings in the right order
 function print_rheology_matrix(v::Tuple)
 
     n = 40
