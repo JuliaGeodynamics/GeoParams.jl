@@ -1,7 +1,7 @@
 module Tables
 
 using Unidecode
-using GeoParams: AbstractMaterialParam, param_info, LinearViscous, PowerlawViscous, DislocationCreep, DiffusionCreep, CompositeRheology, Parallel, make_tuple
+using GeoParams: AbstractMaterialParam, param_info, LinearViscous, PowerlawViscous, DislocationCreep, DiffusionCreep, GrainBoundarySliding, PeierlsCreep, NonLinearPeierlsCreep, CompositeRheology, Parallel, make_tuple
 using ..Units
 using ..MaterialParameters: MaterialParamsInfo
 
@@ -47,15 +47,21 @@ function Phase2Dict(s)
         global Diff = 0
         global Disl = 0
         global Lin = 0
+        global GBS = 0
+        global Pei = 0
+        global NLP = 0
         for label in fieldnames
             if !isempty(getproperty(s[i], label)) && label != :Name
                 # Goes through all components of all fields
                 for j in 1:length(getproperty(s[i], label))
                     a = getproperty(s[i], label)
-                    flowlaw = ""
+                    flowlaw  = ""
                     flowdisl = "DislCreep"
                     flowdiff = "DiffCreep"
-                    flowlin = "LinVisc"
+                    flowlin  = "LinVisc"
+                    flowgbs  = "GBS"
+                    flowpei  = "PeiCreep"
+                    flownlp  = "NLP"
                     flowcomp = "CompoRheo"
                     flowpara = "Parallel"
                     # Checks what type the CreepLaw or CompositeRheology field has 
@@ -73,6 +79,36 @@ function Phase2Dict(s)
                         global Diff += 1
                         flowlawcount += 1
                         flowadd = flowdiff
+                        flowlaw *= flowadd
+                        name = join(a[j].Name)
+                        bibinfo_diff = param_info(a[j])
+                        bib_diff = bibinfo_diff.BibTex_Reference
+                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+
+                    elseif typeof(a[j]) <: GrainBoundarySliding
+                        global GBS += 1
+                        flowlawcount += 1
+                        flowadd = flowgbs
+                        flowlaw *= flowadd
+                        name = join(a[j].Name)
+                        bibinfo_diff = param_info(a[j])
+                        bib_diff = bibinfo_diff.BibTex_Reference
+                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+
+                    elseif typeof(a[j]) <: PeierlsCreep
+                        global Pei += 1
+                        flowlawcount += 1
+                        flowadd = flowpei
+                        flowlaw *= flowadd
+                        name = join(a[j].Name)
+                        bibinfo_diff = param_info(a[j])
+                        bib_diff = bibinfo_diff.BibTex_Reference
+                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+
+                    elseif typeof(a[j]) <: NonLinearPeierlsCreep
+                        global NLP += 1
+                        flowlawcount += 1
+                        flowadd = flownlp
                         flowlaw *= flowadd
                         name = join(a[j].Name)
                         bibinfo_diff = param_info(a[j])
@@ -118,6 +154,36 @@ function Phase2Dict(s)
                                         bib_diff = bibinfo_diff.BibTex_Reference
                                         refs["$name"] = (bib_diff, "$flowlawcount", "$i")
 
+                                    elseif typeof(a[j][u][v]) <: GrainBoundarySliding
+                                        global GBS += 1
+                                        flowlawcount += 1
+                                        flowadd = flowgbs
+                                        parallelrheo *= flowadd * ","
+                                        name = namepre * join(a[j][u][v].Name)
+                                        bibinfo_diff = param_info(a[j][u][v])
+                                        bib_diff = bibinfo_diff.BibTex_Reference
+                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                
+                                    elseif typeof(a[j][u][v]) <: PeierlsCreep
+                                        global Pei += 1
+                                        flowlawcount += 1
+                                        flowadd = flowpei
+                                        parallelrheo *= flowadd * ","
+                                        name = namepre * join(a[j][u][v].Name)
+                                        bibinfo_diff = param_info(a[j][u][v])
+                                        bib_diff = bibinfo_diff.BibTex_Reference
+                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                
+                                    elseif typeof(a[j][u][v]) <: NonLinearPeierlsCreep
+                                        global NLP += 1
+                                        flowlawcount += 1
+                                        flowadd = flownlp
+                                        parallelrheo *= flowadd * ","
+                                        name = namepre * join(a[j][u][v].Name)
+                                        bibinfo_diff = param_info(a[j][u][v])
+                                        bib_diff = bibinfo_diff.BibTex_Reference
+                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+
                                     elseif typeof(a[j][u][v]) <: LinearViscous
                                         global Lin += 1
                                         flowlawcount += 1
@@ -144,8 +210,16 @@ function Phase2Dict(s)
                                                 fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Disl", "$flowdisl")
                                             end
                                             if typeof(a[j][u][v]) <: DiffusionCreep
-
                                                 fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Diff", "$flowdiff")
+                                            end
+                                            if typeof(a[j][u][v]) <: GrainBoundarySliding
+                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$GBS", "$flowgbs")
+                                            end
+                                            if typeof(a[j][u][v]) <: PeierlsCreep
+                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Pei", "$flowpei")
+                                            end
+                                            if typeof(a[j][u][v]) <: NonLinearPeierlsCreep
+                                                fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$NLP", "$flownlp")
                                             end
                                             if typeof(a[j][u][v]) <: LinearViscous
                                                 fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Lin", "$flowlin")
@@ -170,6 +244,36 @@ function Phase2Dict(s)
                                 global Diff += 1
                                 flowlawcount += 1
                                 flowadd = flowdiff
+                                comporheo *= flowadd * ","
+                                name =  fdsname * join(a[j][u].Name)
+                                bibinfo_diff = param_info(a[j][u])
+                                bib_diff = bibinfo_diff.BibTex_Reference
+                                refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+
+                            elseif typeof(a[j][u]) <: GrainBoundarySliding
+                                global GBS += 1
+                                flowlawcount += 1
+                                flowadd = flowgbs
+                                comporheo *= flowadd * ","
+                                name =  fdsname * join(a[j][u].Name)
+                                bibinfo_diff = param_info(a[j][u])
+                                bib_diff = bibinfo_diff.BibTex_Reference
+                                refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+
+                            elseif typeof(a[j][u]) <: PeierlsCreep
+                                global Pei += 1
+                                flowlawcount += 1
+                                flowadd = flowpei
+                                comporheo *= flowadd * ","
+                                name =  fdsname * join(a[j][u].Name)
+                                bibinfo_diff = param_info(a[j][u])
+                                bib_diff = bibinfo_diff.BibTex_Reference
+                                refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+
+                            elseif typeof(a[j][u]) <: NonLinearPeierlsCreep
+                                global NLP += 1
+                                flowlawcount += 1
+                                flowadd = flownlp
                                 comporheo *= flowadd * ","
                                 name =  fdsname * join(a[j][u].Name)
                                 bibinfo_diff = param_info(a[j][u])
@@ -205,6 +309,15 @@ function Phase2Dict(s)
                                     if typeof(a[j][u]) <: DiffusionCreep
                                         fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$Diff", "$flowdiff")
                                     end
+                                    if typeof(a[j][u]) <: GrainBoundarySliding
+                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$GBS", "$flowgbs")
+                                    end
+                                    if typeof(a[j][u]) <: PeierlsCreep
+                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$Pei", "$flowpei")
+                                    end
+                                    if typeof(a[j][u]) <: NonLinearPeierlsCreep
+                                        fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$NLP", "$flownlp")
+                                    end
                                     if typeof(a[j][u]) <: LinearViscous
                                         fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$Lin", "$flowlin")
                                     end
@@ -234,6 +347,36 @@ function Phase2Dict(s)
                                 global Diff += 1
                                 flowlawcount += 1
                                 flowadd = flowdiff
+                                parallelrheo *= flowadd * ","
+                                name = fdsname * join(a[j][q].Name)
+                                bibinfo_diff = param_info(a[j][q])
+                                bib_diff = bibinfo_diff.BibTex_Reference
+                                refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+
+                            elseif typeof(a[j][q]) <: GrainBoundarySliding
+                                global GBS += 1
+                                flowlawcount += 1
+                                flowadd = flowgbs
+                                parallelrheo *= flowadd * ","
+                                name = fdsname * join(a[j][q].Name)
+                                bibinfo_diff = param_info(a[j][q])
+                                bib_diff = bibinfo_diff.BibTex_Reference
+                                refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+
+                            elseif typeof(a[j][q]) <: PeierlsCreep
+                                global Pei += 1
+                                flowlawcount += 1
+                                flowadd = flowpei
+                                parallelrheo *= flowadd * ","
+                                name = fdsname * join(a[j][q].Name)
+                                bibinfo_diff = param_info(a[j][q])
+                                bib_diff = bibinfo_diff.BibTex_Reference
+                                refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+
+                            elseif typeof(a[j][q]) <: NonLinearPeierlsCreep
+                                global NLP += 1
+                                flowlawcount += 1
+                                flowadd = flownlp
                                 parallelrheo *= flowadd * ","
                                 name = fdsname * join(a[j][q].Name)
                                 bibinfo_diff = param_info(a[j][q])
@@ -273,6 +416,35 @@ function Phase2Dict(s)
                                         bib_diff = bibinfo_diff.BibTex_Reference
                                         refs["$name"] = (bib_diff, "$flowlawcount", "$i")
 
+                                    elseif typeof(a[j][q][u]) <: GrainBoundarySliding
+                                        global GBS += 1
+                                        flowlawcount += 1
+                                        flowadd = flowgbs
+                                        comporheo *= flowadd * ","
+                                        name = namepre * join(a[j][q][u].Name)
+                                        bibinfo_diff = param_info(a[j][q][u])
+                                        bib_diff = bibinfo_diff.BibTex_Reference
+                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+
+                                    elseif typeof(a[j][q][u]) <: PeierlsCreep
+                                        global Pei += 1
+                                        flowlawcount += 1
+                                        flowadd = flowpei
+                                        comporheo *= flowadd * ","
+                                        name = namepre * join(a[j][q][u].Name)
+                                        bibinfo_diff = param_info(a[j][q][u])
+                                        bib_diff = bibinfo_diff.BibTex_Reference
+                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+
+                                    elseif typeof(a[j][q][u]) <: NonLinearPeierlsCreep
+                                        global NLP += 1
+                                        flowlawcount += 1
+                                        flowadd = flownlp
+                                        comporheo *= flowadd * ","
+                                        name = namepre * join(a[j][q][u].Name)
+                                        bibinfo_diff = param_info(a[j][q][u])
+                                        bib_diff = bibinfo_diff.BibTex_Reference
+                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
                                     elseif typeof(a[j][q][u]) <: LinearViscous
                                         global Lin += 1
                                         flowlawcount += 1
@@ -299,6 +471,15 @@ function Phase2Dict(s)
                                             end
                                             if typeof(a[j][q][u]) <: DiffusionCreep
                                                 fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Diff", "$flowdiff")
+                                            end
+                                            if typeof(a[j][q][u]) <: GrainBoundarySliding
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$GBS", "$flowgbs")
+                                            end
+                                            if typeof(a[j][q][u]) <: PeierlsCreep
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Pei", "$flowpei")
+                                            end
+                                            if typeof(a[j][q][u]) <: NonLinearPeierlsCreep
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$NLP", "$flownlp")
                                             end
                                             if typeof(a[j][q][u]) <: LinearViscous
                                                 fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Lin", "$flowlin")
@@ -331,6 +512,15 @@ function Phase2Dict(s)
                                     if typeof(a[j][q]) <: DiffusionCreep
                                         fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$Diff", "$flowdiff")
                                     end
+                                    if typeof(a[j][q]) <: GrainBoundarySliding
+                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$GBS", "$flowgbs")
+                                    end
+                                    if typeof(a[j][q]) <: PeierlsCreep
+                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$Pei", "$flowpei")
+                                    end
+                                    if typeof(a[j][q]) <: NonLinearPeierlsCreep
+                                        fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$NLP", "$flownlp")
+                                    end
                                     if typeof(a[j][q]) <: LinearViscous
                                         fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$Lin", "$flowlin")
                                     end
@@ -360,6 +550,12 @@ function Phase2Dict(s)
                                     fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Disl", "$flowdisl")
                                 elseif typeof(a[j]) <: DiffusionCreep
                                     fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Diff", "$flowdiff")
+                                elseif typeof(a[j]) <: GrainBoundarySliding
+                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$GBS", "$flowgbs")
+                                elseif typeof(a[j]) <: PeierlsCreep
+                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Pei", "$flowpei")
+                                elseif typeof(a[j]) <: NonLinearPeierlsCreep
+                                    fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$NLP", "$flownlp")
                                 elseif typeof(a[j]) <: LinearViscous
                                     fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Lin", "$flowlin")
                                 # If not a CreepLaw or CompositeRheology
@@ -889,6 +1085,36 @@ function Phase2DictMd(s)
                                         bib_diff = bibinfo_diff.BibTex_Reference
                                         refs["$name"] = (bib_diff, "$flowlawcount", "$i")
 
+                                    elseif typeof(a[j][q][u]) <: GrainBoundarySliding
+                                        global GBS += 1
+                                        flowlawcount += 1
+                                        flowadd = flowgbs
+                                        comporheo *= flowadd * ","
+                                        name = namepre * join(a[j][q][u].Name)
+                                        bibinfo_diff = param_info(a[j][q][u])
+                                        bib_diff = bibinfo_diff.BibTex_Reference
+                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+
+                                    elseif typeof(a[j][q][u]) <: PeierlsCreep
+                                        global Pei += 1
+                                        flowlawcount += 1
+                                        flowadd = flowpei
+                                        comporheo *= flowadd * ","
+                                        name = namepre * join(a[j][q][u].Name)
+                                        bibinfo_diff = param_info(a[j][q][u])
+                                        bib_diff = bibinfo_diff.BibTex_Reference
+                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+
+                                    elseif typeof(a[j][q][u]) <: NonLinearPeierlsCreep
+                                        global NLP += 1
+                                        flowlawcount += 1
+                                        flowadd = flownlp
+                                        comporheo *= flowadd * ","
+                                        name = namepre * join(a[j][q][u].Name)
+                                        bibinfo_diff = param_info(a[j][q][u])
+                                        bib_diff = bibinfo_diff.BibTex_Reference
+                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+
                                     elseif typeof(a[j][q][u]) <: LinearViscous
                                         global Lin += 1
                                         flowlawcount += 1
@@ -911,6 +1137,15 @@ function Phase2DictMd(s)
                                             if typeof(a[j][q][u]) <: DiffusionCreep
                                                 fds["$var $label $flowadd $i.$q.$u"] = (value, mdvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Diff", "$flowdiff")
                                             end
+                                            if typeof(a[j][q][u]) <: GrainBoundarySliding
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, mdvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$GBS", "$flowgbs")
+                                            end
+                                            if typeof(a[j][q][u]) <: PeierlsCreep
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, mdvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Pei", "$flowpei")
+                                            end
+                                            if typeof(a[j][q][u]) <: NonLinearPeierlsCreep
+                                                fds["$var $label $flowadd $i.$q.$u"] = (value, mdvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$NLP", "$flownlp")
+                                            end
                                             if typeof(a[j][q][u]) <: LinearViscous
                                                 fds["$var $label $flowadd $i.$q.$u"] = (value, mdvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Lin", "$flowlin")
                                             end
@@ -932,10 +1167,19 @@ function Phase2DictMd(s)
                                     mdvar = "$var"
                                     # Put value, LaTex variable name, creep law pattern, phase number, current disl, diff or linvisc count and corresponding string in a Dict
                                     if typeof(a[j][q]) <: DislocationCreep
-                                        fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i","$Disl", "$flowdisl")
+                                        fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i", "$Disl", "$flowdisl")
                                     end
                                     if typeof(a[j][q]) <: DiffusionCreep
                                         fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i", "$Diff", "$flowdiff")
+                                    end
+                                    if typeof(a[j][q]) <: GrainBoundarySliding
+                                        fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i", "$GBS", "$flowgbs")
+                                    end
+                                    if typeof(a[j][q]) <: PeierlsCreep
+                                        fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i", "$Pei", "$flowpei")
+                                    end
+                                    if typeof(a[j][q]) <: NonLinearPeierlsCreep
+                                        fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i", "$NLP", "$flownlp")
                                     end
                                     if typeof(a[j][q]) <: LinearViscous
                                         fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i", "$Lin", "$flowlin")
@@ -961,6 +1205,12 @@ function Phase2DictMd(s)
                                     fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$Disl", "$flowdisl")
                                 elseif typeof(a[j]) <: DiffusionCreep
                                     fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$Diff", "$flowdiff")
+                                elseif typeof(a[j]) <: GrainBoundarySliding
+                                    fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$GBS", "$flowgbs")
+                                elseif typeof(a[j]) <: PeierlsCreep
+                                    fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$Pei", "$flowpei")
+                                elseif typeof(a[j]) <: NonLinearPeierlsCreep
+                                    fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$NLP", "$flownlp")
                                 elseif typeof(a[j]) <: LinearViscous
                                     fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$Lin", "$flowlin")
                                 else
