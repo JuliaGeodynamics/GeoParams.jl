@@ -182,9 +182,10 @@ using GeoParams
     CharDim = GEO_units()
     creeplaw_list = DiffusionCreep_info       # all creeplaws in database
     for (key, val) in creeplaw_list
-        p     = SetDiffusionCreep(key)        # original creep law
-        p_nd  = nondimensionalize(p,CharDim)    # non-dimensionalized
-        p_dim = dimensionalize(p,CharDim)       # dimensionalized
+        p     = SetDiffusionCreep(key)                # original creep law
+        p_nd  = nondimensionalize(p,CharDim)          # non-dimensionalized
+        @test p_nd == SetDiffusionCreep(key, CharDim) # check that the non-dimensionalized version is the same as the original
+        p_dim = dimensionalize(p,CharDim)             # dimensionalized
 
         # Check that values are the same after non-dimensionalisation & dimensionalisation
         for field in fieldnames(typeof(p_dim))

@@ -76,11 +76,12 @@ using GeoParams
 
     # Do some basic checks on all creeplaws in the DB
     CharDim = GEO_units()
-    creeplaw_list = GrainBoundarySliding_info       # all creeplaws in database
+    creeplaw_list = GrainBoundarySliding_info               # all creeplaws in database
     for (key, val) in creeplaw_list
-        p     = SetGrainBoundarySliding(key)        # original creep law
-        p_nd  = nondimensionalize(p,CharDim)    # non-dimensionalized
-        p_dim = dimensionalize(p,CharDim)       # dimensionalized
+        p     = SetGrainBoundarySliding(key)                # original creep law
+        p_nd  = nondimensionalize(p,CharDim)                # non-dimensionalized
+        @test p_nd == SetGrainBoundarySliding(key, CharDim) # check that the non-dimensionalized version is the same as the original
+        p_dim = dimensionalize(p,CharDim)                   # dimensionalized
 
         # Check that values are the same after non-dimensionalisation & dimensionalisation
         for field in fieldnames(typeof(p_dim))
