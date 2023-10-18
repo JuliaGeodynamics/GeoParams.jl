@@ -13,7 +13,7 @@ export compute_viscosity_εII,
 """
     compute_viscosity_εII(s::AbstractConstitutiveLaw, εII, kwargs...)
 
-Compute effective viscosity given a 2nd invariant of the deviatoric strain rate tensor, extra paramaters are passed as a named tuple, e.g., (;T=T) 
+Compute effective viscosity given a 2nd invariant of the deviatoric strain rate tensor, extra parameters are passed as a named tuple, e.g., (;T=T) 
 """
 @inline function compute_viscosity_εII(v::AbstractConstitutiveLaw, εII, args)
 
@@ -26,7 +26,7 @@ end
 """
     compute_viscosity_τII(s::AbstractConstitutiveLaw, τII, kwargs...)
 
-Compute effective viscosity given a 2nd invariant of the deviatoric stress tensor and, extra paramaters are passed as a named tuple, e.g., (;T=T) 
+Compute effective viscosity given a 2nd invariant of the deviatoric stress tensor and, extra parameters are passed as a named tuple, e.g., (;T=T) 
 """
 @inline function compute_viscosity_τII(v::AbstractConstitutiveLaw, τII, args)
 
