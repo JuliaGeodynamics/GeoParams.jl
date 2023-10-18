@@ -16,7 +16,7 @@ using Test, GeoParams
         CompositeRheology = CompositeRheology((creep, el)),
     )
 
-    @test η0 == compute_viscosity_εII(rheology, τII, args) == compute_viscosity_τII(rheology, τII, args)
+    @test η0 == compute_viscosity_εII(rheology, εII, args) == compute_viscosity_τII(rheology, τII, args)
     @test 1(1/η0 + 1/el.G.val/dt) == compute_elastoviscosity_εII(rheology, εII, args) == compute_elastoviscosity_τII(rheology, τII, args)
 
     # Slightly more complex example ----------------------
