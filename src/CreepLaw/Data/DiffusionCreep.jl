@@ -7,7 +7,7 @@ This is a dictionary with pre-defined creep laws
 """
 SetDiffusionCreep(name::String; kwargs...) = Transform_DiffusionCreep(name; kwargs)
 
-function SetDiffusionCreep(name::String, CharDim::GeoUnits{GEO}; kwargs...) 
+function SetDiffusionCreep(name::String, CharDim::GeoUnits{T}; kwargs...) where T<:Union{GEO, SI}
     return nondimensionalize(Transform_DiffusionCreep(name; kwargs), CharDim)
 end
 
