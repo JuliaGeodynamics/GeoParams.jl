@@ -10,6 +10,11 @@ export compute_viscosity_εII,
 @inline _viscosity(τII, εII) = τII / (2  * εII)
 
 # compute effective "creep" viscosity from strain rate tensor
+"""
+    compute_viscosity_εII(s::AbstractConstitutiveLaw, εII, kwargs...)
+
+Compute effective viscosity given a 2nd invariant of the deviatoric strain rate tensor and an extra paramaters undet the from of a named tuple, e.g., (;T=T) 
+"""
 @inline function compute_viscosity_εII(v::AbstractConstitutiveLaw, εII, args)
 
     τII = compute_τII(v, εII, args)
@@ -18,6 +23,11 @@ export compute_viscosity_εII,
 end
 
 # compute effective "creep" viscosity from deviatoric stress tensor
+"""
+    compute_viscosity_τII(s::AbstractConstitutiveLaw, τII, kwargs...)
+
+Compute effective viscosity given a 2nd invariant of the deviatoric stress tensor and an extra paramaters undet the from of a named tuple, e.g., (;T=T) 
+"""
 @inline function compute_viscosity_τII(v::AbstractConstitutiveLaw, τII, args)
 
     εII = compute_εII(v, τII, args)
