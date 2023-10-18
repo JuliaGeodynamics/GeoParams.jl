@@ -7,6 +7,10 @@ This is a dictionary with pre-defined creep laws
 """
 SetDiffusionCreep(name::String; kwargs...) = Transform_DiffusionCreep(name; kwargs)
 
+function SetDiffusionCreep(name::String, CharDim::GeoUnits{GEO}; kwargs...) 
+    return nondimensionalize(Transform_DiffusionCreep(name; kwargs), CharDim)
+end
+
 # predefined diffusion creep laws are to be added in the dictionary as it is done for dislocation creep laws (see 'DislocationCreep.jl')!
 const DiffusionCreep_info = Dict(
     [

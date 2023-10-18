@@ -9,6 +9,10 @@ function SetGrainBoundarySliding(name::String; kwargs...)
     return Transform_GrainBoundarySliding(name; kwargs)
 end
 
+function SetGrainBoundarySliding(name::String, CharDim::GeoUnits{GEO}; kwargs...) 
+    nondimensionalize(Transform_GrainBoundarySliding(name; kwargs), CharDim)
+end
+
 # predefined grain boundary sliding laws are to be added in the dictionary as it is done for dislocation creep laws (see 'DislocationCreep.jl')!
 const GrainBoundarySliding_info = Dict(
     [
