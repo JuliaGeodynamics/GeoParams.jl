@@ -12,17 +12,14 @@ import GeoParams: second_invariant, second_invariant_staggered, value_and_partia
 using BibTeX
 using ..MaterialParameters: MaterialParamsInfo
 import Base.show
-using ForwardDiff
-using StaticArrays
-using Static
+using ForwardDiff, StaticArrays, Static, Adapt
 
 const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 
 #abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
 #abstract type AbstractComposite <: AbstractMaterialParam end
 
-@inline precision(v::AbstractConstitutiveLaw{T}) where T = T
-
+@inline precision(::AbstractConstitutiveLaw{T}) where T = T
 
 include("Computations.jl")
 include("CreepLaw/CreepLaw.jl")              # viscous Creeplaws
