@@ -9,7 +9,7 @@ function SetGrainBoundarySliding(name::String; kwargs...)
     return Transform_GrainBoundarySliding(name; kwargs)
 end
 
-function SetGrainBoundarySliding(name::String, CharDim::GeoUnits{GEO}; kwargs...) 
+function SetGrainBoundarySliding(name::String, CharDim::GeoUnits{T}; kwargs...)  where T<:Union{GEO, SI}
     nondimensionalize(Transform_GrainBoundarySliding(name; kwargs), CharDim)
 end
 

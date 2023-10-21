@@ -7,7 +7,7 @@ Sets predefined dislocation creep data from a dictionary
 """
 SetDislocationCreep(name::String; kwargs...) = Transform_DislocationCreep(name; kwargs)
 
-function SetDislocationCreep(name::String, CharDim::GeoUnits{GEO}; kwargs...) 
+function SetDislocationCreep(name::String, CharDim::GeoUnits{T}; kwargs...) where T<:Union{GEO, SI}
     return nondimensionalize(Transform_DislocationCreep(name; kwargs), CharDim)
 end
 
