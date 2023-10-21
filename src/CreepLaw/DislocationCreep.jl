@@ -40,8 +40,9 @@ julia> x2 = DislocationCreep(n=3)
 DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3 mol^-1, Apparatus=AxialCompression
 ```
 """
-struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-    Name::NTuple{N,Char}
+struct DislocationCreep{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
+    Name::S
+    # Name::NTuple
     n::GeoUnit{T,U1} # power-law exponent
     r::GeoUnit{T,U1} # exponent of water-fugacity
     A::GeoUnit{T,U2} # material specific rheological parameter
@@ -54,29 +55,23 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
 
     function DislocationCreep(;
         Name="",
-        n=1.0NoUnits,
-        r=0.0NoUnits,
+        n=1NoUnits,
+        r=0NoUnits,
         A=1.5MPa^(-n) / s,
         E=476.0kJ / mol,
         V=6e-6m^3 / mol,
         R=8.3145J / mol / K,
         Apparatus=AxialCompression,
     )
-
-        # Rheology name
-        Name = String(join(Name))
-        N = length(Name)
-        NameU = NTuple{N,Char}(collect.(Name))
-
         # Corrections from lab experiments
         FT, FE = CorrectionFactor(Apparatus)
         # Convert to GeoUnits
-        nU = n isa GeoUnit ? n : convert(GeoUnit, n)
-        rU = r isa GeoUnit ? r : convert(GeoUnit, r)
-        AU = A isa GeoUnit ? A : convert(GeoUnit, A)
-        EU = E isa GeoUnit ? E : convert(GeoUnit, E)
-        VU = V isa GeoUnit ? V : convert(GeoUnit, V)
-        RU = R isa GeoUnit ? R : convert(GeoUnit, R)
+        nU = convert(GeoUnit, rat2float(n))
+        rU = convert(GeoUnit, r)
+        AU = convert(GeoUnit, A)
+        EU = convert(GeoUnit, E)
+        VU = convert(GeoUnit, V)
+        RU = convert(GeoUnit, R)
         # Extract struct types
         T = typeof(nU).types[1]
         U1 = typeof(nU).types[2]
@@ -85,8 +80,8 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U4 = typeof(VU).types[2]
         U5 = typeof(RU).types[2]
         # Create struct
-        return new{T,N,U1,U2,U3,U4,U5}(
-            NameU, nU, rU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
+        return new{T,String,U1,U2,U3,U4,U5}(
+            Name, nU, rU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
         )
     end
 
@@ -96,6 +91,8 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         )
     end
 end
+
+Adapt.@adapt_structure DislocationCreep
 
 """
     Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.

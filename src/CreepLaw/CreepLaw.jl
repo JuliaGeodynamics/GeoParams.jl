@@ -49,6 +49,9 @@ function CorrectionFactor(a::_T) where {_T}
     end
 end
 
+@inline rat2float(x::Rational) = float(x)
+@inline rat2float(x) = x
+
 include("DislocationCreep.jl")
 include("DiffusionCreep.jl")
 include("GrainBoundarySliding.jl")

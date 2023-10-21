@@ -3,7 +3,7 @@ export CustomRheology, dεII_dτII, dτII_dεII, compute_εII, compute_τII
 struct CustomRheology{F1,F2,T} <: AbstractConstitutiveLaw{Float64}
     strain::F1 # function to compute strain rate
     stress::F2 # function to compute deviatoric stress
-    args::T # NamedTuple of parameters
+    args::T    # NamedTuple of parameters
 
     function CustomRheology(strain::F1, stress::F2, args::T) where {F1,F2,T}
         f_strain = has_kwargs(strain) ? strain : (a, τII; kwargs...) -> a.strain(a, τII)

@@ -44,8 +44,8 @@ GrainBoundarySliding: Name = test, n=1.0, p=-3.0, A=1.5 m³·⁰ MPa⁻¹·⁰ s
 ```
 """
 
-struct GrainBoundarySliding{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-    Name::NTuple{N,Char}
+struct GrainBoundarySliding{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
+    Name::S
     n::GeoUnit{T,U1} # powerlaw exponent
     p::GeoUnit{T,U1} # grain size exponent
     A::GeoUnit{T,U2} # material specific rheological parameter
@@ -58,28 +58,24 @@ struct GrainBoundarySliding{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
 
     function GrainBoundarySliding(;
         Name="",
-        n=3.5NoUnits,
-        p=-2.0NoUnits,
-        A=6500MPa^(-3.5) * s^(-1.0) * µm^(2.0),
+        n=(7//2)NoUnits,
+        p=-2NoUnits,
+        A=6500MPa^(-n) * s^(-1.0) * µm^(2),
         E=400kJ / mol,
         V=18e-6m^3 / mol,
         R=8.3145J / mol / K,
         Apparatus=AxialCompression,
     )
 
-        # Rheology name
-        Name = String(join(Name))
-        N = length(Name)
-        NameU = NTuple{N,Char}(collect.(Name))
         # Corrections from lab experiments
         FT, FE = CorrectionFactor(Apparatus)
         # Convert to GeoUnits
-        nU = n isa GeoUnit ? n : convert(GeoUnit, n)
-        pU = p isa GeoUnit ? p : convert(GeoUnit, p)
-        AU = A isa GeoUnit ? A : convert(GeoUnit, A)
-        EU = E isa GeoUnit ? E : convert(GeoUnit, E)
-        VU = V isa GeoUnit ? V : convert(GeoUnit, V)
-        RU = R isa GeoUnit ? R : convert(GeoUnit, R)
+        nU = convert(GeoUnit, rat2float(n))
+        pU = convert(GeoUnit, p)
+        AU = convert(GeoUnit, A)
+        EU = convert(GeoUnit, E)
+        VU = convert(GeoUnit, V)
+        RU = convert(GeoUnit, R)
         # Extract struct types
         T = typeof(nU).types[1]
         U1 = typeof(nU).types[2]
@@ -88,8 +84,8 @@ struct GrainBoundarySliding{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U4 = typeof(VU).types[2]
         U5 = typeof(RU).types[2]
         # Create struct
-        return new{T,N,U1,U2,U3,U4,U5}(
-            NameU, nU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
+        return new{T,String,U1,U2,U3,U4,U5}(
+            Name, nU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
         )
     end
 
@@ -99,6 +95,8 @@ struct GrainBoundarySliding{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         )
     end
 end
+
+Adapt.@adapt_structure GrainBoundarySliding
 
 """
     Transform_GrainBoundarySliding(name)
