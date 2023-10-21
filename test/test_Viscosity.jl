@@ -5,19 +5,21 @@ using Test, GeoParams
     τII = 1
     η0 = 1
     dt = 1
-    P, T, xx, yy, xy = (rand() for i in  1:5);
-    args = (; P = P, T = T, dt = dt);
+    P, T, xx, yy, xy = (rand() for i in 1:5)
+    args = (; P=P, T=T, dt=dt)
 
     # Physical properties using GeoParams ----------------
     # create rheology struct
-    el       = SetConstantElasticity(; G=1, ν=0.5)            
-    creep    = LinearViscous(; η = η0)       # Arrhenius-like (T-dependant) viscosity
-    rheology = SetMaterialParams(;
-        CompositeRheology = CompositeRheology((creep, el)),
-    )
+    el = SetConstantElasticity(; G=1, ν=0.5)
+    creep = LinearViscous(; η=η0)       # Arrhenius-like (T-dependant) viscosity
+    rheology = SetMaterialParams(; CompositeRheology=CompositeRheology((creep, el)))
 
-    @test η0 == compute_viscosity_εII(rheology, εII, args) == compute_viscosity_τII(rheology, τII, args)
-    @test 1(1/η0 + 1/el.G.val/dt) == compute_elastoviscosity_εII(rheology, εII, args) == compute_elastoviscosity_τII(rheology, τII, args)
+    @test η0 ==
+        compute_viscosity_εII(rheology, εII, args) ==
+        compute_viscosity_τII(rheology, τII, args)
+    @test 1(1 / η0 + 1 / el.G.val / dt) ==
+        compute_elastoviscosity_εII(rheology, εII, args) ==
+        compute_elastoviscosity_τII(rheology, τII, args)
 
     # Slightly more complex example ----------------------
     # function to compute strain rate 
@@ -33,7 +35,9 @@ using Test, GeoParams
     end
 
     # helper function (optional)
-    @inline function custom_viscosity(a::CustomRheology; P=0.0, T=273.0, depth=0.0, kwargs...)
+    @inline function custom_viscosity(
+        a::CustomRheology; P=0.0, T=273.0, depth=0.0, kwargs...
+    )
         η0, Ea, Va, T0, R, cutoff = a.args.η0,
         a.args.Ea, a.args.Va, a.args.T0, a.args.R,
         a.args.cutoff
@@ -50,12 +54,14 @@ using Test, GeoParams
 
     # create rheology struct
     v1 = CustomRheology(custom_εII, custom_τII, v_args)
-    el = SetConstantElasticity(; G=70e9, ν=0.5)            
-    rheology = SetMaterialParams(;
-        CompositeRheology = CompositeRheology((v1, el)),
-    )
+    el = SetConstantElasticity(; G=70e9, ν=0.5)
+    rheology = SetMaterialParams(; CompositeRheology=CompositeRheology((v1, el)))
 
     η = 5.0317354602872275e20
-    @test η == compute_viscosity_τII(rheology, τII, args) == compute_viscosity_εII(rheology, εII, args)
-    @test 1(1/η + 1/el.G.val/dt) == compute_elastoviscosity_εII(rheology, εII, args) == compute_elastoviscosity_τII(rheology, τII, args)
+    @test η ==
+        compute_viscosity_τII(rheology, τII, args) ==
+        compute_viscosity_εII(rheology, εII, args)
+    @test 1(1 / η + 1 / el.G.val / dt) ==
+        compute_elastoviscosity_εII(rheology, εII, args) ==
+        compute_elastoviscosity_τII(rheology, τII, args)
 end

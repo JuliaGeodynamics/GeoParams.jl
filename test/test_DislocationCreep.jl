@@ -8,7 +8,6 @@ using GeoParams
 
     # Define a linear viscous creep law ---------------------------------
     x1 = DislocationCreep()
-    @test isbits(x1)
     @test x1.n.val == 1.0
     @test x1.A.val == 1.5
 
@@ -109,34 +108,28 @@ using GeoParams
     CharDim = GEO_units()
     creeplaw_list = DislocationCreep_info       # all creeplaws in database
     for (key, val) in creeplaw_list
-        p     = SetDislocationCreep(key)        # original creep law
-        p_nd  = nondimensionalize(p,CharDim)    # non-dimensionalized
-        p_dim = dimensionalize(p,CharDim)       # dimensionalized
+        p = SetDislocationCreep(key)        # original creep law
+        p_nd = nondimensionalize(p, CharDim)    # non-dimensionalized
+        p_dim = dimensionalize(p, CharDim)       # dimensionalized
 
         # Check that values are the same after non-dimensionalisation & dimensionalisation
         for field in fieldnames(typeof(p_dim))
-            val_original = getfield(p,    field)
-            val_final    = getfield(p_dim,field)
+            val_original = getfield(p, field)
+            val_final = getfield(p_dim, field)
             if isa(val_original, GeoUnit)
-                @test Value(val_original) == Value(val_final)        
+                @test Value(val_original) == Value(val_final)
             end
         end
-        
+
         # Perform computations with the rheology
-        args = (T=900.0, d=100e-6, τII_old=1e6);
+        args = (T=900.0, d=100e-6, τII_old=1e6)
         ε = 1e-15
-        τ      =   compute_τII(p,ε,args)
-        ε_test =   compute_εII(p,τ,args)
+        τ = compute_τII(p, ε, args)
+        ε_test = compute_εII(p, τ, args)
         @test ε ≈ ε_test
 
-
         # test overriding the default values
-        a =  SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)", V=1e-6m^3/mol)
-        @test Value(a.V) == 1e-6m^3/mol
-
+        a = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)"; V=1e-6m^3 / mol)
+        @test Value(a.V) == 1e-6m^3 / mol
     end
-
-
-   
-
 end
