@@ -9,7 +9,7 @@ function SetNonLinearPeierlsCreep(name::String; kwargs...)
     return Transform_NonLinearPeierlsCreep(name; kwargs)
 end
 
-function SetNonLinearPeierlsCreep(name::String, CharDim::GeoUnits{GEO}; kwargs...) 
+function SetNonLinearPeierlsCreep(name::String, CharDim::GeoUnits{T}; kwargs...)  where T<:Union{GEO, SI}
     return nondimensionalize(Transform_NonLinearPeierlsCreep(name; kwargs), CharDim)
 end
 
