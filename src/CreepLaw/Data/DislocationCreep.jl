@@ -24,7 +24,7 @@ const DislocationCreep_info = Dict(
                     Name="Dry Olivine | Hirth & Kohlstedt (2003)",
                     n=3.5NoUnits,
                     r=0.0NoUnits,
-                    A=1.1e5MPa^(-3.5) / s,
+                    A=1.1e5MPa^(-7//2) / s,
                     E=530.0kJ / mol,
                     V=14e-6m^3 / mol,
                     Apparatus=AxialCompression,
@@ -64,7 +64,7 @@ const DislocationCreep_info = Dict(
                     Name="Test Disl",
                     n=3.5NoUnits,
                     r=0.0NoUnits,
-                    A=7.440446357925734e7MPa^(-3.5) / s,
+                    A=7.440446357925734e7MPa^(-7//2) / s,
                     E=530.0kJ / mol,
                     V=14e-6m^3 / mol,
                     Apparatus=AxialCompression,
@@ -86,7 +86,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="1. Wet Olivine | Hirth & Kohlstedt (2003)",
                     n=3.5NoUnits,
-                    A=90MPa^(-3.5) / s,
+                    A=90MPa^(-7//2) / s,
                     E=480kJ / mol,
                     V=11e-6m^3 / mol,
                     r=1.2NoUnits,
@@ -125,7 +125,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="2. Wet Olivine | Hirth & Kohlstedt (2003)",
                     n=3.0NoUnits,
-                    A=1600MPa^(-3.0) / s,
+                    A=1600MPa^(-3) / s,
                     E=520.0kJ / mol,
                     V=22.0m^3 / mol,
                     r=1.2NoUnits,
@@ -167,7 +167,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Quartz Diorite | Hansen & Carter (1982)",
                     n=2.25NoUnits,
-                    A=3.5e-2MPa^(-2.25) / s,
+                    A=3.5e-2MPa^(-9//4) / s,
                     E=212kJ / mol,
                     V=0m^3 / mol,
                     r=0NoUnits,
@@ -202,7 +202,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Diabase | Caristan (1982)",
                     n=3.05NoUnits,
-                    A=6.0e-2MPa^(-3.05) / s,
+                    A=6.0e-2MPa^(-61//20) / s,
                     E=276kJ / mol,
                     V=0m^3 / mol,
                     r=0NoUnits,
@@ -237,7 +237,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Tumut Pond Serpentinite | Raleigh and Paterson (1965)",
                     n=2.8NoUnits,
-                    A=6.3e-7MPa^(-2.8) / s,
+                    A=6.3e-7MPa^(-14//5) / s,
                     E=66kJ / mol,
                     V=0m^3 / mol,
                     r=0NoUnits,
@@ -270,7 +270,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Maryland strong diabse | Mackwell et al. (1998)",
                     n=4.7NoUnits,
-                    A=8MPa^(-4.7) / s,
+                    A=8MPa^(-47//10) / s,
                     E=485kJ / mol,
                     V=0m^3 / mol,
                     r=0NoUnits,
@@ -304,7 +304,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Mafic Granulite | Wilks and Carter (1990)",
                     n=4.2NoUnits,
-                    A=1.4e4MPa^(-4.2) / s,
+                    A=1.4e4MPa^(-21//5) / s,
                     E=445kJ / mol,
                     V=0m^3 / mol,
                     r=0NoUnits,
@@ -336,7 +336,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Wet Quartzite | Ueda et al. (2008)",
                     n=2.3NoUnits,
-                    A=1 * exp10(-3.5)MPa^(-2.3) / s,
+                    A=1 * exp10(-3.5)MPa^(-23//10) / s,
                     E=154kJ / mol,
                     V=0m^3 / mol,
                     r=0NoUnits,
@@ -370,7 +370,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Granite | Carter and Tsenn (1987)",
                     n=3.3NoUnits,
-                    A=1.0 * exp10(-5.7)MPa^(-3.3) / s,
+                    A=1.0 * exp10(-5.7)MPa^(-33//10) / s,
                     E=186.5kJ / mol,
                     V=0m^3 / mol,
                     r=0NoUnits,
@@ -404,7 +404,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Plagioclase An75 | Ji and Zhao (1993)",
                     n=3.2NoUnits,
-                    A=3.27e-4MPa^(-3.2) / s,
+                    A=3.27e-4MPa^(-16//5) / s,
                     E=238kJ / mol,
                     V=0m^3 / mol,
                     r=0NoUnits,
@@ -436,7 +436,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Dry Anorthite | Rybacki et al. (2006)",
                     n=3.0NoUnits,
-                    A=exp10(12.7)MPa^(-3.0) / s,
+                    A=exp10(12.7)MPa^(-3) / s,
                     E=641kJ / mol,
                     V=24e-6m^3 / mol,
                     r=0NoUnits,
@@ -467,7 +467,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Wet Anorthite | Rybacki et al. (2006)",
                     n=3.0NoUnits,
-                    A=(10^0.2)MPa^(-3.0) / s,
+                    A=(10^0.2)MPa^(-3) / s,
                     E=345kJ / mol,
                     V=38m^3 / mol,
                     r=1NoUnits,
@@ -498,7 +498,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Wet Olivine | Hirth and Kohlstedt (2003)",
                     n=3.5NoUnits,
-                    A=1600.0MPa^(-3.5) / s,
+                    A=1600.0MPa^(-7//2) / s,
                     E=520kJ / mol,
                     V=11.0e-6m^3 / mol,
                     r=1.2NoUnits,
@@ -532,7 +532,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Wet Quarzite | Kirby (1983)",
                     n=2.3NoUnits,
-                    A=uconvert(Pa^(-2.3) / s, 3.2e-4MPa^(-2.3) / s),
+                    A=uconvert(Pa^(-23//10) / s, 3.2e-4MPa^(-23//10) / s),
                     E=154e3J / mol,
                     V=0m^3 / mol,
                     r=0NoUnits,
@@ -566,7 +566,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Wet Upper Mantle Olivine | Afonso and Ranalli (2004)",
                     n=4.0NoUnits,
-                    A=2.0e3MPa^(-4.0) / s,
+                    A=2.0e3MPa^(-4) / s,
                     E=471kJ / mol,
                     V=0.0m^3 / mol,
                     r=0.0NoUnits,
@@ -631,8 +631,8 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Olivine | Gerya (2019)",
                     n=3.5NoUnits,
-                    #A = 2.5e-17Pa^(-3.5)/s, 
-                    A=uconvert(MPa^(-3.5) / s, 2.5e-17Pa^(-3.5) / s),
+                    #A = 2.5e-17Pa^(-7//2)/s, 
+                    A=uconvert(MPa^(-7//2) / s, 2.5e-17Pa^(-7//2) / s),
                     E=532.0kJ / mol,
                     V=0.0m^3 / mol,
                     Apparatus=AxialCompression,   # used in book (according to matlab script)
@@ -663,7 +663,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Rock salt | Li & Urai (2016)",
                     n=5.0NoUnits,
-                    A=7.26e-6MPa^(-5.0) / s,
+                    A=7.26e-6MPa^(-5) / s,
                     E=53.92kJ / mol,
                     V=0.0m^3 / mol,
                     r=0.0NoUnits,
@@ -696,7 +696,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Rock salt | Li & Urai (2016)",
                     n=5.0NoUnits,
-                    A=7.26e-6MPa^(-5.0) / s,
+                    A=7.26e-6MPa^(-5) / s,
                     E=53.92kJ / mol,
                     V=0.0m^3 / mol,
                     r=0.0NoUnits,
@@ -728,7 +728,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Wet Olivine | Mei & Kohlstedt (2000b)",
                     n=3.0NoUnits,
-                    A=(10^3.2)MPa^(-3.0) / s,
+                    A=(10^3.2)MPa^(-3) / s,
                     E=470.0kJ / mol,
                     V=20.0m^3 / mol,
                     r=0.98NoUnits,
@@ -760,7 +760,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Dry Olivine | Karato & Jung (2003)",
                     n=3.0NoUnits,
-                    A=(10^6.1)MPa^(-3.0) / s,
+                    A=(10^6.1)MPa^(-3) / s,
                     E=510.0kJ / mol,
                     V=14.0m^3 / mol,
                     r=0.0NoUnits,
@@ -792,7 +792,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Wet Olivine | Karato & Jung (2003)",
                     n=3.0NoUnits,
-                    A=(10^2.9)MPa^(-3.0) / s,
+                    A=(10^2.9)MPa^(-3) / s,
                     E=510.0kJ / mol,
                     V=24.0m^3 / mol,
                     r=1.2NoUnits,
@@ -824,7 +824,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Wet Clinopyroxene | Chen et al. (2006)",
                     n=2.7NoUnits,
-                    A=(10^6.7)MPa^(-2.7) / s,
+                    A=(10^6.7)MPa^(-27//10) / s,
                     E=670.0kJ / mol,
                     V=0.0m^3 / mol,
                     r=3.0NoUnits,
@@ -855,7 +855,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Dry Clinopyroxene | Bystricky & Mackwell (2001)",
                     n=4.7NoUnits,
-                    A=(10^9.8)MPa^(-4.7) / s,
+                    A=(10^9.8)MPa^(-47//10) / s,
                     E=760.0kJ / mol,
                     V=0.0m^3 / mol,
                     r=0.0NoUnits,
@@ -887,7 +887,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Dry Clinopyroxene | Bystricky & Mackwell (2001)",
                     n=4.7NoUnits,
-                    A=(10^10.8)MPa^(-4.7) / s,
+                    A=(10^10.8)MPa^(-47//10) / s,
                     E=760.0kJ / mol,
                     V=0.0m^3 / mol,
                     r=0.0NoUnits,
@@ -919,7 +919,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Dry Diopside | Dimanov & Dresen (2005)",
                     n=5.5NoUnits,
-                    A=uconvert(MPa^(-5.5) / s, 3.01e-28Pa^(-5.5) / s),
+                    A=uconvert(MPa^(-55//10) / s, 3.01e-28Pa^(-55//10) / s),
                     E=691.0kJ / mol,
                     V=0.0m^3 / mol,
                     r=0.0NoUnits,
@@ -950,7 +950,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Wet Diopside | Dimanov & Dresen (2005)",
                     n=5.5NoUnits,
-                    A=uconvert(MPa^(-5.5) / s, 5.16e-33Pa^(-5.5) / s),
+                    A=uconvert(MPa^(-55//10) / s, 5.16e-33Pa^(-55//10) / s),
                     E=534.0kJ / mol,
                     V=0.0m^3 / mol,
                     r=0.0NoUnits,
@@ -981,7 +981,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Wet Omphacite | Zhang et al. (2006)",
                     n=3.5NoUnits,
-                    A=(10^-2)MPa^(-3.5) / s,
+                    A=(10^-2)MPa^(-7//2) / s,
                     E=310.0kJ / mol,
                     V=0.0m^3 / mol,
                     r=0.0NoUnits,
@@ -1013,7 +1013,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Wet Jadeit | Orzol et al. (2006)",
                     n=3.7NoUnits,
-                    A=(10^-3.3)MPa^(-3.7) / s,
+                    A=(10^-3.3)MPa^(-37//10) / s,
                     E=326.0kJ / mol,
                     V=0.0m^3 / mol,
                     r=0.0NoUnits,
@@ -1172,7 +1172,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Dry Quartzite | Jaoul et al. (1984)",
                     n=2.8NoUnits,
-                    A=(10^-5.415)MPa^(-2.8) / s,
+                    A=(10^-5.415)MPa^(-14//5) / s,
                     E=184.0kJ / mol,
                     V=0.0m^3 / mol,
                     r=0.0NoUnits,
@@ -1204,7 +1204,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="Wet Quartzite | Jaoul et al. (1984)",
                     n=2.8NoUnits,
-                    A=(10^-5.045)MPa^(-2.8) / s,
+                    A=(10^-5.045)MPa^(-14//5) / s,
                     E=163.0kJ / mol,
                     V=0.0m^3 / mol,
                     r=0.0NoUnits,
@@ -1299,7 +1299,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="low pressure wet Quartzite | Lusk et al. (2021)",
                     n=3.5NoUnits,
-                    A=(10^-9.3)MPa^(-3.5) / s,
+                    A=(10^-9.3)MPa^(-7//2) / s,
                     E=118.0kJ / mol,
                     V=2.59e-6m^3 / mol,
                     r=0.49NoUnits,
@@ -1331,7 +1331,7 @@ const DislocationCreep_info = Dict(
                 DislocationCreep(;
                     Name="high pressure wet Quartzite | Lusk et al. (2021)",
                     n=2.1NoUnits,
-                    A=(10^-6.36)MPa^(-2.1) / s,
+                    A=(10^-6.36)MPa^(-21//10) / s,
                     E=94.0kJ / mol,
                     V=1.44e-6m^3 / mol,
                     r=0.2NoUnits,
