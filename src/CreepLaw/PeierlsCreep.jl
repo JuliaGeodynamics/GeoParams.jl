@@ -91,26 +91,8 @@ Adapt.@adapt_structure PeierlsCreep
     Transforms units from GPa, MPa, kJ etc. to basic units such as Pa, J etc.
 """
 
-function Transform_PeierlsCreep(name; kwargs)
-    p_in = PeierlsCreep_info[name][1]
-
-    # Take optional arguments 
-    v_kwargs = values(kwargs)
-    val = GeoUnit.(values(v_kwargs))
-
-    args = (
-        Name=p_in.Name,
-        n=p_in.n,
-        q=p_in.q,
-        o=p_in.o,
-        TauP=p_in.TauP,
-        A=p_in.A,
-        E=p_in.E,
-        Apparatus=p_in.Apparatus,
-    )
-    p = merge(args, NamedTuple{keys(v_kwargs)}(val))
-
-    Name = String(collect(p.Name))
+function Transform_PeierlsCreep(name)
+    p = PeierlsCreep_data(name)
     n = Value(p.n)
     q = Value(p.q)
     o = Value(p.o)
@@ -121,7 +103,7 @@ function Transform_PeierlsCreep(name; kwargs)
     Apparatus = p.Apparatus
 
     # args from database
-    args = (Name=Name, n=n, q=q, o=o, TauP=TauP, A=A_Pa, E=E_J, Apparatus=Apparatus)
+    args = (Name=p.Name, n=n, q=q, o=o, TauP=TauP, A=A_Pa, E=E_J, Apparatus=Apparatus)
 
     return PeierlsCreep(; args...)
 end

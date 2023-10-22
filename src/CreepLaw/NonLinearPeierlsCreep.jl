@@ -95,37 +95,18 @@ Adapt.@adapt_structure NonLinearPeierlsCreep
     Transforms units from GPa, MPa, kJ etc. to basic units such as Pa, J etc.
 """
 
-function Transform_NonLinearPeierlsCreep(name; kwargs)
-    p_in = NonLinearPeierlsCreep_info[name][1]
-
-    # Take optional arguments 
-    v_kwargs = values(kwargs)
-    val = GeoUnit.(values(v_kwargs))
-
-    args = (
-        Name=p_in.Name,
-        n=p_in.n,
-        q=p_in.q,
-        o=p_in.o,
-        TauP=p_in.TauP,
-        A=p_in.A,
-        E=p_in.E,
-        Apparatus=p_in.Apparatus,
-    )
-    p = merge(args, NamedTuple{keys(v_kwargs)}(val))
-
-    Name = String(collect(p.Name))
+function Transform_NonLinearPeierlsCreep(name)
+    p = NonLinearPeierlsCreep_data(name)
     n = Value(p.n)
     q = Value(p.q)
     o = Value(p.o)
     TauP = uconvert(Pa, Value(p.TauP))
-    A_Pa = uconvert(Pa^(-NumValue(p.n)) / s, Value(p.A))
+    A_Pa = uconvert(Pa^(unit_power(p.A)) / s, Value(p.A))
     E_J = uconvert(J / mol, Value(p.E))
-
     Apparatus = p.Apparatus
 
     # args from database
-    args = (Name=Name, n=n, q=q, o=o, TauP=TauP, A=A_Pa, E=E_J, Apparatus=Apparatus)
+    args = (Name=p.Name, n=n, q=q, o=o, TauP=TauP, A=A_Pa, E=E_J, Apparatus=Apparatus)
 
     return NonLinearPeierlsCreep(; args...)
 end

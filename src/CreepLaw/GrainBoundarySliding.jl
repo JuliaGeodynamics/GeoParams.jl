@@ -102,34 +102,20 @@ Adapt.@adapt_structure GrainBoundarySliding
     Transform_GrainBoundarySliding(name)
 Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 """
-function Transform_GrainBoundarySliding(name; kwargs)
-    pp_in = GrainBoundarySliding_info[name][1]
-
-    # Take optional arguments 
-    v_kwargs = values(kwargs)
-    val = GeoUnit.(values(v_kwargs))
-
-    args = (
-        Name=pp_in.Name,
-        n=pp_in.n,
-        p=pp_in.p,
-        A=pp_in.A,
-        E=pp_in.E,
-        V=pp_in.V,
-        Apparatus=pp_in.Apparatus,
-    )
-    pp = merge(args, NamedTuple{keys(v_kwargs)}(val))
-
-    Name = String(collect(pp.Name))
+function Transform_GrainBoundarySliding(name)
+    @inline f1(A::T) where T = typeof(A).parameters[2].parameters[1][2].power
+    @inline f2(A::T) where T = typeof(A).parameters[2].parameters[1][1].power
+   
+    pp = GrainBoundarySliding_data(name)
     n = Value(pp.n)
     p = Value(pp.p)
-    A_Pa = uconvert(Pa^(-NumValue(pp.n)) * m^(-NumValue(p)) / s, Value(pp.A))
+    power_Pa = f1(pp.A)
+    power_m = f2(pp.A)
+    A_Pa = uconvert(Pa^(power_Pa) * m^(power_m) / s, Value(pp.A))
     E_J = uconvert(J / mol, Value(pp.E))
     V_m3 = uconvert(m^3 / mol, Value(pp.V))
-
     Apparatus = pp.Apparatus
-
-    args = (Name=Name, n=n, p=p, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+    args = (Name=pp.Name, n=n, p=p, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
 
     return GrainBoundarySliding(; args...)
 end
