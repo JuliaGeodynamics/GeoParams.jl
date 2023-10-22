@@ -65,7 +65,7 @@ struct DiffusionCreep{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         n=1NoUnits,
         r=0NoUnits,
         p=-3NoUnits,
-        A=1.5MPa^(-n - r) * s^(-1) * m^(-p),
+        A=1.5MPa^(-n - r) / s * m^(-p),
         E=500kJ / mol,
         V=24e-6m^3 / mol,
         R=8.3145J / mol / K,
@@ -127,6 +127,46 @@ function Transform_DiffusionCreep(name)
 
     return DiffusionCreep(; args...)
 end
+
+# function Transform_DiffusionCreep(name; kwargs)
+
+#     @inline f1(A::T) where T = typeof(A).parameters[2].parameters[1][2].power
+#     @inline f2(A::T) where T = typeof(A).parameters[2].parameters[1][1].power
+    
+#     pp_in = DiffusionCreep_data(name)
+
+#     # Take optional arguments 
+#     v_kwargs = values(kwargs)
+#     val = GeoUnit.(values(v_kwargs))
+
+#     args = (
+#         Name=pp_in.Name,
+#         n=pp_in.n,
+#         p=pp_in.p,
+#         r=pp_in.r,
+#         A=pp_in.A,
+#         E=pp_in.E,
+#         V=pp_in.V,
+#         Apparatus=pp_in.Apparatus,
+#     )
+#     pp = merge(args, NamedTuple{keys(v_kwargs)}(val))
+
+#     Name = String(collect(pp.Name))
+#     n = Value(pp.n)
+#     r = Value(pp.r)
+#     p = Value(pp.p)
+#     power_Pa = f1(pp.A)
+#     power_m  = f2(pp.A)
+#     A_Pa = uconvert(Pa^(power_Pa) * m^(power_m) / s, Value(pp.A))
+#     E_J = uconvert(J / mol, Value(pp.E))
+#     V_m3 = uconvert(m^3 / mol, Value(pp.V))
+
+#     Apparatus = pp.Apparatus
+
+#     args = (Name=Name, p=p, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+
+#     return DiffusionCreep(; args...)
+# end
 
 """
     s = remove_tensor_correction(s::DiffusionCreep)

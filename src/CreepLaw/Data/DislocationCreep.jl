@@ -1,3 +1,4 @@
+export SetDislocationCreep, DislocationCreep_data
 # This contains predefined dislocation creep values - Feel free to expand
 """
     SetDislocationCreep["Name of Dislocation Creep"]
@@ -11,7 +12,7 @@ function SetDislocationCreep(name::String, CharDim::GeoUnits{T}) where {T<:Union
     return nondimensionalize(Transform_DislocationCreep(name), CharDim)
 end
 
-function DislocationCreep_info(name::String)
+function DislocationCreep_data(name::String)
     rheology = if name === "Dry Olivine | Hirth & Kohlstedt (2003)"
         DislocationCreep(;
             Name = "Dry Olivine | Hirth & Kohlstedt (2003)",
@@ -82,9 +83,9 @@ function DislocationCreep_info(name::String)
             r = 0NoUnits,
             Apparatus = AxialCompression,
         )
-    elseif name === "Maryland strong diabse | Mackwell et al. (1998)"
+    elseif name === "Maryland strong diabase | Mackwell et al. (1998)"
         DislocationCreep(;
-            Name = "Maryland strong diabse | Mackwell et al. (1998)",
+            Name = "Maryland strong diabase | Mackwell et al. (1998)",
             n = 4.7NoUnits,
             A = 8MPa^(-47 // 10) / s,
             E = 485kJ / mol,
@@ -192,9 +193,9 @@ function DislocationCreep_info(name::String)
             r = 0.0NoUnits,
             Apparatus = AxialCompression,
         )
-    elseif name === "Olivine | Gerya (2019)"
+    elseif name === "Dry Olivine | Gerya (2019)"
         DislocationCreep(;
-            Name = "Olivine | Gerya (2019)",
+            Name = "Dry Olivine | Gerya (2019)",
             n = 3.5NoUnits,
             A = uconvert(MPa^(-7 // 2) / s, 2.5e-17Pa^(-7 // 2) / s),
             E = 532.0kJ / mol,
@@ -202,9 +203,9 @@ function DislocationCreep_info(name::String)
             Apparatus = AxialCompression,   # used in book (according to matlab script)
             r = 0.0NoUnits,
         )
-    elseif name === "Rock salt | Li & Urai (2016)"
+    elseif name === "Salado rock salt | Li & Urai (2016)"
         DislocationCreep(;
-            Name = "Rock salt | Li & Urai (2016)",
+            Name = "Salado rock salt | Li & Urai (2016)",
             n = 5.0NoUnits,
             A = 7.26e-6MPa^(-5) / s,
             E = 53.92kJ / mol,
@@ -432,7 +433,7 @@ function DislocationCreep_info(name::String)
             r = 0.49NoUnits,
             Apparatus = AxialCompression,
         )
-
     end
 
+    return DislocationCreep()
 end

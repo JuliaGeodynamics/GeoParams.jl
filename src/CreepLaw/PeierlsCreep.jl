@@ -97,7 +97,7 @@ function Transform_PeierlsCreep(name)
     q = Value(p.q)
     o = Value(p.o)
     TauP = uconvert(Pa, Value(p.TauP))
-    A_Pa = uconvert(s^(-1.0), Value(p.A))
+    A_Pa = uconvert(s^(-1), Value(p.A))
     E_J = uconvert(J / mol, Value(p.E))
 
     Apparatus = p.Apparatus

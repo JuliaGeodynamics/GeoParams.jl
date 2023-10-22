@@ -107,7 +107,7 @@ function Transform_DislocationCreep(name)
     Apparatus = p.Apparatus
     r = Value(p.r)
     # args from database
-    args = (Name=args.Name, n=n, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+    args = (Name=p.Name, n=n, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
 
     return DislocationCreep(; args...)
 end
