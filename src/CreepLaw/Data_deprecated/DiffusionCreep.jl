@@ -1,15 +1,15 @@
 # Add a list of pre-defined diffusion creep law values
 export DiffusionCreep_info
 
-"""
-    SetDiffusionCreep["Name of Diffusion Creep"]
-This is a dictionary with pre-defined creep laws    
-"""
-SetDiffusionCreep(name::String; kwargs...) = Transform_DiffusionCreep(name; kwargs)
+# """
+#     SetDiffusionCreep["Name of Diffusion Creep"]
+# This is a dictionary with pre-defined creep laws    
+# """
+# SetDiffusionCreep(name::String; kwargs...) = Transform_DiffusionCreep(name; kwargs)
 
-function SetDiffusionCreep(name::String, CharDim::GeoUnits{T}; kwargs...) where T<:Union{GEO, SI}
-    return nondimensionalize(Transform_DiffusionCreep(name; kwargs), CharDim)
-end
+# function SetDiffusionCreep(name::String, CharDim::GeoUnits{T}; kwargs...) where T<:Union{GEO, SI}
+#     return nondimensionalize(Transform_DiffusionCreep(name; kwargs), CharDim)
+# end
 
 # predefined diffusion creep laws are to be added in the dictionary as it is done for dislocation creep laws (see 'DislocationCreep.jl')!
 const DiffusionCreep_info = Dict(
@@ -450,7 +450,7 @@ const DiffusionCreep_info = Dict(
             "Wet Quartzite | Rutter & Brodie (2004)",
             (
                 DiffusionCreep(;
-                    Name="Wet Quartz | Rutter & Brodie (2004)",
+                    Name="Wet Quartzite | Rutter & Brodie (2004)",
                     n=1.0NoUnits,                         # power-law exponent
                     r=0.0NoUnits,                         # exponent of water-fugacity
                     p=-2.0NoUnits,                        # grain size exponent

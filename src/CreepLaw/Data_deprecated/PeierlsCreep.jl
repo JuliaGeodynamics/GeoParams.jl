@@ -5,16 +5,15 @@ export PeierlsCreep_info
     SetPeierlsCreep["Name of peierls creep law"]
 This is a dictionary with pre-defined creep laws    
 """
-SetPeierlsCreep(name::String; kwargs...) = Transform_PeierlsCreep(name; kwargs)
+# SetPeierlsCreep(name::String; kwargs...) = Transform_PeierlsCreep(name; kwargs)
 
-function SetPeierlsCreep(name::String, CharDim::GeoUnits{GEO}; kwargs...) 
-    return nondimensionalize(Transform_PeierlsCreep(name; kwargs), CharDim)
-end
+# function SetPeierlsCreep(name::String, CharDim::GeoUnits{GEO}; kwargs...) 
+#     return nondimensionalize(Transform_PeierlsCreep(name; kwargs), CharDim)
+# end
 
 # predefined peierls creep laws are to be added in the dictionary as it is done for dislocation creep laws (see 'DislocationCreep.jl')!
 const PeierlsCreep_info = Dict(
     [
-
         # Dry Olivine rheology 
         (
             "Dry Olivine | Goetze and Evans (1979)",

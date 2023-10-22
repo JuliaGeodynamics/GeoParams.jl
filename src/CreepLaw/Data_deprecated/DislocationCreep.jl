@@ -5,11 +5,11 @@
 Sets predefined dislocation creep data from a dictionary
 
 """
-SetDislocationCreep(name::String; kwargs...) = Transform_DislocationCreep(name; kwargs)
+# SetDislocationCreep(name::String; kwargs...) = Transform_DislocationCreep(name; kwargs)
 
-function SetDislocationCreep(name::String, CharDim::GeoUnits{T}; kwargs...) where T<:Union{GEO, SI}
-    return nondimensionalize(Transform_DislocationCreep(name; kwargs), CharDim)
-end
+# function SetDislocationCreep(name::String, CharDim::GeoUnits{T}; kwargs...) where T<:Union{GEO, SI}
+#     return nondimensionalize(Transform_DislocationCreep(name; kwargs), CharDim)
+# end
 
 const DislocationCreep_info = Dict(
     [
@@ -268,7 +268,7 @@ const DislocationCreep_info = Dict(
             #  Mackwell et al. (1998), page 980, equation in text
             (
                 DislocationCreep(;
-                    Name="Maryland strong diabse | Mackwell et al. (1998)",
+                    Name="Maryland strong diabase | Mackwell et al. (1998)",
                     n=4.7NoUnits,
                     A=8MPa^(-47//10) / s,
                     E=485kJ / mol,
@@ -629,7 +629,7 @@ const DislocationCreep_info = Dict(
             # after Exercise 6.1 of Numerical Geodynamics 
             (
                 DislocationCreep(;
-                    Name="Olivine | Gerya (2019)",
+                    Name="Dry Olivine | Gerya (2019)",
                     n=3.5NoUnits,
                     #A = 2.5e-17Pa^(-7//2)/s, 
                     A=uconvert(MPa^(-7//2) / s, 2.5e-17Pa^(-7//2) / s),
@@ -694,7 +694,7 @@ const DislocationCreep_info = Dict(
             #  refers to Wawersik & Zeuch (1986), values can not be reproduced!
             (
                 DislocationCreep(;
-                    Name="Rock salt | Li & Urai (2016)",
+                    Name="Salado Rock salt | Li & Urai (2016)",
                     n=5.0NoUnits,
                     A=7.26e-6MPa^(-5) / s,
                     E=53.92kJ / mol,

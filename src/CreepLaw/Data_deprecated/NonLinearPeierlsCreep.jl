@@ -5,13 +5,13 @@ export NonLinearPeierlsCreep_info
     SetNonLinearPeierlsCreep["Name of non linear peierls creep law"]
 This is a dictionary with pre-defined creep laws    
 """
-function SetNonLinearPeierlsCreep(name::String; kwargs...)
-    return Transform_NonLinearPeierlsCreep(name; kwargs)
-end
+# function SetNonLinearPeierlsCreep(name::String; kwargs...)
+#     return Transform_NonLinearPeierlsCreep(name; kwargs)
+# end
 
-function SetNonLinearPeierlsCreep(name::String, CharDim::GeoUnits{T}; kwargs...)  where T<:Union{GEO, SI}
-    return nondimensionalize(Transform_NonLinearPeierlsCreep(name; kwargs), CharDim)
-end
+# function SetNonLinearPeierlsCreep(name::String, CharDim::GeoUnits{T}; kwargs...)  where T<:Union{GEO, SI}
+#     return nondimensionalize(Transform_NonLinearPeierlsCreep(name; kwargs), CharDim)
+# end
 
 # predefined peierls creep laws are to be added in the dictionary as it is done for dislocation creep laws (see 'DislocationCreep.jl')!
 const NonLinearPeierlsCreep_info = Dict(
