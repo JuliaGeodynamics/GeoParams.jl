@@ -11,41 +11,50 @@ abstract type AbstractCreepLaw{T} <: AbstractConstitutiveLaw{T} end
 
 export isvolumetric,
     LinearViscous, PowerlawViscous, CorrectionFactor, AbstractCreepLaw, ArrheniusType
+    
+isvolumetric(a::AbstractCreepLaw) = false
 
 # This computes correction factors to go from experimental data to tensor format
 function CorrectionFactor(a::AbstractCreepLaw{_T}) where {_T}
-    if a.Apparatus == AxialCompression
+    apparatus = a.Apparatus
+    if apparatus == AxialCompression
         FT = sqrt(3) # relation between differential stress recorded by apparatus and TauII
         FE = 2 / FT            # relation between gamma recorded by apparatus and EpsII
         return FT, FE
 
-    elseif a.Apparatus == SimpleShear
-        FT = one(_T) * 2      # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
+    elseif apparatus == SimpleShear
+        FT = 2.0      # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
         FE = FT
         return FT, FE
 
-    elseif a.Apparatus == Invariant
-        FT, FE = one(_T), one(_T)
+    elseif apparatus == Invariant
+        FT = FE = 1.0
         return FT, FE
+    
+    else
+        throw(ArgumentError("Unknown apparatus"))
+
     end
 end
 
-isvolumetric(a::AbstractCreepLaw) = false
-
-function CorrectionFactor(a::_T) where {_T}
+function CorrectionFactor(a)
     if a == AxialCompression
-        FT = sqrt(3) # relation between differential stress recorded by apparatus and TauII
+        FT = sqrt(3)           # relation between differential stress recorded by apparatus and TauII
         FE = 2 / FT            # relation between gamma recorded by apparatus and EpsII
         return FT, FE
 
     elseif a == SimpleShear
-        FT = one(_T) * 2      # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
+        FT = 2.0      # it is assumed that the flow law parameters were derived as a function of differential stress, not the shear stress. Must be modidified if it is not the case
         FE = FT
         return FT, FE
 
     elseif a == Invariant
-        FT, FE = one(_T), one(_T)
+        FT = FE = 1.0
         return FT, FE
+
+    else
+        throw(ArgumentError("Unknown apparatus"))
+
     end
 end
 
