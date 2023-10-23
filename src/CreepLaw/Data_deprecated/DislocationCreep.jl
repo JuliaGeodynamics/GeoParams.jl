@@ -1,16 +1,11 @@
 # This contains predefined dislocation creep values - Feel free to expand
+export DislocationCreep_info
 """
     SetDislocationCreep["Name of Dislocation Creep"]
 
 Sets predefined dislocation creep data from a dictionary
 
 """
-# SetDislocationCreep(name::String; kwargs...) = Transform_DislocationCreep(name; kwargs)
-
-# function SetDislocationCreep(name::String, CharDim::GeoUnits{T}; kwargs...) where T<:Union{GEO, SI}
-#     return nondimensionalize(Transform_DislocationCreep(name; kwargs), CharDim)
-# end
-
 const DislocationCreep_info = Dict(
     [
 

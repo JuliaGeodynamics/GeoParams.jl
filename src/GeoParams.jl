@@ -226,7 +226,16 @@ export dεII_dτII,
     local_iterations_εvol, 
     compute_p_harmonic 
 
-
+include("CreepLaw/Data_deprecated/DislocationCreep.jl")
+include("CreepLaw/Data_deprecated/DiffusionCreep.jl")
+include("CreepLaw/Data_deprecated/GrainBoundarySliding.jl")
+include("CreepLaw/Data_deprecated/NonLinearPeierlsCreep.jl")
+include("CreepLaw/Data_deprecated/PeierlsCreep.jl")
+export DislocationCreep_info,
+    DiffusionCreep_info,
+    GrainBoundarySliding_info,
+    PeierlsCreep_info,
+    NonLinearPeierlsCreep_info
 
 # Constitutive relationships laws
 include("StressComputations/StressComputations.jl")
@@ -333,15 +342,15 @@ end
 include("aliases.jl")
 export ntuple_idx
 
-include("CreepLaw/Data_deprecated/DislocationCreep.jl")
-include("CreepLaw/Data_deprecated/DiffusionCreep.jl")
-include("CreepLaw/Data_deprecated/GrainBoundarySliding.jl")
-include("CreepLaw/Data_deprecated/NonLinearPeierlsCreep.jl")
-include("CreepLaw/Data_deprecated/PeierlsCreep.jl")
-export DislocationCreep_info,
-    DiffusionCreep_info,
-    GrainBoundarySliding_info,
-    PeierlsCreep_info,
-    NonLinearPeierlsCreep_info
+# include("CreepLaw/Data_deprecated/DislocationCreep.jl")
+# include("CreepLaw/Data_deprecated/DiffusionCreep.jl")
+# include("CreepLaw/Data_deprecated/GrainBoundarySliding.jl")
+# include("CreepLaw/Data_deprecated/NonLinearPeierlsCreep.jl")
+# include("CreepLaw/Data_deprecated/PeierlsCreep.jl")
+# export DislocationCreep_info,
+#     DiffusionCreep_info,
+#     GrainBoundarySliding_info,
+#     PeierlsCreep_info,
+#     NonLinearPeierlsCreep_info
 
 end # module

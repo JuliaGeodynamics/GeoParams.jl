@@ -136,18 +136,6 @@ function remove_tensor_correction(s::DislocationCreep)
     )
 end
 
-function param_info(s::DislocationCreep)
-    name = String(collect(s.Name))
-    eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"
-    if name == ""
-        return MaterialParamsInfo(; Equation=eq)
-    end
-    inf = DislocationCreep_info[name][2]
-    return MaterialParamsInfo(;
-        Equation=eq, Comment=inf.Comment, BibTex_Reference=inf.BibTex_Reference
-    )
-end
-
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
 @inline function compute_εII(
@@ -330,3 +318,16 @@ end
 
 # load collection of dislocation creep laws
 include("Data/DislocationCreep.jl")
+include("Data_deprecated/DislocationCreep.jl")
+
+function param_info(s::DislocationCreep)
+    name = String(collect(s.Name))
+    eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"
+    if name == ""
+        return MaterialParamsInfo(; Equation=eq)
+    end
+    inf = DislocationCreep_info[name][2]
+    return MaterialParamsInfo(;
+        Equation=eq, Comment=inf.Comment, BibTex_Reference=inf.BibTex_Reference
+    )
+end
