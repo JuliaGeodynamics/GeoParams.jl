@@ -614,7 +614,7 @@ function compute_units(
     end
 
     value::T = ustrip(char_val)                                 # numerical value
-    char_val_out = upreferred(param.unit) * value                # this is done for type-stability
+    char_val_out = upreferred(param.unit) * value               # this is done for type-stability
 
     return char_val_out
 end
@@ -630,9 +630,9 @@ Non-dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
     N = length(fields)
     quote
         Base.@_inline_meta 
-        Base.@nexprs $N i -> x_i = begin
+        Base.@nexprs $N i -> MatParam = begin
             field = $(fields)[i]
-            _nondimensionalize(MatParam, getfield(MatParam, field), g, field)
+            @show _nondimensionalize(MatParam, getfield(MatParam, field), g, field)
         end
     end
 end
@@ -655,6 +655,7 @@ nondimensionalizes all fields within the Material Parameters structure that cont
 function nondimensionalize(
     phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TYPE}
 ) where {TYPE}
+    # @show fieldnames(typeof(phase_mat))
     for param in fieldnames(typeof(phase_mat))
         fld = getfield(phase_mat, param)
         if length(fld) > 0
@@ -674,6 +675,7 @@ function nondimensionalize(
                     fld_new = ntuple(
                         i -> Units.nondimensionalize(fld[id[i]], g), length(id)
                     )
+                    @show fld_new, fld
                     #                    setfield!(phase_mat, param, fld_new)        # to be changed for immutable struct
                     phase_mat = set(phase_mat, Setfield.PropertyLens{param}(), fld_new)
                 end

@@ -263,16 +263,13 @@ function SetMaterialParams(
     )
 
     # [optionally] non-dimensionalize the struct
-    if ~isnothing(CharDim)
-        if typeof(CharDim) <: GeoUnits
-            phase = nondimensionalize(phase, CharDim)
-        else
-            error("CharDim should be of type GeoUnits")
-        end
-    end
-
-    return phase
+    phase_nd = nondimensionalize_phase(phase, CharDim) 
+    return phase_nd
 end
+
+@inline nondimensionalize_phase(phase, CharDim::GeoUnits) = nondimensionalize(phase, CharDim)
+@inline nondimensionalize_phase(phase, ::Nothing) = phase
+@inline nondimensionalize_phase(phase, CharDim) = error("CharDim should be of type GeoUnits")
 
 @inline str2char(str::String) = str2char(str, static(length(str)))
 @inline str2char(str, ::StaticInt{N}) where N = ntuple(i->str[i], Val(N))
