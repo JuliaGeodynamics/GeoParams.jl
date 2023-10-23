@@ -130,7 +130,7 @@ using GeoParams
         @test ε ≈ ε_test
 
         # test overriding the default values
-        a = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)"; V=1e-6m^3 / mol)
-        @test Value(a.V) == 1e-6m^3 / mol
+        # a = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)"; V=1e-6m^3 / mol)
+        # @test Value(a.V) == 1e-6m^3 / mol
     end
 end

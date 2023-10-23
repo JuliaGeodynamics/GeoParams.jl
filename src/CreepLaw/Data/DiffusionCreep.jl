@@ -11,15 +11,7 @@ function SetDiffusionCreep(name::String, CharDim::GeoUnits{T}) where {T<:Union{G
     return nondimensionalize(Transform_DiffusionCreep(name), CharDim)
 end
 
-# function SetDiffusionCreep(name::String; kwargs...)
-#     return Transform_DiffusionCreep(name; kwargs)
-# end
-
-# function SetDiffusionCreep(name::String, CharDim::GeoUnits{T}; kwargs...)  where T<:Union{GEO, SI}
-#     nondimensionalize(Transform_DiffusionCreep(name; kwargs), CharDim)
-# end
-
-@inline function DiffusionCreep_data(name::String)
+function DiffusionCreep_data(name::String)
     if name === "Test Diff"
         return DiffusionCreep(;
             Name = "Test Diff",
