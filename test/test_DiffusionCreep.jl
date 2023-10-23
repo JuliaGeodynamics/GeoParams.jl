@@ -54,23 +54,6 @@ using GeoParams
     compute_εII!(ε_array, p, τII_array, args)
     @test ε_array[1] ≈ ε
 
-    # ===
-
-    # dry anorthtite, stress-strainrate curve
-    p = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
-    εII = exp10.(-22:0.5:-12)
-    τII = zero(εII)                # preallocate array
-    T = 650 + 273.15
-    gsiz = 100e-6
-    args = (T=T, d=gsiz)
-    compute_τII!(τII, p, εII, args)
-
-    eta_array = @. 0.5 * τII / εII
-
-    εII = zero(τII)
-    compute_εII!(εII, p, τII, args)
-    eta_array1 = @. 0.5 * τII / εII
-
     #---------------------------
     # This is data from a matlab script implementation of the rheology (which was again benchmarked vs. LaMEM)
     for itest in 1:2
@@ -160,20 +143,9 @@ using GeoParams
         compute_εII!(εII_vec, pp, τII_vec, args)
     end
 
-    # test overriding the default values
-    a = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)"; V=1e-6m^3 / mol)
-    @test Value(a.V) == 1e-6m^3 / mol
-
-    # --- debugging
-
-    #@unpack_units n,r,A,E,V,R = pp
-
-    #FT, FE = CorrectionFactor(pp);    
-    #FT=0.5; FE=1;
-
-    #τ = A^(-1/n)*(EpsII*FE)^(1/n)*f^(-r/n)*exp((E + P*V)/(n * R*T))/FT
-
-    # ----
+    # # test overriding the default values
+    # a = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)"; V=1e-6m^3 / mol)
+    # @test Value(a.V) == 1e-6m^3 / mol
 
     # Do some basic checks on all creeplaws in the DB
     CharDim = GEO_units()

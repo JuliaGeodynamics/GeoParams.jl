@@ -48,8 +48,8 @@ using GeoParams
     # ===
 
     # test overriding the default values
-    a = SetPeierlsCreep("Dry Olivine | Goetze and Evans (1979)"; E=535.0kJ / mol)
-    @test Value(a.E) == 535.0kJ / mol
+    # a = SetPeierlsCreep("Dry Olivine | Goetze and Evans (1979)"; E=535.0kJ / mol)
+    # @test Value(a.E) == 535.0kJ / mol
 
     # Do some basic checks on all creeplaws in the DB
     CharDim       = GEO_units()

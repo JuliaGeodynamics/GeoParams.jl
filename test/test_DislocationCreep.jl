@@ -32,7 +32,7 @@ using GeoParams
         Name="Viscous Matrix",
         Phase=2,
         Density=ConstantDensity(),
-        CreepLaws=DislocationCreep(; n=3NoUnits, r=1NoUnits),
+        CreepLaws=DislocationCreep(; n=3NoUnits, r=1NoUnits), 
         CharDim=CharDim,
     )
     TauII = 1e6
@@ -94,8 +94,8 @@ using GeoParams
     ηvec = τvec ./ (2 * εvec)
     @test sum(ηvec) / length(ηvec) ≈ 4.124658696991946e24
 
-    p = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
-    #p = SetDislocationCreep("Wet Anorthite | Rybecki and Dresen (2000)")
+    # p = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
+    # p = SetDislocationCreep("Wet Anorthite | Rybecki and Dresen (2000)")
     p = SetDislocationCreep("Dry Olivine | Hirth & Kohlstedt (2003)")
 
     args = (; T=(650 + 273.15))
@@ -108,6 +108,7 @@ using GeoParams
     CharDim = GEO_units()
     creeplaw_list = DislocationCreep_info       # all creeplaws in database
     for (key, val) in creeplaw_list
+        # @show key
         p = SetDislocationCreep(key)        # original creep law
         p_nd = nondimensionalize(p, CharDim)    # non-dimensionalized
         p_dim = dimensionalize(p, CharDim)       # dimensionalized

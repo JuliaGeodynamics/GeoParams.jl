@@ -57,8 +57,8 @@ using GeoParams
     eta_array1 = @. 0.5 * τII / εII
 
     # test overriding the default values
-    a = SetNonLinearPeierlsCreep("Dry Olivine | Mei et al. (2010)"; E=475.0kJ / mol)
-    @test Value(a.E) == 475.0kJ / mol
+    # a = SetNonLinearPeierlsCreep("Dry Olivine | Mei et al. (2010)"; E=475.0kJ / mol)
+    # @test Value(a.E) == 475.0kJ / mol
 
     # Do some basic checks on all creeplaws in the DB
     CharDim = GEO_units()

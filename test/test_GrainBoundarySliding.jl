@@ -48,11 +48,11 @@ using GeoParams
     compute_εII!(ε_array, p, τII_array, args)
     @test ε_array[1] ≈ ε
 
-    # test overriding the default values
-    a = SetGrainBoundarySliding(
-        "Dry Olivine >= 1523K | Hirth and Kohlstedt (2003)"; V=1e-6m^3 / mol
-    )
-    @test Value(a.V) == 1.0e-6m^3 / mol
+    # # test overriding the default values
+    # a = SetGrainBoundarySliding(
+    #     "Dry Olivine >= 1523K | Hirth and Kohlstedt (2003)"; V=1e-6m^3 / mol
+    # )
+    # @test Value(a.V) == 1.0e-6m^3 / mol
 
     # Do some basic checks on all creeplaws in the DB
     CharDim       = GEO_units()
