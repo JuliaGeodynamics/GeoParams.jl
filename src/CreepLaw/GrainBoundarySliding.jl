@@ -1,5 +1,6 @@
 export GrainBoundarySliding,
     SetGrainBoundarySliding,
+    Transform_GrainBoundarySliding,
     GrainBoundarySliding_info,
     remove_tensor_correction,
     compute_εII!,
@@ -102,11 +103,20 @@ Adapt.@adapt_structure GrainBoundarySliding
     Transform_GrainBoundarySliding(name)
 Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 """
-function Transform_GrainBoundarySliding(name)
+Transform_GrainBoundarySliding(name::String) = Transform_GrainBoundarySliding(GrainBoundarySliding_data(name))
+
+function Transform_GrainBoundarySliding(name::String, CharDim::GeoUnits{U}) where {U<:Union{GEO,SI}}
+    Transform_GrainBoundarySliding(GrainBoundarySliding_data(name), CharDim)
+end
+
+function Transform_GrainBoundarySliding(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) where {T,U<:Union{GEO,SI}}
+    nondimensionalize(Transform_GrainBoundarySliding(p), CharDim)
+end
+
+function Transform_GrainBoundarySliding(pp::AbstractCreepLaw{T}) where T
     @inline f1(A::T) where T = typeof(A).parameters[2].parameters[1][2].power
     @inline f2(A::T) where T = typeof(A).parameters[2].parameters[1][1].power
    
-    pp = GrainBoundarySliding_data(name)
     n = Value(pp.n)
     p = Value(pp.p)
     power_Pa = f1(pp.A)

@@ -9,6 +9,7 @@
 
 export DislocationCreep,
     DislocationCreep_info,
+    Transform_DislocationCreep,
     SetDislocationCreep,
     remove_tensor_correction,
     dεII_dτII,
@@ -98,8 +99,17 @@ Adapt.@adapt_structure DislocationCreep
     Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 """
 
-function Transform_DislocationCreep(name)
-    p = DislocationCreep_data(name)
+Transform_DislocationCreep(name::String) = Transform_DislocationCreep(DislocationCreep_data(name))
+
+function Transform_DislocationCreep(name::String, CharDim::GeoUnits{U}) where {U<:Union{GEO,SI}}
+    Transform_DislocationCreep(DislocationCreep_data(name), CharDim)
+end
+
+function Transform_DislocationCreep(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) where {T,U<:Union{GEO,SI}}
+    nondimensionalize(Transform_DislocationCreep(p), CharDim)
+end
+
+function Transform_DislocationCreep(p::AbstractCreepLaw{T}) where T
     n = Value(p.n)
     A_Pa = uconvert(Pa^unit_power(p.A) / s, Value(p.A))
     E_J = uconvert(J / mol, Value(p.E))

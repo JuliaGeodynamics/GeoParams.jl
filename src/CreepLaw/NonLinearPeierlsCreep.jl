@@ -3,7 +3,8 @@ export NonLinearPeierlsCreep,
     SetNonLinearPeierlsCreep,
     remove_tensor_correction,
     dεII_dτII,
-    Peierls_stress_iterations
+    Peierls_stress_iterations,
+    Transform_NonLinearPeierlsCreep
 
 # NonLinearPeierls Creep ------------------------------------------------
 """
@@ -94,9 +95,17 @@ Adapt.@adapt_structure NonLinearPeierlsCreep
 """
     Transforms units from GPa, MPa, kJ etc. to basic units such as Pa, J etc.
 """
+Transform_NonLinearPeierlsCreep(name::String) = Transform_NonLinearPeierlsCreep(NonLinearPeierlsCreep_data(name))
 
-function Transform_NonLinearPeierlsCreep(name)
-    p = NonLinearPeierlsCreep_data(name)
+function Transform_NonLinearPeierlsCreep(name::String, CharDim::GeoUnits{U}) where {U<:Union{GEO,SI}}
+    Transform_NonLinearPeierlsCreep(NonLinearPeierlsCreep_data(name), CharDim)
+end
+
+function Transform_NonLinearPeierlsCreep(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) where {T,U<:Union{GEO,SI}}
+    nondimensionalize(Transform_NonLinearPeierlsCreep(p), CharDim)
+end
+
+function Transform_NonLinearPeierlsCreep(p::AbstractCreepLaw{T}) where T
     n = Value(p.n)
     q = Value(p.q)
     o = Value(p.o)

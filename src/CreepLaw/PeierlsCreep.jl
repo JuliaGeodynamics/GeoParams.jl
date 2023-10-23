@@ -1,5 +1,10 @@
 export PeierlsCreep,
-    Peierls_info, SetPeierlsCreep, remove_tensor_correction, dεII_dτII, dτII_dεII
+    Peierls_info, 
+    SetPeierlsCreep, 
+    remove_tensor_correction, 
+    dεII_dτII, 
+    dτII_dεII,
+    Transform_PeierlsCreep
 
 # Peierls Creep ------------------------------------------------
 """
@@ -90,9 +95,17 @@ Adapt.@adapt_structure PeierlsCreep
 """
     Transforms units from GPa, MPa, kJ etc. to basic units such as Pa, J etc.
 """
+Transform_PeierlsCreep(name::String) = Transform_PeierlsCreep(PeierlsCreep_data(name))
 
-function Transform_PeierlsCreep(name)
-    p = PeierlsCreep_data(name)
+function Transform_PeierlsCreep(name::String, CharDim::GeoUnits{U}) where {U<:Union{GEO,SI}}
+    Transform_PeierlsCreep(PeierlsCreep_data(name), CharDim)
+end
+
+function Transform_PeierlsCreep(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) where {T,U<:Union{GEO,SI}}
+    nondimensionalize(Transform_PeierlsCreep(p), CharDim)
+end
+
+function Transform_PeierlsCreep(p::AbstractCreepLaw{T}) where T
     n = Value(p.n)
     q = Value(p.q)
     o = Value(p.o)
