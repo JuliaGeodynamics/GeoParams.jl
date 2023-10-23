@@ -625,11 +625,16 @@ end
 Non-dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
 
 # """
-function nondimensionalize(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE}
-    for param in fieldnames(typeof(MatParam))
-        MatParam = _nondimensionalize(MatParam, getfield(MatParam, param), g, param)
+@generated function nondimensionalize(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE}
+    fields = fieldnames(MatParam)
+    N = length(fields)
+    quote
+        Base.@_inline_meta 
+        Base.@nexprs $N i -> x_i = begin
+            field = $(fields)[i]
+            _nondimensionalize(MatParam, getfield(MatParam, field), g, field)
+        end
     end
-    return MatParam
 end
 
 @inline function _nondimensionalize(MatParam, z::Union{GeoUnit, AbstractMaterialParam}, g::GeoUnits, param)
