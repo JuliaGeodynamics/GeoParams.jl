@@ -632,7 +632,7 @@ Non-dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
         Base.@_inline_meta 
         Base.@nexprs $N i -> MatParam = begin
             field = $(fields)[i]
-            @show _nondimensionalize(MatParam, getfield(MatParam, field), g, field)
+            _nondimensionalize(MatParam, getfield(MatParam, field), g, field)
         end
     end
 end
@@ -655,12 +655,10 @@ nondimensionalizes all fields within the Material Parameters structure that cont
 function nondimensionalize(
     phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TYPE}
 ) where {TYPE}
-    # @show fieldnames(typeof(phase_mat))
     for param in fieldnames(typeof(phase_mat))
         fld = getfield(phase_mat, param)
         if length(fld) > 0
             if typeof(fld[1]) <: AbstractPhaseDiagramsStruct
-
                 # in case we employ a phase diagram 
                 temp = PerpleX_LaMEM_Diagram(fld[1].Name; CharDim=g)
                 fld_new = (temp,)
@@ -675,7 +673,6 @@ function nondimensionalize(
                     fld_new = ntuple(
                         i -> Units.nondimensionalize(fld[id[i]], g), length(id)
                     )
-                    @show fld_new, fld
                     #                    setfield!(phase_mat, param, fld_new)        # to be changed for immutable struct
                     phase_mat = set(phase_mat, Setfield.PropertyLens{param}(), fld_new)
                 end
