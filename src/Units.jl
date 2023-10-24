@@ -659,8 +659,8 @@ nondimensionalizes all fields within the Material Parameters structure that cont
     N = length(params)
     quote
         Base.@_inline_meta
-        Base.@nexprs $N i -> x_i = begin
-            param = $(params)[4]
+        Base.@nexprs $N i -> phase_mat = begin
+            param = $(params)[i]
             field = getfield(phase_mat, param)
             nondimensionalize_MatParam(field, phase_mat, param, g)
         end 
@@ -813,8 +813,8 @@ Dimensionalizes all fields within the Material Parameters structure that contain
     N = length(params)
     quote
         Base.@_inline_meta
-        Base.@nexprs $N i -> x_i = begin
-            param = $(params)[4]
+        Base.@nexprs $N i -> phase_mat = begin
+            param = $(params)[i]
             field = getfield(phase_mat, param)
             dimensionalize_MatParam(field, phase_mat, param, g)
         end 
