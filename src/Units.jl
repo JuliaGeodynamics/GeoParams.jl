@@ -741,48 +741,106 @@ end
 Dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
 
 """
-function dimensionalize(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE}
-    for param in fieldnames(typeof(MatParam))
-        if isa(getfield(MatParam, param), GeoUnit)
-            z = getfield(MatParam, param)
-            z_dim = dimensionalize(z, g)
+# function dimensionalize(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE}
+#     for param in fieldnames(typeof(MatParam))
+#         if isa(getfield(MatParam, param), GeoUnit)
+#             z = getfield(MatParam, param)
+#             z_dim = dimensionalize(z, g)
 
-            # Replace field (using Setfield package):
-            MatParam = set(MatParam, Setfield.PropertyLens{param}(), z_dim)
+#             # Replace field (using Setfield package):
+#             MatParam = set(MatParam, Setfield.PropertyLens{param}(), z_dim)
 
-        elseif isa(getfield(MatParam, param), AbstractMaterialParam)
-            # The field contains another AbstractMaterialParam
-            z = getfield(MatParam, param)
-            z_dim = dimensionalize(z, g)
-            MatParam = set(MatParam, Setfield.PropertyLens{param}(), z_dim)
+#         elseif isa(getfield(MatParam, param), AbstractMaterialParam)
+#             # The field contains another AbstractMaterialParam
+#             z = getfield(MatParam, param)
+#             z_dim = dimensionalize(z, g)
+#             MatParam = set(MatParam, Setfield.PropertyLens{param}(), z_dim)
+#         end
+#     end
+#     return MatParam
+# end
+
+@generated function dimensionalize(MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}) where {TYPE}
+    fields = fieldnames(MatParam)
+    N = length(fields)
+    quote
+        Base.@_inline_meta 
+        Base.@nexprs $N i -> MatParam = begin
+            field = $(fields)[i]
+            _dimensionalize(MatParam, getfield(MatParam, field), g, field)
         end
     end
+end
+
+@inline function _dimensionalize(MatParam, z::Union{GeoUnit, AbstractMaterialParam}, g::GeoUnits, param)
+    # non-dimensionalize:
+    z = dimensionalize(z, g)
+    # Replace field (using Setfield package):
+    MatParam = set(MatParam, Setfield.PropertyLens{param}(), z)
     return MatParam
 end
+
+@inline _dimensionalize(MatParam, ::T1, ::T2, ::T3) where {T1, T2, T3} = MatParam
 
 """
     Dimensionalize(phase_mat::MaterialParams, g::GeoUnits{TYPE})
 
 Dimensionalizes all fields within the Material Parameters structure that contain material parameters
 """
-function dimensionalize(
+# function dimensionalize(
+#     phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TYPE}
+# ) where {TYPE}
+#     for param in fieldnames(typeof(phase_mat))
+#         field = getfield(phase_mat, param)
+#         if length(field) > 0
+#             id = findall(isa.(field, AbstractMaterialParam))
+#             if length(id) > 0
+#                 # Create a new tuple with non-dimensionalized fields:
+#                 field_new = ntuple(i -> Units.dimensionalize(field[id[i]], g), length(id))
+
+#                 phase_mat = set(phase_mat, Setfield.PropertyLens{param}(), field_new)
+#             end
+#         end
+#     end
+#     phase_mat = set(phase_mat, Setfield.PropertyLens{:Nondimensional}(), false)
+
+#     return phase_mat
+# end
+@generated function dimensionalize(
     phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TYPE}
 ) where {TYPE}
-    for param in fieldnames(typeof(phase_mat))
-        field = getfield(phase_mat, param)
-        if length(field) > 0
-            id = findall(isa.(field, AbstractMaterialParam))
-            if length(id) > 0
-                # Create a new tuple with non-dimensionalized fields:
-                field_new = ntuple(i -> Units.dimensionalize(field[id[i]], g), length(id))
-
-                phase_mat = set(phase_mat, Setfield.PropertyLens{param}(), field_new)
-            end
-        end
+    params = fieldnames(phase_mat)
+    N = length(params)
+    quote
+        Base.@_inline_meta
+        Base.@nexprs $N i -> x_i = begin
+            param = $(params)[4]
+            field = getfield(phase_mat, param)
+            dimensionalize_MatParam(field, phase_mat, param, g)
+        end 
+        phase_mat = set(phase_mat, Setfield.PropertyLens{:Nondimensional}(), true)
+        return phase_mat
     end
-    phase_mat = set(phase_mat, Setfield.PropertyLens{:Nondimensional}(), false)
+end
 
-    return phase_mat
+@inline dimensionalize_MatParam(::Tuple{}, phase_mat, ::Vararg{Any, N}) where N = phase_mat
+@inline dimensionalize_MatParam(::Any, phase_mat, ::Vararg{Any, N}) where N = phase_mat
+
+@inline _dimensionalize_MatParam(field::AbstractMaterialParam, g) = dimensionalize(field, g)
+@inline _dimensionalize_MatParam(field, g) = field
+
+@inline function dimensionalize_MatParam(field::NTuple{N, AbstractMaterialParam}, phase_mat, param, g) where N
+    field_new = ntuple(Val(N)) do i 
+        Base.@_inline_meta
+        _dimensionalize_MatParam(field[i], g)
+    end
+    return set(phase_mat, Setfield.PropertyLens{param}(), field_new)
+end
+
+@inline function dimensionalize_MatParam(field::AbstractPhaseDiagramsStruct, phase_mat, param, g)
+    temp = PerpleX_LaMEM_Diagram(field.Name; CharDim=g)
+    field_new = (temp,)
+    return set(phase_mat, Setfield.PropertyLens{param}(), field_new)
 end
 
 """
