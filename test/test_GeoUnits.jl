@@ -395,13 +395,12 @@ using GeoParams
     =#
 
     # test arrays of parameters 
-    param = (100km, 800/s)
-    param1 = (GeoUnit(100km), GeoUnit(800/s))
-    g=GEO_units();
+    param = (100km, 800 / s)
+    param1 = (GeoUnit(100km), GeoUnit(800 / s))
+    g = GEO_units()
 
     p_nd = nondimensionalize(param, g)
     @test p_nd == (0.1, 8.0e15)
 
     p1_nd = nondimensionalize(param1, g)
-    
 end

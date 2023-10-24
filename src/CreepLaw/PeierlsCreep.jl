@@ -1,5 +1,10 @@
 export PeierlsCreep,
-    Peierls_info, SetPeierlsCreep, remove_tensor_correction, dεII_dτII, dτII_dεII
+    Peierls_info, 
+    SetPeierlsCreep, 
+    remove_tensor_correction, 
+    dεII_dτII, 
+    dτII_dεII,
+    Transform_PeierlsCreep
 
 # Peierls Creep ------------------------------------------------
 """
@@ -30,8 +35,8 @@ julia> x2 = PeierlsCreep(n=1)
 PeierlsCreep: Name = , n=1.0, q=2.0, o=1.0, TauP=8.5e9 Pa, A=5.7e11 s^-1.0, E=476.0 kJ mol^-1.0, FT=1.7320508075688772, FE=1.1547005383792517, Apparatus=1
 ```
 """
-struct PeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-    Name::NTuple{N,Char}
+struct PeierlsCreep{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
+    Name::S
     n::GeoUnit{T,U1} # power-law exponent
     q::GeoUnit{T,U1} # stress relation exponent
     o::GeoUnit{T,U1} # ... (normally called p but used as 'o' since p already exists)
@@ -49,27 +54,21 @@ struct PeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         q=2.0NoUnits,
         o=1.0NoUnits,
         TauP=8.5e9Pa,
-        A=5.7e11s^(-1.0),
+        A=5.7e11s^(-1),
         E=476.0kJ / mol,
         R=8.3145J / mol / K,
         Apparatus=AxialCompression,
     )
-
-        # Rheology name
-        Name = String(join(Name))
-        N = length(Name)
-        NameU = NTuple{N,Char}(collect.(Name))
-
         # Corrections from lab experiments
         FT, FE = CorrectionFactor(Apparatus)
         # Convert to GeoUnits
-        nU = n isa GeoUnit ? n : convert(GeoUnit, n)
-        qU = q isa GeoUnit ? q : convert(GeoUnit, q)
-        oU = o isa GeoUnit ? o : convert(GeoUnit, o)
-        TauPU = TauP isa GeoUnit ? TauP : convert(GeoUnit, TauP)
-        AU = A isa GeoUnit ? A : convert(GeoUnit, A)
-        EU = E isa GeoUnit ? E : convert(GeoUnit, E)
-        RU = R isa GeoUnit ? R : convert(GeoUnit, R)
+        nU = convert(GeoUnit, n)
+        qU = convert(GeoUnit, q)
+        oU = convert(GeoUnit, o)
+        TauPU = convert(GeoUnit, TauP)
+        AU = convert(GeoUnit, A)
+        EU = convert(GeoUnit, E)
+        RU = convert(GeoUnit, R)
         # Extract struct types
         T = typeof(nU).types[1]
         U1 = typeof(nU).types[2]
@@ -79,8 +78,8 @@ struct PeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U5 = typeof(RU).types[2]
 
         # Create struct
-        return new{T,N,U1,U2,U3,U4,U5}(
-            NameU, nU, qU, oU, TauPU, AU, EU, RU, Int8(Apparatus), FT, FE
+        return new{T,String,U1,U2,U3,U4,U5}(
+            Name, nU, qU, oU, TauPU, AU, EU, RU, Int8(Apparatus), FT, FE
         )
     end
 
@@ -91,41 +90,33 @@ struct PeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     end
 end
 
+Adapt.@adapt_structure PeierlsCreep
+
 """
     Transforms units from GPa, MPa, kJ etc. to basic units such as Pa, J etc.
 """
+Transform_PeierlsCreep(name::String) = Transform_PeierlsCreep(PeierlsCreep_data(name))
 
-function Transform_PeierlsCreep(name; kwargs)
-    p_in = PeierlsCreep_info[name][1]
+function Transform_PeierlsCreep(name::String, CharDim::GeoUnits{U}) where {U<:Union{GEO,SI}}
+    Transform_PeierlsCreep(PeierlsCreep_data(name), CharDim)
+end
 
-    # Take optional arguments 
-    v_kwargs = values(kwargs)
-    val = GeoUnit.(values(v_kwargs))
+function Transform_PeierlsCreep(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) where {T,U<:Union{GEO,SI}}
+    nondimensionalize(Transform_PeierlsCreep(p), CharDim)
+end
 
-    args = (
-        Name=p_in.Name,
-        n=p_in.n,
-        q=p_in.q,
-        o=p_in.o,
-        TauP=p_in.TauP,
-        A=p_in.A,
-        E=p_in.E,
-        Apparatus=p_in.Apparatus,
-    )
-    p = merge(args, NamedTuple{keys(v_kwargs)}(val))
-
-    Name = String(collect(p.Name))
+function Transform_PeierlsCreep(p::AbstractCreepLaw{T}) where T
     n = Value(p.n)
     q = Value(p.q)
     o = Value(p.o)
     TauP = uconvert(Pa, Value(p.TauP))
-    A_Pa = uconvert(s^(-1.0), Value(p.A))
+    A_Pa = uconvert(s^(-1), Value(p.A))
     E_J = uconvert(J / mol, Value(p.E))
 
     Apparatus = p.Apparatus
 
     # args from database
-    args = (Name=Name, n=n, q=q, o=o, TauP=TauP, A=A_Pa, E=E_J, Apparatus=Apparatus)
+    args = (Name=p.Name, n=n, q=q, o=o, TauP=TauP, A=A_Pa, E=E_J, Apparatus=Apparatus)
 
     return PeierlsCreep(; args...)
 end
@@ -272,3 +263,4 @@ end
 
 # load collection of peierls creep laws
 include("Data/PeierlsCreep.jl")
+include("Data_deprecated/PeierlsCreep.jl")

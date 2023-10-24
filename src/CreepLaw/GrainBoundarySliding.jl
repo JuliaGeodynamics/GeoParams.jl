@@ -1,5 +1,6 @@
 export GrainBoundarySliding,
     SetGrainBoundarySliding,
+    Transform_GrainBoundarySliding,
     GrainBoundarySliding_info,
     remove_tensor_correction,
     compute_εII!,
@@ -44,8 +45,8 @@ GrainBoundarySliding: Name = test, n=1.0, p=-3.0, A=1.5 m³·⁰ MPa⁻¹·⁰ s
 ```
 """
 
-struct GrainBoundarySliding{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-    Name::NTuple{N,Char}
+struct GrainBoundarySliding{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
+    Name::S
     n::GeoUnit{T,U1} # powerlaw exponent
     p::GeoUnit{T,U1} # grain size exponent
     A::GeoUnit{T,U2} # material specific rheological parameter
@@ -58,28 +59,24 @@ struct GrainBoundarySliding{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
 
     function GrainBoundarySliding(;
         Name="",
-        n=3.5NoUnits,
-        p=-2.0NoUnits,
-        A=6500MPa^(-3.5) * s^(-1.0) * µm^(2.0),
+        n=(7//2)NoUnits,
+        p=-2NoUnits,
+        A=6500MPa^(-n) * s^(-1.0) * µm^(2),
         E=400kJ / mol,
         V=18e-6m^3 / mol,
         R=8.3145J / mol / K,
         Apparatus=AxialCompression,
     )
 
-        # Rheology name
-        Name = String(join(Name))
-        N = length(Name)
-        NameU = NTuple{N,Char}(collect.(Name))
         # Corrections from lab experiments
         FT, FE = CorrectionFactor(Apparatus)
         # Convert to GeoUnits
-        nU = n isa GeoUnit ? n : convert(GeoUnit, n)
-        pU = p isa GeoUnit ? p : convert(GeoUnit, p)
-        AU = A isa GeoUnit ? A : convert(GeoUnit, A)
-        EU = E isa GeoUnit ? E : convert(GeoUnit, E)
-        VU = V isa GeoUnit ? V : convert(GeoUnit, V)
-        RU = R isa GeoUnit ? R : convert(GeoUnit, R)
+        nU = convert(GeoUnit, rat2float(n))
+        pU = convert(GeoUnit, p)
+        AU = convert(GeoUnit, A)
+        EU = convert(GeoUnit, E)
+        VU = convert(GeoUnit, V)
+        RU = convert(GeoUnit, R)
         # Extract struct types
         T = typeof(nU).types[1]
         U1 = typeof(nU).types[2]
@@ -88,8 +85,8 @@ struct GrainBoundarySliding{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U4 = typeof(VU).types[2]
         U5 = typeof(RU).types[2]
         # Create struct
-        return new{T,N,U1,U2,U3,U4,U5}(
-            NameU, nU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
+        return new{T,String,U1,U2,U3,U4,U5}(
+            Name, nU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
         )
     end
 
@@ -100,38 +97,35 @@ struct GrainBoundarySliding{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     end
 end
 
+Adapt.@adapt_structure GrainBoundarySliding
+
 """
     Transform_GrainBoundarySliding(name)
 Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 """
-function Transform_GrainBoundarySliding(name; kwargs)
-    pp_in = GrainBoundarySliding_info[name][1]
+Transform_GrainBoundarySliding(name::String) = Transform_GrainBoundarySliding(GrainBoundarySliding_data(name))
 
-    # Take optional arguments 
-    v_kwargs = values(kwargs)
-    val = GeoUnit.(values(v_kwargs))
+function Transform_GrainBoundarySliding(name::String, CharDim::GeoUnits{U}) where {U<:Union{GEO,SI}}
+    Transform_GrainBoundarySliding(GrainBoundarySliding_data(name), CharDim)
+end
 
-    args = (
-        Name=pp_in.Name,
-        n=pp_in.n,
-        p=pp_in.p,
-        A=pp_in.A,
-        E=pp_in.E,
-        V=pp_in.V,
-        Apparatus=pp_in.Apparatus,
-    )
-    pp = merge(args, NamedTuple{keys(v_kwargs)}(val))
+function Transform_GrainBoundarySliding(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) where {T,U<:Union{GEO,SI}}
+    nondimensionalize(Transform_GrainBoundarySliding(p), CharDim)
+end
 
-    Name = String(collect(pp.Name))
+function Transform_GrainBoundarySliding(pp::AbstractCreepLaw{T}) where T
+    @inline f1(A::T) where T = typeof(A).parameters[2].parameters[1][2].power
+    @inline f2(A::T) where T = typeof(A).parameters[2].parameters[1][1].power
+   
     n = Value(pp.n)
     p = Value(pp.p)
-    A_Pa = uconvert(Pa^(-NumValue(pp.n)) * m^(-NumValue(p)) / s, Value(pp.A))
+    power_Pa = f1(pp.A)
+    power_m = f2(pp.A)
+    A_Pa = uconvert(Pa^(power_Pa) * m^(power_m) / s, Value(pp.A))
     E_J = uconvert(J / mol, Value(pp.E))
     V_m3 = uconvert(m^3 / mol, Value(pp.V))
-
     Apparatus = pp.Apparatus
-
-    args = (Name=Name, n=n, p=p, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+    args = (Name=pp.Name, n=n, p=p, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
 
     return GrainBoundarySliding(; args...)
 end
@@ -347,3 +341,4 @@ end
 
 # load collection of grain boundary sliding laws
 include("Data/GrainBoundarySliding.jl")
+include("Data_deprecated/GrainBoundarySliding.jl")

@@ -17,18 +17,16 @@ using GeoParams
     CharDim = GEO_units(;
         length=1000km, viscosity=1e19Pa * s, stress=100MPa, temperature=1000C
     )
-    EpsII = GeoUnit(1.0s^-1.0)
-    TauII = GeoUnit(1e6MPa)
-    T = GeoUnit(600C)
+    EpsII   = GeoUnit(1.0s^-1.0)
+    TauII   = GeoUnit(1e6MPa)
+    T       = GeoUnit(600C)
 
     # compute a pure diffusion creep rheology
-    p = SetPeierlsCreep("Dry Olivine | Goetze and Evans (1979)")
-
-    T = 600 + 273.15
-
-    args = (; T=T)
-    TauII = 1e9
-    ε = compute_εII(p, TauII, args)
+    p       = SetPeierlsCreep("Dry Olivine | Goetze and Evans (1979)")
+    T       = 600 + 273.15
+    args    = (; T=T)
+    TauII   = 1e9
+    ε       = compute_εII(p, TauII, args)
     @test ε ≈ 9.127028135349583e-20
 
     # same but while removing the tensor correction
@@ -36,10 +34,9 @@ using GeoParams
     @test ε_notensor ≈ 1.3652144989670166e-20
 
     # test with arrays
-    τII_array = ones(10) * 1e9
-    ε_array = similar(τII_array)
-    T_array = ones(size(τII_array)) * (600.0 + 273.15)
-
+    τII_array  = ones(10) * 1e9
+    ε_array    = similar(τII_array)
+    T_array    = ones(size(τII_array)) * (600.0 + 273.15)
     args_array = (; T=T_array)
 
     compute_εII!(ε_array, p, τII_array, args_array)
@@ -48,64 +45,35 @@ using GeoParams
     # compute when args are scalars
     compute_εII!(ε_array, p, τII_array, args)
     @test ε_array[1] ≈ ε
-
     # ===
 
-    # dry olivine, stress-strainrate curve
-    p = SetPeierlsCreep("Dry Olivine | Goetze and Evans (1979)")
-    εII = exp10.(-15:0.5:-11)
-    τII = zero(εII)                    # preallocate array
-    T = 600 + 273.15
-
-    args = (;T=T)
-    compute_τII!(τII, p, εII, args)
-
-    eta_array = @. 0.5 * τII / εII
-
-    εII = zero(τII)
-    compute_εII!(εII, p, τII, args)
-    eta_array1 = @. 0.5 * τII / εII
-
     # test overriding the default values
-    a = SetPeierlsCreep("Dry Olivine | Goetze and Evans (1979)", E=535.0kJ / mol)
-    @test Value(a.E) == 535.0kJ / mol
-
-    # --- debugging
-
-    #@unpack_units n,A,E,V,R = pp
-
-    #FT, FE = CorrectionFactor(pp);    
-    #FT=0.5; FE=1;
-
-    #τ = A^(-1/n)*(EpsII*FE)^(1/n)*exp((E + P*V)/(n * R*T))/FT
-
-    # ----
+    # a = SetPeierlsCreep("Dry Olivine | Goetze and Evans (1979)"; E=535.0kJ / mol)
+    # @test Value(a.E) == 535.0kJ / mol
 
     # Do some basic checks on all creeplaws in the DB
-    CharDim = GEO_units()
+    CharDim       = GEO_units()
     creeplaw_list = PeierlsCreep_info       # all creeplaws in database
     for (key, val) in creeplaw_list
         p     = SetPeierlsCreep(key)                # original creep law
-        p_nd  = nondimensionalize(p,CharDim)        # non-dimensionalized
+        p_nd  = nondimensionalize(p, CharDim)        # non-dimensionalized
         @test p_nd == SetPeierlsCreep(key, CharDim) # check that the non-dimensionalized version is the same as the original
-        p_dim = dimensionalize(p,CharDim)           # dimensionalized
+        p_dim = dimensionalize(p, CharDim)           # dimensionalized
 
         # Check that values are the same after non-dimensionalisation & dimensionalisation
         for field in fieldnames(typeof(p_dim))
-            val_original = getfield(p,    field)
-            val_final    = getfield(p_dim,field)
+            val_original = getfield(p, field)
+            val_final    = getfield(p_dim, field)
             if isa(val_original, GeoUnit)
-                @test Value(val_original) == Value(val_final)        
+                @test Value(val_original) == Value(val_final)
             end
         end
- 
+
         # Perform computations with the rheology
-        args   = (T=500.0, τII_old=2.2e9);
+        args   = (T=500.0, τII_old=2.2e9)
         ε      = 1e-7
-        τ      = compute_τII(p,ε,args)
-        ε_test = compute_εII(p,τ,args)
+        τ      = compute_τII(p, ε, args)
+        ε_test = compute_εII(p, τ, args)
         @test ε ≈ ε_test
-
     end
-
 end
