@@ -1,7 +1,7 @@
 # Plasticity 
 
-Plasticity is a non;linear rheology bthat is actrivated once stresses exceed a certain yield criteria.
-# Implemented  laws
+Plasticity is a non-linear rheology that is activated once stresses exceed a certain yield criteria.
+# Implemented laws
 The following plastic law are implemented:
 ```@docs
 GeoParams.MaterialParameters.Plasticity.DruckerPrager

@@ -3,11 +3,11 @@ module MeltingParam
 # If you want to add a new method here, feel free to do so.
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
-using Parameters, LaTeXStrings, Unitful
+using Parameters, LaTeXStrings, Unitful, ForwardDiff
 using ..Units
 using GeoParams:
     AbstractMaterialParam, PhaseDiagram_LookupTable, AbstractMaterialParamsStruct
-import Base.show, GeoParams.param_info
+import Base.Math.@horner, Base.show, GeoParams.param_info 
 using ..MaterialParameters: MaterialParamsInfo
 using Setfield # allows modifying fields in immutable struct
 
@@ -77,13 +77,6 @@ function (p::MeltingParam_Caricchi)(; T, kwargs...)
     return 1.0 / (1.0 + exp(θ))
 end
 
-# function compute_meltfraction!(ϕ::AbstractArray, p::MeltingParam_Caricchi; T, kwargs...)
-#     for i in eachindex(T)
-#         @inbounds ϕ[i] = p(; T=T[i])
-#     end
-#     return nothing
-# end
-
 function compute_dϕdT(p::MeltingParam_Caricchi; T, kwargs...)
     if T isa Quantity
         @unpack_units a, b, c = p
@@ -144,6 +137,7 @@ function param_info(s::MeltingParam_5thOrder) # info about the struct
     return MaterialParamsInfo(; Equation=L"\phi = aT^5 + bT^4 + cT^3 + dT^2 + eT + f")
 end
 
+
 # Calculation routines
 function (p::MeltingParam_5thOrder)(; T, kwargs...)
     if T isa Quantity
@@ -152,7 +146,8 @@ function (p::MeltingParam_5thOrder)(; T, kwargs...)
         @unpack_val a, b, c, d, e, f, T_s, T_l = p
     end
 
-    ϕ = a * T^5 + b * T^4 + c * T^3 + d * T^2 + e * T + f
+    coeffs = f,e,d,c,b,a
+    ϕ = @horner(T, coeffs...)
     if p.apply_bounds
         if T < T_s
             ϕ = 0.0
@@ -164,6 +159,8 @@ function (p::MeltingParam_5thOrder)(; T, kwargs...)
     return ϕ
 end
 
+compute_dϕdT(p::MeltingParam_5thOrder, T, kwargs...) = compute_dϕdT(p; T, kwargs...) 
+
 function compute_dϕdT(p::MeltingParam_5thOrder; T, kwargs...)
     if T isa Quantity
         @unpack_units a, b, c, d, e, T_s, T_l = p
@@ -171,8 +168,10 @@ function compute_dϕdT(p::MeltingParam_5thOrder; T, kwargs...)
         @unpack_val a, b, c, d, e, T_s, T_l = p
     end
 
-    dϕdT = 5 * a * T^4 + 4 * b * T^3 + 3 * c * T^2 + 2 * d * T + e
-    if (T < T_s || T > T_l) && p.apply_bounds
+    coeffs = e,2*d,3*c,4*b,5*a
+    dϕdT = @horner(T, coeffs...)
+    
+    if p.apply_bounds && (T < T_s || T > T_l)
         dϕdT = 0.0
     end
 
@@ -234,7 +233,8 @@ function (p::MeltingParam_4thOrder)(; T, kwargs...)
         @unpack_val b, c, d, e, f, T_s, T_l = p
     end
 
-    ϕ = b * T^4 + c * T^3 + d * T^2 + e * T + f
+    coeffs = f,e,d,c,b
+    ϕ = @horner(T, coeffs...)
     if p.apply_bounds
         if T < T_s
             ϕ = 0.0
@@ -253,8 +253,9 @@ function compute_dϕdT(p::MeltingParam_4thOrder; T, kwargs...)
         @unpack_val b, c, d, e, T_s, T_l = p
     end
 
-    dϕdT = 4 * b * T^3 + 3 * c * T^2 + 2 * d * T + e
-    if (T < T_s || T > T_l) && p.apply_bounds
+    coeffs = e,2*d,3*c,4*b
+    dϕdT = @horner(T, coeffs...)
+    if p.apply_bounds && (T < T_s || T > T_l)
         dϕdT = 0.0
     end
     return dϕdT
@@ -338,7 +339,7 @@ function compute_dϕdT(p::MeltingParam_Quadratic; T, kwargs...)
     end
 
     dϕdT = (2T_l - 2T) / ((T_l - T_s)^2)
-    if (T > T_l || T < T_s) && p.apply_bounds
+    if p.apply_bounds && (T > T_l || T < T_s)
         dϕdT = 0.0
     end
     return dϕdT
@@ -455,7 +456,7 @@ function compute_dϕdT(p::MeltingParam_Assimilation; T, kwargs...)
             ) / (T_l - T_s)
     end
 
-    if (T > T_l || T < T_s) && p.apply_bounds
+    if p.apply_bounds && (T > T_l || T < T_s)
         dϕdT = 0.0
     end
     return dϕdT
@@ -573,17 +574,12 @@ function compute_dϕdT(param::SmoothMelting; T, kwargs...)
     # compute heaviside functions & derivatives of that vs. T
     T_s = param.p.T_s
     T_l = param.p.T_l
-    H_s = 1.0 / (1.0 + exp(-2 * k_sol * (T - T_s - (2 / k_sol))))
-    H_l = 1.0 - 1.0 / (1.0 + exp(-2 * k_liq * (T - T_l + (2 / k_liq))))
 
-    dHs_dT =
-        2k_sol *
-        (1.0 / ((1.0 + exp(-2k_sol * (T + -2 / k_sol - T_s)))^2)) *
-        exp(-2k_sol * (T + -2 / k_sol - T_s))
-    dHl_dT =
-        2k_liq *
-        (-1.0 / ((1.0 + exp(-2k_liq * (T + 2 / k_liq - T_l)))^2)) *
-        exp(-2k_liq * (T + 2 / k_liq - T_l))
+    f_s(T) = 1.0 / (1.0 + exp(-2 * k_sol * (T - T_s - (2 / k_sol))))
+    f_l(T) = 1.0 - 1.0 / (1.0 + exp(-2 * k_liq * (T - T_l + (2 / k_liq))))
+
+    H_s, dHs_dT = value_and_partial(f_s, T)
+    H_l, dHl_dT = value_and_partial(f_l, T)
 
     # melt fraction & derivative
     dϕdT = compute_dϕdT(param.p; T=T)

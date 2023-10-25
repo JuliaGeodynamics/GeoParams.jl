@@ -1,7 +1,8 @@
 <h1> <img src="docs/src/assets/logo.png" alt="GeoParams.jl" width="50"> GeoParams.jl </h1>
 
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliageodynamics.github.io/GeoParams.jl/dev/)
-[![Build Status](https://github.com/JuliaGeodynamics/GeoParams.jl/workflows/CI/badge.svg)](https://github.com/JuliaGeodynamics/GeoParams.jl/actions)
+[![CI](https://github.com/JuliaGeodynamics/GeoParams.jl/actions/workflows/blank.yml/badge.svg)](https://github.com/JuliaGeodynamics/GeoParams.jl/actions/workflows/blank.yml)
+
 
 Typical geodynamic simulations involve a large number of material parameters and nonlinear constitutive relationships. A large part of the work in writing a new code is benchmarking and debugging the implementation of such material parameters, which involve *point-wise* calculations that are independent of the discretisation method (finite difference, finite element, finite volume).
 

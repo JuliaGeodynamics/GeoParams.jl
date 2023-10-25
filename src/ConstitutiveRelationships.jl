@@ -7,30 +7,24 @@ using Base: Float64
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
-import GeoParams: param_info, fastpow, nphase, ntuple_idx, @print
-import GeoParams: second_invariant, second_invariant_staggered
+import GeoParams: param_info, fastpow, pow_check, nphase, ntuple_idx, @print, @pow
+import GeoParams: second_invariant, second_invariant_staggered, value_and_partial
 using BibTeX
 using ..MaterialParameters: MaterialParamsInfo
 import Base.show
-using ForwardDiff
-using StaticArrays
-using Static
+using ForwardDiff, StaticArrays, Static, Adapt
 
 const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 
 #abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
 #abstract type AbstractComposite <: AbstractMaterialParam end
 
-@inline precision(v::AbstractConstitutiveLaw{T}) where T = T
-
+@inline precision(::AbstractConstitutiveLaw{T}) where T = T
 
 include("Computations.jl")
-#include("TensorAlgebra/TensorAlgebra.jl")
 include("CreepLaw/CreepLaw.jl")              # viscous Creeplaws
 include("Elasticity/Elasticity.jl")          # elasticity
 include("Plasticity/Plasticity.jl")          # plasticity
-# include("CompositeRheologies/Viscosity.jl")             # composite creeplaws
-#include("CreepLaw/Viscosity.jl")             # composite creeplaws
 include("CompositeRheologies/CompositeRheologies.jl")            # composite constitutive relationships
 
 export param_info,
@@ -60,14 +54,15 @@ export param_info,
     Parallel,
     CompositeRheology,
     AbstractComposite,
-    AbstractConstitutiveLaw
-    AxialCompression, SimpleShear, Invariant,
+    AbstractConstitutiveLaw,
+    AxialCompression, SimpleShear, Invariant, 
     get_G, 
     get_Kb,
     iselastic
 
 # add methods programmatically 
-for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType)
+for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType, 
+                :GrainBoundarySliding, :PeierlsCreep, :NonLinearPeierlsCreep)
     @eval begin
         @inline compute_εII(a::$(myType), TauII, args) = compute_εII(a, TauII; args...)
         @inline compute_εvol(a::$(myType), P, args) = compute_εvol(a, P; args...)

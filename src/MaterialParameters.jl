@@ -7,7 +7,7 @@ using Unitful: Energy
 using Unitful
 using Parameters, LaTeXStrings, BibTeX
 using ..Units
-using Static
+using Static, Adapt
 
 import Base.show, Base.convert
 using GeoParams:
@@ -64,7 +64,7 @@ Structure that holds all material parameters for a given phase
 
 """
 @with_kw_noshow struct MaterialParams{
-    N,
+    S,
     Vdensity<:Tuple,
     Vgravity<:Tuple,
     Vcreep<:Tuple,
@@ -79,23 +79,25 @@ Structure that holds all material parameters for a given phase
     Vmelting<:Tuple,
     Vseismvel<:Tuple,
 } <: AbstractMaterialParamsStruct
-    Name::NTuple{N,Char}               #       The name is encoded as a NTuple{Char} (to make it isbits and the whole MaterialParams isbits as well; required to use this on the GPU)
-    Phase::Int64 = 1                   #       Number of the phase (optional)
-    Nondimensional::Bool = false       #       Are all fields non-dimensionalized or not?
-    Density::Vdensity = ()             #       Density equation of state
-    Gravity::Vgravity = ()             #       Gravitational acceleration (set automatically)
-    CreepLaws::Vcreep = ()             #       Creep laws
-    Elasticity::Velastic = ()          #       Elastic parameters
-    Plasticity::Vplastic = ()          #       Plasticity
-    CompositeRheology::Vcomposite = () #       Composite (combined) rheologies 
-    Conductivity::Vcond = ()           #       Parameters related to the energy equation 
-    HeatCapacity::Vheatc = ()          #       Heat capacity 
-    RadioactiveHeat::Vradioact = ()    #       Radioactive heating source terms in energy conservation equation
-    LatentHeat::Vlatent = ()           #       Latent heating source terms in energy conservation equation
-    ShearHeat::Vshearheat = ()         #       Shear heating source terms in energy conservation equation
-    Melting::Vmelting = ()             #       Melting model
-    SeismicVelocity::Vseismvel = ()    #       Seismic velocity
+    Name::S                            #  Phase name
+    Phase::Int64 = 1                   #  Number of the phase (optional)
+    Nondimensional::Bool = false       #  Are all fields non-dimensionalized or not?
+    Density::Vdensity = ()             #  Density equation of state
+    Gravity::Vgravity = ()             #  Gravitational acceleration (set automatically)
+    CreepLaws::Vcreep = ()             #  Creep laws
+    Elasticity::Velastic = ()          #  Elastic parameters
+    Plasticity::Vplastic = ()          #  Plasticity
+    CompositeRheology::Vcomposite = () #  Composite (combined) rheologies 
+    Conductivity::Vcond = ()           #  Parameters related to the energy equation 
+    HeatCapacity::Vheatc = ()          #  Heat capacity 
+    RadioactiveHeat::Vradioact = ()    #  Radioactive heating source terms in energy conservation equation
+    LatentHeat::Vlatent = ()           #  Latent heating source terms in energy conservation equation
+    ShearHeat::Vshearheat = ()         #  Shear heating source terms in energy conservation equation
+    Melting::Vmelting = ()             #  Melting model
+    SeismicVelocity::Vseismvel = ()    #  Seismic velocity
 end
+
+Adapt.@adapt_structure MaterialParams
 
 """
     SetMaterialParams(; Name::String="", Phase::Int64=1,
@@ -184,7 +186,7 @@ julia> MatParam
 
 """
 function SetMaterialParams(;
-    Name::String="",         # this makes the struct !isbits(); as that sucks for portability we change that later to NTuple(Char)
+    Name::String="",
     Phase=1,
     Density=nothing,
     Gravity=nothing,
@@ -201,9 +203,8 @@ function SetMaterialParams(;
     SeismicVelocity=nothing,
     CharDim=nothing,
 )
-    Name_GP = str2char(Name)
     return SetMaterialParams(
-        Name_GP,
+        Name,
         Phase,
         ConvField(Density, :Density; maxAllowedFields=1),
         ConvField(set_gravity(Gravity, Density), :Gravity; maxAllowedFields=1),
@@ -223,7 +224,7 @@ function SetMaterialParams(;
 end
 
 function SetMaterialParams(
-    Name, # this makes the struct !isbits(); as that sucks for portability we change that later to NTuple(Char)
+    Name,
     Phase,
     Density,
     Gravity,
@@ -242,7 +243,6 @@ function SetMaterialParams(
 )
 
     # define struct for phase, while also specifying the maximum number of definitions for every field   
-    # phase = MaterialParams(
     phase = MaterialParams(
         Name,
         Phase,
@@ -263,16 +263,13 @@ function SetMaterialParams(
     )
 
     # [optionally] non-dimensionalize the struct
-    if ~isnothing(CharDim)
-        if typeof(CharDim) <: GeoUnits
-            phase = nondimensionalize(phase, CharDim)
-        else
-            error("CharDim should be of type GeoUnits")
-        end
-    end
-
-    return phase
+    phase_nd = nondimensionalize_phase(phase, CharDim) 
+    return phase_nd
 end
+
+@inline nondimensionalize_phase(phase, CharDim::GeoUnits) = nondimensionalize(phase, CharDim)
+@inline nondimensionalize_phase(phase, ::Nothing) = phase
+@inline nondimensionalize_phase(phase, CharDim) = error("CharDim should be of type GeoUnits")
 
 @inline str2char(str::String) = str2char(str, static(length(str)))
 @inline str2char(str, ::StaticInt{N}) where N = ntuple(i->str[i], Val(N))

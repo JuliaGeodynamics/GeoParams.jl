@@ -28,10 +28,10 @@ using GeoParams
     @test isvolumetric(a) == true
 
     b = ConstantElasticity()
-    v = SetMaterialParams(; Elasticity = ConstantElasticity())
-    vv=(
-        SetMaterialParams(; Phase=1, Elasticity = ConstantElasticity()),
-        SetMaterialParams(; Phase=2, Elasticity = ConstantElasticity()),
+    v = SetMaterialParams(; Elasticity=ConstantElasticity())
+    vv = (
+        SetMaterialParams(; Phase=1, Elasticity=ConstantElasticity()),
+        SetMaterialParams(; Phase=2, Elasticity=ConstantElasticity()),
     )
 
     @test get_G(b) == b.G.val
@@ -55,9 +55,9 @@ using GeoParams
     @test compute_εvol(a, p, argsp) ≈ -5.0e-11  # compute
     @test compute_p(a, 1e-15, argsp) ≈ 4.9999e6
     @test dεII_dτII(a, τII, argsτ) ≈ 1e-17
-    @test dτII_dεII(a,τII_old,dt,argsτ) ≈ 1e17
-    @test dεvol_dp(a,p,argsp) ≈ -1e-17
-    @test dp_dεvol(a,P_old,dt,argsp) ≈ -1e17
+    @test dτII_dεII(a, τII_old, dt, argsτ) ≈ 1e17
+    @test dεvol_dp(a, p, argsp) ≈ -1e-17
+    @test dp_dεvol(a, P_old, dt, argsp) ≈ -1e17
 
     # Test with arrays
     τII_old_array = ones(10) * 15e6
