@@ -673,6 +673,7 @@ end
 @inline nondimensionalize_MatParam(::Any, phase_mat, ::Vararg{Any, N}) where N = phase_mat
 
 @inline _nondimensionalize_MatParam(field::AbstractMaterialParam, g) = nondimensionalize(field, g)
+@inline _nondimensionalize_MatParam(field::AbstractPhaseDiagramsStruct, g) =  PerpleX_LaMEM_Diagram(field.Name; CharDim=g)
 @inline _nondimensionalize_MatParam(field, g) = field
 
 @inline function nondimensionalize_MatParam(field::NTuple{N, AbstractMaterialParam}, phase_mat, param, g) where N
@@ -680,12 +681,6 @@ end
         Base.@_inline_meta
         _nondimensionalize_MatParam(field[i], g)
     end
-    return set(phase_mat, Setfield.PropertyLens{param}(), field_new)
-end
-
-@inline function nondimensionalize_MatParam(field::AbstractPhaseDiagramsStruct, phase_mat, param, g)
-    temp = PerpleX_LaMEM_Diagram(field.Name; CharDim=g)
-    field_new = (temp,)
     return set(phase_mat, Setfield.PropertyLens{param}(), field_new)
 end
 
