@@ -245,15 +245,14 @@ using Test, GeoParams, StaticArrays
             Phase=1,
             CreepLaws=(PowerlawViscous(; n=5.0), LinearViscous(; η=1e21Pas)),
             Density=Compressible_Density(; ρ0=3000kg / m^3),
-        )
+        ),
     )
 
     PhaseRatio = (0.5, 0.5)
     @test 2950e0 == compute_density_ratio(PhaseRatio, rheologies, args)
     @test 2950e0 == compute_density(rheologies, PhaseRatio, args)
-    
+
     SvPhaseRatio = SA[0.5, 0.5]
     @test 2950e0 == compute_density_ratio(SvPhaseRatio, rheologies, args)
     @test 2950e0 == compute_density(rheologies, SvPhaseRatio, args)
-
 end

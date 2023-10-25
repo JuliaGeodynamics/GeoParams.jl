@@ -1,7 +1,6 @@
 # Tests the GeoUnits
 using Test
 using GeoParams
-#using Parameters
 
 @testset "Units" begin
 
@@ -296,7 +295,7 @@ using GeoParams
         ρ::GeoUnit
     end
 
-    # add type info in name, but no default values
+    # add type info in name, but no default values (GeoUnit{T}, is still NOT concrete, dont use this definition)
     mutable struct ConDensity4{T<:AbstractFloat} <: AbstractMaterialParam  # 1 allocation
         test::String
         ρ::GeoUnit{T}
@@ -331,13 +330,13 @@ using GeoParams
         v::GeoUnit = 100 / s
     end
 
-    # This works with 1 allocation, and is the preferred way to use it within GeoParams
-    Base.@kwdef struct ConDensity9{T<:AbstractFloat} <: AbstractMaterialParam # 1 allocation
+    # No allocations (ρ and v have concrete types this time), and is the
+    # preferred way to use it within GeoParams
+    Base.@kwdef struct ConDensity9{U1,U2} <: AbstractMaterialParam # 1 allocation
         test::String = ""
-        ρ::GeoUnit{T} = 3300.1kg / m^3
-        v::GeoUnit{T} = 100.0m / s
+        ρ::U1 = 3300.1kg / m^3
+        v::U2 = 100.0m / s
     end
-    ConDensity9(a...) = ConDensity9{Float64}(a...)  # in case we do not give a type
 
     rho = ConDensity(3300.1)
     rho1 = ConDensity1("t", GeoUnit(3300.1kg / m^3), GeoUnit(100 / s))
@@ -349,11 +348,11 @@ using GeoParams
     rho7 = ConDensity7()
     rho8 = ConDensity8()
     rho9 = ConDensity9(; ρ=2800kg / m^3)
-    rho9_ND = nondimensionalize(rho9, GEO_units())
+    rho9_ND = nondimensionalize(rho9, GEO_units()) # this is type stable, unlike with the rho* variables above
 
     # test automatic nondimensionalization of a MaterialsParam struct:
     CD = GEO_units()
-    rho2_ND = nondimensionalize(rho2, CD)
+    rho2_ND = nondimensionalize(rho2, CD) # type unstable...
     @test rho2_ND.ρ ≈ 3.3000999999999995e-18
     @test rho2_ND.v ≈ 9.999999999999999e11
 
@@ -364,7 +363,7 @@ using GeoParams
     # Simple function to test speed
     function f!(r, x, y)
         for i in 1:1000
-            r += x.ρ * y          # compute
+            r += x.ρ * GeoUnit(y)          # compute
         end
         return r
     end
@@ -380,7 +379,7 @@ using GeoParams
 
     #=
     # testing speed (# of allocs)
-    r = 0.0
+    r = GeoUnit(0.0)
     @btime f!($r, $rho,  $c)    # 1 allocations
     @btime f!($r, $rho1, $c)    # 1 allocation
     @btime f!($r, $rho2, $c)    # 3001 allocations
@@ -388,20 +387,19 @@ using GeoParams
     @btime f!($r, $rho4, $c)    # 1 allocation
     @btime f!($r, $rho5, $c)    # 3001 allocation
     @btime f!($r, $rho6, $c)    # 3001 allocation (so also with keywords, it is crucial to indicate the type)
-    @btime f!($r, $rho7, $c)    # 1 allocation (shows that we need to encode the units)
+    @btime f!($r, $rho7, $c)    # 1 allocation (shows that we the variables are not of concrete types)
     @btime f!($r, $rho8, $c)    # 3001 allocation 
-    @btime f!($r, $rho9, $c)    # 1 allocation (shows that we need to encode the units)
+    @btime f!($r, $rho9, $c)    # 0 allocations
     @btime f!($r, $rho9_ND, $c) 
     =#
 
     # test arrays of parameters 
-    param = (100km, 800/s)
-    param1 = (GeoUnit(100km), GeoUnit(800/s))
-    g=GEO_units();
+    param = (100km, 800 / s)
+    param1 = (GeoUnit(100km), GeoUnit(800 / s))
+    g = GEO_units()
 
     p_nd = nondimensionalize(param, g)
     @test p_nd == (0.1, 8.0e15)
 
     p1_nd = nondimensionalize(param1, g)
-    
 end

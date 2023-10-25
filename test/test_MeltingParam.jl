@@ -81,7 +81,6 @@ using GeoParams
     args = (; T=ustrip.(T))
     compute_dϕdT!(dϕdT_dim, p, args)
     @test sum(dϕdT_dim) ≈ 0.006484458453421382
-
     #------------------------------
 
     #------------------------------
@@ -122,7 +121,6 @@ using GeoParams
     args = (; T=ustrip.(T))
     compute_dϕdT!(dϕdT_dim, p, args)
     @test sum(dϕdT_dim) ≈ 0.00830985782591842
-
     #------------------------------
 
     #------------------------------
