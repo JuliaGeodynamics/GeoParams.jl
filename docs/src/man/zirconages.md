@@ -1,7 +1,7 @@
 # Zircon age parameterizations
 
 # Methods
-Zircons are one of the ways in which we can date the age & activity of magmatic systems. 
+Zircons are one of the ways in which we can date the age & activity of magmatic systems.
 Here, we provide a computational routine that computes the zircon age distribution from temperature-time paths
 
 ```@docs
@@ -20,5 +20,5 @@ GeoParams.compute_zircons_Ttpath
 GeoParams.zircon_age_PDF
 ```
 
-We also provide a plotting routine, provided the `Plots` package is loaded, which produces figures such as:
+We also provide a plotting routine, provided the GLMakie.jl package is loaded, which produces figures such as:
 ![subet3](./assets/img/ZirconAge_PDF.png)
