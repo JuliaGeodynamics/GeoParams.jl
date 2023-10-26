@@ -187,7 +187,7 @@ function DislocationCreep_data(name::String)
         return DislocationCreep(;
             Name = "Granite | Tirel et al. (2008)",
             n = 3.2NoUnits,
-            A = 1.25e-9MPa^(-3.2) / s,
+            A = 1.25e-9MPa^(-16 // 5) / s,
             E = 123kJ / mol,
             V = 0.0m^3 / mol,
             r = 0.0NoUnits,

@@ -49,7 +49,7 @@ struct NonLinearPeierlsCreep{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     FE::T # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
 
     function NonLinearPeierlsCreep(;
-        Name="",
+        Name=nothing,
         n=2NoUnits,
         q=1.0NoUnits,
         o=0.5NoUnits,
@@ -78,7 +78,7 @@ struct NonLinearPeierlsCreep{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U5 = typeof(RU).types[2]
 
         # Create struct
-        return new{T,String,U1,U2,U3,U4,U5}(
+        return new{T,typeof(Name),U1,U2,U3,U4,U5}(
             Name, nU, qU, oU, TauPU, AU, EU, RU, Int8(Apparatus), FT, FE
         )
     end
@@ -230,7 +230,7 @@ end
 function show(io::IO, g::NonLinearPeierlsCreep)
     return print(
         io,
-        "NonLinearPeierlsCreep: Name = $(String(collect(g.Name))), n=$(Value(g.n)), q=$(Value(g.q)), o=$(Value(g.o)), TauP=$(Value(g.TauP)), A=$(Value(g.A)), E=$(Value(g.E)), FT=$(g.FT), FE=$(g.FE), Apparatus=$(g.Apparatus)",
+        "NonLinearPeierlsCreep: Name = $(printable_name(g.Name)), n=$(Value(g.n)), q=$(Value(g.q)), o=$(Value(g.o)), TauP=$(Value(g.TauP)), A=$(Value(g.A)), E=$(Value(g.E)), FT=$(g.FT), FE=$(g.FE), Apparatus=$(g.Apparatus)",
     )
 end
 #-------------------------------------------------------------------------

@@ -123,3 +123,7 @@ end
     df =  f(ForwardDiff.Dual{T}(x, one(x)), )     
     return df.value, ForwardDiff.extract_derivative(T, df) 
 end
+
+# Convert to printable name
+printable_name(str) = String(collect(str))
+printable_name(::Nothing) = "Unnamed"

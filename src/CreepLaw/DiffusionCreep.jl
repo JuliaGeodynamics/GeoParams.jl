@@ -62,7 +62,7 @@ struct DiffusionCreep{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     FE::T # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
 
     function DiffusionCreep(;
-        Name="",
+        Name=nothing,
         n=1NoUnits,
         r=0NoUnits,
         p=-3NoUnits,
@@ -91,7 +91,7 @@ struct DiffusionCreep{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U4 = typeof(VU).types[2]
         U5 = typeof(RU).types[2]
         # Create struct
-        return new{T,String,U1,U2,U3,U4,U5}(
+        return new{T,typeof(Name),U1,U2,U3,U4,U5}(
             Name, nU, rU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
         )
     end
@@ -358,7 +358,7 @@ end
 function show(io::IO, g::DiffusionCreep)
     return print(
         io,
-        "DiffusionCreep: Name = $(String(collect(g.Name))), n=$(Value(g.n)), r=$(Value(g.r)), p=$(Value(g.p)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), FT=$(g.FT), FE=$(g.FE)",
+        "DiffusionCreep: Name = $(printable_name(g.Name)), n=$(Value(g.n)), r=$(Value(g.r)), p=$(Value(g.p)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), FT=$(g.FT), FE=$(g.FE)",
     )
 end
 

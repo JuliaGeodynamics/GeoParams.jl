@@ -11,8 +11,11 @@ using Static, Adapt
 
 import Base.show, Base.convert
 using GeoParams:
-    AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct, AbstractComposite 
-
+    AbstractMaterialParam, 
+    AbstractMaterialParamsStruct, 
+    AbstractPhaseDiagramsStruct, 
+    AbstractComposite,
+    printable_name
 
 # Define an "empty" Material parameter structure
 struct No_MaterialParam{_T} <: AbstractMaterialParam end

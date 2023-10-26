@@ -58,7 +58,7 @@ struct GrainBoundarySliding{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     FE::T # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
 
     function GrainBoundarySliding(;
-        Name="",
+        Name=nothing,
         n=(7//2)NoUnits,
         p=-2NoUnits,
         A=6500MPa^(-n) * s^(-1.0) * µm^(2),
@@ -85,7 +85,7 @@ struct GrainBoundarySliding{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U4 = typeof(VU).types[2]
         U5 = typeof(RU).types[2]
         # Create struct
-        return new{T,String,U1,U2,U3,U4,U5}(
+        return new{T,typeof(Name),U1,U2,U3,U4,U5}(
             Name, nU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
         )
     end
@@ -335,7 +335,7 @@ end
 function show(io::IO, g::GrainBoundarySliding)
     return print(
         io,
-        "GrainBoundarySliding: Name = $(String(collect(g.Name))), n=$(Value(g.n)), p=$(Value(g.p)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), FT=$(g.FT), FE=$(g.FE)",
+        "GrainBoundarySliding: Name = $(printable_name(g.Name)), n=$(Value(g.n)), p=$(Value(g.p)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), FT=$(g.FT), FE=$(g.FE)",
     )
 end
 

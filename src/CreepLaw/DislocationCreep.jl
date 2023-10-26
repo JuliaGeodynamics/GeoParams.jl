@@ -55,7 +55,7 @@ struct DislocationCreep{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     FE::T # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
 
     function DislocationCreep(;
-        Name="",
+        Name=nothing,
         n=1NoUnits,
         r=0NoUnits,
         A=1.5MPa^(-n) / s,
@@ -81,7 +81,7 @@ struct DislocationCreep{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U4 = typeof(VU).types[2]
         U5 = typeof(RU).types[2]
         # Create struct
-        return new{T,String,U1,U2,U3,U4,U5}(
+        return new{T,typeof(Name),U1,U2,U3,U4,U5}(
             Name, nU, rU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
         )
     end
@@ -92,6 +92,11 @@ struct DislocationCreep{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         )
     end
 end
+
+@inline str2char(str::NTuple{N, Char}) where N = str
+@inline str2char(str::String) = str2char(str, static(length(str)))
+@inline str2char(str::String, ::StaticInt{N}) where N = ntuple(i->str[i], Val(N))
+@inline str2char(::String, ::StaticInt{0}) = ()
 
 Adapt.@adapt_structure DislocationCreep
 
@@ -311,7 +316,7 @@ end
 function show(io::IO, g::DislocationCreep)
     return print(
         io,
-        "DislocationCreep: Name = $(String(collect(g.Name))), n=$(Value(g.n)), r=$(Value(g.r)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), FT=$(g.FT), FE=$(g.FE), Apparatus=$(g.Apparatus)",
+        "DislocationCreep: Name = $(printable_name(g.Name)), n=$(Value(g.n)), r=$(Value(g.r)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), FT=$(g.FT), FE=$(g.FE), Apparatus=$(g.Apparatus)",
     )
 end
 #-------------------------------------------------------------------------
