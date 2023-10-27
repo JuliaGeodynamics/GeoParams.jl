@@ -425,5 +425,10 @@ using GeoParams
     @test Unit(T_nd-T_nd) == K
     @test Unit(T_nd*T_nd) == K*K
     
+    T_gradients_Kkm = GeoUnit(30K)/GeoUnit(1km)
+    @test T_gradients_Kkm == GeoUnit(0.03K/m)
+    T_gradients_Ckm = (GeoUnit(30C)-GeoUnit(0C))/GeoUnit(1km)
+    @test T_gradients_Ckm == GeoUnit(0.03K/m)
+    
 
 end

@@ -234,7 +234,7 @@ for op in (:+, :-, :*, :/)
     # Multiplying/dividing/adding/subtracting a GeoUnit with another one, returns a GeoUnit
     @eval function Base.$op(x::GeoUnit, y::GeoUnit) 
         isdimensional_new_unit = x.isdimensional*y.isdimensional
-        new_value = $(op)(UnitValue(x), UnitValue(y))
+        new_value = $(op)(upreferred.(UnitValue(x)), upreferred.(UnitValue(y)))
         if isdimensional_new_unit
             new_unit = unit(new_value)
         else
