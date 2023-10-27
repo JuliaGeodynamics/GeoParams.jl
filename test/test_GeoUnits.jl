@@ -404,7 +404,7 @@ using GeoParams
     p1_nd = nondimensionalize(param1, g)
 
     # Test multiplication/division of GeoUnits in dimensional and non-dimensional from
-    # Thie addresses issue #125
+    # This addresses issue #125
     CharDim     = GEO_units(length=40km, viscosity=1e20Pa*s);
     GeoTherm    = GeoUnit(30K/1km)
     GeoTherm_nd = nondimensionalize(GeoTherm, CharDim)
