@@ -7,12 +7,11 @@ using Unitful: Energy
 using Unitful
 using Parameters, LaTeXStrings, BibTeX
 using ..Units
-using Static, Adapt
+using Static
 
 import Base.show, Base.convert
 using GeoParams:
     AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct, AbstractComposite 
-
 
 # Define an "empty" Material parameter structure
 struct No_MaterialParam{_T} <: AbstractMaterialParam end
@@ -64,7 +63,7 @@ Structure that holds all material parameters for a given phase
 
 """
 @with_kw_noshow struct MaterialParams{
-    S,
+    N,
     Vdensity<:Tuple,
     Vgravity<:Tuple,
     Vcreep<:Tuple,
@@ -79,7 +78,7 @@ Structure that holds all material parameters for a given phase
     Vmelting<:Tuple,
     Vseismvel<:Tuple,
 } <: AbstractMaterialParamsStruct
-    Name::S                            #  Phase name
+    Name::NTuple{N,Char}               #  Phase name
     Phase::Int64 = 1                   #  Number of the phase (optional)
     Nondimensional::Bool = false       #  Are all fields non-dimensionalized or not?
     Density::Vdensity = ()             #  Density equation of state
@@ -96,8 +95,6 @@ Structure that holds all material parameters for a given phase
     Melting::Vmelting = ()             #  Melting model
     SeismicVelocity::Vseismvel = ()    #  Seismic velocity
 end
-
-Adapt.@adapt_structure MaterialParams
 
 """
     SetMaterialParams(; Name::String="", Phase::Int64=1,
@@ -242,9 +239,10 @@ function SetMaterialParams(
     CharDim,
 )
 
+    name = ntuple(i -> Name[i], length(Name))
     # define struct for phase, while also specifying the maximum number of definitions for every field   
     phase = MaterialParams(
-        Name,
+        name,
         Phase,
         false,
         Density,

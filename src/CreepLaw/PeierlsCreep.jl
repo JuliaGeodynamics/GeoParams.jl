@@ -35,8 +35,8 @@ julia> x2 = PeierlsCreep(n=1)
 PeierlsCreep: Name = , n=1.0, q=2.0, o=1.0, TauP=8.5e9 Pa, A=5.7e11 s^-1.0, E=476.0 kJ mol^-1.0, FT=1.7320508075688772, FE=1.1547005383792517, Apparatus=1
 ```
 """
-struct PeierlsCreep{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-    Name::S
+struct PeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
+    Name::NTuple{N,Char}
     n::GeoUnit{T,U1} # power-law exponent
     q::GeoUnit{T,U1} # stress relation exponent
     o::GeoUnit{T,U1} # ... (normally called p but used as 'o' since p already exists)
@@ -76,10 +76,11 @@ struct PeierlsCreep{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U3 = typeof(AU).types[2]
         U4 = typeof(EU).types[2]
         U5 = typeof(RU).types[2]
-
+        N = length(Name)
+        name = ntuple(i -> Name[i], Val(N))
         # Create struct
-        return new{T,String,U1,U2,U3,U4,U5}(
-            Name, nU, qU, oU, TauPU, AU, EU, RU, Int8(Apparatus), FT, FE
+        return new{T,N,U1,U2,U3,U4,U5}(
+            name, nU, qU, oU, TauPU, AU, EU, RU, Int8(Apparatus), FT, FE
         )
     end
 
@@ -89,8 +90,6 @@ struct PeierlsCreep{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         )
     end
 end
-
-Adapt.@adapt_structure PeierlsCreep
 
 """
     Transforms units from GPa, MPa, kJ etc. to basic units such as Pa, J etc.
