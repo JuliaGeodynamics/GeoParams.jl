@@ -48,8 +48,8 @@ julia> x2 = DiffusionCreep(Name="test")
 DiffusionCreep: Name = test, n=1.0, r=0.0, p=-3.0, A=1.5 m³·⁰ MPa⁻¹·⁰ s⁻¹·⁰, E=500.0 kJ mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517)
 ```
 """
-struct DiffusionCreep{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-    Name::S
+struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
+    Name::NTuple{N,Char}
     n::GeoUnit{T,U1} # powerlaw exponent
     r::GeoUnit{T,U1} # exponent of water-fugacity
     p::GeoUnit{T,U1} # grain size exponent
@@ -90,9 +90,11 @@ struct DiffusionCreep{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U3 = typeof(EU).types[2]
         U4 = typeof(VU).types[2]
         U5 = typeof(RU).types[2]
+        N = length(Name)
+        name = ntuple(i -> Name[i], Val(N))
         # Create struct
-        return new{T,String,U1,U2,U3,U4,U5}(
-            Name, nU, rU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
+        return new{T,N,U1,U2,U3,U4,U5}(
+            name, nU, rU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
         )
     end
 
@@ -103,8 +105,6 @@ function DiffusionCreep(Name, n, r, p, A, E, V, R, Apparatus, FT, FE)
         Name=Name, n=n, r=r, p=p, A=A, E=E, V=V, R=R, Apparatus=Apparatus
     )
 end
-
-Adapt.@adapt_structure DiffusionCreep
 
 """
     Transform_DiffusionCreep(name)

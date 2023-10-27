@@ -35,8 +35,8 @@ julia> x2 = NonLinearPeierlsCreep(n=1)
 NonLinearPeierlsCreep: n=1, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, Apparatus=AxialCompression
 ```
 """
-struct NonLinearPeierlsCreep{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-    Name::S
+struct NonLinearPeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
+    Name::NTuple{N,Char}
     n::GeoUnit{T,U1} # power-law exponent
     q::GeoUnit{T,U1} # stress relation exponent
     o::GeoUnit{T,U1} # ... (normally called p but used as 'o' since p already exists)
@@ -76,10 +76,11 @@ struct NonLinearPeierlsCreep{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U3 = typeof(AU).types[2]
         U4 = typeof(EU).types[2]
         U5 = typeof(RU).types[2]
-
+        N = length(Name)
+        name = ntuple(i -> Name[i], Val(N))
         # Create struct
-        return new{T,String,U1,U2,U3,U4,U5}(
-            Name, nU, qU, oU, TauPU, AU, EU, RU, Int8(Apparatus), FT, FE
+        return new{T,N,U1,U2,U3,U4,U5}(
+            name, nU, qU, oU, TauPU, AU, EU, RU, Int8(Apparatus), FT, FE
         )
     end
 
@@ -89,8 +90,6 @@ struct NonLinearPeierlsCreep{T,S,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         )
     end
 end
-
-Adapt.@adapt_structure NonLinearPeierlsCreep
 
 """
     Transforms units from GPa, MPa, kJ etc. to basic units such as Pa, J etc.
