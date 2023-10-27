@@ -231,9 +231,21 @@ for op in (:+, :-, :*, :/)
     @eval Base.$op(x::GeoUnit, y::Number) = $(op)(x.val, y)
     @eval Base.$op(x::Number, y::GeoUnit) = $(op)(x, y.val)
 
-    # Multiplying a GeoUnit with another one, returns a GeoUnit
+    # Multiplying/dividing/adding/subtracting a GeoUnit with another one, returns a GeoUnit
     @eval function Base.$op(x::GeoUnit{T1,U1}, y::GeoUnit{T2,U2}) where {T1,T2,U1,U2}
-        return GeoUnit($(op)(UnitValue(x), UnitValue(y)))
+        isdimensional_new_unit = x.isdimensional*y.isdimensional
+        new_value = $(op)(UnitValue(x), UnitValue(y))
+        if isdimensional_new_unit
+            new_unit = unit(new_value)
+        else
+            if ($(op) == +) ||  ($(op) == -)
+                new_unit = Unit(x)
+            else
+                new_unit = $(op)(Unit(x), Unit(y))
+            end
+        end
+
+        return GeoUnit(ustrip(new_value), new_unit, isdimensional_new_unit)
     end
     @eval Base.$op(x::GeoUnit, y::Quantity) = $(op).(UnitValue(x), y)
     @eval Base.$op(x::Quantity, y::GeoUnit) = $(op).(x, UnitValue(y))

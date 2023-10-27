@@ -136,7 +136,7 @@ using GeoParams
     CharUnits = SI_units()
     c = nondimensionalize(a, CharUnits)
     d = nondimensionalize(b, CharUnits)
-    @test c - d == GeoUnit(1)
+    @test NumValue(c - d) == 1.0
 
     # test various calculations (using arrays with and without units)
     T_vec = (273K):(10K):(500K)        # using units
@@ -402,4 +402,28 @@ using GeoParams
     @test p_nd == (0.1, 8.0e15)
 
     p1_nd = nondimensionalize(param1, g)
+
+    # Test multiplication/division of GeoUnits in dimensional and non-dimensional from
+    # Thie addresses issue #125
+    CharDim     = GEO_units(length=40km, viscosity=1e20Pa*s);
+    GeoTherm    = GeoUnit(30K/1km)
+    GeoTherm_nd = nondimensionalize(GeoTherm, CharDim)
+    GeoTherm_dim = dimensionalize(GeoTherm_nd, CharDim)
+    @test GeoTherm == GeoTherm_dim
+    @test Unit(GeoTherm_nd) == K/km
+
+    length = GeoUnit(1km)
+    length_nd = nondimensionalize(length, CharDim)
+    T = length*GeoTherm
+    @test T == GeoUnit(30K)
+    @test Unit(T) == K
+
+
+    T_nd = length_nd*GeoTherm_nd
+    @test Unit(T) == K
+    @test Unit(T_nd+T_nd) == K
+    @test Unit(T_nd-T_nd) == K
+    @test Unit(T_nd*T_nd) == K*K
+    
+
 end
