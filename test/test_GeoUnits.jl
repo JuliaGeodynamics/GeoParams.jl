@@ -430,5 +430,21 @@ using GeoParams
     T_gradients_Ckm = (GeoUnit(30C)-GeoUnit(0C))/GeoUnit(1km)
     @test T_gradients_Ckm == GeoUnit(0.03K/m)
     
+    # MWE of @aelligp
+    CharDim     = GEO_units(length=40km, viscosity=1e20Pa*s);
+    Depth       = GeoUnit(Array(0km:1km:10km));
+    Depth_nondim= nondimensionalize(Depth,CharDim);
+
+    Geotherm    = nondimensionalize(GeoUnit(30K/1km), CharDim)
+    Geotherm_C  = nondimensionalize(GeoUnit(30C)-GeoUnit(0C), CharDim)/nondimensionalize(GeoUnit(1km), CharDim)
+    
+    Gradient_K  = nondimensionalize(GeoUnit(273.15K),CharDim) .+ Geotherm * Depth_nondim;
+    Temp_K_dim  = dimensionalize(Gradient_K, CharDim)
+    @test all(Temp_K_dim.val .≈ (Depth.val.*30 .+ 273.15))
+
+    Gradient_C  = nondimensionalize(GeoUnit(0C),CharDim) .+ Geotherm_C * Depth_nondim;
+    Temp_C_dim  = dimensionalize(Gradient_C, CharDim)
+    @test all(Temp_C_dim.val .≈ Depth.val.*30)
+
 
 end
