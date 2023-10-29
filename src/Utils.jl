@@ -107,6 +107,19 @@ end
     end
 end
 
+"""
+    str2tuple(x::String) 
+Converts a string to a tuple with fixed length
+"""
+function str2tuple(x::String) 
+    N = 100
+    if length(x)>N
+        error("Name String is too long; max. allowed length=$N")
+    end
+    x = rpad(x,N)
+    return ntuple(i -> x[i], Val(N))
+end
+
 # Creates tuple without branching
 make_tuple(x) = (x,)
 make_tuple(x::Tuple) = x

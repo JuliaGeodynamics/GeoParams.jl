@@ -62,7 +62,6 @@ end
 @inline rat2float(x) = x
 
 @inline unit_power(A) = typeof(A).parameters[2].parameters[1][1].power
-
 include("DislocationCreep.jl")
 include("DiffusionCreep.jl")
 include("GrainBoundarySliding.jl")

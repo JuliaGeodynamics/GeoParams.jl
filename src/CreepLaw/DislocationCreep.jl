@@ -79,8 +79,13 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U3 = typeof(EU).types[2]
         U4 = typeof(VU).types[2]
         U5 = typeof(RU).types[2]
-        N = length(Name)
-        name = ntuple(i -> Name[i], Val(N))
+        if isa(Name,String)
+            name = str2tuple(Name)
+        else
+            name = Name
+        end
+            
+        N = length(name)
         # Create struct
         return new{T,N,U1,U2,U3,U4,U5}(
             name, nU, rU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
@@ -310,7 +315,7 @@ end
 function show(io::IO, g::DislocationCreep)
     return print(
         io,
-        "DislocationCreep: Name = $(String(collect(g.Name))), n=$(Value(g.n)), r=$(Value(g.r)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), FT=$(g.FT), FE=$(g.FE), Apparatus=$(g.Apparatus)",
+        "DislocationCreep: Name = $(strip(String(collect(g.Name)))), n=$(Value(g.n)), r=$(Value(g.r)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), FT=$(g.FT), FE=$(g.FE), Apparatus=$(g.Apparatus)",
     )
 end
 #-------------------------------------------------------------------------
@@ -320,7 +325,7 @@ include("Data/DislocationCreep.jl")
 include("Data_deprecated/DislocationCreep.jl")
 
 function param_info(s::DislocationCreep)
-    name = String(collect(s.Name))
+    name = strip(String(collect(s.Name)))
     eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"
     if name == ""
         return MaterialParamsInfo(; Equation=eq)
