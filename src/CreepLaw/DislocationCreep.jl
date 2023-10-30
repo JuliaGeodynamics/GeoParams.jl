@@ -79,12 +79,7 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U3 = typeof(EU).types[2]
         U4 = typeof(VU).types[2]
         U5 = typeof(RU).types[2]
-        if isa(Name,String)
-            name = str2tuple(Name)
-        else
-            name = Name
-        end
-            
+        name = str2tuple(Name)    
         N = length(name)
         # Create struct
         return new{T,N,U1,U2,U3,U4,U5}(
