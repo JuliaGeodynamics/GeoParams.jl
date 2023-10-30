@@ -46,7 +46,7 @@ GrainBoundarySliding: Name = test, n=1.0, p=-3.0, A=1.5 m³·⁰ MPa⁻¹·⁰ s
 """
 
 struct GrainBoundarySliding{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-    Name::NTuple{N,Char}
+    Name::NTuple{100,UInt8}
     n::GeoUnit{T,U1} # powerlaw exponent
     p::GeoUnit{T,U1} # grain size exponent
     A::GeoUnit{T,U2} # material specific rheological parameter
@@ -87,7 +87,7 @@ struct GrainBoundarySliding{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         N = length(Name)
         name = str2tuple(Name)    
         # Create struct
-        return new{T,N,U1,U2,U3,U4,U5}(
+        return new{T,100,U1,U2,U3,U4,U5}(
             name, nU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
         )
     end

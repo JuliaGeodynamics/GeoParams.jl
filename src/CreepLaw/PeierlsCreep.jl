@@ -36,7 +36,7 @@ PeierlsCreep: Name = , n=1.0, q=2.0, o=1.0, TauP=8.5e9 Pa, A=5.7e11 s^-1.0, E=47
 ```
 """
 struct PeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-    Name::NTuple{N,Char}
+    Name::NTuple{100,UInt8}
     n::GeoUnit{T,U1} # power-law exponent
     q::GeoUnit{T,U1} # stress relation exponent
     o::GeoUnit{T,U1} # ... (normally called p but used as 'o' since p already exists)
@@ -76,10 +76,9 @@ struct PeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U3 = typeof(AU).types[2]
         U4 = typeof(EU).types[2]
         U5 = typeof(RU).types[2]
-        N = length(Name)
         name = str2tuple(Name)    
         # Create struct
-        return new{T,N,U1,U2,U3,U4,U5}(
+        return new{T,100,U1,U2,U3,U4,U5}(
             name, nU, qU, oU, TauPU, AU, EU, RU, Int8(Apparatus), FT, FE
         )
     end

@@ -239,7 +239,7 @@ function SetMaterialParams(
     CharDim,
 )
 
-    name = ntuple(i -> Name[i], length(Name))
+    name = str2tuple(Name)    
     # define struct for phase, while also specifying the maximum number of definitions for every field   
     phase = MaterialParams(
         name,

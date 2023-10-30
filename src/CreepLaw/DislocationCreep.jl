@@ -42,7 +42,7 @@ DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3
 ```
 """
 struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-    Name::NTuple{N,Char}
+    Name::NTuple{100,UInt8}
     n::GeoUnit{T,U1} # power-law exponent
     r::GeoUnit{T,U1} # exponent of water-fugacity
     A::GeoUnit{T,U2} # material specific rheological parameter
@@ -82,7 +82,7 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         name = str2tuple(Name)    
         N = length(name)
         # Create struct
-        return new{T,N,U1,U2,U3,U4,U5}(
+        return new{T,100,U1,U2,U3,U4,U5}(
             name, nU, rU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
         )
     end
