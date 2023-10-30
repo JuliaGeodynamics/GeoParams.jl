@@ -1,6 +1,7 @@
 using Test
 using LinearAlgebra
 using GeoParams
+using StaticArrays
 
 @testset "MeltingParam.jl" begin
 
@@ -248,4 +249,12 @@ using GeoParams
 
     compute_dϕdT!(dϕdT, Mat_tup, Phases, args) #allocation free
     @test sum(dϕdT) / n^3 ≈ 0.0006838372430250584
+
+    # # test PhaseRatio
+    # PhaseRatio = (0.5,0.5,0.5)
+    # compute_meltfraction_ratio(PhaseRatio, Mat_tup, args) 
+
+    # SvPhaseRatio = SA[0.5,0.5,0.5]
+    # compute_meltfraction_ratio(SvPhaseRatio, Mat_tup, args)
+
 end
