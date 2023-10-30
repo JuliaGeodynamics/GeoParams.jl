@@ -11,7 +11,7 @@ using Static
 
 import Base.show, Base.convert
 using GeoParams:
-    AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct, AbstractComposite 
+    AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct, AbstractComposite, str2tuple 
 
 # Define an "empty" Material parameter structure
 struct No_MaterialParam{_T} <: AbstractMaterialParam end
@@ -78,7 +78,7 @@ Structure that holds all material parameters for a given phase
     Vmelting<:Tuple,
     Vseismvel<:Tuple,
 } <: AbstractMaterialParamsStruct
-    Name::NTuple{N,Char}               #  Phase name
+    Name::NTuple{N,UInt8}               #  Phase name
     Phase::Int64 = 1                   #  Number of the phase (optional)
     Nondimensional::Bool = false       #  Are all fields non-dimensionalized or not?
     Density::Vdensity = ()             #  Density equation of state
