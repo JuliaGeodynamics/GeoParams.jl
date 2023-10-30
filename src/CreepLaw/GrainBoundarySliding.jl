@@ -85,7 +85,7 @@ struct GrainBoundarySliding{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U4 = typeof(VU).types[2]
         U5 = typeof(RU).types[2]
         N = length(Name)
-        name = ntuple(i -> Name[i], Val(N))
+        name = str2tuple(Name)    
         # Create struct
         return new{T,N,U1,U2,U3,U4,U5}(
             name, nU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
