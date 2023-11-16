@@ -48,12 +48,11 @@ function ∂Q∂τ(p::AbstractPlasticity{T}, args::NamedTuple{N,T}; kwargs...) w
 end
 #-------------------------------------------------------------------------
 
-
 #-------------------------------------------------------------------------
 # Generic fallback
 @inline compute_yieldfunction(p::AbstractMaterialParam, ::Vararg{Any, N}) where N = 0.0
 # Composite rheologies
-@inline compute_yieldfunction(p::CompositeRheology, args::Vararg{Any, N}) where N = compute_yieldfunction(p.elements, args...)
+@inline compute_yieldfunction(p::AbstractComposite, args::Vararg{Any, N}) where N = compute_yieldfunction(p.elements, args...)
 @generated function compute_yieldfunction(p:: NTuple{N1, AbstractMaterialParam}, args::Vararg{Any, N2}) where {N1, N2}
     quote
         Base.@_inline_meta
@@ -68,7 +67,7 @@ end
 # Generic fallback
 @inline lambda(F, p::AbstractMaterialParam, ::Vararg{Any, N}) where N = 0.0
 # Composite rheologies
-@inline lambda(F, p::CompositeRheology, args::Vararg{Any, N}) where N =  lambda(F, p.elements, args...)
+@inline lambda(F, p::AbstractComposite, args::Vararg{Any, N}) where N =  lambda(F, p.elements, args...)
 @generated function lambda(F, p:: NTuple{N1, AbstractMaterialParam}, args::Vararg{Any, N2}) where {N1, N2}
     quote
         Base.@_inline_meta
@@ -83,7 +82,7 @@ end
 # Generic fallback
 @inline ∂Q∂τII(p::AbstractMaterialParam, ::Vararg{Any, N}) where N = 0.0
 # Composite rheologies
-@inline ∂Q∂τII(p::CompositeRheology, args::Vararg{Any, N}) where N = ∂Q∂τII(p.elements, args...)
+@inline ∂Q∂τII(p::AbstractComposite, args::Vararg{Any, N}) where N = ∂Q∂τII(p.elements, args...)
 @generated function ∂Q∂τII(p:: NTuple{N1, AbstractMaterialParam}, args::Vararg{Any, N2}) where {N1, N2}
     quote
         Base.@_inline_meta
