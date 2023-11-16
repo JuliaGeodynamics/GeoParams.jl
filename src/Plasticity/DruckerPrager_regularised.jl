@@ -39,24 +39,19 @@ where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the
 end
 DruckerPrager_regularised(args...) = DruckerPrager_regularised(convert.(GeoUnit, args)...)
 
-function isvolumetric(s::DruckerPrager_regularised)
-    @unpack_val Ψ = s
-    return Ψ == 0 ? false : true
-end
+isvolumetric(s::DruckerPrager_regularised) = !(s.Ψ == 0)
 
-function param_info(s::DruckerPrager_regularised) # info about the struct
+function param_info(::DruckerPrager_regularised) # info about the struct
     return MaterialParamsInfo(;
         Equation=L"F = \\tau_{II} - \\cos(ϕ)C - \\sin(ϕ)(P-P_f) - 2η_vpε̇II_pl ; Q=\\tau_{II} - \\sin(Ψ)(P-P_f)",
     )
 end
 
 # Calculation routines
-function (s::DruckerPrager_regularised{_T,U,U1})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T),kwargs...
-) where {_T,U,U1}
+function (s::DruckerPrager_regularised)(; P = 0.0, τII = 0.0, Pf = 0.0, λ = 0.0, kwargs...)
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
-    ε̇II_pl = λ*∂Q∂τII(s, τII)  # plastic strainrate
-    F = τII - cosϕ * C - sinϕ * (P - Pf)  - 2*η_vp*ε̇II_pl # with fluid pressure (set to zero by default)
+    ε̇II_pl = λ*∂Q∂τII(s, τII) # plastic strainrate
+    F = τII - cosϕ * C - sinϕ * (P - Pf) - 2 * η_vp * ε̇II_pl # with fluid pressure (set to zero by default)
     return F
 end
 
@@ -65,9 +60,7 @@ end
 
 Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` pressure, and `Pf` fluid pressure.
 """
-function compute_yieldfunction(
-    s::DruckerPrager_regularised{_T}; P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T=zero(_T)
-) where {_T}
+function compute_yieldfunction(s::DruckerPrager_regularised; P = 0.0, τII = 0.0, Pf = 0.0, λ = 0.0)
     return s(; P=P, τII=τII, Pf=Pf, λ=λ)
 end
 
@@ -94,16 +87,31 @@ function compute_yieldfunction!(
     return nothing
 end
 
+# Plastic multiplier 
+# NOTE: this is not used in the nonlinear iterations, so may not have to be defined for all cases
+"""
+    lambda(F::T, p::DruckerPrager, ηve::T, ηvp::T; K=zero(T), dt=zero(T), h=zero(T), τij=(one(T), one(T), one(T)))
+    
+    Compute the plastic multiplier λ for a Drucker-Prager yield surface. `F` is the trial yield surface, 
+    `ηve` is the visco-elastic effective viscosity (i.e. `(1/G/dt + 1/η)⁻¹`), `ηvp` is a regularization term,
+    `K` is the elastic bulk modulus, h is the harderning, and `τij`` is the stress tensor in Voigt notation.
+    Equations from Duretz et al. 2019 G3
+"""
+@inline function lambda(F, p::DruckerPrager_regularised, ηve, K, dt)
+    # FMA version of => λ =  F * inv(ηve + η_vp + K * dt * sinϕ + sinΨ)
+    λ =  F / (ηve + muladd(K, muladd(dt, p.sinϕ, p.sinΨ), p.η_vp))
+    return λ
+end
+
 # Plastic Potential 
 
 # Derivatives w.r.t pressure
-∂Q∂P(p::DruckerPrager_regularised, args; kwargs...) = -NumValue(p.sinΨ)
+@inline ∂Q∂P(p::DruckerPrager_regularised, args; kwargs...) = -NumValue(p.sinΨ)
 
 # Derivatives of yield function
-∂F∂τII(p::DruckerPrager_regularised, τII::_T; P=zero(_T), kwargs...) where _T  = _T(1)
-∂F∂P(p::DruckerPrager_regularised, P::_T; τII=zero(_T), kwargs...) where _T    = -NumValue(p.sinϕ)
-∂F∂λ(p::DruckerPrager_regularised, τII::_T; P=zero(_T), kwargs...) where _T    = -2*NumValue(p.η_vp)*∂Q∂τII(p, τII, P=P) 
-
+@inline ∂F∂τII(p::DruckerPrager_regularised, τII; P = 0.0, kwargs...) = 1.0
+@inline ∂F∂P(p::DruckerPrager_regularised, P; kwargs...)              = -NumValue(p.sinϕ)
+@inline ∂F∂λ(p::DruckerPrager_regularised, τII; P = 0.0, kwargs...)   = -2 * NumValue(p.η_vp) * ∂Q∂τII(p, τII, P = P) 
 
 # Derivatives w.r.t stress tensor
 
@@ -111,35 +119,30 @@ end
 for t in (:NTuple,:SVector)
     @eval begin
         ## 3D derivatives 
-        ∂Q∂τxx(p::DruckerPrager_regularised, τij::$(t){6, T}) where T = 0.5 * τij[1] / second_invariant(τij)
-        ∂Q∂τyy(p::DruckerPrager_regularised, τij::$(t){6, T}) where T = 0.5 * τij[2] / second_invariant(τij)
-        ∂Q∂τzz(p::DruckerPrager_regularised, τij::$(t){6, T}) where T = 0.5 * τij[3] / second_invariant(τij)
-        ∂Q∂τyz(p::DruckerPrager_regularised, τij::$(t){6, T}) where T = τij[4] / second_invariant(τij)
-        ∂Q∂τxz(p::DruckerPrager_regularised, τij::$(t){6, T}) where T = τij[5] / second_invariant(τij)
-        ∂Q∂τxy(p::DruckerPrager_regularised, τij::$(t){6, T}) where T = τij[6] / second_invariant(τij) 
+        @inline ∂Q∂τxx(p::DruckerPrager_regularised, τij::$(t){6, T}) where T = 0.5 * τij[1] / second_invariant(τij)
+        @inline ∂Q∂τyy(p::DruckerPrager_regularised, τij::$(t){6, T}) where T = 0.5 * τij[2] / second_invariant(τij)
+        @inline ∂Q∂τzz(p::DruckerPrager_regularised, τij::$(t){6, T}) where T = 0.5 * τij[3] / second_invariant(τij)
+        @inline ∂Q∂τyz(p::DruckerPrager_regularised, τij::$(t){6, T}) where T = τij[4] / second_invariant(τij)
+        @inline ∂Q∂τxz(p::DruckerPrager_regularised, τij::$(t){6, T}) where T = τij[5] / second_invariant(τij)
+        @inline ∂Q∂τxy(p::DruckerPrager_regularised, τij::$(t){6, T}) where T = τij[6] / second_invariant(τij) 
         ## 2D derivatives 
-        ∂Q∂τxx(p::DruckerPrager_regularised, τij::$(t){3, T}) where T = 0.5 * τij[1] / second_invariant(τij)
-        ∂Q∂τyy(p::DruckerPrager_regularised, τij::$(t){3, T}) where T = 0.5 * τij[2] / second_invariant(τij)
-        ∂Q∂τxy(p::DruckerPrager_regularised, τij::$(t){3, T}) where T = τij[3] / second_invariant(τij) 
+        @inline ∂Q∂τxx(p::DruckerPrager_regularised, τij::$(t){3, T}) where T = 0.5 * τij[1] / second_invariant(τij)
+        @inline ∂Q∂τyy(p::DruckerPrager_regularised, τij::$(t){3, T}) where T = 0.5 * τij[2] / second_invariant(τij)
+        @inline ∂Q∂τxy(p::DruckerPrager_regularised, τij::$(t){3, T}) where T = τij[3] / second_invariant(τij) 
     end
 end
 
-∂Q∂τII(p::DruckerPrager_regularised, τII::_T; P=zero(_T), kwargs...) where _T = 0.5
+@inline ∂Q∂τII(p::DruckerPrager_regularised, τII; kwargs...) = 0.5
 
 """
-    compute_εII(p::DruckerPrager_regularised{_T,U,U1}, λdot::_T, τII::_T,  P) 
+    compute_εII(p::DruckerPrager_regularised, λdot, τII,  P) 
 
 This computes plastic strain rate invariant for a given ``λdot``
 """
-function compute_εII(p::DruckerPrager_regularised{_T,U,U1}, λdot::_T, τII::_T, kwargs...) where {_T, U, U1}
+function compute_εII(p::DruckerPrager_regularised, λdot, τII, kwargs...)
     args = merge(kwargs, (λ=λdot,))
     F = compute_yieldfunction(p, args)
-    if F>0
-        ε_pl = λdot*∂Q∂τII(p, τII)
-
-    else
-        ε_pl = 0.0
-    end 
+    ε_pl = F > 0 ? λdot*∂Q∂τII(p, τII) : 0.0
 
     return ε_pl
 end

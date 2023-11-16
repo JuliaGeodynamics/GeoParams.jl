@@ -15,7 +15,6 @@ export AbstractPlasticity,
 include("DruckerPrager.jl")    # DP plasticity
 include("DruckerPrager_regularised.jl")    # regularized DP plasticity
 
-
 # Thin convenience wrappers
 # 3D
 function ∂Q∂τ(p::AbstractPlasticity{T}, τij::SVector{6,T}; kwargs...) where {T}
@@ -50,6 +49,49 @@ end
 #-------------------------------------------------------------------------
 
 
+#-------------------------------------------------------------------------
+# Generic fallback
+@inline compute_yieldfunction(p::AbstractMaterialParam, ::Vararg{Any, N}) where N = 0.0
+# Composite rheologies
+@inline compute_yieldfunction(p::CompositeRheology, args::Vararg{Any, N}) where N = compute_yieldfunction(p.elements, args...)
+@generated function compute_yieldfunction(p:: NTuple{N1, AbstractMaterialParam}, args::Vararg{Any, N2}) where {N1, N2}
+    quote
+        Base.@_inline_meta
+        val = 0.0
+        Base.@nexprs $N1 i -> val += compute_yieldfunction(p[i], args...)
+        return val
+    end
+end
+#-------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------
+# Generic fallback
+@inline lambda(F, p::AbstractMaterialParam, ::Vararg{Any, N}) where N = 0.0
+# Composite rheologies
+@inline lambda(F, p::CompositeRheology, args::Vararg{Any, N}) where N =  lambda(F, p.elements, args...)
+@generated function lambda(F, p:: NTuple{N1, AbstractMaterialParam}, args::Vararg{Any, N2}) where {N1, N2}
+    quote
+        Base.@_inline_meta
+        val = 0.0
+        Base.@nexprs $N1 i -> val += lambda(F, p[i], args...)
+        return val
+    end
+end
+#-------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------
+# Generic fallback
+@inline ∂Q∂τII(p::AbstractMaterialParam, ::Vararg{Any, N}) where N = 0.0
+# Composite rheologies
+@inline ∂Q∂τII(p::CompositeRheology, args::Vararg{Any, N}) where N = ∂Q∂τII(p.elements, args...)
+@generated function ∂Q∂τII(p:: NTuple{N1, AbstractMaterialParam}, args::Vararg{Any, N2}) where {N1, N2}
+    quote
+        Base.@_inline_meta
+        val = 0.0
+        Base.@nexprs $N1 i -> val += ∂Q∂τII(p[i], args...)
+        return val
+    end
+end
 #-------------------------------------------------------------------------
 
 # Plastic finite strain and strain rate
@@ -95,6 +137,8 @@ for myType in (:DruckerPrager, :DruckerPrager_regularised)
         
         compute_yieldfunction(p::$(myType), args) = p(args)
         compute_εII(p::$(myType), args) = compute_εII(p,args...)
+        
+        # lambda(F, p::$(myType), ηve, args) = lambda(F, p, ηve; args...)
         
         function compute_yieldfunction!(
             H::AbstractArray{_T,N}, p::$(myType){_T}, args
