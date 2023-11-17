@@ -39,7 +39,10 @@ where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the
 end
 DruckerPrager_regularised(args...) = DruckerPrager_regularised(convert.(GeoUnit, args)...)
 
-isvolumetric(s::DruckerPrager_regularised) = !(s.Ψ == 0)
+function isvolumetric(s::DruckerPrager_regularised)
+    @unpack_val Ψ = s
+    return !(Ψ == 0)
+end
 
 function param_info(::DruckerPrager_regularised) # info about the struct
     return MaterialParamsInfo(;
