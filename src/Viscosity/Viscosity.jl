@@ -178,6 +178,6 @@ end
         Base.@_inline_meta
         η = 0.0
         Base.@nexprs $N i -> !isplastic(v[i]) && (η += inv(fn(v[i], II, args)))
-        return η
+        return inv(η)
     end
 end
