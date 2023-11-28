@@ -2,7 +2,7 @@
 
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliageodynamics.github.io/GeoParams.jl/dev/)
 [![CI](https://github.com/JuliaGeodynamics/GeoParams.jl/actions/workflows/blank.yml/badge.svg)](https://github.com/JuliaGeodynamics/GeoParams.jl/actions/workflows/blank.yml)
-[![DOI](https://zenodo.org/badge/613790043.svg)](https://zenodo.org/doi/10.5281/zenodo.10211613)
+[![DOI](https://zenodo.org/badge/369433137.svg)](https://zenodo.org/doi/10.5281/zenodo.8089230)
 
 Typical geodynamic simulations involve a large number of material parameters and nonlinear constitutive relationships. A large part of the work in writing a new code is benchmarking and debugging the implementation of such material parameters, which involve *point-wise* calculations that are independent of the discretisation method (finite difference, finite element, finite volume).
 
