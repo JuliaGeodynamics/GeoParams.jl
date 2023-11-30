@@ -5,7 +5,7 @@ using GeoParams: AbstractMaterialParam, param_info, LinearViscous, PowerlawVisco
 using ..Units
 using ..MaterialParameters: MaterialParamsInfo
 
-export detachFloatfromExponent, Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2MarkdownTable, ParameterTable
+export detachFloatfromExponent, check_flowadd, checkRheologyType, Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2MarkdownTable, ParameterTable
 
 
 """ 
@@ -28,6 +28,26 @@ function detachFloatfromExponent(str::String)
 
 end
 
+@inline check_flowadd(a::DislocationCreep) = "DislCreep"
+@inline check_flowadd(a::DiffusionCreep) = "DiffCreep"
+@inline check_flowadd(a::GrainBoundarySliding) = "GBS"
+@inline check_flowadd(a::PeierlsCreep) = "PeiCreep"
+@inline check_flowadd(a::NonLinearPeierlsCreep) = "NLP"
+@inline check_flowadd(a::LinearViscous) = "LinVisc"
+@inline check_flowadd(::T) where T = throw("Rheology not supported.")
+#Noch nachdenken wie jetzt nach Typ rheo zu Disl, Diff, etc. dazu addiert wird
+
+function checkRheologyType(a, rheo, flowlaw, flowlawcount, refs, i; pre="")
+    rheo += 1
+    flowadd = check_flowadd(a)
+    flowlawcount += 1
+    flowlaw *= flowadd * ","
+    name = pre * join(a.Name)
+    bibinfo = param_info(a)
+    bib = bibinfo.BibTex_Reference
+    refs["$name"] = (bib, "$flowlawcount", "$i")
+    return rheo, flowlaw, flowlawcount, refs
+end
 
 """
 Phase2Dict() puts all parameters of a phase s in a dict.
@@ -44,13 +64,13 @@ function Phase2Dict(s)
     # Checks all Phases 
     for i in 1:phasecount
         fieldnames = propertynames(s[i])
-        global Diff = 0
-        global Disl = 0
-        global Lin = 0
-        global GBS = 0
-        global Pei = 0
-        global NLP = 0
-        for label in fieldnames
+        Diff = 0
+        Disl = 0
+        Lin = 0
+        GBS = 0
+        Pei = 0
+        NLP = 0
+        for label in fieldnames # labels are symbols
             if !isempty(getproperty(s[i], label)) && label != :Name
                 # Goes through all components of all fields
                 for j in 1:length(getproperty(s[i], label))
@@ -64,138 +84,71 @@ function Phase2Dict(s)
                     flownlp  = "NLP"
                     flowcomp = "CompoRheo"
                     flowpara = "Parallel"
+                    a_j = a[j]
                     # Checks what type the CreepLaw or CompositeRheology field has 
-                    if typeof(a[j]) <: DislocationCreep
-                        global Disl += 1
-                        flowlawcount += 1
-                        flowadd = flowdisl
-                        flowlaw *= flowadd
-                        name = join(a[j].Name)
-                        bibinfo_disl = param_info(a[j])
-                        bib_disl = bibinfo_disl.BibTex_Reference
-                        refs["$name"] = (bib_disl, "$flowlawcount", "$i")
+                    if typeof(a_j) <: DislocationCreep
+                        Disl, flowlaw, flowlawcount, refs = checkRheologyType(a_j, Disl, flowlaw, flowlawcount, refs, i)
 
-                    elseif typeof(a[j]) <: DiffusionCreep
-                        global Diff += 1
-                        flowlawcount += 1
-                        flowadd = flowdiff
-                        flowlaw *= flowadd
-                        name = join(a[j].Name)
-                        bibinfo_diff = param_info(a[j])
-                        bib_diff = bibinfo_diff.BibTex_Reference
-                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                    elseif typeof(a_j) <: DiffusionCreep
+                        Diff, flowlaw, flowlawcount, refs = checkRheologyType(a_j, Diff, flowlaw, flowlawcount, refs, i)
 
-                    elseif typeof(a[j]) <: GrainBoundarySliding
-                        global GBS += 1
-                        flowlawcount += 1
-                        flowadd = flowgbs
-                        flowlaw *= flowadd
-                        name = join(a[j].Name)
-                        bibinfo_diff = param_info(a[j])
-                        bib_diff = bibinfo_diff.BibTex_Reference
-                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                    elseif typeof(a_j) <: GrainBoundarySliding
+                        GBS, flowlaw, flowlawcount, refs = checkRheologyType(a_j, GBS, flowlaw, flowlawcount, refs, i)
 
-                    elseif typeof(a[j]) <: PeierlsCreep
-                        global Pei += 1
-                        flowlawcount += 1
-                        flowadd = flowpei
-                        flowlaw *= flowadd
-                        name = join(a[j].Name)
-                        bibinfo_diff = param_info(a[j])
-                        bib_diff = bibinfo_diff.BibTex_Reference
-                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                    elseif typeof(a_j) <: PeierlsCreep
+                        Pei, flowlaw, flowlawcount, refs = checkRheologyType(a_j, Pei, flowlaw, flowlawcount, refs, i)
 
-                    elseif typeof(a[j]) <: NonLinearPeierlsCreep
-                        global NLP += 1
-                        flowlawcount += 1
-                        flowadd = flownlp
-                        flowlaw *= flowadd
-                        name = join(a[j].Name)
-                        bibinfo_diff = param_info(a[j])
-                        bib_diff = bibinfo_diff.BibTex_Reference
-                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                    elseif typeof(a_j) <: NonLinearPeierlsCreep
+                        NLP, flowlaw, flowlawcount, refs = checkRheologyType(a_j, NLP, flowlaw, flowlawcount, refs, i)
 
-                    elseif typeof(a[j]) <: LinearViscous
-                        global Lin += 1
+                    elseif typeof(a_j) <: LinearViscous
+                        Lin += 1
                         flowlawcount += 1
                         flowadd = flowlin
                         flowlaw *= flowadd
 
-                    elseif typeof(a[j]) <: CompositeRheology
-                        compos = getproperty(a[j], :elements)
+                    elseif typeof(a_j) <: CompositeRheology
+                        compos = getproperty(a_j, :elements)
                         num_rheologies = length(compos)
                         fdsname = "Comp "
                         flowadd = flowcomp
                         comporheo = flowadd * "("
                         for u in 1:num_rheologies
-                            if typeof(a[j][u]) <: Parallel
-                                num_parallel = length(a[j][u].elements)
+                            a_ju = a_j[u]
+                            if typeof(a_ju) <: Parallel
+                                num_parallel = length(a_ju.elements)
                                 flowadd = flowpara
                                 parallelrheo = flowadd * "("
                                 namepre = fdsname * "Para "
                                 for v in 1:num_parallel
-                                    if typeof(a[j][u][v]) <: DislocationCreep
-                                        global Disl += 1
-                                        flowlawcount += 1
-                                        flowadd = flowdisl
-                                        parallelrheo *= flowadd * ","
-                                        name = namepre * join(a[j][u][v].Name)
-                                        bibinfo_disl = param_info(a[j][u][v])
-                                        bib_disl = bibinfo_disl.BibTex_Reference
-                                        refs["$name"] = (bib_disl, "$flowlawcount", "$i")
+                                    a_juv = a_ju[v]
+                                    if typeof(a_juv) <: DislocationCreep
+                                        Disl, parallelrheo, flowlawcount, refs = checkRheologyType(a_juv, Disl, parallelrheo, flowlawcount, refs, i; pre=namepre)
+                                        
+                                    elseif typeof(a_juv) <: DiffusionCreep
+                                        Diff, parallelrheo, flowlawcount, refs = checkRheologyType(a_juv, Diff, parallelrheo, flowlawcount, refs, i; pre=namepre)
 
-                                    elseif typeof(a[j][u][v]) <: DiffusionCreep
-                                        global Diff += 1
-                                        flowlawcount += 1
-                                        flowadd = flowdiff
-                                        parallelrheo *= flowadd * ","
-                                        name = namepre * join(a[j][u][v].Name)
-                                        bibinfo_diff = param_info(a[j][u][v])
-                                        bib_diff = bibinfo_diff.BibTex_Reference
-                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
-
-                                    elseif typeof(a[j][u][v]) <: GrainBoundarySliding
-                                        global GBS += 1
-                                        flowlawcount += 1
-                                        flowadd = flowgbs
-                                        parallelrheo *= flowadd * ","
-                                        name = namepre * join(a[j][u][v].Name)
-                                        bibinfo_diff = param_info(a[j][u][v])
-                                        bib_diff = bibinfo_diff.BibTex_Reference
-                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                                    elseif typeof(a_juv) <: GrainBoundarySliding
+                                        GBS, parallelrheo, flowlawcount, refs = checkRheologyType(a_juv, GBS, parallelrheo, flowlawcount, refs, i; pre=namepre)
                 
-                                    elseif typeof(a[j][u][v]) <: PeierlsCreep
-                                        global Pei += 1
-                                        flowlawcount += 1
-                                        flowadd = flowpei
-                                        parallelrheo *= flowadd * ","
-                                        name = namepre * join(a[j][u][v].Name)
-                                        bibinfo_diff = param_info(a[j][u][v])
-                                        bib_diff = bibinfo_diff.BibTex_Reference
-                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                                    elseif typeof(a_juv) <: PeierlsCreep
+                                        Pei, parallelrheo, flowlawcount, refs = checkRheologyType(a_juv, Pei, parallelrheo, flowlawcount, refs, i; pre=namepre)
                 
-                                    elseif typeof(a[j][u][v]) <: NonLinearPeierlsCreep
-                                        global NLP += 1
-                                        flowlawcount += 1
-                                        flowadd = flownlp
-                                        parallelrheo *= flowadd * ","
-                                        name = namepre * join(a[j][u][v].Name)
-                                        bibinfo_diff = param_info(a[j][u][v])
-                                        bib_diff = bibinfo_diff.BibTex_Reference
-                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
-
-                                    elseif typeof(a[j][u][v]) <: LinearViscous
-                                        global Lin += 1
+                                    elseif typeof(a_juv) <: NonLinearPeierlsCreep
+                                        NLP, parallelrheo, flowlawcount, refs = checkRheologyType(a_juv, NLP, parallelrheo, flowlawcount, refs, i; pre=namepre)
+                                        
+                                    elseif typeof(a_juv) <: LinearViscous
+                                        Lin += 1
                                         flowlawcount += 1
                                         flowadd = flowlin
                                         parallelrheo *= flowadd * ","
                                         
                                     end
 
-                                    varnames = propertynames(a[j][u][v])
+                                    varnames = propertynames(a_juv)
                                     # Goes through all variables in a field component
                                     for var in varnames
-                                        b = getproperty(a[j][u][v], var)
+                                        b = getproperty(a_juv, var)
                                         # Checks if they are GeoUnit (Value and Unit exist then)
                                         if isa(b, GeoUnit)
                                             value = string(getproperty(b, :val))
@@ -206,22 +159,22 @@ function Phase2Dict(s)
                                                 latexvar = string("$var")
                                             end
                                             # Put value, LaTex variable name, creep law pattern, phase id, current disl, diff or linvisc count and corresponding string for equation in a Dict
-                                            if typeof(a[j][u][v]) <: DislocationCreep
+                                            if typeof(a_juv) <: DislocationCreep
                                                 fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Disl", "$flowdisl")
                                             end
-                                            if typeof(a[j][u][v]) <: DiffusionCreep
+                                            if typeof(a_juv) <: DiffusionCreep
                                                 fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Diff", "$flowdiff")
                                             end
-                                            if typeof(a[j][u][v]) <: GrainBoundarySliding
+                                            if typeof(a_juv) <: GrainBoundarySliding
                                                 fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$GBS", "$flowgbs")
                                             end
-                                            if typeof(a[j][u][v]) <: PeierlsCreep
+                                            if typeof(a_juv) <: PeierlsCreep
                                                 fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Pei", "$flowpei")
                                             end
-                                            if typeof(a[j][u][v]) <: NonLinearPeierlsCreep
+                                            if typeof(a_juv) <: NonLinearPeierlsCreep
                                                 fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$NLP", "$flownlp")
                                             end
-                                            if typeof(a[j][u][v]) <: LinearViscous
+                                            if typeof(a_juv) <: LinearViscous
                                                 fds["$var $label $flowadd $i.$u.$v"] = (value, latexvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Lin", "$flowlin")
                                             end
                                         end
@@ -230,69 +183,34 @@ function Phase2Dict(s)
                                 end
                                 comporheo *= parallelrheo * "),"
 
-                            elseif typeof(a[j][u]) <: DislocationCreep
-                                global Disl += 1
-                                flowlawcount += 1
-                                flowadd = flowdisl
-                                comporheo *= flowadd * ","
-                                name =  fdsname * join(a[j][u].Name)
-                                bibinfo_disl = param_info(a[j][u])
-                                bib_disl = bibinfo_disl.BibTex_Reference
-                                refs["$name"] = (bib_disl, "$flowlawcount", "$i")
+                            elseif typeof(a_ju) <: DislocationCreep
+                                Disl, comporheo, flowlawcount, refs = checkRheologyType(a_ju, Disl, comporheo, flowlawcount, refs, i; pre=fdsname)
 
-                            elseif typeof(a[j][u]) <: DiffusionCreep
-                                global Diff += 1
-                                flowlawcount += 1
-                                flowadd = flowdiff
-                                comporheo *= flowadd * ","
-                                name =  fdsname * join(a[j][u].Name)
-                                bibinfo_diff = param_info(a[j][u])
-                                bib_diff = bibinfo_diff.BibTex_Reference
-                                refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                            elseif typeof(a_ju) <: DiffusionCreep
+                                Diff, comporheo, flowlawcount, refs = checkRheologyType(a_ju, Diff, comporheo, flowlawcount, refs, i; pre=fdsname)
 
-                            elseif typeof(a[j][u]) <: GrainBoundarySliding
-                                global GBS += 1
-                                flowlawcount += 1
-                                flowadd = flowgbs
-                                comporheo *= flowadd * ","
-                                name =  fdsname * join(a[j][u].Name)
-                                bibinfo_diff = param_info(a[j][u])
-                                bib_diff = bibinfo_diff.BibTex_Reference
-                                refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                            elseif typeof(a_ju) <: GrainBoundarySliding
+                                GBS, comporheo, flowlawcount, refs = checkRheologyType(a_ju, GBS, comporheo, flowlawcount, refs, i; pre=fdsname)
 
-                            elseif typeof(a[j][u]) <: PeierlsCreep
-                                global Pei += 1
-                                flowlawcount += 1
-                                flowadd = flowpei
-                                comporheo *= flowadd * ","
-                                name =  fdsname * join(a[j][u].Name)
-                                bibinfo_diff = param_info(a[j][u])
-                                bib_diff = bibinfo_diff.BibTex_Reference
-                                refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                            elseif typeof(a_ju) <: PeierlsCreep
+                                Pei, comporheo, flowlawcount, refs = checkRheologyType(a_ju, Pei, comporheo, flowlawcount, refs, i; pre=fdsname)
 
-                            elseif typeof(a[j][u]) <: NonLinearPeierlsCreep
-                                global NLP += 1
-                                flowlawcount += 1
-                                flowadd = flownlp
-                                comporheo *= flowadd * ","
-                                name =  fdsname * join(a[j][u].Name)
-                                bibinfo_diff = param_info(a[j][u])
-                                bib_diff = bibinfo_diff.BibTex_Reference
-                                refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                            elseif typeof(a_ju) <: NonLinearPeierlsCreep
+                                NLP, comporheo, flowlawcount, refs = checkRheologyType(a_ju, NLP, comporheo, flowlawcount, refs, i; pre=fdsname)
 
-                            elseif typeof(a[j][u]) <: LinearViscous
-                                global Lin += 1
+                            elseif typeof(a_ju) <: LinearViscous
+                                Lin += 1
                                 flowlawcount += 1
                                 flowadd = flowlin
                                 comporheo *= flowadd * ","
                             end
 
-                            varnames = propertynames(a[j][u])
+                            varnames = propertynames(a_ju)
                             # Goes through all variables in a field component
                             c = 0
                             for var in varnames
                                 c += 1
-                                b = getproperty(a[j][u], var)
+                                b = getproperty(a_ju, var)
                                 # Checks if they are GeoUnit (Value and Unit exist then)
                                 if isa(b, GeoUnit)
                                     value = string(getproperty(b, :val))
@@ -303,22 +221,22 @@ function Phase2Dict(s)
                                         latexvar = string("$var")
                                     end
                                     # Put value, LaTex variable name, creep law pattern, phase id, current disl, diff or linvisc count and corresponding string for equation in a Dict
-                                    if typeof(a[j][u]) <: DislocationCreep
+                                    if typeof(a_ju) <: DislocationCreep
                                         fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$Disl", "$flowdisl")
                                     end
-                                    if typeof(a[j][u]) <: DiffusionCreep
+                                    if typeof(a_ju) <: DiffusionCreep
                                         fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$Diff", "$flowdiff")
                                     end
-                                    if typeof(a[j][u]) <: GrainBoundarySliding
+                                    if typeof(a_ju) <: GrainBoundarySliding
                                         fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$GBS", "$flowgbs")
                                     end
-                                    if typeof(a[j][u]) <: PeierlsCreep
+                                    if typeof(a_ju) <: PeierlsCreep
                                         fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$Pei", "$flowpei")
                                     end
-                                    if typeof(a[j][u]) <: NonLinearPeierlsCreep
+                                    if typeof(a_ju) <: NonLinearPeierlsCreep
                                         fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$NLP", "$flownlp")
                                     end
-                                    if typeof(a[j][u]) <: LinearViscous
+                                    if typeof(a_ju) <: LinearViscous
                                         fds["$var $label $flowadd $i.$u"] = (value, latexvar, "$flowlaw$comporheo)", "$i", "$Lin", "$flowlin")
                                     end
                                 end
@@ -327,135 +245,68 @@ function Phase2Dict(s)
                         end
                         flowlaw *= comporheo * "),"
 
-                    elseif typeof(a[j]) <: Parallel
-                        num_parallel = length(a[j].elements)
+                    elseif typeof(a_j) <: Parallel
+                        num_parallel = length(a_j.elements)
                         fdsname = "Para "
                         flowadd = flowpara
                         parallelrheo = flowadd * "("
                         for q in 1:num_parallel
-                            if typeof(a[j][q]) <: DislocationCreep
-                                global Disl += 1
-                                flowlawcount += 1
-                                flowadd = flowdisl
-                                parallelrheo *= flowadd * ","
-                                name = fdsname * join(a[j][q].Name)
-                                bibinfo_disl = param_info(a[j][q])
-                                bib_disl = bibinfo_disl.BibTex_Reference
-                                refs["$name"] = (bib_disl, "$flowlawcount", "$i")
+                            a_jq = a_j[q]
+                            if typeof(a_jq) <: DislocationCreep
+                                Disl, parallelrheo, flowlawcount, refs = checkRheologyType(a_jq, Disl, parallelrheo, flowlawcount, refs, i; pre=fdsname)
 
-                            elseif typeof(a[j][q]) <: DiffusionCreep
-                                global Diff += 1
-                                flowlawcount += 1
-                                flowadd = flowdiff
-                                parallelrheo *= flowadd * ","
-                                name = fdsname * join(a[j][q].Name)
-                                bibinfo_diff = param_info(a[j][q])
-                                bib_diff = bibinfo_diff.BibTex_Reference
-                                refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                            elseif typeof(a_jq) <: DiffusionCreep
+                                Diff, parallelrheo, flowlawcount, refs = checkRheologyType(a_jq, Diff, parallelrheo, flowlawcount, refs, i; pre=fdsname)
 
-                            elseif typeof(a[j][q]) <: GrainBoundarySliding
-                                global GBS += 1
-                                flowlawcount += 1
-                                flowadd = flowgbs
-                                parallelrheo *= flowadd * ","
-                                name = fdsname * join(a[j][q].Name)
-                                bibinfo_diff = param_info(a[j][q])
-                                bib_diff = bibinfo_diff.BibTex_Reference
-                                refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                            elseif typeof(a_jq) <: GrainBoundarySliding
+                                GBS, parallelrheo, flowlawcount, refs = checkRheologyType(a_jq, GBS, parallelrheo, flowlawcount, refs, i; pre=fdsname)
 
-                            elseif typeof(a[j][q]) <: PeierlsCreep
-                                global Pei += 1
-                                flowlawcount += 1
-                                flowadd = flowpei
-                                parallelrheo *= flowadd * ","
-                                name = fdsname * join(a[j][q].Name)
-                                bibinfo_diff = param_info(a[j][q])
-                                bib_diff = bibinfo_diff.BibTex_Reference
-                                refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                            elseif typeof(a_jq) <: PeierlsCreep
+                                Pei, parallelrheo, flowlawcount, refs = checkRheologyType(a_jq, Pei, parallelrheo, flowlawcount, refs, i; pre=fdsname)
 
-                            elseif typeof(a[j][q]) <: NonLinearPeierlsCreep
-                                global NLP += 1
-                                flowlawcount += 1
-                                flowadd = flownlp
-                                parallelrheo *= flowadd * ","
-                                name = fdsname * join(a[j][q].Name)
-                                bibinfo_diff = param_info(a[j][q])
-                                bib_diff = bibinfo_diff.BibTex_Reference
-                                refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                            elseif typeof(a_jq) <: NonLinearPeierlsCreep
+                                NLP, parallelrheo, flowlawcount, refs = checkRheologyType(a_jq, NLP, parallelrheo, flowlawcount, refs, i; pre=fdsname)
 
-                            elseif typeof(a[j][q]) <: LinearViscous
-                                global Lin += 1
+                            elseif typeof(a_jq) <: LinearViscous
+                                Lin += 1
                                 flowlawcount += 1
                                 flowadd = flowlin
                                 parallelrheo *= flowadd * ","
 
-                            elseif typeof(a[j][q]) <: CompositeRheology
-                                compos = getproperty(a[j], :elements)
+                            elseif typeof(a_jq) <: CompositeRheology
+                                compos = getproperty(a_j, :elements)
                                 num_rheologies = length(compos)
                                 namepre = fdsname * "Comp "
                                 flowadd = flowcomp
                                 comporheo = flowadd * "("
                                 for u in 1:num_rheologies
-                                    if typeof(a[j][q][u]) <: DislocationCreep
-                                        global Disl += 1
-                                        flowlawcount += 1
-                                        flowadd = flowdisl
-                                        comporheo *= flowadd * ","
-                                        name = namepre * join(a[j][q][u].Name)
-                                        bibinfo_disl = param_info(a[j][q][u])
-                                        bib_disl = bibinfo_disl.BibTex_Reference
-                                        refs["$name"] = (bib_disl, "$flowlawcount", "$i")
+                                    a_jqu = a_jq[u]
+                                    if typeof(a_jqu) <: DislocationCreep
+                                        Disl, comporheo, flowlawcount, refs = checkRheologyType(a_jqu, Disl, comporheo, flowlawcount, refs, i; pre=namepre)
 
-                                    elseif typeof(a[j][q][u]) <: DiffusionCreep
-                                        global Diff += 1
-                                        flowlawcount += 1
-                                        flowadd = flowdiff
-                                        comporheo *= flowadd * ","
-                                        name = namepre * join(a[j][q][u].Name)
-                                        bibinfo_diff = param_info(a[j][q][u])
-                                        bib_diff = bibinfo_diff.BibTex_Reference
-                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                                    elseif typeof(a_jqu) <: DiffusionCreep
+                                        Diff, comporheo, flowlawcount, refs = checkRheologyType(a_jqu, Diff, comporheo, flowlawcount, refs, i; pre=namepre)
 
-                                    elseif typeof(a[j][q][u]) <: GrainBoundarySliding
-                                        global GBS += 1
-                                        flowlawcount += 1
-                                        flowadd = flowgbs
-                                        comporheo *= flowadd * ","
-                                        name = namepre * join(a[j][q][u].Name)
-                                        bibinfo_diff = param_info(a[j][q][u])
-                                        bib_diff = bibinfo_diff.BibTex_Reference
-                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                                    elseif typeof(a_jqu) <: GrainBoundarySliding
+                                        GBS, comporheo, flowlawcount, refs = checkRheologyType(a_jqu, GBS, comporheo, flowlawcount, refs, i; pre=namepre)
 
-                                    elseif typeof(a[j][q][u]) <: PeierlsCreep
-                                        global Pei += 1
-                                        flowlawcount += 1
-                                        flowadd = flowpei
-                                        comporheo *= flowadd * ","
-                                        name = namepre * join(a[j][q][u].Name)
-                                        bibinfo_diff = param_info(a[j][q][u])
-                                        bib_diff = bibinfo_diff.BibTex_Reference
-                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                                    elseif typeof(a_jqu) <: PeierlsCreep
+                                        Pei, comporheo, flowlawcount, refs = checkRheologyType(a_jqu, Pei, comporheo, flowlawcount, refs, i; pre=namepre)
 
-                                    elseif typeof(a[j][q][u]) <: NonLinearPeierlsCreep
-                                        global NLP += 1
-                                        flowlawcount += 1
-                                        flowadd = flownlp
-                                        comporheo *= flowadd * ","
-                                        name = namepre * join(a[j][q][u].Name)
-                                        bibinfo_diff = param_info(a[j][q][u])
-                                        bib_diff = bibinfo_diff.BibTex_Reference
-                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
-                                    elseif typeof(a[j][q][u]) <: LinearViscous
-                                        global Lin += 1
+                                    elseif typeof(a_jqu) <: NonLinearPeierlsCreep
+                                        NLP, flowlaw, flowlawcount, refs = checkRheologyType(a_jqu, NLP, flowlaw, flowlawcount, refs, i; pre=namepre)
+
+                                    elseif typeof(a_jqu) <: LinearViscous
+                                        Lin += 1
                                         flowlawcount += 1
                                         flowadd = flowlin
                                         comporheo *= flowadd * ","
                                     end
 
-                                    varnames = propertynames(a[j][q][u])
+                                    varnames = propertynames(a_jqu)
                                     # Goes through all variables in a field component
                                     for var in varnames
-                                        b = getproperty(a[j][q][u], var)
+                                        b = getproperty(a_jqu, var)
                                         # Checks if they are GeoUnit (Value and Unit exist then)
                                         if isa(b, GeoUnit)
                                             value = string(getproperty(b, :val))
@@ -466,22 +317,22 @@ function Phase2Dict(s)
                                                 latexvar = string("$var")
                                             end
                                             # Put value, LaTex variable name, creep law pattern, phase id, current disl, diff or linvisc count and corresponding string for equation in a Dict
-                                            if typeof(a[j][q][u]) <: DislocationCreep
+                                            if typeof(a_jqu) <: DislocationCreep
                                                 fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Disl", "$flowdisl")
                                             end
-                                            if typeof(a[j][q][u]) <: DiffusionCreep
+                                            if typeof(a_jqu) <: DiffusionCreep
                                                 fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Diff", "$flowdiff")
                                             end
-                                            if typeof(a[j][q][u]) <: GrainBoundarySliding
+                                            if typeof(a_jqu) <: GrainBoundarySliding
                                                 fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$GBS", "$flowgbs")
                                             end
-                                            if typeof(a[j][q][u]) <: PeierlsCreep
+                                            if typeof(a_jqu) <: PeierlsCreep
                                                 fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Pei", "$flowpei")
                                             end
-                                            if typeof(a[j][q][u]) <: NonLinearPeierlsCreep
+                                            if typeof(a_jqu) <: NonLinearPeierlsCreep
                                                 fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$NLP", "$flownlp")
                                             end
-                                            if typeof(a[j][q][u]) <: LinearViscous
+                                            if typeof(a_jqu) <: LinearViscous
                                                 fds["$var $label $flowadd $i.$q.$u"] = (value, latexvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Lin", "$flowlin")
                                             end
                                         end
@@ -492,10 +343,10 @@ function Phase2Dict(s)
                                 parallelrheo *= comporheo * "),"
                             end
 
-                            varnames = propertynames(a[j][q])
+                            varnames = propertynames(a_jq)
                             # Goes through all variables in a field component
                             for var in varnames
-                                b = getproperty(a[j][q], var)
+                                b = getproperty(a_jq, var)
                                 # Checks if they are GeoUnit (Value and Unit exist then)
                                 if isa(b, GeoUnit)
                                     value = string(getproperty(b, :val))
@@ -506,22 +357,22 @@ function Phase2Dict(s)
                                         latexvar = string("$var")
                                     end
                                     # Put value, LaTex variable name, creep law pattern, phase id, current disl, diff or linvisc count and corresponding string for equation in a Dict
-                                    if typeof(a[j][q]) <: DislocationCreep
+                                    if typeof(a_jq) <: DislocationCreep
                                         fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i","$Disl", "$flowdisl")
                                     end
-                                    if typeof(a[j][q]) <: DiffusionCreep
+                                    if typeof(a_jq) <: DiffusionCreep
                                         fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$Diff", "$flowdiff")
                                     end
-                                    if typeof(a[j][q]) <: GrainBoundarySliding
+                                    if typeof(a_jq) <: GrainBoundarySliding
                                         fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$GBS", "$flowgbs")
                                     end
-                                    if typeof(a[j][q]) <: PeierlsCreep
+                                    if typeof(a_jq) <: PeierlsCreep
                                         fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$Pei", "$flowpei")
                                     end
-                                    if typeof(a[j][q]) <: NonLinearPeierlsCreep
+                                    if typeof(a_jq) <: NonLinearPeierlsCreep
                                         fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$NLP", "$flownlp")
                                     end
-                                    if typeof(a[j][q]) <: LinearViscous
+                                    if typeof(a_jq) <: LinearViscous
                                         fds["$var $label $flowadd $i.$q"] = (value, latexvar, "$flowlaw$parallelrheo)", "$i", "$Lin", "$flowlin")
                                     end
                                 end
@@ -531,11 +382,11 @@ function Phase2Dict(s)
                         end
                         flowlaw *= parallelrheo * "),"
                     end
-                    varnames = propertynames(a[j])
+                    varnames = propertynames(a_j)
                     # Goes through all variables in a field component
-                    if !(typeof(a[j]) <: CompositeRheology || typeof(a[j]) <: Parallel)
+                    if !(typeof(a_j) <: CompositeRheology || typeof(a_j) <: Parallel)
                         for var in varnames
-                            b = getproperty(a[j], var)
+                            b = getproperty(a_j, var)
                             # Checks if they are GeoUnit (Value and Unit exist then)
                             if isa(b, GeoUnit)
                                 value = string(getproperty(b, :val))
@@ -546,17 +397,17 @@ function Phase2Dict(s)
                                     latexvar = string("$var")
                                 end
                                 # Put value, LaTex variable name, creep law pattern, phase id, current disl, diff or linvisc count and corresponding string for equation in a Dict
-                                if typeof(a[j]) <: DislocationCreep
+                                if typeof(a_j) <: DislocationCreep
                                     fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Disl", "$flowdisl")
-                                elseif typeof(a[j]) <: DiffusionCreep
+                                elseif typeof(a_j) <: DiffusionCreep
                                     fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Diff", "$flowdiff")
-                                elseif typeof(a[j]) <: GrainBoundarySliding
+                                elseif typeof(a_j) <: GrainBoundarySliding
                                     fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$GBS", "$flowgbs")
-                                elseif typeof(a[j]) <: PeierlsCreep
+                                elseif typeof(a_j) <: PeierlsCreep
                                     fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Pei", "$flowpei")
-                                elseif typeof(a[j]) <: NonLinearPeierlsCreep
+                                elseif typeof(a_j) <: NonLinearPeierlsCreep
                                     fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$NLP", "$flownlp")
-                                elseif typeof(a[j]) <: LinearViscous
+                                elseif typeof(a_j) <: LinearViscous
                                     fds["$var $label $i"] = (value, latexvar, "$flowlaw", "$i", "$Lin", "$flowlin")
                                 # If not a CreepLaw or CompositeRheology
                                 else
@@ -612,6 +463,8 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         "p" => "Grain size exponent (-)",
         "A_diff" => "Coefficient \$(Pa^{-n - r} \\cdot m^{p}/s)\$", # DiffusionCreep
         "A_disl" => "Coefficient \$(Pa^{-n}/s)\$", # DislocationCreep
+        "A_GBS" => "Coefficient \$(Pa^{-n}/s)\$", # DislocationCreep
+        "A_peir" => "Coefficient \$(Pa^{-n}/s)\$", # DislocationCreep
         "E" => "Activation energy (J/mol)", # can also be Elastic Young's modulus, maybe change symbol for that?
         "R" => "Gas constant (J/mol/K)",
         "G" => "Shear modulus (Pa)",
@@ -659,17 +512,21 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         Table *= " & " * d["Name $i"][1]
         for j in 1:length(refs)
             if parse(Int64, refpair[j].second[3]) == i
+                if length(refpair[j].second[1]) != 0 
+                    Table *= "(" * "*" ^ counter * ")"
+                    currentbib = refpair[j].second[1]
+                    startidx = first(findfirst("{", currentbib))
+                    endidx = first(findfirst(",", currentbib))
+                    InTextRef *=
+                        "(" *
+                        "*"^counter *
+                        ") \\cite{" *
+                        currentbib[(startidx + 1):(endidx - 1)] *
+                        "}"
+                else
+                    continue
+                end
 
-                Table *= "(" * "*" ^ counter * ")"
-                currentbib = refpair[j].second[1]
-                startidx = first(findfirst("{", currentbib))
-                endidx = first(findfirst(",", currentbib))
-                InTextRef *=
-                    "(" *
-                    "*"^counter *
-                    ") \\cite{" *
-                    currentbib[(startidx + 1):(endidx - 1)] *
-                    "}"
                 if counter != length(refs)
                     InTextRef *= ", "
                 end
@@ -867,9 +724,9 @@ function Phase2DictMd(s)
     # Checks all Phases 
     for i in 1:phasecount
         fieldnames = propertynames(s[i])
-        global Diff = 0
-        global Disl = 0
-        global Lin = 0
+        Diff = 0
+        Disl = 0
+        Lin = 0
         for label in fieldnames
             if !isempty(getproperty(s[i], label)) && label != :Name
                 # Goes through all components of all fields
@@ -881,90 +738,93 @@ function Phase2DictMd(s)
                     flowlin = "LinVisc"
                     flowcomp = "CompoRheo"
                     flowpara = "Parallel"
+                    a_j = a[j]
                     # Checks what type the CreepLaw or CompositeRheology field has 
-                    if typeof(a[j]) <: DislocationCreep
-                        global Disl += 1
+                    if typeof(a_j) <: DislocationCreep
+                        Disl += 1
                         flowlawcount += 1
                         flowadd = flowdisl
                         flowlaw *= flowadd
-                        name = join(a[j].Name)
-                        bibinfo_disl = param_info(a[j])
+                        name = join(a_j.Name)
+                        bibinfo_disl = param_info(a_j)
                         bib_disl = bibinfo_disl.BibTex_Reference
                         refs["$name"] = (bib_disl, "$flowlawcount", "$i")
 
-                    elseif typeof(a[j]) <: DiffusionCreep
-                        global Diff += 1
+                    elseif typeof(a_j) <: DiffusionCreep
+                        Diff += 1
                         flowlawcount += 1
                         flowadd = flowdiff
                         flowlaw *= flowadd
-                        name = join(a[j].Name)
-                        bibinfo_diff = param_info(a[j])
+                        name = join(a_j.Name)
+                        bibinfo_diff = param_info(a_j)
                         bib_diff = bibinfo_diff.BibTex_Reference
                         refs["$name"] = (bib_diff, "$flowlawcount", "$i")
 
-                    elseif typeof(a[j]) <: LinearViscous
-                        global Lin += 1
+                    elseif typeof(a_j) <: LinearViscous
+                        Lin += 1
                         flowlawcount += 1
                         flowadd = flowlin
                         flowlaw *= flowadd
 
-                    elseif typeof(a[j]) <: CompositeRheology
-                        compos = getproperty(a[j], :elements)
+                    elseif typeof(a_j) <: CompositeRheology
+                        compos = getproperty(a_j, :elements)
                         num_rheologies = length(compos)
                         fdsname = "Comp "
                         flowadd = flowcomp
                         comporheo = flowadd * "("
                         for u in 1:num_rheologies
-                            if typeof(a[j][u]) <: Parallel
-                                num_parallel = length(a[j][u].elements)
+                            a_ju = a_j[u]
+                            if typeof(a_ju) <: Parallel
+                                num_parallel = length(a_ju.elements)
                                 flowadd = flowpara
                                 parallelrheo = flowadd * "("
                                 namepre = fdsname * "Para "
                                 for v in 1:num_parallel
-                                    if typeof(a[j][u][v]) <: DislocationCreep
-                                        global Disl += 1
+                                    a_juv = a_ju[v]
+                                    if typeof(a_juv) <: DislocationCreep
+                                        Disl += 1
                                         flowlawcount += 1
                                         flowadd = flowdisl
                                         parallelrheo *= flowadd * ","
-                                        name = namepre * join(a[j][u][v].Name)
-                                        bibinfo_disl = param_info(a[j][u][v])
+                                        name = namepre * join(a_juv.Name)
+                                        bibinfo_disl = param_info(a_juv)
                                         bib_disl = bibinfo_disl.BibTex_Reference
                                         refs["$name"] = (bib_disl, "$flowlawcount", "$i")
 
-                                    elseif typeof(a[j][u][v]) <: DiffusionCreep
-                                        global Diff += 1
+                                    elseif typeof(a_juv) <: DiffusionCreep
+                                        Diff += 1
                                         flowlawcount += 1
                                         flowadd = flowdiff
                                         parallelrheo *= flowadd * ","
-                                        name = namepre * join(a[j][u][v].Name)
-                                        bibinfo_diff = param_info(a[j][u][v])
+                                        name = namepre * join(a_juv.Name)
+                                        bibinfo_diff = param_info(a_juv)
                                         bib_diff = bibinfo_diff.BibTex_Reference
                                         refs["$name"] = (bib_diff, "$flowlawcount", "$i")
 
-                                    elseif typeof(a[j][u][v]) <: LinearViscous
-                                        global Lin += 1
+                                    elseif typeof(a_juv) <: LinearViscous
+                                        Lin += 1
                                         flowlawcount += 1
                                         flowadd = flowlin
                                         parallelrheo *= flowadd * ","
                                         
                                     end
 
-                                    varnames = propertynames(a[j][u][v])
+                                    varnames = propertynames(a_juv)
                                     # Goes through all variables in a field component
                                     for var in varnames
-                                        b = getproperty(a[j][u][v], var)
+                                        b = getproperty(a_juv, var)
                                         # Checks if they are GeoUnit (Value and Unit exist then)
                                         if isa(b, GeoUnit)
                                             value = string(getproperty(b, :val))
                                             mdvar = "$var"
                                             # Put value, LaTex variable name, creep law pattern, phase number, current disl, diff or linvisc count and corresponding string in a Dict
-                                            if typeof(a[j][u][v]) <: DislocationCreep
+                                            if typeof(a_juv) <: DislocationCreep
                                                 fds["$var $label $flowadd $i.$u.$v"] = (value, mdvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Disl", "$flowdisl")
                                             end
-                                            if typeof(a[j][u][v]) <: DiffusionCreep
+                                            if typeof(a_juv) <: DiffusionCreep
                                                 fds["$var $label $flowadd $i.$u.$v"] = (value, mdvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Diff", "$flowdiff")
                                             end
-                                            if typeof(a[j][u][v]) <: LinearViscous
+                                            if typeof(a_juv) <: LinearViscous
                                                 fds["$var $label $flowadd $i.$u.$v"] = (value, mdvar, "$flowlaw$comporheo$parallelrheo)", "$i", "$Lin", "$flowlin")
                                             end
                                         end
@@ -973,51 +833,51 @@ function Phase2DictMd(s)
                                 end
                                 comporheo *= parallelrheo * "),"
 
-                            elseif typeof(a[j][u]) <: DislocationCreep
-                                global Disl += 1
+                            elseif typeof(a_ju) <: DislocationCreep
+                                Disl += 1
                                 flowlawcount += 1
                                 flowadd = flowdisl
                                 comporheo *= flowadd * ","
-                                name =  fdsname * join(a[j][u].Name)
-                                bibinfo_disl = param_info(a[j][u])
+                                name =  fdsname * join(a_ju.Name)
+                                bibinfo_disl = param_info(a_ju)
                                 bib_disl = bibinfo_disl.BibTex_Reference
                                 refs["$name"] = (bib_disl, "$flowlawcount", "$i")
 
-                            elseif typeof(a[j][u]) <: DiffusionCreep
-                                global Diff += 1
+                            elseif typeof(a_ju) <: DiffusionCreep
+                                Diff += 1
                                 flowlawcount += 1
                                 flowadd = flowdiff
                                 comporheo *= flowadd * ","
-                                name =  fdsname * join(a[j][u].Name)
-                                bibinfo_diff = param_info(a[j][u])
+                                name =  fdsname * join(a_ju.Name)
+                                bibinfo_diff = param_info(a_ju)
                                 bib_diff = bibinfo_diff.BibTex_Reference
                                 refs["$name"] = (bib_diff, "$flowlawcount", "$i")
 
-                            elseif typeof(a[j][u]) <: LinearViscous
-                                global Lin += 1
+                            elseif typeof(a_ju) <: LinearViscous
+                                Lin += 1
                                 flowlawcount += 1
                                 flowadd = flowlin
                                 comporheo *= flowadd * ","
                             end
 
-                            varnames = propertynames(a[j][u])
+                            varnames = propertynames(a_ju)
                             # Goes through all variables in a field component
                             c = 0
                             for var in varnames
                                 c += 1
-                                b = getproperty(a[j][u], var)
+                                b = getproperty(a_ju, var)
                                 # Checks if they are GeoUnit (Value and Unit exist then)
                                 if isa(b, GeoUnit)
                                     value = string(getproperty(b, :val))
                                     mdvar = "$var"
                                     # Put value, LaTex variable name, creep law pattern, phase number, current disl, diff or linvisc count and corresponding string in a Dict
-                                    if typeof(a[j][u]) <: DislocationCreep
+                                    if typeof(a_ju) <: DislocationCreep
                                         fds["$var $label $flowadd $i.$u"] = (value, mdvar, "$flowlaw$comporheo)", "$i", "$Disl", "$flowdisl")
                                     end
-                                    if typeof(a[j][u]) <: DiffusionCreep
+                                    if typeof(a_ju) <: DiffusionCreep
                                         fds["$var $label $flowadd $i.$u"] = (value, mdvar, "$flowlaw$comporheo)", "$i", "$Diff", "$flowdiff")
                                     end
-                                    if typeof(a[j][u]) <: LinearViscous
+                                    if typeof(a_ju) <: LinearViscous
                                         fds["$var $label $flowadd $i.$u"] = (value, mdvar, "$flowlaw$comporheo)", "$i", "$Lin", "$flowlin")
                                     end
                                 end
@@ -1026,127 +886,129 @@ function Phase2DictMd(s)
                         end
                         flowlaw *= comporheo * "),"
 
-                    elseif typeof(a[j]) <: Parallel
-                        num_parallel = length(a[j].elements)
+                    elseif typeof(a_j) <: Parallel
+                        num_parallel = length(a_j.elements)
                         fdsname = "Para "
                         flowadd = flowpara
                         parallelrheo = flowadd * "("
                         for q in 1:num_parallel
-                            if typeof(a[j][q]) <: DislocationCreep
-                                global Disl += 1
+                            a_jq = a_j[q]
+                            if typeof(a_jq) <: DislocationCreep
+                                Disl += 1
                                 flowlawcount += 1
                                 flowadd = flowdisl
                                 parallelrheo *= flowadd * ","
-                                name = fdsname * join(a[j][q].Name)
-                                bibinfo_disl = param_info(a[j][q])
+                                name = fdsname * join(a_jq.Name)
+                                bibinfo_disl = param_info(a_jq)
                                 bib_disl = bibinfo_disl.BibTex_Reference
                                 refs["$name"] = (bib_disl, "$flowlawcount", "$i")
 
-                            elseif typeof(a[j][q]) <: DiffusionCreep
-                                global Diff += 1
+                            elseif typeof(a_jq) <: DiffusionCreep
+                                Diff += 1
                                 flowlawcount += 1
                                 flowadd = flowdiff
                                 parallelrheo *= flowadd * ","
-                                name = fdsname * join(a[j][q].Name)
-                                bibinfo_diff = param_info(a[j][q])
+                                name = fdsname * join(a_jq.Name)
+                                bibinfo_diff = param_info(a_jq)
                                 bib_diff = bibinfo_diff.BibTex_Reference
                                 refs["$name"] = (bib_diff, "$flowlawcount", "$i")
 
-                            elseif typeof(a[j][q]) <: LinearViscous
-                                global Lin += 1
+                            elseif typeof(a_jq) <: LinearViscous
+                                Lin += 1
                                 flowlawcount += 1
                                 flowadd = flowlin
                                 parallelrheo *= flowadd * ","
 
-                            elseif typeof(a[j][q]) <: CompositeRheology
-                                compos = getproperty(a[j], :elements)
+                            elseif typeof(a_jq) <: CompositeRheology
+                                compos = getproperty(a_j, :elements)
                                 num_rheologies = length(compos)
                                 namepre = fdsname * "Comp "
                                 flowadd = flowcomp
                                 comporheo = flowadd * "("
                                 for u in 1:num_rheologies
-                                    if typeof(a[j][q][u]) <: DislocationCreep
-                                        global Disl += 1
+                                    a_jqu = a_jq[u]
+                                    if typeof(a_jqu) <: DislocationCreep
+                                        Disl += 1
                                         flowlawcount += 1
                                         flowadd = flowdisl
                                         comporheo *= flowadd * ","
-                                        name = namepre * join(a[j][q][u].Name)
-                                        bibinfo_disl = param_info(a[j][q][u])
+                                        name = namepre * join(a_jqu.Name)
+                                        bibinfo_disl = param_info(a_jqu)
                                         bib_disl = bibinfo_disl.BibTex_Reference
                                         refs["$name"] = (bib_disl, "$flowlawcount", "$i")
 
-                                    elseif typeof(a[j][q][u]) <: DiffusionCreep
-                                        global Diff += 1
+                                    elseif typeof(a_jqu) <: DiffusionCreep
+                                        Diff += 1
                                         flowlawcount += 1
                                         flowadd = flowdiff
                                         comporheo *= flowadd * ","
-                                        name = namepre * join(a[j][q][u].Name)
-                                        bibinfo_diff = param_info(a[j][q][u])
+                                        name = namepre * join(a_jqu.Name)
+                                        bibinfo_diff = param_info(a_jqu)
                                         bib_diff = bibinfo_diff.BibTex_Reference
                                         refs["$name"] = (bib_diff, "$flowlawcount", "$i")
 
-                                    elseif typeof(a[j][q][u]) <: GrainBoundarySliding
-                                        global GBS += 1
+                                    elseif typeof(a_jqu) <: GrainBoundarySliding
+                                        GBS += 1
                                         flowlawcount += 1
                                         flowadd = flowgbs
                                         comporheo *= flowadd * ","
-                                        name = namepre * join(a[j][q][u].Name)
-                                        bibinfo_diff = param_info(a[j][q][u])
+                                        name = namepre * join(a_jqu.Name)
+                                        bibinfo_diff = param_info(a_jqu)
                                         bib_diff = bibinfo_diff.BibTex_Reference
                                         refs["$name"] = (bib_diff, "$flowlawcount", "$i")
 
-                                    elseif typeof(a[j][q][u]) <: PeierlsCreep
-                                        global Pei += 1
+                                    elseif typeof(a_jqu) <: PeierlsCreep
+                                        Pei += 1
                                         flowlawcount += 1
                                         flowadd = flowpei
                                         comporheo *= flowadd * ","
-                                        name = namepre * join(a[j][q][u].Name)
-                                        bibinfo_diff = param_info(a[j][q][u])
+                                        name = namepre * join(a_jqu.Name)
+                                        bibinfo_diff = param_info(a_jqu)
                                         bib_diff = bibinfo_diff.BibTex_Reference
                                         refs["$name"] = (bib_diff, "$flowlawcount", "$i")
 
-                                    elseif typeof(a[j][q][u]) <: NonLinearPeierlsCreep
-                                        global NLP += 1
+                                    elseif typeof(a_jqu) <: NonLinearPeierlsCreep
+                                        NLP += 1
                                         flowlawcount += 1
                                         flowadd = flownlp
                                         comporheo *= flowadd * ","
-                                        name = namepre * join(a[j][q][u].Name)
-                                        bibinfo_diff = param_info(a[j][q][u])
+                                        name = namepre * join(a_jqu.Name)
+                                        bibinfo_diff = param_info(a_jqu)
                                         bib_diff = bibinfo_diff.BibTex_Reference
                                         refs["$name"] = (bib_diff, "$flowlawcount", "$i")
 
-                                    elseif typeof(a[j][q][u]) <: LinearViscous
-                                        global Lin += 1
+                                    elseif typeof(a_jqu) <: LinearViscous
+                                        Lin += 1
                                         flowlawcount += 1
                                         flowadd = flowlin
                                         comporheo *= flowadd * ","
                                     end
 
-                                    varnames = propertynames(a[j][q][u])
+                                    varnames = propertynames(a_jqu)
                                     # Goes through all variables in a field component
                                     for var in varnames
-                                        b = getproperty(a[j][q][u], var)
+                                        b = getproperty(a_jqu, var)
                                         # Checks if they are GeoUnit (Value and Unit exist then)
                                         if isa(b, GeoUnit)
                                             value = string(getproperty(b, :val))
                                             mdvar = "$var"
                                             # Put value, LaTex variable name, creep law pattern, phase number, current disl, diff or linvisc count and corresponding string in a Dict
-                                            if typeof(a[j][q][u]) <: DislocationCreep
+                                            if typeof(a_jqu) <: DislocationCreep
                                                 fds["$var $label $flowadd $i.$q.$u"] = (value, mdvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Disl", "$flowdisl")
                                             end
-                                            if typeof(a[j][q][u]) <: DiffusionCreep
+                                            if typeof(a_jqu) <: DiffusionCreep
                                                 fds["$var $label $flowadd $i.$q.$u"] = (value, mdvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Diff", "$flowdiff")
                                             end
-                                            if typeof(a[j][q][u]) <: GrainBoundarySliding
+                                            if typeof(a_jqu) <: GrainBoundarySliding
                                                 fds["$var $label $flowadd $i.$q.$u"] = (value, mdvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$GBS", "$flowgbs")
                                             end
-                                            if typeof(a[j][q][u]) <: PeierlsCreep
+                                            if typeof(a_jqu) <: PeierlsCreep
                                                 fds["$var $label $flowadd $i.$q.$u"] = (value, mdvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Pei", "$flowpei")
                                             end
-                                            if typeof(a[j][q][u]) <: NonLinearPeierlsCreep
+                                            if typeof(a_jqu) <: NonLinearPeierlsCreep
                                                 fds["$var $label $flowadd $i.$q.$u"] = (value, mdvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$NLP", "$flownlp")
                                             end
-                                            if typeof(a[j][q][u]) <: LinearViscous
+                                            if typeof(a_jqu) <: LinearViscous
                                                 fds["$var $label $flowadd $i.$q.$u"] = (value, mdvar, "$flowlaw$parallelrheo$comporheo)", "$i", "$Lin", "$flowlin")
                                             end
                                         end
@@ -1157,31 +1019,31 @@ function Phase2DictMd(s)
                                 parallelrheo *= comporheo * "),"
                             end
 
-                            varnames = propertynames(a[j][q])
+                            varnames = propertynames(a_jq)
                             # Goes through all variables in a field component
                             for var in varnames
-                                b = getproperty(a[j][q], var)
+                                b = getproperty(a_jq, var)
                                 # Checks if they are GeoUnit (Value and Unit exist then)
                                 if isa(b, GeoUnit)
                                     value = string(getproperty(b, :val))
                                     mdvar = "$var"
                                     # Put value, LaTex variable name, creep law pattern, phase number, current disl, diff or linvisc count and corresponding string in a Dict
-                                    if typeof(a[j][q]) <: DislocationCreep
+                                    if typeof(a_jq) <: DislocationCreep
                                         fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i", "$Disl", "$flowdisl")
                                     end
-                                    if typeof(a[j][q]) <: DiffusionCreep
+                                    if typeof(a_jq) <: DiffusionCreep
                                         fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i", "$Diff", "$flowdiff")
                                     end
-                                    if typeof(a[j][q]) <: GrainBoundarySliding
+                                    if typeof(a_jq) <: GrainBoundarySliding
                                         fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i", "$GBS", "$flowgbs")
                                     end
-                                    if typeof(a[j][q]) <: PeierlsCreep
+                                    if typeof(a_jq) <: PeierlsCreep
                                         fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i", "$Pei", "$flowpei")
                                     end
-                                    if typeof(a[j][q]) <: NonLinearPeierlsCreep
+                                    if typeof(a_jq) <: NonLinearPeierlsCreep
                                         fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i", "$NLP", "$flownlp")
                                     end
-                                    if typeof(a[j][q]) <: LinearViscous
+                                    if typeof(a_jq) <: LinearViscous
                                         fds["$var $label $flowadd $i.$q"] = (value, mdvar, "$flowlaw$parallelrheo)", "$i", "$Lin", "$flowlin")
                                     end
                                 end
@@ -1191,27 +1053,27 @@ function Phase2DictMd(s)
                         end
                         flowlaw *= parallelrheo * "),"
                     end
-                    varnames = propertynames(a[j])
+                    varnames = propertynames(a_j)
                     # Goes through all variables in a field component
-                    if !(typeof(a[j]) <: CompositeRheology || typeof(a[j]) <: Parallel)
+                    if !(typeof(a_j) <: CompositeRheology || typeof(a_j) <: Parallel)
                         for var in varnames
-                            b = getproperty(a[j], var)
+                            b = getproperty(a_j, var)
                             # Checks if they are GeoUnit (Value and Unit exist then)
                             if isa(b, GeoUnit)
                                 value = string(getproperty(b, :val))
                                 mdvar = "$var"
                                 # Put value, LaTex variable name, creep law pattern, phase number, current disl, diff or linvisc count and corresponding string in a Dict
-                                if typeof(a[j]) <: DislocationCreep
+                                if typeof(a_j) <: DislocationCreep
                                     fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$Disl", "$flowdisl")
-                                elseif typeof(a[j]) <: DiffusionCreep
+                                elseif typeof(a_j) <: DiffusionCreep
                                     fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$Diff", "$flowdiff")
-                                elseif typeof(a[j]) <: GrainBoundarySliding
+                                elseif typeof(a_j) <: GrainBoundarySliding
                                     fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$GBS", "$flowgbs")
-                                elseif typeof(a[j]) <: PeierlsCreep
+                                elseif typeof(a_j) <: PeierlsCreep
                                     fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$Pei", "$flowpei")
-                                elseif typeof(a[j]) <: NonLinearPeierlsCreep
+                                elseif typeof(a_j) <: NonLinearPeierlsCreep
                                     fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$NLP", "$flownlp")
-                                elseif typeof(a[j]) <: LinearViscous
+                                elseif typeof(a_j) <: LinearViscous
                                     fds["$var $label $i"] = (value, mdvar, "$flowlaw", "$i", "$Lin", "$flowlin")
                                 else
                                     fds["$var $label $i"] = (value, mdvar, "", "$i", "", "")
