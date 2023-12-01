@@ -423,6 +423,9 @@ function Phase2Dict(s)
             elseif !isempty(getproperty(s[i], label)) && label == :Name
                 phasename = join(getproperty(s[i], :Name))
                 fds["$label $i"] = (phasename, "$phasecount", "$i", "", "", "")
+            elseif isempty(getproperty(s[i], label)) && label == :Name
+                phasename = "Phase $i"
+                fds["$label $i"] = (phasename, "$phasecount", "$i", "", "", "")
             end
         end
     end
@@ -482,7 +485,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         "H_r" => "Radioactive heat \$(W/m^{3})\$",
         "H_s" => "Shear heating (-)",
         "ϕ" => "Friction angle \$(^{\\circ})\$",
-        "\\psi" => "Dilation angle \$(^{\\circ})\$",
+        "\\psi" => "Dilatation angle \$(^{\\circ})\$",
         "C" => "Cohesion (Pa)",
         "Vp" => "P-wave velocity (km/s)",
         "Vs" => "S-wave velocity (km/s)",
@@ -559,6 +562,15 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
             elseif occursin("Diff", dictpairs[key].second[6])
                 number = parse(Int64, dictpairs[key].second[5])
                 push!(symbs, "A_diff" * "^$number")
+            elseif occursin("Grain", dictpairs[key].second[6])
+                number = parse(Int64, dictpairs[key].second[5])
+                push!(symbs, "A_gbs" * "^$number")
+            elseif occursin("Pei", dictpairs[key].second[6]) && !(occursin("NonL", dictpairs[key].second[6]))
+                number = parse(Int64, dictpairs[key].second[5])
+                push!(symbs, "A_pei" * "^$number")
+            elseif occursin("Pei", dictpairs[key].second[6]) && (occursin("NonL", dictpairs[key].second[6]))
+                number = parse(Int64, dictpairs[key].second[5])
+                push!(symbs, "A_nlp" * "^$number")
             else
                 number = parse(Int64, dictpairs[key].second[5])
                 push!(symbs, dictpairs[key].second[2] * "$number")
@@ -1036,9 +1048,12 @@ function Phase2DictMd(s)
                         end
                     end
                 end
-                # Takes field "Name" and puts phase name, maximum phase  count and current phase number in Dict 
+                # Takes field "Name" and puts phase name, maximum phase count and current phase number in Dict 
             elseif !isempty(getproperty(s[i], label)) && label == :Name
                 phasename = join(getproperty(s[i], :Name))
+                fds["$label $i"] = (phasename, "$phasecount", "$i", "", "", "")
+            elseif isempty(getproperty(s[i], label)) && label == :Name
+                phasename = "Phase $i"
                 fds["$label $i"] = (phasename, "$phasecount", "$i", "", "", "")
             end
         end
@@ -1046,6 +1061,11 @@ function Phase2DictMd(s)
     return fds
 end
 
+
+function checkA(d)
+    number = parse(Int64, dictpairs[key].second[5])
+    push!(symbs, "A_disl" * "^$number")
+end
 
 """
 Dict2MarkdownTable() writes a .md file with all parameters from the Phase2DictMd() output in a Markdown table. rdigits will round numbers with more decimals than rdigits
@@ -1061,6 +1081,12 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
 
     # Descriptions for every parameter that could occur in the table and their corresponding variable name(s) that is used in GeoParams
     desc = Dict(
+        "a_melt"=>"Melting factor a", # -> Die müssen noch _melt angehängt bekommen wie A zu A_disl und so
+        "b_melt"=>"Melting factor b",
+        "c_melt"=>"Melting factor c",
+        "d_melt"=>"Melting factor d",
+        "e_melt"=>"Melting factor e",
+        "f_melt"=>"Melting factor f",
         "ρ"=>"Density *(kg/m^3^)*",
         "ρ0"=>"Reference density *(kg/m^3^)*",
         "g"=>"Gravity *(m/s^2^)*",
@@ -1094,7 +1120,7 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
         "H_r"=>"Radioactive heat *(W/m^3^)*",
         "H_s"=>"Shear heating *(-)*",
         "ϕ"=>"Friction angle *(°)*",
-        "ψ"=>"Dilation angle *(°)*",
+        "ψ"=>"Dilatation angle *(°)*",
         "C"=>"Cohesion *(Pa)*",
         "Vp"=>"P-wave velocity *(km/s)*",
         "Vs"=>"S-wave velocity *(km/s)*",
@@ -1122,8 +1148,9 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
     Table *= "\n"
 
     # Get vector with all unique symbols without phasenames
-    for key in 1:length(dictpairs)
+    for key in eachindex(dictpairs)
         dictpairs_key = dictpairs[key].first
+        # Skips Name
         if occursin("Name", dictpairs_key)
             continue
         # Checks if symbol is from field CompositeRheology or CreepLaws, if symbol is R and if the symbol occurs more often than once
@@ -1136,6 +1163,15 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
             elseif occursin("Diff", dictpairs[key].second[6])
                 number = parse(Int64, dictpairs[key].second[5])
                 push!(symbs, "A_diff" * "^$number")
+            elseif occursin("Grain", dictpairs[key].second[6])
+                number = parse(Int64, dictpairs[key].second[5])
+                push!(symbs, "A_gbs" * "^$number")
+            elseif occursin("Pei", dictpairs[key].second[6]) && !(occursin("NonL", dictpairs[key].second[6]))
+                number = parse(Int64, dictpairs[key].second[5])
+                push!(symbs, "A_pei" * "^$number")
+            elseif occursin("Pei", dictpairs[key].second[6]) && (occursin("NonL", dictpairs[key].second[6]))
+                number = parse(Int64, dictpairs[key].second[5])
+                push!(symbs, "A_nlp" * "^$number")
             else
                 number = parse(Int64, dictpairs[key].second[5])
                 push!(symbs, dictpairs[key].second[2] * "$number")
