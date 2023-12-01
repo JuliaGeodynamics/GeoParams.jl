@@ -461,10 +461,14 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         "n" => "Power-law exponent (-)",
         "r" => "Water fugacity exponent (-)",
         "p" => "Grain size exponent (-)",
-        "A_diff" => "Coefficient \$(Pa^{-n - r} \\cdot m^{p}/s)\$", # DiffusionCreep
-        "A_disl" => "Coefficient \$(Pa^{-n}/s)\$", # DislocationCreep
-        "A_GBS" => "Coefficient \$(Pa^{-n}/s)\$", # DislocationCreep
-        "A_peir" => "Coefficient \$(Pa^{-n}/s)\$", # DislocationCreep
+        "o" => "Stres parametrization exponent *(-)*",    # in PeierlsCreep
+        "q" => "Stress relation exponent *(-)*",          # in PeierlsCreep
+        "A_diff" => "Coefficient *(Pa^-n-r^ m^p^/s)*",  # DiffusionCreep
+        "A_disl" => "Coefficient *(Pa^-n^/s)*",         # DislocationCreep
+        "A_gbs" => "Coefficient *(Pa^-n^ m^p^/s)*",          # GrainBoundarySliding
+        "A_pei" => "Coefficient *(1/-s)*",          # PeierlsCreep
+        "A_nlp" => "Coefficient *(Pa^-n^/s)*",          # NonLinearPeierlsCreep
+        "Tau_p" => "Peierls stress *(Pa)*",
         "E" => "Activation energy (J/mol)", # can also be Elastic Young's modulus, maybe change symbol for that?
         "R" => "Gas constant (J/mol/K)",
         "G" => "Shear modulus (Pa)",
@@ -732,33 +736,31 @@ function Phase2DictMd(s)
                 # Goes through all components of all fields
                 for j in 1:length(getproperty(s[i], label))
                     a = getproperty(s[i], label)
-                    flowlaw = ""
+                    flowlaw  = ""
                     flowdisl = "DislCreep"
                     flowdiff = "DiffCreep"
-                    flowlin = "LinVisc"
+                    flowlin  = "LinVisc"
+                    flowgbs  = "GBS"
+                    flowpei  = "PeiCreep"
+                    flownlp  = "NLP"
                     flowcomp = "CompoRheo"
                     flowpara = "Parallel"
                     a_j = a[j]
                     # Checks what type the CreepLaw or CompositeRheology field has 
                     if typeof(a_j) <: DislocationCreep
-                        Disl += 1
-                        flowlawcount += 1
-                        flowadd = flowdisl
-                        flowlaw *= flowadd
-                        name = join(a_j.Name)
-                        bibinfo_disl = param_info(a_j)
-                        bib_disl = bibinfo_disl.BibTex_Reference
-                        refs["$name"] = (bib_disl, "$flowlawcount", "$i")
+                        Disl, flowlaw, flowlawcount, refs = checkRheologyType(a_j, Disl, flowlaw, flowlawcount, refs, i)
 
                     elseif typeof(a_j) <: DiffusionCreep
-                        Diff += 1
-                        flowlawcount += 1
-                        flowadd = flowdiff
-                        flowlaw *= flowadd
-                        name = join(a_j.Name)
-                        bibinfo_diff = param_info(a_j)
-                        bib_diff = bibinfo_diff.BibTex_Reference
-                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                        Diff, flowlaw, flowlawcount, refs = checkRheologyType(a_j, Diff, flowlaw, flowlawcount, refs, i)
+
+                    elseif typeof(a_j) <: GrainBoundarySliding
+                        GBS, flowlaw, flowlawcount, refs = checkRheologyType(a_j, GBS, flowlaw, flowlawcount, refs, i)
+
+                    elseif typeof(a_j) <: PeierlsCreep
+                        Pei, flowlaw, flowlawcount, refs = checkRheologyType(a_j, Pei, flowlaw, flowlawcount, refs, i)
+
+                    elseif typeof(a_j) <: NonLinearPeierlsCreep
+                        NLP, flowlaw, flowlawcount, refs = checkRheologyType(a_j, NLP, flowlaw, flowlawcount, refs, i)
 
                     elseif typeof(a_j) <: LinearViscous
                         Lin += 1
@@ -782,25 +784,20 @@ function Phase2DictMd(s)
                                 for v in 1:num_parallel
                                     a_juv = a_ju[v]
                                     if typeof(a_juv) <: DislocationCreep
-                                        Disl += 1
-                                        flowlawcount += 1
-                                        flowadd = flowdisl
-                                        parallelrheo *= flowadd * ","
-                                        name = namepre * join(a_juv.Name)
-                                        bibinfo_disl = param_info(a_juv)
-                                        bib_disl = bibinfo_disl.BibTex_Reference
-                                        refs["$name"] = (bib_disl, "$flowlawcount", "$i")
-
+                                        Disl, parallelrheo, flowlawcount, refs = checkRheologyType(a_juv, Disl, parallelrheo, flowlawcount, refs, i; pre=namepre)
+                                        
                                     elseif typeof(a_juv) <: DiffusionCreep
-                                        Diff += 1
-                                        flowlawcount += 1
-                                        flowadd = flowdiff
-                                        parallelrheo *= flowadd * ","
-                                        name = namepre * join(a_juv.Name)
-                                        bibinfo_diff = param_info(a_juv)
-                                        bib_diff = bibinfo_diff.BibTex_Reference
-                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                                        Diff, parallelrheo, flowlawcount, refs = checkRheologyType(a_juv, Diff, parallelrheo, flowlawcount, refs, i; pre=namepre)
 
+                                    elseif typeof(a_juv) <: GrainBoundarySliding
+                                        GBS, parallelrheo, flowlawcount, refs = checkRheologyType(a_juv, GBS, parallelrheo, flowlawcount, refs, i; pre=namepre)
+                
+                                    elseif typeof(a_juv) <: PeierlsCreep
+                                        Pei, parallelrheo, flowlawcount, refs = checkRheologyType(a_juv, Pei, parallelrheo, flowlawcount, refs, i; pre=namepre)
+                
+                                    elseif typeof(a_juv) <: NonLinearPeierlsCreep
+                                        NLP, parallelrheo, flowlawcount, refs = checkRheologyType(a_juv, NLP, parallelrheo, flowlawcount, refs, i; pre=namepre)
+                                        
                                     elseif typeof(a_juv) <: LinearViscous
                                         Lin += 1
                                         flowlawcount += 1
@@ -834,24 +831,19 @@ function Phase2DictMd(s)
                                 comporheo *= parallelrheo * "),"
 
                             elseif typeof(a_ju) <: DislocationCreep
-                                Disl += 1
-                                flowlawcount += 1
-                                flowadd = flowdisl
-                                comporheo *= flowadd * ","
-                                name =  fdsname * join(a_ju.Name)
-                                bibinfo_disl = param_info(a_ju)
-                                bib_disl = bibinfo_disl.BibTex_Reference
-                                refs["$name"] = (bib_disl, "$flowlawcount", "$i")
+                                Disl, comporheo, flowlawcount, refs = checkRheologyType(a_ju, Disl, comporheo, flowlawcount, refs, i; pre=fdsname)
 
                             elseif typeof(a_ju) <: DiffusionCreep
-                                Diff += 1
-                                flowlawcount += 1
-                                flowadd = flowdiff
-                                comporheo *= flowadd * ","
-                                name =  fdsname * join(a_ju.Name)
-                                bibinfo_diff = param_info(a_ju)
-                                bib_diff = bibinfo_diff.BibTex_Reference
-                                refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                                Diff, comporheo, flowlawcount, refs = checkRheologyType(a_ju, Diff, comporheo, flowlawcount, refs, i; pre=fdsname)
+
+                            elseif typeof(a_ju) <: GrainBoundarySliding
+                                GBS, comporheo, flowlawcount, refs = checkRheologyType(a_ju, GBS, comporheo, flowlawcount, refs, i; pre=fdsname)
+
+                            elseif typeof(a_ju) <: PeierlsCreep
+                                Pei, comporheo, flowlawcount, refs = checkRheologyType(a_ju, Pei, comporheo, flowlawcount, refs, i; pre=fdsname)
+
+                            elseif typeof(a_ju) <: NonLinearPeierlsCreep
+                                NLP, comporheo, flowlawcount, refs = checkRheologyType(a_ju, NLP, comporheo, flowlawcount, refs, i; pre=fdsname)
 
                             elseif typeof(a_ju) <: LinearViscous
                                 Lin += 1
@@ -894,24 +886,19 @@ function Phase2DictMd(s)
                         for q in 1:num_parallel
                             a_jq = a_j[q]
                             if typeof(a_jq) <: DislocationCreep
-                                Disl += 1
-                                flowlawcount += 1
-                                flowadd = flowdisl
-                                parallelrheo *= flowadd * ","
-                                name = fdsname * join(a_jq.Name)
-                                bibinfo_disl = param_info(a_jq)
-                                bib_disl = bibinfo_disl.BibTex_Reference
-                                refs["$name"] = (bib_disl, "$flowlawcount", "$i")
+                                Disl, parallelrheo, flowlawcount, refs = checkRheologyType(a_jq, Disl, parallelrheo, flowlawcount, refs, i; pre=fdsname)
 
                             elseif typeof(a_jq) <: DiffusionCreep
-                                Diff += 1
-                                flowlawcount += 1
-                                flowadd = flowdiff
-                                parallelrheo *= flowadd * ","
-                                name = fdsname * join(a_jq.Name)
-                                bibinfo_diff = param_info(a_jq)
-                                bib_diff = bibinfo_diff.BibTex_Reference
-                                refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                                Diff, parallelrheo, flowlawcount, refs = checkRheologyType(a_jq, Diff, parallelrheo, flowlawcount, refs, i; pre=fdsname)
+
+                            elseif typeof(a_jq) <: GrainBoundarySliding
+                                GBS, parallelrheo, flowlawcount, refs = checkRheologyType(a_jq, GBS, parallelrheo, flowlawcount, refs, i; pre=fdsname)
+
+                            elseif typeof(a_jq) <: PeierlsCreep
+                                Pei, parallelrheo, flowlawcount, refs = checkRheologyType(a_jq, Pei, parallelrheo, flowlawcount, refs, i; pre=fdsname)
+
+                            elseif typeof(a_jq) <: NonLinearPeierlsCreep
+                                NLP, parallelrheo, flowlawcount, refs = checkRheologyType(a_jq, NLP, parallelrheo, flowlawcount, refs, i; pre=fdsname)
 
                             elseif typeof(a_jq) <: LinearViscous
                                 Lin += 1
@@ -928,54 +915,19 @@ function Phase2DictMd(s)
                                 for u in 1:num_rheologies
                                     a_jqu = a_jq[u]
                                     if typeof(a_jqu) <: DislocationCreep
-                                        Disl += 1
-                                        flowlawcount += 1
-                                        flowadd = flowdisl
-                                        comporheo *= flowadd * ","
-                                        name = namepre * join(a_jqu.Name)
-                                        bibinfo_disl = param_info(a_jqu)
-                                        bib_disl = bibinfo_disl.BibTex_Reference
-                                        refs["$name"] = (bib_disl, "$flowlawcount", "$i")
+                                        Disl, comporheo, flowlawcount, refs = checkRheologyType(a_jqu, Disl, comporheo, flowlawcount, refs, i; pre=namepre)
 
                                     elseif typeof(a_jqu) <: DiffusionCreep
-                                        Diff += 1
-                                        flowlawcount += 1
-                                        flowadd = flowdiff
-                                        comporheo *= flowadd * ","
-                                        name = namepre * join(a_jqu.Name)
-                                        bibinfo_diff = param_info(a_jqu)
-                                        bib_diff = bibinfo_diff.BibTex_Reference
-                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                                        Diff, comporheo, flowlawcount, refs = checkRheologyType(a_jqu, Diff, comporheo, flowlawcount, refs, i; pre=namepre)
 
                                     elseif typeof(a_jqu) <: GrainBoundarySliding
-                                        GBS += 1
-                                        flowlawcount += 1
-                                        flowadd = flowgbs
-                                        comporheo *= flowadd * ","
-                                        name = namepre * join(a_jqu.Name)
-                                        bibinfo_diff = param_info(a_jqu)
-                                        bib_diff = bibinfo_diff.BibTex_Reference
-                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                                        GBS, comporheo, flowlawcount, refs = checkRheologyType(a_jqu, GBS, comporheo, flowlawcount, refs, i; pre=namepre)
 
                                     elseif typeof(a_jqu) <: PeierlsCreep
-                                        Pei += 1
-                                        flowlawcount += 1
-                                        flowadd = flowpei
-                                        comporheo *= flowadd * ","
-                                        name = namepre * join(a_jqu.Name)
-                                        bibinfo_diff = param_info(a_jqu)
-                                        bib_diff = bibinfo_diff.BibTex_Reference
-                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                                        Pei, comporheo, flowlawcount, refs = checkRheologyType(a_jqu, Pei, comporheo, flowlawcount, refs, i; pre=namepre)
 
                                     elseif typeof(a_jqu) <: NonLinearPeierlsCreep
-                                        NLP += 1
-                                        flowlawcount += 1
-                                        flowadd = flownlp
-                                        comporheo *= flowadd * ","
-                                        name = namepre * join(a_jqu.Name)
-                                        bibinfo_diff = param_info(a_jqu)
-                                        bib_diff = bibinfo_diff.BibTex_Reference
-                                        refs["$name"] = (bib_diff, "$flowlawcount", "$i")
+                                        NLP, flowlaw, flowlawcount, refs = checkRheologyType(a_jqu, NLP, flowlaw, flowlawcount, refs, i; pre=namepre)
 
                                     elseif typeof(a_jqu) <: LinearViscous
                                         Lin += 1
@@ -1121,8 +1073,14 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
         "n"=>"Power-law exponent *(-)*",
         "r"=>"Water fugacity exponent *(-)*",
         "p"=>"Grain size exponent *(-)*",
-        "A_diff" => "Coefficient *(Pa^-n-r^ m^p^/s)*", # DiffusionCreep
-        "A_disl" => "Coefficient *(Pa^-n^/s)*", # DislocationCreep
+        "o"=>"Stres parametrization exponent *(-)*",    # in PeierlsCreep
+        "q"=>"Stress relation exponent *(-)*",          # in PeierlsCreep
+        "A_diff" => "Coefficient *(Pa^-n-r^ m^p^/s)*",  # DiffusionCreep
+        "A_disl" => "Coefficient *(Pa^-n^/s)*",         # DislocationCreep
+        "A_gbs" => "Coefficient *(Pa^-n^/s)*",          # GrainBoundarySliding
+        "A_pei" => "Coefficient *(Pa^-n^/s)*",          # PeierlsCreep
+        "A_nlp" => "Coefficient *(Pa^-n^/s)*",          # NonLinearPeierlsCreep
+        "Tau_p" => "Peierls stress *(Pa)*",
         "E"=>"Activation energy *(J/mol)*",
         "R"=>"Gas constant *(J/mol/K)*",
         "G"=>"Shear modulus *(Pa)*",
