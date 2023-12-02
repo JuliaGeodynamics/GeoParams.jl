@@ -383,7 +383,7 @@ using GeoParams
     @test isbits(Χ)
 
     # Define parameters as vectors
-    τ = [1 2 3 4] * 1e6
+    τ = [1.0 2 3 4] * 1e6
     ε = [1 0.1 0.1 1]
     ε_el = [0.01 0.01 0.01 0.01]
 
@@ -402,6 +402,30 @@ using GeoParams
     H_s4 = compute_shearheating(Χ, τ_2D, ε_2D)
     @test H_s3 ≈ 5.5e6
     @test H_s4 ≈ 5.5e6
+    
+    # test in-place computation
+    n = 12
+    τ_xx = fill(1e6, n, n)
+    τ_xy = fill(2e6, n, n)
+    τ_yx = fill(3e6, n, n)
+    τ_yy = fill(4e6, n, n)
+    ε_xx = fill(1.0, n, n)
+    ε_xy = fill(0.1, n, n)
+    ε_yx = fill(0.1, n, n)
+    ε_yy = fill(1.0, n, n)
+    ε_el_xx = fill(0.01, n, n)
+    ε_el_xy = fill(0.01, n, n)
+    ε_el_yx = fill(0.01, n, n)
+    ε_el_yy = fill(0.01, n, n)
+    H_s = similar(τ_xx)
+    τ = τ_xx, τ_xy, τ_yy, τ_yx
+    ε = ε_xx, ε_xy, ε_yy, ε_yx
+    ε_el = ε_el_xx, ε_el_xy, ε_el_yy, ε_el_yx
+    compute_shearheating!(H_s, Χ, τ, ε, ε_el)
+    @test all(x == 5.4e6 for x in H_s) 
+
+    compute_shearheating!(H_s, Χ, τ, ε)
+    @test all(x == 5.5e6 for x in H_s) 
 
     # Now in non-dimensional units
     τ = [1 2 3 4]

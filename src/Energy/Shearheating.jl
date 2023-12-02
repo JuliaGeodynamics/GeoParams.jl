@@ -45,29 +45,32 @@ function param_info(s::ConstantShearheating) # info about the struct
     )
 end
 
-# In-place routine (H_s can't take new value)
-function compute_shearheating!(H_s, s::ConstantShearheating, τ, ε, ε_el)
-    @unpack_val Χ = s
+# In-place routine
+function compute_shearheating!(H_s::AbstractArray, s::ConstantShearheating, τ::NTuple{N, AbstractArray}, ε::NTuple{N, AbstractArray}, ε_el::Union{Nothing, NTuple{N, AbstractArray}}) where N
+    V = Val(N)
 
-    if isnothing(ε_el)
-        H_s = Χ * sum(τi * εi for (τi, εi) in zip(τ, ε))
-    else
-        H_s = Χ * sum(τi * (εi - εi_el) for (τi, εi, εi_el) in zip(τ, ε, ε_el))
+    @inline f(x, i) = ntuple(j -> x[j][i], V)
+    @inline f(::Nothing, i) = nothing
+
+    for i in eachindex(H_s)
+        τ_i    = f(τ, i)
+        ε_i    = f(ε, i)
+        ε_el_i = f(ε_el, i)
+        H_s[i]  = compute_shearheating(s, τ_i, ε_i, ε_el_i)
     end
 end
 
 # Calculation routine
-function compute_shearheating(s::ConstantShearheating, τ, ε, ε_el)
+@inline function compute_shearheating(s::ConstantShearheating, τ, ε, ε_el)
     @unpack_val Χ = s
-
-    if isnothing(ε_el)
-        H_s = Χ * sum(τi * εi for (τi, εi) in zip(τ, ε))
-    else
-        H_s = Χ * sum(τi * (εi - εi_el) for (τi, εi, εi_el) in zip(τ, ε, ε_el))
-    end
-
+    H_s = Χ * _compute_shearheating(τ, ε, ε_el)
     return H_s
 end
+
+@inline _compute_shearheating(τ, ε, ::Nothing) = sum(τi * εi for (τi, εi) in zip(τ, ε))
+@inline _compute_shearheating(τ, ε, ε_el) = sum(τi * (εi - εi_el) for (τi, εi, εi_el) in zip(τ, ε, ε_el))
+@inline _compute_shearheating(τ::NTuple{N,T}, ε::NTuple{N,T}, ε_el::NTuple{N,T}) where {N,T} = @.(τ * (ε - ε_el)) |> sum
+@inline _compute_shearheating(τ::NTuple{N,T}, ε::NTuple{N,T}, ::Nothing) where {N,T} = @.(τ * ε) |> sum
 
 # Print info 
 function show(io::IO, g::ConstantShearheating)
@@ -108,7 +111,7 @@ H_s = \\Chi \\cdot \\tau_{ij}  \\dot{\\varepsilon}_{ij}
 - ``\\tau_{ij}`` : The full deviatoric stress tensor [4 components in 2D; 9 in 3D]
 - ``\\dot{\\varepsilon}_{ij}`` : The full deviatoric strainrate tensor
 """
-function compute_shearheating(s::AbstractShearheating{_T}, τ::Any, ε::Any) where {_T}
+@inline function compute_shearheating(s::AbstractShearheating{_T}, τ::Any, ε::Any) where {_T}
     return compute_shearheating(s, τ, ε, nothing)
 end
 
@@ -156,7 +159,7 @@ H_s = \\Chi \\cdot \\tau_{ij}  \\dot{\\varepsilon}_{ij}
 - ``\\tau_{ij}`` : The full deviatoric stress tensor [4 components in 2D; 9 in 3D]
 - ``\\dot{\\varepsilon}_{ij}`` : The full deviatoric strainrate tensor
 """
-function compute_shearheating!(H_s, s::AbstractShearheating, τ, ε)
+@inline function compute_shearheating!(H_s, s::AbstractShearheating, τ, ε)
     return compute_shearheating!(H_s, s, τ, ε, nothing)
 end
 
