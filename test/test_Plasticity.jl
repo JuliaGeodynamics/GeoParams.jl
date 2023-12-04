@@ -80,7 +80,7 @@ using GeoParams
     compute_yieldfunction!(F, MatParam, PhaseRatio, args)
     num_alloc = @allocated compute_yieldfunction!(F, MatParam, PhaseRatio, args)
     @test maximum(F[1, 1, :]) ≈ 839745.962155614
-    # @test num_alloc <= 32
+    @test num_alloc == 0
 
     # Test plastic potential derivatives
     ## 2D
