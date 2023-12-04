@@ -48,7 +48,7 @@ ConstantElasticity(args...) = ConstantElasticity(convert.(GeoUnit, args)...)
 
 This allows setting elastic parameters by specifying 2 out of the 4 elastic parameters `G` (Elastic shear modulus), `ν` (Poisson's ratio), `E` (Young's modulus), or `Kb` (bulk modulus).
 """
-function SetConstantElasticity(; G=26e9, ν=0.5, E=nothing, Kb=nothing)
+function SetConstantElasticity(; G=26e9, ν=0.4, E=nothing, Kb=nothing)
     if (!isnothing(G) && !isnothing(ν))
         Kb = 2 * G * (1 + ν) / (3 * (1 - 2 * ν))     # Bulk modulus
         E = 9 * Kb * G / (3 * Kb + G)              # Youngs modulus
