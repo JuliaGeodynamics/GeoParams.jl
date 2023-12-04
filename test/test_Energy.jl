@@ -447,7 +447,7 @@ using GeoParams
     @test H_s3 ≈ 5.5
     @test H_s4 ≈ 5.5
 
-
+    # test material structs    
     Mat_tup = (
         SetMaterialParams(;
             Name="Mantle", Phase=1, ShearHeat = ConstantShearheating(Χ=0.0NoUnits),
@@ -455,24 +455,12 @@ using GeoParams
         SetMaterialParams(;
             Name="Crust", Phase=2, ShearHeat = ConstantShearheating(Χ=1.0NoUnits),
         ),
-        SetMaterialParams(; Name="MantleLithosphere", Phase=3),
     )
-    # -----------------------
-
-    n = 100
-    Phases = ones(Int64, n, n, n);
-    Phases[:, :, 20:end] .= 2
-    Phases[:, :, 60:end] .= 3
-
-    PhaseRatio = zeros(n, n, n, 3)
-    for i in CartesianIndices(Phases)
-        iz = Phases[i]
-        I = CartesianIndex(i, iz)
-        PhaseRatio[I] = 1.0
-    end
-
     args = (τ=τ, ε=ε, ε_el=ε_el)
-    H_s = zeros(size(Phases));
-    compute_shearheating(Mat_tup, Phases, args)
+    @test compute_shearheating(Mat_tup[1], τ, ε, ε_el) == 0.0
+    @test compute_shearheating(Mat_tup[2], τ, ε, ε_el) == 5.4
+    @test compute_shearheating(Mat_tup, 1, τ, ε, ε_el) == 0.0
+    @test compute_shearheating(Mat_tup, 2, τ, ε, ε_el) == 5.4
 
 end
+
