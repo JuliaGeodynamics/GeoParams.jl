@@ -87,12 +87,12 @@ using GeoParams
     P = zeros(size(Phases))
 
     args = (; T=T)
-    compute_heatcapacity!(Cp, Mat_tup, Phases, args)    # computation routine w/out P (not used in most heat capacity formulations)     
+    compute_heatcapacity!(Cp, Mat_tup, Phases, args)    # computation routine w/out P (not used in most heat capacity formulations)
     @test sum(Cp[1, 1, :]) ≈ 121399.0486067196
 
     # check with array of constant properties (and no required input args)
     args1 = (;)
-    compute_heatcapacity!(Cp, Mat_tup1, Phases, args1)    # computation routine w/out P (not used in most heat capacity formulations)     
+    compute_heatcapacity!(Cp, Mat_tup1, Phases, args1)    # computation routine w/out P (not used in most heat capacity formulations)
     @test sum(Cp[1, 1, :]) ≈ 109050.0
 
     num_alloc = @allocated compute_heatcapacity!(Cp, Mat_tup, Phases, args)
@@ -115,7 +115,7 @@ using GeoParams
 
     # Conductivity ----------
 
-    # Constant 
+    # Constant
 
     # Constant conductivity
     cond = ConstantConductivity()
@@ -221,12 +221,12 @@ using GeoParams
 
     compute_conductivity!(k, Mat_tup, Phases, args)
     @test sum(k) ≈ 1.9216938849389635e6
-    # num_alloc = @allocated compute_conductivity!(k, Mat_tup, Phases, args) 
+    # num_alloc = @allocated compute_conductivity!(k, Mat_tup, Phases, args)
     # @test num_alloc <= 32
 
     compute_conductivity!(k, Mat_tup, PhaseRatio, args)
     @test sum(k) ≈ 1.9216938849389635e6
-    # num_alloc = @allocated compute_conductivity!(k, Mat_tup, PhaseRatio, args) 
+    # num_alloc = @allocated compute_conductivity!(k, Mat_tup, PhaseRatio, args)
     # @test num_alloc <= 32
 
     ######
@@ -370,7 +370,7 @@ using GeoParams
     compute_radioactive_heat!(Hr, Mat_tup1, Phases, args1)
     @test Hr[50, 50, 50] ≈ 1e-6
 
-    # num_alloc = @allocated compute_radioactive_heat!(Hr, Mat_tup, Phases, args)  
+    # num_alloc = @allocated compute_radioactive_heat!(Hr, Mat_tup, Phases, args)
     # @test num_alloc <= 32   # in the commandline this gives 0; while running the script not always
 
     compute_radioactive_heat!(Hr, Mat_tup, PhaseRatio, args)
@@ -402,7 +402,7 @@ using GeoParams
     H_s4 = compute_shearheating(Χ, τ_2D, ε_2D)
     @test H_s3 ≈ 5.5e6
     @test H_s4 ≈ 5.5e6
-    
+
     # test in-place computation
     n = 12
     τ_xx = fill(1e6, n, n)
@@ -422,10 +422,10 @@ using GeoParams
     ε = ε_xx, ε_xy, ε_yy, ε_yx
     ε_el = ε_el_xx, ε_el_xy, ε_el_yy, ε_el_yx
     compute_shearheating!(H_s, Χ, τ, ε, ε_el)
-    @test all(x == 5.4e6 for x in H_s) 
+    @test all(x == 5.4e6 for x in H_s)
 
     compute_shearheating!(H_s, Χ, τ, ε)
-    @test all(x == 5.5e6 for x in H_s) 
+    @test all(x == 5.5e6 for x in H_s)
 
     # Now in non-dimensional units
     τ = [1 2 3 4]
@@ -446,6 +446,33 @@ using GeoParams
     @test H_s2 ≈ 5.4
     @test H_s3 ≈ 5.5
     @test H_s4 ≈ 5.5
+
+
+    Mat_tup = (
+        SetMaterialParams(;
+            Name="Mantle", Phase=1, ShearHeat = ConstantShearheating(Χ=0.0NoUnits),
+        ),
+        SetMaterialParams(;
+            Name="Crust", Phase=2, ShearHeat = ConstantShearheating(Χ=1.0NoUnits),
+        ),
+        SetMaterialParams(; Name="MantleLithosphere", Phase=3),
+    )
     # -----------------------
+
+    n = 100
+    Phases = ones(Int64, n, n, n);
+    Phases[:, :, 20:end] .= 2
+    Phases[:, :, 60:end] .= 3
+
+    PhaseRatio = zeros(n, n, n, 3)
+    for i in CartesianIndices(Phases)
+        iz = Phases[i]
+        I = CartesianIndex(i, iz)
+        PhaseRatio[I] = 1.0
+    end
+
+    args = (τ=τ, ε=ε, ε_el=ε_el)
+    H_s = zeros(size(Phases));
+    compute_shearheating(Mat_tup, Phases, args)
 
 end
