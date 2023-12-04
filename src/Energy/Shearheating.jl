@@ -68,11 +68,6 @@ end
     return H_s
 end
 
-@inline function compute_shearheating(s::AbstractMaterialParamsStruct, τ, ε, ε_el)
-    Χ = s[i].ShearHeat
-    H_s = Χ * _compute_shearheating(τ, ε, ε_el)
-    return H_s
-end
 
 @inline _compute_shearheating(τ, ε, ::Nothing) = sum(τi * εi for (τi, εi) in zip(τ, ε))
 @inline _compute_shearheating(τ, ε, ε_el) = sum(τi * (εi - εi_el) for (τi, εi, εi_el) in zip(τ, ε, ε_el))
@@ -168,6 +163,14 @@ H_s = \\Chi \\cdot \\tau_{ij}  \\dot{\\varepsilon}_{ij}
 """
 @inline function compute_shearheating!(H_s, s::AbstractShearheating, τ, ε)
     return compute_shearheating!(H_s, s, τ, ε, nothing)
+end
+
+function compute_shearheating(s::AbstractMaterialParamsStruct, args::Vararg{Any,N}) where N
+    if isempty(s.ShearHeat)
+        return isempty(args) ? 0.0 : zero(typeof(args).types[1])  # return zero if not specified
+    else
+        return compute_shearheating(s.ShearHeat[1], args...)
+    end
 end
 
 compute_shearheating(args::Vararg{Any,N}) where N = compute_param(compute_shearheating, args...)
