@@ -452,6 +452,12 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
 
     # Descriptions for every parameter that could occur in the table and their corresponding variable name(s) that is used in GeoParams
     desc = Dict(
+        "a_melt" => "Melting factor a", # -> Die müssen noch _melt angehängt bekommen wie A zu A_disl und so
+        "b_melt" => "Melting factor b",
+        "c_melt" => "Melting factor c",
+        "d_melt" => "Melting factor d",
+        "e_melt" => "Melting factor e",
+        "f_melt" => "Melting factor f",
         "\\rho" => "Density \$(kg/m^{3})\$",
         "\\rho0" => "Reference density \$(kg/m^{3})\$",
         "g" => "Gravity \$(m/s^{2})\$",
@@ -1153,7 +1159,7 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
         # Skips Name
         if occursin("Name", dictpairs_key)
             continue
-        # Checks if symbol is from field CompositeRheology or CreepLaws, if symbol is R and if the symbol occurs more often than once
+        # Checks if symbol is from field CompositeRheology or CreepLaws, if symbol is R and if the symbol occurs more than once
         elseif (occursin("R", dictpairs_key[1:3]))
             push!(symbs, dictpairs[key].second[2])
         elseif maximum(occursin.(["CompositeRheology", "CreepLaws"], dictpairs_key)) && !(occursin("R", dictpairs_key[1:3]))
