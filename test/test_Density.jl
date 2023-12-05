@@ -1,4 +1,4 @@
-using Test, GeoParams, StaticArrays
+using Test, GeoParams, StaticArrays, AllocCheck
 
 @testset "Density.jl" begin
 
@@ -51,27 +51,27 @@ using Test, GeoParams, StaticArrays
     args = (P=P, T=T)
 
     x = ConstantDensity()
-    num_alloc = @allocated compute_density!(rho, x, args)
-    @test num_alloc == 0
-
+    num_alloc = check_allocs(compute_density!, typeof.((rho, x, args)))
+    @test isempty(num_alloc)
+    
     #Test allocations using ρ alias
     ρ!(rho, x, args)
-    num_alloc = @allocated ρ!(rho, x, args)
-    @test num_alloc == 0
+    num_alloc = check_allocs(ρ!, typeof.((rho, x, args)))
+    @test isempty(num_alloc)
 
     # This does NOT allocate if I test this with @btime;
     #   yet it does while running the test here
     x = PT_Density()
     compute_density!(rho, x, args)
-    num_alloc = @allocated compute_density!(rho, x, args)
-    @test num_alloc == 0
+    num_alloc = check_allocs(compute_density!, typeof.((rho, x, args)))
+    @test isempty(num_alloc)
 
     # This does NOT allocate if I test this with @btime;
     #   yet it does while running the test here
     x = Compressible_Density()
     compute_density!(rho, x, args)
-    num_alloc = @allocated compute_density!(rho, x, args)
-    @test num_alloc == 0
+    num_alloc = check_allocs(compute_density!, typeof.((rho, x, args)))
+    @test isempty(num_alloc)
 
     # Read Phase diagram interpolation object
     fname = "test_data/Peridotite_dry.in"
@@ -180,18 +180,18 @@ using Test, GeoParams, StaticArrays
 
     # Test computing density when Mat_tup1 is provided as a tuple
     compute_density!(rho, Mat_tup1, Phases, args)
-    num_alloc = @allocated compute_density!(rho, Mat_tup1, Phases, args)   #      287.416 μs (0 allocations: 0 bytes)
-    @test num_alloc == 0
+    num_alloc = check_allocs(compute_density!, typeof.((rho, Mat_tup1, Phases, args)))   #      287.416 μs (0 allocations: 0 bytes)
+    @test isempty(num_alloc)
     
     @test sum(rho) / 400^2 ≈ 2945.000013499999
-    @test num_alloc == 0
+    @test isempty(num_alloc)
 
     #Same test using function alias
     rho = zeros(size(Phases))
     ρ!(rho, Mat_tup1, Phases, args)
-    num_alloc = @allocated compute_density!(rho, Mat_tup1, Phases, args)
+    num_alloc = check_allocs(compute_density!, typeof.((rho, Mat_tup1, Phases, args)))
     @test sum(rho) / 400^2 ≈ 2945.000013499999
-    @test num_alloc == 0
+    @test isempty(num_alloc)
 
     # Test for single phase
     compute_density(MatParam, 1, (P=P[1], T=T[1]))
@@ -210,9 +210,9 @@ using Test, GeoParams, StaticArrays
 
     compute_density!(rho, Mat_tup1, PhaseRatio, args)
 
-    num_alloc = @allocated compute_density!(rho, Mat_tup1, PhaseRatio, args) #   136.776 μs (0 allocations: 0 bytes)
+    num_alloc = check_allocs(compute_density!, typeof.((rho, Mat_tup1, PhaseRatio, args))) #   136.776 μs (0 allocations: 0 bytes)
     @test sum(rho) / 400^2 ≈ 2945.000013499999
-    @test num_alloc == 0           # for some reason this does indicate allocations but @btime does not
+    @test isempty(num_alloc)           # for some reason this does indicate allocations but @btime does not
 
     # Test calling the routine with only pressure as input. 
     # This is ok for Mat_tup1, as it only has constant & P-dependent densities.
