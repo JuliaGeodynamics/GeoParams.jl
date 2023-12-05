@@ -17,13 +17,13 @@ using GeoParams
     @test a_nd.G.val ≈ 5000.0
 
     a = SetConstantElasticity(; Kb=5e10, ν=0.43)
-    @test Value(a.E) ≈ 7.436e10Pa
+    @test Value(a.E) ≈ 2.1e10Pa
 
     a = SetConstantElasticity(; G=5e10, ν=0.43)
     @test Value(a.E) ≈ 1.43e11Pa
 
     a = SetConstantElasticity(; G=5e10, Kb=1e11)
-    @test Value(a.E) ≈ 1.4Pa
+    @test Value(a.E) ≈ 1.2857142857142856e11Pa
 
     @test isvolumetric(a) == true
 
