@@ -383,26 +383,34 @@ using GeoParams
     @test isbits(Χ)
 
     # Define parameters as vectors
-    τ = [1.0 2 3 4] * 1e6
-    ε = [1 0.1 0.1 1]
-    ε_el = [0.01 0.01 0.01 0.01]
+    τ    = (1, 2, 2, 3) .* 1e6
+    ε    = (1.0, 0.1, 0.1, 1.0)
+    ε_el = (0.01, 0.01, 0.01, 0.01)
 
-    τ_2D = [1 2; 3 4] * 1e6
+    τ_2D = [1 2; 2 3] * 1e6
     ε_2D = [1 0.1; 0.1 1]
     ε_el_2D = [0.01 0.01; 0.01 0.01]
 
     # With elasticity
     H_s1 = compute_shearheating(Χ, τ, ε, ε_el)
     H_s2 = compute_shearheating(Χ, τ_2D, ε_2D, ε_el_2D)
-    @test H_s1 ≈ 5.4e6
-    @test H_s2 ≈ 5.4e6
-
+    @test H_s1 ≈ 4.32e6
+    @test H_s2 ≈ 4.32e6
+ 
     # No elasticity
     H_s3 = compute_shearheating(Χ, τ, ε)
     H_s4 = compute_shearheating(Χ, τ_2D, ε_2D)
-    @test H_s3 ≈ 5.5e6
-    @test H_s4 ≈ 5.5e6
+    @test H_s3 ≈ 4.4e6
+    @test H_s4 ≈ 4.4e6
 
+    # symmetric tensors
+    τ    = (1, 3, 2) .* 1e6
+    ε    = (1.0, 1.0, 0.1)
+    ε_el = (0.01, 0.01, 0.01)
+    @test H_s1 == compute_shearheating(Χ, τ, ε, ε_el)
+    @test H_s3 == compute_shearheating(Χ, τ, ε)
+ 
+       
     # test in-place computation
     n = 12
     τ_xx = fill(1e6, n, n)
