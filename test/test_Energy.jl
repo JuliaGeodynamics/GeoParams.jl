@@ -1,5 +1,4 @@
-using Test
-using GeoParams
+using Test, GeoParams, AllocCheck
 
 @testset "EnergyParameters.jl" begin
 
@@ -95,9 +94,10 @@ using GeoParams
     compute_heatcapacity!(Cp, Mat_tup1, Phases, args1)    # computation routine w/out P (not used in most heat capacity formulations)     
     @test sum(Cp[1, 1, :]) ≈ 109050.0
 
-    num_alloc = @allocated compute_heatcapacity!(Cp, Mat_tup, Phases, args)
+    compute_heatcapacity!(Cp, Mat_tup, Phases, args)
     @test sum(Cp[1, 1, :]) ≈ 121399.0486067196
-    # @test num_alloc <= 32
+    num_alloc = check_allocs(compute_heatcapacity!, typeof.((Cp, Mat_tup, Phases, args)))
+    @test isempty(num_alloc)
 
     # test if we provide phase ratios
     PhaseRatio = zeros(n, n, n, 3)
@@ -107,9 +107,10 @@ using GeoParams
         PhaseRatio[I] = 1.0
     end
     compute_heatcapacity!(Cp, Mat_tup, PhaseRatio, args)
-    num_alloc = @allocated compute_heatcapacity!(Cp, Mat_tup, PhaseRatio, args)
     @test sum(Cp[1, 1, :]) ≈ 121399.0486067196
-    # @test num_alloc <= 32
+    # num_alloc = check_allocs(compute_heatcapacity!, typeof.((Cp, Mat_tup, PhaseRatio, args)))
+    num_alloc = @allocated compute_heatcapacity!(Cp, Mat_tup, PhaseRatio, args)
+    @test iszero(num_alloc)
 
     # -----------------------
 
@@ -221,13 +222,15 @@ using GeoParams
 
     compute_conductivity!(k, Mat_tup, Phases, args)
     @test sum(k) ≈ 1.9216938849389635e6
-    # num_alloc = @allocated compute_conductivity!(k, Mat_tup, Phases, args) 
-    # @test num_alloc <= 32
+    # num_alloc = check_allocs(compute_conductivity!, typeof.((k, Mat_tup, Phases, args)))
+    num_alloc = @allocated compute_conductivity!(k, Mat_tup, Phases, args)
+    @test iszero(num_alloc)
 
     compute_conductivity!(k, Mat_tup, PhaseRatio, args)
     @test sum(k) ≈ 1.9216938849389635e6
-    # num_alloc = @allocated compute_conductivity!(k, Mat_tup, PhaseRatio, args) 
-    # @test num_alloc <= 32
+    # num_alloc = check_allocs(compute_conductivity!, typeof.((k, Mat_tup, PhaseRatio, args)))
+    num_alloc = @allocated compute_conductivity!(k, Mat_tup, PhaseRatio, args)
+    @test iszero(num_alloc)
 
     ######
 
@@ -370,8 +373,8 @@ using GeoParams
     compute_radioactive_heat!(Hr, Mat_tup1, Phases, args1)
     @test Hr[50, 50, 50] ≈ 1e-6
 
-    # num_alloc = @allocated compute_radioactive_heat!(Hr, Mat_tup, Phases, args)  
-    # @test num_alloc <= 32   # in the commandline this gives 0; while running the script not always
+    num_alloc = check_allocs(compute_radioactive_heat!, typeof.((Hr, Mat_tup, Phases, args)))
+    @test isempty(num_alloc)   # in the commandline this gives 0; while running the script not always
 
     compute_radioactive_heat!(Hr, Mat_tup, PhaseRatio, args)
     @test sum(Hr) ≈ 0.33715177646857664

@@ -1,5 +1,4 @@
-using Test
-using GeoParams
+using Test, GeoParams, AllocCheck
 
 @testset "Plasticity.jl" begin
 
@@ -78,9 +77,10 @@ using GeoParams
         PhaseRatio[I] = 1.0
     end
     compute_yieldfunction!(F, MatParam, PhaseRatio, args)
-    num_alloc = @allocated compute_yieldfunction!(F, MatParam, PhaseRatio, args)
     @test maximum(F[1, 1, :]) ≈ 839745.962155614
-    # @test num_alloc <= 32
+    # num_alloc = check_allocs(compute_yieldfunction!, typeof.((F, MatParam, PhaseRatio, args)))
+    num_alloc = @allocated compute_yieldfunction!(F, MatParam, PhaseRatio, args)
+    @test iszero(num_alloc)
 
     # Test plastic potential derivatives
     ## 2D
