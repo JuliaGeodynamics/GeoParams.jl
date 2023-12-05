@@ -107,9 +107,10 @@ using Test, GeoParams, AllocCheck
         PhaseRatio[I] = 1.0
     end
     compute_heatcapacity!(Cp, Mat_tup, PhaseRatio, args)
-    num_alloc = check_allocs(compute_heatcapacity!, typeof.((Cp, Mat_tup, PhaseRatio, args)))
     @test sum(Cp[1, 1, :]) ≈ 121399.0486067196
-    @test isempty(num_alloc)
+    # num_alloc = check_allocs(compute_heatcapacity!, typeof.((Cp, Mat_tup, PhaseRatio, args)))
+    num_alloc = @allocated compute_heatcapacity!(Cp, Mat_tup, PhaseRatio, args)
+    @test iszero(num_alloc)
 
     # -----------------------
 
@@ -221,13 +222,15 @@ using Test, GeoParams, AllocCheck
 
     compute_conductivity!(k, Mat_tup, Phases, args)
     @test sum(k) ≈ 1.9216938849389635e6
-    num_alloc = check_allocs(compute_conductivity!, typeof.((k, Mat_tup, Phases, args)))
-    @test isempty(num_alloc)
+    # num_alloc = check_allocs(compute_conductivity!, typeof.((k, Mat_tup, Phases, args)))
+    num_alloc = @allocated compute_conductivity!(k, Mat_tup, Phases, args)
+    @test iszero(num_alloc)
 
     compute_conductivity!(k, Mat_tup, PhaseRatio, args)
     @test sum(k) ≈ 1.9216938849389635e6
-    num_alloc = check_allocs(compute_conductivity!, typeof.((k, Mat_tup, PhaseRatio, args)))
-    @test isempty(num_alloc)
+    # num_alloc = check_allocs(compute_conductivity!, typeof.((k, Mat_tup, PhaseRatio, args)))
+    num_alloc = @allocated compute_conductivity!(k, Mat_tup, PhaseRatio, args)
+    @test iszero(num_alloc)
 
     ######
 

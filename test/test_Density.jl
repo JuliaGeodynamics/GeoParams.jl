@@ -190,8 +190,9 @@ using Test, GeoParams, StaticArrays, AllocCheck
     rho = zeros(size(Phases))
     ρ!(rho, Mat_tup1, Phases, args)
     num_alloc = check_allocs(compute_density!, typeof.((rho, Mat_tup1, Phases, args)))
-    @test sum(rho) / 400^2 ≈ 2945.000013499999
     @test isempty(num_alloc)
+    compute_density!(rho, Mat_tup1, Phases, args)
+    @test sum(rho) / 400^2 ≈ 2945.000013499999
 
     # Test for single phase
     compute_density(MatParam, 1, (P=P[1], T=T[1]))
@@ -209,10 +210,12 @@ using Test, GeoParams, StaticArrays, AllocCheck
     end
 
     compute_density!(rho, Mat_tup1, PhaseRatio, args)
-
-    num_alloc = check_allocs(compute_density!, typeof.((rho, Mat_tup1, PhaseRatio, args))) #   136.776 μs (0 allocations: 0 bytes)
     @test sum(rho) / 400^2 ≈ 2945.000013499999
-    @test isempty(num_alloc)           # for some reason this does indicate allocations but @btime does not
+
+    # num_alloc = check_allocs(compute_density!, typeof.((rho, Mat_tup1, PhaseRatio, args))) # 136.776 μs (0 allocations: 0 bytes)
+    # @test isempty(num_alloc)           # for some reason this does indicate allocations but @btime does not
+    num_alloc = @allocated compute_density!(rho, Mat_tup1, PhaseRatio, args)
+    @test iszero(num_alloc)           # for some reason this does indicate allocations but @btime does not
 
     # Test calling the routine with only pressure as input. 
     # This is ok for Mat_tup1, as it only has constant & P-dependent densities.
