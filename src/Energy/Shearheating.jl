@@ -172,7 +172,7 @@ end
 
 function compute_shearheating(s::AbstractMaterialParamsStruct, args::Vararg{Any,N}) where N
     if isempty(s.ShearHeat)
-        return isempty(args) ? 0.0 : zero(typeof(args).types[1])  # return zero if not specified
+        return 0.0  # return zero if not specified
     else
         return compute_shearheating(s.ShearHeat[1], args...)
     end
