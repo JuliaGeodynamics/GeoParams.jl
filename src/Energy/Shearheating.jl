@@ -2,12 +2,12 @@ module Shearheating
 
 # This implements different methods to specify Shearheating of rocks
 #
-# If you want to add a new method here, feel free to do so. 
+# If you want to add a new method here, feel free to do so.
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
 using Parameters, LaTeXStrings, Unitful
 using ..Units
-using GeoParams: AbstractMaterialParam
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 import Base.show, GeoParams.param_info
 using ..MaterialParameters: MaterialParamsInfo
 
@@ -18,18 +18,19 @@ export ConstantShearheating,   # constant
     compute_shearheating!,
     param_info
 
+include("../Computations.jl")
 # Constant Shearheating -------------------------------------------------------
 """
     ConstantShearheating(Χ=0.0NoUnits)
-    
+
 Set the shear heating efficiency [0-1] parameter
-```math  
+```math
 Χ  = cst
 ```
 where ``\\Chi`` is the shear heating efficiency [NoUnits]
 
 Shear heating is computed as
-```math  
+```math
 H_s = \\Chi \\cdot \\tau_{ij}(\\dot{\\varepsilon}_{ij} - \\dot{\\varepsilon}^{el}_{ij})
 ```
 
@@ -67,12 +68,18 @@ end
     return H_s
 end
 
-@inline _compute_shearheating(τ, ε, ::Nothing) = sum(τi * εi for (τi, εi) in zip(τ, ε))
-@inline _compute_shearheating(τ, ε, ε_el) = sum(τi * (εi - εi_el) for (τi, εi, εi_el) in zip(τ, ε, ε_el))
+@inline _compute_shearheating(τ, ε, ::Nothing)                                               = sum(τi * εi for (τi, εi) in zip(τ, ε))
+@inline _compute_shearheating(τ, ε, ε_el)                                                    = sum(τi * (εi - εi_el) for (τi, εi, εi_el) in zip(τ, ε, ε_el))
 @inline _compute_shearheating(τ::NTuple{N,T}, ε::NTuple{N,T}, ε_el::NTuple{N,T}) where {N,T} = @.(τ * (ε - ε_el)) |> sum
-@inline _compute_shearheating(τ::NTuple{N,T}, ε::NTuple{N,T}, ::Nothing) where {N,T} = @.(τ * ε) |> sum
+@inline _compute_shearheating(τ::NTuple{N,T}, ε::NTuple{N,T}, ::Nothing)         where {N,T} = @.(τ * ε) |> sum
+# Symmetric 2D tensors (assuming Voigts notations)
+@inline _compute_shearheating(τ::NTuple{3,T}, ε::NTuple{3,T}, ε_el::NTuple{3,T}) where {T} = _compute_shearheating((τ..., τ[end]), (ε..., ε[end]), (ε_el..., ε_el[end]))
+@inline _compute_shearheating(τ::NTuple{3,T}, ε::NTuple{3,T}, ::Nothing)         where {T} = _compute_shearheating((τ..., τ[end]), (ε..., ε[end]), nothing)
+# Symmetric 3D tensors (assuming Voigts notations)
+@inline _compute_shearheating(τ::NTuple{6,T}, ε::NTuple{6,T}, ε_el::NTuple{6,T}) where {T} = _compute_shearheating((τ..., τ[4:end]), (ε..., ε[4:end]), (ε_el..., ε_el[4:end]))
+@inline _compute_shearheating(τ::NTuple{6,T}, ε::NTuple{6,T}, ::Nothing)         where {T} = _compute_shearheating((τ..., τ[4:end]), (ε..., ε[4:end]), nothing)
 
-# Print info 
+# Print info
 function show(io::IO, g::ConstantShearheating)
     return print(io, "Shear heating: H_s = $(UnitValue(g.Χ)) τ_ij*(ε_ij - ε^el_ij)")
 end
@@ -84,7 +91,7 @@ end
 
 Computes the shear heating source term
 
-```math  
+```math
 H_s = \\Chi \\cdot \\tau_{ij} ( \\dot{\\varepsilon}_{ij} - \\dot{\\varepsilon}^{el}_{ij})
 ```
 
@@ -102,8 +109,8 @@ compute_shearheating(s::AbstractShearheating, τ, ε, ε_el)
 
 Computes the shear heating source term when there is no elasticity
 
-```math  
-H_s = \\Chi \\cdot \\tau_{ij}  \\dot{\\varepsilon}_{ij} 
+```math
+H_s = \\Chi \\cdot \\tau_{ij}  \\dot{\\varepsilon}_{ij}
 ```
 
 # Parameters
@@ -120,7 +127,7 @@ end
 
 Computes the shear heating source term in-place
 
-```math  
+```math
 H_s = \\Chi \\cdot \\tau_{ij} ( \\dot{\\varepsilon}_{ij} - \\dot{\\varepsilon}^{el}_{ij})
 ```
 
@@ -133,15 +140,15 @@ H_s = \\Chi \\cdot \\tau_{ij} ( \\dot{\\varepsilon}_{ij} - \\dot{\\varepsilon}^{
 *NOTE:*
 The shear heating terms require the full deviatoric stress & strain rate tensors, i.e.:
 
-```math  
-2D: \\tau_{ij} = \\left(   
+```math
+2D: \\tau_{ij} = \\left(
                 \\begin{matrix}
                     \\tau_{xx} & \\tau_{xz} \\\\
-                    \\tau_{zx} & \\tau_{zz} 
-                \\end{matrix} 
+                    \\tau_{zx} & \\tau_{zz}
+                \\end{matrix}
             \\right)
 ```
-Since ``\\tau_{zx}=\\tau_{xz}``, most geodynamic codes only take one of the terms into account; shear heating requires all components to be used! 
+Since ``\\tau_{zx}=\\tau_{xz}``, most geodynamic codes only take one of the terms into account; shear heating requires all components to be used!
 """
 compute_shearheating!(H_s, s::AbstractShearheating, τ, ε, ε_el)
 
@@ -150,8 +157,8 @@ compute_shearheating!(H_s, s::AbstractShearheating, τ, ε, ε_el)
 
 Computes the shear heating source term `H_s` in-place when there is no elasticity
 
-```math  
-H_s = \\Chi \\cdot \\tau_{ij}  \\dot{\\varepsilon}_{ij} 
+```math
+H_s = \\Chi \\cdot \\tau_{ij}  \\dot{\\varepsilon}_{ij}
 ```
 
 # Parameters
@@ -162,5 +169,16 @@ H_s = \\Chi \\cdot \\tau_{ij}  \\dot{\\varepsilon}_{ij}
 @inline function compute_shearheating!(H_s, s::AbstractShearheating, τ, ε)
     return compute_shearheating!(H_s, s, τ, ε, nothing)
 end
+
+function compute_shearheating(s::AbstractMaterialParamsStruct, args::Vararg{Any,N}) where N
+    if isempty(s.ShearHeat)
+        return 0.0  # return zero if not specified
+    else
+        return compute_shearheating(s.ShearHeat[1], args...)
+    end
+end
+
+compute_shearheating(args::Vararg{Any,N}) where N = compute_param(compute_shearheating, args...)
+compute_shearheating!(args::Vararg{Any,N}) where N = compute_param!(compute_shearheating!, args...)
 
 end
