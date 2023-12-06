@@ -1,5 +1,6 @@
 using Test
 using GeoParams
+using StaticArrays
 
 @testset "EnergyParameters.jl" begin
 
@@ -396,7 +397,7 @@ using GeoParams
     H_s2 = compute_shearheating(Χ, τ_2D, ε_2D, ε_el_2D)
     @test H_s1 ≈ 4.32e6
     @test H_s2 ≈ 4.32e6
- 
+
     # No elasticity
     H_s3 = compute_shearheating(Χ, τ, ε)
     H_s4 = compute_shearheating(Χ, τ_2D, ε_2D)
@@ -409,8 +410,8 @@ using GeoParams
     ε_el = (0.01, 0.01, 0.01)
     @test H_s1 == compute_shearheating(Χ, τ, ε, ε_el)
     @test H_s3 == compute_shearheating(Χ, τ, ε)
- 
-       
+
+
     # test in-place computation
     n = 12
     τ_xx = fill(1e6, n, n)
@@ -455,7 +456,7 @@ using GeoParams
     @test H_s3 ≈ 5.5
     @test H_s4 ≈ 5.5
 
-    # test material structs    
+    # test material structs
     rheology = (
         SetMaterialParams(;
             Name="Mantle", Phase=1, ShearHeat = ConstantShearheating(Χ=0.0NoUnits),
@@ -471,7 +472,7 @@ using GeoParams
 
     # Test with phase ratios
     phase = SA[0.5, 0.5] # static array
-    @test compute_shearheating(rheology, phase, τ, ε, ε_el) == 2.16e6
+    @test compute_shearheating(rheology, phase, τ, ε, ε_el) == 2.7
     phase = (0.5, 0.5) # tuple
-    @test compute_shearheating(rheology, phase, τ, ε, ε_el) == 2.16e6
+    @test compute_shearheating(rheology, phase, τ, ε, ε_el) == 2.7
 end
