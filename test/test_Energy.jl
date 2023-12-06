@@ -456,7 +456,7 @@ using GeoParams
     @test H_s4 ≈ 5.5
 
     # test material structs    
-    Mat_tup = (
+    rheology = (
         SetMaterialParams(;
             Name="Mantle", Phase=1, ShearHeat = ConstantShearheating(Χ=0.0NoUnits),
         ),
@@ -464,11 +464,14 @@ using GeoParams
             Name="Crust", Phase=2, ShearHeat = ConstantShearheating(Χ=1.0NoUnits),
         ),
     )
-    args = (τ=τ, ε=ε, ε_el=ε_el)
-    @test compute_shearheating(Mat_tup[1], τ, ε, ε_el) == 0.0
-    @test compute_shearheating(Mat_tup[2], τ, ε, ε_el) == 5.4
-    @test compute_shearheating(Mat_tup, 1, τ, ε, ε_el) == 0.0
-    @test compute_shearheating(Mat_tup, 2, τ, ε, ε_el) == 5.4
+    @test compute_shearheating(rheology[1], τ, ε, ε_el) == 0.0
+    @test compute_shearheating(rheology[2], τ, ε, ε_el) == 5.4
+    @test compute_shearheating(rheology, 1, τ, ε, ε_el) == 0.0
+    @test compute_shearheating(rheology, 2, τ, ε, ε_el) == 5.4
 
+    # Test with phase ratios
+    phase = SA[0.5, 0.5] # static array
+    @test compute_shearheating(rheology, phase, τ, ε, ε_el) == 2.16e6
+    phase = (0.5, 0.5) # tuple
+    @test compute_shearheating(rheology, phase, τ, ε, ε_el) == 2.16e6
 end
-
