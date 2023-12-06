@@ -24,8 +24,8 @@ using StaticArrays
 
 # performs computation given a single Phase
 @generated function compute_param(
-    fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Int64, args::Vararg{Any,N1}
-) where {F,N,N1}
+    fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Int64, args::Vararg{Any,NA}
+) where {F,N,NA}
     quote
         Base.@_inline_meta
         Base.Cartesian.@nexprs $N i ->
@@ -35,29 +35,29 @@ using StaticArrays
 end
 
 @generated function compute_param(
-    fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, phase_ratios::Union{SVector{N,T}, NTuple{N,T}}, args
-) where {F,N,T}
+    fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, phase_ratios::Union{SVector{N,T}, NTuple{N,T}}, args::Vararg{Any,NA}
+) where {F,N,T,NA}
     quote
         Base.@_inline_meta
         x = zero($T)
         Base.Cartesian.@nexprs $N i ->
-            @inbounds  x+= fn(MatParam[i], args) * phase_ratios[i]
+            @inbounds  x+= fn(MatParam[i], args...) * phase_ratios[i]
         return x
     end
 end
 
-function compute_param(
-    fn::F, MatParam::AbstractVector{AbstractMaterialParamsStruct}, Phase::Union{SArray, Int64}, args
-) where {F}
-    return compute_param(fn, Tuple(MatParam), Phase, args)
+@inline function compute_param(
+    fn::F, MatParam::AbstractVector{AbstractMaterialParamsStruct}, Phase::Union{SArray, Int64}, args::Vararg{Any,NA}
+) where {F,NA}
+    return compute_param(fn, Tuple(MatParam), Phase, args...)
 end
 
-function compute_param(fn::F, MatParam::AbstractMaterialParam, args) where {F}
-    return fn(MatParam, args)
+@inline function compute_param(fn::F, MatParam::AbstractMaterialParam, args::Vararg{Any,NA}) where {F,NA}
+    return fn(MatParam, args...)
 end
 
-function compute_param(fn::F, MatParam::AbstractMaterialParamsStruct, args) where {F}
-    return fn(MatParam, args)
+@inline function compute_param(fn::F, MatParam::AbstractMaterialParamsStruct, args::Vararg{Any,NA}) where {F,NA}
+    return fn(MatParam, args...)
 end
 
 @inline function compute_param!(
