@@ -2,6 +2,58 @@ using Test
 using GeoParams
 using Unidecode
 
+### 1. Values für E_e und ..._melt parameter in Table einfügen
+### 2. Noch die Strings im Dict anpassen z.B. so einer: Compo(Disl, Diff,...)
+### 3. Test cases dafür anpassen
+MatParam = (
+               #Name="UpperCrust"
+               SetMaterialParams(;
+                   Phase   = 1,
+                   Density  = PT_Density(ρ0=2700kg/m^3, β=1e10/Pa),
+                   HeatCapacity = ConstantHeatCapacity(cp=1050J/kg/K),
+                   Conductivity = ConstantConductivity(k=3.0Watt/K/m),
+                   LatentHeat = ConstantLatentHeat(Q_L=350e3J/kg),
+                   CompositeRheology = CompositeRheology((LinearViscous(; η=1e21 * Pa * s), SetConstantElasticity(; G=25e9Pa, ν=0.5), DruckerPrager_regularised(; C=10MPa, ϕ=30.0, η_vp=1.0e14Pas, Ψ=0), )),
+                   Melting = MeltingParam_Caricchi(),
+                   Elasticity = SetConstantElasticity(; G=25e9Pa, ν=0.5),
+                   ),
+
+               #Name="Magma"
+               SetMaterialParams(;
+                   Phase   = 2,
+                   Density  = PT_Density(ρ0=2600kg/m^3, β=1e8/Pa),
+                   HeatCapacity = ConstantHeatCapacity(cp=1050J/kg/K),
+                   Conductivity = ConstantConductivity(k=1.5Watt/K/m),
+                   LatentHeat = ConstantLatentHeat(Q_L=350e3J/kg),
+                   CompositeRheology = CompositeRheology(Parallel((LinearViscous(), SetConstantElasticity(; G=10e9Pa, ν=0.3))), SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)"), SetDiffusionCreep("Dry Diopside | Dimanov & Dresen (2005)")),
+                   Melting = MeltingParam_Caricchi(),
+                   Elasticity = SetConstantElasticity(; G=10e9Pa, ν=0.3),
+                   ),
+
+               #Name="Thermal Anomaly"
+               SetMaterialParams(;
+                   Phase   = 3,
+                   Density  = PT_Density(ρ0=2600kg/m^3, β=1e8/Pa),
+                   HeatCapacity = ConstantHeatCapacity(cp=1050J/kg/K),
+                   Conductivity = ConstantConductivity(k=1.5Watt/K/m),
+                   LatentHeat = ConstantLatentHeat(Q_L=350e3J/kg),
+                   CompositeRheology = Parallel(CompositeRheology((LinearViscous(; η=1e16 * Pa * s),SetConstantElasticity(; G=10e9Pa, ν=0.3))), LinearViscous(; η=1e15*Pa*s)),
+                   Melting = MeltingParam_Caricchi(),
+                   Elasticity = SetConstantElasticity(; G=10e9Pa, ν=0.3),
+                   ),
+
+               #Name="Sticky Air"
+               SetMaterialParams(;
+                   Phase   = 4,
+                   Density   = ConstantDensity(ρ=100kg/m^3,),
+                   HeatCapacity = ConstantHeatCapacity(cp=1000J/kg/K),
+                   Conductivity = ConstantConductivity(k=15Watt/K/m),
+                   LatentHeat = ConstantLatentHeat(Q_L=0.0J/kg),
+                   CompositeRheology = CompositeRheology(Parallel((LinearViscous(; η=1e16*Pa*s),SetConstantElasticity(; ν=0.5, Kb=0.101MPa)),LinearViscous(;η=1e17*Pa*s))),
+                   Elasticity = SetConstantElasticity(; ν=0.5, Kb=0.101MPa),
+                   ),
+                   )
+
 @testset "Tables.jl" begin
 MatParam = (SetMaterialParams(Name="Viscous Matrix", Phase=1, Density=ConstantDensity(),CreepLaws = SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)")),
             SetMaterialParams(Name="Viscous Sinker", Phase=2, Density= PT_Density(),CreepLaws = LinearViscous(η=1e21Pa*s)),
