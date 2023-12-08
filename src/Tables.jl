@@ -5,7 +5,7 @@ using GeoParams: AbstractMaterialParam, param_info, LinearViscous, PowerlawVisco
 using ..Units
 using ..MaterialParameters: MaterialParamsInfo
 
-export detachFloatfromExponent, check_flowadd, checkRheologyType, Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2MarkdownTable, ParameterTable
+export detachFloatfromExponent, check_flowadd, check_fieldaddition, checkRheologyType, checkParallelType, Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2MarkdownTable, ParameterTable
 
 
 """ 
@@ -15,6 +15,16 @@ The argument output returns "1" for "ex" if the input number has no exponent.
 
 """
 function detachFloatfromExponent(str::String)
+    # Catch cases where the number is Inf, -Inf or NaN
+    if str == "Inf" 
+        return 0, str, "1"
+    elseif str == "-Inf" 
+        return 0, str, "1"
+    elseif str == "NaN"
+        return 0, str, "1"
+    end
+
+    # dig are digits after the comma, s is the number without the exponent, ex is the exponent
     s = lowercase(str)
     if 'e' in s
         s, ex = string.(split(s, "e"))
@@ -27,15 +37,18 @@ function detachFloatfromExponent(str::String)
     return dig, s, ex
 
 end
-
+@inline check_flowadd(a::Parallel)= "Parallel" 
+@inline check_flowadd(a::CompositeRheology) = "CompoRheo"
 @inline check_flowadd(a::DislocationCreep) = "DislCreep"
 @inline check_flowadd(a::DiffusionCreep) = "DiffCreep"
 @inline check_flowadd(a::GrainBoundarySliding) = "GBS"
 @inline check_flowadd(a::PeierlsCreep) = "PeiCreep"
 @inline check_flowadd(a::NonLinearPeierlsCreep) = "NLP"
-@inline check_flowadd(a::LinearViscous) = "LinVisc"
+#@inline check_flowadd(a::LinearViscous) = "LinVisc"
 @inline check_flowadd(::T) where T = throw("Rheology not supported.")
-#Noch nachdenken wie jetzt nach Typ rheo zu Disl, Diff, etc. dazu addiert wird
+
+@inline check_fieldaddition(a::Parallel) = "Para "
+@inline check_fieldaddition(a::CompositeRheology) = "Comp "
 
 function checkRheologyType(a, rheo, flowlaw, flowlawcount, refs, i; pre="")
     rheo += 1
@@ -47,6 +60,15 @@ function checkRheologyType(a, rheo, flowlaw, flowlawcount, refs, i; pre="")
     bib = bibinfo.BibTex_Reference
     refs["$name"] = (bib, "$flowlawcount", "$i")
     return rheo, flowlaw, flowlawcount, refs
+end
+
+function checkParallelType(a; fieldname="")
+    fieldcount = getproperty(a, :elements)
+    num_laws = length(fieldcount)
+    flowadd = check_flowadd(a)
+    parallelrheo = flowadd * "("
+    namepre = fieldname * check_fieldaddition(a)
+    return num_laws, flowadd, parallelrheo, namepre
 end
 
 """
@@ -111,15 +133,12 @@ function Phase2Dict(s)
                         compos = getproperty(a_j, :elements)
                         num_rheologies = length(compos)
                         fdsname = "Comp "
-                        flowadd = flowcomp
+                        flowadd = check_flowadd(a_j)
                         comporheo = flowadd * "("
                         for u in 1:num_rheologies
                             a_ju = a_j[u]
                             if typeof(a_ju) <: Parallel
-                                num_parallel = length(a_ju.elements)
-                                flowadd = flowpara
-                                parallelrheo = flowadd * "("
-                                namepre = fdsname * "Para "
+                                num_parallel, flowadd, parallelrheo, namepre = checkParallelType(a_ju; fieldname=fdsname)
                                 for v in 1:num_parallel
                                     a_juv = a_ju[v]
                                     if typeof(a_juv) <: DislocationCreep
@@ -246,10 +265,7 @@ function Phase2Dict(s)
                         flowlaw *= comporheo * "),"
 
                     elseif typeof(a_j) <: Parallel
-                        num_parallel = length(a_j.elements)
-                        fdsname = "Para "
-                        flowadd = flowpara
-                        parallelrheo = flowadd * "("
+                        num_parallel, flowadd, parallelrheo, namepre = checkParallelType(a_j)
                         for q in 1:num_parallel
                             a_jq = a_j[q]
                             if typeof(a_jq) <: DislocationCreep
@@ -276,8 +292,8 @@ function Phase2Dict(s)
                             elseif typeof(a_jq) <: CompositeRheology
                                 compos = getproperty(a_j, :elements)
                                 num_rheologies = length(compos)
-                                namepre = fdsname * "Comp "
-                                flowadd = flowcomp
+                                namepre = namepre * "Comp "
+                                flowadd = check_flowadd(a_jq)
                                 comporheo = flowadd * "("
                                 for u in 1:num_rheologies
                                     a_jqu = a_jq[u]
@@ -391,7 +407,7 @@ function Phase2Dict(s)
                             if isa(b, GeoUnit)
                                 value = string(getproperty(b, :val))
                                 # Gives back LaTex format string for the corresponding variable if it is longer than 2 chars
-                                if length(unidecode("$var")) > 2
+                                if length(unidecode("$var")) >= 2 && string(unidecode("$var")) != "$var"
                                     latexvar = string("\\" * string(unidecode("$var")))
                                 else
                                     latexvar = string("$var")
@@ -452,12 +468,12 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
 
     # Descriptions for every parameter that could occur in the table and their corresponding variable name(s) that is used in GeoParams
     desc = Dict(
-        "a_melt" => "Melting factor a", # -> Die müssen noch _melt angehängt bekommen wie A zu A_disl und so
-        "b_melt" => "Melting factor b",
-        "c_melt" => "Melting factor c",
-        "d_melt" => "Melting factor d",
-        "e_melt" => "Melting factor e",
-        "f_melt" => "Melting factor f",
+        "a_melt" => "Melting factor a (-)", # -> Die müssen noch _melt angehängt bekommen wie A zu A_disl und so
+        "b_melt" => "Melting factor b (-)",
+        "c_melt" => "Melting factor c (-)",
+        "d_melt" => "Melting factor d (-)",
+        "e_melt" => "Melting factor e (-)",
+        "f_melt" => "Melting factor f (-)",
         "\\rho" => "Density \$(kg/m^{3})\$",
         "\\rho0" => "Reference density \$(kg/m^{3})\$",
         "g" => "Gravity \$(m/s^{2})\$",
@@ -470,15 +486,16 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         "n" => "Power-law exponent (-)",
         "r" => "Water fugacity exponent (-)",
         "p" => "Grain size exponent (-)",
-        "o" => "Stres parametrization exponent *(-)*",    # in PeierlsCreep
-        "q" => "Stress relation exponent *(-)*",          # in PeierlsCreep
-        "A_diff" => "Coefficient *(Pa^-n-r^ m^p^/s)*",  # DiffusionCreep
-        "A_disl" => "Coefficient *(Pa^-n^/s)*",         # DislocationCreep
-        "A_gbs" => "Coefficient *(Pa^-n^ m^p^/s)*",          # GrainBoundarySliding
-        "A_pei" => "Coefficient *(1/-s)*",          # PeierlsCreep
-        "A_nlp" => "Coefficient *(Pa^-n^/s)*",          # NonLinearPeierlsCreep
-        "Tau_p" => "Peierls stress *(Pa)*",
+        "o" => "Stres parametrization exponent (-)",    # in PeierlsCreep
+        "q" => "Stress relation exponent (-)",          # in PeierlsCreep
+        "A_diff" => "Coefficient (Pa^{-n-r} m^{p}/s)",  # DiffusionCreep
+        "A_disl" => "Coefficient (Pa^{-n}/s)",         # DislocationCreep
+        "A_gbs" => "Coefficient (Pa^{-n} m^{p}/s)",          # GrainBoundarySliding
+        "A_pei" => "Coefficient (1/-s)",          # PeierlsCreep
+        "A_nlp" => "Coefficient (Pa^{-n}/s)",          # NonLinearPeierlsCreep
+        "Tau_p" => "Peierls stress (Pa)",
         "E" => "Activation energy (J/mol)", # can also be Elastic Young's modulus, maybe change symbol for that?
+        "E_e" => "Elastic Youngs modulus (Pa)", # can also be Elastic Young's modulus, maybe change symbol for that?
         "R" => "Gas constant (J/mol/K)",
         "G" => "Shear modulus (Pa)",
         "\\nu" => "Poisson ratio (-)",
@@ -581,6 +598,10 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
                 number = parse(Int64, dictpairs[key].second[5])
                 push!(symbs, dictpairs[key].second[2] * "$number")
             end
+        elseif occursin("Melting", dictpairs_key) && maximum(occursin.(["a", "b", "c", "d", "e", "f"], dictpairs[key].second[2]))
+            push!(symbs, "$(dictpairs[key].second[2])_melt")
+        elseif occursin("Elasticity", dictpairs_key) && occursin("E", dictpairs[key].second[2])
+            push!(symbs, "$(dictpairs[key].second[2])_e")
         else
             push!(symbs, dictpairs[key].second[2])
         end
@@ -591,8 +612,8 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
     for symbol in symbs
         # Sets parametername and variable (symbol)
         # Order of signs in symbol: 1. "_", if already "_" in there -> 2. "^"
-        # If no underscore in symbol
-        if (maximum(endswith(symbol, string(i),) for i in 0:9) && !occursin("_", symbol)) || (!occursin("\\", symbol) && length(symbol) > 1 && !occursin("_", symbol)) 
+        # If no underscore in symbol and symbol does not only consist of letters
+        if (maximum(endswith(symbol, string(i),) for i in 0:9) && !occursin("_", symbol)) || (!occursin("\\", symbol) && (length(symbol) > 1 && !(all(isletter, symbol))) && !occursin("_", symbol)) 
             # If "0" in symbol (0 in key for dict)
             if occursin("0", symbol)
                 Table *= " " * string(desc[symbol]) *  " & " * "\$" * symbol[1:end-1] * "_" * symbol[end] *"\$"
@@ -609,10 +630,15 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         elseif occursin("_", symbol)
             occ_under = findfirst('_', symbol)
             Table *= " " * string(desc[symbol]) *  " & " * "\$" * symbol[1:occ_under] * "{" * symbol[occ_under+1:end] * "}" * "\$"
+        # If symbol consists exclusively of multiple letters  
+        elseif all(isletter, symbol)
+            Table *= " " * string(desc[symbol]) * " & " * "\$" * symbol[1] * "_{" * symbol[2:end] * "}\$" 
         # If neither a number nor one of the above signs in symbol, so just a normal symbol
         else
             Table *= " " * string(desc[symbol]) *  " & " * "\$" * symbol *"\$"
         end
+
+
         # Iterates over all phases
         for j in 1:parse(Int64, d["Name 1"][2])
             hit = 0
@@ -1114,6 +1140,7 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
         "A_nlp" => "Coefficient *(Pa^-n^/s)*",          # NonLinearPeierlsCreep
         "Tau_p" => "Peierls stress *(Pa)*",
         "E"=>"Activation energy *(J/mol)*",
+        "E_e"=>"Elastic Youngs modulus *(Pa)*",
         "R"=>"Gas constant *(J/mol/K)*",
         "G"=>"Shear modulus *(Pa)*",
         "ν"=>"Poisson ratio *(-)*",
@@ -1182,6 +1209,10 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
                 number = parse(Int64, dictpairs[key].second[5])
                 push!(symbs, dictpairs[key].second[2] * "$number")
             end
+        elseif occursin("Melting", dictpairs_key) && maximum(occursin.(["a", "b", "c", "d", "e", "f"], dictpairs[key].second[2]))
+            push!(symbs, "$(dictpairs[key].second[2])_melt")
+        elseif occursin("Elasticity", dictpairs_key) && occursin("E", dictpairs[key].second[2])
+            push!(symbs, "$(dictpairs[key].second[2])_e")
         else
             push!(symbs, dictpairs[key].second[2])
         end
@@ -1215,6 +1246,9 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
             elseif occursin("_", symbol)
                 occ_under = findfirst('_', symbol)
                 Table *= " " * string(desc[symbol]) *  " | " * symbol[1:occ_under-1] * "~" * symbol[occ_under+1:end] * "~"
+            # If symbol consists exclusively of multiple letters  
+            elseif all(isletter, symbol)
+                Table *= " " * string(desc[symbol]) * " | " * symbol[1] * "~" * symbol[2:end] * "~"
             end
         # If neither a number nor one of the above signs in symbol, so just a normal symbol
         else
