@@ -18,7 +18,7 @@ The peierls creep law, as used by experimentalists, is given by
 ```
 where 
 - ``n`` is the power law exponent  
-- ``q`` is the stress relation exponent  
+- ``q`` is the (1 - stress relation) exponent  
 - ``o`` is the stress relation exponent (normally called p) 
 - ``r`` is the exponent of fugacity dependence 
 - ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` must be either pre-defined or substituted) 
