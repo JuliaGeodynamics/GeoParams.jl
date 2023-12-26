@@ -1,5 +1,4 @@
 export GrainBoundarySliding,
-    SetGrainBoundarySliding,
     Transform_GrainBoundarySliding,
     GrainBoundarySliding_info,
     remove_tensor_correction,
@@ -44,7 +43,6 @@ julia> x2 = GrainBoundarySliding(Name="test")
 GrainBoundarySliding: Name = test, n=1.0, p=-3.0, A=1.5 m³·⁰ MPa⁻¹·⁰ s⁻¹·⁰, E=500.0 kJ mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517)
 ```
 """
-
 struct GrainBoundarySliding{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     Name::NTuple{100,UInt8}
     n::GeoUnit{T,U1} # powerlaw exponent
@@ -97,37 +95,6 @@ struct GrainBoundarySliding{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
             Name=Name, n=n, p=p, A=A, E=E, V=V, R=R, Apparatus=Apparatus
         )
     end
-end
-
-"""
-    Transform_GrainBoundarySliding(name)
-Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
-"""
-Transform_GrainBoundarySliding(name::String) = Transform_GrainBoundarySliding(GrainBoundarySliding_data(name))
-
-function Transform_GrainBoundarySliding(name::String, CharDim::GeoUnits{U}) where {U<:Union{GEO,SI}}
-    Transform_GrainBoundarySliding(GrainBoundarySliding_data(name), CharDim)
-end
-
-function Transform_GrainBoundarySliding(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) where {T,U<:Union{GEO,SI}}
-    nondimensionalize(Transform_GrainBoundarySliding(p), CharDim)
-end
-
-function Transform_GrainBoundarySliding(pp::AbstractCreepLaw{T}) where T
-    @inline f1(A::T) where T = typeof(A).parameters[2].parameters[1][2].power
-    @inline f2(A::T) where T = typeof(A).parameters[2].parameters[1][1].power
-   
-    n = Value(pp.n)
-    p = Value(pp.p)
-    power_Pa = f1(pp.A)
-    power_m = f2(pp.A)
-    A_Pa = uconvert(Pa^(power_Pa) * m^(power_m) / s, Value(pp.A))
-    E_J = uconvert(J / mol, Value(pp.E))
-    V_m3 = uconvert(m^3 / mol, Value(pp.V))
-    Apparatus = pp.Apparatus
-    args = (Name=pp.Name, n=n, p=p, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
-
-    return GrainBoundarySliding(; args...)
 end
 
 """
@@ -342,3 +309,50 @@ end
 # load collection of grain boundary sliding laws
 include("Data/GrainBoundarySliding.jl")
 include("Data_deprecated/GrainBoundarySliding.jl")
+
+using .GBS
+
+export SetGrainBoundarySliding
+
+"""
+    SetGrainBoundarySliding["Name of GBS"]
+This is a dictionary with pre-defined creep laws    
+"""
+function SetGrainBoundarySliding(name::F) where F
+    return Transform_GrainBoundarySliding(name)
+end
+
+function SetGrainBoundarySliding(name::F, CharDim::GeoUnits{T}) where {F, T<:Union{GEO, SI}}
+    nondimensionalize(Transform_GrainBoundarySliding(name), CharDim)
+end
+
+"""
+    Transform_GrainBoundarySliding(name)
+Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
+"""
+Transform_GrainBoundarySliding(name::F) where F = Transform_GrainBoundarySliding(GrainBoundarySliding_database(name))
+
+function Transform_GrainBoundarySliding(name::F, CharDim::GeoUnits{U}) where {U<:Union{GEO,SI}} where F
+    Transform_GrainBoundarySliding(GrainBoundarySliding_database(name), CharDim)
+end
+
+function Transform_GrainBoundarySliding(p::AbstractCreepLaw, CharDim::GeoUnits{U}) where {U<:Union{GEO,SI}}
+    nondimensionalize(Transform_GrainBoundarySliding(p), CharDim)
+end
+
+function Transform_GrainBoundarySliding(pp::AbstractCreepLaw{T}) where T
+    @inline f1(A::T) where T = typeof(A).parameters[2].parameters[1][2].power
+    @inline f2(A::T) where T = typeof(A).parameters[2].parameters[1][1].power
+   
+    n = Value(pp.n)
+    p = Value(pp.p)
+    power_Pa = f1(pp.A)
+    power_m = f2(pp.A)
+    A_Pa = uconvert(Pa^(power_Pa) * m^(power_m) / s, Value(pp.A))
+    E_J = uconvert(J / mol, Value(pp.E))
+    V_m3 = uconvert(m^3 / mol, Value(pp.V))
+    Apparatus = pp.Apparatus
+    args = (Name=pp.Name, n=n, p=p, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+
+    return GrainBoundarySliding(; args...)
+end

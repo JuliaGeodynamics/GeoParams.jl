@@ -1,6 +1,5 @@
 export PeierlsCreep,
     Peierls_info, 
-    SetPeierlsCreep, 
     remove_tensor_correction, 
     dεII_dτII, 
     dτII_dεII,
@@ -88,19 +87,6 @@ struct PeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
             Name=Name, n=n, q=q, o=o, TauP=TauP, A=A, E=E, R=R, Apparatus=Apparatus
         )
     end
-end
-
-"""
-    Transforms units from GPa, MPa, kJ etc. to basic units such as Pa, J etc.
-"""
-Transform_PeierlsCreep(name::String) = Transform_PeierlsCreep(PeierlsCreep_data(name))
-
-function Transform_PeierlsCreep(name::String, CharDim::GeoUnits{U}) where {U<:Union{GEO,SI}}
-    Transform_PeierlsCreep(PeierlsCreep_data(name), CharDim)
-end
-
-function Transform_PeierlsCreep(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) where {T,U<:Union{GEO,SI}}
-    nondimensionalize(Transform_PeierlsCreep(p), CharDim)
 end
 
 function Transform_PeierlsCreep(p::AbstractCreepLaw{T}) where T
@@ -262,3 +248,29 @@ end
 # load collection of peierls creep laws
 include("Data/PeierlsCreep.jl")
 include("Data_deprecated/PeierlsCreep.jl")
+
+using .Peierls
+export SetPeierlsCreep
+
+"""
+    SetPeierlsCreep["Name of peierls creep law"]
+This is a dictionary with pre-defined creep laws    
+"""
+SetPeierlsCreep(name::F) where F = Transform_PeierlsCreep(name)
+
+function SetPeierlsCreep(name::F, CharDim::GeoUnits{GEO}) where F
+    return nondimensionalize(Transform_PeierlsCreep(name), CharDim)
+end
+
+"""
+    Transforms units from GPa, MPa, kJ etc. to basic units such as Pa, J etc.
+"""
+Transform_PeierlsCreep(name::F) where F = Transform_PeierlsCreep(peierls_database(name))
+
+function Transform_PeierlsCreep(name::F, CharDim::GeoUnits{U}) where {U<:Union{GEO,SI}} where F
+    Transform_PeierlsCreep(peierls_database(name), CharDim)
+end
+
+function Transform_PeierlsCreep(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) where {T,U<:Union{GEO,SI}}
+    nondimensionalize(Transform_PeierlsCreep(p), CharDim)
+end
