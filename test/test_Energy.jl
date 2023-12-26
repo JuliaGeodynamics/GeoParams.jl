@@ -98,7 +98,7 @@ using StaticArrays
 
     num_alloc = @allocated compute_heatcapacity!(Cp, Mat_tup, Phases, args)
     @test sum(Cp[1, 1, :]) ≈ 121399.0486067196
-    # @test num_alloc <= 32
+    @test num_alloc == 0
 
     # test if we provide phase ratios
     PhaseRatio = zeros(n, n, n, 3)
@@ -110,7 +110,7 @@ using StaticArrays
     compute_heatcapacity!(Cp, Mat_tup, PhaseRatio, args)
     num_alloc = @allocated compute_heatcapacity!(Cp, Mat_tup, PhaseRatio, args)
     @test sum(Cp[1, 1, :]) ≈ 121399.0486067196
-    # @test num_alloc <= 32
+    @test num_alloc == 0
 
     # -----------------------
 
@@ -222,13 +222,13 @@ using StaticArrays
 
     compute_conductivity!(k, Mat_tup, Phases, args)
     @test sum(k) ≈ 1.9216938849389635e6
-    # num_alloc = @allocated compute_conductivity!(k, Mat_tup, Phases, args)
-    # @test num_alloc <= 32
+    num_alloc = @allocated compute_conductivity!(k, Mat_tup, Phases, args)
+    @test num_alloc == 0
 
     compute_conductivity!(k, Mat_tup, PhaseRatio, args)
     @test sum(k) ≈ 1.9216938849389635e6
-    # num_alloc = @allocated compute_conductivity!(k, Mat_tup, PhaseRatio, args)
-    # @test num_alloc <= 32
+    num_alloc = @allocated compute_conductivity!(k, Mat_tup, PhaseRatio, args)
+    @test num_alloc == 0
 
     ######
 
@@ -371,8 +371,8 @@ using StaticArrays
     compute_radioactive_heat!(Hr, Mat_tup1, Phases, args1)
     @test Hr[50, 50, 50] ≈ 1e-6
 
-    # num_alloc = @allocated compute_radioactive_heat!(Hr, Mat_tup, Phases, args)
-    # @test num_alloc <= 32   # in the commandline this gives 0; while running the script not always
+    num_alloc = @allocated compute_radioactive_heat!(Hr, Mat_tup, Phases, args)
+    @test num_alloc == 0
 
     compute_radioactive_heat!(Hr, Mat_tup, PhaseRatio, args)
     @test sum(Hr) ≈ 0.33715177646857664
