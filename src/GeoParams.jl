@@ -314,6 +314,7 @@ include("./MeltFraction/MeltingParameterization.jl")
 using .MeltingParam
 export compute_meltfraction,
     compute_meltfraction!,       # calculation routines
+    compute_meltfraction_ratio,
     compute_dϕdT,
     compute_dϕdT!,
     MeltingParam_Caricchi,

@@ -15,6 +15,7 @@ abstract type AbstractMeltingParam{T} <: AbstractMaterialParam end
 
 export compute_meltfraction,
     compute_meltfraction!,    # calculation routines
+    compute_meltfraction_ratio,
     compute_dϕdT,             # derivative of melt fraction versus
     compute_dϕdT!,
     param_info,
@@ -68,21 +69,13 @@ end
 
 # Calculation routines
 function (p::MeltingParam_Caricchi)(; T, kwargs...)
-    if T isa Quantity
-        @unpack_units a, b, c = p
-    else
-        @unpack_val a, b, c = p
-    end
+    @unpack_val a, b, c = p
     θ = (a - (T - c)) / b
     return 1.0 / (1.0 + exp(θ))
 end
 
 function compute_dϕdT(p::MeltingParam_Caricchi; T, kwargs...)
-    if T isa Quantity
-        @unpack_units a, b, c = p
-    else
-        @unpack_val a, b, c = p
-    end
+    @unpack_val a, b, c = p
 
     _b = inv(b)
     dϕdT = exp((a + c - T) * _b) / (b * ((1.0 + exp((a + c - T) * _b))^2))
@@ -140,11 +133,7 @@ end
 
 # Calculation routines
 function (p::MeltingParam_5thOrder)(; T, kwargs...)
-    if T isa Quantity
-        @unpack_units a, b, c, d, e, f, T_s, T_l = p
-    else
-        @unpack_val a, b, c, d, e, f, T_s, T_l = p
-    end
+    @unpack_val a, b, c, d, e, f, T_s, T_l = p
 
     coeffs = f,e,d,c,b,a
     ϕ = @horner(T, coeffs...)
@@ -162,11 +151,7 @@ end
 compute_dϕdT(p::MeltingParam_5thOrder, T, kwargs...) = compute_dϕdT(p; T, kwargs...) 
 
 function compute_dϕdT(p::MeltingParam_5thOrder; T, kwargs...)
-    if T isa Quantity
-        @unpack_units a, b, c, d, e, T_s, T_l = p
-    else
-        @unpack_val a, b, c, d, e, T_s, T_l = p
-    end
+    @unpack_val a, b, c, d, e, T_s, T_l = p
 
     coeffs = e,2*d,3*c,4*b,5*a
     dϕdT = @horner(T, coeffs...)
@@ -227,11 +212,7 @@ end
 
 # Calculation routines
 function (p::MeltingParam_4thOrder)(; T, kwargs...)
-    if T isa Quantity
-        @unpack_units b, c, d, e, f, T_s, T_l = p
-    else
-        @unpack_val b, c, d, e, f, T_s, T_l = p
-    end
+    @unpack_val b, c, d, e, f, T_s, T_l = p
 
     coeffs = f,e,d,c,b
     ϕ = @horner(T, coeffs...)
@@ -247,11 +228,7 @@ function (p::MeltingParam_4thOrder)(; T, kwargs...)
 end
 
 function compute_dϕdT(p::MeltingParam_4thOrder; T, kwargs...)
-    if T isa Quantity
-        @unpack_units b, c, d, e, T_s, T_l = p
-    else
-        @unpack_val b, c, d, e, T_s, T_l = p
-    end
+    @unpack_val b, c, d, e, T_s, T_l = p
 
     coeffs = e,2*d,3*c,4*b
     dϕdT = @horner(T, coeffs...)
@@ -314,11 +291,7 @@ end
 
 # Calculation routines
 function (p::MeltingParam_Quadratic)(; T, kwargs...)
-    if T isa Quantity
-        @unpack_units T_s, T_l = p
-    else
-        @unpack_val T_s, T_l = p
-    end
+    @unpack_val T_s, T_l = p
 
     ϕ = 1.0 - ((T_l - T) / (T_l - T_s))^2
     if p.apply_bounds
@@ -332,11 +305,7 @@ function (p::MeltingParam_Quadratic)(; T, kwargs...)
 end
 
 function compute_dϕdT(p::MeltingParam_Quadratic; T, kwargs...)
-    if T isa Quantity
-        @unpack_units T_s, T_l = p
-    else
-        @unpack_val T_s, T_l = p
-    end
+     @unpack_val T_s, T_l = p
 
     dϕdT = (2T_l - 2T) / ((T_l - T_s)^2)
     if p.apply_bounds && (T > T_l || T < T_s)
@@ -407,11 +376,7 @@ end
 
 # Calculation routines
 function (p::MeltingParam_Assimilation)(; T, kwargs...)
-    if T isa Quantity
-        @unpack_units T_s, T_l, a = p
-    else
-        @unpack_val T_s, T_l, a = p
-    end
+    @unpack_val T_s, T_l, a = p
 
     X = (T - T_s) / (T_l - T_s)
 
@@ -431,11 +396,7 @@ function (p::MeltingParam_Assimilation)(; T, kwargs...)
 end
 
 function compute_dϕdT(p::MeltingParam_Assimilation; T, kwargs...)
-    if T isa Quantity
-        @unpack_units T_s, T_l, a = p
-    else
-        @unpack_val T_s, T_l, a = p
-    end
+    @unpack_val T_s, T_l, a = p
 
     X = (T - T_s) / (T_l - T_s)
     dϕdT =
@@ -543,20 +504,15 @@ SmoothMelting(p::AbstractMeltingParam) = SmoothMelting(; p=p)
 
 # Calculation routines
 function (param::SmoothMelting)(; T, kwargs...)
-    if T isa Quantity
-        @unpack_units k_sol, k_liq = param
-    else
-        @unpack_val k_sol, k_liq = param
-        k_sol = param.k_sol.val
-    end
+    @unpack_val k_sol, k_liq = param
 
     ϕ = param.p(; T, kwargs...)     # Melt fraction computed in usual manner
 
     T_s = param.p.T_s
-    H_s = 1.0 / (1.0 + exp(-2 * k_sol * (T - T_s - (2 / k_sol))))
+    H_s =inv(1.0 + exp(-2 * k_sol * (T - T_s - (2 / k_sol))))
 
     T_l = param.p.T_l
-    H_l = 1.0 - 1.0 / (1.0 + exp(-2 * k_liq * (T - T_l + (2 / k_liq))))
+    H_l = 1.0 - inv(1.0 + exp(-2 * k_liq * (T - T_l + (2 / k_liq))))
 
     # Apply heaviside smoothening above liquidus & below solidus
     ϕ = ϕ * H_s * H_l + 1.0 - H_l
@@ -564,19 +520,16 @@ function (param::SmoothMelting)(; T, kwargs...)
     return ϕ
 end
 
+
 function compute_dϕdT(param::SmoothMelting; T, kwargs...)
-    if T isa Quantity
-        @unpack_units k_sol, k_liq = param
-    else
-        @unpack_val k_sol, k_liq = param
-    end
+    @unpack_val k_sol, k_liq = param
 
     # compute heaviside functions & derivatives of that vs. T
     T_s = param.p.T_s
     T_l = param.p.T_l
 
-    f_s(T) = 1.0 / (1.0 + exp(-2 * k_sol * (T - T_s - (2 / k_sol))))
-    f_l(T) = 1.0 - 1.0 / (1.0 + exp(-2 * k_liq * (T - T_l + (2 / k_liq))))
+    f_s(T) = inv(1.0 + exp(-2 * k_sol * (T - T_s - (2 / k_sol))))
+    f_l(T) = 1.0 - inv(1.0 + exp(-2 * k_liq * (T - T_l + (2 / k_liq))))
 
     H_s, dHs_dT = value_and_partial(f_s, T)
     H_l, dHl_dT = value_and_partial(f_l, T)
@@ -588,7 +541,6 @@ function compute_dϕdT(param::SmoothMelting; T, kwargs...)
     # The derivative of the function
     # ϕ = ϕ(T)*H_s(T)*H_l(T)  + 1.0 - H_l
     # versus T is
-
     dϕdT_tot = dϕdT * H_s * H_l + ϕ * dHs_dT * H_l + ϕ * H_s * dHl_dT - dHl_dT
 
     return dϕdT_tot
@@ -709,6 +661,14 @@ compute_meltfraction(args::Vararg{Any, N}) where N = compute_param(compute_meltf
 In-place computation of melt fraction ϕ for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 """
 compute_meltfraction!(args::Vararg{Any, N}) where N = compute_param!(compute_meltfraction, args...)
+
+"""
+    compute_meltfraction(ϕ::AbstractArray{<:AbstractFloat}, PhaseRatios::Union{NTuple{N,T}, SVector{N,T}}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
+
+Computation of melt fraction ϕ for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
+This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
+"""
+compute_meltfraction_ratio(args::Vararg{Any, N}) where N = compute_param_times_frac(compute_meltfraction, args...)
 
 """
     ϕ = compute_dϕdT(Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})

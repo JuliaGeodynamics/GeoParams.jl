@@ -16,7 +16,7 @@ include("../Computations.jl")
 
 abstract type AbstractDensity{T} <: AbstractMaterialParam end
 
-export compute_density,        # calculation routines
+export compute_density,     # calculation routines
     compute_density!,       # in place calculation
     compute_density_ratio, 
     param_info,             # info about the parameters
@@ -50,10 +50,10 @@ where ``\\rho`` is the density [``kg/m^3``].
 end
 ConstantDensity(args...) = ConstantDensity(convert.(GeoUnit, args)...)
 
-(ρ::ConstantDensity)(; args...) = ρ.ρ.val
-(ρ::ConstantDensity)(args) = ρ(; args...)
-compute_density(s::ConstantDensity{_T}, args) where {_T} = s(; args...)
-compute_density(s::ConstantDensity{_T}) where {_T} = s()
+@inline (ρ::ConstantDensity)(; args...)                          = ρ.ρ.val
+@inline (ρ::ConstantDensity)(args)                               = ρ(; args...)
+@inline compute_density(s::ConstantDensity{_T}, args) where {_T} = s(; args...)
+@inline compute_density(s::ConstantDensity{_T})       where {_T} = s()
 
 # This assumes that density always has a single parameter. If that is not the case, we will have to extend this (to be done)
 function param_info(s::ConstantDensity) # info about the struct
@@ -63,7 +63,6 @@ end
 # Calculation routines
 function compute_density!(rho::AbstractArray, s::ConstantDensity; kwargs...)
     @unpack_val ρ = s
-
     rho[:] .= ρ
     return nothing
 end
@@ -90,35 +89,37 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference temperature ``T_0`` a
 ``\\alpha`` is the temperature dependence of density and ``\\beta`` the pressure dependence.
 """
 @with_kw_noshow struct PT_Density{_T,U1,U2,U3,U4,U5} <: AbstractDensity{_T}
-    ρ0::GeoUnit{_T,U1} = 2900.0kg / m^3                # density
-    α::GeoUnit{_T,U2} = 3e-5 / K                      # T-dependence of density
-    β::GeoUnit{_T,U3} = 1e-9 / Pa                     # P-dependence of density
-    T0::GeoUnit{_T,U4} = 0.0C                        # Reference temperature
-    P0::GeoUnit{_T,U5} = 0.0MPa                      # Reference pressure
+    ρ0::GeoUnit{_T,U1} = 2900.0kg / m^3 # density
+    α::GeoUnit{_T,U2}  = 3e-5 / K       # T-dependence of density
+    β::GeoUnit{_T,U3}  = 1e-9 / Pa      # P-dependence of density
+    T0::GeoUnit{_T,U4} = 0.0C           # Reference temperature
+    P0::GeoUnit{_T,U5} = 0.0MPa         # Reference pressure
 end
 PT_Density(args...) = PT_Density(convert.(GeoUnit, args)...)
 
-function param_info(s::PT_Density)  # info
+function param_info(s::PT_Density) # info
     return MaterialParamsInfo(;
         Equation=L"\rho = \rho_0(1.0-\alpha (T-T_0) + \beta (P-P_0)"
     )
 end
 
 # Calculation routine 
-function (ρ::PT_Density)(; P::Number, T::Number, kwargs...)
+@inline function (ρ::PT_Density)(; P::Number, T::Number, kwargs...)
     if T isa Quantity
         @unpack_units ρ0, α, β, P0, T0 = ρ
     else
-        @unpack_val ρ0, α, β, P0, T0 = ρ
+        @unpack_val   ρ0, α, β, P0, T0 = ρ
     end
 
-    return ρ0 * (1.0 - α * (T - T0) + β * (P - P0))
+    # fma version of: ρ0 * (1.0 - α * (T - T0) + β * (P - P0))
+    return ρ0 * muladd(β, P - P0, muladd(-α, T - T0, 1))
 end
 
-(ρ::PT_Density)(args) = ρ(; args...)
-
-compute_density(s::PT_Density, args) = s(args)
-compute_density(s::PT_Density, P::AbstractArray, T::AbstractArray) = s(; P=P, T=T)
+@inline (ρ::PT_Density)(args)                = ρ(; args...)
+@inline compute_density(s::PT_Density, args) = s(args)
+@inline function compute_density(s::PT_Density, P::AbstractArray, T::AbstractArray)
+    s(; P=P, T=T)
+end
 
 # Print info 
 function show(io::IO, g::PT_Density)
@@ -140,28 +141,28 @@ Set a pressure-dependent density:
 where ``\\rho_0`` is the density [``kg/m^3``] at reference pressure ``P_0`` and ``\\beta`` the pressure dependence.
 """
 @with_kw_noshow struct Compressible_Density{_T,U1,U2,U3} <: AbstractDensity{_T}
-    ρ0::GeoUnit{_T,U1} = 2900.0kg / m^3                # density
-    β::GeoUnit{_T,U2} = 1e-9 / Pa                     # P-dependence of density
-    P0::GeoUnit{_T,U3} = 0.0MPa                      # Reference pressure
+    ρ0::GeoUnit{_T,U1} = 2900.0kg / m^3 # density
+    β::GeoUnit{_T,U2}  = 1e-9 / Pa      # P-dependence of density
+    P0::GeoUnit{_T,U3} = 0.0MPa         # Reference pressure
 end
 Compressible_Density(args...) = Compressible_Density(convert.(GeoUnit, args)...)
 
 function param_info(s::Compressible_Density) # info about the struct
-    return MaterialParamsInfo(; Equation=L"\rho = \rho_0\exp(\beta*(P-P_0))")
+    return MaterialParamsInfo(; Equation = L"\rho = \rho_0\exp(\beta*(P-P_0))")
 end
 
 function (s::Compressible_Density{_T})(; P::_T=zero(_T), kwargs...) where {_T}
     if P isa Quantity
         @unpack_units ρ0, β, P0 = s
     else
-        @unpack_val ρ0, β, P0 = s
+        @unpack_val   ρ0, β, P0 = s
     end
 
     return ρ0 * exp(β * (P - P0))
 end
 
-(s::Compressible_Density)(args) = s(; args...)
-compute_density(s::Compressible_Density, args) = s(; args...)
+@inline (s::Compressible_Density)(args)                = s(; args...)
+@inline compute_density(s::Compressible_Density, args) = s(; args...)
 
 # Print info 
 function show(io::IO, g::Compressible_Density)
@@ -182,11 +183,11 @@ end
     compute_density(P,T, s::PhaseDiagram_LookupTable)
 Interpolates density as a function of `T,P` from a lookup table  
 """
-function compute_density(s::PhaseDiagram_LookupTable; P, T, kwargs...)
+@inline function compute_density(s::PhaseDiagram_LookupTable; P, T, kwargs...)
     fn = s.Rho
     return fn(T, P)
 end
-compute_density(s::PhaseDiagram_LookupTable, args) = compute_density(s; args...)
+@inline compute_density(s::PhaseDiagram_LookupTable, args) = compute_density(s; args...)
 
 """
     compute_density!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
@@ -196,15 +197,9 @@ In-place computation of density as a function of `T,P`, in case we are using a l
 
 #------------------------------------------------------------------------------------------------------------------#
 # Computational routines needed for computations with the MaterialParams structure 
-
-# This assumes that density always has a single parameter. If that is not the case, we will have to extend this (to be done)
-# function compute_density(s::AbstractMaterialParamsStruct, args...) where {_T}
-#     return compute_density(s.Density[1], args...)
-# end
 function compute_density(s::AbstractMaterialParamsStruct, args)
     return compute_density(s.Density[1], args)
 end
-
 #-------------------------------------------------------------------------------------------------------------
 
 """
@@ -273,8 +268,8 @@ ________________________________________________________________________________
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 """
-compute_density!(args::Vararg{Any, N}) where N = compute_param!(compute_density, args...) #Multiple dispatch to rest of routines found in Computations.jl
-compute_density(args::Vararg{Any, N}) where N = compute_param(compute_density, args...)
-compute_density_ratio(args::Vararg{Any, N}) where N = compute_param_times_frac(compute_density, args...)
+@inline compute_density!(args::Vararg{Any, N})      where N = compute_param!(compute_density, args...) #Multiple dispatch to rest of routines found in Computations.jl
+@inline compute_density(args::Vararg{Any, N})       where N = compute_param(compute_density, args...)
+@inline compute_density_ratio(args::Vararg{Any, N}) where N = compute_param_times_frac(compute_density, args...)
 
 end
