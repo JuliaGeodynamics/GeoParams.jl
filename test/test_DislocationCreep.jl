@@ -1,5 +1,6 @@
 using Test
 using GeoParams
+import GeoParams.Dislocation
 
 @testset "DislocationCreepLaws" begin
 
@@ -39,7 +40,7 @@ using GeoParams
     ε = compute_εII(x1, TauII, args)
 
     # Test some of the preset rheologies
-    p = SetDislocationCreep("Dry Olivine | Hirth & Kohlstedt (2003)")
+    p = SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003)
     TauII = 0.3e6Pa
     args = (; T=1673.0K, P=0.0Pa)
     ε = compute_εII(p, TauII, args)
@@ -72,7 +73,7 @@ using GeoParams
     τ_book = 2 * η_book * ε
 
     # Same but using GeoParams & dimensional values:
-    p = SetDislocationCreep("Dry Olivine | Gerya (2019)")
+    p = SetDislocationCreep(Dislocation.dry_olivine_Gerya_2019)
     args = (; T=T)
     τ = compute_τII(p, ε, args)        # compute stress
     @test τ ≈ τ_book
@@ -94,9 +95,7 @@ using GeoParams
     ηvec = τvec ./ (2 * εvec)
     @test sum(ηvec) / length(ηvec) ≈ 4.124658696991946e24
 
-    # p = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
-    # p = SetDislocationCreep("Wet Anorthite | Rybecki and Dresen (2000)")
-    p = SetDislocationCreep("Dry Olivine | Hirth & Kohlstedt (2003)")
+    p = SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003)
 
     args = (; T=(650 + 273.15))
     ε_vec = exp10.(-22:-12)
@@ -106,10 +105,10 @@ using GeoParams
 
     # Do some basic checks on all creeplaws in the DB
     CharDim = GEO_units()
-    creeplaw_list = DislocationCreep_info       # all creeplaws in database
-    for (key, val) in creeplaw_list
+    creeplaw_list = dislocation_law_list()
+    for fun in creeplaw_list
         # @show key
-        p = SetDislocationCreep(key)        # original creep law
+        p = SetDislocationCreep(fun)        # original creep law
         p_nd = nondimensionalize(p, CharDim)    # non-dimensionalized
         p_dim = dimensionalize(p, CharDim)       # dimensionalized
 
