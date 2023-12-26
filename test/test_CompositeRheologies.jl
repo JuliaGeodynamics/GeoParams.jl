@@ -1,11 +1,12 @@
 using Test
 using GeoParams, ForwardDiff
+import GeoParams: Dislocation, Diffusion
 
 @testset "CompositeRheologies" begin
 
     # Define a range of rheological components
-    v1 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)") # SetPeierlsCreep("Dry Olivine | Goetze and Evans (1979)")
-    v2 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
+    v1 = SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006) # SetPeierlsCreep("Dry Olivine | Goetze and Evans (1979)")
+    v2 = SetDislocationCreep(Dislocation.dry_anorthite_Rybacki_2006)
     v3 = LinearViscous()
     v4 = LinearViscous(; η=1e22Pa * s)
     e1 = ConstantElasticity()           # elasticity
