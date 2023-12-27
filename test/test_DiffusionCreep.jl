@@ -1,6 +1,6 @@
 using Test
 using GeoParams
-import Diffusion
+import GeoParams.Diffusion
 
 @testset "DiffusionCreepLaws" begin
 
