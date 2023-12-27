@@ -1,5 +1,6 @@
 using Test
 using GeoParams
+import GeoParams.GBS
 
 @testset "GrainBoundarySliding" begin
 
@@ -25,7 +26,7 @@ using GeoParams
     d_nd  = nondimensionalize(d, CharDim)
 
     # compute a pure diffusion creep rheology
-    p     = SetGrainBoundarySliding("Dry Olivine < 1523K | Hirth and Kohlstedt (2003)")
+    p     = SetGrainBoundarySliding(GBS.cold_dry_olivine_Hirth_2003)
     T     = 650.0 + 273.15
     args  = (; T=T)
     TauII = 1.0e6
@@ -56,11 +57,11 @@ using GeoParams
 
     # Do some basic checks on all creeplaws in the DB
     CharDim       = GEO_units()
-    creeplaw_list = GrainBoundarySliding_info               # all creeplaws in database
-    for (key, val) in creeplaw_list
-        p     = SetGrainBoundarySliding(key)                # original creep law
+    creeplaw_list = grainboundarysliding_law_list()              # all creeplaws in database
+    for fun in creeplaw_list
+        p     = SetGrainBoundarySliding(fun)                # original creep law
         p_nd  = nondimensionalize(p, CharDim)                # non-dimensionalized
-        @test p_nd == SetGrainBoundarySliding(key, CharDim) # check that the non-dimensionalized version is the same as the original
+        @test p_nd == SetGrainBoundarySliding(fun, CharDim) # check that the non-dimensionalized version is the same as the original
         p_dim = dimensionalize(p, CharDim)                   # dimensionalized
 
         # Check that values are the same after non-dimensionalisation & dimensionalisation
