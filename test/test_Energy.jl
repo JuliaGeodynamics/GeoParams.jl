@@ -52,12 +52,12 @@ using StaticArrays
 
     Cp_array = similar(T_array)
     compute_heatcapacity!(Cp_array, cp2, (; T=T_array))
-    @test sum(Cp_array[:, 1]) ≈ 11667.035717418683
+    @test sum(Cp_array[i, 1] for i in axes(Cp_array,1)) ≈ 11667.035717418683
 
     T_array = T * ones(10)'
     Cp_array = zeros(size(T_array))
     compute_heatcapacity!(Cp_array, cp2, (; T=T_array))
-    @test sum(Cp_array[:, 1]) ≈ 11667.035717418683
+    @test sum(Cp_array[i, 1] for i in axes(Cp_array,1)) ≈ 11667.035717418683
 
     # Check that it works if we give a phase array
     MatParam = Array{MaterialParams,1}(undef, 2)
@@ -81,7 +81,7 @@ using StaticArrays
     # test computing material properties
     n = 100
     Phases = ones(Int64, n, n, n)
-    Phases[:, :, 20:end] .= 2
+    @views Phases[:, :, 20:end] .= 2
 
     Cp = zeros(size(Phases))
     T = ones(size(Phases)) * 1500
