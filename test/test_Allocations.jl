@@ -1,4 +1,4 @@
-# this tests allocations for a range of scenarious
+# this tests allocations for a range of scenarios
 using Test
 using GeoParams
 import GeoParams.Dislocation
