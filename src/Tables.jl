@@ -1,7 +1,7 @@
 module Tables
 
 using Unidecode
-using GeoParams: AbstractMaterialParam, param_info, LinearViscous, PowerlawViscous, DislocationCreep, DiffusionCreep, CompositeRheology, Parallel, make_tuple
+using GeoParams: AbstractMaterialParam, param_info, LinearViscous, PowerlawViscous, DislocationCreep, DiffusionCreep, CompositeRheology, Parallel, make_tuple, uint2str
 using ..Units
 using ..MaterialParameters: MaterialParamsInfo
 
@@ -64,7 +64,8 @@ function Phase2Dict(s)
                         flowlawcount += 1
                         flowadd = flowdisl
                         flowlaw *= flowadd
-                        name = join(a[j].Name)
+                        # name = join(uint2str(a[j].Name))
+                        name = join(uint2str(a[j].Name))
                         bibinfo_disl = param_info(a[j])
                         bib_disl = bibinfo_disl.BibTex_Reference
                         refs["$name"] = (bib_disl, "$flowlawcount", "$i")
@@ -74,7 +75,7 @@ function Phase2Dict(s)
                         flowlawcount += 1
                         flowadd = flowdiff
                         flowlaw *= flowadd
-                        name = join(a[j].Name)
+                        name = join(uint2str(a[j].Name))
                         bibinfo_diff = param_info(a[j])
                         bib_diff = bibinfo_diff.BibTex_Reference
                         refs["$name"] = (bib_diff, "$flowlawcount", "$i")
@@ -691,7 +692,7 @@ function Phase2DictMd(s)
                         flowlawcount += 1
                         flowadd = flowdisl
                         flowlaw *= flowadd
-                        name = join(a[j].Name)
+                        name = join(uint2str(a[j].Name))
                         bibinfo_disl = param_info(a[j])
                         bib_disl = bibinfo_disl.BibTex_Reference
                         refs["$name"] = (bib_disl, "$flowlawcount", "$i")
@@ -701,7 +702,7 @@ function Phase2DictMd(s)
                         flowlawcount += 1
                         flowadd = flowdiff
                         flowlaw *= flowadd
-                        name = join(a[j].Name)
+                        name = join(uint2str(a[j].Name))
                         bibinfo_diff = param_info(a[j])
                         bib_diff = bibinfo_diff.BibTex_Reference
                         refs["$name"] = (bib_diff, "$flowlawcount", "$i")

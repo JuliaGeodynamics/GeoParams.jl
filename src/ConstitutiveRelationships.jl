@@ -7,7 +7,7 @@ using Base: Float64
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
-import GeoParams: param_info, fastpow, pow_check, nphase, ntuple_idx, @print, @pow, str2tuple
+import GeoParams: param_info, fastpow, pow_check, nphase, ntuple_idx, @print, @pow, str2tuple, uint2str
 import GeoParams: second_invariant, second_invariant_staggered, value_and_partial
 using BibTeX
 using ..MaterialParameters: MaterialParamsInfo

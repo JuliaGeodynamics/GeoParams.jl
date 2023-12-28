@@ -97,7 +97,7 @@ Removes the tensor correction of the creeplaw, which is useful to compare the im
 with the curves of the original publications, as those publications usually do not transfer their data to tensor format
 """
 function remove_tensor_correction(s::NonLinearPeierlsCreep)
-    name = String(collect(s.Name))
+    name = uint2str(s.Name)
 
     return NonLinearPeierlsCreep(;
         Name=name, n=s.n, q=s.q, o=s.o, TauP=s.TauP, A=s.A, E=s.E, Apparatus=Invariant
@@ -105,7 +105,7 @@ function remove_tensor_correction(s::NonLinearPeierlsCreep)
 end
 
 function param_info(s::NonLinearPeierlsCreep)
-    name = String(collect(s.Name))
+    name = uint2str(s.Name)
     eq = ""
     if name == ""
         return MaterialParamsInfo(; Equation=eq)

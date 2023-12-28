@@ -104,14 +104,14 @@ Removes the tensor correction of the creeplaw, which is useful to compare the im
 with the curves of the original publications, as those publications usually do not transfer their data to tensor format
 """
 function remove_tensor_correction(s::GrainBoundarySliding)
-    name = String(collect(s.Name))
+    name = uint2str(s.Name)
     return GrainBoundarySliding(;
         Name=name, n=s.n, p=s.p, A=s.A, E=s.E, V=s.V, Apparatus=Invariant
     )
 end
 
 function param_info(s::GrainBoundarySliding)
-    name = String(collect(s.Name))
+    name = uint2str(s.Name)
     eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}" #ÄNDERN!!!!!!!!!!!
     if name == ""
         return MaterialParamsInfo(; Equation=eq)

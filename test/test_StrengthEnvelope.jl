@@ -1,5 +1,6 @@
 using Test
 using GeoParams
+import GeoParams.Dislocation
 
 @testset "StrengthEnvelope.jl" begin
     MatParam = (
@@ -7,14 +8,14 @@ using GeoParams
             Name="UC",
             Phase=1,
             Density=ConstantDensity(; ρ=2700kg / m^3),
-            CreepLaws=SetDislocationCreep("Wet Quartzite | Ueda et al. (2008)"),
+            CreepLaws=SetDislocationCreep(Dislocation.wet_quartzite_Ueda_2008),
             Plasticity=DruckerPrager(; ϕ=30.0, C=10MPa),
         ),
         SetMaterialParams(;
             Name="MC",
             Phase=2,
             Density=Density = ConstantDensity(; ρ=2900kg / m^3),
-            CreepLaws=SetDislocationCreep("Plagioclase An75 | Ji and Zhao (1993)"),
+            CreepLaws=SetDislocationCreep(Dislocation.plagioclase_An75_Ji_1993),
             Plasticity=DruckerPrager(; ϕ=20.0, C=10MPa),
         ),
         SetMaterialParams(;
@@ -22,7 +23,7 @@ using GeoParams
             Phase=3,
             Density=PT_Density(; ρ0=2900kg / m^3, α=3e-5 / K, β=1e-10 / Pa),
             CreepLaws=SetDislocationCreep(
-                "Maryland strong diabase | Mackwell et al. (1998)"
+                Dislocation.strong_diabase_Mackwell_1998
             ),
             Plasticity=DruckerPrager(; ϕ=30.0, C=10MPa),
         ),

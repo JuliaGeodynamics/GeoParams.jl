@@ -101,7 +101,7 @@ Removes the tensor correction of the creeplaw, which is useful to compare the im
 with the curves of the original publications, as those publications usually do not transfer their data to tensor format
 """
 function remove_tensor_correction(s::DislocationCreep)
-    name = String(collect(s.Name))
+    name = uint2str(s.Name)
 
     return DislocationCreep(;
         Name=name, n=s.n, r=s.r, A=s.A, E=s.E, V=s.V, Apparatus=Invariant
@@ -296,7 +296,7 @@ using .Dislocation
 export SetDislocationCreep
 
 function param_info(s::DislocationCreep)
-    name = strip(String(collect(s.Name)))
+    name = strip(uint2str(s.Name))
     eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"
     if name == ""
         return MaterialParamsInfo(; Equation=eq)

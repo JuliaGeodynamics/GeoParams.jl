@@ -119,7 +119,7 @@ function remove_tensor_correction(s::DiffusionCreep)
 end
 
 function param_info(s::DiffusionCreep)
-    name = String(collect(s.Name))
+    name = uint2str(s.Name)
     eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"
     if name == ""
         return MaterialParamsInfo(; Equation=eq)
