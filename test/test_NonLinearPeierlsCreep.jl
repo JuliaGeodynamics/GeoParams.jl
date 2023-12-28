@@ -1,5 +1,6 @@
 using Test
 using GeoParams
+import GeoParams.NonLinearPeierls
 
 @testset "NonLinearPeierlsCreepLaws" begin
 
@@ -23,7 +24,7 @@ using GeoParams
     T     = GeoUnit(473.0C)
 
     # compute a pure non linear peierls creep rheology
-    p     = SetNonLinearPeierlsCreep("Dry Olivine | Mei et al. (2010)")
+    p     = SetNonLinearPeierlsCreep(NonLinearPeierls.dry_olivine_Mei_2010)
     T     = 200.0 + 273.15
     args  = (; T=T)
     TauII = 1.0e9
@@ -47,7 +48,7 @@ using GeoParams
     @test ε_array[1] ≈ ε
 
     # wet olivine, stress-strainrate curve
-    p    = SetNonLinearPeierlsCreep("Dry Olivine | Mei et al. (2010)")
+    # p    = SetNonLinearPeierlsCreep("Dry Olivine | Mei et al. (2010)")
     εII  = exp10.(-22:0.5:-12)
     τII  = exp10.(9:0.05:10)               # preallocate array
     T    = 200.0 + 273.15
@@ -62,12 +63,12 @@ using GeoParams
 
     # Do some basic checks on all creeplaws in the DB
     CharDim = GEO_units()
-    creeplaw_list = NonLinearPeierlsCreep_info       # all creeplaws in database
-    for (key, val) in creeplaw_list
-        p     = SetNonLinearPeierlsCreep(key)                # original creep law
-        p_nd  = nondimensionalize(p, CharDim)                 # non-dimensionalized
-        @test p_nd == SetNonLinearPeierlsCreep(key, CharDim) # check that the non-dimensionalized version is the same as the original
-        p_dim = dimensionalize(p, CharDim)                    # dimensionalized
+    creeplaw_list = nonlinearpeierls_law_list() # all creeplaws in database
+    for fun in creeplaw_list
+        p     = SetNonLinearPeierlsCreep(fun)                # original creep law
+        p_nd  = nondimensionalize(p, CharDim)                # non-dimensionalized
+        @test p_nd == SetNonLinearPeierlsCreep(fun, CharDim) # check that the non-dimensionalized version is the same as the original
+        p_dim = dimensionalize(p, CharDim)                   # dimensionalized
 
         # Check that values are the same after non-dimensionalisation & dimensionalisation
         for field in fieldnames(typeof(p_dim))
@@ -88,7 +89,7 @@ using GeoParams
     end
 
     # check that derivative calculation is correct
-    p        = SetNonLinearPeierlsCreep("Dry Olivine | Mei et al. (2010)")
+    # p        = SetNonLinearPeierlsCreep("Dry Olivine | Mei et al. (2010)")
     TauII    = 1.0e9
     args     = (; T=273 + 200.0)
     depsdtau = dεII_dτII(p, TauII; args...)

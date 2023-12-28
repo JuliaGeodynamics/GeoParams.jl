@@ -1,6 +1,7 @@
 using Test
 using GeoParams
 using Unidecode
+import GeoParams: Dislocation, Diffusion
 
 @testset "Tables.jl" begin
     MatParam = (
@@ -8,7 +9,7 @@ using Unidecode
             Name="Viscous Matrix",
             Phase=1,
             Density=ConstantDensity(),
-            CreepLaws=SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)"),
+            CreepLaws=SetDislocationCreep(Dislocation.quartz_diorite_HansenCarter_1982),
         ),
         SetMaterialParams(;
             Name="Viscous Sinker",
@@ -20,7 +21,7 @@ using Unidecode
             Name="Viscous Bottom",
             Phase=3,
             Density=PT_Density(),
-            CreepLaws=SetDislocationCreep("Diabase | Caristan (1982)"),
+            CreepLaws=SetDislocationCreep(Dislocation.diabase_Caristan_1982),
         ),
     )
 
@@ -123,10 +124,10 @@ using Unidecode
     rm("TestTable.md"; force=true)
 
     # test phase with CompositeRheology field
-    v1 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
+    v1 = SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006)
     c1 = CompositeRheology(
         v1,
-        SetDislocationCreep("Diabase | Caristan (1982)"),
+        SetDislocationCreep(Dislocation.diabase_Caristan_1982),
         LinearViscous(; η=1e21Pa * s),
         v1,
     )
@@ -135,7 +136,7 @@ using Unidecode
             Name="Viscous Matrix",
             Phase=1,
             Density=ConstantDensity(),
-            CreepLaws=SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)"),
+            CreepLaws=SetDislocationCreep(Dislocation.quartz_diorite_HansenCarter_1982),
         ),
         SetMaterialParams(;
             Name="Viscous Sinker", Phase=2, Density=PT_Density(), CompositeRheology=c1
@@ -144,7 +145,7 @@ using Unidecode
             Name="Viscous Bottom",
             Phase=3,
             Density=PT_Density(),
-            CreepLaws=SetDislocationCreep("Diabase | Caristan (1982)"),
+            CreepLaws=SetDislocationCreep(Dislocation.diabase_Caristan_1982),
         ),
     )
 
@@ -170,3 +171,16 @@ using Unidecode
     @test dictMd["η CompositeRheology LinVisc 2.3"][5] == "1"
     @test dictMd["η CompositeRheology LinVisc 2.3"][6] == "LinVisc"
 end
+
+
+# function uint2str(x::Vector{UInt8})
+#     idx = 101-findfirst(x[i] != 0x20 for i in 100:-1:1)
+#     return String(x[1:idx])
+# end
+
+# @inline uint2str(x::NTuple{100, UInt8}) = uint2str([x...])
+# uint2str(x::AbstractCreepLaw) = uint2str(x.Name)
+
+# uint2str(x)
+
+# x=[v1.Name...]

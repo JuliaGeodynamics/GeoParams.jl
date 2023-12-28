@@ -1,5 +1,6 @@
 using Test
 using GeoParams
+import GeoParams.Peierls
 
 @testset "PeierlsCreep" begin
 
@@ -22,7 +23,7 @@ using GeoParams
     T       = GeoUnit(600C)
 
     # compute a pure diffusion creep rheology
-    p       = SetPeierlsCreep("Dry Olivine | Goetze and Evans (1979)")
+    p       = SetPeierlsCreep(Peierls.dry_olivine_Goetze_1979)
     T       = 600 + 273.15
     args    = (; T=T)
     TauII   = 1e9
@@ -53,11 +54,11 @@ using GeoParams
 
     # Do some basic checks on all creeplaws in the DB
     CharDim       = GEO_units()
-    creeplaw_list = PeierlsCreep_info       # all creeplaws in database
-    for (key, val) in creeplaw_list
-        p     = SetPeierlsCreep(key)                # original creep law
+    creeplaw_list = peierls_law_list()       # all creeplaws in database
+    for fun in creeplaw_list
+        p     = SetPeierlsCreep(fun)                # original creep law
         p_nd  = nondimensionalize(p, CharDim)        # non-dimensionalized
-        @test p_nd == SetPeierlsCreep(key, CharDim) # check that the non-dimensionalized version is the same as the original
+        @test p_nd == SetPeierlsCreep(fun, CharDim) # check that the non-dimensionalized version is the same as the original
         p_dim = dimensionalize(p, CharDim)           # dimensionalized
 
         # Check that values are the same after non-dimensionalisation & dimensionalisation

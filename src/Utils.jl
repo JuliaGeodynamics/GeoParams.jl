@@ -107,6 +107,31 @@ end
     end
 end
 
+"""
+    str2tuple(x::String) 
+Converts a string to a tuple with fixed length
+"""
+function str2tuple(str::String) 
+    N = 100
+    if length(str) > N
+        error("Name String is too long; max. allowed length=$N")
+    end
+    str_padded = rpad(str, N)
+    cu_iterator = codeunits(str_padded)
+
+    return ntuple(i -> cu_iterator[i], Val(N))
+end
+
+str2tuple(not_a_str) = not_a_str
+
+function uint2str(x::Vector{UInt8})
+    idx = 101-findfirst(x[i] != 0x20 for i in 100:-1:1)
+    return String(x[1:idx])
+end
+
+@inline uint2str(x::NTuple{100, UInt8}) = uint2str([x...])
+# uint2str(x::AbstractCreepLaw) = uint2str(x.Name)
+
 # Creates tuple without branching
 make_tuple(x) = (x,)
 make_tuple(x::Tuple) = x

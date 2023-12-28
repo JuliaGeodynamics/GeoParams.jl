@@ -7,6 +7,12 @@
 # In case you want to add new creep laws, have a look at how the ones
 # here are implemented. Please add tests as well!
 
+# include("Data/DiffusionCreep.jl")
+# include("Data/DislocationCreep.jl")
+# include("Data/GrainBoundarySliding.jl")
+# include("Data/NonLinearPeierlsCreep.jl")
+# include("Data/PeierlsCreep.jl")
+
 abstract type AbstractCreepLaw{T} <: AbstractConstitutiveLaw{T} end
 
 export isvolumetric,
@@ -62,7 +68,6 @@ end
 @inline rat2float(x) = x
 
 @inline unit_power(A) = typeof(A).parameters[2].parameters[1][1].power
-
 include("DislocationCreep.jl")
 include("DiffusionCreep.jl")
 include("GrainBoundarySliding.jl")

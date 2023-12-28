@@ -1,5 +1,6 @@
 using Test
 using GeoParams
+import GeoParams.Diffusion
 
 @testset "DiffusionCreepLaws" begin
 
@@ -27,7 +28,8 @@ using GeoParams
     d_nd = nondimensionalize(d, CharDim)
 
     # compute a pure diffusion creep rheology
-    p = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
+    diffusion_law = Diffusion.dry_anorthite_Rybacki_2006
+    p = SetDiffusionCreep(diffusion_law)
 
     T = 650 + 273.15
 
@@ -102,10 +104,10 @@ using GeoParams
         #---------------------------
 
         # Do the same but using GeoParams:
-        if itest == 1
-            pp = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
+        pp = if itest == 1
+            SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006)
         elseif itest == 2
-            pp = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
+            SetDislocationCreep(GeoParams.Dislocation.dry_anorthite_Rybacki_2006)
         end
 
         # using SI units
@@ -149,12 +151,13 @@ using GeoParams
 
     # Do some basic checks on all creeplaws in the DB
     CharDim = GEO_units()
-    creeplaw_list = DiffusionCreep_info       # all creeplaws in database
-    for (key, val) in creeplaw_list
-        p = SetDiffusionCreep(key)                # original creep law
+    creeplaw_list = diffusion_law_list()
+    
+    for fun in creeplaw_list
+        p = SetDiffusionCreep(fun)                    # original creep law
         p_nd = nondimensionalize(p, CharDim)          # non-dimensionalized
-        @test p_nd == SetDiffusionCreep(key, CharDim) # check that the non-dimensionalized version is the same as the original
-        p_dim = dimensionalize(p, CharDim)             # dimensionalized
+        @test p_nd == SetDiffusionCreep(fun, CharDim) # check that the non-dimensionalized version is the same as the original
+        p_dim = dimensionalize(p, CharDim)            # dimensionalized
 
         # Check that values are the same after non-dimensionalisation & dimensionalisation
         for field in fieldnames(typeof(p_dim))

@@ -7,10 +7,10 @@
 # In case you want to add new creep laws, have a look at how the ones
 # here are implemented. Please add tests as well!
 
+# include("Data/DislocationCreep_data.jl")
+
 export DislocationCreep,
-    DislocationCreep_info,
     Transform_DislocationCreep,
-    SetDislocationCreep,
     remove_tensor_correction,
     dεII_dτII,
     dτII_dεII
@@ -42,7 +42,7 @@ DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3
 ```
 """
 struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-    Name::NTuple{N,Char}
+    Name::NTuple{100,UInt8}
     n::GeoUnit{T,U1} # power-law exponent
     r::GeoUnit{T,U1} # exponent of water-fugacity
     A::GeoUnit{T,U2} # material specific rheological parameter
@@ -79,10 +79,10 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U3 = typeof(EU).types[2]
         U4 = typeof(VU).types[2]
         U5 = typeof(RU).types[2]
-        N = length(Name)
-        name = ntuple(i -> Name[i], Val(N))
+        name = str2tuple(Name)    
+        N = length(name)
         # Create struct
-        return new{T,N,U1,U2,U3,U4,U5}(
+        return new{T,100,U1,U2,U3,U4,U5}(
             name, nU, rU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
         )
     end
@@ -95,40 +95,13 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
 end
 
 """
-    Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
-"""
-
-Transform_DislocationCreep(name::String) = Transform_DislocationCreep(DislocationCreep_data(name))
-
-function Transform_DislocationCreep(name::String, CharDim::GeoUnits{U}) where {U<:Union{GEO,SI}}
-    Transform_DislocationCreep(DislocationCreep_data(name), CharDim)
-end
-
-function Transform_DislocationCreep(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) where {T,U<:Union{GEO,SI}}
-    nondimensionalize(Transform_DislocationCreep(p), CharDim)
-end
-
-function Transform_DislocationCreep(p::AbstractCreepLaw{T}) where T
-    n = Value(p.n)
-    A_Pa = uconvert(Pa^unit_power(p.A) / s, Value(p.A))
-    E_J = uconvert(J / mol, Value(p.E))
-    V_m3 = uconvert(m^3 / mol, Value(p.V))
-    Apparatus = p.Apparatus
-    r = Value(p.r)
-    # args from database
-    args = (Name=p.Name, n=n, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
-
-    return DislocationCreep(; args...)
-end
-
-"""
     s = remove_tensor_correction(s::DiffusionCreep)
 
 Removes the tensor correction of the creeplaw, which is useful to compare the implemented creeplaws
 with the curves of the original publications, as those publications usually do not transfer their data to tensor format
 """
 function remove_tensor_correction(s::DislocationCreep)
-    name = String(collect(s.Name))
+    name = uint2str(s.Name)
 
     return DislocationCreep(;
         Name=name, n=s.n, r=s.r, A=s.A, E=s.E, V=s.V, Apparatus=Invariant
@@ -310,7 +283,7 @@ end
 function show(io::IO, g::DislocationCreep)
     return print(
         io,
-        "DislocationCreep: Name = $(String(collect(g.Name))), n=$(Value(g.n)), r=$(Value(g.r)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), FT=$(g.FT), FE=$(g.FE), Apparatus=$(g.Apparatus)",
+        "DislocationCreep: Name = $(strip(String(collect(g.Name)))), n=$(Value(g.n)), r=$(Value(g.r)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), FT=$(g.FT), FE=$(g.FE), Apparatus=$(g.Apparatus)",
     )
 end
 #-------------------------------------------------------------------------
@@ -319,8 +292,11 @@ end
 include("Data/DislocationCreep.jl")
 include("Data_deprecated/DislocationCreep.jl")
 
+using .Dislocation
+export SetDislocationCreep
+
 function param_info(s::DislocationCreep)
-    name = String(collect(s.Name))
+    name = strip(uint2str(s.Name))
     eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"
     if name == ""
         return MaterialParamsInfo(; Equation=eq)
@@ -329,4 +305,36 @@ function param_info(s::DislocationCreep)
     return MaterialParamsInfo(;
         Equation=eq, Comment=inf.Comment, BibTex_Reference=inf.BibTex_Reference
     )
+end
+
+SetDislocationCreep(name::F) where F = Transform_DislocationCreep(name)
+
+function SetDislocationCreep(name::F, CharDim::GeoUnits{T}) where {F, T<:Union{GEO,SI}}
+    return nondimensionalize(Transform_DislocationCreep(name), CharDim)
+end
+
+"""
+    Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
+"""
+Transform_DislocationCreep(name::F) where F = Transform_DislocationCreep(dislocation_database(name))
+
+function Transform_DislocationCreep(name::F, CharDim::GeoUnits{U}) where {U<:Union{GEO,SI}} where F
+    Transform_DislocationCreep(dislocation_database(name), CharDim)
+end
+
+function Transform_DislocationCreep(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) where {T,U<:Union{GEO,SI}}
+    nondimensionalize(Transform_DislocationCreep(p), CharDim)
+end
+
+function Transform_DislocationCreep(p::AbstractCreepLaw{T}) where T
+    n = Value(p.n)
+    A_Pa = uconvert(Pa^unit_power(p.A) / s, Value(p.A))
+    E_J = uconvert(J / mol, Value(p.E))
+    V_m3 = uconvert(m^3 / mol, Value(p.V))
+    Apparatus = p.Apparatus
+    r = Value(p.r)
+    # args from database
+    args = (Name=p.Name, n=n, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+
+    return DislocationCreep(; args...)
 end

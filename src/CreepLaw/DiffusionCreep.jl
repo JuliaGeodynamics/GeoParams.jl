@@ -1,6 +1,5 @@
 export DiffusionCreep,
     SetDiffusionCreep,
-    DiffusionCreep_info,
     Transform_DiffusionCreep,
     remove_tensor_correction,
     dεII_dτII,
@@ -49,7 +48,7 @@ DiffusionCreep: Name = test, n=1.0, r=0.0, p=-3.0, A=1.5 m³·⁰ MPa⁻¹·⁰ 
 ```
 """
 struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-    Name::NTuple{N,Char}
+    Name::NTuple{100,UInt8}
     n::GeoUnit{T,U1} # powerlaw exponent
     r::GeoUnit{T,U1} # exponent of water-fugacity
     p::GeoUnit{T,U1} # grain size exponent
@@ -91,9 +90,9 @@ struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U4 = typeof(VU).types[2]
         U5 = typeof(RU).types[2]
         N = length(Name)
-        name = ntuple(i -> Name[i], Val(N))
+        name = str2tuple(Name)    
         # Create struct
-        return new{T,N,U1,U2,U3,U4,U5}(
+        return new{T,100,U1,U2,U3,U4,U5}(
             name, nU, rU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
         )
     end
@@ -104,38 +103,6 @@ function DiffusionCreep(Name, n, r, p, A, E, V, R, Apparatus, FT, FE)
     return DiffusionCreep(;
         Name=Name, n=n, r=r, p=p, A=A, E=E, V=V, R=R, Apparatus=Apparatus
     )
-end
-
-"""
-    Transform_DiffusionCreep(name)
-Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
-"""
-Transform_DiffusionCreep(name::String) = Transform_DiffusionCreep(DiffusionCreep_data(name))
-
-function Transform_DiffusionCreep(name::String, CharDim::GeoUnits{U}) where {U<:Union{GEO,SI}}
-    Transform_DiffusionCreep(DiffusionCreep_data(name), CharDim)
-end
-
-function Transform_DiffusionCreep(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) where {T,U<:Union{GEO,SI}}
-    nondimensionalize(Transform_DiffusionCreep(p), CharDim)
-end
-
-function Transform_DiffusionCreep(pp::AbstractCreepLaw{T}) where T
-    @inline f1(A::T) where T = typeof(A).parameters[2].parameters[1][2].power
-    @inline f2(A::T) where T = typeof(A).parameters[2].parameters[1][1].power
-    
-    n = Value(pp.n)
-    r = Value(pp.r)
-    p = Value(pp.p)
-    power_Pa = f1(pp.A)
-    power_m  = f2(pp.A)
-    A_Pa = uconvert(Pa^(power_Pa) * m^(power_m) / s, Value(pp.A))
-    E_J = uconvert(J / mol, Value(pp.E))
-    V_m3 = uconvert(m^3 / mol, Value(pp.V))
-    Apparatus = pp.Apparatus
-    args = (Name=pp.Name, n=n, p=p, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
-
-    return DiffusionCreep(; args...)
 end
 
 """
@@ -152,7 +119,7 @@ function remove_tensor_correction(s::DiffusionCreep)
 end
 
 function param_info(s::DiffusionCreep)
-    name = String(collect(s.Name))
+    name = uint2str(s.Name)
     eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"
     if name == ""
         return MaterialParamsInfo(; Equation=eq)
@@ -365,3 +332,47 @@ end
 # load collection of diffusion creep laws
 include("Data/DiffusionCreep.jl")
 include("Data_deprecated/DiffusionCreep.jl")
+
+using .Diffusion
+
+"""
+    SetDiffusionCreep["Name of Diffusion Creep"]
+This is a dictionary with pre-defined creep laws    
+"""
+SetDiffusionCreep(name::F) where F = Transform_DiffusionCreep(name)
+
+function SetDiffusionCreep(name::F, CharDim::GeoUnits{T}) where {F, T<:Union{GEO, SI}}
+    return nondimensionalize(Transform_DiffusionCreep(name), CharDim)
+end
+
+"""
+    Transform_DiffusionCreep(name)
+Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
+"""
+Transform_DiffusionCreep(name::F) where F = Transform_DiffusionCreep(diffusion_database(name))
+
+function Transform_DiffusionCreep(name::F, CharDim::GeoUnits{U}) where {F, U<:Union{GEO,SI}}
+    Transform_DiffusionCreep(diffusion_database(name), CharDim)
+end
+
+function Transform_DiffusionCreep(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) where {T,U<:Union{GEO,SI}}
+    nondimensionalize(Transform_DiffusionCreep(p), CharDim)
+end
+
+function Transform_DiffusionCreep(pp::AbstractCreepLaw{T}) where T
+    @inline f1(A::T) where T = typeof(A).parameters[2].parameters[1][2].power
+    @inline f2(A::T) where T = typeof(A).parameters[2].parameters[1][1].power
+    
+    n = Value(pp.n)
+    r = Value(pp.r)
+    p = Value(pp.p)
+    power_Pa = f1(pp.A)
+    power_m  = f2(pp.A)
+    A_Pa = uconvert(Pa^(power_Pa) * m^(power_m) / s, Value(pp.A))
+    E_J = uconvert(J / mol, Value(pp.E))
+    V_m3 = uconvert(m^3 / mol, Value(pp.V))
+    Apparatus = pp.Apparatus
+    args = (Name=pp.Name, n=n, p=p, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+
+    return DiffusionCreep(; args...)
+end

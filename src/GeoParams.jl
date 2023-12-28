@@ -92,7 +92,7 @@ function param_info end
 export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
 
 include("Utils.jl")
-export value_and_partial
+export value_and_partial, str2tuple
 
 include("TensorAlgebra/TensorAlgebra.jl")
 export second_invariant, second_invariant_staggered, rotate_elastic_stress
@@ -324,6 +324,39 @@ export compute_meltfraction,
     MeltingParam_Assimilation,
     SmoothMelting
 
+include("CreepLaw/Data/DislocationCreep.jl")
+using .Dislocation
+
+include("CreepLaw/Data/DiffusionCreep.jl")
+using .Diffusion
+
+include("CreepLaw/Data/GrainBoundarySliding.jl")
+using .GBS
+
+include("CreepLaw/Data/NonLinearPeierlsCreep.jl")
+using .NonLinearPeierls
+
+include("CreepLaw/Data/PeierlsCreep.jl")
+using .Peierls
+
+function creeplaw_list(m::Module)
+    out = string.(names(m; all=true, imported=true))
+    filter!(x -> !startswith(x, "#"), out)
+    return [getfield(m, Symbol(x)) for x in out if !isnothing(tryparse(Int, string(x[end]))) || endswith(x, "a") || endswith(x, "b")]
+end 
+
+diffusion_law_list() = creeplaw_list(Diffusion)
+dislocation_law_list() = creeplaw_list(Dislocation)
+grainboundarysliding_law_list() = creeplaw_list(GBS)
+nonlinearpeierls_law_list() = creeplaw_list(NonLinearPeierls)
+peierls_law_list() = creeplaw_list(Peierls)
+
+export diffusion_law_list, 
+       dislocation_law_list, 
+       grainboundarysliding_law_list, 
+       nonlinearpeierls_law_list, 
+       peierls_law_list
+
 # Define Table output functions
 include("Tables.jl")
 using .Tables
@@ -383,11 +416,6 @@ end
 include("aliases.jl")
 export ntuple_idx
 
-# include("CreepLaw/Data_deprecated/DislocationCreep.jl")
-# include("CreepLaw/Data_deprecated/DiffusionCreep.jl")
-# include("CreepLaw/Data_deprecated/GrainBoundarySliding.jl")
-# include("CreepLaw/Data_deprecated/NonLinearPeierlsCreep.jl")
-# include("CreepLaw/Data_deprecated/PeierlsCreep.jl")
 # export DislocationCreep_info,
 #     DiffusionCreep_info,
 #     GrainBoundarySliding_info,
