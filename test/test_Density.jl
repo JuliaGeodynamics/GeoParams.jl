@@ -52,14 +52,13 @@ using Test, GeoParams, StaticArrays
 
     x = ConstantDensity()
     num_alloc = @allocated compute_density!(rho, x, args)
-    num_alloc = @allocated compute_density!(rho, x, args)
     # @show num_alloc
     # @test num_alloc == 0
 
     #Test allocations using ρ alias
     ρ!(rho, x, args)
     num_alloc = @allocated ρ!(rho, x, args)
-    # @test num_alloc == 0
+    @test num_alloc == 0
 
     # This does NOT allocate if I test this with @btime;
     #   yet it does while running the test here
@@ -67,7 +66,7 @@ using Test, GeoParams, StaticArrays
     compute_density!(rho, x, args)
     num_alloc = @allocated compute_density!(rho, x, args)
     # @show num_alloc
-    # @test num_alloc ≤ 32
+    @test num_alloc == 0 
 
     # This does NOT allocate if I test this with @btime;
     #   yet it does while running the test here
@@ -75,7 +74,7 @@ using Test, GeoParams, StaticArrays
     compute_density!(rho, x, args)
     num_alloc = @allocated compute_density!(rho, x, args)
     # @show num_alloc
-    # @test num_alloc ≤ 32
+    @test num_alloc == 0
 
     # Read Phase diagram interpolation object
     fname = "test_data/Peridotite_dry.in"
@@ -169,9 +168,9 @@ using Test, GeoParams, StaticArrays
 
     # test computing material properties
     Phases = zeros(Int64, 400, 400)
-    Phases[:, 20:end] .= 1
-    Phases[:, 200:end] .= 2
-    Phases[:, 300:end] .= 3
+    @views Phases[:,  20:end] .= 1
+    @views Phases[:, 200:end] .= 2
+    @views Phases[:, 300:end] .= 3
 
     #Phases .= 2;
     rho = zeros(size(Phases))
@@ -214,7 +213,7 @@ using Test, GeoParams, StaticArrays
 
     num_alloc = @allocated compute_density!(rho, Mat_tup1, PhaseRatio, args) #   136.776 μs (0 allocations: 0 bytes)
     @test sum(rho) / 400^2 ≈ 2945.000013499999
-    # @test num_alloc ≤ 32           # for some reason this does indicate allocations but @btime does not
+    @test num_alloc == 0           # for some reason this does indicate allocations but @btime does not
 
     # Test calling the routine with only pressure as input. 
     # This is ok for Mat_tup1, as it only has constant & P-dependent densities.

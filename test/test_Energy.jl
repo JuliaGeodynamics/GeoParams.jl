@@ -84,20 +84,21 @@ using StaticArrays
     @views Phases[:, :, 20:end] .= 2
 
     Cp = zeros(size(Phases))
-    T = ones(size(Phases)) * 1500
+    T = fill(1500e0, size(Phases))
     P = zeros(size(Phases))
 
     args = (; T=T)
     compute_heatcapacity!(Cp, Mat_tup, Phases, args)    # computation routine w/out P (not used in most heat capacity formulations)
-    @test sum(Cp[1, 1, :]) ≈ 121399.0486067196
+    @test sum(Cp[1, 1, k] for k in axes(Cp,3)) ≈ 121399.0486067196
 
     # check with array of constant properties (and no required input args)
     args1 = (;)
     compute_heatcapacity!(Cp, Mat_tup1, Phases, args1)    # computation routine w/out P (not used in most heat capacity formulations)
-    @test sum(Cp[1, 1, :]) ≈ 109050.0
+    @test sum(Cp[1, 1, k] for k in axes(Cp,3)) ≈ 109050.0
 
     num_alloc = @allocated compute_heatcapacity!(Cp, Mat_tup, Phases, args)
-    @test sum(Cp[1, 1, :]) ≈ 121399.0486067196
+    @test sum(Cp[1, 1, k] for k in axes(Cp,3)) ≈ 121399.0486067196
+
     @test num_alloc == 0
 
     # test if we provide phase ratios
@@ -109,7 +110,7 @@ using StaticArrays
     end
     compute_heatcapacity!(Cp, Mat_tup, PhaseRatio, args)
     num_alloc = @allocated compute_heatcapacity!(Cp, Mat_tup, PhaseRatio, args)
-    @test sum(Cp[1, 1, :]) ≈ 121399.0486067196
+    @test sum(Cp[1, 1, k] for k in axes(Cp,3)) ≈ 121399.0486067196
     @test num_alloc == 0
 
     # -----------------------
@@ -131,7 +132,7 @@ using StaticArrays
 
     # Temperature-dependent conductivity
     # dimensional
-    T = Vector{Float64}(250:100:1250)
+    T = collect(250e0:100:1250e0)
     cond2 = T_Conductivity_Whittington()
     k = compute_conductivity(cond2, T)
     @test isbits(cond2)
@@ -154,7 +155,7 @@ using StaticArrays
 
     # Temperature-dependent parameterised conductivity
     # dimensional
-    T = Vector{Float64}(250:100:1250)
+    T = collect(250e0:100:1250e0)
     cond2 = T_Conductivity_Whittington_parameterised()
     k = compute_conductivity(cond2, T)
     @test isbits(cond2)
@@ -205,8 +206,8 @@ using StaticArrays
     # test computing material properties
     n = 100
     Phases = ones(Int64, n, n, n)
-    Phases[:, :, 20:end] .= 2
-    Phases[:, :, 60:end] .= 3
+    @views Phases[:, :, 20:end] .= 2
+    @views Phases[:, :, 60:end] .= 3
 
     PhaseRatio = zeros(n, n, n, 3)
     for i in CartesianIndices(Phases)
@@ -216,7 +217,7 @@ using StaticArrays
     end
 
     k = zeros(size(Phases))
-    T = ones(size(Phases)) * 1500
+    T = fill(1500e0, size(Phases))
     P = zeros(size(Phases))
     args = (P=P, T=T)
 
@@ -235,9 +236,9 @@ using StaticArrays
     # TP-dependent conductivity for different predefines cases
     T = Vector{Float64}(250:100:1250)
     P = 1e6 * ones(size(T)) / ustrip(uconvert(Pa, 1MPa))  # must be in MPa!
-    List = ["LowerCrust" "Mantle" "OceanicCrust" "UpperCrust"]
-    Sol_kT = [20.55712932736763 28.700405819019323 20.55712932736763 19.940302462417037]
-    for i in 1:length(List)
+    List = "LowerCrust", "Mantle", "OceanicCrust", "UpperCrust"
+    Sol_kT = 20.55712932736763, 28.700405819019323, 20.55712932736763, 19.940302462417037
+    for i in eachindex(List)
         k_TP = Set_TP_Conductivity(List[i])
         k = compute_conductivity(k_TP, P, T)         # note that P must be in MPa
         @test sum(k) ≈ Sol_kT[i]
@@ -277,8 +278,8 @@ using StaticArrays
     # test computing material properties
     n = 100
     Phases = ones(Int64, n, n, n)
-    Phases[:, :, 20:end] .= 2
-    Phases[:, :, 60:end] .= 3
+    @views Phases[:, :, 20:end] .= 2
+    @views Phases[:, :, 60:end] .= 3
 
     PhaseRatio = zeros(n, n, n, 3)
     for i in CartesianIndices(Phases)
@@ -288,7 +289,7 @@ using StaticArrays
     end
 
     Hl = zeros(size(Phases))
-    z = ones(size(Phases)) * 10e3
+    z = fill(10e3, size(Phases))
     args = (;)
 
     compute_latent_heat!(Hl, Mat_tup, Phases, args)
@@ -348,8 +349,8 @@ using StaticArrays
     # test computing material properties
     n = 100
     Phases = ones(Int64, n, n, n)
-    Phases[:, :, 20:end] .= 2
-    Phases[:, :, 60:end] .= 3
+    @views Phases[:, :, 20:end] .= 2
+    @views Phases[:, :, 60:end] .= 3
 
     PhaseRatio = zeros(n, n, n, 3)
     for i in CartesianIndices(Phases)
@@ -359,7 +360,7 @@ using StaticArrays
     end
 
     Hr = zeros(size(Phases))
-    z = ones(size(Phases)) * 10e3
+    z = fill(10e3, size(Phases))
     args = (z=z,)
 
     compute_radioactive_heat!(Hr, Mat_tup, Phases, args)
