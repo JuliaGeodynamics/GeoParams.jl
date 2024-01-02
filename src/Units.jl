@@ -337,11 +337,11 @@ end
     #Luminosity
 
     # Derived units
-    N = kg * m / s^2        # Newton
+    N = kg * m / s^2      # Newton
     J = N * m             # Joule
     W = J / s             # Watt
-    area = m^2             # area   in SI units for material parameter scaling
-    volume = m^3             # volume
+    area = m^2            # area in SI units for material parameter scaling
+    volume = m^3          # volume
     velocity = m / s
     density = kg / m^3
     acceleration = m / s^2
@@ -616,23 +616,22 @@ end
 
 nondimensionalize(args...) = nondimensionalize(Tuple(args[1:(end - 1)]), args[end])
 
+@inline dimension_types(::Unitful.Dimensions{T}) where T = T
+
 # This computes the characteristic value
 function compute_units(
     param::GeoUnit{<:Union{T,AbstractArray{T}},U}, g::GeoUnits{TYPE}
 ) where {T,U,TYPE}
     dim = Unitful.dimension(param.unit)              # Basic SI units
-
-    # Note: `char_val`` is type unstable within the routine
-    # Yet, the dimensions at the end are known as they must be the same as `U` 
-    #  (perhaps converted to preferred units such as m instead of km)
-    char_val = 1.0
-    foreach((typeof(dim).parameters[1])) do y
-        val = upreferred(getproperty(g, Unitful.name(y)))       # Retrieve the characteristic value from structure g
-        pow = Float64(y.power)                                  # power by which it should be multiplied   
-        char_val *= val^pow                                     # multiply characteristic value
+    value::T = if dim == NoDims
+        one(T)
+    else
+        prod(dimension_types(dim)) do y
+            val::T = upreferred(getproperty(g, Unitful.name(y))).val      # Retrieve the characteristic value from structure g
+            pow = Float64(y.power)                                  # power by which it should be multiplied   
+            val^pow                                     # multiply characteristic value
+        end
     end
-
-    value::T = ustrip(char_val)                                 # numerical value
     char_val_out = upreferred(param.unit) * value               # this is done for type-stability
 
     return char_val_out
