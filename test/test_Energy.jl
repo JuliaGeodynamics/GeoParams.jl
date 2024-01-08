@@ -452,10 +452,8 @@ using StaticArrays
     H_s2 = compute_shearheating(Χ, τ_2D, ε_2D, ε_el_2D)
     H_s3 = compute_shearheating(Χ, τ, ε)
     H_s4 = compute_shearheating(Χ, τ_2D, ε_2D)
-    @test H_s1 ≈ 5.4
-    @test H_s2 ≈ 5.4
-    @test H_s3 ≈ 5.5
-    @test H_s4 ≈ 5.5
+    @test H_s1 ≈ H_s2 ≈ 5.4
+    @test H_s3 ≈ H_s4 ≈ 5.5
 
     # test material structs
     rheology = (
@@ -466,9 +464,9 @@ using StaticArrays
             Name="Crust", Phase=2, ShearHeat = ConstantShearheating(Χ=1.0NoUnits),
         ),
     )
-    @test compute_shearheating(rheology[1], τ, ε, ε_el) == 0.0
+    @test iszero(compute_shearheating(rheology[1], τ, ε, ε_el))
     @test compute_shearheating(rheology[2], τ, ε, ε_el) == 5.4
-    @test compute_shearheating(rheology, 1, τ, ε, ε_el) == 0.0
+    @test iszero(compute_shearheating(rheology, 1, τ, ε, ε_el))
     @test compute_shearheating(rheology, 2, τ, ε, ε_el) == 5.4
 
     # Test with phase ratios
@@ -476,4 +474,38 @@ using StaticArrays
     @test compute_shearheating(rheology, phase, τ, ε, ε_el) == 2.7
     phase = (0.5, 0.5) # tuple
     @test compute_shearheating(rheology, phase, τ, ε, ε_el) == 2.7
+
+     # 3D shear heating tests
+     τ_3D = [
+        1e0 2e0 3e0 
+        2e0 5e0 6e0
+        3e0 6e0 9e0
+    ]
+    ε_3D = [
+        1e0  1e-1 1e-1
+        1e-1 1e0  1e-1
+        1e-1 1e-1 1e0
+    ]
+    ε_el_3D = fill(0.01, 3, 3)
+
+    τ_3D_voigt    = 1e0, 5e0, 9e0, 6e0, 3e0, 2e0
+    ε_3D_voigt    = 1e0, 1e0, 1e0, 0.1, 0.1, 0.1
+    ε_el_3D_voigt = ntuple(_->1e-2, Val(6))
+
+    H_s5 = compute_shearheating(Χ, τ_3D, ε_3D, ε_el_3D)
+    H_s6 = compute_shearheating(Χ, τ_3D_voigt, ε_3D_voigt, ε_el_3D_voigt)
+    H_s7 = compute_shearheating(Χ, τ_3D, ε_3D)
+    H_s8 = compute_shearheating(Χ, τ_3D_voigt, ε_3D_voigt)
+    @test H_s5 ≈ H_s6 ≈ 16.83
+    @test H_s7 ≈ H_s7 ≈ 17.2
+    
+    phase = SA[0.5, 0.5] # static array
+    H_s9  = compute_shearheating(rheology, phase, τ_3D, ε_3D, ε_el_3D)
+    H_s10 = compute_shearheating(rheology, 1, τ_3D, ε_3D, ε_el_3D)
+    H_s11 = compute_shearheating(rheology[1], τ_3D, ε_3D, ε_el_3D)
+    H_s12 = compute_shearheating(rheology, phase, τ_3D_voigt, ε_3D_voigt, ε_el_3D_voigt)
+    H_s13 = compute_shearheating(rheology, 1, τ_3D_voigt, ε_3D_voigt, ε_el_3D_voigt)
+    H_s14 = compute_shearheating(rheology[1], τ_3D_voigt, ε_3D_voigt, ε_el_3D_voigt)
+    @test H_s9 ≈ H_s12 ≈ 8.415
+    @test all(iszero, (H_s10, H_s11, H_s13, H_s14))
 end
