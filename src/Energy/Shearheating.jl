@@ -76,8 +76,8 @@ end
 @inline _compute_shearheating(τ::NTuple{3,T}, ε::NTuple{3,T}, ε_el::NTuple{3,T}) where {T} = _compute_shearheating((τ..., τ[end]), (ε..., ε[end]), (ε_el..., ε_el[end]))
 @inline _compute_shearheating(τ::NTuple{3,T}, ε::NTuple{3,T}, ::Nothing)         where {T} = _compute_shearheating((τ..., τ[end]), (ε..., ε[end]), nothing)
 # Symmetric 3D tensors (assuming Voigts notations)
-@inline _compute_shearheating(τ::NTuple{6,T}, ε::NTuple{6,T}, ε_el::NTuple{6,T}) where {T} = _compute_shearheating((τ..., τ[4:end]), (ε..., ε[4:end]), (ε_el..., ε_el[4:end]))
-@inline _compute_shearheating(τ::NTuple{6,T}, ε::NTuple{6,T}, ::Nothing)         where {T} = _compute_shearheating((τ..., τ[4:end]), (ε..., ε[4:end]), nothing)
+@inline _compute_shearheating(τ::NTuple{6,T}, ε::NTuple{6,T}, ε_el::NTuple{6,T}) where {T} = _compute_shearheating((τ..., τ[4:end]...), (ε..., ε[4:end]...), (ε_el..., ε_el[4:end]...))
+@inline _compute_shearheating(τ::NTuple{6,T}, ε::NTuple{6,T}, ::Nothing)         where {T} = _compute_shearheating((τ..., τ[4:end]...), (ε..., ε[4:end]...), nothing)
 
 # Print info
 function show(io::IO, g::ConstantShearheating)
