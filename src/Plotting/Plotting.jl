@@ -93,7 +93,7 @@ function PlotStrainrateStress(
         n = length(x)
     end
     if isnothing(fig)
-        fig = Figure(; fontsize=25, resolution=res)
+        fig = Figure(; fontsize=25, size=res)
     end
     ax = Axis(
         fig[1, 1];
@@ -258,7 +258,7 @@ function PlotStressStrainrate(
     end
 
     if isnothing(fig)
-        fig = Figure(; fontsize=25, resolution=res)
+        fig = Figure(; fontsize=25, size=res)
     end
     ax = Axis(
         fig[1, 1];
@@ -349,7 +349,7 @@ function PlotStrainrateViscosity(
     end
 
     if isnothing(fig)
-        fig = Figure(; fontsize=25, resolution=res)
+        fig = Figure(; fontsize=25, size=res)
     end
     ax = Axis(
         fig[1, 1];
@@ -453,7 +453,7 @@ function PlotStressViscosity(
     end
 
     if isnothing(fig)
-        fig = Figure(; fontsize=25, resolution=res)
+        fig = Figure(; fontsize=25, size=res)
     end
     ax = Axis(
         fig[1, 1];
@@ -771,12 +771,12 @@ function Plot_TAS_diagram(; displayLabel=true)
     ClassTASdata              = TASclassificationData()
     @unpack litho, n_ver, ver = ClassTASdata
 
-    f = Figure(resolution = (1100, 1100), fontsize = 18)
+    f = Figure(size = (1100, 1100), fontsize = 18)
     p1 = GridLayout(f[1, 1])
     ax1 = Axis(
-        p1[1, 1], 
-        xlabel = "SiO2 [wt%]", 
-        ylabel = "Na2O+K2O [wt%]", 
+        p1[1, 1],
+        xlabel = "SiO2 [wt%]",
+        ylabel = "Na2O+K2O [wt%]",
         title  = "TAS Diagram",
         aspect = 1,
         xticks = 35:5:100,
@@ -802,7 +802,7 @@ function Plot_TAS_diagram(; displayLabel=true)
     if displayLabel
         p2 = GridLayout(f[1, 2])
         ax2 = Axis(
-            p2[1, 1], 
+            p2[1, 1],
             bottomspinevisible = false,
             xgridvisible       = false,
             ygridvisible       = false,
@@ -862,7 +862,7 @@ function PlotStressTime_0D(
     end
 
     if isnothing(fig)
-        fig = Figure(; fontsize=25, resolution=res)
+        fig = Figure(; fontsize=25, size=res)
     end
     ax = Axis(
         fig[1, 1];
@@ -953,7 +953,7 @@ julia> PlotDeformationMap(v,  strainrate=false, viscosity=true, levels=Vector(18
 """
 function PlotDeformationMap(
     v;
-    args=(P=0.0, T=1250, d=3e-3, f=1.0),  
+    args=(P=0.0, T=1250, d=3e-3, f=1.0),
     d = (1e-6, 1e-1),               # in m
     σ = (1e-2, 1e8),                # in MPa
     T = (10, 1000),                 # in C
@@ -1007,9 +1007,9 @@ function PlotDeformationMap(
             end
             εII[i] = compute_εII(v, τlocal, args_local)       # compute strainrate (1/s)
             ε_components =  [ compute_εII(v[i], τlocal, args_local) for i=1:n_components];
-            ε_components = ε_components./sum(ε_components) 
-            mainDef[i] = argmax(ε_components)                 # index of max. strainrate 
-        end 
+            ε_components = ε_components./sum(ε_components)
+            mainDef[i] = argmax(ε_components)                 # index of max. strainrate
+        end
         log_σ = log10.(σ_vec./1e6)
     else
         # compute τ as a function of ε and T
@@ -1064,7 +1064,7 @@ function PlotDeformationMap(
     end
 
     # Plotting with Makie
-    fig = Figure(; fontsize=fontsize, resolution=res)
+    fig = Figure(; fontsize=fontsize, size=res)
 
     ax = Axis(
         fig[1,1],
@@ -1085,7 +1085,7 @@ function PlotDeformationMap(
         # plot boundaries between deformation regimes
         contour!(ax,x,y,mainDef, color=:red, linewidth=2, linestyle=:solid, levels=n_components-1)
     end
-    
+
     contour!(ax,x,y,data; color=:black, levels=-20:1:-2, labels = true, labelsize = 25, labelfont = :bold, labelcolor = :black)
 
     Colorbar(fig[1,2], c1, label=label, labelsize=fontsize)
@@ -1137,7 +1137,7 @@ function PlotPressureStressTime_0D(
     end
 
     if isnothing(fig)
-        fig = Figure(; fontsize=25, resolution=res)
+        fig = Figure(; fontsize=25, size=res)
     end
     if τ_scale == 1.0
         ylabel_str = "Deviatoric stress";
