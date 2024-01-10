@@ -31,7 +31,7 @@ function StrengthEnvelopePlot(MatParam::NTuple{N, AbstractMaterialParamsStruct},
     end
 
     # build Figure
-    fig = Figure(resolution = (1200, 900));
+    fig = Figure(size = (1200, 900));
     ax1 = fig[1, 1:3] = Axis(fig,
         # title
         title  = title,
