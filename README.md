@@ -224,4 +224,4 @@ The simplest way to do this is by cloning the repository, and creating a new bra
 
 
 ### 9. Funding
-The development of this package was supported by the European Research Council (ERC CoG #771143 MAGMA).
+The development of this package was supported by the European Research Council (ERC CoG #771143 MAGMA) as well as by the [GPU4GEO](https://ptsolvers.github.io/GPU4GEO/) [PASC](https://www.pasc-ch.org) project.
