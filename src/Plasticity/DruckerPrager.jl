@@ -27,7 +27,9 @@ Plasticity is activated when ``F(\\tau_{II}^{trial})`` (the yield function compu
 where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the resulting stress gives ``F(\\tau_{II}^{final})=0``, and ``\\sigma_{ij}=-P + \\tau_{ij}`` denotes the total stress tensor.   
         
 """
-@with_kw_noshow struct DruckerPrager{T, U, U1} <: AbstractPlasticity{T}
+@with_kw_noshow struct DruckerPrager{T, U, U1, S<:AbstractSoftening} <: AbstractPlasticity{T}
+    softening_ϕ::S = NoSoftening()
+    softening_C::S = NoSoftening()
     ϕ::GeoUnit{T,U} = 30NoUnits # Friction angle
     Ψ::GeoUnit{T,U} = 0NoUnits # Dilation angle
     sinϕ::GeoUnit{T,U} = sind(ϕ)NoUnits # Friction angle
@@ -36,7 +38,8 @@ where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the
     cosΨ::GeoUnit{T,U} = cosd(Ψ)NoUnits # Dilation angle
     C::GeoUnit{T,U1} = 10e6Pa # Cohesion
 end
-DruckerPrager(args...) = DruckerPrager(convert.(GeoUnit, args)...)
+DruckerPrager(args...) = DruckerPrager(args[1:2]..., convert.(GeoUnit, args[3:end])...)
+DruckerPrager(softening_ϕ::AbstractSoftening, softening_C::AbstractSoftening, args...) = DruckerPrager(softening_ϕ, softening_C, convert.(GeoUnit, args)...)
 
 function isvolumetric(s::DruckerPrager)
     @unpack_val Ψ = s
@@ -51,9 +54,14 @@ end
 
 # Calculation routines
 function (s::DruckerPrager{_T,U,U1})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), kwargs...
+    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), EII::_T=zero(_T), kwargs...
 ) where {_T,U,U1}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
+    ϕ = s.softening_ϕ(ϕ, EII)
+    C = s.softening_C(C, EII)
+
+    cosϕ, sinϕ = iszero(EII) ? (cosϕ, sinϕ) : (cosd(ϕ), sind(ϕ))
+
     F = τII - cosϕ * C - sinϕ * (P - Pf)   # with fluid pressure (set to zero by default)
     return F
 end
@@ -64,9 +72,9 @@ end
 Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` pressure, and `Pf` fluid pressure.
 """
 function compute_yieldfunction(
-    s::DruckerPrager{_T}; P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T)
+    s::DruckerPrager{_T}; P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), EII::_T=zero(_T)
 ) where {_T}
-    return s(; P=P, τII=τII, Pf=Pf)
+    return s(; P=P, τII=τII, Pf=Pf, EII=EII)
 end
 
 """
@@ -81,11 +89,12 @@ function compute_yieldfunction!(
     s::DruckerPrager{_T};
     P::AbstractArray{_T,N},
     τII::AbstractArray{_T,N},
-    Pf=zero(P)::AbstractArray{_T,N},
+    Pf::AbstractArray{_T,N} = zero(P),
+    EII::AbstractArray{_T,N} = zero(P),
     kwargs...,
 ) where {N,_T}
     @inbounds for i in eachindex(P)
-        F[i] = compute_yieldfunction(s; P=P[i], τII=τII[i], Pf=Pf[i])
+        F[i] = compute_yieldfunction(s; P=P[i], τII=τII[i], Pf=Pf[i], EII=EII[i])
     end
 
     return nothing
@@ -164,7 +173,8 @@ end
     `K` is the elastic bulk modulus, h is the harderning, and `τij`` is the stress tensor in Voigt notation.
     Equations from Duretz et al. 2019 G3
 """
-@inline function lambda(F::T, p::DruckerPrager, ηve::T, ηvp::T; K=zero(T), dt=zero(T), h=zero(T), τij=(one(T), one(T), one(T))) where T
-    F * inv(ηve + ηvp + K * dt * p.sinΨ * p.sinϕ + h * p.cosϕ * plastic_strain(p, τij, zero(T)))
+@inline function lambda(F::T, p::DruckerPrager, ηve::T, ηvp::T; K=zero(T), dt=zero(T), EII=zero(T), τij=(one(T), one(T), one(T))) where T
+    ϕ = s.softening_ϕ(p.cosϕ, EII)
+    F * inv(ηve + ηvp + K * dt * p.sinΨ * p.sinϕ + h * cosdϕ * plastic_strain(p, τij, zero(T)))
 end
 #-------------------------------------------------------------------------

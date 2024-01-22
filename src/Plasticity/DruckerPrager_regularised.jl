@@ -27,7 +27,9 @@ Plasticity is activated when ``F(\\tau_{II}^{trial})`` (the yield function compu
 where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the resulting stress gives ``F(\\tau_{II}^{final})=0``, and ``\\sigma_{ij}=-P + \\tau_{ij}`` denotes the total stress tensor.   
         
 """
-@with_kw_noshow struct DruckerPrager_regularised{T, U, U1, U2} <: AbstractPlasticity{T}
+@with_kw_noshow struct DruckerPrager_regularised{T, U, U1, U2, S<:AbstractSoftening} <: AbstractPlasticity{T}
+    softening_ϕ::S = NoSoftening()
+    softening_C::S = NoSoftening()
     ϕ::GeoUnit{T,U} = 30NoUnits # Friction angle
     Ψ::GeoUnit{T,U} = 0NoUnits # Dilation angle
     sinϕ::GeoUnit{T,U} = sind(ϕ)NoUnits # Friction angle
@@ -37,7 +39,10 @@ where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the
     C::GeoUnit{T,U1} = 10e6Pa # Cohesion
     η_vp::GeoUnit{T,U2} = 1e20Pa*s # regularisation viscosity
 end
-DruckerPrager_regularised(args...) = DruckerPrager_regularised(convert.(GeoUnit, args)...)
+
+DruckerPrager_regularised(args...) = DruckerPrager_regularised(args[1:2]..., convert.(GeoUnit, args[3:end])...)
+DruckerPrager_regularised(softening_ϕ::AbstractSoftening, softening_C::AbstractSoftening, args...) = DruckerPrager_regularised(softening_ϕ, softening_C, convert.(GeoUnit, args)...)
+
 
 function isvolumetric(s::DruckerPrager_regularised)
     @unpack_val Ψ = s
@@ -52,9 +57,12 @@ end
 
 # Calculation routines
 function (s::DruckerPrager_regularised{_T,U,U1})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T),kwargs...
+    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T), EII::_T=zero(_T), kwargs...
 ) where {_T,U,U1}
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
+    ϕ = s.softening_ϕ(ϕ, EII)
+    C = s.softening_C(C, EII)
+    cosϕ, sinϕ = iszero(EII) ? (cosϕ, sinϕ) : (cosd(ϕ), sind(ϕ))
     ε̇II_pl = λ*∂Q∂τII(s, τII)  # plastic strainrate
     F = τII - cosϕ * C - sinϕ * (P - Pf)  - 2*η_vp*ε̇II_pl # with fluid pressure (set to zero by default)
     return F
@@ -66,9 +74,9 @@ end
 Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` pressure, and `Pf` fluid pressure.
 """
 function compute_yieldfunction(
-    s::DruckerPrager_regularised{_T}; P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T=zero(_T)
+    s::DruckerPrager_regularised{_T}; P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T=zero(_T), EII::_T=zero(_T)
 ) where {_T}
-    return s(; P=P, τII=τII, Pf=Pf, λ=λ)
+    return s(; P=P, τII=τII, Pf=Pf, λ=λ, EII=EII)
 end
 
 """
@@ -85,10 +93,11 @@ function compute_yieldfunction!(
     τII::AbstractArray{_T,N},
     Pf=zero(P)::AbstractArray{_T,N},
     λ=zero(P)::AbstractArray{_T,N},
+    EII::AbstractArray{_T,N} = zero(P),
     kwargs...,
 ) where {N,_T}
     @inbounds for i in eachindex(P)
-        F[i] = compute_yieldfunction(s; P=P[i], τII=τII[i], Pf=Pf[i], λ=λ)
+        F[i] = compute_yieldfunction(s; P=P[i], τII=τII[i], Pf=Pf[i], λ=λ[i], EII=EII[i])
     end
 
     return nothing
