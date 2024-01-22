@@ -90,7 +90,7 @@ function (s::DruckerPrager{_T, U, U1, S, NoSoftening})(;
 end
 
 function (s::DruckerPrager{_T, U, U1, NoSoftening, NoSoftening})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), EII::_T=zero(_T), kwargs...
+    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), kwargs...
 ) where {_T,U,U1}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
 
