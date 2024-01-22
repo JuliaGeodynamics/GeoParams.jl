@@ -18,7 +18,7 @@ struct LinearSoftening{T} <: AbstractSoftening
     end
 end
 
-LinearSoftening(min_max_values::NTuple{2, T}, lo_hi::NTuple{2, T}) where T = @inline LinearSoftening(min_max_values..., lo_hi...)
+LinearSoftening(min_max_values::NTuple{2, T}, lo_hi::NTuple{2, T}) where T = LinearSoftening(min_max_values..., lo_hi...)
 
 function (softening::LinearSoftening)(max_value, softening_var::T) where T
     (; hi, lo, min_value, damage) = softening
