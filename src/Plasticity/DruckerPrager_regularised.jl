@@ -27,22 +27,21 @@ Plasticity is activated when ``F(\\tau_{II}^{trial})`` (the yield function compu
 where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the resulting stress gives ``F(\\tau_{II}^{final})=0``, and ``\\sigma_{ij}=-P + \\tau_{ij}`` denotes the total stress tensor.   
         
 """
-@with_kw_noshow struct DruckerPrager_regularised{T, U, U1, U2, S<:AbstractSoftening} <: AbstractPlasticity{T}
-    softening_ϕ::S = NoSoftening()
-    softening_C::S = NoSoftening()
-    ϕ::GeoUnit{T,U} = 30NoUnits # Friction angle
-    Ψ::GeoUnit{T,U} = 0NoUnits # Dilation angle
+@with_kw_noshow struct DruckerPrager_regularised{T, U, U1, U2, S1<:AbstractSoftening, S2<:AbstractSoftening} <: AbstractPlasticity{T}
+    softening_ϕ::S1 = NoSoftening()
+    softening_C::S2 = NoSoftening()
+    ϕ::GeoUnit{T,U} = 30NoUnits         # Friction angle
+    Ψ::GeoUnit{T,U} = 0NoUnits          # Dilation angle
     sinϕ::GeoUnit{T,U} = sind(ϕ)NoUnits # Friction angle
     cosϕ::GeoUnit{T,U} = cosd(ϕ)NoUnits # Friction angle
     sinΨ::GeoUnit{T,U} = sind(Ψ)NoUnits # Dilation angle
     cosΨ::GeoUnit{T,U} = cosd(Ψ)NoUnits # Dilation angle
-    C::GeoUnit{T,U1} = 10e6Pa # Cohesion
-    η_vp::GeoUnit{T,U2} = 1e20Pa*s # regularisation viscosity
+    C::GeoUnit{T,U1} = 10e6Pa           # Cohesion
+    η_vp::GeoUnit{T,U2} = 1e20Pa*s      # regularisation viscosity
 end
 
 DruckerPrager_regularised(args...) = DruckerPrager_regularised(args[1:2]..., convert.(GeoUnit, args[3:end])...)
-DruckerPrager_regularised(softening_ϕ::AbstractSoftening, softening_C::AbstractSoftening, args...) = DruckerPrager_regularised(softening_ϕ, softening_C, convert.(GeoUnit, args)...)
-
+DruckerPrager_regularised(softening_ϕ::AbstractSoftening, softening_C::AbstractSoftening, args::Vararg{GeoUnit, N}) where N = DruckerPrager_regularised(softening_ϕ, softening_C, convert.(GeoUnit, args)...)
 
 function isvolumetric(s::DruckerPrager_regularised)
     @unpack_val Ψ = s
@@ -56,9 +55,9 @@ function param_info(s::DruckerPrager_regularised) # info about the struct
 end
 
 # Calculation routines
-function (s::DruckerPrager_regularised{_T,U,U1})(;
+function (s::DruckerPrager_regularised{_T,U,U1,S,S})(;
     P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T), EII::_T=zero(_T), kwargs...
-) where {_T,U,U1}
+) where {_T,U,U1,S}
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
     ϕ = s.softening_ϕ(ϕ, EII)
     C = s.softening_C(C, EII)
@@ -67,6 +66,37 @@ function (s::DruckerPrager_regularised{_T,U,U1})(;
     F = τII - cosϕ * C - sinϕ * (P - Pf)  - 2*η_vp*ε̇II_pl # with fluid pressure (set to zero by default)
     return F
 end
+
+function (s::DruckerPrager_regularised{_T,U,U1,NoSoftening,S})(;
+    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T), EII::_T=zero(_T), kwargs...
+) where {_T,U,U1,S}
+    @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
+    C = s.softening_C(C, EII)
+    ε̇II_pl = λ*∂Q∂τII(s, τII)  # plastic strainrate
+    F = τII - cosϕ * C - sinϕ * (P - Pf)  - 2*η_vp*ε̇II_pl # with fluid pressure (set to zero by default)
+    return F
+end
+
+function (s::DruckerPrager_regularised{_T,U,U1,S,NoSoftening})(;
+    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T), EII::_T=zero(_T), kwargs...
+) where {_T,U,U1,S}
+    @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
+    ϕ = s.softening_ϕ(ϕ, EII)
+    cosϕ, sinϕ = iszero(EII) ? (cosϕ, sinϕ) : (cosd(ϕ), sind(ϕ))
+    ε̇II_pl = λ*∂Q∂τII(s, τII)  # plastic strainrate
+    F = τII - cosϕ * C - sinϕ * (P - Pf)  - 2*η_vp*ε̇II_pl # with fluid pressure (set to zero by default)
+    return F
+end
+
+function (s::DruckerPrager_regularised{_T,U,U1,NoSoftening,NoSoftening})(;
+    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T), EII::_T=zero(_T), kwargs...
+) where {_T,U,U1}
+    @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
+    ε̇II_pl = λ*∂Q∂τII(s, τII)  # plastic strainrate
+    F = τII - cosϕ * C - sinϕ * (P - Pf)  - 2*η_vp*ε̇II_pl # with fluid pressure (set to zero by default)
+    return F
+end
+
 
 """
     compute_yieldfunction(s::DruckerPrager_regularised; P, τII, Pf, λ, kwargs...) 

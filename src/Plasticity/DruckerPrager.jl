@@ -27,9 +27,9 @@ Plasticity is activated when ``F(\\tau_{II}^{trial})`` (the yield function compu
 where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the resulting stress gives ``F(\\tau_{II}^{final})=0``, and ``\\sigma_{ij}=-P + \\tau_{ij}`` denotes the total stress tensor.   
         
 """
-@with_kw_noshow struct DruckerPrager{T, U, U1, S<:AbstractSoftening} <: AbstractPlasticity{T}
-    softening_ϕ::S = NoSoftening()
-    softening_C::S = NoSoftening()
+@with_kw_noshow struct DruckerPrager{T, U, U1, S1<:AbstractSoftening, S2<:AbstractSoftening} <: AbstractPlasticity{T}
+    softening_ϕ::S1 = NoSoftening()
+    softening_C::S2 = NoSoftening()
     ϕ::GeoUnit{T,U} = 30NoUnits # Friction angle
     Ψ::GeoUnit{T,U} = 0NoUnits # Dilation angle
     sinϕ::GeoUnit{T,U} = sind(ϕ)NoUnits # Friction angle
@@ -38,6 +38,7 @@ where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the
     cosΨ::GeoUnit{T,U} = cosd(Ψ)NoUnits # Dilation angle
     C::GeoUnit{T,U1} = 10e6Pa # Cohesion
 end
+
 DruckerPrager(args...) = DruckerPrager(args[1:2]..., convert.(GeoUnit, args[3:end])...)
 DruckerPrager(softening_ϕ::AbstractSoftening, softening_C::AbstractSoftening, args...) = DruckerPrager(softening_ϕ, softening_C, convert.(GeoUnit, args)...)
 
@@ -53,14 +54,45 @@ function param_info(s::DruckerPrager) # info about the struct
 end
 
 # Calculation routines
-function (s::DruckerPrager{_T,U,U1})(;
+function (s::DruckerPrager{_T, U, U1, S, S})(;
     P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), EII::_T=zero(_T), kwargs...
-) where {_T,U,U1}
+) where {_T,U,U1,S}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
     ϕ = s.softening_ϕ(ϕ, EII)
     C = s.softening_C(C, EII)
 
     cosϕ, sinϕ = iszero(EII) ? (cosϕ, sinϕ) : (cosd(ϕ), sind(ϕ))
+
+    F = τII - cosϕ * C - sinϕ * (P - Pf)   # with fluid pressure (set to zero by default)
+    return F
+end
+
+function (s::DruckerPrager{_T, U, U1, NoSoftening, S})(;
+    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), EII::_T=zero(_T), kwargs...
+) where {_T,U,U1,S}
+    @unpack_val sinϕ, cosϕ, ϕ, C = s
+    C = s.softening_C(C, EII)
+
+    F = τII - cosϕ * C - sinϕ * (P - Pf)   # with fluid pressure (set to zero by default)
+    return F
+end
+
+function (s::DruckerPrager{_T, U, U1, S, NoSoftening})(;
+    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), EII::_T=zero(_T), kwargs...
+) where {_T,U,U1,S}
+    @unpack_val sinϕ, cosϕ, ϕ, C = s
+    ϕ = s.softening_ϕ(ϕ, EII)
+
+    cosϕ, sinϕ = iszero(EII) ? (cosϕ, sinϕ) : (cosd(ϕ), sind(ϕ))
+
+    F = τII - cosϕ * C - sinϕ * (P - Pf)   # with fluid pressure (set to zero by default)
+    return F
+end
+
+function (s::DruckerPrager{_T, U, U1, NoSoftening, NoSoftening})(;
+    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), EII::_T=zero(_T), kwargs...
+) where {_T,U,U1}
+    @unpack_val sinϕ, cosϕ, ϕ, C = s
 
     F = τII - cosϕ * C - sinϕ * (P - Pf)   # with fluid pressure (set to zero by default)
     return F
