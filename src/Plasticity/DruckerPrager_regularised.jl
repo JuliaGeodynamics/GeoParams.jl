@@ -55,15 +55,15 @@ function param_info(s::DruckerPrager_regularised) # info about the struct
 end
 
 # Calculation routines
-function (s::DruckerPrager_regularised{_T,U,U1,S,S})(;
+function (s::DruckerPrager_regularised{_T})(;
     P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T), EII::_T=zero(_T), kwargs...
-) where {_T,U,U1,S}
+) where {_T}
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
     ϕ = s.softening_ϕ(ϕ, EII)
     C = s.softening_C(C, EII)
     cosϕ, sinϕ = iszero(EII) ? (cosϕ, sinϕ) : (cosd(ϕ), sind(ϕ))
     ε̇II_pl = λ*∂Q∂τII(s, τII)  # plastic strainrate
-    F = τII - cosϕ * C - sinϕ * (P - Pf)  - 2*η_vp*ε̇II_pl # with fluid pressure (set to zero by default)
+    F = τII - cosϕ * C - sinϕ * (P - Pf)  - 2 * η_vp * ε̇II_pl # with fluid pressure (set to zero by default)
     return F
 end
 
@@ -73,7 +73,7 @@ function (s::DruckerPrager_regularised{_T,U,U1,NoSoftening,S})(;
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
     C = s.softening_C(C, EII)
     ε̇II_pl = λ*∂Q∂τII(s, τII)  # plastic strainrate
-    F = τII - cosϕ * C - sinϕ * (P - Pf)  - 2*η_vp*ε̇II_pl # with fluid pressure (set to zero by default)
+    F = τII - cosϕ * C - sinϕ * (P - Pf)  - 2 * η_vp * ε̇II_pl # with fluid pressure (set to zero by default)
     return F
 end
 
@@ -84,16 +84,16 @@ function (s::DruckerPrager_regularised{_T,U,U1,S,NoSoftening})(;
     ϕ = s.softening_ϕ(ϕ, EII)
     cosϕ, sinϕ = iszero(EII) ? (cosϕ, sinϕ) : (cosd(ϕ), sind(ϕ))
     ε̇II_pl = λ*∂Q∂τII(s, τII)  # plastic strainrate
-    F = τII - cosϕ * C - sinϕ * (P - Pf)  - 2*η_vp*ε̇II_pl # with fluid pressure (set to zero by default)
+    F = τII - cosϕ * C - sinϕ * (P - Pf)  - 2 * η_vp * ε̇II_pl # with fluid pressure (set to zero by default)
     return F
 end
 
 function (s::DruckerPrager_regularised{_T,U,U1,NoSoftening,NoSoftening})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T), EII::_T=zero(_T), kwargs...
+    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T), kwargs...
 ) where {_T,U,U1}
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
     ε̇II_pl = λ*∂Q∂τII(s, τII)  # plastic strainrate
-    F = τII - cosϕ * C - sinϕ * (P - Pf)  - 2*η_vp*ε̇II_pl # with fluid pressure (set to zero by default)
+    F = τII - cosϕ * C - sinϕ * (P - Pf)  - 2 * η_vp * ε̇II_pl # with fluid pressure (set to zero by default)
     return F
 end
 
