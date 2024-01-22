@@ -22,10 +22,11 @@ const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 @inline precision(::AbstractConstitutiveLaw{T}) where T = T
 
 include("Computations.jl")
-include("CreepLaw/CreepLaw.jl")              # viscous Creeplaws
-include("Elasticity/Elasticity.jl")          # elasticity
-include("Plasticity/Plasticity.jl")          # plasticity
-include("CompositeRheologies/CompositeRheologies.jl")            # composite constitutive relationships
+include("Softening/Softening.jl")                      # strain softening
+include("CreepLaw/CreepLaw.jl")                        # viscous Creeplaws
+include("Elasticity/Elasticity.jl")                    # elasticity
+include("Plasticity/Plasticity.jl")                    # plasticity
+include("CompositeRheologies/CompositeRheologies.jl")  # composite constitutive relationships
 
 export param_info,
     dεII_dτII,
@@ -58,7 +59,9 @@ export param_info,
     AxialCompression, SimpleShear, Invariant, 
     get_G, 
     get_Kb,
-    iselastic
+    iselastic,
+    NoSoftening,
+    LinearSoftening
 
 # add methods programmatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType, 
