@@ -196,6 +196,10 @@ export dεII_dτII,
     get_shearmodulus,
     get_bulkmodulus,
 
+    #       softening
+    NoSoftening,
+    LinearSoftening,
+
     #       Plasticity
     AbstractPlasticity,
     compute_yieldfunction,
