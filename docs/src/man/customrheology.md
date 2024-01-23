@@ -1,4 +1,4 @@
-# `User-defined rheology`
+## `User-defined rheology`
 
 `CustomRheology` allows the user to interface with `GeoParams.jl` API for rheology calculations: 
 
@@ -13,11 +13,10 @@ end
 where `strain` and `stress` are functions that compute the strain rate and deviatoric stress tensors, respectively, and `args` is a `NamedTuple` containing any constant (i.e. **immutable**) physical parameters needed by our `CustomRheology`. 
 
 ## Example: Arrhenious-type rheology
-The deviatoric stress $\tau_{ij}$ and strain rate tensors $\dot{\varepsilon}_{ij}$ are simply
-    $$\tau_{ij} = 2 \eta \dot{\varepsilon}_{ij} \qquad \dot{\varepsilon}_{ij}  = {\tau_{ij}  \over 2 \eta}$$
+The deviatoric stress $\tau_{ij}$ and strain rate tensors $\dot{\varepsilon}_{ij}$ are simply $\tau_{ij} = 2 \eta \dot{\varepsilon}_{ij}$ and $\dot{\varepsilon}_{ij}  = {\tau_{ij}  \over 2 \eta}$
 
 and the viscosity $\eta$ is temperature-dependant
-    $$\eta = \eta_{0} * \exp\left(\frac{E}{T+T_{o}}-\frac{E}{T_{\eta}+T_{o}}\right)$$
+    $$\eta = \eta_{0}  \exp\left(\frac{E}{T+T_{o}}-\frac{E}{T_{\eta}+T_{o}}\right)$$
 
 where $\eta_0$ and $T_{\eta}$ are the respective reference viscosity and temperature, $T_o$ is the offset temperature, $T$ is the local temperature, and $E$ is activation energy. 
 
