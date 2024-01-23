@@ -21,10 +21,9 @@ end
 LinearSoftening(min_max_values::NTuple{2, T}, lo_hi::NTuple{2, T}) where T = LinearSoftening(min_max_values..., lo_hi...)
 
 function (softening::LinearSoftening)(max_value, softening_var::T) where T
-    (; hi, lo, min_value, damage) = softening
 
-    softening_var ≥ hi && return min_value
-    softening_var ≤ lo && return T(max_value)
+    softening_var ≥ softening.hi && return softening.min_value
+    softening_var ≤ softening.lo && return T(max_value)
     
-    return softening_var * damage
+    return softening_var * softening.damage
 end
