@@ -197,6 +197,7 @@ export dεII_dτII,
     get_bulkmodulus,
 
     #       softening
+    AbstractSoftening,
     NoSoftening,
     LinearSoftening,
 

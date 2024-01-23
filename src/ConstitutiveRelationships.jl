@@ -60,6 +60,7 @@ export param_info,
     get_G, 
     get_Kb,
     iselastic,
+    AbstractSoftening,
     NoSoftening,
     LinearSoftening
 
