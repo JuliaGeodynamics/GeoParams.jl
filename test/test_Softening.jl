@@ -8,18 +8,29 @@ using GeoParams, Test
     @test x === soft(x, rand())
 
     # Test LinearSoftening
-    min_v, max_v = 15e0, 30e0
+    min_v, max_v = rand()*15, (rand()+1)*15
     lo, hi = 0.0, 1.0
     
     @test LinearSoftening(min_v, max_v, lo, hi) === LinearSoftening((min_v, max_v), (lo, hi))
     
     soft_ϕ = LinearSoftening(min_v, max_v, lo, hi)
     
-    @test soft_ϕ(30, 1) == min_v
-    @test soft_ϕ(30, 0) == max_v
-    @test soft_ϕ(30, 0.5) == 0.5 * (min_v + max_v)
+    @test soft_ϕ(max_v, 1) == min_v
+    @test soft_ϕ(max_v, 0) == max_v
+    @test soft_ϕ(max_v, 0.5) ≈ 0.5 * (min_v + max_v)
+
+    min_v, max_v = 20e0, 20e0
+    soft_ϕ = LinearSoftening(min_v, max_v, lo, hi)
+    
+    @test soft_ϕ(max_v, 1) == 20e0
+    @test soft_ϕ(max_v, 0) == 20e0
+    @test soft_ϕ(max_v, 0.5) == 20e0
 
     # test Drucker-Prager with softening
+    min_v, max_v = 15e0, 30e0
+    lo, hi = 0.0, 1.0
+    soft_ϕ = LinearSoftening(min_v, max_v, lo, hi)
+  
     τII = 20e6
     P = 1e6
     args = (P=P, τII=τII)
@@ -52,4 +63,3 @@ using GeoParams, Test
     @test compute_yieldfunction(p3, args) ≈ 1.974118095489748e7
     
 end
-
