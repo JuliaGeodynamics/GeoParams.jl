@@ -112,7 +112,7 @@ end
     end
 
     # fma version of: ρ0 * (1.0 - α * (T - T0) + β * (P - P0))
-    return ρ0 * muladd(β, P - P0, muladd(-α, T - T0, 1))
+    return ρ0 * fma(β, P - P0, fma(-α, T - T0, 1))
 end
 
 @inline (ρ::PT_Density)(args)                = ρ(; args...)
