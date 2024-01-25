@@ -27,5 +27,5 @@ LinearSoftening(min_max_values::NTuple{2, T}, lo_hi::NTuple{2, T}) where T = Lin
     softening_var ≥ softening.hi && return softening.min_value
     softening_var ≤ softening.lo && return max_value
     
-    return softening.min_value + (one(T) - softening_var) * softening.slope
+    return fma((one(T) - softening_var), softening.slope, softening.min_value)
 end

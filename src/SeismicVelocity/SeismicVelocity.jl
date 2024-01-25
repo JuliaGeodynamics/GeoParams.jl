@@ -419,9 +419,9 @@ function anelastic_correction(water::Int64, Vs0::Float64, Pref::Float64, Tref::F
         B0 *
         fastpow(dref, G - Gref) *
         (COH / COHref)^r *
-        exp((muladd(Pref, V, E) - muladd(Pref, Vref, Eref)) / (R * Tref))
+        exp((fma(Pref, V, E) - fma(Pref, Vref, Eref)) / (R * Tref))
 
-    Qinv = fastpow(B * d^(-G) * inv(ω) * exp(-muladd(Pref, V, E) / (R * Tref)), α)
+    Qinv = fastpow(B * d^(-G) * inv(ω) * exp(-fma(Pref, V, E) / (R * Tref)), α)
 
     Vs_anel = Vs0 * (1.0 - (Qinv) / (2.0 * tan(π * α *0.5)))
 
