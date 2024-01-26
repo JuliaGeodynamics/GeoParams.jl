@@ -200,6 +200,7 @@ export dεII_dτII,
     AbstractSoftening,
     NoSoftening,
     LinearSoftening,
+    NoLinearSoftening,
 
     #       Plasticity
     AbstractPlasticity,
