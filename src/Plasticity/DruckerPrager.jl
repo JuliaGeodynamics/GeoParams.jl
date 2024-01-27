@@ -58,8 +58,8 @@ function (s::DruckerPrager{_T, U, U1, S, S})(;
     P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), EII::_T=zero(_T), kwargs...
 ) where {_T,U,U1,S<:AbstractSoftening}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
-    ϕ = s.softening_ϕ(ϕ, EII)
-    C = s.softening_C(C, EII)
+    ϕ = s.softening_ϕ(EII, ϕ)
+    C = s.softening_C(EII, C)
 
     cosϕ, sinϕ = iszero(EII) ? (cosϕ, sinϕ) : (cosd(ϕ), sind(ϕ))
 
@@ -71,7 +71,7 @@ function (s::DruckerPrager{_T, U, U1, NoSoftening, S})(;
     P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), EII::_T=zero(_T), kwargs...
 ) where {_T,U,U1,S}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
-    C = s.softening_C(C, EII)
+    C = s.softening_C(EII, C)
 
     F = τII - cosϕ * C - sinϕ * (P - Pf)   # with fluid pressure (set to zero by default)
     return F
@@ -81,7 +81,7 @@ function (s::DruckerPrager{_T, U, U1, S, NoSoftening})(;
     P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), EII::_T=zero(_T), kwargs...
 ) where {_T,U,U1,S}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
-    ϕ = s.softening_ϕ(ϕ, EII)
+    ϕ = s.softening_ϕ(EII, ϕ)
 
     cosϕ, sinϕ = iszero(EII) ? (cosϕ, sinϕ) : (cosd(ϕ), sind(ϕ))
 
@@ -141,7 +141,6 @@ end
 ∂F∂τII(p::DruckerPrager, τII::_T; P=zero(_T), kwargs...) where _T  = _T(1)
 ∂F∂P(p::DruckerPrager, P::_T; τII=zero(_T), kwargs...) where _T    = -NumValue(p.sinϕ)
 ∂F∂λ(p::DruckerPrager, τII::_T; P=zero(_T), kwargs...) where _T    = _T(0) 
-
 
 # Derivatives w.r.t stress tensor
 

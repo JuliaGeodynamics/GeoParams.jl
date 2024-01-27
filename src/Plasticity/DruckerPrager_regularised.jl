@@ -59,8 +59,8 @@ function (s::DruckerPrager_regularised{_T})(;
     P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T), EII::_T=zero(_T), kwargs...
 ) where {_T}
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
-    ϕ = s.softening_ϕ(ϕ, EII)
-    C = s.softening_C(C, EII)
+    ϕ = s.softening_ϕ(EII, ϕ)
+    C = s.softening_C(EII, C)
     cosϕ, sinϕ = iszero(EII) ? (cosϕ, sinϕ) : (cosd(ϕ), sind(ϕ))
     ε̇II_pl = λ*∂Q∂τII(s, τII)  # plastic strainrate
     F = τII - cosϕ * C - sinϕ * (P - Pf)  - 2 * η_vp * ε̇II_pl # with fluid pressure (set to zero by default)
@@ -71,7 +71,7 @@ function (s::DruckerPrager_regularised{_T,U,U1,NoSoftening,S})(;
     P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T), EII::_T=zero(_T), kwargs...
 ) where {_T,U,U1,S}
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
-    C = s.softening_C(C, EII)
+    C = s.softening_C(EII, C)
     ε̇II_pl = λ*∂Q∂τII(s, τII)  # plastic strainrate
     F = τII - cosϕ * C - sinϕ * (P - Pf)  - 2 * η_vp * ε̇II_pl # with fluid pressure (set to zero by default)
     return F
@@ -81,8 +81,8 @@ function (s::DruckerPrager_regularised{_T,U,U1,S,NoSoftening})(;
     P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T), EII::_T=zero(_T), kwargs...
 ) where {_T,U,U1,S}
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
-    ϕ = s.softening_ϕ(ϕ, EII)
-    cosϕ, sinϕ = iszero(EII) ? (cosϕ, sinϕ) : (cosd(ϕ), sind(ϕ))
+    ϕ = s.softening_ϕ(EII, ϕ)
+    sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
     ε̇II_pl = λ*∂Q∂τII(s, τII)  # plastic strainrate
     F = τII - cosϕ * C - sinϕ * (P - Pf)  - 2 * η_vp * ε̇II_pl # with fluid pressure (set to zero by default)
     return F
