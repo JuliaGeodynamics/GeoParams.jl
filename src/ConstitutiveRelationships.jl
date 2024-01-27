@@ -63,7 +63,7 @@ export param_info,
     AbstractSoftening,
     NoSoftening,
     LinearSoftening,
-    NoLinearSoftening
+    NonLinearSoftening
 
 # add methods programmatically 
 for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType, 
