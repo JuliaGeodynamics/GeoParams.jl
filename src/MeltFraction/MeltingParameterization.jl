@@ -20,6 +20,7 @@ export compute_meltfraction,
     compute_dϕdT!,
     param_info,
     MeltingParam_Caricchi,
+    MeltingParam_Melnik,
     MeltingParam_4thOrder,
     MeltingParam_5thOrder,
     MeltingParam_Quadratic,
@@ -86,6 +87,78 @@ end
 # Print info
 function show(io::IO, g::MeltingParam_Caricchi)
     return print(io, "Caricchi et al. melting parameterization")
+end
+#-------------------------------------------------------------------------
+
+# Melnik  -------------------------------------------------------
+"""
+    MeltingParam_Melnik()
+
+Implements the T-dependent melting parameterisation used by Melnik and coworkers
+```math
+    x = {  (T+273.15) \\over 1000.0;}
+```
+```math
+    \\theta = { a + b * x + c * x^2 + d * x^3}
+```
+```math
+    \\phi_{melt} = 1.0 - {1.0 \\over (1.0 + e^\\theta)}
+```
+
+Note that T is in Kelvin. As default parameters we employ:
+```math
+a=517.9,  b=-1619.0, c=1699.0, d = -597.4
+```
+which gives a reasonable fit to experimental data for basalt.
+
+Data for rhyolite are:
+```math
+a=3043.0,  b=-10552.0, c=12204.9, d = -4709.0 
+```
+
+![MeltingParam_Melnik](./assets/img/MeltingParam_Melnik.png)
+
+References
+====
+"""
+@with_kw_noshow struct MeltingParam_Melnik{T,U,U1} <: AbstractMeltingParam{T}
+    a::GeoUnit{T,U} =  517.9NoUnits
+    b::GeoUnit{T,U} = -1619.0NoUnits
+    c::GeoUnit{T,U} = 1699.0NoUnits
+    d::GeoUnit{T,U} = -597.4NoUnits
+    C::GeoUnit{T,U1} = 273.15K # shift from C to K
+    Tchar::GeoUnit{T,U1} = 1000K # normalization
+    apply_bounds::Bool = true
+end
+MeltingParam_Melnik(args...) = MeltingParam_Melnik(convert.(GeoUnit, args)...)
+
+function param_info(s::MeltingParam_Melnik) # info about the struct
+    return MaterialParamsInfo(;
+        Equation=L"\phi = f(T)"
+    )
+end
+
+# Calculation routines
+function (p::MeltingParam_Melnik)(; T, kwargs...)
+    @unpack_val a, b, c, d, C, Tchar = p
+    x = (T + C) / Tchar
+    θ = a + b * x + c * x^2 + d * x^3;
+    ϕ = 1.0 - inv(1.0 + exp(θ))
+    return ϕ
+end
+
+function compute_dϕdT(p::MeltingParam_Melnik; T, kwargs...)
+    @unpack_val a, b, c, d, C, Tchar = p
+    
+    x = (T + C) / Tchar
+
+    dϕdT = -((3d*(x^2)) / Tchar + b / Tchar + (2(C + T)*c) / (Tchar^2))*(-1 / ((1.0 + exp(a + ((C + T)*b) / Tchar + c*x^2 + d*x^3))^2))*exp(a + b*x + c*x^2 + d*x^3)
+    return dϕdT
+end
+
+# Print info
+function show(io::IO, g::MeltingParam_Melnik)
+    return print(io, "Melnik et al. melting parameterization")
 end
 #-------------------------------------------------------------------------
 
@@ -556,6 +629,7 @@ function show(io::IO, g::SmoothMelting)
 end
 #-------------------------------------------------------------------------
 
+
 """
     compute_meltfraction(P,T, p::AbstractPhaseDiagramsStruct)
 
@@ -618,6 +692,7 @@ The derivative is computed by finite differencing.
 # fill methods programmatically
 for myType in (
     :MeltingParam_Caricchi,
+    :MeltingParam_Melnik,
     :MeltingParam_5thOrder,
     :MeltingParam_4thOrder,
     :MeltingParam_Quadratic,

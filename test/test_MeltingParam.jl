@@ -145,6 +145,16 @@ using StaticArrays
     @test sum(abs.(dϕdT_dim)) ≈ 0.004605170185988078
     #------------------------------
 
+    #------------------------------
+    # Melnik parameterisation
+    p = MeltingParam_Melnik()
+    compute_meltfraction!(phi_dim, p, args)
+    @test sum(phi_dim) ≈ 2.546
+    dϕdT_dim = zeros(size(T))
+    compute_dϕdT!(dϕdT_dim, p, args)
+    @test sum(abs.(dϕdT_dim)) ≈ 0.009842552900718364
+    #------------------------------
+
     # Test computation of melt parameterization for the whole computational domain, using arrays 
     MatParam = Vector{MaterialParams}(undef, 4)
     MatParam[1] = SetMaterialParams(;
