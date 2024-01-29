@@ -96,16 +96,17 @@ end
 
 Implements the T-dependent melting parameterisation used by Melnik and coworkers
 ```math
-    x = {  (T+273.15) \\over 1000.0;}
+    x = {  T \\over 1000.0}
 ```
 ```math
     \\theta = { a + b * x + c * x^2 + d * x^3}
 ```
 ```math
-    \\phi_{melt} = 1.0 - {1.0 \\over (1.0 + e^\\theta)}
+    \\phi_{melt} = {1.0 \\over (1.0 + e^\\theta)}
 ```
+Note that T is in Kelvin. 
 
-Note that T is in Kelvin. As default parameters we employ:
+As default parameters we employ:
 ```math
 a=517.9,  b=-1619.0, c=1699.0, d = -597.4
 ```
@@ -117,6 +118,7 @@ a=3043.0,  b=-10552.0, c=12204.9, d = -4709.0
 ```
 
 ![MeltingParam_Melnik](./assets/img/MeltingParam_Melnik.png)
+Red: Rhyolite, Blue: Basalt
 
 References
 ====
@@ -126,7 +128,6 @@ References
     b::GeoUnit{T,U} = -1619.0NoUnits
     c::GeoUnit{T,U} = 1699.0NoUnits
     d::GeoUnit{T,U} = -597.4NoUnits
-    C::GeoUnit{T,U1} = 273.15K # shift from C to K
     Tchar::GeoUnit{T,U1} = 1000K # normalization
     apply_bounds::Bool = true
 end
@@ -140,19 +141,20 @@ end
 
 # Calculation routines
 function (p::MeltingParam_Melnik)(; T, kwargs...)
-    @unpack_val a, b, c, d, C, Tchar = p
-    x = (T + C) / Tchar
+    @unpack_val a, b, c, d, Tchar = p
+    x = T / Tchar
     θ = a + b * x + c * x^2 + d * x^3;
-    ϕ = 1.0 - inv(1.0 + exp(θ))
+    ϕ = inv(1.0 + exp(θ))
     return ϕ
 end
 
 function compute_dϕdT(p::MeltingParam_Melnik; T, kwargs...)
-    @unpack_val a, b, c, d, C, Tchar = p
+    @unpack_val a, b, c, d, Tchar = p
     
-    x = (T + C) / Tchar
+    x = T / Tchar
 
-    dϕdT = -((3d*(x^2)) / Tchar + b / Tchar + (2(C + T)*c) / (Tchar^2))*(-1 / ((1.0 + exp(a + ((C + T)*b) / Tchar + c*x^2 + d*x^3))^2))*exp(a + b*x + c*x^2 + d*x^3)
+    dϕdT = -((2T*c) / (Tchar^2) + b / Tchar + (3d*((x)^2)) / Tchar)*(1 / ((1.0 + exp(a + (T*b) / Tchar + c*((x)^2) + d*((x)^3)))^2))*exp(a + (T*b) / Tchar + c*((x)^2) + d*((x)^3))
+
     return dϕdT
 end
 
