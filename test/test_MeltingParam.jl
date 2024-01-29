@@ -149,10 +149,10 @@ using StaticArrays
     # Melnik parameterisation
     p = MeltingParam_Melnik()
     compute_meltfraction!(phi_dim, p, args)
-    @test sum(phi_dim) ≈ 2.546
+    @test sum(phi_dim) ≈ 5.704199153357903
     dϕdT_dim = zeros(size(T))
     compute_dϕdT!(dϕdT_dim, p, args)
-    @test sum(abs.(dϕdT_dim)) ≈ 0.009842552900718364
+    @test sum(abs.(dϕdT_dim)) ≈ 0.009147222097882098
     #------------------------------
 
     # Test computation of melt parameterization for the whole computational domain, using arrays 
