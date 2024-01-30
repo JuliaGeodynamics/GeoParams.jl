@@ -161,6 +161,13 @@ using GeoParams
 
     η_rhyolite1 = compute_viscosity_τII(x_rhyolite, 1e6Pa, args_D)
     @test η_rhyolite1 ≈ 4.445205243727607e8Pa*s
-
     # -------------------------------------------------------------------
+
+   # Test effective viscosity of partially molten rocks -----------------
+   x1 = ViscosityPartialMelt_Costa_etal_2009()
+ 
+
+   # -----
+
+
 end
