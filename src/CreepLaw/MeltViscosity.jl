@@ -81,7 +81,6 @@ end
 ) where {N,_T}
 
     @inbounds for i in eachindex(EpsII)
-        @show TauII[i], T[i]
         EpsII[i] = compute_εII(a, TauII[i], T=T[i])
     end
 
@@ -199,6 +198,7 @@ Costa, A., Caricchi, L., Bagdassarov, N., 2009. A model for the rheology of part
 end
 ViscosityPartialMelt_Costa_etal_2009(args...) = ViscosityPartialMelt_Costa_etal_2009(args[1]..., convert.(GeoUnit, args[2:end])...)
 ViscosityPartialMelt_Costa_etal_2009(melt_viscosity::AbstractCreepLaw, args...) = ViscosityPartialMelt_Costa_etal_2009(melt_viscosity, convert.(GeoUnit, args)...)
+isDimensional(g::ViscosityPartialMelt_Costa_etal_2009) = isDimensional(g.ε0)
 
 function param_info(a::ViscosityPartialMelt_Costa_etal_2009) # info about the struct
     return MaterialParamsInfo(; Equation=L"Costa et al. (2009) effective viscosity parameterisation")
@@ -225,39 +225,108 @@ end
 @inline function compute_εII(
     a::ViscosityPartialMelt_Costa_etal_2009, 
     TauII;  
+    ϕ = one(precision(a)),
     kwargs...,
     )
-    @unpack_vals ε0 = a
 
     # melt viscosity 
-    η_melt = compute_viscosity_τII(s.η, TauII, kwargs...)
-    ε      = compute_εII(s.η, TauII, kwargs...)
-    
+    ε      = compute_εII(a.η, TauII, kwargs)
+    η_melt = TauII/(2 * ε)
+   
     # viscosity correction factor 
-    ηr     = viscosity_correction(1 - ϕ, ε/ε0)  
+    ηr     = viscosity_correction(1 - ϕ, ε/a.ε0)  
 
     η      =  ηr * η_melt
-   
+    
     return (TauII / η) * 0.5
 end
 
-#=
-@inline function compute_εII(
-            a::LinearMeltViscosity, 
-            TauII::Quantity; 
-            T=1K, 
-            args...
-            )
-    @unpack_units A,B,T0,η0 = a
-    η = η0*10^(A + (B / (T - T0)))
-    
-    
-    ε = (TauII / η) * 0.5
+"""
+    compute_εII!(EpsII::AbstractArray{_T,N}, s::ViscosityPartialMelt_Costa_etal_2009, TauII::AbstractArray{_T,N}; T, kwargs...)
+"""
+@inline function compute_εII!(
+    EpsII::AbstractArray{_T,N}, 
+    a::ViscosityPartialMelt_Costa_etal_2009, 
+    TauII::AbstractArray{_T,N}; 
+    ϕ=ones(size(TauII))::AbstractArray{_T,N},
+    T=ones(size(TauII))::AbstractArray{_T,N},
+    kwargs...
+) where {N,_T}
 
-return ε
+    @inbounds for i in eachindex(EpsII)
+        EpsII[i] = compute_εII(a, TauII[i], T=T[i])
+    end
+
+    return nothing
 end
-=#
 
+
+"""
+    compute_τII(s::ViscosityPartialMelt_Costa_etal_2009, EpsII; kwargs...)
+
+Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor 
+"""
+@inline function compute_τII(
+    a::ViscosityPartialMelt_Costa_etal_2009, 
+    EpsII; 
+    ϕ=one(precision(a)),
+    T=one(precision(a)),
+    kwargs...
+)
+
+    # melt viscosity 
+    τ      = compute_τII(a.η, EpsII, kwargs)
+    η_melt = τ/(2 * EpsII)
+    
+    # viscosity correction factor 
+    ηr     = viscosity_correction(1.0 - ϕ, EpsII/a.ε0)  
+
+    η      =  ηr * η_melt
+
+    return 2 * (η * EpsII)
+end
+
+@inline function compute_τII(
+    a::ViscosityPartialMelt_Costa_etal_2009, EpsII::Quantity; ϕ=1.0, T=1K, kwargs...
+)
+  
+    # melt viscosity 
+    τ      = compute_τII(a.η, EpsII, kwargs)
+    η_melt = τ/(2 * EpsII)
+    
+    # viscosity correction factor 
+    ηr     = viscosity_correction(1.0 - ϕ, EpsII/a.ε0)  
+
+    η      =  ηr * η_melt
+
+    return 2 * (η * EpsII)
+end
+
+
+function compute_τII!(
+    TauII::AbstractArray{_T,N}, 
+    a::ViscosityPartialMelt_Costa_etal_2009, 
+    EpsII::AbstractArray{_T,N}; 
+    ϕ=ones(size(TauII))::AbstractArray{_T,N},
+    T=ones(size(TauII))::AbstractArray{_T,N},
+    kwargs...
+) where {N,_T}
+   
+    @inbounds for i in eachindex(EpsII)
+        TauII[i] = compute_τII(a, EpsII[i]; ϕ=ϕ[i], T=T[i])
+    end
+
+    return nothing
+end
+
+#use AD to compute derivatives
+@inline function dεII_dτII(a::ViscosityPartialMelt_Costa_etal_2009, τII, args)
+    return ForwardDiff.derivative(τII -> compute_εII(a, τII; args...), τII)
+end
+
+@inline function dτII_dεII(a::ViscosityPartialMelt_Costa_etal_2009, εII, args)
+    return ForwardDiff.derivative(εII -> compute_τII(a, εII; args...), εII)
+end
 
 # Print info 
 function show(io::IO, g::ViscosityPartialMelt_Costa_etal_2009)

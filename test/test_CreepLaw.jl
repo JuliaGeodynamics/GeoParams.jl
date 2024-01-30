@@ -125,9 +125,9 @@ using GeoParams
     @test ε_ND ≈ 39161.68662376807                              # non-dimensional
     @test ε_ND*CharUnits_GEO.strainrate ≈ ε_D   # check that non-dimensiional computations give the same results
 
-    τ = [0.0; 0.0]
-    compute_εII!(τ, x1_ND, [1e0; 2.0], args)
-    @test τ ≈ [5.559506657237564e12; 1.1119013314475129e13]    # vector input
+    ε = [0.0; 0.0]
+    compute_εII!(ε, x1_ND, [1e6; 2e6], args_ND)
+    @test ε ≈ [3.9161686623768066e11; 7.832337324753613e11]    # vector input
 
     # Given strainrate 
     @test compute_τII(x1_D,  1e-13 / s, args_D) ≈ 2.553516169022932Pa      # dimensional input       
@@ -163,11 +163,54 @@ using GeoParams
     @test η_rhyolite1 ≈ 4.445205243727607e8Pa*s
     # -------------------------------------------------------------------
 
-   # Test effective viscosity of partially molten rocks -----------------
-   x1 = ViscosityPartialMelt_Costa_etal_2009()
- 
+    # Test effective viscosity of partially molten rocks -----------------
+     
+    x1_D =ViscosityPartialMelt_Costa_etal_2009(η=LinearMeltViscosity(A = -8.1590, B = 2.4050e+04K, T0 = -430.9606K))   # Rhyolite
+    @test isDimensional(x1_D) == true
+    x1_ND = nondimensionalize(x1_D, CharUnits_GEO)                 # check that we can nondimensionalize all entries within the struct
+    @test isDimensional(x1_ND) == false
+    @test  NumValue(x1_ND.η.B) ≈ 18.890154341593682
+    x1_D1  = dimensionalize(x1_ND, CharUnits_GEO)                    # check that we can dimensionalize it again
+    @test  Value(x1_D.η.B) ≈  Value(x1_D1.η.B)
+    
+    # Given stress
+    args_D  = (; T = 700K, ϕ=0.5)
+    args_ND = (; T =  nondimensionalize(700K, CharUnits_GEO), ϕ=0.5)
+    
+    ε_D = compute_εII(x1_D, 1e6Pa, args_D)
+    @test ε_D ≈ 3.916168662376774e-8 / s                      # dimensional input     
+    ε_ND  = compute_εII(x1_ND, nondimensionalize(1e6Pa, CharUnits_GEO), args_ND)
+    @test ε_ND ≈ 39161.68662376807                              # non-dimensional
+    @test ε_ND*CharUnits_GEO.strainrate ≈ ε_D   # check that non-dimensiional computations give the same results
 
-   # -----
+    ε = [0.0; 0.0]
+    τ = [1e6; 2e6]
+    args_ND1 = (; T =  1000*ones(size(τ)), ϕ=0.5*ones(size(τ)))
+    compute_εII!(ε, x1_D, τ, args_ND1)
+    @test ε ≈ [0.0011248074556411618; 0.0022496149112823235]    # vector input
+
+
+    # Given strainrate 
+    @test compute_τII(x1_D,  1e-13 / s, args_D) ≈ 1.6599192713557953e37Pa      # dimensional input       
+    @test compute_τII(x1_ND, 1e-13, args_ND) ≈ 3.975694864471416e-24                  # non-dimensional
+    
+    ε = [0.0; 0.0]
+    compute_τII!(ε, x1_ND, [1e0; 2.0], args_ND1)
+    @test ε ≈ [4.5357140595467253e-11, 9.071412372305195e-11]     # vector input
+
+
+    x1_D = ViscosityPartialMelt_Costa_etal_2009()
+    args_D=(;T=1000K, ϕ=0.5)
+    ε_D    = compute_εII(x1_D, 1e6Pa, args_D)
+    @test ustrip(ε_D) ≈  3.4537433628446676e-6
+
+    η    =   compute_viscosity_τII(x1_D, 1e6Pa, args_D)
+    @test  ustrip(η) ≈  1.447704555523709e11
+
+    @test dεII_dτII(x1_ND, 1e6, args_ND) ≈ 31884.63277076202
+    @test dτII_dεII(x1_ND, 1e-15, args_ND) ≈ 3.975694864471415e-11
+
+    # -----
 
 
 end
