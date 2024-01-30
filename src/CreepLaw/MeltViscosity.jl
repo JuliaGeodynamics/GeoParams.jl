@@ -80,7 +80,8 @@ end
 ) where {N,_T}
 
     @inbounds for i in eachindex(EpsII)
-        EpsII[i] = compute_εII(a, TauII[i])
+        @show TauII[i], T[i]
+        EpsII[i] = compute_εII(a, TauII[i], T=T[i])
     end
 
     return nothing

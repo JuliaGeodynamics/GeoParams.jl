@@ -136,5 +136,31 @@ using GeoParams
     ε = [0.0; 0.0]
     compute_τII!(ε, x1_ND, [1e0; 2.0], args_ND)
     @test ε ≈ [2.553516169022911e-6; 5.107032338045822e-6]     # vector input
+
+    # With vector as input
+    T = Vector(800.0:1400)*K
+    η_basalt = zeros(size(T))*Pas
+    η_rhyolite = zeros(size(T))*Pas
+    
+    x_basalt   = LinearMeltViscosity()
+    x_rhyolite = LinearMeltViscosity(A = -8.1590, B = 2.4050e+04K, T0 = -430.9606K)   # Rhyolite
+   
+    for i in eachindex(T)
+        args_D  = (; T = T[i])
+        η_basalt[i]     = compute_viscosity_τII(x_basalt, 1e6Pa, (; T=T[i]))
+        η_rhyolite[i]   = compute_viscosity_τII(x_rhyolite, 1e6Pa, (; T=T[i]))
+    end
+
+    #using Plots
+    #plot(ustrip.(T) .- 273.15, log10.(ustrip.(η_basalt)), xlabel="T [C]", ylabel="log10(η [Pas])", label="basalt")
+    #plot!(ustrip.(T) .- 273.15, log10.(ustrip.(η_rhyolite)), label="rhyolite")
+
+    args_D=(;T=1000K)
+    η_basalt1 = compute_viscosity_τII(x_basalt, 1e6Pa, args_D)
+    @test η_basalt1 ≈ 5.2471745814062805e9Pa*s
+
+    η_rhyolite1 = compute_viscosity_τII(x_rhyolite, 1e6Pa, args_D)
+    @test η_rhyolite1 ≈ 4.445205243727607e8Pa*s
+
     # -------------------------------------------------------------------
 end
