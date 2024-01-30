@@ -320,11 +320,11 @@ function compute_τII!(
 end
 
 #use AD to compute derivatives
-@inline function dεII_dτII(a::ViscosityPartialMelt_Costa_etal_2009, τII, args)
-    return ForwardDiff.derivative(τII -> compute_εII(a, τII; args...), τII)
+@inline function dεII_dτII(a::ViscosityPartialMelt_Costa_etal_2009, τII; args...)
+   return ForwardDiff.derivative(τII -> compute_εII(a, τII; args...), τII)
 end
 
-@inline function dτII_dεII(a::ViscosityPartialMelt_Costa_etal_2009, εII, args)
+@inline function dτII_dεII(a::ViscosityPartialMelt_Costa_etal_2009, εII; args...)
     return ForwardDiff.derivative(εII -> compute_τII(a, εII; args...), εII)
 end
 

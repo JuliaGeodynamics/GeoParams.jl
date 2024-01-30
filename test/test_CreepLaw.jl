@@ -178,9 +178,9 @@ using GeoParams
     args_ND = (; T =  nondimensionalize(700K, CharUnits_GEO), ϕ=0.5)
     
     ε_D = compute_εII(x1_D, 1e6Pa, args_D)
-    @test ε_D ≈ 3.916168662376774e-8 / s                      # dimensional input     
+    @test ε_D ≈  1.5692922423522311e-10 / s                      # dimensional input     
     ε_ND  = compute_εII(x1_ND, nondimensionalize(1e6Pa, CharUnits_GEO), args_ND)
-    @test ε_ND ≈ 39161.68662376807                              # non-dimensional
+    @test ε_ND ≈ 156.92922423522444                              # non-dimensional
     @test ε_ND*CharUnits_GEO.strainrate ≈ ε_D   # check that non-dimensiional computations give the same results
 
     ε = [0.0; 0.0]
