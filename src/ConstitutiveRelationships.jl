@@ -66,7 +66,7 @@ export param_info,
     NonLinearSoftening
 
 # add methods programmatically 
-for myType in (:LinearViscous, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType, 
+for myType in (:LinearViscous, :LinearMeltViscosity, :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType, 
                 :GrainBoundarySliding, :PeierlsCreep, :NonLinearPeierlsCreep)
     @eval begin
         @inline compute_εII(a::$(myType), TauII, args) = compute_εII(a, TauII; args...)

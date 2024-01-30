@@ -23,14 +23,16 @@ using GeoParams
     x1_ND = nondimensionalize(x1_ND, CharUnits_GEO)                 # check that we can nondimensionalize all entries within the struct
     @test isDimensional(x1_ND) == false
     @test x1_ND.η * 1.0 == 0.1
-    x1_ND = dimensionalize(x1_ND, CharUnits_GEO)                    # check that we can dimensionalize it again
-    @test x1_ND.η.val == 1e18
-    x1_ND = nondimensionalize(x1_ND, CharUnits_GEO)
-
+    x1_D = dimensionalize(x1_ND, CharUnits_GEO)                    # check that we can dimensionalize it again
+    @test x1_D.η.val == 1e18
+    
     # Given stress
     args = (;)
-    @test compute_εII(x1, 1e6Pa, args) == 5e-13 / s                # dimensional input       
-    @test compute_εII(x1_ND, 1e0, args) == 5.0                   # non-dimensional
+    ε_D = compute_εII(x1, 1e6Pa, args)
+    @test ε_D == 5e-13 / s                      # dimensional input     
+    ε_ND  = compute_εII(x1_ND, nondimensionalize(1e6Pa, CharUnits_GEO), args)
+    @test ε_ND ≈ 0.5                            # non-dimensional
+    @test ε_ND*CharUnits_GEO.strainrate ≈ ε_D   # check that non-dimensiional computations give the same results
 
     τ = [0.0; 0.0]
     compute_εII!(τ, x1_ND, [1e0; 2.0], args)
@@ -42,6 +44,7 @@ using GeoParams
     ε = [0.0; 0.0]
     compute_τII!(ε, x1_ND, [1e0; 2.0], args)
     @test ε == [0.2; 0.4]     # vector input
+
     # -------------------------------------------------------------------
 
     # -------------------------------------------------------------------
@@ -98,4 +101,40 @@ using GeoParams
     @test sol1 ≈ 0.5
     sol2 = dτII_dεII(x3, ε21)
     @test sol2 ≈ 2.0
+
+    # Test melt viscosity ---------------------------------
+    x1 = LinearMeltViscosity()
+    @test  x1.B.val == 13374.0
+
+    
+    x1_D =LinearMeltViscosity(A = -8.1590, B = 2.4050e+04K, T0 = -430.9606K)   # Rhyolite
+    @test isDimensional(x1_D) == true
+    x1_ND = nondimensionalize(x1_D, CharUnits_GEO)                 # check that we can nondimensionalize all entries within the struct
+    @test isDimensional(x1_ND) == false
+    @test  NumValue(x1_ND.B) ≈ 18.890154341593682
+    x1_D1  = dimensionalize(x1_ND, CharUnits_GEO)                    # check that we can dimensionalize it again
+    @test  Value(x1_D.B) ≈  Value(x1_D1.B)
+
+    # Given stress
+    args_D  = (; T = 700K)
+    args_ND = (; T =  nondimensionalize(700K, CharUnits_GEO))
+    
+    ε_D = compute_εII(x1_D, 1e6Pa, args_D)
+    @test ε_D ≈ 3.916168662376774e-8 / s                      # dimensional input     
+    ε_ND  = compute_εII(x1_ND, nondimensionalize(1e6Pa, CharUnits_GEO), args_ND)
+    @test ε_ND ≈ 39161.68662376807                              # non-dimensional
+    @test ε_ND*CharUnits_GEO.strainrate ≈ ε_D   # check that non-dimensiional computations give the same results
+
+    τ = [0.0; 0.0]
+    compute_εII!(τ, x1_ND, [1e0; 2.0], args)
+    @test τ ≈ [5.559506657237564e12; 1.1119013314475129e13]    # vector input
+
+    # Given strainrate 
+    @test compute_τII(x1_D,  1e-13 / s, args_D) ≈ 2.553516169022932Pa      # dimensional input       
+    @test compute_τII(x1_ND, 1e-13, args_ND) ≈ 2.553516169022911e-19                  # non-dimensional
+    
+    ε = [0.0; 0.0]
+    compute_τII!(ε, x1_ND, [1e0; 2.0], args_ND)
+    @test ε ≈ [2.553516169022911e-6; 5.107032338045822e-6]     # vector input
+    # -------------------------------------------------------------------
 end
