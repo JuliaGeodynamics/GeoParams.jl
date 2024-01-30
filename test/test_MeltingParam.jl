@@ -147,7 +147,7 @@ using StaticArrays
 
     #------------------------------
     # Melnik parameterisation
-    p = MeltingParam_Melnik()
+    p = MeltingParam_Smooth3rdOrder()
     compute_meltfraction!(phi_dim, p, args)
     @test sum(phi_dim) ≈ 5.704199153357903
     dϕdT_dim = zeros(size(T))

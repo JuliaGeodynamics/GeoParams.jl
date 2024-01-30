@@ -20,7 +20,7 @@ export compute_meltfraction,
     compute_dϕdT!,
     param_info,
     MeltingParam_Caricchi,
-    MeltingParam_Melnik,
+    MeltingParam_Smooth3rdOrder,
     MeltingParam_4thOrder,
     MeltingParam_5thOrder,
     MeltingParam_Quadratic,
@@ -92,9 +92,9 @@ end
 
 # Melnik  -------------------------------------------------------
 """
-    MeltingParam_Melnik()
+    MeltingParam_Smooth3rdOrder()
 
-Implements the T-dependent melting parameterisation used by Melnik and coworkers
+Implements the a smooth 3rd order T-dependent melting parameterisation (as used by Melnik and coworkers)
 ```math
     x = {  T \\over 1000.0}
 ```
@@ -117,13 +117,13 @@ Data for rhyolite are:
 a=3043.0,  b=-10552.0, c=12204.9, d = -4709.0 
 ```
 
-![MeltingParam_Melnik](./assets/img/MeltingParam_Melnik.png)
+![MeltingParam_Smooth3rdOrder](./assets/img/MeltingParam_Melnik.png)
 Red: Rhyolite, Blue: Basalt
 
 References
 ====
 """
-@with_kw_noshow struct MeltingParam_Melnik{T,U,U1} <: AbstractMeltingParam{T}
+@with_kw_noshow struct MeltingParam_Smooth3rdOrder{T,U,U1} <: AbstractMeltingParam{T}
     a::GeoUnit{T,U} =  517.9NoUnits
     b::GeoUnit{T,U} = -1619.0NoUnits
     c::GeoUnit{T,U} = 1699.0NoUnits
@@ -131,16 +131,16 @@ References
     Tchar::GeoUnit{T,U1} = 1000K # normalization
     apply_bounds::Bool = true
 end
-MeltingParam_Melnik(args...) = MeltingParam_Melnik(convert.(GeoUnit, args)...)
+MeltingParam_Smooth3rdOrder(args...) = MeltingParam_Smooth3rdOrder(convert.(GeoUnit, args)...)
 
-function param_info(s::MeltingParam_Melnik) # info about the struct
+function param_info(s::MeltingParam_Smooth3rdOrder) # info about the struct
     return MaterialParamsInfo(;
         Equation=L"\phi = f(T)"
     )
 end
 
 # Calculation routines
-function (p::MeltingParam_Melnik)(; T, kwargs...)
+function (p::MeltingParam_Smooth3rdOrder)(; T, kwargs...)
     @unpack_val a, b, c, d, Tchar = p
     x = T / Tchar
     θ = a + b * x + c * x^2 + d * x^3;
@@ -148,7 +148,7 @@ function (p::MeltingParam_Melnik)(; T, kwargs...)
     return ϕ
 end
 
-function compute_dϕdT(p::MeltingParam_Melnik; T, kwargs...)
+function compute_dϕdT(p::MeltingParam_Smooth3rdOrder; T, kwargs...)
     @unpack_val a, b, c, d, Tchar = p
     
     x = T / Tchar
@@ -159,7 +159,7 @@ function compute_dϕdT(p::MeltingParam_Melnik; T, kwargs...)
 end
 
 # Print info
-function show(io::IO, g::MeltingParam_Melnik)
+function show(io::IO, g::MeltingParam_Smooth3rdOrder)
     return print(io, "Melnik et al. melting parameterization")
 end
 #-------------------------------------------------------------------------
@@ -694,7 +694,7 @@ The derivative is computed by finite differencing.
 # fill methods programmatically
 for myType in (
     :MeltingParam_Caricchi,
-    :MeltingParam_Melnik,
+    :MeltingParam_Smooth3rdOrder,
     :MeltingParam_5thOrder,
     :MeltingParam_4thOrder,
     :MeltingParam_Quadratic,
