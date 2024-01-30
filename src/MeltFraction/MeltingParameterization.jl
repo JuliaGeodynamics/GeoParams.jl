@@ -161,7 +161,7 @@ end
 
 # Print info
 function show(io::IO, g::MeltingParam_Smooth3rdOrder)
-    return print(io, "Melnik et al. melting parameterization")
+    return print(io, "Smooth 3rd order melting parameterization")
 end
 #-------------------------------------------------------------------------
 
