@@ -160,6 +160,7 @@ export dεII_dτII,
     #       Viscous creep laws
     AbstractCreepLaw,
     LinearViscous,
+    LinearMeltViscosity,
     PowerlawViscous,
     ArrheniusType,
     CustomRheology,

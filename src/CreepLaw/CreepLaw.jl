@@ -74,6 +74,7 @@ include("GrainBoundarySliding.jl")
 include("PeierlsCreep.jl")
 include("NonLinearPeierlsCreep.jl")
 include("CustomRheology.jl")
+include("MeltViscosity.jl")
 
 # Linear viscous rheology ------------------------------------------------
 """
