@@ -20,6 +20,7 @@ export compute_meltfraction,
     compute_dϕdT!,
     param_info,
     MeltingParam_Caricchi,
+    MeltingParam_Smooth3rdOrder,
     MeltingParam_4thOrder,
     MeltingParam_5thOrder,
     MeltingParam_Quadratic,
@@ -86,6 +87,81 @@ end
 # Print info
 function show(io::IO, g::MeltingParam_Caricchi)
     return print(io, "Caricchi et al. melting parameterization")
+end
+#-------------------------------------------------------------------------
+
+# Melnik  -------------------------------------------------------
+"""
+    MeltingParam_Smooth3rdOrder()
+
+Implements the a smooth 3rd order T-dependent melting parameterisation (as used by Melnik and coworkers)
+```math
+    x = {  T \\over 1000.0}
+```
+```math
+    \\theta = { a + b * x + c * x^2 + d * x^3}
+```
+```math
+    \\phi_{melt} = {1.0 \\over (1.0 + e^\\theta)}
+```
+Note that T is in Kelvin. 
+
+As default parameters we employ:
+```math
+a=517.9,  b=-1619.0, c=1699.0, d = -597.4
+```
+which gives a reasonable fit to experimental data for basalt.
+
+Data for rhyolite are:
+```math
+a=3043.0,  b=-10552.0, c=12204.9, d = -4709.0 
+```
+
+![MeltingParam_Smooth3rdOrder](./assets/img/MeltingParam_Melnik.png)
+Red: Rhyolite, Blue: Basalt
+
+References
+====
+"""
+@with_kw_noshow struct MeltingParam_Smooth3rdOrder{T,U,U1} <: AbstractMeltingParam{T}
+    a::GeoUnit{T,U} =  517.9NoUnits
+    b::GeoUnit{T,U} = -1619.0NoUnits
+    c::GeoUnit{T,U} = 1699.0NoUnits
+    d::GeoUnit{T,U} = -597.4NoUnits
+    Tchar::GeoUnit{T,U1} = 1000K # normalization
+    apply_bounds::Bool = true
+end
+MeltingParam_Smooth3rdOrder(args...) = MeltingParam_Smooth3rdOrder(convert.(GeoUnit, args)...)
+
+function param_info(s::MeltingParam_Smooth3rdOrder) # info about the struct
+    return MaterialParamsInfo(;
+        Equation=L"\phi = f(T)"
+    )
+end
+
+# Calculation routines
+function (p::MeltingParam_Smooth3rdOrder)(; T, kwargs...)
+    @unpack_val a, b, c, d, Tchar = p
+    x = T / Tchar
+    
+    θ = evalpoly(x, (a, b, c, d)) # θ = a + b * x + c * x^2 + d * x^3;
+    ϕ = inv(1.0 + exp(θ))
+    return ϕ
+end
+
+function compute_dϕdT(p::MeltingParam_Smooth3rdOrder; T, kwargs...)
+    @unpack_val a, b, c, d, Tchar = p
+    
+    x = T / Tchar
+    θ = evalpoly(x, (a, b, c, d))
+    dϕdT = -((2T*c) / (Tchar^2) + b / Tchar + (3d*x^2) / Tchar)*inv((1.0 + exp(θ))^2)*exp(θ)
+
+    return dϕdT
+end
+
+# Print info
+function show(io::IO, g::MeltingParam_Smooth3rdOrder)
+    return print(io, "Smooth 3rd order melting parameterization")
 end
 #-------------------------------------------------------------------------
 
@@ -556,6 +632,7 @@ function show(io::IO, g::SmoothMelting)
 end
 #-------------------------------------------------------------------------
 
+
 """
     compute_meltfraction(P,T, p::AbstractPhaseDiagramsStruct)
 
@@ -618,6 +695,7 @@ The derivative is computed by finite differencing.
 # fill methods programmatically
 for myType in (
     :MeltingParam_Caricchi,
+    :MeltingParam_Smooth3rdOrder,
     :MeltingParam_5thOrder,
     :MeltingParam_4thOrder,
     :MeltingParam_Quadratic,
