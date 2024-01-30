@@ -647,7 +647,7 @@ function PlotMeltFraction(
     p::AbstractMeltingParam; T=nothing, P=nothing, plt=nothing, lbl=nothing
 )
     if isnothing(T)
-        T = (500.0:10:1500.0) * K
+        T = (873.0:10:1500.0) * K
     end
     T_C = ustrip(T) .- 273.15
 
