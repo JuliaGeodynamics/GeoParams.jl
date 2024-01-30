@@ -143,7 +143,8 @@ end
 function (p::MeltingParam_Smooth3rdOrder)(; T, kwargs...)
     @unpack_val a, b, c, d, Tchar = p
     x = T / Tchar
-    θ = a + b * x + c * x^2 + d * x^3;
+    
+    θ = evalpoly(x, (a, b, c, d)) # θ = a + b * x + c * x^2 + d * x^3;
     ϕ = inv(1.0 + exp(θ))
     return ϕ
 end
@@ -152,8 +153,8 @@ function compute_dϕdT(p::MeltingParam_Smooth3rdOrder; T, kwargs...)
     @unpack_val a, b, c, d, Tchar = p
     
     x = T / Tchar
-
-    dϕdT = -((2T*c) / (Tchar^2) + b / Tchar + (3d*((x)^2)) / Tchar)*(1 / ((1.0 + exp(a + (T*b) / Tchar + c*((x)^2) + d*((x)^3)))^2))*exp(a + (T*b) / Tchar + c*((x)^2) + d*((x)^3))
+    θ = evalpoly(x, (a, b, c, d))
+    dϕdT = -((2T*c) / (Tchar^2) + b / Tchar + (3d*x^2) / Tchar)*inv((1.0 + exp(θ))^2)*exp(θ)
 
     return dϕdT
 end
