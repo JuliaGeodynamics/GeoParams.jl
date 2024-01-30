@@ -147,12 +147,46 @@ using StaticArrays
 
     #------------------------------
     # Melnik parameterisation
-    p = MeltingParam_Smooth3rdOrder()
-    compute_meltfraction!(phi_dim, p, args)
-    @test sum(phi_dim) ≈ 5.704199153357903
+    p_basalt   = MeltingParam_Smooth3rdOrder()
+    p_rhyolite = MeltingParam_Smooth3rdOrder(a=3043.0,b=−10552.0,c=12204.9,d=−4709.0)
+    compute_meltfraction!(phi_dim, p_basalt, args)
+    @test sum(phi_dim) ≈ 2.963636933098781
+    
+    compute_meltfraction!(phi_dim, p_rhyolite, args)
+    @test sum(phi_dim) ≈ 4.498360881531148
+
     dϕdT_dim = zeros(size(T))
-    compute_dϕdT!(dϕdT_dim, p, args)
-    @test sum(abs.(dϕdT_dim)) ≈ 0.009147222097882098
+    compute_dϕdT!(dϕdT_dim, p_basalt, args)
+    @test sum(abs.(dϕdT_dim)) ≈ 0.010340923744790025
+
+    compute_dϕdT!(dϕdT_dim, p_rhyolite, args)
+    @test sum(abs.(dϕdT_dim)) ≈ 0.0049712527005299255
+
+    #=
+    p_basalt   = MeltingParam_Smooth3rdOrder()
+    p_rhyolite = MeltingParam_Smooth3rdOrder(a=3043.0,b=−10552.0,c=12204.9,d=−4709.0)
+    T_C=600:1200
+    T=T_C .+ 273.15
+    ϕ_basalt = zeros(size(T))
+    ϕ_rhyolite = zeros(size(T))
+    dϕdT_basalt = zeros(size(T))
+    dϕdT_rhyolite = zeros(size(T))
+
+    compute_meltfraction!(ϕ_basalt, p_basalt, (;T=T))
+    compute_meltfraction!(ϕ_rhyolite, p_rhyolite, (;T=T))
+    compute_dϕdT!(dϕdT_basalt, p_basalt, (;T=T))
+    compute_dϕdT!(dϕdT_rhyolite, p_rhyolite, (;T=T))
+
+    using Plots
+    plt1 = plot(T_C, ϕ_basalt, label="basalt", xlabel="T (C)", ylabel="ϕ")
+    plot!(plt1,T_C, ϕ_rhyolite, label="rhyolite")
+
+    plt2 = plot(T_C, dϕdT_basalt, label="basalt",xlabel="T (C)", ylabel="dϕ/dT")
+    plot!(plt2,T_C, dϕdT_rhyolite, label="rhyolite")
+
+    plot(plt1, plt2, layout=(2,1))
+    =#
+
     #------------------------------
 
     # Test computation of melt parameterization for the whole computational domain, using arrays 

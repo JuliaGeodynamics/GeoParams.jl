@@ -1,4 +1,4 @@
-using Test
+using Test, Statistics
 using GeoParams
 
 @testset "CreepLaw" begin
@@ -211,6 +211,52 @@ using GeoParams
     @test dτII_dεII(x1_ND, 1e-15, args_ND) ≈ 3.975694864471415e-11
 
     # -----
+
+    # ----
+    # Create plot
+    T = Vector(800.0:1400)*K
+    η_basalt  = zeros(size(T))*Pas
+    η_basalt1 = zeros(size(T))*Pas
+    η_rhyolite = zeros(size(T))*Pas
+    ϕ_basalt = zeros(size(T))
+    ϕ_rhyolite = zeros(size(T))
+    
+    x_basalt   = ViscosityPartialMelt_Costa_etal_2009(η = LinearMeltViscosity())
+    x_rhyolite = ViscosityPartialMelt_Costa_etal_2009(η= LinearMeltViscosity(A = -8.1590, B = 2.4050e+04K, T0 = -430.9606K))   # Rhyolite
+   
+    mf_basalt = MeltingParam_Smooth3rdOrder()
+    mf_rhyolite = MeltingParam_Smooth3rdOrder( a=3043.0,  b=-10552.0, c=12204.9, d = -4709.0 )
+    
+    εII = 1e-5/s;
+    for i in eachindex(T)
+        args_D  = (; T = T[i])
+        ϕ_basalt[i] = compute_meltfraction(mf_basalt, (; T=T[i]/K))
+        η_basalt[i]     = compute_viscosity_εII(x_basalt, εII, (; ϕ=ϕ_basalt[i], T=T[i]))
+       
+        η_basalt1[i]     = compute_viscosity_εII(x_basalt, 1e-3/s, (; ϕ=ϕ_basalt[i], T=T[i]))
+       
+        ϕ_rhyolite[i] = compute_meltfraction(mf_rhyolite, (; T=T[i]/K))
+        η_rhyolite[i]   = compute_viscosity_εII(x_rhyolite, εII, (; ϕ=ϕ_rhyolite[i], T=T[i]))
+
+    end
+    @test mean(η_rhyolite) ≈ 1.26143880075233e19Pas
+    @test mean(η_basalt) ≈ 5.822731206904198e24Pas
+    @test mean(η_basalt1) ≈ 8.638313729394237e21Pas
+
+    #=
+    using Plots
+    plt1 = plot(ustrip.(T) .- 273.15, log10.(ustrip.(η_basalt)), xlabel="T [C]", ylabel="log10(η [Pas])", label="basalt, εII=1e-5/s")
+    plot!(plt1, ustrip.(T) .- 273.15, log10.(ustrip.(η_basalt1)), label="basalt, εII=1e-3/s")
+    plot!(plt1, ustrip.(T) .- 273.15, log10.(ustrip.(η_rhyolite)), label="rhyolite, εII=1e-5/s")
+
+    plt2 = plot(ustrip.(T) .- 273.15, ϕ_basalt, xlabel="T [C]", ylabel="Melt fraction ϕ []", label="basalt")
+    plot!(plt2, ustrip.(T) .- 273.15, ϕ_rhyolite, label="rhyolite")
+
+    plot(plt1,plt2, layout=(2,1))
+    =#
+
+    # ----
+
 
 
 end

@@ -270,10 +270,9 @@ Returns second invariant of the stress tensor given a 2nd invariant of strain ra
     a::ViscosityPartialMelt_Costa_etal_2009, 
     EpsII; 
     ϕ=one(precision(a)),
-    T=one(precision(a)),
     kwargs...
 )
-
+    @show EpsII, ϕ, T
     # melt viscosity 
     τ      = compute_τII(a.η, EpsII, kwargs)
     η_melt = τ/(2 * EpsII)
@@ -282,12 +281,11 @@ Returns second invariant of the stress tensor given a 2nd invariant of strain ra
     ηr     = viscosity_correction(1.0 - ϕ, EpsII/a.ε0)  
 
     η      =  ηr * η_melt
-
     return 2 * (η * EpsII)
 end
 
 @inline function compute_τII(
-    a::ViscosityPartialMelt_Costa_etal_2009, EpsII::Quantity; ϕ=1.0, T=1K, kwargs...
+    a::ViscosityPartialMelt_Costa_etal_2009, EpsII::Quantity; ϕ=1.0, kwargs...
 )
   
     # melt viscosity 
@@ -298,7 +296,6 @@ end
     ηr     = viscosity_correction(1.0 - ϕ, EpsII/a.ε0)  
 
     η      =  ηr * η_melt
-
     return 2 * (η * EpsII)
 end
 
