@@ -96,7 +96,7 @@ end
 
 Implements the a smooth 3rd order T-dependent melting parameterisation (as used by Melnik and coworkers)
 ```math
-    x = {  T \\over 1000.0}
+    x = {  (T - 273.15) \\over 1000.0}
 ```
 ```math
     \\theta = { a + b * x + c * x^2 + d * x^3}
@@ -128,6 +128,7 @@ References
     b::GeoUnit{T,U} = -1619.0NoUnits
     c::GeoUnit{T,U} = 1699.0NoUnits
     d::GeoUnit{T,U} = -597.4NoUnits
+    T0::GeoUnit{T,U1} = 273.15K 
     Tchar::GeoUnit{T,U1} = 1000K # normalization
     apply_bounds::Bool = true
 end
@@ -141,22 +142,31 @@ end
 
 # Calculation routines
 function (p::MeltingParam_Smooth3rdOrder)(; T, kwargs...)
-    @unpack_val a, b, c, d, Tchar = p
-    x = T / Tchar
+    @unpack_val a, b, c, d, Tchar, T0 = p
+    x = (T - T0)/ Tchar
     
-    θ = evalpoly(x, (a, b, c, d)) # θ = a + b * x + c * x^2 + d * x^3;
+    θ = min(evalpoly(x, (a, b, c, d)),200.0)
+
     ϕ = inv(1.0 + exp(θ))
     return ϕ
 end
 
 function compute_dϕdT(p::MeltingParam_Smooth3rdOrder; T, kwargs...)
-    @unpack_val a, b, c, d, Tchar = p
+    @unpack_val a, b, c, d, Tchar, T0 = p
     
-    x = T / Tchar
-    θ = evalpoly(x, (a, b, c, d))
-    dϕdT = -((2T*c) / (Tchar^2) + b / Tchar + (3d*x^2) / Tchar)*inv((1.0 + exp(θ))^2)*exp(θ)
+    x =  (T - T0) / Tchar
+    θ = min(evalpoly(x, (a, b, c, d)),200.0)
+
+    dϕdT = -exp(θ)*(1 / (1.0 + exp(θ))^2 )*(b / Tchar + (3d*x^2) / Tchar + (2(T - T0)*c) / (Tchar^2))
 
     return dϕdT
+end
+
+function foo(T,T0,Tchar,a,b,c,d)
+    x =  (T - T0) / Tchar
+    θ = a + b * x + c * x^2 + d * x^3;
+    ϕ = inv(1.0 + exp(θ))
+    return x^2
 end
 
 # Print info

@@ -1,4 +1,4 @@
-using Test
+using Test, Statistics
 
 function runtests()
     files = readdir(@__DIR__)
