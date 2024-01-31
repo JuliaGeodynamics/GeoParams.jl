@@ -255,8 +255,52 @@ using Test, GeoParams, StaticArrays
     @test 2950e0 == compute_density_ratio(SvPhaseRatio, rheologies, args)
     @test 2950e0 == compute_density(rheologies, SvPhaseRatio, args)
 
-    # Melt-dependent density
-    x = MeltDependent_Density()
+    # Melt-dependent density ----------------------------------
+    CharUnits_GEO = GEO_units(; viscosity=1e19, length=1000km)
+    x_D = MeltDependent_Density(ρmelt=T_Density(ρ0=2200kg / m^3))
+    x_ND = nondimensionalize(x_D, CharUnits_GEO)
+    @test isdimensional(x_D)==true
+    @test isdimensional(x_ND)==false
+
+    args = (P=0.0, T=20.0+273.15, ϕ=0.5)
+    ρsolid = compute_density(x_D.ρsolid, args)
+    ρmelt  = compute_density(x_D.ρmelt, args)
+    ρ      = compute_density(x_D, args)
+    
+    @test ρsolid == 2900.0
+    @test ρmelt ≈ 2198.68
+    @test ρ == (1-args.ϕ)*ρsolid + args.ϕ*ρmelt
 
 
+    rheologies = (
+        SetMaterialParams(;
+            Name="Crust",
+            Phase=0,
+            CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e23Pas)),
+            Density=MeltDependent_Density(ρmelt=T_Density(ρ0=2200kg / m^3)),
+        ),
+        SetMaterialParams(;
+            Name="Lower Crust",
+            Phase=1,
+            CreepLaws=(PowerlawViscous(; n=5.0), LinearViscous(; η=1e21Pas)),
+            Density=MeltDependent_Density(ρmelt=T_Density(ρ0=2200kg / m^3)),
+        ),
+    )
+    PhaseRatio = (0.5, 0.5)
+    
+    args = (P=0.0, T=20.0+273.15, ϕ=0.5)
+    @test compute_density_ratio(PhaseRatio, rheologies, args) == compute_density(rheologies, PhaseRatio, args) == ρ
+
+
+    rho = zeros(size(Phases))
+    T = fill(20.0+273.15, size(Phases))
+    P = fill(10.0, size(Phases))
+    ϕ = fill(0.5, size(Phases))
+
+    args_vec = (P=P, T=T, ϕ=ϕ)
+
+    compute_density!(rho, rheologies, Phases, args_vec)
+    @test rho[1] ≈ ρ
+    # ---------------------------------------------------------
+    
 end

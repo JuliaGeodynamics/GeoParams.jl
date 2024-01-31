@@ -9,6 +9,7 @@ using Parameters, Unitful, LaTeXStrings
 using ..Units
 using ..PhaseDiagrams
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
+import ..Units: isdimensional
 using ..MaterialParameters: No_MaterialParam, MaterialParamsInfo
 import Base.show, GeoParams.param_info
 
@@ -24,6 +25,7 @@ export compute_density,     # calculation routines
     ConstantDensity,        # constant
     PT_Density,             # P & T dependent density
     Compressible_Density,   # Compressible density 
+    T_Density,              # T dependent density   
     MeltDependent_Density   # Melt dependent density
 
 # Define "empty" computational routines in case nothing is defined
@@ -50,6 +52,7 @@ where ``\\rho`` is the density [``kg/m^3``].
     ρ::GeoUnit{_T,U} = 2900.0kg / m^3 # density
 end
 ConstantDensity(args...) = ConstantDensity(convert.(GeoUnit, args)...)
+isdimensional(s::ConstantDensity) = isdimensional(s.ρ)
 
 @inline (ρ::ConstantDensity)(; args...)                          = ρ.ρ.val
 @inline (ρ::ConstantDensity)(args)                               = ρ(; args...)
@@ -97,6 +100,7 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference temperature ``T_0`` a
     P0::GeoUnit{_T,U5} = 0.0MPa         # Reference pressure
 end
 PT_Density(args...) = PT_Density(convert.(GeoUnit, args)...)
+isdimensional(s::PT_Density) = isdimensional(s.ρ0)
 
 function param_info(s::PT_Density) # info
     return MaterialParamsInfo(;
@@ -147,6 +151,7 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference pressure ``P_0`` and 
     P0::GeoUnit{_T,U3} = 0.0MPa         # Reference pressure
 end
 Compressible_Density(args...) = Compressible_Density(convert.(GeoUnit, args)...)
+isdimensional(s::Compressible_Density) = isdimensional(s.ρ0)
 
 function param_info(s::Compressible_Density) # info about the struct
     return MaterialParamsInfo(; Equation = L"\rho = \rho_0\exp(\beta*(P-P_0))")
@@ -170,6 +175,50 @@ function show(io::IO, g::Compressible_Density)
     return print(
         io,
         "Compressible density: ρ0=$(UnitValue(g.ρ0)), β=$(UnitValue(g.β)), P0=$(UnitValue(g.P0))",
+    )
+end
+#-------------------------------------------------------------------------
+
+# Temperature-dependent density -------------------------------
+"""
+    T_Density(ρ0=2900kg/m^3, α=3e-5/K, T₀=273.15K)
+    
+Set a temperature-dependent density:
+```math  
+    \\rho  = \\rho_0 (1 - \\alpha * (T - T\\_0) )  
+```
+where ``\\rho_0`` is the density [``kg/m^3``] at reference temperature ``T_0`` and ``\\alpha`` the temperature dependence.
+"""
+@with_kw_noshow struct T_Density{_T,U1,U2,U3} <: AbstractDensity{_T}
+    ρ0::GeoUnit{_T,U1} = 2900.0kg / m^3 # density
+    α::GeoUnit{_T,U2}  = 3e-5 / K       # T-dependence of density
+    T0::GeoUnit{_T,U3} = 273.15K        # Reference temperature
+end
+T_Density(args...) = T_Density(convert.(GeoUnit, args)...)
+isdimensional(s::T_Density) = isdimensional(s.ρ0)
+
+function param_info(s::T_Density) # info about the struct
+    return MaterialParamsInfo(; Equation = L"\rho = \rho_0*(1 - \alpha*(T-T_0))")
+end
+
+function (s::T_Density{_T})(; T::_T=zero(_T), kwargs...) where {_T}
+    if T isa Quantity
+        @unpack_units ρ0, α, T0 = s
+    else
+        @unpack_val   ρ0, α, T0 = s
+    end
+
+    return ρ0 * (1.0 -  α * (T - T0))
+end
+
+@inline (s::T_Density)(args)                = s(; args...)
+@inline compute_density(s::T_Density, args) = s(; args...)
+
+# Print info 
+function show(io::IO, g::T_Density)
+    return print(
+        io,
+        "Temperature dependent density:  ρ = $(UnitValue(g.ρ0))(1 - $(UnitValue(g.α))(T-$(UnitValue(g.T0))))",
     )
 end
 #-------------------------------------------------------------------------
@@ -206,23 +255,16 @@ function param_info(s::MeltDependent_Density) # info about the struct
     return MaterialParamsInfo(; Equation=L"\rho =  \phi \rho_{\textrm{melt}} + (1-\phi) \\rho_{\textrm{solid}}")
 end
 
-
 # Calculation routines
-@inline function compute_density(rho::MeltDependent_Density; 
-                    ϕ = zero(precision(a)),
-                    kwargs...)
-
+function (rho::MeltDependent_Density{_T})(; ϕ::_T=zero(_T), kwargs...) where {_T}
     ρsolid = compute_density(rho.ρsolid, kwargs)
     ρmelt  = compute_density(rho.ρmelt,  kwargs)
 
     return ϕ * ρmelt + (1-ϕ) * ρsolid
 end
 
-#=#
-function compute_density!(rho::AbstractArray, s::ConstantDensity, args)
-    return compute_density!(rho, s; args...)
-end
-=#
+@inline (s::MeltDependent_Density)(args)                = s(; args...)
+@inline compute_density(s::MeltDependent_Density, args) = s(; args...)
 
 # Print info 
 function show(io::IO, g::MeltDependent_Density)

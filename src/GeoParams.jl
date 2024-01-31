@@ -125,6 +125,7 @@ export compute_density,                                # computational routines
     ConstantDensity,
     PT_Density,
     Compressible_Density,
+    T_Density,
     PhaseDiagram_LookupTable,
     Read_LaMEM_Perple_X_Diagram,
     MeltDependent_Density,
