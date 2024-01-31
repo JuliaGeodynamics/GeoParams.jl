@@ -117,11 +117,17 @@ end
 """
     Latent_HeatCapacity(Cp=ConstantHeatCapacity(), Q_L=400kJ/kg)
     
-This takes the effects of latent heat into account by modifying the heat capacity:
-```math  
-    C_p  = C_p + \\frac{\\partial \\phi}{\\partial T} Q_L
+This takes the effects of latent heat into account by modifying the heat capacity in the temperature equation:
+
+```math
+\\rho C_p^{\\textrm{new}} \\frac{\\partial T}{\\partial t}  = \\frac{\\partial }{\\partial x_i} \\left( k \\frac{\\partial T}{\\partial x_i} \\right)  + H_s
 ```
-where ``Q_L`` is the latent heat [``kJ/kg``], and ``\\frac{\\partial \\phi}{\\partial T}`` is the derivative of the melt fraction with respect to temperature.
+
+with
+```math  
+C_p^{\\textrm{new}}  = C_p + \\frac{\\partial \\phi}{\\partial T} Q_L
+```
+where ``Q_L`` is the latent heat [``kJ/kg``], and ``\\frac{\\partial \\phi}{\\partial T}`` is the derivative of the melt fraction with respect to temperature
 
 """
 @with_kw_noshow struct Latent_HeatCapacity{T,U} <: AbstractHeatCapacity{T}
