@@ -218,7 +218,7 @@ end
 function show(io::IO, g::T_Density)
     return print(
         io,
-        "Temperature dependent density:  ρ = ρ0(1 - α(T-T0)); ρ0=$(UnitValue(g.ρ0)), α=$(UnitValue(g.α)), T0=$(UnitValue(g.T0))",
+        "Temperature dependent density:  ρ = $(UnitValue(g.ρ0))(1 - $(UnitValue(g.α))(T-$(UnitValue(g.T0))))",
     )
 end
 #-------------------------------------------------------------------------
@@ -255,23 +255,16 @@ function param_info(s::MeltDependent_Density) # info about the struct
     return MaterialParamsInfo(; Equation=L"\rho =  \phi \rho_{\textrm{melt}} + (1-\phi) \\rho_{\textrm{solid}}")
 end
 
-
 # Calculation routines
-@inline function compute_density(rho::MeltDependent_Density; 
-                    ϕ = zero(precision(a)),
-                    kwargs...)
-
+function (rho::MeltDependent_Density{_T})(; ϕ::_T=zero(_T), kwargs...) where {_T}
     ρsolid = compute_density(rho.ρsolid, kwargs)
     ρmelt  = compute_density(rho.ρmelt,  kwargs)
 
     return ϕ * ρmelt + (1-ϕ) * ρsolid
 end
 
-#=#
-function compute_density!(rho::AbstractArray, s::ConstantDensity, args)
-    return compute_density!(rho, s; args...)
-end
-=#
+@inline (s::MeltDependent_Density)(args)                = s(; args...)
+@inline compute_density(s::MeltDependent_Density, args) = s(; args...)
 
 # Print info 
 function show(io::IO, g::MeltDependent_Density)
