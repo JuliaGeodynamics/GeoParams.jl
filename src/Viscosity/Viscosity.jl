@@ -49,7 +49,7 @@ for fn in (:compute_viscosity_εII, :compute_viscosity_τII)
         @inline $fn(v::MaterialParams, args::Vararg{Any, N}) where {N} = $fn(v.CompositeRheology[1], args...)
 
        # compute effective "creep" viscosity from strain rate tensor given a composite rheology
-        @inline function $fn(v::CompositeRheology, II, args::Vararg{T, N} where {T, N})
+        @inline function $fn(v::CompositeRheology, II, args::Vararg{T, N} ) where {T, N}
             e = elements(v)
             compute_viscosity_II(e, $fn, II, args...)
         end
