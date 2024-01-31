@@ -256,6 +256,7 @@ using Test, GeoParams, StaticArrays
     @test 2950e0 == compute_density(rheologies, SvPhaseRatio, args)
 
     # Melt-dependent density
+    CharUnits_GEO = GEO_units(; viscosity=1e19, length=1000km)
     x = MeltDependent_Density()
 
 
