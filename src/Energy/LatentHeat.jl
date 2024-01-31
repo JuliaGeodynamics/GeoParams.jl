@@ -1,7 +1,7 @@
 module LatentHeat
 
 # This implements latent heat. There are two options:
-# 1) Constant latent heat as a source term to the enery equation (usually numerically unstable)
+# 1) Constant latent heat as a source term to the energy equation (usually numerically unstable)
 # 2) Latent heat by modifying heat capacity (usually more stable)
 # Note that 1) is implemented in this module, but that 2) is added to the HeatCapacity module
 
