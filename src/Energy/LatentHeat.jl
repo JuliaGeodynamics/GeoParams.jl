@@ -1,12 +1,16 @@
 module LatentHeat
 
-# If you want to add a new method here, feel free to do so. 
-# Remember to also export the function name in GeoParams.jl (in addition to here)
+# This implements latent heat. There are two options:
+# 1) Constant latent heat as a source term to the energy equation (usually numerically unstable)
+# 2) Latent heat by modifying heat capacity (usually more stable)
+# Note that 1) is implemented in this module, but that 2) is added to the HeatCapacity module
 
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam
 using ..MaterialParameters: MaterialParamsInfo
+using ..HeatCapacity: AbstractHeatCapacity, ConstantHeatCapacity
+
 import Base.show, GeoParams.param_info
 
 abstract type AbstractLatentHeat{T} <: AbstractMaterialParam end
@@ -14,10 +18,10 @@ abstract type AbstractLatentHeat{T} <: AbstractMaterialParam end
 export compute_latent_heat,                  # calculation routines
     compute_latent_heat!,
     param_info,
-    ConstantLatentHeat                  # constant
-
+    ConstantLatentHeat                      # constant (as source)
+    
 include("../Computations.jl")
-#include("../Utils.jl")
+
 # Constant  -------------------------------------------------------
 """
     ConstantLatentHeat(Q_L=400kJ/kg)
@@ -58,6 +62,7 @@ function show(io::IO, g::ConstantLatentHeat)
 end
 #-------------------------------------------------------------------------
 
+
 # Help info for the calculation routines
 """
     Ql = compute_latent_heat(s:<AbstractLatentHeat)
@@ -65,7 +70,6 @@ end
 Returns the latent heat `Q_L`
 
 """
-#compute_latent_heat()
 
 # Computational routines needed for computations with the MaterialParams structure 
 function compute_latent_heat(s::AbstractMaterialParamsStruct, args)

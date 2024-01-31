@@ -23,7 +23,6 @@ export compute_conductivity,                       # calculation routines
     Set_TP_Conductivity                         # Routine to set pre-defined parameters
 
 include("../Computations.jl")
-#include("../Utils.jl")
 
 # Constant Conductivity -------------------------------------------------------
 """
@@ -545,7 +544,7 @@ ________________________________________________________________________________
 
 compute_conductivity!(k::AbstractArray{T,N}, PhaseRatios::AbstractArray{T, M}, P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
 
-In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
+In-place computation of conductivity `k` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 """
 compute_conductivity(args::Vararg{Any, N}) where N = compute_param(compute_conductivity, args...)
