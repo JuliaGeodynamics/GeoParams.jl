@@ -127,6 +127,7 @@ export compute_density,                                # computational routines
     Compressible_Density,
     PhaseDiagram_LookupTable,
     Read_LaMEM_Perple_X_Diagram,
+    MeltDependent_Density,
     compute_density_ratio
 
 # Constitutive relationships laws

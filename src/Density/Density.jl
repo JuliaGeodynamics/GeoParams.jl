@@ -23,7 +23,8 @@ export compute_density,     # calculation routines
     AbstractDensity,
     ConstantDensity,        # constant
     PT_Density,             # P & T dependent density
-    Compressible_Density    # Compressible density 
+    Compressible_Density,   # Compressible density 
+    MeltDependent_Density   # Melt dependent density
 
 # Define "empty" computational routines in case nothing is defined
 function compute_density!(
@@ -170,6 +171,62 @@ function show(io::IO, g::Compressible_Density)
         io,
         "Compressible density: ρ0=$(UnitValue(g.ρ0)), β=$(UnitValue(g.β)), P0=$(UnitValue(g.P0))",
     )
+end
+#-------------------------------------------------------------------------
+
+# Melt-dependent density -------------------------------------------------
+"""
+    MeltDependent_Density(ρsolid=ConstantDensity(), ρmelt=ConstantDensity())
+    
+If we use a single phase code the average density of a partially molten rock is
+```math  
+    \\rho  = \\phi \\rho_{\\textrm{melt}} + (1-\\phi) \\rho_{\\textrm{solid}}
+```
+where ``\\rho`` is the average density [``kg/m^3``], ``\\rho_{\textrm{melt}}`` the melt density, ``\\rho_{\textrm{solid}} `` the solid density and ``\\phi`` the melt fraction.
+
+Note that any density formulation can be used for melt and solid.
+"""
+@with_kw_noshow struct MeltDependent_Density{_T,U} <: AbstractDensity{_T}
+    ρsolid::AbstractDensity{_T} = ConstantDensity(ρ=2900kg/m^3) # density of the solid
+    ρmelt::AbstractDensity{_T} = ConstantDensity(ρ=2200kg/m^3)  # density of the melt
+    ρ::GeoUnit{_T,U} = 2900.0kg / m^3                     # to keep track on whether this struct is dimensional or not
+end
+MeltDependent_Density(args...) = MeltDependent_Density(args[1], args[2], convert.(GeoUnit, args[3:end])...)
+isdimensional(s::MeltDependent_Density) = isdimensional(s.ρsolid)
+
+#MeltDependent_Density(args...) = MeltDependent_Density(convert.(GeoUnit, args)...)
+
+#@inline (ρ::ConstantDensity)(; args...)                          = ρ.ρ.val
+#@inline (ρ::ConstantDensity)(args)                               = ρ(; args...)
+#@inline compute_density(s::ConstantDensity{_T}, args) where {_T} = s(; args...)
+#@inline compute_density(s::ConstantDensity{_T})       where {_T} = s()
+
+# This assumes that density always has a single parameter. If that is not the case, we will have to extend this (to be done)
+function param_info(s::MeltDependent_Density) # info about the struct
+    return MaterialParamsInfo(; Equation=L"\rho =  \phi \rho_{\textrm{melt}} + (1-\phi) \\rho_{\textrm{solid}}")
+end
+
+
+# Calculation routines
+@inline function compute_density(rho::MeltDependent_Density; 
+                    ϕ = zero(precision(a)),
+                    kwargs...)
+
+    ρsolid = compute_density(rho.ρsolid, kwargs)
+    ρmelt  = compute_density(rho.ρmelt,  kwargs)
+
+    return ϕ * ρmelt + (1-ϕ) * ρsolid
+end
+
+#=#
+function compute_density!(rho::AbstractArray, s::ConstantDensity, args)
+    return compute_density!(rho, s; args...)
+end
+=#
+
+# Print info 
+function show(io::IO, g::MeltDependent_Density)
+    return print(io, "Melt dependent density: ρ = (1-ϕ)*ρsolid + ϕ*ρmelt; ρsolid=$(g.ρsolid); ρmelt=$(g.ρmelt)")
 end
 #-------------------------------------------------------------------------
 

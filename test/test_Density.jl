@@ -254,4 +254,9 @@ using Test, GeoParams, StaticArrays
     SvPhaseRatio = SA[0.5, 0.5]
     @test 2950e0 == compute_density_ratio(SvPhaseRatio, rheologies, args)
     @test 2950e0 == compute_density(rheologies, SvPhaseRatio, args)
+
+    # Melt-dependent density
+    x = MeltDependent_Density()
+
+
 end
