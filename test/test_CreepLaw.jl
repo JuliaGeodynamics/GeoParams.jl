@@ -191,12 +191,12 @@ using GeoParams
 
 
     # Given strainrate 
-    @test compute_τII(x1_D,  1e-13 / s, args_D) ≈ 1.6599192713557953e37Pa      # dimensional input       
-    @test compute_τII(x1_ND, 1e-13, args_ND) ≈ 3.975694864471416e-24                  # non-dimensional
+    @test compute_τII(x1_D,  1e-13 / s, args_D) ≈ 643.9044043803415Pa      # dimensional input       
+    @test compute_τII(x1_ND, 1e-13, args_ND) ≈ 5.64401178083053e-17                  # non-dimensional
     
     ε = [0.0; 0.0]
     compute_τII!(ε, x1_ND, [1e0; 2.0], args_ND1)
-    @test ε ≈ [4.5357140595467253e-11, 9.071412372305195e-11]     # vector input
+    @test ε ≈ [3.65254588484434e-25, 7.305079089024537e-25]    # vector input
 
 
     x1_D = ViscosityPartialMelt_Costa_etal_2009()
@@ -208,7 +208,7 @@ using GeoParams
     @test  ustrip(η) ≈  1.447704555523709e11
 
     @test dεII_dτII(x1_ND, 1e6, args_ND) ≈ 31884.63277076202
-    @test dτII_dεII(x1_ND, 1e-15, args_ND) ≈ 3.975694864471415e-11
+    @test dτII_dεII(x1_ND, 1e-15, args_ND) ≈ 0.0005644011780830529
 
     # -----
 

@@ -272,7 +272,6 @@ Returns second invariant of the stress tensor given a 2nd invariant of strain ra
     ϕ=one(precision(a)),
     kwargs...
 )
-    @show EpsII, ϕ, T
     # melt viscosity 
     τ      = compute_τII(a.η, EpsII, kwargs)
     η_melt = τ/(2 * EpsII)
