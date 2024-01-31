@@ -19,8 +19,7 @@ using StaticArrays
     cp1_nd = nondimensionalize(cp1_nd, CharUnits_GEO)
     @test cp1_nd.cp.val ≈ 1.3368075000000002e22
     @test compute_heatcapacity(cp1_nd) ≈ 1.3368075000000002e22  # compute
-    @test cp1_nd() ≈ 1.3368075000000002e22  # compute
-    @test compute_heatcapacity(cp1_nd; random_name=1) ≈ 1.3368075000000002e22  # compute
+    @test compute_heatcapacity(cp1_nd, (random_name=1,)) ≈ 1.3368075000000002e22  # compute
 
     # Temperature-dependent heat capacity
     # dimensional
@@ -80,12 +79,12 @@ using StaticArrays
 
     # test computing material properties
     n = 100
-    Phases = ones(Int64, n, n, n)
-    @views Phases[:, :, 20:end] .= 2
+    Phases = ones(Int64, n, n, n);
+    @views Phases[:, :, 20:end] .= 2;
 
-    Cp = zeros(size(Phases))
-    T = fill(1500e0, size(Phases))
-    P = zeros(size(Phases))
+    Cp = zeros(size(Phases));
+    T = fill(1500e0, size(Phases));
+    P = zeros(size(Phases));
 
     args = (; T=T)
     compute_heatcapacity!(Cp, Mat_tup, Phases, args)    # computation routine w/out P (not used in most heat capacity formulations)
@@ -112,6 +111,20 @@ using StaticArrays
     num_alloc = @allocated compute_heatcapacity!(Cp, Mat_tup, PhaseRatio, args)
     @test sum(Cp[1, 1, k] for k in axes(Cp,3)) ≈ 121399.0486067196
     @test num_alloc == 0
+
+
+    # Test latent heat based heat capacity
+    CharUnits_GEO = GEO_units(; viscosity=1e19, length=10km)
+    x_D =Latent_HeatCapacity(Q_L=500kJ/kg)
+    x_D1 =Latent_HeatCapacity(Cp=T_HeatCapacity_Whittington())
+    x_ND = nondimensionalize(x_D, CharUnits_GEO)
+    @test isdimensional(x_D)==true
+    @test isdimensional(x_ND)==false
+    
+    dϕdT = 0.1
+    args = (dϕdT=dϕdT, T=10)
+    Cp = compute_heatcapacity(x_D, args)
+    @test Cp == 1100.0
 
     # -----------------------
 

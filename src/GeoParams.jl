@@ -270,7 +270,7 @@ export compute_gravity,                                # computational routines
 # Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat
 using .MaterialParameters.HeatCapacity
 export compute_heatcapacity,
-    compute_heatcapacity!, ConstantHeatCapacity, T_HeatCapacity_Whittington
+    compute_heatcapacity!, ConstantHeatCapacity, T_HeatCapacity_Whittington, Latent_HeatCapacity
 
 using .MaterialParameters.Conductivity
 export compute_conductivity,
