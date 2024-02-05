@@ -2,7 +2,7 @@ using Test, GeoParams, StaticArrays
 
 @testset "Density.jl" begin
 
-    #Set alias for density function    
+    #Set alias for density function
     if !isdefined(Main, :GeoParamsAliases)
         eval(:(@use GeoParamsAliases density = ρ))
     end
@@ -15,6 +15,12 @@ using Test, GeoParams, StaticArrays
     @test isbits(x)
 
     x = Compressible_Density()
+    @test isbits(x)
+
+    x = MeltDependent_Density()
+    @test isbits(x)
+
+    x = T_Density()
     @test isbits(x)
 
     # This tests the MaterialParameters structure
@@ -66,7 +72,7 @@ using Test, GeoParams, StaticArrays
     compute_density!(rho, x, args)
     num_alloc = @allocated compute_density!(rho, x, args)
     # @show num_alloc
-    @test num_alloc == 0 
+    @test num_alloc == 0
 
     # This does NOT allocate if I test this with @btime;
     #   yet it does while running the test here
@@ -102,12 +108,12 @@ using Test, GeoParams, StaticArrays
         nondimensionalize(1500.0K, CharDim), nondimensionalize(1e8 * Pa, CharDim)
     )
 
-    # redimensionalize and check with value from original structure that did not use non-dimensionalization 
+    # redimensionalize and check with value from original structure that did not use non-dimensionalization
     @test ustrip(dimensionalize(rho_ND, kg / m^3, CharDim)) ≈ PD_data.Rho(1500.0, 1e8)
     @test ustrip(dimensionalize(Vp_ND, km / s, CharDim)) ≈ PD_data.Vp(1500.0, 1e8)
     @test ustrip(dimensionalize(Vs_ND, km / s, CharDim)) ≈ PD_data.Vs(1500.0, 1e8)
 
-    # Test computation of density for the whole computational domain, using arrays 
+    # Test computation of density for the whole computational domain, using arrays
     MatParam = Vector{AbstractMaterialParamsStruct}(undef, 4)
 
     MatParam[1] = SetMaterialParams(;
@@ -215,9 +221,9 @@ using Test, GeoParams, StaticArrays
     @test sum(rho) / 400^2 ≈ 2945.000013499999
     @test num_alloc == 0           # for some reason this does indicate allocations but @btime does not
 
-    # Test calling the routine with only pressure as input. 
+    # Test calling the routine with only pressure as input.
     # This is ok for Mat_tup1, as it only has constant & P-dependent densities.
-    # Note, however, that if you have P & T dependent densities and do this it will use 0 as default value for T 
+    # Note, however, that if you have P & T dependent densities and do this it will use 0 as default value for T
     compute_density!(rho, Mat_tup1, PhaseRatio, (; P=P))
     @test sum(rho) / 400^2 ≈ 2945.000013499999
 
@@ -266,7 +272,7 @@ using Test, GeoParams, StaticArrays
     ρsolid = compute_density(x_D.ρsolid, args)
     ρmelt  = compute_density(x_D.ρmelt, args)
     ρ      = compute_density(x_D, args)
-    
+
     @test ρsolid == 2900.0
     @test ρmelt ≈ 2198.68
     @test ρ == (1-args.ϕ)*ρsolid + args.ϕ*ρmelt
@@ -287,7 +293,7 @@ using Test, GeoParams, StaticArrays
         ),
     )
     PhaseRatio = (0.5, 0.5)
-    
+
     args = (P=0.0, T=20.0+273.15, ϕ=0.5)
     @test compute_density_ratio(PhaseRatio, rheologies, args) == compute_density(rheologies, PhaseRatio, args) == ρ
 
@@ -302,5 +308,5 @@ using Test, GeoParams, StaticArrays
     compute_density!(rho, rheologies, Phases, args_vec)
     @test rho[1] ≈ ρ
     # ---------------------------------------------------------
-    
+
 end
