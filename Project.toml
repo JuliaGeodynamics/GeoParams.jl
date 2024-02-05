@@ -4,7 +4,6 @@ authors = ["Boris Kaus <kaus@uni-mainz.de>, Albert De Montserrat <albertdemontse
 version = "0.5.6"
 
 [deps]
-Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 BibTeX = "7b0aa2c9-049f-5cec-894a-2b6b781bb25e"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"

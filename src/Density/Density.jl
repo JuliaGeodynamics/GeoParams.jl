@@ -242,8 +242,6 @@ Note that any density formulation can be used for melt and solid.
     ρ::GeoUnit{_T,U} = 2900.0kg / m^3                     # to keep track on whether this struct is dimensional or not
 end
 
-Adapt.@adapt_structure MeltDependent_Density
-
 MeltDependent_Density(args...) = MeltDependent_Density(args[1], args[2], convert.(GeoUnit, args[3:end])...)
 isdimensional(s::MeltDependent_Density) = isdimensional(s.ρsolid)
 

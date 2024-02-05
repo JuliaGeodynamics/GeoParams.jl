@@ -1,11 +1,11 @@
 using Test, GeoParams, StaticArrays
 
-@testset "Density.jl" begin
+# @testset "Density.jl" begin
 
     #Set alias for density function
-    if !isdefined(Main, :GeoParamsAliases)
-        eval(:(@use GeoParamsAliases density = ρ))
-    end
+    # if !isdefined(Main, :GeoParamsAliases)
+    #     eval(:(@use GeoParamsAliases density = ρ))
+    # end
 
     #Make sure that structs are isbits
     x = ConstantDensity()
@@ -59,7 +59,7 @@ using Test, GeoParams, StaticArrays
     x = ConstantDensity()
     num_alloc = @allocated compute_density!(rho, x, args)
     # @show num_alloc
-    # @test num_alloc == 0
+    @test num_alloc == 0
 
     #Test allocations using ρ alias
     ρ!(rho, x, args)
