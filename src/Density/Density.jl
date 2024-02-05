@@ -236,9 +236,9 @@ where ``\\rho`` is the average density [``kg/m^3``], ``\\rho_{\textrm{melt}}`` t
 
 Note that any density formulation can be used for melt and solid.
 """
-@with_kw_noshow struct MeltDependent_Density{_T,U} <: AbstractDensity{_T}
-    ρsolid::AbstractDensity{_T} = ConstantDensity(ρ=2900kg/m^3) # density of the solid
-    ρmelt::AbstractDensity{_T} = ConstantDensity(ρ=2200kg/m^3)  # density of the melt
+@with_kw_noshow struct MeltDependent_Density{_T,U, S1<:AbstractDensity, S2 <:AbstractDensity} <: AbstractDensity{_T}
+    ρsolid::S1 = ConstantDensity(ρ=2900kg/m^3) # density of the solid
+    ρmelt::S2 = ConstantDensity(ρ=2200kg/m^3)  # density of the melt
     ρ::GeoUnit{_T,U} = 2900.0kg / m^3                     # to keep track on whether this struct is dimensional or not
 end
 
