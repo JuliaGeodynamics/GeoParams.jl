@@ -9,11 +9,12 @@ import GeoParams.GBS
 
     # Define a linear viscous creep law ---------------------------------
     x1 = GrainBoundarySliding()
+    @test isbits(x1)
     @test Value(x1.n) == 3.5
     @test Value(x1.p) == -2.0
     @test Value(x1.A) == 6500.0MPa^(-3.5) * s^(-1) * µm^(2)
 
-    # perform a computation with the dislocation creep laws 
+    # perform a computation with the dislocation creep laws
     # Calculate EpsII, using a set of pre-defined values
     CharDim = GEO_units(;
         length=1000km, viscosity=1e19Pa * s, stress=100MPa, temperature=1000C

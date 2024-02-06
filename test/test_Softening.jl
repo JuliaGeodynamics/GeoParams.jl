@@ -1,6 +1,6 @@
 using GeoParams, Test
 
-@testset "LinearSoftening" begin
+@testset "Softening" begin
 
     # Test NoSoftening
     soft = NoSoftening()

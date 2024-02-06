@@ -9,12 +9,13 @@ import GeoParams.NonLinearPeierls
 
     # Define a linear viscous creep law ---------------------------------
     x1 = NonLinearPeierlsCreep()
+    @test isbits(x1)
     @test Value(x1.n) == 2.0
     @test Value(x1.q) == 1.0
     @test Value(x1.o) == 0.5
     @test Value(x1.A) == 5.7e11MPa^(-2.0) * s^(-1.0)
 
-    # perform a computation with the peierls creep laws 
+    # perform a computation with the peierls creep laws
     # Calculate EpsII, using a set of pre-defined values
     CharDim = GEO_units(;
         length=1000.0km, viscosity=1.0e19Pa * s, stress=100.0MPa, temperature=1000.0C
