@@ -36,7 +36,7 @@ using GeoParams, Test
     args = (P=P, τII=τII)
 
     p = DruckerPrager()
-    @tests isbits(p)
+    @test isbits(p)
     @test compute_yieldfunction(p, args) ≈ 1.0839745962155614e7
     args = (P=P, τII=τII, EII=1e0)
 
