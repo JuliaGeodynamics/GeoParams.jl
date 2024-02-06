@@ -12,7 +12,6 @@ using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 import ..Units: isdimensional
 using ..MaterialParameters: No_MaterialParam, MaterialParamsInfo
 import Base.show, GeoParams.param_info
-using Adapt
 
 include("../Computations.jl")
 
