@@ -55,10 +55,10 @@ using Test, GeoParams, StaticArrays
     P = 1.0
     T = 1.0
     args = (P=P, T=T)
-
-    x = ConstantDensity()
-    num_alloc = @allocated compute_density!(rho, x, args)
-    # @show num_alloc
+    for i in 1:2
+        x = ConstantDensity()
+        num_alloc = @allocated compute_density!(rho, x, args)
+    end
     @test num_alloc == 0
 
     #Test allocations using ρ alias
