@@ -46,7 +46,7 @@ using GeoParams
         SetMaterialParams(; Name="Mantle", Phase=1, Plasticity=DruckerPrager()),
         SetMaterialParams(; Name="Crust", Phase=2, Plasticity=DruckerPrager(; ϕ=10)),
         SetMaterialParams(;
-            Name="Crust", Phase=3, HeatCapacity=ConstantHeatCapacity(; cp=1100J / kg / K)
+            Name="Crust", Phase=3, HeatCapacity=ConstantHeatCapacity(; Cp=1100J / kg / K)
         ),
     )
 
@@ -61,14 +61,14 @@ using GeoParams
     Pf = ones(size(Phases)) * 0.5e6
     F = zero(P)
     args = (P=P, τII=τII)
-    compute_yieldfunction!(F, MatParam, Phases, args)    # computation routine w/out P (not used in most heat capacity formulations)     
+    compute_yieldfunction!(F, MatParam, Phases, args)    # computation routine w/out P (not used in most heat capacity formulations)
     @test maximum(F[1, 1, :]) ≈ 839745.962155614
 
     args_f = (P=P, τII=τII, Pf=Pf)
     args_f1 = (Pf=Pf, τII=τII, P=P)
 
     Ff = zero(P)
-    compute_yieldfunction!(Ff, MatParam, Phases, args_f)    # computation routine w/out P (not used in most heat capacity formulations)     
+    compute_yieldfunction!(Ff, MatParam, Phases, args_f)    # computation routine w/out P (not used in most heat capacity formulations)
 
     # test if we provide phase ratios
     PhaseRatio = zeros(n, n, n, 3)
@@ -159,7 +159,7 @@ using GeoParams
     args = (τII_old=9.8001101017963, P=0.0, τII=9.8001101017963)
     F_old = compute_yieldfunction(c_pl.elements[3], args)
 
-    # 
+    #
     τ1, = local_iterations_εII(c_pl, εII, args; verbose=false, max_iter=10)
     τ2, = compute_τII(c_pl, εII, args; verbose=false)
     @test τ1 == τ2

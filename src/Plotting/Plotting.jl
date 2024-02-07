@@ -520,9 +520,9 @@ function PlotStressViscosity(
 end
 
 """
-    T,Cp,plt = PlotHeatCapacity(cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=nothing)
+    T,Cp,plt = PlotHeatCapacity(Cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=nothing)
 
-Creates a plot of temperature `T` vs. heat capacity, as specified in cp (which can be temperature-dependent).
+Creates a plot of temperature `T` vs. heat capacity, as specified in Cp (which can be temperature-dependent).
 
 # Optional parameters
 - T: temperature range
@@ -531,8 +531,8 @@ Creates a plot of temperature `T` vs. heat capacity, as specified in cp (which c
 
 # Example
 ```
-julia> cp = T_HeatCapacity_Whittacker()
-julia> T,Cp,plt = PlotHeatCapacity(cp)
+julia> Cp = T_HeatCapacity_Whittacker()
+julia> T,Cp,plt = PlotHeatCapacity(Cp)
 ```
 you can now save the figure to disk with:
 ```
@@ -541,16 +541,16 @@ julia> savefig(plt,"Tdependent_heatcapacity.png")
 ```
 
 """
-function PlotHeatCapacity(cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=nothing)
+function PlotHeatCapacity(Cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=nothing)
     if isnothing(T)
         T = collect(273.0:10:1250) * K
     end
 
     args = (; T=ustrip.(T))
-    Cp = zeros(size(T))
-    compute_heatcapacity!(Cp, cp, args)
+    Cp1 = zeros(size(T))
+    compute_heatcapacity!(Cp1, Cp, args)
     if length(Cp) == 1
-        Cp = ones(size(T)) * Cp
+        Cp1 = ones(size(T)) * Cp1
     end
 
     if isnothing(plt)
@@ -561,11 +561,11 @@ function PlotHeatCapacity(cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=
     plot!(plt; xlabel="Temperature [$(unit(T[1]))]", ylabel="Cp [$(unit(Cp[1]))]")
     gui(plt)
 
-    return T, Cp, plt
+    return T, Cp1, plt
 end
 
 """
-    T,Kk,plt = PlotConductivity(cp::AbstractConductivity; T=nothing, plt=nothing, lbl=nothing)
+    T,Kk,plt = PlotConductivity(Cp::AbstractConductivity; T=nothing, plt=nothing, lbl=nothing)
 
 Creates a plot of temperature `T` vs. thermal conductivity, as specified in `k` (which can be temperature-dependent).
 

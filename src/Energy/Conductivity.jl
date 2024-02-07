@@ -184,8 +184,8 @@ function (s::T_Conductivity_Whittington)(T::AbstractArray; kwargs...)
         end
         #  κ = κ*1e-6
 
-        cp = (a + b * T[i] - c / T[i]^2) * inv_molmass # conductivity
-        k[i] = κ * rho * cp       # compute conductivity from diffusivity
+        Cp = (a + b * T[i] - c / T[i]^2) * inv_molmass # conductivity
+        k[i] = κ * rho * Cp       # compute conductivity from diffusivity
     end
 
     return k

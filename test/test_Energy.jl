@@ -10,34 +10,34 @@ using StaticArrays
     # Heat capacity ---------
 
     # Constant heat capacity
-    cp1 = ConstantHeatCapacity()
-    info = param_info(cp1)
-    @test isbits(cp1)
-    @test cp1.cp.val == 1050.0
+    Cp1 = ConstantHeatCapacity()
+    info = param_info(Cp1)
+    @test isbits(Cp1)
+    @test Cp1.Cp.val == 1050.0
 
-    cp1_nd = cp1
-    cp1_nd = nondimensionalize(cp1_nd, CharUnits_GEO)
-    @test cp1_nd.cp.val ≈ 1.3368075000000002e22
-    @test compute_heatcapacity(cp1_nd) ≈ 1.3368075000000002e22  # compute
-    @test compute_heatcapacity(cp1_nd, (random_name=1,)) ≈ 1.3368075000000002e22  # compute
+    Cp1_nd = Cp1
+    Cp1_nd = nondimensionalize(Cp1_nd, CharUnits_GEO)
+    @test Cp1_nd.Cp.val ≈ 1.3368075000000002e22
+    @test compute_heatcapacity(Cp1_nd) ≈ 1.3368075000000002e22  # compute
+    @test compute_heatcapacity(Cp1_nd, (random_name=1,)) ≈ 1.3368075000000002e22  # compute
 
     # Temperature-dependent heat capacity
     # dimensional
     T = 250.0:100:1250
-    cp2 = T_HeatCapacity_Whittington()
+    Cp2 = T_HeatCapacity_Whittington()
     Cp = similar(T)
-    @test isbits(cp2)
+    @test isbits(Cp2)
     args = (; T=T)
-    compute_heatcapacity!(Cp, cp2, args)
+    compute_heatcapacity!(Cp, Cp2, args)
     @test sum(Cp) ≈ 11667.035717418683
 
     # nondimensional
-    cp2_nd = T_HeatCapacity_Whittington()
-    cp2_nd = nondimensionalize(cp2_nd, CharUnits_GEO)
+    Cp2_nd = T_HeatCapacity_Whittington()
+    Cp2_nd = nondimensionalize(Cp2_nd, CharUnits_GEO)
     T_nd = Float64.(T * K / CharUnits_GEO.Temperature)
     Cp_nd = similar(T)
     args = (; T=T_nd)
-    compute_heatcapacity!(Cp_nd, cp2_nd, args)
+    compute_heatcapacity!(Cp_nd, Cp2_nd, args)
     @test sum(Cp_nd) ≈ 1.4853886523631602e23
 
     # Dimensionalize again and double-check the results
@@ -46,16 +46,16 @@ using StaticArrays
     # Test with arrays
     T_array = T * ones(10)'
     Cp_array = similar(T_array)
-    compute_heatcapacity!(Cp_array, cp1, (;))
+    compute_heatcapacity!(Cp_array, Cp1, (;))
     @test Cp_array[1] ≈ 1050
 
     Cp_array = similar(T_array)
-    compute_heatcapacity!(Cp_array, cp2, (; T=T_array))
+    compute_heatcapacity!(Cp_array, Cp2, (; T=T_array))
     @test sum(Cp_array[i, 1] for i in axes(Cp_array,1)) ≈ 11667.035717418683
 
     T_array = T * ones(10)'
     Cp_array = zeros(size(T_array))
-    compute_heatcapacity!(Cp_array, cp2, (; T=T_array))
+    compute_heatcapacity!(Cp_array, Cp2, (; T=T_array))
     @test sum(Cp_array[i, 1] for i in axes(Cp_array,1)) ≈ 11667.035717418683
 
     # Check that it works if we give a phase array
@@ -73,7 +73,7 @@ using StaticArrays
     Mat_tup1 = (
         SetMaterialParams(; Name="Mantle", Phase=1, HeatCapacity=ConstantHeatCapacity()),
         SetMaterialParams(;
-            Name="Crust", Phase=2, HeatCapacity=ConstantHeatCapacity(; cp=1100J / kg / K)
+            Name="Crust", Phase=2, HeatCapacity=ConstantHeatCapacity(; Cp=1100J / kg / K)
         ),
     )
 
