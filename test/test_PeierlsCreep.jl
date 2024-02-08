@@ -9,11 +9,12 @@ import GeoParams.Peierls
 
     # Define a linear viscous creep law ---------------------------------
     x1 = PeierlsCreep()
+    @test isbits(x1)
     @test Value(x1.n) == 1.0
     @test Value(x1.q) == 2.0
     @test Value(x1.A) == 5.7e11s^(-1.0)
 
-    # perform a computation with the dislocation creep laws 
+    # perform a computation with the dislocation creep laws
     # Calculate EpsII, using a set of pre-defined values
     CharDim = GEO_units(;
         length=1000km, viscosity=1e19Pa * s, stress=100MPa, temperature=1000C

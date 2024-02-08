@@ -9,13 +9,14 @@ import GeoParams.Dislocation
 
     # Define a linear viscous creep law ---------------------------------
     x1 = DislocationCreep()
+    @test isbits(x1)
     @test x1.n.val == 1.0
     @test x1.A.val == 1.5
 
     x2 = DislocationCreep(; n=3)
     @test x2.A.val == 1.5
 
-    # perform a computation with the dislocation creep laws 
+    # perform a computation with the dislocation creep laws
     # Calculate EpsII, using a set of pre-defined values
     CharDim = GEO_units()
     EpsII = GeoUnit(0s^-1)
@@ -33,7 +34,7 @@ import GeoParams.Dislocation
         Name="Viscous Matrix",
         Phase=2,
         Density=ConstantDensity(),
-        CreepLaws=DislocationCreep(; n=3NoUnits, r=1NoUnits), 
+        CreepLaws=DislocationCreep(; n=3NoUnits, r=1NoUnits),
         CharDim=CharDim,
     )
     TauII = 1e6

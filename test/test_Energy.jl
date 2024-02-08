@@ -118,9 +118,11 @@ using StaticArrays
     x_D =Latent_HeatCapacity(Q_L=500kJ/kg)
     x_D1 =Latent_HeatCapacity(Cp=T_HeatCapacity_Whittington())
     x_ND = nondimensionalize(x_D, CharUnits_GEO)
+    @test isbits(x_D)
+    @test isbits(x_ND)
     @test isdimensional(x_D)==true
     @test isdimensional(x_ND)==false
-    
+
     dϕdT = 0.1
     args = (dϕdT=dϕdT, T=10)
     Cp = compute_heatcapacity(x_D, args)
@@ -490,7 +492,7 @@ using StaticArrays
 
      # 3D shear heating tests
      τ_3D = [
-        1e0 2e0 3e0 
+        1e0 2e0 3e0
         2e0 5e0 6e0
         3e0 6e0 9e0
     ]
@@ -511,7 +513,7 @@ using StaticArrays
     H_s8 = compute_shearheating(Χ, τ_3D_voigt, ε_3D_voigt)
     @test H_s5 ≈ H_s6 ≈ 16.83
     @test H_s7 ≈ H_s7 ≈ 17.2
-    
+
     phase = SA[0.5, 0.5] # static array
     H_s9  = compute_shearheating(rheology, phase, τ_3D, ε_3D, ε_el_3D)
     H_s10 = compute_shearheating(rheology, 1, τ_3D, ε_3D, ε_el_3D)

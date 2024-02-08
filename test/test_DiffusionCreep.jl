@@ -9,11 +9,12 @@ import GeoParams.Diffusion
 
     # Define a linear viscous creep law ---------------------------------
     x1 = DiffusionCreep()
+    @test isbits(x1)
     @test Value(x1.n) == 1.0
     @test Value(x1.p) == -3.0
     @test Value(x1.A) == 1.5MPa^-1 * s^-1 * m^3
 
-    # perform a computation with the dislocation creep laws 
+    # perform a computation with the dislocation creep laws
     # Calculate EpsII, using a set of pre-defined values
     CharDim = GEO_units(;
         length=1000km, viscosity=1e19Pa * s, stress=100MPa, temperature=1000C
@@ -70,7 +71,7 @@ import GeoParams.Diffusion
         m_gr0 = [3 0] #Grain size Exponent (will convert to negative)
         r_fug = [0 0] #Exponent of Fugacity
         Vact = [24 24] #Activation Volume cm-3
-        fugH = [1 1] #Fugacity of water MPa 
+        fugH = [1 1] #Fugacity of water MPa
 
         R = 8.3145 #Gas Constant
         MPa2Pa = 1e6   #MPa  -> Pa
@@ -99,7 +100,7 @@ import GeoParams.Diffusion
                 (R * J2kJ * TK * npow[i_flow]),
             )
         mu = mu1 .* MPa2Pa #In Pa.s
-        Tau = 2 * mu * eII     # stress 
+        Tau = 2 * mu * eII     # stress
 
         #---------------------------
 
@@ -152,7 +153,7 @@ import GeoParams.Diffusion
     # Do some basic checks on all creeplaws in the DB
     CharDim = GEO_units()
     creeplaw_list = diffusion_law_list()
-    
+
     for fun in creeplaw_list
         p = SetDiffusionCreep(fun)                    # original creep law
         p_nd = nondimensionalize(p, CharDim)          # non-dimensionalized

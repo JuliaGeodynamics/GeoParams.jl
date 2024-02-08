@@ -2,7 +2,7 @@ module Density
 
 # This implements different methods to compute density
 #
-# If you want to add a new method here, feel free to do so. 
+# If you want to add a new method here, feel free to do so.
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
 using Parameters, Unitful, LaTeXStrings
@@ -19,13 +19,13 @@ abstract type AbstractDensity{T} <: AbstractMaterialParam end
 
 export compute_density,     # calculation routines
     compute_density!,       # in place calculation
-    compute_density_ratio, 
+    compute_density_ratio,
     param_info,             # info about the parameters
     AbstractDensity,
     ConstantDensity,        # constant
     PT_Density,             # P & T dependent density
-    Compressible_Density,   # Compressible density 
-    T_Density,              # T dependent density   
+    Compressible_Density,   # Compressible density
+    T_Density,              # T dependent density
     MeltDependent_Density   # Melt dependent density
 
 # Define "empty" computational routines in case nothing is defined
@@ -41,9 +41,9 @@ end
 # Constant Density -------------------------------------------------------
 """
     ConstantDensity(ρ=2900kg/m^3)
-    
+
 Set a constant density:
-```math  
+```math
     \\rho  = cst
 ```
 where ``\\rho`` is the density [``kg/m^3``].
@@ -75,7 +75,7 @@ function compute_density!(rho::AbstractArray, s::ConstantDensity, args)
     return compute_density!(rho, s; args...)
 end
 
-# Print info 
+# Print info
 function show(io::IO, g::ConstantDensity)
     return print(io, "Constant density: ρ=$(UnitValue(g.ρ))")
 end
@@ -84,10 +84,10 @@ end
 # Pressure & Temperature dependent density -------------------------------
 """
     PT_Density(ρ0=2900kg/m^3, α=3e-5/K, β=1e-9/Pa, T0=0C, P=0MPa)
-    
+
 Set a pressure and temperature-dependent density:
-```math  
-    \\rho  = \\rho_0 (1.0 - \\alpha (T-T_0) + \\beta  (P-P_0) )  
+```math
+    \\rho  = \\rho_0 (1.0 - \\alpha (T-T_0) + \\beta  (P-P_0) )
 ```
 where ``\\rho_0`` is the density [``kg/m^3``] at reference temperature ``T_0`` and pressure ``P_0``,
 ``\\alpha`` is the temperature dependence of density and ``\\beta`` the pressure dependence.
@@ -108,7 +108,7 @@ function param_info(s::PT_Density) # info
     )
 end
 
-# Calculation routine 
+# Calculation routine
 @inline function (ρ::PT_Density)(; P::Number, T::Number, kwargs...)
     if T isa Quantity
         @unpack_units ρ0, α, β, P0, T0 = ρ
@@ -126,7 +126,7 @@ end
     s(; P=P, T=T)
 end
 
-# Print info 
+# Print info
 function show(io::IO, g::PT_Density)
     return print(
         io,
@@ -138,10 +138,10 @@ end
 # Pressure-dependent density -------------------------------
 """
     Compressible_Density(ρ0=2900kg/m^3, β=1e-9/Pa, P₀=0MPa)
-    
+
 Set a pressure-dependent density:
-```math  
-    \\rho  = \\rho_0 \\exp(β*(P - P\\_0))  
+```math
+    \\rho  = \\rho_0 \\exp(β*(P - P\\_0))
 ```
 where ``\\rho_0`` is the density [``kg/m^3``] at reference pressure ``P_0`` and ``\\beta`` the pressure dependence.
 """
@@ -170,7 +170,7 @@ end
 @inline (s::Compressible_Density)(args)                = s(; args...)
 @inline compute_density(s::Compressible_Density, args) = s(; args...)
 
-# Print info 
+# Print info
 function show(io::IO, g::Compressible_Density)
     return print(
         io,
@@ -182,10 +182,10 @@ end
 # Temperature-dependent density -------------------------------
 """
     T_Density(ρ0=2900kg/m^3, α=3e-5/K, T₀=273.15K)
-    
+
 Set a temperature-dependent density:
-```math  
-    \\rho  = \\rho_0 (1 - \\alpha * (T - T\\_0) )  
+```math
+    \\rho  = \\rho_0 (1 - \\alpha * (T - T\\_0) )
 ```
 where ``\\rho_0`` is the density [``kg/m^3``] at reference temperature ``T_0`` and ``\\alpha`` the temperature dependence.
 """
@@ -214,7 +214,7 @@ end
 @inline (s::T_Density)(args)                = s(; args...)
 @inline compute_density(s::T_Density, args) = s(; args...)
 
-# Print info 
+# Print info
 function show(io::IO, g::T_Density)
     return print(
         io,
@@ -226,20 +226,21 @@ end
 # Melt-dependent density -------------------------------------------------
 """
     MeltDependent_Density(ρsolid=ConstantDensity(), ρmelt=ConstantDensity())
-    
+
 If we use a single phase code the average density of a partially molten rock is
-```math  
+```math
     \\rho  = \\phi \\rho_{\\textrm{melt}} + (1-\\phi) \\rho_{\\textrm{solid}}
 ```
 where ``\\rho`` is the average density [``kg/m^3``], ``\\rho_{\textrm{melt}}`` the melt density, ``\\rho_{\textrm{solid}} `` the solid density and ``\\phi`` the melt fraction.
 
 Note that any density formulation can be used for melt and solid.
 """
-@with_kw_noshow struct MeltDependent_Density{_T,U} <: AbstractDensity{_T}
-    ρsolid::AbstractDensity{_T} = ConstantDensity(ρ=2900kg/m^3) # density of the solid
-    ρmelt::AbstractDensity{_T} = ConstantDensity(ρ=2200kg/m^3)  # density of the melt
+@with_kw_noshow struct MeltDependent_Density{_T,U, S1<:AbstractDensity, S2 <:AbstractDensity} <: AbstractDensity{_T}
+    ρsolid::S1 = ConstantDensity(ρ=2900kg/m^3) # density of the solid
+    ρmelt::S2 = ConstantDensity(ρ=2200kg/m^3)  # density of the melt
     ρ::GeoUnit{_T,U} = 2900.0kg / m^3                     # to keep track on whether this struct is dimensional or not
 end
+
 MeltDependent_Density(args...) = MeltDependent_Density(args[1], args[2], convert.(GeoUnit, args[3:end])...)
 isdimensional(s::MeltDependent_Density) = isdimensional(s.ρsolid)
 
@@ -266,7 +267,7 @@ end
 @inline (s::MeltDependent_Density)(args)                = s(; args...)
 @inline compute_density(s::MeltDependent_Density, args) = s(; args...)
 
-# Print info 
+# Print info
 function show(io::IO, g::MeltDependent_Density)
     return print(io, "Melt dependent density: ρ = (1-ϕ)*ρsolid + ϕ*ρmelt; ρsolid=$(g.ρsolid); ρmelt=$(g.ρmelt)")
 end
@@ -280,7 +281,7 @@ end
 
 """
     compute_density(P,T, s::PhaseDiagram_LookupTable)
-Interpolates density as a function of `T,P` from a lookup table  
+Interpolates density as a function of `T,P` from a lookup table
 """
 @inline function compute_density(s::PhaseDiagram_LookupTable; P, T, kwargs...)
     fn = s.Rho
@@ -290,12 +291,12 @@ end
 
 """
     compute_density!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
-In-place computation of density as a function of `T,P`, in case we are using a lookup table.    
+In-place computation of density as a function of `T,P`, in case we are using a lookup table.
 """
 # function compute_density!(rho::AbstractArray{_T}, s::PhaseDiagram_LookupTable; P::AbstractArray{_T}=[zero(_T)],T::AbstractArray{_T}=[zero(_T)], kwargs...) where _T end
 
 #------------------------------------------------------------------------------------------------------------------#
-# Computational routines needed for computations with the MaterialParams structure 
+# Computational routines needed for computations with the MaterialParams structure
 function compute_density(s::AbstractMaterialParamsStruct, args)
     return compute_density(s.Density[1], args)
 end
@@ -303,7 +304,7 @@ end
 
 """
     compute_density!(rho::AbstractArray{_T, ndim}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phases::AbstractArray{_I, ndim}; P=nothing, T=nothing) where {ndim,N,_T,_I<:Integer}
-    
+
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `Phase` of every point is specified as an Integer in the `Phases` array.
 # Example
@@ -339,7 +340,7 @@ julia> rho
  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
-    ⋮                                            ⋮                                         ⋱     ⋮                                       ⋮                            
+    ⋮                                            ⋮                                         ⋱     ⋮                                       ⋮
  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
@@ -360,8 +361,8 @@ julia> using BenchmarkTools
 julia> @btime compute_density!(\$rho, \$MatParam, \$Phases, P=\$P, T=\$T)
     203.468 μs (0 allocations: 0 bytes)
 ```
-_____________________________________________________________________________________________________________________________   
-    
+_____________________________________________________________________________________________________________________________
+
     compute_density!(rho::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}, PhaseRatios::AbstractArray{_T, M}, P=nothing, T=nothing)
 
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
