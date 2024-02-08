@@ -63,7 +63,7 @@ Sets a temperature-dependent heat capacity following the parameterization of Whi
     Cp = (a + b T - c/T^2)/m
 ```
 
-where ``Cp`` is the heat capacity [``J/kg/K``], and ``a,b,c`` are parameters that dependent on the temperature `T`:
+where ``Cp`` is the heat capacity [``J/kg/K``], and ``a,b,c`` are parameters that dependent on the temperature ``T`` [``K``]:
 - a = 199.50 J/mol/K    if T<= 846 K
 - a = 199.50 J/mol/K    if T> 846 K
 - b = 0.0857J/mol/K^2   if T<= 846 K
