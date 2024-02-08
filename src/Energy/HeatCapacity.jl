@@ -146,6 +146,7 @@ end
 @inline function compute_heatcapacity(
     a::Latent_HeatCapacity{_T}; 
     dϕdT = zero(_T),
+    kwargs...
 ) where _T
     @unpack_val Q_L = a
 
