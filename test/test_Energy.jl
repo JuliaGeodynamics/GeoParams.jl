@@ -117,16 +117,31 @@ using StaticArrays
     CharUnits_GEO = GEO_units(; viscosity=1e19, length=10km)
     x_D =Latent_HeatCapacity(Q_L=500kJ/kg)
     x_D1 =Latent_HeatCapacity(Cp=T_HeatCapacity_Whittington())
+    x_D2 =Latent_HeatCapacity(Cp=ConstantHeatCapacity())
     x_ND = nondimensionalize(x_D, CharUnits_GEO)
+    x_ND1 = nondimensionalize(x_D1, CharUnits_GEO)
+    x_ND2 = nondimensionalize(x_D2, CharUnits_GEO)
+
     @test isbits(x_D)
+    @test isbits(x_D1)
+    @test isbits(x_D2)
     @test isbits(x_ND)
     @test isdimensional(x_D)==true
+    @test isdimensional(x_D1)==true
+    @test isdimensional(x_D2)==true
     @test isdimensional(x_ND)==false
+    @test isdimensional(x_ND1)==false
+    @test isdimensional(x_ND2)==false
 
     dϕdT = 0.1
     args = (dϕdT=dϕdT, T=10)
     Cp = compute_heatcapacity(x_D, args)
+    Cp1 = compute_heatcapacity(x_D1, args)
+    Cp2 = compute_heatcapacity(x_D2, args)
+    Cp_nd = compute_heatcapacity(x_ND, args)
+    Cp_nd = ustrip.(Cp_nd * CharUnits_GEO.heatcapacity)
     @test Cp == 1100.0
+    @test Cp == Cp_nd
 
     # -----------------------
 
