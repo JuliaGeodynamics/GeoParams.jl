@@ -164,28 +164,7 @@ function add_extractor_functions(::Type{_T}, param_field) where _T
             $fun(a::$_T) = a.$(f).val
             if $checker
                 $fun(a::AbstractMaterialParamsStruct) = isempty(a.$(param_field)) ? 0.0 : $(fun)(a.$(param_field)[1])
-                # $fun(a::NTuple{N, AbstractMaterialParamsStruct}, phase) where N = nphase($(fun), phase, a)
-            end
-        end
-    end
-end
-
-
-function add_extractor_functions(types::NTuple{N, Any}, param_field) where N
-    for i in 1:N
-        _T = typeof(types[i])
-        fields = fieldnames(_T)
-        for f in fields
-            fun = Symbol("get_$(string(f))")
-            @eval GeoParams begin 
-                $fun(a::$_T) = a.$(f).val
-            end
-
-            if i == 1
-                @eval GeoParams begin 
-                    $fun(a::AbstractMaterialParamsStruct) = isempty(a.$(param_field)) ? 0.0 : $(fun)(a.$(param_field)[1])
-                    $fun(a::NTuple{N, AbstractMaterialParamsStruct}, phase) where N = nphase($(fun), phase, a)
-                end
+                $fun(a::NTuple{N, AbstractMaterialParamsStruct}, phase) where N = nphase($(fun), phase, a)
             end
         end
     end
