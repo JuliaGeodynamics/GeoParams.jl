@@ -8,7 +8,7 @@ module Density
 using Parameters, Unitful, LaTeXStrings
 using ..Units
 using ..PhaseDiagrams
-using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, @extractors, add_extractor_functions
 import ..Units: isdimensional
 using ..MaterialParameters: No_MaterialParam, MaterialParamsInfo
 import Base.show, GeoParams.param_info
@@ -371,5 +371,10 @@ This assumes that the `PhaseRatio` of every point is specified as an Integer in 
 @inline compute_density!(args::Vararg{Any, N})      where N = compute_param!(compute_density, args...) #Multiple dispatch to rest of routines found in Computations.jl
 @inline compute_density(args::Vararg{Any, N})       where N = compute_param(compute_density, args...)
 @inline compute_density_ratio(args::Vararg{Any, N}) where N = compute_param_times_frac(compute_density, args...)
+
+# extractor methods
+for type in (ConstantDensity, PT_Density, Compressible_Density, T_Density, MeltDependent_Density)
+    @extractors(type, :Density)
+end
 
 end
