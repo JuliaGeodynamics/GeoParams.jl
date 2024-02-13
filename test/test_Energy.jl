@@ -278,7 +278,7 @@ using StaticArrays
     a = ConstantLatentHeat()
     Q_L = compute_latent_heat(a)
     @test isbits(a)
-    @test Q_L == 400
+    @test Q_L == 400e3
 
     a = nondimensionalize(a, CharUnits_GEO)
     Q_L = compute_latent_heat(a)
@@ -312,11 +312,11 @@ using StaticArrays
 
     compute_latent_heat!(Hl, Mat_tup, Phases, args)
     @test minimum(Hl) ≈ 0.0
-    @test maximum(Hl) ≈ 400
+    @test maximum(Hl) ≈ 400e3
     @test Hl[50, 50, 50] ≈ 153.0
 
     compute_latent_heat!(Hl, Mat_tup, PhaseRatio, args)
-    @test sum(Hl) ≈ 1.372e8
+    @test sum(Hl) ≈ 7.60612e10
 
     # -----------------------
 
