@@ -10,10 +10,11 @@ using StaticArrays
     # Heat capacity ---------
 
     # Constant heat capacity
-    Cp1 = ConstantHeatCapacity()
-    info = param_info(Cp1)
-    @test isbits(Cp1)
-    @test Cp1.Cp.val == 1050.0
+    cp1 = ConstantHeatCapacity()
+    info = param_info(cp1)
+    @test isbits(cp1)
+    @test cp1.cp.val == 1050.0
+    @test GeoParams.get_cp(cp1) ==  1050.0
 
     Cp1_nd = Cp1
     Cp1_nd = nondimensionalize(Cp1_nd, CharUnits_GEO)
@@ -30,6 +31,7 @@ using StaticArrays
     args = (; T=T)
     compute_heatcapacity!(Cp, Cp2, args)
     @test sum(Cp) ≈ 11667.035717418683
+    @test GeoParams.get_Tcutoff(cp2) ==  846.0
 
     # nondimensional
     Cp2_nd = T_HeatCapacity_Whittington()
@@ -154,6 +156,7 @@ using StaticArrays
     @test isbits(cond)
     @test NumValue(cond.k) == 3.0
     @test cond.k.unit == u"W" / K / m
+    @test GeoParams.get_k(cond) ==  3.0
 
     cond = nondimensionalize(cond, CharUnits_GEO)
     @test NumValue(cond.k) ≈ 3.8194500000000007

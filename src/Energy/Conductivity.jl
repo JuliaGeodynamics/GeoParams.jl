@@ -7,7 +7,7 @@ module Conductivity
 
 using Parameters, LaTeXStrings, Unitful
 using ..Units
-using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, @extractors, add_extractor_functions
 using ..MaterialParameters: MaterialParamsInfo
 import Base.show, GeoParams.param_info
 
@@ -549,5 +549,10 @@ This assumes that the `PhaseRatio` of every point is specified as an Integer in 
 """
 compute_conductivity(args::Vararg{Any, N}) where N = compute_param(compute_conductivity, args...)
 compute_conductivity!(args::Vararg{Any, N}) where N = compute_param!(compute_conductivity, args...)
+
+# extractor methods
+for type in (ConstantConductivity, T_Conductivity_Whittington, T_Conductivity_Whittington_parameterised, TP_Conductivity)
+    @extractors(type, :Conductivity)
+end
 
 end
