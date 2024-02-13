@@ -94,7 +94,7 @@ end
 
 # Calculation routine
 @inline function compute_heatcapacity(
-    a::T_HeatCapacity_Whittington{_T}; 
+    a::T_HeatCapacity_Whittington{_T};
     T = zero(_T),
     kwargs...
 ) where _T
@@ -144,7 +144,7 @@ end
 
 # Calculation routine
 @inline function compute_heatcapacity(
-    a::Latent_HeatCapacity{_T}; 
+    a::Latent_HeatCapacity{_T};
     dϕdT = zero(_T),
     kwargs...
 ) where _T
@@ -208,25 +208,28 @@ Returns the heat capacity `Cp` at any temperature `T` and pressure `P` using any
 Currently available:
 - ConstantHeatCapacity
 - T\\_HeatCapacity_Whittington
+- Latent_HeatCapacity
 
 # Example
 Using dimensional units
 ```julia
-julia> T  = (250:100:1250)*K;
-julia> Cp = T_HeatCapacity_Whittington()
-julia> Cp = ComputeHeatCapacity(0,T,Cp)
-11-element Vector{Unitful.Quantity{Float64, 𝐋² 𝚯⁻¹ 𝐓⁻², Unitful.FreeUnits{(kg⁻¹, J, K⁻¹), 𝐋² 𝚯⁻¹ 𝐓⁻², nothing}}}:
-  635.4269997294616 J kg⁻¹ K⁻¹
-  850.7470171764261 J kg⁻¹ K⁻¹
-  962.0959598489883 J kg⁻¹ K⁻¹
- 1037.5420433770641 J kg⁻¹ K⁻¹
- 1097.3517921966488 J kg⁻¹ K⁻¹
- 1149.2745563671706 J kg⁻¹ K⁻¹
- 1157.7915050948404 J kg⁻¹ K⁻¹
- 1172.3554874197264 J kg⁻¹ K⁻¹
- 1186.9194697445964 J kg⁻¹ K⁻¹
-  1201.483452069455 J kg⁻¹ K⁻¹
- 1216.0474343943067 J kg⁻¹ K⁻¹
+julia> T = 250.0:100:1250
+julia> Cp2 = T_HeatCapacity_Whittington()
+julia> Cp = similar(T)
+julia> args = (; T=T)
+julia> Cp =compute_heatcapacity!(Cp, Cp2, args)
+11-element Vector nitful.Quantity{Float64, 𝐋² 𝚯⁻¹ 𝐓⁻², Unitful.FreeUnits{(kg⁻¹, J, K⁻¹), 𝐋² 𝚯⁻¹ 𝐓⁻², nothing}}}:
+635.4269997294616 J kg⁻¹ K⁻¹
+850.7470171764261 J kg⁻¹ K⁻¹
+962.0959598489883 J kg⁻¹ K⁻¹
+1037.542043377064 J kg⁻¹ K⁻¹
+1097.351792196648 J kg⁻¹ K⁻¹
+1149.274556367170 J kg⁻¹ K⁻¹
+1157.791505094840 J kg⁻¹ K⁻¹
+1172.355487419726 J kg⁻¹ K⁻¹
+1186.919469744596 J kg⁻¹ K⁻¹
+1201.483452069455 J kg⁻¹ K⁻¹
+1216.0474343943067 J kg⁻¹ K⁻¹
 ```
 
 
