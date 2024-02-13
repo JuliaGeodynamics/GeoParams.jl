@@ -106,9 +106,19 @@ using Test, GeoParams, StaticArrays
         Phase=1,
         Density=ConstantDensity(; ρ=2900kg / m^3),
     )
-    R = (r,r)
     @test GeoParams.get_ρ(r) == 2900
+    
+    R = (
+        r,
+        SetMaterialParams(;
+            Name="Crust",
+            Phase=2,
+            Density=ConstantDensity(; ρ=2700kg / m^3),
+        )
+    )
     @test GeoParams.get_ρ(R, 1) == 2900
+    @test GeoParams.get_ρ(R, 2) == 2700
+    @test GeoParams.get_ρ(R, SA[0.5, 0.5]) == 2800
 
     # Do the same but non-dimensionalize the result
     CharDim = GEO_units()
