@@ -417,7 +417,7 @@ function anelastic_correction(water::Int64, Vs0::Float64, Pref::Float64, Tref::F
 
     B =
         B0 *
-        @pow(dref, G - Gref) *
+        fastpow(dref, G - Gref) *
         (COH / COHref)^r *
         exp((fma(Pref, V, E) - fma(Pref, Vref, Eref)) / (R * Tref))
 
