@@ -7,7 +7,7 @@ module HeatCapacity
 
 using Parameters, LaTeXStrings, Unitful
 using ..Units
-using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, @extractors, add_extractor_functions
 import Base.show, GeoParams.param_info
 import ..Units: isdimensional
 using ..MaterialParameters: MaterialParamsInfo

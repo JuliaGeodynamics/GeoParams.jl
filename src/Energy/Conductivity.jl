@@ -7,7 +7,7 @@ module Conductivity
 
 using Parameters, LaTeXStrings, Unitful
 using ..Units
-using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, @extractors, add_extractor_functions
 using ..MaterialParameters: MaterialParamsInfo
 import Base.show, GeoParams.param_info
 

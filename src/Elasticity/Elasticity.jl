@@ -103,7 +103,7 @@ end
 # end
 
 # extractor methods
-@extractors(SetConstantElasticity, :Elasticity)
+@extractors(ConstantElasticity, :Elasticity)
 
 # Calculation routines
 """
