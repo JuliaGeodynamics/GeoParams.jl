@@ -53,8 +53,8 @@ struct NonLinearPeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         q=1.0NoUnits,
         o=0.5NoUnits,
         TauP=8.5e9Pa,
-        A=5.7e11MPa^(-2) * s^(-1),
-        E=476.0kJ / mol,
+        A=0.57Pa^(-2) * s^(-1),
+        E=476e3J / mol,
         R=8.3145J / mol / K,
         Apparatus=AxialCompression,
     )

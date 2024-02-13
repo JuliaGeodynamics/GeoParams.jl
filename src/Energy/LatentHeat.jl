@@ -22,6 +22,7 @@ export compute_latent_heat,                  # calculation routines
     
 include("../Computations.jl")
 
+
 # Constant  -------------------------------------------------------
 """
     ConstantLatentHeat(Q_L=400kJ/kg)
@@ -30,10 +31,10 @@ Set a constant latent heat:
 ```math  
     Q_L  = cst
 ```
-where ``Q_L`` is the latent heat [``kJ/kg``].
+where ``Q_L`` is the latent heat [``J/kg``].
 """
 @with_kw_noshow struct ConstantLatentHeat{T,U} <: AbstractLatentHeat{T}
-    Q_L::GeoUnit{T,U} = 400kJ / kg                # Latent heat
+    Q_L::GeoUnit{T,U} = 400e3J / kg                # Latent heat
 end
 ConstantLatentHeat(args...) = ConstantLatentHeat(convert.(GeoUnit, args)...)
 
