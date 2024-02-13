@@ -550,4 +550,9 @@ This assumes that the `PhaseRatio` of every point is specified as an Integer in 
 compute_conductivity(args::Vararg{Any, N}) where N = compute_param(compute_conductivity, args...)
 compute_conductivity!(args::Vararg{Any, N}) where N = compute_param!(compute_conductivity, args...)
 
+# extractor methods
+for type in (ConstantConductivity, T_Conductivity_Whittington, T_Conductivity_Whittington_parameterised, TP_Conductivity)
+    @extractors(type, :Conductivity)
+end
+
 end

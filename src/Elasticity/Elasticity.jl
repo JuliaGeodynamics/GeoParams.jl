@@ -26,7 +26,6 @@ export compute_εII,            # calculation routines
     get_Kb
 
 # ConstantElasticity  -------------------------------------------------------
-
 """
     ConstantElasticity(G, ν, K, E)
 
@@ -94,14 +93,17 @@ end
 @inline iselastic(v::AbstractElasticity) = true
 @inline iselastic(v) = false
 
-for modulus in (:G, :Kb)
-    fun = Symbol("get_$(string(modulus))")
-    @eval begin
-        @inline $(fun)(a::ConstantElasticity) = a.$(modulus).val
-        @inline $(fun)(a::AbstractMaterialParamsStruct) = isempty(a.Elasticity) ? Inf : $(fun)(a.Elasticity[1])
-        @inline $(fun)(a::NTuple{N, AbstractMaterialParamsStruct}, phase) where N = nphase($(fun), phase, a)
-    end
-end
+# for modulus in (:G, :Kb)
+#     fun = Symbol("get_$(string(modulus))")
+#     @eval begin
+#         @inline $(fun)(a::ConstantElasticity) = a.$(modulus).val
+#         @inline $(fun)(a::AbstractMaterialParamsStruct) = isempty(a.Elasticity) ? Inf : $(fun)(a.Elasticity[1])
+#         @inline $(fun)(a::NTuple{N, AbstractMaterialParamsStruct}, phase) where N = nphase($(fun), phase, a)
+#     end
+# end
+
+# extractor methods
+@extractors(SetConstantElasticity, :Elasticity)
 
 # Calculation routines
 """

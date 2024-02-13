@@ -263,7 +263,6 @@ compute_heatcapacity!()
 compute_heatcapacity(args::Vararg{Any, N}) where N = compute_param(compute_heatcapacity, args...)
 compute_heatcapacity!(args::Vararg{Any, N}) where N = compute_param!(compute_heatcapacity, args...)
 
-
 # In case just temperature is provided
 #=
 function compute_heatcapacity!(
@@ -275,5 +274,10 @@ function compute_heatcapacity!(
     return compute_param!(compute_heatcapacity, Cp, MatParam, Phases, nothing, T)
 end
 =#
+
+# extractor methods
+for type in (ConstantHeatCapacity, T_HeatCapacity_Whittington, Latent_HeatCapacity)
+    @extractors(type, :HeatCapacity)
+end
 
 end
