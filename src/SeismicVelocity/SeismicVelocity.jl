@@ -45,8 +45,8 @@ Set a constant seismic P and S-wave velocity:
 where ``V_p, V_s`` are the P-wave and S-wave velocities [``km/s``].
 """
 @with_kw_noshow struct ConstantSeismicVelocity{T,U} <: AbstractSeismicVelocity{T}
-    Vp::GeoUnit{T,U} = 8.1km / s               # P-wave velocity
-    Vs::GeoUnit{T,U} = 4.5km / s               # S-wave velocity
+    Vp::GeoUnit{T,U} = 8.1e3m / s               # P-wave velocity
+    Vs::GeoUnit{T,U} = 4.5e3m / s               # S-wave velocity
 end
 ConstantSeismicVelocity(args...) = ConstantSeismicVelocity(convert.(GeoUnit, args)...)
 
@@ -384,13 +384,13 @@ function anelastic_correction(water::Int64, Vs0::Float64, Pref::Float64, Tref::F
 
     # values based on fitting experimental constraints (Behn et al., 2009)
     α = 0.27
-    B0 = 1.28e8               # m/s
-    dref = 1.24e-5              # m
-    COHref = 50.0 * 1e-6             # 50H/1e6Si
+    B0 = 1.28e8          # m/s
+    dref = 1.24e-5       # m
+    COHref = 50.0 * 1e-6 # 50H/1e6Si
 
     Gref = 1.09
-    Eref = 505.0e3              # J/mol
-    Vref = 1.2e-5               # m3*mol
+    Eref = 505.0e3 # J/mol
+    Vref = 1.2e-5  # m3*mol
 
     G = 1
     E = 420.0e3              # J/mol (activation energy)
@@ -401,14 +401,14 @@ function anelastic_correction(water::Int64, Vs0::Float64, Pref::Float64, Tref::F
     d = 1e-2                 # m (grain size)
 
     if water == 0
-        COH = 50.0 * 1e-6     # for dry mantle
-        r = 0              # for dry mantle
+        COH = 50.0 * 1e-6   # for dry mantle
+        r = 0               # for dry mantle
     elseif water == 1
-        COH = 1000.0 * 1e-6   # for damp mantle    
-        r = 1              # for damp mantle
+        COH = 1000.0 * 1e-6 # for damp mantle    
+        r = 1               # for damp mantle
     elseif water == 2
-        COH = 3000.0 * 1e-6   # for wet mantle (saturated water)
-        r = 2              # for wet mantle
+        COH = 3000.0 * 1e-6 # for wet mantle (saturated water)
+        r = 2               # for wet mantle
     else
         print(
             "water mode is not implemented. Valid values are 0 (dry),1 (dampened) and 2 (wet)",

@@ -12,7 +12,7 @@ import GeoParams.Diffusion
     @test isbits(x1)
     @test Value(x1.n) == 1.0
     @test Value(x1.p) == -3.0
-    @test Value(x1.A) == 1.5MPa^-1 * s^-1 * m^3
+    @test Value(x1.A) == 1.5e6Pa^-1 * s^-1 * m^3
 
     # perform a computation with the dislocation creep laws
     # Calculate EpsII, using a set of pre-defined values

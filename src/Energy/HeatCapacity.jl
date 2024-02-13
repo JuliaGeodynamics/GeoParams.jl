@@ -127,12 +127,12 @@ with
 ```math
 C_p^{\\textrm{new}}  = C_p + \\frac{\\partial \\phi}{\\partial T} Q_L
 ```
-where ``Q_L`` is the latent heat [``kJ/kg``], and ``\\frac{\\partial \\phi}{\\partial T}`` is the derivative of the melt fraction with respect to temperature
+where ``Q_L`` is the latent heat [``J/kg``], and ``\\frac{\\partial \\phi}{\\partial T}`` is the derivative of the melt fraction with respect to temperature
 
 """
 @with_kw_noshow struct Latent_HeatCapacity{T,U,S1<:AbstractHeatCapacity} <: AbstractHeatCapacity{T}
     Cp::S1 = ConstantHeatCapacity()
-    Q_L::GeoUnit{T,U} = 400kJ/kg                            # Latent heat
+    Q_L::GeoUnit{T,U} = 400e3J/kg                            # Latent heat
 end
 Latent_HeatCapacity(args...) = Latent_HeatCapacity(args[1], convert.(GeoUnit, args[2:end])...)
 Latent_HeatCapacity(Cp::AbstractHeatCapacity, args...) = Latent_HeatCapacity(Cp, convert.(GeoUnit, args)...)
@@ -265,18 +265,6 @@ compute_heatcapacity!()
 
 compute_heatcapacity(args::Vararg{Any, N}) where N = compute_param(compute_heatcapacity, args...)
 compute_heatcapacity!(args::Vararg{Any, N}) where N = compute_param!(compute_heatcapacity, args...)
-
-# In case just temperature is provided
-#=
-function compute_heatcapacity!(
-    Cp::AbstractArray{_T,ndim},
-    MatParam::NTuple{N,AbstractMaterialParamsStruct},
-    Phases::AbstractArray{_I,ndim},
-    T::AbstractArray{_T,ndim},
-) where {_T,ndim,N,_I<:Integer}
-    return compute_param!(compute_heatcapacity, Cp, MatParam, Phases, nothing, T)
-end
-=#
 
 # extractor methods
 for type in (ConstantHeatCapacity, T_HeatCapacity_Whittington, Latent_HeatCapacity)

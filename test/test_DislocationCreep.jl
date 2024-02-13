@@ -11,10 +11,10 @@ import GeoParams.Dislocation
     x1 = DislocationCreep()
     @test isbits(x1)
     @test x1.n.val == 1.0
-    @test x1.A.val == 1.5
+    @test x1.A.val == 1.5e6
 
     x2 = DislocationCreep(; n=3)
-    @test x2.A.val == 1.5
+    @test x2.A.val == 1.5e6
 
     # perform a computation with the dislocation creep laws
     # Calculate EpsII, using a set of pre-defined values
@@ -52,15 +52,15 @@ import GeoParams.Dislocation
     @test ε_notensor ≈ 4.612967949163285e-14 / s
 
     # test with arrays
-    τII_array = ones(10) * 1e6
+    τII_array = ones(10) * 1e9
     ε_array = similar(τII_array)
-    T_array = ones(size(τII_array)) * (500)
+    T_array = ones(size(τII_array)) * (500+273)
 
     args_array = (; T=T_array, P=100.0, f=5e7)
 
     compute_εII!(ε_array, x1, τII_array, args_array)
-    @test ε_array[1] ≈ 2.0065790455204593e6
-
+    @test ε_array[1] ≈ 1.5408816790109496e-17
+    
     # EXERCISE 6.1 of the Gerya textbook (as implemented in the matlab exercise)
     Ad = 2.5e-17Pa^-3.5 * s^-1
     n = 3.5NoUnits
