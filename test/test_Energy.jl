@@ -117,7 +117,7 @@ using StaticArrays
 
     # Test latent heat based heat capacity
     CharUnits_GEO = GEO_units(; viscosity=1e19, length=10km)
-    x_D =Latent_HeatCapacity(Q_L=400e3*J/kg)
+    x_D =Latent_HeatCapacity(Q_L=500e3*J/kg)
     x_D1 =Latent_HeatCapacity(Cp=T_HeatCapacity_Whittington())
     x_D2 =Latent_HeatCapacity(Cp=ConstantHeatCapacity())
     x_ND = nondimensionalize(x_D, CharUnits_GEO)
@@ -140,13 +140,10 @@ using StaticArrays
     args = (; dϕdT=dϕdT, T=300.0+273)
     args_ND = (; dϕdT=dϕdT_ND, T=300.0+273)
 
-    x_D =Latent_HeatCapacity(Q_L=500e3 *J/kg)
     @test compute_heatcapacity(x_D, args) == 1050 + 500e3*dϕdT
 
-    x_D1 =Latent_HeatCapacity(Cp=T_HeatCapacity_Whittington(), Q_L=400e3*J/kg)
     @test compute_heatcapacity(x_D1, args) == 41052.29268922852
 
-    x_D2 =Latent_HeatCapacity(Cp=ConstantHeatCapacity(), Q_L=400e3*J/kg)
     @test compute_heatcapacity(x_D2, args) == 1050 + 400e3*dϕdT
 
     x_ND = nondimensionalize(x_D, CharUnits_GEO)
