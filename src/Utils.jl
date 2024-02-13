@@ -1,3 +1,5 @@
+using StaticArrays
+
 # Various helper functions (mostly for internal use)
 
 # Finds index in an allocation-free manner
