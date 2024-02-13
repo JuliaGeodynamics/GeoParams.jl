@@ -29,6 +29,7 @@ using Test, GeoParams, StaticArrays
     # Define a linear viscous creep law
     x1 = ConstantDensity(; ρ=2900kg / m^3)
     @test x1.ρ.val == 2900
+    @test GeoParams.get_ρ(x1) == 2900
 
     x1 = nondimensionalize(x1, CharUnits_GEO)
     @test x1.ρ.val ≈ 2.9e-16
@@ -36,6 +37,8 @@ using Test, GeoParams, StaticArrays
     x2 = PT_Density()
     @test x2.α.val == 3e-5
     @test x2.ρ0.val == 2900.0
+    @test GeoParams.get_α(x2) == 3e-5
+    @test GeoParams.get_ρ0(x2) == 2900
 
     x2 = nondimensionalize(x2, CharUnits_GEO)
     @test x2.T0.val ≈ 0.21454659702313156
@@ -77,6 +80,9 @@ using Test, GeoParams, StaticArrays
     # This does NOT allocate if I test this with @btime;
     #   yet it does while running the test here
     x = Compressible_Density()
+    @test GeoParams.get_P0(x) == x.P0.val
+    @test GeoParams.get_β(x) == x.β.val
+    @test GeoParams.get_ρ0(x) == x.ρ0.val
     compute_density!(rho, x, args)
     num_alloc = @allocated compute_density!(rho, x, args)
     # @show num_alloc
@@ -93,6 +99,16 @@ using Test, GeoParams, StaticArrays
     args = (P=1e7, T=1500.0)
     @test compute_density(PD_data, args) ≈ 3054.8671154189938 # named tuple syntax
     @test compute_density(PD_data; P=1e7, T=1500.0) ≈ 3054.8671154189938 # optional parameter syntax
+
+    #  test extractors for more complex data strutcs
+    r = SetMaterialParams(;
+        Name="Crust",
+        Phase=1,
+        Density=ConstantDensity(; ρ=2900kg / m^3),
+    )
+    R = (r,r)
+    @test GeoParams.get_ρ(r) == 2900
+    @test GeoParams.get_ρ(R, 1) == 2900
 
     # Do the same but non-dimensionalize the result
     CharDim = GEO_units()

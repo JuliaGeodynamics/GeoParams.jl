@@ -148,3 +148,24 @@ end
     df =  f(ForwardDiff.Dual{T}(x, one(x)), )     
     return df.value, ForwardDiff.extract_derivative(T, df) 
 end
+
+macro extractors(type, field)
+    esc(quote
+        add_extractor_functions($type, $field)
+    end)
+end
+
+function add_extractor_functions(::Type{_T}, param_field) where _T
+    fields = fieldnames(_T)
+    for f in fields
+        fun = Symbol("get_$(string(f))")
+        checker = !isdefined(GeoParams, fun)
+        @eval GeoParams begin 
+            $fun(a::$_T) = a.$(f).val
+            if $checker
+                $fun(a::AbstractMaterialParamsStruct) = isempty(a.$(param_field)) ? 0.0 : $(fun)(a.$(param_field)[1])
+                $fun(a::NTuple{N, AbstractMaterialParamsStruct}, phase) where N = nphase($(fun), phase, a)
+            end
+        end
+    end
+end

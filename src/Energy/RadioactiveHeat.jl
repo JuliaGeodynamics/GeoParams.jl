@@ -5,7 +5,7 @@ module RadioactiveHeat
 
 using Parameters, LaTeXStrings, Unitful
 using ..Units
-using GeoParams: AbstractMaterialParam
+using GeoParams: AbstractMaterialParam, @extractors, add_extractor_functions
 using ..MaterialParameters: MaterialParamsInfo
 import Base.show, GeoParams.param_info
 
@@ -165,5 +165,10 @@ end
 
 compute_radioactive_heat(args::Vararg{Any, N}) where N = compute_param(compute_radioactive_heat, args...)
 compute_radioactive_heat!(args::Vararg{Any, N}) where N = compute_param!(compute_radioactive_heat, args...)
+
+# extractor methods
+for type in (ConstantRadioactiveHeat, ExpDepthDependentRadioactiveHeat)
+    @extractors(type, :RadioactiveHeat)
+end
 
 end
