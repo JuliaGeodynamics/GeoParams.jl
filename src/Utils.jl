@@ -98,7 +98,7 @@ end
     end
 end
 
-@generated function nphase_ratio(f::F, phase_ratio::NTuple{N,T}, v::NTuple{N,AbstractMaterialParamsStruct}) where {N,F,T}
+@generated function nphase_ratio(f::F, phase_ratio::Union{SVector{N,T}, NTuple{N,T}}, v::NTuple{N,AbstractMaterialParamsStruct}) where {N,F,T}
     Base.@_inline_meta
     quote
         val = 0.0
@@ -164,7 +164,8 @@ function add_extractor_functions(::Type{_T}, param_field) where _T
             $fun(a::$_T) = a.$(f).val
             if $checker
                 $fun(a::AbstractMaterialParamsStruct) = isempty(a.$(param_field)) ? 0.0 : $(fun)(a.$(param_field)[1])
-                $fun(a::NTuple{N, AbstractMaterialParamsStruct}, phase) where N = nphase($(fun), phase, a)
+                $fun(a::NTuple{N, AbstractMaterialParamsStruct}, phase::Integer) where N = nphase($(fun), phase, a)
+                $fun(a::NTuple{N, AbstractMaterialParamsStruct}, phase::Union{SVector, Tuple}) where N = nphase_ratio($(fun), phase, a)
             end
         end
     end
