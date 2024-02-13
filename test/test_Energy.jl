@@ -14,6 +14,7 @@ using StaticArrays
     info = param_info(cp1)
     @test isbits(cp1)
     @test cp1.cp.val == 1050.0
+    @test GeoParams.get_cp(cp1) ==  1050.0
 
     cp1_nd = cp1
     cp1_nd = nondimensionalize(cp1_nd, CharUnits_GEO)
@@ -30,6 +31,7 @@ using StaticArrays
     args = (; T=T)
     compute_heatcapacity!(Cp, cp2, args)
     @test sum(Cp) ≈ 11667.035717418683
+    @test GeoParams.get_Tcutoff(cp2) ==  846.0
 
     # nondimensional
     cp2_nd = T_HeatCapacity_Whittington()
@@ -139,6 +141,7 @@ using StaticArrays
     @test isbits(cond)
     @test NumValue(cond.k) == 3.0
     @test cond.k.unit == u"W" / K / m
+    @test GeoParams.get_k(cond) ==  3.0
 
     cond = nondimensionalize(cond, CharUnits_GEO)
     @test NumValue(cond.k) ≈ 3.8194500000000007
