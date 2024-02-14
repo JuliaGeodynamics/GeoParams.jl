@@ -25,16 +25,16 @@ include("../Computations.jl")
 
 # Constant Heat Capacity -------------------------------------------------------
 """
-    ConstantHeatCapacity(cp=1050J/mol/kg)
+    ConstantHeatCapacity(Cp=1050J/mol/kg)
 
 Set a constant heat capacity:
 ```math
-    cp  = cst
+    Cp  = cst
 ```
-where ``cp`` is the thermal heat capacity [``J/kg/K``].
+where ``Cp`` is the thermal heat capacity [``J/kg/K``].
 """
 @with_kw_noshow struct ConstantHeatCapacity{T,U} <: AbstractHeatCapacity{T}
-    cp::GeoUnit{T,U} = 1050J / kg / K                # heat capacity
+    Cp::GeoUnit{T,U} = 1050J / kg / K                # heat capacity
 end
 ConstantHeatCapacity(args...) = ConstantHeatCapacity(convert.(GeoUnit, args)...)
 
@@ -44,13 +44,13 @@ end
 
 # Calculation routine
 @inline function compute_heatcapacity(a::ConstantHeatCapacity;  kwargs...)
-    @unpack_val cp = a
-    return cp
+    @unpack_val Cp = a
+    return Cp
 end
 
 # Print info
 function show(io::IO, g::ConstantHeatCapacity)
-    return print(io, "Constant heat capacity: cp=$(UnitValue(g.cp))")
+    return print(io, "Constant heat capacity: Cp=$(UnitValue(g.Cp))")
 end
 #-------------------------------------------------------------------------
 
@@ -63,7 +63,7 @@ Sets a temperature-dependent heat capacity following the parameterization of Whi
     Cp = (a + b T - c/T^2)/m
 ```
 
-where ``Cp`` is the heat capacity [``J/kg/K``], and ``a,b,c`` are parameters that dependent on the temperature `T`:
+where ``Cp`` is the heat capacity [``J/kg/K``], and ``a,b,c`` are parameters that dependent on the temperature ``T`` [``K``]:
 - a = 199.50 J/mol/K    if T<= 846 K
 - a = 199.50 J/mol/K    if T> 846 K
 - b = 0.0857J/mol/K^2   if T<= 846 K
@@ -94,13 +94,13 @@ end
 
 # Calculation routine
 @inline function compute_heatcapacity(
-    a::T_HeatCapacity_Whittington{_T}; 
+    a::T_HeatCapacity_Whittington{_T};
     T = zero(_T),
     kwargs...
 ) where _T
     @unpack_val a0, a1, b0, b1, c0, c1, molmass, Tcutoff = a
 
-    cp = a0 / molmass
+    Cp = a0 / molmass
 
     if T <= Tcutoff
         a, b, c = a0, b0, c0
@@ -108,9 +108,9 @@ end
         a, b, c = a1, b1, c1
     end
 
-    cp = (a + b * T - c / T^2) / molmass
-    
-    return cp
+    Cp = (a + b * T - c / T^2) / molmass
+
+    return Cp
 end
 
 # LatentHeat by modifying heat capacity  ---------------------------------
@@ -144,7 +144,7 @@ end
 
 # Calculation routine
 @inline function compute_heatcapacity(
-    a::Latent_HeatCapacity{_T}; 
+    a::Latent_HeatCapacity{_T};
     dϕdT = zero(_T),
     kwargs...
 ) where _T
@@ -166,11 +166,11 @@ end
 
 #-------------------------------------------------------------------------
 """
-    compute_heatcapacity!(cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}, T::_T=zero(_T), P::_T=zero(_T)) where {_T,N}
+    compute_heatcapacity!(Cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}, T::_T=zero(_T), P::_T=zero(_T)) where {_T,N}
 
 Computes T-dependent heat capacity in-place
 """
-# function compute_heatcapacity!(cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}; T::AbstractArray{_T, N}, kwargs...) where {_T,N} end
+# function compute_heatcapacity!(Cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}; T::AbstractArray{_T, N}, kwargs...) where {_T,N} end
 
 # add methods programmatically
 for myType in (:ConstantHeatCapacity, :T_HeatCapacity_Whittington, :Latent_HeatCapacity)
@@ -208,25 +208,28 @@ Returns the heat capacity `Cp` at any temperature `T` and pressure `P` using any
 Currently available:
 - ConstantHeatCapacity
 - T\\_HeatCapacity_Whittington
+- Latent_HeatCapacity
 
 # Example
 Using dimensional units
 ```julia
-julia> T  = (250:100:1250)*K;
-julia> cp = T_HeatCapacity_Whittington()
-julia> Cp = ComputeHeatCapacity(0,T,cp)
-11-element Vector{Unitful.Quantity{Float64, 𝐋² 𝚯⁻¹ 𝐓⁻², Unitful.FreeUnits{(kg⁻¹, J, K⁻¹), 𝐋² 𝚯⁻¹ 𝐓⁻², nothing}}}:
-  635.4269997294616 J kg⁻¹ K⁻¹
-  850.7470171764261 J kg⁻¹ K⁻¹
-  962.0959598489883 J kg⁻¹ K⁻¹
- 1037.5420433770641 J kg⁻¹ K⁻¹
- 1097.3517921966488 J kg⁻¹ K⁻¹
- 1149.2745563671706 J kg⁻¹ K⁻¹
- 1157.7915050948404 J kg⁻¹ K⁻¹
- 1172.3554874197264 J kg⁻¹ K⁻¹
- 1186.9194697445964 J kg⁻¹ K⁻¹
-  1201.483452069455 J kg⁻¹ K⁻¹
- 1216.0474343943067 J kg⁻¹ K⁻¹
+julia> T = 250.0:100:1250
+julia> Cp2 = T_HeatCapacity_Whittington()
+julia> Cp = similar(T)
+julia> args = (; T=T)
+julia> Cp =compute_heatcapacity!(Cp, Cp2, args)
+11-element Vector nitful.Quantity{Float64, 𝐋² 𝚯⁻¹ 𝐓⁻², Unitful.FreeUnits{(kg⁻¹, J, K⁻¹), 𝐋² 𝚯⁻¹ 𝐓⁻², nothing}}}:
+635.4269997294616 J kg⁻¹ K⁻¹
+850.7470171764261 J kg⁻¹ K⁻¹
+962.0959598489883 J kg⁻¹ K⁻¹
+1037.542043377064 J kg⁻¹ K⁻¹
+1097.351792196648 J kg⁻¹ K⁻¹
+1149.274556367170 J kg⁻¹ K⁻¹
+1157.791505094840 J kg⁻¹ K⁻¹
+1172.355487419726 J kg⁻¹ K⁻¹
+1186.919469744596 J kg⁻¹ K⁻¹
+1201.483452069455 J kg⁻¹ K⁻¹
+1216.0474343943067 J kg⁻¹ K⁻¹
 ```
 
 
@@ -239,7 +242,7 @@ compute_heatcapacity()
 Computes heat capacity if only temperature (and not pressure) is specified
 """
 # compute_heatcapacity(s::AbstractHeatCapacity, T::AbstractArray{_T}) where _T =  compute_heatcapacity(s,similar(T), T)
-# compute_heatcapacity!(cp_array::AbstractArray{_T}, s::AbstractHeatCapacity, T::AbstractArray{_T}) where _T =  compute_heatcapacity!(cp_array,s,similar(T), T)
+# compute_heatcapacity!(Cp_array::AbstractArray{_T}, s::AbstractHeatCapacity, T::AbstractArray{_T}) where _T =  compute_heatcapacity!(Cp_array,s,similar(T), T)
 
 """
     Cp = ComputeHeatCapacity(s::ConstantHeatCapacity)

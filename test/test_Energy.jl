@@ -10,36 +10,36 @@ using StaticArrays
     # Heat capacity ---------
 
     # Constant heat capacity
-    cp1 = ConstantHeatCapacity()
-    info = param_info(cp1)
-    @test isbits(cp1)
-    @test cp1.cp.val == 1050.0
-    @test GeoParams.get_cp(cp1) ==  1050.0
+    Cp1 = ConstantHeatCapacity()
+    info = param_info(Cp1)
+    @test isbits(Cp1)
+    @test Cp1.Cp.val == 1050.0
+    @test GeoParams.get_Cp(Cp1) ==  1050.0
 
-    cp1_nd = cp1
-    cp1_nd = nondimensionalize(cp1_nd, CharUnits_GEO)
-    @test cp1_nd.cp.val ≈ 1.3368075000000002e22
-    @test compute_heatcapacity(cp1_nd) ≈ 1.3368075000000002e22  # compute
-    @test compute_heatcapacity(cp1_nd, (random_name=1,)) ≈ 1.3368075000000002e22  # compute
+    Cp1_nd = Cp1
+    Cp1_nd = nondimensionalize(Cp1_nd, CharUnits_GEO)
+    @test Cp1_nd.Cp.val ≈ 1.3368075000000002e22
+    @test compute_heatcapacity(Cp1_nd) ≈ 1.3368075000000002e22  # compute
+    @test compute_heatcapacity(Cp1_nd, (random_name=1,)) ≈ 1.3368075000000002e22  # compute
 
     # Temperature-dependent heat capacity
     # dimensional
     T = 250.0:100:1250
-    cp2 = T_HeatCapacity_Whittington()
+    Cp2 = T_HeatCapacity_Whittington()
     Cp = similar(T)
-    @test isbits(cp2)
+    @test isbits(Cp2)
     args = (; T=T)
-    compute_heatcapacity!(Cp, cp2, args)
+    compute_heatcapacity!(Cp, Cp2, args)
     @test sum(Cp) ≈ 11667.035717418683
-    @test GeoParams.get_Tcutoff(cp2) ==  846.0
+    @test GeoParams.get_Tcutoff(Cp2) ==  846.0
 
     # nondimensional
-    cp2_nd = T_HeatCapacity_Whittington()
-    cp2_nd = nondimensionalize(cp2_nd, CharUnits_GEO)
+    Cp2_nd = T_HeatCapacity_Whittington()
+    Cp2_nd = nondimensionalize(Cp2_nd, CharUnits_GEO)
     T_nd = Float64.(T * K / CharUnits_GEO.Temperature)
     Cp_nd = similar(T)
     args = (; T=T_nd)
-    compute_heatcapacity!(Cp_nd, cp2_nd, args)
+    compute_heatcapacity!(Cp_nd, Cp2_nd, args)
     @test sum(Cp_nd) ≈ 1.4853886523631602e23
 
     # Dimensionalize again and double-check the results
@@ -48,16 +48,16 @@ using StaticArrays
     # Test with arrays
     T_array = T * ones(10)'
     Cp_array = similar(T_array)
-    compute_heatcapacity!(Cp_array, cp1, (;))
+    compute_heatcapacity!(Cp_array, Cp1, (;))
     @test Cp_array[1] ≈ 1050
 
     Cp_array = similar(T_array)
-    compute_heatcapacity!(Cp_array, cp2, (; T=T_array))
+    compute_heatcapacity!(Cp_array, Cp2, (; T=T_array))
     @test sum(Cp_array[i, 1] for i in axes(Cp_array,1)) ≈ 11667.035717418683
 
     T_array = T * ones(10)'
     Cp_array = zeros(size(T_array))
-    compute_heatcapacity!(Cp_array, cp2, (; T=T_array))
+    compute_heatcapacity!(Cp_array, Cp2, (; T=T_array))
     @test sum(Cp_array[i, 1] for i in axes(Cp_array,1)) ≈ 11667.035717418683
 
     # Check that it works if we give a phase array
@@ -75,7 +75,7 @@ using StaticArrays
     Mat_tup1 = (
         SetMaterialParams(; Name="Mantle", Phase=1, HeatCapacity=ConstantHeatCapacity()),
         SetMaterialParams(;
-            Name="Crust", Phase=2, HeatCapacity=ConstantHeatCapacity(; cp=1100J / kg / K)
+            Name="Crust", Phase=2, HeatCapacity=ConstantHeatCapacity(; Cp=1100J / kg / K)
         ),
     )
 
@@ -117,19 +117,58 @@ using StaticArrays
 
     # Test latent heat based heat capacity
     CharUnits_GEO = GEO_units(; viscosity=1e19, length=10km)
-    x_D =Latent_HeatCapacity(Q_L=500kJ/kg)
-    x_D1 =Latent_HeatCapacity(Cp=T_HeatCapacity_Whittington())
+    x_D =Latent_HeatCapacity(Q_L=500e3*J/kg)
+    x_D1 =Latent_HeatCapacity(Cp=ConstantHeatCapacity())
     x_ND = nondimensionalize(x_D, CharUnits_GEO)
+    x_ND1 = nondimensionalize(x_D1, CharUnits_GEO)
+
     @test isbits(x_D)
+    @test isbits(x_D1)
     @test isbits(x_ND)
     @test isdimensional(x_D)==true
+    @test isdimensional(x_D1)==true
     @test isdimensional(x_ND)==false
+    @test isdimensional(x_ND1)==false
+
 
     dϕdT = 0.1
-    args = (dϕdT=dϕdT, T=10)
-    Cp = compute_heatcapacity(x_D, args)
-    @test Cp == 1100.0
+    dϕdT_ND = nondimensionalize(dϕdT / K, CharUnits_GEO)
+    args = (; dϕdT=dϕdT, T=300.0+273)
+    args_ND = (; dϕdT=dϕdT_ND, T=300.0+273)
+    @test compute_heatcapacity(x_D, args) == 1050 + 500e3*dϕdT
 
+    @test compute_heatcapacity(x_D1, args) == 1050 + 400e3*dϕdT
+
+    x_ND = nondimensionalize(x_D, CharUnits_GEO)
+    Cp_nd = compute_heatcapacity(x_ND, args_ND)
+    @test compute_heatcapacity(x_D, args) ≈ dimensionalize(Cp_nd, J / kg / K, CharUnits_GEO).val
+
+    x_ND1 = nondimensionalize(x_D1, CharUnits_GEO)
+    Cp_nd1 = compute_heatcapacity(x_ND1, args_ND)
+    @test compute_heatcapacity(x_D1, args) ≈ dimensionalize(Cp_nd1, J / kg / K, CharUnits_GEO).val
+
+    #Temperature-dependent latent heat based heat capacity
+
+    T=300.0+273
+    dϕdT = 0.1
+    args = (; T=T, dϕdT=dϕdT)
+
+    x_D =Latent_HeatCapacity(Cp=T_HeatCapacity_Whittington())
+
+    @test isbits(x_D)
+    @test isdimensional(x_D)==true
+
+    @test compute_heatcapacity(x_D, args) == 41052.29268922852
+
+    dϕdT_ND = nondimensionalize(dϕdT / K, CharUnits_GEO)
+    args_ND = (; T=ustrip.(T * K / CharUnits_GEO.Temperature), dϕdT=dϕdT_ND)
+    x_ND = nondimensionalize(x_D, CharUnits_GEO)
+
+    @test isdimensional(x_ND)==false
+    @test isbits(x_ND)
+
+    Cp_nd = compute_heatcapacity(x_ND, args_ND)
+    @test compute_heatcapacity(x_D, args) ≈ dimensionalize(Cp_nd, J / kg / K, CharUnits_GEO).val
     # -----------------------
 
     # Conductivity ----------
@@ -275,20 +314,20 @@ using StaticArrays
     # -----------------------
 
     # Latent heat -----------
-    a = ConstantLatentHeat()
+    a = ConstantLatentHeat(Q_L=400e3J / kg)
     Q_L = compute_latent_heat(a)
     @test isbits(a)
     @test Q_L == 400e3
 
     a = nondimensionalize(a, CharUnits_GEO)
     Q_L = compute_latent_heat(a)
-    @test Q_L ≈ 4e21
+    @test Q_L ≈ 4.0e21
 
     # Check that it works if we give a phase array (including with an empty field)
     Mat_tup = (
-        SetMaterialParams(; Name="Mantle", Phase=1, LatentHeat=ConstantLatentHeat()),
+        SetMaterialParams(; Name="Mantle", Phase=1, LatentHeat=ConstantLatentHeat(Q_L=400e3J / kg)),
         SetMaterialParams(;
-            Name="Crust", Phase=2, LatentHeat=ConstantLatentHeat(; Q_L=153kJ / kg)
+            Name="Crust", Phase=2, LatentHeat=ConstantLatentHeat(; Q_L=153e3J / kg)
         ),
         SetMaterialParams(; Name="MantleLithosphere", Phase=3),
     )
@@ -313,10 +352,10 @@ using StaticArrays
     compute_latent_heat!(Hl, Mat_tup, Phases, args)
     @test minimum(Hl) ≈ 0.0
     @test maximum(Hl) ≈ 400e3
-    @test Hl[50, 50, 50] ≈ 153.0
+    @test Hl[50, 50, 50] ≈ 153e3
 
     compute_latent_heat!(Hl, Mat_tup, PhaseRatio, args)
-    @test sum(Hl) ≈ 7.60612e10
+    @test sum(Hl) ≈ 1.372e11
 
     # -----------------------
 
