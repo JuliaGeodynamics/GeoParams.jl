@@ -120,13 +120,13 @@ using StaticArrays
     x_D =Latent_HeatCapacity(Q_L=500e3*J/kg)
     x_D1 =Latent_HeatCapacity(Cp=ConstantHeatCapacity())
     x_ND = nondimensionalize(x_D, CharUnits_GEO)
-    x_ND1 = nondimensionalize(x_D2, CharUnits_GEO)
+    x_ND1 = nondimensionalize(x_D1, CharUnits_GEO)
 
     @test isbits(x_D)
-    @test isbits(x_D2)
+    @test isbits(x_D1)
     @test isbits(x_ND)
     @test isdimensional(x_D)==true
-    @test isdimensional(x_D2)==true
+    @test isdimensional(x_D1)==true
     @test isdimensional(x_ND)==false
     @test isdimensional(x_ND1)==false
 
