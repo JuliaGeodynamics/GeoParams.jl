@@ -118,42 +118,57 @@ using StaticArrays
     # Test latent heat based heat capacity
     CharUnits_GEO = GEO_units(; viscosity=1e19, length=10km)
     x_D =Latent_HeatCapacity(Q_L=500e3*J/kg)
-    x_D1 =Latent_HeatCapacity(Cp=T_HeatCapacity_Whittington())
-    x_D2 =Latent_HeatCapacity(Cp=ConstantHeatCapacity())
+    x_D1 =Latent_HeatCapacity(Cp=ConstantHeatCapacity())
     x_ND = nondimensionalize(x_D, CharUnits_GEO)
-    x_ND1 = nondimensionalize(x_D1, CharUnits_GEO)
-    x_ND2 = nondimensionalize(x_D2, CharUnits_GEO)
+    x_ND1 = nondimensionalize(x_D2, CharUnits_GEO)
 
     @test isbits(x_D)
-    @test isbits(x_D1)
     @test isbits(x_D2)
     @test isbits(x_ND)
     @test isdimensional(x_D)==true
-    @test isdimensional(x_D1)==true
     @test isdimensional(x_D2)==true
     @test isdimensional(x_ND)==false
     @test isdimensional(x_ND1)==false
-    @test isdimensional(x_ND2)==false
+
 
     dϕdT = 0.1
     dϕdT_ND = nondimensionalize(dϕdT / K, CharUnits_GEO)
     args = (; dϕdT=dϕdT, T=300.0+273)
     args_ND = (; dϕdT=dϕdT_ND, T=300.0+273)
-
     @test compute_heatcapacity(x_D, args) == 1050 + 500e3*dϕdT
 
-    @test compute_heatcapacity(x_D1, args) == 41052.29268922852
-
-    @test compute_heatcapacity(x_D2, args) == 1050 + 400e3*dϕdT
+    @test compute_heatcapacity(x_D1, args) == 1050 + 400e3*dϕdT
 
     x_ND = nondimensionalize(x_D, CharUnits_GEO)
     Cp_nd = compute_heatcapacity(x_ND, args_ND)
     @test compute_heatcapacity(x_D, args) ≈ dimensionalize(Cp_nd, J / kg / K, CharUnits_GEO).val
 
-    x_ND2 = nondimensionalize(x_D2, CharUnits_GEO)
-    Cp_nd2 = compute_heatcapacity(x_ND2, args_ND)
-    @test compute_heatcapacity(x_D2, args) ≈ dimensionalize(Cp_nd2, J / kg / K, CharUnits_GEO).val
+    x_ND1 = nondimensionalize(x_D1, CharUnits_GEO)
+    Cp_nd1 = compute_heatcapacity(x_ND1, args_ND)
+    @test compute_heatcapacity(x_D1, args) ≈ dimensionalize(Cp_nd1, J / kg / K, CharUnits_GEO).val
 
+    #Temperature-dependent latent heat based heat capacity
+
+    T=300.0+273
+    dϕdT = 0.1
+    args = (; T=T, dϕdT=dϕdT)
+
+    x_D =Latent_HeatCapacity(Cp=T_HeatCapacity_Whittington())
+
+    @test isbits(x_D)
+    @test isdimensional(x_D)==true
+
+    @test compute_heatcapacity(x_D, args) == 41052.29268922852
+
+    dϕdT_ND = nondimensionalize(dϕdT / K, CharUnits_GEO)
+    args_ND = (; T=ustrip.(T * K / CharUnits_GEO.Temperature), dϕdT=dϕdT_ND)
+    x_ND = nondimensionalize(x_D, CharUnits_GEO)
+
+    @test isdimensional(x_ND)==false
+    @test isbits(x_ND)
+
+    Cp_nd = compute_heatcapacity(x_ND, args_ND)
+    @test compute_heatcapacity(x_D, args) ≈ dimensionalize(Cp_nd, J / kg / K, CharUnits_GEO).val
     # -----------------------
 
     # Conductivity ----------
