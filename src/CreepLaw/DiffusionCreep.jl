@@ -406,7 +406,6 @@ function Transform_DiffusionCreep(pp::AbstractCreepLaw{T}, kwargs::NamedTuple) w
     
     (; n, r, p, A, E, V) = kwargs
 
-    @show n
     n_new = isnothing(n) ? Value(pp.n) : Value(GeoUnit(n))
     r_new = isnothing(r) ? Value(pp.r) : Value(GeoUnit(r))
     p_new = isnothing(p) ? Value(pp.p) : Value(GeoUnit(p))
