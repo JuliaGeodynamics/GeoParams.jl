@@ -385,16 +385,16 @@ function Transform_DiffusionCreep(pp::AbstractCreepLaw{T}) where T
     @inline f1(A::T) where T = typeof(A).parameters[2].parameters[1][2].power
     @inline f2(A::T) where T = typeof(A).parameters[2].parameters[1][1].power
     
-    n = Value(pp.n)
-    r = Value(pp.r)
-    p = Value(pp.p)
-    power_Pa = f1(pp.A)
-    power_m  = f2(pp.A)
-    A_Pa = uconvert(Pa^(power_Pa) * m^(power_m) / s, Value(pp.A))
-    E_J = uconvert(J / mol, Value(pp.E))
-    V_m3 = uconvert(m^3 / mol, Value(pp.V))
+    n         = Value(pp.n)
+    r         = Value(pp.r)
+    p         = Value(pp.p)
+    power_Pa  = f1(pp.A)
+    power_m   = f2(pp.A)
+    A_Pa      = uconvert(Pa^(power_Pa) * m^(power_m) / s, Value(pp.A))
+    E_J       = uconvert(J / mol, Value(pp.E))
+    V_m3      = uconvert(m^3 / mol, Value(pp.V))
     Apparatus = pp.Apparatus
-    args = (Name=pp.Name, n=n, p=p, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+    args      = (Name=pp.Name, n=n, p=p, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
 
     return DiffusionCreep(; args...)
 end
@@ -413,17 +413,13 @@ function Transform_DiffusionCreep(pp::AbstractCreepLaw{T}, kwargs::NamedTuple) w
     E_new = isnothing(E) ? Value(pp.E) : Value(GeoUnit(E))
     V_new = isnothing(E) ? Value(pp.V) : Value(GeoUnit(V))
     
-    power_Pa = f1(A_new)
-    power_m  = f2(A_new)
-    A_Pa = uconvert(Pa^(power_Pa) * m^(power_m) / s, Value(A_new))
-    E_J = uconvert(J / mol, E_new)
-    V_m3 = uconvert(m^3 / mol, V_new)
+    power_Pa  = f1(A_new)
+    power_m   = f2(A_new)
+    A_Pa      = uconvert(Pa^(power_Pa) * m^(power_m) / s, Value(A_new))
+    E_J       = uconvert(J / mol, E_new)
+    V_m3      = uconvert(m^3 / mol, V_new)
     Apparatus = pp.Apparatus
-    args = (Name=pp.Name, n=n_new, p=p_new, r=r_new, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+    args      = (Name=pp.Name, n=n_new, p=p_new, r=r_new, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
 
     return DiffusionCreep(; args...)
 end
-
-
-###
-

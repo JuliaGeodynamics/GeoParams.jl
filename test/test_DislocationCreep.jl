@@ -41,6 +41,10 @@ import GeoParams.Dislocation
     ε = compute_εII(x1, TauII, args)
 
     # Test some of the preset rheologies
+    p = SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003; n= 3.1)
+    @test p.n.val == 3.1
+
+    # Test some of the preset rheologies
     p = SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003)
     TauII = 0.3e6Pa
     args = (; T=1673.0K, P=0.0Pa)

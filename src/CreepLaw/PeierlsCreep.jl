@@ -89,7 +89,7 @@ struct PeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     end
 end
 
-function Transform_PeierlsCreep(p::AbstractCreepLaw{T}) where T
+function Transform_PeierlsCreep(p::AbstractCreepLaw)
     n = Value(p.n)
     q = Value(p.q)
     o = Value(p.o)
@@ -101,6 +101,26 @@ function Transform_PeierlsCreep(p::AbstractCreepLaw{T}) where T
 
     # args from database
     args = (Name=p.Name, n=n, q=q, o=o, TauP=TauP, A=A_Pa, E=E_J, Apparatus=Apparatus)
+
+    return PeierlsCreep(; args...)
+end
+
+function Transform_PeierlsCreep(p::AbstractCreepLaw, kwargs)
+    (; n, q, o, A, E, TauP) = kwargs
+
+    n_new    = isnothing(n) ? Value(pp.n)    : Value(GeoUnit(n))
+    q_new    = isnothing(r) ? Value(pp.q)    : Value(GeoUnit(q))
+    o_new    = isnothing(o) ? Value(pp.o)    : Value(GeoUnit(o))
+    A_new    = isnothing(A) ?        pp.A    : GeoUnit(A)
+    E_new    = isnothing(E) ? Value(pp.E)    : Value(GeoUnit(E))
+    TauP_new = isnothing(E) ? Value(pp.TauP) : Value(GeoUnit(TauP))
+    
+    A_Pa      = uconvert(s^(-1), A_new)
+    E_J       = uconvert(J / mol, E_new)
+    Apparatus = p.Apparatus
+
+    # args from database
+    args = (Name=p.Name, n=n_new, q=q_new, o=o_new, TauP=TauP_new, A=A_Pa, E=E_J, Apparatus=Apparatus)
 
     return PeierlsCreep(; args...)
 end
@@ -256,16 +276,38 @@ export SetPeierlsCreep
     SetPeierlsCreep["Name of peierls creep law"]
 This is a dictionary with pre-defined creep laws    
 """
-SetPeierlsCreep(name::F) where F = Transform_PeierlsCreep(name)
+function SetPeierlsCreep(
+    name::F;
+    n    = nothing,
+    q    = nothing,
+    o    = nothing,
+    A    = nothing,
+    E    = nothing,
+    TauP = nothing,
+) where F 
+    kwargs = (; n, q, o, A, E, TauP)
+    Transform_PeierlsCreep(name, kwargs)
+end
 
-function SetPeierlsCreep(name::F, CharDim::GeoUnits{GEO}) where F
-    return nondimensionalize(Transform_PeierlsCreep(name), CharDim)
+function SetPeierlsCreep(
+    name::F,
+    CharDim::GeoUnits{T};
+    n    = nothing,
+    q    = nothing,
+    o    = nothing,
+    A    = nothing,
+    E    = nothing,
+    TauP = nothing,
+) where {F, T<:Union{GEO, SI}}
+    kwargs = (; n, q, o, A, E, TauP)
+    nondimensionalize(Transform_PeierlsCreep(name, kwargs), CharDim)
 end
 
 """
     Transforms units from GPa, MPa, kJ etc. to basic units such as Pa, J etc.
 """
 Transform_PeierlsCreep(name::F) where F = Transform_PeierlsCreep(peierls_database(name))
+Transform_PeierlsCreep(name::F, kwargs::NamedTuple) where F = Transform_PeierlsCreep(peierls_database(name), kwargs)
 
 function Transform_PeierlsCreep(name::F, CharDim::GeoUnits{U}) where {U<:Union{GEO,SI}} where F
     Transform_PeierlsCreep(peierls_database(name), CharDim)
