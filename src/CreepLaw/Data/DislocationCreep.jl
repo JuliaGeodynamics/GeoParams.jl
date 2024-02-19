@@ -108,7 +108,7 @@ function wet_olivine2_Hirth_2003()
         n=3.0NoUnits,
         A=1600MPa^(-3) / s,
         E=520.0kJ / mol,
-        V=22.0m^3 / mol,
+        V=22.0e-6m^3 / mol,
         r=1.2NoUnits,
         Apparatus=AxialCompression,
     )
@@ -430,7 +430,7 @@ function wet_anorthite_Rybacki_2006()
         n=3.0NoUnits,
         A=(10^0.2)MPa^(-3) / s,
         E=345kJ / mol,
-        V=38m^3 / mol,
+        V=38e-6m^3 / mol,
         r=1NoUnits,
         Apparatus=AxialCompression,
     )
@@ -663,7 +663,7 @@ function wet_olivine_Mei_2000b()
         n=3.0NoUnits,
         A=(10^3.2)MPa^(-3) / s,
         E=470.0kJ / mol,
-        V=20.0m^3 / mol,
+        V=20.0e-6m^3 / mol,
         r=0.98NoUnits,
         Apparatus=AxialCompression,
     )
@@ -692,7 +692,7 @@ function dry_olivine_Karato_2003()
         n=3.0NoUnits,
         A=(10^6.1)MPa^(-3) / s,
         E=510.0kJ / mol,
-        V=14.0m^3 / mol,
+        V=14.0e-6m^3 / mol,
         r=0.0NoUnits,
         Apparatus=AxialCompression,
     )
@@ -721,7 +721,7 @@ function wet_olivine_Karato_2003()
         n=3.0NoUnits,
         A=(10^2.9)MPa^(-3) / s,
         E=510.0kJ / mol,
-        V=24.0m^3 / mol,
+        V=24.0e-6m^3 / mol,
         r=1.2NoUnits,
         Apparatus=AxialCompression,
     )

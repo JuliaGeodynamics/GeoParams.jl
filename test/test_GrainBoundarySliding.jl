@@ -27,6 +27,10 @@ import GeoParams.GBS
     d_nd  = nondimensionalize(d, CharDim)
 
     # compute a pure diffusion creep rheology
+    p     = SetGrainBoundarySliding(GBS.cold_dry_olivine_Hirth_2003; n=3.1)
+    @test p.n.val == 3.1
+   
+    # compute a pure diffusion creep rheology
     p     = SetGrainBoundarySliding(GBS.cold_dry_olivine_Hirth_2003)
     T     = 650.0 + 273.15
     args  = (; T=T)

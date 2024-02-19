@@ -7,11 +7,11 @@ export peierls_database, peierls_database_info
 function dry_olivine_Goetze_1979()
     data = PeierlsCreep(;
         Name="Dry Olivine | Goetze and Evans (1979)",
-        n=1.0NoUnits,                         # power-law exponent
-        o=2.0NoUnits,                         # exponent of water-fugacity
-        q=1.0NoUnits,                        # grain size exponent
-        TauP=8.5e9Pa,                         # Peierls stress
-        A=(5.7e11)s^(-1),    # material specific rheological parameter
+        n=1.0NoUnits,                           # power-law exponent
+        o=2.0NoUnits,                           # exponent of water-fugacity
+        q=1.0NoUnits,                           # grain size exponent
+        TauP=8.5e9Pa,                           # Peierls stress
+        A=(5.7e11)s^(-1),                       # material specific rheological parameter
         E=536.0kJ / mol,                        # activation energy
         Apparatus=AxialCompression,
     )
@@ -36,11 +36,11 @@ end
 function dry_olivine_Demouchy_2013()
     data = PeierlsCreep(;
             Name="Dry Olivine | Demouchy (2013)",
-            n=1.0NoUnits,                         # power-law exponent
-            o=2.0NoUnits,                         # exponent of water-fugacity
-            q=0.5NoUnits,                        # grain size exponent
-            TauP=15.0e9Pa,                         # Peierls stress
-            A=(1.0e6)s^(-1),    # material specific rheological parameter
+            n=1.0NoUnits,                           # power-law exponent
+            o=2.0NoUnits,                           # exponent of water-fugacity
+            q=0.5NoUnits,                           # grain size exponent
+            TauP=15.0e9Pa,                          # Peierls stress
+            A=(1.0e6)s^(-1),                        # material specific rheological parameter
             E=450.0kJ / mol,                        # activation energy
             Apparatus=AxialCompression,
     )
@@ -64,11 +64,11 @@ end
 function dry_olivine_Idrissei_2016()
     data = PeierlsCreep(;
         Name="Dry Olivine | Idrissei (2016)",
-        n=1.0NoUnits,                         # power-law exponent
-        o=2.0NoUnits,                         # exponent of water-fugacity
-        q=0.5NoUnits,                        # grain size exponent
-        TauP=3.8e9Pa,                         # Peierls stress
-        A=(1e6)s^(-1),    # material specific rheological parameter
+        n=1.0NoUnits,                           # power-law exponent
+        o=2.0NoUnits,                           # exponent of water-fugacity
+        q=0.5NoUnits,                           # grain size exponent
+        TauP=3.8e9Pa,                           # Peierls stress
+        A=(1e6)s^(-1),                          # material specific rheological parameter
         E=566.0kJ / mol,                        # activation energy
         Apparatus=AxialCompression,
     )

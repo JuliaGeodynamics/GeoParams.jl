@@ -190,13 +190,13 @@ function viscosity_correction(c_vf, Strain_Rate)
         strain_rate = 1.e-6
     end
     phi_max = 0.066499 * tanh(0.913424 * log10(strain_rate) + 3.850623) + 0.591806
-    delta = -6.301095 * tanh(0.818496 * log10(strain_rate) + 2.86) + 7.462405
-    alpha = -0.000378 * tanh(1.148101 * log10(strain_rate) + 3.92) + 0.999572
-    gamma = 3.987815 * tanh(0.8908 * log10(strain_rate) + 3.24) + 5.099645
-    num = 1.0 + (c_vf / phi_max)^delta
-    x = sqrt(π) * c_vf / (2 * alpha * phi_max) * (1.0 + (c_vf / phi_max)^gamma)
-    den = (1.0 - alpha * erf(x))^(2.5 * phi_max)
-    mu_r = num / den
+    delta   = -6.301095 * tanh(0.818496 * log10(strain_rate) + 2.86) + 7.462405
+    alpha   = -0.000378 * tanh(1.148101 * log10(strain_rate) + 3.92) + 0.999572
+    gamma   = 3.987815 * tanh(0.8908 * log10(strain_rate) + 3.24) + 5.099645
+    num     = 1.0 + (c_vf / phi_max)^delta
+    x       = √(π) * c_vf / (2 * alpha * phi_max) * (1.0 + (c_vf / phi_max)^gamma)
+    den     = (1.0 - alpha * erf(x))^(2.5 * phi_max)
+    mu_r    = num / den
     return mu_r
 end
 
@@ -204,16 +204,12 @@ end
 @inline function compute_εII(
     a::ViscosityPartialMelt_Costa_etal_2009, TauII; ϕ=one(precision(a)), kwargs...
 )
-
     # melt viscosity
     ε = compute_εII(a.η, TauII, kwargs)
     η_melt = TauII / ε * 0.5
-
     # viscosity correction factor
     ηr = viscosity_correction(1 - ϕ, ε / a.ε0)
-
     η = ηr * η_melt
-
     return (TauII / η) * 0.5
 end
 
@@ -246,10 +242,8 @@ Returns second invariant of the stress tensor given a 2nd invariant of strain ra
     # melt viscosity
     τ = compute_τII(a.η, EpsII, kwargs)
     η_melt = τ / EpsII * 0.5
-
     # viscosity correction factor
     ηr = viscosity_correction(1.0 - ϕ, EpsII / a.ε0)
-
     η = ηr * η_melt
     return 2 * η * EpsII
 end

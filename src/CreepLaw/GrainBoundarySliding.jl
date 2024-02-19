@@ -318,12 +318,29 @@ export SetGrainBoundarySliding
     SetGrainBoundarySliding["Name of GBS"]
 This is a dictionary with pre-defined creep laws    
 """
-function SetGrainBoundarySliding(name::F) where F
-    return Transform_GrainBoundarySliding(name)
+function SetGrainBoundarySliding(
+    name::F;
+    n = nothing,
+    p = nothing,
+    A = nothing,
+    E = nothing,
+    V = nothing,
+) where F 
+    kwargs = (; n, p, A, E, V)
+    Transform_GrainBoundarySliding(name, kwargs)
 end
 
-function SetGrainBoundarySliding(name::F, CharDim::GeoUnits{T}) where {F, T<:Union{GEO, SI}}
-    nondimensionalize(Transform_GrainBoundarySliding(name), CharDim)
+function SetGrainBoundarySliding(
+    name::F,
+    CharDim::GeoUnits{T};
+    n = nothing,
+    p = nothing,
+    A = nothing,
+    E = nothing,
+    V = nothing,
+) where {F, T<:Union{GEO, SI}}
+    kwargs = (; n, p, A, E, V)
+    nondimensionalize(Transform_GrainBoundarySliding(name, kwargs), CharDim)
 end
 
 """
@@ -331,6 +348,7 @@ end
 Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 """
 Transform_GrainBoundarySliding(name::F) where F = Transform_GrainBoundarySliding(GrainBoundarySliding_database(name))
+Transform_GrainBoundarySliding(name::F, kwargs::NamedTuple) where F = Transform_GrainBoundarySliding(GrainBoundarySliding_database(name), kwargs)
 
 function Transform_GrainBoundarySliding(name::F, CharDim::GeoUnits{U}) where {U<:Union{GEO,SI}} where F
     Transform_GrainBoundarySliding(GrainBoundarySliding_database(name), CharDim)
@@ -353,6 +371,29 @@ function Transform_GrainBoundarySliding(pp::AbstractCreepLaw{T}) where T
     V_m3 = uconvert(m^3 / mol, Value(pp.V))
     Apparatus = pp.Apparatus
     args = (Name=pp.Name, n=n, p=p, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+
+    return GrainBoundarySliding(; args...)
+end
+
+function Transform_GrainBoundarySliding(pp::AbstractCreepLaw, kwargs::NamedTuple)
+    @inline f1(A::T) where T = typeof(A).parameters[2].parameters[1][2].power
+    @inline f2(A::T) where T = typeof(A).parameters[2].parameters[1][1].power
+   
+    (; n, p, A, E, V) = kwargs
+
+    n_new = isnothing(n) ? Value(pp.n) : Value(GeoUnit(n))
+    p_new = isnothing(p) ? Value(pp.p) : Value(GeoUnit(p))
+    A_new = isnothing(A) ?        pp.A : GeoUnit(A)
+    E_new = isnothing(E) ? Value(pp.E) : Value(GeoUnit(E))
+    V_new = isnothing(E) ? Value(pp.V) : Value(GeoUnit(V))
+    
+    power_Pa  = f1(A_new)
+    power_m   = f2(A_new)
+    A_Pa      = uconvert(Pa^(power_Pa) * m^(power_m) / s, Value(A_new))
+    E_J       = uconvert(J / mol, E_new)
+    V_m3      = uconvert(m^3 / mol, V_new)
+    Apparatus = pp.Apparatus
+    args      = (Name=pp.Name, n=n_new, p=p_new, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
 
     return GrainBoundarySliding(; args...)
 end

@@ -23,7 +23,11 @@ import GeoParams.NonLinearPeierls
     EpsII = GeoUnit(1.0s^-1.0)
     TauII = GeoUnit(1.0e3MPa)
     T     = GeoUnit(473.0C)
-
+ 
+    # compute a pure non linear peierls creep rheology
+    p     = SetNonLinearPeierlsCreep(NonLinearPeierls.dry_olivine_Mei_2010; n=3.1)
+    @test p.n.val == 3.1
+    
     # compute a pure non linear peierls creep rheology
     p     = SetNonLinearPeierlsCreep(NonLinearPeierls.dry_olivine_Mei_2010)
     T     = 200.0 + 273.15

@@ -216,18 +216,38 @@ export SetNonLinearPeierlsCreep
     SetNonLinearPeierlsCreep["Name of non linear peierls creep law"]
 This is a dictionary with pre-defined creep laws    
 """
-function SetNonLinearPeierlsCreep(name::F) where F
-    return Transform_NonLinearPeierlsCreep(name)
+function SetNonLinearPeierlsCreep(
+    name::F;
+    n    = nothing,
+    q    = nothing,
+    o    = nothing,
+    A    = nothing,
+    E    = nothing,
+    TauP = nothing,
+) where F 
+    kwargs = (; n, q, o, A, E, TauP)
+    Transform_NonLinearPeierlsCreep(name, kwargs)
 end
 
-function SetNonLinearPeierlsCreep(name::F, CharDim::GeoUnits{T})  where {F, T<:Union{GEO, SI}}
-    return nondimensionalize(Transform_NonLinearPeierlsCreep(name), CharDim)
+function SetNonLinearPeierlsCreep(
+    name::F,
+    CharDim::GeoUnits{T};
+    n    = nothing,
+    q    = nothing,
+    o    = nothing,
+    A    = nothing,
+    E    = nothing,
+    TauP = nothing,
+) where {F, T<:Union{GEO, SI}}
+    kwargs = (; n, q, o, A, E, TauP)
+    nondimensionalize(Transform_NonLinearPeierlsCreep(name, kwargs), CharDim)
 end
 
 """
     Transforms units from GPa, MPa, kJ etc. to basic units such as Pa, J etc.
 """
 Transform_NonLinearPeierlsCreep(name::F) where F = Transform_NonLinearPeierlsCreep(nonlinear_peierls_database(name))
+Transform_NonLinearPeierlsCreep(name::F, kwargs::NamedTuple) where F = Transform_NonLinearPeierlsCreep(nonlinear_peierls_database(name), kwargs)
 
 function Transform_NonLinearPeierlsCreep(name::F, CharDim::GeoUnits{U}) where {F, U<:Union{GEO,SI}}
     Transform_NonLinearPeierlsCreep(nonlinear_peierls_database(name), CharDim)
@@ -237,7 +257,7 @@ function Transform_NonLinearPeierlsCreep(p::AbstractCreepLaw{T}, CharDim::GeoUni
     nondimensionalize(Transform_NonLinearPeierlsCreep(p), CharDim)
 end
 
-function Transform_NonLinearPeierlsCreep(p::AbstractCreepLaw{T}) where T
+function Transform_NonLinearPeierlsCreep(p::AbstractCreepLaw)
     n = Value(p.n)
     q = Value(p.q)
     o = Value(p.o)
@@ -248,6 +268,27 @@ function Transform_NonLinearPeierlsCreep(p::AbstractCreepLaw{T}) where T
 
     # args from database
     args = (Name=p.Name, n=n, q=q, o=o, TauP=TauP, A=A_Pa, E=E_J, Apparatus=Apparatus)
+
+    return NonLinearPeierlsCreep(; args...)
+end
+
+function Transform_NonLinearPeierlsCreep(p::AbstractCreepLaw, kwargs::NamedTuple)
+    (; n, q, o, A, E, TauP) = kwargs
+
+    n_new    = isnothing(n) ? Value(p.n)    : Value(GeoUnit(n))
+    q_new    = isnothing(q) ? Value(p.q)    : Value(GeoUnit(q))
+    o_new    = isnothing(o) ? Value(p.o)    : Value(GeoUnit(o))
+    A_new    = isnothing(A) ?        p.A    : GeoUnit(A)
+    E_new    = isnothing(E) ? Value(p.E)    : Value(GeoUnit(E))
+    TauP_new = isnothing(E) ? Value(p.TauP) : Value(GeoUnit(TauP))
+
+    TauP      = uconvert(Pa, TauP_new)
+    A_Pa      = uconvert(Pa^(unit_power(A_new)) / s, Value(A_new))
+    E_J       = uconvert(J / mol, E_new)
+    Apparatus = p.Apparatus
+
+    # args from database
+    args      = (Name=p.Name, n=n_new, q=q_new, o=o_new, TauP=TauP_new, A=A_Pa, E=E_J, Apparatus=Apparatus)
 
     return NonLinearPeierlsCreep(; args...)
 end

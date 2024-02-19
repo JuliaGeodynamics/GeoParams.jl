@@ -307,16 +307,36 @@ function param_info(s::DislocationCreep)
     )
 end
 
-SetDislocationCreep(name::F) where F = Transform_DislocationCreep(name)
+function SetDislocationCreep(
+    name::F;
+    n = nothing,
+    r = nothing,
+    A = nothing,
+    E = nothing,
+    V = nothing,
+) where F 
+    kwargs = (; n, r, A, E, V)
+    Transform_DislocationCreep(name, kwargs)
+end
 
-function SetDislocationCreep(name::F, CharDim::GeoUnits{T}) where {F, T<:Union{GEO,SI}}
-    return nondimensionalize(Transform_DislocationCreep(name), CharDim)
+function SetDislocationCreep(
+    name::F,
+    CharDim::GeoUnits{T};
+    n = nothing,
+    r = nothing,
+    A = nothing,
+    E = nothing,
+    V = nothing,
+) where {F, T<:Union{GEO, SI}}
+    kwargs = (; n, r, A, E, V)
+    nondimensionalize(Transform_DislocationCreep(name, kwargs), CharDim)
 end
 
 """
     Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 """
 Transform_DislocationCreep(name::F) where F = Transform_DislocationCreep(dislocation_database(name))
+Transform_DislocationCreep(name::F, kwargs::NamedTuple) where F = Transform_DislocationCreep(dislocation_database(name), kwargs)
 
 function Transform_DislocationCreep(name::F, CharDim::GeoUnits{U}) where {U<:Union{GEO,SI}} where F
     Transform_DislocationCreep(dislocation_database(name), CharDim)
@@ -327,14 +347,34 @@ function Transform_DislocationCreep(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}
 end
 
 function Transform_DislocationCreep(p::AbstractCreepLaw{T}) where T
-    n = Value(p.n)
-    A_Pa = uconvert(Pa^unit_power(p.A) / s, Value(p.A))
-    E_J = uconvert(J / mol, Value(p.E))
-    V_m3 = uconvert(m^3 / mol, Value(p.V))
+    n         = Value(p.n)
+    A_Pa      = uconvert(Pa^unit_power(p.A) / s, Value(p.A))
+    E_J       = uconvert(J / mol, Value(p.E))
+    V_m3      = uconvert(m^3 / mol, Value(p.V))
     Apparatus = p.Apparatus
-    r = Value(p.r)
+    r         = Value(p.r)
     # args from database
     args = (Name=p.Name, n=n, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+
+    return DislocationCreep(; args...)
+end
+
+function Transform_DislocationCreep(p::AbstractCreepLaw{T}, kwargs::NamedTuple) where T
+    
+    (; n, r, A, E, V) = kwargs
+
+    n_new = isnothing(n) ? Value(p.n) : Value(GeoUnit(n))
+    r_new = isnothing(r) ? Value(p.r) : Value(GeoUnit(r))
+    A_new = isnothing(A) ?        p.A : GeoUnit(A)
+    E_new = isnothing(E) ? Value(p.E) : Value(GeoUnit(E))
+    V_new = isnothing(E) ? Value(p.V) : Value(GeoUnit(V))
+   
+    A_Pa      = uconvert(Pa^unit_power(A_new) / s, Value(A_new))
+    E_J       = uconvert(J / mol, E_new)
+    V_m3      = uconvert(m^3 / mol, V_new)
+    Apparatus = p.Apparatus
+    # args from database
+    args = (Name=p.Name, n=n_new, r=r_new, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
 
     return DislocationCreep(; args...)
 end
