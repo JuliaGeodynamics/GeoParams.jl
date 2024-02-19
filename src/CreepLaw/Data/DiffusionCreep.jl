@@ -401,7 +401,7 @@ function wet_anorthite_rybacki_2006()
         p=-3.0NoUnits,                        # grain size exponent
         A=(10^-0.7)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
         E=159.0kJ / mol,                        # activation energy
-        V=38.0m^3 / mol,                       # activation Volume
+        V=38.0e-6m^3 / mol,                       # activation Volume
         Apparatus=AxialCompression,
     )
     info = MaterialParamsInfo(;
