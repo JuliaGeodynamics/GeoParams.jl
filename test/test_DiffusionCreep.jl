@@ -31,7 +31,7 @@ import GeoParams.Diffusion
     # compute a pure diffusion creep rheology
     diffusion_law = Diffusion.dry_anorthite_Rybacki_2006
     p = SetDiffusionCreep(diffusion_law; n = 1NoUnits)
-    p.n.val == 1.0
+    @test p.n.val == 1.0
 
     # compute a pure diffusion creep rheology
     diffusion_law = Diffusion.dry_anorthite_Rybacki_2006
