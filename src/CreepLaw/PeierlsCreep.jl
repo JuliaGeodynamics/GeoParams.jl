@@ -89,42 +89,6 @@ struct PeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     end
 end
 
-function Transform_PeierlsCreep(p::AbstractCreepLaw)
-    n = Value(p.n)
-    q = Value(p.q)
-    o = Value(p.o)
-    TauP = uconvert(Pa, Value(p.TauP))
-    A_Pa = uconvert(s^(-1), Value(p.A))
-    E_J = uconvert(J / mol, Value(p.E))
-
-    Apparatus = p.Apparatus
-
-    # args from database
-    args = (Name=p.Name, n=n, q=q, o=o, TauP=TauP, A=A_Pa, E=E_J, Apparatus=Apparatus)
-
-    return PeierlsCreep(; args...)
-end
-
-function Transform_PeierlsCreep(p::AbstractCreepLaw, kwargs)
-    (; n, q, o, A, E, TauP) = kwargs
-
-    n_new    = isnothing(n) ? Value(pp.n)    : Value(GeoUnit(n))
-    q_new    = isnothing(r) ? Value(pp.q)    : Value(GeoUnit(q))
-    o_new    = isnothing(o) ? Value(pp.o)    : Value(GeoUnit(o))
-    A_new    = isnothing(A) ?        pp.A    : GeoUnit(A)
-    E_new    = isnothing(E) ? Value(pp.E)    : Value(GeoUnit(E))
-    TauP_new = isnothing(E) ? Value(pp.TauP) : Value(GeoUnit(TauP))
-    
-    A_Pa      = uconvert(s^(-1), A_new)
-    E_J       = uconvert(J / mol, E_new)
-    Apparatus = p.Apparatus
-
-    # args from database
-    args = (Name=p.Name, n=n_new, q=q_new, o=o_new, TauP=TauP_new, A=A_Pa, E=E_J, Apparatus=Apparatus)
-
-    return PeierlsCreep(; args...)
-end
-
 """
     s = remove_tensor_correction(s::PeierlsCreep)
 
@@ -315,4 +279,40 @@ end
 
 function Transform_PeierlsCreep(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) where {T,U<:Union{GEO,SI}}
     nondimensionalize(Transform_PeierlsCreep(p), CharDim)
+end
+
+function Transform_PeierlsCreep(p::AbstractCreepLaw{T}) where T
+    n = Value(p.n)
+    q = Value(p.q)
+    o = Value(p.o)
+    TauP = uconvert(Pa, Value(p.TauP))
+    A_Pa = uconvert(s^(-1), Value(p.A))
+    E_J = uconvert(J / mol, Value(p.E))
+
+    Apparatus = p.Apparatus
+
+    # args from database
+    args = (Name=p.Name, n=n, q=q, o=o, TauP=TauP, A=A_Pa, E=E_J, Apparatus=Apparatus)
+
+    return PeierlsCreep(; args...)
+end
+
+function Transform_PeierlsCreep(p::AbstractCreepLaw{T}, kwargs::NamedTuple) where T
+    (; n, q, o, A, E, TauP) = kwargs
+
+    n_new    = isnothing(n) ? Value(p.n)    : Value(GeoUnit(n))
+    q_new    = isnothing(q) ? Value(p.q)    : Value(GeoUnit(q))
+    o_new    = isnothing(o) ? Value(p.o)    : Value(GeoUnit(o))
+    A_new    = isnothing(A) ?        p.A    : GeoUnit(A)
+    E_new    = isnothing(E) ? Value(p.E)    : Value(GeoUnit(E))
+    TauP_new = isnothing(E) ? Value(p.TauP) : Value(GeoUnit(TauP))
+    
+    A_Pa      = uconvert(s^(-1), Value(A_new))
+    E_J       = uconvert(J / mol, E_new)
+    Apparatus = p.Apparatus
+
+    # args from database
+    args = (Name=p.Name, n=n_new, q=q_new, o=o_new, TauP=TauP_new, A=A_Pa, E=E_J, Apparatus=Apparatus)
+
+    return PeierlsCreep(; args...)
 end
