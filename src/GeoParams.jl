@@ -103,7 +103,7 @@ export second_invariant, second_invariant_staggered, rotate_elastic_stress
 include("Units.jl")
 using .Units
 export @unpack_units, @unpack_val
-export compute_units
+export compute_units, udim
 
 # Define Material Parameter structure
 include("MaterialParameters.jl")

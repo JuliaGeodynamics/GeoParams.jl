@@ -89,7 +89,8 @@ export km,
     Unit,
     UnitValue,
     isdimensional,
-    compute_units
+    compute_units,
+    udim
 
 include("unpack.jl")    # adds macros for unpacking GeoUnit variables with or w/out units
 
@@ -847,6 +848,8 @@ function dimensionalize(
 ) where {N}
     return ntuple(i -> dimensionalize(MatParam[i], g), Val(N))
 end
+
+@inline udim(args::Vararg{Any, N}) where N = ustrip(dimensionalize(args...))
 
 """
     isDimensional(MatParam::AbstractMaterialParam)

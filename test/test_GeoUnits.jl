@@ -83,6 +83,7 @@ using GeoParams
     # test Dimensionalize in case we provide a number and units
     v_ND = nondimensionalize(3cm / yr, CharUnits_GEO)
     @test dimensionalize(v_ND, cm / yr, CharUnits_GEO) == 3.0cm / yr
+    @test ustrip(dimensionalize(v_ND, cm / yr, CharUnits_GEO)) == udim(v_ND, cm / yr, CharUnits_GEO)
 
     # Test the GeoUnit struct
     x = GeoUnit(8.1cm / yr)
