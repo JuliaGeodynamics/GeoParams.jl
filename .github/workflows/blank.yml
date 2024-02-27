@@ -44,9 +44,10 @@ jobs:
             ${{ runner.os }}-
       - uses: julia-actions/julia-buildpkg@latest
       - uses: julia-actions/julia-runtest@latest
-      - uses: codecov/codecov-action@v4.0.0
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
+      - uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false  # or true if you want CI to fail when Codecov fails
   build_docs:
     runs-on: ubuntu-20.04
     steps:
