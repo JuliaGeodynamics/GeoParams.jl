@@ -90,7 +90,7 @@ function compute_param!(
     fn::F,
     rho::AbstractArray{T, ndim},
     MatParam::Vector{AbstractMaterialParamsStruct},
-    Phases::AbstractArray{Int64,ndim},
+    Phases::AbstractArray{Integer,ndim},
     args,
 ) where {F, T, ndim}
     return compute_param!(fn, rho, Tuple(MatParam), Phases, args)
