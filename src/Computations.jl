@@ -75,14 +75,14 @@ end
     fn::F,
     rho::AbstractArray{T, ndim},
     MatParam::NTuple{N,AbstractMaterialParamsStruct},
-    Phases::AbstractArray{Int64,ndim},
+    Phases::AbstractArray{M,ndim},
     args,
-) where {F, T, ndim, N}
+) where {F, T, ndim, N, M<:Integer}
     @inbounds for I in eachindex(Phases)
         k = keys(args)
         v = getindex.(values(args), I)      # works for scalars & arrays thanks to overload (above)
         argsi = (; zip(k, v)...)
-        rho[I] = compute_param(fn, MatParam, Phases[I], argsi)
+        rho[I] = compute_param(fn, MatParam, Int64(Phases[I]), argsi)
     end
 end
 
@@ -90,10 +90,10 @@ function compute_param!(
     fn::F,
     rho::AbstractArray{T, ndim},
     MatParam::Vector{AbstractMaterialParamsStruct},
-    Phases::AbstractArray{Integer,ndim},
+    Phases::AbstractArray{M,ndim},
     args,
-) where {F, T, ndim}
-    return compute_param!(fn, rho, Tuple(MatParam), Phases, args)
+) where {F, T, ndim, M<:Integer}
+    return compute_param!(fn, rho, Tuple(MatParam), Int64(Phases), args)
 end
 
 #Phase PhaseRatios
