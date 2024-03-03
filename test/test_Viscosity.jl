@@ -19,6 +19,8 @@ using Test, GeoParams, StaticArrays
     @test compute_viscosity(creep, args) == η0
     @test compute_viscosity(rheology, args) == 1/(1 / η0 + 1 / G / dt)
     
+    @test_throws "compute_viscosity only works for linear rheologies" compute_viscosity(DislocationCreep(), args)
+
     @test η0 ==
         compute_viscosity_εII(rheology, 0.0, args) ==
         compute_viscosity_τII(rheology, 0.0, args)
