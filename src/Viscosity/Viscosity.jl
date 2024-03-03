@@ -223,3 +223,33 @@ end
         return val
     end
 end
+
+@inline function compute_elasticviscosity(v::CompositeRheology, args)
+    return compute_elasticviscosity(elements(v), args)
+end
+
+@generated function compute_elasticviscosity(v::NTuple{N, AbstractMaterialParamsStruct}, phase, args) where N
+    quote
+        Base.@_inline_meta
+        Base.@nexprs $N i -> i == phase && (return compute_elasticviscosity(v[i].CompositeRheology[1], args))
+        return 0.0
+    end
+end
+
+@generated function compute_elasticviscosity(v::NTuple{N, AbstractConstitutiveLaw}, args) where {N}
+    quote
+        Base.@_inline_meta
+        η = 0.0
+        Base.@nexprs $N i -> iselastic(v[i]) && return compute_viscosity(v[i], args)
+        return 0.0
+    end
+end
+
+@generated function compute_elasticviscosity(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1,T}, SVector{N1, T}}, args::Vararg{Any, N2}) where {N1, N2, T}
+    quote
+        Base.@_inline_meta
+        val = 0.0
+        Base.@nexprs $N1 i -> val += compute_elasticviscosity(v[i].CompositeRheology[1], args...) * phase_ratio[i]
+        return val
+    end
+end
