@@ -24,7 +24,7 @@ using Test, GeoParams, StaticArrays
     @test η0 ==
         compute_viscosity_εII(rheology, 0.0, args) ==
         compute_viscosity_τII(rheology, 0.0, args)
-    @test 1/(1 / η0 + 1 / el.G.val / dt) ==
+    @test 1/(1 / η0 + 1 / G / dt) ==
         compute_elastoviscosity_εII(rheology, εII, args) ==
         compute_elastoviscosity_τII(rheology, τII, args)
 
@@ -59,9 +59,9 @@ using Test, GeoParams, StaticArrays
     @test compute_viscosity(rheologies2, phase_ratio, args)  == 1.0666666666666667
     @test compute_viscosity(rheologies2, SA[0.5, 0.5], args) == 1.0666666666666667
 
-    @test compute_elasticviscosity(rheologies2, 1, args) == el.G.val * dt
-    @test compute_elasticviscosity(rheologies2, 2, args) == el.G.val * dt
-    @test compute_elasticviscosity(rheologies2, phase_ratio, args) == el.G.val * dt
+    @test compute_elasticviscosity(rheologies2, 1, args) == el.G * dt
+    @test compute_elasticviscosity(rheologies2, 2, args) == el.G * dt
+    @test compute_elasticviscosity(rheologies2, phase_ratio, args) == el.G * dt
     
         # Slightly more complex example ----------------------
     # function to compute strain rate 
@@ -102,7 +102,7 @@ using Test, GeoParams, StaticArrays
     @test η ==
         compute_viscosity_τII(rheology, τII, args) ==
         compute_viscosity_εII(rheology, εII, args)
-    @test 1/(1 / η + 1 / el.G.val / dt) ==
+    @test 1/(1 / η + 1 / el.G / dt) ==
         compute_elastoviscosity_εII(rheology, εII, args) ==
         compute_elastoviscosity_τII(rheology, τII, args)
 end

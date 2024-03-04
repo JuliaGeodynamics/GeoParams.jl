@@ -17,7 +17,7 @@ Compute effective viscosity given a 2nd invariant of the deviatoric strain rate 
 end
 
 @inline compute_viscosity_εII(v::LinearViscous, εII, args) = v.η.val
-@inline compute_viscosity_εII(v::ConstantElasticity, εII, args) = v.G.val * args.dt
+@inline compute_viscosity_εII(v::ConstantElasticity, εII, args) = v.G * args.dt
 
 # compute effective "creep" viscosity from deviatoric stress tensor
 """
@@ -32,7 +32,7 @@ Compute effective viscosity given a 2nd invariant of the deviatoric stress tenso
 end
 
 @inline compute_viscosity_τII(v::LinearViscous, τII, args) = v.η.val
-@inline compute_viscosity_τII(v::ConstantElasticity, τII, args) = v.G.val * args.dt
+@inline compute_viscosity_τII(v::ConstantElasticity, τII, args) = v.G * args.dt
 
 for fn in (:compute_viscosity_εII, :compute_viscosity_τII)
     @eval begin
@@ -129,7 +129,7 @@ end
 end
 
 # compute effective "visco-elastic" viscosity
-@inline compute_elastoviscosity(v::ConstantElasticity, η, dt) = (inv(η) + inv(v.G.val * dt)) |> inv
+@inline compute_elastoviscosity(v::ConstantElasticity, η, dt) = (inv(η) + inv(v.G * dt)) |> inv
 @inline compute_elastoviscosity(G, η, dt) = (inv(η) + inv(G * dt)) |> inv
 @inline compute_elastoviscosity(v::ConstantElasticity, η, args::NamedTuple) = compute_elastoviscosity(v, η, args.dt)
 @inline compute_elastoviscosity(G, η, args::NamedTuple) = compute_elastoviscosity(G, η, args.dt)
@@ -184,7 +184,7 @@ end
 # special cases for constant viscosity and elasticity 
 
 @inline compute_viscosity(v::LinearViscous; kwargs...) = v.η.val
-@inline compute_viscosity(v::ConstantElasticity; dt = 0.0, kwargs...) = v.G.val * dt
+@inline compute_viscosity(v::ConstantElasticity; dt = 0.0, kwargs...) = v.G * dt
 @inline compute_viscosity(v::Union{LinearViscous,ConstantElasticity}, kwargs) = compute_viscosity(v; kwargs...)
 @inline compute_viscosity(v, kwargs) = throw("compute_viscosity only works for linear rheologies")
 
