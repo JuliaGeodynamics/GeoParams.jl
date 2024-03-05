@@ -262,7 +262,9 @@ export compute_viscosity_εII,
     compute_viscosity_τII,
     compute_elastoviscosity,
     compute_elastoviscosity_εII,
-    compute_elastoviscosity_τII
+    compute_elastoviscosity_τII,
+    compute_viscosity,
+    compute_elasticviscosity
 
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration
