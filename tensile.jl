@@ -1,4 +1,4 @@
-using ForwardDiff
+using ForwardDiff, MuladdMacro
 
 struct TensilePlasticity{T}
     C::T
@@ -169,14 +169,23 @@ function plastic_corrections(P_tr, τ_ii_tr::NTuple{N1, T}, τ_ij_tr::NTuple{N2,
     return P, τII, τnormal, τshear
 end
 
+function foo()
+    C, ϕ, Ψ, PC1, PC2, τC1, τC2, β, ηve, σT, δ = rand(11)
+    p = TensilePlasticity(C, ϕ, Ψ, PC1, PC2, τC1, τC2, β, ηve, σT, δ)
+    Ptrial = 1.0
+    τIItrial = 1.0
+    dt = 1.0
+    (; C, ϕ, Ψ, PC1, PC2, τC1, τC2, β, ηve, σT, δ, sinϕ, cosϕ, sinΨ, cosΨ) = p
+    args = (; Ptrial = Ptrial, τIItrial = τIItrial, dt = dt, χ = 1/2, C, ϕ, Ψ, PC1, PC2, τC1, τC2, β, ηve, σT, δ, sinϕ, cosϕ, sinΨ, cosΨ)
 
-x = C, ϕ, Ψ, PC1, PC2, τC1, τC2, β, ηve, σT, δ = tuple(rand(11)...)
-p = TensilePlasticity(x...)
-Ptrial = 1.0
-τIItrial = 1.0
-dt = 1.0
-(; C, ϕ, Ψ, PC1, PC2, τC1, τC2, β, ηve, σT, δ, sinϕ, cosϕ, sinΨ, cosΨ) = p
-args = (; Ptrial = Ptrial, τIItrial = τIItrial, dt = dt, χ = 1/2, C, ϕ, Ψ, PC1, PC2, τC1, τC2, β, ηve, σT, δ, sinϕ, cosϕ, sinΨ, cosΨ)
+    # # @be compute_plastic_strain($p, $args)
+    compute_plastic_strain(p, args)
 
-@be compute_plastic_strain($p, $args)
+    @be compute_Q($p, $args)
 
+    # ForwardDiff.derivative(
+    #     x -> compute_Q(p, (; Ptrial = 1, τIItrial = x, dt = dt, χ = 1/2, C, ϕ, Ψ, PC1, PC2, τC1, τC2, β, ηve, σT, δ, sinϕ, cosϕ, sinΨ, cosΨ)), 
+    #     Ptrial
+    # )
+end
+@code_warntype foo()
