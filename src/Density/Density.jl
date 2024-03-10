@@ -122,9 +122,7 @@ end
 
 @inline (ρ::PT_Density)(args)                = ρ(; args...)
 @inline compute_density(s::PT_Density, args) = s(args)
-@inline function compute_density(s::PT_Density, P::AbstractArray, T::AbstractArray)
-    s(; P=P, T=T)
-end
+
 
 # Print info
 function show(io::IO, g::PT_Density)
@@ -168,7 +166,7 @@ function (s::Compressible_Density{_T})(; P::_T=zero(_T), kwargs...) where {_T}
 end
 
 @inline (s::Compressible_Density)(args)                = s(; args...)
-@inline compute_density(s::Compressible_Density, args) = s(; args...)
+@inline compute_density(s::Compressible_Density, args) = s(args)
 
 # Print info
 function show(io::IO, g::Compressible_Density)
@@ -208,11 +206,12 @@ function (s::T_Density{_T})(; T::_T=zero(_T), kwargs...) where {_T}
         @unpack_val   ρ0, α, T0 = s
     end
 
-    return ρ0 * (1.0 -  α * (T - T0))
+    # fma version of ρ0 * (1.0 -  α * (T - T0))
+    return ρ0 * fma(-α, (T - T0), 1.0)
 end
 
 @inline (s::T_Density)(args)                = s(; args...)
-@inline compute_density(s::T_Density, args) = s(; args...)
+@inline compute_density(s::T_Density, args) = s(args)
 
 # Print info
 function show(io::IO, g::T_Density)
@@ -238,18 +237,11 @@ Note that any density formulation can be used for melt and solid.
 @with_kw_noshow struct MeltDependent_Density{_T,U, S1<:AbstractDensity, S2 <:AbstractDensity} <: AbstractDensity{_T}
     ρsolid::S1 = ConstantDensity(ρ=2900kg/m^3) # density of the solid
     ρmelt::S2 = ConstantDensity(ρ=2200kg/m^3)  # density of the melt
-    ρ::GeoUnit{_T,U} = 2900.0kg / m^3                     # to keep track on whether this struct is dimensional or not
+    ρ::GeoUnit{_T,U} = 2900.0kg / m^3          # to keep track on whether this struct is dimensional or not
 end
 
 MeltDependent_Density(args...) = MeltDependent_Density(args[1], args[2], convert.(GeoUnit, args[3:end])...)
 isdimensional(s::MeltDependent_Density) = isdimensional(s.ρsolid)
-
-#MeltDependent_Density(args...) = MeltDependent_Density(convert.(GeoUnit, args)...)
-
-#@inline (ρ::ConstantDensity)(; args...)                          = ρ.ρ.val
-#@inline (ρ::ConstantDensity)(args)                               = ρ(; args...)
-#@inline compute_density(s::ConstantDensity{_T}, args) where {_T} = s(; args...)
-#@inline compute_density(s::ConstantDensity{_T})       where {_T} = s()
 
 # This assumes that density always has a single parameter. If that is not the case, we will have to extend this (to be done)
 function param_info(s::MeltDependent_Density) # info about the struct
@@ -261,11 +253,12 @@ function (rho::MeltDependent_Density{_T})(; ϕ::_T=zero(_T), kwargs...) where {_
     ρsolid = compute_density(rho.ρsolid, kwargs)
     ρmelt  = compute_density(rho.ρmelt,  kwargs)
 
-    return ϕ * ρmelt + (1-ϕ) * ρsolid
+    # fma version of ϕ * ρmelt + (1-ϕ) * ρsolid
+    return fma(ϕ, ρmelt, (1-ϕ) * ρsolid)
 end
 
 @inline (s::MeltDependent_Density)(args)                = s(; args...)
-@inline compute_density(s::MeltDependent_Density, args) = s(; args...)
+@inline compute_density(s::MeltDependent_Density, args) = s(args)
 
 # Print info
 function show(io::IO, g::MeltDependent_Density)
