@@ -2,38 +2,39 @@ module HeatCapacity
 
 # This implements different methods to specify heat capacity
 #
-# If you want to add a new method here, feel free to do so. 
+# If you want to add a new method here, feel free to do so.
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
 using Parameters, LaTeXStrings, Unitful
 using ..Units
-using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, @extractors, add_extractor_functions
 import Base.show, GeoParams.param_info
+import ..Units: isdimensional
 using ..MaterialParameters: MaterialParamsInfo
 
 abstract type AbstractHeatCapacity{T} <: AbstractMaterialParam end
 
 export compute_heatcapacity,               # calculation routines
-    compute_heatcapacity!,              # in-place routine
-    ConstantHeatCapacity,               # constant
+    compute_heatcapacity!,               # in-place routine
+    ConstantHeatCapacity,                # constant
     T_HeatCapacity_Whittington,          # T-dependent heat capacity
+    Latent_HeatCapacity,                 # Implement latent heat by modifying heat capacity
     param_info
 
-#include("../Utils.jl")
 include("../Computations.jl")
 
 # Constant Heat Capacity -------------------------------------------------------
 """
-    ConstantHeatCapacity(cp=1050J/mol/kg)
-    
+    ConstantHeatCapacity(Cp=1050J/mol/kg)
+
 Set a constant heat capacity:
-```math  
-    cp  = cst
+```math
+    Cp  = cst
 ```
-where ``cp`` is the thermal heat capacity [``J/kg/K``].
+where ``Cp`` is the thermal heat capacity [``J/kg/K``].
 """
 @with_kw_noshow struct ConstantHeatCapacity{T,U} <: AbstractHeatCapacity{T}
-    cp::GeoUnit{T,U} = 1050J / kg / K                # heat capacity
+    Cp::GeoUnit{T,U} = 1050J / kg / K                # heat capacity
 end
 ConstantHeatCapacity(args...) = ConstantHeatCapacity(convert.(GeoUnit, args)...)
 
@@ -42,36 +43,34 @@ function param_info(s::ConstantHeatCapacity) # info about the struct
 end
 
 # Calculation routine
-function (s::ConstantHeatCapacity)(; kwargs...)
-    @unpack_val cp = s
-    return cp
+@inline function compute_heatcapacity(a::ConstantHeatCapacity;  kwargs...)
+    @unpack_val Cp = a
+    return Cp
 end
 
-compute_heatcapacity(s::ConstantHeatCapacity; kwargs...) = s()
-
-# Print info 
+# Print info
 function show(io::IO, g::ConstantHeatCapacity)
-    return print(io, "Constant heat capacity: cp=$(UnitValue(g.cp))")
+    return print(io, "Constant heat capacity: Cp=$(UnitValue(g.Cp))")
 end
 #-------------------------------------------------------------------------
 
 # Temperature dependent heat capacity -------------------------------
 """
     T_HeatCapacity_Whittington()
-    
+
 Sets a temperature-dependent heat capacity following the parameterization of Whittington et al. (2009), Nature:
-```math  
-    Cp = (a + b T - c/T^2)/m 
+```math
+    Cp = (a + b T - c/T^2)/m
 ```
 
-where ``Cp`` is the heat capacity [``J/kg/K``], and ``a,b,c`` are parameters that dependent on the temperature `T`:
+where ``Cp`` is the heat capacity [``J/kg/K``], and ``a,b,c`` are parameters that dependent on the temperature ``T`` [``K``]:
 - a = 199.50 J/mol/K    if T<= 846 K
 - a = 199.50 J/mol/K    if T> 846 K
 - b = 0.0857J/mol/K^2   if T<= 846 K
 - b = 0.0323J/mol/K^2   if T> 846 K
 - c = 5e6J/mol*K        if T<= 846 K
 - c = 47.9e-6J/mol*K    if T> 846 K
-- molmass =   0.22178kg/mol 
+- molmass =   0.22178kg/mol
 
 Note that this is slightly different than the equation in the manuscript, as Cp is in J/kg/K (rather than ``J/mol/K`` as in eq.3/4 of the paper)
 """
@@ -84,7 +83,7 @@ Note that this is slightly different than the equation in the manuscript, as Cp 
     b1::GeoUnit{T,U2} = 0.0323J / mol / K^2             # linear term for high T    (T>  846 K)
     c0::GeoUnit{T,U3} = 5e6J / mol * K                  # quadratic term for low T  (T<= 846 K)
     c1::GeoUnit{T,U3} = 47.9e-6J / mol * K              # quadratic term for high T (T>  846 K)
-    molmass::GeoUnit{T,U4} = 0.22178kg / mol               # average molar mass 
+    molmass::GeoUnit{T,U4} = 0.22178kg / mol               # average molar mass
     Tcutoff::GeoUnit{T,U5} = 846K                        # cutoff temperature
 end
 T_HeatCapacity_Whittington(args...) = T_HeatCapacity_Whittington(convert.(GeoUnit, args)...)
@@ -94,10 +93,14 @@ function param_info(s::T_HeatCapacity_Whittington) # info about the struct
 end
 
 # Calculation routine
-function (s::T_HeatCapacity_Whittington{_T})(; T::_T=zero(_T), kwargs...) where {_T}
-    @unpack_val a0, a1, b0, b1, c0, c1, molmass, Tcutoff = s
+@inline function compute_heatcapacity(
+    a::T_HeatCapacity_Whittington{_T};
+    T = zero(_T),
+    kwargs...
+) where _T
+    @unpack_val a0, a1, b0, b1, c0, c1, molmass, Tcutoff = a
 
-    cp = a0 / molmass
+    Cp = a0 / molmass
 
     if T <= Tcutoff
         a, b, c = a0, b0, c0
@@ -105,39 +108,94 @@ function (s::T_HeatCapacity_Whittington{_T})(; T::_T=zero(_T), kwargs...) where 
         a, b, c = a1, b1, c1
     end
 
-    cp = (a + b * T - c / T^2) / molmass
+    Cp = (a + b * T - c / T^2) / molmass
 
-    return cp
+    return Cp
 end
 
+# LatentHeat by modifying heat capacity  ---------------------------------
 """
-    compute_heatcapacity!(cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}, T::_T=zero(_T), P::_T=zero(_T)) where {_T,N}
- 
-Computes T-dependent heat capacity in-place    
+    Latent_HeatCapacity(Cp=ConstantHeatCapacity(), Q_L=400kJ/kg)
+
+This takes the effects of latent heat into account by modifying the heat capacity in the temperature equation:
+
+```math
+\\rho C_p^{\\textrm{new}} \\frac{\\partial T}{\\partial t}  = \\frac{\\partial }{\\partial x_i} \\left( k \\frac{\\partial T}{\\partial x_i} \\right)  + H_s
+```
+
+with
+```math
+C_p^{\\textrm{new}}  = C_p + \\frac{\\partial \\phi}{\\partial T} Q_L
+```
+where ``Q_L`` is the latent heat [``J/kg``], and ``\\frac{\\partial \\phi}{\\partial T}`` is the derivative of the melt fraction with respect to temperature
+
 """
-# function compute_heatcapacity!(cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}; T::AbstractArray{_T, N}, kwargs...) where {_T,N} end
+@with_kw_noshow struct Latent_HeatCapacity{T,U,S1<:AbstractHeatCapacity} <: AbstractHeatCapacity{T}
+    Cp::S1 = ConstantHeatCapacity()
+    Q_L::GeoUnit{T,U} = 400e3J/kg                            # Latent heat
+end
+Latent_HeatCapacity(args...) = Latent_HeatCapacity(args[1], convert.(GeoUnit, args[2:end])...)
+Latent_HeatCapacity(Cp::AbstractHeatCapacity, args...) = Latent_HeatCapacity(Cp, convert.(GeoUnit, args)...)
+isdimensional(g::Latent_HeatCapacity) = isdimensional(g.Q_L)
+
+function param_info(s::Latent_HeatCapacity) # info about the struct
+    return MaterialParamsInfo(; Equation=L"Q_L = cst; c_p = Cp + \frac{\partial \phi}{\partial T}")
+end
+
+# Calculation routine
+@inline function compute_heatcapacity(
+    a::Latent_HeatCapacity{_T};
+    dϕdT = zero(_T),
+    kwargs...
+) where _T
+    @unpack_val Q_L = a
+
+    Cp = compute_heatcapacity(a.Cp, kwargs)
+
+    Cp += Q_L*dϕdT      # latent heat contribution
+
+    return Cp
+end
+
+# Print info
+function show(io::IO, g::Latent_HeatCapacity)
+    return print(io, "Latent heat through modifying heat capacity: Cp = Cp + dϕdT*$(Value(g.Q_L)); Cp=$(g.Cp)")
+end
+#-------------------------------------------------------------------------
+
+
+#-------------------------------------------------------------------------
+"""
+    compute_heatcapacity!(Cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}, T::_T=zero(_T), P::_T=zero(_T)) where {_T,N}
+
+Computes T-dependent heat capacity in-place
+"""
+# function compute_heatcapacity!(Cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}; T::AbstractArray{_T, N}, kwargs...) where {_T,N} end
 
 # add methods programmatically
-for myType in (:ConstantHeatCapacity, :T_HeatCapacity_Whittington)
+for myType in (:ConstantHeatCapacity, :T_HeatCapacity_Whittington, :Latent_HeatCapacity)
     @eval begin
-        (s::$(myType))(args) = s(; args...)
-        compute_heatcapacity(s::$(myType), args) = s(args)
+        #(s::$(myType))(args) = s(; args...)
+        compute_heatcapacity(s::$(myType), args) = compute_heatcapacity(s; args...)
     end
 end
 
-# Print info 
+# Print info
 function show(io::IO, g::T_HeatCapacity_Whittington)
     return print(
         io,
-        "T-dependent heat capacity following Whittington et al. (2009) for average crust). \n",
+        "T-dependent heat capacity following Whittington et al. (2009) for average crust. \n",
     )
 end
 #-------------------------------------------------------------------------
+
+
 
 #-------------------------------------------------------------------------
 # Heat capacity from phase diagram
 
 # to be implemented - see density implementation
+#
 
 #-------------------------------------------------------------------------
 
@@ -150,25 +208,28 @@ Returns the heat capacity `Cp` at any temperature `T` and pressure `P` using any
 Currently available:
 - ConstantHeatCapacity
 - T\\_HeatCapacity_Whittington
+- Latent_HeatCapacity
 
-# Example 
+# Example
 Using dimensional units
 ```julia
-julia> T  = (250:100:1250)*K;
-julia> cp = T_HeatCapacity_Whittington()
-julia> Cp = ComputeHeatCapacity(0,T,cp)
-11-element Vector{Unitful.Quantity{Float64, 𝐋² 𝚯⁻¹ 𝐓⁻², Unitful.FreeUnits{(kg⁻¹, J, K⁻¹), 𝐋² 𝚯⁻¹ 𝐓⁻², nothing}}}:
-  635.4269997294616 J kg⁻¹ K⁻¹
-  850.7470171764261 J kg⁻¹ K⁻¹
-  962.0959598489883 J kg⁻¹ K⁻¹
- 1037.5420433770641 J kg⁻¹ K⁻¹
- 1097.3517921966488 J kg⁻¹ K⁻¹
- 1149.2745563671706 J kg⁻¹ K⁻¹
- 1157.7915050948404 J kg⁻¹ K⁻¹
- 1172.3554874197264 J kg⁻¹ K⁻¹
- 1186.9194697445964 J kg⁻¹ K⁻¹
-  1201.483452069455 J kg⁻¹ K⁻¹
- 1216.0474343943067 J kg⁻¹ K⁻¹
+julia> T = 250.0:100:1250
+julia> Cp2 = T_HeatCapacity_Whittington()
+julia> Cp = similar(T)
+julia> args = (; T=T)
+julia> Cp =compute_heatcapacity!(Cp, Cp2, args)
+11-element Vector nitful.Quantity{Float64, 𝐋² 𝚯⁻¹ 𝐓⁻², Unitful.FreeUnits{(kg⁻¹, J, K⁻¹), 𝐋² 𝚯⁻¹ 𝐓⁻², nothing}}}:
+635.4269997294616 J kg⁻¹ K⁻¹
+850.7470171764261 J kg⁻¹ K⁻¹
+962.0959598489883 J kg⁻¹ K⁻¹
+1037.542043377064 J kg⁻¹ K⁻¹
+1097.351792196648 J kg⁻¹ K⁻¹
+1149.274556367170 J kg⁻¹ K⁻¹
+1157.791505094840 J kg⁻¹ K⁻¹
+1172.355487419726 J kg⁻¹ K⁻¹
+1186.919469744596 J kg⁻¹ K⁻¹
+1201.483452069455 J kg⁻¹ K⁻¹
+1216.0474343943067 J kg⁻¹ K⁻¹
 ```
 
 
@@ -181,7 +242,7 @@ compute_heatcapacity()
 Computes heat capacity if only temperature (and not pressure) is specified
 """
 # compute_heatcapacity(s::AbstractHeatCapacity, T::AbstractArray{_T}) where _T =  compute_heatcapacity(s,similar(T), T)
-# compute_heatcapacity!(cp_array::AbstractArray{_T}, s::AbstractHeatCapacity, T::AbstractArray{_T}) where _T =  compute_heatcapacity!(cp_array,s,similar(T), T)
+# compute_heatcapacity!(Cp_array::AbstractArray{_T}, s::AbstractHeatCapacity, T::AbstractArray{_T}) where _T =  compute_heatcapacity!(Cp_array,s,similar(T), T)
 
 """
     Cp = ComputeHeatCapacity(s::ConstantHeatCapacity)
@@ -189,9 +250,9 @@ Computes heat capacity if only temperature (and not pressure) is specified
 Returns heat capacity if we are sure that we will only employ constant heat capacity in the simulation
 """
 
-# Computational routines needed for computations with the MaterialParams structure 
+# Computational routines needed for computations with the MaterialParams structure
 function compute_heatcapacity(s::AbstractMaterialParamsStruct, args)
-    return s.HeatCapacity[1](args)
+    return compute_heatcapacity(s.HeatCapacity[1],args)
 end
 
 """
@@ -205,14 +266,9 @@ compute_heatcapacity!()
 compute_heatcapacity(args::Vararg{Any, N}) where N = compute_param(compute_heatcapacity, args...)
 compute_heatcapacity!(args::Vararg{Any, N}) where N = compute_param!(compute_heatcapacity, args...)
 
-# In case just temperature is provided
-function compute_heatcapacity!(
-    Cp::AbstractArray{_T,ndim},
-    MatParam::NTuple{N,AbstractMaterialParamsStruct},
-    Phases::AbstractArray{_I,ndim},
-    T::AbstractArray{_T,ndim},
-) where {_T,ndim,N,_I<:Integer}
-    return compute_param!(compute_heatcapacity, Cp, MatParam, Phases, nothing, T)
+# extractor methods
+for type in (ConstantHeatCapacity, T_HeatCapacity_Whittington, Latent_HeatCapacity)
+    @extractors(type, :HeatCapacity)
 end
 
 end

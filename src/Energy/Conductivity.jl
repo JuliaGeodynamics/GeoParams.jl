@@ -2,12 +2,12 @@ module Conductivity
 
 # This implements different methods to specify conductivity of rocks
 #
-# If you want to add a new method here, feel free to do so. 
+# If you want to add a new method here, feel free to do so.
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
 using Parameters, LaTeXStrings, Unitful
 using ..Units
-using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, @extractors, add_extractor_functions
 using ..MaterialParameters: MaterialParamsInfo
 import Base.show, GeoParams.param_info
 
@@ -23,14 +23,13 @@ export compute_conductivity,                       # calculation routines
     Set_TP_Conductivity                         # Routine to set pre-defined parameters
 
 include("../Computations.jl")
-#include("../Utils.jl")
 
 # Constant Conductivity -------------------------------------------------------
 """
     ConstantConductivity(k=3.0W/m/K)
-    
+
 Set a constant conductivity
-```math  
+```math
     k  = cst
 ```
 where ``k`` is the thermal conductivity [``W/m/K``].
@@ -64,13 +63,13 @@ compute_conductivity(s::ConstantConductivity, I::Integer...) = s(I...)
 """
     compute_conductivity(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::ConstantConductivity) where N
 
-In-place routine to compute constant conductivity    
+In-place routine to compute constant conductivity
 """
 function compute_conductivity!(
     k_array::AbstractArray{_T,N}, s::ConstantConductivity; kwargs...
 ) where {_T, N} end
 
-# Print info 
+# Print info
 function show(io::IO, g::ConstantConductivity)
     return print(io, "Constant conductivity: k=$(g.k.val)")
 end
@@ -79,19 +78,19 @@ end
 # Temperature dependent conductivity -------------------------------
 """
     T_Conductivity_Whittington()
-    
-Sets a temperature-dependent conductivity following the parameterization of *Whittington, A.G., Hofmeister, A.M., Nabelek, P.I., 2009. Temperature-dependent thermal diffusivity of the Earth’s crust and implications for magmatism. Nature 458, 319–321. https://doi.org/10.1038/nature07818.* 
-Their parameterization is originally given for the thermal diffusivity, together with a parameterization for thermal conductivity, which allows us to compute 
-```math  
-    Cp = a + b T - c/T^2 
+
+Sets a temperature-dependent conductivity following the parameterization of *Whittington, A.G., Hofmeister, A.M., Nabelek, P.I., 2009. Temperature-dependent thermal diffusivity of the Earth’s crust and implications for magmatism. Nature 458, 319–321. https://doi.org/10.1038/nature07818.*
+Their parameterization is originally given for the thermal diffusivity, together with a parameterization for thermal conductivity, which allows us to compute
+```math
+    Cp = a + b T - c/T^2
 ```
-```math  
+```math
     \\kappa = d/T - e \\textrm{ if } T<=846K
 ```
-```math  
+```math
     \\kappa = f - g*T \\textrm{ if } T>846K
 ```
-```math    
+```math
     \\rho = 2700 kg/m^3
 ```
 ```math
@@ -105,10 +104,10 @@ where ``Cp`` is the heat capacity [``J/mol/K``], and ``a,b,c`` are parameters th
 - b = 0.0323J/mol/K^2   if T> 846 K
 - c = 5e6J/mol*K        if T<= 846 K
 - c = 47.9e-6J/mol*K    if T> 846 K
-- d = 576.3m^2/s*K      
-- e = 0.062m^2/s        
-- f = 0.732m^2/s        
-- g = 0.000135m^2/s/K 
+- d = 576.3m^2/s*K
+- e = 0.062m^2/s
+- f = 0.732m^2/s
+- g = 0.000135m^2/s/K
 
 This looks like:
 
@@ -117,7 +116,7 @@ This looks like:
 Example
 ===
 ```julia
-julia> using GeoParams, Plots
+julia> using GLMakie, GeoParams
 julia> p=T_Conductivity_Whittington();
 julia> T,k,plt = PlotConductivity(p)
 ```
@@ -126,14 +125,14 @@ julia> T,k,plt = PlotConductivity(p)
 """
 @with_kw_noshow struct T_Conductivity_Whittington{T,U1,U2,U3,U4,U5,U6,U7,U8,U9} <:
                        AbstractConductivity{T}
-    # Note: the resulting curve of k was visually compared with Fig. 2 of the paper  
+    # Note: the resulting curve of k was visually compared with Fig. 2 of the paper
     a0::GeoUnit{T,U1} = 199.5J / mol / K                # prefactor for low T       (T<= 846 K)
     a1::GeoUnit{T,U1} = 229.32J / mol / K               # prefactor for high T      (T>  846 K)
     b0::GeoUnit{T,U2} = 0.0857J / mol / K^2             # linear term for low T     (T<= 846 K)
     b1::GeoUnit{T,U2} = 0.0323J / mol / K^2             # linear term for high T    (T>  846 K)
     c0::GeoUnit{T,U3} = 5e6J / mol * K                  # quadratic term for low T  (T<= 846 K)
     c1::GeoUnit{T,U3} = 47.9e-6J / mol * K              # quadratic term for high T (T>  846 K)
-    molmass::GeoUnit{T,U4} = 0.22178kg / mol               # average molar mass 
+    molmass::GeoUnit{T,U4} = 0.22178kg / mol               # average molar mass
     Tcutoff::GeoUnit{T,U5} = 846.0K                      # cutoff temperature
     rho::GeoUnit{T,U6} = 2700kg / m^3                  # Density they use for an average crust
     d::GeoUnit{T,U7} = 576.3 * 1e-6m^2 / s * K           # diffusivity parameterization
@@ -185,8 +184,8 @@ function (s::T_Conductivity_Whittington)(T::AbstractArray; kwargs...)
         end
         #  κ = κ*1e-6
 
-        cp = (a + b * T[i] - c / T[i]^2) * inv_molmass # conductivity
-        k[i] = κ * rho * cp       # compute conductivity from diffusivity
+        Cp = (a + b * T[i] - c / T[i]^2) * inv_molmass # conductivity
+        k[i] = κ * rho * Cp       # compute conductivity from diffusivity
     end
 
     return k
@@ -200,11 +199,11 @@ end
 """
     compute_conductivity!(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, s::T_Conductivity_Whittington) where N
 
-In-place routine to compute temperature-dependent conductivity    
+In-place routine to compute temperature-dependent conductivity
 """
 # function compute_conductivity!(k::AbstractArray{_T,N}, s::T_Conductivity_Whittington{_T}; T::AbstractArray{_T,N}, kwargs...) where {_T,N} end
 
-# Print info 
+# Print info
 function show(io::IO, g::T_Conductivity_Whittington) #info about the struct
     return print(
         io,
@@ -216,8 +215,8 @@ end
 # Temperature dependent conductivity -------------------------------
 """
     T_Conductivity_Whittington_parameterised()
-    
-Sets a temperature-dependent conductivity that is  parameterization after *Whittington, et al.  2009* 
+
+Sets a temperature-dependent conductivity that is  parameterization after *Whittington, et al.  2009*
 
 The original parameterization involves quite a few parameters; this is a polynomial fit that is roughly valid from 0-1000 Celsius
 ```math
@@ -235,11 +234,11 @@ The comparison of this parameterisation vs. the original one is:
 """
 @with_kw_noshow struct T_Conductivity_Whittington_parameterised{T,U1,U2,U3,U4,U5} <:
                        AbstractConductivity{T}
-    # Note: the resulting curve of k was visually compared with Fig. 2 of the paper  
-    a::GeoUnit{T,U1} = -2e-09Watt / m / K^4                # 
-    b::GeoUnit{T,U2} = 6e-06Watt / m / K^3              # 
-    c::GeoUnit{T,U3} = -0.0062Watt / m / K^2              # 
-    d::GeoUnit{T,U4} = 4Watt / m / K                # 
+    # Note: the resulting curve of k was visually compared with Fig. 2 of the paper
+    a::GeoUnit{T,U1} = -2e-09Watt / m / K^4                #
+    b::GeoUnit{T,U2} = 6e-06Watt / m / K^3              #
+    c::GeoUnit{T,U3} = -0.0062Watt / m / K^2              #
+    d::GeoUnit{T,U4} = 4Watt / m / K                #
     Ts::GeoUnit{T,U5} = 273.15 * K                    # Temperature shift [C->K]
 end
 function T_Conductivity_Whittington_parameterised(args...)
@@ -277,7 +276,7 @@ function (s::T_Conductivity_Whittington_parameterised)(T::AbstractArray; kwargs.
 
     @inbounds for i in eachindex(T)
         # Note: in general, we operate with SI units or the non-dimensional equivalent of that
-        # This parameterisation was developed 
+        # This parameterisation was developed
         T_C = T[i] - Ts
         k[i] = a * T_C^3 + b * T_C^2 + c * T_C + d
     end
@@ -295,11 +294,11 @@ end
 """
     compute_conductivity!(k::AbstractArray{_T,N}, s::T_Conductivity_Whittington_parameterised{_T}, P::AbstractArray{_T,N}, T::AbstractArray{_T,N})
 
-In-place routine to compute temperature-dependent conductivity    
+In-place routine to compute temperature-dependent conductivity
 """
 # function compute_conductivity!(k::AbstractArray{_T,N}, s::T_Conductivity_Whittington_parameterised{_T}; T::AbstractArray{_T,N}, kwargs...) where {_T,N} end
 
-# Print info 
+# Print info
 function show(io::IO, g::T_Conductivity_Whittington_parameterised) #info about the struct
     return print(
         io,
@@ -311,19 +310,19 @@ end
 # Temperature (& Pressure) dependent conductivity -------------------------------
 """
     TP_Conductivity()
-    
-Sets a temperature (and pressure)-dependent conductivity parameterization as described in Gerya, Numerical Geodynamics (2nd edition, Table 21.2).
-The general for  
 
-```math  
-    k = \\left( a_k +  {b_k \\over {T + c_k}} \\right) (1 + d_k P) 
+Sets a temperature (and pressure)-dependent conductivity parameterization as described in Gerya, Numerical Geodynamics (2nd edition, Table 21.2).
+The general for
+
+```math
+    k = \\left( a_k +  {b_k \\over {T + c_k}} \\right) (1 + d_k P)
 ```
 
 where ``k`` is the conductivity [``W/K/m``], and ``a_k,b_k,c_k,d_k`` are parameters that dependent on the temperature `T` and pressure `P`:
-- ``a_k`` = 1.18Watt/K/m    
-- ``b_k`` = 474Watt/m 
-- ``c_k`` = 77K       
-- ``d_k`` = 0/MPa       
+- ``a_k`` = 1.18Watt/K/m
+- ``b_k`` = 474Watt/m
+- ``c_k`` = 77K
+- ``d_k`` = 0/MPa
 """
 @with_kw_noshow struct TP_Conductivity{T,N,U1,U2,U3,U4} <: AbstractConductivity{T}
     Name::NTuple{N,Char} = ""                  # The name is encoded as a NTuple{Char} to make it isbits
@@ -349,17 +348,17 @@ end
 
 """
     Set_TP_Conductivity["Name of temperature(-pressure) dependent conductivity"]
-    
+
 This is a dictionary with pre-defined laws:
-- "UpperCrust"    
+- "UpperCrust"
 - "LowerCrust"
 - "OceanicCrust"
 - "Mantle"
 
 # Example
-```julia 
+```julia
 julia> k=Set_TP_Conductivity["Mantle"]
-T/P dependent conductivity: k = (0.73 W K⁻¹ m⁻¹ + 1293 W m⁻¹/(T + 77 K))*(1 + 4.0e-5 MPa⁻¹*P)  
+T/P dependent conductivity: k = (0.73 W K⁻¹ m⁻¹ + 1293 W m⁻¹/(T + 77 K))*(1 + 4.0e-5 MPa⁻¹*P)
 ```
 
 """
@@ -477,7 +476,7 @@ for myType in (
     end
 end
 
-# Print info 
+# Print info
 function show(io::IO, g::TP_Conductivity)
     if ustrip(Value(g.d)) == 0
         print(
@@ -504,7 +503,7 @@ Currently available:
 - T\\_Conductivity_Whittington
 - TP\\_Conductivity
 
-# Example 
+# Example
 Using dimensional units
 ```julia
 julia> T  = (250:100:1250)*K;
@@ -530,7 +529,7 @@ Returns conductivity if we are sure that we will only employ constant values thr
 """
 #compute_conductivity(s::ConstantConductivity) =  compute_conductivity(s,0,0)
 
-# Computational routines needed for computations with the MaterialParams structure 
+# Computational routines needed for computations with the MaterialParams structure
 function compute_conductivity(s::AbstractMaterialParamsStruct, args)
     return s.Conductivity[1](args)
 end
@@ -545,10 +544,15 @@ ________________________________________________________________________________
 
 compute_conductivity!(k::AbstractArray{T,N}, PhaseRatios::AbstractArray{T, M}, P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
 
-In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
+In-place computation of conductivity `k` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 """
 compute_conductivity(args::Vararg{Any, N}) where N = compute_param(compute_conductivity, args...)
 compute_conductivity!(args::Vararg{Any, N}) where N = compute_param!(compute_conductivity, args...)
+
+# extractor methods
+for type in (ConstantConductivity, T_Conductivity_Whittington, T_Conductivity_Whittington_parameterised, TP_Conductivity)
+    @extractors(type, :Conductivity)
+end
 
 end

@@ -6,58 +6,58 @@ using StaticArrays
 # Computational routines needed for computations with the MaterialParams structure 
 
 # with tuple & vector - apply for all phases in MatParam
-function compute_param!(
-    fn::F, rho::AbstractVector, MatParam::NTuple{N,AbstractMaterialParamsStruct}, args
-) where {F,N}
-    return rho .= map(x -> fn(x, P, T), MatParam)
-end
+# function compute_param!(
+#     fn::F, rho::AbstractVector, MatParam::NTuple{N,AbstractMaterialParamsStruct}, args
+# ) where {F,N}
+#     return rho .= map(x -> fn(x, P, T), MatParam)
+# end
 
 # each individual calculation 
-function compute_param(
-    fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, args
-) where {F,N}
-    return map(x -> fn(x, args), MatParam)
-end
+# function compute_param(
+#     fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, args
+# ) where {F,N}
+#     return map(x -> fn(x, args), MatParam)
+# end
 
 #---------------------------------------------------------------------------------------------------------------------------#
 # Computational routines for Phases
 
 # performs computation given a single Phase
 @generated function compute_param(
-    fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Int64, args
-) where {F,N}
+    fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Int64, args::Vararg{Any,NA}
+) where {F,N,NA}
     quote
         Base.@_inline_meta
         Base.Cartesian.@nexprs $N i ->
-            @inbounds (MatParam[i].Phase == Phase) && return fn(MatParam[i], args)
+            @inbounds (MatParam[i].Phase == Phase) && return fn(MatParam[i], args...)
         return 0.0
     end
 end
 
 @generated function compute_param(
-    fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, phase_ratios::Union{SVector{N,T}, NTuple{N,T}}, args
-) where {F,N,T}
+    fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, phase_ratios::Union{SVector{N,T}, NTuple{N,T}}, args::Vararg{Any,NA}
+) where {F,N,T,NA}
     quote
         Base.@_inline_meta
         x = zero($T)
         Base.Cartesian.@nexprs $N i ->
-            @inbounds  x+= fn(MatParam[i], args) * phase_ratios[i]
+            @inbounds  x+= fn(MatParam[i], args...) * phase_ratios[i]
         return x
     end
 end
 
-function compute_param(
-    fn::F, MatParam::AbstractVector{AbstractMaterialParamsStruct}, Phase::Union{SArray, Int64}, args
-) where {F}
-    return compute_param(fn, Tuple(MatParam), Phase, args)
+@inline function compute_param(
+    fn::F, MatParam::AbstractVector{AbstractMaterialParamsStruct}, Phase::Union{SArray, Int64}, args::Vararg{Any,NA}
+) where {F,NA}
+    return compute_param(fn, Tuple(MatParam), Phase, args...)
 end
 
-function compute_param(fn::F, MatParam::AbstractMaterialParam, args) where {F}
-    return fn(MatParam, args)
+@inline function compute_param(fn::F, MatParam::AbstractMaterialParam, args::Vararg{Any,NA}) where {F,NA}
+    return fn(MatParam, args...)
 end
 
-function compute_param(fn::F, MatParam::AbstractMaterialParamsStruct, args) where {F}
-    return fn(MatParam, args)
+@inline function compute_param(fn::F, MatParam::AbstractMaterialParamsStruct, args::Vararg{Any,NA}) where {F,NA}
+    return fn(MatParam, args...)
 end
 
 @inline function compute_param!(

@@ -1,15 +1,15 @@
 module Tables
 
 using Unidecode
-using GeoParams: AbstractMaterialParam, param_info, LinearViscous, PowerlawViscous, DislocationCreep, DiffusionCreep, CompositeRheology, Parallel, make_tuple
+using GeoParams: AbstractMaterialParam, param_info, LinearViscous, PowerlawViscous, DislocationCreep, DiffusionCreep, CompositeRheology, Parallel, make_tuple, uint2str
 using ..Units
 using ..MaterialParameters: MaterialParamsInfo
 
 export detachFloatfromExponent, Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2MarkdownTable, ParameterTable
 
 
-""" 
-detachFloatfromExponent() returns the number of float decimals after the comma as Integer, the float number without the exponent as string 
+"""
+detachFloatfromExponent() returns the number of float decimals after the comma as Integer, the float number without the exponent as string
 and the exponent after the "e" as string.
 The argument output returns "1" for "ex" if the input number has no exponent.
 
@@ -23,7 +23,7 @@ function detachFloatfromExponent(str::String)
     end
 
     dig = something(findfirst('.', reverse(s)), 1) - 1
-    
+
     return dig, s, ex
 
 end
@@ -41,7 +41,7 @@ function Phase2Dict(s)
     phasecount = length(s)
     k = 1
     flowlawcount = 0
-    # Checks all Phases 
+    # Checks all Phases
     for i in 1:phasecount
         fieldnames = propertynames(s[i])
         global Diff = 0
@@ -58,13 +58,14 @@ function Phase2Dict(s)
                     flowlin = "LinVisc"
                     flowcomp = "CompoRheo"
                     flowpara = "Parallel"
-                    # Checks what type the CreepLaw or CompositeRheology field has 
+                    # Checks what type the CreepLaw or CompositeRheology field has
                     if typeof(a[j]) <: DislocationCreep
                         global Disl += 1
                         flowlawcount += 1
                         flowadd = flowdisl
                         flowlaw *= flowadd
-                        name = join(a[j].Name)
+                        # name = join(uint2str(a[j].Name))
+                        name = join(uint2str(a[j].Name))
                         bibinfo_disl = param_info(a[j])
                         bib_disl = bibinfo_disl.BibTex_Reference
                         refs["$name"] = (bib_disl, "$flowlawcount", "$i")
@@ -74,7 +75,7 @@ function Phase2Dict(s)
                         flowlawcount += 1
                         flowadd = flowdiff
                         flowlaw *= flowadd
-                        name = join(a[j].Name)
+                        name = join(uint2str(a[j].Name))
                         bibinfo_diff = param_info(a[j])
                         bib_diff = bibinfo_diff.BibTex_Reference
                         refs["$name"] = (bib_diff, "$flowlawcount", "$i")
@@ -123,7 +124,7 @@ function Phase2Dict(s)
                                         flowlawcount += 1
                                         flowadd = flowlin
                                         parallelrheo *= flowadd * ","
-                                        
+
                                     end
 
                                     varnames = propertynames(a[j][u][v])
@@ -366,7 +367,7 @@ function Phase2Dict(s)
                                 else
                                     fds["$var $label $i"] = (value, latexvar, "", "$i", "", "")
                                 end
-                                
+
                             end
                             k += 1
                         end
@@ -424,7 +425,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         "Kb" => "Elastic bulk modulus (Pa)",
         "Y" => "Young's modulus (Pa)",
         "k" => "Thermal conductivity (W/m/K)",
-        "cp" => "Heat capacity (J/kg/K)",
+        "Cp" => "Heat capacity (J/kg/K)",
         "Q_L" => "Latent heat (kJ/kg)",
         "H_r" => "Radioactive heat \$(W/m^{3})\$",
         "H_s" => "Shear heating (-)",
@@ -517,7 +518,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
         # Sets parametername and variable (symbol)
         # Order of signs in symbol: 1. "_", if already "_" in there -> 2. "^"
         # If no underscore in symbol
-        if (maximum(endswith(symbol, string(i),) for i in 0:9) && !occursin("_", symbol)) || (!occursin("\\", symbol) && length(symbol) > 1 && !occursin("_", symbol)) 
+        if (maximum(endswith(symbol, string(i),) for i in 0:9) && !occursin("_", symbol)) || (!occursin("\\", symbol) && length(symbol) > 1 && !occursin("_", symbol))
             # If "0" in symbol (0 in key for dict)
             if occursin("0", symbol)
                 Table *= " " * string(desc[symbol]) *  " & " * "\$" * symbol[1:end-1] * "_" * symbol[end] *"\$"
@@ -525,7 +526,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
             else
                 Table *= " " * string(desc[symbol[1:end-1]]) *  " & " * "\$" * symbol[1:end-1] * "_" * symbol[end] *"\$"
             end
-        # If "_" AND "^" in symbol 
+        # If "_" AND "^" in symbol
         elseif occursin("_", symbol) && occursin("^", symbol)
             occ_under = findfirst('_', symbol)
             occ_roof = findfirst('^', symbol)
@@ -553,7 +554,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
                     if symbol_A == dictpairs[i_dictpairs].second[2] && j == parse(Int64, dictpairs[i_dictpairs].second[4]) && hit == 0
                         # put in the matched parameter value
                         dig, num, expo = detachFloatfromExponent(dictpairs[i_dictpairs].second[1])
-                        if  dig <= rdigits && expo != "1" 
+                        if  dig <= rdigits && expo != "1"
                             Table *= " & \$" * "$num \\times 10^{$expo} \$"
                         elseif dig <= rdigits && expo == "1"
                             Table *= " & \$" * "$num\$"
@@ -570,7 +571,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
                 if symbol == dictpairs[i_dictpairs].second[2] && j == parse(Int64, dictpairs[i_dictpairs].second[4]) && hit == 0 && !(occursin("A_", string(symbol)))
                     # put in the matched parameter value
                     dig, num, expo = detachFloatfromExponent(dictpairs[i_dictpairs].second[1])
-                    if  dig <= rdigits && expo != "1" 
+                    if  dig <= rdigits && expo != "1"
                         Table *= " & \$" * "$num \\times 10^{$expo} \$"
                     elseif dig <= rdigits && expo == "1"
                         Table *= " & \$" * "$num\$"
@@ -585,7 +586,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
                 i_dictpairs += 1
             end
 
-            # checks if a parameter in a phase is not existing 
+            # checks if a parameter in a phase is not existing
             if hit == 0
                 Table *= " & "
             end
@@ -626,7 +627,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
 
     Table *= "\\midrule[0.3pt]\n"
 
-    # Creates References string which is later written to References.bib 
+    # Creates References string which is later written to References.bib
     for i in 1:parse(Int64, d["Name 1"][2])
         for j in 1:length(refs)
             if parse(Int64, refpair[j].second[2]) == i
@@ -634,7 +635,7 @@ function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits
             end
         end
     end
-    
+
     # Adds in text citation for all BibTex sources to LaTEx code. InTextRef is created simultaneously with table headers
     Table *= "\\multicolumn{5}{l}{"
     Table *= InTextRef * "}\\\\\n"
@@ -668,7 +669,7 @@ function Phase2DictMd(s)
     phasecount = length(s)
     k = 1
     flowlawcount = 0
-    # Checks all Phases 
+    # Checks all Phases
     for i in 1:phasecount
         fieldnames = propertynames(s[i])
         global Diff = 0
@@ -685,13 +686,13 @@ function Phase2DictMd(s)
                     flowlin = "LinVisc"
                     flowcomp = "CompoRheo"
                     flowpara = "Parallel"
-                    # Checks what type the CreepLaw or CompositeRheology field has 
+                    # Checks what type the CreepLaw or CompositeRheology field has
                     if typeof(a[j]) <: DislocationCreep
                         global Disl += 1
                         flowlawcount += 1
                         flowadd = flowdisl
                         flowlaw *= flowadd
-                        name = join(a[j].Name)
+                        name = join(uint2str(a[j].Name))
                         bibinfo_disl = param_info(a[j])
                         bib_disl = bibinfo_disl.BibTex_Reference
                         refs["$name"] = (bib_disl, "$flowlawcount", "$i")
@@ -701,7 +702,7 @@ function Phase2DictMd(s)
                         flowlawcount += 1
                         flowadd = flowdiff
                         flowlaw *= flowadd
-                        name = join(a[j].Name)
+                        name = join(uint2str(a[j].Name))
                         bibinfo_diff = param_info(a[j])
                         bib_diff = bibinfo_diff.BibTex_Reference
                         refs["$name"] = (bib_diff, "$flowlawcount", "$i")
@@ -750,7 +751,7 @@ function Phase2DictMd(s)
                                         flowlawcount += 1
                                         flowadd = flowlin
                                         parallelrheo *= flowadd * ","
-                                        
+
                                     end
 
                                     varnames = propertynames(a[j][u][v])
@@ -966,13 +967,13 @@ function Phase2DictMd(s)
                                 else
                                     fds["$var $label $i"] = (value, mdvar, "", "$i", "", "")
                                 end
-                                
+
                             end
                             k += 1
                         end
                     end
                 end
-                # Takes field "Name" and puts phase name, maximum phase  count and current phase number in Dict 
+                # Takes field "Name" and puts phase name, maximum phase  count and current phase number in Dict
             elseif !isempty(getproperty(s[i], label)) && label == :Name
                 phasename = join(getproperty(s[i], :Name))
                 fds["$label $i"] = (phasename, "$phasecount", "$i", "", "", "")
@@ -1016,10 +1017,10 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
         "G"=>"Shear modulus *(Pa)*",
         "ν"=>"Poisson ratio *(-)*",
         "K"=>"Bulk modulus *(Pa)*",
-        "Kb"=>"Elastic bulk modulus *(Pa)*", 
+        "Kb"=>"Elastic bulk modulus *(Pa)*",
         "Y"=>"Young's modulus *(Pa)*",
         "k"=>"Thermal conductivity *(W/m/K)*",
-        "cp"=>"Heat capacity *(J/kg/K)*",
+        "Cp"=>"Heat capacity *(J/kg/K)*",
         "Q_L"=>"Latent heat *(kJ/kg)*",
         "H_r"=>"Radioactive heat *(W/m^3^)*",
         "H_s"=>"Shear heating *(-)*",
@@ -1081,7 +1082,7 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
         # Sets parametername and variable
         if length(symbol) > 1
             # Checks if Unicode chars in combination with a number etc. (e.g "α0") are used which apparently do not have a second index but only first and third
-            # and checks if symbol has a number in it 
+            # and checks if symbol has a number in it
             if maximum(endswith(symbol, string(i),) for i in 0:9) && !occursin("_", symbol)
                 if length(unidecode(symbol)) > 2 && occursin("0", symbol)
                     Table *= " " * string(desc[symbol]) * " | " * symbol[1] * "~" * symbol[3] * "~"
@@ -1094,7 +1095,7 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
                     symbol_1 = symbol[1:end-1]
                     Table *= " " * string(desc["$symbol_1"]) * " | " * symbol[1] * "~" * symbol[2] * "~"
                 end
-            # If "_" AND "^" in symbol 
+            # If "_" AND "^" in symbol
             elseif occursin("_", symbol) && occursin("^", symbol)
                 occ_under = findfirst('_', symbol)
                 occ_roof = findfirst('^', symbol)
@@ -1122,7 +1123,7 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
                     if symbol_A == dictpairs[i_dictpairs].second[2] && j == parse(Int64, dictpairs[i_dictpairs].second[4]) && hit == 0
                         # put in the matched parameter value
                         dig, num, expo = detachFloatfromExponent(dictpairs[i_dictpairs].second[1])
-                        if  dig <= rdigits && expo != "1" 
+                        if  dig <= rdigits && expo != "1"
                             Table *= " | " * "$num x 10^$expo^"
                         elseif dig <= rdigits && expo == "1"
                             Table *= " | " * "$num"
@@ -1139,7 +1140,7 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
                 if symbol == dictpairs[i_dictpairs].second[2] && j == parse(Int64, dictpairs[i_dictpairs].second[4]) && hit == 0 && !(occursin("A_", string(symbol)))
                     # put in the matched parameter value
                     dig, num, expo = detachFloatfromExponent(dictpairs[i_dictpairs].second[1])
-                    if  dig <= rdigits && expo != "1" 
+                    if  dig <= rdigits && expo != "1"
                         Table *= " | " * "$num x 10^$expo^"
                     elseif dig <= rdigits && expo == "1"
                         Table *= " | " * "$num"
@@ -1154,7 +1155,7 @@ function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
                 i_dictpairs += 1
             end
 
-            # checks if a parameter in a phase is not existing 
+            # checks if a parameter in a phase is not existing
             if hit == 0
                 Table *= " | "
             end

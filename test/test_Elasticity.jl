@@ -28,10 +28,10 @@ using GeoParams
     @test isvolumetric(a) == true
 
     b = ConstantElasticity()
-    v = SetMaterialParams(; Elasticity = ConstantElasticity())
-    vv=(
-        SetMaterialParams(; Phase=1, Elasticity = ConstantElasticity()),
-        SetMaterialParams(; Phase=2, Elasticity = ConstantElasticity()),
+    v = SetMaterialParams(; Elasticity=ConstantElasticity())
+    vv = (
+        SetMaterialParams(; Phase=1, Elasticity=ConstantElasticity()),
+        SetMaterialParams(; Phase=2, Elasticity=ConstantElasticity()),
     )
 
     @test get_G(b) == b.G.val
@@ -55,9 +55,9 @@ using GeoParams
     @test compute_εvol(a, p, argsp) ≈ -5.0e-11  # compute
     @test compute_p(a, 1e-15, argsp) ≈ 4.9999e6
     @test dεII_dτII(a, τII, argsτ) ≈ 1e-17
-    @test dτII_dεII(a,τII_old,dt,argsτ) ≈ 1e17
-    @test dεvol_dp(a,p,argsp) ≈ -1e-17
-    @test dp_dεvol(a,P_old,dt,argsp) ≈ -1e17
+    @test dτII_dεII(a, τII_old, dt, argsτ) ≈ 1e17
+    @test dεvol_dp(a, p, argsp) ≈ -1e-17
+    @test dp_dεvol(a, P_old, dt, argsp) ≈ -1e17
 
     # Test with arrays
     τII_old_array = ones(10) * 15e6
@@ -85,7 +85,7 @@ using GeoParams
             Name="Crust", Phase=2, Elasticity=ConstantElasticity(; G=1e10Pa)
         ),
         SetMaterialParams(;
-            Name="Crust", Phase=2, HeatCapacity=ConstantHeatCapacity(; cp=1100J / kg / K)
+            Name="Crust", Phase=2, HeatCapacity=ConstantHeatCapacity(; Cp=1100J / kg / K)
         ),
     )
 
@@ -99,7 +99,7 @@ using GeoParams
     τII_old  =  ones(size(Phases))*15e6;
     ε_el = zero(τII);
     args = (τII_old=τII_old, dt=1e6);
-    compute_εII!(ε_el, MatParam, Phases, τII, args)    # computation routine w/out P (not used in most heat capacity formulations)     
+    compute_εII!(ε_el, MatParam, Phases, τII, args)    # computation routine w/out P (not used in most heat capacity formulations)
     @test maximum(ε_el[1,1,:]) ≈ 2.5e-10
 
     # test if we provide phase ratios
@@ -113,14 +113,14 @@ using GeoParams
     # Note; using PhaseRatio currently requires an array of timesteps - can probably be fixed to also allow scalars
     dt_arr   =  ones(size(Phases))*1e6;     # needs to be an array of timesteps currently
     args = (τII=τII, τII_old=τII_old, dt=dt_arr);
-    compute_εII!(ε_el, MatParam, PhaseRatio, args)  
+    compute_εII!(ε_el, MatParam, PhaseRatio, args)
     @test maximum(ε_el[1,1,:]) ≈ 2.5e-10
 
     args1 = (τII=τII, τII_old=τII_old, dt=1e6);
-    compute_εII!(ε_el, MatParam, PhaseRatio, args1)  
+    compute_εII!(ε_el, MatParam, PhaseRatio, args1)
     @test maximum(ε_el[1,1,:]) ≈ 2.5e-10
 
-    num_alloc = @allocated compute_εII!(ε_el, MatParam, PhaseRatio, args)  
+    num_alloc = @allocated compute_εII!(ε_el, MatParam, PhaseRatio, args)
     @test maximum(ε_el[1,1,:]) ≈ 2.5e-10
     @test num_alloc <= 32
 

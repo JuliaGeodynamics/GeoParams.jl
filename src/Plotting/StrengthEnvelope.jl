@@ -1,7 +1,12 @@
-using Parameters
-using .GLMakie
+# This function is implemented in this file
+import GeoParams: StrengthEnvelopePlot
 
-export StrengthEnvelopePlot
+# Make all `export`ed names from GeoParams.jl available
+using GeoParams
+# We also need the following un-`export`ed names
+using GeoParams: AbstractTempStruct
+
+using Parameters
 
 function StrengthEnvelopePlot(MatParam::NTuple{N, AbstractMaterialParamsStruct}, Thickness::Vector{U}; TempType::AbstractTempStruct=LinTemp(), nz::Int64=101) where {N, U}
 
@@ -26,7 +31,7 @@ function StrengthEnvelopePlot(MatParam::NTuple{N, AbstractMaterialParamsStruct},
     end
 
     # build Figure
-    fig = Figure(resolution = (1200, 900));
+    fig = Figure(size = (1200, 900));
     ax1 = fig[1, 1:3] = Axis(fig,
         # title
         title  = title,
@@ -64,7 +69,7 @@ function StrengthEnvelopePlot(MatParam::NTuple{N, AbstractMaterialParamsStruct},
 
     # create listener to sliders
     T_slider     = lsgrid.sliders[1].value
-    
+
     exp_slider   = lsgrid.sliders[2].value
     ε            = @lift(10^$exp_slider/s)
 
@@ -82,7 +87,7 @@ function StrengthEnvelopePlot(MatParam::NTuple{N, AbstractMaterialParamsStruct},
 
     # get results from computational routine
     res          = @lift(StrengthEnvelopeComp(MatParam, Thickness, $Temp, $ε, nz))
-    
+
     # extract components for plotting
     z_plot       = @lift(extractFromResult($res, 1, nz))
     τ_plot       = @lift(extractFromResult($res, 2, nz))

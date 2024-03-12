@@ -32,7 +32,7 @@ function local_iterations_εII(
                 dfdτII = - dεII_dτII(v, τII, args) 
                 τII -= f / dfdτII
         =#
-        τII = muladd(εII - compute_εII(v, τII, args), inv(dεII_dτII(v, τII, args)), τII)
+        τII = fma(εII - compute_εII(v, τII, args), inv(dεII_dτII(v, τII, args)), τII)
 
         ϵ = abs(τII - τII_prev) * inv(τII)
         τII_prev = τII
@@ -112,7 +112,7 @@ Performs local iterations versus stress for a given strain rate using AD
         f -= ε_pl
 
 
-        τII = muladd(f, inv(dεII_dτII), τII)
+        τII = fma(f, inv(dεII_dτII), τII)
 
         ϵ = abs(τII - τII_prev) * inv(τII)
         τII_prev = τII
@@ -185,7 +185,7 @@ end
                 dfdτII = - dεII_dτII(v, τII, args) 
                 τII -= f / dfdτII
         =#
-        εII = muladd(τII - first(compute_τII(v, εII, args)), inv(dτII_dεII(v, εII, args)), εII)
+        εII = fma(τII - first(compute_τII(v, εII, args)), inv(dτII_dεII(v, εII, args)), εII)
 
         ϵ = abs(εII - εII_prev) * inv(εII)
         εII_prev = εII
@@ -232,7 +232,7 @@ Performs local iterations versus pressure for a given total volumetric strain ra
                 dfdτII = - dεII_dτII(v, τII, args) 
                 τII -= f / dfdτII
         =#
-        p = muladd(εvol - compute_εvol(v, p, args), inv(dεvol_dp(v, p, args)), p)
+        p = fma(εvol - compute_εvol(v, p, args), inv(dεvol_dp(v, p, args)), p)
 
         ϵ = abs(p - p_prev) * inv(abs(p))
         p_prev = p

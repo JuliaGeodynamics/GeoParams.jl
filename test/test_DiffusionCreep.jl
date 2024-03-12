@@ -1,5 +1,6 @@
 using Test
 using GeoParams
+import GeoParams.Diffusion
 
 @testset "DiffusionCreepLaws" begin
 
@@ -8,11 +9,12 @@ using GeoParams
 
     # Define a linear viscous creep law ---------------------------------
     x1 = DiffusionCreep()
+    @test isbits(x1)
     @test Value(x1.n) == 1.0
     @test Value(x1.p) == -3.0
-    @test Value(x1.A) == 1.5MPa^-1.0 * s^-1 * m^(3.0)
+    @test Value(x1.A) == 1.5e6Pa^-1 * s^-1 * m^3
 
-    # perform a computation with the dislocation creep laws 
+    # perform a computation with the dislocation creep laws
     # Calculate EpsII, using a set of pre-defined values
     CharDim = GEO_units(;
         length=1000km, viscosity=1e19Pa * s, stress=100MPa, temperature=1000C
@@ -27,7 +29,13 @@ using GeoParams
     d_nd = nondimensionalize(d, CharDim)
 
     # compute a pure diffusion creep rheology
-    p = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
+    diffusion_law = Diffusion.dry_anorthite_Rybacki_2006
+    p = SetDiffusionCreep(diffusion_law; n = 1NoUnits)
+    @test p.n.val == 1.0
+
+    # compute a pure diffusion creep rheology
+    diffusion_law = Diffusion.dry_anorthite_Rybacki_2006
+    p = SetDiffusionCreep(diffusion_law)
 
     T = 650 + 273.15
 
@@ -54,23 +62,6 @@ using GeoParams
     compute_εII!(ε_array, p, τII_array, args)
     @test ε_array[1] ≈ ε
 
-    # ===
-
-    # dry anorthtite, stress-strainrate curve
-    p = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
-    εII = exp10.(-22:0.5:-12)
-    τII = zero(εII)                # preallocate array
-    T = 650 + 273.15
-    gsiz = 100e-6
-    args = (T=T, d=gsiz)
-    compute_τII!(τII, p, εII, args)
-
-    eta_array = @. 0.5 * τII / εII
-
-    εII = zero(τII)
-    compute_εII!(εII, p, τII, args)
-    eta_array1 = @. 0.5 * τII / εII
-
     #---------------------------
     # This is data from a matlab script implementation of the rheology (which was again benchmarked vs. LaMEM)
     for itest in 1:2
@@ -85,7 +76,7 @@ using GeoParams
         m_gr0 = [3 0] #Grain size Exponent (will convert to negative)
         r_fug = [0 0] #Exponent of Fugacity
         Vact = [24 24] #Activation Volume cm-3
-        fugH = [1 1] #Fugacity of water MPa 
+        fugH = [1 1] #Fugacity of water MPa
 
         R = 8.3145 #Gas Constant
         MPa2Pa = 1e6   #MPa  -> Pa
@@ -114,15 +105,15 @@ using GeoParams
                 (R * J2kJ * TK * npow[i_flow]),
             )
         mu = mu1 .* MPa2Pa #In Pa.s
-        Tau = 2 * mu * eII     # stress 
+        Tau = 2 * mu * eII     # stress
 
         #---------------------------
 
         # Do the same but using GeoParams:
-        if itest == 1
-            pp = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
+        pp = if itest == 1
+            SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006)
         elseif itest == 2
-            pp = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
+            SetDislocationCreep(GeoParams.Dislocation.dry_anorthite_Rybacki_2006)
         end
 
         # using SI units
@@ -160,48 +151,34 @@ using GeoParams
         compute_εII!(εII_vec, pp, τII_vec, args)
     end
 
-    # test overriding the default values
-    a =  SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)", V=1e-6m^3/mol)
-    @test Value(a.V) == 1e-6m^3/mol
-
-
-    # --- debugging
-
-    #@unpack_units n,r,A,E,V,R = pp
-
-    #FT, FE = CorrectionFactor(pp);    
-    #FT=0.5; FE=1;
-
-    #τ = A^(-1/n)*(EpsII*FE)^(1/n)*f^(-r/n)*exp((E + P*V)/(n * R*T))/FT
-
-    # ----
-
-
+    # # test overriding the default values
+    # a = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)"; V=1e-6m^3 / mol)
+    # @test Value(a.V) == 1e-6m^3 / mol
 
     # Do some basic checks on all creeplaws in the DB
     CharDim = GEO_units()
-    creeplaw_list = DiffusionCreep_info       # all creeplaws in database
-    for (key, val) in creeplaw_list
-        p     = SetDiffusionCreep(key)        # original creep law
-        p_nd  = nondimensionalize(p,CharDim)    # non-dimensionalized
-        p_dim = dimensionalize(p,CharDim)       # dimensionalized
+    creeplaw_list = diffusion_law_list()
+
+    for fun in creeplaw_list
+        p = SetDiffusionCreep(fun)                    # original creep law
+        p_nd = nondimensionalize(p, CharDim)          # non-dimensionalized
+        @test p_nd == SetDiffusionCreep(fun, CharDim) # check that the non-dimensionalized version is the same as the original
+        p_dim = dimensionalize(p, CharDim)            # dimensionalized
 
         # Check that values are the same after non-dimensionalisation & dimensionalisation
         for field in fieldnames(typeof(p_dim))
-            val_original = getfield(p,    field)
-            val_final    = getfield(p_dim,field)
+            val_original = getfield(p, field)
+            val_final = getfield(p_dim, field)
             if isa(val_original, GeoUnit)
-                @test Value(val_original) == Value(val_final)        
+                @test Value(val_original) == Value(val_final)
             end
         end
-        
+
         # Perform computations with the rheology
-        args   = (T=900.0, d=100e-6, τII_old=1e6);
-        ε      = 1e-15
-        τ      = compute_τII(p,ε,args)
-        ε_test = compute_εII(p,τ,args)
+        args = (T=900.0, d=100e-6, τII_old=1e6)
+        ε = 1e-15
+        τ = compute_τII(p, ε, args)
+        ε_test = compute_εII(p, τ, args)
         @test ε ≈ ε_test
-
     end
-
 end

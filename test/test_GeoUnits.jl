@@ -1,7 +1,6 @@
 # Tests the GeoUnits
 using Test
 using GeoParams
-#using Parameters
 
 @testset "Units" begin
 
@@ -84,6 +83,7 @@ using GeoParams
     # test Dimensionalize in case we provide a number and units
     v_ND = nondimensionalize(3cm / yr, CharUnits_GEO)
     @test dimensionalize(v_ND, cm / yr, CharUnits_GEO) == 3.0cm / yr
+    @test ustrip(dimensionalize(v_ND, cm / yr, CharUnits_GEO)) == udim(v_ND, cm / yr, CharUnits_GEO)
 
     # Test the GeoUnit struct
     x = GeoUnit(8.1cm / yr)
@@ -137,7 +137,7 @@ using GeoParams
     CharUnits = SI_units()
     c = nondimensionalize(a, CharUnits)
     d = nondimensionalize(b, CharUnits)
-    @test c - d == GeoUnit(1)
+    @test NumValue(c - d) == 1.0
 
     # test various calculations (using arrays with and without units)
     T_vec = (273K):(10K):(500K)        # using units
@@ -296,7 +296,7 @@ using GeoParams
         ρ::GeoUnit
     end
 
-    # add type info in name, but no default values
+    # add type info in name, but no default values (GeoUnit{T}, is still NOT concrete, dont use this definition)
     mutable struct ConDensity4{T<:AbstractFloat} <: AbstractMaterialParam  # 1 allocation
         test::String
         ρ::GeoUnit{T}
@@ -331,13 +331,13 @@ using GeoParams
         v::GeoUnit = 100 / s
     end
 
-    # This works with 1 allocation, and is the preferred way to use it within GeoParams
-    Base.@kwdef struct ConDensity9{T<:AbstractFloat} <: AbstractMaterialParam # 1 allocation
+    # No allocations (ρ and v have concrete types this time), and is the
+    # preferred way to use it within GeoParams
+    Base.@kwdef struct ConDensity9{U1,U2} <: AbstractMaterialParam # 1 allocation
         test::String = ""
-        ρ::GeoUnit{T} = 3300.1kg / m^3
-        v::GeoUnit{T} = 100.0m / s
+        ρ::U1 = 3300.1kg / m^3
+        v::U2 = 100.0m / s
     end
-    ConDensity9(a...) = ConDensity9{Float64}(a...)  # in case we do not give a type
 
     rho = ConDensity(3300.1)
     rho1 = ConDensity1("t", GeoUnit(3300.1kg / m^3), GeoUnit(100 / s))
@@ -349,11 +349,11 @@ using GeoParams
     rho7 = ConDensity7()
     rho8 = ConDensity8()
     rho9 = ConDensity9(; ρ=2800kg / m^3)
-    rho9_ND = nondimensionalize(rho9, GEO_units())
+    rho9_ND = nondimensionalize(rho9, GEO_units()) # this is type stable, unlike with the rho* variables above
 
     # test automatic nondimensionalization of a MaterialsParam struct:
     CD = GEO_units()
-    rho2_ND = nondimensionalize(rho2, CD)
+    rho2_ND = nondimensionalize(rho2, CD) # type unstable...
     @test rho2_ND.ρ ≈ 3.3000999999999995e-18
     @test rho2_ND.v ≈ 9.999999999999999e11
 
@@ -364,7 +364,7 @@ using GeoParams
     # Simple function to test speed
     function f!(r, x, y)
         for i in 1:1000
-            r += x.ρ * y          # compute
+            r += x.ρ * GeoUnit(y)          # compute
         end
         return r
     end
@@ -380,7 +380,7 @@ using GeoParams
 
     #=
     # testing speed (# of allocs)
-    r = 0.0
+    r = GeoUnit(0.0)
     @btime f!($r, $rho,  $c)    # 1 allocations
     @btime f!($r, $rho1, $c)    # 1 allocation
     @btime f!($r, $rho2, $c)    # 3001 allocations
@@ -388,20 +388,64 @@ using GeoParams
     @btime f!($r, $rho4, $c)    # 1 allocation
     @btime f!($r, $rho5, $c)    # 3001 allocation
     @btime f!($r, $rho6, $c)    # 3001 allocation (so also with keywords, it is crucial to indicate the type)
-    @btime f!($r, $rho7, $c)    # 1 allocation (shows that we need to encode the units)
+    @btime f!($r, $rho7, $c)    # 1 allocation (shows that we the variables are not of concrete types)
     @btime f!($r, $rho8, $c)    # 3001 allocation 
-    @btime f!($r, $rho9, $c)    # 1 allocation (shows that we need to encode the units)
+    @btime f!($r, $rho9, $c)    # 0 allocations
     @btime f!($r, $rho9_ND, $c) 
     =#
 
     # test arrays of parameters 
-    param = (100km, 800/s)
-    param1 = (GeoUnit(100km), GeoUnit(800/s))
-    g=GEO_units();
+    param = (100km, 800 / s)
+    param1 = (GeoUnit(100km), GeoUnit(800 / s))
+    g = GEO_units()
 
     p_nd = nondimensionalize(param, g)
     @test p_nd == (0.1, 8.0e15)
 
     p1_nd = nondimensionalize(param1, g)
+
+    # Test multiplication/division of GeoUnits in dimensional and non-dimensional from
+    # This addresses issue #125
+    CharDim     = GEO_units(length=40km, viscosity=1e20Pa*s);
+    GeoTherm    = GeoUnit(30K/1km)
+    GeoTherm_nd = nondimensionalize(GeoTherm, CharDim)
+    GeoTherm_dim = dimensionalize(GeoTherm_nd, CharDim)
+    @test GeoTherm == GeoTherm_dim
+    @test Unit(GeoTherm_nd) == K/km
+
+    length = GeoUnit(1km)
+    length_nd = nondimensionalize(length, CharDim)
+    T = length*GeoTherm
+    @test T == GeoUnit(30K)
+    @test Unit(T) == K
+
+
+    T_nd = length_nd*GeoTherm_nd
+    @test Unit(T) == K
+    @test Unit(T_nd+T_nd) == K
+    @test Unit(T_nd-T_nd) == K
+    @test Unit(T_nd*T_nd) == K*K
     
+    T_gradients_Kkm = GeoUnit(30K)/GeoUnit(1km)
+    @test T_gradients_Kkm == GeoUnit(0.03K/m)
+    T_gradients_Ckm = (GeoUnit(30C)-GeoUnit(0C))/GeoUnit(1km)
+    @test T_gradients_Ckm == GeoUnit(0.03K/m)
+    
+    # MWE of @aelligp
+    CharDim     = GEO_units(length=40km, viscosity=1e20Pa*s);
+    Depth       = GeoUnit(Array(0km:1km:10km));
+    Depth_nondim= nondimensionalize(Depth,CharDim);
+
+    Geotherm    = nondimensionalize(GeoUnit(30K/1km), CharDim)
+    Geotherm_C  = nondimensionalize(GeoUnit(30C)-GeoUnit(0C), CharDim)/nondimensionalize(GeoUnit(1km), CharDim)
+    
+    Gradient_K  = nondimensionalize(GeoUnit(273.15K),CharDim) .+ Geotherm * Depth_nondim;
+    Temp_K_dim  = dimensionalize(Gradient_K, CharDim)
+    @test all(Temp_K_dim.val .≈ (Depth.val.*30 .+ 273.15))
+
+    Gradient_C  = nondimensionalize(GeoUnit(0C),CharDim) .+ Geotherm_C * Depth_nondim;
+    Temp_C_dim  = dimensionalize(Gradient_C, CharDim)
+    @test all(Temp_C_dim.val .≈ Depth.val.*30)
+
+
 end

@@ -46,7 +46,7 @@ using GeoParams
         SetMaterialParams(; Name="Mantle", Phase=1, Plasticity=DruckerPrager()),
         SetMaterialParams(; Name="Crust", Phase=2, Plasticity=DruckerPrager(; ϕ=10)),
         SetMaterialParams(;
-            Name="Crust", Phase=3, HeatCapacity=ConstantHeatCapacity(; cp=1100J / kg / K)
+            Name="Crust", Phase=3, HeatCapacity=ConstantHeatCapacity(; Cp=1100J / kg / K)
         ),
     )
 
@@ -61,14 +61,14 @@ using GeoParams
     Pf = ones(size(Phases)) * 0.5e6
     F = zero(P)
     args = (P=P, τII=τII)
-    compute_yieldfunction!(F, MatParam, Phases, args)    # computation routine w/out P (not used in most heat capacity formulations)     
+    compute_yieldfunction!(F, MatParam, Phases, args)    # computation routine w/out P (not used in most heat capacity formulations)
     @test maximum(F[1, 1, :]) ≈ 839745.962155614
 
     args_f = (P=P, τII=τII, Pf=Pf)
     args_f1 = (Pf=Pf, τII=τII, P=P)
 
     Ff = zero(P)
-    compute_yieldfunction!(Ff, MatParam, Phases, args_f)    # computation routine w/out P (not used in most heat capacity formulations)     
+    compute_yieldfunction!(Ff, MatParam, Phases, args_f)    # computation routine w/out P (not used in most heat capacity formulations)
 
     # test if we provide phase ratios
     PhaseRatio = zeros(n, n, n, 3)
@@ -85,11 +85,11 @@ using GeoParams
     # Test plastic potential derivatives
     ## 2D
     τij = (1.0, 2.0, 3.0)
-    fxx(τij) = 0.5 * τij[1]/second_invariant(τij)
-    fyy(τij) = 0.5 * τij[2]/second_invariant(τij)
-    fxy(τij) = τij[3]/second_invariant(τij)
+    fxx(τij) = 0.5 * τij[1] / second_invariant(τij)
+    fyy(τij) = 0.5 * τij[2] / second_invariant(τij)
+    fxy(τij) = τij[3] / second_invariant(τij)
     solution2D = [fxx(τij), fyy(τij), fxy(τij)]
- 
+
     # # using StaticArrays
     # τij_static = @SVector [1.0, 2.0, 3.0]
     # out1 = ∂Q∂τ(p, τij_static)
@@ -113,12 +113,12 @@ using GeoParams
 
     ## 3D
     τij = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
-    gxx(τij) = 0.5 * τij[1]/second_invariant(τij)
-    gyy(τij) = 0.5 * τij[2]/second_invariant(τij)
-    gzz(τij) = 0.5 * τij[3]/second_invariant(τij)
-    gyz(τij) = τij[4]/second_invariant(τij)
-    gxz(τij) = τij[5]/second_invariant(τij)
-    gxy(τij) = τij[6]/second_invariant(τij)
+    gxx(τij) = 0.5 * τij[1] / second_invariant(τij)
+    gyy(τij) = 0.5 * τij[2] / second_invariant(τij)
+    gzz(τij) = 0.5 * τij[3] / second_invariant(τij)
+    gyz(τij) = τij[4] / second_invariant(τij)
+    gxz(τij) = τij[5] / second_invariant(τij)
+    gxy(τij) = τij[6] / second_invariant(τij)
     solution3D = [gxx(τij), gyy(τij), gzz(τij), gyz(τij), gxz(τij), gxy(τij)]
 
     # # using StaticArrays
@@ -144,29 +144,27 @@ using GeoParams
 
     # -----------------------
 
-
     # composite rheology with plasticity
-    η,G  =  10, 1;
-    t_M  =  η/G
-    εII  =  1.;
+    η, G = 10, 1
+    t_M = η / G
+    εII = 1.0
     args = (;)
-    pl2  =  DruckerPrager(C=η, ϕ=0)                # plasticity
-    c_pl  =  CompositeRheology(LinearViscous(η=η*Pa*s),ConstantElasticity(G=G*Pa),pl2) # linear VEP
-    c_pl2 =  CompositeRheology(ConstantElasticity(G=G*Pa),pl2) # linear VEP
-    
+    pl2 = DruckerPrager(; C=η, ϕ=0)                # plasticity
+    c_pl = CompositeRheology(
+        LinearViscous(; η=η * Pa * s), ConstantElasticity(; G=G * Pa), pl2
+    ) # linear VEP
+    c_pl2 = CompositeRheology(ConstantElasticity(; G=G * Pa), pl2) # linear VEP
+
     # case where old stress is below yield & new stress is above
-    args  = (τII_old=9.8001101017963, P=0.0, τII=9.8001101017963)
-    F_old = compute_yieldfunction(c_pl.elements[3],args)
+    args = (τII_old=9.8001101017963, P=0.0, τII=9.8001101017963)
+    F_old = compute_yieldfunction(c_pl.elements[3], args)
 
-    # 
-    τ1, =  local_iterations_εII(c_pl,εII, args, verbose=false, max_iter=10)
-    τ2, =   compute_τII(c_pl,εII, args, verbose=false)
+    #
+    τ1, = local_iterations_εII(c_pl, εII, args; verbose=false, max_iter=10)
+    τ2, = compute_τII(c_pl, εII, args; verbose=false)
     @test τ1 == τ2
-    
+
     args = merge(args, (τII=τ1,))
-    F_check = compute_yieldfunction(c_pl.elements[3],args)
+    F_check = compute_yieldfunction(c_pl.elements[3], args)
     @test abs(F_check) < 1e-12
-
-
-
 end

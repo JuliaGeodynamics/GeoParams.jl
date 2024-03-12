@@ -1,23 +1,7 @@
-"""
-    This provides a few plotting routines, for example, for CreepLaws
-"""
+# This provides a few plotting routines, for example, for CreepLaws
 
-using Unitful
-using Parameters
-using ..Units
-using ..MaterialParameters
-using ..MeltingParam
-using .GLMakie
-
-using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
-using .MaterialParameters.ConstitutiveRelationships
-using .MaterialParameters.HeatCapacity: AbstractHeatCapacity, compute_heatcapacity
-using .MaterialParameters.Conductivity: AbstractConductivity, compute_conductivity
-using .MeltingParam: AbstractMeltingParam, compute_meltfraction
-
-#Makie.inline!(true)
-
-export PlotStrainrateStress,
+# These functions are implemented in this file
+import GeoParams: PlotStrainrateStress,
     PlotStressStrainrate,
     PlotStrainrateViscosity,
     PlotStressViscosity,
@@ -31,12 +15,29 @@ export PlotStrainrateStress,
     PlotStressTime_0D,
     PlotPressureStressTime_0D
 
+# Make all `export`ed names from GeoParams.jl available
+using GeoParams
+# We also need the following un-`export`ed names
+using GeoParams: AbstractTempStruct
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
+using GeoParams.MaterialParameters.ConstitutiveRelationships
+using GeoParams.MaterialParameters.HeatCapacity: AbstractHeatCapacity, compute_heatcapacity
+using GeoParams.MaterialParameters.Conductivity: AbstractConductivity, compute_conductivity
+using GeoParams.MeltingParam: AbstractMeltingParam, compute_meltfraction
+
+using GeoParams.Units
+using GeoParams.MaterialParameters
+using GeoParams.MeltingParam
+
+using Unitful
+using Parameters
+
 """
-    fig, ax, εII,τII = PlotStrainrateStress(x; Strainrate=(1e-18,1e-12), args =(T=1000.0, P=0.0, d=1e-3, f=1.0), 
-                                            linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="", 
+    fig, ax, εII,τII = PlotStrainrateStress(x; Strainrate=(1e-18,1e-12), args =(T=1000.0, P=0.0, d=1e-3, f=1.0),
+                                            linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="",
                                             fig=nothing, filename=nothing, res=(1200, 1200), legendsize=15, labelsize=35)
-                                            
-Plots deviatoric stress versus deviatoric strain rate for a single or multiple creeplaws 
+
+Plots deviatoric stress versus deviatoric strain rate for a single or multiple creeplaws
     Note: if you want to create plots you need to install and load the `GLMakie.jl` package in julia.
 
 
@@ -49,7 +50,7 @@ julia> pp1 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)");
 ```
 Next you can define each of the creeplaws inidvidually, plus a combined diffusion & dislocation creep law:
 ```julia-repl
-julia> v   = (pp,pp1,(pp,pp1));   
+julia> v   = (pp,pp1,(pp,pp1));
 ```
 Next, define temperature to be `900K` and grainsize to be `100 μm` and create a default plot of the 3 mechanisms:
 ```julia-repl
@@ -58,9 +59,9 @@ julia> args=(T=900.0, d=100e-6)
 julia> PlotStrainrateStress(v, args=args, Strainrate=(1e-22,1e-15));
 ```
 
-We have quite a few options to customize the look & feel of the plot: 
+We have quite a few options to customize the look & feel of the plot:
 ```julia-repl
-julia> fig,ax,εII,τII = PlotStrainrateStress(v, args=args, Strainrate=(1e-22,1e-15), 
+julia> fig,ax,εII,τII = PlotStrainrateStress(v, args=args, Strainrate=(1e-22,1e-15),
                                             color=(:red,:blue,:green), linewidth=(1,1,3), linestyle=(:dash,:dash,:solid), label=("diffusion creep","dislocation creep","diffusion+dislocation creep"),
                                             title="Dry Anorthite after Rybacki et al. (2006) for T=900K, d=100μm");
 ```
@@ -92,7 +93,7 @@ function PlotStrainrateStress(
         n = length(x)
     end
     if isnothing(fig)
-        fig = Figure(; fontsize=25, resolution=res)
+        fig = Figure(; fontsize=25, size=res)
     end
     ax = Axis(
         fig[1, 1];
@@ -123,7 +124,7 @@ function PlotStrainrateStress(
             args_in = args
         end
 
-        # Define strainrate 
+        # Define strainrate
         Eps_II =
             exp10.(
                 range(
@@ -162,7 +163,7 @@ function PlotStrainrateStress(
     return fig, ax, Eps_II, Tau_II_MPa
 end
 
-# Gelper function that simplifies customising the plots 
+# Gelper function that simplifies customising the plots
 function ObtainPlotArgs(i, p, args_in, linewidth, linestyle, color, label_in)
     if isa(linewidth, Tuple)
         linewidth_in = linewidth[i]
@@ -184,14 +185,14 @@ function ObtainPlotArgs(i, p, args_in, linewidth, linestyle, color, label_in)
 
     # Create a label name from the input parameters
     if isa(p, Tuple)
-        # Combined creep law 
+        # Combined creep law
         Name = ""
         Type = ""
         label = "$Type: $Name $args_in"
     else
         #if haskey(p,"Name")
         #    Name = String(collect(p.Name))
-        #    # determine type of creeplaw 
+        #    # determine type of creeplaw
         #    Type = "$(typeof(p))"           # full name of type
         #else
             Name = "";
@@ -203,7 +204,7 @@ function ObtainPlotArgs(i, p, args_in, linewidth, linestyle, color, label_in)
         label = "$Type: $Name $args_in"
     end
 
-    # We can manually overrule the auto-generated label 
+    # We can manually overrule the auto-generated label
     if !isnothing(label_in)
         if isa(label_in, Tuple)
             label = label_in[i]
@@ -257,7 +258,7 @@ function PlotStressStrainrate(
     end
 
     if isnothing(fig)
-        fig = Figure(; fontsize=25, resolution=res)
+        fig = Figure(; fontsize=25, size=res)
     end
     ax = Axis(
         fig[1, 1];
@@ -284,12 +285,12 @@ function PlotStressStrainrate(
             args_in = args
         end
 
-        # Define strainrate 
+        # Define strainrate
         Tau_II_MPa = range(ustrip(Stress[1]); stop=ustrip(Stress[2]), length=101)
         Tau_II = Tau_II_MPa .* 1e6
         Eps_II = zeros(size(Tau_II))
 
-        
+
         # Compute stress
         #compute_εII!(Eps_II, p, Tau_II, args_in)       # Compute strainrate
         for j in eachindex(Tau_II)
@@ -320,8 +321,8 @@ function PlotStressStrainrate(
 end
 
 """
-    fig, ax, εII, η = PlotStrainrateViscosity(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Strainrate=(1e-18,1e-12),    
-                                linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="", 
+    fig, ax, εII, η = PlotStrainrateViscosity(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Strainrate=(1e-18,1e-12),
+                                linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="",
                                 fig=nothing, filename=nothing, res=(1200, 1200), legendsize=15, labelsize=35)
 
 Same as `PlotStrainrateStress` but versus viscosity instead of stress.
@@ -348,7 +349,7 @@ function PlotStrainrateViscosity(
     end
 
     if isnothing(fig)
-        fig = Figure(; fontsize=25, resolution=res)
+        fig = Figure(; fontsize=25, size=res)
     end
     ax = Axis(
         fig[1, 1];
@@ -375,7 +376,7 @@ function PlotStrainrateViscosity(
             args_in = args
         end
 
-        # Define strainrate 
+        # Define strainrate
         Eps_II =
             exp10.(
                 range(
@@ -423,8 +424,8 @@ function PlotStrainrateViscosity(
 end
 
 """
-    fig,ax,τII,η =  PlotStressViscosity(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Stress=(1e0,1e8), 
-                                    linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="", 
+    fig,ax,τII,η =  PlotStressViscosity(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Stress=(1e0,1e8),
+                                    linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="",
                                     fig=nothing, filename=nothing, res=(1200, 1200), legendsize=15, labelsize=35)
 
 
@@ -452,7 +453,7 @@ function PlotStressViscosity(
     end
 
     if isnothing(fig)
-        fig = Figure(; fontsize=25, resolution=res)
+        fig = Figure(; fontsize=25, size=res)
     end
     ax = Axis(
         fig[1, 1];
@@ -480,7 +481,7 @@ function PlotStressViscosity(
             args_in = args
         end
 
-        # Define strainrate 
+        # Define strainrate
         Tau_II_MPa = range(ustrip(Stress[1]); stop=ustrip(Stress[2]), length=101)
         Tau_II = Tau_II_MPa .* 1e6
         Eps_II = zeros(size(Tau_II))
@@ -519,9 +520,9 @@ function PlotStressViscosity(
 end
 
 """
-    T,Cp,plt = PlotHeatCapacity(cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=nothing)
+    T,Cp,plt = PlotHeatCapacity(Cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=nothing)
 
-Creates a plot of temperature `T` vs. heat capacity, as specified in cp (which can be temperature-dependent).
+Creates a plot of temperature `T` vs. heat capacity, as specified in Cp (which can be temperature-dependent).
 
 # Optional parameters
 - T: temperature range
@@ -530,8 +531,8 @@ Creates a plot of temperature `T` vs. heat capacity, as specified in cp (which c
 
 # Example
 ```
-julia> cp = T_HeatCapacity_Whittacker()
-julia> T,Cp,plt = PlotHeatCapacity(cp)
+julia> Cp = T_HeatCapacity_Whittacker()
+julia> T,Cp,plt = PlotHeatCapacity(Cp)
 ```
 you can now save the figure to disk with:
 ```
@@ -540,16 +541,16 @@ julia> savefig(plt,"Tdependent_heatcapacity.png")
 ```
 
 """
-function PlotHeatCapacity(cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=nothing)
+function PlotHeatCapacity(Cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=nothing)
     if isnothing(T)
         T = collect(273.0:10:1250) * K
     end
 
     args = (; T=ustrip.(T))
-    Cp = zeros(size(T))
-    compute_heatcapacity!(Cp, cp, args)
+    Cp1 = zeros(size(T))
+    compute_heatcapacity!(Cp1, Cp, args)
     if length(Cp) == 1
-        Cp = ones(size(T)) * Cp
+        Cp1 = ones(size(T)) * Cp1
     end
 
     if isnothing(plt)
@@ -560,11 +561,11 @@ function PlotHeatCapacity(cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=
     plot!(plt; xlabel="Temperature [$(unit(T[1]))]", ylabel="Cp [$(unit(Cp[1]))]")
     gui(plt)
 
-    return T, Cp, plt
+    return T, Cp1, plt
 end
 
 """
-    T,Kk,plt = PlotConductivity(cp::AbstractConductivity; T=nothing, plt=nothing, lbl=nothing)
+    T,Kk,plt = PlotConductivity(Cp::AbstractConductivity; T=nothing, plt=nothing, lbl=nothing)
 
 Creates a plot of temperature `T` vs. thermal conductivity, as specified in `k` (which can be temperature-dependent).
 
@@ -621,12 +622,12 @@ end
 """
     T,phi,plt = PlotMeltFraction(p::AbstractMeltingParam; T=nothing, plt=nothing, lbl=nothing)
 
-Creates a plot of temperature `T` vs. melt fraction, as specified in `p`. 
+Creates a plot of temperature `T` vs. melt fraction, as specified in `p`.
 The 1D curve can be evaluated at a specific pressure `P` which can be given as a scalar or as an array of the same size as `T`
 
 # Optional parameters
 - `T`: temperature range
-- `P`: pressure 
+- `P`: pressure
 - `plt`: a previously generated plotting object
 - `lbl`: label of the curve
 
@@ -646,7 +647,7 @@ function PlotMeltFraction(
     p::AbstractMeltingParam; T=nothing, P=nothing, plt=nothing, lbl=nothing
 )
     if isnothing(T)
-        T = (500.0:10:1500.0) * K
+        T = (873.0:10:1500.0) * K
     end
     T_C = ustrip(T) .- 273.15
 
@@ -688,7 +689,7 @@ Example
 =======
 ```julia
 julia> PD_data =  Read_LaMEM_Perple_X_Diagram("Peridotite.in")
-Perple_X/LaMEM Phase Diagram Lookup Table: 
+Perple_X/LaMEM Phase Diagram Lookup Table:
                       File    :   Peridotite.in
                       T       :   293.0 - 1573.000039
                       P       :   1.0e7 - 2.9999999944e9
@@ -770,12 +771,12 @@ function Plot_TAS_diagram(; displayLabel=true)
     ClassTASdata              = TASclassificationData()
     @unpack litho, n_ver, ver = ClassTASdata
 
-    f = Figure(resolution = (1100, 1100), fontsize = 18)
+    f = Figure(size = (1100, 1100), fontsize = 18)
     p1 = GridLayout(f[1, 1])
     ax1 = Axis(
-        p1[1, 1], 
-        xlabel = "SiO2 [wt%]", 
-        ylabel = "Na2O+K2O [wt%]", 
+        p1[1, 1],
+        xlabel = "SiO2 [wt%]",
+        ylabel = "Na2O+K2O [wt%]",
         title  = "TAS Diagram",
         aspect = 1,
         xticks = 35:5:100,
@@ -801,7 +802,7 @@ function Plot_TAS_diagram(; displayLabel=true)
     if displayLabel
         p2 = GridLayout(f[1, 2])
         ax2 = Axis(
-            p2[1, 1], 
+            p2[1, 1],
             bottomspinevisible = false,
             xgridvisible       = false,
             ygridvisible       = false,
@@ -824,12 +825,12 @@ function Plot_TAS_diagram(; displayLabel=true)
 end
 
 """
-    fig,ax,τII,η =  PlotStressTime_0D(x;    args=(T=1000.0, P=0.0, d=1e-3, f=1.0),  
-                                            εII::Union{Number, AbstractVector}, 
+    fig,ax,τII,η =  PlotStressTime_0D(x;    args=(T=1000.0, P=0.0, d=1e-3, f=1.0),
+                                            εII::Union{Number, AbstractVector},
                                             τ0=0,
                                             Time=(1e0,1e8), nt=100,
                                             t_vec=nothing,
-                                            linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="", 
+                                            linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="",
                                             fig=nothing, filename=nothing, res=(1200, 1200), legendsize=15, labelsize=35, position=:rt)
 
 
@@ -861,7 +862,7 @@ function PlotStressTime_0D(
     end
 
     if isnothing(fig)
-        fig = Figure(; fontsize=25, resolution=res)
+        fig = Figure(; fontsize=25, size=res)
     end
     ax = Axis(
         fig[1, 1];
@@ -886,7 +887,7 @@ function PlotStressTime_0D(
             args_in = args
         end
 
-        # Compute 
+        # Compute
         t_vec, τ_vec = time_τII_0D(p, εII, args; t=Time, nt=nt, verbose=verbose)
         Tau_II_MPa = τ_vec/τ_scale;
 
@@ -912,7 +913,7 @@ function PlotStressTime_0D(
 end
 
 """
-	fig = PlotDeformationMap(v;    args=(P=0.0, d=1e-3, f=1.0),  
+	fig = PlotDeformationMap(v;    args=(P=0.0, d=1e-3, f=1.0),
                                 σ = (1e-2, 1e8),                # in MPa
                                 T = (10, 1000),                 # in C
                                 ε = (1e-22, 1e-8),              # in 1/s
@@ -952,21 +953,27 @@ julia> PlotDeformationMap(v,  strainrate=false, viscosity=true, levels=Vector(18
 """
 function PlotDeformationMap(
     v;
-    args=(P=0.0, d=1e-3, f=1.0),  
+    args=(P=0.0, T=1250, d=3e-3, f=1.0),
+    d = (1e-6, 1e-1),               # in m
     σ = (1e-2, 1e8),                # in MPa
     T = (10, 1000),                 # in C
-    ε = (1e-22, 1e-8),                 # in 1/s
+    ε = (1e-22, 1e-8),              # in 1/s
     n = 400,                        # number of points
-    rotate_axes = false,
+    rotate_axes = false,            # flip x & y axes
     strainrate = true,              # strainrate (otherwise stress)
     viscosity = false,              # plot viscosity instead of strainrate/stress
+    grainsize = false,              # plot strainrate with grainsize as x-axis
+    depth = false,                  # plot strainrate with depth as x-axis
     boundaries = true,              # plot deformation boundaries
-    levels = 20,                    # number of contour levels
+    levels = 30,                    # number of contour levels
     colormap=:viridis,
     filename=nothing,
     fontsize=40,
     res=(1200, 900),
 )
+
+    # allocating ticks
+    xtick = 0
 
     # Parameters
     T_vec = Vector(range(T[1], T[2], n+1))    .+ 273.15   # in K
@@ -978,7 +985,7 @@ function PlotDeformationMap(
     else
         n_components = length(v)
     end
-    
+
     if strainrate
         # compute ε as a function of τ and T
 
@@ -987,18 +994,22 @@ function PlotDeformationMap(
         η   = zeros(n+1,n)
         mainDef = zeros(n+1,n)     # indicates the main components
         for i in CartesianIndices(εII)
-            Tlocal = T_vec[i[1]]
             τlocal = σ_vec[i[2]]
-            args_local = merge(args, (T=Tlocal,))
-
+            if grainsize
+                Tlocal = 1250
+                dlocal = d_vec[i[1]]
+                args_local = merge(args, (T=Tlocal, d=dlocal,))
+                xtick = log10(d[1]):0.1:log10(d[2]).+3.0
+            else
+                dlocal = 3e-3
+                Tlocal = T_vec[i[1]]
+                args_local = merge(args, (T=Tlocal, d=dlocal))
+            end
             εII[i] = compute_εII(v, τlocal, args_local)       # compute strainrate (1/s)
-            η[i]   = computeViscosity_εII(v, τlocal, args_local) 
-
             ε_components =  [ compute_εII(v[i], τlocal, args_local) for i=1:n_components];
-            ε_components = ε_components./sum(ε_components) 
-            mainDef[i] = argmax(ε_components)                 # index of max. strainrate 
+            ε_components = ε_components./sum(ε_components)
+            mainDef[i] = argmax(ε_components)                 # index of max. strainrate
         end
-
         log_σ = log10.(σ_vec./1e6)
     else
         # compute τ as a function of ε and T
@@ -1010,15 +1021,16 @@ function PlotDeformationMap(
         mainDef = zeros(n+1,n)     # indicates the main components
         for i in CartesianIndices(τII)
             Tlocal = T_vec[i[1]]
+            dlocal = d_vec[i[1]]
             εlocal = ε_vec[i[2]]
-            args_local = merge(args, (T=Tlocal,))
+            args_local = merge(args, (T=Tlocal, d=dlocal,))
 
-            τII[i] = compute_τII(v, εlocal, args_local)       # compute strainrate (1/s)
+            τII[i] = compute_τII(v, εlocal, args_local)       # compute stress (Pa)
             η[i]   = τII[i] / (2 * εlocal)
 
             τ_components =  [ compute_τII(v[i],  εlocal, args_local) for i=1:n_components];
-            τ_components = τ_components./sum(τ_components) 
-            mainDef[i] = argmin(τ_components)                 # index of max. strainrate 
+            τ_components = τ_components./sum(τ_components)
+            mainDef[i] = argmin(τ_components)                 # index of max. strainrate
         end
         log_ε = log10.(ε_vec)
     end
@@ -1045,30 +1057,38 @@ function PlotDeformationMap(
         data = log10.(η)
     end
 
-    if rotate_axes 
+    if rotate_axes
         x,y = y,x
         xlabel,ylabel = ylabel,xlabel
         data,mainDef = data', mainDef'
     end
 
     # Plotting with Makie
-    fig = Figure(; fontsize=fontsize, resolution=res)
-    
+    fig = Figure(; fontsize=fontsize, size=res)
+
     ax = Axis(
         fig[1,1],
         title="Deformation mechanism map",
         xlabel=xlabel, xlabelsize=fontsize,
+        xticks = -3:0.5:2,
+        xminorticks = IntervalsBetween(5),
+        xminorticksvisible = true,
         ylabel=ylabel, ylabelsize=fontsize,
+        yticks = -1:0.5:4,
+        yminorticks = IntervalsBetween(5),
+        yminorticksvisible = true
         )
+
     c1 = heatmap!(ax,x,y,data, colormap = colormap)
-    contour!(ax,x,y,data, color=:black, levels=levels)
 
     if boundaries
-        # plot boundaries between deformation regimes    
+        # plot boundaries between deformation regimes
         contour!(ax,x,y,mainDef, color=:red, linewidth=2, linestyle=:solid, levels=n_components-1)
     end
 
-    Colorbar(fig[1,2], c1, label=label, labelsize=fontsize )
+    contour!(ax,x,y,data; color=:black, levels=-20:1:-2, labels = true, labelsize = 25, labelfont = :bold, labelcolor = :black)
+
+    Colorbar(fig[1,2], c1, label=label, labelsize=fontsize)
 
     if !isnothing(filename)
         save(filename, fig)
@@ -1080,12 +1100,12 @@ function PlotDeformationMap(
 end
 
 """
-    fig, ax1, ax2, P_MPa, Tau_II_MPa, t_vec =  PlotPressureStressTime_0D(x;    args=(T=1000.0, P=0.0, d=1e-3, f=1.0),  εII::Union{Number, AbstractVector}, εvol::Union{Number, AbstractVector}, 
+    fig, ax1, ax2, P_MPa, Tau_II_MPa, t_vec =  PlotPressureStressTime_0D(x;    args=(T=1000.0, P=0.0, d=1e-3, f=1.0),  εII::Union{Number, AbstractVector}, εvol::Union{Number, AbstractVector},
                                             τ0=0,
                                             P0=0,
                                             Time=(1e0,1e8), nt=100,
                                             t_vec=nothing,
-                                            linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="", 
+                                            linestyle=:solid, linewidth=1, color=nothing, label=nothing, title="",
                                             fig=nothing, filename=nothing, res=(1200, 1200), legendsize=15, labelsize=35)
 
 
@@ -1117,7 +1137,7 @@ function PlotPressureStressTime_0D(
     end
 
     if isnothing(fig)
-        fig = Figure(; fontsize=25, resolution=res)
+        fig = Figure(; fontsize=25, size=res)
     end
     if τ_scale == 1.0
         ylabel_str = "Deviatoric stress";
@@ -1129,7 +1149,7 @@ function PlotPressureStressTime_0D(
     else
         xlabel_str = "Time [Myrs]";
     end
-    
+
     ax1 = Axis(
         fig[1, 1];
         ylabel=ylabel_str,
@@ -1169,26 +1189,26 @@ function PlotPressureStressTime_0D(
             args_in = args
         end
 
-        # Compute 
+        # Compute
         t_vec, p_vec, τ_vec = time_p_τII_0D(p, εII, εvol, args; t=Time, nt=nt, verbose=verbose)
         Tau_II_MPa = τ_vec/τ_scale;
         P_MPa      = p_vec/τ_scale;
-        
+
         # Retrieve plot arguments (label, color etc.)
         plot_args = ObtainPlotArgs(i, p, args_in, linewidth, linestyle, color, label)
 
         # Create plot:
-        li_1 = lines!(ax1, t_vec/t_scale, Tau_II_MPa)    
-        li_2 = lines!(ax2, t_vec/t_scale, P_MPa)    
-        
+        li_1 = lines!(ax1, t_vec/t_scale, Tau_II_MPa)
+        li_2 = lines!(ax2, t_vec/t_scale, P_MPa)
+
         # Customize plot:
         customize_plot!(li_1, plot_args)
         customize_plot!(li_2, plot_args)
-        
+
     end
 
     axislegend(ax2; labelsize=legendsize)
-    
+
     if !isnothing(filename)
         save(filename, fig)
     else

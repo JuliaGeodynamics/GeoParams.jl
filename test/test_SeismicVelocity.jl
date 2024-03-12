@@ -56,9 +56,9 @@ using GeoParams
     args = (; T=T, P=P, wave=:VpVs)
     compute_wave_velocity!(VpVs, Mat_tup, Phases, args)
 
-    @test Vp[1] == 8.1
+    @test Vp[1] == 8.1e3
     @test Vp[1, 1, end] ≈ 5.500887338991992
-    @test Vs[1] == 4.5
+    @test Vs[1] == 4.5e3
     @test Vs[1, 1, end] ≈ 2.68
 
     @test VpVs[1] ≈ 1.8

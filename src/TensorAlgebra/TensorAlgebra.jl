@@ -190,9 +190,9 @@ end
     A11 = A[1]
     A22 = A[2]
     A12 = A[3]
-    xx  = muladd( sinθ, muladd( sinθ, A22, cosθ * A12), cosθ * muladd( sinθ, A12, cosθ * A11))
-    yy  = muladd(-sinθ, muladd(-sinθ, A11, cosθ * A12), cosθ * muladd(-sinθ, A12, cosθ * A22))
-    xy  = muladd(-sinθ, muladd( sinθ, A12, cosθ * A11), cosθ * muladd( sinθ, A22, cosθ * A12))
+    xx  = fma( sinθ, fma( sinθ, A22, cosθ * A12), cosθ * fma( sinθ, A12, cosθ * A11))
+    yy  = fma(-sinθ, fma(-sinθ, A11, cosθ * A12), cosθ * fma(-sinθ, A12, cosθ * A22))
+    xy  = fma(-sinθ, fma( sinθ, A12, cosθ * A11), cosθ * fma( sinθ, A22, cosθ * A12))
     return xx, yy, xy
 end
 

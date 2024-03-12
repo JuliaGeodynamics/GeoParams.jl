@@ -1,6 +1,7 @@
 using Test
 using LinearAlgebra
 using GeoParams
+using StaticArrays
 
 @testset "MeltingParam.jl" begin
 
@@ -16,6 +17,7 @@ using GeoParams
 
     # Caricchi parameterization [in ND numbers, which is anyways the typical use case]
     p = MeltingParam_Caricchi()
+    @test isbits(p)
     phi_dim = zeros(size(T))
     args = (; T=ustrip.(T))
     compute_meltfraction!(phi_dim, p, args)
@@ -25,6 +27,7 @@ using GeoParams
 
     p_nd = p
     p_nd = nondimensionalize(p_nd, CharUnits_GEO)
+    @test isbits(p_nd)
     phi_nd = zeros(size(T))
     args = (; T=T_nd)
     compute_meltfraction!(phi_nd, p_nd, args)
@@ -47,6 +50,7 @@ using GeoParams
     #------------------------------
     # 5th order polynomial
     p = MeltingParam_5thOrder()
+    @test isbits(p)
     compute_meltfraction!(phi_dim, p, args)
     @test sum(phi_dim) ≈ 4.708427909521561
 
@@ -81,12 +85,12 @@ using GeoParams
     args = (; T=ustrip.(T))
     compute_dϕdT!(dϕdT_dim, p, args)
     @test sum(dϕdT_dim) ≈ 0.006484458453421382
-
     #------------------------------
 
     #------------------------------
     # 4th order polynomial
     p = MeltingParam_4thOrder()
+    @test isbits(p)
     compute_meltfraction!(phi_dim, p, args)
     @test sum(phi_dim) ≈ 4.853749635538406
 
@@ -122,12 +126,12 @@ using GeoParams
     args = (; T=ustrip.(T))
     compute_dϕdT!(dϕdT_dim, p, args)
     @test sum(dϕdT_dim) ≈ 0.00830985782591842
-
     #------------------------------
 
     #------------------------------
     # Quadratic parameterisation
     p = MeltingParam_Quadratic()
+    @test isbits(p)
     compute_meltfraction!(phi_dim, p, args)
     @test sum(phi_dim) ≈ 5.0894901144641
 
@@ -146,7 +150,53 @@ using GeoParams
     @test sum(abs.(dϕdT_dim)) ≈ 0.004605170185988078
     #------------------------------
 
-    # Test computation of melt parameterization for the whole computational domain, using arrays 
+    #------------------------------
+    # Melnik parameterisation
+    p_basalt   = MeltingParam_Smooth3rdOrder()
+    p_rhyolite = MeltingParam_Smooth3rdOrder(a=3043.0,b=-10552.0,c=12204.9,d=-4709.0)
+    @test isbits(p_basalt)
+    @test isbits(p_rhyolite)
+    compute_meltfraction!(phi_dim, p_basalt, args)
+    @test sum(phi_dim) ≈ 2.963636933098781
+
+    compute_meltfraction!(phi_dim, p_rhyolite, args)
+    @test sum(phi_dim) ≈ 4.498360881531148
+
+    dϕdT_dim = zeros(size(T))
+    compute_dϕdT!(dϕdT_dim, p_basalt, args)
+    @test sum(abs.(dϕdT_dim)) ≈ 0.010340923744790025
+
+    compute_dϕdT!(dϕdT_dim, p_rhyolite, args)
+    @test sum(abs.(dϕdT_dim)) ≈ 0.0049712527005299255
+
+    #=
+    p_basalt   = MeltingParam_Smooth3rdOrder()
+    p_rhyolite = MeltingParam_Smooth3rdOrder(a=3043.0,b=−10552.0,c=12204.9,d=−4709.0)
+    T_C=600:1200
+    T=T_C .+ 273.15
+    ϕ_basalt = zeros(size(T))
+    ϕ_rhyolite = zeros(size(T))
+    dϕdT_basalt = zeros(size(T))
+    dϕdT_rhyolite = zeros(size(T))
+
+    compute_meltfraction!(ϕ_basalt, p_basalt, (;T=T))
+    compute_meltfraction!(ϕ_rhyolite, p_rhyolite, (;T=T))
+    compute_dϕdT!(dϕdT_basalt, p_basalt, (;T=T))
+    compute_dϕdT!(dϕdT_rhyolite, p_rhyolite, (;T=T))
+
+    using Plots
+    plt1 = plot(T_C, ϕ_basalt, label="basalt", xlabel="T (C)", ylabel="ϕ")
+    plot!(plt1,T_C, ϕ_rhyolite, label="rhyolite")
+
+    plt2 = plot(T_C, dϕdT_basalt, label="basalt",xlabel="T (C)", ylabel="dϕ/dT")
+    plot!(plt2,T_C, dϕdT_rhyolite, label="rhyolite")
+
+    plot(plt1, plt2, layout=(2,1))
+    =#
+
+    #------------------------------
+
+    # Test computation of melt parameterization for the whole computational domain, using arrays
     MatParam = Vector{MaterialParams}(undef, 4)
     MatParam[1] = SetMaterialParams(;
         Name="Mantle", Phase=1, Melting=PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in")
@@ -213,7 +263,7 @@ using GeoParams
 
     # try non-dimensionalisation
     p_nd = nondimensionalize(p, CharUnits_GEO)
-    @test isbits(p)
+    @test isbits(p_nd)
     @test isdimensional(p_nd.p.a) == false
     @test p_nd.p.a ≈ 6968.639721576996
 
@@ -223,7 +273,7 @@ using GeoParams
 
     #Mat_tup = ( SetMaterialParams( Name="Mantle", Phase=1, Melting=SmoothMelting(MeltingParam_4thOrder())),
     #            SetMaterialParams( Name="Crust", Phase=2, Melting=MeltingParam_5thOrder()),
-    #            SetMaterialParams( Name="UpperCrust", Phase=3, Melting=SmoothMelting(MeltingParam_5thOrder()), Density=PT_Density()), 
+    #            SetMaterialParams( Name="UpperCrust", Phase=3, Melting=SmoothMelting(MeltingParam_5thOrder()), Density=PT_Density()),
     #            SetMaterialParams( Name="LowerCrust", Phase=4, Density=PT_Density())
     #                )
     Mat_tup = (
@@ -250,4 +300,13 @@ using GeoParams
 
     compute_dϕdT!(dϕdT, Mat_tup, Phases, args) #allocation free
     @test sum(dϕdT) / n^3 ≈ 0.0006838372430250584
+
+    # test PhaseRatio and StaticArrays PhaseRatios as input
+    args = (P=0.0, T=1000.0 + 273.15)
+    PhaseRatio = (0.25, 0.25, 0.25, 0.25)
+    @test 0.6991003705903673 ≈ compute_meltfraction_ratio(PhaseRatio, Mat_tup, args)
+
+    SvPhaseRatio = SA[0.25,0.25,0.25,0.25]
+    @test 0.6991003705903673 ≈ compute_meltfraction_ratio(SvPhaseRatio, Mat_tup, args)
+
 end

@@ -26,7 +26,6 @@ export compute_εII,            # calculation routines
     get_Kb
 
 # ConstantElasticity  -------------------------------------------------------
-
 """
     ConstantElasticity(G, ν, K, E)
 
@@ -49,6 +48,9 @@ ConstantElasticity(args...) = ConstantElasticity(convert.(GeoUnit, args)...)
 This allows setting elastic parameters by specifying 2 out of the 4 elastic parameters `G` (Elastic shear modulus), `ν` (Poisson's ratio), `E` (Young's modulus), or `Kb` (bulk modulus).
 """
 function SetConstantElasticity(; G=nothing, ν=nothing, E=nothing, Kb=nothing)
+    if all(isnothing, (G, ν, E, Kb))
+        G, ν = 26e9Pa, 0.4
+    end
     if (!isnothing(G) && !isnothing(ν))
         Kb = 2 * G * (1 + ν) / (3 * (1 - 2 * ν))     # Bulk modulus
         E = 9 * Kb * G / (3 * Kb + G)              # Youngs modulus
@@ -91,14 +93,17 @@ end
 @inline iselastic(v::AbstractElasticity) = true
 @inline iselastic(v) = false
 
-for modulus in (:G, :Kb)
-    fun = Symbol("get_$(string(modulus))")
-    @eval begin
-        @inline $(fun)(a::ConstantElasticity) = a.$(modulus).val
-        @inline $(fun)(a::AbstractMaterialParamsStruct) = isempty(a.Elasticity) ? Inf : $(fun)(a.Elasticity[1])
-        @inline $(fun)(a::NTuple{N, AbstractMaterialParamsStruct}, phase) where N = nphase($(fun), phase, a)
-    end
-end
+# for modulus in (:G, :Kb)
+#     fun = Symbol("get_$(string(modulus))")
+#     @eval begin
+#         @inline $(fun)(a::ConstantElasticity) = a.$(modulus).val
+#         @inline $(fun)(a::AbstractMaterialParamsStruct) = isempty(a.Elasticity) ? Inf : $(fun)(a.Elasticity[1])
+#         @inline $(fun)(a::NTuple{N, AbstractMaterialParamsStruct}, phase) where N = nphase($(fun), phase, a)
+#     end
+# end
+
+# extractor methods
+@extractors(ConstantElasticity, :Elasticity)
 
 # Calculation routines
 """

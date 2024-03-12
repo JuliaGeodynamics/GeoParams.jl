@@ -31,9 +31,9 @@ using GeoParams, LinearAlgebra, DelimitedFiles
     )
 
     # add tests to check that results are consistent
-    @test sum(number_zircons[1:200]) == 67333.0
-    @test sum(number_zircons) == 5.886208e6
-    @test prob[100] ≈ 1.868775279432871e-5
+    @test sum(number_zircons[1:200]) ≈ 67316.0
+    @test sum(number_zircons) ≈  5.88569e6
+    @test prob[100] ≈ 1.868939750479553e-5
 
     # A second way to generate the input is having Vector{Vector} for both time and Tt-path. 
     time_years_vecs = Vector{Vector{Float64}}(undef, size(Tt_paths_Temp, 2))
@@ -55,9 +55,9 @@ using GeoParams, LinearAlgebra, DelimitedFiles
     )
 
     # add tests to check that results are consistent
-    @test sum(number_zircons1[1:200]) == 67333.0
-    @test sum(number_zircons1) == 5.886208e6
-    @test prob1[100] ≈ 1.868775279432871e-5
+    @test sum(number_zircons1[1:200]) ≈ 67316.0
+    @test sum(number_zircons1) ≈ 5.88569e6
+    @test prob1[100] ≈ 1.868939750479553e-5
     @test cumPDF[100] == cumPDF1[100]
 
     # Do the same but with a single routine that also returns the PDF's 
@@ -66,9 +66,9 @@ using GeoParams, LinearAlgebra, DelimitedFiles
         time_years_vecs, Tt_paths_Temp_vecs; ZirconData=ZirconData
     )
 
-    @test sum(number_zircons2[1:200]) == 67333.0
-    @test sum(number_zircons2) == 5.886208e6
-    @test prob2[100] ≈ 1.868775279432871e-5
+    @test sum(number_zircons2[1:200]) ≈ 67316.0
+    @test sum(number_zircons2) ≈ 5.88569e6
+    @test prob2[100] ≈ 1.868939750479553e-5
 
     #=	
         # Plot Zircon age probability distribution
