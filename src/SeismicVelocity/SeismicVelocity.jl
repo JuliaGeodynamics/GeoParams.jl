@@ -5,7 +5,7 @@ module SeismicVelocity
 # If you want to add a new method here, feel free to do so. 
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
-using Parameters, LaTeXStrings, Unitful
+using Parameters, LaTeXStrings, Unitful, MuladdMacro
 using ..Units
 using ..PhaseDiagrams
 using ..MaterialParameters: MaterialParamsInfo
@@ -415,13 +415,12 @@ function anelastic_correction(water::Int64, Vs0::Float64, Pref::Float64, Tref::F
         )
     end
 
-    B =
-        B0 *
-        fastpow(dref, G - Gref) *
+    B = @muladd @pow B0 *
+        dref ^ (G - Gref) *
         (COH / COHref)^r *
-        exp((fma(Pref, V, E) - fma(Pref, Vref, Eref)) / (R * Tref))
+        exp(((Pref * V + E) - (Pref * Vref + Eref)) / (R * Tref))
 
-    Qinv = fastpow(B * d^(-G) * inv(ω) * exp(-fma(Pref, V, E) / (R * Tref)), α)
+    Qinv = @pow (B * d^(-G) * inv(ω) * exp(-(Pref * V + E) / (R * Tref)))^α
 
     Vs_anel = Vs0 * (1.0 - (Qinv) / (2.0 * tan(π * α *0.5)))
 

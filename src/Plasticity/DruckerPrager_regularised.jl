@@ -67,7 +67,7 @@ function (s::DruckerPrager_regularised{_T})(;
     return F
 end
 
-function (s::DruckerPrager_regularised{_T,U,U1,NoSoftening,S})(;
+function (s::DruckerPrager_regularised{_T,U,U1,NoSoftening, S})(;
     P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T), EII::_T=zero(_T), kwargs...
 ) where {_T,U,U1,S}
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
@@ -77,7 +77,7 @@ function (s::DruckerPrager_regularised{_T,U,U1,NoSoftening,S})(;
     return F
 end
 
-function (s::DruckerPrager_regularised{_T,U,U1,S,NoSoftening})(;
+function (s::DruckerPrager_regularised{_T,U,U1,S, NoSoftening})(;
     P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T), EII::_T=zero(_T), kwargs...
 ) where {_T,U,U1,S}
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
@@ -94,6 +94,7 @@ function (s::DruckerPrager_regularised{_T,U,U1,NoSoftening,NoSoftening})(;
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
     ε̇II_pl = λ*∂Q∂τII(s, τII)  # plastic strainrate
     F = τII - cosϕ * C - sinϕ * (P - Pf)  - 2 * η_vp * ε̇II_pl # with fluid pressure (set to zero by default)
+    # F = fma(-cosϕ, C, τII) - fma(sinϕ, (P - Pf),  -2.0 * η_vp * ε̇II_pl) # with fluid pressure (set to zero by default)
     return F
 end
 
