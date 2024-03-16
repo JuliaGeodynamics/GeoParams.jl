@@ -7,7 +7,7 @@ using Parameters, LaTeXStrings, Unitful, ForwardDiff
 using ..Units
 using GeoParams:
     AbstractMaterialParam, PhaseDiagram_LookupTable, AbstractMaterialParamsStruct
-import Base.Math.@horner, Base.show, GeoParams.param_info 
+import Base.show, GeoParams.param_info 
 using ..MaterialParameters: MaterialParamsInfo
 using Setfield # allows modifying fields in immutable struct
 
@@ -221,8 +221,8 @@ end
 function (p::MeltingParam_5thOrder)(; T, kwargs...)
     @unpack_val a, b, c, d, e, f, T_s, T_l = p
 
-    coeffs = f,e,d,c,b,a
-    ϕ = @horner(T, coeffs...)
+    coeffs = f, e, d, c, b, a
+    ϕ = evalpoly(T, coeffs)
     if p.apply_bounds
         if T < T_s
             ϕ = 0.0
@@ -239,8 +239,8 @@ compute_dϕdT(p::MeltingParam_5thOrder, T, kwargs...) = compute_dϕdT(p; T, kwar
 function compute_dϕdT(p::MeltingParam_5thOrder; T, kwargs...)
     @unpack_val a, b, c, d, e, T_s, T_l = p
 
-    coeffs = e,2*d,3*c,4*b,5*a
-    dϕdT = @horner(T, coeffs...)
+    coeffs = e, 2*d, 3*c, 4*b, 5*a
+    dϕdT = evalpoly(T, coeffs...)
     
     if p.apply_bounds && (T < T_s || T > T_l)
         dϕdT = 0.0
@@ -300,8 +300,8 @@ end
 function (p::MeltingParam_4thOrder)(; T, kwargs...)
     @unpack_val b, c, d, e, f, T_s, T_l = p
 
-    coeffs = f,e,d,c,b
-    ϕ = @horner(T, coeffs...)
+    coeffs = f, e, d, c, b
+    ϕ = evalpoly(T, coeffs)
     if p.apply_bounds
         if T < T_s
             ϕ = 0.0
@@ -316,8 +316,8 @@ end
 function compute_dϕdT(p::MeltingParam_4thOrder; T, kwargs...)
     @unpack_val b, c, d, e, T_s, T_l = p
 
-    coeffs = e,2*d,3*c,4*b
-    dϕdT = @horner(T, coeffs...)
+    coeffs = e, 2*d, 3*c, 4*b
+    dϕdT = evalpoly(T, coeffs)
     if p.apply_bounds && (T < T_s || T > T_l)
         dϕdT = 0.0
     end

@@ -5,7 +5,7 @@ module Density
 # If you want to add a new method here, feel free to do so.
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
-using Parameters, Unitful, LaTeXStrings
+using Parameters, Unitful, LaTeXStrings, MuladdMacro
 using ..Units
 using ..PhaseDiagrams
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, @extractors, add_extractor_functions
@@ -116,8 +116,7 @@ end
         @unpack_val   ρ0, α, β, P0, T0 = ρ
     end
 
-    # fma version of: ρ0 * (1.0 - α * (T - T0) + β * (P - P0))
-    return ρ0 * fma(β, P - P0, fma(-α, T - T0, 1))
+    return @muladd ρ0 * (1.0 - α * (T - T0) + β * (P - P0))
 end
 
 @inline (ρ::PT_Density)(args)                = ρ(; args...)
@@ -206,8 +205,7 @@ function (s::T_Density{_T})(; T::_T=zero(_T), kwargs...) where {_T}
         @unpack_val   ρ0, α, T0 = s
     end
 
-    # fma version of ρ0 * (1.0 -  α * (T - T0))
-    return ρ0 * fma(-α, (T - T0), 1.0)
+    return @muladd ρ0 * (1.0 -  α * (T - T0))
 end
 
 @inline (s::T_Density)(args)                = s(; args...)
@@ -253,8 +251,7 @@ function (rho::MeltDependent_Density{_T})(; ϕ::_T=zero(_T), kwargs...) where {_
     ρsolid = compute_density(rho.ρsolid, kwargs)
     ρmelt  = compute_density(rho.ρmelt,  kwargs)
 
-    # fma version of ϕ * ρmelt + (1-ϕ) * ρsolid
-    return fma(ϕ, ρmelt, (1-ϕ) * ρsolid)
+    return @muladd ϕ * ρmelt + (1-ϕ) * ρsolid
 end
 
 @inline (s::MeltDependent_Density)(args)                = s(; args...)
