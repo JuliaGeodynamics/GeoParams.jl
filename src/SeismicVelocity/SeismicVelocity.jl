@@ -416,11 +416,11 @@ function anelastic_correction(water::Int64, Vs0::Float64, Pref::Float64, Tref::F
     end
 
     B = @muladd @pow B0 *
-        dref^(G - Gref) *
+        dref ^ (G - Gref) *
         (COH / COHref)^r *
-        exp(((Pref * V + E) - ((Pref * Vref + Eref))) / (R * Tref))
+        exp(((Pref * V + E) - (Pref * Vref + Eref)) / (R * Tref))
 
-    Qinv = @muladd @pow (B * d^(-G) * inv(ω) * exp((-Pref * V + E) / (R * Tref)))^α
+    Qinv = @pow (B * d^(-G) * inv(ω) * exp(-(Pref * V + E) / (R * Tref)))^α
 
     Vs_anel = Vs0 * (1.0 - (Qinv) / (2.0 * tan(π * α *0.5)))
 

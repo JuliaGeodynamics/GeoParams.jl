@@ -240,7 +240,7 @@ function compute_dϕdT(p::MeltingParam_5thOrder; T, kwargs...)
     @unpack_val a, b, c, d, e, T_s, T_l = p
 
     coeffs = e, 2*d, 3*c, 4*b, 5*a
-    dϕdT = evalpoly(T, coeffs...)
+    dϕdT = evalpoly(T, coeffs)
     
     if p.apply_bounds && (T < T_s || T > T_l)
         dϕdT = 0.0
