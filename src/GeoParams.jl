@@ -19,6 +19,7 @@ using Requires: @require # To only add plotting routines if GLMakie is loaded
 using StaticArrays
 using LinearAlgebra
 using ForwardDiff
+using MuladdMacro
 
 import Base: getindex
 

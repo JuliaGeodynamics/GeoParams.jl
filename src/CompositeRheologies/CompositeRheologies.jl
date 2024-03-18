@@ -1,6 +1,7 @@
 # This holds structures and computational routines for compositional rheologies
 using StaticArrays
 using Setfield
+using MuladdMacro
 
 export CompositeRheology, Parallel, create_rheology_string, print_rheology_matrix
 export time_τII_0D, compute_εII_harmonic, compute_τII_AD, isplastic, compute_p_τII, local_iterations_εvol, compute_p_harmonic
