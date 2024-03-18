@@ -170,7 +170,6 @@ This computes plastic strain rate invariant for a given ``λdot``
 """
 function compute_εII(p::DruckerPrager{_T,U,U1}, λdot::_T, τII::_T, kwargs...) where {_T, U, U1}
     F = compute_yieldfunction(p, kwargs)
-    @show F, kwargs
     if F>0
         ε_pl = λdot*∂Q∂τII(p, τII)
 
