@@ -338,6 +338,9 @@ export compute_meltfraction,
     MeltingParam_Assimilation,
     SmoothMelting
 
+include("Traits/rheology.jl")
+export islinear, RheologyTrait, LinearRheology, NonLinearRheology
+
 include("CreepLaw/Data/DislocationCreep.jl")
 using .Dislocation
 
