@@ -2,12 +2,10 @@ import Base: (:)
 
 # convert tensor form to Voigt notation
 @inline tensor2voigt(A::T) where T = tensor2voigt(T, A)
-@inline tensor2voigt(::Type{NTuple{3, T}}, A) where T = A[1,1] , A[2,2], A[1,2]
-@inline tensor2voigt(::Type{NTuple{6, T}}, A) where T = A[1,1], A[2,2], A[3,3], A[2,3], A[1,3], A[1,2]
-@inline tensor2voigt(::Type{SVector{3, T}}, A) where T = @SVector [A[1,1], A[2,2], A[1,2]]
-@inline tensor2voigt(::Type{SVector{6, T}}, A) where T = @SVector [A[1,1], A[2,2], A[3,3], A[2,3], A[1,3], A[1,2]]
+@inline tensor2voigt(::Type{SMatrix{2, 2, T, 4}}, A) where T = @SVector [A[1,1], A[2,2], A[1,2]]
+@inline tensor2voigt(::Type{SMatrix{3, 3, T, 9}}, A) where T = @SVector [A[1,1], A[2,2], A[3,3], A[2,3], A[1,3], A[1,2]]
 
-@inline  function tensor2voigt(::Type{AbstractMatrix}, A)
+@inline  function tensor2voigt(::Type{<:AbstractMatrix}, A)
     if size(A) == (2, 2)
         return [A[1,1], A[2,2], A[1,2]]
 
