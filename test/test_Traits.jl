@@ -101,5 +101,5 @@ end
     @test isconstant(d2) isa NonConstantDensityTrait
     @test isconstant(r1) isa NonConstantDensityTrait
     @test isconstant(r2) isa ConstantDensityTrait
-    @test_throws ArgumentError islinear("potato")
+    @test_throws ArgumentError isconstant("potato")
 end
