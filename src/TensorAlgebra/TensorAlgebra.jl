@@ -202,7 +202,7 @@ Trii-dimensional rotation of the elastic stress where τ is in the Voig notation
 ω = [duz/dy - duy/dz, dux/dz - duz/dx, duy/dx - dux/dy]
 """
 # from Anton's talk
-@inline Base.@propagate_inbounds function rotate_elastic_stress3D(ωi, τ::T, dt) where T
+@inline Base.@propagate_inbounds function rotate_elastic_stress3D(ωi, τ, dt)
     # vorticity
     ω = √(sum(x^2 for x in ωi))
     # unit rotation axis
@@ -214,7 +214,7 @@ Trii-dimensional rotation of the elastic stress where τ is in the Voig notation
     # rotate tensor
     τij = voigt2tensor(τ)
     τij_rot = R * (τij * R')
-    tensor2voigt(T, τij_rot)
+    tensor2voigt(τij_rot)
 end
 
 # Euler Rodrigues rotation matrix
