@@ -38,7 +38,6 @@ for fn in (:compute_viscosity_εII, :compute_viscosity_τII)
     @eval begin
 
         @inline function $fn(v::AbstractConstitutiveLaw, xx, yy, xy, args)
-
             II = second_invariant(xx, yy, xy)
             η = $fn(v, II, args)
             return η
