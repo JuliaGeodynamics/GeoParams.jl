@@ -68,25 +68,24 @@ using Test, GeoParams
     ## plastic rheology traits
     # test basic cases
     for r in (v1, v2, v3, el)
-        @test isplastic(r) isa NonPlasticRheologyTrait
+        @test isplasticity(r) isa NonPlasticRheologyTrait
     end
-    @test isplastic(pl) isa PlasticRheologyTrait
-    @test_throws ArgumentError isplastic("potato")
+    @test isplasticity(pl) isa PlasticRheologyTrait
+    @test_throws ArgumentError isplasticity("potato")
 
     # test composite cases
-    @test isplastic(v1, v2) isa NonPlasticRheologyTrait
-    @test isplastic(pl, el) isa PlasticRheologyTrait
-    @test isplastic(tuple(v1, v2)) isa NonPlasticRheologyTrait
-    @test isplastic(tuple(pl, el)) isa PlasticRheologyTrait
+    @test isplasticity(v1, v2) isa NonPlasticRheologyTrait
+    @test isplasticity(pl, el) isa PlasticRheologyTrait
+    @test isplasticity(tuple(v1, v2)) isa NonPlasticRheologyTrait
+    @test isplasticity(tuple(pl, el)) isa PlasticRheologyTrait
     
-    @test isplastic(CompositeRheology(v1, v2, v3)) isa NonPlasticRheologyTrait
-    @test isplastic(CompositeRheology(el, pl, v1)) isa PlasticRheologyTrait
+    @test isplasticity(CompositeRheology(v1, v2, v3)) isa NonPlasticRheologyTrait
+    @test isplasticity(CompositeRheology(el, pl, v1)) isa PlasticRheologyTrait
 
     # test MaterialParams cases
-    @test isplastic(r1) isa PlasticRheologyTrait
-    @test isplastic(r2) isa NonPlasticRheologyTrait
+    @test isplasticity(r1) isa PlasticRheologyTrait
+    @test isplasticity(r2) isa NonPlasticRheologyTrait
 end
-
 
 @testset "Density traits" begin
     v1 = ConstantDensity()

@@ -340,7 +340,7 @@ export compute_meltfraction,
 
 include("Traits/rheology.jl")
 export islinear, RheologyTrait, LinearRheologyTrait, NonLinearRheologyTrait
-export isplastic, PlasticrRheologyTrait, NonPlasticRheologyTrait
+export isplasticity, PlasticRheologyTrait, NonPlasticRheologyTrait
 
 include("Traits/density.jl")
 export isconstant, DensityTrait, ConstantDensityTrait, NonConstantDensityTrait
