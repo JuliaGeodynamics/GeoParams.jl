@@ -11,7 +11,7 @@ using Test, GeoParams
     c = CompositeRheology(v1, v2, v3)
     r1 = (
         SetMaterialParams(;
-            CompositeRheology = CompositeRheology(v1, v2, v3),
+            CompositeRheology = CompositeRheology(pl, el, v3),
         ),
         SetMaterialParams(;
             CompositeRheology = CompositeRheology(v2, el),
@@ -32,6 +32,7 @@ using Test, GeoParams
         ),
     )
 
+    ## linear rheology traits
     # test basic cases
     for r in (v1, v2, pl)
         @test islinear(r) isa NonLinearRheologyTrait
@@ -53,7 +54,7 @@ using Test, GeoParams
     @test islinear(CompositeRheology(v1, v2, v3)) isa NonLinearRheologyTrait
     @test islinear(CompositeRheology(el, v3))     isa LinearRheologyTrait
 
-    # # test MaterialParams cases
+    # test MaterialParams cases
     @test islinear(r1[1]) isa NonLinearRheologyTrait
     @test islinear(r1[2]) isa NonLinearRheologyTrait
     @test islinear(r1[3]) isa LinearRheologyTrait
@@ -63,7 +64,29 @@ using Test, GeoParams
     @test islinear(r2[2]) isa LinearRheologyTrait
     @test islinear(r2[3]) isa LinearRheologyTrait
     @test islinear(r2)    isa LinearRheologyTrait
+
+    ## plastic rheology traits
+    # test basic cases
+    for r in (v1, v2, v3, el)
+        @test isplastic(r) isa NonPlasticRheologyTrait
+    end
+    @test isplastic(pl) isa PlasticRheologyTrait
+    @test_throws ArgumentError isplastic("potato")
+
+    # test composite cases
+    @test isplastic(v1, v2) isa NonPlasticRheologyTrait
+    @test isplastic(pl, el) isa PlasticRheologyTrait
+    @test isplastic(tuple(v1, v2)) isa NonPlasticRheologyTrait
+    @test isplastic(tuple(pl, el)) isa PlasticRheologyTrait
+    
+    @test isplastic(CompositeRheology(v1, v2, v3)) isa NonPlasticRheologyTrait
+    @test isplastic(CompositeRheology(el, pl, v1)) isa PlasticRheologyTrait
+
+    # test MaterialParams cases
+    @test isplastic(r1) isa PlasticRheologyTrait
+    @test isplastic(r2) isa NonPlasticRheologyTrait
 end
+
 
 @testset "Density traits" begin
     v1 = ConstantDensity()

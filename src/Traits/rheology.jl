@@ -1,7 +1,7 @@
 abstract type RheologyTrait end
 struct LinearRheologyTrait     <: RheologyTrait end
 struct NonLinearRheologyTrait  <: RheologyTrait end
-struct PlasticrRheologyTrait   <: RheologyTrait end
+struct PlasticRheologyTrait   <: RheologyTrait end
 struct NonPlasticRheologyTrait <: RheologyTrait end
 
 ## LINEAR RHEOLOGY traits
@@ -14,7 +14,7 @@ struct NonPlasticRheologyTrait <: RheologyTrait end
 
 # compares two rheologies and return linear trait only and if only both are linear
 @inline islinear(::LinearRheologyTrait, ::LinearRheologyTrait) = LinearRheologyTrait()
-@inline islinear(::RheologyTrait, ::RheologyTrait)            = NonLinearRheologyTrait()
+@inline islinear(::RheologyTrait, ::RheologyTrait)             = NonLinearRheologyTrait()
 @inline islinear(v1::AbstractConstitutiveLaw, v2::AbstractConstitutiveLaw) = islinear(islinear(v1), islinear(v2))
 
 # traits for composite rheologies
