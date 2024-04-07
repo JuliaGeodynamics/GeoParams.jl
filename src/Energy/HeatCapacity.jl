@@ -164,33 +164,6 @@ function show(io::IO, g::Latent_HeatCapacity)
 end
 #-------------------------------------------------------------------------
 
-
-#-------------------------------------------------------------------------
-"""
-    compute_heatcapacity!(Cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}, T::_T=zero(_T), P::_T=zero(_T)) where {_T,N}
-
-Computes T-dependent heat capacity in-place
-"""
-# function compute_heatcapacity!(Cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}; T::AbstractArray{_T, N}, kwargs...) where {_T,N} end
-
-# add methods programmatically
-for myType in (:ConstantHeatCapacity, :T_HeatCapacity_Whittington, :Latent_HeatCapacity)
-    @eval begin
-        #(s::$(myType))(args) = s(; args...)
-        compute_heatcapacity(s::$(myType), args) = compute_heatcapacity(s; args...)
-    end
-end
-
-# Print info
-function show(io::IO, g::T_HeatCapacity_Whittington)
-    return print(
-        io,
-        "T-dependent heat capacity following Whittington et al. (2009) for average crust. \n",
-    )
-end
-#-------------------------------------------------------------------------
-
-
 #-------------------------------------------------------------------------
 """
     MAGEMin_HeatCapacity(_T)
@@ -213,14 +186,40 @@ Pointwise calculation of heat capacity from an adaptive MAGEMin database, where 
     return s.Cp[index]
 end
 
-
-
 # Print info
 function show(io::IO, g::MAGEMin_HeatCapacity)
     return print(io, "Heat capacity from adaptive MAGEMin database with $(length(g.Cp)) entries")
 end
 
 #-------------------------------------------------------------------------
+
+
+#-------------------------------------------------------------------------
+"""
+    compute_heatcapacity!(Cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}, T::_T=zero(_T), P::_T=zero(_T)) where {_T,N}
+
+Computes T-dependent heat capacity in-place
+"""
+# function compute_heatcapacity!(Cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}; T::AbstractArray{_T, N}, kwargs...) where {_T,N} end
+
+# add methods programmatically
+for myType in (:ConstantHeatCapacity, :T_HeatCapacity_Whittington, :Latent_HeatCapacity, :MAGEMin_HeatCapacity)
+    @eval begin
+        #(s::$(myType))(args) = s(; args...)
+        compute_heatcapacity(s::$(myType), args) = compute_heatcapacity(s; args...)
+    end
+end
+
+# Print info
+function show(io::IO, g::T_HeatCapacity_Whittington)
+    return print(
+        io,
+        "T-dependent heat capacity following Whittington et al. (2009) for average crust. \n",
+    )
+end
+#-------------------------------------------------------------------------
+
+
 
 
 #-------------------------------------------------------------------------
