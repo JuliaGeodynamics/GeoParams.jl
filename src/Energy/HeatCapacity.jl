@@ -19,6 +19,7 @@ export compute_heatcapacity,               # calculation routines
     ConstantHeatCapacity,                # constant
     T_HeatCapacity_Whittington,          # T-dependent heat capacity
     Latent_HeatCapacity,                 # Implement latent heat by modifying heat capacity
+    MAGEMin_HeatCapacity,                # MAGEMin DB
     param_info
 
 include("../Computations.jl")
@@ -190,6 +191,37 @@ end
 #-------------------------------------------------------------------------
 
 
+#-------------------------------------------------------------------------
+"""
+    MAGEMin_HeatCapacity(_T)
+"""
+struct MAGEMin_HeatCapacity{_T, V <: AbstractVector} <: AbstractHeatCapacity{_T}
+    Cp::V       # Heat capacity
+end
+MAGEMin_HeatCapacity(; Cp=Vector{Float64}()) = MAGEMin_HeatCapacity{eltype(Cp), typeof(Cp)}(Cp)
+
+function param_info(s::MAGEMin_HeatCapacity) # info about the struct
+    return MaterialParamsInfo(; Equation=L"Cp = computed from a MAGEMin database")
+end
+
+"""
+    compute_heatcapacity(a::MAGEMin_HeatCapacity; index::Int64, kwargs...)
+
+Pointwise calculation of heat capacity from an adaptive MAGEMin database, where `index` is the index of the point
+"""
+@inline function compute_heatcapacity(s::MAGEMin_HeatCapacity; index::Int64=1, kwargs...)
+    return s.Cp[index]
+end
+
+
+
+# Print info
+function show(io::IO, g::MAGEMin_HeatCapacity)
+    return print(io, "Heat capacity from adaptive MAGEMin database with $(length(g.Cp)) entries")
+end
+
+#-------------------------------------------------------------------------
+
 
 #-------------------------------------------------------------------------
 # Heat capacity from phase diagram
@@ -267,7 +299,7 @@ compute_heatcapacity(args::Vararg{Any, N}) where N = compute_param(compute_heatc
 compute_heatcapacity!(args::Vararg{Any, N}) where N = compute_param!(compute_heatcapacity, args...)
 
 # extractor methods
-for type in (ConstantHeatCapacity, T_HeatCapacity_Whittington, Latent_HeatCapacity)
+for type in (ConstantHeatCapacity, T_HeatCapacity_Whittington, Latent_HeatCapacity, MAGEMin_HeatCapacity)
     @extractors(type, :HeatCapacity)
 end
 

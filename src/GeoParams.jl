@@ -275,7 +275,7 @@ export compute_gravity,                                # computational routines
 # Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat
 using .MaterialParameters.HeatCapacity
 export compute_heatcapacity,
-    compute_heatcapacity!, ConstantHeatCapacity, T_HeatCapacity_Whittington, Latent_HeatCapacity
+    compute_heatcapacity!, ConstantHeatCapacity, T_HeatCapacity_Whittington, Latent_HeatCapacity, MAGEMin_HeatCapacity
 
 using .MaterialParameters.Conductivity
 export compute_conductivity,
@@ -336,7 +336,7 @@ export compute_meltfraction,
     MeltingParam_5thOrder,
     MeltingParam_Quadratic,
     MeltingParam_Assimilation,
-    MeltingParam_MAGEMin,
+    MAGEMin_MeltingParam,
     SmoothMelting
 
 include("CreepLaw/Data/DislocationCreep.jl")
