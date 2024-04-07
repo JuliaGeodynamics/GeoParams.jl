@@ -25,6 +25,7 @@ export compute_meltfraction,
     MeltingParam_5thOrder,
     MeltingParam_Quadratic,
     MeltingParam_Assimilation,
+    MeltingParam_MAGEMin,
     SmoothMelting
 
 include("../Utils.jl")
@@ -518,6 +519,35 @@ end
 
 #-------------------------------------------------------------------------
 
+# MAGEMin Database -------------------------------------------------------
+"""
+    MeltingParam_MAGEMin(_T)
+"""
+struct MeltingParam_MAGEMin{_T, V <: AbstractVector} <: AbstractMeltingParam{_T}
+    ϕ::V       # melt fraction
+end
+MeltingParam_MAGEMin(; ϕ=Vector{Float64}()) = MeltingParam_MAGEMin{eltype(ϕ), typeof(ϕ)}(ϕ)
+
+function param_info(s::MeltingParam_MAGEMin) # info about the struct
+    return MaterialParamsInfo(; Equation=L"\phi = computed from a MAGEMin database")
+end
+
+# Calculation routines
+function (g::MeltingParam_MAGEMin)(; index, kwargs...)
+    return g.ϕ[index]
+end
+
+function compute_dϕdT(g::MeltingParam_MAGEMin; kwargs...)
+    return 0.0
+end
+
+# Print info
+function show(io::IO, g::MeltingParam_MAGEMin)
+    return print(io, "MAGEMin melting database with $(length(g.ϕ)) points")
+end
+#-------------------------------------------------------------------------
+
+
 # Smooth melting function ------------------------------------------------
 
 """
@@ -710,6 +740,7 @@ for myType in (
     :MeltingParam_4thOrder,
     :MeltingParam_Quadratic,
     :MeltingParam_Assimilation,
+    :MeltingParam_MAGEMin,
     :SmoothMelting,
 )
     @eval begin

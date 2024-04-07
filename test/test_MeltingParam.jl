@@ -197,7 +197,7 @@ using StaticArrays
     #------------------------------
 
     # Test computation of melt parameterization for the whole computational domain, using arrays
-    MatParam = Vector{MaterialParams}(undef, 4)
+    MatParam = Vector{MaterialParams}(undef, 5)
     MatParam[1] = SetMaterialParams(;
         Name="Mantle", Phase=1, Melting=PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in")
     )
@@ -214,28 +214,35 @@ using StaticArrays
     # No melting parameterization for this phase
     MatParam[4] = SetMaterialParams(; Name="LowerCrust", Phase=4, Density=PT_Density())
 
+    # No melting parameterization for this phase
+    ϕ_vec = fill(0.55, 100)
+    MatParam[5] = SetMaterialParams(; Name="Asthenosphere", Phase=5, Melting=MeltingParam_MAGEMin(ϕ=ϕ_vec), Density=PT_Density())
+
     Mat_tup = Tuple(MatParam)
 
     # test computing material properties
     n = 100
     Phases = ones(Int64, n, n, n)
     Phases[:, :, 20:end] .= 2
-    Phases[:, :, 80:end] .= 3
-    Phases[:, :, 90:end] .= 4
+    Phases[:, :, 50:end] .= 3
+    Phases[:, :, 70:end] .= 4
+    Phases[:, :, 90:end] .= 5
 
     ϕ = zeros(size(Phases))
     dϕdT = zeros(size(Phases))
     T = ones(size(Phases)) * 1500
     P = ones(size(Phases)) * 10
-    args = (P=P, T=T)
+    index = fill(20,size(Phases))
+
+    args = (P=P, T=T, index=index)
     compute_meltfraction!(ϕ, Mat_tup, Phases, args) #allocations coming from computing meltfraction using PhaseDiagram_LookupTable
-    @test sum(ϕ) / n^3 ≈ 0.7484802337240443
+    @test sum(ϕ) / n^3 ≈ 0.6089802363373018
 
     compute_dϕdT!(dϕdT, Mat_tup, Phases, args)
-    @test sum(dϕdT) / n^3 ≈ 4.695945929818635e-5
+    @test sum(dϕdT) / n^3 ≈ 4.6959345678313734e-5
 
     # test computing material properties when we have PhaseRatios, instead of Phase numbers
-    PhaseRatio = zeros(n, n, n, 4)
+    PhaseRatio = zeros(n, n, n, 5)
     for i in CartesianIndices(Phases)
         iz = Phases[i]
         I = CartesianIndex(i, iz)
@@ -243,10 +250,10 @@ using StaticArrays
     end
 
     compute_meltfraction!(ϕ, Mat_tup, PhaseRatio, args)
-    @test sum(ϕ) / n^3 ≈ 0.7484802337240443
+    @test sum(ϕ) / n^3 ≈ 0.6089802363373018
 
     compute_dϕdT!(dϕdT, Mat_tup, PhaseRatio, args)
-    @test sum(dϕdT) / n^3 ≈ 4.695945929818635e-5
+    @test sum(dϕdT) / n^3 ≈ 4.6959345678313734e-5
 
     # Test smoothening of the melting curves:
     p = SmoothMelting(; p=MeltingParam_5thOrder())
@@ -296,10 +303,10 @@ using StaticArrays
     P = ones(size(Phases)) * 10
     args = (P=P, T=T)
     compute_meltfraction!(ϕ, Mat_tup, Phases, args) #allocation free
-    @test sum(ϕ) / n^3 ≈ 0.4409766063389861
+    @test sum(ϕ) / n^3 ≈ 0.3422377699021051
 
     compute_dϕdT!(dϕdT, Mat_tup, Phases, args) #allocation free
-    @test sum(dϕdT) / n^3 ≈ 0.0006838372430250584
+    @test sum(dϕdT) / n^3 ≈ 0.0005249809490115178
 
     # test PhaseRatio and StaticArrays PhaseRatios as input
     args = (P=0.0, T=1000.0 + 273.15)

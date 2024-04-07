@@ -336,6 +336,7 @@ export compute_meltfraction,
     MeltingParam_5thOrder,
     MeltingParam_Quadratic,
     MeltingParam_Assimilation,
+    MeltingParam_MAGEMin,
     SmoothMelting
 
 include("CreepLaw/Data/DislocationCreep.jl")
