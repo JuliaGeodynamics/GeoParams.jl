@@ -26,6 +26,7 @@ export compute_density,     # calculation routines
     PT_Density,             # P & T dependent density
     Compressible_Density,   # Compressible density
     T_Density,              # T dependent density
+    MAGEMin_Density,        # MAGEMin DB density
     MeltDependent_Density   # Melt dependent density
 
 # Define "empty" computational routines in case nothing is defined
@@ -263,6 +264,41 @@ function show(io::IO, g::MeltDependent_Density)
 end
 #-------------------------------------------------------------------------
 
+# MAGEMin DB density -------------------------------
+"""
+    MAGEMin_Density(_T)
+
+This computes density from a MAGEMin database, which can have many points and can be dynamically extended 
+"""
+struct MAGEMin_Density{_T, V <: AbstractVector} <: AbstractDensity{_T}
+    rho::V       # Density
+end
+MAGEMin_Density(; rho=Vector{Float64}()) = MAGEMin_Density{eltype(rho), typeof(rho)}(rho)
+
+# This assumes that density always has a single parameter. If that is not the case, we will have to extend this (to be done)
+function param_info(s::MAGEMin_Density) # info about the struct
+    return MaterialParamsInfo(; Equation=L"\rho = computed from a MAGEMin database")
+end
+
+# Calculation routine
+"""
+    compute_density(s::MAGEMin_Density; index::Int64, DB::DB_MAGEMin, kwargs...)
+
+Pointwise calculation of density from an adaptive MAGEMin database, where `index` is the hash of the point
+"""
+@inline function (s::MAGEMin_Density)(; index::Int64, kwargs...)
+    return s.rho[index]
+end
+
+@inline (s::MAGEMin_Density)(args)                = s(; args...)
+@inline compute_density(s::MAGEMin_Density, args) = s(args)
+
+# Print info
+function show(io::IO, g::MAGEMin_Density)
+    return print(io, "Density from adaptive MAGEMin database with $(length(g.rho)) entries")
+end
+#-------------------------------------------------------------------------
+
 #-------------------------------------------------------------------------
 # Phase diagrams
 function param_info(s::PhaseDiagram_LookupTable) # info about the struct
@@ -363,7 +399,7 @@ This assumes that the `PhaseRatio` of every point is specified as an Integer in 
 @inline compute_density_ratio(args::Vararg{Any, N}) where N = compute_param_times_frac(compute_density, args...)
 
 # extractor methods
-for type in (ConstantDensity, PT_Density, Compressible_Density, T_Density, MeltDependent_Density)
+for type in (ConstantDensity, PT_Density, Compressible_Density, T_Density, MeltDependent_Density, MAGEMin_Density)
     @extractors(type, :Density)
 end
 
