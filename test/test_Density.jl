@@ -156,7 +156,7 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
     @test ustrip(dimensionalize(Vs_ND, km / s, CharDim)) ≈ PD_data.Vs(1500.0, 1e8)
 
     # Test computation of density for the whole computational domain, using arrays
-    MatParam = Vector{AbstractMaterialParamsStruct}(undef, 4)
+    MatParam = Vector{AbstractMaterialParamsStruct}(undef, 5)
 
     MatParam[1] = SetMaterialParams(;
         Name="Mantle",
@@ -184,7 +184,12 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
         CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e23Pa * s)),
         Density=Compressible_Density(),
     )
-
+    MatParam[5] = SetMaterialParams(;
+        Name="LowerCrust",
+        Phase=4,
+        CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e23Pa * s)),
+        Density=Vector_Density(rho=fill(2900.0,100)),
+    )
     Mat_tup = Tuple(MatParam)  # create a tuple to avoid allocations
 
     MatParam1 = Vector{AbstractMaterialParamsStruct}(undef, 4)
@@ -219,27 +224,28 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
     @views Phases[:,  20:end] .= 1
     @views Phases[:, 200:end] .= 2
     @views Phases[:, 300:end] .= 3
+    @views Phases[:, 350:end] .= 4
 
     #Phases .= 2;
     rho = zeros(size(Phases))
     T = ones(size(Phases))
     P = fill(10.0, size(Phases))
 
-    args = (P=P, T=T)
+    args = (P=P, T=T, index=fill(10,size(T)))
 
     compute_density!(rho, MatParam, Phases, args)
 
     # Test computing density when Mat_tup1 is provided as a tuple
     compute_density!(rho, Mat_tup1, Phases, args)
     num_alloc = @allocated compute_density!(rho, Mat_tup1, Phases, args)   #      287.416 μs (0 allocations: 0 bytes)
-    @test sum(rho) / 400^2 ≈ 2945.000013499999
+    @test sum(rho) / 400^2 ≈ 2575.250013499998
     # @test num_alloc ≤ 32
 
     #Same test using function alias
     rho = zeros(size(Phases))
     ρ!(rho, Mat_tup1, Phases, args)
     num_alloc = @allocated compute_density!(rho, Mat_tup1, Phases, args)
-    @test sum(rho) / 400^2 ≈ 2945.000013499999
+    @test sum(rho) / 400^2 ≈ 2575.250013499998
     # @test num_alloc ≤ 32
 
     # Test for single phase
@@ -250,7 +256,7 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
     @test sum(rho) / 400^2 ≈ 2895.5241895725003
 
     # test computing material properties when we have PhaseRatios, instead of Phase numbers
-    PhaseRatio = zeros(size(Phases)..., length(Mat_tup1))
+    PhaseRatio = zeros(size(Phases)..., length(Mat_tup))
     for i in CartesianIndices(Phases)
         iz = Phases[i]
         I = CartesianIndex(i, iz + 1)
@@ -260,19 +266,19 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
     compute_density!(rho, Mat_tup1, PhaseRatio, args)
 
     num_alloc = @allocated compute_density!(rho, Mat_tup1, PhaseRatio, args) #   136.776 μs (0 allocations: 0 bytes)
-    @test sum(rho) / 400^2 ≈ 2945.000013499999
+    @test sum(rho) / 400^2 ≈ 2575.250013499998
     @test num_alloc == 0           # for some reason this does indicate allocations but @btime does not
 
     # Test calling the routine with only pressure as input.
     # This is ok for Mat_tup1, as it only has constant & P-dependent densities.
     # Note, however, that if you have P & T dependent densities and do this it will use 0 as default value for T
     compute_density!(rho, Mat_tup1, PhaseRatio, (; P=P))
-    @test sum(rho) / 400^2 ≈ 2945.000013499999
+    @test sum(rho) / 400^2 ≈ 2575.250013499998
 
     # In case we only want to compute with T, do this:
     #  NOTE that in this example the results are actually wrong (as some functions require P as well)
-    compute_density!(rho, Mat_tup, PhaseRatio, (P=zeros(size(T)), T=T))
-    @test sum(rho) / 400^2 ≈ 2895.5241749999996
+    compute_density!(rho, Mat_tup, PhaseRatio, (P=zeros(size(T)), T=T, index=fill(10,size(T)) ))
+    @test sum(rho) / 400^2 ≈ 2895.524175
 
     #Test computation of density given a single phase and P,T as scalars
     Phase, P, T = 0, 1.0, 1.0

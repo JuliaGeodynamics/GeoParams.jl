@@ -25,6 +25,7 @@ export compute_meltfraction,
     MeltingParam_5thOrder,
     MeltingParam_Quadratic,
     MeltingParam_Assimilation,
+    Vector_MeltingParam,
     SmoothMelting
 
 include("../Utils.jl")
@@ -518,6 +519,37 @@ end
 
 #-------------------------------------------------------------------------
 
+# MAGEMin Database -------------------------------------------------------
+"""
+    Vector_MeltingParam(_T)
+
+Stores a vector with melt fraction that can be retrieved by providing an `index`
+"""
+struct Vector_MeltingParam{_T, V <: AbstractVector} <: AbstractMeltingParam{_T}
+    ϕ::V       # melt fraction
+end
+Vector_MeltingParam(; ϕ=Vector{Float64}()) = Vector_MeltingParam{eltype(ϕ), typeof(ϕ)}(ϕ)
+
+function param_info(s::Vector_MeltingParam) # info about the struct
+    return MaterialParamsInfo(; Equation=L"\phi from a precomputed vector")
+end
+
+# Calculation routines
+function (g::Vector_MeltingParam)(; index, kwargs...)
+    return g.ϕ[index]
+end
+
+function compute_dϕdT(g::Vector_MeltingParam; kwargs...)
+    return 0.0
+end
+
+# Print info
+function show(io::IO, g::Vector_MeltingParam)
+    return print(io, "Melt fraction from precomputed vector with $(length(g.ϕ)) entries")
+end
+#-------------------------------------------------------------------------
+
+
 # Smooth melting function ------------------------------------------------
 
 """
@@ -710,7 +742,8 @@ for myType in (
     :MeltingParam_4thOrder,
     :MeltingParam_Quadratic,
     :MeltingParam_Assimilation,
-    :SmoothMelting,
+    :Vector_MeltingParam,
+    :SmoothMelting, 
 )
     @eval begin
         (p::$(myType))(args) = p(; args...)

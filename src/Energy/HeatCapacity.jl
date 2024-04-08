@@ -19,6 +19,7 @@ export compute_heatcapacity,               # calculation routines
     ConstantHeatCapacity,                # constant
     T_HeatCapacity_Whittington,          # T-dependent heat capacity
     Latent_HeatCapacity,                 # Implement latent heat by modifying heat capacity
+    Vector_HeatCapacity,                 # Vector 
     param_info
 
 include("../Computations.jl")
@@ -163,6 +164,37 @@ function show(io::IO, g::Latent_HeatCapacity)
 end
 #-------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------
+"""
+    Vector_HeatCapacity(_T)
+
+Stores a vector with heat capacity data that can be retrieved by providing an `index`
+"""
+struct Vector_HeatCapacity{_T, V <: AbstractVector} <: AbstractHeatCapacity{_T}
+    Cp::V       # Heat capacity
+end
+Vector_HeatCapacity(; Cp=Vector{Float64}()) = Vector_HeatCapacity{eltype(Cp), typeof(Cp)}(Cp)
+
+function param_info(s::Vector_HeatCapacity) # info about the struct
+    return MaterialParamsInfo(; Equation=L"Cp from a precomputed vector")
+end
+
+"""
+    compute_heatcapacity(a::Vector_HeatCapacity; index::Int64, kwargs...)
+
+Pointwise calculation of heat capacity from a vector where `index` is the index of the point
+"""
+@inline function compute_heatcapacity(s::Vector_HeatCapacity; index::Int64=1, kwargs...)
+    return s.Cp[index]
+end
+
+# Print info
+function show(io::IO, g::Vector_HeatCapacity)
+    return print(io, "Heat capacity from precomputed vector with $(length(g.Cp)) entries")
+end
+
+#-------------------------------------------------------------------------
+
 
 #-------------------------------------------------------------------------
 """
@@ -173,7 +205,7 @@ Computes T-dependent heat capacity in-place
 # function compute_heatcapacity!(Cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}; T::AbstractArray{_T, N}, kwargs...) where {_T,N} end
 
 # add methods programmatically
-for myType in (:ConstantHeatCapacity, :T_HeatCapacity_Whittington, :Latent_HeatCapacity)
+for myType in (:ConstantHeatCapacity, :T_HeatCapacity_Whittington, :Latent_HeatCapacity, :Vector_HeatCapacity)
     @eval begin
         #(s::$(myType))(args) = s(; args...)
         compute_heatcapacity(s::$(myType), args) = compute_heatcapacity(s; args...)
@@ -188,6 +220,7 @@ function show(io::IO, g::T_HeatCapacity_Whittington)
     )
 end
 #-------------------------------------------------------------------------
+
 
 
 
@@ -267,7 +300,7 @@ compute_heatcapacity(args::Vararg{Any, N}) where N = compute_param(compute_heatc
 compute_heatcapacity!(args::Vararg{Any, N}) where N = compute_param!(compute_heatcapacity, args...)
 
 # extractor methods
-for type in (ConstantHeatCapacity, T_HeatCapacity_Whittington, Latent_HeatCapacity)
+for type in (ConstantHeatCapacity, T_HeatCapacity_Whittington, Latent_HeatCapacity, Vector_HeatCapacity)
     @extractors(type, :HeatCapacity)
 end
 
