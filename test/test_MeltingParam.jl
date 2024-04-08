@@ -216,7 +216,7 @@ using StaticArrays
 
     # No melting parameterization for this phase
     ϕ_vec = fill(0.55, 100)
-    MatParam[5] = SetMaterialParams(; Name="Asthenosphere", Phase=5, Melting=MAGEMin_MeltingParam(ϕ=ϕ_vec), Density=PT_Density())
+    MatParam[5] = SetMaterialParams(; Name="Asthenosphere", Phase=5, Melting=Vector_MeltingParam(ϕ=ϕ_vec), Density=PT_Density())
 
     Mat_tup = Tuple(MatParam)
 

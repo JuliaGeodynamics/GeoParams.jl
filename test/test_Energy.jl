@@ -46,7 +46,7 @@ using StaticArrays
     @test sum(abs.(ustrip.(Cp_nd * CharUnits_GEO.heatcapacity) - Cp)) < 1e-11
 
     # heat capacity
-    Cp3 = MAGEMin_HeatCapacity(Cp=fill(1500.0, 100))
+    Cp3 = Vector_HeatCapacity(Cp=fill(1500.0, 100))
     index = fill(10,size(T))
     args  = (; index=index)
     Cp = zero(T)
@@ -80,7 +80,7 @@ using StaticArrays
     )
 
     MatParam[3] = SetMaterialParams(;
-        Name="Crust1", Phase=3, HeatCapacity=MAGEMin_HeatCapacity(Cp=fill(1500.0, 100))
+        Name="Crust1", Phase=3, HeatCapacity=Vector_HeatCapacity(Cp=fill(1500.0, 100))
     )
     
     Mat_tup = Tuple(MatParam)

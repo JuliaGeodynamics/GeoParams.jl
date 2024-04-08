@@ -25,7 +25,7 @@ export compute_meltfraction,
     MeltingParam_5thOrder,
     MeltingParam_Quadratic,
     MeltingParam_Assimilation,
-    MAGEMin_MeltingParam,
+    Vector_MeltingParam,
     SmoothMelting
 
 include("../Utils.jl")
@@ -521,29 +521,31 @@ end
 
 # MAGEMin Database -------------------------------------------------------
 """
-    MAGEMin_MeltingParam(_T)
+    Vector_MeltingParam(_T)
+
+Stores a vector with melt fraction that can be retrieved by providing an `index`
 """
-struct MAGEMin_MeltingParam{_T, V <: AbstractVector} <: AbstractMeltingParam{_T}
+struct Vector_MeltingParam{_T, V <: AbstractVector} <: AbstractMeltingParam{_T}
     ϕ::V       # melt fraction
 end
-MAGEMin_MeltingParam(; ϕ=Vector{Float64}()) = MAGEMin_MeltingParam{eltype(ϕ), typeof(ϕ)}(ϕ)
+Vector_MeltingParam(; ϕ=Vector{Float64}()) = Vector_MeltingParam{eltype(ϕ), typeof(ϕ)}(ϕ)
 
-function param_info(s::MAGEMin_MeltingParam) # info about the struct
-    return MaterialParamsInfo(; Equation=L"\phi = computed from a MAGEMin database")
+function param_info(s::Vector_MeltingParam) # info about the struct
+    return MaterialParamsInfo(; Equation=L"\phi from a precomputed vector")
 end
 
 # Calculation routines
-function (g::MAGEMin_MeltingParam)(; index, kwargs...)
+function (g::Vector_MeltingParam)(; index, kwargs...)
     return g.ϕ[index]
 end
 
-function compute_dϕdT(g::MAGEMin_MeltingParam; kwargs...)
+function compute_dϕdT(g::Vector_MeltingParam; kwargs...)
     return 0.0
 end
 
 # Print info
-function show(io::IO, g::MAGEMin_MeltingParam)
-    return print(io, "MAGEMin melting database with $(length(g.ϕ)) points")
+function show(io::IO, g::Vector_MeltingParam)
+    return print(io, "Melt fraction from precomputed vector with $(length(g.ϕ)) entries")
 end
 #-------------------------------------------------------------------------
 
@@ -740,8 +742,8 @@ for myType in (
     :MeltingParam_4thOrder,
     :MeltingParam_Quadratic,
     :MeltingParam_Assimilation,
-    :MAGEMin_MeltingParam,
-    :SmoothMelting,
+    :Vector_MeltingParam,
+    :SmoothMelting, 
 )
     @eval begin
         (p::$(myType))(args) = p(; args...)

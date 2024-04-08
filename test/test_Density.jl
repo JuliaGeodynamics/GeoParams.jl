@@ -188,7 +188,7 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
         Name="LowerCrust",
         Phase=4,
         CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e23Pa * s)),
-        Density=MAGEMin_Density(rho=fill(2900.0,100)),
+        Density=Vector_Density(rho=fill(2900.0,100)),
     )
     Mat_tup = Tuple(MatParam)  # create a tuple to avoid allocations
 

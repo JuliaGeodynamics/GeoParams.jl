@@ -127,7 +127,7 @@ export compute_density,                                # computational routines
     PT_Density,
     Compressible_Density,
     T_Density,
-    MAGEMin_Density,
+    Vector_Density,
     PhaseDiagram_LookupTable,
     Read_LaMEM_Perple_X_Diagram,
     MeltDependent_Density,
@@ -276,7 +276,7 @@ export compute_gravity,                                # computational routines
 # Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat
 using .MaterialParameters.HeatCapacity
 export compute_heatcapacity,
-    compute_heatcapacity!, ConstantHeatCapacity, T_HeatCapacity_Whittington, Latent_HeatCapacity, MAGEMin_HeatCapacity
+    compute_heatcapacity!, ConstantHeatCapacity, T_HeatCapacity_Whittington, Latent_HeatCapacity, Vector_HeatCapacity
 
 using .MaterialParameters.Conductivity
 export compute_conductivity,
@@ -337,7 +337,7 @@ export compute_meltfraction,
     MeltingParam_5thOrder,
     MeltingParam_Quadratic,
     MeltingParam_Assimilation,
-    MAGEMin_MeltingParam,
+    Vector_MeltingParam,
     SmoothMelting
 
 include("CreepLaw/Data/DislocationCreep.jl")

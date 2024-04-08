@@ -26,7 +26,7 @@ export compute_density,     # calculation routines
     PT_Density,             # P & T dependent density
     Compressible_Density,   # Compressible density
     T_Density,              # T dependent density
-    MAGEMin_Density,        # MAGEMin DB density
+    Vector_Density,         # Vector with density
     MeltDependent_Density   # Melt dependent density
 
 # Define "empty" computational routines in case nothing is defined
@@ -266,36 +266,36 @@ end
 
 # MAGEMin DB density -------------------------------
 """
-    MAGEMin_Density(_T)
+    Vector_Density(_T)
 
-This computes density from a MAGEMin database, which can have many points and can be dynamically extended 
+Stores a vector with density data that can be retrieved by providing an `index`
 """
-struct MAGEMin_Density{_T, V <: AbstractVector} <: AbstractDensity{_T}
+struct Vector_Density{_T, V <: AbstractVector} <: AbstractDensity{_T}
     rho::V       # Density
 end
-MAGEMin_Density(; rho=Vector{Float64}()) = MAGEMin_Density{eltype(rho), typeof(rho)}(rho)
+Vector_Density(; rho=Vector{Float64}()) = Vector_Density{eltype(rho), typeof(rho)}(rho)
 
 # This assumes that density always has a single parameter. If that is not the case, we will have to extend this (to be done)
-function param_info(s::MAGEMin_Density) # info about the struct
-    return MaterialParamsInfo(; Equation=L"\rho = computed from a MAGEMin database")
+function param_info(s::Vector_Density) # info about the struct
+    return MaterialParamsInfo(; Equation=L"\rho from a precomputed vector")
 end
 
 # Calculation routine
 """
-    compute_density(s::MAGEMin_Density; index::Int64, DB::DB_MAGEMin, kwargs...)
+    compute_density(s::Vector_Density; index::Int64, kwargs...)
 
-Pointwise calculation of density from an adaptive MAGEMin database, where `index` is the hash of the point
+Pointwise calculation of density from a vector where `index` is the index of the point
 """
-@inline function (s::MAGEMin_Density)(; index::Int64, kwargs...)
+@inline function (s::Vector_Density)(; index::Int64, kwargs...)
     return s.rho[index]
 end
 
-@inline (s::MAGEMin_Density)(args)                = s(; args...)
-@inline compute_density(s::MAGEMin_Density, args) = s(args)
+@inline (s::Vector_Density)(args)                = s(; args...)
+@inline compute_density(s::Vector_Density, args) = s(args)
 
 # Print info
-function show(io::IO, g::MAGEMin_Density)
-    return print(io, "Density from adaptive MAGEMin database with $(length(g.rho)) entries")
+function show(io::IO, g::Vector_Density)
+    return print(io, "Density from precomputed vector with $(length(g.rho)) entries.")
 end
 #-------------------------------------------------------------------------
 
@@ -399,7 +399,7 @@ This assumes that the `PhaseRatio` of every point is specified as an Integer in 
 @inline compute_density_ratio(args::Vararg{Any, N}) where N = compute_param_times_frac(compute_density, args...)
 
 # extractor methods
-for type in (ConstantDensity, PT_Density, Compressible_Density, T_Density, MeltDependent_Density, MAGEMin_Density)
+for type in (ConstantDensity, PT_Density, Compressible_Density, T_Density, MeltDependent_Density, Vector_Density)
     @extractors(type, :Density)
 end
 
