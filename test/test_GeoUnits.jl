@@ -42,7 +42,7 @@ using GeoParams
     @test CharUnits_GEO.Mass == 1.0e37kg
     @test CharUnits_GEO.Time == 1.0e12s
     @test CharUnits_GEO.Length == 1000000m
-
+    
     CharUnits_SI = SI_units()
     @test CharUnits_SI.length == 1000m
     @test CharUnits_SI.Pa == 10Pa
@@ -54,7 +54,6 @@ using GeoParams
     # test nondimensionization of various parameters
     @test nondimensionalize(10cm / yr, CharUnits_GEO) ≈ 0.0031688087814028945 rtol = 1e-10
     @test nondimensionalize(10cm / yr, CharUnits_SI) ≈ 3.168808781402895e7 rtol = 1e-10
-    @test nondimensionalize([10 1; 20 30.0], CharUnits_GEO) == [10 1; 20 30.0]
 
     # test the same nondimensionalisation if giving a GeoUnit as input:
     @test NumValue(nondimensionalize(GeoUnit(10cm / yr), CharUnits_GEO)) ≈
@@ -84,6 +83,13 @@ using GeoParams
     v_ND = nondimensionalize(3cm / yr, CharUnits_GEO)
     @test dimensionalize(v_ND, cm / yr, CharUnits_GEO) == 3.0cm / yr
     @test ustrip(dimensionalize(v_ND, cm / yr, CharUnits_GEO)) == udim(v_ND, cm / yr, CharUnits_GEO)
+
+    # test error handling
+    @test_throws ArgumentError nondimensionalize(5, CharUnits_GEO)
+    @test_throws ArgumentError nondimensionalize(5e0, CharUnits_GEO)
+    @test_throws ArgumentError nondimensionalize([10 1; 20 30.0], CharUnits_GEO)
+    @test_throws ArgumentError nondimensionalize((10, 1), CharUnits_GEO)
+    @test_throws ArgumentError nondimensionalize((10e0, 1e0), CharUnits_GEO)
 
     # Test the GeoUnit struct
     x = GeoUnit(8.1cm / yr)
