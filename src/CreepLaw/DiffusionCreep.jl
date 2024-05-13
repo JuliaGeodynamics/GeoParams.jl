@@ -47,8 +47,8 @@ julia> x2 = DiffusionCreep(Name="test")
 DiffusionCreep: Name = test, n=1.0, r=0.0, p=-3.0, A=1.5 m³·⁰ MPa⁻¹·⁰ s⁻¹·⁰, E=500.0 kJ mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517)
 ```
 """
-struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-    Name::NTuple{100,UInt8}
+struct DiffusionCreep{T,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
+    Name::Ptr{UInt8}
     n::GeoUnit{T,U1} # powerlaw exponent
     r::GeoUnit{T,U1} # exponent of water-fugacity
     p::GeoUnit{T,U1} # grain size exponent
@@ -89,10 +89,9 @@ struct DiffusionCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U3 = typeof(EU).types[2]
         U4 = typeof(VU).types[2]
         U5 = typeof(RU).types[2]
-        N = length(Name)
-        name = str2tuple(Name)    
+        name = pointer(ptr2string(Name))
         # Create struct
-        return new{T,100,U1,U2,U3,U4,U5}(
+        return new{T,U1,U2,U3,U4,U5}(
             name, nU, rU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
         )
     end
@@ -114,12 +113,12 @@ with the curves of the original publications, as those publications usually do n
 function remove_tensor_correction(s::DiffusionCreep)
     # name = String(collect(s.Name))
     return DiffusionCreep(;
-        Name=s.Name, n=s.n, r=s.r, p=s.p, A=s.A, E=s.E, V=s.V, Apparatus=Invariant
+        Name=unsafe_string(s.Name), n=s.n, r=s.r, p=s.p, A=s.A, E=s.E, V=s.V, Apparatus=Invariant
     )
 end
 
 function param_info(s::DiffusionCreep)
-    name = uint2str(s.Name)
+    name = unsafe_string(s.Name)
     eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"
     if name == ""
         return MaterialParamsInfo(; Equation=eq)
@@ -325,7 +324,7 @@ end
 function show(io::IO, g::DiffusionCreep)
     return print(
         io,
-        "DiffusionCreep: Name = $(String(collect(g.Name))), n=$(Value(g.n)), r=$(Value(g.r)), p=$(Value(g.p)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), FT=$(g.FT), FE=$(g.FE)",
+        "DiffusionCreep: Name = $(unsafe_string(g.Name)), n=$(Value(g.n)), r=$(Value(g.r)), p=$(Value(g.p)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), FT=$(g.FT), FE=$(g.FE)",
     )
 end
 
@@ -394,7 +393,7 @@ function Transform_DiffusionCreep(pp::AbstractCreepLaw{T}) where T
     E_J       = uconvert(J / mol, Value(pp.E))
     V_m3      = uconvert(m^3 / mol, Value(pp.V))
     Apparatus = pp.Apparatus
-    args      = (Name=pp.Name, n=n, p=p, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+    args      = (Name=unsafe_string(pp.Name), n=n, p=p, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
 
     return DiffusionCreep(; args...)
 end
@@ -419,7 +418,7 @@ function Transform_DiffusionCreep(pp::AbstractCreepLaw{T}, kwargs::NamedTuple) w
     E_J       = uconvert(J / mol, E_new)
     V_m3      = uconvert(m^3 / mol, V_new)
     Apparatus = pp.Apparatus
-    args      = (Name=pp.Name, n=n_new, p=p_new, r=r_new, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+    args      = (Name=unsafe_string(pp.Name), n=n_new, p=p_new, r=r_new, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
 
     return DiffusionCreep(; args...)
 end

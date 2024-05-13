@@ -11,7 +11,7 @@ using Static
 
 import Base.show, Base.convert
 using GeoParams:
-    AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct, AbstractComposite, str2tuple 
+    AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct, AbstractComposite, ptr2string 
 
 # Define an "empty" Material parameter structure
 struct No_MaterialParam{_T} <: AbstractMaterialParam end
@@ -63,7 +63,6 @@ Structure that holds all material parameters for a given phase
 
 """
 @with_kw_noshow struct MaterialParams{
-    N,
     Vdensity<:Tuple,
     Vgravity<:Tuple,
     Vcreep<:Tuple,
@@ -78,7 +77,7 @@ Structure that holds all material parameters for a given phase
     Vmelting<:Tuple,
     Vseismvel<:Tuple,
 } <: AbstractMaterialParamsStruct
-    Name::NTuple{N,UInt8}               #  Phase name
+    Name::Ptr{UInt8}                   #  Phase name
     Phase::Int64 = 1                   #  Number of the phase (optional)
     Nondimensional::Bool = false       #  Are all fields non-dimensionalized or not?
     Density::Vdensity = ()             #  Density equation of state
@@ -201,7 +200,7 @@ function SetMaterialParams(;
     CharDim=nothing,
 )
     return SetMaterialParams(
-        Name,
+        pointer(ptr2string(Name)),
         Phase,
         ConvField(Density, :Density; maxAllowedFields=1),
         ConvField(set_gravity(Gravity, Density), :Gravity; maxAllowedFields=1),
@@ -239,10 +238,9 @@ function SetMaterialParams(
     CharDim,
 )
 
-    name = str2tuple(Name)    
     # define struct for phase, while also specifying the maximum number of definitions for every field   
     phase = MaterialParams(
-        name,
+        pointer(ptr2string(Name)),
         Phase,
         false,
         Density,
@@ -269,10 +267,6 @@ end
 @inline nondimensionalize_phase(phase, ::Nothing) = phase
 @inline nondimensionalize_phase(phase, CharDim) = error("CharDim should be of type GeoUnits")
 
-@inline str2char(str::String) = str2char(str, static(length(str)))
-@inline str2char(str, ::StaticInt{N}) where N = ntuple(i->str[i], Val(N))
-@inline str2char(str, ::StaticInt{0}) = ()
-
 # In case density is defined and gravity not, set gravity to default value
 function set_gravity(Gravity::Nothing, Density::AbstractMaterialParam)
     GravitationalAcceleration.ConstantGravity()
@@ -295,7 +289,11 @@ end
 #  for this to look nice, you need to define a Base.show 
 function Print_MaterialParam(io::IO, name::Symbol, Data)
     if length(Data) > 0
-        if typeof(Data[1]) <: AbstractMaterialParam
+        if Data isa Ptr
+            str = unsafe_string(Data) 
+            print(io, "        |-- $(rpad(name,18)): $str \n")
+
+        elseif typeof(Data[1]) <: AbstractMaterialParam
             print(io, "        |-- $(rpad(name,18)):")
             for i in 1:length(Data)
                 str = Data[i]
@@ -317,7 +315,8 @@ end
 
 # Specify how the printing of the MaterialParam structure is done
 function Base.show(io::IO, phase::MaterialParams)
-    println(io, "Phase $(rpad(phase.Phase,2)): $(String(collect(phase.Name)))")
+    name = unsafe_string(phase.Name)
+    println(io, "Phase $(rpad(phase.Phase,2)): $(name)")
     if phase.Nondimensional
         println(io, "        | [non-dimensional units]")
     else
