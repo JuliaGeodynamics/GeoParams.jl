@@ -1,7 +1,7 @@
 module Tables
 
 using Unidecode
-using GeoParams: AbstractMaterialParam, param_info, LinearViscous, PowerlawViscous, DislocationCreep, DiffusionCreep, CompositeRheology, Parallel, make_tuple, uint2str
+using GeoParams: AbstractMaterialParam, param_info, LinearViscous, PowerlawViscous, DislocationCreep, DiffusionCreep, CompositeRheology, Parallel, make_tuple
 using ..Units
 using ..MaterialParameters: MaterialParamsInfo
 

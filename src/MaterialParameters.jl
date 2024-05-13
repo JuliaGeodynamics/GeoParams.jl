@@ -11,7 +11,7 @@ using Static
 
 import Base.show, Base.convert
 using GeoParams:
-    AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct, AbstractComposite, str2tuple, ptr2string 
+    AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct, AbstractComposite, ptr2string 
 
 # Define an "empty" Material parameter structure
 struct No_MaterialParam{_T} <: AbstractMaterialParam end
@@ -266,10 +266,6 @@ end
 @inline nondimensionalize_phase(phase, CharDim::GeoUnits) = nondimensionalize(phase, CharDim)
 @inline nondimensionalize_phase(phase, ::Nothing) = phase
 @inline nondimensionalize_phase(phase, CharDim) = error("CharDim should be of type GeoUnits")
-
-@inline str2char(str::String) = str2char(str, static(length(str)))
-@inline str2char(str, ::StaticInt{N}) where N = ntuple(i->str[i], Val(N))
-@inline str2char(str, ::StaticInt{0}) = ()
 
 # In case density is defined and gravity not, set gravity to default value
 function set_gravity(Gravity::Nothing, Density::AbstractMaterialParam)
