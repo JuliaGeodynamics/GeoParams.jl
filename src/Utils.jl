@@ -1,4 +1,5 @@
 using StaticArrays
+using InternedStrings
 
 # Various helper functions (mostly for internal use)
 
@@ -133,6 +134,10 @@ end
 
 @inline uint2str(x::NTuple{100, UInt8}) = uint2str([x...])
 # uint2str(x::AbstractCreepLaw) = uint2str(x.Name)
+
+@inline ptr2string(str::String) = intern(str)
+@inline ptr2string(str::Ptr{UInt8}) = intern(unsafe_string(str))
+@inline ptr2string(::T) where T = throw(ArgumentError("Cannot convert $T to string. Hint: input agument must be a `String` or a Ptr{UInt8}."))
 
 # Creates tuple without branching
 make_tuple(x) = (x,)
