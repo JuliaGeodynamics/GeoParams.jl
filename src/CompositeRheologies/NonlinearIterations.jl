@@ -23,6 +23,7 @@ function local_iterations_εII(
     iter = 0
     ϵ = 2.0 * tol
     τII_prev = τII
+    
     while ϵ > tol
         iter += 1
         #= 
@@ -33,12 +34,15 @@ function local_iterations_εII(
                 τII -= f / dfdτII
         =#
         τII = @muladd τII + (εII - compute_εII(v, τII, args)) * inv(dεII_dτII(v, τII, args)) 
-
         ϵ = abs(τII - τII_prev) * inv(τII)
         τII_prev = τII
-
         # @print(verbose, " iter $(iter) $ϵ")
+        
+        T_check = ϵ isa Union{AbstractFloat,Integer}
+        !(T_check) && break
+        (ϵ > tol) && break
     end
+   
     # @print(verbose, "final τII = $τII")
     # @print(verbose, "---")
 
