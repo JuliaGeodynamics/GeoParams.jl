@@ -78,7 +78,7 @@ function (s::DruckerPrager{_T, U, U1, NoSoftening, S})(;
 end
 
 function (s::DruckerPrager{_T, U, U1, S, NoSoftening})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), EII::_T=zero(_T), kwargs...
+    P=zero(_T), τII=zero(_T), Pf=zero(_T), EII=zero(_T), kwargs...
 ) where {_T,U,U1,S}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
     ϕ = s.softening_ϕ(EII, ϕ)
@@ -90,7 +90,7 @@ function (s::DruckerPrager{_T, U, U1, S, NoSoftening})(;
 end
 
 function (s::DruckerPrager{_T, U, U1, NoSoftening, NoSoftening})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), kwargs...
+    P=zero(_T), τII=zero(_T), Pf=zero(_T), kwargs...
 ) where {_T,U,U1}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
 
@@ -104,7 +104,7 @@ end
 Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` pressure, and `Pf` fluid pressure.
 """
 function compute_yieldfunction(
-    s::DruckerPrager{_T}; P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), EII::_T=zero(_T)
+    s::DruckerPrager{_T}; P=zero(_T), τII=zero(_T), Pf=zero(_T), EII=zero(_T)
 ) where {_T}
     return s(; P=P, τII=τII, Pf=Pf, EII=EII)
 end
