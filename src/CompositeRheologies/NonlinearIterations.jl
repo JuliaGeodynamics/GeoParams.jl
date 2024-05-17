@@ -40,7 +40,6 @@ function local_iterations_εII(
         
         T_check = ϵ isa Union{AbstractFloat,Integer}
         !(T_check) && break
-        (ϵ > tol) && break
     end
    
     # @print(verbose, "final τII = $τII")
