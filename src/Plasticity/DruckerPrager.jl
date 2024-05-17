@@ -55,7 +55,7 @@ end
 
 # Calculation routines
 function (s::DruckerPrager{_T, U, U1, S, S})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), EII::_T=zero(_T), kwargs...
+    P=zero(_T), τII=zero(_T), Pf=zero(_T), EII=zero(_T), kwargs...
 ) where {_T,U,U1,S<:AbstractSoftening}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
     ϕ = s.softening_ϕ(EII, ϕ)
@@ -68,7 +68,7 @@ function (s::DruckerPrager{_T, U, U1, S, S})(;
 end
 
 function (s::DruckerPrager{_T, U, U1, NoSoftening, S})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), EII::_T=zero(_T), kwargs...
+    P=zero(_T), τII=zero(_T), Pf=zero(_T), EII=zero(_T), kwargs...
 ) where {_T,U,U1,S}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
     C = s.softening_C(EII, C)
