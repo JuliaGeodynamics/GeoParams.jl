@@ -164,10 +164,10 @@ function compute_εII!(
     ε_el::AbstractArray{T,N},
     p::ConstantElasticity,
     τII::AbstractArray{T,N};
-    τII_old::AbstractArray{T,N},
+    τII_old::AbstractArray{T1,N},
     dt::T,
     kwargs...,
-) where {N, T}
+) where {N, T, T1}
     @inbounds for i in eachindex(τII)
         ε_el[i] = compute_εII(p, τII[i]; τII_old=τII_old[i], dt=dt)
     end
@@ -188,10 +188,10 @@ function compute_τII!(
     τII::AbstractArray{T,N},
     p::ConstantElasticity,
     ε_el::AbstractArray{T,N};
-    τII_old::AbstractArray{T,N},
+    τII_old::AbstractArray{T1,N},
     dt,
     kwargs...,
-) where {N, T}
+) where {N, T, T1}
     @inbounds for i in eachindex(ε_el)
         τII[i] = compute_τII(p, ε_el[i]; τII_old=τII_old[i], dt=dt)
     end
@@ -259,10 +259,10 @@ function compute_εvol!(
     εvol_el::AbstractArray{T,N},
     a::ConstantElasticity,
     P::AbstractArray{T,N};
-    P_old::AbstractArray{T,N},
+    P_old::AbstractArray{T1,N},
     dt,
     kwargs...,
-) where {N, T}
+) where {N, T, T1}
     @inbounds for i in eachindex(P)
         εvol_el[i] = compute_εvol(a, P[i]; P_old=P_old[i], dt=dt)
     end
@@ -282,11 +282,11 @@ In-place update of the elastic pressure for given volumetric strainrate and pres
 function compute_p!(
     P::AbstractArray{T,N},
     a::ConstantElasticity,
-    εvol_el::AbstractArray{T,N};
-    P_old::AbstractArray{T,N},
+    εvol_el::AbstractArray{T1,N};
+    P_old::AbstractArray{T2,N},
     dt,
     kwargs...,
-) where {N, T}
+) where {N, T, T1, T2}
     @inbounds for i in eachindex(εvol_el)
         P[i] = compute_p(a, εvol_el[i]; P_old=P_old[i], dt=dt)
     end
@@ -323,8 +323,8 @@ end
 
 # Method for staggered grids
 @inline function effective_ε(
-    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T,NTuple{4,T}}}, dt
-) where {N,T}
+    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T1,NTuple{4,T1}}}, dt
+) where {N,T,T1}
     ntuple(Val(N)) do i
         Base.@_inline_meta
         @inbounds effective_ε(εij[i], v, τij_old[i], dt)
@@ -332,8 +332,8 @@ end
 end
 
 @inline function effective_ε(
-    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt
-) where {N,T}
+    εij::NTuple{N, T}, v, τij_old::NTuple{N,T1}, dt
+) where {N,T,T1}
     return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt), Val(N))
 end
 
@@ -415,8 +415,8 @@ end
 
 # Method for staggered grids
 @inline function effective_ε(
-    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T,NTuple{4,T}}}, dt, phase::Int64
-) where {N,T}
+    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T1,NTuple{4,T1}}}, dt, phase::Int64
+) where {N,T,T1}
     ntuple(Val(N)) do i
         Base.@_inline_meta
         @inbounds effective_ε(εij[i], v, τij_old[i], dt, phase)
@@ -424,8 +424,8 @@ end
 end
 
 @inline function effective_ε(
-    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt, phase::Int64
-) where {N,T}
+    εij::NTuple{N, T}, v, τij_old::NTuple{N,T1}, dt, phase::Int64
+) where {N,T,T1}
     return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt, phase), Val(N))
 end
 
@@ -507,8 +507,8 @@ end
 
 ## Expand methods for multiple phases in staggered grids
 @inline function effective_ε(
-    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T,NTuple{4,T}}}, dt, phases::NTuple{N,Union{I,NTuple{4,I}}}
-) where {N,T,I<:Integer}
+    εij::NTuple{N,Union{T,NTuple{4,T}}}, v, τij_old::NTuple{N,Union{T1,NTuple{4,T1}}}, dt, phases::NTuple{N,Union{I,NTuple{4,I}}}
+) where {N,T,T1,I<:Integer}
     ntuple(Val(N)) do i
         Base.@_inline_meta
         @inbounds effective_ε(εij[i], v, τij_old[i], dt, phases[i])
@@ -516,7 +516,7 @@ end
 end
 
 @inline function effective_ε(
-    εij::NTuple{N, T}, v, τij_old::NTuple{N,T}, dt, phases::NTuple{N,Union{I,NTuple{4,I}}}
-) where {N,T,I<:Integer}
+    εij::NTuple{N, T}, v, τij_old::NTuple{N,T1}, dt, phases::NTuple{N,Union{I,NTuple{4,I}}}
+) where {N,T,T1,I<:Integer}
     return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt, phases[i]), Val(N))
 end
