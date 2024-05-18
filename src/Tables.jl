@@ -1,7 +1,7 @@
 module Tables
 
 using Unidecode
-using GeoParams: AbstractMaterialParam, param_info, LinearViscous, PowerlawViscous, DislocationCreep, DiffusionCreep, CompositeRheology, Parallel, make_tuple, uint2str
+using GeoParams: AbstractMaterialParam, param_info, LinearViscous, PowerlawViscous, DislocationCreep, DiffusionCreep, CompositeRheology, Parallel, make_tuple
 using ..Units
 using ..MaterialParameters: MaterialParamsInfo
 
@@ -64,8 +64,8 @@ function Phase2Dict(s)
                         flowlawcount += 1
                         flowadd = flowdisl
                         flowlaw *= flowadd
-                        # name = join(uint2str(a[j].Name))
-                        name = join(uint2str(a[j].Name))
+                        # name = unsafe_string(a[j].Name)
+                        name = unsafe_string(a[j].Name)
                         bibinfo_disl = param_info(a[j])
                         bib_disl = bibinfo_disl.BibTex_Reference
                         refs["$name"] = (bib_disl, "$flowlawcount", "$i")
@@ -75,7 +75,7 @@ function Phase2Dict(s)
                         flowlawcount += 1
                         flowadd = flowdiff
                         flowlaw *= flowadd
-                        name = join(uint2str(a[j].Name))
+                        name = unsafe_string(a[j].Name)
                         bibinfo_diff = param_info(a[j])
                         bib_diff = bibinfo_diff.BibTex_Reference
                         refs["$name"] = (bib_diff, "$flowlawcount", "$i")
@@ -162,7 +162,7 @@ function Phase2Dict(s)
                                 flowlawcount += 1
                                 flowadd = flowdisl
                                 comporheo *= flowadd * ","
-                                name =  fdsname * join(a[j][u].Name)
+                                name =  fdsname * unsafe_string(a[j][u].Name)
                                 bibinfo_disl = param_info(a[j][u])
                                 bib_disl = bibinfo_disl.BibTex_Reference
                                 refs["$name"] = (bib_disl, "$flowlawcount", "$i")
@@ -172,7 +172,7 @@ function Phase2Dict(s)
                                 flowlawcount += 1
                                 flowadd = flowdiff
                                 comporheo *= flowadd * ","
-                                name =  fdsname * join(a[j][u].Name)
+                                name =  fdsname * unsafe_string(a[j][u].Name)
                                 bibinfo_diff = param_info(a[j][u])
                                 bib_diff = bibinfo_diff.BibTex_Reference
                                 refs["$name"] = (bib_diff, "$flowlawcount", "$i")
@@ -375,7 +375,7 @@ function Phase2Dict(s)
                 end
                 # Takes field "Name", puts in Phasename, maximum phase count and current phase number in the Dict
             elseif !isempty(getproperty(s[i], label)) && label == :Name
-                phasename = join(getproperty(s[i], :Name))
+                phasename = unsafe_string(getproperty(s[i], :Name))
                 fds["$label $i"] = (phasename, "$phasecount", "$i", "", "", "")
             end
         end
@@ -692,7 +692,7 @@ function Phase2DictMd(s)
                         flowlawcount += 1
                         flowadd = flowdisl
                         flowlaw *= flowadd
-                        name = join(uint2str(a[j].Name))
+                        name = unsafe_string(a[j].Name)
                         bibinfo_disl = param_info(a[j])
                         bib_disl = bibinfo_disl.BibTex_Reference
                         refs["$name"] = (bib_disl, "$flowlawcount", "$i")
@@ -702,7 +702,7 @@ function Phase2DictMd(s)
                         flowlawcount += 1
                         flowadd = flowdiff
                         flowlaw *= flowadd
-                        name = join(uint2str(a[j].Name))
+                        name = unsafe_string(a[j].Name)
                         bibinfo_diff = param_info(a[j])
                         bib_diff = bibinfo_diff.BibTex_Reference
                         refs["$name"] = (bib_diff, "$flowlawcount", "$i")
@@ -783,7 +783,7 @@ function Phase2DictMd(s)
                                 flowlawcount += 1
                                 flowadd = flowdisl
                                 comporheo *= flowadd * ","
-                                name =  fdsname * join(a[j][u].Name)
+                                name =  fdsname * unsafe_string(a[j][u].Name)
                                 bibinfo_disl = param_info(a[j][u])
                                 bib_disl = bibinfo_disl.BibTex_Reference
                                 refs["$name"] = (bib_disl, "$flowlawcount", "$i")
@@ -793,7 +793,7 @@ function Phase2DictMd(s)
                                 flowlawcount += 1
                                 flowadd = flowdiff
                                 comporheo *= flowadd * ","
-                                name =  fdsname * join(a[j][u].Name)
+                                name =  fdsname * unsafe_string(a[j][u].Name)
                                 bibinfo_diff = param_info(a[j][u])
                                 bib_diff = bibinfo_diff.BibTex_Reference
                                 refs["$name"] = (bib_diff, "$flowlawcount", "$i")
@@ -975,7 +975,7 @@ function Phase2DictMd(s)
                 end
                 # Takes field "Name" and puts phase name, maximum phase  count and current phase number in Dict
             elseif !isempty(getproperty(s[i], label)) && label == :Name
-                phasename = join(getproperty(s[i], :Name))
+                phasename = unsafe_string(getproperty(s[i], :Name))
                 fds["$label $i"] = (phasename, "$phasecount", "$i", "", "", "")
             end
         end

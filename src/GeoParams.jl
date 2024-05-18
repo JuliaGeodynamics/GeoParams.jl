@@ -93,7 +93,7 @@ function param_info end
 export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
 
 include("Utils.jl")
-export value_and_partial, str2tuple
+export value_and_partial
 
 include("TensorAlgebra/TensorAlgebra.jl")
 export second_invariant, second_invariant_staggered, rotate_elastic_stress
@@ -339,6 +339,13 @@ export compute_meltfraction,
     MeltingParam_Assimilation,
     Vector_MeltingParam,
     SmoothMelting
+
+include("Traits/rheology.jl")
+export islinear, RheologyTrait, LinearRheologyTrait, NonLinearRheologyTrait
+export isplasticity, PlasticRheologyTrait, NonPlasticRheologyTrait
+
+include("Traits/density.jl")
+export isconstant, DensityTrait, ConstantDensityTrait, NonConstantDensityTrait
 
 include("CreepLaw/Data/DislocationCreep.jl")
 using .Dislocation

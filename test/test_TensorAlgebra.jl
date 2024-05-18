@@ -1,7 +1,76 @@
 using Test, GeoParams, StaticArrays
+import GeoParams: tensor2voigt, voigt2tensor
 
-@testset "TensorAlgebra.jl" begin
+@testset "Tensor to Voigt notation" begin
+    ## 2D transformations
+    A2D_tensor = [
+        1 2
+        2 3
+    ]
+    A_Voigt = tensor2voigt(A2D_tensor)
+    @test A_Voigt == [1, 3, 2]
+    sA2D_tensor = SA[
+        1 2
+        2 3
+    ]
+    sA_Voigt = tensor2voigt(sA2D_tensor)
+    @test sA_Voigt == SA[1, 3, 2]
 
+    ## 3D transformations
+    A3D_tensor = [
+        1 2 3
+        2 3 4
+        3 4 5
+    ]
+    A_Voigt = tensor2voigt(A3D_tensor)
+    @test A_Voigt == [1, 3, 5, 4, 3, 2]
+    sA3D_tensor = @SMatrix [
+        1 2 3
+        2 3 4
+        3 4 5
+    ]
+    sA_Voigt = tensor2voigt(sA3D_tensor)
+    @test sA_Voigt == SA[1, 3, 5, 4, 3, 2]
+end
+
+@testset " Voigt notation to tensor form" begin
+    ## 2D transformations
+    A_Voigt = [1, 3, 2]
+    @test voigt2tensor(A_Voigt) == [
+        1 2
+        2 3
+    ]
+    A_Voigt = SA[1, 3, 2]
+    @test voigt2tensor(A_Voigt) == SA[
+        1 2
+        2 3
+    ]
+    A_Voigt = 1, 3, 2
+    @test voigt2tensor(A_Voigt) == SA[
+        1 2
+        2 3
+    ]
+    ## 3D transformations
+    A_Voigt = [1, 3, 5, 4, 3, 2]
+    @test voigt2tensor(A_Voigt) == [
+        1 2 3
+        2 3 4
+        3 4 5
+    ]
+    A_Voigt = SA[1, 3, 5, 4, 3, 2]
+    @test voigt2tensor(A_Voigt) == SA[
+        1 2 3
+        2 3 4
+        3 4 5
+    ]
+    A_Voigt = 1, 3, 5, 4, 3, 2
+    @test voigt2tensor(A_Voigt) == SA[
+        1 2 3
+        2 3 4
+        3 4 5
+    ]
+end
+@testset "Tensor algebra" begin
     # J2 TENSOR INVARIANT: 2D TESTS 
     τ_xx, τ_yy, τ_xy = 1.0, 2.0, 3.0
     τII = √(0.5 * (τ_xx^2 + τ_yy^2) + τ_xy^2)
