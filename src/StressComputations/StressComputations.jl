@@ -168,7 +168,7 @@ function compute_τij(
     v::NTuple{N1,AbstractMaterialParamsStruct},
     εij::NTuple{N2,Union{T,NTuple{4,T}}},
     args,
-    τij_old::NTuple{N2,Union{T1,NTuple{4,T}}},
+    τij_old::NTuple{N2,Union{T1,NTuple{4,T1}}},
     phases::NTuple{N2,Union{I,NTuple{4,I}}},
 ) where {T,T1,N1,N2,I<:Integer}
 
