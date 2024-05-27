@@ -96,9 +96,9 @@ end
 # Calculation routine
 @inline function compute_heatcapacity(
     a::T_HeatCapacity_Whittington{_T};
-    T = zero(_T),
+    T = zero(_T1),
     kwargs...
-) where _T
+) where {_T, _T1}
     @unpack_val a0, a1, b0, b1, c0, c1, molmass, Tcutoff = a
 
     Cp = a0 / molmass
@@ -146,9 +146,9 @@ end
 # Calculation routine
 @inline function compute_heatcapacity(
     a::Latent_HeatCapacity{_T};
-    dϕdT = zero(_T),
+    dϕdT = zero(_T1),
     kwargs...
-) where _T
+) where {_T, _T1}
     @unpack_val Q_L = a
 
     Cp = compute_heatcapacity(a.Cp, kwargs)

@@ -31,11 +31,11 @@ export compute_density,     # calculation routines
 
 # Define "empty" computational routines in case nothing is defined
 function compute_density!(
-    rho::_T, s::No_MaterialParam{_T}; P::_T=zero(_T), T::_T=zero(_T)
-) where {_T}
+    rho::_T, s::No_MaterialParam{_T}; P::_T1=zero(_T1), T::_T1=zero(_T1)
+) where {_T,_T1}
     return zero(_T)
 end
-function compute_density(s::No_MaterialParam{_T}; P::_T=zero(_T), T::_T=zero(_T)) where {_T}
+function compute_density(s::No_MaterialParam{_T}; P::_T1=zero(_T1), T::_T1=zero(_T1)) where {_T,_T1}
     return zero(_T)
 end
 
@@ -155,7 +155,7 @@ function param_info(s::Compressible_Density) # info about the struct
     return MaterialParamsInfo(; Equation = L"\rho = \rho_0\exp(\beta*(P-P_0))")
 end
 
-function (s::Compressible_Density{_T})(; P::_T=zero(_T), kwargs...) where {_T}
+function (s::Compressible_Density{_T})(; P::_T1=zero(_T1), kwargs...) where {_T, _T1}
     if P isa Quantity
         @unpack_units ρ0, β, P0 = s
     else
@@ -199,7 +199,7 @@ function param_info(s::T_Density) # info about the struct
     return MaterialParamsInfo(; Equation = L"\rho = \rho_0*(1 - \alpha*(T-T_0))")
 end
 
-function (s::T_Density{_T})(; T::_T=zero(_T), kwargs...) where {_T}
+function (s::T_Density{_T})(; T::_T1=zero(_T1), kwargs...) where {_T,_T1}
     if T isa Quantity
         @unpack_units ρ0, α, T0 = s
     else
@@ -248,7 +248,7 @@ function param_info(s::MeltDependent_Density) # info about the struct
 end
 
 # Calculation routines
-function (rho::MeltDependent_Density{_T})(; ϕ::_T=zero(_T), kwargs...) where {_T}
+function (rho::MeltDependent_Density{_T})(; ϕ::_T1=zero(_T1), kwargs...) where {_T, _T1}
     ρsolid = compute_density(rho.ρsolid, kwargs)
     ρmelt  = compute_density(rho.ρmelt,  kwargs)
 
