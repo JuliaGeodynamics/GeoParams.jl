@@ -147,7 +147,7 @@ function param_info(s::T_Conductivity_Whittington) # info about the structwhere 
 end
 
 # Calculation routine
-function (s::T_Conductivity_Whittington{_T})(; T::_T=zero(_T), kwargs...) where {_T}
+function (s::T_Conductivity_Whittington{_T})(; T::_T1=zero(_T1), kwargs...) where {_T, _T1}
     if T isa Quantity
         @unpack_units a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
     else
@@ -161,7 +161,7 @@ function (s::T_Conductivity_Whittington{_T})(; T::_T=zero(_T), kwargs...) where 
     end
 end
 
-function compute_conductivity(s::T_Conductivity_Whittington{_T}; T::_T=zero(_T)) where {_T}
+function compute_conductivity(s::T_Conductivity_Whittington{_T}; T::_T1=zero(_T1)) where {_T,_T1}
     return s(; T=T)
 end
 
@@ -418,7 +418,7 @@ TP_Conductivity_info = Dict(
 )
 
 # Calculation routine
-function (s::TP_Conductivity{_T})(; P::_T=zero(_T), T::_T=zero(_T), kwargs...) where {_T}
+function (s::TP_Conductivity{_T})(; P::_T=zero(_T), T::_T1=zero(_T1), kwargs...) where {_T, _T1}
     if T isa Quantity
         @unpack_units a, b, c, d = s
     else
@@ -433,8 +433,8 @@ function (s::TP_Conductivity{_T})(; P::_T=zero(_T), T::_T=zero(_T), kwargs...) w
 end
 
 function (s::TP_Conductivity{_T})(
-    P::AbstractArray{_T,N}, T::AbstractArray{_T,N}; kwargs...
-) where {_T,N}
+    P::AbstractArray{_T1,N}, T::AbstractArray{_T1,N}; kwargs...
+) where {_T,_T1,N}
     if T isa Quantity
         @unpack_units a, b, c, d = s
     else
