@@ -125,6 +125,8 @@ import ForwardDiff as FD
     @test FD.derivative(x-> compute_elastoviscosity_τII(rheology, τII, (; depth=1e3, P=1e3 * 3300 * 9.81, T=x, dt = dt)), 1.6e3) == -4.708437955242587e18
     @test FD.derivative(x-> compute_elastoviscosity_εII(rheology, εII, (; depth=1e3, P=1e3 * 3300 * 9.81, T=x, dt = dt)), 1.6e3) == -4.708437955242587e18
     # dη / dP
+    @test FD.derivative(x-> compute_viscosity_τII(rheology, τII, (; depth=1e3, P=x, T=1.6e3, dt = dt)),       args.P) == 9.834109234429906e10
+    @test FD.derivative(x-> compute_viscosity_εII(rheology, εII, (; depth=1e3, P=x, T=1.6e3, dt = dt)),       args.P) == 9.834109234429906e10
     @test FD.derivative(x-> compute_elastoviscosity_τII(rheology, τII, (; depth=1e3, P=x, T=1.6e3, dt = dt)), args.P) == 9.789431074626257e10
     @test FD.derivative(x-> compute_elastoviscosity_εII(rheology, εII, (; depth=1e3, P=x, T=1.6e3, dt = dt)), args.P) == 9.789431074626257e10
 end
