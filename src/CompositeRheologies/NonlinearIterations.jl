@@ -611,7 +611,13 @@ end
 
 
 """
-    local_iterations_εII(c::CompositeRheology{T,N}, εII_total, εvol_total, args)
+    local_iterations_εII(c::CompositeRheology{T,N}, εII_total, εvol_total, args;
+                                tol = 1e-6, 
+                                verbose = false,
+                                τ_initial = nothing, 
+                                p_initial = nothing, 
+                                ε_init  = nothing,
+                                max_iter = 1000)
 
 This performs nonlinear Newton iterations for `τII` with given `εII_total` for cases where we plastic elements
 """
@@ -642,8 +648,9 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     if isnothing(p_initial)
         p_initial = compute_p_harmonic(c, εvol_total, args)
     end    
-    # @print(verbose,"τII guess = $τ_initial \n  P guess = $p_initial")
-    
+    if !isGPU
+         @print(verbose,"τII guess = $τ_initial \n  P guess = $p_initial")
+    end
     x    = @MVector zeros(_T, n)
     x[1] = τ_initial
 
@@ -676,12 +683,17 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
 
         # update solution
         dx  = J\r 
-        x .+= dx   
+        x .+= dx        # we probably need linesearch here
         
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
-        # @print(verbose," iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3])")
+        if !isGPU
+            @print(verbose," iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3])")
+        end
     end
-    # @print(verbose,"---")
+    if !isGPU
+        @print(verbose,"---")
+    end
+
     if (iter == max_iter)
         error("iterations did not converge")
     end

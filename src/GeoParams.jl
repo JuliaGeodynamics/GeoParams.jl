@@ -31,6 +31,13 @@ for T in (:Real, :Symbol)
     end
 end
 
+# Define a const that tells if we are on a GPU or nort
+@static const isGPU = if isdefined(Main, :CUDA) || isdefined(Main, :AMDGPU)
+    true
+else
+    false
+end
+
 export @u_str,
     uconvert,
     upreffered,
