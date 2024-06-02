@@ -648,9 +648,9 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     if isnothing(p_initial)
         p_initial = compute_p_harmonic(c, εvol_total, args)
     end    
-    if !isGPU
+    #if !isGPU
          @print(verbose,"τII guess = $τ_initial \n  P guess = $p_initial")
-    end
+    #end
     x    = @MVector zeros(_T, n)
     x[1] = τ_initial
 
@@ -686,13 +686,13 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         x .+= dx        # we probably need linesearch here
         
         ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
-        if !isGPU
+        #if !isGPU
             @print(verbose," iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3])")
-        end
+        #end
     end
-    if !isGPU
+    #if !isGPU
         @print(verbose,"---")
-    end
+    #end
 
     if (iter == max_iter)
         error("iterations did not converge")
