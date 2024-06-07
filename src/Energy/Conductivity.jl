@@ -253,8 +253,8 @@ end
 
 # Calculation routine
 function (s::T_Conductivity_Whittington_parameterised{_T})(;
-    T::_T=zero(_T), kwargs...
-) where {_T}
+    T::_T1=0.0, kwargs...
+) where {_T,_T1}
     if T isa Quantity
         @unpack_units a, b, c, d, Ts = s
     else
