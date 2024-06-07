@@ -1,7 +1,7 @@
 using Test
 using GeoParams
 using StaticArrays
-
+import ForwardDiff as FD
 @testset "EnergyParameters.jl" begin
 
     # This tests the MaterialParameters structure
@@ -32,6 +32,8 @@ using StaticArrays
     compute_heatcapacity!(Cp, Cp2, args)
     @test sum(Cp) ≈ 11667.035717418683
     @test GeoParams.get_Tcutoff(Cp2) ==  846.0
+
+    FD.derivative(x -> compute_heatcapacity(Cp2, (; T=x)), T[1]) == 3.2721616015871584
 
     # nondimensional
     Cp2_nd = T_HeatCapacity_Whittington()
@@ -172,6 +174,8 @@ using StaticArrays
     @test isdimensional(x_D)==true
 
     @test compute_heatcapacity(x_D, args) == 41052.29268922852
+    @test FD.derivative(x->compute_heatcapacity(x_D,  (; T=x, dϕdT=dϕdT)), T) == 0.6260890173995907
+    @test FD.derivative(x->compute_heatcapacity(x_D,  (; T=T, dϕdT=x)), dϕdT) == 400000.0
 
     dϕdT_ND = nondimensionalize(dϕdT / K, CharUnits_GEO)
     args_ND = (; T=ustrip.(T * K / CharUnits_GEO.Temperature), dϕdT=dϕdT_ND)
@@ -198,7 +202,7 @@ using StaticArrays
     cond = nondimensionalize(cond, CharUnits_GEO)
     @test NumValue(cond.k) ≈ 3.8194500000000007
 
-    @test compute_conductivity(cond; T=100.0) ≈ 3.8194500000000007 # compute
+    @test compute_conductivity(cond; T = rand()) ≈ 3.8194500000000007 # compute
 
     # Temperature-dependent conductivity
     # dimensional
@@ -324,6 +328,7 @@ using StaticArrays
 
     T = [200.0 300.0; 400.0 500.0]
     k1 = compute_conductivity(cond2, T)
+    @test FD.derivative(x->compute_conductivity(cond2, (;T=x)), T[1]) == -0.007109905535
     # -----------------------
 
     # Latent heat -----------
@@ -481,7 +486,6 @@ using StaticArrays
     ε_el = (0.01, 0.01, 0.01)
     @test H_s1 == compute_shearheating(Χ, τ, ε, ε_el)
     @test H_s3 == compute_shearheating(Χ, τ, ε)
-
 
     # test in-place computation
     n = 12
