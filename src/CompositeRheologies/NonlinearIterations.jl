@@ -1,4 +1,5 @@
 import GeoParams: isGPU
+using LinearAlgebra
 
 # NONLINEAR ITERATION SCHEMES
 """
@@ -529,11 +530,11 @@ end
         ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl, args)  
         ε̇vol_pl =  λ̇*∂Q∂P(element, P, args)  
         r[1]   -=  ε̇_pl                     #  contribution of plastic strainrate to residual
-        r[j+2] +=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
+        r[j+2] -=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
         
         if F>=0.0
             J[1,j]   =  ∂Q∂τII(element, τ_pl, args)     
-            J[j+2,j] = -∂Q∂P(element, P, args)     
+            J[j+2,j] =  ∂Q∂P(element, P, args)     
             
             J[j,j]     = ∂F∂λ(element.elements[1], τ_pl, args)        # derivative of F vs. λ
             J[j,j+1]   = ∂F∂τII(element.elements[1], τ_pl, args)    
@@ -589,16 +590,16 @@ end
         ε̇vol_pl =  λ̇*∂Q∂P(element, P, args)  
         
         r[1]   -=  ε̇_pl                     #  contribution of plastic strainrate to residual
-        r[j+1] +=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
+        r[j+1] -=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
         if F>=0.0
             J[1,j] = ∂Q∂τII(element, τ_pl, args)     
-            J[3,j] = -∂Q∂P(element, P, args)      # minus sign because of P sign convention
+            J[3,j] = ∂Q∂P(element, P, args)      
             
             # plasticity is not in a parallel element    
             J[j,1] = ∂F∂τII(element, τ_pl, args)      # derivative of F vs. τ
             J[j,j] = ∂F∂λ(element, τ_pl, args)        # derivative of F vs. λ
             J[j,3] = ∂F∂P(element, P, args)           # derivative of F vs. P
-            r[j] =  -F                          # residual
+            r[j] =  -F                                # residual
         else
             J[j,j] = 1.0
             r[j] = 0.0
@@ -610,7 +611,49 @@ end
     return j
 end
 
+"""
+    α,rmnorm = linesearch(f!,x,dx, rnorm; αmin=1e-2, lstol=0.95)
 
+Local linesearch algorithm provided that the in-place residual function is `f!(r,x)`
+"""
+function linesearch(f!,x,dx, rnorm; αmin=1e-2, lstol=0.95)
+    r = zero(x)
+    xn = zero(x)
+    α, rmnorm = 1.0, 1.0
+    while α>αmin
+        xn = x + α*dx
+
+        f!(r,xn) # inplace residual computation
+
+        rmnorm = norm(r)
+        if rmnorm <= lstol*rnorm
+            break
+        end
+
+        α  /= 2.0 # reduce bisect step length
+    end
+
+    return α, rmnorm
+end
+
+# compute the local residual
+function Res_εvol_εII!(r,J,x,c,εII_total,εvol_total, args, n)
+
+    τ   = x[1]
+    P   = x[n]
+    
+    # Update part of jacobian related to serial, non-plastic, elements
+    r[1]   = εII_total - compute_εII_elements(c,τ,args)     
+    J[1,1] = dεII_dτII_elements(c,τ,args);               
+
+    r[n]   = εvol_total - compute_εvol_elements(c,P,args)     
+    J[n,n] = dεvol_dp(c,P,args);               
+
+    # Add contributions from plastic elements
+    fill_J_plastic!(J, r, x, c, args)
+
+    return nothing
+end
 
 """
     local_iterations_εII(c::CompositeRheology{T,N}, εII_total, εvol_total, args;
@@ -621,7 +664,7 @@ end
                                 ε_init  = nothing,
                                 max_iter = 1000)
 
-This performs nonlinear Newton iterations for `τII` with given `εII_total` for cases where we plastic elements
+This performs nonlinear Newton iterations for `τII` with given `εII_total` for cases where we have plastic elements
 """
 @inline function local_iterations_εvol_εII(
     c::CompositeRheology{T,N,
@@ -651,7 +694,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         p_initial = compute_p_harmonic(c, εvol_total, args)
     end    
     if !isGPU
-         @print(verbose,"τII guess = $τ_initial \n  P guess = $p_initial")
+         @print(verbose,"τII guess = $τ_initial,  P guess = $p_initial")
     end
     x    = @MVector zeros(_T, n)
     x[1] = τ_initial
@@ -661,7 +704,10 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     r = @MVector zeros(_T,n);
     J = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
     
+    
     # Local Iterations
+    Res_local_εvol_εII!(r,x)  = Res_εvol_εII!(r,J,x,c,εII_total,εvol_total, args, n)
+
     iter = 0
     ϵ = 2 * tol
     while (ϵ > tol) && (iter < max_iter)
@@ -672,24 +718,23 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         P   = x[n]
         
         args = merge(args, (τII=τ, P=P, λ=λ))    # update (to compute yield function)
-
-        # Update part of jacobian related to serial, non-plastic, elements
-        r[1]   = εII_total - compute_εII_elements(c,τ,args)     
-        J[1,1] = dεII_dτII_elements(c,τ,args);               
         
-        r[n]   = εvol_total - compute_εvol_elements(c,P,args)     
-        J[n,n] = dεvol_dp(c,P,args);               
-        
-        # Add contributions from plastic elements
-        fill_J_plastic!(J, r, x, c, args)
-
+        # Update residual and jacobian
+        Res_εvol_εII!(r,J,x,c,εII_total,εvol_total, args, n)
+        rnorm_old = norm(r) 
+      
         # update solution
-        dx  = J\r 
-        x .+= dx            # we probably need line-search here
-        
-        ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
+        dx  = J\r
+
+        # use linesearch to find optimal stepsize
+        # remark: we are currently also updating the jacobian while computing the residual; 
+        # that is likely an overkill, so we have speedup potential here
+        α, rnorm   = linesearch(Res_local_εvol_εII!, x,dx, rnorm_old; αmin=2e-1, lstol=0.99)
+        x .+=  α*dx            
+
+        ϵ    = rnorm
         if !isGPU
-            @print(verbose," iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3])")
+            @print(verbose," iter $(iter) $ϵ F=$(-r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3]) α=$(α)")
         end
     end
     if !isGPU
@@ -699,7 +744,6 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     if (iter == max_iter)
         error("iterations did not converge")
     end
-
     return (x...,)
 end
 
