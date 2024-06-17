@@ -626,7 +626,8 @@ function linesearch(f!,x,dx, rnorm; αmin=1e-2, lstol=0.95)
 
         f!(r,xn) # inplace residual computation
 
-        rmnorm = norm(r)
+        rmnorm = norm(r./[7e-14 7e-15 1e6])
+
         if rmnorm <= lstol*rnorm
             break
         end
@@ -638,32 +639,39 @@ function linesearch(f!,x,dx, rnorm; αmin=1e-2, lstol=0.95)
 end
 
 # Computes the local residual for cases with shear & volumetric deformation
-function Res_εvol_εII!(r::MVector{N,T}, x::MVector{N,T}, c::CompositeRheology,εII_total::_T1,εvol_total::_T1, args) where {N,T,_T1}
+function Res_εvol_εII!(r::MVector{N,T}, x::MVector{N,T}, rn::MVector{N,_T2}, c::CompositeRheology,εII_total::_T1,εvol_total::_T1, args; normalize=false) where {N,T,_T1, _T2}
     τ   = x[1]
-    #P   = x[2]
+    P   = x[2]
     
     # Update part of jacobian related to serial, non-plastic, elements
-    #r[1]   = εII_total  -  compute_εII_elements(c,τ,args)     
-    #r[2]   = εvol_total - compute_εvol_elements(c,P,args)
+    @show args compute_εvol_elements(c,P,args) εvol_total
+    r[1]   = εII_total  -  compute_εII_elements(c,τ,args)     
+    r[2]   = εvol_total -  compute_εvol_elements(c,P,args)
     
+    
+    εvol_el = - (P - args.P_old) / (c[1].Kb.val * args.dt)
+    @show εvol_el (P - args.P_old)  1/(c[1].Kb.val * args.dt) args.dt
+
+
     # Add contributions from plastic elements
-    #add_plastic_residual!(r, x, c, args)
+    args = merge(args, (εII=εII_total, εvol=εvol_total))  
+    #add_plastic_residual!(r, x, rn, c, args, normalize=normalize)
    
     return nothing
 end
 
 # This deals with plastic elements
-@generated function add_plastic_residual!(r, x, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}, args) where {T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}
+@generated function add_plastic_residual!(r, x, rn, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}, args; normalize=false) where {T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}
     quote
         Base.@_inline_meta
         j = 1
-        Base.Cartesian.@nexprs $N i -> j = @inbounds _add_plastic_residual!(r, x, c.elements[i], args, static($(is_plastic)[i]), $(is_par)[i], $(is_vol)[i], j)
+        Base.Cartesian.@nexprs $N i -> j = @inbounds _add_plastic_residual!(r, x, rn, c.elements[i], args, static($(is_plastic)[i]), $(is_par)[i], $(is_vol)[i], j, normalize)
         return nothing
     end
 end
 
-@inline _add_plastic_residual!(r, x, element, args, ::False, is_par, is_vol, j) = j
-@inline _add_plastic_residual!(r, x, element, args, ::True,  is_par, is_vol, j) = add_plastic_residual!(r, x, element, args)    # plasticity callback implemented in 
+@inline _add_plastic_residual!(r, x, rn, element, args, ::False, is_par, is_vol, j, normalize) = j
+@inline _add_plastic_residual!(r, x, rn, element, args, ::True,  is_par, is_vol, j, normalize) = add_plastic_residual!(r, x, rn, element, args, normalize=normalize)    # plasticity callback implemented in 
 
 
 #=
@@ -852,6 +860,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     verbose     = false,
     τ_initial   = nothing, 
     p_initial   = nothing, 
+    λ_initial   = nothing,
     ε_init      = nothing,
     max_iter    = 1000
 ) where {T,N,Npar,is_par, _T, Nplast, is_plastic, Nvol, is_vol}
@@ -860,54 +869,77 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     n = 1 + Nplast + Npar + 1;             # total size of unknowns (one added for volumetric plasticity)
 
     # Initial guess of stress & strainrate
-    if isnothing(τ_initial)
-        τ_initial = compute_τII_harmonic(c, εII_total, args)
+    τ_initial = if isnothing(τ_initial)
+        compute_τII_harmonic(c, εII_total, args)
+    else
+        τ_initial
     end
-    if isnothing(p_initial)
-        p_initial = compute_p_harmonic(c, εvol_total, args)
+    p_initial = if isnothing(p_initial)
+        compute_p_harmonic(c, εvol_total, args)
+    else
+        p_initial
     end    
+    λ_initial = if isnothing(λ_initial)
+        0.0
+    else
+        λ_initial
+    end    
+    @show p_initial τ_initial λ_initial
+
+    
     if !isGPU
-         @print(verbose,"τII guess = $τ_initial,  P guess = $p_initial")
+        @print(verbose,"τII guess = $τ_initial,  P guess = $p_initial")
     end
+    
     x    = @MVector zeros(_T, n)
     x[1] = τ_initial
+    x[2] = p_initial
 
-    set_initial_values!(x, c, τ_initial, p_initial)
+   # set_initial_values!(x, c, τ_initial, p_initial)
 
 #    @show τ_initial p_initial
 
-    r = @MVector zeros(_T, n);
-    J = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
+    r  = @MVector zeros(_T, n);
+    rn = @MVector zeros(_T, n);
+    J  = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
     
     # Local Iterations
-    Res_local_εvol_εII!(r,x)  = Res_εvol_εII!(r,x,c,εII_total,εvol_total, args)
-    
+   # r = Res_εvol_εII(x, c, εII_total, εvol_total, args)
+
+   Res_εvol_εII!(r,x,rn, c,εII_total,εvol_total, args, normalize=true)
+
+   @show r rn x 
+   # Res_local_εvol_εII!(r,x)
+    norm_vec = [1, 1,  c[3].C.val]
+
+    Res_local_εvol_εII!(r,x)  = Res_εvol_εII!(r,x,rn, c,εII_total,εvol_total, args,  normalize=false)
+
     Res_local_εvol_εII!(r,x)
+    @show r rn x 
 
     iter = 0
-#=    
     ϵ = 2 * tol
-#    @show r
     while (ϵ > tol) && (iter < max_iter)
         iter += 1
 
-        #τ   = x[1]
-        #P   = x[2]
-        #λ   = x[3]
+        τ   = x[1]
+        P   = x[2]
+        λ   = x[3]
         
-        #args = merge(args, (τII=τ, P=P, λ=λ))    # update (to compute yield function)
-        
+        args = merge(args, (τII=τ, P=P, λ=λ))    # update (to compute yield function)
+        Res_local_εvol_εII!(r,x)  = Res_εvol_εII!(r,x,rn, c,εII_total,εvol_total, args)
+
         # Update residual and jacobian
         #Res_local_εvol_εII!(r,x)
         ForwardDiff.jacobian!(J, Res_local_εvol_εII!,r,x)
         #@show J1
-        
+
         #Res_εvol_εII!(r,x,c,εII_total,εvol_total, args, n)
         #Jac_εvol_εII!(J,r,x,c, args, n)
 
         rnorm_old = norm(r) 
 
-#        @show r J
+        @show r J
       
         # update solution
         dx  = J\-r
@@ -915,28 +947,38 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         # use linesearch to find optimal stepsize
         # remark: we are currently also updating the jacobian while computing the residual; 
         # that is likely an overkill, so we have speedup potential here
-        α, rnorm   = linesearch(Res_local_εvol_εII!, x,dx, rnorm_old; αmin=2e-1, lstol=0.99)
+        #α, rnorm   = linesearch(Res_local_εvol_εII!, x, dx, rnorm_old; αmin=2e-1, lstol=0.95)
         
         ### debugging
-        #α = 1.0
+        α = 1.0
 
 
-    
+
+        @show x dx
         x .+=  α*dx            
 
-        Res_local_εvol_εII!(r,x)
+        @show x dx 
+        @show J
 
-        ϵ    = rnorm
-        #ϵ    = maximum(abs.(r))
+        Res_εvol_εII!(r,x,rn, c,εII_total,εvol_total, args, normalize=true)
+        ϵ   = maximum(abs.(rn))
+        @show rn, ϵ
         
+        error("stop")
+
+        #ϵ    = maximum(abs.(r))
+        if iter>8
+#            error("stop")
+        end
         if !isGPU
-            @print(verbose," iter $(iter) $ϵ F=$(-r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3]) α=$(α)")
+          @print(verbose," iter $(iter) $ϵ F=$(r[3]) τ=$(x[1]) λ=$(x[3]) P=$(x[2]) α=$(α)")
         end
     end
+    
     if !isGPU
-        @print(verbose,"---")
+      @print(verbose,"---")
     end
-=#
+
     if (iter == max_iter)
         error("iterations did not converge")
     end
