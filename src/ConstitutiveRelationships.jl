@@ -63,7 +63,8 @@ export param_info,
     AbstractSoftening,
     NoSoftening,
     LinearSoftening,
-    NonLinearSoftening
+    NonLinearSoftening,
+    add_plastic_residual!
 
 # add methods programmatically 
 for myType in (:LinearViscous, :LinearMeltViscosity, :ViscosityPartialMelt_Costa_etal_2009, 

@@ -1,4 +1,5 @@
 import GeoParams: isGPU
+import GeoParams.MaterialParameters.ConstitutiveRelationships: add_plastic_residual!
 using LinearAlgebra
 
 # NONLINEAR ITERATION SCHEMES
@@ -612,12 +613,12 @@ end
 end
 
 """
-    α,rmnorm = linesearch(f!,x,dx, rnorm; αmin=1e-2, lstol=0.95)
+    α, rmnorm = linesearch(f!,x,dx, rnorm; αmin=1e-2, lstol=0.95)
 
-Local linesearch algorithm provided that the in-place residual function is `f!(r,x)`
+Local linesearch algorithm provided that the in-place residual function is coded as `f!(r,x)`, where `r` is the residual and `x` contains the unknowns
 """
 function linesearch(f!,x,dx, rnorm; αmin=1e-2, lstol=0.95)
-    r = zero(x)
+    r  = zero(x)
     xn = zero(x)
     α, rmnorm = 1.0, 1.0
     while α>αmin
@@ -636,17 +637,47 @@ function linesearch(f!,x,dx, rnorm; αmin=1e-2, lstol=0.95)
     return α, rmnorm
 end
 
-# compute the local residual
-function Res_εvol_εII!(r,J,x,c,εII_total,εvol_total, args, n)
+# Computes the local residual for cases with shear & volumetric deformation
+function Res_εvol_εII!(r::MVector{N,T}, x::MVector{N,T}, c::CompositeRheology,εII_total::_T1,εvol_total::_T1, args) where {N,T,_T1}
+    τ   = x[1]
+    #P   = x[2]
+    
+    # Update part of jacobian related to serial, non-plastic, elements
+    #r[1]   = εII_total  -  compute_εII_elements(c,τ,args)     
+    #r[2]   = εvol_total - compute_εvol_elements(c,P,args)
+    
+    # Add contributions from plastic elements
+    #add_plastic_residual!(r, x, c, args)
+   
+    return nothing
+end
+
+# This deals with plastic elements
+@generated function add_plastic_residual!(r, x, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}, args) where {T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}
+    quote
+        Base.@_inline_meta
+        j = 1
+        Base.Cartesian.@nexprs $N i -> j = @inbounds _add_plastic_residual!(r, x, c.elements[i], args, static($(is_plastic)[i]), $(is_par)[i], $(is_vol)[i], j)
+        return nothing
+    end
+end
+
+@inline _add_plastic_residual!(r, x, element, args, ::False, is_par, is_vol, j) = j
+@inline _add_plastic_residual!(r, x, element, args, ::True,  is_par, is_vol, j) = add_plastic_residual!(r, x, element, args)    # plasticity callback implemented in 
+
+
+#=
+# compute the local jacobian
+function Jac_εvol_εII!(J,r,x,c, args, n)
 
     τ   = x[1]
     P   = x[n]
     
     # Update part of jacobian related to serial, non-plastic, elements
-    r[1]   = εII_total - compute_εII_elements(c,τ,args)     
+    #r[1]   = εII_total - compute_εII_elements(c,τ,args)     
     J[1,1] = dεII_dτII_elements(c,τ,args);               
 
-    r[n]   = εvol_total - compute_εvol_elements(c,P,args)     
+    #r[n]   = εvol_total - compute_εvol_elements(c,P,args)     
     J[n,n] = dεvol_dp(c,P,args);               
 
     # Add contributions from plastic elements
@@ -654,9 +685,151 @@ function Res_εvol_εII!(r,J,x,c,εII_total,εvol_total, args, n)
 
     return nothing
 end
+=#
+
+#=
+@generated function fill_res_parallel!(r, x, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plast}, τ, args) where {T, N, Npar, is_par, Nplast, is_plast}
+    quote
+        Base.@_inline_meta
+        j = 1
+        Base.Cartesian.@nexprs $N i -> j = @inbounds _fill_res_parallel!(r, x, c.elements[i], τ, args, $(is_par)[i], j)
+        return nothing
+    end
+end
+
+@inline function _fill_res_parallel!(r, x, elements, τ, args, is_par, j)
+    !is_par && return j
+
+    j += 1
+    εII_p = x[j]
+    r[1] -= εII_p
+    τ_parallel, = compute_τII(elements, εII_p, args)    
+    r[j]        =  (τ - τ_parallel) # residual (stress should be equal)
+    return j
+end
+
+@generated function fill_res_plastic!(r, x, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}, args) where {T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}
+    quote
+        Base.@_inline_meta
+        j = 1
+        Base.Cartesian.@nexprs $N i -> j = @inbounds _fill_res_plastic!(r, x, c.elements[i], args, static($(is_plastic)[i]), $(is_par)[i], $(is_vol)[i], j)
+        return nothing
+    end
+end
+
+@inline _fill_res_plastic!(r, x, element, args, ::False, is_par, is_vol, j) = j
+
+@inline function _fill_res_plastic!(r, x, element, args, ::True, is_par, is_vol, j)
+
+    j += 1
+    λ̇  = x[j]
+
+    @inline function __fill_res_plastic!(::True, ::False, j, args) # parallel, non-dilatant element 
+        τ       = x[1]
+        τ_pl    = x[j+1]    # if the plastic element is in || with other elements, need to explicitly solve for this
+        args    = merge(args, (τII=τ_pl,))
+        F       = compute_yieldfunction(element, args);  # yield function applied to plastic element
+    
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl, args)  
+        r[1]   -=  ε̇_pl                     #  add plastic strainrate
+
+        if F>=0.0
+            r[j] = -F
+            r[j+1] = τ - compute_τII_nonplastic(element, ε̇_pl, args) - τ_pl                
+        else
+            # In this case set τ_pl=τ
+            r[j] = r[j+1] = 0.0
+        end
+    end
+
+    @inline function __fill_res_plastic!(::True, ::True, j, args) # parallel, dilatant element 
+        τ       = x[1]
+        τ_pl    = x[j+1]    # if the plastic element is in || with other elements, need to explicitly solve for this
+        P       = x[j+2]    # pressure
+
+        args    = merge(args, (τII=τ_pl, P=P))
+        F       = compute_yieldfunction(element,args);  # yield function applied to plastic element
+    
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl, args)  
+        ε̇vol_pl =  λ̇*∂Q∂P(element, P, args)  
+        r[1]   -=  ε̇_pl                     #  contribution of plastic strainrate to residual
+        r[j+2] -=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
+        
+        if F>=0.0
+            r[j] = -F
+            r[j+1] = τ - compute_τII_nonplastic(element, ε̇_pl, args) - τ_pl                
+        else
+            # In this case set τ_pl=τ
+            r[j] = r[j+1] = 0.0
+        end
+    end
+
+    @inline function __fill_res_plastic!(::False, ::False, j, args) #non-parallel, non-dilatant
+        τ_pl    = x[1]    # if the plastic element is in || with other elements, need to explicitly solve for this
+
+        args    = merge(args, (τII=τ_pl,))
+        F       = compute_yieldfunction(element,args);  # yield function applied to plastic element
+    
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl, args)  
+        r[1]   -=  ε̇_pl                     #  add plastic strainrate
+        
+        if F>=0.0
+            # plasticity is not in a parallel element    
+            r[j] =  -F      
+        else
+            r[j] = 0.0
+        end
+    end
+
+    @inline function __fill_res_plastic!(::False, ::True, j, args) #non-parallel, dilatant
+        τ_pl    = x[1]    # if the plastic element is in || with other elements, need to explicitly solve for this
+        P       = x[3]
+
+        args    = merge(args, (τII=τ_pl, P=P))
+        F       = compute_yieldfunction(element,args);  # yield function applied to plastic element
+    
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl, args)  
+        ε̇vol_pl =  λ̇*∂Q∂P(element, P, args)  
+        
+        r[1]   -=  ε̇_pl                     #  contribution of plastic strainrate to residual
+        r[j+1] -=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
+        if F>=0.0
+            # plasticity is not in a parallel element    
+            r[j] =  -F                                # residual
+        else
+            r[j] = 0.0
+        end
+    end
+
+    __fill_res_plastic!(static(is_par), static(is_vol), j, args)
+
+    return j
+end
+
+
+## temporary to debug
+function GetRes(xx,Eps_II,Eps_vol,P_o,Mat,dt,F,Tau_o_II,k, kf, c, a, b, pd, py, pf, R, flag, plast)
+
+    τII        = x[1]
+    P          = x[2]
+    lambda_dot = xx[3]
+
+   
+
+   # r1, A_e, A_l, A_n = DevRes(Eps_II,Mat,dt,lambda_dot,dQdτ,Tau_II,Tau_o_II)
+   # r2 = BulkRes(Eps_vol,P,P_o,Mat,dt,lambda_dot,dQdP)
+   # r3 = F - Mat.eta_vp * lambda_dot #*dQdτ
+
+    r = [r1,r2,r3]
+
+    return r
+
+end
+=#
+
 
 """
-    local_iterations_εII(c::CompositeRheology{T,N}, εII_total, εvol_total, args;
+    local_iterations_εvol_εII(c::CompositeRheology{T,N}, εII_total, εvol_total, args;
                                 tol = 1e-6, 
                                 verbose = false,
                                 τ_initial = nothing, 
@@ -676,11 +849,11 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     εvol_total::_T, 
     args; 
     tol = 1e-6, 
-    verbose = false,
-    τ_initial = nothing, 
-    p_initial = nothing, 
-    ε_init = nothing,
-    max_iter = 1000
+    verbose     = false,
+    τ_initial   = nothing, 
+    p_initial   = nothing, 
+    ε_init      = nothing,
+    max_iter    = 1000
 ) where {T,N,Npar,is_par, _T, Nplast, is_plastic, Nvol, is_vol}
 
     # Compute residual
@@ -701,38 +874,61 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
 
     set_initial_values!(x, c, τ_initial, p_initial)
 
-    r = @MVector zeros(_T,n);
+#    @show τ_initial p_initial
+
+    r = @MVector zeros(_T, n);
     J = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
     
-    
     # Local Iterations
-    Res_local_εvol_εII!(r,x)  = Res_εvol_εII!(r,J,x,c,εII_total,εvol_total, args, n)
+    Res_local_εvol_εII!(r,x)  = Res_εvol_εII!(r,x,c,εII_total,εvol_total, args)
+    
+    Res_local_εvol_εII!(r,x)
 
     iter = 0
+#=    
     ϵ = 2 * tol
+#    @show r
     while (ϵ > tol) && (iter < max_iter)
         iter += 1
 
-        τ   = x[1]
-        λ   = x[2]
-        P   = x[n]
+        #τ   = x[1]
+        #P   = x[2]
+        #λ   = x[3]
         
-        args = merge(args, (τII=τ, P=P, λ=λ))    # update (to compute yield function)
+        #args = merge(args, (τII=τ, P=P, λ=λ))    # update (to compute yield function)
         
         # Update residual and jacobian
-        Res_εvol_εII!(r,J,x,c,εII_total,εvol_total, args, n)
+        #Res_local_εvol_εII!(r,x)
+        ForwardDiff.jacobian!(J, Res_local_εvol_εII!,r,x)
+        #@show J1
+        
+        #Res_εvol_εII!(r,x,c,εII_total,εvol_total, args, n)
+        #Jac_εvol_εII!(J,r,x,c, args, n)
+
         rnorm_old = norm(r) 
+
+#        @show r J
       
         # update solution
-        dx  = J\r
+        dx  = J\-r
 
         # use linesearch to find optimal stepsize
         # remark: we are currently also updating the jacobian while computing the residual; 
         # that is likely an overkill, so we have speedup potential here
         α, rnorm   = linesearch(Res_local_εvol_εII!, x,dx, rnorm_old; αmin=2e-1, lstol=0.99)
+        
+        ### debugging
+        #α = 1.0
+
+
+    
         x .+=  α*dx            
 
+        Res_local_εvol_εII!(r,x)
+
         ϵ    = rnorm
+        #ϵ    = maximum(abs.(r))
+        
         if !isGPU
             @print(verbose," iter $(iter) $ϵ F=$(-r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3]) α=$(α)")
         end
@@ -740,7 +936,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     if !isGPU
         @print(verbose,"---")
     end
-
+=#
     if (iter == max_iter)
         error("iterations did not converge")
     end
@@ -766,20 +962,21 @@ end
     @inline function __set_initial_values!(x, ::True, τ_initial, p_initial, j)
       # parallel plastic element
       j=j+2
-      x[j] = τ_initial    # τ_plastic initial guess     
-      j += 1
+      #x[j] = τ_initial    # τ_plastic initial guess     
       x[j] = p_initial    # initial guess for pressure
-
+      j += 1
+      x[j] = τ_initial    # τ_plastic initial guess     
+      
       return nothing
     end
 
     @inline function __set_initial_values!(x, ::False, τ_initial, p_initial, j)
         # parallel plastic element
         j += 1
-        x[j] = 0    # λ̇  
-        j += 1
         x[j] = p_initial    # initial guess for pressure
-
+        j += 1
+        x[j] = 0    # λ̇  
+        
         return nothing
       end
 

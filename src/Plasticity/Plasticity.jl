@@ -7,6 +7,7 @@ export AbstractPlasticity,
         isvolumetric,
         compute_yieldfunction,      # calculation routines
         compute_yieldfunction!,
+        add_plastic_residual!, 
         compute_plasticpotentialDerivative,
         ∂Q∂τ,∂Q∂τII,∂Q∂P,
         ∂F∂τII,∂F∂P,∂F∂λ,

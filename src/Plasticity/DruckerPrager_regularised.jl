@@ -145,6 +145,34 @@ end
 ∂F∂λ(p::DruckerPrager_regularised,   τII::_T; P=zero(_T), kwargs...) where _T = -2 * NumValue(p.η_vp)*∂Q∂τII(p, τII, P=P) 
 
 
+"""
+This adds the plasticity contributions to the local residual vector. 
+"""
+function add_plastic_residual!(r::_T, x::_T1, c::DruckerPrager_regularised, kwargs...) where {_T, _T1}   
+    τ   = x[1]  # second invariant of stress; always the 1th entry 
+    P   = x[2]  # second invariant of stress; always the 1th entry 
+    λ   = x[3]
+    @show λ
+    
+    args = merge(args, (λ=λ,τII=τ, P=P))
+    F = compute_yieldfunction(v, args)
+    
+    if F>0
+        εII_pl  = λ*∂Q∂τII(c, τ, args)
+        εvol_pl = λ*∂Q∂P(c, P, args)
+    else
+        εII_pl = 0.0
+        εvol_pl = 0.0
+    end 
+    @show εvol_pl εII_pl ∂Q∂P(c[3], P, args) ∂Q∂τII(c[3], τ, args)
+    r[1]  -= εII_pl
+    r[2]  -= εvol_pl 
+    r[3]   = F
+
+    return nothing
+end
+
+
 # Derivatives w.r.t stress tensor
 
 # Hard-coded partial derivatives of the plastic potential Q
