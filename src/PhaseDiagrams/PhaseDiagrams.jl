@@ -221,7 +221,19 @@ function CreateInterpolationObject_PhaseDiagram(
     else
         Pvec = nondimensionalize(Pvec_Pa, CharDim)
         Tvec = nondimensionalize(Tvec_K, CharDim)
-        data = nondimensionalize(data_units, CharDim)
+
+        # data_tmp = data_units isa Matrix{<:GeoUnit} ? data_units : GeoUnit.(data_units)
+        # data = nondimensionalize(data_tmp, CharDim)
+        data = if data_units isa Matrix{<:Quantity}
+            nondimensionalize(data_units, CharDim)
+        else
+            data_units
+        end
+        # # @show typeof(data)
+        # @show typeof(data)
+        # @show typeof(data_units)
+        # @show typeof(data_tmp)
+        # error()
     end
 
     # Create interpolation object
