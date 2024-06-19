@@ -599,14 +599,14 @@ function nondimensionalize(
 end
 
 function nondimensionalize(
-    ::Union{Integer, AbstractFloat,AbstractArray{<:Integer}, AbstractArray{<:AbstractFloat}},
+    ::Union{Integer, AbstractFloat,AbstractArray{<:Integer}, AbstractArray{<:AbstractFloat}, AbstractArray{Any}},
     ::GeoUnits,
 )
     throw(ArgumentError("The input parameter should have units"))
 end
 
 function nondimensionalize(
-    ::NTuple{N, Union{Integer, AbstractFloat,AbstractArray{<:Integer}, AbstractArray{<:AbstractFloat}}},
+    ::NTuple{N, Union{Integer, AbstractFloat,AbstractArray{<:Integer}, AbstractArray{<:AbstractFloat}, AbstractArray{Any}}},
     ::GeoUnits,
 ) where N
     throw(ArgumentError("The input parameter should have units"))
