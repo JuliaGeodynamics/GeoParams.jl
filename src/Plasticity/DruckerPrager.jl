@@ -55,11 +55,12 @@ end
 
 # Calculation routines
 function (s::DruckerPrager{_T, U, U1, S, S})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), EII::_T=zero(_T), kwargs...
+    P=0.0, τII=0.0, Pf=0.0, EII=0.0, perturbation_C = 1.0, kwargs...
 ) where {_T,U,U1,S<:AbstractSoftening}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C = s.softening_C(EII, C)
+    C *=  perturbation_C
 
     cosϕ, sinϕ = iszero(EII) ? (cosϕ, sinϕ) : (cosd(ϕ), sind(ϕ))
 
@@ -67,21 +68,24 @@ function (s::DruckerPrager{_T, U, U1, S, S})(;
     return F
 end
 
+
 function (s::DruckerPrager{_T, U, U1, NoSoftening, S})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), EII::_T=zero(_T), kwargs...
+    P=0.0, τII=0.0, Pf=0.0, EII=0.0, perturbation_C = 1.0, kwargs...
 ) where {_T,U,U1,S}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
     C = s.softening_C(EII, C)
+    C *=  perturbation_C
 
     F = τII - cosϕ * C - sinϕ * (P - Pf)   # with fluid pressure (set to zero by default)
     return F
 end
 
 function (s::DruckerPrager{_T, U, U1, S, NoSoftening})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), EII::_T=zero(_T), kwargs...
+    P=0.0, τII=0.0, Pf=0.0, EII=0.0, perturbation_C = 1.0, kwargs...
 ) where {_T,U,U1,S}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
     ϕ = s.softening_ϕ(EII, ϕ)
+    C *=  perturbation_C
 
     cosϕ, sinϕ = iszero(EII) ? (cosϕ, sinϕ) : (cosd(ϕ), sind(ϕ))
 
@@ -90,9 +94,10 @@ function (s::DruckerPrager{_T, U, U1, S, NoSoftening})(;
 end
 
 function (s::DruckerPrager{_T, U, U1, NoSoftening, NoSoftening})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), kwargs...
+    P=0.0, τII=0.0, Pf=0.0, perturbation_C = 1.0, kwargs...
 ) where {_T,U,U1}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
+    C *=  perturbation_C
 
     F = τII - cosϕ * C - sinϕ * (P - Pf)   # with fluid pressure (set to zero by default)
     return F
@@ -104,9 +109,9 @@ end
 Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` pressure, and `Pf` fluid pressure.
 """
 function compute_yieldfunction(
-    s::DruckerPrager{_T}; P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), EII::_T=zero(_T)
+    s::DruckerPrager{_T}; P=0.0, τII=0.0, Pf=0.0, EII=0.0, perturbation_C = 1.0
 ) where {_T}
-    return s(; P=P, τII=τII, Pf=Pf, EII=EII)
+    return s(; P=P, τII=τII, Pf=Pf, EII=EII, perturbation_C =perturbation_C)
 end
 
 """
@@ -135,7 +140,7 @@ end
 # Plastic Potential 
 
 # Derivatives w.r.t pressure
-∂Q∂P(p::DruckerPrager, P=zero(_T); τII=zero(_T), kwargs...) = -NumValue(p.sinΨ)
+∂Q∂P(p::DruckerPrager, P=0.0; τII=0.0, kwargs...) = -NumValue(p.sinΨ)
 
 # Derivatives of yield function
 ∂F∂τII(p::DruckerPrager, τII::_T; P=zero(_T), kwargs...) where _T  = _T(1)

@@ -43,8 +43,8 @@ julia> x2 = GrainBoundarySliding(Name="test")
 GrainBoundarySliding: Name = test, n=1.0, p=-3.0, A=1.5 m³·⁰ MPa⁻¹·⁰ s⁻¹·⁰, E=500.0 kJ mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517)
 ```
 """
-struct GrainBoundarySliding{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-    Name::NTuple{100,UInt8}
+struct GrainBoundarySliding{T,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
+    Name::Ptr{UInt8}
     n::GeoUnit{T,U1} # powerlaw exponent
     p::GeoUnit{T,U1} # grain size exponent
     A::GeoUnit{T,U2} # material specific rheological parameter
@@ -69,23 +69,22 @@ struct GrainBoundarySliding{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         # Corrections from lab experiments
         FT, FE = CorrectionFactor(Apparatus)
         # Convert to GeoUnits
-        nU = convert(GeoUnit, rat2float(n))
-        pU = convert(GeoUnit, p)
-        AU = convert(GeoUnit, A)
-        EU = convert(GeoUnit, E)
-        VU = convert(GeoUnit, V)
-        RU = convert(GeoUnit, R)
+        nU     = convert(GeoUnit, rat2float(n))
+        pU     = convert(GeoUnit, p)
+        AU     = convert(GeoUnit, A)
+        EU     = convert(GeoUnit, E)
+        VU     = convert(GeoUnit, V)
+        RU     = convert(GeoUnit, R)
         # Extract struct types
-        T = typeof(nU).types[1]
-        U1 = typeof(nU).types[2]
-        U2 = typeof(AU).types[2]
-        U3 = typeof(EU).types[2]
-        U4 = typeof(VU).types[2]
-        U5 = typeof(RU).types[2]
-        N = length(Name)
-        name = str2tuple(Name)    
+        T      = typeof(nU).types[1]
+        U1     = typeof(nU).types[2]
+        U2     = typeof(AU).types[2]
+        U3     = typeof(EU).types[2]
+        U4     = typeof(VU).types[2]
+        U5     = typeof(RU).types[2]
+        name   = pointer(ptr2string(Name))
         # Create struct
-        return new{T,100,U1,U2,U3,U4,U5}(
+        return new{T,U1,U2,U3,U4,U5}(
             name, nU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
         )
     end
@@ -104,14 +103,14 @@ Removes the tensor correction of the creeplaw, which is useful to compare the im
 with the curves of the original publications, as those publications usually do not transfer their data to tensor format
 """
 function remove_tensor_correction(s::GrainBoundarySliding)
-    name = uint2str(s.Name)
+    name = ptr2string(s.Name)
     return GrainBoundarySliding(;
         Name=name, n=s.n, p=s.p, A=s.A, E=s.E, V=s.V, Apparatus=Invariant
     )
 end
 
 function param_info(s::GrainBoundarySliding)
-    name = uint2str(s.Name)
+    name = ptr2string(s.Name)
     eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}" #ÄNDERN!!!!!!!!!!!
     if name == ""
         return MaterialParamsInfo(; Equation=eq)
@@ -302,7 +301,7 @@ end
 function show(io::IO, g::GrainBoundarySliding)
     return print(
         io,
-        "GrainBoundarySliding: Name = $(String(collect(g.Name))), n=$(Value(g.n)), p=$(Value(g.p)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), FT=$(g.FT), FE=$(g.FE)",
+        "GrainBoundarySliding: Name = $(unsafe_string(g.Name)), n=$(Value(g.n)), p=$(Value(g.p)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), FT=$(g.FT), FE=$(g.FE)",
     )
 end
 

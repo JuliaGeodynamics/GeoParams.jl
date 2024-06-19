@@ -56,7 +56,7 @@ import GeoParams: Dislocation, Diffusion
     @test dict["ρ Density 1"][4] == "1"
     @test dict["ρ Density 1"][5] == ""
     @test dict["ρ Density 1"][6] == ""
-    @test dict["Name 1"][1] == "$(join(MatParam[1].Name))"
+    @test dict["Name 1"][1] == "$(unsafe_string(MatParam[1].Name))"
     @test dict["Name 1"][2] == "$(length(MatParam))"
     @test dict["Name 1"][3] == "1"
     @test dict["Name 1"][4] == ""
@@ -72,7 +72,7 @@ import GeoParams: Dislocation, Diffusion
     @test dictMd["ρ Density 1"][4] == "1"
     @test dictMd["ρ Density 1"][5] == ""
     @test dictMd["ρ Density 1"][6] == ""
-    @test dictMd["Name 1"][1] == "$(join(MatParam[1].Name))"
+    @test dictMd["Name 1"][1] == "$(unsafe_string(MatParam[1].Name))"
     @test dictMd["Name 1"][2] == "$(length(MatParam))"
     @test dictMd["Name 1"][3] == "1"
     @test dictMd["Name 1"][4] == ""
@@ -171,16 +171,3 @@ import GeoParams: Dislocation, Diffusion
     @test dictMd["η CompositeRheology LinVisc 2.3"][5] == "1"
     @test dictMd["η CompositeRheology LinVisc 2.3"][6] == "LinVisc"
 end
-
-
-# function uint2str(x::Vector{UInt8})
-#     idx = 101-findfirst(x[i] != 0x20 for i in 100:-1:1)
-#     return String(x[1:idx])
-# end
-
-# @inline uint2str(x::NTuple{100, UInt8}) = uint2str([x...])
-# uint2str(x::AbstractCreepLaw) = uint2str(x.Name)
-
-# uint2str(x)
-
-# x=[v1.Name...]

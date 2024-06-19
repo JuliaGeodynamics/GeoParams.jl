@@ -93,7 +93,7 @@ function param_info end
 export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
 
 include("Utils.jl")
-export value_and_partial, str2tuple
+export value_and_partial
 
 include("TensorAlgebra/TensorAlgebra.jl")
 export second_invariant, second_invariant_staggered, rotate_elastic_stress

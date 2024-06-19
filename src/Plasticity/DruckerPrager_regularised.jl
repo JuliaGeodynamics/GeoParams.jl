@@ -56,7 +56,7 @@ end
 
 # Calculation routines
 function (s::DruckerPrager_regularised{_T})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T), EII::_T=zero(_T), kwargs...
+    P=0.0, τII=0.0, Pf=0.0, λ= 0.0, EII=0.0, perturbation_C = 1.0, kwargs...
 ) where {_T}
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
     ϕ = s.softening_ϕ(EII, ϕ)
@@ -68,7 +68,7 @@ function (s::DruckerPrager_regularised{_T})(;
 end
 
 function (s::DruckerPrager_regularised{_T,U,U1,NoSoftening, S})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T), EII::_T=zero(_T), kwargs...
+    P=0.0, τII=0.0, Pf=0.0, λ= 0.0, EII=0.0, perturbation_C = 1.0, kwargs...
 ) where {_T,U,U1,S}
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
     C = s.softening_C(EII, C)
@@ -78,7 +78,7 @@ function (s::DruckerPrager_regularised{_T,U,U1,NoSoftening, S})(;
 end
 
 function (s::DruckerPrager_regularised{_T,U,U1,S, NoSoftening})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T), EII::_T=zero(_T), kwargs...
+    P=0.0, τII=0.0, Pf=0.0, λ= 0.0, EII=0.0, perturbation_C = 1.0, kwargs...
 ) where {_T,U,U1,S}
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
     ϕ = s.softening_ϕ(EII, ϕ)
@@ -89,7 +89,7 @@ function (s::DruckerPrager_regularised{_T,U,U1,S, NoSoftening})(;
 end
 
 function (s::DruckerPrager_regularised{_T,U,U1,NoSoftening,NoSoftening})(;
-    P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T= zero(_T), kwargs...
+    P=0.0, τII=0.0, Pf=0.0, λ= 0.0, perturbation_C = 1.0, kwargs...
 ) where {_T,U,U1}
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
     ε̇II_pl = λ*∂Q∂τII(s, τII)  # plastic strainrate
@@ -105,9 +105,9 @@ end
 Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` pressure, and `Pf` fluid pressure.
 """
 function compute_yieldfunction(
-    s::DruckerPrager_regularised{_T}; P::_T=zero(_T), τII::_T=zero(_T), Pf::_T=zero(_T), λ::_T=zero(_T), EII::_T=zero(_T)
+    s::DruckerPrager_regularised{_T}; P=0.0, τII=0.0, Pf=0.0, λ=0.0, EII=0.0, perturbation_C = 1.0
 ) where {_T}
-    return s(; P=P, τII=τII, Pf=Pf, λ=λ, EII=EII)
+    return s(; P=P, τII=τII, Pf=Pf, λ=λ, EII=EII, perturbation_C = perturbation_C)
 end
 
 """
@@ -143,7 +143,6 @@ end
 ∂F∂τII(p::DruckerPrager_regularised, τII::_T; kwargs...) where _T             = _T(1)
 ∂F∂P(p::DruckerPrager_regularised,     P::_T; kwargs...) where _T             = -NumValue(p.sinϕ)
 ∂F∂λ(p::DruckerPrager_regularised,   τII::_T; P=zero(_T), kwargs...) where _T = -2 * NumValue(p.η_vp)*∂Q∂τII(p, τII, P=P) 
-
 
 # Derivatives w.r.t stress tensor
 
