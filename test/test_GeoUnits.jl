@@ -88,6 +88,8 @@ using GeoParams
     @test_throws ArgumentError nondimensionalize(5, CharUnits_GEO)
     @test_throws ArgumentError nondimensionalize(5e0, CharUnits_GEO)
     @test_throws ArgumentError nondimensionalize([10 1; 20 30.0], CharUnits_GEO)
+    @test_throws ArgumentError nondimensionalize([], CharUnits_GEO)
+    @test_throws ArgumentError nondimensionalize(Float64[], CharUnits_GEO)
     @test_throws ArgumentError nondimensionalize((10, 1), CharUnits_GEO)
     @test_throws ArgumentError nondimensionalize((10e0, 1e0), CharUnits_GEO)
 
