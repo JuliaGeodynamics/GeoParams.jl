@@ -626,8 +626,7 @@ function linesearch(f!,x,dx, rnorm; αmin=1e-2, lstol=0.95)
 
         f!(r,xn) # inplace residual computation
 
-        rmnorm = norm(r./[7e-14 7e-15 1e6])
-
+        rmnorm = maximum(abs.(r))
         if rmnorm <= lstol*rnorm
             break
         end
@@ -642,21 +641,16 @@ end
 function Res_εvol_εII!(r::MVector{N,T}, x::MVector{N,T}, rn::MVector{N,_T2}, c::CompositeRheology,εII_total::_T1,εvol_total::_T1, args; normalize=false) where {N,T,_T1, _T2}
     τ   = x[1]
     P   = x[2]
+    λ   = x[3]
     
     # Update part of jacobian related to serial, non-plastic, elements
-    @show args compute_εvol_elements(c,P,args) εvol_total
     r[1]   = εII_total  -  compute_εII_elements(c,τ,args)     
     r[2]   = εvol_total -  compute_εvol_elements(c,P,args)
-    
-    
-    εvol_el = - (P - args.P_old) / (c[1].Kb.val * args.dt)
-    @show εvol_el (P - args.P_old)  1/(c[1].Kb.val * args.dt) args.dt
-
 
     # Add contributions from plastic elements
     args = merge(args, (εII=εII_total, εvol=εvol_total))  
-    #add_plastic_residual!(r, x, rn, c, args, normalize=normalize)
-   
+    add_plastic_residual!(r, x, rn, c, args, normalize=normalize)
+
     return nothing
 end
 
@@ -884,8 +878,6 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     else
         λ_initial
     end    
-    @show p_initial τ_initial λ_initial
-
     
     if !isGPU
         @print(verbose,"τII guess = $τ_initial,  P guess = $p_initial")
@@ -895,9 +887,8 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     x[1] = τ_initial
     x[2] = p_initial
 
-   # set_initial_values!(x, c, τ_initial, p_initial)
+    # Need 
 
-#    @show τ_initial p_initial
 
     r  = @MVector zeros(_T, n);
     rn = @MVector zeros(_T, n);
@@ -906,9 +897,11 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     # Local Iterations
    # r = Res_εvol_εII(x, c, εII_total, εvol_total, args)
 
-   Res_εvol_εII!(r,x,rn, c,εII_total,εvol_total, args, normalize=true)
+    # ## DEBUGGING STUFF
+    #=
+    Res_εvol_εII!(r,x,rn, c,εII_total,εvol_total, args, normalize=true)
 
-   @show r rn x 
+    @show r rn x 
    # Res_local_εvol_εII!(r,x)
     norm_vec = [1, 1,  c[3].C.val]
 
@@ -916,60 +909,38 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
 
     Res_local_εvol_εII!(r,x)
     @show r rn x 
-
+    =#
+    # ## DEBUGGING STUFF
+    Res_local_εvol_εII!(r,x)        = Res_εvol_εII!(r,x,rn, c,εII_total,εvol_total, args)
+    Res_local_εvol_εII_norm!(rn,x)  = Res_εvol_εII!(r,x,rn, c,εII_total,εvol_total, args, normalize=true)
+    
     iter = 0
     ϵ = 2 * tol
     while (ϵ > tol) && (iter < max_iter)
         iter += 1
+        ϵ_old   = ϵ
 
         τ   = x[1]
         P   = x[2]
         λ   = x[3]
+        r  .= 0.0
         
         args = merge(args, (τII=τ, P=P, λ=λ))    # update (to compute yield function)
-        Res_local_εvol_εII!(r,x)  = Res_εvol_εII!(r,x,rn, c,εII_total,εvol_total, args)
+     
 
         # Update residual and jacobian
-        #Res_local_εvol_εII!(r,x)
         ForwardDiff.jacobian!(J, Res_local_εvol_εII!,r,x)
-        #@show J1
+        
+        # Note, we should have an optional argument to provide the jacobian manually
 
-        #Res_εvol_εII!(r,x,c,εII_total,εvol_total, args, n)
-        #Jac_εvol_εII!(J,r,x,c, args, n)
-
-        rnorm_old = norm(r) 
-
-        @show r J
-      
         # update solution
         dx  = J\-r
 
-        # use linesearch to find optimal stepsize
-        # remark: we are currently also updating the jacobian while computing the residual; 
-        # that is likely an overkill, so we have speedup potential here
-        #α, rnorm   = linesearch(Res_local_εvol_εII!, x, dx, rnorm_old; αmin=2e-1, lstol=0.95)
+        # use linesearch to find the optimal stepsize
+        α, ϵ   = linesearch(Res_local_εvol_εII_norm!, x, dx, ϵ_old; αmin=2e-1, lstol=0.95)
         
-        ### debugging
-        α = 1.0
-
-
-
-        @show x dx
         x .+=  α*dx            
 
-        @show x dx 
-        @show J
-
-        Res_εvol_εII!(r,x,rn, c,εII_total,εvol_total, args, normalize=true)
-        ϵ   = maximum(abs.(rn))
-        @show rn, ϵ
-        
-        error("stop")
-
-        #ϵ    = maximum(abs.(r))
-        if iter>8
-#            error("stop")
-        end
         if !isGPU
           @print(verbose," iter $(iter) $ϵ F=$(r[3]) τ=$(x[1]) λ=$(x[3]) P=$(x[2]) α=$(α)")
         end
@@ -984,8 +955,6 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     end
     return (x...,)
 end
-
-
 
 # These lines of code are added as they are slightly faster
 @generated function set_initial_values!(x, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plast}, τ_initial, p_initial) where {T, N, Npar, is_par, Nplast, is_plast}
