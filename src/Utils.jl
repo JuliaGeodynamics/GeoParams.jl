@@ -152,3 +152,11 @@ function add_extractor_functions(::Type{_T}, param_field) where _T
         end
     end
 end
+
+function get_α(rho::MeltDependent_Density; ϕ::T=0.0, kwargs...) where {T}
+    αsolid = rho.ρsolid.α.val
+    αmelt  = rho.ρmelt.α.val
+    return @muladd ϕ * αmelt + (1-ϕ) * αsolid
+end
+
+get_α(rho::MeltDependent_Density, args) = get_α(rho; args...)

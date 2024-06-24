@@ -325,6 +325,13 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
     @test ρmelt ≈ 2198.68
     @test ρ == (1-args.ϕ)*ρsolid + args.ϕ*ρmelt
 
+    x = MeltDependent_Density(
+        ρsolid = PT_Density(α= 1e-3), 
+        ρmelt  = PT_Density(α= 1e-2), 
+    )
+    @test GeoParams.Density.get_α(x, (;ϕ = 1)) == 1e-2
+    @test GeoParams.Density.get_α(x, (;ϕ = 0)) == 1e-3 
+    @test GeoParams.Density.get_α(x, (;ϕ = 0.5)) == 0.0055
 
     rheologies = (
         SetMaterialParams(;
