@@ -115,7 +115,6 @@ export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo
 using .MaterialParameters.PhaseDiagrams
 export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
 
-
 # Density
 using .MaterialParameters.Density
 export compute_density,                                # computational routines
@@ -445,13 +444,5 @@ export ntuple_idx
 #     PeierlsCreep_info,
 #     NonLinearPeierlsCreep_info
 
-
-function get_α(rho::MeltDependent_Density; ϕ::T=0.0, kwargs...) where {T}
-    αsolid = rho.ρsolid.α.val
-    αmelt  = rho.ρmelt.α.val
-    return @muladd ϕ * αmelt + (1-ϕ) * αsolid
-end
-
-get_α(rho::MeltDependent_Density, args) = get_α(rho; args...)
 
 end # module

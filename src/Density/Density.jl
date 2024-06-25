@@ -27,7 +27,8 @@ export compute_density,     # calculation routines
     Compressible_Density,   # Compressible density
     T_Density,              # T dependent density
     Vector_Density,         # Vector with density
-    MeltDependent_Density   # Melt dependent density
+    MeltDependent_Density,   # Melt dependent density
+    get_α
 
 # Define "empty" computational routines in case nothing is defined
 function compute_density!(
@@ -122,7 +123,6 @@ end
 
 @inline (ρ::PT_Density)(args)                = ρ(; args...)
 @inline compute_density(s::PT_Density, args) = s(args)
-
 
 # Print info
 function show(io::IO, g::PT_Density)
@@ -402,5 +402,15 @@ This assumes that the `PhaseRatio` of every point is specified as an Integer in 
 for type in (ConstantDensity, PT_Density, Compressible_Density, T_Density, MeltDependent_Density, Vector_Density)
     @extractors(type, :Density)
 end
+
+import GeoParams.get_α
+
+function get_α(rho::MeltDependent_Density; ϕ::T=0.0, kwargs...) where {T}
+    αsolid = rho.ρsolid.α.val
+    αmelt  = rho.ρmelt.α.val
+    return @muladd ϕ * αmelt + (1-ϕ) * αsolid
+end
+
+get_α(rho::MeltDependent_Density, args) = get_α(rho; args...)
 
 end
