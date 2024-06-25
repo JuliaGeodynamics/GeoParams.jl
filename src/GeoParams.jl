@@ -115,7 +115,6 @@ export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo
 using .MaterialParameters.PhaseDiagrams
 export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
 
-
 # Density
 using .MaterialParameters.Density
 export compute_density,                                # computational routines
@@ -444,5 +443,6 @@ export ntuple_idx
 #     GrainBoundarySliding_info,
 #     PeierlsCreep_info,
 #     NonLinearPeierlsCreep_info
+
 
 end # module
