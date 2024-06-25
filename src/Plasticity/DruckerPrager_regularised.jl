@@ -48,6 +48,9 @@ function isvolumetric(s::DruckerPrager_regularised)
     return Ψ == 0 ? false : true
 end
 
+number_plastic_variables(s::DruckerPrager_regularised) = Val(3)
+
+
 function param_info(s::DruckerPrager_regularised) # info about the struct
     return MaterialParamsInfo(;
         Equation=L"F = \\tau_{II} - \\cos(ϕ)C - \\sin(ϕ)(P-P_f) - 2η_vpε̇II_pl ; Q=\\tau_{II} - \\sin(Ψ)(P-P_f)",
@@ -171,6 +174,39 @@ function add_plastic_residual!(r::_T, x::_T1, c::DruckerPrager_regularised, kwar
 
     return nothing
 end
+
+"""
+    add_plastic_jacobian!(J::_T, x::_T1, c::DruckerPrager_regularised, args)
+
+This adds the plasticity contributions to the local jacobian matrix. Note that defining this function is optional; one can also compute it using AD.
+"""
+function add_plastic_jacobian!(J::_T, x::_T1, v::DruckerPrager_regularised, args) where {_T, _T1}   
+    @unpack_val η_vp, kf, pf, b = v
+    τ   = x[1]  # second invariant of stress; always the 1th entry 
+    P   = x[2]  # pressure; always the 2nd entry 
+    λ   = x[3]  # plastic multiplier
+    
+    dQdτ = ∂Q∂τII(v, τ, args)
+    dQdP = ∂Q∂P(v, P, args)
+    dFdτ = ∂F∂τII(v, τ, args)
+    dFdP = ∂F∂P(v, P, args)
+
+    F = compute_yieldfunction(v, args)
+
+    J[1, 1] += 0.0 
+    J[1, 2] += 0.0
+    J[1, 3] += -dQdτ
+    
+    J[2, 1] += 0.0
+    J[2, 2] += 0.0
+    J[2, 3] += -dQdP
+    
+    J[3, 1] +=  dFdτ
+    J[3, 2] +=  dFdP
+    J[3, 3] +=  -η_vp
+    return nothing
+end
+
 
 
 # Derivatives w.r.t stress tensor

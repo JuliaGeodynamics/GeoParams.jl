@@ -409,8 +409,9 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         end
     end
 
-    r = @MVector zeros(_T,n);
-    J = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
+    r  = @MVector zeros(_T,n);
+    J  = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
+    J1 = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
     
     # Local Iterations
     iter = 0
@@ -428,7 +429,9 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         J[1,1] = dεII_dτII_elements(c,x[1],args);               
         
         # Add contributions from plastic elements
-        fill_J_plastic!(J, r, x, c, args)
+        Jac_εvol_εII!(J1,r,x,c, args, n)
+        @show J1 J
+       # fill_J_plastic!(J, r, x, c, args)
         
         # update solution
         dx  = J\r 
@@ -473,17 +476,29 @@ end
     return j
 end
 
+#=
 @generated function fill_J_plastic!(J, r, x, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}, args) where {T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}
     quote
         Base.@_inline_meta
         j = 1
-        Base.Cartesian.@nexprs $N i -> j = @inbounds _fill_J_plastic!(J, r, x, c.elements[i], args, static($(is_plastic)[i]), $(is_par)[i], $(is_vol)[i], j)
+#        Base.Cartesian.@nexprs $N i -> j = @inbounds _fill_J_plastic!(J, r, x, c.elements[i], args, static($(is_plastic)[i]), $(is_par)[i], $(is_vol)[i], j)
+        Base.Cartesian.@nexprs $N i -> j = @inbounds  add_plastic_jacobian!(J, x, c.elements[i], args, static($(is_plastic)[i]), $(is_par)[i], $(is_vol)[i], j)
+
+       
+
+        #fill_J_plastic!
+
         return nothing
     end
 end
+=#
 
-@inline _fill_J_plastic!(J, r, x, element, args, ::False, is_par, is_vol, j) = j
+#@inline _add_plastic_jacobian!(J, x, element, args, ::False, is_par, is_vol, j) = j
+#@inline function _add_plastic_jacobian!(J, x, element, args, ::True, is_par, is_vol, j)
+#    add_plastic_jacobian!(J, x, c.elements[i], args, static($(is_plastic)[i]), $(is_par)[i], $(is_vol)[i], j)
+#end
 
+#=
 @inline function _fill_J_plastic!(J, r, x, element, args, ::True, is_par, is_vol, j)
 
     j += 1
@@ -611,6 +626,8 @@ end
 
     return j
 end
+=#
+
 
 """
     α, rmnorm = linesearch(f!,x,dx, rnorm; αmin=1e-2, lstol=0.95)
@@ -668,28 +685,41 @@ end
 @inline _add_plastic_residual!(r, x, rn, element, args, ::True,  is_par, is_vol, j, normalize) = add_plastic_residual!(r, x, rn, element, args, normalize=normalize)    # plasticity callback implemented in 
 
 
-#=
 # compute the local jacobian
 function Jac_εvol_εII!(J,r,x,c, args, n)
-
+    J .= 0.0
     τ   = x[1]
-    P   = x[n]
+    P   = x[2]
     
     # Update part of jacobian related to serial, non-plastic, elements
-    #r[1]   = εII_total - compute_εII_elements(c,τ,args)     
-    J[1,1] = dεII_dτII_elements(c,τ,args);               
-
-    #r[n]   = εvol_total - compute_εvol_elements(c,P,args)     
-    J[n,n] = dεvol_dp(c,P,args);               
+    J[1,1] = -dεII_dτII_elements(c,τ,args);               
+    J[2,2] = -dεvol_dp(c,P,args);               
 
     # Add contributions from plastic elements
-    fill_J_plastic!(J, r, x, c, args)
-
+    add_plastic_jacobian_local!(J, x, c, args)
+    
     return nothing
 end
-=#
+
+# This deals with plastic elements
+
+@generated function add_plastic_jacobian_local!(J, x, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}, args) where {T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}
+    quote
+        Base.@_inline_meta
+        j = 1
+        Base.Cartesian.@nexprs $N i -> j = @inbounds _add_plastic_jacobian!(J, x, c.elements[i], args, static($(is_plastic)[i]), $(is_par)[i], $(is_vol)[i], j)
+        return nothing
+    end
+end
+
+@inline _add_plastic_jacobian!(J, x, element, args, ::False, is_par, is_vol, j) = j
+@inline _add_plastic_jacobian!(J, x, element, args, ::True,  is_par, is_vol, j) = add_plastic_jacobian!(J, x, element, args)    # plasticity callback implemented in the corresponding routines
+
 
 #=
+=#
+
+
 @generated function fill_res_parallel!(r, x, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plast}, τ, args) where {T, N, Npar, is_par, Nplast, is_plast}
     quote
         Base.@_inline_meta
@@ -710,6 +740,7 @@ end
     return j
 end
 
+#=
 @generated function fill_res_plastic!(r, x, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}, args) where {T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}
     quote
         Base.@_inline_meta
@@ -893,6 +924,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     r  = @MVector zeros(_T, n);
     rn = @MVector zeros(_T, n);
     J  = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
+    J1 = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
     
     # Local Iterations
    # r = Res_εvol_εII(x, c, εII_total, εvol_total, args)
@@ -928,10 +960,12 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         args = merge(args, (τII=τ, P=P, λ=λ))    # update (to compute yield function)
      
 
-        # Update residual and jacobian
+        # jacobian using AD
         ForwardDiff.jacobian!(J, Res_local_εvol_εII!,r,x)
         
         # Note, we should have an optional argument to provide the jacobian manually
+        Jac_εvol_εII!(J1,r,x,c, args, n)
+        @show J1 J
 
         # update solution
         dx  = J\-r
@@ -965,6 +999,7 @@ end
         return nothing
     end
 end
+
 
 @inline _set_initial_values!(x, ::False, is_par, τ_initial, p_initial, j) = j
 

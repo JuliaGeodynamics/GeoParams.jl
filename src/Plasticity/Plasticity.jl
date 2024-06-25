@@ -8,6 +8,7 @@ export AbstractPlasticity,
         compute_yieldfunction,      # calculation routines
         compute_yieldfunction!,
         add_plastic_residual!, 
+        add_plastic_jacobian!,
         number_plastic_variables,
         compute_plasticpotentialDerivative,
         ∂Q∂τ,∂Q∂τII,∂Q∂P,
