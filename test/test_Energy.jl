@@ -10,7 +10,7 @@ using StaticArrays
     # Heat capacity ---------
 
     # Constant heat capacity
-    Cp1 = ConstantHeatCapacity()
+    Cp1  = ConstantHeatCapacity()
     info = param_info(Cp1)
     @test isbits(Cp1)
     @test Cp1.Cp.val == 1050.0
