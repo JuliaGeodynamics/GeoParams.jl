@@ -3,13 +3,13 @@
 abstract type AbstractPlasticity{T} <: AbstractConstitutiveLaw{T} end
 abstract type AbstractPlasticPotential{Float64}  <: AbstractConstitutiveLaw{Float64} end
 
-export AbstractPlasticity,
+export  AbstractPlasticity,
         isvolumetric,
         compute_yieldfunction,      # calculation routines
         compute_yieldfunction!,
         add_plastic_residual!, 
         add_plastic_jacobian!,
-        number_plastic_variables,
+        num_residual_components,
         compute_plasticpotentialDerivative,
         ∂Q∂τ,∂Q∂τII,∂Q∂P,
         ∂F∂τII,∂F∂P,∂F∂λ,

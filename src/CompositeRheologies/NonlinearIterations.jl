@@ -16,7 +16,7 @@ function local_iterations_εII(
                     false},         # no volumetric plasticity
     εII::_T, 
     args; 
-    tol=1e-6, verbose=false
+    tol=1e-6, verbose=false, max_iter=1000, AD=false
 ) where {N, T, _T, is_parallel, is_plastic, Nvol, is_vol}
 
     # Initial guess
@@ -66,7 +66,7 @@ Performs local iterations versus stress for a given strain rate using AD
             false},
     εII::_T, 
     args; 
-    tol=1e-6, verbose=false
+    tol=1e-6, verbose=false, max_iter=1000, AD=false
 ) where {N, T, _T, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}
     
     # Initial guess
@@ -217,7 +217,7 @@ Performs local iterations versus pressure for a given total volumetric strain ra
                     Nvol,is_vol}, 
     εvol::_T, 
     args; 
-    tol=1e-6, verbose=false
+    tol=1e-6, verbose=false, AD=false, max_iter=1000
 ) where {N, T, _T, is_parallel, is_plastic, Nvol, is_vol}
 
     # Initial guess
@@ -260,7 +260,7 @@ Performs local iterations versus strain rate for a given stress
     τII::_T, 
     args; 
     tol=1e-6, 
-    verbose=false, n=1
+    verbose=false, n=1, AD=false, max_iter=1000
 ) where {T,N, _T}
 
     # Initial guess (harmonic average of ε of each element)
@@ -303,7 +303,8 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     args; 
     tol=1e-6, 
     verbose=false,
-    τ_initial=nothing, ε_init=nothing
+    τ_initial=nothing, ε_init=nothing,
+    AD=false, max_iter=1000
 ) where {T,N,Npar,is_par, _T, is_plastic, is_vol}
     
     # Compute residual
@@ -383,7 +384,8 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     verbose = false,
     τ_initial = nothing, 
     ε_init = nothing,
-    max_iter = 1000
+    max_iter = 1000,
+    AD=false
 ) where {T,N,Npar,is_par, _T, Nplast, is_plastic, is_vol}
     
     # Compute residual
@@ -394,9 +396,10 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     if isnothing(τ_initial)
         τ_initial = compute_τII_harmonic(c, εII_total, args)
     end
-    
-    # @print(verbose,"τII guess = $τ_initial")
-    
+   
+    if !isGPU
+        @print(verbose,"τII guess = $τ_initial; automatic differentiation=$AD")
+    end
     x    = @MVector zeros(_T, n)
     x[1] = τ_initial
 
@@ -408,44 +411,55 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
             x[j] = τ_initial    # τ_plastic initial guess     
         end
     end
-
     r  = @MVector zeros(_T,n);
+    rn = @MVector zeros(_T,n);
+    
     J  = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
-    J1 = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
+    
+    Res_local_εII!(r,x)        = Res_εII!(r,x,rn, c,εII_total, args)
+    Res_local_εII_norm!(rn,x)  = Res_εII!(r,x,rn, c,εII_total, args, normalize=true)
     
     # Local Iterations
     iter = 0
     ϵ = 2 * tol
     while (ϵ > tol) && (iter < max_iter)
         iter += 1
-
+        ϵ_old  = ϵ
+        
         τ   = x[1]
         λ   = x[2]
 
-        args = merge(args, (τII=τ, λ=λ))    # update
-
-        # Update part of jacobian related to serial, non-plastic, elements
-        r[1]   = εII_total - compute_εII_elements(c,τ,args)     
-        J[1,1] = dεII_dτII_elements(c,x[1],args);               
+        args = merge(args, (τII=τ, λ=λ))   
         
-        # Add contributions from plastic elements
-        Jac_εvol_εII!(J1,r,x,c, args, n)
-        @show J1 J
-       # fill_J_plastic!(J, r, x, c, args)
+        Res_local_εII!(r,x) 
+
+        # jacobian using AD
+        if AD
+            ForwardDiff.jacobian!(J, Res_local_εII!,r,x)
+        else
+            # Manual jacobian:
+            Jac_εII!(J,r,x,c, args,n)
+        end
         
         # update solution
-        dx  = J\r 
-        x .+= dx   
-       # @show dx x r J
+        dx  = J\-r
+
+        # use linesearch to find the optimal stepsize
+        α, ϵ   = linesearch(Res_local_εII_norm!, x, dx, ϵ_old; αmin=2e-1, lstol=0.95)
         
-        ϵ    = sum(abs.(dx)./(abs.(x .+ 1e-9)))
-        # @print(verbose," iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
+        x .+=  α*dx            
+
+        if !isGPU
+            @print(verbose," iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) α=$(α)")
+        end
     end
-    # @print(verbose,"---")
+    if !isGPU
+        @print(verbose,"---")
+    end
+
     if (iter == max_iter)
         error("iterations did not converge")
     end
-    
 
     return (x...,)
 end
@@ -463,6 +477,7 @@ end
 
 @inline function _fill_J_parallel!(J, r, x, elements, τ, args, is_par, j)
     !is_par && return j
+    # TO BE CHECKED
 
     j += 1
     εII_p = x[j]
@@ -658,7 +673,6 @@ end
 function Res_εvol_εII!(r::MVector{N,T}, x::MVector{N,T}, rn::MVector{N,_T2}, c::CompositeRheology,εII_total::_T1,εvol_total::_T1, args; normalize=false) where {N,T,_T1, _T2}
     τ   = x[1]
     P   = x[2]
-    λ   = x[3]
     
     # Update part of jacobian related to serial, non-plastic, elements
     r[1]   = εII_total  -  compute_εII_elements(c,τ,args)     
@@ -666,6 +680,20 @@ function Res_εvol_εII!(r::MVector{N,T}, x::MVector{N,T}, rn::MVector{N,_T2}, c
 
     # Add contributions from plastic elements
     args = merge(args, (εII=εII_total, εvol=εvol_total))  
+    add_plastic_residual!(r, x, rn, c, args, normalize=normalize)
+
+    return nothing
+end
+
+# Computes the local residual for cases with shear deformation
+function Res_εII!(r::MVector{N,T}, x::MVector{N,T}, rn::MVector{N,_T2}, c::CompositeRheology,εII_total::_T1, args; normalize=false) where {N,T,_T1, _T2}
+    τ   = x[1]
+    
+    # Update part of jacobian related to serial, non-plastic, elements
+    r[1]   = εII_total  -  compute_εII_elements(c,τ,args)     
+
+    # Add contributions from plastic elements:
+    args = merge(args, (εII=εII_total,))  
     add_plastic_residual!(r, x, rn, c, args, normalize=normalize)
 
     return nothing
@@ -682,14 +710,30 @@ end
 end
 
 @inline _add_plastic_residual!(r, x, rn, element, args, ::False, is_par, is_vol, j, normalize) = j
+
+### NEEDS TO BE EXPANDED TO INCLUDE THE SIZE OF THE JACOBIAN
 @inline _add_plastic_residual!(r, x, rn, element, args, ::True,  is_par, is_vol, j, normalize) = add_plastic_residual!(r, x, rn, element, args, normalize=normalize)    # plasticity callback implemented in 
 
-
 # compute the local jacobian
-function Jac_εvol_εII!(J,r,x,c, args, n)
+# Jacobian with shear components
+function Jac_εII!(J,r,x,c, args, n)
     J .= 0.0
-    τ   = x[1]
-    P   = x[2]
+    τ  = x[1]
+
+    # Update part of jacobian related to serial, non-plastic, elements
+    J[1,1] = -dεII_dτII_elements(c,τ,args);               
+
+    # Add contributions from plastic elements
+    add_plastic_jacobian_local!(J, x, c, args)
+    
+    return nothing
+end
+
+# Jacobian with shear & volumetric components
+function Jac_εvol_εII!(J,r,x,c, args, n)    
+    J .= 0.0
+    τ  = x[1]
+    P  = x[2]
     
     # Update part of jacobian related to serial, non-plastic, elements
     J[1,1] = -dεII_dτII_elements(c,τ,args);               
@@ -702,23 +746,60 @@ function Jac_εvol_εII!(J,r,x,c, args, n)
 end
 
 # This deals with plastic elements
-
 @generated function add_plastic_jacobian_local!(J, x, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}, args) where {T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}
     quote
         Base.@_inline_meta
         j = 1
-        Base.Cartesian.@nexprs $N i -> j = @inbounds _add_plastic_jacobian!(J, x, c.elements[i], args, static($(is_plastic)[i]), $(is_par)[i], $(is_vol)[i], j)
+        Base.Cartesian.@nexprs $N i -> j = @inbounds _add_plastic_jacobian_local!(J, x, c.elements[i], args, static($(is_plastic)[i]), $(is_par)[i], $(is_vol)[i], j)
         return nothing
     end
 end
 
-@inline _add_plastic_jacobian!(J, x, element, args, ::False, is_par, is_vol, j) = j
-@inline _add_plastic_jacobian!(J, x, element, args, ::True,  is_par, is_vol, j) = add_plastic_jacobian!(J, x, element, args)    # plasticity callback implemented in the corresponding routines
+@inline _add_plastic_jacobian_local!(J, x, element, args, ::False, is_par, is_vol, j) = j             # non-plastic elements
+
+@inline function _add_plastic_jacobian_local!(J, x, element, args, ::True,  is_par, is_vol, j)        # plastic routines
+    # depending on the type of plasticity (dilatant - requires P; parallel - all shifted by on), we call the corresponding routine
+
+    @inline function _add_plastic_jacobian_local!(::True, ::False, j, args) # parallel, non-dilatant element 
+        # if the plastic element is in || with other elements, need to explicitly solve for this
+        j += 1
+        J_local = @view J[j:j+1,j:j+1]
+        x_local = @view x[j:j+1]
+        add_plastic_jacobian!(J_local, x_local, element, args)
+    end
+
+    @inline function _add_plastic_jacobian_local!(::True, ::True, j, args) # parallel, dilatant element 
+        j += 1
+        J_local = @view J[j:j+2,j:j+2]
+        x_local = @view x[j:j+2]
+        add_plastic_jacobian!(J_local, x_local, element, args)
+    end
+
+    @inline function _add_plastic_jacobian_local!(::False, ::False, j, args) #non-parallel, non-dilatant
+        τ_pl    = x[1]    
+        J_local = @view J[j:j+1,j:j+1]
+        x_local = @view x[j:j+1]
+        add_plastic_jacobian!(J_local, x_local, element, args)
+    end
+
+    @inline function _add_plastic_jacobian_local!(::False, ::True, j, args) #non-parallel, dilatant
+        @show j
+        J_local = @view J[j:j+2,j:j+2]
+        x_local = @view x[j:j+2]
+        add_plastic_jacobian!(J_local, x_local, element, args)
+        
+    end
+
+    #  plasticity callback implemented in the corresponding routines above 
+   _add_plastic_jacobian_local!(static(is_par), static(is_vol), j, args)
+
+   return j
+
+end
 
 
 #=
 =#
-
 
 @generated function fill_res_parallel!(r, x, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plast}, τ, args) where {T, N, Npar, is_par, Nplast, is_plast}
     quote
@@ -731,7 +812,6 @@ end
 
 @inline function _fill_res_parallel!(r, x, elements, τ, args, is_par, j)
     !is_par && return j
-
     j += 1
     εII_p = x[j]
     r[1] -= εII_p
@@ -739,6 +819,8 @@ end
     r[j]        =  (τ - τ_parallel) # residual (stress should be equal)
     return j
 end
+
+
 
 #=
 @generated function fill_res_plastic!(r, x, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}, args) where {T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}
@@ -882,12 +964,13 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     εvol_total::_T, 
     args; 
     tol = 1e-6, 
-    verbose     = false,
-    τ_initial   = nothing, 
-    p_initial   = nothing, 
-    λ_initial   = nothing,
-    ε_init      = nothing,
-    max_iter    = 1000
+    verbose     =   false,
+    τ_initial   =   nothing, 
+    p_initial   =   nothing, 
+    λ_initial   =   nothing,
+    ε_init      =   nothing,
+    max_iter    =   1000,
+    AD          =   false
 ) where {T,N,Npar,is_par, _T, Nplast, is_plastic, Nvol, is_vol}
 
     # Compute residual
@@ -919,8 +1002,6 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     x[2] = p_initial
 
     # Need 
-
-
     r  = @MVector zeros(_T, n);
     rn = @MVector zeros(_T, n);
     J  = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
@@ -942,29 +1023,30 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     Res_local_εvol_εII!(r,x)
     @show r rn x 
     =#
-    # ## DEBUGGING STUFF
+    # DEBUGGING STUFF
+    
     Res_local_εvol_εII!(r,x)        = Res_εvol_εII!(r,x,rn, c,εII_total,εvol_total, args)
     Res_local_εvol_εII_norm!(rn,x)  = Res_εvol_εII!(r,x,rn, c,εII_total,εvol_total, args, normalize=true)
     
     iter = 0
     ϵ = 2 * tol
     while (ϵ > tol) && (iter < max_iter)
-        iter += 1
-        ϵ_old   = ϵ
+        iter  += 1
+        ϵ_old  = ϵ
 
         τ   = x[1]
         P   = x[2]
         λ   = x[3]
         r  .= 0.0
         
+        # NOTE: THIS IS INSUFFICIENTLY GENERAL, AS OTHER PLASTICITY MODELS MAY REQUIRE MORE PARAMETERS
         args = merge(args, (τII=τ, P=P, λ=λ))    # update (to compute yield function)
-     
 
         # jacobian using AD
         ForwardDiff.jacobian!(J, Res_local_εvol_εII!,r,x)
         
-        # Note, we should have an optional argument to provide the jacobian manually
-        Jac_εvol_εII!(J1,r,x,c, args, n)
+        # Manual jacobian:
+        Jac_εvol_εII!(J1,r,x,c, args,n)
         @show J1 J
 
         # update solution

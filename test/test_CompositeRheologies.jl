@@ -216,6 +216,8 @@ import GeoParams: Dislocation, Diffusion
     for v in [c10 c8]
         # τ_AD, = compute_τII_AD(v, εII, args)     
         τ, = compute_τII(v, εII, args; verbose=false)
+        τ1, = compute_τII(v, εII, args; verbose=false, AD=true)
+        @test τ ≈ τ1
 
         args_old = merge(args, (τII=args.τII_old,))
         Fold = compute_yieldfunction(c8.elements[3], args_old)
@@ -301,8 +303,8 @@ import GeoParams: Dislocation, Diffusion
     c_lin = CompositeRheology(LinearViscous(; η=η * Pa * s), ConstantElasticity(; G=G * Pa)) # linear VE
     t_vec, τ_vec = time_τII_0D(c_lin, εII, args; t=(0.0, t_M * 4), nt=100, verbose=false)
     analytical_sol = @. 2.0 * η * (1.0 - exp(-t_vec / t_M)) * εII
-    err = sum(abs.(τ_vec .- analytical_sol)) / length(t_vec)
-    @test err ≈ 0.0900844333898483
+    err1 = sum(abs.(τ_vec .- analytical_sol)) / length(t_vec)
+    @test err1 ≈ 0.0900844333898483
 
     # Plasticity calculation
     F = zero(τ_vec)

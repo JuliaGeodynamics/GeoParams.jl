@@ -109,7 +109,7 @@ compute_εII_AD(v::AbstractMaterialParamsStruct, τII, args) = compute_εII_AD(v
 
 #COMPUTE VOLUMETRIC STRAIN-RATE
 """
-    compute_εvol(v::CompositeRheology{T,N}, p, args; tol=1e-6, verbose=false, n=1)
+    compute_εvol(v::CompositeRheology{T,N}, p, args; tol=1e-6, verbose=false, max_iter=1000)
 
 Computing `εvol` as a function of `p` for a composite element is the sum of the individual contributions
 """
@@ -117,14 +117,14 @@ compute_εvol(v::CompositeRheology, p, args; tol=1e-6, verbose=false) = nreduce(
 compute_εvol(v::CompositeRheology, p::Quantity, args; tol=1e-6, verbose=false) = nreduce(vi -> first(compute_εvol(vi, p, args)), v.elements)
 
 # COMPUTE DEVIATORIC STRESS AND PRESSURE
-function compute_τII(v::CompositeRheology{T,N,0}, εII, args; tol=1e-6, verbose=false) where {T,N}
+function compute_τII(v::CompositeRheology{T,N,0}, εII, args; tol=1e-6, verbose=false, max_iter=1000, AD=false) where {T,N}
     # A composite rheology case with no parallel element; iterations for τII
-    τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose)
+    τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose, max_iter=max_iter, AD=AD)
     return τII
 end
 
 """
-    p,τII = compute_p_τII(v::CompositeRheology, εII, εvol, args; tol=1e-6, verbose=false) 
+    p,τII = compute_p_τII(v::CompositeRheology, εII, εvol, args; tol=1e-6, verbose=false, max_iter=1000, AD=false) 
 
 This updates pressure `p` and deviatoric stress invariant `τII` in case the composite rheology structure has volumetric components, but does not contain plastic or parallel elements.
 The 'old' pressure should be stored in `args` as `args.P_old`   
@@ -138,20 +138,20 @@ function compute_p_τII(
         εII, 
         εvol,
         args; 
-        tol=1e-6, verbose=false
+        tol=1e-6, verbose=false, max_iter=1000, AD=false
     ) where {T, N, Npar, is_parallel, Nplastic, is_plastic, Nvol, is_vol}
 
     # A composite rheology case that may have volumetric elements, but the are not 
     # tightly coupled, so we do NOT perform coupled iterations.
-    τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose)
-    P   = local_iterations_εvol(v, εvol, args; tol=tol, verbose=verbose)
+    τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose, AD=false)
+    P   = local_iterations_εvol(v, εvol, args; tol=tol, verbose=verbose, AD=false)
 
     return P,τII
 end
 
 
 """
-    p,τII = compute_p_τII(v::CompositeRheology, εII, εvol, args; tol=1e-6, verbose=false) 
+    p,τII = compute_p_τII(v::CompositeRheology, εII, εvol, args; tol=1e-6, verbose=false, AD=false) 
 
 This updates pressure `p` and deviatoric stress invariant `τII` in case the composite rheology structure has no volumetric elements, but may contain plastic or parallel elements. 
 In that case, pressure is not updated (`args.P` is used instead).     
@@ -165,7 +165,7 @@ function compute_p_τII(
         εII,
         εvol,
         args;
-        tol=1e-6, verbose=false
+        tol=1e-6, verbose=false, AD=false
     ) where {T, N, Npar, is_parallel, Nplast, is_plastic, is_vol}
     
     # A composite rheology case with no parallel element; iterations for τII

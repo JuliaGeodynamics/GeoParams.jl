@@ -27,7 +27,7 @@ Plasticity is activated when ``F(\\tau_{II}^{trial})`` (the yield function compu
 where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the resulting stress gives ``F(\\tau_{II}^{final})=0``, and ``\\sigma_{ij}=-P + \\tau_{ij}`` denotes the total stress tensor.   
         
 """
-@with_kw_noshow struct DruckerPrager{T, U, U1, S1<:AbstractSoftening, S2<:AbstractSoftening} <: AbstractPlasticity{T}
+@with_kw_noshow struct DruckerPrager{Nres, isVol, T, U, U1, S1<:AbstractSoftening, S2<:AbstractSoftening} <: AbstractPlasticity{T}
     softening_ϕ::S1 = NoSoftening()
     softening_C::S2 = NoSoftening()
     ϕ::GeoUnit{T,U} = 30NoUnits # Friction angle
@@ -36,16 +36,33 @@ where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the
     cosϕ::GeoUnit{T,U} = cosd(ϕ)NoUnits # Friction angle
     sinΨ::GeoUnit{T,U} = sind(Ψ)NoUnits # Dilation angle
     cosΨ::GeoUnit{T,U} = cosd(Ψ)NoUnits # Dilation angle
-    C::GeoUnit{T,U1} = 10e6Pa # Cohesion
+    C::GeoUnit{T,U1} = 10e6Pa           # Cohesion
+end
+
+# Initialize routine along with length of residual vector encoded in name 
+function DruckerPrager( softening_ϕ::S1, 
+                        softening_C::S2, 
+                        ϕ::GeoUnit{T,U}, 
+                        Ψ::GeoUnit{T,U}, 
+                        sinϕ::GeoUnit{T,U}, 
+                        cosϕ::GeoUnit{T,U}, 
+                        sinΨ::GeoUnit{T,U}, 
+                        cosΨ::GeoUnit{T,U}, 
+                        C::GeoUnit{T,U1})  where {S1<:AbstractSoftening,S2<:AbstractSoftening,T,U,U1}
+    Nres::Int64 = 3;
+    isVol::Bool = true
+    if NumValue(Ψ) == 0 # incompressible case requires iterations for τ & λ̇ only
+        isVol = false
+        Nres = 2
+    end
+    return DruckerPrager{Nres, isVol,T,U,U1,S1,S2}(softening_ϕ, softening_C, ϕ, Ψ, sinϕ, cosϕ, sinΨ, cosΨ, C)
 end
 
 DruckerPrager(args...) = DruckerPrager(args[1:2]..., convert.(GeoUnit, args[3:end])...)
-DruckerPrager(softening_ϕ::AbstractSoftening, softening_C::AbstractSoftening, args...) = DruckerPrager(softening_ϕ, softening_C, convert.(GeoUnit, args)...)
+#DruckerPrager(softening_ϕ::AbstractSoftening, softening_C::AbstractSoftening, args...) = DruckerPrager(softening_ϕ, softening_C, convert.(GeoUnit, args)...)
 
-function isvolumetric(s::DruckerPrager)
-    @unpack_val Ψ = s
-    return Ψ == 0 ? false : true
-end
+isvolumetric(s::DruckerPrager{Nres, isVol}) where {Nres, isVol} = isVol     # volumetric or not?
+num_residual_components(s::DruckerPrager{Nres}) where {Nres} = Nres  # number of components in residual vector
 
 function param_info(s::DruckerPrager) # info about the struct
     return MaterialParamsInfo(;
@@ -54,9 +71,9 @@ function param_info(s::DruckerPrager) # info about the struct
 end
 
 # Calculation routines
-function (s::DruckerPrager{_T, U, U1, S, S})(;
+function (s::DruckerPrager{Nres, isVol, _T, U, U1, S, S})(;
     P=zero(_T), τII=zero(_T), Pf=zero(_T), EII=zero(_T), kwargs...
-) where {_T,U,U1,S<:AbstractSoftening}
+) where {Nres,isVol,_T,U,U1,S<:AbstractSoftening}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C = s.softening_C(EII, C)
@@ -67,9 +84,9 @@ function (s::DruckerPrager{_T, U, U1, S, S})(;
     return F
 end
 
-function (s::DruckerPrager{_T, U, U1, NoSoftening, S})(;
+function (s::DruckerPrager{Nres, isVol, _T, U, U1, NoSoftening, S})(;
     P=zero(_T), τII=zero(_T), Pf=zero(_T), EII=zero(_T), kwargs...
-) where {_T,U,U1,S}
+) where {Nres,isVol,_T,U,U1,S}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
     C = s.softening_C(EII, C)
 
@@ -77,9 +94,9 @@ function (s::DruckerPrager{_T, U, U1, NoSoftening, S})(;
     return F
 end
 
-function (s::DruckerPrager{_T, U, U1, S, NoSoftening})(;
+function (s::DruckerPrager{Nres, isVol, _T, U, U1, S, NoSoftening})(;
     P=zero(_T), τII=zero(_T), Pf=zero(_T), EII=zero(_T), kwargs...
-) where {_T,U,U1,S}
+) where {Nres, isVol, _T,U,U1,S}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
     ϕ = s.softening_ϕ(EII, ϕ)
 
@@ -89,9 +106,9 @@ function (s::DruckerPrager{_T, U, U1, S, NoSoftening})(;
     return F
 end
 
-function (s::DruckerPrager{_T, U, U1, NoSoftening, NoSoftening})(;
+function (s::DruckerPrager{Nres, isVol, _T, U, U1, NoSoftening, NoSoftening})(;
     P=zero(_T), τII=zero(_T), Pf=zero(_T), kwargs...
-) where {_T,U,U1}
+) where {Nres, isVol,_T,U,U1}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
 
     F = τII - cosϕ * C - sinϕ * (P - Pf)   # with fluid pressure (set to zero by default)
@@ -104,8 +121,8 @@ end
 Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` pressure, and `Pf` fluid pressure.
 """
 function compute_yieldfunction(
-    s::DruckerPrager{_T}; P=zero(_T), τII=zero(_T), Pf=zero(_T), EII=zero(_T)
-) where {_T}
+    s::DruckerPrager{Nres, isVol, _T}; P=zero(_T), τII=zero(_T), Pf=zero(_T), EII=zero(_T)
+) where {Nres, isVol, _T}
     return s(; P=P, τII=τII, Pf=Pf, EII=EII)
 end
 
@@ -129,6 +146,66 @@ function compute_yieldfunction!(
         F[i] = compute_yieldfunction(s; P=P[i], τII=τII[i], Pf=Pf[i], EII=EII[i])
     end
 
+    return nothing
+end
+
+"""
+
+This adds the plasticity contributions to the local residual vector for Drucker-Prager plasticity with no volumetric component
+"""
+function add_plastic_residual!(r::_T, x::_T1, rn::_T2, 
+    v::DruckerPrager{Nres, false, _T3, U, U1, S1, S2}, 
+    args; 
+    normalize=false) where {_T, _T1, _T2, _T3, U, U1, S1, S2, Nres}   
+    @unpack_val C = v
+    
+    τ       = x[1]     # second invariant of stress; always the 1th entry 
+    λ̇       = x[2]  
+    args    = merge(args, (τII=τ,))
+    
+    F       = compute_yieldfunction(v, args)
+    εII_pl  = λ̇*∂Q∂τII(v, τ, args)
+    r[1]  -= εII_pl
+    if F>0
+        r[2]   = -F
+    else
+        r[2]  = λ̇   # to prevent NaN when using AD
+    end
+
+    # normalized residual
+    if normalize
+        rn[1] = abs(r[1])/(args.εII  + εII_pl)
+        rn[2] = abs(r[2]/C)
+    end
+
+    return nothing
+end
+
+"""
+    add_plastic_jacobian!(J::_T, x::_T1, c::DruckerPrager, args)
+
+This adds the plasticity contributions to the local jacobian matrix. Note that defining this function is optional; one can also compute it using AD.
+"""
+function add_plastic_jacobian!(J::_T, x::_T1, 
+    v::DruckerPrager{Nres, false, _T3, U, U1, S1, S2}, 
+    args) where {Nres, _T, _T1, _T3, U, U1, S1, S2}   
+    τ   = x[1]  # second invariant of stress; always the 1th entry 
+    λ   = x[2]  # plastic multiplier
+    
+    dQdτ = ∂Q∂τII(v, τ, args)
+    dFdτ = ∂F∂τII(v, τ, args)
+    dFdλ = ∂F∂λ(v, τ, args)
+    args = merge(args, (τII=τ,))
+    F    = compute_yieldfunction(v, args)
+    if F>0
+        J[1, 1] += 0.0 
+        J[1, 2] += -dQdτ
+        J[2, 1] += -dFdτ
+        J[2, 2] += -dFdλ
+    else
+        J[2, 2] = 1.0
+    end
+        
     return nothing
 end
 
@@ -168,7 +245,7 @@ end
 
 This computes plastic strain rate invariant for a given ``λdot``
 """
-function compute_εII(p::DruckerPrager{_T,U,U1}, λdot::_T, τII::_T, kwargs...) where {_T, U, U1}
+function compute_εII(p::DruckerPrager{Nres, isVol, _T,U,U1}, λdot::_T, τII::_T, kwargs...) where {Nres, isVol, _T, U, U1}
     F = compute_yieldfunction(p, kwargs)
     if F>0
         ε_pl = λdot*∂Q∂τII(p, τII)
