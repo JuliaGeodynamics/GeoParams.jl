@@ -212,7 +212,7 @@ import GeoParams: Dislocation, Diffusion
 
     # Composite cases with (non-parallel) plasticity 
     εII = 3e-15
-    args = merge(args, (τII_old=7e5, P=0.0, dt=8e8))
+    args = merge(args, (τII_old=7e5, P=0.0, dt=2*8e8))
     for v in [c10 c8]
         # τ_AD, = compute_τII_AD(v, εII, args)     
         τ, = compute_τII(v, εII, args; verbose=false)

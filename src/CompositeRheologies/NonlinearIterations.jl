@@ -371,11 +371,11 @@ end
 """
     local_iterations_εII(c::CompositeRheology{T,N}, εII_total, args)
 
-This performs nonlinear Newton iterations for `τII` with given `εII_total` for cases where we plastic elements
+This performs nonlinear Newton iterations for `τII` with given `εII_total` for cases where we have plastic elements
 """
 @inline function local_iterations_εII(
     c::CompositeRheology{T,N,
-                        Npar,is_par,            # no ||
+                        Npar,is_par,            # can have ||
                         Nplast, is_plastic,     # with plasticity
                         0,is_vol},              # no volumetric
     εII_total::_T, 
@@ -385,13 +385,13 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     τ_initial = nothing, 
     ε_init = nothing,
     max_iter = 1000,
-    AD=false
+    AD =  false
 ) where {T,N,Npar,is_par, _T, Nplast, is_plastic, is_vol}
     
     # Compute residual
     n = 1 + Nplast + Npar;             # total size of unknowns
     x = zero(εII_total)
-
+    @show n x Npar Nplast N
     # Initial guess of stress & strainrate
     if isnothing(τ_initial)
         τ_initial = compute_τII_harmonic(c, εII_total, args)
@@ -407,14 +407,16 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     for i=1:N
         if is_plastic[i] && is_par[i]
             # parallel plastic element
-            j=j+2
+            j=j+1
             x[j] = τ_initial    # τ_plastic initial guess     
         end
     end
     r  = @MVector zeros(_T,n);
     rn = @MVector zeros(_T,n);
+    @show x r
     
     J  = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
+    J1 = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
     
     Res_local_εII!(r,x)        = Res_εII!(r,x,rn, c,εII_total, args)
     Res_local_εII_norm!(rn,x)  = Res_εII!(r,x,rn, c,εII_total, args, normalize=true)
@@ -440,6 +442,11 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
             # Manual jacobian:
             Jac_εII!(J,r,x,c, args,n)
         end
+
+        ## debugging
+        Jac_εII!(J1,r,x,c, args,n)
+        
+        @show J1 J r x c J1-J
         
         # update solution
         dx  = J\-r
@@ -512,6 +519,284 @@ end
 #@inline function _add_plastic_jacobian!(J, x, element, args, ::True, is_par, is_vol, j)
 #    add_plastic_jacobian!(J, x, c.elements[i], args, static($(is_plastic)[i]), $(is_par)[i], $(is_vol)[i], j)
 #end
+
+
+@generated function add_plastic_residual!(r, x, rn, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}, args; normalize=false) where {T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}
+    quote
+        Base.@_inline_meta
+        j = 1
+        Base.Cartesian.@nexprs $N i -> j = @inbounds _fill_res_plastic!(r, x, rn, c.elements[i], args, static($(is_plastic)[i]), $(is_par)[i], $(is_vol)[i], j, normalize)
+        return nothing
+    end
+end
+
+@inline _fill_res_plastic!(r, x, rn, element, args, ::False, is_par, is_vol, j, normalize) = j # no plasticity
+
+## NEEDS TO BE EXPANDED TO INCLUDE THE SIZE OF THE JACOBIAN
+                                                       #isplastic isparallel  is_vol    
+#@inline _add_plastic_residual!(r, x, rn, element, args, ::True,  ::False, is_vol, j, normalize) = add_plastic_residual!(r, x, rn, element, args, normalize=normalize)    # non-parallel plasticity callback implemented in the respective routine
+#@inline _add_plastic_residual!(r, x, rn, element, args, ::True,  ::True, is_vol, j, normalize)  = add_plastic_residual_parallel!(r, x, rn, element, args, normalize=normalize)    # parallel plasticity callback requiers special treatment
+
+#function add_plastic_residual_parallel!(r, x, rn, element::Parallel, args; normalize=false)    # parallel plasticity callback requiers special treatment
+#    @show "parallel plastic element + pla"#
+#
+#end
+
+
+
+#@inline _fill_res_plastic!(J, r, x, element, args, ::False, is_par, is_vol, j, normalize) = j
+
+# adds the plastic residual for cases with/without parallel and volumetric plastic elements
+#=
+@inline function _fill_res_plastic!(r, x, rn, element, args, ::True, is_par, is_vol, j, normalize)
+
+    j += 1
+    @show j
+
+    @inline function __fill_res_plastic!(::True, ::False, j, args, normalize) # parallel, non-dilatant element 
+        println("parallel non-dilatant element")
+        x_local = @view x[j:j+1]
+        #r_local = @view r[j:j+1]
+        #rn_local = @view rn[j:j+1]
+        
+        r_local  = zeros(eltype(x),2)
+        rn_local  = zeros(eltype(x),2)
+        
+        # Note: if we have a parallel element, the plastic one must be the first; we can only have 1 plastic
+        add_plastic_residual!(r_local, x_local, rn_local, element.elements[1], args, normalize=normalize)
+
+        τ_pl    = x[j]      # if the plastic element is in || with other elements, so we need to explicitly solve for this
+        λ̇       = x[j+1]
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl, args)  
+        r[1]   += r_local[1]
+        r[2]   = x[1] - compute_τII_nonplastic(element, ε̇_pl, args) - τ_pl # || element requires stress to be the same
+        r[3:end]   = r_local[2:end]
+        
+        @show τ_pl x[1] ε̇_pl
+        
+
+
+        #=
+        τ = x[1]
+        τ_pl    = x[2] 
+        λ̇  = x[3]
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl, args) 
+        r_local[1] = τ - compute_τII_nonplastic(element, ε̇_pl, args) - τ_pl
+        =#
+
+        #=
+        τ       = x[1]
+        τ_pl    = x[j]      # if the plastic element is in || with other elements, so we need to explicitly solve for this
+        λ̇       = x[j+1]    
+
+        args    = merge(args, (τII=τ_pl,))
+        F       = compute_yieldfunction(element, args);  # yield function applied to plastic element
+    
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl, args)  
+        r[1]   -=  ε̇_pl                     #  add plastic strainrate
+
+        if F>=0.0
+            r[j+1] = -F
+            r[j]   = τ - compute_τII_nonplastic(element, ε̇_pl, args) - τ_pl   # stresses should be equal             
+        else
+            r[j] = r[j+1] = 0.0
+        end
+        =#
+    end
+
+    @inline function __fill_res_plastic!(::True, ::True, j, args, normalize) # parallel, dilatant element 
+        τ       = x[1]
+        λ̇       = x[j+1]    # TO BE FIXED
+        
+        τ_pl    = x[j+1]    # if the plastic element is in || with other elements, need to explicitly solve for this
+        P       = x[j+2]    # pressure
+
+        args    = merge(args, (τII=τ_pl, P=P))
+        F       = compute_yieldfunction(element,args);  # yield function applied to plastic element
+    
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl, args)  
+        ε̇vol_pl =  λ̇*∂Q∂P(element, P, args)  
+        r[1]   -=  ε̇_pl                     #  contribution of plastic strainrate to residual
+        r[j+2] -=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
+        
+        if F>=0.0
+            r[j] = -F
+            r[j+1] = τ - compute_τII_nonplastic(element, ε̇_pl, args) - τ_pl                
+        else
+            r[j] = r[j+1] = 0.0
+        end
+    end
+
+    @inline function __fill_res_plastic!(::False, ::False, j, args, normalize) #non-parallel, non-dilatant
+        add_plastic_residual!(r, x, rn, element, args, normalize=normalize)
+    end
+
+    @inline function __fill_res_plastic!(::False, ::True, j, args, normalize) #non-parallel, dilatant
+        add_plastic_residual!(r, x, rn, element, args, normalize=normalize)
+    end
+
+    __fill_res_plastic!(static(is_par), static(is_vol), j, args, normalize)
+
+    return j
+end
+=#
+
+@inline function _fill_res_plastic!(r, x, rn, element, args, ::True, is_par, is_vol, j, normalize)
+
+    j += 1
+    λ̇  = x[j]   # need to reorder this to make plasticity more general
+
+    @inline function __fill_res_plastic!(::False, ::False, j, args, normalize) 
+        # non-parallel, non-dilatant plasticity
+        #=
+            In this case, the parameter vector is ordered as:
+                | τ  |
+            x = | λ  |
+                | .. | 
+            The length of the plasticity (residual) vector is defined in the respective residual 
+            routine, which can be extended. The interaction with other rheological
+            components is through τ, which is always x[1]
+        =#
+        add_plastic_residual!(r, x, rn, element, args; normalize=normalize)
+
+    end
+
+    @inline function __fill_res_plastic!(::True, ::False, j, args, normalize) # parallel, non-dilatant element 
+        #=
+         if we have a parallel element, we have define x as:
+        
+             | τ    |
+        x =  | τ_pl |  
+             | λ̇    |
+             | ..   |
+        
+        here, τ is the stress of the non-plastic elements. 
+        At convergence, τ = τ_pl + τ_nonplastic.
+        We specify a separate equation for this last term in the residual equation
+        =#
+        
+        x_local  = @view x[j:end]
+        r_local  = @view r[j:end]
+        rn_local = @view rn[j:end]
+        
+        add_plastic_residual!(r_local, x_local, rn_local, element, args; normalize=normalize)
+
+        # residual equation to couple the two
+        τ_pl    = x[j] 
+        τ       = x[1]
+        r[1]    = τ - compute_τII_nonplastic(element, ε̇_pl, args) - τ_pl              
+
+        #=
+        τ       = x[1]
+
+        # PLASTIC RELATED ELEMENTS SHOULD BE 2:end
+
+        τ_pl    = x[j+1]    # if the plastic element is in || with other elements, need to explicitly solve for this
+        args    = merge(args, (τII=τ_pl,))
+        F       = compute_yieldfunction(element, args);  # yield function applied to plastic element
+        println("CALL RESIDUAL FUNCTION INSTEAD")
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl, args)  
+        r[1]   -=  ε̇_pl                     #  add plastic strainrate
+
+        @show element ε̇_pl F
+
+        if F>=0.0
+            #J[1,j] = ∂Q∂τII(element, τ_pl, args)     
+#
+            #J[j,j]     = ∂F∂λ(element.elements[1], τ_pl, args)        # derivative of F vs. λ
+            #J[j,j+1]   = ∂F∂τII(element.elements[1], τ_pl, args)    
+        #
+            #J[j+1,1]   = -1.0;
+            #J[j+1,2]   = dτII_dεII_nonplastic(element, τ_pl, args)*∂Q∂τII(element, τ_pl, args) ;
+            #J[j+1,j+1] = 1.0;
+            r[j] = -F
+            r[j+1] = τ - compute_τII_nonplastic(element, ε̇_pl, args) - τ_pl                
+        else
+         #   J[j,j] =  1.0
+            
+            # In this case set τ_pl=τ
+         #   J[j+1,j+1] = 1.0
+         #   J[j+1,1] = -1.0
+            
+            r[j] = λ̇
+            r[j+1] = -τ - compute_τII_nonplastic(element, ε̇_pl, args) + τ_pl
+        end
+        =#
+    end
+
+    @inline function __fill_res_plastic!(::True, ::True, j, args, normalize) # parallel, dilatant element 
+        τ       = x[1]
+        τ_pl    = x[j+1]    # if the plastic element is in || with other elements, need to explicitly solve for this
+        P       = x[j+2]    # pressure
+        println("CALL RESIDUAL FUNCTION INSTEAD")
+        
+        args    = merge(args, (τII=τ_pl, P=P))
+        F       = compute_yieldfunction(element,args);  # yield function applied to plastic element
+    
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl, args)  
+        ε̇vol_pl =  λ̇*∂Q∂P(element, P, args)  
+        r[1]   -=  ε̇_pl                     #  contribution of plastic strainrate to residual
+        r[j+2] -=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
+        
+        if F>=0.0
+            J[1,j]   =  ∂Q∂τII(element, τ_pl, args)     
+            J[j+2,j] =  ∂Q∂P(element, P, args)     
+            
+            J[j,j]     = ∂F∂λ(element.elements[1], τ_pl, args)        # derivative of F vs. λ
+            J[j,j+1]   = ∂F∂τII(element.elements[1], τ_pl, args)    
+            J[j,j+2]   = ∂F∂P(element.elements[1], P, args)           # derivative of F vs. P
+            
+            J[j+1,1]   = -1.0;
+            J[j+1,2]   = dτII_dεII_nonplastic(element, τ_pl, args)*∂Q∂τII(element, τ_pl, args) ;
+            J[j+1,j+1] = 1.0;
+
+            r[j] = -F
+            r[j+1] = τ - compute_τII_nonplastic(element, ε̇_pl, args) - τ_pl                
+        else
+            J[j,j] = 1.0
+            
+            # In this case set τ_pl=τ
+            J[j+1,j+1] = 1.0
+            J[j+1,1] = -1.0
+            
+            r[j] = r[j+1] = 0.0
+        end
+    end
+
+  
+
+    @inline function __fill_res_plastic!(::False, ::True, j, args, normalize) #non-parallel, dilatant
+        τ_pl    = x[1]    # if the plastic element is in || with other elements, need to explicitly solve for this
+        P       = x[3]
+        println("CALL RESIDUAL FUNCTION INSTEAD")
+        
+        args    = merge(args, (τII=τ_pl, P=P))
+        F       = compute_yieldfunction(element,args);  # yield function applied to plastic element
+    
+        ε̇_pl    =  λ̇*∂Q∂τII(element, τ_pl, args)  
+        ε̇vol_pl =  λ̇*∂Q∂P(element, P, args)  
+        
+        r[1]   -=  ε̇_pl                     #  contribution of plastic strainrate to residual
+        r[j+1] -=  ε̇vol_pl                  #  contribution of vol. plastic strainrate to residual
+        if F>=0.0
+            J[1,j] = ∂Q∂τII(element, τ_pl, args)     
+            J[3,j] = ∂Q∂P(element, P, args)      
+            
+            # plasticity is not in a parallel element    
+            J[j,1] = ∂F∂τII(element, τ_pl, args)      # derivative of F vs. τ
+            J[j,j] = ∂F∂λ(element, τ_pl, args)        # derivative of F vs. λ
+            J[j,3] = ∂F∂P(element, P, args)           # derivative of F vs. P
+            r[j] =  -F                                # residual
+        else
+            J[j,j] = 1.0
+            r[j] = 0.0
+        end
+    end
+
+    __fill_res_plastic!(static(is_par), static(is_vol), j, args, normalize)
+
+    return j
+end
 
 #=
 @inline function _fill_J_plastic!(J, r, x, element, args, ::True, is_par, is_vol, j)
@@ -690,7 +975,10 @@ function Res_εII!(r::MVector{N,T}, x::MVector{N,T}, rn::MVector{N,_T2}, c::Comp
     τ   = x[1]
     
     # Update part of jacobian related to serial, non-plastic, elements
-    r[1]   = εII_total  -  compute_εII_elements(c,τ,args)     
+    r[1]   = εII_total  -  compute_εII_elements(c,τ,args)   
+    
+    # in case we have parallel elements:
+    #r[2]   = εII_total  -  compute_εII_elements(c,x[2],args)     
 
     # Add contributions from plastic elements:
     args = merge(args, (εII=εII_total,))  
@@ -700,19 +988,38 @@ function Res_εII!(r::MVector{N,T}, x::MVector{N,T}, rn::MVector{N,_T2}, c::Comp
 end
 
 # This deals with plastic elements
+#=
 @generated function add_plastic_residual!(r, x, rn, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}, args; normalize=false) where {T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}
     quote
         Base.@_inline_meta
         j = 1
-        Base.Cartesian.@nexprs $N i -> j = @inbounds _add_plastic_residual!(r, x, rn, c.elements[i], args, static($(is_plastic)[i]), $(is_par)[i], $(is_vol)[i], j, normalize)
+        Base.Cartesian.@nexprs $N i -> j = @inbounds _add_plastic_residual!(r, x, rn, c.elements[i], args, static($(is_plastic)[i]), static($(is_par)[i]), $(is_vol)[i], j, normalize)
+
         return nothing
     end
 end
+=#
 
-@inline _add_plastic_residual!(r, x, rn, element, args, ::False, is_par, is_vol, j, normalize) = j
+#@generated function add_plastic_residual!(r, x, c::CompositeRheology{T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}, args; normalize=false) where {T, N, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}
+#    quote
+#        Base.@_inline_meta
+#        j = 1
+#        Base.Cartesian.@nexprs $N i -> j = @inbounds _add_plastic_residual!(r, x, c.elements[i], args, static($(is_plastic)[i]), $(is_par)[i], $(is_vol)[i], j, normalize)
+#        return nothing
+#    end
+#end
+
+#@inline _add_plastic_residual!(r, x, rn, element, args, ::False, is_par, is_vol, j, normalize) = j # no plasticity
 
 ### NEEDS TO BE EXPANDED TO INCLUDE THE SIZE OF THE JACOBIAN
-@inline _add_plastic_residual!(r, x, rn, element, args, ::True,  is_par, is_vol, j, normalize) = add_plastic_residual!(r, x, rn, element, args, normalize=normalize)    # plasticity callback implemented in 
+#                                                       isplastic isparallel  is_vol    
+#@inline _add_plastic_residual!(r, x, rn, element, args, ::True,  ::False, is_vol, j, normalize) = add_plastic_residual!(r, x, rn, element, args, normalize=normalize)    # non-parallel plasticity callback implemented in the respective routine
+#@inline _add_plastic_residual!(r, x, rn, element, args, ::True,  ::True, is_vol, j, normalize)  = add_plastic_residual_parallel!(r, x, rn, element, args, normalize=normalize)    # parallel plasticity callback requiers special treatment
+
+#function add_plastic_residual_parallel!(r, x, rn, element::Parallel, args; normalize=false)    # parallel plasticity callback requiers special treatment
+#    @show "parallel plastic element + pla"#
+#
+#end
 
 # compute the local jacobian
 # Jacobian with shear components
@@ -765,14 +1072,15 @@ end
         j += 1
         J_local = @view J[j:j+1,j:j+1]
         x_local = @view x[j:j+1]
-        add_plastic_jacobian!(J_local, x_local, element, args)
+        @info j "parallel, non-dilatenyt", element
+        add_plastic_jacobian!(J_local, x_local, first(element.elements), args)
     end
 
     @inline function _add_plastic_jacobian_local!(::True, ::True, j, args) # parallel, dilatant element 
         j += 1
         J_local = @view J[j:j+2,j:j+2]
         x_local = @view x[j:j+2]
-        add_plastic_jacobian!(J_local, x_local, element, args)
+        add_plastic_jacobian!(J_local, x_local, first(element.elements), args)
     end
 
     @inline function _add_plastic_jacobian_local!(::False, ::False, j, args) #non-parallel, non-dilatant

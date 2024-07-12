@@ -206,12 +206,12 @@ end
 
 # COMPUTE STRAIN RATE
 """
-    τII = compute_τII(v::CompositeRheology{T,N}, εII, args; tol=1e-6, verbose=false)
+    τII = compute_τII(v::CompositeRheology{T,N}, εII, args; tol=1e-6, verbose=false, τ_initial=nothing, ε_init=nothing, AD=false)
     
 """
-function compute_τII(v::CompositeRheology, εII, args; tol=1e-6, verbose=false, τ_initial=nothing, ε_init=nothing)
+function compute_τII(v::CompositeRheology, εII, args; tol=1e-6, verbose=false, τ_initial=nothing, ε_init=nothing, AD=false)
     # A composite rheology case with parallel elements
-    τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose, τ_initial=τ_initial, ε_init=ε_init)
+    τII = local_iterations_εII(v, εII, args; tol=tol, verbose=verbose, τ_initial=τ_initial, ε_init=ε_init, AD=AD)
     return τII
 end
 
