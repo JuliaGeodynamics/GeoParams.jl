@@ -154,7 +154,7 @@ end
 This adds the plasticity contributions to the local residual vector for Drucker-Prager plasticity with no volumetric component
 """
 function add_plastic_residual!(r::_T, x::_T1, rn::_T2, 
-    v::DruckerPrager{Nres, false, _T3, U, U1, S1, S2}, 
+    v::DruckerPrager{Nres, false, _T3, U, U1, S1, S2}, # no volumetric
     args; 
     normalize=false) where {_T, _T1, _T2, _T3, U, U1, S1, S2, Nres}   
     @unpack_val C = v
@@ -165,7 +165,7 @@ function add_plastic_residual!(r::_T, x::_T1, rn::_T2,
     
     F       = compute_yieldfunction(v, args)
     εII_pl  = λ̇*∂Q∂τII(v, τ, args)
-    r[1]  -= εII_pl
+    r[1]   -= εII_pl
     if F>0
         r[2]   = -F
     else
@@ -177,6 +177,7 @@ function add_plastic_residual!(r::_T, x::_T1, rn::_T2,
         rn[1] = abs(r[1])/(args.εII  + εII_pl)
         rn[2] = abs(r[2]/C)
     end
+   # @show "inside DP:", r
 
     return nothing
 end

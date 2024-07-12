@@ -333,7 +333,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     r = @MVector zeros(_T,n);
     J = @MMatrix zeros(_T, Npar+1,Npar+1)   # size depends on # of parallel objects (+ likely plastic elements)
     
-    # Local Iterations
+    # Local iterations
     iter = 0
     ϵ = 2 * tol
     τII_prev = τ_initial
@@ -384,7 +384,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     verbose = false,
     τ_initial = nothing, 
     ε_init = nothing,
-    max_iter = 1000,
+    max_iter = 10,
     AD =  false
 ) where {T,N,Npar,is_par, _T, Nplast, is_plastic, is_vol}
     
@@ -413,9 +413,10 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     end
     r  = @MVector zeros(_T,n);
     rn = @MVector zeros(_T,n);
-    @show x r
     
     J  = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
+    
+    ## debug:
     J1 = @MMatrix zeros(_T, n,n)   # size depends on # of plastic elements
     
     Res_local_εII!(r,x)        = Res_εII!(r,x,rn, c,εII_total, args)
@@ -434,6 +435,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         args = merge(args, (τII=τ, λ=λ))   
         
         Res_local_εII!(r,x) 
+        @show r
 
         # jacobian using AD
         if AD
@@ -446,18 +448,22 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         ## debugging
         Jac_εII!(J1,r,x,c, args,n)
         
-        @show J1 J r x c J1-J
         
         # update solution
         dx  = J\-r
-
+        
         # use linesearch to find the optimal stepsize
         α, ϵ   = linesearch(Res_local_εII_norm!, x, dx, ϵ_old; αmin=2e-1, lstol=0.95)
         
         x .+=  α*dx            
-
+        
+        #@show J1 J r x c J1-J dx
+        @show J r dx x 
+        
         if !isGPU
-            @print(verbose," iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) α=$(α)")
+            #@print(verbose," iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) α=$(α)")
+            @print(verbose," iter $(iter) $ϵ τ=$(x[1]) x[2:end]=$(x[2:end]) α=$(α)")
+            
         end
     end
     if !isGPU
@@ -675,17 +681,27 @@ end
         We specify a separate equation for this last term in the residual equation
         =#
         
+        r[2]    = r[1]   # sum of strainrates was coded here; will be shifted to spot 2
+        rn[2]   = rn[1]  # sum of strainrates
+
         x_local  = @view x[j:end]
         r_local  = @view r[j:end]
         rn_local = @view rn[j:end]
         
-        add_plastic_residual!(r_local, x_local, rn_local, element, args; normalize=normalize)
+        add_plastic_residual!(r_local, x_local, rn_local, first(element.elements), args; normalize=normalize)
 
-        # residual equation to couple the two
-        τ_pl    = x[j] 
+        # residual equation to couple the parallel with non-parallel elements
         τ       = x[1]
+        τ_pl    = x[j] 
+        λ̇       = x[j+1]
+        args    = merge(args, (τII=τ_pl,))
+        ε̇_pl    = λ̇*∂Q∂τII(element, τ_pl, args) 
+        
         r[1]    = τ - compute_τII_nonplastic(element, ε̇_pl, args) - τ_pl              
 
+      #  @show compute_τII_nonplastic(element, ε̇_pl, args) τ τ_pl
+        println("CALLING RESIDUAL FUNCTION INSTEAD")
+        
         #=
         τ       = x[1]
 
@@ -724,7 +740,8 @@ end
         =#
     end
 
-    @inline function __fill_res_plastic!(::True, ::True, j, args, normalize) # parallel, dilatant element 
+    @inline function __fill_res_plastic!(::True, ::True, j, args, normalize) 
+        # parallel, dilatant element 
         τ       = x[1]
         τ_pl    = x[j+1]    # if the plastic element is in || with other elements, need to explicitly solve for this
         P       = x[j+2]    # pressure
@@ -765,8 +782,9 @@ end
 
   
 
-    @inline function __fill_res_plastic!(::False, ::True, j, args, normalize) #non-parallel, dilatant
-        τ_pl    = x[1]    # if the plastic element is in || with other elements, need to explicitly solve for this
+    @inline function __fill_res_plastic!(::False, ::True, j, args, normalize) 
+        # non-parallel, dilatant
+        τ_pl    = x[1]    # if the plastic element is not in || with other elements, need to explicitly solve for this
         P       = x[3]
         println("CALL RESIDUAL FUNCTION INSTEAD")
         

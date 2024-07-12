@@ -13,8 +13,9 @@ import GeoParams: Dislocation, Diffusion
     e2 = SetConstantElasticity(; G=5e10, Kb=1e11)
     #pl1= DruckerPrager(C=1e6)                # plasticity
     pl1 = DruckerPrager(; C=1e6 / cosd(30))        # plasticity which ends up with the same yield stress as pl3
-    pl2 = DruckerPrager(; C=1e6, ϕ=0, Ψ=10)      # plasticity
-    pl3 = DruckerPrager(; C=1e6, ϕ=0)            # plasticity
+    pl2 = DruckerPrager(; C=1e6, ϕ=0, Ψ=10)        # plasticity
+    pl3 = DruckerPrager(; C=1e6, ϕ=0)              # plasticity
+    pl4 = DruckerPrager_regularised(; C=1e6, ϕ=0)  # regularised plasticity
 
     # Parallel elements
     p1 = Parallel(v3, v4)                # linear elements
@@ -215,9 +216,9 @@ import GeoParams: Dislocation, Diffusion
     args = merge(args, (τII_old=7e5, P=0.0, dt=2*8e8))
     for v in [c10 c8]
         # τ_AD, = compute_τII_AD(v, εII, args)     
-        τ, = compute_τII(v, εII, args; verbose=false)
-        τ1, = compute_τII(v, εII, args; verbose=false, AD=true)
-        @test τ ≈ τ1
+        τ, = compute_τII(v, εII, args; verbose=true)
+        τ_AD, = compute_τII(v, εII, args; verbose=false, AD=true)
+        @test τ ≈ τ_AD
 
         args_old = merge(args, (τII=args.τII_old,))
         Fold = compute_yieldfunction(c8.elements[3], args_old)
@@ -242,7 +243,12 @@ import GeoParams: Dislocation, Diffusion
         v_pl = v[length(v.elements)]   # assuming it is the last element
         if isa(v_pl, Parallel)
             v_pl = v_pl[1]
-            τ, λ, τ_plastic = compute_τII(v, εII, args; verbose=false)
+            τ, τ_plastic, λ = compute_τII(v, εII, args; verbose=false, AD=true)
+            τ1, τ_plastic1, λ1  = compute_τII(v, εII, args; verbose=false, AD=false)
+            @test τ ≈ τ1
+            @test τ_plastic ≈ τ_plastic1
+            @test λ ≈ λ1
+            
         else
             τ, λ = compute_τII(v, εII, args; verbose=false)
             τ_plastic = τ
@@ -257,6 +263,7 @@ import GeoParams: Dislocation, Diffusion
                 # plastic element
                 ε_check += ∂Q∂τII(v_pl, τ_plastic) * λ
             end
+            @show ε_check
         end
         @test ε_check ≈ εII
 
@@ -273,6 +280,7 @@ import GeoParams: Dislocation, Diffusion
                         # plastic element
                         τ_check += τ_plastic
                     end
+                    @show τ_check
                 end
                 @test τ_check ≈ τ       # sum of stress of || element should be the same as 
             end
