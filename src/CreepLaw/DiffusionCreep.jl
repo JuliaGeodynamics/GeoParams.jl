@@ -47,7 +47,7 @@ julia> x2 = DiffusionCreep(Name="test")
 DiffusionCreep: Name = test, n=1.0, r=0.0, p=-3.0, A=1.5 m³·⁰ MPa⁻¹·⁰ s⁻¹·⁰, E=500.0 kJ mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517)
 ```
 """
-struct DiffusionCreep{T,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
+struct DiffusionCreep{T,U1,U2,U3,U4,U5,U6} <: AbstractCreepLaw{T}
     Name::Ptr{UInt8}
     n::GeoUnit{T,U1} # powerlaw exponent
     r::GeoUnit{T,U1} # exponent of water-fugacity
@@ -56,6 +56,7 @@ struct DiffusionCreep{T,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     E::GeoUnit{T,U3} # activation energy
     V::GeoUnit{T,U4} # activation volume
     R::GeoUnit{T,U5} # universal gas constant
+    A_to_minus_n::GeoUnit{T,U6} # universal gas constant
     Apparatus::Int8 # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
     FT::T # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
     FE::T # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
@@ -71,7 +72,6 @@ struct DiffusionCreep{T,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         R=8.3145J / mol / K,
         Apparatus=AxialCompression,
     )
-
         # Corrections from lab experiments
         FT, FE = CorrectionFactor(Apparatus)
         # Convert to GeoUnits
@@ -82,23 +82,26 @@ struct DiffusionCreep{T,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         EU = convert(GeoUnit, E)
         VU = convert(GeoUnit, V)
         RU = convert(GeoUnit, R)
+        u  = (Pa^(-nU.val - r) / s * m^(-pU.val)) ^ (-nU.val)
+        A_to_minus_n = convert(GeoUnit, (AU.val^(-nU.val)) * u)
         # Extract struct types
-        T = typeof(rU).types[1]
+        T  = typeof(rU).types[1]
         U1 = typeof(rU).types[2]
         U2 = typeof(AU).types[2]
         U3 = typeof(EU).types[2]
         U4 = typeof(VU).types[2]
         U5 = typeof(RU).types[2]
+        U6 = typeof(A_to_minus_n).types[2]
         name = pointer(ptr2string(Name))
         # Create struct
-        return new{T,U1,U2,U3,U4,U5}(
-            name, nU, rU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
+        return new{T,U1,U2,U3,U4,U5,U6}(
+            name, nU, rU, pU, AU, EU, VU, RU, A_to_minus_n, Int8(Apparatus), FT, FE
         )
     end
 
 end
 
-function DiffusionCreep(Name, n, r, p, A, E, V, R, Apparatus, FT, FE)
+function DiffusionCreep(Name, n, r, p, A, E, V, R, A_to_minus_nU, Apparatus, FT, FE)
     return DiffusionCreep(;
         Name=Name, n=n, r=r, p=p, A=A, E=E, V=V, R=R, Apparatus=Apparatus
     )
@@ -255,12 +258,11 @@ end
 @inline function compute_τII(
     a::DiffusionCreep, EpsII::Quantity; T=1K, P=0Pa, f=1NoUnits, d=1m, kwargs...
 )
-    @unpack_units n, r, p, A, E, V, R = a
+    @unpack_units n, r, p, A, E, V, R, A_to_minus_n = a
     FT, FE = a.FT, a.FE
 
     n_inv = inv(n)
-
-    τ = @pow A^(-n_inv) *
+    τ = @pow A_to_minus_n *
              EpsII *
              FE *
              f^(-r * n_inv) *
@@ -296,14 +298,14 @@ end
     d=one(precision(a)),
     kwargs...,
 )
-    @unpack_val n, r, p, A, E, V, R = a
+    @unpack_val n, r, p, A, E, V, R, A_to_minus_n = a
     FT, FE = a.FT, a.FE
 
     n_inv = inv(n)
 
     return @pow (
         FE *
-        A^(-n_inv) *
+        A_to_minus_n*
         f^(-r * n_inv) *
         d^(-p * n_inv) *
         (EpsII * FE)^(n_inv - 1) *

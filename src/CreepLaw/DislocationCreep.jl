@@ -41,7 +41,7 @@ julia> x2 = DislocationCreep(n=3)
 DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3 mol^-1, Apparatus=AxialCompression
 ```
 """
-struct DislocationCreep{T,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
+struct DislocationCreep{T,U1,U2,U3,U4,U5,U6} <: AbstractCreepLaw{T}
     Name::Ptr{UInt8}
     n::GeoUnit{T,U1} # power-law exponent
     r::GeoUnit{T,U1} # exponent of water-fugacity
@@ -49,6 +49,7 @@ struct DislocationCreep{T,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
     E::GeoUnit{T,U3} # activation energy
     V::GeoUnit{T,U4} # activation volume
     R::GeoUnit{T,U5} # universal gas constant
+    A_to_minus_n::GeoUnit{T,U6} # universal gas constant
     Apparatus::Int8 # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
     FT::T # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
     FE::T # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
@@ -72,21 +73,24 @@ struct DislocationCreep{T,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         EU = convert(GeoUnit, E)
         VU = convert(GeoUnit, V)
         RU = convert(GeoUnit, R)
+        u  = (Pa^(-nU.val) / s) ^ (-1/nU.val)
+        A_to_minus_n = convert(GeoUnit, (AU.val^(-1/nU.val)) * u)
         # Extract struct types
-        T = typeof(nU).types[1]
+        T  = typeof(nU).types[1]
         U1 = typeof(nU).types[2]
         U2 = typeof(AU).types[2]
         U3 = typeof(EU).types[2]
         U4 = typeof(VU).types[2]
         U5 = typeof(RU).types[2]
+        U6 = typeof(A_to_minus_n).types[2]
         name = pointer(ptr2string(Name))
         # Create struct
-        return new{T,U1,U2,U3,U4,U5}(
-            name, nU, rU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
+        return new{T,U1,U2,U3,U4,U5,U6}(
+            name, nU, rU, AU, EU, VU, RU, A_to_minus_n, Int8(Apparatus), FT, FE
         )
     end
 
-    function DislocationCreep(Name, n, r, A, E, V, R, Apparatus, FT, FE)
+    function DislocationCreep(Name, n, r, A, E, V, R, A_to_minus_nU, Apparatus, FT, FE)
         return DislocationCreep(;
             Name=Name, n=n, r=r, A=A, E=E, V=V, R=R, Apparatus=Apparatus
         )
@@ -201,27 +205,27 @@ Computes the stress for a Dislocation creep law given a certain strain rate
     args...,
 )
     n, r, A, E, V, R = if EpsII isa Quantity
-        @unpack_units n, r, A, E, V, R = a
+        @unpack_units n, r, A, E, V, R, A_to_minus_n = a
         n, r, A, E, V, R
     else
-        @unpack_val n, r, A, E, V, R = a
+        @unpack_val n, r, A, E, V, R, A_to_minus_n = a
         n, r, A, E, V, R
     end
 
     FT, FE = a.FT, a.FE
     _n = inv(n)
 
-    return @pow A^-_n * (EpsII * FE)^_n * f^(-r * _n) * exp((E + P * V) / (n * R * T)) / FT
+    return @pow A_to_minus_n * (EpsII * FE)^_n * f^(-r * _n) * exp((E + P * V) / (n * R * T)) / FT
 end
 
 @inline function compute_τII(
     a::DislocationCreep, EpsII::Quantity; P=0Pa, T=1K, f=1NoUnits, args...
 )
-    @unpack_units n, r, A, E, V, R = a
+    @unpack_units n, r, A, E, V, R, A_to_minus_n = a
     FT, FE = a.FT, a.FE
     _n = inv(n)
 
-    return @pow A^-_n * f^(-r * _n) * (EpsII * FE)^_n * exp((E + P * V) / (n * R * T)) / FT
+    return @pow A_to_minus_n * f^(-r * _n) * (EpsII * FE)^_n * exp((E + P * V) / (n * R * T)) / FT
 end
 
 """
@@ -260,9 +264,8 @@ end
     FT, FE = a.FT, a.FE
     _n = inv(n)
 
-
     return @pow (
-        FE * A^-_n * f^(-r * _n) * (EpsII * FE)^(_n - 1) * exp((E + P * V) / (R * T * n))
+        FE * A_to_minus_n * f^(-r * _n) * (EpsII * FE)^(_n - 1) * exp((E + P * V) / (R * T * n))
     ) / (FT * n)
 end
 
@@ -274,7 +277,7 @@ end
     _n = inv(n)
 
     return @pow (
-        FE * A^-_n * f^(-r * _n) * (EpsII * FE)^(_n - 1) * exp((E + P * V) / (R * T * n))
+        FE * A_to_minus_n * f^(-r * _n) * (EpsII * FE)^(_n - 1) * exp((E + P * V) / (R * T * n))
     ) / (FT * n)
 end
 
