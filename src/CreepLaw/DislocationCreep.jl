@@ -260,7 +260,7 @@ end
     f=one(precision(a)),
     args...,
 )
-    @unpack_val n, r, A, E, V, R = a
+    @unpack_val n, r, A, E, V, R, A_to_minus_n = a
     FT, FE = a.FT, a.FE
     _n = inv(n)
 
@@ -272,7 +272,7 @@ end
 @inline function dτII_dεII(
     a::DislocationCreep, EpsII::Quantity; P=0Pa, T=1K, f=1NoUnits, args...
 )
-    @unpack_units n, r, A, E, V, R = a
+    @unpack_units n, r, A, E, V, R, A_to_minus_n = a
     FT, FE = a.FT, a.FE
     _n = inv(n)
 
