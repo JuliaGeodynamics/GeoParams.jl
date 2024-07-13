@@ -177,7 +177,42 @@ function add_plastic_residual!(r::_T, x::_T1, rn::_T2,
         rn[1] = abs(r[1])/(args.εII  + εII_pl)
         rn[2] = abs(r[2]/C)
     end
-   # @show "inside DP:", r
+
+    return nothing
+end
+
+"""
+
+This adds the plasticity contributions to the local residual vector for Drucker-Prager plasticity with a volumetric component
+"""
+function add_plastic_residual!(r::_T, x::_T1, rn::_T2, 
+    v::DruckerPrager{Nres, true, _T3, U, U1, S1, S2}, # with volumetric component
+    args; 
+    normalize=false) where {_T, _T1, _T2, _T3, U, U1, S1, S2, Nres}   
+    @unpack_val C = v
+    
+    τ       = x[1]     # second invariant of stress; always the 1th entry 
+    P       = x[2]     # pressure
+    λ̇       = x[3]  
+    args    = merge(args, (τII=τ, P=P))
+    
+    F       = compute_yieldfunction(v, args)
+    εII_pl  = λ̇*∂Q∂τII(v, τ, args)
+    εvol_pl = λ̇*∂Q∂P(v, P, args)
+    r[1]   -= εII_pl
+    r[2]   -= εvol_pl
+    if F>0
+        r[3]   = -F
+    else
+        r[3]  = λ̇   # to prevent NaN when using AD
+    end
+
+    # normalized residual
+    if normalize
+        rn[1] = abs(r[1])/(args.εII  + εII_pl)
+        rn[2] = abs(r[2])/(args.εvol + εvol_pl)
+        rn[3] = abs(r[3]/C)
+    end
 
     return nothing
 end
@@ -190,6 +225,8 @@ This adds the plasticity contributions to the local jacobian matrix. Note that d
 function add_plastic_jacobian!(J::_T, x::_T1, 
     v::DruckerPrager{Nres, false, _T3, U, U1, S1, S2}, 
     args) where {Nres, _T, _T1, _T3, U, U1, S1, S2}   
+    # this is for the case with no voluemtric component
+
     τ   = x[1]  # second invariant of stress; always the 1th entry 
     λ   = x[2]  # plastic multiplier
     
