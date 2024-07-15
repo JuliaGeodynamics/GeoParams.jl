@@ -26,7 +26,6 @@ end
 @testset "ForwardDiff compatibility with: heat capacity" begin
     Cp = T_HeatCapacity_Whittington()
     @test AD.derivative(x -> compute_heatcapacity(Cp, (; T=x)), T) == 0.145639823248696
-    compute_heatcapacity(Cp, args)
 
     Cp = Latent_HeatCapacity(Q_L=500e3)
     @test AD.derivative(x -> compute_heatcapacity(Cp, (; T=x)), T) == 0 
