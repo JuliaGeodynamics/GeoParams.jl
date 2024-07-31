@@ -306,6 +306,134 @@ where ``\\eta`` is the effective viscosity [Pa*s].
 end
 PowerlawViscous(a...) = PowerlawViscous(convert.(GeoUnit, a)...)
 
+# All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
+@inline function compute_εII(
+    a::PowerlawViscous,
+    TauII;
+    args...,
+)
+    @unpack_val η0,n, ε0   = a
+   
+    ε = @pow inv(η0/ε0) * (TauII)^n
+    return ε
+end
+
+@inline function compute_εII(
+    a::PowerlawViscous, TauII::Quantity; args...
+)
+    @unpack_units n, η0, ε0 = a
+   
+    ε = @pow inv(η0/ε0) * (TauII)^n 
+
+    return ε
+end
+
+function compute_εII!(
+    EpsII::AbstractArray{_T,N},
+    a::PowerlawViscous,
+    TauII::AbstractArray{_T,N};
+    kwargs...,
+) where {N,_T}
+    @inbounds for i in eachindex(EpsII)
+        EpsII[i] = compute_εII(a, TauII[i])
+    end
+
+    return nothing
+end
+
+@inline function dεII_dτII(
+    a::PowerlawViscous,
+    TauII;
+    args...,
+)
+    @unpack_val n, η0,ε0 = a
+
+    return @pow (TauII)^(n - 1) * inv(η0/ε0)
+end
+
+@inline function dεII_dτII(
+    a::PowerlawViscous, TauII::Quantity; T=1K, P=0Pa, f=1NoUnits, args...
+)
+    @unpack_units n, η0,ε0 = a
+    
+    return @pow (TauII)^(n - 1) * inv(η0/ε0)
+end
+
+"""
+    compute_τII(a::PowerlawViscous, EpsII; P, T, f, args...)
+
+Computes the stress for a PowerlawViscous creep law given a certain strain rate
+
+"""
+@inline function compute_τII(
+    a::PowerlawViscous,
+    EpsII;
+    args...,
+)
+    n, η0 = if EpsII isa Quantity
+        @unpack_units n, η0, ε0 = a
+        n, η0
+    else
+        @unpack_val n, η0, ε0 = a
+        n, η0
+    end
+
+    _n = inv(n)
+
+    return @pow η0 * (EpsII/ε0)^_n 
+end
+
+@inline function compute_τII(
+    a::PowerlawViscous, EpsII::Quantity; args...
+)
+    @unpack_units n, η0, ε0 = a
+    
+    return @pow η0 * (EpsII/ε0)^_n 
+end
+
+"""
+    compute_τII!(TauII::AbstractArray{_T,N}, a::DislocationCreep, EpsII::AbstractArray{_T,N}; 
+        P =       zero(TauII)::AbstractArray{_T,N}, 
+        T = ones(size(TauII))::AbstractArray{_T,N}, 
+        f = ones(size(TauII))::AbstractArray{_T,N})
+
+Computes the deviatoric stress invariant for a dislocation creep law
+"""
+function compute_τII!(
+    TauII::AbstractArray{_T,N},
+    a::PowerlawViscous,
+    EpsII::AbstractArray{_T,N};
+    kwargs...,
+) where {N,_T}
+    @inbounds for i in eachindex(TauII)
+        TauII[i] = compute_τII(a, EpsII[i])
+    end
+
+    return nothing
+end
+
+@inline function dτII_dεII(
+    a::PowerlawViscous,
+    EpsII;
+    args...,
+)
+    @unpack_val n, η0, ε0 = a
+    _n = inv(n)
+
+
+    return @pow ( η0 * (EpsII/ε0)^(_n - 1) ) / n
+end
+
+@inline function dτII_dεII(
+    a::PowerlawViscous, EpsII::Quantity; args...
+)
+    @unpack_units n, η0, ε0 = a
+    _n = inv(n)
+
+    return @pow ( η0 * (EpsII/ε0)^(_n - 1) ) / (n)
+end
+
+
 # Print info 
 function show(io::IO, g::PowerlawViscous)
     return print(io, "Powerlaw viscosity: η0=$(g.η0.val), n=$(g.n.val), ε0=$(g.ε0.val) ")
