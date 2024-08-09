@@ -7,7 +7,7 @@ backends = AD.ReverseDiffBackend(), AD.ForwardDiffBackend()
 pkg      = "ReverseDiff", "ForwardDiff"
 
 for (name, backend) in zip(pkg, backends)
-    @testset "name compatibility with: density" begin
+    @testset "$name compatibility with: density" begin
         ρ = ConstantDensity()
         @test AD.derivative(backend, x -> compute_density(ρ, (; T=x, P=1e9)), T)[1] == 0
         @test AD.derivative(backend, x -> compute_density(ρ, (; T=1e3, P=x)), P)[1] == 0
@@ -26,7 +26,7 @@ for (name, backend) in zip(pkg, backends)
         @test AD.derivative(backend, x -> compute_density(ρ, (; T=x, P=1e9)), T)[1] ≈ -0.087
     end
 
-    @testset "ForwardDiff compatibility with: heat capacity" begin
+    @testset "$name compatibility with: heat capacity" begin
         Cp = T_HeatCapacity_Whittington()
         @test AD.derivative(backend, x -> compute_heatcapacity(Cp, (; T=x)), T)[1] ≈ 0.145639823
 
@@ -34,7 +34,7 @@ for (name, backend) in zip(pkg, backends)
         @test AD.derivative(backend, x -> compute_heatcapacity(Cp, (; T=x)), T)[1] == 0 
     end
 
-    @testset "ForwardDiff compatibility with: conductivity" begin
+    @testset "$name compatibility with: conductivity" begin
         K = ConstantConductivity()
         @test AD.derivative(backend, x -> compute_conductivity(K, (; T=x)), T)[1] == 0
 
@@ -48,7 +48,7 @@ for (name, backend) in zip(pkg, backends)
         @test AD.derivative(backend, x -> compute_conductivity(K, (; T=x)), T)[1] ≈ -0.00040864570
     end
 
-    @testset "ForwardDiff compatibility with: Diffusion" begin
+    @testset "$name compatibility with: Diffusion" begin
         import GeoParams.Diffusion
         # Define a linear viscous creep law ---------------------------------
         diffusion_law = Diffusion.dry_anorthite_Rybacki_2006
@@ -63,7 +63,7 @@ for (name, backend) in zip(pkg, backends)
         @test AD.derivative(backend, x -> compute_τII(p, εII, (; T=T, P=x)), P)[1] ≈ 0.0028865235432076496
     end
 
-    @testset "ForwardDiff compatibility with: Dislocation" begin
+    @testset "$name compatibility with: Dislocation" begin
         import GeoParams.Dislocation
         # Define a linear viscous creep law ---------------------------------
         diffusion_law = Dislocation.dry_olivine_Hirth_2003
@@ -76,5 +76,29 @@ for (name, backend) in zip(pkg, backends)
         εII           = compute_εII(p, TauII, args)
         @test AD.derivative(backend, x -> compute_τII(p, εII, (; T=x, P=P)), T)[1] ≈ -65427.866979
         @test AD.derivative(backend, x -> compute_τII(p, εII, (; T=T, P=x)), P)[1] ≈ 0.00168380540
+    end
+
+    @testset "$name compatibility with: CompositeRheology" begin
+        # Define a range of rheological components
+        v1       = SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006)
+        v2       = SetDislocationCreep(Dislocation.dry_anorthite_Rybacki_2006)
+        v3       = LinearViscous()
+        el       = ConstantElasticity()
+        # composite rheology
+        c1       = CompositeRheology(v1, v2, el)
+        c2       = CompositeRheology(v3, el)       # composite rheology
+        # arguments
+        args     = (T=900.0, d=100e-6, τII_old=1e6, dt=1e8)
+        εII, τII = 1e-12, 2e6
+        # test non-linear rheology
+        @test AD.derivative(backend, x -> compute_τII(c1, εII, (;T=x, P=P, d=100e-6, τII_old=1e6, dt=1e8)), T)[1] ≈ -1.074788789
+        @test AD.derivative(backend, x -> compute_τII(c1, εII, (;T=T, P=x, d=100e-6, τII_old=1e6, dt=1e8)), P)[1] ≈  4.73352298e-8
+        @test AD.derivative(backend, x -> compute_εII(c1, τII, (;T=x, P=P, d=100e-6, τII_old=1e6, dt=1e8)), T)[1] ≈ 1.17780761876e-20
+        @test AD.derivative(backend, x -> compute_εII(c1, τII, (;T=T, P=x, d=100e-6, τII_old=1e6, dt=1e8)), P)[1] ≈ -5.8045331761e-28
+        # test linear rheology
+        @test iszero(AD.derivative(backend, x -> compute_τII(c, εII, (;T=x, P=P, d=100e-6, τII_old=1e6, dt=1e8)), T)[1])
+        @test iszero(AD.derivative(backend, x -> compute_τII(c, εII, (;T=T, P=x, d=100e-6, τII_old=1e6, dt=1e8)), P)[1])
+        @test iszero(AD.derivative(backend, x -> compute_εII(c, τII, (;T=x, P=P, d=100e-6, τII_old=1e6, dt=1e8)), T)[1])
+        @test iszero(AD.derivative(backend, x -> compute_εII(c, τII, (;T=T, P=x, d=100e-6, τII_old=1e6, dt=1e8)), P)[1])
     end
 end
