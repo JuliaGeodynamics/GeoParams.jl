@@ -70,6 +70,7 @@ end
         3 4 5
     ]
 end
+
 @testset "Tensor algebra" begin
     # J2 TENSOR INVARIANT: 2D TESTS 
     τ_xx, τ_yy, τ_xy = 1.0, 2.0, 3.0
