@@ -6,6 +6,7 @@ Create a nondimensionalization object in which we specify characteristic values,
 - `NO` units are nondimensional units. Note that for parameters to be correctly non-dimensionalized in this case, you still have to indicate units (such as that `velocity` is given in `m/s`).
 
 A dimensional parameter can be transformed into a non-dimensional one with `nondimensionalize`.
+
 # Specify characteristic values
 Characteristic values can be defined in 3 ways.
 
