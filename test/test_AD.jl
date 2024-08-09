@@ -96,9 +96,9 @@ for (name, backend) in zip(pkg, backends)
         @test AD.derivative(backend, x -> compute_εII(c1, τII, (;T=x, P=P, d=100e-6, τII_old=1e6, dt=1e8)), T)[1] ≈ 1.17780761876e-20
         @test AD.derivative(backend, x -> compute_εII(c1, τII, (;T=T, P=x, d=100e-6, τII_old=1e6, dt=1e8)), P)[1] ≈ -5.8045331761e-28
         # test linear rheology
-        @test iszero(AD.derivative(backend, x -> compute_τII(c, εII, (;T=x, P=P, d=100e-6, τII_old=1e6, dt=1e8)), T)[1])
-        @test iszero(AD.derivative(backend, x -> compute_τII(c, εII, (;T=T, P=x, d=100e-6, τII_old=1e6, dt=1e8)), P)[1])
-        @test iszero(AD.derivative(backend, x -> compute_εII(c, τII, (;T=x, P=P, d=100e-6, τII_old=1e6, dt=1e8)), T)[1])
-        @test iszero(AD.derivative(backend, x -> compute_εII(c, τII, (;T=T, P=x, d=100e-6, τII_old=1e6, dt=1e8)), P)[1])
+        @test iszero(AD.derivative(backend, x -> compute_τII(c2, εII, (;T=x, P=P, d=100e-6, τII_old=1e6, dt=1e8)), T)[1])
+        @test iszero(AD.derivative(backend, x -> compute_τII(c2, εII, (;T=T, P=x, d=100e-6, τII_old=1e6, dt=1e8)), P)[1])
+        @test iszero(AD.derivative(backend, x -> compute_εII(c2, τII, (;T=x, P=P, d=100e-6, τII_old=1e6, dt=1e8)), T)[1])
+        @test iszero(AD.derivative(backend, x -> compute_εII(c2, τII, (;T=T, P=x, d=100e-6, τII_old=1e6, dt=1e8)), P)[1])
     end
 end
