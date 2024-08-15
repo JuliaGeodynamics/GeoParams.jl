@@ -136,9 +136,6 @@ export compute_density,                                # computational routines
 using .MaterialParameters.ConstitutiveRelationships
 export AxialCompression, SimpleShear, Invariant
 
-const get_shearmodulus = get_G
-const get_bulkmodulus = get_Kb
-
 #       Calculation routines
 export dεII_dτII,
     dτII_dεII,
@@ -196,8 +193,6 @@ export dεII_dτII,
     SetConstantElasticity,
     effective_εII,
     iselastic,
-    get_G,
-    get_Kb,
     get_shearmodulus,
     get_bulkmodulus,
 
@@ -340,7 +335,9 @@ export compute_meltfraction,
     SmoothMelting
 
 include("Traits/rheology.jl")
-export islinear, RheologyTrait, LinearRheologyTrait, NonLinearRheologyTrait
+export RheologyTrait
+export islinear, LinearRheologyTrait, NonLinearRheologyTrait
+export isviscoelastic, ElasticRheologyTrait, NonElasticRheologyTrait
 export isplasticity, PlasticRheologyTrait, NonPlasticRheologyTrait
 
 include("Traits/density.jl")
@@ -438,11 +435,22 @@ end
 include("aliases.jl")
 export ntuple_idx
 
-# export DislocationCreep_info,
-#     DiffusionCreep_info,
-#     GrainBoundarySliding_info,
-#     PeierlsCreep_info,
-#     NonLinearPeierlsCreep_info
 
+for modulus in (:G, :Kb)
+    fun = Symbol("get_$(string(modulus))")
+    @eval begin
+        @inline $(fun)(a::ConstantElasticity) = a.$(modulus).val
+        @inline $(fun)(c::CompositeRheology) = $(fun)(isviscoelastic(c), c)
+        @inline $(fun)(::ElasticRheologyTrait, c::CompositeRheology) = mapreduce(x->$(fun)(x), +, c.elements)
+        @inline $(fun)(::AbstractCreepLaw) = 0
+        @inline $(fun)(r::AbstractMaterialParamsStruct) = $(fun)(r.CompositeRheology[1])
+        @inline $(fun)(a::NTuple{N, AbstractMaterialParamsStruct}, phase) where N = nphase($(fun), phase, a)
+    end
+end
 
-end # module
+export get_G, get_Kb
+
+const get_shearmodulus = get_G
+const get_bulkmodulus  = get_Kb
+
+end # module GeoParams

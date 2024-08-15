@@ -28,10 +28,10 @@ using GeoParams
     @test isvolumetric(a) == true
 
     b = ConstantElasticity()
-    v = SetMaterialParams(; Elasticity=ConstantElasticity())
+    v = SetMaterialParams(; CompositeRheology=CompositeRheology((ConstantElasticity(),)))
     vv = (
-        SetMaterialParams(; Phase=1, Elasticity=ConstantElasticity()),
-        SetMaterialParams(; Phase=2, Elasticity=ConstantElasticity()),
+        SetMaterialParams(; Phase=1, CompositeRheology=CompositeRheology((ConstantElasticity(),))),
+        SetMaterialParams(; Phase=2, CompositeRheology=CompositeRheology((ConstantElasticity(),))),
     )
 
     @test get_G(b) == b.G.val
@@ -41,6 +41,20 @@ using GeoParams
     @test get_Kb(b) == b.Kb.val
     @test get_Kb(v) == b.Kb.val
     @test get_Kb(vv, 1) == get_Kb(vv, 2) == b.Kb.val # for multiple phases
+
+    # Test get_G and get_Kb with a composite rheology
+    v1 = SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006) # SetPeierlsCreep("Dry Olivine | Goetze and Evans (1979)")
+    v2 = SetDislocationCreep(Dislocation.dry_anorthite_Rybacki_2006)
+    e1 = ConstantElasticity()           # elasticity
+    # CompositeRheologies
+    c = CompositeRheology(v1, v2, e1)   # with elasticity
+
+    r = SetMaterialParams(;
+        CompositeRheology = c
+    )
+    
+    @test get_G(c)  == get_G(r)  == r.CompositeRheology[1].elements[3].G.val
+    @test get_Kb(c) == get_Kb(r) == r.CompositeRheology[1].elements[3].Kb.val
 
     # Compute with Floats
     τII = 20e6

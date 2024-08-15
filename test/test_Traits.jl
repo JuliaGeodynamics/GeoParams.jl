@@ -19,6 +19,9 @@ using Test, GeoParams
         SetMaterialParams(;
             CompositeRheology = CompositeRheology(el, v3),
         ),
+        SetMaterialParams(;
+            CompositeRheology = CompositeRheology(v1, v2),
+        ),
     )
     r2 = (
         SetMaterialParams(;
@@ -31,6 +34,34 @@ using Test, GeoParams
             CompositeRheology = CompositeRheology(el, v3),
         ),
     )
+
+    # viscoelastic rheology traits
+    # test basic cases
+    for r in (v1, v2, v3, pl)
+        @test isviscoelastic(r) isa NonElasticRheologyTrait
+    end
+    for r in (el,)
+        @test isviscoelastic(r) isa ElasticRheologyTrait
+    end
+    @test_throws ArgumentError isviscoelastic("potato")
+
+    # test composite cases
+    @test isviscoelastic(v1, v2) isa NonElasticRheologyTrait
+    @test isviscoelastic(v1, v3) isa NonElasticRheologyTrait
+    @test isviscoelastic(v3, el) isa ElasticRheologyTrait
+
+    @test isviscoelastic(tuple(v1, v2)) isa NonElasticRheologyTrait
+    @test isviscoelastic(tuple(v1, v3)) isa NonElasticRheologyTrait
+    @test isviscoelastic(tuple(v3, el)) isa ElasticRheologyTrait
+
+    @test isviscoelastic(CompositeRheology(v1, v2, v3)) isa NonElasticRheologyTrait
+    @test isviscoelastic(CompositeRheology(el, v3))     isa ElasticRheologyTrait
+
+    # test MaterialParams cases
+    @test isviscoelastic(r1[1]) isa ElasticRheologyTrait
+    @test isviscoelastic(r1[2]) isa ElasticRheologyTrait
+    @test isviscoelastic(r1[3]) isa ElasticRheologyTrait
+    @test isviscoelastic(r1[4]) isa NonElasticRheologyTrait
 
     ## linear rheology traits
     # test basic cases
