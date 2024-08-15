@@ -28,10 +28,10 @@ using GeoParams
     @test isvolumetric(a) == true
 
     b = ConstantElasticity()
-    v = SetMaterialParams(; Elasticity=ConstantElasticity())
+    v = SetMaterialParams(; CompositeRheology=CompositeRheology((ConstantElasticity(),)))
     vv = (
-        SetMaterialParams(; Phase=1, Elasticity=ConstantElasticity()),
-        SetMaterialParams(; Phase=2, Elasticity=ConstantElasticity()),
+        SetMaterialParams(; Phase=1, CompositeRheology=CompositeRheology((ConstantElasticity(),))),
+        SetMaterialParams(; Phase=2, CompositeRheology=CompositeRheology((ConstantElasticity(),))),
     )
 
     @test get_G(b) == b.G.val

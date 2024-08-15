@@ -28,7 +28,6 @@ struct NonPlasticRheologyTrait <: RheologyTrait end
 @inline islinear(r::NTuple{N, Union{AbstractConstitutiveLaw, MaterialParams}}) where N = islinear(islinear(first(r)), islinear(Base.tail(r)))    
 @inline islinear(v::NTuple{1, Union{AbstractConstitutiveLaw, MaterialParams}})         = islinear(v...)
 
-
 ## ELASTICITY RHEOLOGY traits
 
 # traits individual rheologies
