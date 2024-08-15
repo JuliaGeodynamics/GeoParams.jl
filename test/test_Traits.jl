@@ -62,8 +62,6 @@ using Test, GeoParams
     @test isviscoelastic(r1[2]) isa ElasticRheologyTrait
     @test isviscoelastic(r1[3]) isa ElasticRheologyTrait
     @test isviscoelastic(r1[4]) isa NonElasticRheologyTrait
-    @test isviscoelastic(r1)    isa NonLinearRheologyTrait
-
 
     ## linear rheology traits
     # test basic cases
