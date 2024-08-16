@@ -54,8 +54,8 @@ using Test, GeoParams
     @test isviscoelastic(tuple(v1, v3)) isa NonElasticRheologyTrait
     @test isviscoelastic(tuple(v3, el)) isa ElasticRheologyTrait
 
-    @test isviscoelastic(CompositeRheology(v1, v2, v3)) isa NonElasticRheologyTrait
-    @test isviscoelastic(CompositeRheology(el, v3))     isa ElasticRheologyTrait
+    @test isviscoelastic(CompositeRheology(v1, v2, v3, pl)) isa NonElasticRheologyTrait
+    @test isviscoelastic(CompositeRheology(el, v3, pl))     isa ElasticRheologyTrait
 
     # test MaterialParams cases
     @test isviscoelastic(r1[1]) isa ElasticRheologyTrait
