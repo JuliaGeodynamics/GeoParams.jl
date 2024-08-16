@@ -39,7 +39,7 @@ struct NonPlasticRheologyTrait <: RheologyTrait end
 @inline isviscoelastic(::RheologyTrait, ::ElasticRheologyTrait) = ElasticRheologyTrait()
 @inline isviscoelastic(::ElasticRheologyTrait, ::RheologyTrait) = ElasticRheologyTrait()
 @inline isviscoelastic(::RheologyTrait, ::RheologyTrait)        = NonElasticRheologyTrait()
-@inline isviscoelastic(v1::AbstractConstitutiveLaw, v2::AbstractConstitutiveLaw) = isviscoelastic(isviscoelastic(v1), isviscoelastic(v2))
+@inline isviscoelastic(v1::Union{AbstractConstitutiveLaw, AbstractPlasticity}, v2::Union{AbstractConstitutiveLaw, AbstractPlasticity}) = isviscoelastic(isviscoelastic(v1), isviscoelastic(v2))
 
 # traits for composite rheologies
 @inline isviscoelastic(c::CompositeRheology) = isviscoelastic(c.elements)
@@ -47,8 +47,8 @@ struct NonPlasticRheologyTrait <: RheologyTrait end
 @inline isviscoelastic(r::MaterialParams)    = isviscoelastic(r.CompositeRheology...)
 
 # recursively (pairwise, right-to-left) compare rheology traits of a composite or tuple of material params
-@inline isviscoelastic(r::NTuple{N, Union{AbstractConstitutiveLaw, MaterialParams}}) where N = isviscoelastic(isviscoelastic(first(r)), isviscoelastic(Base.tail(r)))    
-@inline isviscoelastic(v::NTuple{1, Union{AbstractConstitutiveLaw, MaterialParams}})         = isviscoelastic(v...)
+@inline isviscoelastic(r::NTuple{N, Union{AbstractConstitutiveLaw, AbstractPlasticity, MaterialParams}}) where N = isviscoelastic(isviscoelastic(first(r)), isviscoelastic(Base.tail(r)))    
+@inline isviscoelastic(v::NTuple{1, Union{AbstractConstitutiveLaw, AbstractPlasticity, MaterialParams}})         = isviscoelastic(v...)
 
 ## PLASTIC RHEOLOGY TRAITS
 
