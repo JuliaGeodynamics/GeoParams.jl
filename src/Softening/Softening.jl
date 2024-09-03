@@ -49,3 +49,21 @@ NonLinearSoftening(args::Vararg{Any, N}) where N = NonLinearSoftening(promote(ar
 @inline function (softening::NonLinearSoftening)(softening_var::T, args::Vararg{Any, N}) where {T,N}
     return softening.ξ₀ - 0.5 * softening.Δ * erfc(- (softening_var - softening.μ) / softening.σ)
 end
+
+
+# Non linear softening from Taras
+@kwdef struct DecaySoftening{T} <: AbstractSoftening
+    εref::T = 1e-13
+    n::T = 0.1
+    
+    function DecaySoftening(εref::A, n::B) where {A,B}
+        T = promote_type(A, B)
+        new{T}(promote(εref, n)...)
+    end
+end
+
+@inline (softening::DecaySoftening)(args::Vararg{Any, N}) where N = softening(promote(args...)...)
+
+@inline function (softening::DecaySoftening)(softening_var::T, max_value::T) where T
+    return max_value * inv((softening_var / softening.εref + 1)^softening.n)
+end
