@@ -36,7 +36,7 @@ end
 # (Duretz et al 2021; https://agupubs.onlinelibrary.wiley.com/doi/pdfdirect/10.1029/2021GC009675)
 using SpecialFunctions
 
-@with_kw struct NonLinearSoftening{T} <: AbstractSoftening
+@with_kw_noshow struct NonLinearSoftening{T} <: AbstractSoftening
     ξ₀::T= 0.0 # maximum value
     Δ::T = 0.0 # amplitude of the softening (i.e. minimum value)
     μ::T = 1.0 # mean of the softening
@@ -53,7 +53,7 @@ end
 
 
 # Non linear softening from Taras
-@kwdef struct DecaySoftening{T} <: AbstractSoftening
+@with_kw_noshow struct DecaySoftening{T} <: AbstractSoftening
     εref::T = 1e-13
     n::T = 0.1
     
