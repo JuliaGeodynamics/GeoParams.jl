@@ -54,9 +54,9 @@ function param_info(s::DruckerPrager) # info about the struct
 end
 
 # Calculation routines
-function (s::DruckerPrager{_T, U, U1, S, S})(;
+function (s::DruckerPrager{_T, U, U1, S1, S2})(;
     P=0.0, τII=0.0, Pf=0.0, EII=0.0, perturbation_C = 1.0, kwargs...
-) where {_T,U,U1,S<:AbstractSoftening}
+) where {_T,U,U1,S1<:AbstractSoftening,S2<:AbstractSoftening}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C = s.softening_C(EII, C)
@@ -69,9 +69,9 @@ function (s::DruckerPrager{_T, U, U1, S, S})(;
 end
 
 
-function (s::DruckerPrager{_T, U, U1, NoSoftening, S})(;
+function (s::DruckerPrager{_T, U, U1, NoSoftening, AbstractSoftening})(;
     P=0.0, τII=0.0, Pf=0.0, EII=0.0, perturbation_C = 1.0, kwargs...
-) where {_T,U,U1,S}
+) where {_T,U,U1}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
     C = s.softening_C(EII, C)
     C *=  perturbation_C
@@ -80,9 +80,9 @@ function (s::DruckerPrager{_T, U, U1, NoSoftening, S})(;
     return F
 end
 
-function (s::DruckerPrager{_T, U, U1, S, NoSoftening})(;
+function (s::DruckerPrager{_T, U, U1, AbstractSoftening, NoSoftening})(;
     P=0.0, τII=0.0, Pf=0.0, EII=0.0, perturbation_C = 1.0, kwargs...
-) where {_T,U,U1,S}
+) where {_T,U,U1}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C *=  perturbation_C
