@@ -56,11 +56,6 @@ end
 @with_kw_noshow struct DecaySoftening{T} <: AbstractSoftening
     εref::T = 1e-13
     n::T = 0.1
-    
-    function DecaySoftening(εref::A, n::B) where {A,B}
-        T = promote_type(A, B)
-        new{T}(promote(εref, n)...)
-    end
 end
 
 @inline (softening::DecaySoftening)(args::Vararg{Any, N}) where N = softening(promote(args...)...)
