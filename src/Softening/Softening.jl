@@ -1,5 +1,6 @@
 
 abstract type AbstractSoftening end
+abstract type AbstractNoSoftening end
 
 struct NoSoftening <: AbstractSoftening end
 

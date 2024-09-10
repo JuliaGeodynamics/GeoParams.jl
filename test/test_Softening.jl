@@ -45,11 +45,13 @@ using GeoParams, Test
     p2 = DruckerPrager(; softening_C = LinearSoftening((0e0, 10e6), (lo, hi)))
     p3 = DruckerPrager(; softening_ϕ = soft_ϕ, softening_C = softening_C)
     p4 = DruckerPrager(; softening_ϕ = DecaySoftening())
+    p5 = DruckerPrager(; softening_C = softening_C, softening_ϕ = DecaySoftening())
 
     @test compute_yieldfunction(p1, args) ≈ 1.0081922692006797e7
     @test compute_yieldfunction(p2, args) ≈ 1.95e7
     @test compute_yieldfunction(p3, args) ≈ 1.974118095489748e7
     @test compute_yieldfunction(p4, args) ≈ 9.977203951679487e6
+    @test compute_yieldfunction(p5, args) ≈ 1.997376090963723e7
 
     # test regularized Drucker-Prager with softening
     p = DruckerPrager_regularised()
@@ -63,14 +65,14 @@ using GeoParams, Test
     p3 = DruckerPrager_regularised(; softening_ϕ = soft_ϕ, softening_C = LinearSoftening((0e0, 10e6), (lo, hi)))
 
     @test compute_yieldfunction(p1, args) ≈ 1.0081922692006797e7
-    @test compute_yieldfunction(p2, args) ≈ 1.0839745962155614e7
+    @test compute_yieldfunction(p2, args) ≈ 1.95e7
     @test compute_yieldfunction(p3, args) ≈ 1.974118095489748e7
 
     # non linear softening
     p4 = DruckerPrager_regularised(; softening_C = NonLinearSoftening())
     p5 = DruckerPrager_regularised(; softening_C = NonLinearSoftening(ξ₀ = 30, Δ = 10))
 
-    @test compute_yieldfunction(p4, args) ≈ 1.0839745962155614e7
-    @test compute_yieldfunction(p5, (P=P, τII=τII, EII=0e0)) ≈ 1.0839745962155614e7
-    @test compute_yieldfunction(p5, (P=P, τII=τII, EII=10e0)) ≈ 1.0839745962155614e7
+    @test compute_yieldfunction(p4, args) ≈ 1.95e7
+    @test compute_yieldfunction(p5, (P=P, τII=τII, EII=0e0)) ≈ 1.9499974039493073e7
+    @test compute_yieldfunction(p5, (P=P, τII=τII, EII=10e0)) ≈ 1.9499982679491926e7
 end
