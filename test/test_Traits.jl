@@ -64,8 +64,9 @@ using Test, GeoParams
     @test isviscoelastic(r1[4]) isa NonElasticRheologyTrait
 
     # test get_G and get_Kb
-    @test GeoParams.get_G(isviscoelastic(CompositeRheology(v1, v2, v3)), r) == 0
-    @test GeoParams.get_Kb(isviscoelastic(CompositeRheology(v1, v2, v3)), r) == Inf
+    r = CompositeRheology(v1, v2, v3)
+    @test GeoParams.get_G(isviscoelastic(r), r) == 0
+    @test GeoParams.get_Kb(isviscoelastic(r), r) == Inf
 
     ## linear rheology traits
     # test basic cases
