@@ -448,14 +448,10 @@ for modulus in (:G, :Kb)
 end
 
 @inline get_G(::NonElasticRheologyTrait, c::CompositeRheology) = 0
-@inline get_G(::NonElasticRheologyTrait)                       = 0
-@inline get_G(::AbstractCreepLaw)                              = 0
-@inline get_G(::AbstractPlasticity)                            = 0
+@inline get_G(::Union{NonElasticRheologyTrait, AbstractCreepLaw, AbstractPlasticity, AbstractConstitutiveLaw}) = 0
 
 @inline get_Kb(::NonElasticRheologyTrait, c::CompositeRheology) = Inf
-@inline get_Kb(::NonElasticRheologyTrait)                       = Inf
-@inline get_Kb(::AbstractCreepLaw)                              = Inf
-@inline get_Kb(::AbstractPlasticity)                            = Inf
+@inline get_Kb(::Union{NonElasticRheologyTrait, AbstractCreepLaw, AbstractPlasticity, AbstractConstitutiveLaw}) = Inf
 
 export get_G, get_Kb
 
