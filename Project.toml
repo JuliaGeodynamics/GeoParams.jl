@@ -1,7 +1,7 @@
 name = "GeoParams"
 uuid = "e018b62d-d9de-4a26-8697-af89c310ae38"
 authors = ["Boris Kaus <kaus@uni-mainz.de>, Albert De Montserrat <albertdemontserratnavarro@erdw.ethz.ch>"]
-version = "0.6.1"
+version = "0.6.2"
 
 [deps]
 BibTeX = "7b0aa2c9-049f-5cec-894a-2b6b781bb25e"
