@@ -436,24 +436,26 @@ end
 include("aliases.jl")
 export ntuple_idx
 
-
 for modulus in (:G, :Kb)
     fun = Symbol("get_$(string(modulus))")
     @eval begin
         @inline $(fun)(a::ConstantElasticity) = a.$(modulus).val
         @inline $(fun)(c::CompositeRheology) = $(fun)(isviscoelastic(c), c)
         @inline $(fun)(::ElasticRheologyTrait, c::CompositeRheology) = mapreduce(x->$(fun)(x), +, c.elements)
-        @inline $(fun)(::AbstractCreepLaw) = 0
         @inline $(fun)(r::AbstractMaterialParamsStruct) = $(fun)(r.CompositeRheology[1])
         @inline $(fun)(a::NTuple{N, AbstractMaterialParamsStruct}, phase) where N = nphase($(fun), phase, a)
     end
 end
 
 @inline get_G(::NonElasticRheologyTrait, c::CompositeRheology) = 0
-@inline get_G(::NonElasticRheologyTrait) = 0
+@inline get_G(::NonElasticRheologyTrait)                       = 0
+@inline get_G(::AbstractCreepLaw)                              = 0
+@inline get_G(::AbstractPlasticity)                            = 0
 
 @inline get_Kb(::NonElasticRheologyTrait, c::CompositeRheology) = Inf
-@inline get_Kb(::NonElasticRheologyTrait) = Inf
+@inline get_Kb(::NonElasticRheologyTrait)                       = Inf
+@inline get_Kb(::AbstractCreepLaw)                              = Inf
+@inline get_Kb(::AbstractPlasticity)                            = Inf
 
 export get_G, get_Kb
 
