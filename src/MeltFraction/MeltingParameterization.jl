@@ -775,7 +775,7 @@ compute_meltfraction(args::Vararg{Any,N}) where {N} =
 In-place computation of melt fraction ϕ for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 """
 compute_meltfraction!(args::Vararg{Any,N}) where {N} =
-    clamp(compute_param!(compute_meltfraction, args...), 0e0, 1e0)
+    compute_param!(compute_meltfraction, args...)
 
 """
     compute_meltfraction(ϕ::AbstractArray{<:AbstractFloat}, PhaseRatios::Union{NTuple{N,T}, SVector{N,T}}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
@@ -784,7 +784,7 @@ Computation of melt fraction ϕ for the whole domain and all phases, in case an 
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 """
 compute_meltfraction_ratio(args::Vararg{Any,N}) where {N} =
-    clamp(compute_param_times_frac(compute_meltfraction, args...), 0e0, 1e0)
+    compute_param_times_frac(compute_meltfraction, args...)
 
 """
     ϕ = compute_dϕdT(Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
