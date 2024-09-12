@@ -1,7 +1,7 @@
 # Plotting
 
 We provide a number of plotting routines. Note that these plotting routines only become available once the `GLMakie` package is loaded.
-### Plot CreepLaws 
+### Plot CreepLaws
 
 ```@docs
 GeoParams.PlotStressStrainrate_CreepLaw
