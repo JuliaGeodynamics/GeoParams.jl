@@ -10,5 +10,5 @@ GeoParams.CompTempStruct
 GeoParams.LithPres
 GeoParams.StrengthEnvelopeComp
 GeoParams.StrengthEnvelopePlot
-![XMasTree](../assets/XMasTree.png)
 ```
+![XMasTree](../assets/XMasTree.png)
