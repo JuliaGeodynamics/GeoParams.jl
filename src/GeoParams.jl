@@ -444,14 +444,10 @@ for modulus in (:G, :Kb)
         @inline $(fun)(::ElasticRheologyTrait, c::CompositeRheology) = mapreduce(x->$(fun)(x), +, c.elements)
         @inline $(fun)(r::AbstractMaterialParamsStruct) = $(fun)(r.CompositeRheology[1])
         @inline $(fun)(a::NTuple{N, AbstractMaterialParamsStruct}, phase) where N = nphase($(fun), phase, a)
+        @inline $(fun)(::NonElasticRheologyTrait, c::CompositeRheology) = 0
+        @inline $(fun)(::Union{NonElasticRheologyTrait, AbstractCreepLaw, AbstractPlasticity, AbstractConstitutiveLaw}) = 0
     end
 end
-
-@inline get_G(::NonElasticRheologyTrait, c::CompositeRheology) = 0
-@inline get_G(::Union{NonElasticRheologyTrait, AbstractCreepLaw, AbstractPlasticity, AbstractConstitutiveLaw}) = 0
-
-@inline get_Kb(::NonElasticRheologyTrait, c::CompositeRheology) = Inf
-@inline get_Kb(::Union{NonElasticRheologyTrait, AbstractCreepLaw, AbstractPlasticity, AbstractConstitutiveLaw}) = Inf
 
 export get_G, get_Kb
 
