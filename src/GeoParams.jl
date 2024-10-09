@@ -335,6 +335,17 @@ export compute_meltfraction,
     Vector_MeltingParam,
     SmoothMelting
 
+
+using .MaterialParameters.Permeability
+export compute_permeability,
+    compute_permeability!,
+    param_info,
+    AbstractPermeability,
+    ConstantPermeability,
+    HazenPermeability,
+    PowerLawPermeability,
+    CarmanKozenyPermeability
+
 include("Traits/rheology.jl")
 export RheologyTrait
 export islinear, LinearRheologyTrait, NonLinearRheologyTrait
@@ -363,7 +374,7 @@ function creeplaw_list(m::Module)
     out = string.(names(m; all=true, imported=true))
     filter!(x -> !startswith(x, "#"), out)
     return [getfield(m, Symbol(x)) for x in out if !isnothing(tryparse(Int, string(x[end]))) || endswith(x, "a") || endswith(x, "b")]
-end 
+end
 
 diffusion_law_list() = creeplaw_list(Diffusion)
 dislocation_law_list() = creeplaw_list(Dislocation)
@@ -371,10 +382,10 @@ grainboundarysliding_law_list() = creeplaw_list(GBS)
 nonlinearpeierls_law_list() = creeplaw_list(NonLinearPeierls)
 peierls_law_list() = creeplaw_list(Peierls)
 
-export diffusion_law_list, 
-       dislocation_law_list, 
-       grainboundarysliding_law_list, 
-       nonlinearpeierls_law_list, 
+export diffusion_law_list,
+       dislocation_law_list,
+       grainboundarysliding_law_list,
+       nonlinearpeierls_law_list,
        peierls_law_list
 
 # Define Table output functions
