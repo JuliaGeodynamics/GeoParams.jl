@@ -61,11 +61,11 @@ end
 
 # Hazen Permeability
 @with_kw_noshow struct HazenPermeability{_T,U1,U2} <: AbstractPermeability{_T}
-    C::GeoUnit{_T,U1} = 1.0       # Hazen constant
-    D10::GeoUnit{_T,U2} = 1e-4m    # Effective grain size
+    C::GeoUnit{_T,U1} = 1.0 * NoUnits          # Hazen constant
+    D10::GeoUnit{_T,U2} = 1e-4 * m   # Effective grain size
 end
 HazenPermeability(args...) = HazenPermeability(convert.(GeoUnit, args)...)
-isdimensional(s::HazenPermeability) = isdimensional(s.C)
+isdimensional(s::HazenPermeability) = isdimensional(s.D10)
 
 function param_info(s::HazenPermeability)
     return MaterialParamsInfo(; Equation = L"k = C \cdot D_{10}^2")
@@ -82,23 +82,25 @@ function (s::HazenPermeability{_T})(; kwargs...) where {_T}
 end
 
 @inline (s::HazenPermeability)(args)                = s(; args...)
-@inline compute_permeability(s::HazenPermeability, args) = s(args)
+@inline compute_permeability(s::HazenPermeability, args) = s(; args...)
+
 
 function show(io::IO, g::HazenPermeability)
     return print(io, "Hazen permeability: k = C * D10^2; C=$(g.C); D10=$(g.D10)")
 end
 
 # Power-law Permeability
-@with_kw_noshow struct PowerLawPermeability{_T,U1,U2,U3} <: AbstractPermeability{_T}
-    c::GeoUnit{_T,U1}  = 1.0       # Power-law constant
-    k0::GeoUnit{_T,U1} = 1e-12m^2 # reference permeability
-    n::GeoUnit{_T,U3}  = 3.0      # exponent
+@with_kw_noshow struct PowerLawPermeability{_T,U1,U2,U3, U4} <: AbstractPermeability{_T}
+    c::GeoUnit{_T,U1}  = 1.0 * NoUnits      # Power-law constant
+    k0::GeoUnit{_T,U2} = 1e-12 * m^2           # reference permeability
+    ϕ::GeoUnit{_T,U3}  = 1e-2 * NoUnits     # reference porosity
+    n::GeoUnit{_T,U4}  = 3.0 * NoUnits      # exponent
 end
 PowerLawPermeability(args...) = PowerLawPermeability(convert.(GeoUnit, args)...)
 isdimensional(s::PowerLawPermeability) = isdimensional(s.k0)
 
 function param_info(s::PowerLawPermeability)
-    return MaterialParamsInfo(; Equation = L"k = c * k_0 * (\phi^n)")
+    return MaterialParamsInfo(; Equation = L"k = c \cdot k_0 \cdot \phi^n")
 end
 
 function (s::PowerLawPermeability{_T})(; ϕ=0e0, kwargs...) where {_T}
@@ -120,12 +122,12 @@ end
 
 # Carman-Kozeny Permeability
 @with_kw_noshow struct CarmanKozenyPermeability{_T,U1,U2,U3} <: AbstractPermeability{_T}
-    c::GeoUnit{_T,U1} = 1.0       # Carman-Kozeny constant
-    ϕ0::GeoUnit{_T,U2} = 0.01      # reference porosity
-    n::GeoUnit{_T,U3}  = 3.0      # exponent
+    c::GeoUnit{_T,U1} = 1.0 * NoUnits       # Carman-Kozeny constant
+    ϕ0::GeoUnit{_T,U2} = 0.01 * NoUnits      # reference porosity
+    n::GeoUnit{_T,U3}  = 3.0 * NoUnits     # exponent
 end
 CarmanKozenyPermeability(args...) = CarmanKozenyPermeability(convert.(GeoUnit, args)...)
-isdimensional(s::CarmanKozenyPermeability) = isdimensional(s.c)
+# isdimensional(s::CarmanKozenyPermeability) = isdimensional(s.c)
 
 function param_info(s::CarmanKozenyPermeability)
     return MaterialParamsInfo(; Equation = L"k = c \left(\frac{\phi}{\phi_0}\right)^n")
