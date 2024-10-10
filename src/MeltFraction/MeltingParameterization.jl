@@ -738,8 +738,8 @@ for myType in (
     :SmoothMelting,
 )
     @eval begin
-        (p::$(myType))(args) = p(; args...)
-        compute_meltfraction(p::$(myType), args) = p(; args...)
+        (p::$(myType))(args) = clamp(p(; args...), one(eltype(args)), zero(eltype(args)))
+        compute_meltfraction(p::$(myType), args) = clamp(p(; args...), one(eltype(args)), zero(eltype(args)))
         compute_dϕdT(p::$(myType), args) = compute_dϕdT(p; args...)
     end
 end
@@ -747,7 +747,7 @@ end
 # Computational routines needed for computations with the MaterialParams structure
 function compute_meltfraction(s::AbstractMaterialParamsStruct, args)
     if isempty(s.Melting) #in case there is a phase with no melting parametrization
-        return zero(typeof(args).types[1])
+        return zero(eltype(args))
     else
         return compute_meltfraction(s.Melting[1], args)
     end
@@ -755,7 +755,7 @@ end
 
 function compute_dϕdT(s::AbstractMaterialParamsStruct, args)
     if isempty(s.Melting) #in case there is a phase with no melting parametrization
-        return zero(typeof(args).types[1])
+        return zero(eltype(args))
     else
         return compute_dϕdT(s.Melting[1], args)
     end

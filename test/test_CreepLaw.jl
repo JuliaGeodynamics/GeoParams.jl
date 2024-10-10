@@ -1,6 +1,7 @@
 using Test, Statistics
 using GeoParams
 
+
 @testset "CreepLaw" begin
 
     #Make sure structs are isbits
@@ -29,7 +30,7 @@ using GeoParams
 
     x1_ND = LinearViscous(; η=1e18Pa * s)
     @test isDimensional(x1_ND) == true
-    x1_ND = nondimensionalize(x1_ND, CharUnits_GEO)                 # check that we can nondimensionalize all entries within the struct
+    x1_ND = nondimensionalize(x1_ND, CharUnits_GEO)                # check that we can nondimensionalize all entries within the struct
     @test isDimensional(x1_ND) == false
     @test x1_ND.η * 1.0 == 0.1
     x1_D = dimensionalize(x1_ND, CharUnits_GEO)                    # check that we can dimensionalize it again
@@ -53,11 +54,23 @@ using GeoParams
     ε = [0.0; 0.0]
     compute_τII!(ε, x1_ND, [1e0; 2.0], args)
     @test ε == [0.2; 0.4]     # vector input
-
     # -------------------------------------------------------------------
 
     # -------------------------------------------------------------------
     # Define powerlaw viscous rheology
+    η0 = 10
+    n  = 2.3
+    ε0 = 1
+    x2 = PowerlawViscous(; η0 = 10, n=2.3, ε0 = 1)
+
+    τII = 1e0
+    εII = 1e0
+    @test compute_τII(x2, τII) == η0
+    @test compute_εII(x2, εII) == 0.36746619407366893
+
+    @test compute_viscosity_εII(x2, τII, (;)) == 5e0
+    @test compute_viscosity_τII(x2, εII, (;)) == 1.3606693841876538
+
     x2 = PowerlawViscous()
     x2 = nondimensionalize(x2, CharUnits_GEO)
     @test NumValue(x2.ε0) == 0.001                                 # powerlaw
@@ -269,3 +282,4 @@ using GeoParams
 
 
 end
+
