@@ -1,13 +1,14 @@
 # Zircon age parameterizations
 
-# Methods
+## Methods
 Zircons are one of the ways in which we can date the age & activity of magmatic systems.
 Here, we provide a computational routine that computes the zircon age distribution from temperature-time paths
 
 ```@docs
 GeoParams.ZirconAgeData
 ```
-# Computational routines
+
+## Computational routines
 There is one main routine with which you can compute zircon age probability density functions from a range of temperature-ime paths:
 
 ```@docs
