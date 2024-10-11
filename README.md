@@ -176,9 +176,10 @@ When writing scientific papers that describes numerical modelling results, it is
 That is why we provide routines that fully automatize this process:
 First, we need to define a phase.
 ```julia
-julia> MatParam = (SetMaterialParams(Name="Viscous Matrix", Phase=1, Density=ConstantDensity(),CreepLaws = SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)")),
+julia> import GeoParams.Dislocation
+julia> MatParam = (SetMaterialParams(Name="Viscous Matrix", Phase=1, Density=ConstantDensity(),CreepLaws = SetDislocationCreep(Dislocation.quartz_diorite_HansenCarter_1982)),
                    SetMaterialParams(Name="Viscous Sinker", Phase=2, Density= PT_Density(),CreepLaws = LinearViscous(η=1e21Pa*s)),
-                   SetMaterialParams(Name="Viscous Bottom", Phase=3, Density= PT_Density(),CreepLaws = SetDislocationCreep("Diabase | Caristan (1982)")))
+                   SetMaterialParams(Name="Viscous Bottom", Phase=3, Density= PT_Density(),CreepLaws = SetDislocationCreep(Dislocation.diabase_Caristan_1982)))
 ```
 Next, you can create a LaTeX table for the defined phase ...
 ```julia
