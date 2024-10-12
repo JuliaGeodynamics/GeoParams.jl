@@ -747,7 +747,7 @@ end
 # Computational routines needed for computations with the MaterialParams structure
 function compute_meltfraction(s::AbstractMaterialParamsStruct, args)
     if isempty(s.Melting) #in case there is a phase with no melting parametrization
-        return isempty(args) ? 0.0 : zero(typeof(args).types[1])  # return zero if not specified
+        return 0.0 # return zero if not specified
     else
         return compute_meltfraction(s.Melting[1], args)
     end
