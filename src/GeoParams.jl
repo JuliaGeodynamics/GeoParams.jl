@@ -15,7 +15,6 @@ module GeoParams
 using Parameters         # helps setting default parameters in structures
 using Unitful            # Units
 using BibTeX             # references of creep laws
-#using Requires: @require # To only add plotting routines if GLMakie is loaded
 using StaticArrays
 using LinearAlgebra
 using ForwardDiff
@@ -419,18 +418,6 @@ export PlotStrainrateStress,
     PlotStressTime_0D,
     PlotPressureStressTime_0D,
     StrengthEnvelopePlot
-
-# We do not check `isdefined(Base, :get_extension)` as recommended since
-# Julia v1.9.0 does not load package extensions when their dependency is
-# loaded from the main environment.
-#function __init__()
-#    @static if !(VERSION >= v"1.9.1")
-#        @require GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a" begin
-#            print("Adding plotting routines of GeoParams through GLMakie \n")
-#            @eval include("../ext/GeoParamsGLMakieExt.jl")
-#        end
-#    end
-#end
 
 #Set functions aliases using @use
 include("aliases.jl")
