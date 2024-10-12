@@ -232,9 +232,20 @@ function customize_plot!(li, args)
 end
 
 """
-    fig,ax,τII,εII =  PlotStressStrainrate(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Stress=(1e0,1e8), plt=nothing)
+    fig,ax,τII,εII =  PlotStressStrainrate(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Stress=(1e0,1e8))
 
 Same as `PlotStrainrateStress` but with stress (in MPa) versus strainrate (in 1/s) instead.
+
+Example
+===
+
+```julia
+julia> import GeoParams.Dislocation, GeoParams.Diffusion;
+julia> a1=SetDislocationCreep(Dislocation.wet_olivine_Hirth_2003);
+julia> a2=SetDiffusionCreep(Diffusion.wet_olivine_Hirth_2003);
+julia> x=CompositeRheology(a1,a2);
+julia> fig,ax,τII,εII =  PlotStressStrainrate(x; args=(T=1000.0, P=0.0, d=1e-3, f=1.0), Stress=(1e0,1e8));
+```
 
 """
 function PlotStressStrainrate(
