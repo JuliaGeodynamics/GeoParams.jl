@@ -45,12 +45,13 @@ Plots deviatoric stress versus deviatoric strain rate for a single or multiple c
 
 First, we retrieve the data for anorthite creeplaws
 ```julia-repl
-julia> pp  = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)");
-julia> pp1 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)");
+julia> import GeoParams.Diffusion, GeoParams.Dislocation 
+julia> pp  = SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006);
+julia> pp1 = SetDislocationCreep(Dislocation.dry_anorthite_Rybacki_2006);
 ```
-Next you can define each of the creeplaws inidvidually, plus a combined diffusion & dislocation creep law:
+Next you can define each of the creeplaws individually, plus a combined diffusion & dislocation creep law:
 ```julia-repl
-julia> v   = (pp,pp1,(pp,pp1));
+julia> v   = (pp,pp1,CompositeRheology(pp,pp1));
 ```
 Next, define temperature to be `900K` and grainsize to be `100 μm` and create a default plot of the 3 mechanisms:
 ```julia-repl
@@ -531,7 +532,7 @@ function PlotStressViscosity(
 end
 
 """
-    T,Cp,plt = PlotHeatCapacity(Cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=nothing)
+     fig,ax,T,Cp_vec = PlotHeatCapacity(Cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=nothing)
 
 Creates a plot of temperature `T` vs. heat capacity, as specified in Cp (which can be temperature-dependent).
 
@@ -543,36 +544,93 @@ Creates a plot of temperature `T` vs. heat capacity, as specified in Cp (which c
 # Example
 ```
 julia> Cp = T_HeatCapacity_Whittacker()
-julia> T,Cp,plt = PlotHeatCapacity(Cp)
+julia> fig,ax,T,Cp_vec = PlotHeatCapacity(Cp)
 ```
-you can now save the figure to disk with:
-```
-julia> using Plots
-julia> savefig(plt,"Tdependent_heatcapacity.png")
-```
-
 """
-function PlotHeatCapacity(Cp::AbstractHeatCapacity; T=nothing, plt=nothing, lbl=nothing)
+function PlotHeatCapacity(x; 
+            args=(; ),
+            Stress=(1e0, 1e8),
+            linestyle=:solid,
+            linewidth=1,
+            color=nothing,
+            label=nothing,
+            title="",
+            fig=nothing,
+            filename=nothing,
+            res=(1200, 1200),
+            legendsize=15,
+            labelsize=35,
+            T=nothing)
+
     if isnothing(T)
         T = collect(273.0:10:1250) * K
     end
 
+    n = 1
+    if isa(x, Tuple)
+        n = length(x)
+    end
+
+    if isnothing(fig)
+        fig = Figure(; fontsize=25, size=res)
+    end
+    ax = Axis(
+        fig[1, 1];
+        xlabel="Temperature [K]",
+        ylabel="Heat Capacity [J kg⁻¹·⁰ K⁻¹·⁰]",
+        xlabelsize=labelsize,
+        ylabelsize=labelsize,
+        title=title,
+    )
+    
     args = (; T=ustrip.(T))
     Cp1 = zeros(size(T))
-    compute_heatcapacity!(Cp1, Cp, args)
-    if length(Cp) == 1
-        Cp1 = ones(size(T)) * Cp1
+    #compute_heatcapacity!(Cp1, Cp, args)
+    #if length(Cp) == 1
+    #    Cp1 = ones(size(T)) * Cp1
+    #end
+
+    #if isnothing(plt)
+    #    plt = plot(ustrip(T), ustrip(Cp); label=lbl)
+    #else
+    #    plt = plot!(ustrip(T), ustrip(Cp); label=lbl)
+    #end
+    #lines(plt; xlabel="Temperature [$(unit(T[1]))]", ylabel="Cp [$(unit(Cp[1]))]")
+    #gui(plt)
+
+    for i in 1:n
+        if isa(x, Tuple)
+            p = x[i]
+        else
+            p = x
+        end
+
+        if isa(args, Tuple)
+            args_in = args[i]
+        else
+            args_in = args
+        end
+
+        compute_heatcapacity!(Cp1, p, args)
+        # Retrieve plot arguments (label, color etc.)
+        plot_args = ObtainPlotArgs(i, p, args_in, linewidth, linestyle, color, label)
+
+        # Create plot:
+        li = lines!(ustrip.(T), Cp1)    # plot line
+
+        # Customize plot:
+        customize_plot!(li, plot_args)
     end
 
-    if isnothing(plt)
-        plt = plot(ustrip(T), ustrip(Cp); label=lbl)
+    #axislegend(ax; labelsize=legendsize)
+
+    if !isnothing(filename)
+        save(filename, fig)
     else
-        plt = plot!(ustrip(T), ustrip(Cp); label=lbl)
+        display(fig)
     end
-    plot!(plt; xlabel="Temperature [$(unit(T[1]))]", ylabel="Cp [$(unit(Cp[1]))]")
-    gui(plt)
 
-    return T, Cp1, plt
+    return fig, ax, T, Cp1
 end
 
 """
