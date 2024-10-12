@@ -19,15 +19,20 @@ We also implement some typically used creep law parameters, together with tools 
 NOTE: The package remains under development and the API is not yet fully fixed. Therefore feel free to look at it, but be aware that things may still change when you incorporate it into your codes. Comments/ideas/suggestions are highly apprecciated!
 
 ### Contents
-* [1. Nondimensionalization](#1-nondimensionalization)
-* [2. Material parameters](#2-material-parameters)
-* [3. Plotting and output](#3-plotting-and-output)
-* [4. Computational engine](#4-computational-engine)
-* [5. Installation](#5-installation)
-* [6. Documentation](#6-documentation)
-* [7. Dependencies](#7-dependencies)
-* [8. Contributing](#8-contributing)
-* [9. Funding](#9-funding)
+- [Contents](#contents)
+- [1. Nondimensionalization](#1-nondimensionalization)
+- [2. Material parameters](#2-material-parameters)
+  - [2.1 Constant density, constant linear viscosity](#21-constant-density-constant-linear-viscosity)
+  - [2.2 Nonlinear creep laws](#22-nonlinear-creep-laws)
+- [3. Plotting and output](#3-plotting-and-output)
+  - [3.1 Plotting](#31-plotting)
+  - [3.2 Automatically create data tables](#32-automatically-create-data-tables)
+- [4. Computational engine](#4-computational-engine)
+- [5. Installation](#5-installation)
+- [6. Documentation](#6-documentation)
+- [7. Dependencies](#7-dependencies)
+- [8. Contributing](#8-contributing)
+- [9. Funding](#9-funding)
 
 ### 1. Nondimensionalization
 Typical geodynamic simulations involve dimensions on the order of 10's-1000's of kilometers, and viscosities on the order of ~1e20 Pas. If such values are directly employed in numerical solvers, they may result in roundoff errors. It is therefore common practice to nondimensionalize the input parameters by dividing them by typical values such that the result gives numbers that are closer to one.
@@ -126,23 +131,30 @@ Phase 2 : Viscous Sinker
 You can add pre-defined non-linear creep laws as:
 ```julia
 julia> Phase = SetMaterialParams(Name="Viscous Matrix", Phase=2,
-                                                  Density   = ConstantDensity(),
-                                                  CreepLaws = (SetDislocationCreep("Wet Olivine | Hirth & Kohlstedt (2003)"),
-                                                              LinearViscous(η=1e23Pa*s)) )
+                                 Density   = ConstantDensity(),
+                                 CompositeRheology = CompositeRheology(
+                                                        SetDislocationCreep(Dislocation.wet_olivine_Hirth_2003),  
+                                                        LinearViscous(η=1e23Pa*s))
+                                )
 Phase 2 : Viscous Matrix
         | [dimensional units]
-        |
-        |-- Density           : Constant density: ρ=2900.0 kg m⁻³·⁰
-        |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻²·⁰
-        |-- CreepLaws         : DislocationCreep: Name = Wet Olivine | Hirth & Kohlstedt (2003), n=3.5, r=1.2, A=90.0, E=480.0, V=1.1e-5, Apparatus=1
-        |                       Linear viscosity: η=1.0e23
+        | 
+        |-- Name              : Viscous Matrix 
+        |-- Density           : Constant density: ρ=2900.0 kg m⁻³·⁰ 
+        |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻²·⁰ 
+        |-- CompositeRheology : --⟦▪̲̅▫̲̅▫̲̅▫̲̅----⟦▪̲̅▫̲̅▫̲̅▫̲̅--
 ```
-Note that the dictionary `DislocationCreep_info` has all pre-defined creep laws, so for an overview type:
+Note that the functions `dislocation_law_list()` and `diffusion_law_list()` list all pre-defined creep laws, so for an overview type:
 ```julia
-julia> DislocationCreep_info
-Dict{String, DislocationCreep} with 2 entries:
-  "Dry Olivine | Hirth & Kohlstedt (2003)" => DislocationCreep: n=3.05, r=0, A=110000.0 MPa⁻³·⁰⁵ s⁻¹, E…
-  "Wet Olivine | Hirth & Kohlstedt (2003)" => DislocationCreep: n=3.5, r=1.2, A=90 MPa⁻³·⁵ s⁻¹, E=480 k…
+julia> dislocation_law_list()
+40-element Vector{Function}:
+ dry_anorthite_Rybacki_2000 (generic function with 1 method)
+ dry_olivine_Hirth_2003 (generic function with 1 method)
+ dry_olivine_Karato_2003 (generic function with 1 method)
+ dry_quartzite_Jaoul_1984 (generic function with 1 method)
+ ⋮
+ wet_omphacite_Zhang_2006 (generic function with 1 method)
+ wet_quartzite_Hirth_2001 (generic function with 1 method)
 ```
 
 ### 3. Plotting and output
@@ -164,9 +176,10 @@ When writing scientific papers that describes numerical modelling results, it is
 That is why we provide routines that fully automatize this process:
 First, we need to define a phase.
 ```julia
-julia> MatParam = (SetMaterialParams(Name="Viscous Matrix", Phase=1, Density=ConstantDensity(),CreepLaws = SetDislocationCreep("Quartz Diorite | Hansen & Carter (1982)")),
+julia> import GeoParams.Dislocation
+julia> MatParam = (SetMaterialParams(Name="Viscous Matrix", Phase=1, Density=ConstantDensity(),CreepLaws = SetDislocationCreep(Dislocation.quartz_diorite_HansenCarter_1982)),
                    SetMaterialParams(Name="Viscous Sinker", Phase=2, Density= PT_Density(),CreepLaws = LinearViscous(η=1e21Pa*s)),
-                   SetMaterialParams(Name="Viscous Bottom", Phase=3, Density= PT_Density(),CreepLaws = SetDislocationCreep("Diabase | Caristan (1982)")))
+                   SetMaterialParams(Name="Viscous Bottom", Phase=3, Density= PT_Density(),CreepLaws = SetDislocationCreep(Dislocation.diabase_Caristan_1982)))
 ```
 Next, you can create a LaTeX table for the defined phase ...
 ```julia

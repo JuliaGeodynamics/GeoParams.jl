@@ -62,6 +62,7 @@ export param_info,
     iselastic,
     AbstractSoftening,
     NoSoftening,
+    DecaySoftening,
     LinearSoftening,
     NonLinearSoftening
 

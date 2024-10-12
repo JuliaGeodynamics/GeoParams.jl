@@ -63,6 +63,11 @@ using Test, GeoParams
     @test isviscoelastic(r1[3]) isa ElasticRheologyTrait
     @test isviscoelastic(r1[4]) isa NonElasticRheologyTrait
 
+    # test get_G and get_Kb
+    r = CompositeRheology(v1, v2, v3)
+    @test GeoParams.get_G(isviscoelastic(r), r) == 0
+    @test GeoParams.get_Kb(isviscoelastic(r), r) == 0
+
     ## linear rheology traits
     # test basic cases
     for r in (v1, v2, pl)
@@ -134,3 +139,4 @@ end
     @test isconstant(r2) isa ConstantDensityTrait
     @test_throws ArgumentError isconstant("potato")
 end
+

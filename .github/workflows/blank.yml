@@ -7,6 +7,11 @@ on:
     tags: '*'
   pull_request:
 
+# Cancel redundant CI tests automatically
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   run_tests:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
@@ -16,14 +21,13 @@ jobs:
       matrix:
         version:
           - '1.7'
-          - '1.8'
-          - '1.9'
           - '1.10'
-          - '~1.11.0-rc2'
+          - '1.11'
           - 'nightly'
         os:
           - ubuntu-latest
           - macOS-latest
+          - macOS-13
           - windows-latest
         arch:
           - x64
@@ -34,7 +38,7 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       - name: Install dependencies 1
-        run: sudo apt-get update && sudo apt-get install -y xorg-dev mesa-utils xvfb libgl1 freeglut3-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev   
+        run: sudo apt-get update && sudo apt-get install -y xorg-dev mesa-utils xvfb libgl1 freeglut3-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
       - uses: actions/cache@v4
         env:
           cache-name: cache-artifacts
@@ -61,12 +65,12 @@ jobs:
         with:
           version: '1.10'
       - name: Install dependencies 1
-        run: sudo apt-get update && sudo apt-get install -y xorg-dev mesa-utils xvfb libgl1 freeglut3-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev        
+        run: sudo apt-get update && sudo apt-get install -y xorg-dev mesa-utils xvfb libgl1 freeglut3-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
       - name: Install dependencies 2
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
       - name: Build and deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} # For authentication with SSH deploy key
-        run: DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' 
+        run: DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24'
              julia --project=docs/ docs/make.jl
