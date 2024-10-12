@@ -633,6 +633,8 @@ function PlotHeatCapacity(x;
     return fig, ax, T, Cp1
 end
 
+
+# TO BE FIXED
 """
     T,Kk,plt = PlotConductivity(Cp::AbstractConductivity; T=nothing, plt=nothing, lbl=nothing)
 
@@ -688,6 +690,7 @@ function PlotConductivity(
     return T, Cond, plt
 end
 
+# TO BE FIXED
 """
     T,phi,plt = PlotMeltFraction(p::AbstractMeltingParam; T=nothing, plt=nothing, lbl=nothing)
 
@@ -747,6 +750,7 @@ function PlotMeltFraction(
     return T, phi, dϕdT
 end
 
+# BROKEN
 """
     plt, data, Tvec, Pvec = PlotPhaseDiagram(p::PhaseDiagram_LookupTable; fieldname::Symbol, Tvec=nothing, Pvec=nothing)
 
@@ -757,7 +761,7 @@ The return arguments are the plotting object `plt` (so you can modify properties
 Example
 =======
 ```julia
-julia> PD_data =  Read_LaMEM_Perple_X_Diagram("Peridotite.in")
+julia> PD_Data = PerpleX_LaMEM_Diagram("./test/test_data/Peridotite.in")
 Perple_X/LaMEM Phase Diagram Lookup Table:
                       File    :   Peridotite.in
                       T       :   293.0 - 1573.000039
@@ -831,16 +835,16 @@ end
 
 
 """
-	plt = Plot_TAS_diagram()
+	plt = Plot_TAS_diagram(; displayLabel=true,size=(1500,1500), fontsize=18)
 
 Creates a TAS diagram plot
 """
-function Plot_TAS_diagram(; displayLabel=true)
+function Plot_TAS_diagram(; displayLabel=true,sz=(1500,1500), fontsz=18)
     # get TAS diagram data from TASclassification routine
     ClassTASdata              = TASclassificationData()
     @unpack litho, n_ver, ver = ClassTASdata
 
-    f = Figure(size = (1100, 1100), fontsize = 18)
+    f = Figure(size = sz, fontsize = fontsz)
     p1 = GridLayout(f[1, 1])
     ax1 = Axis(
         p1[1, 1],
@@ -853,6 +857,7 @@ function Plot_TAS_diagram(; displayLabel=true)
     )
     n_poly = size(litho, 2)
     shift = 1
+    #=
     for poly in 1:n_poly
         shift_poly = shift:(shift + n_ver[poly] - 1)
         x          = sum(ver[i, 1] for i in shift_poly) / n_ver[poly]
@@ -888,6 +893,7 @@ function Plot_TAS_diagram(; displayLabel=true)
         rowsize!(p2, 1, 700)
         colsize!(p2, 1, 225)
     end
+    =#
     display(f)
 
     return f
@@ -1001,9 +1007,10 @@ Creates a deformation mechanism map (T/εII vs. stress/viscosity or T/τII vs. s
 
 # Example
 ```julia
-julia> v1 = SetDiffusionCreep("Dry Anorthite | Rybacki et al. (2006)")
-julia> v2 = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)")
-julia> v=CompositeRheology(v1,v2)
+julia> import GeoParams.Diffusion, GeoParams.Dislocation 
+julia> v1 = SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006);
+julia> v2 = SetDislocationCreep(Dislocation.dry_anorthite_Rybacki_2006);
+julia> v = CompositeRheology(v1,v2)
 julia> PlotDeformationMap(v, levels=100, colormap=:roma)
 ```
 Next, let's plot viscosity and flip x & y axis:
@@ -1055,6 +1062,7 @@ function PlotDeformationMap(
         n_components = length(v)
     end
 
+    d_vec = range(d[1], d[2], n+1)
     if strainrate
         # compute ε as a function of τ and T
 
