@@ -37,12 +37,12 @@ using Test, GeoParams, Unitful, StaticArrays, LaTeXStrings
     @test compute_permeability(x2, args) ≈ 1.0 * (0.1e-3)^2
     @test x2() ≈ 1.0 * (0.1e-3)^2
 
-    x3 = PowerLawPermeability(; c=1.0, k0=1e-12m^2, n=3.0)
+    x3 = PowerLawPermeability(; c=1.0, k0=1e-12m^2, n=3)
     args = (;ϕ=0.4)
     @test compute_permeability(x3, args) ≈ 1.0 * 1.0e-12 * (0.4)^3
     @test x3(args) ≈ 1.0 * 1.0e-12 * (0.4)^3
 
-    x4 = CarmanKozenyPermeability(; c=1.0, ϕ0=0.3, n=3.0)
+    x4 = CarmanKozenyPermeability(; c=1.0, ϕ0=0.3, n=3)
     args = (;ϕ=0.4)
     @test compute_permeability(x4, args) ≈ 1.0 * (0.4 / 0.3)^3
     @test x4(args) ≈ 1.0 * (0.4 / 0.3)^3

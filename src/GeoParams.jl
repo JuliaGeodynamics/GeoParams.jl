@@ -344,7 +344,9 @@ export compute_permeability,
     ConstantPermeability,
     HazenPermeability,
     PowerLawPermeability,
-    CarmanKozenyPermeability
+    CarmanKozenyPermeability,
+    BiotWillis,
+    SkemptonCoeff
 
 include("Traits/rheology.jl")
 export RheologyTrait
