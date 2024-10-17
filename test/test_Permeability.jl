@@ -1,4 +1,4 @@
-using Test, GeoParams, Unitful, StaticArrays, LaTeXStrings
+using Test, GeoParams, StaticArrays, LaTeXStrings
 
 @testset "Permeability.jl" begin
 
