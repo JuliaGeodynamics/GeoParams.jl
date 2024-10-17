@@ -15,14 +15,13 @@ abstract type AbstractPermeability{T} <: AbstractMaterialParam end
 
 export compute_permeability,     # calculation routines
     compute_permeability!,       # in place calculation
+    compute_permeability_ratio, # calculation with phase ratios
     param_info,                  # info about the parameters
     AbstractPermeability,
     ConstantPermeability,        # constant
     HazenPermeability,           # Hazen equation
     PowerLawPermeability,        # Power-law permeability
-    CarmanKozenyPermeability,    # Carman-Kozeny permeability
-    BiotWillis,                  # Biot-Willis coefficient
-    SkemptonCoeff                # Skempton coefficient
+    CarmanKozenyPermeability    # Carman-Kozeny permeability
 
 # Define "empty" computational routines in case nothing is defined
 function compute_permeability!(
@@ -60,6 +59,8 @@ end
 ConstantPermeability(args...) = ConstantPermeability(convert.(GeoUnit, args)...)
 isdimensional(s::ConstantPermeability) = isdimensional(s.k)
 
+@inline (s::ConstantPermeability)(; args...) = s.k.val
+@inline (s::ConstantPermeability)(args) = s(; args...)
 @inline compute_permeability(s::ConstantPermeability{_T}, args) where {_T} = s(; args...)
 @inline compute_permeability(s::ConstantPermeability{_T})       where {_T} = s()
 
@@ -104,7 +105,7 @@ function (s::HazenPermeability{_T})(; kwargs...) where {_T}
 end
 
 @inline (s::HazenPermeability)(args)                = s(; args...)
-@inline compute_permeability(s::HazenPermeability, args) = s(; args...)
+@inline compute_permeability(s::HazenPermeability, args) = s(args)
 
 
 function show(io::IO, g::HazenPermeability)
@@ -125,7 +126,7 @@ function param_info(s::PowerLawPermeability)
     return MaterialParamsInfo(; Equation = L"k = c \cdot k_0 \cdot \phi^n")
 end
 
-function (s::PowerLawPermeability{_T})(; ϕ=0e0, kwargs...) where {_T}
+function (s::PowerLawPermeability{_T})(; ϕ=1e-2, kwargs...) where {_T}
     if ϕ isa Quantity
         @unpack_units c, k0, n = s
     else
@@ -172,75 +173,12 @@ function show(io::IO, g::CarmanKozenyPermeability)
     return print(io, "Carman-Kozeny permeability: k = c * (ϕ / ϕ0)^n; c=$(g.c); ϕ0=$(g.ϕ0); n=$(g.n)")
 end
 
-# -----------------------------------------------
-# This implements the methods described by Yarushina and Podladchikov, 2015
-"""
-Biot-Willis coefficient
-"""
-@with_kw_noshow struct BiotWillis{_T,U} <: AbstractPermeability{_T}
-    Kd::GeoUnit{_T,U} = 1.0 * Pa  # Drained bulk modulus
-    Ks::GeoUnit{_T,U} = 1.0 * Pa  # Solid grain bulk modulus
-    α::GeoUnit{_T,U} = 1.0 * NoUnits   # Biot-Willis coefficient to keep track of dimensionality
+#------------------------------------------------------------------------------------------------------------------#
+# Computational routines needed for computations with the MaterialParams structure
+function compute_permeability(s::AbstractMaterialParamsStruct, args)
+    return compute_permeability(s.Permeability[1], args)
 end
-
-BiotWillis(args...) = BiotWillis(convert.(GeoUnit, args)...)
-isdimensional(s::BiotWillis) = isdimensional(s.Kd)
-
-function param_info(s::BiotWillis)
-    return MaterialParamsInfo(; Equation = L"\alpha = 1 - \frac{K_d}{K_s}")
-end
-
-function (bw::BiotWillis{_T})(; kwargs...) where {_T}
-    if kwargs isa Quantity
-        @unpack_units Kd, Ks, α = bw
-    else
-        @unpack_val   Kd, Ks, α = bw
-    end
-
-    return 1 - (Kd * inv(Ks))
-end
-
-@inline (s::BiotWillis)(args) = s(; args...)
-@inline compute_biot_willis(s::BiotWillis, args) = s(args)
-
-function show(io::IO, g::BiotWillis)
-    return print(io, "Biot-Willis coefficient: α = 1 - (Kd / Ks); Kd=$(g.Kd); Ks=$(g.Ks)")
-end
-
-"""
-Skempton coefficient
-"""
-@with_kw_noshow struct SkemptonCoeff{_T,U} <: AbstractPermeability{_T}
-    Kd::GeoUnit{_T,U} = 1.0 * Pa  # Drained bulk modulus
-    Ks::GeoUnit{_T,U} = 1.0 * Pa  # Solid grain bulk modulus
-    Kf::GeoUnit{_T,U} = 1.0 * Pa  # Fluid bulk modulus
-    ϕ::GeoUnit{_T,U} = 1.0 * NoUnits   # Porosity
-    B::GeoUnit{_T,U} = 1.0 * Pa   # Skempton coefficient to keep track of dimensionality
-end
-
-SkemptonCoeff(args...) = SkemptonCoeff(convert.(GeoUnit, args)...)
-isdimensional(s::SkemptonCoeff) = isdimensional(s.Kd)
-
-function param_info(s::SkemptonCoeff)
-    return MaterialParamsInfo(; Equation = L"B = \frac{(1/K_d - 1/K_s)}{(1/K_d - 1/K_s) + \phi (1/K_f - 1/K_s)}")
-end
-
-function (sc::SkemptonCoeff{_T})(; kwargs...) where {_T}
-    if kwargs isa Quantity
-        @unpack_units Kd, Ks, Kf, ϕ, B = sc
-    else
-        @unpack_val   Kd, Ks, Kf, ϕ, B = sc
-    end
-
-    return (inv(Kd) - inv(Ks)) * inv(inv(Kd) - inv(Ks) + ϕ * (inv(Kf) - inv(Ks)))
-end
-
-@inline (s::SkemptonCoeff)(args) = s(; args...)
-@inline compute_skempton_coeff(s::SkemptonCoeff, args) = s(args)
-
-function show(io::IO, g::SkemptonCoeff)
-    return print(io, "Skempton Coefficient: B = (1/Kd - 1/Ks) / ((1/Kd - 1/Ks) + ϕ * (1/Kf - 1/Ks)); Kd=$(g.Kd); Ks=$(g.Ks); Kf=$(g.Kf); ϕ=$(g.ϕ)")
-end
+#-------------------------------------------------------------------------------------------------------------
 
 """
     compute_permeability!(k::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}, PhaseRatios::AbstractArray{_T, M}, P=nothing, T=nothing)

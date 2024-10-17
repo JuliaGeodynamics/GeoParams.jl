@@ -339,6 +339,7 @@ export compute_meltfraction,
 using .MaterialParameters.Permeability
 export compute_permeability,
     compute_permeability!,
+    compute_permeability_ratio,
     param_info,
     AbstractPermeability,
     ConstantPermeability,

@@ -31,6 +31,7 @@ using Test, GeoParams, Unitful, StaticArrays, LaTeXStrings
     x1 = ConstantPermeability(; k=1e-12m^2)
     @test x1.k.val == 1e-12
     @test GeoParams.get_k(x1) == 1e-12
+    @test compute_permeability(x1) ≈ 1e-12
 
     x2 = HazenPermeability(; C=1.0, D10=1e-4m)
     args = (;ϕ=0.4)
@@ -62,18 +63,45 @@ using Test, GeoParams, Unitful, StaticArrays, LaTeXStrings
     x4 = nondimensionalize(x4, CharUnits_GEO)
     @test x4.c.val ≈ 1.0
 
-    # # Test allocations
-    # k = [0.0]
-    # ϕ = 0.4
-    # args = (ϕ=ϕ)
 
-    # # Test allocations using k alias
-    # k!(k, x3, args)
-    # num_alloc = @allocated k!(k, x3, args)
-    # @test num_alloc == 0
+    # Define material parameters with different permeability parameterizations
+    Mat_tup = (
+        SetMaterialParams(;
+            Name="Mantle", Phase=1, Permeability=ConstantPermeability(; k=1e-12m^2)
+        ),
+        SetMaterialParams(; Name="Crust", Phase=2, Permeability=HazenPermeability(; C=1.0, D10=1e-4m)),
+        SetMaterialParams(;
+            Name="UpperCrust",
+            Phase=3,
+            Permeability=PowerLawPermeability(; c=1.0, k0=1e-12m^2, n=3, ϕ=0.1),
+            Density=PT_Density(),
+        ),
+        SetMaterialParams(; Name="LowerCrust", Phase=4, Permeability=CarmanKozenyPermeability(; c=1.0, ϕ0=0.3, n=3), Density=PT_Density()),
+    )
 
-    # k!(k, x4, args)
-    # num_alloc = @allocated k!(k, x4, args)
-    # @test num_alloc == 0
+    n = 100
+    Phases = ones(Int64, n, n, n)
+    Phases[:, :, 20:end] .= 2
+    Phases[:, :, 50:end] .= 3
+    Phases[:, :, 70:end] .= 4
+
+    ϕ = fill(1e-2, size(Phases))
+    T = ones(size(Phases)) * (800 + 273.15)
+    P = ones(size(Phases)) * 10
+    args = (P=P, T=T)
+
+    @test compute_permeability(Mat_tup, Phases[1], args) == 1e-12
+
+    compute_permeability!(ϕ, Mat_tup, Phases, args)
+
+    @test sum(ϕ) / n^3 ≈ 1.1484481671481687e-5  # Adjust this value based on expected results
+
+    # Test PhaseRatio and StaticArrays PhaseRatios as input
+    args = (P=0.0, T=1000.0 + 273.15)
+    PhaseRatio = (0.25, 0.25, 0.25, 0.25)
+    @test compute_permeability_ratio(PhaseRatio, Mat_tup, args) == 9.26175950925951e-6 # Adjust this value based on expected results
+
+    SvPhaseRatio = SA[0.25,0.25,0.25,0.25]
+    @test compute_permeability_ratio(SvPhaseRatio, Mat_tup, args) == 9.26175950925951e-6  # Adjust this value based on expected results
 
 end
