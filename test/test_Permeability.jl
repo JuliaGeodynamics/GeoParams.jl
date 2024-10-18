@@ -86,8 +86,8 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
     Phases[:, :, 70:end] .= 4
 
     ϕ = fill(1e-2, size(Phases))
-    T = ones(size(Phases)) * (800 + 273.15)
-    P = ones(size(Phases)) * 10
+    T = fill((800 + 273.15), size(Phases))
+    P = fill(10, size(Phases))
     args = (P=P, T=T)
 
     @test compute_permeability(Mat_tup, Phases[1], args) == 1e-12
