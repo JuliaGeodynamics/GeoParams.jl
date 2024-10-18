@@ -4,7 +4,7 @@ using Parameters, Unitful, LaTeXStrings, MuladdMacro
 using ..Units
 using ..PhaseDiagrams
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, @extractors, add_extractor_functions
-using GeoParams: fastpow, pow_check, @pow
+using GeoParams: fastpow, pow_check, @pow, @fastpow
 import ..Units: isdimensional
 using ..MaterialParameters: No_MaterialParam, MaterialParamsInfo
 import Base.show, GeoParams.param_info
@@ -133,7 +133,7 @@ function (s::PowerLawPermeability{_T})(; ϕ=1e-2, kwargs...) where {_T}
         @unpack_val   c, k0, n = s
     end
 
-    return @pow c * k0 * ϕ^n
+    return @fastpow c * k0 * ϕ^n
 end
 
 @inline (s::PowerLawPermeability)(args)                = s(; args...)

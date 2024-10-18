@@ -2,11 +2,6 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
 
 @testset "Permeability.jl" begin
 
-    # Set alias for permeability function
-    if !isdefined(Main, :GeoParamsAliases)
-        eval(:(@use GeoParamsAliases permeability = k))
-    end
-
     # Make sure that structs are isbits
     x = ConstantPermeability()
     @test isbits(x)
