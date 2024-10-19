@@ -15,7 +15,6 @@ module GeoParams
 using Parameters         # helps setting default parameters in structures
 using Unitful            # Units
 using BibTeX             # references of creep laws
-using Requires: @require # To only add plotting routines if GLMakie is loaded
 using StaticArrays
 using LinearAlgebra
 using ForwardDiff
@@ -335,6 +334,18 @@ export compute_meltfraction,
     Vector_MeltingParam,
     SmoothMelting
 
+
+using .MaterialParameters.Permeability
+export compute_permeability,
+    compute_permeability!,
+    compute_permeability_ratio,
+    param_info,
+    AbstractPermeability,
+    ConstantPermeability,
+    HazenPermeability,
+    PowerLawPermeability,
+    CarmanKozenyPermeability
+
 include("Traits/rheology.jl")
 export RheologyTrait
 export islinear, LinearRheologyTrait, NonLinearRheologyTrait
@@ -363,7 +374,7 @@ function creeplaw_list(m::Module)
     out = string.(names(m; all=true, imported=true))
     filter!(x -> !startswith(x, "#"), out)
     return [getfield(m, Symbol(x)) for x in out if !isnothing(tryparse(Int, string(x[end]))) || endswith(x, "a") || endswith(x, "b")]
-end 
+end
 
 diffusion_law_list() = creeplaw_list(Diffusion)
 dislocation_law_list() = creeplaw_list(Dislocation)
@@ -371,10 +382,10 @@ grainboundarysliding_law_list() = creeplaw_list(GBS)
 nonlinearpeierls_law_list() = creeplaw_list(NonLinearPeierls)
 peierls_law_list() = creeplaw_list(Peierls)
 
-export diffusion_law_list, 
-       dislocation_law_list, 
-       grainboundarysliding_law_list, 
-       nonlinearpeierls_law_list, 
+export diffusion_law_list,
+       dislocation_law_list,
+       grainboundarysliding_law_list,
+       nonlinearpeierls_law_list,
        peierls_law_list
 
 # Define Table output functions
@@ -419,18 +430,6 @@ export PlotStrainrateStress,
     PlotStressTime_0D,
     PlotPressureStressTime_0D,
     StrengthEnvelopePlot
-
-# We do not check `isdefined(Base, :get_extension)` as recommended since
-# Julia v1.9.0 does not load package extensions when their dependency is
-# loaded from the main environment.
-function __init__()
-    @static if !(VERSION >= v"1.9.1")
-        @require GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a" begin
-            print("Adding plotting routines of GeoParams through GLMakie \n")
-            @eval include("../ext/GeoParamsGLMakieExt.jl")
-        end
-    end
-end
 
 #Set functions aliases using @use
 include("aliases.jl")
