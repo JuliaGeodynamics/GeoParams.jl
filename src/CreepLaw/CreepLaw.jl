@@ -324,7 +324,7 @@ end
 function dεII_dτII(a::PowerlawViscous, TauII; kwargs...)
     @unpack_val η0, n, ε0 = a
 
-    return @pow ((TauII^((1 - n) / n))*(1^(1 / n))) / (n*(η0^(1 / n)))
+    return @pow (TauII^((1 - n) / n)) / (n*(η0^(1 / n)))
 end
 
 """
