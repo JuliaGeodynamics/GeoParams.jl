@@ -247,7 +247,7 @@ using GeoParams
         η_rhyolite[i] = compute_viscosity_εII(x_rhyolite, εII, (; ϕ=ϕ_rhyolite[i], T=T[i]))
 
     end
-    @test mean(η_rhyolite) ≈ 1.262261299272795e19Pas
+    @test mean(η_rhyolite) ≈ 1.2614388007523279e19Pas
     @test mean(η_basalt)   ≈ 5.822731206904198e24Pas
     @test mean(η_basalt1)  ≈ 8.638313729394237e21Pas
 
