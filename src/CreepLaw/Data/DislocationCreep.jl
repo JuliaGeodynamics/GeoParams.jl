@@ -487,7 +487,7 @@ function wet_quartzite_Kirby_1983()
     data = DislocationCreep(;
         Name="Wet Quarzite | Kirby (1983)",
         n=2.4NoUnits,
-        A=uconvert(Pa^(-23//10) / s, 3.2e-4MPa^(-23//10) / s), #A is given in 10^(3.2)^ GPa^(2.4)^ in paper -> needs to be converted to MPa (approx. 0.0125MPa^(−2.4)^
+        A=1.25e-2MPa^(-2.4), #A is given in 10^(3.2)^ GPa^(2.4)^ in paper
         E=160e3J / mol,
         V=0m^3 / mol,
         r=0NoUnits,
