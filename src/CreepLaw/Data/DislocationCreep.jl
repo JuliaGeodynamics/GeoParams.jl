@@ -309,7 +309,7 @@ function wet_quartzite_Ueda_2008()
     data = DislocationCreep(;
         Name="Wet Quartzite | Ueda et al. (2008)",
         n=2.3NoUnits,
-        A=1 * exp10(-7//2)MPa^(-23//10) / s,
+        A=1 * exp10(-3.5)MPa^(-23//10) / s,
         E=154kJ / mol,
         V=0m^3 / mol,
         r=0NoUnits,
@@ -340,7 +340,7 @@ function granite_Carter_1987()
     data = DislocationCreep(;
         Name="Granite | Carter and Tsenn (1987)",
         n=3.3NoUnits,
-        A=1.0 * exp10(-57//10)MPa^(-33//10) / s,
+        A=1.0 * exp10(-5.7)MPa^(-33//10) / s,
         E=186.5kJ / mol,
         V=0m^3 / mol,
         r=0NoUnits,
@@ -428,7 +428,7 @@ function wet_anorthite_Rybacki_2006()
     data = DislocationCreep(;
         Name="Wet Anorthite | Rybacki et al. (2006)",
         n=3.0NoUnits,
-        A=(10^(1//5))MPa^(-3) / s,
+        A=(10^0.2)MPa^(-3) / s,
         E=345kJ / mol,
         V=38e-6m^3 / mol,
         r=1NoUnits,
@@ -690,7 +690,7 @@ function dry_olivine_Karato_2003()
     data = DislocationCreep(;
         Name="Dry Olivine | Karato & Jung (2003)",
         n=3.0NoUnits,
-        A=(10^(61//10))MPa^(-3) / s,
+        A=(10^6.1)MPa^(-3) / s,
         E=510.0kJ / mol,
         V=14.0e-6m^3 / mol,
         r=0.0NoUnits,
@@ -719,7 +719,7 @@ function wet_olivine_Karato_2003()
     data = DislocationCreep(;
         Name="Wet Olivine | Karato & Jung (2003)",
         n=3.0NoUnits,
-        A=(10^(29//10))MPa^(-21//5) / s,
+        A=(10^2.9)MPa^(-21//5) / s,
         E=470.0kJ / mol,
         V=24.0e-6m^3 / mol,
         r=1.2NoUnits,
@@ -748,7 +748,7 @@ function wet_clinopyroxene_Chen_2006()
     data = DislocationCreep(;
         Name="Wet Clinopyroxene | Chen et al. (2006)",
         n=2.7NoUnits,
-        A=(10^(67//10))MPa^(-27//10) / s,
+        A=(10^6.7)MPa^(-27//10) / s,
         E=670.0kJ / mol,
         V=0.0m^3 / mol,
         r=3.0NoUnits,
@@ -776,7 +776,7 @@ function dry_clinopyroxene_Bystricky_Mackwell_2001()
     data = DislocationCreep(;
         Name="Dry Clinopyroxene | Bystricky & Mackwell (2001)",
         n=4.7NoUnits,
-        A=(10^(49//5))MPa^(-47//10) / s,
+        A=(10^9.8)MPa^(-47//10) / s,
         E=760.0kJ / mol,
         V=0.0m^3 / mol,
         r=0.0NoUnits,
@@ -890,7 +890,7 @@ function wet_jadeit_Orzol_2006()
     data = DislocationCreep(;
         Name="Wet Jadeit | Orzol et al. (2006)",
         n=3.7NoUnits,
-        A=(10^(-33//10))MPa^(-37//10) / s,
+        A=(10^-3.3)MPa^(-37//10) / s,
         E=326.0kJ / mol,
         V=0.0m^3 / mol,
         r=0.0NoUnits,
@@ -918,7 +918,7 @@ function dry_anorthite_Rybacki_2000()
     data = DislocationCreep(;
         Name="Dry Anorthite | Rybacki & Dresen (2000)",
         n=3.0NoUnits,
-        A=(10^(127//10))MPa^(-3) / s,
+        A=(10^12.7)MPa^(-3) / s,
         E=648.0kJ / mol,
         V=0.0m^3 / mol,
         r=0.0NoUnits,
@@ -947,7 +947,7 @@ function wet_anorthite_Rybacki_2000()
     data = DislocationCreep(;
         Name="Wet Anorthite | Rybacki & Dresen (2000)",
         n=3.0NoUnits,
-        A=(10^(13//5))MPa^(-3) / s,
+        A=(10^2.6)MPa^(-3) / s,
         E=356.0kJ / mol,
         V=0.0m^3 / mol,
         r=0.0NoUnits,
@@ -976,7 +976,7 @@ function wet_quartzite_Rutter_2004()
     data = DislocationCreep(;
         Name="Wet Quartzite | Rutter & Brodie (2004)",
         n=2.97NoUnits,
-        A=(10^(-493//100))MPa^(-297//100) / s,
+        A=(10^-4.93)MPa^(-297//100) / s,
         E=242.0kJ / mol,
         V=0.0m^3 / mol,
         r=1.0NoUnits,
@@ -1005,7 +1005,7 @@ function wet_quartzite_Hirth_2001()
     data = DislocationCreep(;
         Name="Wet Quartzite | Hirth et al. (2001)",
         n=4.0NoUnits,
-        A=(10^(-56//5))MPa^(-4) / s,
+        A=(10^-11.2)MPa^(-4) / s,
         E=135.0kJ / mol,
         V=0.0m^3 / mol,
         r=1.0NoUnits,
@@ -1092,7 +1092,7 @@ function wet_quartzite_Tokle_2019()
     data = DislocationCreep(;
         Name="Wet Quartzite | Tokle et al. (2019)",
         n=3.0NoUnits,
-        A=(10^(-11959//1000))MPa^(-3) / s,
+        A=(10^-11.959)MPa^(-3) / s,
         E=115.0kJ / mol,
         V=0.0m^3 / mol,
         r=1.2NoUnits,
@@ -1208,7 +1208,7 @@ function highP_wet_quartzite_Lusk_2021()
     data = DislocationCreep(;
         Name="high pressure wet Quartzite | Lusk et al. (2021)",
         n=2.0NoUnits,
-        A=(10^(-159//25))MPa^(-23//10) / s,
+        A=(10^-6.36)MPa^(-23//10) / s,
         E=77.0kJ / mol,
         V=2.59e-6m^3 / mol,
         r=0.49NoUnits,
@@ -1237,7 +1237,7 @@ function high_stress_wet_dunite_Chopra_1981()
     data = DislocationCreep(;
         Name="High Stress Wet Dunite | Chopra & Paterson (1981)",
         n=3.35NoUnits,
-        A=(10^(199//50))MPa^(-67//20) / s,
+        A=(10^3.98)MPa^(-67//20) / s,
         E=444.0kJ / mol,
         V=0.0m^3 / mol,
         r=0.0NoUnits,
@@ -1272,7 +1272,7 @@ function low_stress_wet_dunite_Chopra_1981()
     data = DislocationCreep(;
         Name="Low Stress Wet Dunite | Chopra & Paterson (1981)",
         n=2.44NoUnits,
-        A=(10^(97//25))MPa^(-61//25) / s,
+        A=(10^3.88)MPa^(-61//25) / s,
         E=386.0kJ / mol,
         V=0.0m^3 / mol,
         r=0.0NoUnits,
