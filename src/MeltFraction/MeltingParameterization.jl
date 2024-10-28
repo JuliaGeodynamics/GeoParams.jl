@@ -581,7 +581,7 @@ julia> T,phi,dϕdT =  PlotMeltFraction(p,T=T);
 The same but with smoothening:
 ```julia
 julia> p_s = SmoothMelting(p=MeltingParam_4thOrder(), k_liq=0.21/K);
-4th order polynomial melting curve: phi = -7.594512597174117e-10T^4 + 3.469192091489447e-6T^3 + -0.00592352980926T^2 + 4.482855645604745T + -1268.730161921053  963.15 K ≤ T ≤ 1270.15 K with smooth Heaviside function smoothening using k_sol=0.1 K⁻¹·⁰, k_liq=0.11 K⁻¹·⁰
+4th order polynomial melting curve: phi = -7.594512597174117e-10T^4 + 3.469192091489447e-6T^3 + -0.00592352980926T^2 + 4.482855645604745T + -1268.730161921053  963.15 K ≤ T ≤ 1270.15 K with smooth Heaviside function smoothening using k_sol=0.1 K⁻¹·⁰, k_liq=0.11 K⁻¹·⁰
 julia> T_s,phi_s,dϕdT_s =  PlotMeltFraction(p_s,T=T);
 ```
 
@@ -767,7 +767,7 @@ end
 Computation of melt fraction ϕ for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 """
 compute_meltfraction(args::Vararg{Any,N}) where {N} =
-    clamp(compute_param(compute_meltfraction, args...), 0e0, 1e0)
+    clamp(compute_param(compute_meltfraction, args...), 0, 1)
 
 """
     compute_meltfraction(ϕ::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})

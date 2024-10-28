@@ -69,7 +69,7 @@ export param_info,
 # add methods programmatically 
 for myType in (:LinearViscous, :LinearMeltViscosity, :ViscosityPartialMelt_Costa_etal_2009, 
                 :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType, 
-                :GrainBoundarySliding, :PeierlsCreep, :NonLinearPeierlsCreep)
+                :GrainBoundarySliding, :PeierlsCreep, :NonLinearPeierlsCreep, :PowerlawViscous)
     @eval begin
         @inline compute_εII(a::$(myType), TauII, args) = compute_εII(a, TauII; args...)
         @inline compute_εvol(a::$(myType), P, args) = compute_εvol(a, P; args...)
