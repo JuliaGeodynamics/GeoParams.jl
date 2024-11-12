@@ -1,5 +1,6 @@
 
 abstract type AbstractSoftening end
+abstract type AbstractNoSoftening end
 
 struct NoSoftening <: AbstractSoftening end
 
@@ -35,7 +36,7 @@ end
 # (Duretz et al 2021; https://agupubs.onlinelibrary.wiley.com/doi/pdfdirect/10.1029/2021GC009675)
 using SpecialFunctions
 
-@with_kw struct NonLinearSoftening{T} <: AbstractSoftening
+@with_kw_noshow struct NonLinearSoftening{T} <: AbstractSoftening
     ξ₀::T= 0.0 # maximum value
     Δ::T = 0.0 # amplitude of the softening (i.e. minimum value)
     μ::T = 1.0 # mean of the softening
@@ -48,4 +49,17 @@ NonLinearSoftening(args::Vararg{Any, N}) where N = NonLinearSoftening(promote(ar
 
 @inline function (softening::NonLinearSoftening)(softening_var::T, args::Vararg{Any, N}) where {T,N}
     return softening.ξ₀ - 0.5 * softening.Δ * erfc(- (softening_var - softening.μ) / softening.σ)
+end
+
+
+# Non linear softening from Taras
+@with_kw_noshow struct DecaySoftening{T} <: AbstractSoftening
+    εref::T = 1e-13
+    n::T = 0.1
+end
+
+@inline (softening::DecaySoftening)(args::Vararg{Any, N}) where N = softening(promote(args...)...)
+
+@inline function (softening::DecaySoftening)(softening_var::T, max_value::T) where T
+    return max_value * inv((softening_var / softening.εref + 1)^softening.n)
 end

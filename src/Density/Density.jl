@@ -27,7 +27,8 @@ export compute_density,     # calculation routines
     Compressible_Density,   # Compressible density
     T_Density,              # T dependent density
     Vector_Density,         # Vector with density
-    MeltDependent_Density   # Melt dependent density
+    MeltDependent_Density,   # Melt dependent density
+    get_α
 
 # Define "empty" computational routines in case nothing is defined
 function compute_density!(
@@ -123,7 +124,6 @@ end
 @inline (ρ::PT_Density)(args)                = ρ(; args...)
 @inline compute_density(s::PT_Density, args) = s(args)
 
-
 # Print info
 function show(io::IO, g::PT_Density)
     return print(
@@ -155,7 +155,7 @@ function param_info(s::Compressible_Density) # info about the struct
     return MaterialParamsInfo(; Equation = L"\rho = \rho_0\exp(\beta*(P-P_0))")
 end
 
-function (s::Compressible_Density{_T})(; P::_T1=0.0, kwargs...) where {_T, _T1}
+function (s::Compressible_Density{_T})(; P=0e0, kwargs...) where {_T}
     if P isa Quantity
         @unpack_units ρ0, β, P0 = s
     else
@@ -199,14 +199,14 @@ function param_info(s::T_Density) # info about the struct
     return MaterialParamsInfo(; Equation = L"\rho = \rho_0*(1 - \alpha*(T-T_0))")
 end
 
-function (s::T_Density{_T})(; T::_T1=0.0, kwargs...) where {_T, _T1}
+function (s::T_Density{_T})(; T = 0e0, kwargs...) where {_T}
     if T isa Quantity
         @unpack_units ρ0, α, T0 = s
     else
         @unpack_val   ρ0, α, T0 = s
     end
 
-    return @muladd ρ0 * (1.0 -  α * (T - T0))
+    return @muladd ρ0 * (1 -  α * (T - T0))
 end
 
 @inline (s::T_Density)(args)                = s(; args...)
@@ -248,7 +248,7 @@ function param_info(s::MeltDependent_Density) # info about the struct
 end
 
 # Calculation routines
-function (rho::MeltDependent_Density{_T})(; ϕ::_T1=0.0, kwargs...) where {_T, _T1}
+function (rho::MeltDependent_Density{_T})(; ϕ=0e0, kwargs...) where {_T}
     ρsolid = compute_density(rho.ρsolid, kwargs)
     ρmelt  = compute_density(rho.ρmelt,  kwargs)
 
@@ -402,5 +402,15 @@ This assumes that the `PhaseRatio` of every point is specified as an Integer in 
 for type in (ConstantDensity, PT_Density, Compressible_Density, T_Density, MeltDependent_Density, Vector_Density)
     @extractors(type, :Density)
 end
+
+import GeoParams.get_α
+
+function get_α(rho::MeltDependent_Density; ϕ::T=0.0, kwargs...) where {T}
+    αsolid = rho.ρsolid.α.val
+    αmelt  = rho.ρmelt.α.val
+    return @muladd ϕ * αmelt + (1-ϕ) * αsolid
+end
+
+get_α(rho::MeltDependent_Density, args) = get_α(rho; args...)
 
 end

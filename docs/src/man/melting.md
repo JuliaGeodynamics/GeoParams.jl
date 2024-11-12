@@ -1,6 +1,6 @@
 # Melting Parameterizations
 
-# Methods
+## Methods
 A number of melting parameterisations are implemented, which can be set with:
 
 ```@docs
@@ -12,7 +12,7 @@ GeoParams.MeltingParam.MeltingParam_Quadratic
 GeoParams.MeltingParam.MeltingParam_Assimilation
 GeoParams.MeltingParam.SmoothMelting
 ```
-# Computational routines
+## Computational routines
 To compute the melt fraction at given `T` and `P`, use:
 ```@docs
 GeoParams.MeltingParam.compute_meltfraction!

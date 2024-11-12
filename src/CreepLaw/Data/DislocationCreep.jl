@@ -10,7 +10,7 @@ export dislocation_database, dislocation_database_info
 #     out = string.(names(m; all=true, imported=true))
 #     filter!(x -> !startswith(x, "#"), out)
 #     return [getfield(m, Symbol(x)) for x in out if !isnothing(tryparse(Int, string(x[end]))) || endswith(x, "a") || endswith(x, "b")]
-# end 
+# end
 
 """
 Dislocation creep data for dry olivine after Hirth, G. & Kohlstedt (2003)
@@ -105,7 +105,7 @@ function wet_olivine2_Hirth_2003()
 
     data = DislocationCreep(;
         Name="Wet Olivine 2 | Hirth & Kohlstedt (2003)",
-        n=3.0NoUnits,
+        n=3.5NoUnits,
         A=1600MPa^(-3) / s,
         E=520.0kJ / mol,
         V=22.0e-6m^3 / mol,
@@ -185,7 +185,7 @@ function diabase_Caristan_1982()
     data = DislocationCreep(;
         Name="Diabase | Caristan (1982)",
         n=3.05NoUnits,
-        A=6.0e-2MPa^(-61//20) / s,
+        A=6.12e-2MPa^(-61//20) / s,
         E=276kJ / mol,
         V=0m^3 / mol,
         r=0NoUnits,
@@ -458,7 +458,7 @@ function wet_olivine_Hirth_2003()
         n=3.5NoUnits,
         A=1600.0MPa^(-7//2) / s,
         E=520kJ / mol,
-        V=11.0e-6m^3 / mol,
+        V=22e-6m^3 / mol,
         r=1.2NoUnits,
         Apparatus=AxialCompression,
     )
@@ -486,9 +486,9 @@ function wet_quartzite_Kirby_1983()
     #  referring to Koch et al. (1981), unpublished manuscript...
     data = DislocationCreep(;
         Name="Wet Quarzite | Kirby (1983)",
-        n=2.3NoUnits,
-        A=uconvert(Pa^(-23//10) / s, 3.2e-4MPa^(-23//10) / s),
-        E=154e3J / mol,
+        n=2.4NoUnits,
+        A=1.25e-2MPa^(-12//5) / s, #A is given in 10^(3.2)^ GPa^(2.4)^ in paper
+        E=160e3J / mol,
         V=0m^3 / mol,
         r=0NoUnits,
         Apparatus=AxialCompression,
@@ -549,7 +549,7 @@ function granite_Tirel_2008()
     data = DislocationCreep(;
         Name="Granite | Tirel et al. (2008)",
         n=3.2NoUnits,
-        A=1.25e-9MPa^(-3.2) / s,
+        A=1.25e-9MPa^(-16//5) / s,
         E=123kJ / mol,
         V=0.0m^3 / mol,
         r=0.0NoUnits,
@@ -573,11 +573,11 @@ function granite_Tirel_2008()
 end
 
 function dry_olivine_Gerya_2019()
-    # after Exercise 6.1 of Numerical Geodynamics         
+    # after Exercise 6.1 of Numerical Geodynamics
     data = DislocationCreep(;
         Name="Dry Olivine | Gerya (2019)",
         n=3.5NoUnits,
-        #A = 2.5e-17Pa^(-7//2)/s, 
+        #A = 2.5e-17Pa^(-7//2)/s,
         A=uconvert(MPa^(-7//2) / s, 2.5e-17Pa^(-7//2) / s),
         E=532.0kJ / mol,
         V=0.0m^3 / mol,
@@ -587,13 +587,13 @@ function dry_olivine_Gerya_2019()
     info = MaterialParamsInfo(;
         Comment="This is from Exercise 6.1, indicated to be valid for olivine under upper mantle conditions.",
         BibTex_Reference="
-            @book{Gerya_2019, 
-            title={Introduction to Numerical Geodynamic Modelling}, 
-            ISBN={978-1-107-14314-2}, 
-            note={Google-Books-ID: 8XGSDwAAQBAJ}, 
-            publisher={Cambridge University Press}, 
-            author={Gerya, Taras}, 
-            year={2019}, month={May}, 
+            @book{Gerya_2019,
+            title={Introduction to Numerical Geodynamic Modelling},
+            ISBN={978-1-107-14314-2},
+            note={Google-Books-ID: 8XGSDwAAQBAJ},
+            publisher={Cambridge University Press},
+            author={Gerya, Taras},
+            year={2019}, month={May},
             language={en} }
     ",
     )
@@ -660,8 +660,8 @@ function wet_olivine_Mei_2000b()
     #  Mei & Kohlstedt (2000b), table 1
     data = DislocationCreep(;
         Name="Wet Olivine | Mei & Kohlstedt (2000b)",
-        n=3.0NoUnits,
-        A=(10^3.2)MPa^(-3) / s,
+        n=3.02NoUnits,
+        A=(1.5e3)MPa^(-4) / s,
         E=470.0kJ / mol,
         V=20.0e-6m^3 / mol,
         r=0.98NoUnits,
@@ -719,14 +719,14 @@ function wet_olivine_Karato_2003()
     data = DislocationCreep(;
         Name="Wet Olivine | Karato & Jung (2003)",
         n=3.0NoUnits,
-        A=(10^2.9)MPa^(-3) / s,
-        E=510.0kJ / mol,
+        A=(10^2.9)MPa^(-21//5) / s,
+        E=470.0kJ / mol,
         V=24.0e-6m^3 / mol,
         r=1.2NoUnits,
         Apparatus=AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment="Values checked (NM).",
+        Comment="Values checked (NM, PA)",
         BibTex_Reference="
         @article{karato2003effects,
         title={Effects of pressure on high-temperature dislocation creep in olivine},
@@ -776,7 +776,7 @@ function dry_clinopyroxene_Bystricky_Mackwell_2001()
     data = DislocationCreep(;
         Name="Dry Clinopyroxene | Bystricky & Mackwell (2001)",
         n=4.7NoUnits,
-        A=(10^10.8)MPa^(-47//10) / s,
+        A=(10^9.8)MPa^(-47//10) / s,
         E=760.0kJ / mol,
         V=0.0m^3 / mol,
         r=0.0NoUnits,
@@ -947,7 +947,7 @@ function wet_anorthite_Rybacki_2000()
     data = DislocationCreep(;
         Name="Wet Anorthite | Rybacki & Dresen (2000)",
         n=3.0NoUnits,
-        A=(10^0.2)MPa^(-3) / s,
+        A=(10^2.6)MPa^(-3) / s,
         E=356.0kJ / mol,
         V=0.0m^3 / mol,
         r=0.0NoUnits,
@@ -975,8 +975,8 @@ function wet_quartzite_Rutter_2004()
     #  Rutter & Brodie (2004), table 5
     data = DislocationCreep(;
         Name="Wet Quartzite | Rutter & Brodie (2004)",
-        n=3.0NoUnits,
-        A=(10^-4.9)MPa^(-3) / s,
+        n=2.97NoUnits,
+        A=(10^-4.93)MPa^(-297//100) / s,
         E=242.0kJ / mol,
         V=0.0m^3 / mol,
         r=1.0NoUnits,
@@ -1034,7 +1034,7 @@ function dry_quartzite_Jaoul_1984()
     data = DislocationCreep(;
         Name="Dry Quartzite | Jaoul et al. (1984)",
         n=2.8NoUnits,
-        A=(10^-5.415)MPa^(-14//5) / s,
+        A=(2.8899e-3)MPa^(-14//5) / s,
         E=184.0kJ / mol,
         V=0.0m^3 / mol,
         r=0.0NoUnits,
@@ -1062,9 +1062,9 @@ function wet_quartzite_Jaoul_1984()
     #  Jaoul et al. (1984), table 1, second entry
     data = DislocationCreep(;
         Name="Wet Quartzite | Jaoul et al. (1984)",
-        n=2.8NoUnits,
-        A=(10^-5.045)MPa^(-14//5) / s,
-        E=163.0kJ / mol,
+        n=1.4NoUnits,
+        A=(104.957e-3)MPa^(-14//5) / s,
+        E=146.44kJ / mol,
         V=0.0m^3 / mol,
         r=0.0NoUnits,
         Apparatus=AxialCompression,
@@ -1119,8 +1119,8 @@ function wet_quartzite_Lu_2019()
     #  Lu and Jiang (2019), section 3, equation (6)
     data = DislocationCreep(;
         Name="Wet Quartzite | Lu and Jiang (2019)",
-        n=3.0NoUnits,
-        A=(10^-14.2218)MPa^(-3) / s,
+        n=4.0NoUnits,
+        A=(6.0e-15)MPa^(-67//10) / s,
         E=132.0kJ / mol,
         V=35.3e-6m^3 / mol,
         r=2.7NoUnits,
@@ -1148,7 +1148,7 @@ function lowP_wet_quartzite_Lusk_2021()
     #  Lusk et al. (2021), abstract, 1st law
     data = DislocationCreep(;
         Name="low pressure wet Quartzite | Lusk et al. (2021)",
-        n=3.5NoUnits,
+        n=-3.99NoUnits,
         A=(10^-9.3)MPa^(-7//2) / s,
         E=118.0kJ / mol,
         V=2.59e-6m^3 / mol,
@@ -1173,12 +1173,12 @@ function lowP_wet_quartzite_Lusk_2021()
     return data, info
 end
 
-function highP_wet_quartzite_Lusk_2021()
-    #  Lusk et al. (2021), abstract, 2nd law
+function wet_quartzite_Lusk_2021()
+    #  Lusk et al. (2021), table 2, full data set
     data = DislocationCreep(;
-        Name="high pressure wet Quartzite | Lusk et al. (2021)",
+        Name="Wet Quartzite | Lusk et al. (2021)",
         n=2.1NoUnits,
-        A=(10^-6.36)MPa^(-21//10) / s,
+        A=(10^-7.9)MPa^(-249//100) / s,
         E=94.0kJ / mol,
         V=1.44e-6m^3 / mol,
         r=0.2NoUnits,
@@ -1202,12 +1202,13 @@ function highP_wet_quartzite_Lusk_2021()
     return data, info
 end
 
-function wet_quartzite_Lusk_2021()
-    #  Lusk et al. (2021), table 2, full data set
+
+function highP_wet_quartzite_Lusk_2021()
+    #  Lusk et al. (2021), abstract, 2nd law
     data = DislocationCreep(;
-        Name="Wet Quartzite | Lusk et al. (2021)",
+        Name="high pressure wet Quartzite | Lusk et al. (2021)",
         n=2.0NoUnits,
-        A=(10^-7.9)MPa^(-2) / s,
+        A=(10^-6.36)MPa^(-23//10) / s,
         E=77.0kJ / mol,
         V=2.59e-6m^3 / mol,
         r=0.49NoUnits,
@@ -1230,6 +1231,75 @@ function wet_quartzite_Lusk_2021()
     )
     return data, info
 end
+
+function high_stress_wet_dunite_Chopra_1981()
+    # Chopra & Paterson (1981) Table IV, Anita Bay dunite ($$\sigma$$ > ~ 100MPa)
+    data = DislocationCreep(;
+        Name="High Stress Wet Dunite | Chopra & Paterson (1981)",
+        n=3.35NoUnits,
+        A=(10^3.98)MPa^(-67//20) / s,
+        E=444.0kJ / mol,
+        V=0.0m^3 / mol,
+        r=0.0NoUnits,
+        Apparatus=AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment="Values checked (PA).",
+        BibTex_Reference="
+            @article{CHOPRA1981453,
+            title = {The experimental deformation of dunite},
+            journal = {Tectonophysics},
+            volume = {78},
+            number = {1},
+            pages = {453-473},
+            year = {1981},
+            note = {The Effect of Deformation on Rocks},
+            issn = {0040-1951},
+            doi = {https://doi.org/10.1016/0040-1951(81)90024-X},
+            url = {https://www.sciencedirect.com/science/article/pii/004019518190024X},
+            author = {P.N. Chopra and M.S. Paterson},
+            abstract = {Deformation experiments have been carried out on two dunites (Anita Bay, of 100 μm grain size, and Åheim, of 900 μm grain size) at strain rates from 10−3 to 10−6 s−1 and temperatures from 1000°C to 1300°C in a gas-medium deformation apparatus at 300 MPa confining pressure. Most of the tests were under “wet” conditions defined by the presence of small amounts of water from hydrous minerals initially present. Constant strain rate and relaxation experiments, covering ranges of flow stress down to about 70 MPa and 7 MPa, respectively, show that there is a change in flow law in going below about 100 MPa differential stress, and that the coarser-grained rock is stronger than the finer-grained one. Power law parameters above the transition are n = 4.48 ± 0.31 and Q = 498 ± 38 kJ mol−1 for Åheim dunite and n = 3.35 ± 0.17 and Q = 444 ± 24 kJ mol−1 for Anita Bay dunite, while below the transition relaxation tests on Anita Bay dunite give n = 2.44 ±0.18 and Q = 386 ± 27 kJ mol−1. It is concluded that there is a weakening effect of water, that this effect is mainly in the grain boundaries and that grain boundary sliding is probably a significant deformation mechanism at the lower stresses under wet conditions.}
+            }
+    ",
+    )
+    return data, info
+end
+
+
+
+function low_stress_wet_dunite_Chopra_1981()
+    # Chopra & Paterson (1981) Table IV, Anita Bay dunite ($$\sigma$$ < ~ 100MPa)
+    data = DislocationCreep(;
+        Name="Low Stress Wet Dunite | Chopra & Paterson (1981)",
+        n=2.44NoUnits,
+        A=(10^3.88)MPa^(-61//25) / s,
+        E=386.0kJ / mol,
+        V=0.0m^3 / mol,
+        r=0.0NoUnits,
+        Apparatus=AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment="Values checked (PA).",
+        BibTex_Reference="
+            @article{CHOPRA1981453,
+            title = {The experimental deformation of dunite},
+            journal = {Tectonophysics},
+            volume = {78},
+            number = {1},
+            pages = {453-473},
+            year = {1981},
+            note = {The Effect of Deformation on Rocks},
+            issn = {0040-1951},
+            doi = {https://doi.org/10.1016/0040-1951(81)90024-X},
+            url = {https://www.sciencedirect.com/science/article/pii/004019518190024X},
+            author = {P.N. Chopra and M.S. Paterson},
+            abstract = {Deformation experiments have been carried out on two dunites (Anita Bay, of 100 μm grain size, and Åheim, of 900 μm grain size) at strain rates from 10−3 to 10−6 s−1 and temperatures from 1000°C to 1300°C in a gas-medium deformation apparatus at 300 MPa confining pressure. Most of the tests were under “wet” conditions defined by the presence of small amounts of water from hydrous minerals initially present. Constant strain rate and relaxation experiments, covering ranges of flow stress down to about 70 MPa and 7 MPa, respectively, show that there is a change in flow law in going below about 100 MPa differential stress, and that the coarser-grained rock is stronger than the finer-grained one. Power law parameters above the transition are n = 4.48 ± 0.31 and Q = 498 ± 38
+            }
+    ",
+    )
+    return data, info
+end
+
 
 @inline dislocation_database(f::F) where {F} = first(f())
 @inline dislocation_database_info(f::F) where {F} = last(f())

@@ -56,7 +56,7 @@ import ForwardDiff.derivative
     @test x2(args) ≈ 5713.000000000001kg * m^-3
     @test derivative(x -> compute_density(x2,  (P=1e9, T=x)), 1e3) == -0.08700000000000001
     @test derivative(x -> compute_density(x2,  (P=x, T=1e3)), 1e9) == 2.9e-6
-    
+
     # Test the density calculations with non-dimensionalized units
     x2 = nondimensionalize(x2, CharUnits_GEO)
     @test x2.T0.val ≈ 0.21454659702313156
@@ -70,7 +70,7 @@ import ForwardDiff.derivative
     @test compute_density(x1) ≈ 2.9e-16
     @test x1(args) ≈ 2.9e-16
     @test x1() ≈ 2.9e-16
-    
+
     # test to allocations
     rho  = [0.0]
     P    = 1.0
@@ -106,9 +106,9 @@ import ForwardDiff.derivative
     # @show num_alloc
     @test num_alloc == 0
 
-    @test derivative(x->compute_density(Compressible_Density(), (P=args.P.val, T=x)), args.T.val) == 0.0
-    @test derivative(x->compute_density(Compressible_Density(), (P=x, T=args.T.val)), args.P.val) == 2.90000290000145e-6
-    
+    @test derivative(x->compute_density(Compressible_Density(), (P=args.P, T=x)), args.T) == 0.0
+    @test derivative(x->compute_density(Compressible_Density(), (P=x, T=args.T)), args.P) ≈ 2.90000290000145e-6 rtol = 1e-6
+
     # Read Phase diagram interpolation object
     fname = "test_data/Peridotite_dry.in"
     PD_data = PerpleX_LaMEM_Diagram(fname)
@@ -128,7 +128,7 @@ import ForwardDiff.derivative
         Density=ConstantDensity(; ρ=2900kg / m^3),
     )
     @test GeoParams.get_ρ(r) == 2900
-    
+
     R = (
         r,
         SetMaterialParams(;
@@ -309,7 +309,7 @@ import ForwardDiff.derivative
     PhaseRatio = (0.5, 0.5)
     @test 2950e0 == compute_density_ratio(PhaseRatio, rheologies, args)
     @test 2950e0 == compute_density(rheologies, PhaseRatio, args)
-    
+
     SvPhaseRatio = SA[0.5, 0.5]
     @test 2950e0 == compute_density_ratio(SvPhaseRatio, rheologies, args)
     @test 2950e0 == compute_density(rheologies, SvPhaseRatio, args)
@@ -334,6 +334,14 @@ import ForwardDiff.derivative
     @test ρsolid == 2900.0
     @test ρmelt ≈ 2198.68
     @test ρ == (1-args.ϕ)*ρsolid + args.ϕ*ρmelt
+
+    x = MeltDependent_Density(
+        ρsolid = PT_Density(α= 1e-3),
+        ρmelt  = PT_Density(α= 1e-2),
+    )
+    @test GeoParams.get_α(x, (;ϕ = 1)) == 1e-2
+    @test GeoParams.get_α(x, (;ϕ = 0)) == 1e-3
+    @test GeoParams.get_α(x, (;ϕ = 0.5)) == 0.0055
 
     @test derivative(x -> compute_density(x_D.ρsolid, (P=args.P, T=x)), args.T) == 0.0
     @test derivative(x -> compute_density(x_D.ρsolid, (P=x, T=args.T)), args.P) == 0.0

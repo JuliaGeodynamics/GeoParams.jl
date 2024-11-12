@@ -84,7 +84,7 @@ import ForwardDiff as FD
     MatParam[3] = SetMaterialParams(;
         Name="Crust1", Phase=3, HeatCapacity=Vector_HeatCapacity(Cp=fill(1500.0, 100))
     )
-    
+
     Mat_tup = Tuple(MatParam)
 
     Mat_tup1 = (
@@ -99,7 +99,7 @@ import ForwardDiff as FD
     Phases = ones(Int64, n, n, n);
     @views Phases[:, :, 20:end] .= 2;
     @views Phases[:, :, 50:end] .= 3;
-    
+
     Cp = zeros(size(Phases));
     T = fill(1500e0, size(Phases));
     P = zeros(size(Phases));
@@ -202,7 +202,7 @@ import ForwardDiff as FD
     cond = nondimensionalize(cond, CharUnits_GEO)
     @test NumValue(cond.k) ≈ 3.8194500000000007
 
-    @test compute_conductivity(cond; T = rand()) ≈ 3.8194500000000007 # compute
+    @test compute_conductivity(cond; T=100.0) ≈ 3.8194500000000007 # compute
 
     # Temperature-dependent conductivity
     # dimensional

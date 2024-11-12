@@ -598,6 +598,21 @@ function nondimensionalize(
     return UnitValue(result)
 end
 
+function nondimensionalize(
+    ::Union{Integer, AbstractFloat,AbstractArray{<:Integer}, AbstractArray{<:AbstractFloat}, AbstractArray{Any}},
+    ::GeoUnits,
+)
+    throw(ArgumentError("The input parameter should have units"))
+end
+
+function nondimensionalize(
+    ::NTuple{N, Union{Integer, AbstractFloat,AbstractArray{<:Integer}, AbstractArray{<:AbstractFloat}, AbstractArray{Any}}},
+    ::GeoUnits,
+) where N
+    throw(ArgumentError("The input parameter should have units"))
+end
+
+
 # If it is an array, but has no units we cannot know how to nondimensionalize it
 nondimensionalize(param::AbstractArray{<:Number}, g::GeoUnits{TYPE}) where {TYPE} = param
 

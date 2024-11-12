@@ -1,4 +1,4 @@
-## `User-defined rheology`
+# User-defined rheology
 
 `CustomRheology` allows the user to interface with `GeoParams.jl` API for rheology calculations: 
 
