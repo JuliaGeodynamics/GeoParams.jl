@@ -265,7 +265,8 @@ export compute_viscosity_εII,
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration
 export compute_gravity,                                # computational routines
-    ConstantGravity
+    ConstantGravity,
+    DippingGravity
 
 # Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat
 using .MaterialParameters.HeatCapacity
