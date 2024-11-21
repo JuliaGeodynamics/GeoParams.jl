@@ -55,7 +55,7 @@ Set a constant value for the gravitational acceleration with dip and strike angl
     g  = R_z  R_y  9.81 m s^{-2} 
 ```
 """
-@kwdef struct DippingGravity{_T,U} #<: AbstractGravity{_T}
+@kwdef struct DippingGravity{_T,U} <: AbstractGravity{_T}
     g::GeoUnit{_T,U}  = 9.81m / s^2 # gravitational acceleration
     gx::GeoUnit{_T,U} = 0e0m / s^2  # gravitational acceleration
     gy::GeoUnit{_T,U} = 0e0m / s^2  # gravitational acceleration
@@ -63,10 +63,11 @@ Set a constant value for the gravitational acceleration with dip and strike angl
 end
 DippingGravity(args...) = DippingGravity(convert.(GeoUnit, args)...)
 
-function DippingGravity(α, θ, g::T) where T
+function DippingGravity(α::T1, θ::T2, g::T3) where {T1, T2, T3}
+    T          = promote_type(T1, T2, T3)
     sinα, cosα = sincosd(90 - α)
     sinθ, cosθ = sincosd(θ)
-    gᵢ         = @SVector [zero(T), zero(T), g]
+    gᵢ         = @SVector [zero(T), zero(T), T(g)]
 
     Ry = @SMatrix [
         cosα    zero(T) sinα
@@ -96,10 +97,6 @@ end
 
 # Print info 
 function show(io::IO, d::DippingGravity)
-    return print(io, "Gravitational acceleration: g=$((UnitValue(d.gz), UnitValue(d.gy), UnitValue(d.gz)))")
-end
-
-function show(io::IO, ::Any, d::DippingGravity)
     return print(io, "Gravitational acceleration: g=$((UnitValue(d.gz), UnitValue(d.gy), UnitValue(d.gz)))")
 end
 #-------------------------------------------------------------------------
