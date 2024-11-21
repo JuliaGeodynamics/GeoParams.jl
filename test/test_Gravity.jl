@@ -5,20 +5,21 @@ using Test, GeoParams
     g = 9.81
 
     gconst = ConstantGravity()
-    @test gconst.g == convert(GeoUnit, 9.81m / s^2)
+    @test compute_gravity(gconst) == 9.81
 
     gconst = ConstantGravity(; g = 1)
-    @test gconst.g == convert(GeoUnit,1)
+    @test compute_gravity(gconst) == 1
 
     d = DippingGravity(90, 0, g)
     gᵢ = compute_gravity(d)
     @test gᵢ == (0e0, 0e0, g)
 
-    d = DippingGravity(45, 0, g)
+    α = 45
+    d = DippingGravity(α, 0, g)
     gᵢ = compute_gravity(d)
     @test gᵢ == sind(90 - α) .* (g, 0, g)
 
-    d = DippingGravity(45, 45, g)
+    d = DippingGravity(α, α, g)
     gᵢ = compute_gravity(d)
     @test gᵢ ==   sind(90 - α) .* (g *  cosd(45), g *  cosd(45), g)
 end
