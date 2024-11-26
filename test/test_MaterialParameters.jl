@@ -70,4 +70,16 @@ using GeoParams
     )
 
     @test MatParam[1].Density[1].Rho(1, 10) ≈ 3.180692806182894e-18
+
+    MatParam = Array{MaterialParams,1}(undef, 1)
+    Phase = 1
+    MatParam[Phase] = SetMaterialParams(;
+        Name="Mantle",
+        Phase=Phase,
+        CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e23Pa * s)),
+        Density=PT_Density(; ρ0=3000kg / m^3),
+        CharDim=nothing,
+    )
+
+    @test isdimensional(MatParam[1].Density[1])
 end
