@@ -571,12 +571,9 @@ julia> upreferred(A)
 ```
 """
 function nondimensionalize(param::GeoUnit{T,U}, g::Union{GeoUnits{TYPE}, Nothing}) where {T,U,TYPE}
-    if isnothing(g)
-        @warn("The input parameter is not being nondimensionalized, as no characteristic units are given")
-        return param_ND = param
-    elseif param.isdimensional
+
+    if param.isdimensional
         char_val = compute_units(param, g)
-        #    @show char_val, typeof(char_val)
         val_ND = upreferred.(param.val * param.unit) / char_val
         val_ND_number = convert(T, val_ND)
         param_ND = GeoUnit{T,U}(val_ND_number, param.unit, false)          # store new value, but keep original dimensions
@@ -609,6 +606,11 @@ function nondimensionalize(
 ) where {T,K,M}
     @warn("The input parameter is not being nondimensionalized, as no characteristic units are given")
     return ustrip.(param)
+end
+
+function nondimensionalize(param::GeoUnit, g::Nothing)
+    @warn("The input parameter is not being nondimensionalized, as no characteristic units are given")
+    return param
 end
 
 function nondimensionalize(
