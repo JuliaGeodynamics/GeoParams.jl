@@ -16,7 +16,7 @@ using GeoParams:
     AbstractPhaseDiagramsStruct,
     PerpleX_LaMEM_Diagram
 
-# Define additional units that are useful in geodynamics 
+# Define additional units that are useful in geodynamics
 @unit Myrs "Myrs" MillionYears 1000000u"yr" false
 
 function __init__()
@@ -156,7 +156,7 @@ end
 Base.convert(t::Type{GeoUnit{T,U}}, x::Quantity{T,U,X}) where {T,U,X} = GeoUnit(x)
 Base.convert(t::Type{GeoUnit{T,U}}, x::T) where {T,U} = GeoUnit(x)
 
-# Define methods to deal with cases when the input has integers 
+# Define methods to deal with cases when the input has integers
 GeoUnit(val::Union{Int64,AbstractArray{Int64}}) = GeoUnit(Float64.(val))
 GeoUnit(val::Union{Int32,AbstractArray{Int32}}) = GeoUnit(Float32.(val))
 function GeoUnit(val::Union{Quantity{Int64},AbstractArray{<:Quantity{<:Int64}}})
@@ -208,7 +208,7 @@ Base.convert(::Type{GeoUnit{T}}, v::Quantity) where {T} = GeoUnit(T.(v))
 Base.convert(::Type{GeoUnit{T}}, v::Number) where {T} = GeoUnit(T(v))
 Base.convert(::Type{GeoUnit{T}}, v::AbstractArray) where {T} = GeoUnit(T.(v))
 
-#Base.convert(::Type{GeoUnit{T,U}},  v::T)    where {T,U}    =   GeoUnit{T,typeof(unit(v[1]))}(v) 
+#Base.convert(::Type{GeoUnit{T,U}},  v::T)    where {T,U}    =   GeoUnit{T,typeof(unit(v[1]))}(v)
 
 Base.promote_rule(::Type{GeoUnit}, ::Type{Quantity}) = GeoUnit
 
@@ -225,8 +225,8 @@ end
 # define a few basic routines so we can easily operate with GeoUnits
 Base.length(v::GeoUnit) = length(v.val)
 Base.size(v::GeoUnit) = size(v.val)
-Base.getindex(A::GeoUnit{T,U}, inds::Vararg{Int,N}) where {T,U,N} = GeoUnit(A.val[inds...],A.unit, A.isdimensional)             
-Base.iterate(s::GeoUnit, i::Integer) = GeoUnit(s.val[i], s.unit, s.isdimensional)  
+Base.getindex(A::GeoUnit{T,U}, inds::Vararg{Int,N}) where {T,U,N} = GeoUnit(A.val[inds...],A.unit, A.isdimensional)
+Base.iterate(s::GeoUnit, i::Integer) = GeoUnit(s.val[i], s.unit, s.isdimensional)
 Base.iterate(S::GeoUnit, state=1) = state > length(S) ? nothing : (state, state+1)
 
 
@@ -237,7 +237,7 @@ for op in (:+, :-, :*, :/)
     @eval Base.$op(x::Number, y::GeoUnit) = $(op)(x, y.val)
 
     # Multiplying/dividing/adding/subtracting a GeoUnit with another one, returns a GeoUnit
-    @eval function Base.$op(x::GeoUnit, y::GeoUnit) 
+    @eval function Base.$op(x::GeoUnit, y::GeoUnit)
         isdimensional_new_unit = x.isdimensional*y.isdimensional
         new_value = $(op)(upreferred.(UnitValue(x)), upreferred.(UnitValue(y)))
         if isdimensional_new_unit
@@ -261,7 +261,7 @@ for op in (:+, :-, :*, :/)
     @eval Base.$op(x::GeoUnit, y::AbstractArray{<:Quantity}) = broadcast($op, NumValue(x), y)
 
     @eval Base.$op(x::AbstractArray{<:Quantity}, y::GeoUnit) = broadcast($op, x, Value(y))
-    
+
     # Broadcasting
     @eval function Base.broadcasted(::typeof($(op)), A::GeoUnit, B::AbstractArray)
         return broadcast($(op), NumValue(A), B)
@@ -322,7 +322,7 @@ end
     K = 1                      # temperature in SI units for material parameter scaling
     s = 1                      # time in SI units for material parameter scaling
     m = 1                      # length in SI units for material parameter scaling
-    Pa = 1                      # stress in SI units 
+    Pa = 1                      # stress in SI units
     kg = upreferred(Pa * m * s^2)    # compute mass from pascal. Note: this may result in very large values
 
     # Main SI units (used later for nondimensionalization)
@@ -369,8 +369,8 @@ The characteristic values given as input can be in arbitrary units (`km` or `m`)
 # Examples:
 ```julia-repl
 julia> CharUnits = GEO_units()
-Employing GEO units 
-Characteristic values: 
+Employing GEO units
+Characteristic values:
          length:      1000 km
          time:        0.3169 Myrs
          stress:      10 MPa
@@ -381,8 +381,8 @@ julia> CharUnits.velocity
 If we instead have a crustal-scale simulation, it is likely more appropriate to use a different characteristic `length`:
 ```julia-repl
 julia> CharUnits = GEO_units(length=10km)
-Employing GEO units 
-Characteristic values: 
+Employing GEO units
+Characteristic values:
          length:      10 km
          time:        0.3169 Myrs
          stress:      10 MPa
@@ -430,13 +430,13 @@ end
 """
     CharUnits = SI_units(length=1000m, temperature=1000K, stress=10Pa, viscosity=1e20)
 
-Specify the characteristic values using SI units 
+Specify the characteristic values using SI units
 
 # Examples:
 ```julia-repl
 julia> CharUnits = SI_units(length=1000m)
-Employing SI units 
-Characteristic values: 
+Employing SI units
+Characteristic values:
          length:      1000 m
          time:        1.0e19 s
          stress:      10 Pa
@@ -487,17 +487,17 @@ end
 
 """
     CharUnits = NO_units(length=1, temperature=1, stress=1, viscosity=1)
-   
+
 Specify the characteristic values in non-dimensional units
 
 # Examples:
 ```julia-repl
 julia> using GeoParams;
 julia> CharUnits = NO_units()
-Employing NONE units 
-Characteristic values: 
+Employing NONE units
+Characteristic values:
          length:      1
-         time:        1.0 
+         time:        1.0
          stress:      1
          temperature: 1.0
 ```
@@ -545,8 +545,8 @@ Nondimensionalizes `param` using the characteristic values specified in `CharUni
 julia> using GeoParams;
 julia> CharUnits =   GEO_units();
 julia> v         =   3cm/yr
-3 cm yr⁻¹ 
-julia> v_ND      =   nondimensionalize(v, CharUnits) 
+3 cm yr⁻¹
+julia> v_ND      =   nondimensionalize(v, CharUnits)
 0.009506426344208684
 ```
 # Example 2
@@ -555,13 +555,13 @@ In geodynamics one sometimes encounters more funky units
 julia> CharUnits =   GEO_units();
 julia> A         =   6.3e-2MPa^-3.05*s^-1
 0.063 MPa⁻³·⁰⁵ s⁻¹
-julia> A_ND      =   nondimensionalize(A, CharUnits) 
+julia> A_ND      =   nondimensionalize(A, CharUnits)
 7.068716262102384e14
 ```
 
 In case you are interested to see how the units of `A` look like in different units, use this function from the [Unitful](https://github.com/PainterQubits/Unitful.jl) package:
 ```julia-repl
-julia> uconvert(u"Pa^-3.05*s^-1",A) 
+julia> uconvert(u"Pa^-3.05*s^-1",A)
 3.157479571851836e-20 Pa⁻³·⁰⁵
 ```
 and to see it decomposed in the basic `SI` units of length, mass and time:
@@ -570,8 +570,11 @@ julia> upreferred(A)
 3.1574795718518295e-20 m³·⁰⁵ s⁵·¹ kg⁻³·⁰⁵
 ```
 """
-function nondimensionalize(param::GeoUnit{T,U}, g::GeoUnits{TYPE}) where {T,U,TYPE}
-    if param.isdimensional
+function nondimensionalize(param::GeoUnit{T,U}, g::Union{GeoUnits{TYPE}, Nothing}) where {T,U,TYPE}
+    if isnothing(g)
+        @warn("The input parameter is not being nondimensionalized, as no characteristic units are given")
+        return param_ND = param
+    elseif param.isdimensional
         char_val = compute_units(param, g)
         #    @show char_val, typeof(char_val)
         val_ND = upreferred.(param.val * param.unit) / char_val
@@ -587,15 +590,25 @@ end
 # in case the parameter is already non-dimensional:
 nondimensionalize(param::String, g::GeoUnits{TYPE}) where {TYPE} = param
 
+nondimensionalize(param::String, g::Nothing)  = param
+
 # in case it is a unitful quantity
 function nondimensionalize(
     param::Union{Unitful.Quantity{T,K,M},AbstractArray{<:Quantity{T,K,M}}},
-    g::GeoUnits{TYPE},
+    g::Union{GeoUnits{TYPE}, Nothing},
 ) where {TYPE,T,K,M}
     param_Geo = GeoUnit(param)
     result = nondimensionalize(param_Geo, g)
 
     return UnitValue(result)
+end
+
+function nondimensionalize(
+    param::Union{Unitful.Quantity{T,K,M},AbstractArray{<:Quantity{T,K,M}}},
+    g::Nothing,
+) where {T,K,M}
+    @warn("The input parameter is not being nondimensionalized, as no characteristic units are given")
+    return ustrip.(param)
 end
 
 function nondimensionalize(
@@ -616,13 +629,27 @@ end
 # If it is an array, but has no units we cannot know how to nondimensionalize it
 nondimensionalize(param::AbstractArray{<:Number}, g::GeoUnits{TYPE}) where {TYPE} = param
 
+function nondimensionalize(
+    param::AbstractArray{<:Quantity{T, K, M}},
+    g::GeoUnits{TYPE}
+) where {TYPE, T, K, M}
+    param_Geo = GeoUnit.(param)
+    result = map(p -> nondimensionalize(p, g), param_Geo)
+    return UnitValue.(result)
+end
+
+function nondimensionalize(param::AbstractArray{<:Number}, g::Nothing)
+    @warn("The input parameter is not being nondimensionalized, as no characteristic units are given")
+    return param
+end
+
 """
     param = nondimensionalize(param::NTuple{N,Quantity}, g::GeoUnits{TYPE})
 
-nondimensionalizes a tuple of parameters    
+nondimensionalizes a tuple of parameters
 """
 function nondimensionalize(
-    param::NTuple{N,Union{Quantity,GeoUnit}}, g::GeoUnits{TYPE}
+    param::NTuple{N,Union{Quantity,GeoUnit}}, g::Union{GeoUnits{TYPE}, Nothing}
 ) where {N,TYPE}
     ntuple(Val(N)) do i
         Base.@_inline_meta
@@ -644,7 +671,7 @@ function compute_units(
     else
         prod(dimension_types(dim)) do y
             val::T = upreferred(getproperty(g, Unitful.name(y))).val      # Retrieve the characteristic value from structure g
-            pow = Float64(y.power)                                  # power by which it should be multiplied   
+            pow = Float64(y.power)                                  # power by which it should be multiplied
             val^pow                                     # multiply characteristic value
         end
     end
@@ -660,7 +687,7 @@ Non-dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
 
 # """
 @generated function nondimensionalize(
-    MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}
+    MatParam::AbstractMaterialParam, g::Union{GeoUnits{TYPE}, Nothing}
 ) where {TYPE}
     fields = fieldnames(MatParam)
     N = length(fields)
@@ -675,7 +702,7 @@ Non-dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
 end
 
 @inline function _nondimensionalize(
-    MatParam, z::Union{GeoUnit,AbstractMaterialParam}, g::GeoUnits, param
+    MatParam, z::Union{GeoUnit,AbstractMaterialParam}, g::Union{GeoUnits, Nothing}, param
 )
     # non-dimensionalize:
     z = nondimensionalize(z, g)
@@ -692,7 +719,7 @@ end
 nondimensionalizes all fields within the Material Parameters structure that contain material parameters
 """
 @generated function nondimensionalize(
-    phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TYPE}
+    phase_mat::AbstractMaterialParamsStruct, g::Union{GeoUnits{TYPE}, Nothing}
 ) where {TYPE}
     params = fieldnames(phase_mat)
     N = length(params)
@@ -740,14 +767,14 @@ end
 """
     dimensionalize(param, param_dim::Unitful.FreeUnits, CharUnits::GeoUnits{TYPE})
 
-Dimensionalizes `param` into the dimensions `param_dim` using the characteristic values specified in `CharUnits`.  
+Dimensionalizes `param` into the dimensions `param_dim` using the characteristic values specified in `CharUnits`.
 
 # Example
 ```julia-repl
 julia> CharUnits =   GEO_units();
-julia> v_ND      =   nondimensionalize(3cm/yr, CharUnits) 
+julia> v_ND      =   nondimensionalize(3cm/yr, CharUnits)
 0.031688087814028945
-julia> v_dim     =   dimensionalize(v_ND, cm/yr, CharUnits) 
+julia> v_dim     =   dimensionalize(v_ND, cm/yr, CharUnits)
 3.0 cm yr⁻¹
 ```
 
@@ -758,6 +785,13 @@ function dimensionalize(
     char_val = compute_units(GeoUnit(1.0 * param_dim), g)         # Determine characteristic units
     param = uconvert.(param_dim, param_ND * char_val)
     return param
+end
+
+function dimensionalize(
+    param_ND, param_dim::Unitful.FreeUnits, g::Nothing
+)
+    @warn("The input parameter is not being dimensionalized, as no characteristic units are given")
+    return ustrip.(param_ND)
 end
 
 function dimensionalize(param_ND::GeoUnit{T,U}, g::GeoUnits{TYPE}) where {T,U,TYPE}
@@ -779,7 +813,7 @@ Dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
 
 """
 @generated function dimensionalize(
-    MatParam::AbstractMaterialParam, g::GeoUnits{TYPE}
+    MatParam::AbstractMaterialParam, g::Union{GeoUnits{TYPE}, Nothing}
 ) where {TYPE}
     fields = fieldnames(MatParam)
     N = length(fields)
@@ -794,7 +828,7 @@ Dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
 end
 
 @inline function _dimensionalize(
-    MatParam, z::Union{GeoUnit,AbstractMaterialParam}, g::GeoUnits, param
+    MatParam, z::Union{GeoUnit,AbstractMaterialParam}, g::Union{GeoUnits, Nothing}, param
 )
     # non-dimensionalize:
     z = dimensionalize(z, g)
@@ -811,7 +845,7 @@ end
 Dimensionalizes all fields within the Material Parameters structure that contain material parameters
 """
 @generated function dimensionalize(
-    phase_mat::AbstractMaterialParamsStruct, g::GeoUnits{TYPE}
+    phase_mat::AbstractMaterialParamsStruct, g::Union{GeoUnits{TYPE}, Nothing}
 ) where {TYPE}
     params = fieldnames(phase_mat)
     N = length(params)
@@ -859,7 +893,7 @@ dimensionalizes a tuple of material parameter structures (e.g., Density, CreepLa
 
 """
 function dimensionalize(
-    MatParam::NTuple{N,AbstractMaterialParamsStruct}, g::GeoUnits
+    MatParam::NTuple{N,AbstractMaterialParamsStruct}, g::Union{GeoUnits, Nothing}
 ) where {N}
     return ntuple(i -> dimensionalize(MatParam[i], g), Val(N))
 end
@@ -869,7 +903,7 @@ end
 """
     isDimensional(MatParam::AbstractMaterialParam)
 
-`true` if MatParam is in dimensional units.    
+`true` if MatParam is in dimensional units.
 """
 function isDimensional(MatParam::AbstractMaterialParam)
     isDim = false
