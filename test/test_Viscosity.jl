@@ -129,35 +129,35 @@ import ForwardDiff as FD
     @test FD.derivative(x-> compute_viscosity_εII(rheology, εII, (; depth=1e3, P=x, T=1.6e3, dt = dt)),       args.P) == 9.834109234429906e10
     @test FD.derivative(x-> compute_elastoviscosity_τII(rheology, τII, (; depth=1e3, P=x, T=1.6e3, dt = dt)), args.P) == 9.789431074626257e10
     @test FD.derivative(x-> compute_elastoviscosity_εII(rheology, εII, (; depth=1e3, P=x, T=1.6e3, dt = dt)), args.P) == 9.789431074626257e10
+
+    T  = LinRange(0, 1.6e3, 100)
+    P  = LinRange(0, 9e9,   100)
+    dT = zeros(100, 100)
+    dP = zeros(100, 100)
+
+    for (j, T) in enumerate(T), (i, P) in enumerate(P)
+        dT[i,j] =
+            FD.derivative(
+                x-> compute_viscosity_τII(rheology, τII, (; depth=1e3, P=P, T=x, dt = dt)), 
+                T
+            ) 
+        dP[i,j] =
+            FD.derivative(
+                x-> compute_viscosity_τII(rheology, τII, (; depth=1e3, P=x, T=T, dt = dt)), 
+                P
+            ) 
+    end
 end
 
-T  = LinRange(0, 1.6e3, 100)
-P  = LinRange(0, 9e9,   100)
-dT = zeros(100, 100)
-dP = zeros(100, 100)
+# using GLMakie
 
-for (j, T) in enumerate(T), (i, P) in enumerate(P)
-    dT[i,j] =
-        FD.derivative(
-            x-> compute_viscosity_τII(rheology, τII, (; depth=1e3, P=P, T=x, dt = dt)), 
-            T
-        ) 
-    dP[i,j] =
-        FD.derivative(
-            x-> compute_viscosity_τII(rheology, τII, (; depth=1e3, P=x, T=T, dt = dt)), 
-            P
-        ) 
-end
-
-using GLMakie
-
-fig=Figure()
-ax1 = Axis(fig[1, 1])
-ax2 = Axis(fig[2, 1])
-# h1 = heatmap!(ax1, @. log10(abs(dT)))
-# h2 = heatmap!(ax2, @. log10(abs(dP)))
-h1 = heatmap!(ax1, abs.(dT), colormap=:lipari)
-h2 = heatmap!(ax2, abs.(dP), colormap=:lipari)
-Colorbar(fig[1,2], h1)
-Colorbar(fig[2,2], h2)
-fig
+# fig=Figure()
+# ax1 = Axis(fig[1, 1])
+# ax2 = Axis(fig[2, 1])
+# # h1 = heatmap!(ax1, @. log10(abs(dT)))
+# # h2 = heatmap!(ax2, @. log10(abs(dP)))
+# h1 = heatmap!(ax1, abs.(dT), colormap=:lipari)
+# h2 = heatmap!(ax2, abs.(dP), colormap=:lipari)
+# Colorbar(fig[1,2], h1)
+# Colorbar(fig[2,2], h2)
+# fig
