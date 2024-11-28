@@ -1,5 +1,5 @@
 using Test, GeoParams, StaticArrays, LaTeXStrings
-
+import ForwardDiff.derivative
 @testset "Density.jl" begin
 
     #Set alias for density function
@@ -54,7 +54,9 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
     args = (P=1e3MPa, T=1000C)
     @test compute_density(x2, args) ≈ 5713.000000000001kg * m^-3
     @test x2(args) ≈ 5713.000000000001kg * m^-3
-    
+    @test derivative(x -> compute_density(x2,  (P=1e9, T=x)), 1e3) == -0.08700000000000001
+    @test derivative(x -> compute_density(x2,  (P=x, T=1e3)), 1e9) == 2.9e-6
+
     # Test the density calculations with non-dimensionalized units
     x2 = nondimensionalize(x2, CharUnits_GEO)
     @test x2.T0.val ≈ 0.21454659702313156
@@ -68,11 +70,11 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
     @test compute_density(x1) ≈ 2.9e-16
     @test x1(args) ≈ 2.9e-16
     @test x1() ≈ 2.9e-16
-    
+
     # test to allocations
-    rho = [0.0]
-    P = 1.0
-    T = 1.0
+    rho  = [0.0]
+    P    = 1.0
+    T    = 1.0
     args = (P=P, T=T)
 
     # This allocates the first time it is called but not the second time
@@ -104,6 +106,9 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
     # @show num_alloc
     @test num_alloc == 0
 
+    @test derivative(x->compute_density(Compressible_Density(), (P=args.P, T=x)), args.T) == 0.0
+    @test derivative(x->compute_density(Compressible_Density(), (P=x, T=args.T)), args.P) ≈ 2.90000290000145e-6 rtol = 1e-6
+
     # Read Phase diagram interpolation object
     fname = "test_data/Peridotite_dry.in"
     PD_data = PerpleX_LaMEM_Diagram(fname)
@@ -123,7 +128,7 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
         Density=ConstantDensity(; ρ=2900kg / m^3),
     )
     @test GeoParams.get_ρ(r) == 2900
-    
+
     R = (
         r,
         SetMaterialParams(;
@@ -152,8 +157,8 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
 
     # redimensionalize and check with value from original structure that did not use non-dimensionalization
     @test ustrip(dimensionalize(rho_ND, kg / m^3, CharDim)) ≈ PD_data.Rho(1500.0, 1e8)
-    @test ustrip(dimensionalize(Vp_ND, km / s, CharDim)) ≈ PD_data.Vp(1500.0, 1e8)
-    @test ustrip(dimensionalize(Vs_ND, km / s, CharDim)) ≈ PD_data.Vs(1500.0, 1e8)
+    @test ustrip(dimensionalize(Vp_ND, km / s, CharDim))    ≈ PD_data.Vp(1500.0, 1e8)
+    @test ustrip(dimensionalize(Vs_ND, km / s, CharDim))    ≈ PD_data.Vs(1500.0, 1e8)
 
     # Test computation of density for the whole computational domain, using arrays
     MatParam = Vector{AbstractMaterialParamsStruct}(undef, 5)
@@ -309,6 +314,11 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
     @test 2950e0 == compute_density_ratio(SvPhaseRatio, rheologies, args)
     @test 2950e0 == compute_density(rheologies, SvPhaseRatio, args)
 
+    @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P=args.P, T=x)), args.T) == 0.0
+    @test derivative(x ->       compute_density(rheologies, PhaseRatio, (P=args.P, T=x)), args.T) == 0.0
+    @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P=x, T=args.T)), args.P) == 1.5e-6
+    @test derivative(x ->       compute_density(rheologies, PhaseRatio, (P=x, T=args.T)), args.P) == 1.5e-6
+
     # Melt-dependent density ----------------------------------
     CharUnits_GEO = GEO_units(; viscosity=1e19, length=1000km)
     x_D = MeltDependent_Density(ρmelt=T_Density(ρ0=2200kg / m^3))
@@ -326,12 +336,19 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
     @test ρ == (1-args.ϕ)*ρsolid + args.ϕ*ρmelt
 
     x = MeltDependent_Density(
-        ρsolid = PT_Density(α= 1e-3), 
-        ρmelt  = PT_Density(α= 1e-2), 
+        ρsolid = PT_Density(α= 1e-3),
+        ρmelt  = PT_Density(α= 1e-2),
     )
     @test GeoParams.get_α(x, (;ϕ = 1)) == 1e-2
-    @test GeoParams.get_α(x, (;ϕ = 0)) == 1e-3 
+    @test GeoParams.get_α(x, (;ϕ = 0)) == 1e-3
     @test GeoParams.get_α(x, (;ϕ = 0.5)) == 0.0055
+
+    @test derivative(x -> compute_density(x_D.ρsolid, (P=args.P, T=x)), args.T) == 0.0
+    @test derivative(x -> compute_density(x_D.ρsolid, (P=x, T=args.T)), args.P) == 0.0
+    @test derivative(x -> compute_density(x_D.ρmelt,  (P=args.P, T=x)), args.T) == -0.066
+    @test derivative(x -> compute_density(x_D.ρmelt,  (P=x, T=args.T)), args.P) == 0.0
+    @test derivative(x -> compute_density(x_D,        (P=args.P, T=x)), args.T) == 0.0
+    @test derivative(x -> compute_density(x_D,        (P=x, T=args.T)), args.P) == 0.0
 
     rheologies = (
         SetMaterialParams(;
@@ -352,6 +369,8 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
     args = (P=0.0, T=20.0+273.15, ϕ=0.5)
     @test compute_density_ratio(PhaseRatio, rheologies, args) == compute_density(rheologies, PhaseRatio, args) == ρ
 
+    @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P=args.P, T=x)), args.T) == 0.0
+    @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P=x, T=args.T)), args.P) == 0.0
 
     rho = zeros(size(Phases))
     T = fill(20.0+273.15, size(Phases))

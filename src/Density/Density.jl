@@ -32,11 +32,11 @@ export compute_density,     # calculation routines
 
 # Define "empty" computational routines in case nothing is defined
 function compute_density!(
-    rho::_T, s::No_MaterialParam{_T}; P::_T=zero(_T), T::_T=zero(_T)
-) where {_T}
+    rho, s::No_MaterialParam{_T}; P::_T1=0e0, T::_T2=0e0
+) where {_T, _T1, _T2}
     return zero(_T)
 end
-function compute_density(s::No_MaterialParam{_T}; P::_T=zero(_T), T::_T=zero(_T)) where {_T}
+function compute_density(s::No_MaterialParam{_T}; P::_T1=0e0, T::_T2=0e0) where {_T,_T1,_T2}
     return zero(_T)
 end
 

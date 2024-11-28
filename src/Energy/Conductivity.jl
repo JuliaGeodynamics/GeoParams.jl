@@ -432,9 +432,10 @@ function (s::TP_Conductivity{_T})(; P=0e0, T=0e0, kwargs...) where {_T}
     end
 end
 
+
 function (s::TP_Conductivity{_T})(
-    P::AbstractArray{_T,N}, T::AbstractArray{_T,N}; kwargs...
-) where {_T,N}
+    P::AbstractArray, T::AbstractArray; kwargs...
+) where {_T}
     if T isa Quantity
         @unpack_units a, b, c, d = s
     else
@@ -460,7 +461,8 @@ function (s::TP_Conductivity{_T})(
     return k
 end
 
-(s::TP_Conductivity)(P::AbstractArray, T::AbstractArray) = s(P, T)
+
+#(s::TP_Conductivity)(P::AbstractArray, T::AbstractArray) = s(P, T)
 compute_conductivity(s::TP_Conductivity, P::AbstractArray, T::AbstractArray) = s(P, T)
 
 # add methods programmatically
