@@ -25,11 +25,11 @@ export compute_permeability,     # calculation routines
 
 # Define "empty" computational routines in case nothing is defined
 function compute_permeability!(
-    k, s::No_MaterialParam{_T}; ϕ::_T1=zero(_T1)
+    k, s::No_MaterialParam{_T}; ϕ::_T1=0e0
 ) where {_T, _T1}
     return zero(_T)
 end
-function compute_permeability(s::No_MaterialParam{_T}; ϕ::_T1=zero(_T1)) where {_T, _T1}
+function compute_permeability(s::No_MaterialParam{_T}; ϕ::_T1=0e0) where {_T, _T1}
     return zero(_T)
 end
 
