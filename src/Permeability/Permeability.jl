@@ -40,7 +40,7 @@ end
 Defines a constant permeability value for a given material.
 
 # Arguments
-- `k::Float64`: The permeability value in square meters (m^2). Default is `1e-12 m^2`.
+- `k`: The permeability value in square meters (m^2). Default is `1e-12 m^2`.
 
 # Example
 ```julia
@@ -83,6 +83,29 @@ function show(io::IO, g::ConstantPermeability)
 end
 
 # Hazen Permeability
+"""
+    HazenPermeability(C = 1.0 * NoUnits, D10 = 1e-4m)
+
+Defines the Hazen permeability equation for a given material.
+```math
+    k = C \\cdot D_{10}^2
+```
+
+# Arguments
+- `C`: The Hazen constant. Default is `1.0`.
+- `D10`: The effective grain size. Default is `1e-4 m`.
+
+# Example
+```julia
+rheology = SetMaterialParams(;
+                      Phase=1,
+                      CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e21Pa * s)),
+                      Gravity=ConstantGravity(; g=9.81.0m / s^2),
+                      Density= MeltDependent_Density(),
+                      Permeability = HazenPermeability(; C=1.0, D10=1e-4m),
+                      )
+```
+"""
 @with_kw_noshow struct HazenPermeability{_T,U1,U2} <: AbstractPermeability{_T}
     C::GeoUnit{_T,U1} = 1.0 * NoUnits # Hazen constant
     D10::GeoUnit{_T,U2} = 1e-4 * m    # Effective grain size
@@ -113,6 +136,31 @@ function show(io::IO, g::HazenPermeability)
 end
 
 # Power-law Permeability
+"""
+    PowerLawPermeability(c = 1.0, k0 = 1e-12m^2, ϕ = 1e-2, n = 3)
+
+Defines the power-law permeability equation for a given material.
+```math
+    c * k_0 * \\phi^{n}
+```
+
+# Arguments
+- `c`: The power-law constant. Default is `1.0`.
+- `k0`: The reference permeability. Default is `1e-12 m^2`.
+- `ϕ`: The reference porosity. Default is `1e-2`.
+- `n`: The exponent. Default is `3`.
+
+# Example
+```julia
+rheology = SetMaterialParams(;
+                      Phase=1,
+                      CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e21Pa * s)),
+                      Gravity=ConstantGravity(; g=9.81.0m / s^2),
+                      Density= MeltDependent_Density(),
+                      Permeability = PowerLawPermeability(; c=1.0, k0=1e-12m^2, ϕ=1e-2, n=3),
+                      )
+```
+"""
 @with_kw_noshow struct PowerLawPermeability{_T,U1,U2,U3, U4} <: AbstractPermeability{_T}
     c::GeoUnit{_T,U1}  = 1.0 * NoUnits  # Power-law constant
     k0::GeoUnit{_T,U2} = 1e-12 * m^2    # reference permeability
@@ -144,6 +192,30 @@ function show(io::IO, g::PowerLawPermeability)
 end
 
 # Carman-Kozeny Permeability
+"""
+    CarmanKozenyPermeability(c = 1.0m^2, ϕ0 = 0.01, n = 3)
+
+Defines the Carman-Kozeny permeability equation for a given material.
+```math
+    k = c \\left(\\frac{\\phi}{\\phi_0}\\right)^n
+```
+
+# Arguments
+- `c`: The Carman-Kozeny constant. Default is `1.0 m^2`.
+- `ϕ0`: The reference porosity. Default is `0.01`.
+- `n`: The exponent. Default is `3`.
+
+# Example
+```julia
+rheology = SetMaterialParams(;
+                      Phase=1,
+                      CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e21Pa * s)),
+                      Gravity=ConstantGravity(; g=9.81.0m / s^2),
+                      Density= MeltDependent_Density(),
+                      Permeability = CarmanKozenyPermeability(; c=1.0m^2, ϕ0=0.01, n=3),
+                      )
+```
+"""
 @with_kw_noshow struct CarmanKozenyPermeability{_T,U1,U2,U3} <: AbstractPermeability{_T}
     c::GeoUnit{_T,U1} = 1.0 * m^2       # Carman-Kozeny constant
     ϕ0::GeoUnit{_T,U2} = 0.01 * NoUnits # reference porosity
@@ -175,6 +247,11 @@ end
 
 #------------------------------------------------------------------------------------------------------------------#
 # Computational routines needed for computations with the MaterialParams structure
+"""
+    compute_permeability(k::AbstractPermeability, args)
+
+Computation of permeability `k` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided.
+"""
 function compute_permeability(s::AbstractMaterialParamsStruct, args)
     return compute_permeability(s.Permeability[1], args)
 end

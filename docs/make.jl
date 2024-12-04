@@ -20,6 +20,7 @@ makedocs(;
             "Viscosity" => "man/viscosity.md",
             "Elasticity" => "man/elasticity.md",
             "Plasticity" => "man/plasticity.md",
+            "Permeability" => "man/permeability.md",
             "Heat Capacity" => "man/heatcapacity.md",
             "Conductivity" => "man/conductivity.md",
             "Latent heat" => "man/latentheat.md",
