@@ -16,6 +16,7 @@ using Parameters         # helps setting default parameters in structures
 using Unitful            # Units
 using BibTeX             # references of creep laws
 using StaticArrays
+using Requires: @require
 using LinearAlgebra
 using ForwardDiff
 using MuladdMacro
@@ -120,6 +121,7 @@ export compute_density,                                # computational routines
     compute_density!,
     param_info,
     AbstractDensity,
+    ConduitDensity,
     No_Density,
     ConstantDensity,
     PT_Density,
@@ -129,6 +131,8 @@ export compute_density,                                # computational routines
     PhaseDiagram_LookupTable,
     Read_LaMEM_Perple_X_Diagram,
     MeltDependent_Density,
+    BubbleFlow_Density,
+    GasPyroclast_Density,
     compute_density_ratio
 
 # Constitutive relationships laws
@@ -432,6 +436,17 @@ export PlotStrainrateStress,
     PlotPressureStressTime_0D,
     StrengthEnvelopePlot
 
+# We do not check `isdefined(Base, :get_extension)` as recommended since
+# Julia v1.9.0 does not load package extensions when their dependency is
+# loaded from the main environment.
+function __init__()
+   @static if !(VERSION >= v"1.9.1")
+       @require GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a" begin
+           print("Adding plotting routines of GeoParams through GLMakie \n")
+           @eval include("../ext/GeoParamsGLMakieExt.jl")
+       end
+   end
+end
 #Set functions aliases using @use
 include("aliases.jl")
 export ntuple_idx
