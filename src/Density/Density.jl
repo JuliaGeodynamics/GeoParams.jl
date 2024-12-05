@@ -276,7 +276,14 @@ Defines the BubbleFlow_Density as descriped in Slezin (2003) with a default gas 
 ```math
     \\rho = \\frac{1}{\\frac{c_0 - c}{\\rho_g} + \\frac{1-(c_0-c)}{\\rho_m}}
 ```
-
+with
+```math
+c =
+\\begin{cases}
+   aP^{1/2} & \\text{for } P < \\frac{c_0^2}{a^2} \\\\
+    c_0 & \\text{for } P \\geq \\frac{c_0^2}{a^2}
+\\end{cases}
+```
 # Arguments
 - `ρmelt`: Density of the melt
 - `ρgas`: Density of the gas
@@ -299,11 +306,11 @@ rheology = SetMaterialParams(;
 - Slezin, Yu. B. (2003), The mechanism of volcanic eruptions (a steady state approach), Journal of Volcanology and Geothermal Research, 122, 7-50, https://doi.org/10.1016/S0377-0273(02)00464-X
 - Sparks, R. S. J.(1978), The dynamics of bubble formation and growth in magmas: A review and analysis, Journal of Volcanology and Geothermal Research, 3, 1-37, https://doi.org/10.1016/0377-0273(78)90002-1
 """
-@with_kw_noshow struct BubbleFlow_Density{_T, U1, U2, U3, S1<:AbstractDensity, S2 <:AbstractDensity, S3} <: ConduitDensity{_T}
+@with_kw_noshow struct BubbleFlow_Density{_T, U1, U2, U3, S1<:AbstractDensity, S2 <:AbstractDensity} <: ConduitDensity{_T}
     ρmelt::S1 = ConstantDensity(ρ=2900kg/m^3)   # density of the melt
     ρgas::S2 = ConstantDensity(ρ=1kg/m^3)       # density of the gas
-    c0::GeoUnit{_T, U1} = 0e0                   # total volatile content
-    a::GeoUnit{_T, U2} = 0.0041MPa^-1//2        # gas solubility constant
+    c0::GeoUnit{_T, U1} = 0e0 * NoUnits         # total volatile content
+    a::GeoUnit{_T, U2} = 0.0041MPa^(-1//2)      # gas solubility constant
     ρ::GeoUnit{_T,U3} = 2900.0kg / m^3          # to keep track on whether this struct is dimensional or not
 end
 
@@ -328,7 +335,7 @@ end
         c = c0
     end
 
-    return 1/(((c0-c)/ρgas) + (1-(c0-c))/ρmelt)
+    return inv(((c0-c)/ρgas) + (1-(c0-c))/ρmelt)
 end
 
 @inline (s::BubbleFlow_Density)(args)                = s(; args...)
@@ -376,9 +383,9 @@ rheology = SetMaterialParams(;
 @with_kw_noshow struct GasPyroclast_Density{_T, U1, U2, U3, S1<:AbstractDensity, S2 <:AbstractDensity, S3} <: ConduitDensity{_T}
     ρmelt::S1 = ConstantDensity(ρ=2900kg/m^3)   # density of the melt
     ρgas::S2 = ConstantDensity(ρ=1kg/m^3)       # density of the gas
-    δ::GeoUnit{_T, U1} = 0e0                    # volume fraction of fee gas in flow
-    β::GeoUnit{_T, U2} = 0e0                    # gas volume fraction enclosed within the particles
-    ρ::GeoUnit{_T,U2} = 2900.0kg / m^3          # to keep track on whether this struct is dimensional or not
+    δ::GeoUnit{_T, U1} = 0e0 * NoUnits          # volume fraction of free gas in flow
+    β::GeoUnit{_T, U2} = 0e0 * NoUnits          # gas volume fraction enclosed within the particles
+    ρ::GeoUnit{_T, U3} = 2900.0kg / m^3         # to keep track on whether this struct is dimensional or not
 end
 
 GasPyroclast_Density(args...) = GasPyroclast_Density(args[1], args[2], convert.(GeoUnit, args[3:end])...)
