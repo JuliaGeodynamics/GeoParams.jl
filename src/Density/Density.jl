@@ -334,12 +334,12 @@ end
     cutoff = c0^2/a^2
 
     if P < cutoff
-        c = a * P^(1//2)
+        c = a * sqrt(P)
     else
         c = c0
     end
 
-    return 1e0/(((c0-c)/ρgas) + ((1-(c0-c))/ρmelt))
+    return inv((c0-c)/ρgas + (1-(c0-c))/ρmelt)
 end
 
 @inline (s::BubbleFlow_Density)(args)                = s(; args...)
@@ -561,12 +561,12 @@ function get_α(rho::BubbleFlow_Density; P::T=0.0, kwargs...) where {T}
     cutoff = c0^2/a^2
 
     if P < cutoff
-        c = a * P^(1//2)
+        c = a * sqrt(P)
     else
         c = c0
     end
 
-    return 1e0/(((c0-c)/αgas) + ((1-(c0-c))/αmelt))
+    return 1inv((c0-c)/αgas) + (1-(c0-c))/αmelt)
 end
 
 get_α(rho::BubbleFlow_Density, args) = get_α(rho; args...)
