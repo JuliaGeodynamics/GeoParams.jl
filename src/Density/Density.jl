@@ -334,7 +334,7 @@ end
     cutoff = c0^2/a^2
 
     if P < cutoff
-        c = a * sqrt(P)
+        c = a * sqrt(abs(P))
     else
         c = c0
     end
@@ -561,7 +561,7 @@ function get_α(rho::BubbleFlow_Density; P::T=0.0, kwargs...) where {T}
     cutoff = c0^2/a^2
 
     if P < cutoff
-        c = a * sqrt(P)
+        c = a * sqrt(abs(P))
     else
         c = c0
     end
