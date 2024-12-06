@@ -307,7 +307,7 @@ rheology = SetMaterialParams(;
 - Sparks, R. S. J.(1978), The dynamics of bubble formation and growth in magmas: A review and analysis, Journal of Volcanology and Geothermal Research, 3, 1-37, https://doi.org/10.1016/0377-0273(78)90002-1
 """
 @with_kw_noshow struct BubbleFlow_Density{_T, U1, U2, U3, S1<:AbstractDensity, S2 <:AbstractDensity} <: ConduitDensity{_T}
-    ρmelt::S1 = ConstantDensity(ρ=2900kg/m^3)   # density of the melt
+    ρmelt::S1 = ConstantDensity(ρ=2200kg/m^3)   # density of the melt
     ρgas::S2 = ConstantDensity(ρ=1kg/m^3)       # density of the gas
     c0::GeoUnit{_T, U1} = 0e0 * NoUnits         # total volatile content
     a::GeoUnit{_T, U2} = 0.0041MPa^(-1//2)      # gas solubility constant
@@ -322,20 +322,24 @@ function param_info(s::BubbleFlow_Density) # info about the struct
 end
 
 # Calculation routines
-@inline function (rho::BubbleFlow_Density{_T})(; P::Number, kwargs...) where {_T}
+@inline function (rho::BubbleFlow_Density{_T})(; P = 0e0, kwargs...) where {_T}
     ρmelt = compute_density(rho.ρmelt, kwargs)
     ρgas  = compute_density(rho.ρgas,  kwargs)
-    @unpack_val c0, a = rho
+    if P isa Quantity
+        @unpack_units c0, a = rho
+    else
+        @unpack_val c0, a = rho
+    end
 
     cutoff = c0^2/a^2
 
     if P < cutoff
-        c = a * P^1//2
+        c = a * P^(1//2)
     else
         c = c0
     end
 
-    return inv(((c0-c)/ρgas) + (1-(c0-c))/ρmelt)
+    return 1e0/(((c0-c)/ρgas) + ((1-(c0-c))/ρmelt))
 end
 
 @inline (s::BubbleFlow_Density)(args)                = s(; args...)
@@ -380,9 +384,9 @@ rheology = SetMaterialParams(;
 # References
 - Slezin, Yu. B. (2003), The mechanism of volcanic eruptions (a steady state approach), Journal of Volcanology and Geothermal Research, 122, 7-50, https://doi.org/10.1016/S0377-0273(02)00464-X
 """
-@with_kw_noshow struct GasPyroclast_Density{_T, U1, U2, U3, S1<:AbstractDensity, S2 <:AbstractDensity, S3} <: ConduitDensity{_T}
-    ρmelt::S1 = ConstantDensity(ρ=2900kg/m^3)   # density of the melt
-    ρgas::S2 = ConstantDensity(ρ=1kg/m^3)       # density of the gas
+@with_kw_noshow struct GasPyroclast_Density{_T, U1, U2, U3, S1<:AbstractDensity, S2 <:AbstractDensity} <: ConduitDensity{_T}
+    ρmelt::S1 = ConstantDensity(ρ=2200kg/m^3)   # density of the melt
+    ρgas::S2  = ConstantDensity(ρ=1kg/m^3)      # density of the gas
     δ::GeoUnit{_T, U1} = 0e0 * NoUnits          # volume fraction of free gas in flow
     β::GeoUnit{_T, U2} = 0e0 * NoUnits          # gas volume fraction enclosed within the particles
     ρ::GeoUnit{_T, U3} = 2900.0kg / m^3         # to keep track on whether this struct is dimensional or not
@@ -392,7 +396,7 @@ GasPyroclast_Density(args...) = GasPyroclast_Density(args[1], args[2], convert.(
 isdimensional(s::GasPyroclast_Density) = isdimensional(s.ρmelt)
 
 function param_info(s::GasPyroclast_Density) # info about the struct
-    return MaterialParamsInfo(; Equation=L"\rho = 1/((c0-c)/rho_g + 1-(c0-c)/\rho_m)")
+    return MaterialParamsInfo(; Equation=L"\rho = \rho_g\delta + \rho_p(1 - \delta)")
 end
 
 
@@ -544,5 +548,38 @@ function get_α(rho::MeltDependent_Density; ϕ::T=0.0, kwargs...) where {T}
 end
 
 get_α(rho::MeltDependent_Density, args) = get_α(rho; args...)
+
+function get_α(rho::BubbleFlow_Density; P::T=0.0, kwargs...) where {T}
+    αmelt  = rho.ρmelt.α.val
+    αgas   = rho.ρgas.α.val
+    if P isa Quantity
+        @unpack_units c0, a = rho
+    else
+        @unpack_val c0, a = rho
+    end
+
+    cutoff = c0^2/a^2
+
+    if P < cutoff
+        c = a * P^(1//2)
+    else
+        c = c0
+    end
+
+    return 1e0/(((c0-c)/αgas) + ((1-(c0-c))/αmelt))
+end
+
+get_α(rho::BubbleFlow_Density, args) = get_α(rho; args...)
+
+function get_α(rho::GasPyroclast_Density; kwargs...)
+    αmelt  = rho.ρmelt.α.val
+    αgas   = rho.ρgas.α.val
+
+    @unpack_val δ, β = rho
+
+    return @muladd αgas * δ + αmelt * (1 - β)
+end
+
+get_α(rho::GasPyroclast_Density, args) = get_α(rho; args...)
 
 end
