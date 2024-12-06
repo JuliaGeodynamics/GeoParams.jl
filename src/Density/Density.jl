@@ -566,7 +566,7 @@ function get_α(rho::BubbleFlow_Density; P::T=0.0, kwargs...) where {T}
         c = c0
     end
 
-    return 1inv((c0-c)/αgas) + (1-(c0-c))/αmelt)
+    return inv((c0-c)/αgas + (1-(c0-c))/αmelt)
 end
 
 get_α(rho::BubbleFlow_Density, args) = get_α(rho; args...)

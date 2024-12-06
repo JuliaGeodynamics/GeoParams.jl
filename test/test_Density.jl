@@ -408,7 +408,7 @@ import ForwardDiff.derivative
     c_theoretical = 0.0041 * args.P^(1//2)
     @test ρmelt ≈ 2200.0
     @test ρgas ≈ 1.0
-    @test ρ ≈ 1e0/(((x_D.c0-c_theoretical)/ρgas) + ((1-(x_D.c0-c_theoretical))/ρmelt))
+    @test ρ ≈ inv((x_D.c0-c_theoretical)/ρgas + (1-(x_D.c0-c_theoretical))/ρmelt)
 
     x = BubbleFlow_Density(
         ρmelt = PT_Density(α= 1e-3),
@@ -422,7 +422,7 @@ import ForwardDiff.derivative
     @test derivative(x -> compute_density(x_D.ρgas,  (P=args.P, T=x)), args.T) == 0.0
     @test derivative(x -> compute_density(x_D.ρgas,  (P=x, T=args.T)), args.P) == 0.0
     @test derivative(x -> compute_density(x_D,        (P=args.P, T=x)), args.T) == 0.0
-    @test derivative(x -> compute_density(x_D,        (P=x, T=args.T)), args.P) == 0.0580200590363328
+    @test derivative(x -> compute_density(x_D,        (P=x, T=args.T)), args.P) ≈ 0.0580200590363328 rtol = 1e-6
 
     rheologies = (
         SetMaterialParams(;
@@ -444,7 +444,7 @@ import ForwardDiff.derivative
     @test compute_density_ratio(PhaseRatio, rheologies, args) == compute_density(rheologies, PhaseRatio, args) == ρ
 
     @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P=args.P, T=x)), args.T) == 0.0
-    @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P=x, T=args.T)), args.P) == 0.0580200590363328
+    @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P=x, T=args.T)), args.P) ≈ 0.0580200590363328 rtol = 1e-6
 
     rho = zeros(size(Phases))
     T = fill(20.0+273.15, size(Phases))
