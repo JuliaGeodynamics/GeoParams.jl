@@ -16,7 +16,6 @@ using Parameters         # helps setting default parameters in structures
 using Unitful            # Units
 using BibTeX             # references of creep laws
 using StaticArrays
-using Requires: @require
 using LinearAlgebra
 using ForwardDiff
 using MuladdMacro
