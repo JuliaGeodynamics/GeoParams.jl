@@ -33,6 +33,16 @@ import ForwardDiff.derivative
     @test param_info(x).Equation === L"$\rho = \rho_0*(1 - \alpha*(T-T_0))$"
     @test isdimensional(x) === true
 
+    x = BubbleFlow_Density()
+    @test isbits(x)
+    @test param_info(x).Equation === L"\rho = 1/((c_0-c)/rho_g + 1-(c_0-c)/\rho_m)"
+    @test isdimensional(x) === true
+
+    x = GasPyroclast_Density()
+    @test isbits(x)
+    @test param_info(x).Equation === L"\rho = \rho_g\delta + \rho_p(1 - \delta)"
+    @test isdimensional(x) === true
+
     # This tests the MaterialParameters structure
     CharUnits_GEO = GEO_units(; viscosity=1e19, length=1000km)
 
@@ -381,6 +391,130 @@ import ForwardDiff.derivative
 
     compute_density!(rho, rheologies, Phases, args_vec)
     @test rho[1] ≈ ρ
-    # ---------------------------------------------------------
+    # Conduit densities ----------------------------------------
+    # BubbleFlow Density
+    CharUnits_GEO = GEO_units(; viscosity=1e19, length=1000km)
+    x_D = BubbleFlow_Density(c0=0.1)
+    x_ND = nondimensionalize(x_D, CharUnits_GEO)
+    @test isdimensional(x_D)==true
+    @test isdimensional(x_ND)==false
 
+    args = (P=1e8, T=00.0+273.15)
+    ρmelt = compute_density(x_D.ρmelt, args)
+    ρgas  = compute_density(x_D.ρgas, args)
+    ρ     = compute_density(x_D, args)
+
+    cutoff = 0.1^2/4.1e-6^2
+    c_theoretical = 4.1e-6 * sqrt(args.P)
+    @test ρmelt ≈ 2200.0
+    @test ρgas ≈ 1.0
+    @test ρ ≈ inv((x_D.c0-c_theoretical)/ρgas + (1-(x_D.c0-c_theoretical))/ρmelt)
+
+    x = BubbleFlow_Density(
+        ρmelt = PT_Density(α= 1e-3),
+        ρgas  = PT_Density(α= 1e-2),
+    )
+    @test GeoParams.get_α(x, (;P = 0e0)) == 1e-3
+
+
+    @test derivative(x -> compute_density(x_D.ρmelt, (P=args.P, T=x)), args.T) == 0.0
+    @test derivative(x -> compute_density(x_D.ρmelt, (P=x, T=args.T)), args.P) == 0.0
+    @test derivative(x -> compute_density(x_D.ρgas,  (P=args.P, T=x)), args.T) == 0.0
+    @test derivative(x -> compute_density(x_D.ρgas,  (P=x, T=args.T)), args.P) == 0.0
+    @test derivative(x -> compute_density(x_D,        (P=args.P, T=x)), args.T) == 0.0
+    @test derivative(x -> compute_density(x_D,        (P=x, T=args.T)), args.P) ≈ 5.8020059036332765e-8 rtol = 1e-6
+
+    rheologies = (
+        SetMaterialParams(;
+            Name="Crust",
+            Phase=0,
+            CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e23Pas)),
+            Density=BubbleFlow_Density(c0=0.1),
+        ),
+        SetMaterialParams(;
+            Name="Lower Crust",
+            Phase=1,
+            CreepLaws=(PowerlawViscous(; n=5.0), LinearViscous(; η=1e21Pas)),
+            Density=BubbleFlow_Density(c0=0.1),
+        ),
+    )
+    PhaseRatio = (0.5, 0.5)
+
+    args = (P=1e8, T=00.0+273.15)
+    @test compute_density_ratio(PhaseRatio, rheologies, args) == compute_density(rheologies, PhaseRatio, args) == ρ
+
+    @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P=args.P, T=x)), args.T) == 0.0
+    @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P=x, T=args.T)), args.P) ≈ 5.8020059036332765e-8 rtol = 1e-6
+
+    rho = zeros(size(Phases))
+    T = fill(20.0+273.15, size(Phases))
+    P = fill(1e8, size(Phases))
+
+    args_vec = (P=P, T=T)
+
+    compute_density!(rho, rheologies, Phases, args_vec)
+    @test rho[1] ≈ ρ
+
+
+    # GasPyroclast Density
+    CharUnits_GEO = GEO_units(; viscosity=1e19, length=1000km)
+    x_D = GasPyroclast_Density(δ=0.05, β=0.05)
+    x_ND = nondimensionalize(x_D, CharUnits_GEO)
+    @test isdimensional(x_D)==true
+    @test isdimensional(x_ND)==false
+
+    args = (P=1e8, T=00.0+273.15)
+
+    ρmelt = compute_density(x_D.ρmelt, args)
+    ρgas  = compute_density(x_D.ρgas, args)
+    ρ     = compute_density(x_D, args)
+
+    @test ρmelt ≈ 2200.0
+    @test ρgas ≈ 1.0
+    @test ρ ≈ x_D.δ*ρgas + ρmelt*(1 - x_D.δ)
+
+    x = GasPyroclast_Density(
+        ρmelt = PT_Density(α= 1e-3),
+        ρgas  = PT_Density(α= 1e-2),
+    )
+    @test GeoParams.get_α(x, (; P = 0e0)) == 1e-3
+
+
+    @test derivative(x -> compute_density(x_D.ρmelt, (P=args.P, T=x)), args.T) == 0.0
+    @test derivative(x -> compute_density(x_D.ρmelt, (P=x, T=args.T)), args.P) == 0.0
+    @test derivative(x -> compute_density(x_D.ρgas,  (P=args.P, T=x)), args.T) == 0.0
+    @test derivative(x -> compute_density(x_D.ρgas,  (P=x, T=args.T)), args.P) == 0.0
+    @test derivative(x -> compute_density(x_D,        (P=args.P, T=x)), args.T) == 0.0
+    @test derivative(x -> compute_density(x_D,        (P=x, T=args.T)), args.P) == 0.0
+
+    rheologies = (
+        SetMaterialParams(;
+            Name="Crust",
+            Phase=0,
+            CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e23Pas)),
+            Density=GasPyroclast_Density(δ=0.05, β=0.05),
+        ),
+        SetMaterialParams(;
+            Name="Lower Crust",
+            Phase=1,
+            CreepLaws=(PowerlawViscous(; n=5.0), LinearViscous(; η=1e21Pas)),
+            Density=GasPyroclast_Density(δ=0.05, β=0.05),
+        ),
+    )
+
+    PhaseRatio = (0.5, 0.5)
+    args = (P=1e8, T=00.0+273.15)
+    @test compute_density_ratio(PhaseRatio, rheologies, args) == compute_density(rheologies, PhaseRatio, args) == ρ
+
+    @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P=args.P, T=x)), args.T) == 0.0
+    @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P=x, T=args.T)), args.P) == 0.0
+
+    rho = zeros(size(Phases))
+    T = fill(20.0+273.15, size(Phases))
+    P = fill(1e8, size(Phases))
+
+    args_vec = (P=P, T=T)
+
+    compute_density!(rho, rheologies, Phases, args_vec)
+    @test rho[1] ≈ ρ
 end

@@ -53,7 +53,7 @@ include("./Energy/RadioactiveHeat.jl")
 include("./Energy/Shearheating.jl")
 include("./SeismicVelocity/SeismicVelocity.jl")
 
-using .Density: AbstractDensity
+using .Density: AbstractDensity, ConduitDensity
 using .ConstitutiveRelationships: print_rheology_matrix
 
 
