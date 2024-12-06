@@ -399,13 +399,13 @@ import ForwardDiff.derivative
     @test isdimensional(x_D)==true
     @test isdimensional(x_ND)==false
 
-    args = (P=100.0, T=00.0+273.15)
+    args = (P=1e8, T=00.0+273.15)
     ρmelt = compute_density(x_D.ρmelt, args)
     ρgas  = compute_density(x_D.ρgas, args)
     ρ     = compute_density(x_D, args)
 
-    cutoff = 0.1^2/0.0041^2
-    c_theoretical = 0.0041 * args.P^(1//2)
+    cutoff = 0.1^2/4.1e-6^2
+    c_theoretical = 4.1e-6 * sqrt(args.P)
     @test ρmelt ≈ 2200.0
     @test ρgas ≈ 1.0
     @test ρ ≈ inv((x_D.c0-c_theoretical)/ρgas + (1-(x_D.c0-c_theoretical))/ρmelt)
@@ -422,7 +422,7 @@ import ForwardDiff.derivative
     @test derivative(x -> compute_density(x_D.ρgas,  (P=args.P, T=x)), args.T) == 0.0
     @test derivative(x -> compute_density(x_D.ρgas,  (P=x, T=args.T)), args.P) == 0.0
     @test derivative(x -> compute_density(x_D,        (P=args.P, T=x)), args.T) == 0.0
-    @test derivative(x -> compute_density(x_D,        (P=x, T=args.T)), args.P) ≈ 0.0580200590363328 rtol = 1e-6
+    @test derivative(x -> compute_density(x_D,        (P=x, T=args.T)), args.P) ≈ 5.8020059036332765e-8 rtol = 1e-6
 
     rheologies = (
         SetMaterialParams(;
@@ -440,15 +440,15 @@ import ForwardDiff.derivative
     )
     PhaseRatio = (0.5, 0.5)
 
-    args = (P=100.0, T=00.0+273.15)
+    args = (P=1e8, T=00.0+273.15)
     @test compute_density_ratio(PhaseRatio, rheologies, args) == compute_density(rheologies, PhaseRatio, args) == ρ
 
     @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P=args.P, T=x)), args.T) == 0.0
-    @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P=x, T=args.T)), args.P) ≈ 0.0580200590363328 rtol = 1e-6
+    @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P=x, T=args.T)), args.P) ≈ 5.8020059036332765e-8 rtol = 1e-6
 
     rho = zeros(size(Phases))
     T = fill(20.0+273.15, size(Phases))
-    P = fill(100.0, size(Phases))
+    P = fill(1e8, size(Phases))
 
     args_vec = (P=P, T=T)
 
@@ -463,7 +463,7 @@ import ForwardDiff.derivative
     @test isdimensional(x_D)==true
     @test isdimensional(x_ND)==false
 
-    args = (P=100.0, T=00.0+273.15)
+    args = (P=1e8, T=00.0+273.15)
 
     ρmelt = compute_density(x_D.ρmelt, args)
     ρgas  = compute_density(x_D.ρgas, args)
@@ -503,7 +503,7 @@ import ForwardDiff.derivative
     )
 
     PhaseRatio = (0.5, 0.5)
-    args = (P=100.0, T=00.0+273.15)
+    args = (P=1e8, T=00.0+273.15)
     @test compute_density_ratio(PhaseRatio, rheologies, args) == compute_density(rheologies, PhaseRatio, args) == ρ
 
     @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P=args.P, T=x)), args.T) == 0.0
@@ -511,7 +511,7 @@ import ForwardDiff.derivative
 
     rho = zeros(size(Phases))
     T = fill(20.0+273.15, size(Phases))
-    P = fill(100.0, size(Phases))
+    P = fill(1e8, size(Phases))
 
     args_vec = (P=P, T=T)
 

@@ -288,9 +288,9 @@ c =
 - `ρmelt`: Density of the melt
 - `ρgas`: Density of the gas
 - `c0`: Total volatile content
-- `a`: Gas solubility constant (default: 0.0041MPa``^{-1/2}``) (after Sparks et al., 1978)
+- `a`: Gas solubility constant (default: 4.1e-6Pa``^{-1/2}``) (after Sparks et al., 1978)
 
-Possible values for a are 0.0032-0.0064MPa``^{-1/2}`` where the lower value corresponds to mafic magmas at rather large pressures (400-600MPa) and the higher value to felsic magmas at low pressures (0 to 100-200MPa) (after Slezin (2003))
+Possible values for a are 3.2e-6-6.4e-6Pa``^{-1/2}`` where the lower value corresponds to mafic magmas at rather large pressures (400-600MPa) and the higher value to felsic magmas at low pressures (0 to 100-200MPa) (after Slezin (2003))
 
 # Example
 ```julia
@@ -310,7 +310,7 @@ rheology = SetMaterialParams(;
     ρmelt::S1 = ConstantDensity(ρ=2200kg/m^3)   # density of the melt
     ρgas::S2 = ConstantDensity(ρ=1kg/m^3)       # density of the gas
     c0::GeoUnit{_T, U1} = 0e0 * NoUnits         # total volatile content
-    a::GeoUnit{_T, U2} = 0.0041MPa^(-1//2)      # gas solubility constant
+    a::GeoUnit{_T, U2} = 4.1e-6Pa^(-1//2)         # gas solubility constant
     ρ::GeoUnit{_T,U3} = 2900.0kg / m^3          # to keep track on whether this struct is dimensional or not
 end
 
