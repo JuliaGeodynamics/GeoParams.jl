@@ -272,7 +272,7 @@ end
 """
     BubbleFlow_Density(ρmelt=ConstantDensity(), ρgas=ConstantDensity(), c0=0e0, a=0.0041MPa^-1/2)
 
-Defines the BubbleFlow_Density as descriped in Slezin (2003) with a default gas solubility constant of 0.0041MPa``^{-1/2}`` used in e.g. Sparks et al. (1978)
+Defines the BubbleFlow_Density as described in Slezin (2003) with a default gas solubility constant of 0.0041MPa``^{-1/2}`` used in e.g. Sparks et al. (1978)
 ```math
     \\rho = \\frac{1}{\\frac{c_0 - c}{\\rho_g} + \\frac{1-(c_0-c)}{\\rho_m}}
 ```
@@ -354,7 +354,7 @@ end
 """
     GasPyroclast_Density(ρmelt=ConstantDensity(), ρgas=ConstantDensity(), δ=0e0)
 
-Defines the GasPyroclast_Density as descriped in Slezin (2003) with a default volume fraction of free gas in the flow of 0.0
+Defines the GasPyroclast_Density as described in Slezin (2003) with a default volume fraction of free gas in the flow of 0.0
 This is also used to model partly destroyed foam in the conduit.
 
 ```math
