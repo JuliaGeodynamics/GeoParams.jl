@@ -120,7 +120,7 @@ import ForwardDiff.derivative
     @test derivative(x->compute_density(Compressible_Density(), (P=x, T=args.T)), args.P) ≈ 2.90000290000145e-6 rtol = 1e-6
 
     # Read Phase diagram interpolation object
-    fname = "./test/test_data/Peridotite_dry.in"
+    fname = "test_data/Peridotite_dry.in"
     PD_data = PerpleX_LaMEM_Diagram(fname)
     @test PD_data.meltFrac(1500, 1e7) ≈ 0.2538048323727155
     @test PD_data.Rho(1500, 1e7) ≈ 3054.8671154189938
@@ -177,7 +177,7 @@ import ForwardDiff.derivative
         Name="Mantle",
         Phase=0,
         CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e23Pa * s)),
-        Density=PerpleX_LaMEM_Diagram("./test/test_data/sediments_1.in"),
+        Density=PerpleX_LaMEM_Diagram("test_data/sediments_1.in"),
     )
 
     MatParam[2] = SetMaterialParams(;
