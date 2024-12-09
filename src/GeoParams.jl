@@ -120,6 +120,7 @@ export compute_density,                                # computational routines
     compute_density!,
     param_info,
     AbstractDensity,
+    ConduitDensity,
     No_Density,
     ConstantDensity,
     PT_Density,
@@ -129,6 +130,8 @@ export compute_density,                                # computational routines
     PhaseDiagram_LookupTable,
     Read_LaMEM_Perple_X_Diagram,
     MeltDependent_Density,
+    BubbleFlow_Density,
+    GasPyroclast_Density,
     compute_density_ratio
 
 # Constitutive relationships laws
