@@ -1,18 +1,14 @@
 using Test
-using Unitful
 using GeoParams
 
 @testset "ChemicalDiffusion" begin
 
     # test the diffusion data structure
-    x1 = GeoParams.DiffusionData()
+    x1 = DiffusionData()
     @test isbits(x1)
 
-    # test Rutile Hf data
-    test_diff = DiffusionData(
-        )
     # calculate D and test here
-    D = ustrip(compute_D(test_diff))
+    D = ustrip(compute_D(x1))
     @test D == 0.0
 
     # test Rutile Hf data
