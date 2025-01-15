@@ -393,6 +393,11 @@ export diffusion_law_list,
        nonlinearpeierls_law_list,
        peierls_law_list
 
+
+include("ChemicalDiffusion/Data/Rutile/Rutile.jl")
+using .Rutile
+
+
 # Define Table output functions
 include("Tables.jl")
 using .Tables
