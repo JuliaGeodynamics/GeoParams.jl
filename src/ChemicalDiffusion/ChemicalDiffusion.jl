@@ -3,11 +3,10 @@ module ChemicalDiffusion
 using GeoParams
 using Unitful
 
-using Base: Float64
 using Parameters, LaTeXStrings, Unitful, MuladdMacro
 using ..Units
 using GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
-import GeoParams: param_info, fastpow, pow_check, nphase, ntuple_idx, @print, @pow, ptr2string
+import GeoParams: param_info, ptr2string
 using ..MaterialParameters: MaterialParamsInfo
 import Base.show
 
@@ -116,16 +115,16 @@ end
 @inline function compute_D(data::DiffusionData; T=1K, P=0Pa, kwargs...)
     @unpack_units D0, Ea, ΔV, P0, R = data
 
-    D = @pow D0 * exp(- (Ea + (P - P0) * ΔV) / (R * T))
+    D = D0 * exp(- (Ea + (P - P0) * ΔV) / (R * T))
 
     return D
 end
 
-function compute_D!(D::AbstractVector, data::DiffusionData; T=ones(size(D)), P=zeros(size(data)), kwargs...)
+function compute_D!(D::AbstractVector, data::DiffusionData; T=ones(size(D))K, P=zeros(size(data))Pa, kwargs...)
     @unpack_units D0, Ea, ΔV, P0, R = data
 
     @inbounds for i in eachindex(D)
-        D[i] = @pow  D0 * exp(- (Ea + (P[i] - P0) * ΔV) / (R * T[i]))
+        D[i] = D0 * exp(- (Ea + (P[i] - P0) * ΔV) / (R * T[i]))
     end
 end
 
