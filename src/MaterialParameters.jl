@@ -43,6 +43,7 @@ include("./PhaseDiagrams/PhaseDiagrams.jl")
 #include("./Plasticity/Plasticity.jl")
 #include("./Elasticity/Elasticity.jl")
 include("./ConstitutiveRelationships.jl")
+include("./ChemicalDiffusion/ChemicalDiffusion.jl")
 include("./Density/Density.jl")
 include("./Permeability/Permeability.jl")
 include("./GravitationalAcceleration/GravitationalAcceleration.jl")
@@ -52,7 +53,6 @@ include("./Energy/LatentHeat.jl")
 include("./Energy/RadioactiveHeat.jl")
 include("./Energy/Shearheating.jl")
 include("./SeismicVelocity/SeismicVelocity.jl")
-include("./ChemicalDiffusion/ChemicalDiffusion.jl")
 
 using .Density: AbstractDensity, ConduitDensity
 using .ConstitutiveRelationships: print_rheology_matrix
@@ -71,6 +71,7 @@ Structure that holds all material parameters for a given phase
     Velastic<:Tuple,
     Vplastic<:Tuple,
     Vcomposite<:Tuple,
+    Vchemdiffusion<:Tuple,
     Vcond<:Tuple,
     Vheatc<:Tuple,
     Vradioact<:Tuple,
@@ -89,6 +90,7 @@ Structure that holds all material parameters for a given phase
     Elasticity::Velastic = ()          #  Elastic parameters
     Plasticity::Vplastic = ()          #  Plasticity
     CompositeRheology::Vcomposite = () #  Composite (combined) rheologies
+    ChemDiffusion::Vchemdiffusion = () #  Chemical diffusion
     Conductivity::Vcond = ()           #  Parameters related to the energy equation
     HeatCapacity::Vheatc = ()          #  Heat capacity
     RadioactiveHeat::Vradioact = ()    #  Radioactive heating source terms in energy conservation equation
@@ -107,6 +109,7 @@ end
                         Elasticity          =   nothing,
                         Plasticity          =   nothing,
                         CompositeRheology   =   nothing,
+                        ChemDiffusion       =   nothing,
                         Conductivity        =   nothing,
                         HeatCapacity        =   nothing,
                         RadioactiveHeat     =   nothing,
@@ -195,6 +198,7 @@ function SetMaterialParams(;
     Elasticity=nothing,
     Plasticity=nothing,
     CompositeRheology=nothing,
+    ChemDiffusion=nothing,
     Conductivity=nothing,
     HeatCapacity=nothing,
     RadioactiveHeat=nothing,
@@ -213,7 +217,8 @@ function SetMaterialParams(;
         ConvField(CreepLaws, :Creeplaws),
         ConvField(Elasticity, :Elasticity; maxAllowedFields=1),
         ConvField(Plasticity, :Plasticity),
-        ConvField(CompositeRheology,  :CompositeRheology; maxAllowedFields=1),
+        ConvField(CompositeRheology, :CompositeRheology; maxAllowedFields=1),
+        ConvField(ChemDiffusion, :ChemDiffusion; maxAllowedFields=1),
         ConvField(Conductivity, :Conductivity; maxAllowedFields=1),
         ConvField(HeatCapacity, :HeatCapacity; maxAllowedFields=1),
         ConvField(RadioactiveHeat, :RadioactiveHeat; maxAllowedFields=1),
@@ -235,6 +240,7 @@ function SetMaterialParams(
     Elasticity,
     Plasticity,
     CompositeRheology,
+    ChemDiffusion,
     Conductivity,
     HeatCapacity,
     RadioactiveHeat,
@@ -257,6 +263,7 @@ function SetMaterialParams(
         Elasticity,
         Plasticity,
         CompositeRheology,
+        ChemDiffusion,
         Conductivity,
         HeatCapacity,
         RadioactiveHeat,

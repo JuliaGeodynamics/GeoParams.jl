@@ -13,7 +13,7 @@ function Rt_Hf_Cherniak2007_⊥c()
         Species = "Hf",  # element or species being diffused
         D0 = 2.5e-12m^2/s,  # pre-exponential factor
         D0_2σ = 0.0m^2/s,  # uncertainty at 2σ of the pre-exponential factor
-        Ea = -227kJ/mol,  # activation energy
+        Ea = 227kJ/mol,  # activation energy
         Ea_2σ = 62kJ/mol,  # uncertainty at 2σ of the activation energy
         ΔV = 0cm^3/mol,  # activation volume
         ΔV_2σ = 0cm^3/mol,  # uncertainty at 2σ of the activation volume
@@ -58,7 +58,7 @@ function Rt_Hf_Cherniak2007_Ξc()
         Species = "Hf",
         D0 = 9.1e-15m^2/s,
         D0_2σ = 0.0m^2/s,
-        Ea = -169kJ/mol,
+        Ea = 169kJ/mol,
         Ea_2σ = 36kJ/mol,
         ΔV = 0cm^3/mol,
         ΔV_2σ = 0cm^3/mol,
@@ -68,7 +68,7 @@ function Rt_Hf_Cherniak2007_Ξc()
         Crystallography = "tetragonal",
         Buffer = "QFM, NNO",
         Fluid = "anhydrous"
-        ),
+        )
     info = MaterialParamsInfo(;
         Comment="Checked values by HD (15.01.25)",
         BibTex_Reference="

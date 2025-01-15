@@ -272,6 +272,14 @@ export compute_gravity,                                # computational routines
     ConstantGravity,
     DippingGravity
 
+
+using .MaterialParameters.ChemicalDiffusion
+export AbstractChemicalDiffusion,
+       DiffusionData,
+       compute_D,
+       compute_D!,
+       Rutile
+
 # Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat
 using .MaterialParameters.HeatCapacity
 export compute_heatcapacity,
@@ -393,9 +401,6 @@ export diffusion_law_list,
        nonlinearpeierls_law_list,
        peierls_law_list
 
-
-include("ChemicalDiffusion/Data/Rutile/Rutile.jl")
-using .Rutile
 
 
 # Define Table output functions
