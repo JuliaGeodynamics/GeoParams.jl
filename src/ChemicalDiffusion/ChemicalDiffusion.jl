@@ -55,10 +55,10 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9} <: AbstractChemicalD
     Fluid::Ptr{UInt8}  # Fluid condition (e.g., anhydrous) during the experiment
 
     function DiffusionData(;
-        Name            = "",  # name of the diffusion experiment and paper
-        Mineral         = "",  # name of the mineral
-        Formula         = "",  # chemical formula of the mineral
-        Species         = "",  # element or species being diffused
+        Name            = "Unknown",  # name of the diffusion experiment and paper
+        Mineral         = "Unknown",  # name of the mineral
+        Formula         = "Unknown",  # chemical formula of the mineral
+        Species         = "Unknown",  # element or species being diffused
         D0              = 0.0m^2/s,  # pre-exponential factor
         D0_2σ           = 0.0m^2/s,  # uncertainty at 2σ of the pre-exponential factor
         Ea              = 0.0J/mol,  # activation energy
@@ -69,10 +69,10 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9} <: AbstractChemicalD
         T_range_min     = 0.0K,  # minimum temperature of the T_range
         T_range_max     = 0.0K,  # maximum temperature of the T_range
         P0              = 0.0Pa,  # pressure of calibration
-        Orientation     = "",  # Crystal orientation from the diffusion experiment
-        Crystallography = "",  # Crystallographic system of the mineral
-        Buffer          = "",  # Buffer condition (e.g., NNO) during the experiment
-        Fluid           = ""  # Fluid condition (e.g., anhydrous) during the experiment
+        Orientation     = "Unknown",  # Crystal orientation from the diffusion experiment
+        Crystallography = "Unknown",  # Crystallographic system of the mineral
+        Buffer          = "Unknown",  # Buffer condition (e.g., NNO) during the experiment
+        Fluid           = "Unknown"  # Fluid condition (e.g., anhydrous) during the experiment
     )
 
         # Convert to GeoUnits
@@ -140,7 +140,7 @@ function compute_D!(
     data::DiffusionData;
     T=ones(size(D))K,
     P=zeros(size(D))Pa,
-    kwargs...) 
+    kwargs...)
 
     @inbounds for i in eachindex(D)
         D[i] = compute_D(data; T=T[i], P=P[i], kwargs...)

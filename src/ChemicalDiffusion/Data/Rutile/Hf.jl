@@ -3,7 +3,7 @@
 """
     Rt_Hf_Cherniak2007_⊥c
 
-Diffusion data of Hf in rutile. With anhydrous conditions and perpendicular to c-axis. Calibrated between 750-1050°C. From Cherniak et al. (2007) (https://doi.org/10.1016/j.epsl.2007.06.027).
+Diffusion data of Hf in rutile. With anhydrous conditions and perpendicular (⊥) to c-axis. Calibrated between 750-1050°C. From Cherniak et al. (2007) (https://doi.org/10.1016/j.epsl.2007.06.027).
 """
 function Rt_Hf_Cherniak2007_⊥c()
     data = DiffusionData(
@@ -21,9 +21,9 @@ function Rt_Hf_Cherniak2007_⊥c()
         T_range_max = 1050C,  # temperature max of the experiment
         P0 = 0.0Pa,  # pressure of calibration
         Orientation = "⊥c",  # Crystal orientation from the diffusion experiment
-        Crystallography = "tetragonal",  # Crystallographic system of the mineral
+        Crystallography = "Tetragonal",  # Crystallographic system of the mineral
         Buffer = "QFM, NNO",  # Buffer condition (e.g., NNO) during the experiment
-        Fluid = "anhydrous"  # Fluid condition (e.g., anhydrous) during the experiment
+        Fluid = "Anhydrous"  # Fluid condition (e.g., anhydrous) during the experiment
         )
     info = MaterialParamsInfo(;
         Comment="Checked values by HD (15.01.25)",
@@ -48,7 +48,7 @@ end
 """
     Rt_Hf_Cherniak2007_Ξc
 
-Diffusion data of Hf in rutile. With anhydrous conditions and parallel to c-axis. Calibrated between 800-1000°C.
+Diffusion data of Hf in rutile. With anhydrous conditions and parallel (Ξ) to c-axis. Calibrated between 800-1000°C.
 From Cherniak et al. (2007) (https://doi.org/10.1016/j.epsl.2007.06.027).
 """
 function Rt_Hf_Cherniak2007_Ξc()
@@ -67,9 +67,9 @@ function Rt_Hf_Cherniak2007_Ξc()
         T_range_max = 1000C,
         P0 = 0.0Pa,
         Orientation = "Ξc",
-        Crystallography = "tetragonal",
+        Crystallography = "Tetragonal",
         Buffer = "QFM, NNO",
-        Fluid = "anhydrous"
+        Fluid = "Anhydrous"
         )
     info = MaterialParamsInfo(;
         Comment="Checked values by HD (15.01.25)",
