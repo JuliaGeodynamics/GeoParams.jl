@@ -45,16 +45,14 @@ using GeoParams
     D =  ustrip(compute_D(Hf_Rt_perp, T=1273.15K))
     @test D ≈ 1.21560e-21 atol = 1e-24
 
+    # Hf_Rt_para = Rutile.Rt_Hf_Cherniak2007_Ξc;
+    # Hf_Rt_para = SetChemicalDiffusion(Hf_Rt_para)
+
+    # CharUnits_GEO   =   GEO_units(length=10u"cm")
+    # SetMaterialParams(Name="Viscous Matrix",
+    #                   ChemDiffusion   = Hf_Rt_para,
+    #                   CharUnits_GEO)
 end
-
-Hf_Rt_para = Rutile.Rt_Hf_Cherniak2007_Ξc;
-Hf_Rt_para = SetChemicalDiffusion(Hf_Rt_para)
-
-CharUnits_GEO   =   GEO_units(length=10u"cm")
-SetMaterialParams(Name="Viscous Matrix",
-                  ChemDiffusion   = Hf_Rt_para,
-                  CharUnits_GEO)
-
 
 
 
