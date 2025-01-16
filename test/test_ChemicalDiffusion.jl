@@ -7,19 +7,42 @@ using GeoParams
     x1 = DiffusionData()
     @test isbits(x1)
 
-    # calculate D and test here
+    # check auto unit conversion
+    Hf_Rt_perp = Rutile.Rt_Hf_Cherniak2007_⊥c;
+    Hf_Rt_perp = SetChemicalDiffusion(Hf_Rt_perp; D0=10km^2/s)
+    @test Hf_Rt_perp.D0.val == 1.0e7
+
+    # test the diffusion parameter calculation 
     D = ustrip(compute_D(x1))
     @test D == 0.0
 
-    # test Rutile Hf data
-    Hf_Rt_para = Rutile.Rt_Hf_Cherniak2007_Ξc();
+    # test the diffusion parameter calculation with arrays
+    Hf_Rt_para = Rutile.Rt_Hf_Cherniak2007_Ξc;
+    Hf_Rt_para = SetChemicalDiffusion(Hf_Rt_para)
 
-    D =  ustrip(compute_D(Hf_Rt_para[1], T=1273.15K))
+    # with unit
+    T = ones(10) * 1273.15K
+    D = zeros(10)m^2/s
+    compute_D!(D, Hf_Rt_para;T=T)
+    @test ustrip(D[1]) ≈ 1.06039e-21 atol = 1e-24  
+
+    # without unit
+    D = zeros(10)
+    T = ones(10) * 1273.15
+    compute_D!(D, Hf_Rt_para;T=T, P=zeros(size(T)))
+    @test D[1] ≈ 1.06039e-21 atol = 1e-24
+
+    # test experimental data with literature values
+
+    # test Rutile Hf data from Cheniak 2007
+    Hf_Rt_para = Rutile.Rt_Hf_Cherniak2007_Ξc;
+    Hf_Rt_para = SetChemicalDiffusion(Hf_Rt_para)
+    D =  ustrip(compute_D(Hf_Rt_para, T=1273.15K))
     @test D ≈ 1.06039e-21 atol = 1e-24
 
-    Hf_Rt_perp = Rutile.Rt_Hf_Cherniak2007_⊥c();
-
-    D =  ustrip(compute_D(Hf_Rt_perp[1], T=1273.15K))
+    Hf_Rt_perp = Rutile.Rt_Hf_Cherniak2007_⊥c;
+    Hf_Rt_perp = SetChemicalDiffusion(Hf_Rt_perp)
+    D =  ustrip(compute_D(Hf_Rt_perp, T=1273.15K))
     @test D ≈ 1.21560e-21 atol = 1e-24
 
 end

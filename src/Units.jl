@@ -352,6 +352,7 @@ end
     strainrate = 1 / s
     heatcapacity = J / kg / K
     conductivity = W / m / K
+    chemicaldiffusion = m^2 / s
 
     # Helpful
     SecYear = 3600 * 24 * 365.25

@@ -278,7 +278,11 @@ export AbstractChemicalDiffusion,
        DiffusionData,
        compute_D,
        compute_D!,
-       Rutile
+       SetChemicalDiffusion,
+       Transform_ChemicalDiffusion
+
+
+export Rutile
 
 # Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat
 using .MaterialParameters.HeatCapacity

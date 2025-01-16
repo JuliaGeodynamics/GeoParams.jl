@@ -17,7 +17,8 @@ function Rt_Hf_Cherniak2007_⊥c()
         Ea_2σ = 62kJ/mol,  # uncertainty at 2σ of the activation energy
         ΔV = 0cm^3/mol,  # activation volume
         ΔV_2σ = 0cm^3/mol,  # uncertainty at 2σ of the activation volume
-        T_range = (750C, 1050C),  # temperature range
+        T_range_min = 750C,  # temperature min of the experiment
+        T_range_max = 1050C,  # temperature max of the experiment
         P0 = 0.0Pa,  # pressure of calibration
         Orientation = "⊥c",  # Crystal orientation from the diffusion experiment
         Crystallography = "tetragonal",  # Crystallographic system of the mineral
@@ -62,7 +63,8 @@ function Rt_Hf_Cherniak2007_Ξc()
         Ea_2σ = 36kJ/mol,
         ΔV = 0cm^3/mol,
         ΔV_2σ = 0cm^3/mol,
-        T_range = (800C, 1000C),
+        T_range_min = 800C,
+        T_range_max = 1000C,
         P0 = 0.0Pa,
         Orientation = "Ξc",
         Crystallography = "tetragonal",
