@@ -257,17 +257,20 @@ end
 
 function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion{T}, kwargs::NamedTuple) where T
 
+    f(a,b) = Value(GeoUnit(a))
+    f(::Nothing,b) = Value(b)
+
     (; D0, D0_2σ, Ea, Ea_2σ, ΔV, ΔV_2σ, T_range_min, T_range_max, P0) = kwargs
 
-    D0_new          = isnothing(D0) ? Value(pp.D0) : Value(GeoUnit(D0))
-    D0_2σ_new       = isnothing(D0_2σ) ? Value(pp.D0_2σ) : Value(GeoUnit(D0_2σ))
-    Ea_new          = isnothing(Ea) ? Value(pp.Ea) : Value(GeoUnit(Ea))
-    Ea_2σ_new       = isnothing(Ea_2σ) ? Value(pp.Ea_2σ) : Value(GeoUnit(Ea_2σ))
-    ΔV_new          = isnothing(ΔV) ? Value(pp.ΔV) : Value(GeoUnit(ΔV))
-    ΔV_2σ_new       = isnothing(ΔV_2σ) ? Value(pp.ΔV_2σ) : Value(GeoUnit(ΔV_2σ))
-    T_range_min_new = isnothing(T_range_min) ? Value(pp.T_range_min) : Value(GeoUnit(T_range_min))
-    T_range_max_new = isnothing(T_range_max) ? Value(pp.T_range_max) : Value(GeoUnit(T_range_max))
-    P0_new          = isnothing(P0) ? Value(pp.P0) : Value(GeoUnit(P0))
+    D0_new          = f(D0, pp.D0)
+    D0_2σ_new       = f(D0_2σ, pp.D0_2σ)
+    Ea_new          = f(Ea, pp.Ea)
+    Ea_2σ_new       = f(Ea_2σ, pp.Ea_2σ)
+    ΔV_new          = f(ΔV, pp.ΔV)
+    ΔV_2σ_new       = f(ΔV_2σ, pp.ΔV_2σ)
+    T_range_min_new = f(T_range_min, pp.T_range_min)
+    T_range_max_new = f(T_range_max, pp.T_range_max)
+    P0_new          = f(P0, pp.P0)
 
     D0_SI          = uconvert(m^2 / s, D0_new)
     D0_2σ_SI       = uconvert(m^2 / s, D0_2σ_new)

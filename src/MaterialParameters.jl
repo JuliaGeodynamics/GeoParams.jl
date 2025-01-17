@@ -218,7 +218,7 @@ function SetMaterialParams(;
         ConvField(Elasticity, :Elasticity; maxAllowedFields=1),
         ConvField(Plasticity, :Plasticity),
         ConvField(CompositeRheology, :CompositeRheology; maxAllowedFields=1),
-        ConvField(ChemDiffusion, :ChemDiffusion; maxAllowedFields=1),
+        ConvField(ChemDiffusion, :ChemDiffusion),
         ConvField(Conductivity, :Conductivity; maxAllowedFields=1),
         ConvField(HeatCapacity, :HeatCapacity; maxAllowedFields=1),
         ConvField(RadioactiveHeat, :RadioactiveHeat; maxAllowedFields=1),
