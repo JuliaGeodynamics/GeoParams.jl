@@ -39,6 +39,10 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9} <: AbstractChemicalD
     Mineral::Ptr{UInt8}  # name of the mineral
     Formula::Ptr{UInt8}  # chemical formula of the mineral
     Species::Ptr{UInt8}  # element or species being diffused
+    Orientation::Ptr{UInt8}  # Crystal orientation from the diffusion experiment
+    Crystallography::Ptr{UInt8}  # Crystallographic system of the mineral
+    Buffer::Ptr{UInt8}  # Buffer condition (e.g., NNO) during the experiment
+    Fluid::Ptr{UInt8}  # Fluid condition (e.g., anhydrous) during the experiment
     D0::GeoUnit{T, U1} # pre-exponential factor
     D0_2σ::GeoUnit{T, U2} # uncertainty at 2σ of the pre-exponential factor
     Ea::GeoUnit{T, U3} # activation energy
@@ -49,16 +53,16 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9} <: AbstractChemicalD
     T_range_min::GeoUnit{T, U8}  # minimum temperature of the T_range
     T_range_max::GeoUnit{T, U8}  # maximum temperature of the T_range
     P0::GeoUnit{T, U9} # pressure of calibration
-    Orientation::Ptr{UInt8}  # Crystal orientation from the diffusion experiment
-    Crystallography::Ptr{UInt8}  # Crystallographic system of the mineral
-    Buffer::Ptr{UInt8}  # Buffer condition (e.g., NNO) during the experiment
-    Fluid::Ptr{UInt8}  # Fluid condition (e.g., anhydrous) during the experiment
 
     function DiffusionData(;
         Name            = "Unknown",  # name of the diffusion experiment and paper
         Mineral         = "Unknown",  # name of the mineral
         Formula         = "Unknown",  # chemical formula of the mineral
         Species         = "Unknown",  # element or species being diffused
+        Orientation     = "Unknown",  # Crystal orientation from the diffusion experiment
+        Crystallography = "Unknown",  # Crystallographic system of the mineral
+        Buffer          = "Unknown",  # Buffer condition (e.g., NNO) during the experiment
+        Fluid           = "Unknown",  # Fluid condition (e.g., anhydrous) during the experiment
         D0              = 0.0m^2/s,  # pre-exponential factor
         D0_2σ           = 0.0m^2/s,  # uncertainty at 2σ of the pre-exponential factor
         Ea              = 0.0J/mol,  # activation energy
@@ -69,10 +73,6 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9} <: AbstractChemicalD
         T_range_min     = 0.0K,  # minimum temperature of the T_range
         T_range_max     = 0.0K,  # maximum temperature of the T_range
         P0              = 0.0Pa,  # pressure of calibration
-        Orientation     = "Unknown",  # Crystal orientation from the diffusion experiment
-        Crystallography = "Unknown",  # Crystallographic system of the mineral
-        Buffer          = "Unknown",  # Buffer condition (e.g., NNO) during the experiment
-        Fluid           = "Unknown"  # Fluid condition (e.g., anhydrous) during the experiment
     )
 
         # Convert to GeoUnits
@@ -108,9 +108,34 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9} <: AbstractChemicalD
 
         # Create struct
         return new{T,U1,U2,U3,U4,U5,U6,U7,U8,U9}(
-            name, mineral, formula, species, D0U, D0_2σU, EaU, Ea_2σU, ΔVU, ΔV_2σU, RU, T_range_minU, T_range_maxU, P0U, orientation, crystallography, buffer, fluid
+            name, mineral, formula, species, orientation, crystallography, buffer, fluid, D0U, D0_2σU, EaU, Ea_2σU, ΔVU, ΔV_2σU, RU, T_range_minU, T_range_maxU, P0U
         )
     end
+end
+
+function DiffusionData(
+    Name, Mineral, Formula, Species, Orientation, Crystallography, Buffer, Fluid, D0, D0_2σ, Ea, Ea_2σ, ΔV, ΔV_2σ, R, T_range_min, T_range_max, P0,
+)
+    return DiffusionData(;
+        Name = Name,
+        Mineral = Mineral,
+        Formula = Formula,
+        Species = Species,
+        Orientation = Orientation,
+        Crystallography = Crystallography,
+        Buffer = Buffer,
+        Fluid = Fluid,
+        D0 = D0,
+        D0_2σ = D0_2σ,
+        Ea = Ea,
+        Ea_2σ = Ea_2σ,
+        ΔV = ΔV,
+        ΔV_2σ = ΔV_2σ,
+        R = R,
+        T_range_min = T_range_min,
+        T_range_max = T_range_max,
+        P0 = P0,
+    )
 end
 
 function param_info(data::DiffusionData) # info about the struct
