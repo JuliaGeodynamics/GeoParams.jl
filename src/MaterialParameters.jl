@@ -11,7 +11,7 @@ using Static
 
 import Base.show, Base.convert
 using GeoParams:
-    AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct, AbstractComposite, str2tuple 
+    AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct, AbstractComposite, ptr2string
 
 # Define an "empty" Material parameter structure
 struct No_MaterialParam{_T} <: AbstractMaterialParam end
@@ -44,6 +44,7 @@ include("./PhaseDiagrams/PhaseDiagrams.jl")
 #include("./Elasticity/Elasticity.jl")
 include("./ConstitutiveRelationships.jl")
 include("./Density/Density.jl")
+include("./Permeability/Permeability.jl")
 include("./GravitationalAcceleration/GravitationalAcceleration.jl")
 include("./Energy/HeatCapacity.jl")
 include("./Energy/Conductivity.jl")
@@ -52,18 +53,17 @@ include("./Energy/RadioactiveHeat.jl")
 include("./Energy/Shearheating.jl")
 include("./SeismicVelocity/SeismicVelocity.jl")
 
-using .Density: AbstractDensity
+using .Density: AbstractDensity, ConduitDensity
 using .ConstitutiveRelationships: print_rheology_matrix
 
 
 """
     MaterialParams
-    
+
 Structure that holds all material parameters for a given phase
 
 """
 @with_kw_noshow struct MaterialParams{
-    N,
     Vdensity<:Tuple,
     Vgravity<:Tuple,
     Vcreep<:Tuple,
@@ -75,10 +75,11 @@ Structure that holds all material parameters for a given phase
     Vradioact<:Tuple,
     Vlatent<:Tuple,
     Vshearheat<:Tuple,
+    Vpermeability<:Tuple,
     Vmelting<:Tuple,
     Vseismvel<:Tuple,
 } <: AbstractMaterialParamsStruct
-    Name::NTuple{N,UInt8}               #  Phase name
+    Name::Ptr{UInt8}                   #  Phase name
     Phase::Int64 = 1                   #  Number of the phase (optional)
     Nondimensional::Bool = false       #  Are all fields non-dimensionalized or not?
     Density::Vdensity = ()             #  Density equation of state
@@ -86,38 +87,40 @@ Structure that holds all material parameters for a given phase
     CreepLaws::Vcreep = ()             #  Creep laws
     Elasticity::Velastic = ()          #  Elastic parameters
     Plasticity::Vplastic = ()          #  Plasticity
-    CompositeRheology::Vcomposite = () #  Composite (combined) rheologies 
-    Conductivity::Vcond = ()           #  Parameters related to the energy equation 
-    HeatCapacity::Vheatc = ()          #  Heat capacity 
+    CompositeRheology::Vcomposite = () #  Composite (combined) rheologies
+    Conductivity::Vcond = ()           #  Parameters related to the energy equation
+    HeatCapacity::Vheatc = ()          #  Heat capacity
     RadioactiveHeat::Vradioact = ()    #  Radioactive heating source terms in energy conservation equation
     LatentHeat::Vlatent = ()           #  Latent heating source terms in energy conservation equation
     ShearHeat::Vshearheat = ()         #  Shear heating source terms in energy conservation equation
+    Permeability::Vpermeability = ()   #  Permeability
     Melting::Vmelting = ()             #  Melting model
     SeismicVelocity::Vseismvel = ()    #  Seismic velocity
 end
 
 """
     SetMaterialParams(; Name::String="", Phase::Int64=1,
-                        Density             =   nothing, 
+                        Density             =   nothing,
                         Gravity             =   nothing,
-                        CreepLaws           =   nothing, 
-                        Elasticity          =   nothing, 
-                        Plasticity          =   nothing, 
+                        CreepLaws           =   nothing,
+                        Elasticity          =   nothing,
+                        Plasticity          =   nothing,
                         CompositeRheology   =   nothing,
-                        Conductivity        =   nothing, 
-                        HeatCapacity        =   nothing, 
+                        Conductivity        =   nothing,
+                        HeatCapacity        =   nothing,
                         RadioactiveHeat     =   nothing,
                         LatentHeat          =   nothing,
                         ShearHeat           =   nothing,
+                        Permeability        =   nothing,
                         Melting             =   nothing,
                         SeismicVelocity     =   nothing,
                         CharDim::GeoUnits   =   nothing)
 
-Sets material parameters for a given phase. 
+Sets material parameters for a given phase.
 
-If `CharDim` is specified the input parameters are non-dimensionalized.  
+If `CharDim` is specified the input parameters are non-dimensionalized.
 Note that if `Density` is specified, we also set `Gravity` even if not explicitly listed
-    
+
 # Examples
 
 Define two viscous creep laws & constant density:
@@ -127,10 +130,10 @@ julia> Phase = SetMaterialParams(Name="Viscous Matrix",
                        CreepLaws = (PowerlawViscous(), LinearViscous(η=1e21Pa*s)))
 Phase 1 : Viscous Matrix
         | [dimensional units]
-        | 
-        |-- Density           : Constant density: ρ=2900 kg m⁻³ 
-        |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻² 
-        |-- CreepLaws         : Powerlaw viscosity: η0=1.0e18 Pa s, n=2.0, ε0=1.0e-15 s⁻¹  
+        |
+        |-- Density           : Constant density: ρ=2900 kg m⁻³
+        |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻²
+        |-- CreepLaws         : Powerlaw viscosity: η0=1.0e18 Pa s, n=2.0, ε0=1.0e-15 s⁻¹
         |                       Linear viscosity: η=1.0e21 Pa s
 ```
 
@@ -143,11 +146,11 @@ julia> Phase = SetMaterialParams(Name="Viscous Matrix", Phase=33,
                               CharDim   = CharUnits_GEO)
 Phase 33: Viscous Matrix
         | [non-dimensional units]
-        | 
-        |-- Density           : P/T-dependent density: ρ0=2.9e-16, α=0.038194500000000006, β=0.01, T0=0.21454659702313156, P0=0.0 
-        |-- Gravity           : Gravitational acceleration: g=9.810000000000002e18 
-        |-- CreepLaws         : Powerlaw viscosity: η0=0.1, n=3, ε0=0.001  
-        |                       Linear viscosity: η=10000.0 
+        |
+        |-- Density           : P/T-dependent density: ρ0=2.9e-16, α=0.038194500000000006, β=0.01, T0=0.21454659702313156, P0=0.0
+        |-- Gravity           : Gravitational acceleration: g=9.810000000000002e18
+        |-- CreepLaws         : Powerlaw viscosity: η0=0.1, n=3, ε0=0.001
+        |                       Linear viscosity: η=10000.0
 ```
 
 You can also create an array that holds several parameters:
@@ -165,19 +168,19 @@ julia> MatParam
 2-element Vector{MaterialParams}:
  Phase 1 : Upper Crust
     | [dimensional units]
-    | 
-    |-- Density           : Constant density: ρ=2900 kg m⁻³ 
-    |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻² 
-    |-- CreepLaws         : Powerlaw viscosity: η0=1.0e18 Pa s, n=2.0, ε0=1.0e-15 s⁻¹  
-    |                       Linear viscosity: η=1.0e23 Pa s 
-                            
+    |
+    |-- Density           : Constant density: ρ=2900 kg m⁻³
+    |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻²
+    |-- CreepLaws         : Powerlaw viscosity: η0=1.0e18 Pa s, n=2.0, ε0=1.0e-15 s⁻¹
+    |                       Linear viscosity: η=1.0e23 Pa s
+
  Phase 2 : Lower Crust
     | [dimensional units]
-    | 
-    |-- Density           : P/T-dependent density: ρ0=3000 kg m⁻³, α=3.0e-5 K⁻¹, β=1.0e-9 Pa⁻¹, T0=0 °C, P0=0 MPa 
-    |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻² 
-    |-- CreepLaws         : Powerlaw viscosity: η0=1.0e18 Pa s, n=5, ε0=1.0e-15 s⁻¹  
-    |                       Linear viscosity: η=1.0e21 Pa s 
+    |
+    |-- Density           : P/T-dependent density: ρ0=3000 kg m⁻³, α=3.0e-5 K⁻¹, β=1.0e-9 Pa⁻¹, T0=0 °C, P0=0 MPa
+    |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻²
+    |-- CreepLaws         : Powerlaw viscosity: η0=1.0e18 Pa s, n=5, ε0=1.0e-15 s⁻¹
+    |                       Linear viscosity: η=1.0e21 Pa s
 ```
 
 
@@ -196,12 +199,13 @@ function SetMaterialParams(;
     RadioactiveHeat=nothing,
     LatentHeat=nothing,
     ShearHeat=nothing,
+    Permeability=nothing,
     Melting=nothing,
     SeismicVelocity=nothing,
     CharDim=nothing,
 )
     return SetMaterialParams(
-        Name,
+        pointer(ptr2string(Name)),
         Phase,
         ConvField(Density, :Density; maxAllowedFields=1),
         ConvField(set_gravity(Gravity, Density), :Gravity; maxAllowedFields=1),
@@ -214,6 +218,7 @@ function SetMaterialParams(;
         ConvField(RadioactiveHeat, :RadioactiveHeat; maxAllowedFields=1),
         ConvField(LatentHeat, :LatentHeat; maxAllowedFields=1),
         ConvField(ShearHeat, :ShearHeat; maxAllowedFields=1),
+        ConvField(Permeability, :Permeability; maxAllowedFields=1),
         ConvField(Melting, :Melting; maxAllowedFields=1),
         ConvField(SeismicVelocity, :SeismicVelocity; maxAllowedFields=1),
         CharDim,
@@ -234,15 +239,15 @@ function SetMaterialParams(
     RadioactiveHeat,
     LatentHeat,
     ShearHeat,
+    Permeability,
     Melting,
     SeismicVelocity,
     CharDim,
 )
 
-    name = str2tuple(Name)    
-    # define struct for phase, while also specifying the maximum number of definitions for every field   
+    # define struct for phase, while also specifying the maximum number of definitions for every field
     phase = MaterialParams(
-        name,
+        pointer(ptr2string(Name)),
         Phase,
         false,
         Density,
@@ -256,22 +261,19 @@ function SetMaterialParams(
         RadioactiveHeat,
         LatentHeat,
         ShearHeat,
+        Permeability,
         Melting,
         SeismicVelocity,
     )
 
     # [optionally] non-dimensionalize the struct
-    phase_nd = nondimensionalize_phase(phase, CharDim) 
+    phase_nd = nondimensionalize_phase(phase, CharDim)
     return phase_nd
 end
 
 @inline nondimensionalize_phase(phase, CharDim::GeoUnits) = nondimensionalize(phase, CharDim)
 @inline nondimensionalize_phase(phase, ::Nothing) = phase
 @inline nondimensionalize_phase(phase, CharDim) = error("CharDim should be of type GeoUnits")
-
-@inline str2char(str::String) = str2char(str, static(length(str)))
-@inline str2char(str, ::StaticInt{N}) where N = ntuple(i->str[i], Val(N))
-@inline str2char(str, ::StaticInt{0}) = ()
 
 # In case density is defined and gravity not, set gravity to default value
 function set_gravity(Gravity::Nothing, Density::AbstractMaterialParam)
@@ -280,11 +282,11 @@ end
 set_gravity(Gravity, Density) = Gravity
 
 # Helper function that converts a field to a Tuple, provided it is not nothing
-# This also checks for the maximum allowed number of definitions 
-# (some rheological phases may allow for an arbitrary combination per phase; others like density EoS not) 
+# This also checks for the maximum allowed number of definitions
+# (some rheological phases may allow for an arbitrary combination per phase; others like density EoS not)
 ConvField(::Nothing, fieldname::Symbol; maxAllowedFields=1e6) = ()
 ConvField(field::AbstractMaterialParam, fieldname::Symbol; maxAllowedFields=1e6) = (field, )
-function ConvField(field::NTuple{N, Any}, fieldname::Symbol; maxAllowedFields=1e6) where N 
+function ConvField(field::NTuple{N, Any}, fieldname::Symbol; maxAllowedFields=1e6) where N
     if length(field) > maxAllowedFields
         error("Maximum $(maxAllowedFields) field allowed for: $fieldname")
     end
@@ -292,16 +294,20 @@ function ConvField(field::NTuple{N, Any}, fieldname::Symbol; maxAllowedFields=1e
 end
 
 # Helper that prints info about each of the material parameters
-#  for this to look nice, you need to define a Base.show 
+#  for this to look nice, you need to define a Base.show
 function Print_MaterialParam(io::IO, name::Symbol, Data)
     if length(Data) > 0
-        if typeof(Data[1]) <: AbstractMaterialParam
+        if Data isa Ptr
+            str = unsafe_string(Data)
+            print(io, "        |-- $(rpad(name,18)): $str \n")
+
+        elseif typeof(Data[1]) <: AbstractMaterialParam
             print(io, "        |-- $(rpad(name,18)):")
             for i in 1:length(Data)
                 str = Data[i]
                 if isa(str, AbstractComposite)
                     # The CompositeRheology object is formatted a bit different
-                    str = print_composite(Data[i],32)   
+                    str = print_composite(Data[i],32)
                 end
 
                 if i == 1
@@ -317,7 +323,8 @@ end
 
 # Specify how the printing of the MaterialParam structure is done
 function Base.show(io::IO, phase::MaterialParams)
-    println(io, "Phase $(rpad(phase.Phase,2)): $(String(collect(phase.Name)))")
+    name = unsafe_string(phase.Name)
+    println(io, "Phase $(rpad(phase.Phase,2)): $(name)")
     if phase.Nondimensional
         println(io, "        | [non-dimensional units]")
     else
@@ -330,7 +337,7 @@ function Base.show(io::IO, phase::MaterialParams)
     end
 end
 
-# Slightly nicer printout in case we have a tuple with material parameters 
+# Slightly nicer printout in case we have a tuple with material parameters
 function Base.show(io::IO, phase_tuple::NTuple{N,MaterialParams}) where {N}
     for i in 1:N
         Base.show(io, phase_tuple[i])
@@ -350,7 +357,7 @@ function print_composite(a, spaces=10)
     str = str.*"\n"
     for i=2:length(str)
         for j=1:spaces
-            str[i] = " "*str[i] 
+            str[i] = " "*str[i]
         end
     end
     str = join(str)
@@ -359,4 +366,3 @@ function print_composite(a, spaces=10)
 end
 
 end
-

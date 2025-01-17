@@ -15,7 +15,6 @@ module GeoParams
 using Parameters         # helps setting default parameters in structures
 using Unitful            # Units
 using BibTeX             # references of creep laws
-using Requires: @require # To only add plotting routines if GLMakie is loaded
 using StaticArrays
 using LinearAlgebra
 using ForwardDiff
@@ -93,7 +92,7 @@ function param_info end
 export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
 
 include("Utils.jl")
-export value_and_partial, str2tuple
+export value_and_partial
 
 include("TensorAlgebra/TensorAlgebra.jl")
 export second_invariant, second_invariant_staggered, rotate_elastic_stress
@@ -115,29 +114,29 @@ export MaterialParams, SetMaterialParams, No_MaterialParam, MaterialParamsInfo
 using .MaterialParameters.PhaseDiagrams
 export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
 
-
 # Density
 using .MaterialParameters.Density
 export compute_density,                                # computational routines
     compute_density!,
     param_info,
     AbstractDensity,
+    ConduitDensity,
     No_Density,
     ConstantDensity,
     PT_Density,
     Compressible_Density,
     T_Density,
+    Vector_Density,
     PhaseDiagram_LookupTable,
     Read_LaMEM_Perple_X_Diagram,
     MeltDependent_Density,
+    BubbleFlow_Density,
+    GasPyroclast_Density,
     compute_density_ratio
 
 # Constitutive relationships laws
 using .MaterialParameters.ConstitutiveRelationships
 export AxialCompression, SimpleShear, Invariant
-
-const get_shearmodulus = get_G
-const get_bulkmodulus = get_Kb
 
 #       Calculation routines
 export dεII_dτII,
@@ -196,8 +195,6 @@ export dεII_dτII,
     SetConstantElasticity,
     effective_εII,
     iselastic,
-    get_G,
-    get_Kb,
     get_shearmodulus,
     get_bulkmodulus,
 
@@ -206,6 +203,7 @@ export dεII_dτII,
     NoSoftening,
     LinearSoftening,
     NonLinearSoftening,
+    DecaySoftening,
 
     #       Plasticity
     AbstractPlasticity,
@@ -270,12 +268,13 @@ export compute_viscosity_εII,
 # Gravitational Acceleration
 using .MaterialParameters.GravitationalAcceleration
 export compute_gravity,                                # computational routines
-    ConstantGravity
+    ConstantGravity,
+    DippingGravity
 
 # Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat
 using .MaterialParameters.HeatCapacity
 export compute_heatcapacity,
-    compute_heatcapacity!, ConstantHeatCapacity, T_HeatCapacity_Whittington, Latent_HeatCapacity
+    compute_heatcapacity!, ConstantHeatCapacity, T_HeatCapacity_Whittington, Latent_HeatCapacity, Vector_HeatCapacity
 
 using .MaterialParameters.Conductivity
 export compute_conductivity,
@@ -336,7 +335,29 @@ export compute_meltfraction,
     MeltingParam_5thOrder,
     MeltingParam_Quadratic,
     MeltingParam_Assimilation,
+    Vector_MeltingParam,
     SmoothMelting
+
+
+using .MaterialParameters.Permeability
+export compute_permeability,
+    compute_permeability!,
+    compute_permeability_ratio,
+    param_info,
+    AbstractPermeability,
+    ConstantPermeability,
+    HazenPermeability,
+    PowerLawPermeability,
+    CarmanKozenyPermeability
+
+include("Traits/rheology.jl")
+export RheologyTrait
+export islinear, LinearRheologyTrait, NonLinearRheologyTrait
+export isviscoelastic, ElasticRheologyTrait, NonElasticRheologyTrait
+export isplasticity, PlasticRheologyTrait, NonPlasticRheologyTrait
+
+include("Traits/density.jl")
+export isconstant, DensityTrait, ConstantDensityTrait, NonConstantDensityTrait
 
 include("CreepLaw/Data/DislocationCreep.jl")
 using .Dislocation
@@ -357,7 +378,7 @@ function creeplaw_list(m::Module)
     out = string.(names(m; all=true, imported=true))
     filter!(x -> !startswith(x, "#"), out)
     return [getfield(m, Symbol(x)) for x in out if !isnothing(tryparse(Int, string(x[end]))) || endswith(x, "a") || endswith(x, "b")]
-end 
+end
 
 diffusion_law_list() = creeplaw_list(Diffusion)
 dislocation_law_list() = creeplaw_list(Dislocation)
@@ -365,10 +386,10 @@ grainboundarysliding_law_list() = creeplaw_list(GBS)
 nonlinearpeierls_law_list() = creeplaw_list(NonLinearPeierls)
 peierls_law_list() = creeplaw_list(Peierls)
 
-export diffusion_law_list, 
-       dislocation_law_list, 
-       grainboundarysliding_law_list, 
-       nonlinearpeierls_law_list, 
+export diffusion_law_list,
+       dislocation_law_list,
+       grainboundarysliding_law_list,
+       nonlinearpeierls_law_list,
        peierls_law_list
 
 # Define Table output functions
@@ -414,26 +435,26 @@ export PlotStrainrateStress,
     PlotPressureStressTime_0D,
     StrengthEnvelopePlot
 
-# We do not check `isdefined(Base, :get_extension)` as recommended since
-# Julia v1.9.0 does not load package extensions when their dependency is
-# loaded from the main environment.
-function __init__()
-    @static if !(VERSION >= v"1.9.1")
-        @require GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a" begin
-            print("Adding plotting routines of GeoParams through GLMakie \n")
-            @eval include("../ext/GeoParamsGLMakieExt.jl")
-        end
-    end
-end
-
 #Set functions aliases using @use
 include("aliases.jl")
 export ntuple_idx
 
-# export DislocationCreep_info,
-#     DiffusionCreep_info,
-#     GrainBoundarySliding_info,
-#     PeierlsCreep_info,
-#     NonLinearPeierlsCreep_info
+for modulus in (:G, :Kb)
+    fun = Symbol("get_$(string(modulus))")
+    @eval begin
+        @inline $(fun)(a::ConstantElasticity) = a.$(modulus).val
+        @inline $(fun)(c::CompositeRheology) = $(fun)(isviscoelastic(c), c)
+        @inline $(fun)(::ElasticRheologyTrait, c::CompositeRheology) = mapreduce(x->$(fun)(x), +, c.elements)
+        @inline $(fun)(r::AbstractMaterialParamsStruct) = $(fun)(r.CompositeRheology[1])
+        @inline $(fun)(a::NTuple{N, AbstractMaterialParamsStruct}, phase) where N = nphase($(fun), phase, a)
+        @inline $(fun)(::NonElasticRheologyTrait, c::CompositeRheology) = 0
+        @inline $(fun)(::Union{NonElasticRheologyTrait, AbstractCreepLaw, AbstractPlasticity, AbstractConstitutiveLaw}) = 0
+    end
+end
 
-end # module
+export get_G, get_Kb
+
+const get_shearmodulus = get_G
+const get_bulkmodulus  = get_Kb
+
+end # module GeoParams

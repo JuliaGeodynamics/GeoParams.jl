@@ -34,8 +34,8 @@ julia> x2 = NonLinearPeierlsCreep(n=1)
 NonLinearPeierlsCreep: n=1, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, Apparatus=AxialCompression
 ```
 """
-struct NonLinearPeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-    Name::NTuple{100,UInt8}
+struct NonLinearPeierlsCreep{T,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
+    Name::Ptr{UInt8}
     n::GeoUnit{T,U1} # power-law exponent
     q::GeoUnit{T,U1} # stress relation exponent
     o::GeoUnit{T,U1} # ... (normally called p but used as 'o' since p already exists)
@@ -75,10 +75,9 @@ struct NonLinearPeierlsCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U3 = typeof(AU).types[2]
         U4 = typeof(EU).types[2]
         U5 = typeof(RU).types[2]
-        N = length(Name)
-        name = str2tuple(Name)    
+        name = pointer(ptr2string(Name))    
         # Create struct
-        return new{T,100,U1,U2,U3,U4,U5}(
+        return new{T,U1,U2,U3,U4,U5}(
             name, nU, qU, oU, TauPU, AU, EU, RU, Int8(Apparatus), FT, FE
         )
     end
@@ -97,7 +96,7 @@ Removes the tensor correction of the creeplaw, which is useful to compare the im
 with the curves of the original publications, as those publications usually do not transfer their data to tensor format
 """
 function remove_tensor_correction(s::NonLinearPeierlsCreep)
-    name = uint2str(s.Name)
+    name = ptr2string(s.Name)
 
     return NonLinearPeierlsCreep(;
         Name=name, n=s.n, q=s.q, o=s.o, TauP=s.TauP, A=s.A, E=s.E, Apparatus=Invariant
@@ -105,7 +104,7 @@ function remove_tensor_correction(s::NonLinearPeierlsCreep)
 end
 
 function param_info(s::NonLinearPeierlsCreep)
-    name = uint2str(s.Name)
+    name = ptr2string(s.Name)
     eq = ""
     if name == ""
         return MaterialParamsInfo(; Equation=eq)
@@ -200,7 +199,7 @@ end
 function show(io::IO, g::NonLinearPeierlsCreep)
     return print(
         io,
-        "NonLinearPeierlsCreep: Name = $(String(collect(g.Name))), n=$(Value(g.n)), q=$(Value(g.q)), o=$(Value(g.o)), TauP=$(Value(g.TauP)), A=$(Value(g.A)), E=$(Value(g.E)), FT=$(g.FT), FE=$(g.FE), Apparatus=$(g.Apparatus)",
+        "NonLinearPeierlsCreep: Name = $(unsafe_string(g.Name)), n=$(Value(g.n)), q=$(Value(g.q)), o=$(Value(g.o)), TauP=$(Value(g.TauP)), A=$(Value(g.A)), E=$(Value(g.E)), FT=$(g.FT), FE=$(g.FE), Apparatus=$(g.Apparatus)",
     )
 end
 #-------------------------------------------------------------------------

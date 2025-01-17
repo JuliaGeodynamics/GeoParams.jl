@@ -7,7 +7,7 @@ using Base: Float64
 using Parameters, LaTeXStrings, Unitful, MuladdMacro
 using ..Units
 using GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
-import GeoParams: param_info, fastpow, pow_check, nphase, ntuple_idx, @print, @pow, str2tuple, uint2str
+import GeoParams: param_info, fastpow, pow_check, nphase, ntuple_idx, @print, @pow, ptr2string
 import GeoParams: second_invariant, second_invariant_staggered, value_and_partial, @extractors, add_extractor_functions
 using BibTeX
 using ..MaterialParameters: MaterialParamsInfo
@@ -62,13 +62,14 @@ export param_info,
     iselastic,
     AbstractSoftening,
     NoSoftening,
+    DecaySoftening,
     LinearSoftening,
     NonLinearSoftening
 
 # add methods programmatically 
 for myType in (:LinearViscous, :LinearMeltViscosity, :ViscosityPartialMelt_Costa_etal_2009, 
                 :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType, 
-                :GrainBoundarySliding, :PeierlsCreep, :NonLinearPeierlsCreep)
+                :GrainBoundarySliding, :PeierlsCreep, :NonLinearPeierlsCreep, :PowerlawViscous)
     @eval begin
         @inline compute_εII(a::$(myType), TauII, args) = compute_εII(a, TauII; args...)
         @inline compute_εvol(a::$(myType), P, args) = compute_εvol(a, P; args...)

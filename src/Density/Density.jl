@@ -16,25 +16,31 @@ import Base.show, GeoParams.param_info
 include("../Computations.jl")
 
 abstract type AbstractDensity{T} <: AbstractMaterialParam end
+abstract type ConduitDensity{T} <: AbstractDensity{T} end
 
 export compute_density,     # calculation routines
     compute_density!,       # in place calculation
     compute_density_ratio,
     param_info,             # info about the parameters
     AbstractDensity,
+    ConduitDensity,
     ConstantDensity,        # constant
     PT_Density,             # P & T dependent density
     Compressible_Density,   # Compressible density
     T_Density,              # T dependent density
-    MeltDependent_Density   # Melt dependent density
+    Vector_Density,         # Vector with density
+    MeltDependent_Density,   # Melt dependent density
+    BubbleFlow_Density,       # Bubble flow density
+    GasPyroclast_Density,     # Gas-Pyroclast mixture density
+    get_α
 
 # Define "empty" computational routines in case nothing is defined
 function compute_density!(
-    rho::_T, s::No_MaterialParam{_T}; P::_T=zero(_T), T::_T=zero(_T)
-) where {_T}
+    rho, s::No_MaterialParam{_T}; P::_T1=0e0, T::_T2=0e0
+) where {_T, _T1, _T2}
     return zero(_T)
 end
-function compute_density(s::No_MaterialParam{_T}; P::_T=zero(_T), T::_T=zero(_T)) where {_T}
+function compute_density(s::No_MaterialParam{_T}; P::_T1=0e0, T::_T2=0e0) where {_T,_T1,_T2}
     return zero(_T)
 end
 
@@ -122,7 +128,6 @@ end
 @inline (ρ::PT_Density)(args)                = ρ(; args...)
 @inline compute_density(s::PT_Density, args) = s(args)
 
-
 # Print info
 function show(io::IO, g::PT_Density)
     return print(
@@ -154,7 +159,7 @@ function param_info(s::Compressible_Density) # info about the struct
     return MaterialParamsInfo(; Equation = L"\rho = \rho_0\exp(\beta*(P-P_0))")
 end
 
-function (s::Compressible_Density{_T})(; P::_T=zero(_T), kwargs...) where {_T}
+function (s::Compressible_Density{_T})(; P=0e0, kwargs...) where {_T}
     if P isa Quantity
         @unpack_units ρ0, β, P0 = s
     else
@@ -198,14 +203,14 @@ function param_info(s::T_Density) # info about the struct
     return MaterialParamsInfo(; Equation = L"\rho = \rho_0*(1 - \alpha*(T-T_0))")
 end
 
-function (s::T_Density{_T})(; T::_T=zero(_T), kwargs...) where {_T}
+function (s::T_Density{_T})(; T = 0e0, kwargs...) where {_T}
     if T isa Quantity
         @unpack_units ρ0, α, T0 = s
     else
         @unpack_val   ρ0, α, T0 = s
     end
 
-    return @muladd ρ0 * (1.0 -  α * (T - T0))
+    return @muladd ρ0 * (1 -  α * (T - T0))
 end
 
 @inline (s::T_Density)(args)                = s(; args...)
@@ -228,7 +233,7 @@ If we use a single phase code the average density of a partially molten rock is
 ```math
     \\rho  = \\phi \\rho_{\\textrm{melt}} + (1-\\phi) \\rho_{\\textrm{solid}}
 ```
-where ``\\rho`` is the average density [``kg/m^3``], ``\\rho_{\textrm{melt}}`` the melt density, ``\\rho_{\textrm{solid}} `` the solid density and ``\\phi`` the melt fraction.
+where ``\\rho`` is the average density [``kg/m^3``], ``\\rho_{\\textrm{melt}}`` the melt density, ``\\rho_{\\textrm{solid}} `` the solid density and ``\\phi`` the melt fraction.
 
 Note that any density formulation can be used for melt and solid.
 """
@@ -247,7 +252,7 @@ function param_info(s::MeltDependent_Density) # info about the struct
 end
 
 # Calculation routines
-function (rho::MeltDependent_Density{_T})(; ϕ::_T=zero(_T), kwargs...) where {_T}
+function (rho::MeltDependent_Density{_T})(; ϕ=0e0, kwargs...) where {_T}
     ρsolid = compute_density(rho.ρsolid, kwargs)
     ρmelt  = compute_density(rho.ρmelt,  kwargs)
 
@@ -260,6 +265,191 @@ end
 # Print info
 function show(io::IO, g::MeltDependent_Density)
     return print(io, "Melt dependent density: ρ = (1-ϕ)*ρsolid + ϕ*ρmelt; ρsolid=$(g.ρsolid); ρmelt=$(g.ρmelt)")
+end
+#-------------------------------------------------------------------------
+
+# Conduit densities -------------------------------------------------
+"""
+    BubbleFlow_Density(ρmelt=ConstantDensity(), ρgas=ConstantDensity(), c0=0e0, a=0.0041MPa^-1/2)
+
+Defines the BubbleFlow_Density as described in Slezin (2003) with a default gas solubility constant of 0.0041MPa``^{-1/2}`` used in e.g. Sparks et al. (1978)
+```math
+    \\rho = \\frac{1}{\\frac{c_0 - c}{\\rho_g} + \\frac{1-(c_0-c)}{\\rho_m}}
+```
+with
+```math
+c =
+\\begin{cases}
+   aP^{1/2} & \\text{for } P < \\frac{c_0^2}{a^2} \\\\
+    c_0 & \\text{for } P \\geq \\frac{c_0^2}{a^2}
+\\end{cases}
+```
+# Arguments
+- `ρmelt`: Density of the melt
+- `ρgas`: Density of the gas
+- `c0`: Total volatile content
+- `a`: Gas solubility constant (default: 4.1e-6Pa``^{-1/2}``) (after Sparks et al., 1978)
+
+Possible values for a are 3.2e-6-6.4e-6Pa``^{-1/2}`` where the lower value corresponds to mafic magmas at rather large pressures (400-600MPa) and the higher value to felsic magmas at low pressures (0 to 100-200MPa) (after Slezin (2003))
+
+# Example
+```julia
+rheology = SetMaterialParams(;
+                      Phase=1,
+                      CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e21Pa * s)),
+                      Gravity=ConstantGravity(; g=9.81.0m / s^2),
+                      Density= BubbleFlow_Density(ρmelt=ConstantDensity(ρ=2900kg/m^3), ρgas=ConstantDensity(ρ=1kg/m^3), c0=0.0, a=0.0041MPa^-1//2),
+                      )
+```
+
+# References
+- Slezin, Yu. B. (2003), The mechanism of volcanic eruptions (a steady state approach), Journal of Volcanology and Geothermal Research, 122, 7-50, https://doi.org/10.1016/S0377-0273(02)00464-X
+- Sparks, R. S. J.(1978), The dynamics of bubble formation and growth in magmas: A review and analysis, Journal of Volcanology and Geothermal Research, 3, 1-37, https://doi.org/10.1016/0377-0273(78)90002-1
+"""
+@with_kw_noshow struct BubbleFlow_Density{_T, U1, U2, U3, S1<:AbstractDensity, S2 <:AbstractDensity} <: ConduitDensity{_T}
+    ρmelt::S1 = ConstantDensity(ρ=2200kg/m^3)   # density of the melt
+    ρgas::S2 = ConstantDensity(ρ=1kg/m^3)       # density of the gas
+    c0::GeoUnit{_T, U1} = 0e0 * NoUnits         # total volatile content
+    a::GeoUnit{_T, U2} = 4.1e-6Pa^(-1//2)         # gas solubility constant
+    ρ::GeoUnit{_T,U3} = 2900.0kg / m^3          # to keep track on whether this struct is dimensional or not
+end
+
+BubbleFlow_Density(args...) = BubbleFlow_Density(args[1], args[2], convert.(GeoUnit, args[3:end])...)
+isdimensional(s::BubbleFlow_Density) = isdimensional(s.ρmelt)
+
+function param_info(s::BubbleFlow_Density) # info about the struct
+    return MaterialParamsInfo(; Equation=L"\rho = 1/((c_0-c)/rho_g + 1-(c_0-c)/\rho_m)")
+end
+
+# Calculation routines
+@inline function (rho::BubbleFlow_Density{_T})(; P = 0e0, kwargs...) where {_T}
+    ρmelt = compute_density(rho.ρmelt, kwargs)
+    ρgas  = compute_density(rho.ρgas,  kwargs)
+    if P isa Quantity
+        @unpack_units c0, a = rho
+    else
+        @unpack_val c0, a = rho
+    end
+
+    cutoff = c0^2/a^2
+
+    if P < cutoff
+        c = a * sqrt(abs(P))
+    else
+        c = c0
+    end
+
+    return inv((c0-c)/ρgas + (1-(c0-c))/ρmelt)
+end
+
+@inline (s::BubbleFlow_Density)(args)                = s(; args...)
+@inline compute_density(s::BubbleFlow_Density, args) = s(args)
+
+# Print info
+function show(io::IO, g::BubbleFlow_Density)
+    return print(io, "Bubble flow density: ρ = 1/((c0-c)/ρgas + (1-(c0-c))/ρmelt); ρmelt=$(g.ρmelt); ρgas=$(g.ρgas); c0=$(UnitValue(g.c0)); a=$(UnitValue(g.a))")
+end
+
+# Gas-Pyroclast mixture density
+"""
+    GasPyroclast_Density(ρmelt=ConstantDensity(), ρgas=ConstantDensity(), δ=0e0)
+
+Defines the GasPyroclast_Density as described in Slezin (2003) with a default volume fraction of free gas in the flow of 0.0
+This is also used to model partly destroyed foam in the conduit.
+
+```math
+    \\rho = \\rho_g\\delta + \\rho_p(1 - \\delta)
+```
+with
+```math
+    \\rho_p = \\rho_m(1 - \\beta) + \\rho_g\\beta \\approx \\rho_l(1 - \\beta)
+```
+
+# Arguments
+- `ρmelt`: Density of the melt
+- `ρgas`: Density of the gas
+- `δ`: Volume fraction of free gas in the flow
+- `β`: Gas volume fraction enclosed within the particles
+
+# Example
+```julia
+rheology = SetMaterialParams(;
+                      Phase=1,
+                      CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e21Pa * s)),
+                      Gravity=ConstantGravity(; g=9.81.0m / s^2),
+                      Density= GasPyroclast_Density(ρmelt=ConstantDensity(ρ=2900kg/m^3), ρgas=ConstantDensity(ρ=1kg/m^3), δ=0.0, β=0.0),
+                      )
+```
+
+# References
+- Slezin, Yu. B. (2003), The mechanism of volcanic eruptions (a steady state approach), Journal of Volcanology and Geothermal Research, 122, 7-50, https://doi.org/10.1016/S0377-0273(02)00464-X
+"""
+@with_kw_noshow struct GasPyroclast_Density{_T, U1, U2, U3, S1<:AbstractDensity, S2 <:AbstractDensity} <: ConduitDensity{_T}
+    ρmelt::S1 = ConstantDensity(ρ=2200kg/m^3)   # density of the melt
+    ρgas::S2  = ConstantDensity(ρ=1kg/m^3)      # density of the gas
+    δ::GeoUnit{_T, U1} = 0e0 * NoUnits          # volume fraction of free gas in flow
+    β::GeoUnit{_T, U2} = 0e0 * NoUnits          # gas volume fraction enclosed within the particles
+    ρ::GeoUnit{_T, U3} = 2900.0kg / m^3         # to keep track on whether this struct is dimensional or not
+end
+
+GasPyroclast_Density(args...) = GasPyroclast_Density(args[1], args[2], convert.(GeoUnit, args[3:end])...)
+isdimensional(s::GasPyroclast_Density) = isdimensional(s.ρmelt)
+
+function param_info(s::GasPyroclast_Density) # info about the struct
+    return MaterialParamsInfo(; Equation=L"\rho = \rho_g\delta + \rho_p(1 - \delta)")
+end
+
+
+# Calculation routines
+@inline function (rho::GasPyroclast_Density{_T})(; kwargs...) where {_T}
+    ρmelt = compute_density(rho.ρmelt, kwargs)
+    ρgas  = compute_density(rho.ρgas,  kwargs)
+    @unpack_val δ, β = rho
+
+    return @muladd ρgas * δ + ρmelt * (1 - β)
+end
+
+@inline (s::GasPyroclast_Density)(args)                = s(; args...)
+@inline compute_density(s::GasPyroclast_Density, args) = s(args)
+
+# Print info
+function show(io::IO, g::GasPyroclast_Density)
+    return print(io, "Gas-Pyroclast mixture density: ρ = ρgas*δ + ρmelt*(1-β); ρmelt=$(g.ρmelt); ρgas=$(g.ρgas); δ=$(UnitValue(g.δ)); β=$(UnitValue(g.β))")
+end
+#-------------------------------------------------------------------------
+
+# MAGEMin DB density -------------------------------
+"""
+    Vector_Density(_T)
+
+Stores a vector with density data that can be retrieved by providing an `index`
+"""
+struct Vector_Density{_T, V <: AbstractVector} <: AbstractDensity{_T}
+    rho::V       # Density
+end
+Vector_Density(; rho=Vector{Float64}()) = Vector_Density{eltype(rho), typeof(rho)}(rho)
+
+# This assumes that density always has a single parameter. If that is not the case, we will have to extend this (to be done)
+function param_info(s::Vector_Density) # info about the struct
+    return MaterialParamsInfo(; Equation=L"\rho from a precomputed vector")
+end
+
+# Calculation routine
+"""
+    compute_density(s::Vector_Density; index::Int64, kwargs...)
+
+Pointwise calculation of density from a vector where `index` is the index of the point
+"""
+@inline function (s::Vector_Density)(; index::Int64, kwargs...)
+    return s.rho[index]
+end
+
+@inline (s::Vector_Density)(args)                = s(; args...)
+@inline compute_density(s::Vector_Density, args) = s(args)
+
+# Print info
+function show(io::IO, g::Vector_Density)
+    return print(io, "Density from precomputed vector with $(length(g.rho)) entries.")
 end
 #-------------------------------------------------------------------------
 
@@ -307,43 +497,25 @@ julia> MatParam = (SetMaterialParams(Name="Mantle", Phase=1,
                         CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pas)),
                         Density   = ConstantDensity(ρ=2900kg/m^3))
                   );
-julia> Phases = ones(Int64,400,400);
-julia> Phases[:,20:end] .= 2
+julia> Phases = ones(Int64,10,10);
+julia> Phases[:,5:end] .= 2
 julia> rho     = zeros(size(Phases))
 julia> T       =  ones(size(Phases))
 julia> P       =  ones(size(Phases))*10
 julia> args = (P=P, T=T)
 julia> compute_density!(rho, MatParam, Phases, args)
 julia> rho
-400×400 Matrix{Float64}:
-2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
-    ⋮                                            ⋮                                         ⋱     ⋮                                       ⋮
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  …  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91  2899.91     2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+10×10 Matrix{Float64}:
+ 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+ 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
 ```
 The routine is made to minimize allocations:
 ```julia
@@ -351,7 +523,7 @@ julia> using BenchmarkTools
 julia> @btime compute_density!(\$rho, \$MatParam, \$Phases, P=\$P, T=\$T)
     203.468 μs (0 allocations: 0 bytes)
 ```
-_____________________________________________________________________________________________________________________________
+_________________________________________________________________________________________________________
 
     compute_density!(rho::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialParamsStruct}, PhaseRatios::AbstractArray{_T, M}, P=nothing, T=nothing)
 
@@ -363,8 +535,51 @@ This assumes that the `PhaseRatio` of every point is specified as an Integer in 
 @inline compute_density_ratio(args::Vararg{Any, N}) where N = compute_param_times_frac(compute_density, args...)
 
 # extractor methods
-for type in (ConstantDensity, PT_Density, Compressible_Density, T_Density, MeltDependent_Density)
+for type in (ConstantDensity, PT_Density, Compressible_Density, T_Density, MeltDependent_Density, Vector_Density)
     @extractors(type, :Density)
 end
+
+import GeoParams.get_α
+
+function get_α(rho::MeltDependent_Density; ϕ::T=0.0, kwargs...) where {T}
+    αsolid = rho.ρsolid.α.val
+    αmelt  = rho.ρmelt.α.val
+    return @muladd ϕ * αmelt + (1-ϕ) * αsolid
+end
+
+get_α(rho::MeltDependent_Density, args) = get_α(rho; args...)
+
+function get_α(rho::BubbleFlow_Density; P::T=0.0, kwargs...) where {T}
+    αmelt  = rho.ρmelt.α.val
+    αgas   = rho.ρgas.α.val
+    if P isa Quantity
+        @unpack_units c0, a = rho
+    else
+        @unpack_val c0, a = rho
+    end
+
+    cutoff = c0^2/a^2
+
+    if P < cutoff
+        c = a * sqrt(abs(P))
+    else
+        c = c0
+    end
+
+    return inv((c0-c)/αgas + (1-(c0-c))/αmelt)
+end
+
+get_α(rho::BubbleFlow_Density, args) = get_α(rho; args...)
+
+function get_α(rho::GasPyroclast_Density; kwargs...)
+    αmelt  = rho.ρmelt.α.val
+    αgas   = rho.ρgas.α.val
+
+    @unpack_val δ, β = rho
+
+    return @muladd αgas * δ + αmelt * (1 - β)
+end
+
+get_α(rho::GasPyroclast_Density, args) = get_α(rho; args...)
 
 end

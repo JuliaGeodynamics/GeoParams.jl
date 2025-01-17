@@ -41,8 +41,8 @@ julia> x2 = DislocationCreep(n=3)
 DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3 mol^-1, Apparatus=AxialCompression
 ```
 """
-struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
-    Name::NTuple{100,UInt8}
+struct DislocationCreep{T,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
+    Name::Ptr{UInt8}
     n::GeoUnit{T,U1} # power-law exponent
     r::GeoUnit{T,U1} # exponent of water-fugacity
     A::GeoUnit{T,U2} # material specific rheological parameter
@@ -79,10 +79,9 @@ struct DislocationCreep{T,N,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U3 = typeof(EU).types[2]
         U4 = typeof(VU).types[2]
         U5 = typeof(RU).types[2]
-        name = str2tuple(Name)    
-        N = length(name)
+        name = pointer(ptr2string(Name))
         # Create struct
-        return new{T,100,U1,U2,U3,U4,U5}(
+        return new{T,U1,U2,U3,U4,U5}(
             name, nU, rU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
         )
     end
@@ -101,7 +100,7 @@ Removes the tensor correction of the creeplaw, which is useful to compare the im
 with the curves of the original publications, as those publications usually do not transfer their data to tensor format
 """
 function remove_tensor_correction(s::DislocationCreep)
-    name = uint2str(s.Name)
+    name = ptr2string(s.Name)
 
     return DislocationCreep(;
         Name=name, n=s.n, r=s.r, A=s.A, E=s.E, V=s.V, Apparatus=Invariant
@@ -283,7 +282,7 @@ end
 function show(io::IO, g::DislocationCreep)
     return print(
         io,
-        "DislocationCreep: Name = $(strip(String(collect(g.Name)))), n=$(Value(g.n)), r=$(Value(g.r)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), FT=$(g.FT), FE=$(g.FE), Apparatus=$(g.Apparatus)",
+        "DislocationCreep: Name = $(unsafe_string(g.Name)), n=$(Value(g.n)), r=$(Value(g.r)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), FT=$(g.FT), FE=$(g.FE), Apparatus=$(g.Apparatus)",
     )
 end
 #-------------------------------------------------------------------------
@@ -296,7 +295,7 @@ using .Dislocation
 export SetDislocationCreep
 
 function param_info(s::DislocationCreep)
-    name = strip(uint2str(s.Name))
+    name = unsafe_string(s.Name)
     eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"
     if name == ""
         return MaterialParamsInfo(; Equation=eq)
@@ -354,7 +353,7 @@ function Transform_DislocationCreep(p::AbstractCreepLaw{T}) where T
     Apparatus = p.Apparatus
     r         = Value(p.r)
     # args from database
-    args = (Name=p.Name, n=n, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+    args = (Name=unsafe_string(p.Name), n=n, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
 
     return DislocationCreep(; args...)
 end
@@ -374,7 +373,7 @@ function Transform_DislocationCreep(p::AbstractCreepLaw{T}, kwargs::NamedTuple) 
     V_m3      = uconvert(m^3 / mol, V_new)
     Apparatus = p.Apparatus
     # args from database
-    args = (Name=p.Name, n=n_new, r=r_new, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+    args = (Name=unsafe_string(p.Name), n=n_new, r=r_new, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
 
     return DislocationCreep(; args...)
 end

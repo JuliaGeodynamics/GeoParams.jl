@@ -51,11 +51,11 @@ using GeoParams
     @test CharUnits_NO.length == 1
     @test CharUnits_NO.Pa == 1
 
+    CharNothing = nothing
     # test nondimensionization of various parameters
     @test nondimensionalize(10cm / yr, CharUnits_GEO) ≈ 0.0031688087814028945 rtol = 1e-10
     @test nondimensionalize(10cm / yr, CharUnits_SI) ≈ 3.168808781402895e7 rtol = 1e-10
-    @test nondimensionalize([10 1; 20 30.0], CharUnits_GEO) == [10 1; 20 30.0]
-
+    @test nondimensionalize(10cm / yr, CharNothing) == 10
     # test the same nondimensionalisation if giving a GeoUnit as input:
     @test NumValue(nondimensionalize(GeoUnit(10cm / yr), CharUnits_GEO)) ≈
         0.0031688087814028945 rtol = 1e-10
@@ -64,6 +64,9 @@ using GeoParams
 
     A = 10MPa * s^(-1)   # should give 1e12 in ND units
     @test nondimensionalize(A, CharUnits_GEO) ≈ 1e12
+
+    A1 = 10MPa * s^(-1)
+    @test nondimensionalize(A1, CharNothing) == 10
 
     B = GeoUnit(10MPa * s^(-1))
     @test nondimensionalize(B, CharUnits_GEO) ≈ 1e12
@@ -84,6 +87,18 @@ using GeoParams
     v_ND = nondimensionalize(3cm / yr, CharUnits_GEO)
     @test dimensionalize(v_ND, cm / yr, CharUnits_GEO) == 3.0cm / yr
     @test ustrip(dimensionalize(v_ND, cm / yr, CharUnits_GEO)) == udim(v_ND, cm / yr, CharUnits_GEO)
+
+    # test error handling
+    @test_throws ArgumentError nondimensionalize(5, CharUnits_GEO)
+    @test_throws ArgumentError nondimensionalize(5e0, CharUnits_GEO)
+    @test_throws ArgumentError nondimensionalize([10 1; 20 30.0], CharUnits_GEO)
+    @test_throws ArgumentError nondimensionalize([], CharUnits_GEO)
+    @test_throws ArgumentError nondimensionalize(Float64[], CharUnits_GEO)
+    @test_throws ArgumentError nondimensionalize((10, 1), CharUnits_GEO)
+    @test_throws ArgumentError nondimensionalize((10e0, 1e0), CharUnits_GEO)
+    # this tests the warning message
+    @test (@test_logs (:warn,"The input parameter is not being nondimensionalized, as no characteristic units are given") nondimensionalize(10cm / yr, CharNothing)) == 10
+    # @test (@test_logs (:warn,"The input parameter is not being nondimensionalized, as no characteristic units are given") min_level=Logging.Warn nondimensionalize(10cm / yr, CharNothing)) == 10
 
     # Test the GeoUnit struct
     x = GeoUnit(8.1cm / yr)
@@ -119,7 +134,7 @@ using GeoParams
     # test extracting a value from a GeoUnit array
     @test NumValue(z_D[2, 2]) == 2.0
 
-    # test setting a new value 
+    # test setting a new value
     z_D[2, 1] = 3
     @test z_D[2, 1].val == 3.0
 
@@ -142,7 +157,7 @@ using GeoParams
     # test various calculations (using arrays with and without units)
     T_vec = (273K):(10K):(500K)        # using units
     T = 400.0K               # Unitful quantity
-    T_nd = 10:10:200            # no units  
+    T_nd = 10:10:200            # no units
     α = GeoUnit(3e-5 / K)
     T₀ = GeoUnit(293K)
     ρ₀ = GeoUnit(3300kg / m^3)
@@ -171,7 +186,7 @@ using GeoParams
     @test t ≈ 1.3651877133105803
     @test Unit(t) == NoUnits
 
-    # Case in which one of them is a Unitful quantity 
+    # Case in which one of them is a Unitful quantity
     t = T + T₀
     @test isa(t, Quantity)    # addition
     @test t == 693K
@@ -271,8 +286,8 @@ using GeoParams
     @test test .* ar1 == [10.0km^2 20.0km^2; 40.0km^2 50.0km^2]
     @test ar ./ ar1 == [1/km 1/km; 1/km 1/km]
 
-    # The way we define different structures heavily affects the number of allocs 
-    # that are done while computing with parameters defined within the struct 
+    # The way we define different structures heavily affects the number of allocs
+    # that are done while computing with parameters defined within the struct
     struct ConDensity   # 1 allocation
         ρ::Float64
     end
@@ -350,7 +365,10 @@ using GeoParams
     rho8 = ConDensity8()
     rho9 = ConDensity9(; ρ=2800kg / m^3)
     rho9_ND = nondimensionalize(rho9, GEO_units()) # this is type stable, unlike with the rho* variables above
-
+    rho9_1 = nondimensionalize(rho9, CharNothing)
+    rho1_1 = nondimensionalize(rho1, CharNothing)
+    @test rho9 == rho9_1
+    @test rho1 == rho1_1
     # test automatic nondimensionalization of a MaterialsParam struct:
     CD = GEO_units()
     rho2_ND = nondimensionalize(rho2, CD) # type unstable...
@@ -389,12 +407,12 @@ using GeoParams
     @btime f!($r, $rho5, $c)    # 3001 allocation
     @btime f!($r, $rho6, $c)    # 3001 allocation (so also with keywords, it is crucial to indicate the type)
     @btime f!($r, $rho7, $c)    # 1 allocation (shows that we the variables are not of concrete types)
-    @btime f!($r, $rho8, $c)    # 3001 allocation 
+    @btime f!($r, $rho8, $c)    # 3001 allocation
     @btime f!($r, $rho9, $c)    # 0 allocations
-    @btime f!($r, $rho9_ND, $c) 
+    @btime f!($r, $rho9_ND, $c)
     =#
 
-    # test arrays of parameters 
+    # test arrays of parameters
     param = (100km, 800 / s)
     param1 = (GeoUnit(100km), GeoUnit(800 / s))
     g = GEO_units()
@@ -425,20 +443,22 @@ using GeoParams
     @test Unit(T_nd+T_nd) == K
     @test Unit(T_nd-T_nd) == K
     @test Unit(T_nd*T_nd) == K*K
-    
+
     T_gradients_Kkm = GeoUnit(30K)/GeoUnit(1km)
     @test T_gradients_Kkm == GeoUnit(0.03K/m)
     T_gradients_Ckm = (GeoUnit(30C)-GeoUnit(0C))/GeoUnit(1km)
     @test T_gradients_Ckm == GeoUnit(0.03K/m)
-    
+
     # MWE of @aelligp
     CharDim     = GEO_units(length=40km, viscosity=1e20Pa*s);
     Depth       = GeoUnit(Array(0km:1km:10km));
     Depth_nondim= nondimensionalize(Depth,CharDim);
+    Depth_nothing= nondimensionalize(Depth,CharNothing);
+    @test Depth_nothing.val == 0:1:10
 
     Geotherm    = nondimensionalize(GeoUnit(30K/1km), CharDim)
     Geotherm_C  = nondimensionalize(GeoUnit(30C)-GeoUnit(0C), CharDim)/nondimensionalize(GeoUnit(1km), CharDim)
-    
+
     Gradient_K  = nondimensionalize(GeoUnit(273.15K),CharDim) .+ Geotherm * Depth_nondim;
     Temp_K_dim  = dimensionalize(Gradient_K, CharDim)
     @test all(Temp_K_dim.val .≈ (Depth.val.*30 .+ 273.15))

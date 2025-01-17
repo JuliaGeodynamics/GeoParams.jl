@@ -21,27 +21,25 @@ import GeoParams.Diffusion
     )
     EpsII = GeoUnit(1.0s^-1.0)
     TauII = GeoUnit(0.3MPa)
-    P = GeoUnit(1.0e9Pa)
-    T = GeoUnit(1400C)
-    f = GeoUnit(1000NoUnits)
-    f_nd = nondimensionalize(f, CharDim)
-    d = GeoUnit(10mm)
-    d_nd = nondimensionalize(d, CharDim)
+    P     = GeoUnit(1.0e9Pa)
+    T     = GeoUnit(1400C)
+    f     = GeoUnit(1000NoUnits)
+    f_nd  = nondimensionalize(f, CharDim)
+    d     = GeoUnit(10mm)
+    d_nd  = nondimensionalize(d, CharDim)
 
     # compute a pure diffusion creep rheology
     diffusion_law = Diffusion.dry_anorthite_Rybacki_2006
-    p = SetDiffusionCreep(diffusion_law; n = 1NoUnits)
+    p             = SetDiffusionCreep(diffusion_law; n = 1NoUnits)
     @test p.n.val == 1.0
 
     # compute a pure diffusion creep rheology
     diffusion_law = Diffusion.dry_anorthite_Rybacki_2006
-    p = SetDiffusionCreep(diffusion_law)
-
-    T = 650 + 273.15
-
-    args = (; T=T)
-    TauII = 1e6
-    ε = compute_εII(p, TauII, args)
+    p             = SetDiffusionCreep(diffusion_law)
+    T             = 650 + 273.15
+    args          = (; T=T)
+    TauII         = 1e6
+    ε             = compute_εII(p, TauII, args)
     @test ε ≈ 1.7722083485120549e-32
 
     # same but while removing the tensor correction
@@ -49,12 +47,10 @@ import GeoParams.Diffusion
     @test ε_notensor ≈ 1.1814722323413693e-32
 
     # test with arrays
-    τII_array = ones(10) * 1e6
-    ε_array = similar(τII_array)
-    T_array = ones(size(τII_array)) * (650.0 + 273.15)
-
+    τII_array  = ones(10) * 1e6
+    ε_array    = similar(τII_array)
+    T_array    = ones(size(τII_array)) * (650.0 + 273.15)
     args_array = (; T=T_array)
-
     compute_εII!(ε_array, p, τII_array, args_array)
     @test ε_array[1] ≈ ε
 
@@ -65,27 +61,24 @@ import GeoParams.Diffusion
     #---------------------------
     # This is data from a matlab script implementation of the rheology (which was again benchmarked vs. LaMEM)
     for itest in 1:2
-        eII = 1e-22
-        PPa = 0.0
-        gsiz = 100
-        TK = 650 + 273.15
-
-        logA = [12.1 12.7] #Logarithm of pre-exponential factor
-        npow = [1 3] #Power law exponent
-        Qact = [460 641] #Activation energy (KJ)
-        m_gr0 = [3 0] #Grain size Exponent (will convert to negative)
-        r_fug = [0 0] #Exponent of Fugacity
-        Vact = [24 24] #Activation Volume cm-3
-        fugH = [1 1] #Fugacity of water MPa
-
-        R = 8.3145 #Gas Constant
-        MPa2Pa = 1e6   #MPa  -> Pa
-        cm32m3 = 1e-6  #cm3  -> m3
-        J2kJ = 1e-3  #Joul -> kJoule
-
-        A0 = 10.0 .^ (logA)  # in MPa^-n s^-1 micrometer^m
-        m_gr = -m_gr0
-        PMPa = PPa / MPa2Pa
+        eII    = 1e-22
+        PPa    = 0.0
+        gsiz   = 100
+        TK     = 650 + 273.15
+        logA   = [12.1 12.7]    # Logarithm of pre-exponential factor
+        npow   = [1 3]          # Power law exponent
+        Qact   = [460 641]      # Activation energy (KJ)
+        m_gr0  = [3 0]          # Grain size Exponent (will convert to negative)
+        r_fug  = [0 0]          # Exponent of Fugacity
+        Vact   = [24 24]        # Activation Volume cm-3
+        fugH   = [1 1]          # Fugacity of water MPa
+        R      = 8.3145         # Gas Constant
+        MPa2Pa = 1e6            # MPa  -> Pa
+        cm32m3 = 1e-6           # cm3  -> m3
+        J2kJ   = 1e-3           # Joul -> kJoule
+        A0     = 10.0 .^ (logA) # in MPa^-n s^-1 micrometer^m
+        m_gr   = -m_gr0
+        PMPa   = PPa / MPa2Pa
 
         i_flow = itest
         FG_e =
@@ -118,7 +111,7 @@ import GeoParams.Diffusion
 
         # using SI units
         τII = compute_τII(pp, eII / s, (; T=TK * K, d=gsiz * 1e-6m))
-        η = τII / (2 * eII / s)
+        η   = τII / (2 * eII / s)
         @test Tau ≈ ustrip(τII)
         @test mu ≈ ustrip(η)
 
@@ -127,7 +120,7 @@ import GeoParams.Diffusion
 
         # using Floats
         τII = compute_τII(pp, eII, (; T=TK, d=gsiz * 1e-6))
-        η = τII / (2 * eII)
+        η   = τII / (2 * eII)
         @test Tau ≈ τII
         @test mu ≈ η
 
@@ -135,12 +128,12 @@ import GeoParams.Diffusion
         @test eII ≈ ustrip(εII)
 
         # using arrays for some of the variables
-        TK_vec = ones(10) .* TK
-        eII_vec = ones(size(TK_vec)) * eII
-        τII_vec = zero(eII_vec)
-        args = (; T=TK_vec, d=gsiz * 1e-6)
+        TK_vec   = ones(10) .* TK
+        eII_vec  = ones(size(TK_vec)) * eII
+        τII_vec  = zero(eII_vec)
+        args     = (; T=TK_vec, d=gsiz * 1e-6)
         gsiz_vec = ones(size(TK_vec)) * gsiz * 1e-6
-        args1 = (; T=TK_vec, d=gsiz_vec)
+        args1    = (; T=TK_vec, d=gsiz_vec)
 
         compute_τII!(τII_vec, pp, eII_vec, args)
         η_vec = τII_vec ./ (2 * eII_vec)
@@ -160,8 +153,8 @@ import GeoParams.Diffusion
     creeplaw_list = diffusion_law_list()
 
     for fun in creeplaw_list
-        p = SetDiffusionCreep(fun)                    # original creep law
-        p_nd = nondimensionalize(p, CharDim)          # non-dimensionalized
+        p     = SetDiffusionCreep(fun)                    # original creep law
+        p_nd  = nondimensionalize(p, CharDim)          # non-dimensionalized
         @test p_nd == SetDiffusionCreep(fun, CharDim) # check that the non-dimensionalized version is the same as the original
         p_dim = dimensionalize(p, CharDim)            # dimensionalized
 
@@ -175,9 +168,9 @@ import GeoParams.Diffusion
         end
 
         # Perform computations with the rheology
-        args = (T=900.0, d=100e-6, τII_old=1e6)
-        ε = 1e-15
-        τ = compute_τII(p, ε, args)
+        args   = (T=900.0, d=100e-6, τII_old=1e6)
+        ε      = 1e-15
+        τ      = compute_τII(p, ε, args)
         ε_test = compute_εII(p, τ, args)
         @test ε ≈ ε_test
     end

@@ -1,7 +1,7 @@
 using Test
 using GeoParams
 using StaticArrays
-
+import ForwardDiff as FD
 @testset "EnergyParameters.jl" begin
 
     # This tests the MaterialParameters structure
@@ -33,6 +33,8 @@ using StaticArrays
     @test sum(Cp) ≈ 11667.035717418683
     @test GeoParams.get_Tcutoff(Cp2) ==  846.0
 
+    FD.derivative(x -> compute_heatcapacity(Cp2, (; T=x)), T[1]) == 3.2721616015871584
+
     # nondimensional
     Cp2_nd = T_HeatCapacity_Whittington()
     Cp2_nd = nondimensionalize(Cp2_nd, CharUnits_GEO)
@@ -44,6 +46,15 @@ using StaticArrays
 
     # Dimensionalize again and double-check the results
     @test sum(abs.(ustrip.(Cp_nd * CharUnits_GEO.heatcapacity) - Cp)) < 1e-11
+
+    # heat capacity
+    Cp3 = Vector_HeatCapacity(Cp=fill(1500.0, 100))
+    index = fill(10,size(T))
+    args  = (; index=index)
+    Cp = zero(T)
+    @test compute_heatcapacity(Cp3, index=10) == 1500.0
+
+   # compute_heatcapacity!(Cp, Cp3, args)
 
     # Test with arrays
     T_array = T * ones(10)'
@@ -61,13 +72,17 @@ using StaticArrays
     @test sum(Cp_array[i, 1] for i in axes(Cp_array,1)) ≈ 11667.035717418683
 
     # Check that it works if we give a phase array
-    MatParam = Array{MaterialParams,1}(undef, 2)
+    MatParam = Array{MaterialParams,1}(undef, 3)
     MatParam[1] = SetMaterialParams(;
         Name="Mantle", Phase=1, HeatCapacity=ConstantHeatCapacity()
     )
 
     MatParam[2] = SetMaterialParams(;
         Name="Crust", Phase=2, HeatCapacity=T_HeatCapacity_Whittington()
+    )
+
+    MatParam[3] = SetMaterialParams(;
+        Name="Crust1", Phase=3, HeatCapacity=Vector_HeatCapacity(Cp=fill(1500.0, 100))
     )
 
     Mat_tup = Tuple(MatParam)
@@ -83,22 +98,23 @@ using StaticArrays
     n = 100
     Phases = ones(Int64, n, n, n);
     @views Phases[:, :, 20:end] .= 2;
+    @views Phases[:, :, 50:end] .= 3;
 
     Cp = zeros(size(Phases));
     T = fill(1500e0, size(Phases));
     P = zeros(size(Phases));
 
-    args = (; T=T)
+    args = (; T=T, index=fill(10, size(T)))
     compute_heatcapacity!(Cp, Mat_tup, Phases, args)    # computation routine w/out P (not used in most heat capacity formulations)
-    @test sum(Cp[1, 1, k] for k in axes(Cp,3)) ≈ 121399.0486067196
+    @test sum(Cp[1, 1, k] for k in axes(Cp,3)) ≈ 134023.72170619245
 
     # check with array of constant properties (and no required input args)
     args1 = (;)
     compute_heatcapacity!(Cp, Mat_tup1, Phases, args1)    # computation routine w/out P (not used in most heat capacity formulations)
-    @test sum(Cp[1, 1, k] for k in axes(Cp,3)) ≈ 109050.0
+    @test sum(Cp[1, 1, k] for k in axes(Cp,3)) ≈ 52950.0
 
     num_alloc = @allocated compute_heatcapacity!(Cp, Mat_tup, Phases, args)
-    @test sum(Cp[1, 1, k] for k in axes(Cp,3)) ≈ 121399.0486067196
+    @test sum(Cp[1, 1, k] for k in axes(Cp,3)) ≈ 134023.72170619245
 
     @test num_alloc == 0
 
@@ -111,7 +127,7 @@ using StaticArrays
     end
     compute_heatcapacity!(Cp, Mat_tup, PhaseRatio, args)
     num_alloc = @allocated compute_heatcapacity!(Cp, Mat_tup, PhaseRatio, args)
-    @test sum(Cp[1, 1, k] for k in axes(Cp,3)) ≈ 121399.0486067196
+    @test sum(Cp[1, 1, k] for k in axes(Cp,3)) ≈ 134023.72170619245
     @test num_alloc == 0
 
 
@@ -129,7 +145,6 @@ using StaticArrays
     @test isdimensional(x_D1)==true
     @test isdimensional(x_ND)==false
     @test isdimensional(x_ND1)==false
-
 
     dϕdT = 0.1
     dϕdT_ND = nondimensionalize(dϕdT / K, CharUnits_GEO)
@@ -159,6 +174,8 @@ using StaticArrays
     @test isdimensional(x_D)==true
 
     @test compute_heatcapacity(x_D, args) == 41052.29268922852
+    @test FD.derivative(x->compute_heatcapacity(x_D,  (; T=x, dϕdT=dϕdT)), T) == 0.6260890173995907
+    @test FD.derivative(x->compute_heatcapacity(x_D,  (; T=T, dϕdT=x)), dϕdT) == 400000.0
 
     dϕdT_ND = nondimensionalize(dϕdT / K, CharUnits_GEO)
     args_ND = (; T=ustrip.(T * K / CharUnits_GEO.Temperature), dϕdT=dϕdT_ND)
@@ -311,6 +328,7 @@ using StaticArrays
 
     T = [200.0 300.0; 400.0 500.0]
     k1 = compute_conductivity(cond2, T)
+    @test FD.derivative(x->compute_conductivity(cond2, (;T=x)), T[1]) == -0.007109905535
     # -----------------------
 
     # Latent heat -----------
@@ -468,7 +486,6 @@ using StaticArrays
     ε_el = (0.01, 0.01, 0.01)
     @test H_s1 == compute_shearheating(Χ, τ, ε, ε_el)
     @test H_s3 == compute_shearheating(Χ, τ, ε)
-
 
     # test in-place computation
     n = 12

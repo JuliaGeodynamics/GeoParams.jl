@@ -185,18 +185,16 @@ end
 
 # viscosity correction; where c_vf=crystal volume fraction and strain_rate is the strainrate in s^-1
 function viscosity_correction(c_vf, Strain_Rate)
-    strain_rate = Strain_Rate
-    if strain_rate < eps(Float64)
-        strain_rate = 1.e-6
-    end
-    phi_max = 0.066499 * tanh(0.913424 * log10(strain_rate) + 3.850623) + 0.591806
-    delta   = -6.301095 * tanh(0.818496 * log10(strain_rate) + 2.86) + 7.462405
-    alpha   = -0.000378 * tanh(1.148101 * log10(strain_rate) + 3.92) + 0.999572
-    gamma   = 3.987815 * tanh(0.8908 * log10(strain_rate) + 3.24) + 5.099645
-    num     = 1.0 + (c_vf / phi_max)^delta
-    x       = √(π) * c_vf / (2 * alpha * phi_max) * (1.0 + (c_vf / phi_max)^gamma)
-    den     = (1.0 - alpha * erf(x))^(2.5 * phi_max)
-    mu_r    = num / den
+    strain_rate =  Strain_Rate + (Strain_Rate < eps(Float64)) * 1e-6
+    θ           =  log10(strain_rate)
+    ϕ_max       =  0.066499 * tanh(0.913424 * θ + 3.850623) + 0.591806
+    δ           = -6.301095 * tanh(0.818496 * θ + 2.86) + 7.462405
+    α           = -0.000378 * tanh(1.148101 * θ + 3.92) + 0.999572
+    γ           =  3.987815 * tanh(0.8908 * θ + 3.24) + 5.099645
+    num         =  1 + (c_vf / ϕ_max)^δ
+    x           =  √π * c_vf / (2 * α * ϕ_max) * (1 + (c_vf / ϕ_max)^γ)
+    den         =  (1 - α * erf(x))^(2.5 * ϕ_max)
+    mu_r        =  num / den
     return mu_r
 end
 

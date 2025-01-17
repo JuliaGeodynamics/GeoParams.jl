@@ -8,6 +8,7 @@ const VALID_KWARGS = (
     :latent_heat,
     :radioactive_heat,
     :shearheating,
+    :permeability,
     :pwave_velocity,
     :swave_velocity,
     :meltfraction,
