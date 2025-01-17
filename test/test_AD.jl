@@ -31,7 +31,7 @@ for (name, backend) in zip(pkg, backends)
         @test AD.derivative(backend, x -> compute_heatcapacity(Cp, (; T=x)), T)[1] ≈ 0.145639823
 
         Cp = Latent_HeatCapacity(Q_L=500e3)
-        @test AD.derivative(backend, x -> compute_heatcapacity(Cp, (; T=x)), T)[1] == 0 
+        @test AD.derivative(backend, x -> compute_heatcapacity(Cp, (; T=x)), T)[1] == 0
     end
 
     @testset "$name compatibility with: conductivity" begin
@@ -43,7 +43,7 @@ for (name, backend) in zip(pkg, backends)
 
         K = T_Conductivity_Whittington_parameterised()
         @test AD.derivative(backend, x -> compute_conductivity(K, (; T=x)), T)[1] ≈ -0.00064766553
-        
+
         K = TP_Conductivity()
         @test AD.derivative(backend, x -> compute_conductivity(K, (; T=x)), T)[1] ≈ -0.00040864570
     end
@@ -57,7 +57,7 @@ for (name, backend) in zip(pkg, backends)
         TauII         = 1e6
         @test AD.derivative(backend, x -> compute_εII(p, TauII, (; T=x, P=P)), T)[1] ≈ 5.7562812856e-33
         @test AD.derivative(backend, x -> compute_εII(p, TauII, (; T=T, P=x)), P)[1] ≈ -2.8543543565e-40
-        
+
         εII           = compute_εII(p, TauII, args)
         @test AD.derivative(backend, x -> compute_τII(p, εII, (; T=x, P=P)), T)[1] ≈ -58211.55812135427
         @test AD.derivative(backend, x -> compute_τII(p, εII, (; T=T, P=x)), P)[1] ≈ 0.0028865235432076496
@@ -72,7 +72,7 @@ for (name, backend) in zip(pkg, backends)
         TauII         = 1e6
         @test AD.derivative(backend, x -> compute_εII(p, TauII, (; T=x, P=P)), T)[1] ≈ 4.1522654949e-40
         @test AD.derivative(backend, x -> compute_εII(p, TauII, (; T=T, P=x)), P)[1] ≈ -1.0685977376e-47
-        
+
         εII           = compute_εII(p, TauII, args)
         @test AD.derivative(backend, x -> compute_τII(p, εII, (; T=x, P=P)), T)[1] ≈ -65427.866979
         @test AD.derivative(backend, x -> compute_τII(p, εII, (; T=T, P=x)), P)[1] ≈ 0.00168380540
@@ -101,4 +101,13 @@ for (name, backend) in zip(pkg, backends)
         @test iszero(AD.derivative(backend, x -> compute_εII(c2, τII, (;T=x, P=P, d=100e-6, τII_old=1e6, dt=1e8)), T)[1])
         @test iszero(AD.derivative(backend, x -> compute_εII(c2, τII, (;T=T, P=x, d=100e-6, τII_old=1e6, dt=1e8)), P)[1])
     end
+
+    @testset "$name compatibility with: ChemicalDiffusion" begin
+
+        Hf_Rt_para = Rutile.Rt_Hf_Cherniak2007_Ξc;
+        Hf_Rt_para = SetChemicalDiffusion(Hf_Rt_para)
+        @test AD.derivative(backend, x -> compute_D(Hf_Rt_para, T=x, P=0), T)[1] ≈ 2.7517698e-25 atol = 1e-28
+        @test AD.derivative(backend, x -> compute_D(Hf_Rt_para, T=1273.15, P=x), P)[1] ≈ 0.0
+    end
+
 end

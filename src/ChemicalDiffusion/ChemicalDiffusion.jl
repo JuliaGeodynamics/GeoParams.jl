@@ -145,7 +145,12 @@ function param_info(data::DiffusionData) # info about the struct
 end
 
 
-# Calculation routines for the diffusion coefficient without units
+"""
+    compute_D(data::DiffusionData; T=1K, P=0Pa, kwargs...)
+
+Computes the diffusion coefficient `D` [m^2/s] from the diffusion data `data` at temperature `T` [K] and pressure `P` [Pa].
+If `T` and `P` are provided without unit, the function assumes the units are in Kelvin and Pascal, respectively, and outputs the diffusion coefficient without unit.
+"""
 @inline function compute_D(data::DiffusionData; T=1K, P=0Pa, kwargs...)
 
     if P isa Quantity && T isa Quantity
@@ -159,13 +164,17 @@ end
     return D
 end
 
+"""
+    compute_D!(D, data::DiffusionData; T=ones(size(D))K, P=zeros(size(D))Pa, kwargs...)
 
+In-place version of `compute_D(data::DiffusionData; T=1K, P=0Pa, kwargs...)`. `D` should be an array of the same size as T and P.
+"""
 function compute_D!(
-    D,
+    D::AbstractArray{_T,nDim},
     data::DiffusionData;
     T=ones(size(D))K,
     P=zeros(size(D))Pa,
-    kwargs...)
+    kwargs...) where {_T, nDim}
 
     @inbounds for i in eachindex(D)
         D[i] = compute_D(data; T=T[i], P=P[i], kwargs...)
