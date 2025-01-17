@@ -350,6 +350,7 @@ end
     strainrate = 1 / s
     heatcapacity = J / kg / K
     conductivity = W / m / K
+    chemicaldiffusion = m^2 / s
 
     # Helpful
     SecYear = 3600 * 24 * 365.25
@@ -585,9 +586,10 @@ function nondimensionalize(param::GeoUnit{T,U}, g::Union{GeoUnits{TYPE}, Nothing
 end
 
 # in case the parameter is already non-dimensional:
-nondimensionalize(param::String, g::GeoUnits{TYPE}) where {TYPE} = param
-
-nondimensionalize(param::String, g::Nothing)  = param
+nondimensionalize(param::String, ::GeoUnits{TYPE}) where {TYPE} = param
+nondimensionalize(param::String, ::Nothing)  = param
+nondimensionalize(param::Ptr{UInt8}, ::GeoUnits{TYPE}) where {TYPE} = unsafe_string(param)
+nondimensionalize(param::Ptr{UInt8}, ::Nothing)  = unsafe_string(param)
 
 # in case it is a unitful quantity
 function nondimensionalize(
@@ -689,31 +691,28 @@ Non-dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
 
 # """
 @generated function nondimensionalize(
-    MatParam::AbstractMaterialParam, g::Union{GeoUnits{TYPE}, Nothing}
-) where {TYPE}
-    fields = fieldnames(MatParam)
-    N = length(fields)
-    quote
-        Base.@_inline_meta
-        Base.@nexprs $N i ->
-            MatParam = begin
-                field = $(fields)[i]
-                _nondimensionalize(MatParam, getfield(MatParam, field), g, field)
-            end
+    MatParam::T, g::Union{GeoUnits{TYPE}, Nothing}
+) where {T<:AbstractMaterialParam, TYPE}
+
+    Keys = fieldnames(MatParam)
+    N = length(Keys)
+    quote 
+        Vals = Base.@ntuple $N i -> 
+            _nondimensionalize(getfield(MatParam, $Keys[i]), g)
+        strip_type_parameters(MatParam)(Vals...)
     end
 end
 
+@inline strip_type_parameters(::T) where T = Base.typename(T).wrapper
+
 @inline function _nondimensionalize(
-    MatParam, z::Union{GeoUnit,AbstractMaterialParam}, g::Union{GeoUnits, Nothing}, param
+   z::Union{GeoUnit,AbstractMaterialParam}, g::Union{GeoUnits, Nothing}
 )
     # non-dimensionalize:
-    z = nondimensionalize(z, g)
-    # Replace field (using Setfield package):
-    MatParam = set(MatParam, Setfield.PropertyLens{param}(), z)
-    return MatParam
+    nondimensionalize(z, g)
 end
 
-@inline _nondimensionalize(MatParam, ::T1, ::T2, ::T3) where {T1,T2,T3} = MatParam
+@inline _nondimensionalize(z, ::Any) = z
 
 """
     nondimensionalize(phase_mat::MaterialParams, g::GeoUnits{TYPE})
