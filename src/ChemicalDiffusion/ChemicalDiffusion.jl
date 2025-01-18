@@ -117,24 +117,24 @@ function DiffusionData(
     Name, Mineral, Formula, Species, Orientation, Crystallography, Buffer, Fluid, D0, D0_2σ, Ea, Ea_2σ, ΔV, ΔV_2σ, R, T_range_min, T_range_max, P0,
 )
     return DiffusionData(;
-        Name = Name,
-        Mineral = Mineral,
-        Formula = Formula,
-        Species = Species,
-        Orientation = Orientation,
+        Name            = Name,
+        Mineral         = Mineral,
+        Formula         = Formula,
+        Species         = Species,
+        Orientation     = Orientation,
         Crystallography = Crystallography,
-        Buffer = Buffer,
-        Fluid = Fluid,
-        D0 = D0,
-        D0_2σ = D0_2σ,
-        Ea = Ea,
-        Ea_2σ = Ea_2σ,
-        ΔV = ΔV,
-        ΔV_2σ = ΔV_2σ,
-        R = R,
-        T_range_min = T_range_min,
-        T_range_max = T_range_max,
-        P0 = P0,
+        Buffer          = Buffer,
+        Fluid           = Fluid,
+        D0              = D0,
+        D0_2σ           = D0_2σ,
+        Ea              = Ea,
+        Ea_2σ           = Ea_2σ,
+        ΔV              = ΔV,
+        ΔV_2σ           = ΔV_2σ,
+        R               = R,
+        T_range_min     = T_range_min,
+        T_range_max     = T_range_max,
+        P0              = P0,
     )
 end
 
@@ -343,7 +343,10 @@ export SetChemicalDiffusion,
 include("Data/Rutile/Rutile.jl")
 using .Rutile
 
-export Rutile
+include("Data/Garnet/Garnet.jl")
+using .Garnet
+
+export Rutile, Garnet
 
 
 end
