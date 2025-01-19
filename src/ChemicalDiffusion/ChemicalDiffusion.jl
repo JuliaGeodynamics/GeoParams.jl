@@ -3,12 +3,24 @@ module ChemicalDiffusion
 using GeoParams
 using Unitful
 
-using Parameters, LaTeXStrings, Unitful, MuladdMacro
+using Parameters, LaTeXStrings, Unitful
 using ..Units
 using GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
 import GeoParams: param_info, ptr2string
 using ..MaterialParameters: MaterialParamsInfo
 import Base.show
+
+# Exported functions defined in this module
+export SetChemicalDiffusion,
+       Transform_ChemicalDiffusion
+
+# load collection of chemical diffusion data
+include("Data/Rutile/Rutile.jl")
+using .Rutile
+
+# Exported modules of chemical diffusion data
+export Rutile
+
 
 abstract type AbstractChemicalDiffusion{T} <: AbstractMaterialParam end
 
@@ -247,7 +259,7 @@ function Transform_ChemicalDiffusion(p::AbstractChemicalDiffusion{T}, CharDim::G
     nondimensionalize(Transform_ChemicalDiffusion(p), CharDim)
 end
 
-function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion{T}) where T
+function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion)
 
     D0          = Value(pp.D0)
     D0_2σ       = Value(pp.D0_2σ)
@@ -289,7 +301,7 @@ function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion{T}) where T
     return DiffusionData(; args...)
 end
 
-function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion{T}, kwargs::NamedTuple) where T
+function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion, kwargs::NamedTuple)
 
     f(a,b) = Value(GeoUnit(a))
     f(::Nothing,b) = Value(b)
@@ -334,16 +346,6 @@ function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion{T}, kwargs::N
 
     return DiffusionData(; args...)
 end
-
-export SetChemicalDiffusion,
-       Transform_ChemicalDiffusion
-
-
-# load collection of chemical diffusion data
-include("Data/Rutile/Rutile.jl")
-using .Rutile
-
-export Rutile
 
 
 end

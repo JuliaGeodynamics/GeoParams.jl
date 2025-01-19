@@ -104,7 +104,7 @@ for (name, backend) in zip(pkg, backends)
 
     @testset "$name compatibility with: ChemicalDiffusion" begin
 
-        Hf_Rt_para = Rutile.Rt_Hf_Cherniak2007_Ξc;
+        Hf_Rt_para = Rutile.Rt_Hf_Cherniak2007_para_c;
         Hf_Rt_para = SetChemicalDiffusion(Hf_Rt_para)
         @test AD.derivative(backend, x -> compute_D(Hf_Rt_para, T=x, P=0), T)[1] ≈ 2.7517698e-25 atol = 1e-28
         @test AD.derivative(backend, x -> compute_D(Hf_Rt_para, T=1273.15, P=x), P)[1] ≈ 0.0

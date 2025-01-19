@@ -7,8 +7,8 @@ The following diffusion parameters are implemented:
 
 - Hf in Rutile:
 ```@docs
-GeoParams.Rutile.Rt_Hf_Cherniak2007_Ξc
-GeoParams.Rutile.Rt_Hf_Cherniak2007_⊥c
+GeoParams.Rutile.Rt_Hf_Cherniak2007_para_c
+GeoParams.Rutile.Rt_Hf_Cherniak2007_perp_c
 ```
 
 ## Computational routines

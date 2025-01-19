@@ -1,13 +1,13 @@
 # ------------------------------------- Hf -------------------------------------
 
 """
-    Rt_Hf_Cherniak2007_⊥c
+    Rt_Hf_Cherniak2007_perp_c
 
-Diffusion data of Hf in rutile. With anhydrous conditions and perpendicular (⊥) to c-axis. Calibrated between 750-1050°C. From Cherniak et al. (2007) (https://doi.org/10.1016/j.epsl.2007.06.027).
+Diffusion data of Hf in rutile. With anhydrous conditions and perpendicular to c-axis. Calibrated between 750-1050°C. From Cherniak et al. (2007) (https://doi.org/10.1016/j.epsl.2007.06.027).
 """
-function Rt_Hf_Cherniak2007_⊥c()
+function Rt_Hf_Cherniak2007_perp_c()
     data = DiffusionData(
-        Name = "Hf diffusion in Rutile (⊥c and anhydrous conditions) | Cherniak et al. (2007)",
+        Name = "Hf diffusion in Rutile (perpendicular to c-axis and anhydrous conditions) | Cherniak et al. (2007)",
         Mineral = "Rutile",  # name of the mineral
         Formula = "TiO2",  # chemical formula of the mineral
         Species = "Hf",  # element or species being diffused
@@ -46,14 +46,14 @@ end
 
 
 """
-    Rt_Hf_Cherniak2007_Ξc
+    Rt_Hf_Cherniak2007_para_c
 
-Diffusion data of Hf in rutile. With anhydrous conditions and parallel (Ξ) to c-axis. Calibrated between 800-1000°C.
+Diffusion data of Hf in rutile. With anhydrous conditions and parallel to c-axis. Calibrated between 800-1000°C.
 From Cherniak et al. (2007) (https://doi.org/10.1016/j.epsl.2007.06.027).
 """
-function Rt_Hf_Cherniak2007_Ξc()
+function Rt_Hf_Cherniak2007_para_c()
     data = DiffusionData(
-        Name = "Hf diffusion in Rutile (Ξc and anhydrous conditions) | Cherniak et al. (2007)",
+        Name = "Hf diffusion in Rutile (parallel to c-axis and anhydrous conditions) | Cherniak et al. (2007)",
         Mineral = "Rutile",
         Formula = "TiO2",
         Species = "Hf",
