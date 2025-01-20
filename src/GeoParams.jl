@@ -63,6 +63,7 @@ export @u_str,
     Myrs,
     yr,
     s,
+    GPa,
     MPa,
     Pa,
     kbar,
@@ -271,6 +272,18 @@ export compute_gravity,                                # computational routines
     ConstantGravity,
     DippingGravity
 
+
+using .MaterialParameters.ChemicalDiffusion
+export AbstractChemicalDiffusion,
+       DiffusionData,
+       compute_D,
+       compute_D!,
+       SetChemicalDiffusion,
+       Transform_ChemicalDiffusion
+
+
+export Rutile
+
 # Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat
 using .MaterialParameters.HeatCapacity
 export compute_heatcapacity,
@@ -391,6 +404,8 @@ export diffusion_law_list,
        grainboundarysliding_law_list,
        nonlinearpeierls_law_list,
        peierls_law_list
+
+
 
 # Define Table output functions
 include("Tables.jl")

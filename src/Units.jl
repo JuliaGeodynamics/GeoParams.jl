@@ -37,6 +37,7 @@ const kg = u"kg"
 const g = u"g"
 const Pa = u"Pa"
 const MPa = u"MPa"
+const GPa = u"GPa"
 const kbar = u"kbar"
 const Pas = u"Pa*s"
 const K = u"K"
@@ -56,6 +57,7 @@ export km,
     Myrs,
     yr,
     s,
+    GPa,
     MPa,
     Pa,
     kbar,

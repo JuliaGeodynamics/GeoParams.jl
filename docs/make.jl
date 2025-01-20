@@ -17,6 +17,7 @@ makedocs(;
             "Density" => "man/density.md",
             "Creep laws" => "man/creeplaws.md",
             "Custom rheology" => "man/customrheology.md",
+            "Chemical Diffusion" => "man/chemicaldiffusion.md",
             "Viscosity" => "man/viscosity.md",
             "Elasticity" => "man/elasticity.md",
             "Plasticity" => "man/plasticity.md",

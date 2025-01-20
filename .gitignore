@@ -1,5 +1,7 @@
 Manifest.toml
 *.json
 Stress_Pressure.png
-
+.DS_Store
+.vscode
+docs/build/
 Time_evolution.svg
