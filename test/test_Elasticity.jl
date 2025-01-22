@@ -4,34 +4,34 @@ using GeoParams
 @testset "Elasticity.jl" begin
 
     # This tests the MaterialParameters structure
-    CharUnits_GEO = GEO_units(; viscosity=1e19, length=10km)
+    CharUnits_GEO = GEO_units(; viscosity = 1.0e19, length = 10km)
 
     # ConstantElasticity ---------
     a = ConstantElasticity()
     info = param_info(a)
     @test isbits(a)
-    @test NumValue(a.G) == 5e10
+    @test NumValue(a.G) == 5.0e10
 
     a_nd = a
     a_nd = nondimensionalize(a_nd, CharUnits_GEO)
     @test a_nd.G.val ≈ 5000.0
 
-    a = SetConstantElasticity(; Kb=5e10, ν=0.43)
+    a = SetConstantElasticity(; Kb = 5.0e10, ν = 0.43)
     @test Value(a.E) ≈ 2.1e10Pa
 
-    a = SetConstantElasticity(; G=5e10, ν=0.43)
+    a = SetConstantElasticity(; G = 5.0e10, ν = 0.43)
     @test Value(a.E) ≈ 1.43e11Pa
 
-    a = SetConstantElasticity(; G=5e10, Kb=1e11)
+    a = SetConstantElasticity(; G = 5.0e10, Kb = 1.0e11)
     @test Value(a.E) ≈ 1.2857142857142856e11Pa
 
     @test isvolumetric(a) == true
 
     b = ConstantElasticity()
-    v = SetMaterialParams(; CompositeRheology=CompositeRheology((ConstantElasticity(),)))
+    v = SetMaterialParams(; CompositeRheology = CompositeRheology((ConstantElasticity(),)))
     vv = (
-        SetMaterialParams(; Phase=1, CompositeRheology=CompositeRheology((ConstantElasticity(),))),
-        SetMaterialParams(; Phase=2, CompositeRheology=CompositeRheology((ConstantElasticity(),))),
+        SetMaterialParams(; Phase = 1, CompositeRheology = CompositeRheology((ConstantElasticity(),))),
+        SetMaterialParams(; Phase = 2, CompositeRheology = CompositeRheology((ConstantElasticity(),))),
     )
 
     @test get_G(b) == b.G.val
@@ -52,42 +52,42 @@ using GeoParams
     r = SetMaterialParams(;
         CompositeRheology = c
     )
-    
-    @test get_G(c)  == get_G(r)  == r.CompositeRheology[1].elements[3].G.val
+
+    @test get_G(c) == get_G(r) == r.CompositeRheology[1].elements[3].G.val
     @test get_Kb(c) == get_Kb(r) == r.CompositeRheology[1].elements[3].Kb.val
 
     # Compute with Floats
-    τII = 20e6
-    τII_old = 15e6
-    p = 10e6
-    P_old = 5e6
-    dt = 1e6
-    argsτ = (τII_old=τII_old, dt=dt)
-    argsp = (P_old=P_old, dt=dt)
+    τII = 20.0e6
+    τII_old = 15.0e6
+    p = 10.0e6
+    P_old = 5.0e6
+    dt = 1.0e6
+    argsτ = (τII_old = τII_old, dt = dt)
+    argsp = (P_old = P_old, dt = dt)
     @test compute_εII(a, τII, argsτ) ≈ 5.0e-11  # compute
-    @test compute_τII(a, 1e-15, argsτ) ≈ 1.50001e7
+    @test compute_τII(a, 1.0e-15, argsτ) ≈ 1.50001e7
     @test compute_εvol(a, p, argsp) ≈ -5.0e-11  # compute
-    @test compute_p(a, 1e-15, argsp) ≈ 4.9999e6
-    @test dεII_dτII(a, τII, argsτ) ≈ 1e-17
-    @test dτII_dεII(a, τII_old, dt, argsτ) ≈ 1e17
-    @test dεvol_dp(a, p, argsp) ≈ -1e-17
-    @test dp_dεvol(a, P_old, dt, argsp) ≈ -1e17
+    @test compute_p(a, 1.0e-15, argsp) ≈ 4.9999e6
+    @test dεII_dτII(a, τII, argsτ) ≈ 1.0e-17
+    @test dτII_dεII(a, τII_old, dt, argsτ) ≈ 1.0e17
+    @test dεvol_dp(a, p, argsp) ≈ -1.0e-17
+    @test dp_dεvol(a, P_old, dt, argsp) ≈ -1.0e17
 
     # Test with arrays
-    τII_old_array = ones(10) * 15e6
-    τII_array = ones(10) * 20e6
+    τII_old_array = ones(10) * 15.0e6
+    τII_array = ones(10) * 20.0e6
     ε_el_array = similar(τII_array)
-    p_old_array = ones(10) * 20e6
-    p_array = ones(10) * 26e6
+    p_old_array = ones(10) * 20.0e6
+    p_array = ones(10) * 26.0e6
     εvol_el_array = similar(p_array)
-    argsτ = (τII_old=τII_old_array, dt=dt)
-    argsp = (P_old=p_old_array, dt=dt)
+    argsτ = (τII_old = τII_old_array, dt = dt)
+    argsp = (P_old = p_old_array, dt = dt)
     compute_εII!(ε_el_array, a, τII_array, argsτ)
     @test ε_el_array[1] ≈ 5.0e-11
     compute_εvol!(εvol_el_array, a, p_array, argsp)
     @test εvol_el_array[1] ≈ -6.0e-11
     compute_τII!(τII_array, a, ε_el_array, argsτ)
-    @test τII_array[1] ≈ 2e7
+    @test τII_array[1] ≈ 2.0e7
     compute_p!(p_array, a, εvol_el_array, argsp)
     @test p_array[1] ≈ 2.6e7
 

@@ -10,7 +10,7 @@ using StaticArrays
     @test isbits(x)
 
     # This tests the various melting parameterizations
-    CharUnits_GEO = GEO_units(; viscosity=1e19, length=10km)
+    CharUnits_GEO = GEO_units(; viscosity = 1.0e19, length = 10km)
 
     T = collect(250:100:1250) * K .+ 273.15K
     T_nd = Float64.(T / CharUnits_GEO.Temperature)
@@ -19,7 +19,7 @@ using StaticArrays
     p = MeltingParam_Caricchi()
     @test isbits(p)
     phi_dim = zeros(size(T))
-    args = (; T=ustrip.(T))
+    args = (; T = ustrip.(T))
     compute_meltfraction!(phi_dim, p, args)
 
     phi_dim1 = zeros(size(phi_dim))
@@ -29,7 +29,7 @@ using StaticArrays
     p_nd = nondimensionalize(p_nd, CharUnits_GEO)
     @test isbits(p_nd)
     phi_nd = zeros(size(T))
-    args = (; T=T_nd)
+    args = (; T = T_nd)
     compute_meltfraction!(phi_nd, p_nd, args)
 
     # Do this computation manually, using the actual expression of Caricchi
@@ -37,13 +37,13 @@ using StaticArrays
     Phi_solid = 1.0 .- 1.0 ./ (1.0 .+ exp.((800.0 .- T_C) ./ 23.0))
     Phi_anal = 1.0 .- Phi_solid
 
-    @test sum(phi_dim - Phi_anal) < 1e-12
-    @test sum(phi_dim1 - Phi_anal) < 1e-12
-    @test sum(phi_nd - Phi_anal) < 1e-12
+    @test sum(phi_dim - Phi_anal) < 1.0e-12
+    @test sum(phi_dim1 - Phi_anal) < 1.0e-12
+    @test sum(phi_nd - Phi_anal) < 1.0e-12
 
     # test derivative vs T
     dϕdT_dim = zeros(size(T))
-    args = (; T=ustrip.(T))
+    args = (; T = ustrip.(T))
     compute_dϕdT!(dϕdT_dim, p, args)
     @test sum(dϕdT_dim) ≈ 0.008102237679214096
 
@@ -75,14 +75,14 @@ using StaticArrays
     data[:, 2] = data[:, 2] / 100
     Tdata = data[:, 1] .+ 273.15
     phi = zeros(size(Tdata))
-    args = (; T=ustrip.(Tdata))
+    args = (; T = ustrip.(Tdata))
     compute_meltfraction!(phi, p, args)
 
     @test norm(data[:, 2] - phi) ≈ 0.07151515017819135
 
     # test derivative vs T
     dϕdT_dim = zeros(size(T))
-    args = (; T=ustrip.(T))
+    args = (; T = ustrip.(T))
     compute_dϕdT!(dϕdT_dim, p, args)
     @test sum(dϕdT_dim) ≈ 0.006484458453421382
     #------------------------------
@@ -116,14 +116,14 @@ using StaticArrays
     data[:, 2] = data[:, 2] / 100
     Tdata = data[:, 1] .+ 273.15
     phi = zeros(size(Tdata))
-    args = (; T=ustrip.(Tdata))
+    args = (; T = ustrip.(Tdata))
     compute_meltfraction!(phi, p, args)
 
     @test norm(data[:, 2] - phi) ≈ 0.0678052542705406
 
     # test derivative vs T
     dϕdT_dim = zeros(size(T))
-    args = (; T=ustrip.(T))
+    args = (; T = ustrip.(T))
     compute_dϕdT!(dϕdT_dim, p, args)
     @test sum(dϕdT_dim) ≈ 0.00830985782591842
     #------------------------------
@@ -152,8 +152,8 @@ using StaticArrays
 
     #------------------------------
     # Melnik parameterisation
-    p_basalt   = MeltingParam_Smooth3rdOrder()
-    p_rhyolite = MeltingParam_Smooth3rdOrder(a=3043.0,b=-10552.0,c=12204.9,d=-4709.0)
+    p_basalt = MeltingParam_Smooth3rdOrder()
+    p_rhyolite = MeltingParam_Smooth3rdOrder(a = 3043.0, b = -10552.0, c = 12204.9, d = -4709.0)
     @test isbits(p_basalt)
     @test isbits(p_rhyolite)
     compute_meltfraction!(phi_dim, p_basalt, args)
@@ -199,24 +199,24 @@ using StaticArrays
     # Test computation of melt parameterization for the whole computational domain, using arrays
     MatParam = Vector{MaterialParams}(undef, 5)
     MatParam[1] = SetMaterialParams(;
-        Name="Mantle", Phase=1, Melting=PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in")
+        Name = "Mantle", Phase = 1, Melting = PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in")
     )
 
     MatParam[2] = SetMaterialParams(;
-        Name="Crust", Phase=2, Melting=MeltingParam_Caricchi()
+        Name = "Crust", Phase = 2, Melting = MeltingParam_Caricchi()
     )
 
     # No melting parameterization for this phase
     MatParam[3] = SetMaterialParams(;
-        Name="UpperCrust", Phase=3, Melting=MeltingParam_5thOrder(), Density=PT_Density()
+        Name = "UpperCrust", Phase = 3, Melting = MeltingParam_5thOrder(), Density = PT_Density()
     )
 
     # No melting parameterization for this phase
-    MatParam[4] = SetMaterialParams(; Name="LowerCrust", Phase=4, Density=PT_Density())
+    MatParam[4] = SetMaterialParams(; Name = "LowerCrust", Phase = 4, Density = PT_Density())
 
     # No melting parameterization for this phase
     ϕ_vec = fill(0.55, 100)
-    MatParam[5] = SetMaterialParams(; Name="Asthenosphere", Phase=5, Melting=Vector_MeltingParam(ϕ=ϕ_vec), Density=PT_Density())
+    MatParam[5] = SetMaterialParams(; Name = "Asthenosphere", Phase = 5, Melting = Vector_MeltingParam(ϕ = ϕ_vec), Density = PT_Density())
 
     Mat_tup = Tuple(MatParam)
 
@@ -232,9 +232,9 @@ using StaticArrays
     dϕdT = zeros(size(Phases))
     T = ones(size(Phases)) * 1500
     P = ones(size(Phases)) * 10
-    index = fill(20,size(Phases))
+    index = fill(20, size(Phases))
 
-    args = (P=P, T=T, index=index)
+    args = (P = P, T = T, index = index)
     compute_meltfraction!(ϕ, Mat_tup, Phases, args) #allocations coming from computing meltfraction using PhaseDiagram_LookupTable
     @test sum(ϕ) / n^3 ≈ 0.6089802363373018
 
@@ -256,11 +256,11 @@ using StaticArrays
     @test sum(dϕdT) / n^3 ≈ 4.6959345678313734e-5
 
     # Test smoothening of the melting curves:
-    p = SmoothMelting(; p=MeltingParam_5thOrder())
+    p = SmoothMelting(; p = MeltingParam_5thOrder())
     @test isbits(p)
     T = collect(250:100:1250) * K .+ 273.15K
     phi_dim = zeros(size(T))
-    args = (; T=ustrip.(T))
+    args = (; T = ustrip.(T))
     compute_meltfraction!(phi_dim, p, args)
     @test sum(phi_dim) ≈ 4.7084279086574226
 
@@ -285,23 +285,23 @@ using StaticArrays
     #                )
     Mat_tup = (
         SetMaterialParams(;
-            Name="Mantle", Phase=1, Melting=SmoothMelting(MeltingParam_4thOrder())
+            Name = "Mantle", Phase = 1, Melting = SmoothMelting(MeltingParam_4thOrder())
         ),
-        SetMaterialParams(; Name="Crust", Phase=2, Melting=MeltingParam_5thOrder()),
+        SetMaterialParams(; Name = "Crust", Phase = 2, Melting = MeltingParam_5thOrder()),
         SetMaterialParams(;
-            Name="UpperCrust",
-            Phase=3,
-            Melting=SmoothMelting(MeltingParam_5thOrder()),
-            Density=PT_Density(),
+            Name = "UpperCrust",
+            Phase = 3,
+            Melting = SmoothMelting(MeltingParam_5thOrder()),
+            Density = PT_Density(),
         ),
-        SetMaterialParams(; Name="LowerCrust", Phase=4, Density=PT_Density()),
+        SetMaterialParams(; Name = "LowerCrust", Phase = 4, Density = PT_Density()),
     )
 
     ϕ = zeros(size(Phases))
     dϕdT = zeros(size(Phases))
     T = ones(size(Phases)) * (800 + 273.15)
     P = ones(size(Phases)) * 10
-    args = (P=P, T=T)
+    args = (P = P, T = T)
     compute_meltfraction!(ϕ, Mat_tup, Phases, args) #allocation free
     @test sum(ϕ) / n^3 ≈ 0.3422377699021051
 
@@ -309,11 +309,11 @@ using StaticArrays
     @test sum(dϕdT) / n^3 ≈ 0.0005249809490115178
 
     # test PhaseRatio and StaticArrays PhaseRatios as input
-    args = (P=0.0, T=1000.0 + 273.15)
+    args = (P = 0.0, T = 1000.0 + 273.15)
     PhaseRatio = (0.25, 0.25, 0.25, 0.25)
     @test 0.6991003705903673 ≈ compute_meltfraction_ratio(PhaseRatio, Mat_tup, args)
 
-    SvPhaseRatio = SA[0.25,0.25,0.25,0.25]
+    SvPhaseRatio = SA[0.25, 0.25, 0.25, 0.25]
     @test 0.6991003705903673 ≈ compute_meltfraction_ratio(SvPhaseRatio, Mat_tup, args)
 
 end

@@ -6,22 +6,22 @@ import GeoParams: Dislocation, Diffusion
 @testset "Tables.jl" begin
     MatParam = (
         SetMaterialParams(;
-            Name="Viscous Matrix",
-            Phase=1,
-            Density=ConstantDensity(),
-            CreepLaws=SetDislocationCreep(Dislocation.quartz_diorite_HansenCarter_1982),
+            Name = "Viscous Matrix",
+            Phase = 1,
+            Density = ConstantDensity(),
+            CreepLaws = SetDislocationCreep(Dislocation.quartz_diorite_HansenCarter_1982),
         ),
         SetMaterialParams(;
-            Name="Viscous Sinker",
-            Phase=2,
-            Density=PT_Density(),
-            CreepLaws=LinearViscous(; η=1e21Pa * s),
+            Name = "Viscous Sinker",
+            Phase = 2,
+            Density = PT_Density(),
+            CreepLaws = LinearViscous(; η = 1.0e21Pa * s),
         ),
         SetMaterialParams(;
-            Name="Viscous Bottom",
-            Phase=3,
-            Density=PT_Density(),
-            CreepLaws=SetDislocationCreep(Dislocation.diabase_Caristan_1982),
+            Name = "Viscous Bottom",
+            Phase = 3,
+            Density = PT_Density(),
+            CreepLaws = SetDislocationCreep(Dislocation.diabase_Caristan_1982),
         ),
     )
 
@@ -84,14 +84,14 @@ import GeoParams: Dislocation, Diffusion
     @test "ParameterTable.tex" in readdir()
     @test "References.bib" in readdir()
 
-    rm("ParameterTable.tex"; force=true)
-    rm("References.bib"; force=true)
+    rm("ParameterTable.tex"; force = true)
+    rm("References.bib"; force = true)
 
     # test Dict2MarkdownTable()
     Dict2MarkdownTable(dictMd)
     @test "ParameterTable.md" in readdir()
 
-    rm("ParameterTable.md"; force=true)
+    rm("ParameterTable.md"; force = true)
 
     # test ParameterTable()
     # for Latex
@@ -99,53 +99,53 @@ import GeoParams: Dislocation, Diffusion
     @test "ParameterTable.tex" in readdir()
     @test "References.bib" in readdir()
 
-    ParameterTable(MatParam; format="TEX")
+    ParameterTable(MatParam; format = "TEX")
     @test "ParameterTable.tex" in readdir()
     @test "References.bib" in readdir()
-    rm("ParameterTable.tex"; force=true)
-    rm("References.bib"; force=true)
+    rm("ParameterTable.tex"; force = true)
+    rm("References.bib"; force = true)
 
-    ParameterTable(MatParam; format="LaTeX", filename="TestTable")
+    ParameterTable(MatParam; format = "LaTeX", filename = "TestTable")
     @test "TestTable.tex" in readdir()
-    rm("TestTable.tex"; force=true)
-    rm("References.bib"; force=true)
+    rm("TestTable.tex"; force = true)
+    rm("References.bib"; force = true)
 
     # for Markdown
-    ParameterTable(MatParam; format="Markdown")
+    ParameterTable(MatParam; format = "Markdown")
     @test "ParameterTable.md" in readdir()
 
-    ParameterTable(MatParam; format="MD")
+    ParameterTable(MatParam; format = "MD")
     @test "ParameterTable.md" in readdir()
-    rm("ParameterTable.md"; force=true)
+    rm("ParameterTable.md"; force = true)
 
     filename = "TestTable"
-    ParameterTable(MatParam; format="MaRkDoWn", filename="TestTable")
+    ParameterTable(MatParam; format = "MaRkDoWn", filename = "TestTable")
     @test "TestTable.md" in readdir()
-    rm("TestTable.md"; force=true)
+    rm("TestTable.md"; force = true)
 
     # test phase with CompositeRheology field
     v1 = SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006)
     c1 = CompositeRheology(
         v1,
         SetDislocationCreep(Dislocation.diabase_Caristan_1982),
-        LinearViscous(; η=1e21Pa * s),
+        LinearViscous(; η = 1.0e21Pa * s),
         v1,
     )
     MatParam = (
         SetMaterialParams(;
-            Name="Viscous Matrix",
-            Phase=1,
-            Density=ConstantDensity(),
-            CreepLaws=SetDislocationCreep(Dislocation.quartz_diorite_HansenCarter_1982),
+            Name = "Viscous Matrix",
+            Phase = 1,
+            Density = ConstantDensity(),
+            CreepLaws = SetDislocationCreep(Dislocation.quartz_diorite_HansenCarter_1982),
         ),
         SetMaterialParams(;
-            Name="Viscous Sinker", Phase=2, Density=PT_Density(), CompositeRheology=c1
+            Name = "Viscous Sinker", Phase = 2, Density = PT_Density(), CompositeRheology = c1
         ),
         SetMaterialParams(;
-            Name="Viscous Bottom",
-            Phase=3,
-            Density=PT_Density(),
-            CreepLaws=SetDislocationCreep(Dislocation.diabase_Caristan_1982),
+            Name = "Viscous Bottom",
+            Phase = 3,
+            Density = PT_Density(),
+            CreepLaws = SetDislocationCreep(Dislocation.diabase_Caristan_1982),
         ),
     )
 

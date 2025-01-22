@@ -30,7 +30,7 @@ macro unpack_val(args)
     # This extracts the value, but not the units
     kd = [
         :($key = $UnPack.unpack($suitecase_instance, Val{$(Expr(:quote, key))}()).val) for
-        key in items
+            key in items
     ]
 
     kdblock = Expr(:block, kd...)
@@ -72,10 +72,10 @@ macro unpack_units(args)
     # This extracts the value with units
     kd = [
         :(
-            $key =
+                $key =
                 $UnPack.unpack($suitecase_instance, Val{$(Expr(:quote, key))}()).val .*
                 $UnPack.unpack($suitecase_instance, Val{$(Expr(:quote, key))}()).unit
-        ) for key in items
+            ) for key in items
     ]
 
     kdblock = Expr(:block, kd...)

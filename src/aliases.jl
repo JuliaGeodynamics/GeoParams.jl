@@ -27,7 +27,7 @@ function checkargs(args...)
     if (args[1] != :GeoParamsAliases)
         error("the first argument must be `GeoParamsAliases`")
     end
-    if !all(is_kwarg.(args[2:end]))
+    return if !all(is_kwarg.(args[2:end]))
         error(
             "all arguments starting from the second must be keyword arguments (see macro documentation).",
         )
@@ -45,6 +45,7 @@ function validate_kwargkeys(kwargs::Dict, macroname::String)
             )
         end
     end
+    return
 end
 
 function create_module(caller::Module, modulename::Symbol, kwargs_expr::Expr...)
@@ -82,14 +83,16 @@ function create_module(caller::Module, modulename::Symbol, kwargs_expr::Expr...)
         end
     end
 
-    module_expr = :(module $modulename # NOTE: there cannot be any newline before 'module $modulename' or it will create a begin end block and the module creation will fail.
-    using GeoParams: GeoParams
-    export $(exports...)
-    $(aliases...)
-    end)
-    @eval(caller, $module_expr)
+    module_expr = :(
+        module $modulename # NOTE: there cannot be any newline before 'module $modulename' or it will create a begin end block and the module creation will fail.
+        using GeoParams: GeoParams
+        export $(exports...)
+        $(aliases...)
+        end
+    )
+    return @eval(caller, $module_expr)
 end
 
 function use_module(caller::Module, modulename::Symbol)
-    @eval(caller, using $(Symbol(caller)).$modulename)
+    return @eval(caller, using $(Symbol(caller)).$modulename)
 end

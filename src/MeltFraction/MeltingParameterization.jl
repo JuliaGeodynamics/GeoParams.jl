@@ -14,9 +14,9 @@ using Setfield # allows modifying fields in immutable struct
 abstract type AbstractMeltingParam{T} <: AbstractMaterialParam end
 
 export compute_meltfraction,
-    compute_meltfraction!,    # calculation routines
+    compute_meltfraction!, # calculation routines
     compute_meltfraction_ratio,
-    compute_dϕdT,             # derivative of melt fraction versus
+    compute_dϕdT, # derivative of melt fraction versus
     compute_dϕdT!,
     param_info,
     MeltingParam_Caricchi,
@@ -55,17 +55,17 @@ References
 ====
 - Simpson G. (2017) Practical finite element modelling in Earth Sciences Using MATLAB.
 """
-@with_kw_noshow struct MeltingParam_Caricchi{T,U} <: AbstractMeltingParam{T}
-    a::GeoUnit{T,U} = 800.0K
-    b::GeoUnit{T,U} = 23.0K
-    c::GeoUnit{T,U} = 273.15K # shift from C to K
+@with_kw_noshow struct MeltingParam_Caricchi{T, U} <: AbstractMeltingParam{T}
+    a::GeoUnit{T, U} = 800.0K
+    b::GeoUnit{T, U} = 23.0K
+    c::GeoUnit{T, U} = 273.15K # shift from C to K
     apply_bounds::Bool = true
 end
 MeltingParam_Caricchi(args...) = MeltingParam_Caricchi(convert.(GeoUnit, args)...)
 
 function param_info(s::MeltingParam_Caricchi) # info about the struct
     return MaterialParamsInfo(;
-        Equation=L"\phi = {1 \over {1 + \exp( {800-T[^oC] \over 23})}}"
+        Equation = L"\phi = {1 \over {1 + \exp( {800-T[^oC] \over 23})}}"
     )
 end
 
@@ -124,13 +124,13 @@ Red: Rhyolite, Blue: Basalt
 References
 ====
 """
-@with_kw_noshow struct MeltingParam_Smooth3rdOrder{T,U,U1} <: AbstractMeltingParam{T}
-    a::GeoUnit{T,U} = 517.9NoUnits
-    b::GeoUnit{T,U} = -1619.0NoUnits
-    c::GeoUnit{T,U} = 1699.0NoUnits
-    d::GeoUnit{T,U} = -597.4NoUnits
-    T0::GeoUnit{T,U1} = 273.15K
-    Tchar::GeoUnit{T,U1} = 1000K # normalization
+@with_kw_noshow struct MeltingParam_Smooth3rdOrder{T, U, U1} <: AbstractMeltingParam{T}
+    a::GeoUnit{T, U} = 517.9NoUnits
+    b::GeoUnit{T, U} = -1619.0NoUnits
+    c::GeoUnit{T, U} = 1699.0NoUnits
+    d::GeoUnit{T, U} = -597.4NoUnits
+    T0::GeoUnit{T, U1} = 273.15K
+    Tchar::GeoUnit{T, U1} = 1000K # normalization
     apply_bounds::Bool = true
 end
 function MeltingParam_Smooth3rdOrder(args...)
@@ -138,7 +138,7 @@ function MeltingParam_Smooth3rdOrder(args...)
 end
 
 function param_info(s::MeltingParam_Smooth3rdOrder) # info about the struct
-    return MaterialParamsInfo(; Equation=L"\phi = f(T)")
+    return MaterialParamsInfo(; Equation = L"\phi = f(T)")
 end
 
 # Calculation routines
@@ -195,22 +195,22 @@ The default values are for a composite liquid-line-of-descent:
 - the lower part is extrapolated to the granitic minimum using the Marxer & Ulmer LLD for Andesite (Marxer, F. & Ulmer, P. (2019) Crystallisation and zircon saturation of calc-alkaline tonalite from the Adamello Batholith at upper crustal conditions: an experimental study. *Contributions Mineral. Petrol.* 174, 84)
 
 """
-@with_kw_noshow struct MeltingParam_5thOrder{T,U,U1,U2,U3,U4,U5,U6} <:
-                       AbstractMeltingParam{T}
-    a::GeoUnit{T,U1} = 2.083291971482524e-12 / K^5
-    b::GeoUnit{T,U2} = -1.239502833666574e-08 / K^4
-    c::GeoUnit{T,U3} = 2.938887604687626e-05 / K^3
-    d::GeoUnit{T,U4} = -0.034711533077108 / K^2
-    e::GeoUnit{T,U5} = 20.425403874539178 / K
-    f::GeoUnit{T,U6} = -4.790664658179178e+03 * NoUnits
-    T_s::GeoUnit{T,U} = 963.15K
-    T_l::GeoUnit{T,U} = 1388.2K
+@with_kw_noshow struct MeltingParam_5thOrder{T, U, U1, U2, U3, U4, U5, U6} <:
+    AbstractMeltingParam{T}
+    a::GeoUnit{T, U1} = 2.083291971482524e-12 / K^5
+    b::GeoUnit{T, U2} = -1.239502833666574e-8 / K^4
+    c::GeoUnit{T, U3} = 2.938887604687626e-5 / K^3
+    d::GeoUnit{T, U4} = -0.034711533077108 / K^2
+    e::GeoUnit{T, U5} = 20.425403874539178 / K
+    f::GeoUnit{T, U6} = -4.790664658179178e+3 * NoUnits
+    T_s::GeoUnit{T, U} = 963.15K
+    T_l::GeoUnit{T, U} = 1388.2K
     apply_bounds::Bool = true
 end
 MeltingParam_5thOrder(args...) = MeltingParam_5thOrder(convert.(GeoUnit, args)...)
 
 function param_info(s::MeltingParam_5thOrder) # info about the struct
-    return MaterialParamsInfo(; Equation=L"\phi = aT^5 + bT^4 + cT^3 + dT^2 + eT + f")
+    return MaterialParamsInfo(; Equation = L"\phi = aT^5 + bT^4 + cT^3 + dT^2 + eT + f")
 end
 
 # Calculation routines
@@ -276,20 +276,20 @@ The default values are for Tonalite experiments from Marxer and Ulmer (2019):
 - Marxer, F. & Ulmer, P. (2019) Crystallisation and zircon saturation of calc-alkaline tonalite from the Adamello Batholith at upper crustal conditions: an experimental study. *Contributions Mineral. Petrol.* 174, 84
 
 """
-@with_kw_noshow struct MeltingParam_4thOrder{T,U,U2,U3,U4,U5,U6} <: AbstractMeltingParam{T}
-    b::GeoUnit{T,U2} = -7.594512597174117e-10 / K^4
-    c::GeoUnit{T,U3} = 3.469192091489447e-06 / K^3
-    d::GeoUnit{T,U4} = -0.005923529809260 / K^2
-    e::GeoUnit{T,U5} = 4.482855645604745 / K
-    f::GeoUnit{T,U6} = -1.268730161921053e+03 * NoUnits
-    T_s::GeoUnit{T,U} = 963.15K
-    T_l::GeoUnit{T,U} = 1270.15K
+@with_kw_noshow struct MeltingParam_4thOrder{T, U, U2, U3, U4, U5, U6} <: AbstractMeltingParam{T}
+    b::GeoUnit{T, U2} = -7.594512597174117e-10 / K^4
+    c::GeoUnit{T, U3} = 3.469192091489447e-6 / K^3
+    d::GeoUnit{T, U4} = -0.00592352980926 / K^2
+    e::GeoUnit{T, U5} = 4.482855645604745 / K
+    f::GeoUnit{T, U6} = -1.268730161921053e+3 * NoUnits
+    T_s::GeoUnit{T, U} = 963.15K
+    T_l::GeoUnit{T, U} = 1270.15K
     apply_bounds::Bool = true
 end
 MeltingParam_4thOrder(args...) = MeltingParam_4thOrder(convert.(GeoUnit, args)...)
 
 function param_info(s::MeltingParam_4thOrder) # info about the struct
-    return MaterialParamsInfo(; Equation=L"\phi = bT^4 + cT^3 + dT^2 + eT + f")
+    return MaterialParamsInfo(; Equation = L"\phi = bT^4 + cT^3 + dT^2 + eT + f")
 end
 
 # Calculation routines
@@ -321,10 +321,10 @@ function compute_dϕdT(p::MeltingParam_4thOrder; T, kwargs...)
 end
 
 function compute_dϕdT!(
-    dϕdT::AbstractArray, p::MeltingParam_4thOrder; T::AbstractArray, kwargs...
-)
+        dϕdT::AbstractArray, p::MeltingParam_4thOrder; T::AbstractArray, kwargs...
+    )
     for i in eachindex(T)
-        @inbounds dϕdT[i] = compute_dϕdT(p; T=T[i])
+        @inbounds dϕdT[i] = compute_dϕdT(p; T = T[i])
     end
 
     return nothing
@@ -360,15 +360,15 @@ Temperature `T` is in Kelvin.
 This was used, among others, in Tierney et al. (2016) Geology
 
 """
-@with_kw_noshow struct MeltingParam_Quadratic{T,U} <: AbstractMeltingParam{T}
-    T_s::GeoUnit{T,U} = 963.15K
-    T_l::GeoUnit{T,U} = 1273.15K
+@with_kw_noshow struct MeltingParam_Quadratic{T, U} <: AbstractMeltingParam{T}
+    T_s::GeoUnit{T, U} = 963.15K
+    T_l::GeoUnit{T, U} = 1273.15K
     apply_bounds::Bool = true
 end
 MeltingParam_Quadratic(args...) = MeltingParam_Quadratic(convert.(GeoUnit, args)...)
 
 function param_info(s::MeltingParam_Quadratic) # info about the struct
-    return MaterialParamsInfo(; Equation=L"\phi = 1.0 - ((T_l - T)/(T_l - T_s))^2")
+    return MaterialParamsInfo(; Equation = L"\phi = 1.0 - ((T_l - T)/(T_l - T_s))^2")
 end
 
 # Calculation routines
@@ -442,17 +442,17 @@ References
 - Tierney, C.R., Schmitt, A.K., Lovera, O.M., de Silva, S.L., 2016. Voluminous plutonism during volcanic quiescence revealed by thermochemical modeling of zircon. Geology 44, 683–686. https://doi.org/10.1130/G37968.1
 
 """
-@with_kw_noshow struct MeltingParam_Assimilation{T,U,U1} <: AbstractMeltingParam{T}
-    T_s::GeoUnit{T,U} = 973.15K
-    T_l::GeoUnit{T,U} = 1173.15K
-    a::GeoUnit{T,U1} = 0.005NoUnits
+@with_kw_noshow struct MeltingParam_Assimilation{T, U, U1} <: AbstractMeltingParam{T}
+    T_s::GeoUnit{T, U} = 973.15K
+    T_l::GeoUnit{T, U} = 1173.15K
+    a::GeoUnit{T, U1} = 0.005NoUnits
     apply_bounds::Bool = true
 end
 MeltingParam_Assimilation(args...) = MeltingParam_Assimilation(convert.(GeoUnit, args)...)
 
 function param_info(s::MeltingParam_Assimilation) # info about the struct
     return MaterialParamsInfo(;
-        Equation=L"\phi = f(T_S,T_l,a) taking crustal assimilation into account."
+        Equation = L"\phi = f(T_S,T_l,a) taking crustal assimilation into account."
     )
 end
 
@@ -483,20 +483,20 @@ function compute_dϕdT(p::MeltingParam_Assimilation; T, kwargs...)
     X = (T - T_s) / (T_l - T_s)
     dϕdT =
         (
-            9.210340371976184 *
+        9.210340371976184 *
             a *
             exp((9.210340371976184 * T - 9.210340371976184 * T_s) / (T_l - T_s))
-        ) / (T_l - T_s)
+    ) / (T_l - T_s)
     if X > 0.5
         dϕdT =
             (
-                9.210340371976184 *
+            9.210340371976184 *
                 a *
                 exp(
-                    9.210340371976184 +
+                9.210340371976184 +
                     (9.210340371976184 * T_s - 9.210340371976184 * T) / (T_l - T_s),
-                )
-            ) / (T_l - T_s)
+            )
+        ) / (T_l - T_s)
     end
 
     if p.apply_bounds && (T > T_l || T < T_s)
@@ -520,13 +520,13 @@ end
 
 Stores a vector with melt fraction that can be retrieved by providing an `index`
 """
-struct Vector_MeltingParam{_T,V<:AbstractVector} <: AbstractMeltingParam{_T}
+struct Vector_MeltingParam{_T, V <: AbstractVector} <: AbstractMeltingParam{_T}
     ϕ::V       # melt fraction
 end
-Vector_MeltingParam(; ϕ=Vector{Float64}()) = Vector_MeltingParam{eltype(ϕ),typeof(ϕ)}(ϕ)
+Vector_MeltingParam(; ϕ = Vector{Float64}()) = Vector_MeltingParam{eltype(ϕ), typeof(ϕ)}(ϕ)
 
 function param_info(s::Vector_MeltingParam) # info about the struct
-    return MaterialParamsInfo(; Equation=L"\phi from a precomputed vector")
+    return MaterialParamsInfo(; Equation = L"\phi from a precomputed vector")
 end
 
 # Calculation routines
@@ -598,21 +598,21 @@ The derivative no longer has a jump now:
 ![MeltingParam_Smooth](./assets/img/MeltingParam_Smooth.png)
 
 """
-struct SmoothMelting{P,T,U} <: AbstractMeltingParam{T}
+struct SmoothMelting{P, T, U} <: AbstractMeltingParam{T}
     p::P
-    k_sol::GeoUnit{T,U}
-    k_liq::GeoUnit{T,U}
+    k_sol::GeoUnit{T, U}
+    k_liq::GeoUnit{T, U}
 end
 
 # Set default values:
-function SmoothMelting(; p=MeltingParam_4thOrder(), k_sol=0.2 / K, k_liq=0.2 / K)
+function SmoothMelting(; p = MeltingParam_4thOrder(), k_sol = 0.2 / K, k_liq = 0.2 / K)
     k_sol = convert(GeoUnit, k_sol)
     k_liq = convert(GeoUnit, k_liq)
     p = @set p.apply_bounds = false
     return SmoothMelting(p, k_sol, k_liq)
 end
 
-SmoothMelting(p::AbstractMeltingParam) = SmoothMelting(; p=p)
+SmoothMelting(p::AbstractMeltingParam) = SmoothMelting(; p = p)
 
 # Calculation routines
 function (param::SmoothMelting)(; T, kwargs...)
@@ -646,7 +646,7 @@ function compute_dϕdT(param::SmoothMelting; T, kwargs...)
     H_l, dHl_dT = value_and_partial(f_l, T)
 
     # melt fraction & derivative
-    dϕdT = compute_dϕdT(param.p; T=T)
+    dϕdT = compute_dϕdT(param.p; T = T)
     ϕ = param.p(; T, kwargs...)
 
     # The derivative of the function
@@ -673,8 +673,8 @@ end
 Computes melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
 """
 function compute_meltfraction(
-    p::PhaseDiagram_LookupTable; P::_T, T::_T, kwargs...
-) where {_T}
+        p::PhaseDiagram_LookupTable; P::_T, T::_T, kwargs...
+    ) where {_T}
     return p.meltFrac.(T, P)
 end
 
@@ -693,7 +693,7 @@ Computes derivative of melt fraction vs T in case we use a phase diagram lookup 
 The derivative is computed by finite differencing.
 """
 function compute_dϕdT(p::PhaseDiagram_LookupTable; P::_T, T::_T, kwargs...) where {_T}
-    dT = (maximum(T) - minimum(T)) * 0.5 * 1e-6 + 1e-6   # 1e-6 of the average T value
+    dT = (maximum(T) - minimum(T)) * 0.5 * 1.0e-6 + 1.0e-6   # 1e-6 of the average T value
     ϕ1 = p.meltFrac.(T .+ dT, P)
     ϕ0 = p.meltFrac.(T, P)
     dϕdT = (ϕ1 - ϕ0) / dT
@@ -728,15 +728,15 @@ The derivative is computed by finite differencing.
 
 # fill methods programmatically
 for myType in (
-    :MeltingParam_Caricchi,
-    :MeltingParam_Smooth3rdOrder,
-    :MeltingParam_5thOrder,
-    :MeltingParam_4thOrder,
-    :MeltingParam_Quadratic,
-    :MeltingParam_Assimilation,
-    :Vector_MeltingParam,
-    :SmoothMelting,
-)
+        :MeltingParam_Caricchi,
+        :MeltingParam_Smooth3rdOrder,
+        :MeltingParam_5thOrder,
+        :MeltingParam_4thOrder,
+        :MeltingParam_Quadratic,
+        :MeltingParam_Assimilation,
+        :Vector_MeltingParam,
+        :SmoothMelting,
+    )
     @eval begin
         (p::$(myType))(args) = p(; args...)
         compute_meltfraction(p::$(myType), args) = p(; args...)
@@ -747,7 +747,7 @@ end
 # Computational routines needed for computations with the MaterialParams structure
 function compute_meltfraction(s::AbstractMaterialParamsStruct, args)
     if isempty(s.Melting) #in case there is a phase with no melting parametrization
-        return 0e0 # return zero if not specified
+        return 0.0e0 # return zero if not specified
     else
         return compute_meltfraction(s.Melting[1], args)
     end
@@ -755,7 +755,7 @@ end
 
 function compute_dϕdT(s::AbstractMaterialParamsStruct, args)
     if isempty(s.Melting) #in case there is a phase with no melting parametrization
-        return 0e0 # return zero if not specified
+        return 0.0e0 # return zero if not specified
     else
         return compute_dϕdT(s.Melting[1], args)
     end
@@ -766,7 +766,7 @@ end
 
 Computation of melt fraction ϕ for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 """
-compute_meltfraction(args::Vararg{Any,N}) where {N} =
+compute_meltfraction(args::Vararg{Any, N}) where {N} =
     clamp(compute_param(compute_meltfraction, args...), 0, 1)
 
 """
@@ -774,7 +774,7 @@ compute_meltfraction(args::Vararg{Any,N}) where {N} =
 
 In-place computation of melt fraction ϕ for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 """
-compute_meltfraction!(args::Vararg{Any,N}) where {N} =
+compute_meltfraction!(args::Vararg{Any, N}) where {N} =
     compute_param!(compute_meltfraction, args...)
 
 """
@@ -783,7 +783,7 @@ compute_meltfraction!(args::Vararg{Any,N}) where {N} =
 Computation of melt fraction ϕ for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 """
-compute_meltfraction_ratio(args::Vararg{Any,N}) where {N} =
+compute_meltfraction_ratio(args::Vararg{Any, N}) where {N} =
     compute_param_times_frac(compute_meltfraction, args...)
 
 """
@@ -792,7 +792,7 @@ compute_meltfraction_ratio(args::Vararg{Any,N}) where {N} =
 Computates the derivative of melt fraction ϕ versus temperature `T` for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This is employed in computing latent heat terms in an implicit manner, for example
 """
-compute_dϕdT(args::Vararg{Any,N}) where {N} = compute_param(compute_dϕdT, args...)
+compute_dϕdT(args::Vararg{Any, N}) where {N} = compute_param(compute_dϕdT, args...)
 
 """
     compute_dϕdT!(ϕ::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
@@ -800,6 +800,6 @@ compute_dϕdT(args::Vararg{Any,N}) where {N} = compute_param(compute_dϕdT, args
 Computates the derivative of melt fraction `ϕ` versus temperature `T`, ``{\\partial \\phi} \\over {\\partial T}`` for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This is employed, for example, in computing latent heat terms in an implicit manner.
 """
-compute_dϕdT!(args::Vararg{Any,N}) where {N} = compute_param!(compute_dϕdT, args...)
+compute_dϕdT!(args::Vararg{Any, N}) where {N} = compute_param!(compute_dϕdT, args...)
 
 end

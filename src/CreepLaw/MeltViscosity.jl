@@ -32,29 +32,29 @@ Typical parameters for basalt (default) are: `A = -9.6012`, `B = 1.3374e+04K`, `
 
 Typical parameters for rhyolite are: `A = -8.1590`, `B = 2.4050e+04K`, `T_0 = -430.9606K` and `\\eta_0 = 1Pas`.
 """
-@with_kw_noshow struct LinearMeltViscosity{T,U,U1,U2} <: AbstractCreepLaw{T}
-    A::GeoUnit{T,U} = -9.6012NoUnits
-    B::GeoUnit{T,U1} = 1.3374e+04K
-    T0::GeoUnit{T,U1} = 307.8043K          # reference T
-    η0::GeoUnit{T,U2} = 1Pas               # scaling viscosity
+@with_kw_noshow struct LinearMeltViscosity{T, U, U1, U2} <: AbstractCreepLaw{T}
+    A::GeoUnit{T, U} = -9.6012NoUnits
+    B::GeoUnit{T, U1} = 1.3374e+4K
+    T0::GeoUnit{T, U1} = 307.8043K          # reference T
+    η0::GeoUnit{T, U2} = 1Pas               # scaling viscosity
 end
 LinearMeltViscosity(args...) = LinearMeltViscosity(convert.(GeoUnit, args)...)
 
 function param_info(a::LinearMeltViscosity) # info about the struct
     return MaterialParamsInfo(;
-        Equation=L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}; \eta=10^{A + \frac{B}{T-T_0}}",
+        Equation = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}; \eta=10^{A + \frac{B}{T-T_0}}",
     )
 end
 
 # Calculation routine
-@inline function compute_εII(a::LinearMeltViscosity, TauII; T=one(precision(a)), kwargs...)
+@inline function compute_εII(a::LinearMeltViscosity, TauII; T = one(precision(a)), kwargs...)
     @unpack_val A, B, T0, η0 = a
     η = η0 * 10^(A + (B / (T - T0)))
     ε = TauII / η * 0.5
     return ε
 end
 
-@inline function compute_εII(a::LinearMeltViscosity, TauII::Quantity; T=1K, args...)
+@inline function compute_εII(a::LinearMeltViscosity, TauII::Quantity; T = 1K, args...)
     @unpack_units A, B, T0, η0 = a
     η = η0 * 10^(A + (B / (T - T0)))
     ε = TauII / η * 0.5
@@ -65,27 +65,27 @@ end
     compute_εII!(EpsII::AbstractArray{_T,N}, s::LinearMeltViscosity, TauII::AbstractArray{_T,N}; T, kwargs...)
 """
 @inline function compute_εII!(
-    EpsII::AbstractArray{_T,N},
-    a::LinearMeltViscosity,
-    TauII::AbstractArray{_T,N};
-    T=ones(size(TauII))::AbstractArray{_T,N},
-    kwargs...,
-) where {N,_T}
+        EpsII::AbstractArray{_T, N},
+        a::LinearMeltViscosity,
+        TauII::AbstractArray{_T, N};
+        T = ones(size(TauII))::AbstractArray{_T, N},
+        kwargs...,
+    ) where {N, _T}
     @inbounds for i in eachindex(EpsII)
-        EpsII[i] = compute_εII(a, TauII[i]; T=T[i])
+        EpsII[i] = compute_εII(a, TauII[i]; T = T[i])
     end
 
     return nothing
 end
 
-@inline function dεII_dτII(a::LinearMeltViscosity, TauII::Quantity; T=1K, kwargs...)
+@inline function dεII_dτII(a::LinearMeltViscosity, TauII::Quantity; T = 1K, kwargs...)
     @unpack_units A, B, T0, η0 = a
     η = η0 * 10^(A + (B / (T - T0)))
 
     return 0.5 * (1.0 / η)
 end
 
-@inline function dεII_dτII(a::LinearMeltViscosity, TauII; T=one(precision(a)), kwargs...)
+@inline function dεII_dτII(a::LinearMeltViscosity, TauII; T = one(precision(a)), kwargs...)
     @unpack_val A, B, T0, η0 = a
     η = η0 * 10^(A + (B / (T - T0)))
 
@@ -97,14 +97,14 @@ end
 
 Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor
 """
-@inline function compute_τII(a::LinearMeltViscosity, EpsII; T=one(precision(a)), kwargs...)
+@inline function compute_τII(a::LinearMeltViscosity, EpsII; T = one(precision(a)), kwargs...)
     @unpack_val A, B, T0, η0 = a
     η = η0 * 10^(A + (B / (T - T0)))
 
     return 2 * η * EpsII
 end
 
-@inline function compute_τII(a::LinearMeltViscosity, EpsII::Quantity; T=1K, kwargs...)
+@inline function compute_τII(a::LinearMeltViscosity, EpsII::Quantity; T = 1K, kwargs...)
     @unpack_units A, B, T0, η0 = a
 
     η = η0 * 10^(A + (B / (T - T0)))
@@ -113,27 +113,27 @@ end
 end
 
 function compute_τII!(
-    TauII::AbstractArray{_T,N},
-    a::LinearMeltViscosity,
-    EpsII::AbstractArray{_T,N};
-    T=ones(size(TauII))::AbstractArray{_T,N},
-    kwargs...,
-) where {N,_T}
+        TauII::AbstractArray{_T, N},
+        a::LinearMeltViscosity,
+        EpsII::AbstractArray{_T, N};
+        T = ones(size(TauII))::AbstractArray{_T, N},
+        kwargs...,
+    ) where {N, _T}
     @inbounds for i in eachindex(EpsII)
-        TauII[i] = compute_τII(a, EpsII[i]; T=T[i])
+        TauII[i] = compute_τII(a, EpsII[i]; T = T[i])
     end
 
     return nothing
 end
 
-@inline function dτII_dεII(a::LinearMeltViscosity, EpsII; T=one(precision(a)), kwargs...)
+@inline function dτII_dεII(a::LinearMeltViscosity, EpsII; T = one(precision(a)), kwargs...)
     @unpack_val A, B, T0, η0 = a
     η = η0 * 10^(A + (B / (T - T0)))
 
     return 2 * η
 end
 
-@inline function dτII_dεII(a::LinearMeltViscosity, EpsII::Quantity; T=1K, kwargs...)
+@inline function dτII_dεII(a::LinearMeltViscosity, EpsII::Quantity; T = 1K, kwargs...)
     @unpack_units A, B, T0, η0 = a
     η = η0 * 10^(A + (B / (T - T0)))
 
@@ -162,10 +162,10 @@ Reference
 Costa, A., Caricchi, L., Bagdassarov, N., 2009. A model for the rheology of particle‐bearing suspensions and partially molten rocks. Geochem Geophys Geosyst 10, 2008GC002138. https://doi.org/10.1029/2008GC002138
 
 """
-@with_kw_noshow struct ViscosityPartialMelt_Costa_etal_2009{T,U,S1<:AbstractCreepLaw} <:
-                       AbstractCreepLaw{T}
+@with_kw_noshow struct ViscosityPartialMelt_Costa_etal_2009{T, U, S1 <: AbstractCreepLaw} <:
+    AbstractCreepLaw{T}
     η::S1 = LinearMeltViscosity()     # Basalt melt viscosity
-    ε0::GeoUnit{T,U} = 1.0 / s                           # characteristic strainrate
+    ε0::GeoUnit{T, U} = 1.0 / s                           # characteristic strainrate
 end
 function ViscosityPartialMelt_Costa_etal_2009(args...)
     return ViscosityPartialMelt_Costa_etal_2009(
@@ -179,29 +179,29 @@ isDimensional(g::ViscosityPartialMelt_Costa_etal_2009) = isDimensional(g.ε0)
 
 function param_info(a::ViscosityPartialMelt_Costa_etal_2009) # info about the struct
     return MaterialParamsInfo(;
-        Equation=L"Costa et al. (2009) effective viscosity parameterisation"
+        Equation = L"Costa et al. (2009) effective viscosity parameterisation"
     )
 end
 
 # viscosity correction; where c_vf=crystal volume fraction and strain_rate is the strainrate in s^-1
 function viscosity_correction(c_vf, Strain_Rate)
-    strain_rate =  Strain_Rate + (Strain_Rate < eps(Float64)) * 1e-6
-    θ           =  log10(strain_rate)
-    ϕ_max       =  0.066499 * tanh(0.913424 * θ + 3.850623) + 0.591806
-    δ           = -6.301095 * tanh(0.818496 * θ + 2.86) + 7.462405
-    α           = -0.000378 * tanh(1.148101 * θ + 3.92) + 0.999572
-    γ           =  3.987815 * tanh(0.8908 * θ + 3.24) + 5.099645
-    num         =  1 + (c_vf / ϕ_max)^δ
-    x           =  √π * c_vf / (2 * α * ϕ_max) * (1 + (c_vf / ϕ_max)^γ)
-    den         =  (1 - α * erf(x))^(2.5 * ϕ_max)
-    mu_r        =  num / den
+    strain_rate = Strain_Rate + (Strain_Rate < eps(Float64)) * 1.0e-6
+    θ = log10(strain_rate)
+    ϕ_max = 0.066499 * tanh(0.913424 * θ + 3.850623) + 0.591806
+    δ = -6.301095 * tanh(0.818496 * θ + 2.86) + 7.462405
+    α = -0.000378 * tanh(1.148101 * θ + 3.92) + 0.999572
+    γ = 3.987815 * tanh(0.8908 * θ + 3.24) + 5.099645
+    num = 1 + (c_vf / ϕ_max)^δ
+    x = √π * c_vf / (2 * α * ϕ_max) * (1 + (c_vf / ϕ_max)^γ)
+    den = (1 - α * erf(x))^(2.5 * ϕ_max)
+    mu_r = num / den
     return mu_r
 end
 
 # Calculation routine
 @inline function compute_εII(
-    a::ViscosityPartialMelt_Costa_etal_2009, TauII; ϕ=one(precision(a)), kwargs...
-)
+        a::ViscosityPartialMelt_Costa_etal_2009, TauII; ϕ = one(precision(a)), kwargs...
+    )
     # melt viscosity
     ε = compute_εII(a.η, TauII, kwargs)
     η_melt = TauII / ε * 0.5
@@ -215,15 +215,15 @@ end
     compute_εII!(EpsII::AbstractArray{_T,N}, s::ViscosityPartialMelt_Costa_etal_2009, TauII::AbstractArray{_T,N}; T, kwargs...)
 """
 @inline function compute_εII!(
-    EpsII::AbstractArray{_T,N},
-    a::ViscosityPartialMelt_Costa_etal_2009,
-    TauII::AbstractArray{_T,N};
-    ϕ=ones(size(TauII))::AbstractArray{_T,N},
-    T=ones(size(TauII))::AbstractArray{_T,N},
-    kwargs...,
-) where {N,_T}
+        EpsII::AbstractArray{_T, N},
+        a::ViscosityPartialMelt_Costa_etal_2009,
+        TauII::AbstractArray{_T, N};
+        ϕ = ones(size(TauII))::AbstractArray{_T, N},
+        T = ones(size(TauII))::AbstractArray{_T, N},
+        kwargs...,
+    ) where {N, _T}
     @inbounds for i in eachindex(EpsII)
-        EpsII[i] = compute_εII(a, TauII[i]; T=T[i])
+        EpsII[i] = compute_εII(a, TauII[i]; T = T[i])
     end
 
     return nothing
@@ -235,8 +235,8 @@ end
 Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor
 """
 @inline function compute_τII(
-    a::ViscosityPartialMelt_Costa_etal_2009, EpsII; ϕ=one(precision(a)), kwargs...
-)
+        a::ViscosityPartialMelt_Costa_etal_2009, EpsII; ϕ = one(precision(a)), kwargs...
+    )
     # melt viscosity
     τ = compute_τII(a.η, EpsII, kwargs)
     η_melt = τ / EpsII * 0.5
@@ -247,8 +247,8 @@ Returns second invariant of the stress tensor given a 2nd invariant of strain ra
 end
 
 @inline function compute_τII(
-    a::ViscosityPartialMelt_Costa_etal_2009, EpsII::Quantity; ϕ=1.0, kwargs...
-)
+        a::ViscosityPartialMelt_Costa_etal_2009, EpsII::Quantity; ϕ = 1.0, kwargs...
+    )
 
     # melt viscosity
     τ = compute_τII(a.η, EpsII, kwargs)
@@ -262,15 +262,15 @@ end
 end
 
 function compute_τII!(
-    TauII::AbstractArray{_T,N},
-    a::ViscosityPartialMelt_Costa_etal_2009,
-    EpsII::AbstractArray{_T,N};
-    ϕ=ones(size(TauII))::AbstractArray{_T,N},
-    T=ones(size(TauII))::AbstractArray{_T,N},
-    kwargs...,
-) where {N,_T}
+        TauII::AbstractArray{_T, N},
+        a::ViscosityPartialMelt_Costa_etal_2009,
+        EpsII::AbstractArray{_T, N};
+        ϕ = ones(size(TauII))::AbstractArray{_T, N},
+        T = ones(size(TauII))::AbstractArray{_T, N},
+        kwargs...,
+    ) where {N, _T}
     @inbounds for i in eachindex(EpsII)
-        TauII[i] = compute_τII(a, EpsII[i]; ϕ=ϕ[i], T=T[i])
+        TauII[i] = compute_τII(a, EpsII[i]; ϕ = ϕ[i], T = T[i])
     end
 
     return nothing

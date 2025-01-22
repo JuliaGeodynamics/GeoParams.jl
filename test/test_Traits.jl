@@ -55,7 +55,7 @@ using Test, GeoParams
     @test isviscoelastic(tuple(v3, el)) isa ElasticRheologyTrait
 
     @test isviscoelastic(CompositeRheology(v1, v2, v3, pl)) isa NonElasticRheologyTrait
-    @test isviscoelastic(CompositeRheology(el, v3, pl))     isa ElasticRheologyTrait
+    @test isviscoelastic(CompositeRheology(el, v3, pl)) isa ElasticRheologyTrait
 
     # test MaterialParams cases
     @test isviscoelastic(r1[1]) isa ElasticRheologyTrait
@@ -88,18 +88,18 @@ using Test, GeoParams
     @test islinear(tuple(v3, el)) isa LinearRheologyTrait
 
     @test islinear(CompositeRheology(v1, v2, v3)) isa NonLinearRheologyTrait
-    @test islinear(CompositeRheology(el, v3))     isa LinearRheologyTrait
+    @test islinear(CompositeRheology(el, v3)) isa LinearRheologyTrait
 
     # test MaterialParams cases
     @test islinear(r1[1]) isa NonLinearRheologyTrait
     @test islinear(r1[2]) isa NonLinearRheologyTrait
     @test islinear(r1[3]) isa LinearRheologyTrait
-    @test islinear(r1)    isa NonLinearRheologyTrait
+    @test islinear(r1) isa NonLinearRheologyTrait
 
     @test islinear(r2[1]) isa LinearRheologyTrait
     @test islinear(r2[2]) isa LinearRheologyTrait
     @test islinear(r2[3]) isa LinearRheologyTrait
-    @test islinear(r2)    isa LinearRheologyTrait
+    @test islinear(r2) isa LinearRheologyTrait
 
     ## plastic rheology traits
     # test basic cases
@@ -114,7 +114,7 @@ using Test, GeoParams
     @test isplasticity(pl, el) isa PlasticRheologyTrait
     @test isplasticity(tuple(v1, v2)) isa NonPlasticRheologyTrait
     @test isplasticity(tuple(pl, el)) isa PlasticRheologyTrait
-    
+
     @test isplasticity(CompositeRheology(v1, v2, v3)) isa NonPlasticRheologyTrait
     @test isplasticity(CompositeRheology(el, pl, v1)) isa PlasticRheologyTrait
 
@@ -139,4 +139,3 @@ end
     @test isconstant(r2) isa ConstantDensityTrait
     @test_throws ArgumentError isconstant("potato")
 end
-

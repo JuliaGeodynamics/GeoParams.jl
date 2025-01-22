@@ -7,9 +7,9 @@ using GeoParams
 # Julia v1.9.0 does not load package extensions when their dependency is
 # loaded from the main environment.
 if VERSION >= v"1.9.1"
-  using GLMakie
+    using GLMakie
 else
-  using ..GLMakie
+    using ..GLMakie
 end
 
 include("../src/Plotting/Plotting.jl")

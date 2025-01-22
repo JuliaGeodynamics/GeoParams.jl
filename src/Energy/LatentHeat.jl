@@ -15,11 +15,11 @@ import Base.show, GeoParams.param_info
 
 abstract type AbstractLatentHeat{T} <: AbstractMaterialParam end
 
-export compute_latent_heat,                  # calculation routines
+export compute_latent_heat, # calculation routines
     compute_latent_heat!,
     param_info,
     ConstantLatentHeat                      # constant (as source)
-    
+
 include("../Computations.jl")
 
 
@@ -33,13 +33,13 @@ Set a constant latent heat:
 ```
 where ``Q_L`` is the latent heat [``J/kg``].
 """
-@with_kw_noshow struct ConstantLatentHeat{T,U} <: AbstractLatentHeat{T}
-    Q_L::GeoUnit{T,U} = 400e3J / kg                # Latent heat
+@with_kw_noshow struct ConstantLatentHeat{T, U} <: AbstractLatentHeat{T}
+    Q_L::GeoUnit{T, U} = 400.0e3J / kg                # Latent heat
 end
 ConstantLatentHeat(args...) = ConstantLatentHeat(convert.(GeoUnit, args)...)
 
 function param_info(s::ConstantLatentHeat) # info about the struct
-    return MaterialParamsInfo(; Equation=L"Q_L = cst")
+    return MaterialParamsInfo(; Equation = L"Q_L = cst")
 end
 
 # Calculation routine
@@ -57,7 +57,7 @@ function (s::ConstantLatentHeat)(I::Integer...)
     return fill(Q_L, I...)
 end
 
-# Print info 
+# Print info
 function show(io::IO, g::ConstantLatentHeat)
     return print(io, "Constant latent heat: Q_L=$(Value(g.Q_L))")
 end
@@ -72,7 +72,7 @@ Returns the latent heat `Q_L`
 
 """
 
-# Computational routines needed for computations with the MaterialParams structure 
+# Computational routines needed for computations with the MaterialParams structure
 function compute_latent_heat(s::AbstractMaterialParamsStruct, args)
     if isempty(s.LatentHeat)
         return isempty(args) ? 0.0 : zero(typeof(args).types[1])  # return zero if not specified
@@ -89,7 +89,7 @@ for myType in (:ConstantLatentHeat,)
     end
 end
 
-compute_latent_heat(args::Vararg{Any, N}) where N = compute_param(compute_latent_heat, args...)
-compute_latent_heat!(args::Vararg{Any, N}) where N = compute_param!(compute_latent_heat, args...)
+compute_latent_heat(args::Vararg{Any, N}) where {N} = compute_param(compute_latent_heat, args...)
+compute_latent_heat!(args::Vararg{Any, N}) where {N} = compute_param!(compute_latent_heat, args...)
 
 end

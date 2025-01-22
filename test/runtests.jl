@@ -10,7 +10,7 @@ function runtests()
             include(f)
         end
     end
+    return
 end
 
 runtests()
-

@@ -104,8 +104,8 @@ Output:
 
 """
 function retrieveTASrockType(
-    index::Int64; ClassTASdata::TASclassificationData=TASclassificationData()
-)
+        index::Int64; ClassTASdata::TASclassificationData = TASclassificationData()
+    )
     @unpack litho = ClassTASdata
     return litho[index]
 end
@@ -126,8 +126,8 @@ This routine was developed based the TAS classification of Le Maitre et al., 200
 
 """
 function computeTASclassification(
-    point::AbstractArray{_T}; ClassTASdata::TASclassificationData=TASclassificationData()
-) where {_T}
+        point::AbstractArray{_T}; ClassTASdata::TASclassificationData = TASclassificationData()
+    ) where {_T}
     @unpack litho, n_ver, ver, p, v = ClassTASdata
 
     p[1, 1] = 0.0

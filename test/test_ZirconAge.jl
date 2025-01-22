@@ -4,38 +4,38 @@ using GeoParams, LinearAlgebra, DelimitedFiles
 
     # declare constant variables
     s2y = 365.0 * 24.0 * 3600.0 # second to year
-    ZirconData = ZirconAgeData()# default data
+    ZirconData = ZirconAgeData() # default data
 
     # Parameters for Zircon statistical analysis
-    n_analyses = 300# number of synthetic zircon analyses
+    n_analyses = 300 # number of synthetic zircon analyses
 
-    # read input file (this step should be skipped, when using tracers)		
-    filename = "Data/Tt15_st_Bl_rad5_0.0126.txt"# path to input file 
+    # read input file (this step should be skipped, when using tracers)
+    filename = "Data/Tt15_st_Bl_rad5_0.0126.txt" # path to input file
     Tt_paths = readdlm(filename, ',')
-    n_paths = size(Tt_paths, 2) - 1# -1 ro remove first column that corresponds to the time
-    time_years = Tt_paths[:, 1] ./ s2y# time from seconds to years
+    n_paths = size(Tt_paths, 2) - 1 # -1 ro remove first column that corresponds to the time
+    time_years = Tt_paths[:, 1] ./ s2y # time from seconds to years
 
     # Here a matrix is constructed that only contains the temperature information:
     Tt_paths_Temp = Tt_paths[:, 2:end]
 
-    # first: test case in which we provide the Tt-path as matrix 
+    # first: test case in which we provide the Tt-path as matrix
     prob, ages_eruptible, number_zircons, T_av_time, T_sd_time, cumPDF = compute_zircons_Ttpath(
-        time_years, Tt_paths_Temp; ZirconData=ZirconData
+        time_years, Tt_paths_Temp; ZirconData = ZirconData
     )
     time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average = zircon_age_PDF(
         ages_eruptible,
         number_zircons;
-        bandwidth=1e5,
-        n_analyses=n_analyses,
-        ZirconData=ZirconData,
+        bandwidth = 1.0e5,
+        n_analyses = n_analyses,
+        ZirconData = ZirconData,
     )
 
     # add tests to check that results are consistent
     @test sum(number_zircons[1:200]) ≈ 67316.0
-    @test sum(number_zircons) ≈  5.88569e6
+    @test sum(number_zircons) ≈ 5.88569e6
     @test prob[100] ≈ 1.868939750479553e-5
 
-    # A second way to generate the input is having Vector{Vector} for both time and Tt-path. 
+    # A second way to generate the input is having Vector{Vector} for both time and Tt-path.
     time_years_vecs = Vector{Vector{Float64}}(undef, size(Tt_paths_Temp, 2))
     Tt_paths_Temp_vecs = Vector{Vector{Float64}}(undef, size(Tt_paths_Temp, 2))
     for i in 1:size(Tt_paths_Temp, 2)
@@ -60,10 +60,10 @@ using GeoParams, LinearAlgebra, DelimitedFiles
     @test prob1[100] ≈ 1.868939750479553e-5
     @test cumPDF[100] == cumPDF1[100]
 
-    # Do the same but with a single routine that also returns the PDF's 
+    # Do the same but with a single routine that also returns the PDF's
     # Note that given the randomness, you'll always get different results
     time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average, time_years, prob2, ages_eruptible, number_zircons2, T_av_time, T_sd_time = compute_zircon_age_PDF(
-        time_years_vecs, Tt_paths_Temp_vecs; ZirconData=ZirconData
+        time_years_vecs, Tt_paths_Temp_vecs; ZirconData = ZirconData
     )
 
     @test sum(number_zircons2[1:200]) ≈ 67316.0

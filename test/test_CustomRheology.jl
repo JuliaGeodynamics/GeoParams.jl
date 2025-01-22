@@ -15,24 +15,24 @@ end
 end
 
 # helper function (optional)
-@inline function custom_viscosity(a::CustomRheology; P=0.0, T=273.0, depth=0.0, kwargs...)
+@inline function custom_viscosity(a::CustomRheology; P = 0.0, T = 273.0, depth = 0.0, kwargs...)
     η0, Ea, Va, T0, R, cutoff = a.args.η0,
-    a.args.Ea, a.args.Va, a.args.T0, a.args.R,
-    a.args.cutoff
+        a.args.Ea, a.args.Va, a.args.T0, a.args.R,
+        a.args.cutoff
     η = η0 * exp((Ea + P * Va) / (R * T) - Ea / (R * T0))
-    correction = (depth ≤ 660e3) + (depth > 660e3) * 1e1
+    correction = (depth ≤ 660.0e3) + (depth > 660.0e3) * 1.0e1
     return clamp(η * correction, cutoff...)
 end
 
 # constant parameters, these are typically wrapped into a struct (compulsory)
-v_args = (; η0=5e20, Ea=200e3, Va=2.6e-6, T0=1.6e3, R=8.3145, cutoff=(1e16, 1e25))
+v_args = (; η0 = 5.0e20, Ea = 200.0e3, Va = 2.6e-6, T0 = 1.6e3, R = 8.3145, cutoff = (1.0e16, 1.0e25))
 
 # create rheology struct
 v1 = CustomRheology(custom_εII, custom_τII, v_args)
 
 @testset "CustomRheology" begin
-    args = (; depth=1e3, P=1e3 * 3300 * 9.81, T=1.6e3)
-    τII, εII = 1e3, 1e-15
+    args = (; depth = 1.0e3, P = 1.0e3 * 3300 * 9.81, T = 1.6e3)
+    τII, εII = 1.0e3, 1.0e-15
     ε = compute_εII(v1, τII, args)
     τ = compute_τII(v1, εII, args)
     dεdτ = dεII_dτII(v1, τII, args)
@@ -47,7 +47,7 @@ v1 = CustomRheology(custom_εII, custom_τII, v_args)
     # CompositeRheologies
     v2 = ConstantElasticity()
     c = CompositeRheology(v1, v2)
-    args = (; dt=Inf, depth=1e3, P=1e3 * 3300 * 9.81, T=1.6e3)
+    args = (; dt = Inf, depth = 1.0e3, P = 1.0e3 * 3300 * 9.81, T = 1.6e3)
     ε = compute_εII(c, τII, args)
     τ = compute_τII(c, εII, args)
     @test (ε, τ) == (9.936929394365625e-19, 1.0063470920574456e6)

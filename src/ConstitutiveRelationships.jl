@@ -19,7 +19,7 @@ const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 #abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
 #abstract type AbstractComposite <: AbstractMaterialParam end
 
-@inline precision(::AbstractConstitutiveLaw{T}) where T = T
+@inline precision(::AbstractConstitutiveLaw{T}) where {T} = T
 
 include("Computations.jl")
 include("Softening/Softening.jl")                      # strain softening
@@ -56,8 +56,8 @@ export param_info,
     CompositeRheology,
     AbstractComposite,
     AbstractConstitutiveLaw,
-    AxialCompression, SimpleShear, Invariant, 
-    get_G, 
+    AxialCompression, SimpleShear, Invariant,
+    get_G,
     get_Kb,
     iselastic,
     AbstractSoftening,
@@ -66,36 +66,38 @@ export param_info,
     LinearSoftening,
     NonLinearSoftening
 
-# add methods programmatically 
-for myType in (:LinearViscous, :LinearMeltViscosity, :ViscosityPartialMelt_Costa_etal_2009, 
-                :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType, 
-                :GrainBoundarySliding, :PeierlsCreep, :NonLinearPeierlsCreep, :PowerlawViscous)
+# add methods programmatically
+for myType in (
+        :LinearViscous, :LinearMeltViscosity, :ViscosityPartialMelt_Costa_etal_2009,
+        :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType,
+        :GrainBoundarySliding, :PeierlsCreep, :NonLinearPeierlsCreep, :PowerlawViscous,
+    )
     @eval begin
         @inline compute_εII(a::$(myType), TauII, args) = compute_εII(a, TauII; args...)
         @inline compute_εvol(a::$(myType), P, args) = compute_εvol(a, P; args...)
-        
+
         function compute_εII!(
-            ε::AbstractArray{_T,N}, s::$(myType){_T}, TauII::AbstractArray{_T,N}, args
-        ) where {_T,N}
+                ε::AbstractArray{_T, N}, s::$(myType){_T}, TauII::AbstractArray{_T, N}, args
+            ) where {_T, N}
             return compute_εII!(ε, s, TauII; args...)
         end
 
         function compute_εvol!(
-            ε::AbstractArray{_T,N}, s::$(myType){_T}, P::AbstractArray{_T,N}, args
-        ) where {_T,N}
+                ε::AbstractArray{_T, N}, s::$(myType){_T}, P::AbstractArray{_T, N}, args
+            ) where {_T, N}
             return compute_εvol!(ε, s, P; args...)
         end
 
         @inline compute_τII(a::$(myType), EpsII, args) = compute_τII(a, EpsII; args...)
         @inline compute_p(a::$(myType), EpsVol, args) = compute_p(a, EpsVol; args...)
         function compute_τII!(
-            τ::AbstractArray{_T,N}, s::$(myType){_T}, EpsII::AbstractArray{_T,N}, args
-        ) where {_T,N}
+                τ::AbstractArray{_T, N}, s::$(myType){_T}, EpsII::AbstractArray{_T, N}, args
+            ) where {_T, N}
             return compute_τII!(τ, s, EpsII; args...)
         end
         function compute_p!(
-            p::AbstractArray{_T,N}, s::$(myType){_T}, EpsVol::AbstractArray{_T,N}, args
-        ) where {_T,N}
+                p::AbstractArray{_T, N}, s::$(myType){_T}, EpsVol::AbstractArray{_T, N}, args
+            ) where {_T, N}
             return compute_p!(p, s, EpsVol; args...)
         end
 

@@ -13,23 +13,23 @@ include("../Computations.jl")
 
 abstract type AbstractPermeability{T} <: AbstractMaterialParam end
 
-export compute_permeability,     # calculation routines
-    compute_permeability!,       # in place calculation
+export compute_permeability, # calculation routines
+    compute_permeability!, # in place calculation
     compute_permeability_ratio, # calculation with phase ratios
-    param_info,                  # info about the parameters
+    param_info, # info about the parameters
     AbstractPermeability,
-    ConstantPermeability,        # constant
-    HazenPermeability,           # Hazen equation
-    PowerLawPermeability,        # Power-law permeability
+    ConstantPermeability, # constant
+    HazenPermeability, # Hazen equation
+    PowerLawPermeability, # Power-law permeability
     CarmanKozenyPermeability    # Carman-Kozeny permeability
 
 # Define "empty" computational routines in case nothing is defined
 function compute_permeability!(
-    k, s::No_MaterialParam{_T}; ϕ::_T1=0e0
-) where {_T, _T1}
+        k, s::No_MaterialParam{_T}; ϕ::_T1 = 0.0e0
+    ) where {_T, _T1}
     return zero(_T)
 end
-function compute_permeability(s::No_MaterialParam{_T}; ϕ::_T1=0e0) where {_T, _T1}
+function compute_permeability(s::No_MaterialParam{_T}; ϕ::_T1 = 0.0e0) where {_T, _T1}
     return zero(_T)
 end
 
@@ -53,8 +53,8 @@ rheology = SetMaterialParams(;
                       )
 ```
 """
-@with_kw_noshow struct ConstantPermeability{_T,U} <: AbstractPermeability{_T}
-    k::GeoUnit{_T,U} = 1e-12m^2 # permeability
+@with_kw_noshow struct ConstantPermeability{_T, U} <: AbstractPermeability{_T}
+    k::GeoUnit{_T, U} = 1.0e-12m^2 # permeability
 end
 ConstantPermeability(args...) = ConstantPermeability(convert.(GeoUnit, args)...)
 isdimensional(s::ConstantPermeability) = isdimensional(s.k)
@@ -62,10 +62,10 @@ isdimensional(s::ConstantPermeability) = isdimensional(s.k)
 @inline (s::ConstantPermeability)(; args...) = s.k.val
 @inline (s::ConstantPermeability)(args) = s(; args...)
 @inline compute_permeability(s::ConstantPermeability{_T}, args) where {_T} = s(; args...)
-@inline compute_permeability(s::ConstantPermeability{_T})       where {_T} = s()
+@inline compute_permeability(s::ConstantPermeability{_T}) where {_T} = s()
 
 function param_info(s::ConstantPermeability)
-    return MaterialParamsInfo(; Equation=L"k = cst")
+    return MaterialParamsInfo(; Equation = L"k = cst")
 end
 
 function compute_permeability!(k::AbstractArray, s::ConstantPermeability; kwargs...)
@@ -106,9 +106,9 @@ rheology = SetMaterialParams(;
                       )
 ```
 """
-@with_kw_noshow struct HazenPermeability{_T,U1,U2} <: AbstractPermeability{_T}
-    C::GeoUnit{_T,U1} = 1.0 * NoUnits # Hazen constant
-    D10::GeoUnit{_T,U2} = 1e-4 * m    # Effective grain size
+@with_kw_noshow struct HazenPermeability{_T, U1, U2} <: AbstractPermeability{_T}
+    C::GeoUnit{_T, U1} = 1.0 * NoUnits # Hazen constant
+    D10::GeoUnit{_T, U2} = 1.0e-4 * m    # Effective grain size
 end
 HazenPermeability(args...) = HazenPermeability(convert.(GeoUnit, args)...)
 isdimensional(s::HazenPermeability) = isdimensional(s.D10)
@@ -127,7 +127,7 @@ function (s::HazenPermeability{_T})(; kwargs...) where {_T}
     return C * D10^2
 end
 
-@inline (s::HazenPermeability)(args)                = s(; args...)
+@inline (s::HazenPermeability)(args) = s(; args...)
 @inline compute_permeability(s::HazenPermeability, args) = s(args)
 
 
@@ -161,11 +161,11 @@ rheology = SetMaterialParams(;
                       )
 ```
 """
-@with_kw_noshow struct PowerLawPermeability{_T,U1,U2,U3, U4} <: AbstractPermeability{_T}
-    c::GeoUnit{_T,U1}  = 1.0 * NoUnits  # Power-law constant
-    k0::GeoUnit{_T,U2} = 1e-12 * m^2    # reference permeability
-    ϕ::GeoUnit{_T,U3}  = 1e-2 * NoUnits # reference porosity
-    n::GeoUnit{_T,U4}  = 3 * NoUnits    # exponent
+@with_kw_noshow struct PowerLawPermeability{_T, U1, U2, U3, U4} <: AbstractPermeability{_T}
+    c::GeoUnit{_T, U1} = 1.0 * NoUnits  # Power-law constant
+    k0::GeoUnit{_T, U2} = 1.0e-12 * m^2    # reference permeability
+    ϕ::GeoUnit{_T, U3} = 1.0e-2 * NoUnits # reference porosity
+    n::GeoUnit{_T, U4} = 3 * NoUnits    # exponent
 end
 PowerLawPermeability(args...) = PowerLawPermeability(convert.(GeoUnit, args)...)
 isdimensional(s::PowerLawPermeability) = isdimensional(s.k0)
@@ -174,17 +174,17 @@ function param_info(s::PowerLawPermeability)
     return MaterialParamsInfo(; Equation = L"k = c \cdot k_0 \cdot \phi^n")
 end
 
-function (s::PowerLawPermeability{_T})(; ϕ=1e-2, kwargs...) where {_T}
+function (s::PowerLawPermeability{_T})(; ϕ = 1.0e-2, kwargs...) where {_T}
     if ϕ isa Quantity
         @unpack_units c, k0, n = s
     else
         @unpack_val   c, k0, n = s
     end
 
-    return c * k0 * fastpow(ϕ,n)
+    return c * k0 * fastpow(ϕ, n)
 end
 
-@inline (s::PowerLawPermeability)(args)                = s(; args...)
+@inline (s::PowerLawPermeability)(args) = s(; args...)
 @inline compute_permeability(s::PowerLawPermeability, args) = s(args)
 
 function show(io::IO, g::PowerLawPermeability)
@@ -216,10 +216,10 @@ rheology = SetMaterialParams(;
                       )
 ```
 """
-@with_kw_noshow struct CarmanKozenyPermeability{_T,U1,U2,U3} <: AbstractPermeability{_T}
-    c::GeoUnit{_T,U1} = 1.0 * m^2       # Carman-Kozeny constant
-    ϕ0::GeoUnit{_T,U2} = 0.01 * NoUnits # reference porosity
-    n::GeoUnit{_T,U3}  = 3 * NoUnits    # exponent
+@with_kw_noshow struct CarmanKozenyPermeability{_T, U1, U2, U3} <: AbstractPermeability{_T}
+    c::GeoUnit{_T, U1} = 1.0 * m^2       # Carman-Kozeny constant
+    ϕ0::GeoUnit{_T, U2} = 0.01 * NoUnits # reference porosity
+    n::GeoUnit{_T, U3} = 3 * NoUnits    # exponent
 end
 CarmanKozenyPermeability(args...) = CarmanKozenyPermeability(convert.(GeoUnit, args)...)
 # isdimensional(s::CarmanKozenyPermeability) = isdimensional(s.c)
@@ -228,7 +228,7 @@ function param_info(s::CarmanKozenyPermeability)
     return MaterialParamsInfo(; Equation = L"k = c \left(\frac{\phi}{\phi_0}\right)^n")
 end
 
-function (s::CarmanKozenyPermeability{_T})(; ϕ=1e-2, kwargs...) where {_T}
+function (s::CarmanKozenyPermeability{_T})(; ϕ = 1.0e-2, kwargs...) where {_T}
     if ϕ isa Quantity
         @unpack_units c, ϕ0, n = s
     else
@@ -263,9 +263,9 @@ end
 In-place computation of permeability `k` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 """
-@inline compute_permeability!(args::Vararg{Any, N})      where N = compute_param!(compute_permeability, args...)
-@inline compute_permeability(args::Vararg{Any, N})       where N = compute_param(compute_permeability, args...)
-@inline compute_permeability_ratio(args::Vararg{Any, N}) where N = compute_param_times_frac(compute_permeability, args...)
+@inline compute_permeability!(args::Vararg{Any, N}) where {N} = compute_param!(compute_permeability, args...)
+@inline compute_permeability(args::Vararg{Any, N}) where {N} = compute_param(compute_permeability, args...)
+@inline compute_permeability_ratio(args::Vararg{Any, N}) where {N} = compute_param_times_frac(compute_permeability, args...)
 
 # extractor methods
 for type in (ConstantPermeability, HazenPermeability, PowerLawPermeability, CarmanKozenyPermeability)
