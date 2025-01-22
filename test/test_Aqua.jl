@@ -1,5 +1,9 @@
 using Aqua, Test, GeoParams
 
+# Aqua.test_unbound_args(GeoParams)
+# Aqua.test_ambiguities(GeoParams)
+# Aqua.test_piracies(GeoParams)
+
 @testset "Project extras" begin
     @test Aqua.test_project_extras(GeoParams).value
 end
