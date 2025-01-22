@@ -3,7 +3,7 @@ using ..Units
 using Parameters, Unitful
 using StaticArrays
 
-# Computational routines needed for computations with the MaterialParams structure 
+# Computational routines needed for computations with the MaterialParams structure
 
 # with tuple & vector - apply for all phases in MatParam
 # function compute_param!(
@@ -12,7 +12,7 @@ using StaticArrays
 #     return rho .= map(x -> fn(x, P, T), MatParam)
 # end
 
-# each individual calculation 
+# each individual calculation
 # function compute_param(
 #     fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, args
 # ) where {F,N}
@@ -24,46 +24,46 @@ using StaticArrays
 
 # performs computation given a single Phase
 @generated function compute_param(
-    fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Int64, args::Vararg{Any,NA}
-) where {F,N,NA}
-    quote
+        fn::F, MatParam::NTuple{N, AbstractMaterialParamsStruct}, Phase::Int64, args::Vararg{Any, NA}
+    ) where {F, N, NA}
+    return quote
         Base.@_inline_meta
         Base.Cartesian.@nexprs $N i ->
-            @inbounds (MatParam[i].Phase == Phase) && return fn(MatParam[i], args...)
+        @inbounds (MatParam[i].Phase == Phase) && return fn(MatParam[i], args...)
         return 0.0
     end
 end
 
 @generated function compute_param(
-    fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, phase_ratios::Union{SVector{N,T}, NTuple{N,T}}, args::Vararg{Any,NA}
-) where {F,N,T,NA}
-    quote
+        fn::F, MatParam::NTuple{N, AbstractMaterialParamsStruct}, phase_ratios::Union{SVector{N, T}, NTuple{N, T}}, args::Vararg{Any, NA}
+    ) where {F, N, T, NA}
+    return quote
         Base.@_inline_meta
         x = zero($T)
         Base.Cartesian.@nexprs $N i ->
-            @inbounds  x+= fn(MatParam[i], args...) * phase_ratios[i]
+        @inbounds  x += fn(MatParam[i], args...) * phase_ratios[i]
         return x
     end
 end
 
 @inline function compute_param(
-    fn::F, MatParam::AbstractVector{AbstractMaterialParamsStruct}, Phase::Union{SArray, Int64}, args::Vararg{Any,NA}
-) where {F,NA}
+        fn::F, MatParam::AbstractVector{AbstractMaterialParamsStruct}, Phase::Union{SArray, Int64}, args::Vararg{Any, NA}
+    ) where {F, NA}
     return compute_param(fn, Tuple(MatParam), Phase, args...)
 end
 
-@inline function compute_param(fn::F, MatParam::AbstractMaterialParam, args::Vararg{Any,NA}) where {F,NA}
+@inline function compute_param(fn::F, MatParam::AbstractMaterialParam, args::Vararg{Any, NA}) where {F, NA}
     return fn(MatParam, args...)
 end
 
-@inline function compute_param(fn::F, MatParam::AbstractMaterialParamsStruct, args::Vararg{Any,NA}) where {F,NA}
+@inline function compute_param(fn::F, MatParam::AbstractMaterialParamsStruct, args::Vararg{Any, NA}) where {F, NA}
     return fn(MatParam, args...)
 end
 
 @inline function compute_param!(
-    fn::F, rho::AbstractArray, MatParam::AbstractMaterialParam, args
-) where {F}
-    @inbounds for I in eachindex(rho)
+        fn::F, rho::AbstractArray, MatParam::AbstractMaterialParam, args
+    ) where {F}
+    return @inbounds for I in eachindex(rho)
         k = keys(args)
         v = getindex.(values(args), I)      # works for scalars & arrays thanks to overload (above)
         argsi = (; zip(k, v)...)
@@ -72,13 +72,13 @@ end
 end
 
 @inline function compute_param!(
-    fn::F,
-    rho::AbstractArray{T, ndim},
-    MatParam::NTuple{N,AbstractMaterialParamsStruct},
-    Phases::AbstractArray{Int64,ndim},
-    args,
-) where {F, T, ndim, N}
-    @inbounds for I in eachindex(Phases)
+        fn::F,
+        rho::AbstractArray{T, ndim},
+        MatParam::NTuple{N, AbstractMaterialParamsStruct},
+        Phases::AbstractArray{Int64, ndim},
+        args,
+    ) where {F, T, ndim, N}
+    return @inbounds for I in eachindex(Phases)
         k = keys(args)
         v = getindex.(values(args), I)      # works for scalars & arrays thanks to overload (above)
         argsi = (; zip(k, v)...)
@@ -87,29 +87,29 @@ end
 end
 
 function compute_param!(
-    fn::F,
-    rho::AbstractArray{T, ndim},
-    MatParam::Vector{AbstractMaterialParamsStruct},
-    Phases::AbstractArray{Int64,ndim},
-    args,
-) where {F, T, ndim}
+        fn::F,
+        rho::AbstractArray{T, ndim},
+        MatParam::Vector{AbstractMaterialParamsStruct},
+        Phases::AbstractArray{Int64, ndim},
+        args,
+    ) where {F, T, ndim}
     return compute_param!(fn, rho, Tuple(MatParam), Phases, args)
 end
 
 #Phase PhaseRatios
 
 function compute_param!(
-    fn::F,
-    rho::AbstractArray{_T,N},
-    MatParam::NTuple{K,AbstractMaterialParamsStruct},
-    PhaseRatio::AbstractArray{_T,M},
-    args,
-) where {F,_T,N,M,K}
+        fn::F,
+        rho::AbstractArray{_T, N},
+        MatParam::NTuple{K, AbstractMaterialParamsStruct},
+        PhaseRatio::AbstractArray{_T, M},
+        args,
+    ) where {F, _T, N, M, K}
     if M != (N + 1)
         error("The PhaseRatios array should have one dimension more than the other arrays")
     end
     #I1 = last(rho)
-    @inbounds for I in CartesianIndices(rho)
+    return @inbounds for I in CartesianIndices(rho)
         k = keys(args)
         v = getindex.(values(args), Tuple(I)...)   # works for scalars & arrays thanks to overload (above)
         argsi = (; zip(k, v)...)
@@ -125,10 +125,10 @@ end
 
 #Multiplies parameter with the fraction of a phase
 @generated function compute_param_times_frac(
-    fn::F, PhaseRatios::Union{NTuple{N,T}, SVector{N,T}}, MatParam::NTuple{N,AbstractMaterialParamsStruct}, argsi
-) where {F,N,T}
+        fn::F, PhaseRatios::Union{NTuple{N, T}, SVector{N, T}}, MatParam::NTuple{N, AbstractMaterialParamsStruct}, argsi
+    ) where {F, N, T}
     # # Unrolled dot product
-    quote
+    return quote
         val = zero($T)
         Base.Cartesian.@nexprs $N i -> val += @inbounds PhaseRatios[i] * fn(MatParam[i], argsi)
         return val

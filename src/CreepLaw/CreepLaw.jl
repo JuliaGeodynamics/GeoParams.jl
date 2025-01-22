@@ -1,7 +1,7 @@
 # This implements viscous creep laws and routines to compute with them
 #
-# Note that various simple creep laws are defined in this file; 
-# more complex ones (such as DislocationCreep) are in separate files 
+# Note that various simple creep laws are defined in this file;
+# more complex ones (such as DislocationCreep) are in separate files
 # in the same directory
 #
 # In case you want to add new creep laws, have a look at how the ones
@@ -17,7 +17,7 @@ abstract type AbstractCreepLaw{T} <: AbstractConstitutiveLaw{T} end
 
 export isvolumetric,
     LinearViscous, PowerlawViscous, CorrectionFactor, AbstractCreepLaw, ArrheniusType
-    
+
 isvolumetric(a::AbstractCreepLaw) = false
 
 # This computes correction factors to go from experimental data to tensor format
@@ -36,7 +36,7 @@ function CorrectionFactor(a::AbstractCreepLaw{_T}) where {_T}
     elseif apparatus == Invariant
         FT = FE = 1.0
         return FT, FE
-    
+
     else
         throw(ArgumentError("Unknown apparatus"))
 
@@ -93,14 +93,14 @@ or
 
 where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\\dot{\\varepsilon}_0``[1/s], and ``n`` the power law exponent []. 
 """
-@with_kw_noshow struct LinearViscous{T,U} <: AbstractCreepLaw{T}
-    η::GeoUnit{T,U} = 1e20Pa * s                # viscosity
+@with_kw_noshow struct LinearViscous{T, U} <: AbstractCreepLaw{T}
+    η::GeoUnit{T, U} = 1.0e20Pa * s                # viscosity
     η_val::T = 1.0
 end
 LinearViscous(args...) = LinearViscous(convert(GeoUnit, args[1]), args[2])
 
 function param_info(a::LinearViscous) # info about the struct
-    return MaterialParamsInfo(; Equation=L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}")
+    return MaterialParamsInfo(; Equation = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}")
 end
 
 # Calculation routines for linear viscous rheologies
@@ -115,8 +115,8 @@ end
     compute_εII!(EpsII::AbstractArray{_T,N}, s::LinearViscous, TauII::AbstractArray{_T,N})
 """
 function compute_εII!(
-    EpsII::AbstractArray{_T,N}, a::LinearViscous, TauII::AbstractArray{_T,N}; kwargs...
-) where {N,_T}
+        EpsII::AbstractArray{_T, N}, a::LinearViscous, TauII::AbstractArray{_T, N}; kwargs...
+    ) where {N, _T}
     if TauII[1] isa Quantity
         @unpack_units η = a
     else
@@ -148,8 +148,8 @@ function compute_τII(a::LinearViscous, EpsII; kwargs...)
 end
 
 function compute_τII!(
-    TauII::AbstractArray{_T,N}, a::LinearViscous, EpsII::AbstractArray{_T,N}; kwargs...
-) where {N,_T}
+        TauII::AbstractArray{_T, N}, a::LinearViscous, EpsII::AbstractArray{_T, N}; kwargs...
+    ) where {N, _T}
     if EpsII[1] isa Quantity
         @unpack_units η = a
     else
@@ -169,7 +169,7 @@ function dτII_dεII(a::LinearViscous, EpsII; kwargs...)
     return 2 * η
 end
 
-# Print info 
+# Print info
 function show(io::IO, g::LinearViscous)
     return print(io, "Linear viscosity: η=$(g.η.val)")
 end
@@ -193,11 +193,11 @@ or
 
 where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\\dot{\\varepsilon}_0``[1/s], and ``n`` the power law exponent []. 
 """
-@with_kw_noshow struct ArrheniusType{_T,U1,U2,U3} <: AbstractCreepLaw{_T}
-    η0::GeoUnit{_T,U1} = 1.0NoUnits      # Pre-exponential factor
-    E_η::GeoUnit{_T,U2} = 23.03NoUnits    # Activation energy (non-dimensional)
-    T_O::GeoUnit{_T,U3} = 1.0NoUnits      # Offset temperature 
-    T_η::GeoUnit{_T,U3} = 1.0NoUnits      # Reference temperature at which viscosity is unity
+@with_kw_noshow struct ArrheniusType{_T, U1, U2, U3} <: AbstractCreepLaw{_T}
+    η0::GeoUnit{_T, U1} = 1.0NoUnits      # Pre-exponential factor
+    E_η::GeoUnit{_T, U2} = 23.03NoUnits    # Activation energy (non-dimensional)
+    T_O::GeoUnit{_T, U3} = 1.0NoUnits      # Offset temperature
+    T_η::GeoUnit{_T, U3} = 1.0NoUnits      # Reference temperature at which viscosity is unity
 end
 #ArrheniusType(args...) = ArrheniusType(args[1], args[2], args[3], args[4])
 
@@ -212,12 +212,12 @@ end
 
 function param_info(a::ArrheniusType) # info about the struct
     return MaterialParamsInfo(;
-        Equation=L"\tau_{ij} = 2 \eta_0 exp( E_η/(T + T_O) + E_η/(T_η + T_O))  \dot{\varepsilon}_{ij}",
+        Equation = L"\tau_{ij} = 2 \eta_0 exp( E_η/(T + T_O) + E_η/(T_η + T_O))  \dot{\varepsilon}_{ij}",
     )
 end
 
 # Calculation routines for linear viscous rheologies
-function compute_εII(a::ArrheniusType, TauII; T=one(precision(a)), kwargs...)
+function compute_εII(a::ArrheniusType, TauII; T = one(precision(a)), kwargs...)
     @unpack_val η0, E_η, T_O, T_η = a
     η = η0 * exp(E_η / (T + T_O) - E_η / (T_η + T_O))
     return (TauII / η) * 0.5
@@ -228,20 +228,20 @@ end
     compute_εII!(EpsII::AbstractArray{_T,N}, s::ArrheniusType, TauII::AbstractArray{_T,N})
 """
 function compute_εII!(
-    EpsII::AbstractArray{_T,N},
-    a::ArrheniusType,
-    TauII::AbstractArray{_T,N};
-    T=ones(size(TauII))::AbstractArray{_T,N},
-    kwargs...,
-) where {N,_T}
+        EpsII::AbstractArray{_T, N},
+        a::ArrheniusType,
+        TauII::AbstractArray{_T, N};
+        T = ones(size(TauII))::AbstractArray{_T, N},
+        kwargs...,
+    ) where {N, _T}
     @inbounds for i in eachindex(EpsII)
-        EpsII[i] = compute_εII(a, TauII[i]; T=T[i])
+        EpsII[i] = compute_εII(a, TauII[i]; T = T[i])
     end
 
     return nothing
 end
 
-function dεII_dτII(a::ArrheniusType, TauII; T=one(precision(a)), kwargs...)
+function dεII_dτII(a::ArrheniusType, TauII; T = one(precision(a)), kwargs...)
     @unpack_val η0, E_η, T_O, T_η = a
     η = η0 * exp(E_η / (T + T_O) - E_η / (T_η + T_O))
     return 0.5 * inv(η)
@@ -252,7 +252,7 @@ end
 
 Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor 
 """
-function compute_τII(a::ArrheniusType, EpsII; T=one(precision(a)), kwargs...)
+function compute_τII(a::ArrheniusType, EpsII; T = one(precision(a)), kwargs...)
     @unpack_val η0, E_η, T_O, T_η = a
 
     η = η0 * exp(E_η / (T + T_O) - E_η / (T_η + T_O))
@@ -261,27 +261,27 @@ function compute_τII(a::ArrheniusType, EpsII; T=one(precision(a)), kwargs...)
 end
 
 function compute_τII!(
-    TauII::AbstractArray{_T,N},
-    a::ArrheniusType,
-    EpsII::AbstractArray{_T,N};
-    T=ones(size(EpsII))::AbstractArray{_T,N},
-    kwargs...,
-) where {N,_T}
+        TauII::AbstractArray{_T, N},
+        a::ArrheniusType,
+        EpsII::AbstractArray{_T, N};
+        T = ones(size(EpsII))::AbstractArray{_T, N},
+        kwargs...,
+    ) where {N, _T}
     @inbounds for i in eachindex(EpsII)
-        TauII[i] = compute_τII(a, EpsII[i]; T=T[i])
+        TauII[i] = compute_τII(a, EpsII[i]; T = T[i])
     end
 
     return nothing
 end
 
-function dτII_dεII(a::ArrheniusType, EpsII; T=one(precision(a)), kwargs...)
+function dτII_dεII(a::ArrheniusType, EpsII; T = one(precision(a)), kwargs...)
     @unpack_val η0, E_η, T_O, T_η = a
     η = η0 * exp(E_η / (T + T_O) - E_η / (T_η + T_O))
 
     return 2 * η
 end
 
-# Print info 
+# Print info
 function show(io::IO, g::ArrheniusType)
     return print(
         io,
@@ -300,14 +300,14 @@ Defines a power law viscous creeplaw as:
 ```
 where ``\\eta`` is the effective viscosity [Pa*s].
 """
-@with_kw_noshow struct PowerlawViscous{T,U1,U2,U3} <: AbstractCreepLaw{T}
-    η0::GeoUnit{T,U1} = 1e18Pa * s       # reference viscosity 
-    n::GeoUnit{T,U2} = 2.0 * NoUnits     # powerlaw exponent
-    ε0::GeoUnit{T,U3} = 1e-15/s          # reference strainrate
+@with_kw_noshow struct PowerlawViscous{T, U1, U2, U3} <: AbstractCreepLaw{T}
+    η0::GeoUnit{T, U1} = 1.0e18Pa * s       # reference viscosity
+    n::GeoUnit{T, U2} = 2.0 * NoUnits     # powerlaw exponent
+    ε0::GeoUnit{T, U3} = 1.0e-15 / s          # reference strainrate
 end
 PowerlawViscous(a...) = PowerlawViscous(convert.(GeoUnit, a)...)
 
-# Print info 
+# Print info
 function show(io::IO, g::PowerlawViscous)
     return print(io, "Powerlaw viscosity: η0=$(g.η0.val), n=$(g.n.val), ε0=$(g.ε0.val) ")
 end
@@ -316,15 +316,15 @@ end
 function compute_εII(a::PowerlawViscous, TauII; kwargs...)
     @unpack_val η0, n, ε0 = a
 
-    @pow EpsII = (TauII / η0)^(1/n) * ε0
-    
+    @pow EpsII = (TauII / η0)^(1 / n) * ε0
+
     return EpsII
 end
 
 function dεII_dτII(a::PowerlawViscous, TauII; kwargs...)
     @unpack_val η0, n, ε0 = a
 
-    return @pow (TauII^((1 - n) / n)) / (n*(η0^(1 / n)))
+    return @pow (TauII^((1 - n) / n)) / (n * (η0^(1 / n)))
 end
 
 """
@@ -335,7 +335,7 @@ Returns second invariant of the stress tensor given a 2nd invariant of strain ra
 function compute_τII(a::PowerlawViscous, EpsII; kwargs...)
     @unpack_val η0, n, ε0 = a
 
-    τII  = @pow ε0 * η0 * (EpsII / ε0)^n
+    τII = @pow ε0 * η0 * (EpsII / ε0)^n
 
     return τII
 end

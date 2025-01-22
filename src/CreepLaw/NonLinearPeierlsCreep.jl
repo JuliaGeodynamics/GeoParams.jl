@@ -34,30 +34,30 @@ julia> x2 = NonLinearPeierlsCreep(n=1)
 NonLinearPeierlsCreep: n=1, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, Apparatus=AxialCompression
 ```
 """
-struct NonLinearPeierlsCreep{T,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
+struct NonLinearPeierlsCreep{T, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
     Name::Ptr{UInt8}
-    n::GeoUnit{T,U1} # power-law exponent
-    q::GeoUnit{T,U1} # stress relation exponent
-    o::GeoUnit{T,U1} # ... (normally called p but used as 'o' since p already exists)
-    TauP::GeoUnit{T,U2} # Peierls stress
-    A::GeoUnit{T,U3} # material specific rheological parameter
-    E::GeoUnit{T,U4} # activation energy
-    R::GeoUnit{T,U5} # universal gas constant
+    n::GeoUnit{T, U1} # power-law exponent
+    q::GeoUnit{T, U1} # stress relation exponent
+    o::GeoUnit{T, U1} # ... (normally called p but used as 'o' since p already exists)
+    TauP::GeoUnit{T, U2} # Peierls stress
+    A::GeoUnit{T, U3} # material specific rheological parameter
+    E::GeoUnit{T, U4} # activation energy
+    R::GeoUnit{T, U5} # universal gas constant
     Apparatus::Int8 # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
     FT::T # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
     FE::T # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
 
     function NonLinearPeierlsCreep(;
-        Name="",
-        n=2NoUnits,
-        q=1.0NoUnits,
-        o=0.5NoUnits,
-        TauP=8.5e9Pa,
-        A=0.57Pa^(-2) * s^(-1),
-        E=476e3J / mol,
-        R=8.3145J / mol / K,
-        Apparatus=AxialCompression,
-    )
+            Name = "",
+            n = 2NoUnits,
+            q = 1.0NoUnits,
+            o = 0.5NoUnits,
+            TauP = 8.5e9Pa,
+            A = 0.57Pa^(-2) * s^(-1),
+            E = 476.0e3J / mol,
+            R = 8.3145J / mol / K,
+            Apparatus = AxialCompression,
+        )
         # Corrections from lab experiments
         FT, FE = CorrectionFactor(Apparatus)
         # Convert to GeoUnits
@@ -75,16 +75,16 @@ struct NonLinearPeierlsCreep{T,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U3 = typeof(AU).types[2]
         U4 = typeof(EU).types[2]
         U5 = typeof(RU).types[2]
-        name = pointer(ptr2string(Name))    
+        name = pointer(ptr2string(Name))
         # Create struct
-        return new{T,U1,U2,U3,U4,U5}(
+        return new{T, U1, U2, U3, U4, U5}(
             name, nU, qU, oU, TauPU, AU, EU, RU, Int8(Apparatus), FT, FE
         )
     end
 
     function NonLinearPeierlsCreep(Name, n, q, o, TauP, A, E, R, Apparatus, FT, FE)
         return NonLinearPeierlsCreep(;
-            Name=Name, n=n, q=q, o=o, TauP=TauP, A=A, E=E, R=R, Apparatus=Apparatus
+            Name = Name, n = n, q = q, o = o, TauP = TauP, A = A, E = E, R = R, Apparatus = Apparatus
         )
     end
 end
@@ -99,7 +99,7 @@ function remove_tensor_correction(s::NonLinearPeierlsCreep)
     name = ptr2string(s.Name)
 
     return NonLinearPeierlsCreep(;
-        Name=name, n=s.n, q=s.q, o=s.o, TauP=s.TauP, A=s.A, E=s.E, Apparatus=Invariant
+        Name = name, n = s.n, q = s.q, o = s.o, TauP = s.TauP, A = s.A, E = s.E, Apparatus = Invariant
     )
 end
 
@@ -107,19 +107,19 @@ function param_info(s::NonLinearPeierlsCreep)
     name = ptr2string(s.Name)
     eq = ""
     if name == ""
-        return MaterialParamsInfo(; Equation=eq)
+        return MaterialParamsInfo(; Equation = eq)
     end
     inf = NonLinearPeierlsCreep_info[name][2]
     return MaterialParamsInfo(;
-        Equation=eq, Comment=inf.Comment, BibTex_Reference=inf.BibTex_Reference
+        Equation = eq, Comment = inf.Comment, BibTex_Reference = inf.BibTex_Reference
     )
 end
 
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
 @inline function compute_εII(
-    a::NonLinearPeierlsCreep, TauII::_T; T=one(precision(a)), args...
-) where {_T}
+        a::NonLinearPeierlsCreep, TauII::_T; T = one(precision(a)), args...
+    ) where {_T}
     @unpack_val n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
@@ -129,7 +129,7 @@ end
     return ε
 end
 
-@inline function compute_εII(a::NonLinearPeierlsCreep, TauII::Quantity; T=1K, args...)
+@inline function compute_εII(a::NonLinearPeierlsCreep, TauII::Quantity; T = 1K, args...)
     @unpack_units n, q, o, TauP, A, E, R = a
     FT, FE = a.FT, a.FE
 
@@ -140,14 +140,14 @@ end
 end
 
 function compute_εII!(
-    EpsII::AbstractArray{_T,N},
-    a::NonLinearPeierlsCreep,
-    TauII::AbstractArray{_T,N};
-    T=ones(size(TauII))::AbstractArray{_T,N},
-    args...,
-) where {N,_T}
+        EpsII::AbstractArray{_T, N},
+        a::NonLinearPeierlsCreep,
+        TauII::AbstractArray{_T, N};
+        T = ones(size(TauII))::AbstractArray{_T, N},
+        args...,
+    ) where {N, _T}
     @inbounds for i in eachindex(EpsII)
-        EpsII[i] = compute_εII(a, TauII[i]; T=T[i])
+        EpsII[i] = compute_εII(a, TauII[i]; T = T[i])
     end
 
     return nothing
@@ -171,8 +171,8 @@ end
 
 # implement nonlinear iterations function to iterate until stable stress value
 function Peierls_stress_iterations(
-    rheo::NonLinearPeierlsCreep, Tau, EpsII, args; max_iter=500
-)
+        rheo::NonLinearPeierlsCreep, Tau, EpsII, args; max_iter = 500
+    )
     err = 1.0
     dfdtau = 0.0
     i = 0
@@ -188,14 +188,14 @@ function Peierls_stress_iterations(
         Tau = Tau - (fTau_n / dfdtau)
         err = abs(Tau_old - Tau)
 
-        if err < 1e-6
+        if err < 1.0e-6
             println("Converged in $i iterations with err = $err.")
         end
     end
     return Tau
 end
 
-# Print info 
+# Print info
 function show(io::IO, g::NonLinearPeierlsCreep)
     return print(
         io,
@@ -216,44 +216,44 @@ export SetNonLinearPeierlsCreep
 This is a dictionary with pre-defined creep laws    
 """
 function SetNonLinearPeierlsCreep(
-    name::F;
-    n    = nothing,
-    q    = nothing,
-    o    = nothing,
-    A    = nothing,
-    E    = nothing,
-    TauP = nothing,
-) where F 
+        name::F;
+        n = nothing,
+        q = nothing,
+        o = nothing,
+        A = nothing,
+        E = nothing,
+        TauP = nothing,
+    ) where {F}
     kwargs = (; n, q, o, A, E, TauP)
-    Transform_NonLinearPeierlsCreep(name, kwargs)
+    return Transform_NonLinearPeierlsCreep(name, kwargs)
 end
 
 function SetNonLinearPeierlsCreep(
-    name::F,
-    CharDim::GeoUnits{T};
-    n    = nothing,
-    q    = nothing,
-    o    = nothing,
-    A    = nothing,
-    E    = nothing,
-    TauP = nothing,
-) where {F, T<:Union{GEO, SI}}
+        name::F,
+        CharDim::GeoUnits{T};
+        n = nothing,
+        q = nothing,
+        o = nothing,
+        A = nothing,
+        E = nothing,
+        TauP = nothing,
+    ) where {F, T <: Union{GEO, SI}}
     kwargs = (; n, q, o, A, E, TauP)
-    nondimensionalize(Transform_NonLinearPeierlsCreep(name, kwargs), CharDim)
+    return nondimensionalize(Transform_NonLinearPeierlsCreep(name, kwargs), CharDim)
 end
 
 """
     Transforms units from GPa, MPa, kJ etc. to basic units such as Pa, J etc.
 """
-Transform_NonLinearPeierlsCreep(name::F) where F = Transform_NonLinearPeierlsCreep(nonlinear_peierls_database(name))
-Transform_NonLinearPeierlsCreep(name::F, kwargs::NamedTuple) where F = Transform_NonLinearPeierlsCreep(nonlinear_peierls_database(name), kwargs)
+Transform_NonLinearPeierlsCreep(name::F) where {F} = Transform_NonLinearPeierlsCreep(nonlinear_peierls_database(name))
+Transform_NonLinearPeierlsCreep(name::F, kwargs::NamedTuple) where {F} = Transform_NonLinearPeierlsCreep(nonlinear_peierls_database(name), kwargs)
 
-function Transform_NonLinearPeierlsCreep(name::F, CharDim::GeoUnits{U}) where {F, U<:Union{GEO,SI}}
-    Transform_NonLinearPeierlsCreep(nonlinear_peierls_database(name), CharDim)
+function Transform_NonLinearPeierlsCreep(name::F, CharDim::GeoUnits{U}) where {F, U <: Union{GEO, SI}}
+    return Transform_NonLinearPeierlsCreep(nonlinear_peierls_database(name), CharDim)
 end
 
-function Transform_NonLinearPeierlsCreep(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) where {T,U<:Union{GEO,SI}}
-    nondimensionalize(Transform_NonLinearPeierlsCreep(p), CharDim)
+function Transform_NonLinearPeierlsCreep(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) where {T, U <: Union{GEO, SI}}
+    return nondimensionalize(Transform_NonLinearPeierlsCreep(p), CharDim)
 end
 
 function Transform_NonLinearPeierlsCreep(p::AbstractCreepLaw)
@@ -266,7 +266,7 @@ function Transform_NonLinearPeierlsCreep(p::AbstractCreepLaw)
     Apparatus = p.Apparatus
 
     # args from database
-    args = (Name=p.Name, n=n, q=q, o=o, TauP=TauP, A=A_Pa, E=E_J, Apparatus=Apparatus)
+    args = (Name = p.Name, n = n, q = q, o = o, TauP = TauP, A = A_Pa, E = E_J, Apparatus = Apparatus)
 
     return NonLinearPeierlsCreep(; args...)
 end
@@ -274,20 +274,20 @@ end
 function Transform_NonLinearPeierlsCreep(p::AbstractCreepLaw, kwargs::NamedTuple)
     (; n, q, o, A, E, TauP) = kwargs
 
-    n_new    = isnothing(n) ? Value(p.n)    : Value(GeoUnit(n))
-    q_new    = isnothing(q) ? Value(p.q)    : Value(GeoUnit(q))
-    o_new    = isnothing(o) ? Value(p.o)    : Value(GeoUnit(o))
-    A_new    = isnothing(A) ?        p.A    : GeoUnit(A)
-    E_new    = isnothing(E) ? Value(p.E)    : Value(GeoUnit(E))
+    n_new = isnothing(n) ? Value(p.n) : Value(GeoUnit(n))
+    q_new = isnothing(q) ? Value(p.q) : Value(GeoUnit(q))
+    o_new = isnothing(o) ? Value(p.o) : Value(GeoUnit(o))
+    A_new = isnothing(A) ? p.A : GeoUnit(A)
+    E_new = isnothing(E) ? Value(p.E) : Value(GeoUnit(E))
     TauP_new = isnothing(E) ? Value(p.TauP) : Value(GeoUnit(TauP))
 
-    TauP      = uconvert(Pa, TauP_new)
-    A_Pa      = uconvert(Pa^(unit_power(A_new)) / s, Value(A_new))
-    E_J       = uconvert(J / mol, E_new)
+    TauP = uconvert(Pa, TauP_new)
+    A_Pa = uconvert(Pa^(unit_power(A_new)) / s, Value(A_new))
+    E_J = uconvert(J / mol, E_new)
     Apparatus = p.Apparatus
 
     # args from database
-    args      = (Name=p.Name, n=n_new, q=q_new, o=o_new, TauP=TauP_new, A=A_Pa, E=E_J, Apparatus=Apparatus)
+    args = (Name = p.Name, n = n_new, q = q_new, o = o_new, TauP = TauP_new, A = A_Pa, E = E_J, Apparatus = Apparatus)
 
     return NonLinearPeierlsCreep(; args...)
 end

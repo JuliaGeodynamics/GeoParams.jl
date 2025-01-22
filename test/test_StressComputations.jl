@@ -6,10 +6,10 @@ using GeoParams
     # use a (linear) viscoelastic setup
     η, G = 10.0, 1.0
     t_M = η / G
-    εxx, εyy, εxy = 1.0, -1.1, 2.3 # predefined strainrates 
+    εxx, εyy, εxy = 1.0, -1.1, 2.3 # predefined strainrates
     ε = (εxx, εyy, εxy)
     args = (;)
-    c_lin = CompositeRheology(LinearViscous(; η=η), ConstantElasticity(; G=G)) # linear VE
+    c_lin = CompositeRheology(LinearViscous(; η = η), ConstantElasticity(; G = G)) # linear VE
 
     t = LinRange(0, 4 * t_M, 100)
     dt = t[2] - t[1]
@@ -36,11 +36,11 @@ using GeoParams
     end
 
     # 0D solution assuming this to be a scalar (wrong!)
-    t_vec, τ0D_vec = time_τII_0D(c_lin, εII, args; t=(0.0, t_M * 4), nt=100, verbose=false)
+    t_vec, τ0D_vec = time_τII_0D(c_lin, εII, args; t = (0.0, t_M * 4), nt = 100, verbose = false)
 
     # 0D solution with tensor input:
     t_vec, τij_vec, τII_vec = time_τII_0D(
-        c_lin, ε, args; t=(0.0, t_M * 4), nt=100, verbose=false
+        c_lin, ε, args; t = (0.0, t_M * 4), nt = 100, verbose = false
     )
 
     # Time-dependent (correct) solution
@@ -50,7 +50,7 @@ using GeoParams
     τ_vec = zeros(size(τxx))
     for i in 2:length(τxx_vec)
         τ_o = (τxx_vec[i - 1], τyy_vec[i - 1], τxy_vec[i - 1])
-        args = (dt=dt, τII_old=0.0)
+        args = (dt = dt, τII_old = 0.0)
         τij, τII = compute_τij(c_lin, ε, args, τ_o)
         τxx_vec[i] = τij[1]
         τyy_vec[i] = τij[2]
@@ -59,21 +59,21 @@ using GeoParams
     end
 
     # check
-    @test abs(sum(τxx_n .- τxx_vec)) < 1e-10
-    @test abs(sum(τyy_n .- τyy_vec)) < 1e-10
-    @test abs(sum(τxy_n .- τxy_vec)) < 1e-10
-    @test abs(sum(τII_n .- τ_vec)) < 1e-10
-    @test abs(sum(τII_n .- τII_vec)) < 1e-10
+    @test abs(sum(τxx_n .- τxx_vec)) < 1.0e-10
+    @test abs(sum(τyy_n .- τyy_vec)) < 1.0e-10
+    @test abs(sum(τxy_n .- τxy_vec)) < 1.0e-10
+    @test abs(sum(τII_n .- τ_vec)) < 1.0e-10
+    @test abs(sum(τII_n .- τII_vec)) < 1.0e-10
 
     # Time-dependent (correct) solution for multiple material phases
     MatParam = (
-        SetMaterialParams(; Name="Matrix", Phase=1, CompositeRheology=c_lin),
-        SetMaterialParams(; Name="Inclusion", Phase=2, CompositeRheology=c_lin),
+        SetMaterialParams(; Name = "Matrix", Phase = 1, CompositeRheology = c_lin),
+        SetMaterialParams(; Name = "Inclusion", Phase = 2, CompositeRheology = c_lin),
     )
     for phase_i in 1:2
         for i in 2:length(τxx_vec)
             τ_o = (τxx_vec[i - 1], τyy_vec[i - 1], τxy_vec[i - 1])
-            args = (dt=dt, τII_old=0.0)
+            args = (dt = dt, τII_old = 0.0)
             τij, τII = compute_τij(MatParam, ε, args, τ_o, phase_i)
             τxx_vec[i] = τij[1]
             τyy_vec[i] = τij[2]
@@ -82,11 +82,11 @@ using GeoParams
         end
 
         # check
-        @test abs(sum(τxx_n .- τxx_vec)) < 1e-10
-        @test abs(sum(τyy_n .- τyy_vec)) < 1e-10
-        @test abs(sum(τxy_n .- τxy_vec)) < 1e-10
-        @test abs(sum(τII_n .- τ_vec)) < 1e-10
-        @test abs(sum(τII_n .- τII_vec)) < 1e-10
+        @test abs(sum(τxx_n .- τxx_vec)) < 1.0e-10
+        @test abs(sum(τyy_n .- τyy_vec)) < 1.0e-10
+        @test abs(sum(τxy_n .- τxy_vec)) < 1.0e-10
+        @test abs(sum(τII_n .- τ_vec)) < 1.0e-10
+        @test abs(sum(τII_n .- τII_vec)) < 1.0e-10
     end
 
     # Time-dependent (correct) solution for multiple material phases on a staggered grid
@@ -102,7 +102,7 @@ using GeoParams
                 τyy_vec[i - 1],
                 (τxy_vec[i - 1], τxy_vec[i - 1], τxy_vec[i - 1], τxy_vec[i - 1]),
             )
-            args = (dt=dt, τII_old=0.0)
+            args = (dt = dt, τII_old = 0.0)
             τij, τII = compute_τij(MatParam, ε_phase, args, τ_o, phase_i)
             τxx_vec[i] = τij[1]
             τyy_vec[i] = τij[2]
@@ -111,11 +111,11 @@ using GeoParams
         end
 
         # check
-        @test abs(sum(τxx_n .- τxx_vec)) < 1e-10
-        @test abs(sum(τyy_n .- τyy_vec)) < 1e-10
-        @test abs(sum(τxy_n .- τxy_vec)) < 1e-10
-        @test abs(sum(τII_n .- τ_vec)) < 1e-10
-        @test abs(sum(τII_n .- τII_vec)) < 1e-10
+        @test abs(sum(τxx_n .- τxx_vec)) < 1.0e-10
+        @test abs(sum(τyy_n .- τyy_vec)) < 1.0e-10
+        @test abs(sum(τxy_n .- τxy_vec)) < 1.0e-10
+        @test abs(sum(τII_n .- τ_vec)) < 1.0e-10
+        @test abs(sum(τII_n .- τII_vec)) < 1.0e-10
     end
 
     # Test individual stress computations
@@ -142,8 +142,8 @@ using GeoParams
     for case_i in (case_1, case_2, case_3, case_4, case_5, case_6)
         ε, τ_o, phase, P_o = case_i[1], case_i[2], case_i[3], case_i[4]
 
-        τij, τII = compute_τij(v, ε, args, τ_o)                                 # collocated, single phase 
-        τij_1, τII_1 = compute_τij(MatParam, ε, args, τ_o, phase)               # collocated, specify phases          
+        τij, τII = compute_τij(v, ε, args, τ_o)                                 # collocated, single phase
+        τij_1, τII_1 = compute_τij(MatParam, ε, args, τ_o, phase)               # collocated, specify phases
         P_2, τij_2, τII_2 = compute_p_τij(v, ε, P_o, args, τ_o)                 # collocated single phase + pressure
         P_3, τij_3, τII_3 = compute_p_τij(MatParam, ε, P_o, args, τ_o, phase)   # collocated specify phase + pressure
 
@@ -154,8 +154,8 @@ using GeoParams
     # Cases with arrays
     nx, ny = 31, 31
     Exx, Eyy, Exy, Txx, Tyy, Txy = ones(nx, ny),
-    ones(nx, ny), ones(nx, ny), zeros(nx, ny), zeros(nx, ny),
-    zeros(nx, ny)
+        ones(nx, ny), ones(nx, ny), zeros(nx, ny), zeros(nx, ny),
+        zeros(nx, ny)
     Tii, η_vep, P = zeros(nx, ny), zeros(nx, ny), zeros(nx, ny)
     Txx_o, Tyy_o, Txy_o, P_o = zeros(nx, ny), zeros(nx, ny), zeros(nx, ny), zeros(nx, ny)
     Exyv, Txyv_o = ones(nx + 1, ny + 1), zeros(nx + 1, ny + 1)

@@ -1,8 +1,8 @@
 module SeismicVelocity
 
-# This implements different methods to compute seismic velocities 
+# This implements different methods to compute seismic velocities
 #
-# If you want to add a new method here, feel free to do so. 
+# If you want to add a new method here, feel free to do so.
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
 using Parameters, LaTeXStrings, Unitful, MuladdMacro
@@ -44,14 +44,14 @@ Set a constant seismic P and S-wave velocity:
 ```
 where ``V_p, V_s`` are the P-wave and S-wave velocities [``km/s``].
 """
-@with_kw_noshow struct ConstantSeismicVelocity{T,U} <: AbstractSeismicVelocity{T}
-    Vp::GeoUnit{T,U} = 8.1e3m / s               # P-wave velocity
-    Vs::GeoUnit{T,U} = 4.5e3m / s               # S-wave velocity
+@with_kw_noshow struct ConstantSeismicVelocity{T, U} <: AbstractSeismicVelocity{T}
+    Vp::GeoUnit{T, U} = 8.1e3m / s               # P-wave velocity
+    Vs::GeoUnit{T, U} = 4.5e3m / s               # S-wave velocity
 end
 ConstantSeismicVelocity(args...) = ConstantSeismicVelocity(convert.(GeoUnit, args)...)
 
 function param_info(s::ConstantSeismicVelocity) # info about the struct
-    return MaterialParamsInfo(; Equation=L"v_p = cst \\ v_s = cst")
+    return MaterialParamsInfo(; Equation = L"v_p = cst \\ v_s = cst")
 end
 
 # Calculation routines
@@ -61,7 +61,7 @@ function compute_wave_velocity(s::ConstantSeismicVelocity{_T}; wave, kwargs...) 
     return Vp / Vs
 end
 
-# Print info 
+# Print info
 function show(io::IO, g::ConstantSeismicVelocity)
     return print(
         io, "Constant seismic velocity: Vp=$(UnitValue(g.Vp)), Vs=$(UnitValue(g.Vs))"
@@ -87,7 +87,7 @@ end
 #-------------------------------------------------------------------------
 
 #------------------------------------------------------------------------------------------------------------------#
-# Computational routines needed for computations with the MaterialParams structure 
+# Computational routines needed for computations with the MaterialParams structure
 
 function compute_wave_velocity(s::AbstractMaterialParamsStruct, args)
     if isempty(s.SeismicVelocity) #in case there is a phase with no melting parametrization
@@ -386,7 +386,7 @@ function anelastic_correction(water::Int64, Vs0::Float64, Pref::Float64, Tref::F
     α = 0.27
     B0 = 1.28e8          # m/s
     dref = 1.24e-5       # m
-    COHref = 50.0 * 1e-6 # 50H/1e6Si
+    COHref = 50.0 * 1.0e-6 # 50H/1e6Si
 
     Gref = 1.09
     Eref = 505.0e3 # J/mol
@@ -398,16 +398,16 @@ function anelastic_correction(water::Int64, Vs0::Float64, Pref::Float64, Tref::F
 
     # using remaining values from Cobden et al., 2018
     ω = 0.01                 # Hz (frequency to match for studied seismic system)
-    d = 1e-2                 # m (grain size)
+    d = 1.0e-2                 # m (grain size)
 
     if water == 0
-        COH = 50.0 * 1e-6   # for dry mantle
+        COH = 50.0 * 1.0e-6   # for dry mantle
         r = 0               # for dry mantle
     elseif water == 1
-        COH = 1000.0 * 1e-6 # for damp mantle    
+        COH = 1000.0 * 1.0e-6 # for damp mantle
         r = 1               # for damp mantle
     elseif water == 2
-        COH = 3000.0 * 1e-6 # for wet mantle (saturated water)
+        COH = 3000.0 * 1.0e-6 # for wet mantle (saturated water)
         r = 2               # for wet mantle
     else
         print(
@@ -416,13 +416,13 @@ function anelastic_correction(water::Int64, Vs0::Float64, Pref::Float64, Tref::F
     end
 
     B = @muladd @pow B0 *
-        dref ^ (G - Gref) *
+        dref^(G - Gref) *
         (COH / COHref)^r *
         exp(((Pref * V + E) - (Pref * Vref + Eref)) / (R * Tref))
 
     Qinv = @pow (B * d^(-G) * inv(ω) * exp(-(Pref * V + E) / (R * Tref)))^α
 
-    Vs_anel = Vs0 * (1.0 - (Qinv) / (2.0 * tan(π * α *0.5)))
+    Vs_anel = Vs0 * (1.0 - (Qinv) / (2.0 * tan(π * α * 0.5)))
 
     return Vs_anel
 end
@@ -443,21 +443,21 @@ The following corrections can be applied (together with potential options)
 
 """
 function correct_wavevelocities_phasediagrams(
-    PD::PhaseDiagram_LookupTable;
-    apply_porosity_correction=true,
-    ρf=1000.0,
-    α_porosity=0.1,
-    apply_melt_correction=true,
-    α_melt=0.1,
-    melt_correction_takei=true,
-    apply_anelasticity_correction=true,
-    water=0,
-)
+        PD::PhaseDiagram_LookupTable;
+        apply_porosity_correction = true,
+        ρf = 1000.0,
+        α_porosity = 0.1,
+        apply_melt_correction = true,
+        α_melt = 0.1,
+        melt_correction_takei = true,
+        apply_anelasticity_correction = true,
+        water = 0,
+    )
 
     # extract required data
     T, P = PD.Rho.itp.knots   # T,P vectors of diagrams
 
-    # store original results correction   
+    # store original results correction
     Vs_uncorrected = PD.Vs
     Vp_uncorrected = PD.Vp
 
@@ -472,7 +472,7 @@ function correct_wavevelocities_phasediagrams(
         end
     end
 
-    # Apply porosity correction 
+    # Apply porosity correction
     if apply_porosity_correction == true
         Kb_S = PD.solid_bulkModulus.itp.coefs    #  bulk modulus solid
         Ks_S = PD.solid_shearModulus.itp.coefs   #  shear modulus solid
@@ -480,14 +480,14 @@ function correct_wavevelocities_phasediagrams(
         ρ_av = mean(ρS)           # average solid density
 
         for i in CartesianIndices(Vs_corrected)
-            depth = P[i[2]] / (9.81 * ρ_av * 1e3)         # approximate depth in km (assuming lithostatic P)
+            depth = P[i[2]] / (9.81 * ρ_av * 1.0e3)         # approximate depth in km (assuming lithostatic P)
             Vs_corrected[i] = porosity_correction(
                 Kb_S[i], Ks_S[i], ρf, ρS[i], Vs_corrected[i], depth, α_porosity
             )
         end
     end
 
-    # Apply melt correction 
+    # Apply melt correction
     if apply_melt_correction == true
         Kb_L = PD.melt_bulkModulus.itp.coefs    #  bulk modulus melt
         Kb_S = PD.solid_bulkModulus.itp.coefs   #  bulk modulus solid
@@ -539,17 +539,17 @@ function correct_wavevelocities_phasediagrams(
     # Store results ----
 
     # Create interpolation objects
-    Vs_corrected_intp = LinearInterpolation((T, P), Vs_corrected; extrapolation_bc=Flat())
-    Vp_corrected_intp = LinearInterpolation((T, P), Vp_corrected; extrapolation_bc=Flat())
+    Vs_corrected_intp = LinearInterpolation((T, P), Vs_corrected; extrapolation_bc = Flat())
+    Vp_corrected_intp = LinearInterpolation((T, P), Vp_corrected; extrapolation_bc = Flat())
     VpVs_corrected_intp = LinearInterpolation(
-        (T, P), Vp_corrected ./ Vs_corrected; extrapolation_bc=Flat()
+        (T, P), Vp_corrected ./ Vs_corrected; extrapolation_bc = Flat()
     )
 
-    # Initialize fields in the order they are defined in the PhaseDiagram_LookupTable structure 
+    # Initialize fields in the order they are defined in the PhaseDiagram_LookupTable structure
     Struct_Fieldnames = fieldnames(PhaseDiagram_LookupTable)[4:end] # fieldnames from structure
 
     # Process all fields that are present in the phase diagram (and non-dimensionalize if requested)
-    Struct_Fields = Vector{Union{Nothing,Interpolations.Extrapolation}}(
+    Struct_Fields = Vector{Union{Nothing, Interpolations.Extrapolation}}(
         nothing, length(Struct_Fieldnames)
     )
 
@@ -572,7 +572,7 @@ function correct_wavevelocities_phasediagrams(
             Struct_Fields[i] = VpVs_corrected_intp
         end
 
-        # Store 
+        # Store
         if field == :Vs_uncorrected
             Struct_Fields[i] = Vs_uncorrected
         end
@@ -610,20 +610,20 @@ Output arguments:
 - Vp: corrected P-wave velocity
 """
 function melt_correction_Takei(
-    Kb_L::_T, Kb_S::_T, Ks_S::_T, ρL::_T, ρS::_T, Vp0::_T, Vs0::_T, ϕ::_T, α::_T
-) where {_T<:Number}
+        Kb_L::_T, Kb_S::_T, Ks_S::_T, ρL::_T, ρS::_T, Vp0::_T, Vs0::_T, ϕ::_T, α::_T
+    ) where {_T <: Number}
 
     # compute R
     f(x) = R_func(x, α, ϕ, Kb_S, Ks_S)
 
     # Note: this bracketing algorithm sometimes fails, as there might be 2 roots
-    eps = 1e-3
+    eps = 1.0e-3
     if !isnan(f(0.5))
         R = zero(Kb_L)
         if (sign(f(eps)) != sign(f(1.0 - eps)))
             R = find_zero(f, (eps, 1.0 - eps), Bisection())
         else
-            # if bisection fails, try fzero 
+            # if bisection fails, try fzero
             R = fzero(f, 0.5)
         end
 
@@ -638,11 +638,11 @@ function melt_correction_Takei(
         # Formulation of the fraction reduction of P-wave and S-wave
         ΔVp =
             (
-                (
-                    (((β - 1.0) * ΛK) / ((β - 1.0) + ΛK) + 4.0 / 3.0 * γ * ΛG) /
+            (
+                (((β - 1.0) * ΛK) / ((β - 1.0) + ΛK) + 4.0 / 3.0 * γ * ΛG) /
                     (1.0 + 4.0 / 3.0 * γ)
-                ) - (1.0 - ρL / ρS)
-            ) * (ϕ * 0.5) * Vp0
+            ) - (1.0 - ρL / ρS)
+        ) * (ϕ * 0.5) * Vp0
 
         ΔVs = (ΛG - (1.0 - ρL / ρS)) * (ϕ * 0.5) * Vs0
     else
@@ -692,7 +692,7 @@ function P0_func(α::_T, R::_T) where {_T}
     f = f_func(α)
     θ = θ_func(α)
     F1 = 1.0 - 3.0 / 2.0 * (f + θ) + R * (3.0 / 2.0 * f + 5.0 / 2.0 * θ - 4.0 / 3.0)
-    F2 = R * (2.0 * θ - 2.0 * f - 3.0 * θ^2 + 2R * (f - θ + 2.0*θ^2))
+    F2 = R * (2.0 * θ - 2.0 * f - 3.0 * θ^2 + 2R * (f - θ + 2.0 * θ^2))
     return F1 / F2
 end
 
@@ -789,12 +789,12 @@ function Q0_func_deriv(α::_T, R::_T) where {_T}
         (R * (f - θ) / 4 - f / 4 - 3 * θ / 4 + 1) *
         (2 * R * (f + 2 * θ^2 - θ) - 2 * f - 3 * θ^2 + 2 * θ)
     return p1 +
-           p2 +
-           p3 * (-p4 + p5) / p6 +
-           p7 / p8 +
-           (-p9 + p10) * p11 / p12 +
-           p13 +
-           (p14 + p15 + p16 + p17) / p18 - p19 - (-p20 + p21) / p22
+        p2 +
+        p3 * (-p4 + p5) / p6 +
+        p7 / p8 +
+        (-p9 + p10) * p11 / p12 +
+        p13 +
+        (p14 + p15 + p16 + p17) / p18 - p19 - (-p20 + p21) / p22
 end
 
 function R_func(R::_T, α::_T, Φ::_T, K_m::_T, G_m::_T) where {_T}
@@ -821,7 +821,7 @@ end
 """
     simple Newton root finding algorithm as used to determine R
 """
-function find_roots_R(R0::_T, α::_T, Φ::_T, K_m::_T, G_m::_T; tol=1e-5) where {_T}
+function find_roots_R(R0::_T, α::_T, Φ::_T, K_m::_T, G_m::_T; tol = 1.0e-5) where {_T}
     Rn = R0
     for n in 1:500
         f = R_func(Rn, α, Φ, K_m, G_m)
@@ -835,6 +835,7 @@ function find_roots_R(R0::_T, α::_T, Φ::_T, K_m::_T, G_m::_T; tol=1e-5) where 
         end
         Rn = Rn - f / df
     end
+    return
 end
 
 end

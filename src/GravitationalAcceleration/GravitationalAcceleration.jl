@@ -11,8 +11,8 @@ using ..MaterialParameters: MaterialParamsInfo
 abstract type AbstractGravity{_T} <: AbstractMaterialParam end
 
 export compute_gravity, # calculation routines
-    ConstantGravity,    # constant
-    DippingGravity,     # constant with dip and strike angles
+    ConstantGravity, # constant
+    DippingGravity, # constant with dip and strike angles
     param_info
 
 # Constant Gravity -------------------------------------------------------
@@ -24,13 +24,13 @@ Set a constant value for the gravitational acceleration:
     g  = 9.81 m s^{-2}
 ```
 """
-@with_kw_noshow struct ConstantGravity{_T,U} <: AbstractGravity{_T}
-    g::GeoUnit{_T,U} = 9.81m / s^2               # gravitational acceleration
+@with_kw_noshow struct ConstantGravity{_T, U} <: AbstractGravity{_T}
+    g::GeoUnit{_T, U} = 9.81m / s^2               # gravitational acceleration
 end
 ConstantGravity(args...) = ConstantGravity(convert.(GeoUnit, args)...)
 
 function param_info(s::ConstantGravity) # info about the struct
-    return MaterialParamsInfo(; Equation=L"g = 9.81 m s^{-2}")
+    return MaterialParamsInfo(; Equation = L"g = 9.81 m s^{-2}")
 end
 
 # Calculation routine
@@ -40,7 +40,7 @@ function compute_gravity(s::ConstantGravity)
     return g
 end
 
-# Print info 
+# Print info
 function show(io::IO, d::ConstantGravity)
     return print(io, "Gravitational acceleration: g=$(UnitValue(d.g))")
 end
@@ -55,24 +55,24 @@ Set a constant value for the gravitational acceleration with dip and strike angl
     g  = R_z  R_y  9.81 m s^{-2} 
 ```
 """
-@kwdef struct DippingGravity{_T,U} <: AbstractGravity{_T}
-    g::GeoUnit{_T,U}  = 9.81m / s^2 # gravitational acceleration
-    gx::GeoUnit{_T,U} = 0e0m / s^2  # gravitational acceleration
-    gy::GeoUnit{_T,U} = 0e0m / s^2  # gravitational acceleration
-    gz::GeoUnit{_T,U} = 9.81m / s^2 # gravitational acceleration
+@kwdef struct DippingGravity{_T, U} <: AbstractGravity{_T}
+    g::GeoUnit{_T, U} = 9.81m / s^2 # gravitational acceleration
+    gx::GeoUnit{_T, U} = 0.0e0m / s^2  # gravitational acceleration
+    gy::GeoUnit{_T, U} = 0.0e0m / s^2  # gravitational acceleration
+    gz::GeoUnit{_T, U} = 9.81m / s^2 # gravitational acceleration
 end
 DippingGravity(args...) = DippingGravity(convert.(GeoUnit, args)...)
 
 function DippingGravity(α::T1, θ::T2, g::T3) where {T1, T2, T3}
-    T          = promote_type(T1, T2, T3)
+    T = promote_type(T1, T2, T3)
     sinα, cosα = sincosd(90 - α)
     sinθ, cosθ = sincosd(θ)
-    gᵢ         = @SVector [zero(T), zero(T), T(g)]
+    gᵢ = @SVector [zero(T), zero(T), T(g)]
 
     Ry = @SMatrix [
         cosα    zero(T) sinα
         zero(T)  one(T) zero(T)
-       -sinα    zero(T) cosα
+        -sinα    zero(T) cosα
     ]
 
     Rz = @SMatrix [
@@ -82,11 +82,11 @@ function DippingGravity(α::T1, θ::T2, g::T3) where {T1, T2, T3}
     ]
     g′ = Rz * (Ry * gᵢ)
 
-    return DippingGravity(; g=g, gx = g′[1], gy = g′[2], gz = g′[3])
+    return DippingGravity(; g = g, gx = g′[1], gy = g′[2], gz = g′[3])
 end
 
 function param_info(s::DippingGravity) # info about the struct
-    return MaterialParamsInfo(; Equation=L"g = ($(s.gx, s.gy, s.gz)) m s^{-2}")
+    return MaterialParamsInfo(; Equation = L"g = ($(s.gx, s.gy, s.gz)) m s^{-2}")
 end
 
 # Calculation routine
@@ -95,7 +95,7 @@ function compute_gravity(s::DippingGravity)
     return gx, gy, gz
 end
 
-# Print info 
+# Print info
 function show(io::IO, d::DippingGravity)
     return print(io, "Gravitational acceleration: g=$((UnitValue(d.gz), UnitValue(d.gy), UnitValue(d.gz)))")
 end
@@ -104,12 +104,12 @@ end
 
 # Calculation routine
 @generated function compute_gravity(
-    MatParam::NTuple{N,AbstractMaterialParamsStruct}, Phase::Integer
-) where {N}
-    quote
-        @inline 
+        MatParam::NTuple{N, AbstractMaterialParamsStruct}, Phase::Integer
+    ) where {N}
+    return quote
+        @inline
         Base.Cartesian.@nexprs $N i ->
-            (MatParam[i].Phase == Phase) && return compute_gravity(MatParam[i].Gravity[1])
+        (MatParam[i].Phase == Phase) && return compute_gravity(MatParam[i].Gravity[1])
     end
 end
 

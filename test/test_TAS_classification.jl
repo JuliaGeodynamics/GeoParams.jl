@@ -34,8 +34,8 @@ using GeoParams, LinearAlgebra
 
     # add tests to check that results are consistent
     for i in 1:size(point_list, 1)
-        index = computeTASclassification(point_list[i, :]; ClassTASdata=ClassTASdata)
+        index = computeTASclassification(point_list[i, :]; ClassTASdata = ClassTASdata)
         @test index == field[i]
-        @test retrieveTASrockType(index; ClassTASdata=ClassTASdata) == name[i]
+        @test retrieveTASrockType(index; ClassTASdata = ClassTASdata) == name[i]
     end
 end

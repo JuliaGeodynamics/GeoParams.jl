@@ -13,8 +13,8 @@ using ..MaterialParameters: MaterialParamsInfo
 
 abstract type AbstractShearheating{T} <: AbstractMaterialParam end
 
-export ConstantShearheating,   # constant
-    compute_shearheating,   # calculation routines
+export ConstantShearheating, # constant
+    compute_shearheating, # calculation routines
     compute_shearheating!,
     param_info
 
@@ -35,30 +35,31 @@ H_s = \\Chi \\cdot \\tau_{ij}(\\dot{\\varepsilon}_{ij} - \\dot{\\varepsilon}^{el
 ```
 
 """
-@with_kw_noshow struct ConstantShearheating{T,U} <: AbstractShearheating{T}
-    Χ::GeoUnit{T,U} = 0.0 * NoUnits
+@with_kw_noshow struct ConstantShearheating{T, U} <: AbstractShearheating{T}
+    Χ::GeoUnit{T, U} = 0.0 * NoUnits
 end
 ConstantShearheating(args...) = ConstantShearheating(convert.(GeoUnit, args)...)
 
 function param_info(s::ConstantShearheating) # info about the struct
     return MaterialParamsInfo(;
-        Equation=L"\H_s = \Chi \tau_{ij}(\dot{\varepsilon}_{ij} - \dot{\varepsilon}^{el}_{ij})",
+        Equation = L"\H_s = \Chi \tau_{ij}(\dot{\varepsilon}_{ij} - \dot{\varepsilon}^{el}_{ij})",
     )
 end
 
 # In-place routine
-function compute_shearheating!(H_s::AbstractArray, s::ConstantShearheating, τ::NTuple{N, AbstractArray}, ε::NTuple{N, AbstractArray}, ε_el::Union{Nothing, NTuple{N, AbstractArray}}) where N
+function compute_shearheating!(H_s::AbstractArray, s::ConstantShearheating, τ::NTuple{N, AbstractArray}, ε::NTuple{N, AbstractArray}, ε_el::Union{Nothing, NTuple{N, AbstractArray}}) where {N}
     V = Val(N)
 
     @inline f(x, i) = ntuple(j -> x[j][i], V)
     @inline f(::Nothing, i) = nothing
 
     for i in eachindex(H_s)
-        τ_i    = f(τ, i)
-        ε_i    = f(ε, i)
+        τ_i = f(τ, i)
+        ε_i = f(ε, i)
         ε_el_i = f(ε_el, i)
-        H_s[i]  = compute_shearheating(s, τ_i, ε_i, ε_el_i)
+        H_s[i] = compute_shearheating(s, τ_i, ε_i, ε_el_i)
     end
+    return
 end
 
 # Calculation routine
@@ -68,16 +69,16 @@ end
     return H_s
 end
 
-@inline _compute_shearheating(τ, ε, ::Nothing)                                               = sum(τi * εi for (τi, εi) in zip(τ, ε))
-@inline _compute_shearheating(τ, ε, ε_el)                                                    = sum(τi * (εi - εi_el) for (τi, εi, εi_el) in zip(τ, ε, ε_el))
-@inline _compute_shearheating(τ::NTuple{N,T}, ε::NTuple{N,T}, ε_el::NTuple{N,T}) where {N,T} = @.(τ * (ε - ε_el)) |> sum
-@inline _compute_shearheating(τ::NTuple{N,T}, ε::NTuple{N,T}, ::Nothing)         where {N,T} = @.(τ * ε) |> sum
+@inline _compute_shearheating(τ, ε, ::Nothing) = sum(τi * εi for (τi, εi) in zip(τ, ε))
+@inline _compute_shearheating(τ, ε, ε_el) = sum(τi * (εi - εi_el) for (τi, εi, εi_el) in zip(τ, ε, ε_el))
+@inline _compute_shearheating(τ::NTuple{N, T}, ε::NTuple{N, T}, ε_el::NTuple{N, T}) where {N, T} = @.(τ * (ε - ε_el)) |> sum
+@inline _compute_shearheating(τ::NTuple{N, T}, ε::NTuple{N, T}, ::Nothing) where {N, T} = @.(τ * ε) |> sum
 # Symmetric 2D tensors (assuming Voigts notations)
-@inline _compute_shearheating(τ::NTuple{3,T}, ε::NTuple{3,T}, ε_el::NTuple{3,T}) where {T} = _compute_shearheating((τ..., τ[end]), (ε..., ε[end]), (ε_el..., ε_el[end]))
-@inline _compute_shearheating(τ::NTuple{3,T}, ε::NTuple{3,T}, ::Nothing)         where {T} = _compute_shearheating((τ..., τ[end]), (ε..., ε[end]), nothing)
+@inline _compute_shearheating(τ::NTuple{3, T}, ε::NTuple{3, T}, ε_el::NTuple{3, T}) where {T} = _compute_shearheating((τ..., τ[end]), (ε..., ε[end]), (ε_el..., ε_el[end]))
+@inline _compute_shearheating(τ::NTuple{3, T}, ε::NTuple{3, T}, ::Nothing) where {T} = _compute_shearheating((τ..., τ[end]), (ε..., ε[end]), nothing)
 # Symmetric 3D tensors (assuming Voigts notations)
-@inline _compute_shearheating(τ::NTuple{6,T}, ε::NTuple{6,T}, ε_el::NTuple{6,T}) where {T} = _compute_shearheating((τ..., τ[4:end]...), (ε..., ε[4:end]...), (ε_el..., ε_el[4:end]...))
-@inline _compute_shearheating(τ::NTuple{6,T}, ε::NTuple{6,T}, ::Nothing)         where {T} = _compute_shearheating((τ..., τ[4:end]...), (ε..., ε[4:end]...), nothing)
+@inline _compute_shearheating(τ::NTuple{6, T}, ε::NTuple{6, T}, ε_el::NTuple{6, T}) where {T} = _compute_shearheating((τ..., τ[4:end]...), (ε..., ε[4:end]...), (ε_el..., ε_el[4:end]...))
+@inline _compute_shearheating(τ::NTuple{6, T}, ε::NTuple{6, T}, ::Nothing) where {T} = _compute_shearheating((τ..., τ[4:end]...), (ε..., ε[4:end]...), nothing)
 
 # Print info
 function show(io::IO, g::ConstantShearheating)
@@ -170,15 +171,15 @@ H_s = \\Chi \\cdot \\tau_{ij}  \\dot{\\varepsilon}_{ij}
     return compute_shearheating!(H_s, s, τ, ε, nothing)
 end
 
-function compute_shearheating(s::AbstractMaterialParamsStruct, args::Vararg{Any,N}) where N
+function compute_shearheating(s::AbstractMaterialParamsStruct, args::Vararg{Any, N}) where {N}
     if isempty(s.ShearHeat)
-        return 0e0  # return zero if not specified
+        return 0.0e0  # return zero if not specified
     else
         return compute_shearheating(s.ShearHeat[1], args...)
     end
 end
 
-compute_shearheating(args::Vararg{Any,N}) where N = compute_param(compute_shearheating, args...)
-compute_shearheating!(args::Vararg{Any,N}) where N = compute_param!(compute_shearheating!, args...)
+compute_shearheating(args::Vararg{Any, N}) where {N} = compute_param(compute_shearheating, args...)
+compute_shearheating!(args::Vararg{Any, N}) where {N} = compute_param!(compute_shearheating!, args...)
 
 end

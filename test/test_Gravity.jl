@@ -12,7 +12,7 @@ using Test, GeoParams
 
     d = DippingGravity(90, 0, gravity)
     gᵢ = compute_gravity(d)
-    @test gᵢ == (0e0, 0e0, gravity)
+    @test gᵢ == (0.0e0, 0.0e0, gravity)
 
     α = 45
     d = DippingGravity(α, 0, gravity)
@@ -21,9 +21,8 @@ using Test, GeoParams
 
     d = DippingGravity(α, α, gravity)
     gᵢ = compute_gravity(d)
-    @test gᵢ ==   sind(90 - α) .* (gravity *  cosd(45), gravity *  cosd(45), gravity)
+    @test gᵢ == sind(90 - α) .* (gravity * cosd(45), gravity * cosd(45), gravity)
 
-    r = SetMaterialParams(; Gravity = DippingGravity(), )
-    @test compute_gravity(r) == (0e0, 0e0, gravity)
+    r = SetMaterialParams(; Gravity = DippingGravity())
+    @test compute_gravity(r) == (0.0e0, 0.0e0, gravity)
 end
-

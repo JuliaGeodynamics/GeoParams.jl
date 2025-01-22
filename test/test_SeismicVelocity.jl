@@ -3,7 +3,7 @@ using GeoParams
 
 @testset "SeismicVelocity.jl" begin
     # This tests the MaterialParameters structure
-    CharUnits_GEO = GEO_units(; viscosity=1e19, length=10km)
+    CharUnits_GEO = GEO_units(; viscosity = 1.0e19, length = 10km)
 
     # Constant seismic velocity capacity
     x = ConstantSeismicVelocity()
@@ -18,20 +18,20 @@ using GeoParams
     @test UnitValue(x_nd.Vp) ≈ 8.1e11
     @test UnitValue(x_nd.Vs) ≈ 4.5e11
 
-    @test UnitValue(compute_wave_velocity(x_nd, (; wave=:Vp))) ≈ 8.1e11
-    @test UnitValue(compute_wave_velocity(x_nd, (; wave=:Vs))) ≈ 4.5e11
-    @test UnitValue(compute_wave_velocity(x_nd, (; wave=:VpVs))) ≈ 1.8
+    @test UnitValue(compute_wave_velocity(x_nd, (; wave = :Vp))) ≈ 8.1e11
+    @test UnitValue(compute_wave_velocity(x_nd, (; wave = :Vs))) ≈ 4.5e11
+    @test UnitValue(compute_wave_velocity(x_nd, (; wave = :VpVs))) ≈ 1.8
 
     # Check that it works if we give a phase array
-    MatParam = Array{MaterialParams,1}(undef, 2)
+    MatParam = Array{MaterialParams, 1}(undef, 2)
     MatParam[1] = SetMaterialParams(;
-        Name="Mantle", Phase=1, SeismicVelocity=ConstantSeismicVelocity()
+        Name = "Mantle", Phase = 1, SeismicVelocity = ConstantSeismicVelocity()
     )
 
     MatParam[2] = SetMaterialParams(;
-        Name="Crust",
-        Phase=2,
-        SeismicVelocity=PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in"),
+        Name = "Crust",
+        Phase = 2,
+        SeismicVelocity = PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in"),
     )
 
     Mat_tup = Tuple(MatParam)
@@ -47,13 +47,13 @@ using GeoParams
     T = ones(size(Phases)) * 1500
     P = zeros(size(Phases))
 
-    args = (; T=T, P=P, wave=:Vp)
+    args = (; T = T, P = P, wave = :Vp)
     compute_wave_velocity!(Vp, Mat_tup, Phases, args)
 
-    args = (; T=T, P=P, wave=:Vs)
+    args = (; T = T, P = P, wave = :Vs)
     compute_wave_velocity!(Vs, Mat_tup, Phases, args)
 
-    args = (; T=T, P=P, wave=:VpVs)
+    args = (; T = T, P = P, wave = :VpVs)
     compute_wave_velocity!(VpVs, Mat_tup, Phases, args)
 
     @test Vp[1] == 8.1e3
@@ -64,13 +64,13 @@ using GeoParams
     @test VpVs[1] ≈ 1.8
     @test VpVs[1, 1, end] ≈ 2.05
 
-    # NOTE: This will be made obsolete by melt_correction_Takei  
+    # NOTE: This will be made obsolete by melt_correction_Takei
     #    Vp_cor, Vs_cor = melt_correction(
     #        26.0, 94.5, 61.0, 2802.0, 3198.0, 7.4, 4.36, 0.01, 0.15
     #    )
     #    @test [Vp_cor, Vs_cor] ≈  [7.331657177397843, 4.314027804335563]
 
-    # NOTE: This will be made obsolete by melt_correction_Takei  
+    # NOTE: This will be made obsolete by melt_correction_Takei
     #  Vs_cor = porosity_correction(
     #       94.5, 61.0, 1000.0, 3198.0, 4.36, 0.25, 0.25
     #  )

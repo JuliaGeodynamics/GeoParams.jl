@@ -72,7 +72,7 @@ end
 end
 
 @testset "Tensor algebra" begin
-    # J2 TENSOR INVARIANT: 2D TESTS 
+    # J2 TENSOR INVARIANT: 2D TESTS
     τ_xx, τ_yy, τ_xy = 1.0, 2.0, 3.0
     τII = √(0.5 * (τ_xx^2 + τ_yy^2) + τ_xy^2)
 
@@ -87,7 +87,7 @@ end
     τII = √(0.5 * (τ_xx^2 + τ_yy^2) + τ_xy2_av)
     @test τII == second_invariant_staggered(τ_xx, τ_yy, τ_xy_ij)
 
-    # J2 TENSOR INVARIANT: 3D TESTS 
+    # J2 TENSOR INVARIANT: 3D TESTS
     τ_xx, τ_yy, τ_zz, τ_yz, τ_xz, τ_xy = 1.0, 2.0, 3.0, 4.0, 5.0, 6.0
     τII = √(0.5 * (τ_xx^2 + τ_yy^2 + τ_zz^2) + τ_yz^2 + τ_xz^2 + τ_xy^2)
 

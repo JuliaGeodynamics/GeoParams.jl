@@ -1,7 +1,7 @@
 # This implements viscous creep laws and routines to compute with them
 #
-# Note that various simple creep laws are defined in this file; 
-# more complex ones (such as DislocationCreep) are in separate files 
+# Note that various simple creep laws are defined in this file;
+# more complex ones (such as DislocationCreep) are in separate files
 # in the same directory
 #
 # In case you want to add new creep laws, have a look at how the ones
@@ -41,28 +41,28 @@ julia> x2 = DislocationCreep(n=3)
 DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3 mol^-1, Apparatus=AxialCompression
 ```
 """
-struct DislocationCreep{T,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
+struct DislocationCreep{T, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
     Name::Ptr{UInt8}
-    n::GeoUnit{T,U1} # power-law exponent
-    r::GeoUnit{T,U1} # exponent of water-fugacity
-    A::GeoUnit{T,U2} # material specific rheological parameter
-    E::GeoUnit{T,U3} # activation energy
-    V::GeoUnit{T,U4} # activation volume
-    R::GeoUnit{T,U5} # universal gas constant
+    n::GeoUnit{T, U1} # power-law exponent
+    r::GeoUnit{T, U1} # exponent of water-fugacity
+    A::GeoUnit{T, U2} # material specific rheological parameter
+    E::GeoUnit{T, U3} # activation energy
+    V::GeoUnit{T, U4} # activation volume
+    R::GeoUnit{T, U5} # universal gas constant
     Apparatus::Int8 # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
     FT::T # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
     FE::T # type of experimental apparatus, either AxialCompression, SimpleShear or Invariant
 
     function DislocationCreep(;
-        Name="",
-        n=1NoUnits,
-        r=0NoUnits,
-        A=1.5e6Pa^(-n) / s,
-        E=476.0e3J / mol,
-        V=6e-6m^3 / mol,
-        R=8.3145J / mol / K,
-        Apparatus=AxialCompression,
-    )
+            Name = "",
+            n = 1NoUnits,
+            r = 0NoUnits,
+            A = 1.5e6Pa^(-n) / s,
+            E = 476.0e3J / mol,
+            V = 6.0e-6m^3 / mol,
+            R = 8.3145J / mol / K,
+            Apparatus = AxialCompression,
+        )
         # Corrections from lab experiments
         FT, FE = CorrectionFactor(Apparatus)
         # Convert to GeoUnits
@@ -81,14 +81,14 @@ struct DislocationCreep{T,U1,U2,U3,U4,U5} <: AbstractCreepLaw{T}
         U5 = typeof(RU).types[2]
         name = pointer(ptr2string(Name))
         # Create struct
-        return new{T,U1,U2,U3,U4,U5}(
+        return new{T, U1, U2, U3, U4, U5}(
             name, nU, rU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
         )
     end
 
     function DislocationCreep(Name, n, r, A, E, V, R, Apparatus, FT, FE)
         return DislocationCreep(;
-            Name=Name, n=n, r=r, A=A, E=E, V=V, R=R, Apparatus=Apparatus
+            Name = Name, n = n, r = r, A = A, E = E, V = V, R = R, Apparatus = Apparatus
         )
     end
 end
@@ -103,20 +103,20 @@ function remove_tensor_correction(s::DislocationCreep)
     name = ptr2string(s.Name)
 
     return DislocationCreep(;
-        Name=name, n=s.n, r=s.r, A=s.A, E=s.E, V=s.V, Apparatus=Invariant
+        Name = name, n = s.n, r = s.r, A = s.A, E = s.E, V = s.V, Apparatus = Invariant
     )
 end
 
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
 @inline function compute_εII(
-    a::DislocationCreep,
-    TauII;
-    T=one(precision(a)),
-    P=zero(precision(a)),
-    f=one(precision(a)),
-    args...,
-)
+        a::DislocationCreep,
+        TauII;
+        T = one(precision(a)),
+        P = zero(precision(a)),
+        f = one(precision(a)),
+        args...,
+    )
     @unpack_val n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
@@ -125,8 +125,8 @@ end
 end
 
 @inline function compute_εII(
-    a::DislocationCreep, TauII::Quantity; T=1K, P=0Pa, f=1NoUnits, args...
-)
+        a::DislocationCreep, TauII::Quantity; T = 1K, P = 0Pa, f = 1NoUnits, args...
+    )
     @unpack_units n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
@@ -136,29 +136,29 @@ end
 end
 
 function compute_εII!(
-    EpsII::AbstractArray{_T,N},
-    a::DislocationCreep,
-    TauII::AbstractArray{_T,N};
-    P=zero(TauII)::AbstractArray{_T,N},
-    T=ones(size(TauII))::AbstractArray{_T,N},
-    f=ones(size(TauII))::AbstractArray{_T,N},
-    kwargs...,
-) where {N,_T}
+        EpsII::AbstractArray{_T, N},
+        a::DislocationCreep,
+        TauII::AbstractArray{_T, N};
+        P = zero(TauII)::AbstractArray{_T, N},
+        T = ones(size(TauII))::AbstractArray{_T, N},
+        f = ones(size(TauII))::AbstractArray{_T, N},
+        kwargs...,
+    ) where {N, _T}
     @inbounds for i in eachindex(EpsII)
-        EpsII[i] = compute_εII(a, TauII[i]; T=T[i], P=P[i], f=f[i])
+        EpsII[i] = compute_εII(a, TauII[i]; T = T[i], P = P[i], f = f[i])
     end
 
     return nothing
 end
 
 @inline function dεII_dτII(
-    a::DislocationCreep,
-    TauII;
-    T=one(precision(a)),
-    P=zero(precision(a)),
-    f=one(precision(a)),
-    args...,
-)
+        a::DislocationCreep,
+        TauII;
+        T = one(precision(a)),
+        P = zero(precision(a)),
+        f = one(precision(a)),
+        args...,
+    )
     @unpack_val n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
@@ -172,8 +172,8 @@ end
 end
 
 @inline function dεII_dτII(
-    a::DislocationCreep, TauII::Quantity; T=1K, P=0Pa, f=1NoUnits, args...
-)
+        a::DislocationCreep, TauII::Quantity; T = 1K, P = 0Pa, f = 1NoUnits, args...
+    )
     @unpack_units n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
@@ -193,13 +193,13 @@ Computes the stress for a Dislocation creep law given a certain strain rate
 
 """
 @inline function compute_τII(
-    a::DislocationCreep,
-    EpsII;
-    T=one(precision(a)),
-    P=zero(precision(a)),
-    f=one(precision(a)),
-    args...,
-)
+        a::DislocationCreep,
+        EpsII;
+        T = one(precision(a)),
+        P = zero(precision(a)),
+        f = one(precision(a)),
+        args...,
+    )
     n, r, A, E, V, R = if EpsII isa Quantity
         @unpack_units n, r, A, E, V, R = a
         n, r, A, E, V, R
@@ -215,8 +215,8 @@ Computes the stress for a Dislocation creep law given a certain strain rate
 end
 
 @inline function compute_τII(
-    a::DislocationCreep, EpsII::Quantity; P=0Pa, T=1K, f=1NoUnits, args...
-)
+        a::DislocationCreep, EpsII::Quantity; P = 0Pa, T = 1K, f = 1NoUnits, args...
+    )
     @unpack_units n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
     _n = inv(n)
@@ -233,29 +233,29 @@ end
 Computes the deviatoric stress invariant for a dislocation creep law
 """
 function compute_τII!(
-    TauII::AbstractArray{_T,N},
-    a::DislocationCreep,
-    EpsII::AbstractArray{_T,N};
-    T=ones(size(TauII))::AbstractArray{_T,N},
-    P=zero(TauII)::AbstractArray{_T,N},
-    f=ones(size(TauII))::AbstractArray{_T,N},
-    kwargs...,
-) where {N,_T}
+        TauII::AbstractArray{_T, N},
+        a::DislocationCreep,
+        EpsII::AbstractArray{_T, N};
+        T = ones(size(TauII))::AbstractArray{_T, N},
+        P = zero(TauII)::AbstractArray{_T, N},
+        f = ones(size(TauII))::AbstractArray{_T, N},
+        kwargs...,
+    ) where {N, _T}
     @inbounds for i in eachindex(TauII)
-        TauII[i] = compute_τII(a, EpsII[i]; T=T[i], P=P[i], f=f[i])
+        TauII[i] = compute_τII(a, EpsII[i]; T = T[i], P = P[i], f = f[i])
     end
 
     return nothing
 end
 
 @inline function dτII_dεII(
-    a::DislocationCreep,
-    EpsII;
-    T=one(precision(a)),
-    P=zero(precision(a)),
-    f=one(precision(a)),
-    args...,
-)
+        a::DislocationCreep,
+        EpsII;
+        T = one(precision(a)),
+        P = zero(precision(a)),
+        f = one(precision(a)),
+        args...,
+    )
     @unpack_val n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
     _n = inv(n)
@@ -267,8 +267,8 @@ end
 end
 
 @inline function dτII_dεII(
-    a::DislocationCreep, EpsII::Quantity; P=0Pa, T=1K, f=1NoUnits, args...
-)
+        a::DislocationCreep, EpsII::Quantity; P = 0Pa, T = 1K, f = 1NoUnits, args...
+    )
     @unpack_units n, r, A, E, V, R = a
     FT, FE = a.FT, a.FE
     _n = inv(n)
@@ -278,7 +278,7 @@ end
     ) / (FT * n)
 end
 
-# Print info 
+# Print info
 function show(io::IO, g::DislocationCreep)
     return print(
         io,
@@ -298,82 +298,82 @@ function param_info(s::DislocationCreep)
     name = unsafe_string(s.Name)
     eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"
     if name == ""
-        return MaterialParamsInfo(; Equation=eq)
+        return MaterialParamsInfo(; Equation = eq)
     end
     inf = DislocationCreep_info[name][2]
     return MaterialParamsInfo(;
-        Equation=eq, Comment=inf.Comment, BibTex_Reference=inf.BibTex_Reference
+        Equation = eq, Comment = inf.Comment, BibTex_Reference = inf.BibTex_Reference
     )
 end
 
 function SetDislocationCreep(
-    name::F;
-    n = nothing,
-    r = nothing,
-    A = nothing,
-    E = nothing,
-    V = nothing,
-) where F 
+        name::F;
+        n = nothing,
+        r = nothing,
+        A = nothing,
+        E = nothing,
+        V = nothing,
+    ) where {F}
     kwargs = (; n, r, A, E, V)
-    Transform_DislocationCreep(name, kwargs)
+    return Transform_DislocationCreep(name, kwargs)
 end
 
 function SetDislocationCreep(
-    name::F,
-    CharDim::GeoUnits{T};
-    n = nothing,
-    r = nothing,
-    A = nothing,
-    E = nothing,
-    V = nothing,
-) where {F, T<:Union{GEO, SI}}
+        name::F,
+        CharDim::GeoUnits{T};
+        n = nothing,
+        r = nothing,
+        A = nothing,
+        E = nothing,
+        V = nothing,
+    ) where {F, T <: Union{GEO, SI}}
     kwargs = (; n, r, A, E, V)
-    nondimensionalize(Transform_DislocationCreep(name, kwargs), CharDim)
+    return nondimensionalize(Transform_DislocationCreep(name, kwargs), CharDim)
 end
 
 """
     Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 """
-Transform_DislocationCreep(name::F) where F = Transform_DislocationCreep(dislocation_database(name))
-Transform_DislocationCreep(name::F, kwargs::NamedTuple) where F = Transform_DislocationCreep(dislocation_database(name), kwargs)
+Transform_DislocationCreep(name::F) where {F} = Transform_DislocationCreep(dislocation_database(name))
+Transform_DislocationCreep(name::F, kwargs::NamedTuple) where {F} = Transform_DislocationCreep(dislocation_database(name), kwargs)
 
-function Transform_DislocationCreep(name::F, CharDim::GeoUnits{U}) where {U<:Union{GEO,SI}} where F
-    Transform_DislocationCreep(dislocation_database(name), CharDim)
+function Transform_DislocationCreep(name::F, CharDim::GeoUnits{U}) where {U <: Union{GEO, SI}} where {F}
+    return Transform_DislocationCreep(dislocation_database(name), CharDim)
 end
 
-function Transform_DislocationCreep(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) where {T,U<:Union{GEO,SI}}
-    nondimensionalize(Transform_DislocationCreep(p), CharDim)
+function Transform_DislocationCreep(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) where {T, U <: Union{GEO, SI}}
+    return nondimensionalize(Transform_DislocationCreep(p), CharDim)
 end
 
-function Transform_DislocationCreep(p::AbstractCreepLaw{T}) where T
-    n         = Value(p.n)
-    A_Pa      = uconvert(Pa^unit_power(p.A) / s, Value(p.A))
-    E_J       = uconvert(J / mol, Value(p.E))
-    V_m3      = uconvert(m^3 / mol, Value(p.V))
+function Transform_DislocationCreep(p::AbstractCreepLaw{T}) where {T}
+    n = Value(p.n)
+    A_Pa = uconvert(Pa^unit_power(p.A) / s, Value(p.A))
+    E_J = uconvert(J / mol, Value(p.E))
+    V_m3 = uconvert(m^3 / mol, Value(p.V))
     Apparatus = p.Apparatus
-    r         = Value(p.r)
+    r = Value(p.r)
     # args from database
-    args = (Name=unsafe_string(p.Name), n=n, r=r, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+    args = (Name = unsafe_string(p.Name), n = n, r = r, A = A_Pa, E = E_J, V = V_m3, Apparatus = Apparatus)
 
     return DislocationCreep(; args...)
 end
 
-function Transform_DislocationCreep(p::AbstractCreepLaw{T}, kwargs::NamedTuple) where T
-    
+function Transform_DislocationCreep(p::AbstractCreepLaw{T}, kwargs::NamedTuple) where {T}
+
     (; n, r, A, E, V) = kwargs
 
     n_new = isnothing(n) ? Value(p.n) : Value(GeoUnit(n))
     r_new = isnothing(r) ? Value(p.r) : Value(GeoUnit(r))
-    A_new = isnothing(A) ?        p.A : GeoUnit(A)
+    A_new = isnothing(A) ? p.A : GeoUnit(A)
     E_new = isnothing(E) ? Value(p.E) : Value(GeoUnit(E))
     V_new = isnothing(E) ? Value(p.V) : Value(GeoUnit(V))
-   
-    A_Pa      = uconvert(Pa^unit_power(A_new) / s, Value(A_new))
-    E_J       = uconvert(J / mol, E_new)
-    V_m3      = uconvert(m^3 / mol, V_new)
+
+    A_Pa = uconvert(Pa^unit_power(A_new) / s, Value(A_new))
+    E_J = uconvert(J / mol, E_new)
+    V_m3 = uconvert(m^3 / mol, V_new)
     Apparatus = p.Apparatus
     # args from database
-    args = (Name=unsafe_string(p.Name), n=n_new, r=r_new, A=A_Pa, E=E_J, V=V_m3, Apparatus=Apparatus)
+    args = (Name = unsafe_string(p.Name), n = n_new, r = r_new, A = A_Pa, E = E_J, V = V_m3, Apparatus = Apparatus)
 
     return DislocationCreep(; args...)
 end
