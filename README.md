@@ -46,12 +46,12 @@ julia> CharDim = GEO_units(length=1000km, temperature=1000C, stress=10MPa, visco
 Employing GEO units
 Characteristic values:
          length:      1000 km
-         time:        0.3169 Myrs
+         time:        0.3169 Myr
          stress:      10 MPa
          temperature: 1000.0 °C
 ```
 You can use 3 `types`:
-  1. *GEO* units: Units of length in the code are expected to be in kilometers, time is in million of years (Myrs) and stresses are in MPa (1e6 Pa).
+  1. *GEO* units: Units of length in the code are expected to be in kilometers, time is in million of years (Myr) and stresses are in MPa (1e6 Pa).
   2. *SI* units: all values are in SI units (meters, Pascal, seconds)
   3. *NONE*: all input parameters are in nondimensional units
 

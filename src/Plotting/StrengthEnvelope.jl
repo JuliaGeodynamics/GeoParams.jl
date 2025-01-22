@@ -83,7 +83,7 @@ function StrengthEnvelopePlot(MatParam::NTuple{N, AbstractMaterialParamsStruct},
         Tbot = @lift($T_slider * C)
         Temp = @lift(LinTemp(Ttop, $Tbot))
     elseif Ttype == 2
-        Age = @lift($T_slider * Myrs)
+        Age = @lift($T_slider * Myr)
         Temp = @lift(HalfspaceCoolTemp(Ttop, Tbot, $Age, Adiabat, kappa))
     elseif Ttype == 3
         Tcon = @lift($T_slider * C)

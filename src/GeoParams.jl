@@ -60,7 +60,8 @@ module GeoParams
         cm,
         mm,
         μm,
-        Myrs,
+        Myrs, # to remove at some point
+        Myr,
         yr,
         s,
         GPa,
