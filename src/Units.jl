@@ -50,7 +50,7 @@ export km,
     cm,
     mm,
     μm,
-    Myrs,  # to remove at some point
+    Myrs, # to remove at some point
     Myr,
     yr,
     s,

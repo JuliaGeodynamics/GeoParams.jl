@@ -1226,7 +1226,7 @@ function PlotPressureStressTime_0D(
     if t_scale == 1.0
         xlabel_str = "Time"
     else
-        xlabel_str = "Time [Myr]";
+        xlabel_str = "Time [Myr]"
     end
 
     ax1 = Axis(
