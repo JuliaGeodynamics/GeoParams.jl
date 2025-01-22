@@ -45,7 +45,7 @@ import GeoParams.Dislocation
     z, τ, T = StrengthEnvelopeComp(
         MatParam,
         Thickness,
-        HalfspaceCoolTemp(0C, 1350C, 10Myrs, 0K / km, 1.0e-6m^2 / s),
+        HalfspaceCoolTemp(0C, 1350C, 10Myr, 0K / km, 1.0e-6m^2 / s),
         1.0e-10 / s,
     )
 
