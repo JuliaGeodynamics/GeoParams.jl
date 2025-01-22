@@ -324,13 +324,12 @@ module GeoParams
 
     # Seismic velocities
     using .MaterialParameters.SeismicVelocity
-    export compute_pwave_velocity,
-        compute_wave_velocity,
+    export compute_wave_velocity,
         compute_wave_velocity!,
         ConstantSeismicVelocity,
         anelastic_correction,
-        melt_correction,
-        porosity_correction,
+        # melt_correction,
+        # porosity_correction,
         correct_wavevelocities_phasediagrams,
         melt_correction_Takei
 

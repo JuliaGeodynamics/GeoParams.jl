@@ -127,7 +127,7 @@ end
 @generated function compute_param_times_frac(
         fn::F, PhaseRatios::Union{NTuple{N, T}, SVector{N, T}}, MatParam::NTuple{N, AbstractMaterialParamsStruct}, argsi
     ) where {F, N, T}
-    # # Unrolled dot product
+    # Unrolled dot product
     return quote
         val = zero($T)
         Base.Cartesian.@nexprs $N i -> val += @inbounds PhaseRatios[i] * fn(MatParam[i], argsi)

@@ -17,12 +17,11 @@ import Base.show, GeoParams.param_info
 
 abstract type AbstractSeismicVelocity{T} <: AbstractMaterialParam end
 
-export compute_pwave_velocity,
-    compute_wave_velocity, # calculation routines
+export compute_wave_velocity, # calculation routines
     compute_wave_velocity!, # calculation routines
     ConstantSeismicVelocity, # constant
-    melt_correction,
-    porosity_correction,
+    # melt_correction,
+    # porosity_correction,
     anelastic_correction,
     param_info,
     correct_wavevelocities_phasediagrams,

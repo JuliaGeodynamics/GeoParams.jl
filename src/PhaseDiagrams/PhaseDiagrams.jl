@@ -9,7 +9,7 @@ import Base.show
 using GeoParams: AbstractMaterialParam, AbstractPhaseDiagramsStruct
 import GeoParams.PerpleX_LaMEM_Diagram
 
-export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram, ComputeDensity
+export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
 
 """
     Contains data of a Phase Diagram that is regularly spaced in P & T
