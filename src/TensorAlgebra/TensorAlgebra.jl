@@ -47,20 +47,20 @@ end
 
 # Methods to compute the invariant of a tensor
 
-@inline function (:)(A::T, B::T) where {T <: Union{SVector{3}, NTuple{3}}}
+@inline function doubledot(A::T, B::T) where {T <: Union{SVector{3}, NTuple{3}}}
     return (A[1] * B[1] + A[2] * B[2]) + T(2.0) * (A[3] * B[3])
 end
 
-@inline function (:)(A::T, B::T) where {T <: Union{SVector{6}, NTuple{6}}}
+@inline function doubledot(A::T, B::T) where {T <: Union{SVector{6}, NTuple{6}}}
     return (A[1] * B[1] + A[2] * B[2] + A[3] * B[3]) +
         T(2.0) * (A[4] * B[4] + A[5] * B[5] + A[6] * B[6])
 end
 
-@inline (:)(A::SMatrix, B::SMatrix) = sum(A .* B)
+@inline doubledot(A::SMatrix, B::SMatrix) = sum(A .* B)
 
-@inline second_invariant(A::NTuple) = √(0.5 * (A:A))
-@inline second_invariant(A::SMatrix) = √(0.5 * (A:A))
-@inline second_invariant(A::SVector) = √(0.5 * (A:A))
+@inline second_invariant(A::NTuple) = √(0.5 * doubledot(A, A))
+@inline second_invariant(A::SMatrix) = √(0.5 * doubledot(A, A))
+@inline second_invariant(A::SVector) = √(0.5 * doubledot(A, A))
 @inline second_invariant(A::Matrix) = √(0.5 * sum(Ai * Ai for Ai in A))
 # So that is differentiable...
 @inline second_invariant(xx, yy, xy) = √(0.5 * (xx^2 + yy^2) + xy^2)
@@ -95,7 +95,7 @@ at the cell centers around the i-th vertex.
 """
 @inline function second_invariant_staggered(
         Aii::NTuple{3}, Ayz::NTuple{4}, Axz::NTuple{4}, Axy::NTuple{4}
-    ) where {T}
+    )
     return √(
         0.5 * (Aii[1]^2 + Aii[2]^2 + Aii[3]^2) +
             average_pow2(Ayz) +
@@ -105,13 +105,13 @@ at the cell centers around the i-th vertex.
 end
 
 @inline function second_invariant_staggered(
-        Axx, Ayy, Azz, Ayz::NTuple{4}, Axz::NTuple{4}, Axy::NTuple{4}
-    )
+        Axx::T, Ayy::T, Azz::T, Ayz::NTuple{4}, Axz::NTuple{4}, Axy::NTuple{4}
+    ) where {T <: Number}
     return second_invariant_staggered((Axx, Ayy, Azz), Ayz, Axz, Axy)
 end
 @inline function second_invariant(
-        Axx, Ayy, Azz, Ayz::NTuple{4}, Axz::NTuple{4}, Axy::NTuple{4}
-    )
+        Axx::T, Ayy::T, Azz::T, Ayz::NTuple{4}, Axz::NTuple{4}, Axy::NTuple{4}
+    ) where {T <: Number}
     return second_invariant_staggered(Axx, Ayy, Azz, Ayz, Axz, Axy)
 end
 
@@ -148,16 +148,17 @@ components at the i-th vertex.
 end
 
 @inline function second_invariant_staggered(
-        Axx::NTuple{4}, Ayy::NTuple{4}, Azz::NTuple{4}, Ayz, Axz, Axy
-    ) where {T}
+        Axx::NTuple{4}, Ayy::NTuple{4}, Azz::NTuple{4}, Ayz::T, Axz::T, Axy::T
+    ) where {T <: Number}
     return second_invariant_staggered(Axx, Ayy, Azz, (Ayz, Axz, Axy))
 end
 
 @inline function second_invariant(
-        Axx::NTuple{4}, Ayy::NTuple{4}, Azz::NTuple{4}, Ayz, Axz, Axy
-    ) where {T}
+        Axx::NTuple{4}, Ayy::NTuple{4}, Azz::NTuple{4}, Ayz::T, Axz::T, Axy::T
+    ) where {T <: Number}
     return second_invariant_staggered(Axx, Ayy, Azz, Ayz, Axz, Axy)
 end
+
 
 # Methods to rotate the elastic stress
 

@@ -193,7 +193,7 @@ Base.isequal(x::GeoUnit, y::AbstractArray) = Base.isequal(x.val, y)
 Base.isequal(x::GeoUnit, y::GeoUnit) = Base.isequal(x.val, y.val)
 
 Base.convert(::Type{<:AbstractArray}, v::GeoUnit) = v.val
-Base.convert(::Type{<:Number}, v::GeoUnit) = v.val
+Base.convert(::Type{<:Real}, v::GeoUnit) = v.val
 Base.convert(::Type{GeoUnit}, v::Number) = GeoUnit(v)
 Base.convert(::Type{GeoUnit}, v::Int32) = GeoUnit(Float32(v))
 Base.convert(::Type{GeoUnit}, v::Int64) = GeoUnit(Float64(v))
@@ -644,7 +644,7 @@ function nondimensionalize(
     return UnitValue.(result)
 end
 
-function nondimensionalize(param::AbstractArray{<:Number}, g::Nothing)
+function nondimensionalize(param::AbstractArray{<:Number}, ::Nothing)
     @warn("The input parameter is not being nondimensionalized, as no characteristic units are given")
     return param
 end
