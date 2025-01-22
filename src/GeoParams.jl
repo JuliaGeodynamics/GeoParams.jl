@@ -282,7 +282,8 @@ module GeoParams
         Transform_ChemicalDiffusion
 
 
-    export Rutile
+    export Rutile,
+        Garnet
 
     # Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat
     using .MaterialParameters.HeatCapacity

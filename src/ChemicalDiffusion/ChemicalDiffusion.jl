@@ -17,9 +17,11 @@ export SetChemicalDiffusion,
 # load collection of chemical diffusion data
 include("Data/Rutile/Rutile.jl")
 using .Rutile
+include("Data/Garnet/Garnet.jl")
+using .Garnet
 
 # Exported modules of chemical diffusion data
-export Rutile
+export Rutile, Garnet
 
 
 abstract type AbstractChemicalDiffusion{T} <: AbstractMaterialParam end
@@ -30,7 +32,7 @@ abstract type AbstractChemicalDiffusion{T} <: AbstractMaterialParam end
 @inline precision(::AbstractChemicalDiffusion{T}) where {T} = T
 
 """
-    DiffusionData(; Name, Mineral, Formula, Species, D0, D0_2σ, Ea, Ea_2σ, ΔV, ΔV_2σ, T_range, P0, Orientation, Crystallography, Buffer)
+    DiffusionData(; Name, Mineral, Formula, Species, D0, D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, T_range, P0, Orientation, Crystallography, Buffer)
 
 Defines the diffusion data for the chemical diffusion of a given phase and species from an experiment.
 
@@ -56,11 +58,11 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9} <: AbstractChemicalD
     Buffer::Ptr{UInt8}  # Buffer condition (e.g., NNO) during the experiment
     Fluid::Ptr{UInt8}  # Fluid condition (e.g., anhydrous) during the experiment
     D0::GeoUnit{T, U1} # pre-exponential factor
-    D0_2σ::GeoUnit{T, U2} # uncertainty at 2σ of the pre-exponential factor
+    D0_1σ::GeoUnit{T, U2} # uncertainty at 2σ of the pre-exponential factor
     Ea::GeoUnit{T, U3} # activation energy
-    Ea_2σ::GeoUnit{T, U4} # uncertainty at 2σ of the activation energy
+    Ea_1σ::GeoUnit{T, U4} # uncertainty at 2σ of the activation energy
     ΔV::GeoUnit{T, U5} # activation volume
-    ΔV_2σ::GeoUnit{T, U6} # uncertainty at 2σ of the activation volume
+    ΔV_1σ::GeoUnit{T, U6} # uncertainty at 2σ of the activation volume
     R::GeoUnit{T, U7}  # gas constant
     T_range_min::GeoUnit{T, U8}  # minimum temperature of the T_range
     T_range_max::GeoUnit{T, U8}  # maximum temperature of the T_range
@@ -76,11 +78,11 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9} <: AbstractChemicalD
             Buffer = "Unknown",  # Buffer condition (e.g., NNO) during the experiment
             Fluid = "Unknown",  # Fluid condition (e.g., anhydrous) during the experiment
             D0 = 0.0m^2 / s,  # pre-exponential factor
-            D0_2σ = 0.0m^2 / s,  # uncertainty at 2σ of the pre-exponential factor
+            D0_1σ = 0.0m^2 / s,  # uncertainty at 2σ of the pre-exponential factor
             Ea = 0.0J / mol,  # activation energy
-            Ea_2σ = 0.0J / mol,  # uncertainty at 2σ of the activation energy
+            Ea_1σ = 0.0J / mol,  # uncertainty at 2σ of the activation energy
             ΔV = 0.0cm^3 / mol,  # activation volume
-            ΔV_2σ = 0.0cm^3 / mol,  # uncertainty at 2σ of the activation volume
+            ΔV_1σ = 0.0cm^3 / mol,  # uncertainty at 2σ of the activation volume
             R = Unitful.R,  # gas constant
             T_range_min = 0.0K,  # minimum temperature of the T_range
             T_range_max = 0.0K,  # maximum temperature of the T_range
@@ -89,11 +91,11 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9} <: AbstractChemicalD
 
         # Convert to GeoUnits
         D0U = convert(GeoUnit, D0)
-        D0_2σU = convert(GeoUnit, D0_2σ)
+        D0_1σU = convert(GeoUnit, D0_1σ)
         EaU = convert(GeoUnit, Ea)
-        Ea_2σU = convert(GeoUnit, Ea_2σ)
+        Ea_1σU = convert(GeoUnit, Ea_1σ)
         ΔVU = convert(GeoUnit, ΔV)
-        ΔV_2σU = convert(GeoUnit, ΔV_2σ)
+        ΔV_1σU = convert(GeoUnit, ΔV_1σ)
         RU = convert(GeoUnit, R)
         T_range_minU = convert(GeoUnit, T_range_min)
         T_range_maxU = convert(GeoUnit, T_range_max)
@@ -101,11 +103,11 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9} <: AbstractChemicalD
         # Extract struct types
         T = typeof(D0U).types[1]
         U1 = typeof(D0U).types[2]
-        U2 = typeof(D0_2σU).types[2]
+        U2 = typeof(D0_1σU).types[2]
         U3 = typeof(EaU).types[2]
-        U4 = typeof(Ea_2σU).types[2]
+        U4 = typeof(Ea_1σU).types[2]
         U5 = typeof(ΔVU).types[2]
-        U6 = typeof(ΔV_2σU).types[2]
+        U6 = typeof(ΔV_1σU).types[2]
         U7 = typeof(RU).types[2]
         U8 = typeof(T_range_minU).types[2]
         U9 = typeof(P0U).types[2]
@@ -120,13 +122,13 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9} <: AbstractChemicalD
 
         # Create struct
         return new{T, U1, U2, U3, U4, U5, U6, U7, U8, U9}(
-            name, mineral, formula, species, orientation, crystallography, buffer, fluid, D0U, D0_2σU, EaU, Ea_2σU, ΔVU, ΔV_2σU, RU, T_range_minU, T_range_maxU, P0U
+            name, mineral, formula, species, orientation, crystallography, buffer, fluid, D0U, D0_1σU, EaU, Ea_1σU, ΔVU, ΔV_1σU, RU, T_range_minU, T_range_maxU, P0U
         )
     end
 end
 
 function DiffusionData(
-        Name, Mineral, Formula, Species, Orientation, Crystallography, Buffer, Fluid, D0, D0_2σ, Ea, Ea_2σ, ΔV, ΔV_2σ, R, T_range_min, T_range_max, P0,
+        Name, Mineral, Formula, Species, Orientation, Crystallography, Buffer, Fluid, D0, D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, R, T_range_min, T_range_max, P0,
     )
     return DiffusionData(;
         Name = Name,
@@ -138,11 +140,11 @@ function DiffusionData(
         Buffer = Buffer,
         Fluid = Fluid,
         D0 = D0,
-        D0_2σ = D0_2σ,
+        D0_1σ = D0_1σ,
         Ea = Ea,
-        Ea_2σ = Ea_2σ,
+        Ea_1σ = Ea_1σ,
         ΔV = ΔV,
-        ΔV_2σ = ΔV_2σ,
+        ΔV_1σ = ΔV_1σ,
         R = R,
         T_range_min = T_range_min,
         T_range_max = T_range_max,
@@ -215,16 +217,16 @@ export AbstractChemicalDiffusion,
 function SetChemicalDiffusion(
         name::F;
         D0 = nothing,
-        D0_2σ = nothing,
+        D0_1σ = nothing,
         Ea = nothing,
-        Ea_2σ = nothing,
+        Ea_1σ = nothing,
         ΔV = nothing,
-        ΔV_2σ = nothing,
+        ΔV_1σ = nothing,
         T_range_min = nothing,
         T_range_max = nothing,
         P0 = nothing,
     ) where {F}
-    kwargs = (; D0, D0_2σ, Ea, Ea_2σ, ΔV, ΔV_2σ, T_range_min, T_range_max, P0)
+    kwargs = (; D0, D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, T_range_min, T_range_max, P0)
     return Transform_ChemicalDiffusion(name, kwargs)
 end
 
@@ -232,16 +234,16 @@ function SetChemicalDiffusion(
         name::F,
         CharDim::GeoUnits{T};
         D0 = nothing,
-        D0_2σ = nothing,
+        D0_1σ = nothing,
         Ea = nothing,
-        Ea_2σ = nothing,
+        Ea_1σ = nothing,
         ΔV = nothing,
-        ΔV_2σ = nothing,
+        ΔV_1σ = nothing,
         T_range_min = nothing,
         T_range_max = nothing,
         P0 = nothing,
     ) where {F, T <: Union{GEO, SI}}
-    kwargs = (; D0, D0_2σ, Ea, Ea_2σ, ΔV, ΔV_2σ, T_range_min, T_range_max, P0)
+    kwargs = (; D0, D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, T_range_min, T_range_max, P0)
     return nondimensionalize(Transform_ChemicalDiffusion(name, kwargs), CharDim)
 end
 
@@ -263,21 +265,21 @@ end
 function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion)
 
     D0 = Value(pp.D0)
-    D0_2σ = Value(pp.D0_2σ)
+    D0_1σ = Value(pp.D0_1σ)
     Ea = Value(pp.Ea)
-    Ea_2σ = Value(pp.Ea_2σ)
+    Ea_1σ = Value(pp.Ea_1σ)
     ΔV = Value(pp.ΔV)
-    ΔV_2σ = Value(pp.ΔV_2σ)
+    ΔV_1σ = Value(pp.ΔV_1σ)
     T_range_min = Value(pp.T_range_min)
     T_range_max = Value(pp.T_range_max)
     P0 = Value(pp.P0)
 
     D0_SI = uconvert(m^2 / s, D0)
-    D0_2σ_SI = uconvert(m^2 / s, D0_2σ)
+    D0_1σ_SI = uconvert(m^2 / s, D0_1σ)
     Ea_SI = uconvert(J / mol, pp.Ea)
-    Ea_2σ_SI = uconvert(J / mol, pp.Ea_2σ)
+    Ea_1σ_SI = uconvert(J / mol, pp.Ea_1σ)
     ΔV_SI = uconvert(m^3 / mol, pp.ΔV)
-    ΔV_2σ_SI = uconvert(m^3 / mol, pp.ΔV_2σ)
+    ΔV_1σ_SI = uconvert(m^3 / mol, pp.ΔV_1σ)
     T_range_min_SI = uconvert(K, T_range_min)
     T_range_max_SI = uconvert(K, T_range_max)
     P0_SI = uconvert(Pa, P0)
@@ -288,9 +290,9 @@ function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion)
         Mineral = unsafe_string(pp.Mineral),
         Formula = unsafe_string(pp.Formula),
         Species = unsafe_string(pp.Species),
-        D0 = D0_SI, D0_2σ = D0_2σ_SI,
-        Ea = Ea_SI, Ea_2σ = Ea_2σ_SI,
-        ΔV = ΔV_SI, ΔV_2σ = ΔV_2σ_SI,
+        D0 = D0_SI, D0_1σ = D0_1σ_SI,
+        Ea = Ea_SI, Ea_1σ = Ea_1σ_SI,
+        ΔV = ΔV_SI, ΔV_1σ = ΔV_1σ_SI,
         T_range_min_SI = T_range_min_SI,
         T_range_max_SI = T_range_max_SI,
         P0 = P0_SI,
@@ -308,24 +310,24 @@ function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion, kwargs::Name
     f(a, b) = Value(GeoUnit(a))
     f(::Nothing, b) = Value(b)
 
-    (; D0, D0_2σ, Ea, Ea_2σ, ΔV, ΔV_2σ, T_range_min, T_range_max, P0) = kwargs
+    (; D0, D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, T_range_min, T_range_max, P0) = kwargs
 
     D0_new = f(D0, pp.D0)
-    D0_2σ_new = f(D0_2σ, pp.D0_2σ)
+    D0_1σ_new = f(D0_1σ, pp.D0_1σ)
     Ea_new = f(Ea, pp.Ea)
-    Ea_2σ_new = f(Ea_2σ, pp.Ea_2σ)
+    Ea_1σ_new = f(Ea_1σ, pp.Ea_1σ)
     ΔV_new = f(ΔV, pp.ΔV)
-    ΔV_2σ_new = f(ΔV_2σ, pp.ΔV_2σ)
+    ΔV_1σ_new = f(ΔV_1σ, pp.ΔV_1σ)
     T_range_min_new = f(T_range_min, pp.T_range_min)
     T_range_max_new = f(T_range_max, pp.T_range_max)
     P0_new = f(P0, pp.P0)
 
     D0_SI = uconvert(m^2 / s, D0_new)
-    D0_2σ_SI = uconvert(m^2 / s, D0_2σ_new)
+    D0_1σ_SI = uconvert(m^2 / s, D0_1σ_new)
     Ea_SI = uconvert(J / mol, Ea_new)
-    Ea_2σ_SI = uconvert(J / mol, Ea_2σ_new)
+    Ea_1σ_SI = uconvert(J / mol, Ea_1σ_new)
     ΔV_SI = uconvert(m^3 / mol, ΔV_new)
-    ΔV_2σ_SI = uconvert(m^3 / mol, ΔV_2σ_new)
+    ΔV_1σ_SI = uconvert(m^3 / mol, ΔV_1σ_new)
     T_range_min_SI = uconvert(K, T_range_min_new)
     T_range_max_SI = uconvert(K, T_range_max_new)
     P0_SI = uconvert(Pa, P0_new)
@@ -335,9 +337,9 @@ function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion, kwargs::Name
         Mineral = unsafe_string(pp.Mineral),
         Formula = unsafe_string(pp.Formula),
         Species = unsafe_string(pp.Species),
-        D0 = D0_SI, D0_2σ = D0_2σ_SI,
-        Ea = Ea_SI, Ea_2σ = Ea_2σ_SI,
-        ΔV = ΔV_SI, ΔV_2σ = ΔV_2σ_SI,
+        D0 = D0_SI, D0_1σ = D0_1σ_SI,
+        Ea = Ea_SI, Ea_1σ = Ea_1σ_SI,
+        ΔV = ΔV_SI, ΔV_1σ = ΔV_1σ_SI,
         T_range_min = T_range_min_SI,
         T_range_max = T_range_max_SI,
         P0 = P0_SI,

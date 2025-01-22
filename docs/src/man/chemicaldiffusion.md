@@ -5,10 +5,17 @@ Some routines and experimental data for chemical diffusion in minerals and phase
 ## Methods
 The following diffusion parameters are implemented:
 
-- Hf in Rutile:
+- Rutile:
 ```@docs
 GeoParams.Rutile.Rt_Hf_Cherniak2007_para_c
 GeoParams.Rutile.Rt_Hf_Cherniak2007_perp_c
+```
+
+- Garnet:
+```@docs
+GeoParams.Garnet.Grt_Fe_Chakraborty1992
+GeoParams.Garnet.Grt_Mg_Chakraborty1992
+GeoParams.Garnet.Grt_Mn_Chakraborty1992
 ```
 
 ## Computational routines

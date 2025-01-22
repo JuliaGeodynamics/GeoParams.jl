@@ -32,19 +32,6 @@ using GeoParams
     compute_D!(D, Hf_Rt_para; T = T, P = zeros(size(T)))
     @test D[1] ≈ 1.06039e-21 atol = 1.0e-24
 
-    # test experimental data with literature values
-
-    # Benchmark Rutile Hf data from Cherniak 2007 (HD 15/01/25)
-    Hf_Rt_para = Rutile.Rt_Hf_Cherniak2007_para_c
-    Hf_Rt_para = SetChemicalDiffusion(Hf_Rt_para)
-    D = ustrip(compute_D(Hf_Rt_para, T = 1273.15K))
-    @test D ≈ 1.06039e-21 atol = 1.0e-24
-
-    Hf_Rt_perp = Rutile.Rt_Hf_Cherniak2007_perp_c
-    Hf_Rt_perp = SetChemicalDiffusion(Hf_Rt_perp)
-    D = ustrip(compute_D(Hf_Rt_perp, T = 1273.15K))
-    @test D ≈ 1.2156e-21 atol = 1.0e-24
-
     # test SetMaterialParams
     phase = SetMaterialParams(
         Name = "Viscous Matrix",
@@ -62,5 +49,46 @@ using GeoParams
     )
 
     @test phase.ChemDiffusion[1].D0.val ≈ 9.099999999999998
+
+    # test experimental data with literature values
+
+    # -------------------------- Rutile --------------------------
+
+    # Benchmark Hf data from Cherniak 2007 (HD 15/01/25)
+    Hf_Rt_para = Rutile.Rt_Hf_Cherniak2007_para_c
+    Hf_Rt_para = SetChemicalDiffusion(Hf_Rt_para)
+    D = ustrip(compute_D(Hf_Rt_para, T = 1273.15K))
+    @test D ≈ 1.06039e-21 atol = 1.0e-24
+
+    Hf_Rt_perp = Rutile.Rt_Hf_Cherniak2007_perp_c
+    Hf_Rt_perp = SetChemicalDiffusion(Hf_Rt_perp)
+    D = ustrip(compute_D(Hf_Rt_perp, T = 1273.15K))
+    @test D ≈ 1.2156e-21 atol = 1.0e-24
+
+    # Benchmark Zr data from Cherniak 2007 (HD 20/01/25)
+    Zr_Rt = Rutile.Rt_Zr_Cherniak2007_para_c
+    Zr_Rt = SetChemicalDiffusion(Zr_Rt)
+    D = ustrip(compute_D(Zr_Rt, T = 1273.15K))
+    @test D ≈ 1.0390187e-21 atol = 1.0e-24
+
+    # -------------------------- Garnet --------------------------
+
+    # Benchmark Fe data from Chakraborty 1992 (HD 18/01/25)
+    Fe_Grt = Garnet.Grt_Fe_Chakraborty1992
+    Fe_Grt = SetChemicalDiffusion(Fe_Grt)
+    D = ustrip(uconvert(cm^2 / s, compute_D(Fe_Grt, T = 1373.15K)))
+    @test D ≈ 2.137456e-14 atol = 1.0e-18
+
+    # Benchmark Mg data from Chakraborty 1992 (HD 18/01/25)
+    Mg_Grt = Garnet.Grt_Mg_Chakraborty1992
+    Mg_Grt = SetChemicalDiffusion(Mg_Grt)
+    D = ustrip(uconvert(cm^2 / s, compute_D(Mg_Grt, T = 1373.15K)))
+    @test D ≈ 1.65677e-14 atol = 1.0e-18
+
+    # Benchmark Mn data from Chakraborty 1992 (HD 18/01/25)
+    Mn_Grt = Garnet.Grt_Mn_Chakraborty1992
+    Mn_Grt = SetChemicalDiffusion(Mn_Grt)
+    D = ustrip(uconvert(cm^2 / s, compute_D(Mn_Grt, T = 1373.15K)))
+    @test D ≈ 1.168571e-13 atol = 1.0e-18
 
 end
