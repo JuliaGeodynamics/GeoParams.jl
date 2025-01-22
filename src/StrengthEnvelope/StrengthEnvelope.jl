@@ -62,13 +62,13 @@ Sets a halfspace temperature structure in plate
 Parameters:
 - Tsurface: surface temperature [C]
 - Tmantle:  mantle temperature [C]
-- Age:      Thermal Age of plate [Myrs]
+- Age:      Thermal Age of plate [Myr]
 - Adiabat:  Mantle Adiabat [K/km]
 """
 @with_kw_noshow struct HalfspaceCoolTemp <: AbstractTempStruct
     Tsurface = 0        # top T
     Tmantle  = 1350     # bottom T
-    Age      = 60       # thermal age of plate [in Myrs]
+    Age      = 60       # thermal age of plate [in Myr]
     Adiabat  = 0        # Adiabatic gradient in K/km
     kappa    = 1e-6     # thermal diffusivity
 end

@@ -942,7 +942,7 @@ function PlotStressTime_0D(
     ax = Axis(
         fig[1, 1];
         ylabel=L"Deviatoric stress $\tau_{II}$ [MPa]",
-        xlabel="Time [Myrs]",
+        xlabel="Time [Myr]",
         xlabelsize=labelsize,
         ylabelsize=labelsize,
         title=title,
@@ -1224,7 +1224,7 @@ function PlotPressureStressTime_0D(
     if t_scale == 1.0
         xlabel_str = "Time";
     else
-        xlabel_str = "Time [Myrs]";
+        xlabel_str = "Time [Myr]";
     end
 
     ax1 = Axis(

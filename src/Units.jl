@@ -16,21 +16,17 @@ using GeoParams:
     AbstractPhaseDiagramsStruct,
     PerpleX_LaMEM_Diagram
 
-# Define additional units that are useful in geodynamics
-@unit Myrs "Myrs" MillionYears 1000000u"yr" false
 
-function __init__()
-    return Unitful.register(Units)
-end
-
-Unitful.register(Units)
+# to remove at some point
+@warn "`Myrs` as a unit is deprecated. Use `Myr` instead."
+const Myrs = u"Myr"
 
 # Define a number of useful units
 const km = u"km"
 const m = u"m"
 const cm = u"cm"
 const mm = u"mm"
-const Myrs = u"Myrs"
+const Myr = u"Myr"
 const yr = u"yr"
 const s = u"s"
 const kg = u"kg"
@@ -54,7 +50,8 @@ export km,
     cm,
     mm,
     μm,
-    Myrs,
+    Myrs,  # to remove at some point
+    Myr,
     yr,
     s,
     GPa,
@@ -317,7 +314,7 @@ end
     temperature = 1               #   Characteristic temperature  [C or K]
     length = 1               #   Characteristic length unit  [km, m or -]
     stress = 1               #   Characteristic stress unit  [MPa, Pa or -]
-    time = 1               #   Characteristic time unit    [Myrs, s pr -]
+    time = 1               #   Characteristic time unit    [Myr, s pr -]
     viscosity = 1
 
     # primary characteristic units
@@ -356,7 +353,7 @@ end
 
     # Helpful
     SecYear = 3600 * 24 * 365.25
-    Myrs = 1e6
+    Myr = 1e6
     cmYear = SecYear * 100     # to transfer m/s -> cm/yr
 end
 
@@ -365,7 +362,7 @@ end
 
 Creates a non-dimensionalization object using GEO units.
 
-GEO units implies that upon dimensionalization, `time` will be in `Myrs`, `length` in `km`, stress in `MPa`, etc.
+GEO units implies that upon dimensionalization, `time` will be in `Myr`, `length` in `km`, stress in `MPa`, etc.
 which is more convenient for typical geodynamic simulations than SI units
 The characteristic values given as input can be in arbitrary units (`km` or `m`), provided the unit is specified.
 
@@ -375,7 +372,7 @@ julia> CharUnits = GEO_units()
 Employing GEO units
 Characteristic values:
          length:      1000 km
-         time:        0.3169 Myrs
+         time:        0.3169 Myr
          stress:      10 MPa
          temperature: 1000.0 °C
 julia> CharUnits.velocity
@@ -387,7 +384,7 @@ julia> CharUnits = GEO_units(length=10km)
 Employing GEO units
 Characteristic values:
          length:      10 km
-         time:        0.3169 Myrs
+         time:        0.3169 Myr
          stress:      10 MPa
          temperature: 1000.0 °C
 ```
@@ -415,7 +412,7 @@ function GEO_units(; length=1000km, temperature=1000C, stress=10MPa, viscosity=1
     Le_SI = uconvert(m, Le)
     Sigma_SI = uconvert(Pa, Sigma)
     Time_SI = Eta / Sigma_SI
-    t = uconvert(Myrs, Time_SI)
+    t = uconvert(Myr, Time_SI)
 
     return GeoUnits{GEO}(;
         length=Le,
