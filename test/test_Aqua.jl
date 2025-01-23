@@ -35,7 +35,7 @@ end
 
 @testset "Compats" begin
     @test !Aqua.test_deps_compat(
-        GeoParams; 
+        GeoParams;
         check_julia = true,
         check_extras = false,
         check_weakdeps = true,

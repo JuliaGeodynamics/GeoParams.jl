@@ -32,7 +32,7 @@ end
 
 # tensor averages in staggered grids
 
-@inline average_pow2(x::Union{NTuple{N}, SVector{N}}) where N = mapreduce(x -> x^2, +, x) / N
+@inline average_pow2(x::Union{NTuple{N}, SVector{N}}) where {N} = mapreduce(x -> x^2, +, x) / N
 
 @inline staggered_tensor_average(x) = x
 function staggered_tensor_average(x::NTuple{N, Union{Any, NTuple{4}}}) where {N}
@@ -42,7 +42,7 @@ function staggered_tensor_average(x::NTuple{N, Union{Any, NTuple{4}}}) where {N}
     end
 end
 
-@inline _staggered_tensor_average(x::NTuple{N}) where N = sum(x) / N
+@inline _staggered_tensor_average(x::NTuple{N}) where {N} = sum(x) / N
 @inline _staggered_tensor_average(x::Number) = x
 
 # Methods to compute the invariant of a tensor
