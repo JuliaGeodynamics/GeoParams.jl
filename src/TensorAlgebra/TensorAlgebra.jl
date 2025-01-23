@@ -32,7 +32,7 @@ end
 
 # tensor averages in staggered grids
 
-@inline average_pow2(x::Union{NTuple, SVector}) = mapreduce(x -> x^2, +, x) / N
+@inline average_pow2(x::Union{NTuple{N}, SVector{N}}) where N = mapreduce(x -> x^2, +, x) / N
 
 @inline staggered_tensor_average(x) = x
 function staggered_tensor_average(x::NTuple{N, Union{Any, NTuple{4}}}) where {N}
@@ -42,18 +42,18 @@ function staggered_tensor_average(x::NTuple{N, Union{Any, NTuple{4}}}) where {N}
     end
 end
 
-@inline _staggered_tensor_average(x::NTuple) = sum(x) / N
+@inline _staggered_tensor_average(x::NTuple{N}) where N = sum(x) / N
 @inline _staggered_tensor_average(x::Number) = x
 
 # Methods to compute the invariant of a tensor
 
 @inline function doubledot(A::T, B::T) where {T <: Union{SVector{3}, NTuple{3}}}
-    return (A[1] * B[1] + A[2] * B[2]) + T(2.0) * (A[3] * B[3])
+    return (A[1] * B[1] + A[2] * B[2]) + 2 * (A[3] * B[3])
 end
 
 @inline function doubledot(A::T, B::T) where {T <: Union{SVector{6}, NTuple{6}}}
     return (A[1] * B[1] + A[2] * B[2] + A[3] * B[3]) +
-        T(2.0) * (A[4] * B[4] + A[5] * B[5] + A[6] * B[6])
+        2 * (A[4] * B[4] + A[5] * B[5] + A[6] * B[6])
 end
 
 @inline doubledot(A::SMatrix, B::SMatrix) = sum(A .* B)
