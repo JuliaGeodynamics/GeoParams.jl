@@ -12,7 +12,7 @@ using InternedStrings
 end
 
 # Find max element in a tuple
-@generated function find_max_tuple(x::NTuple{N, T}) where {N, T}
+@generated function find_max_tuple(x::NTuple{N, Any}) where {N}
     return quote
         max = x[1]
         Base.Cartesian.@nexprs $N i -> max = (i > 1 && x[i] > max) ? x[i] : max
@@ -88,6 +88,7 @@ end
     ) where {N, NT, F <: Function}
     Base.@_inline_meta
     return quote
+        @inline
         val = 0.0
         Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i], args[id_args[i]])
         return val
@@ -97,6 +98,7 @@ end
 @generated function nphase(f::F, phase::Integer, v::NTuple{N, AbstractMaterialParamsStruct}) where {N, F <: Function}
     Base.@_inline_meta
     return quote
+        @inline
         Base.Cartesian.@nexprs $N i -> @inbounds v[i].Phase === phase && return f(v[i])
         return 0.0
     end
@@ -105,6 +107,7 @@ end
 @generated function nphase_ratio(f::F, phase_ratio::Union{SVector{N, T}, NTuple{N, T}}, v::NTuple{N, AbstractMaterialParamsStruct}) where {N, F, T}
     Base.@_inline_meta
     return quote
+        @inline
         val = 0.0
         Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i]) * phase_ratio[i]
         return val

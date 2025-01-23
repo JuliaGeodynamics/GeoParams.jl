@@ -8,14 +8,14 @@ using StaticArrays
 # with tuple & vector - apply for all phases in MatParam
 # function compute_param!(
 #     fn::F, rho::AbstractVector, MatParam::NTuple{N,AbstractMaterialParamsStruct}, args
-# ) where {F,N}
+# ) where {F<:Function,N}
 #     return rho .= map(x -> fn(x, P, T), MatParam)
 # end
 
 # each individual calculation
 # function compute_param(
 #     fn::F, MatParam::NTuple{N,AbstractMaterialParamsStruct}, args
-# ) where {F,N}
+# ) where {F<:Function,N}
 #     return map(x -> fn(x, args), MatParam)
 # end
 
@@ -25,7 +25,7 @@ using StaticArrays
 # performs computation given a single Phase
 @generated function compute_param(
         fn::F, MatParam::NTuple{N, AbstractMaterialParamsStruct}, Phase::Int64, args::Vararg{Any, NA}
-    ) where {F, N, NA}
+    ) where {F <: Function, N, NA}
     return quote
         Base.@_inline_meta
         Base.Cartesian.@nexprs $N i ->
@@ -36,7 +36,7 @@ end
 
 @generated function compute_param(
         fn::F, MatParam::NTuple{N, AbstractMaterialParamsStruct}, phase_ratios::Union{SVector{N, T}, NTuple{N, T}}, args::Vararg{Any, NA}
-    ) where {F, N, T, NA}
+    ) where {F <: Function, N, T, NA}
     return quote
         Base.@_inline_meta
         x = zero($T)
@@ -48,17 +48,17 @@ end
 
 @inline function compute_param(
         fn::F, MatParam::AbstractVector{AbstractMaterialParamsStruct}, Phase::Union{SArray, Int64}, args::Vararg{Any, NA}
-    ) where {F, NA}
+    ) where {F <: Function, NA}
     return compute_param(fn, Tuple(MatParam), Phase, args...)
 end
 
-@inline function compute_param(fn::F, MatParam::AbstractMaterialParam, args::Vararg{Any, NA}) where {F, NA}
+@inline function compute_param(fn::F, MatParam::Union{AbstractMaterialParamsStruct, AbstractMaterialParam}, args::Vararg{Any, NA}) where {F <: Function, NA}
     return fn(MatParam, args...)
 end
 
-@inline function compute_param(fn::F, MatParam::AbstractMaterialParamsStruct, args::Vararg{Any, NA}) where {F, NA}
-    return fn(MatParam, args...)
-end
+# @inline function compute_param(fn::F, MatParam::AbstractMaterialParamsStruct, args::Vararg{Any, NA}) where {F <: Function, NA}
+#     return fn(MatParam, args...)
+# end
 
 @inline function compute_param!(
         fn::F, rho::AbstractArray, MatParam::AbstractMaterialParam, args
@@ -73,11 +73,11 @@ end
 
 @inline function compute_param!(
         fn::F,
-        rho::AbstractArray{T, ndim},
+        rho::AbstractArray,
         MatParam::NTuple{N, AbstractMaterialParamsStruct},
-        Phases::AbstractArray{Int64, ndim},
+        Phases::AbstractArray{Int64},
         args,
-    ) where {F, T, ndim, N}
+    ) where {F <: Function, N}
     return @inbounds for I in eachindex(Phases)
         k = keys(args)
         v = getindex.(values(args), I)      # works for scalars & arrays thanks to overload (above)
@@ -88,11 +88,11 @@ end
 
 function compute_param!(
         fn::F,
-        rho::AbstractArray{T, ndim},
+        rho::AbstractArray,
         MatParam::Vector{AbstractMaterialParamsStruct},
-        Phases::AbstractArray{Int64, ndim},
+        Phases::AbstractArray,
         args,
-    ) where {F, T, ndim}
+    ) where {F <: Function}
     return compute_param!(fn, rho, Tuple(MatParam), Phases, args)
 end
 
@@ -104,7 +104,7 @@ function compute_param!(
         MatParam::NTuple{K, AbstractMaterialParamsStruct},
         PhaseRatio::AbstractArray{_T, M},
         args,
-    ) where {F, _T, N, M, K}
+    ) where {F <: Function, _T, N, M, K}
     if M != (N + 1)
         error("The PhaseRatios array should have one dimension more than the other arrays")
     end
@@ -126,8 +126,8 @@ end
 #Multiplies parameter with the fraction of a phase
 @generated function compute_param_times_frac(
         fn::F, PhaseRatios::Union{NTuple{N, T}, SVector{N, T}}, MatParam::NTuple{N, AbstractMaterialParamsStruct}, argsi
-    ) where {F, N, T}
-    # # Unrolled dot product
+    ) where {F <: Function, N, T}
+    # Unrolled dot product
     return quote
         val = zero($T)
         Base.Cartesian.@nexprs $N i -> val += @inbounds PhaseRatios[i] * fn(MatParam[i], argsi)

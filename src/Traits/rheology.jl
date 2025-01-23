@@ -38,6 +38,7 @@ struct NonPlasticRheologyTrait <: RheologyTrait end
 # compares two rheologies and return linear trait only and if only both are linear
 @inline isviscoelastic(::RheologyTrait, ::ElasticRheologyTrait) = ElasticRheologyTrait()
 @inline isviscoelastic(::ElasticRheologyTrait, ::RheologyTrait) = ElasticRheologyTrait()
+@inline isviscoelastic(::ElasticRheologyTrait, ::ElasticRheologyTrait) = ElasticRheologyTrait()
 @inline isviscoelastic(::RheologyTrait, ::RheologyTrait) = NonElasticRheologyTrait()
 @inline isviscoelastic(v1::Union{AbstractConstitutiveLaw, AbstractPlasticity}, v2::Union{AbstractConstitutiveLaw, AbstractPlasticity}) = isviscoelastic(isviscoelastic(v1), isviscoelastic(v2))
 

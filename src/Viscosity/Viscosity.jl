@@ -74,7 +74,7 @@ end
 end
 
 # For multi phases given phase ratios
-@generated function compute_viscosity_εII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1, T}, SVector{N1, T}}, args::Vararg{Any, N2}) where {N1, N2, T}
+@generated function compute_viscosity_εII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1}, SVector{N1}}, args::Vararg{Any, N2}) where {N1, N2}
     return quote
         Base.@_inline_meta
         val = 0.0
@@ -83,7 +83,7 @@ end
     end
 end
 
-@generated function compute_viscosity_τII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1, T}, SVector{N1, T}}, args::Vararg{Any, N2}) where {N1, N2, T}
+@generated function compute_viscosity_τII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1}, SVector{N1}}, args::Vararg{Any, N2}) where {N1, N2}
     return quote
         Base.@_inline_meta
         val = 0.0
@@ -244,7 +244,7 @@ end
     end
 end
 
-@generated function compute_elasticviscosity(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1, T}, SVector{N1, T}}, args::Vararg{Any, N2}) where {N1, N2, T}
+@generated function compute_elasticviscosity(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1}, SVector{N1}}, args::Vararg{Any, N2}) where {N1, N2}
     return quote
         Base.@_inline_meta
         val = 0.0

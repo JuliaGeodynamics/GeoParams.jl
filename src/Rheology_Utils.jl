@@ -25,7 +25,7 @@ end
 This performs a 0D constant strainrate experiment for a composite rheology structure `v`, and a given, constant, strainrate tensor `ε` and rheology arguments `args`.
 The initial deviatoric stress tensor `τ`, the time range `t` and the number of timesteps `nt` can be modified 
 """
-function time_τII_0D(v::Union{CompositeRheology, Tuple, Parallel}, ε::NTuple{N, T}, args; t = (0.0, 100.0), τ0::NTuple{N, T} = Tuple(zeros(N)), nt::Int64 = 100, verbose = true) where {N, T}
+function time_τII_0D(v::Union{CompositeRheology, Tuple, Parallel}, ε::NTuple{N}, args; t = (0.0, 100.0), τ0::NTuple{N} = Tuple(zeros(N)), nt::Int64 = 100, verbose = true) where {N}
     t_vec = range(t[1], t[2], length = nt)
     τII_vec = zero(t_vec)
     ε_vec = [ε for i in 1:nt]

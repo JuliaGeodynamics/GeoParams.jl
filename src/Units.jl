@@ -190,7 +190,7 @@ Base.isequal(x::GeoUnit, y::AbstractArray) = Base.isequal(x.val, y)
 Base.isequal(x::GeoUnit, y::GeoUnit) = Base.isequal(x.val, y.val)
 
 Base.convert(::Type{<:AbstractArray}, v::GeoUnit) = v.val
-Base.convert(::Type{<:Number}, v::GeoUnit) = v.val
+Base.convert(::Type{<:Real}, v::GeoUnit) = v.val
 Base.convert(::Type{GeoUnit}, v::Number) = GeoUnit(v)
 Base.convert(::Type{GeoUnit}, v::Int32) = GeoUnit(Float32(v))
 Base.convert(::Type{GeoUnit}, v::Int64) = GeoUnit(Float64(v))
@@ -592,9 +592,9 @@ nondimensionalize(param::Ptr{UInt8}, ::Nothing) = unsafe_string(param)
 
 # in case it is a unitful quantity
 function nondimensionalize(
-        param::Union{Unitful.Quantity{T, K, M}, AbstractArray{<:Quantity{T, K, M}}},
-        g::Union{GeoUnits{TYPE}, Nothing},
-    ) where {TYPE, T, K, M}
+        param::Union{Unitful.Quantity, AbstractArray{<:Quantity}},
+        g::Union{GeoUnits, Nothing},
+    )
     param_Geo = GeoUnit(param)
     result = nondimensionalize(param_Geo, g)
 
@@ -602,14 +602,14 @@ function nondimensionalize(
 end
 
 function nondimensionalize(
-        param::Union{Unitful.Quantity{T, K, M}, AbstractArray{<:Quantity{T, K, M}}},
+        param::Union{Unitful.Quantity, AbstractArray{<:Quantity}},
         g::Nothing,
-    ) where {T, K, M}
+    )
     @warn("The input parameter is not being nondimensionalized, as no characteristic units are given")
     return ustrip.(param)
 end
 
-function nondimensionalize(param::GeoUnit, g::Nothing)
+function nondimensionalize(param::GeoUnit, ::Nothing)
     @warn("The input parameter is not being nondimensionalized, as no characteristic units are given")
     return param
 end
@@ -630,18 +630,18 @@ end
 
 
 # If it is an array, but has no units we cannot know how to nondimensionalize it
-nondimensionalize(param::AbstractArray{<:Number}, g::GeoUnits{TYPE}) where {TYPE} = param
+nondimensionalize(param::AbstractArray{<:Number}, g::GeoUnits) = param
 
 function nondimensionalize(
-        param::AbstractArray{<:Quantity{T, K, M}},
-        g::GeoUnits{TYPE}
-    ) where {TYPE, T, K, M}
+        param::AbstractArray{<:Quantity},
+        g::GeoUnits
+    )
     param_Geo = GeoUnit.(param)
     result = map(p -> nondimensionalize(p, g), param_Geo)
     return UnitValue.(result)
 end
 
-function nondimensionalize(param::AbstractArray{<:Number}, g::Nothing)
+function nondimensionalize(param::AbstractArray{<:Number}, ::Nothing)
     @warn("The input parameter is not being nondimensionalized, as no characteristic units are given")
     return param
 end
@@ -652,8 +652,8 @@ end
 nondimensionalizes a tuple of parameters
 """
 function nondimensionalize(
-        param::NTuple{N, Union{Quantity, GeoUnit}}, g::Union{GeoUnits{TYPE}, Nothing}
-    ) where {N, TYPE}
+        param::NTuple{N, Union{Quantity, GeoUnit}}, g::Union{GeoUnits, Nothing}
+    ) where {N}
     return ntuple(Val(N)) do i
         Base.@_inline_meta
         nondimensionalize(param[i], g)
@@ -666,8 +666,8 @@ nondimensionalize(args...) = nondimensionalize(Tuple(args[1:(end - 1)]), args[en
 
 # This computes the characteristic value
 function compute_units(
-        param::GeoUnit{<:Union{T, AbstractArray{T}}, U}, g::GeoUnits{TYPE}
-    ) where {T, U, TYPE}
+        param::GeoUnit{<:Union{T, AbstractArray{T}}, U}, g::GeoUnits
+    ) where {T, U}
     dim = Unitful.dimension(param.unit)              # Basic SI units
     value::T = if dim == NoDims
         one(T)
@@ -690,8 +690,8 @@ Non-dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
 
 # """
 @generated function nondimensionalize(
-        MatParam::T, g::Union{GeoUnits{TYPE}, Nothing}
-    ) where {T <: AbstractMaterialParam, TYPE}
+        MatParam::T, g::Union{GeoUnits, Nothing}
+    ) where {T <: AbstractMaterialParam}
 
     Keys = fieldnames(MatParam)
     N = length(Keys)
@@ -719,8 +719,8 @@ end
 nondimensionalizes all fields within the Material Parameters structure that contain material parameters
 """
 @generated function nondimensionalize(
-        phase_mat::AbstractMaterialParamsStruct, g::Union{GeoUnits{TYPE}, Nothing}
-    ) where {TYPE}
+        phase_mat::AbstractMaterialParamsStruct, g::Union{GeoUnits, Nothing}
+    )
     params = fieldnames(phase_mat)
     N = length(params)
     return quote
@@ -743,10 +743,11 @@ end
 @inline _nondimensionalize_MatParam(field::AbstractPhaseDiagramsStruct, g) = PerpleX_LaMEM_Diagram(field.Name; CharDim = g)
 @inline _nondimensionalize_MatParam(field, g) = field
 
-@inline function nondimensionalize_MatParam(
+function nondimensionalize_MatParam(
         field::NTuple{N, AbstractMaterialParam}, phase_mat, param, g
     ) where {N}
     field_new = ntuple(Val(N)) do i
+        @inline
         _nondimensionalize_MatParam(field[i], g)
     end
     return set(phase_mat, Setfield.PropertyLens{param}(), field_new)
@@ -780,30 +781,29 @@ julia> v_dim     =   dimensionalize(v_ND, cm/yr, CharUnits)
 
 """
 function dimensionalize(
-        param_ND, param_dim::Unitful.FreeUnits, g::GeoUnits{TYPE}
-    ) where {TYPE}
+        param_ND, param_dim::Unitful.FreeUnits, g::GeoUnits
+    )
     char_val = compute_units(GeoUnit(1.0 * param_dim), g)         # Determine characteristic units
     param = uconvert.(param_dim, param_ND * char_val)
     return param
 end
 
 function dimensionalize(
-        param_ND, param_dim::Unitful.FreeUnits, g::Nothing
+        param_ND, ::Unitful.FreeUnits, ::Nothing
     )
     @warn("The input parameter is not being dimensionalized, as no characteristic units are given")
     return ustrip.(param_ND)
 end
 
-function dimensionalize(param_ND::GeoUnit{T, U}, g::GeoUnits{TYPE}) where {T, U, TYPE}
-    if isdimensional(param_ND) == false
-        char_val = compute_units(param_ND, g)                       # Determine characteristic units
-        val = uconvert.(param_ND.unit, param_ND.val * char_val)   # dimensionalize
-        param = GeoUnit{T, U}(ustrip.(val), param_ND.unit, true)   # store new value, but keep original dimensions
-
-        return param
+function dimensionalize(param_ND::GeoUnit{T, U}, g::GeoUnits) where {T, U}
+    param = if isdimensional(param_ND) == false
+        char_val = compute_units(param_ND, g)                   # Determine characteristic units
+        val = uconvert.(param_ND.unit, param_ND.val * char_val) # dimensionalize
+        GeoUnit{T, U}(ustrip.(val), param_ND.unit, true)        # store new value, but keep original dimensions
     else
-        return param_ND
+        param_ND
     end
+    return param
 end
 
 """
@@ -813,8 +813,8 @@ Dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
 
 """
 @generated function dimensionalize(
-        MatParam::AbstractMaterialParam, g::Union{GeoUnits{TYPE}, Nothing}
-    ) where {TYPE}
+        MatParam::AbstractMaterialParam, g::Union{GeoUnits, Nothing}
+    )
     fields = fieldnames(MatParam)
     N = length(fields)
     return quote
@@ -837,7 +837,7 @@ end
     return MatParam
 end
 
-@inline _dimensionalize(MatParam, ::T1, ::T2, ::T3) where {T1, T2, T3} = MatParam
+@inline _dimensionalize(MatParam, ::Any, ::Any, ::Any) = MatParam
 
 """
     Dimensionalize(phase_mat::MaterialParams, g::GeoUnits{TYPE})
@@ -845,8 +845,8 @@ end
 Dimensionalizes all fields within the Material Parameters structure that contain material parameters
 """
 @generated function dimensionalize(
-        phase_mat::AbstractMaterialParamsStruct, g::Union{GeoUnits{TYPE}, Nothing}
-    ) where {TYPE}
+        phase_mat::AbstractMaterialParamsStruct, g::Union{GeoUnits, Nothing}
+    )
     params = fieldnames(phase_mat)
     N = length(params)
     return quote
@@ -866,13 +866,13 @@ end
 @inline dimensionalize_MatParam(::Any, phase_mat, ::Vararg{Any, N}) where {N} = phase_mat
 
 @inline _dimensionalize_MatParam(field::AbstractMaterialParam, g) = dimensionalize(field, g)
-@inline _dimensionalize_MatParam(field, g) = field
+@inline _dimensionalize_MatParam(field, ::Any) = field
 
 @inline function dimensionalize_MatParam(
         field::NTuple{N, AbstractMaterialParam}, phase_mat, param, g
     ) where {N}
     field_new = ntuple(Val(N)) do i
-        Base.@_inline_meta
+        @inline
         _dimensionalize_MatParam(field[i], g)
     end
     return set(phase_mat, Setfield.PropertyLens{param}(), field_new)
@@ -919,7 +919,7 @@ function isDimensional(MatParam::AbstractMaterialParam)
 end
 
 # Define a view for the GEO_Units structure
-function show(io::IO, g::GeoUnits{TYPE}) where {TYPE}
+function show(io::IO, g::GeoUnits)
     return print(
         io,
         "Employing $TYPE units \n",

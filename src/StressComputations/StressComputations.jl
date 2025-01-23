@@ -166,11 +166,11 @@ This handles various staggered grid arrangements; if staggered components are gi
 """
 function compute_τij(
         v::NTuple{N1, AbstractMaterialParamsStruct},
-        εij::NTuple{N2, Union{T, NTuple{4, T}}},
+        εij::NTuple{N2, Union{Any, NTuple{4}}},
         args,
-        τij_old::NTuple{N2, Union{T1, NTuple{4, T1}}},
-        phases::NTuple{N2, Union{I, NTuple{4, I}}},
-    ) where {T, T1, N1, N2, I <: Integer}
+        τij_old::NTuple{N2, Union{Any, NTuple{4}}},
+        phases::NTuple{N2, Union{Integer, NTuple{4, Integer}}},
+    ) where {N1, N2}
 
     # Second invariant of effective strainrate (taking elasticity into account)
     ε_eff = effective_ε(εij, v, τij_old, args.dt, phases)

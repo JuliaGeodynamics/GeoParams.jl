@@ -32,40 +32,36 @@ end
 
 # tensor averages in staggered grids
 
-@inline average_pow2(x::Union{NTuple{N, T}, SVector{N, T}}) where {N, T} = mapreduce(x -> x^2, +, x) / N
+@inline average_pow2(x::Union{NTuple{N}, SVector{N}}) where {N} = mapreduce(x -> x^2, +, x) / N
 
 @inline staggered_tensor_average(x) = x
-function staggered_tensor_average(x::NTuple{N, Union{T, NTuple{4, T}}}) where {N, T}
+function staggered_tensor_average(x::NTuple{N, Union{Any, NTuple{4}}}) where {N}
     return ntuple(Val(N)) do i
         Base.@_inline_meta
         _staggered_tensor_average(x[i])
     end
 end
 
-@inline _staggered_tensor_average(x::NTuple{N, T}) where {N, T} = sum(x) / N
-@inline _staggered_tensor_average(x::T) where {T <: Number} = x
+@inline _staggered_tensor_average(x::NTuple{N}) where {N} = sum(x) / N
+@inline _staggered_tensor_average(x::Number) = x
 
 # Methods to compute the invariant of a tensor
 
-@inline function (:)(
-        A::Union{SVector{3, T}, NTuple{3, T}}, B::Union{SVector{3, T}, NTuple{3, T}}
-    ) where {T}
-    return (A[1] * B[1] + A[2] * B[2]) + T(2.0) * (A[3] * B[3])
+@inline function doubledot(A::T, B::T) where {T <: Union{SVector{3}, NTuple{3}}}
+    return (A[1] * B[1] + A[2] * B[2]) + 2 * (A[3] * B[3])
 end
 
-@inline function (:)(
-        A::Union{SVector{6, T}, NTuple{6, T}}, B::Union{SVector{6, T}, NTuple{6, T}}
-    ) where {T}
+@inline function doubledot(A::T, B::T) where {T <: Union{SVector{6}, NTuple{6}}}
     return (A[1] * B[1] + A[2] * B[2] + A[3] * B[3]) +
-        T(2.0) * (A[4] * B[4] + A[5] * B[5] + A[6] * B[6])
+        2 * (A[4] * B[4] + A[5] * B[5] + A[6] * B[6])
 end
 
-@inline (:)(A::SMatrix{M, M, T, N}, B::SMatrix{M, M, T, N}) where {M, N, T} = sum(A .* B)
+@inline doubledot(A::SMatrix, B::SMatrix) = sum(A .* B)
 
-@inline second_invariant(A::NTuple{N, T}) where {N, T} = √(0.5 * (A:A))
-@inline second_invariant(A::SMatrix) = √(0.5 * (A:A))
-@inline second_invariant(A::SVector) = √(0.5 * (A:A))
-@inline second_invariant(A::Matrix{T}) where {T} = √(0.5 * sum(Ai * Ai for Ai in A))
+@inline second_invariant(A::NTuple) = √(0.5 * doubledot(A, A))
+@inline second_invariant(A::SMatrix) = √(0.5 * doubledot(A, A))
+@inline second_invariant(A::SVector) = √(0.5 * doubledot(A, A))
+@inline second_invariant(A::Matrix) = √(0.5 * sum(Ai * Ai for Ai in A))
 # So that is differentiable...
 @inline second_invariant(xx, yy, xy) = √(0.5 * (xx^2 + yy^2) + xy^2)
 @inline second_invariant(xx, yy, zz, yz, xz, xy) = √(0.5 * (xx^2 + yy^2 + zz^2) + xy^2 + yz^2 + xz^2)
@@ -78,14 +74,14 @@ need to be mapped from cell center to cell vertex.  `Aii` is a tuple containinig
 terms of `A` at the i-th vertex, and `Axy` is a tuple that contains `A_xy` at the cell centers
 around the i-th vertex.
 """
-@inline function second_invariant_staggered(Aii::NTuple{2, T}, Axy::NTuple{4, T}) where {T}
+@inline function second_invariant_staggered(Aii::NTuple{2}, Axy::NTuple{4})
     return √(0.5 * (Aii[1]^2 + Aii[2]^2) + average_pow2(Axy))
 end
 
-@inline function second_invariant_staggered(Axx::T, Ayy::T, Axy::NTuple{4, T}) where {T}
+@inline function second_invariant_staggered(Axx, Ayy, Axy::NTuple{4})
     return second_invariant_staggered((Axx, Ayy), Axy)
 end
-@inline function second_invariant(Axx::T, Ayy::T, Axy::NTuple{4, T}) where {T}
+@inline function second_invariant(Axx, Ayy, Axy::NTuple{4})
     return second_invariant_staggered(Axx, Ayy, Axy)
 end
 
@@ -98,8 +94,8 @@ terms of `A` at the i-th vertex, and `Ayz`, `Axz`, and `Axy` are tuples that con
 at the cell centers around the i-th vertex.
 """
 @inline function second_invariant_staggered(
-        Aii::NTuple{3, T}, Ayz::NTuple{4, T}, Axz::NTuple{4, T}, Axy::NTuple{4, T}
-    ) where {T}
+        Aii::NTuple{3}, Ayz::NTuple{4}, Axz::NTuple{4}, Axy::NTuple{4}
+    )
     return √(
         0.5 * (Aii[1]^2 + Aii[2]^2 + Aii[3]^2) +
             average_pow2(Ayz) +
@@ -109,13 +105,13 @@ at the cell centers around the i-th vertex.
 end
 
 @inline function second_invariant_staggered(
-        Axx::T, Ayy::T, Azz::T, Ayz::NTuple{4, T}, Axz::NTuple{4, T}, Axy::NTuple{4, T}
-    ) where {T}
+        Axx::T, Ayy::T, Azz::T, Ayz::NTuple{4}, Axz::NTuple{4}, Axy::NTuple{4}
+    ) where {T <: Number}
     return second_invariant_staggered((Axx, Ayy, Azz), Ayz, Axz, Axy)
 end
 @inline function second_invariant(
-        Axx::T, Ayy::T, Azz::T, Ayz::NTuple{4, T}, Axz::NTuple{4, T}, Axy::NTuple{4, T}
-    ) where {T}
+        Axx::T, Ayy::T, Azz::T, Ayz::NTuple{4}, Axz::NTuple{4}, Axy::NTuple{4}
+    ) where {T <: Number}
     return second_invariant_staggered(Axx, Ayy, Azz, Ayz, Axz, Axy)
 end
 
@@ -127,8 +123,8 @@ need to be mapped from cell center to cell vertex. `Axx`, and `Ayy` are tuples c
 terms of `A` at the cell centers around the i-th vertex., and `Axy` is the xy component at the i-th vertex.
 """
 @inline function second_invariant_staggered(
-        Axx::NTuple{4, T}, Ayy::NTuple{4, T}, Axy::Number
-    ) where {T}
+        Axx::NTuple{4}, Ayy::NTuple{4}, Axy::Number
+    )
     return √(0.5 * (average_pow2(Axx) + average_pow2(Ayy)) + Axy^2)
 end
 
@@ -141,8 +137,8 @@ terms of `A` at the cell centers around the i-th vertex., and `Aij` is a tuple t
 components at the i-th vertex.
 """
 @inline function second_invariant_staggered(
-        Axx::NTuple{4, T}, Ayy::NTuple{4, T}, Azz::NTuple{4, T}, Aij::NTuple{3, T}
-    ) where {T}
+        Axx::NTuple{4}, Ayy::NTuple{4}, Azz::NTuple{4}, Aij::NTuple{3}
+    )
     return √(
         0.5 * (average_pow2(Axx) + average_pow2(Ayy) + average_pow2(Azz)) +
             Aij[1]^2 +
@@ -152,16 +148,17 @@ components at the i-th vertex.
 end
 
 @inline function second_invariant_staggered(
-        Axx::NTuple{4, T}, Ayy::NTuple{4, T}, Azz::NTuple{4, T}, Ayz::T, Axz::T, Axy::T
-    ) where {T}
+        Axx::NTuple{4}, Ayy::NTuple{4}, Azz::NTuple{4}, Ayz::T, Axz::T, Axy::T
+    ) where {T <: Number}
     return second_invariant_staggered(Axx, Ayy, Azz, (Ayz, Axz, Axy))
 end
 
 @inline function second_invariant(
-        Axx::NTuple{4, T}, Ayy::NTuple{4, T}, Azz::NTuple{4, T}, Ayz::T, Axz::T, Axy::T
-    ) where {T}
+        Axx::NTuple{4}, Ayy::NTuple{4}, Azz::NTuple{4}, Ayz::T, Axz::T, Axy::T
+    ) where {T <: Number}
     return second_invariant_staggered(Axx, Ayy, Azz, Ayz, Axz, Axy)
 end
+
 
 # Methods to rotate the elastic stress
 
