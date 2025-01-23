@@ -509,7 +509,7 @@ end
 end
 
 @inline function effective_ε(
-        εij::NTuple{N, T}, v, τij_old::NTuple{N, T1}, dt, phases::NTuple{N, Union{I, NTuple{4, I}}}
-    ) where {N, T, T1, I <: Integer}
+        εij::NTuple{N}, v, τij_old::NTuple{N}, dt, phases::NTuple{N, Union{Integer, NTuple{4, Integer}}}
+    ) where {N}
     return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt, phases[i]), Val(N))
 end

@@ -52,13 +52,13 @@ end
     return compute_param(fn, Tuple(MatParam), Phase, args...)
 end
 
-@inline function compute_param(fn::F, MatParam::AbstractMaterialParam, args::Vararg{Any, NA}) where {F <: Function, NA}
+@inline function compute_param(fn::F, MatParam::Union{AbstractMaterialParamsStruct, AbstractMaterialParam}, args::Vararg{Any, NA}) where {F <: Function, NA}
     return fn(MatParam, args...)
 end
 
-@inline function compute_param(fn::F, MatParam::AbstractMaterialParamsStruct, args::Vararg{Any, NA}) where {F <: Function, NA}
-    return fn(MatParam, args...)
-end
+# @inline function compute_param(fn::F, MatParam::AbstractMaterialParamsStruct, args::Vararg{Any, NA}) where {F <: Function, NA}
+#     return fn(MatParam, args...)
+# end
 
 @inline function compute_param!(
         fn::F, rho::AbstractArray, MatParam::AbstractMaterialParam, args

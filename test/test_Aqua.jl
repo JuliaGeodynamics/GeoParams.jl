@@ -1,7 +1,8 @@
 using Aqua, Test, GeoParams
 
+## Failing tests: hard to fix in the current state of the pkg
 # Aqua.test_unbound_args(GeoParams)
-# Aqua.test_ambiguities(GeoParams)
+# Aqua.test_ambiguities(GeoParams, color = true)
 # Aqua.test_piracies(GeoParams)
 
 @testset "Project extras" begin
@@ -45,7 +46,3 @@ end
 @testset "Persistent tasks" begin
     Aqua.test_persistent_tasks(GeoParams)
 end
-
-# Aqua.test_ambiguities(GeoParams)
-# Aqua.test_piracies(GeoParams)
-# Aqua.test_unbound_args(GeoParams)
