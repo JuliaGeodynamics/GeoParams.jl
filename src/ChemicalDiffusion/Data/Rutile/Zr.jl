@@ -19,11 +19,12 @@ function Rt_Zr_Cherniak2007_para_c()
         D0 = 9.8e-15m^2 / s,
         Ea = 170kJ / mol,
         Ea_1σ = 30kJ / mol,
+        Charge = 4,  # charge of the cation
         T_range_min = 750C,
-        T_range_max = 1100C,
+        T_range_max = 1100C
     )
     info = MaterialParamsInfo(;
-        Comment = "Checked values by HD (15.01.25)",
+        Comment = "Checked values by HD (20.01.25)",
         BibTex_Reference = "
             @article{cherniak2007zr,
             title={Zr and Hf diffusion in rutile},

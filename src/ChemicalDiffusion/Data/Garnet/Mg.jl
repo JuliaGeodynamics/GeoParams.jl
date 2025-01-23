@@ -18,9 +18,10 @@ function Grt_Mg_Chakraborty1992()
         Ea_1σ = 8973u"cal/mol",  # uncertainty at 1σ of the activation energy
         ΔV = 5.3cm^3 / mol,  # activation volume
         ΔV_1σ = 3cm^3 / mol,  # uncertainty at 1σ of the activation volume
+        Charge = 2,  # charge of the cation
         T_range_min = 1100C,  # temperature min of the experiment
         T_range_max = 1480C,  # temperature max of the experiment
-        P0 = 1.0u"bar",  # pressure of calibration
+        P0 = 1.0u"bar"  # pressure of calibration
     )
     info = MaterialParamsInfo(;
         Comment = "Checked values by HD (18.01.25)",

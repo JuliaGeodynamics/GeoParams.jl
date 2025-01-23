@@ -34,7 +34,7 @@ using GeoParams
 
     # test SetMaterialParams
     phase = SetMaterialParams(
-        Name = "Viscous Matrix",
+        Name = "Chemical Diffusion",
         ChemDiffusion = Hf_Rt_para
     )
 
@@ -43,7 +43,7 @@ using GeoParams
     # test nondimensionalisation
     CharUnits_GEO = GEO_units(length = 10cm)
     phase = SetMaterialParams(
-        Name = "Viscous Matrix",
+        Name = "Chemical Diffusion",
         ChemDiffusion = Hf_Rt_para,
         CharDim = CharUnits_GEO
     )
@@ -76,19 +76,31 @@ using GeoParams
     # Benchmark Fe data from Chakraborty 1992 (HD 18/01/25)
     Fe_Grt = Garnet.Grt_Fe_Chakraborty1992
     Fe_Grt = SetChemicalDiffusion(Fe_Grt)
-    D = ustrip(uconvert(cm^2 / s, compute_D(Fe_Grt, T = 1373.15K)))
-    @test D ≈ 2.137456e-14 atol = 1.0e-18
+    D = ustrip(uconvert(cm^2 / s, compute_D(Fe_Grt, T = 1373.15K, P = 1GPa)))
+    @test D ≈ 1.308812e-14 atol = 1.0e-18
 
     # Benchmark Mg data from Chakraborty 1992 (HD 18/01/25)
     Mg_Grt = Garnet.Grt_Mg_Chakraborty1992
     Mg_Grt = SetChemicalDiffusion(Mg_Grt)
-    D = ustrip(uconvert(cm^2 / s, compute_D(Mg_Grt, T = 1373.15K)))
-    @test D ≈ 1.65677e-14 atol = 1.0e-18
+    D = ustrip(uconvert(cm^2 / s, compute_D(Mg_Grt, T = 1373.15K, P = 1GPa)))
+    @test D ≈ 1.041487e-14 atol = 1.0e-18
 
     # Benchmark Mn data from Chakraborty 1992 (HD 18/01/25)
     Mn_Grt = Garnet.Grt_Mn_Chakraborty1992
     Mn_Grt = SetChemicalDiffusion(Mn_Grt)
-    D = ustrip(uconvert(cm^2 / s, compute_D(Mn_Grt, T = 1373.15K)))
-    @test D ≈ 1.168571e-13 atol = 1.0e-18
+    D = ustrip(uconvert(cm^2 / s, compute_D(Mn_Grt, T = 1373.15K, P = 1GPa)))
+    @test D ≈ 6.909072e-14 atol = 1.0e-18
 
+    # Benchmark REE data from Bloch 2020 (HD 23/01/25)
+    REE_Grt_fast = Garnet.Grt_REE_Bloch2020_fast
+    REE_Grt_fast = SetChemicalDiffusion(REE_Grt_fast)
+    D = ustrip(compute_D(REE_Grt_fast, T = 1323.15K, P = 1.0GPa))
 end
+
+# REE_Grt_fast = Garnet.Grt_REE_Bloch2020_fast
+# REE_Grt_fast = SetChemicalDiffusion(REE_Grt_fast)
+
+
+# D = ustrip(compute_D(REE_Grt_fast, T = 1323.15K, P = 1.0GPa))
+
+

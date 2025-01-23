@@ -11,15 +11,16 @@ function Rt_Hf_Cherniak2007_perp_c()
         Mineral = "Rutile",  # name of the mineral
         Formula = "TiO2",  # chemical formula of the mineral
         Species = "Hf",  # element or species being diffused
-        D0 = 2.5e-12m^2 / s,  # pre-exponential factor
-        Ea = 227kJ / mol,  # activation energy
-        Ea_1σ = 62kJ / mol,  # uncertainty at 1σ of the activation energy
-        T_range_min = 750C,  # temperature min of the experiment
-        T_range_max = 1050C,  # temperature max of the experiment
         Orientation = "⊥c",  # Crystal orientation from the diffusion experiment
         Crystallography = "Tetragonal",  # Crystallographic system of the mineral
         Buffer = "QFM, NNO",  # Buffer condition (e.g., NNO) during the experiment
-        Fluid = "Anhydrous"  # Fluid condition (e.g., anhydrous) during the experiment
+        Fluid = "Anhydrous",  # Fluid condition (e.g., anhydrous) during the experiment
+        D0 = 2.5e-12m^2 / s,  # pre-exponential factor
+        Ea = 227kJ / mol,  # activation energy
+        Ea_1σ = 62kJ / mol,  # uncertainty at 1σ of the activation energy
+        Charge = 4,  # charge of the cation
+        T_range_min = 750C,  # temperature min of the experiment
+        T_range_max = 1050C  # temperature max of the experiment
     )
     info = MaterialParamsInfo(;
         Comment = "Checked values by HD (15.01.25)",
@@ -53,15 +54,16 @@ function Rt_Hf_Cherniak2007_para_c()
         Mineral = "Rutile",
         Formula = "TiO2",
         Species = "Hf",
-        D0 = 9.1e-15m^2 / s,
-        Ea = 169kJ / mol,
-        Ea_1σ = 36kJ / mol,
-        T_range_min = 800C,
-        T_range_max = 1000C,
         Orientation = "Ξc",
         Crystallography = "Tetragonal",
         Buffer = "QFM, NNO",
-        Fluid = "Anhydrous"
+        Fluid = "Anhydrous",
+        D0 = 9.1e-15m^2 / s,
+        Ea = 169kJ / mol,
+        Ea_1σ = 36kJ / mol,
+        Charge = 4,  # charge of the cation
+        T_range_min = 800C,
+        T_range_max = 1000C
     )
     info = MaterialParamsInfo(;
         Comment = "Checked values by HD (15.01.25)",

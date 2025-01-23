@@ -115,7 +115,7 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10} <: AbstractChem
         U4 = typeof(Ea_1σU).types[2]
         U5 = typeof(ΔVU).types[2]
         U6 = typeof(ΔV_1σU).types[2]
-        U7 = typeof(Charge).types[2]
+        U7 = typeof(ChargeU).types[2]
         U8 = typeof(RU).types[2]
         U9 = typeof(T_range_minU).types[2]
         U10 = typeof(P0U).types[2]
