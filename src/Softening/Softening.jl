@@ -1,6 +1,7 @@
 abstract type AbstractSoftening end
 abstract type AbstractNoSoftening end
 
+# struct NoSoftening end
 struct NoSoftening <: AbstractSoftening end
 
 @inline (softening::NoSoftening)(::Any, max_value, ::Vararg{Any, N}) where {N} = max_value
@@ -50,7 +51,6 @@ NonLinearSoftening(args::Vararg{Any, N}) where {N} = NonLinearSoftening(promote(
     return softening.ξ₀ - 0.5 * softening.Δ * erfc(- (softening_var - softening.μ) / softening.σ)
 end
 
-
 # Non linear softening from Taras
 @with_kw_noshow struct DecaySoftening{T} <: AbstractSoftening
     εref::T = 1.0e-13
@@ -60,5 +60,5 @@ end
 @inline (softening::DecaySoftening)(args::Vararg{Any, N}) where {N} = softening(promote(args...)...)
 
 @inline function (softening::DecaySoftening)(softening_var::T, max_value::T) where {T}
-    return max_value * inv((softening_var / softening.εref + 1)^softening.n)
+    return @pow max_value * inv((softening_var / softening.εref + 1)^softening.n)
 end

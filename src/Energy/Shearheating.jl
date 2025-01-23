@@ -71,14 +71,14 @@ end
 
 @inline _compute_shearheating(τ, ε, ::Nothing) = sum(τi * εi for (τi, εi) in zip(τ, ε))
 @inline _compute_shearheating(τ, ε, ε_el) = sum(τi * (εi - εi_el) for (τi, εi, εi_el) in zip(τ, ε, ε_el))
-@inline _compute_shearheating(τ::NTuple{N, T}, ε::NTuple{N, T}, ε_el::NTuple{N, T}) where {N, T} = @.(τ * (ε - ε_el)) |> sum
-@inline _compute_shearheating(τ::NTuple{N, T}, ε::NTuple{N, T}, ::Nothing) where {N, T} = @.(τ * ε) |> sum
+@inline _compute_shearheating(τ::NTuple, ε::NTuple, ε_el::NTuple) = @.(τ * (ε - ε_el)) |> sum
+@inline _compute_shearheating(τ::NTuple, ε::NTuple, ::Nothing) = @.(τ * ε) |> sum
 # Symmetric 2D tensors (assuming Voigts notations)
-@inline _compute_shearheating(τ::NTuple{3, T}, ε::NTuple{3, T}, ε_el::NTuple{3, T}) where {T} = _compute_shearheating((τ..., τ[end]), (ε..., ε[end]), (ε_el..., ε_el[end]))
-@inline _compute_shearheating(τ::NTuple{3, T}, ε::NTuple{3, T}, ::Nothing) where {T} = _compute_shearheating((τ..., τ[end]), (ε..., ε[end]), nothing)
+@inline _compute_shearheating(τ::NTuple{3}, ε::NTuple{3}, ε_el::NTuple{3}) = _compute_shearheating((τ..., τ[end]), (ε..., ε[end]), (ε_el..., ε_el[end]))
+@inline _compute_shearheating(τ::NTuple{3}, ε::NTuple{3}, ::Nothing) = _compute_shearheating((τ..., τ[end]), (ε..., ε[end]), nothing)
 # Symmetric 3D tensors (assuming Voigts notations)
-@inline _compute_shearheating(τ::NTuple{6, T}, ε::NTuple{6, T}, ε_el::NTuple{6, T}) where {T} = _compute_shearheating((τ..., τ[4:end]...), (ε..., ε[4:end]...), (ε_el..., ε_el[4:end]...))
-@inline _compute_shearheating(τ::NTuple{6, T}, ε::NTuple{6, T}, ::Nothing) where {T} = _compute_shearheating((τ..., τ[4:end]...), (ε..., ε[4:end]...), nothing)
+@inline _compute_shearheating(τ::NTuple{6}, ε::NTuple{6}, ε_el::NTuple{6}) = _compute_shearheating((τ..., τ[4:end]...), (ε..., ε[4:end]...), (ε_el..., ε_el[4:end]...))
+@inline _compute_shearheating(τ::NTuple{6}, ε::NTuple{6}, ::Nothing) = _compute_shearheating((τ..., τ[4:end]...), (ε..., ε[4:end]...), nothing)
 
 # Print info
 function show(io::IO, g::ConstantShearheating)

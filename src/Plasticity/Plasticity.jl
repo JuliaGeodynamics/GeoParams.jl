@@ -18,33 +18,33 @@ include("DruckerPrager_regularised.jl")    # regularized DP plasticity
 
 # Thin convenience wrappers
 # 3D
-function ∂Q∂τ(p::AbstractPlasticity{T}, τij::SVector{6, T}; kwargs...) where {T}
+function ∂Q∂τ(p::AbstractPlasticity, τij::SVector{6}; kwargs...)
     return @SVector [∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τzz(p, τij), ∂Q∂τyz(p, τij), ∂Q∂τxz(p, τij), ∂Q∂τxy(p, τij)]
 end
 
-function ∂Q∂τ(p::AbstractPlasticity{T}, τij::NTuple{6, T}; kwargs...) where {T}
+function ∂Q∂τ(p::AbstractPlasticity, τij::NTuple{6}; kwargs...)
     return ∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τzz(p, τij), ∂Q∂τyz(p, τij), ∂Q∂τxz(p, τij), ∂Q∂τxy(p, τij)
 end
 
 # 2D
-function ∂Q∂τ(p::AbstractPlasticity{T}, τij::SVector{3, T}; kwargs...) where {T}
+function ∂Q∂τ(p::AbstractPlasticity, τij::SVector{3}; kwargs...)
     return @SVector [∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τxy(p, τij)]
 end
 
-function ∂Q∂τ(p::AbstractPlasticity{T}, τij::NTuple{3, T}; kwargs...) where {T}
+function ∂Q∂τ(p::AbstractPlasticity, τij::NTuple{3}; kwargs...)
     return ∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τxy(p, τij)
 end
 
 # Compute partial derivatives of a generic user-defined Q using AD
 ∂Q∂τ(Q::F, args::SVector; kwargs...) where {F <: Function} = ForwardDiff.gradient(Q, args)
 ∂Q∂τ(Q::F, args::Vector; kwargs...) where {F <: Function} = ForwardDiff.gradient(Q, args)
-function ∂Q∂τ(Q::F, args::NTuple{N, T}; kwargs...) where {N, T, F <: Function}
+function ∂Q∂τ(Q::F, args::NTuple{N}; kwargs...) where {N, F <: Function}
     tmp = ∂Q∂τ(Q, SVector{N}(args...))
     return ntuple(i -> tmp[i], Val(N))
 end
 
 # Wrapper for arbitrary args in the form of a NamedTuple
-function ∂Q∂τ(p::AbstractPlasticity{T}, args::NamedTuple{N, T}; kwargs...) where {N, T}
+function ∂Q∂τ(p::AbstractPlasticity, args::NamedTuple; kwargs...)
     return ∂Q∂τ(Q, args.τij, kwargs...)
 end
 #-------------------------------------------------------------------------

@@ -500,8 +500,8 @@ end
 
 ## Expand methods for multiple phases in staggered grids
 @inline function effective_ε(
-        εij::NTuple{N, Union{T, NTuple{4, T}}}, v, τij_old::NTuple{N, Union{T1, NTuple{4, T1}}}, dt, phases::NTuple{N, Union{I, NTuple{4, I}}}
-    ) where {N, T, T1, I <: Integer}
+        εij::NTuple{N, Union{Any, NTuple{4}}}, v, τij_old::NTuple{N, Union{Any, NTuple{4}}}, dt, phases::NTuple{N, Union{Integer, NTuple{4, Integer}}}
+    ) where {N}
     return ntuple(Val(N)) do i
         Base.@_inline_meta
         @inbounds effective_ε(εij[i], v, τij_old[i], dt, phases[i])
@@ -509,7 +509,7 @@ end
 end
 
 @inline function effective_ε(
-        εij::NTuple{N, T}, v, τij_old::NTuple{N, T1}, dt, phases::NTuple{N, Union{I, NTuple{4, I}}}
-    ) where {N, T, T1, I <: Integer}
+        εij::NTuple{N}, v, τij_old::NTuple{N}, dt, phases::NTuple{N, Union{Integer, NTuple{4, Integer}}}
+    ) where {N}
     return ntuple(i -> effective_ε(εij[i], v, τij_old[i], dt, phases[i]), Val(N))
 end
