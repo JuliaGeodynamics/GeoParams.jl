@@ -2,6 +2,7 @@ module Melt
 
 using GeoParams
 
+include("Melt_helpers.jl")
 
 include("Elements/Sc.jl")
 include("Elements/V.jl")
