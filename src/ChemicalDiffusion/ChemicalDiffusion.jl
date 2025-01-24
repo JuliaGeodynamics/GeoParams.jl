@@ -54,7 +54,7 @@ where
 - ``T`` is the temperature [\\mathrm{[K]}],
 - ``R`` is the gas constant [\\mathrm{[J/(mol K)]}],
 """
-struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10} <: AbstractChemicalDiffusion{T}
+struct DiffusionData{T,U1,U2,U3,U4,U5,U6,U7,U8,U9,U10} <: AbstractChemicalDiffusion{T}
     Name::Ptr{UInt8}  # name of the diffusion experiment and paper
     Phase::Ptr{UInt8}  # name of the phase
     Formula::Ptr{UInt8}  # chemical formula of the mineral
@@ -63,39 +63,39 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10} <: AbstractChem
     Crystallography::Ptr{UInt8}  # Crystallographic system of the mineral
     Buffer::Ptr{UInt8}  # Buffer condition (e.g., NNO) during the experiment
     Fluid::Ptr{UInt8}  # Fluid condition (e.g., anhydrous) during the experiment
-    D0::GeoUnit{T, U1}  # pre-exponential factor
-    log_D0_1σ::GeoUnit{T, U2}  # uncertainty at 1σ of the pre-exponential factor
-    Ea::GeoUnit{T, U3}  # activation energy
-    Ea_1σ::GeoUnit{T, U4}  # uncertainty at 1σ of the activation energy
-    ΔV::GeoUnit{T, U5}  # activation volume
-    ΔV_1σ::GeoUnit{T, U6}  # uncertainty at 1σ of the activation volume
-    Charge::GeoUnit{T, U7}  # charge of the species
-    R::GeoUnit{T, U8}  # gas constant
-    T_range_min::GeoUnit{T, U9}  # minimum temperature of the T_range
-    T_range_max::GeoUnit{T, U9}  # maximum temperature of the T_range
-    P0::GeoUnit{T, U10}  # pressure of calibration
+    D0::GeoUnit{T,U1}  # pre-exponential factor
+    log_D0_1σ::GeoUnit{T,U2}  # uncertainty at 1σ of the pre-exponential factor
+    Ea::GeoUnit{T,U3}  # activation energy
+    Ea_1σ::GeoUnit{T,U4}  # uncertainty at 1σ of the activation energy
+    ΔV::GeoUnit{T,U5}  # activation volume
+    ΔV_1σ::GeoUnit{T,U6}  # uncertainty at 1σ of the activation volume
+    Charge::GeoUnit{T,U7}  # charge of the species
+    R::GeoUnit{T,U8}  # gas constant
+    T_range_min::GeoUnit{T,U9}  # minimum temperature of the T_range
+    T_range_max::GeoUnit{T,U9}  # maximum temperature of the T_range
+    P0::GeoUnit{T,U10}  # pressure of calibration
 
     function DiffusionData(;
-            Name = "Unknown",  # name of the diffusion experiment and paper
-            Phase = "Unknown",  # name of the mineral
-            Formula = "Unknown",  # chemical formula of the mineral
-            Species = "Unknown",  # element or species being diffused
-            Orientation = "Unknown",  # Crystal orientation from the diffusion experiment
-            Crystallography = "Unknown",  # Crystallographic system of the mineral
-            Buffer = "Unknown",  # Buffer condition (e.g., NNO) during the experiment
-            Fluid = "Unknown",  # Fluid condition (e.g., anhydrous) during the experiment
-            D0 = 0.0m^2 / s,  # pre-exponential factor
-            log_D0_1σ = 0.0NoUnits,  # uncertainty at 1σ of the pre-exponential factor in the log form
-            Ea = 0.0J / mol,  # activation energy
-            Ea_1σ = 0.0J / mol,  # uncertainty at 1σ of the activation energy
-            ΔV = 0.0cm^3 / mol,  # activation volume
-            ΔV_1σ = 0.0cm^3 / mol,  # uncertainty at 1σ of the activation volume
-            Charge = 0NoUnits,  # charge of the species
-            R = Unitful.R,  # gas constant
-            T_range_min = 0.0K,  # minimum temperature of the T_range
-            T_range_max = 0.0K,  # maximum temperature of the T_range
-            P0 = 0.0Pa,  # pressure of calibration
-        )
+        Name="Unknown",  # name of the diffusion experiment and paper
+        Phase="Unknown",  # name of the mineral
+        Formula="Unknown",  # chemical formula of the mineral
+        Species="Unknown",  # element or species being diffused
+        Orientation="Unknown",  # Crystal orientation from the diffusion experiment
+        Crystallography="Unknown",  # Crystallographic system of the mineral
+        Buffer="Unknown",  # Buffer condition (e.g., NNO) during the experiment
+        Fluid="Unknown",  # Fluid condition (e.g., anhydrous) during the experiment
+        D0=0.0m^2 / s,  # pre-exponential factor
+        log_D0_1σ=0.0NoUnits,  # uncertainty at 1σ of the pre-exponential factor in the log form
+        Ea=0.0J / mol,  # activation energy
+        Ea_1σ=0.0J / mol,  # uncertainty at 1σ of the activation energy
+        ΔV=0.0cm^3 / mol,  # activation volume
+        ΔV_1σ=0.0cm^3 / mol,  # uncertainty at 1σ of the activation volume
+        Charge=0NoUnits,  # charge of the species
+        R=Unitful.R,  # gas constant
+        T_range_min=0.0K,  # minimum temperature of the T_range
+        T_range_max=0.0K,  # maximum temperature of the T_range
+        P0=0.0Pa,  # pressure of calibration
+    )
 
         # Convert to GeoUnits
         D0U = convert(GeoUnit, D0)
@@ -131,41 +131,41 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10} <: AbstractChem
         fluid = pointer(ptr2string(Fluid))
 
         # Create struct
-        return new{T, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10}(
+        return new{T,U1,U2,U3,U4,U5,U6,U7,U8,U9,U10}(
             name, mineral, formula, species, orientation, crystallography, buffer, fluid, D0U, log_D0_1σU, EaU, Ea_1σU, ΔVU, ΔV_1σU, ChargeU, RU, T_range_minU, T_range_maxU, P0U
         )
     end
 end
 
 function DiffusionData(
-        Name, Phase, Formula, Species, Orientation, Crystallography, Buffer, Fluid, D0, log_D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, Charge, R, T_range_min, T_range_max, P0,
-    )
+    Name, Phase, Formula, Species, Orientation, Crystallography, Buffer, Fluid, D0, log_D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, Charge, R, T_range_min, T_range_max, P0,
+)
     return DiffusionData(;
-        Name = Name,
-        Phase = Phase,
-        Formula = Formula,
-        Species = Species,
-        Orientation = Orientation,
-        Crystallography = Crystallography,
-        Buffer = Buffer,
-        Fluid = Fluid,
-        D0 = D0,
-        log_D0_1σ = log_D0_1σ,
-        Ea = Ea,
-        Ea_1σ = Ea_1σ,
-        ΔV = ΔV,
-        ΔV_1σ = ΔV_1σ,
-        R = R,
-        Charge = Charge,
-        T_range_min = T_range_min,
-        T_range_max = T_range_max,
-        P0 = P0,
+        Name=Name,
+        Phase=Phase,
+        Formula=Formula,
+        Species=Species,
+        Orientation=Orientation,
+        Crystallography=Crystallography,
+        Buffer=Buffer,
+        Fluid=Fluid,
+        D0=D0,
+        log_D0_1σ=log_D0_1σ,
+        Ea=Ea,
+        Ea_1σ=Ea_1σ,
+        ΔV=ΔV,
+        ΔV_1σ=ΔV_1σ,
+        R=R,
+        Charge=Charge,
+        T_range_min=T_range_min,
+        T_range_max=T_range_max,
+        P0=P0,
     )
 end
 
 function param_info(data::DiffusionData) # info about the struct
     return MaterialParamsInfo(;
-        Equation = L"D = D0 * \exp\left(-\frac{Ea + PΔV} {RT}\right)",
+        Equation=L"D = D0 * \exp\left(-\frac{Ea + PΔV} {RT}\right)",
     )
 end
 
@@ -176,7 +176,7 @@ end
 Computes the diffusion coefficient `D` [m^2/s] from the diffusion data `data` at temperature `T` [K] and pressure `P` [Pa].
 If `T` and `P` are provided without unit, the function assumes the units are in Kelvin and Pascal, respectively, and outputs the diffusion coefficient without unit based on the value in m^2/s.
 """
-@inline function compute_D(data::DiffusionData; T = 1K, P = 0Pa, kwargs...)
+@inline function compute_D(data::DiffusionData; T=1K, P=0Pa, kwargs...)
 
     if P isa Quantity && T isa Quantity
         @unpack_units D0, Ea, ΔV, P0, R = data
@@ -184,7 +184,7 @@ If `T` and `P` are provided without unit, the function assumes the units are in 
         @unpack_val D0, Ea, ΔV, P0, R = data
     end
 
-    D = D0 * exp(- (Ea + (P - P0) * ΔV) / (R * T))
+    D = D0 * exp(-(Ea + (P - P0) * ΔV) / (R * T))
 
     return D
 end
@@ -195,15 +195,15 @@ end
 In-place version of `compute_D(data::DiffusionData; T=1K, P=0Pa, kwargs...)`. `D` should be an array of the same size as T and P.
 """
 function compute_D!(
-        D::AbstractArray{_T, nDim},
-        data::DiffusionData;
-        T = ones(size(D))K,
-        P = zeros(size(D))Pa,
-        kwargs...
-    ) where {_T, nDim}
+    D::AbstractArray{_T,nDim},
+    data::DiffusionData;
+    T=ones(size(D))K,
+    P=zeros(size(D))Pa,
+    kwargs...
+) where {_T,nDim}
 
     return @inbounds for i in eachindex(D)
-        D[i] = compute_D(data; T = T[i], P = P[i], kwargs...)
+        D[i] = compute_D(data; T=T[i], P=P[i], kwargs...)
     end
 end
 
@@ -220,36 +220,36 @@ end
     SetChemicalDiffusion["Name of Chemical Diffusion"]
 """
 function SetChemicalDiffusion(
-        name::F;
-        D0 = nothing,
-        log_D0_1σ = nothing,
-        Ea = nothing,
-        Ea_1σ = nothing,
-        ΔV = nothing,
-        ΔV_1σ = nothing,
-        Charge = nothing,
-        T_range_min = nothing,
-        T_range_max = nothing,
-        P0 = nothing,
-    ) where {F}
+    name::F;
+    D0=nothing,
+    log_D0_1σ=nothing,
+    Ea=nothing,
+    Ea_1σ=nothing,
+    ΔV=nothing,
+    ΔV_1σ=nothing,
+    Charge=nothing,
+    T_range_min=nothing,
+    T_range_max=nothing,
+    P0=nothing,
+) where {F}
     kwargs = (; D0, log_D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, Charge, T_range_min, T_range_max, P0)
     return Transform_ChemicalDiffusion(name, kwargs)
 end
 
 function SetChemicalDiffusion(
-        name::F,
-        CharDim::GeoUnits{T};
-        D0 = nothing,
-        log_D0_1σ = nothing,
-        Ea = nothing,
-        Ea_1σ = nothing,
-        ΔV = nothing,
-        ΔV_1σ = nothing,
-        Charge = nothing,
-        T_range_min = nothing,
-        T_range_max = nothing,
-        P0 = nothing,
-    ) where {F, T <: Union{GEO, SI}}
+    name::F,
+    CharDim::GeoUnits{T};
+    D0=nothing,
+    log_D0_1σ=nothing,
+    Ea=nothing,
+    Ea_1σ=nothing,
+    ΔV=nothing,
+    ΔV_1σ=nothing,
+    Charge=nothing,
+    T_range_min=nothing,
+    T_range_max=nothing,
+    P0=nothing,
+) where {F,T<:Union{GEO,SI}}
     kwargs = (; D0, log_D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, Charge, T_range_min, T_range_max, P0)
     return nondimensionalize(Transform_ChemicalDiffusion(name, kwargs), CharDim)
 end
@@ -261,11 +261,11 @@ Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 Transform_ChemicalDiffusion(name::F) where {F} = Transform_ChemicalDiffusion(diffusion_database(name))
 Transform_ChemicalDiffusion(name::F, kwargs::NamedTuple) where {F} = Transform_ChemicalDiffusion(diffusion_database(name), kwargs)
 
-function Transform_ChemicalDiffusion(name::F, CharDim::GeoUnits{U}) where {F, U <: Union{GEO, SI}}
+function Transform_ChemicalDiffusion(name::F, CharDim::GeoUnits{U}) where {F,U<:Union{GEO,SI}}
     return Transform_ChemicalDiffusion(diffusion_database(name), CharDim)
 end
 
-function Transform_ChemicalDiffusion(p::AbstractChemicalDiffusion{T}, CharDim::GeoUnits{U}) where {T, U <: Union{GEO, SI}}
+function Transform_ChemicalDiffusion(p::AbstractChemicalDiffusion{T}, CharDim::GeoUnits{U}) where {T,U<:Union{GEO,SI}}
     return nondimensionalize(Transform_ChemicalDiffusion(p), CharDim)
 end
 
@@ -293,21 +293,21 @@ function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion)
 
 
     args = (
-        Name = unsafe_string(pp.Name),
-        Phase = unsafe_string(pp.Phase),
-        Formula = unsafe_string(pp.Formula),
-        Species = unsafe_string(pp.Species),
-        Orientation = unsafe_string(pp.Orientation),
-        Crystallography = unsafe_string(pp.Crystallography),
-        Buffer = unsafe_string(pp.Buffer),
-        Fluid = unsafe_string(pp.Fluid),
-        D0 = D0_SI, log_D0_1σ = log_D0_1σ,
-        Ea = Ea_SI, Ea_1σ = Ea_1σ_SI,
-        ΔV = ΔV_SI, ΔV_1σ = ΔV_1σ_SI,
-        Charge = Charge,
-        T_range_min_SI = T_range_min_SI,
-        T_range_max_SI = T_range_max_SI,
-        P0 = P0_SI,
+        Name=unsafe_string(pp.Name),
+        Phase=unsafe_string(pp.Phase),
+        Formula=unsafe_string(pp.Formula),
+        Species=unsafe_string(pp.Species),
+        Orientation=unsafe_string(pp.Orientation),
+        Crystallography=unsafe_string(pp.Crystallography),
+        Buffer=unsafe_string(pp.Buffer),
+        Fluid=unsafe_string(pp.Fluid),
+        D0=D0_SI, log_D0_1σ=log_D0_1σ,
+        Ea=Ea_SI, Ea_1σ=Ea_1σ_SI,
+        ΔV=ΔV_SI, ΔV_1σ=ΔV_1σ_SI,
+        Charge=Charge,
+        T_range_min_SI=T_range_min_SI,
+        T_range_max_SI=T_range_max_SI,
+        P0=P0_SI,
     )
 
     return DiffusionData(; args...)
@@ -341,21 +341,21 @@ function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion, kwargs::Name
     P0_SI = uconvert(Pa, P0_new)
 
     args = (
-        Name = unsafe_string(pp.Name),
-        Phase = unsafe_string(pp.Phase),
-        Formula = unsafe_string(pp.Formula),
-        Species = unsafe_string(pp.Species),
-        Orientation = unsafe_string(pp.Orientation),
-        Crystallography = unsafe_string(pp.Crystallography),
-        Buffer = unsafe_string(pp.Buffer),
-        Fluid = unsafe_string(pp.Fluid),
-        D0 = D0_SI, log_D0_1σ = log_D0_1σ_new,
-        Ea = Ea_SI, Ea_1σ = Ea_1σ_SI,
-        ΔV = ΔV_SI, ΔV_1σ = ΔV_1σ_SI,
-        Charge = Charge_new,
-        T_range_min = T_range_min_SI,
-        T_range_max = T_range_max_SI,
-        P0 = P0_SI,
+        Name=unsafe_string(pp.Name),
+        Phase=unsafe_string(pp.Phase),
+        Formula=unsafe_string(pp.Formula),
+        Species=unsafe_string(pp.Species),
+        Orientation=unsafe_string(pp.Orientation),
+        Crystallography=unsafe_string(pp.Crystallography),
+        Buffer=unsafe_string(pp.Buffer),
+        Fluid=unsafe_string(pp.Fluid),
+        D0=D0_SI, log_D0_1σ=log_D0_1σ_new,
+        Ea=Ea_SI, Ea_1σ=Ea_1σ_SI,
+        ΔV=ΔV_SI, ΔV_1σ=ΔV_1σ_SI,
+        Charge=Charge_new,
+        T_range_min=T_range_min_SI,
+        T_range_max=T_range_max_SI,
+        P0=P0_SI,
     )
 
     return DiffusionData(; args...)
