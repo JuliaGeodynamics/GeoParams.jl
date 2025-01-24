@@ -3,12 +3,14 @@ push!(LOAD_PATH, "../src/")
 
 @info "Making documentation..."
 makedocs(;
-    sitename="GeoParams.jl",
-    authors="Boris Kaus and contributors",
-    modules=[GeoParams],
-    format=Documenter.HTML(; assets = ["assets/favicon.ico"],
-    prettyurls=get(ENV, "CI", nothing) == "true"), # easier local build
-    pages=[
+    sitename = "GeoParams.jl",
+    authors = "Boris Kaus and contributors",
+    modules = [GeoParams],
+    format = Documenter.HTML(;
+        assets = ["assets/favicon.ico"],
+        prettyurls = get(ENV, "CI", nothing) == "true"
+    ), # easier local build
+    pages = [
         "Home" => "index.md",
         "User Guide" => Any[
             "GeoUnit" => "man/geounit.md",
@@ -33,7 +35,7 @@ makedocs(;
             "Zircon Ages" => "man/zirconages.md",
             "Phase Diagrams" => "man/phasediagrams.md",
             "Seismic Velocity" => "man/seismicvelocity.md",
-            "1D Strength Envelope" => "man/strengthenvelope.md"
+            "1D Strength Envelope" => "man/strengthenvelope.md",
         ],
         "Plotting" => "man/plotting.md",
         "List of functions" => "man/listfunctions.md",
@@ -41,4 +43,4 @@ makedocs(;
     ],
 )
 
-deploydocs(; repo="github.com/JuliaGeodynamics/GeoParams.jl.git", devbranch="main")
+deploydocs(; repo = "github.com/JuliaGeodynamics/GeoParams.jl.git", devbranch = "main")

@@ -96,7 +96,7 @@ using GeoParams
     REE_Grt_slow = SetChemicalDiffusion(REE_Grt_slow)
     D = ustrip(compute_D(REE_Grt_slow, T = 1323.15K))
 
-    D_paper = exp(-10.24 - (221057)/ (2.303*8.31446261815324 * 1323.15))
+    D_paper = exp(-10.24 - (221057) / (2.303 * 8.31446261815324 * 1323.15))
     @test D ≈ D_paper
 
     # Benchmark REE data from Bloch 2020 (HD 23/01/25)
@@ -104,7 +104,7 @@ using GeoParams
     REE_Grt_fast = SetChemicalDiffusion(REE_Grt_fast)
     D = ustrip(compute_D(REE_Grt_fast, T = 1323.15K, P = 1.0GPa))
 
-    D_paper = exp(-9.28 - (265200 + 10800*1) / (2.303*8.31446261815324 * 1323.15))
+    D_paper = exp(-9.28 - (265200 + 10800 * 1) / (2.303 * 8.31446261815324 * 1323.15))
     @test D ≈ D_paper
 
     # -------------------------- Rhyolitic Melt --------------------------
@@ -133,7 +133,7 @@ using GeoParams
     V_Melt_mediumH2O = SetChemicalDiffusion(V_Melt_mediumH2O)
 
     D = ustrip(compute_D(V_Melt_mediumH2O, T = 1273.15K))
-    @test  D ≈ 3.23892920e-13 atol = 1.0e-18
+    @test  D ≈ 3.2389292e-13 atol = 1.0e-18
 
     # Benchmark Y data from Holycross and Watson 2018 (HD 24/01/25)
     Y_Melt_highH2O = Melt.Melt_Y_Holycross2018_rhyolitic_highH2O
@@ -146,7 +146,7 @@ using GeoParams
     Y_Melt_mediumH2O = SetChemicalDiffusion(Y_Melt_mediumH2O)
 
     D = ustrip(compute_D(Y_Melt_mediumH2O, T = 1273.15K))
-    @test  D ≈ 4.11331120e-13 atol = 1.0e-18
+    @test  D ≈ 4.1133112e-13 atol = 1.0e-18
 
     # Benchmark Zr data from Holycross and Watson 2018 (HD 24/01/25)
     Zr_Melt_highH2O = Melt.Melt_Zr_Holycross2018_rhyolitic_highH2O
@@ -218,7 +218,7 @@ using GeoParams
     Pr_Melt_mediumH2O = SetChemicalDiffusion(Pr_Melt_mediumH2O)
 
     D = ustrip(compute_D(Pr_Melt_mediumH2O, T = 1273.15K))
-    @test  D ≈  5.448527e-13 atol = 1.0e-18
+    @test  D ≈ 5.448527e-13 atol = 1.0e-18
 
     # Benchmark Nd data from Holycross and Watson 2018 (HD 24/01/25)
     Nd_Melt_highH2O = Melt.Melt_Nd_Holycross2018_rhyolitic_highH2O
@@ -231,7 +231,7 @@ using GeoParams
     Nd_Melt_mediumH2O = SetChemicalDiffusion(Nd_Melt_mediumH2O)
 
     D = ustrip(compute_D(Nd_Melt_mediumH2O, T = 1273.15K))
-    @test  D ≈  5.6794099e-13 atol = 1.0e-18
+    @test  D ≈ 5.6794099e-13 atol = 1.0e-18
 
     # Benchmark Sm data from Holycross and Watson 2018 (HD 24/01/25)
     Sm_Melt_highH2O = Melt.Melt_Sm_Holycross2018_rhyolitic_highH2O
@@ -244,7 +244,7 @@ using GeoParams
     Sm_Melt_mediumH2O = SetChemicalDiffusion(Sm_Melt_mediumH2O)
 
     D = ustrip(compute_D(Sm_Melt_mediumH2O, T = 1273.15K))
-    @test  D ≈  5.112780e-13 atol = 1.0e-18
+    @test  D ≈ 5.11278e-13 atol = 1.0e-18
 
     # Benchmark Eu data from Holycross and Watson 2018 (HD 24/01/25)
 
@@ -252,20 +252,20 @@ using GeoParams
     Eu_Melt_mediumH2O = SetChemicalDiffusion(Eu_Melt_mediumH2O)
 
     D = ustrip(compute_D(Eu_Melt_mediumH2O, T = 1273.15K))
-    @test  D ≈  1.423718e-12 atol = 1.0e-18
+    @test  D ≈ 1.423718e-12 atol = 1.0e-18
 
     # Benchmark Gd data from Holycross and Watson 2018 (HD 24/01/25)
     Gd_Melt_highH2O = Melt.Melt_Gd_Holycross2018_rhyolitic_highH2O
     Gd_Melt_highH2O = SetChemicalDiffusion(Gd_Melt_highH2O)
 
     D = ustrip(compute_D(Gd_Melt_highH2O, T = 1123.15K))
-    @test  D ≈ 1.704840e-13 atol = 1.0e-18
+    @test  D ≈ 1.70484e-13 atol = 1.0e-18
 
     Gd_Melt_mediumH2O = Melt.Melt_Gd_Holycross2018_rhyolitic_mediumH2O
     Gd_Melt_mediumH2O = SetChemicalDiffusion(Gd_Melt_mediumH2O)
 
     D = ustrip(compute_D(Gd_Melt_mediumH2O, T = 1273.15K))
-    @test  D ≈  5.094053e-13 atol = 1.0e-18
+    @test  D ≈ 5.094053e-13 atol = 1.0e-18
 
     # Benchmark Tb data from Holycross and Watson 2018 (HD 24/01/25)
     Tb_Melt_highH2O = Melt.Melt_Tb_Holycross2018_rhyolitic_highH2O
@@ -278,7 +278,7 @@ using GeoParams
     Tb_Melt_mediumH2O = SetChemicalDiffusion(Tb_Melt_mediumH2O)
 
     D = ustrip(compute_D(Tb_Melt_mediumH2O, T = 1273.15K))
-    @test  D ≈  4.284803e-13 atol = 1.0e-18
+    @test  D ≈ 4.284803e-13 atol = 1.0e-18
 
     # Benchmark Dy data from Holycross and Watson 2018 (HD 24/01/25)
     Dy_Melt_highH2O = Melt.Melt_Dy_Holycross2018_rhyolitic_highH2O
@@ -291,20 +291,20 @@ using GeoParams
     Dy_Melt_mediumH2O = SetChemicalDiffusion(Dy_Melt_mediumH2O)
 
     D = ustrip(compute_D(Dy_Melt_mediumH2O, T = 1273.15K))
-    @test  D ≈  4.628963e-13 atol = 1.0e-18
+    @test  D ≈ 4.628963e-13 atol = 1.0e-18
 
     # Benchmark Ho data from Holycross and Watson 2018 (HD 24/01/25)
     Ho_Melt_highH2O = Melt.Melt_Ho_Holycross2018_rhyolitic_highH2O
     Ho_Melt_highH2O = SetChemicalDiffusion(Ho_Melt_highH2O)
 
     D = ustrip(compute_D(Ho_Melt_highH2O, T = 1123.15K))
-    @test  D ≈ 1.463340e-13 atol = 1.0e-18
+    @test  D ≈ 1.46334e-13 atol = 1.0e-18
 
     Ho_Melt_mediumH2O = Melt.Melt_Ho_Holycross2018_rhyolitic_mediumH2O
     Ho_Melt_mediumH2O = SetChemicalDiffusion(Ho_Melt_mediumH2O)
 
     D = ustrip(compute_D(Ho_Melt_mediumH2O, T = 1273.15K))
-    @test  D ≈  4.072542e-13 atol = 1.0e-18
+    @test  D ≈ 4.072542e-13 atol = 1.0e-18
 
     # Benchmark Er data from Holycross and Watson 2018 (HD 24/01/25)
     Er_Melt_highH2O = Melt.Melt_Er_Holycross2018_rhyolitic_highH2O
@@ -317,7 +317,7 @@ using GeoParams
     Er_Melt_mediumH2O = SetChemicalDiffusion(Er_Melt_mediumH2O)
 
     D = ustrip(compute_D(Er_Melt_mediumH2O, T = 1273.15K))
-    @test  D ≈  4.387794e-13 atol = 1.0e-18
+    @test  D ≈ 4.387794e-13 atol = 1.0e-18
 
     # Benchmark Yb data from Holycross and Watson 2018 (HD 24/01/25)
     Yb_Melt_highH2O = Melt.Melt_Yb_Holycross2018_rhyolitic_highH2O
@@ -330,7 +330,7 @@ using GeoParams
     Yb_Melt_mediumH2O = SetChemicalDiffusion(Yb_Melt_mediumH2O)
 
     D = ustrip(compute_D(Yb_Melt_mediumH2O, T = 1273.15K))
-    @test  D ≈  4.219549e-13 atol = 1.0e-18
+    @test  D ≈ 4.219549e-13 atol = 1.0e-18
 
     # Benchmark Lu data from Holycross and Watson 2018 (HD 24/01/25)
     Lu_Melt_highH2O = Melt.Melt_Lu_Holycross2018_rhyolitic_highH2O
@@ -343,7 +343,7 @@ using GeoParams
     Lu_Melt_mediumH2O = SetChemicalDiffusion(Lu_Melt_mediumH2O)
 
     D = ustrip(compute_D(Lu_Melt_mediumH2O, T = 1273.15K))
-    @test  D ≈  3.775836e-13 atol = 1.0e-18
+    @test  D ≈ 3.775836e-13 atol = 1.0e-18
 
     # Benchmark Th data from Holycross and Watson 2018 (HD 24/01/25)
     Th_Melt_highH2O = Melt.Melt_La_Holycross2018_rhyolitic_highH2O
@@ -363,6 +363,6 @@ using GeoParams
     U_Melt_mediumH2O = SetChemicalDiffusion(U_Melt_mediumH2O)
 
     D = ustrip(compute_D(U_Melt_mediumH2O, T = 1273.15K))
-    @test  D ≈  1.556627767e-13 atol = 1.0e-18
+    @test  D ≈ 1.556627767e-13 atol = 1.0e-18
 
 end
