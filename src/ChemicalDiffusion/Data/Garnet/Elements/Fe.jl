@@ -14,7 +14,6 @@ function Grt_Fe_Chakraborty1992()
         Buffer = "C-O2",  # Buffer condition (e.g., NNO) during the experiment
         Fluid = "C-H2O",  # Fluid condition (e.g., anhydrous) during the experiment
         D0 = 6.4 * 1.0e-4cm^2 / s,  # pre-exponential factor
-        D0_1σ = 0.0m^2 / s,  # uncertainty at 1σ of the pre-exponential factor
         Ea = 65824u"cal/mol",  # activation energy
         Ea_1σ = 8721u"cal/mol",  # uncertainty at 1σ of the activation energy
         ΔV = 5.6cm^3 / mol,  # activation volume

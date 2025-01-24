@@ -15,7 +15,8 @@ function Grt_REE_Bloch2020_slow()
         Crystallography = "Isometric",  # Crystallographic system of the mineral
         Buffer = "QFM",  # Buffer condition (e.g., NNO) during the experiment
         Fluid = "Anhydrous",  # Fluid condition (e.g., anhydrous) during the experiment
-        D0 = (3.571284964163521e-5)u"m^2 / s",  # pre-exponential factor (exp(-9.28) in the original paper)
+        D0 = exp(-10.24)u"m^2 / s",  # pre-exponential factor (exp(-10.24) in the original paper)
+        log_D0_1σ = 0.21NoUnits,
         Ea = (221057/2.303)u"J/mol",  # activation energy
         Ea_1σ = (4284/2.303)u"J/mol",  # uncertainty at 1σ of the activation energy
         Charge = 3,  # charge of the cation
@@ -59,7 +60,8 @@ function Grt_REE_Bloch2020_fast()
         Crystallography = "Isometric",  # Crystallographic system of the mineral
         Buffer = "QFM",  # Buffer condition (e.g., NNO) during the experiment
         Fluid = "Anhydrous",  # Fluid condition (e.g., anhydrous) during the experiment
-        D0 = 9.32711234649488e-5m^2 / s,  # pre-exponential factor (exp(-10.24) in the original paper)
+        D0 = exp(-9.28)m^2 / s,  # pre-exponential factor (exp(-9.28) in the original paper)
+        log_D0_1σ = 0.65NoUnits,
         Ea = (265200/2.303)u"J/mol",  # activation energy (fitted in log10, hence the 2.303)
         Ea_1σ = (38540/2.303)u"J/mol",  # uncertainty at 1σ of the activation energy
         ΔV = (10800e-9/2.303)u"m^3 / mol",  # activation volume (with Pressure in GPa in the original paper)

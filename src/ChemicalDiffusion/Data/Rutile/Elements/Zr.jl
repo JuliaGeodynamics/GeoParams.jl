@@ -14,9 +14,10 @@ function Rt_Zr_Cherniak2007_para_c()
         Species = "Hf",
         Orientation = "Ξc",
         Crystallography = "Tetragonal",
-        Buffer = "QFM, NNO",
+        Buffer = "QFM, NNO, Air",
         Fluid = "Anhydrous",
         D0 = 9.8e-15m^2 / s,
+        log_D0_1σ = 1.25NoUnits,
         Ea = 170kJ / mol,
         Ea_1σ = 30kJ / mol,
         Charge = 4,  # charge of the cation

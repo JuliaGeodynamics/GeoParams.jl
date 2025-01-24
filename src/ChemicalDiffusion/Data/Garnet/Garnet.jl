@@ -2,20 +2,21 @@ module Garnet
 
 using GeoParams
 
-include("Fe.jl")
-include("Mg.jl")
-include("Mn.jl")
-include("REE.jl")
+include("Elements/Fe.jl")
+include("Elements/Mg.jl")
+include("Elements/Mn.jl")
+include("Elements/REE.jl")
 
 """
-    chemical_diffusion_list()
+    chemical_diffusion_list(search::String="")
 
-List all available chemical diffusion data for garnet.
+List all available chemical diffusion data for melt.
+Includes an argument to search for a specific term, i.e. an element ("La") or an author.
 """
-function chemical_diffusion_list()
+function chemical_diffusion_list(search::String="")
     m = @__MODULE__
     all = string.(names(m; all = true, imported = true))
-    Grt = Symbol.(filter(x -> startswith(x, "Grt"), all))
+    Grt = Symbol.(filter(x -> startswith(x, "Grt") && contains(x, search), all))
     return [getfield(m, fun) for fun in Grt]
 end
 

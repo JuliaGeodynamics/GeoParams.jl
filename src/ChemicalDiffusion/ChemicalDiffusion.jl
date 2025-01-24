@@ -23,9 +23,11 @@ include("Data/Rutile/Rutile.jl")
 using .Rutile
 include("Data/Garnet/Garnet.jl")
 using .Garnet
+include("Data/Melt/Melt.jl")
+using .Melt
 
 # Exported modules of chemical diffusion data
-export Rutile, Garnet
+export Rutile, Garnet, Melt
 
 
 abstract type AbstractChemicalDiffusion{T} <: AbstractMaterialParam end
@@ -36,7 +38,7 @@ abstract type AbstractChemicalDiffusion{T} <: AbstractMaterialParam end
 @inline precision(::AbstractChemicalDiffusion{T}) where {T} = T
 
 """
-    DiffusionData(; Name, Phase, Formula, Species, D0, D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, Charge, T_range, P0, Orientation, Crystallography, Buffer)
+    DiffusionData(; Name, Phase, Formula, Species, D0, log_D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, Charge, T_range, P0, Orientation, Crystallography, Buffer)
 
 Defines the diffusion data for the chemical diffusion of a given phase and species from an experiment.
 
@@ -61,17 +63,17 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10} <: AbstractChem
     Crystallography::Ptr{UInt8}  # Crystallographic system of the mineral
     Buffer::Ptr{UInt8}  # Buffer condition (e.g., NNO) during the experiment
     Fluid::Ptr{UInt8}  # Fluid condition (e.g., anhydrous) during the experiment
-    D0::GeoUnit{T, U1} # pre-exponential factor
-    D0_1σ::GeoUnit{T, U2} # uncertainty at 1σ of the pre-exponential factor
-    Ea::GeoUnit{T, U3} # activation energy
-    Ea_1σ::GeoUnit{T, U4} # uncertainty at 1σ of the activation energy
-    ΔV::GeoUnit{T, U5} # activation volume
-    ΔV_1σ::GeoUnit{T, U6} # uncertainty at 1σ of the activation volume
-    Charge::GeoUnit{T, U7} # charge of the species
+    D0::GeoUnit{T, U1}  # pre-exponential factor
+    log_D0_1σ::GeoUnit{T, U2}  # uncertainty at 1σ of the pre-exponential factor
+    Ea::GeoUnit{T, U3}  # activation energy
+    Ea_1σ::GeoUnit{T, U4}  # uncertainty at 1σ of the activation energy
+    ΔV::GeoUnit{T, U5}  # activation volume
+    ΔV_1σ::GeoUnit{T, U6}  # uncertainty at 1σ of the activation volume
+    Charge::GeoUnit{T, U7}  # charge of the species
     R::GeoUnit{T, U8}  # gas constant
     T_range_min::GeoUnit{T, U9}  # minimum temperature of the T_range
     T_range_max::GeoUnit{T, U9}  # maximum temperature of the T_range
-    P0::GeoUnit{T, U10} # pressure of calibration
+    P0::GeoUnit{T, U10}  # pressure of calibration
 
     function DiffusionData(;
             Name = "Unknown",  # name of the diffusion experiment and paper
@@ -83,7 +85,7 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10} <: AbstractChem
             Buffer = "Unknown",  # Buffer condition (e.g., NNO) during the experiment
             Fluid = "Unknown",  # Fluid condition (e.g., anhydrous) during the experiment
             D0 = 0.0m^2 / s,  # pre-exponential factor
-            D0_1σ = 0.0m^2 / s,  # uncertainty at 1σ of the pre-exponential factor
+            log_D0_1σ = 0.0NoUnits,  # uncertainty at 1σ of the pre-exponential factor in the log form
             Ea = 0.0J / mol,  # activation energy
             Ea_1σ = 0.0J / mol,  # uncertainty at 1σ of the activation energy
             ΔV = 0.0cm^3 / mol,  # activation volume
@@ -97,7 +99,7 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10} <: AbstractChem
 
         # Convert to GeoUnits
         D0U = convert(GeoUnit, D0)
-        D0_1σU = convert(GeoUnit, D0_1σ)
+        log_D0_1σU = convert(GeoUnit, log_D0_1σ)
         EaU = convert(GeoUnit, Ea)
         Ea_1σU = convert(GeoUnit, Ea_1σ)
         ΔVU = convert(GeoUnit, ΔV)
@@ -110,7 +112,7 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10} <: AbstractChem
         # Extract struct types
         T = typeof(D0U).types[1]
         U1 = typeof(D0U).types[2]
-        U2 = typeof(D0_1σU).types[2]
+        U2 = typeof(log_D0_1σU).types[2]
         U3 = typeof(EaU).types[2]
         U4 = typeof(Ea_1σU).types[2]
         U5 = typeof(ΔVU).types[2]
@@ -130,13 +132,13 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10} <: AbstractChem
 
         # Create struct
         return new{T, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10}(
-            name, mineral, formula, species, orientation, crystallography, buffer, fluid, D0U, D0_1σU, EaU, Ea_1σU, ΔVU, ΔV_1σU, ChargeU, RU, T_range_minU, T_range_maxU, P0U
+            name, mineral, formula, species, orientation, crystallography, buffer, fluid, D0U, log_D0_1σU, EaU, Ea_1σU, ΔVU, ΔV_1σU, ChargeU, RU, T_range_minU, T_range_maxU, P0U
         )
     end
 end
 
 function DiffusionData(
-        Name, Phase, Formula, Species, Orientation, Crystallography, Buffer, Fluid, D0, D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, Charge, R, T_range_min, T_range_max, P0,
+        Name, Phase, Formula, Species, Orientation, Crystallography, Buffer, Fluid, D0, log_D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, Charge, R, T_range_min, T_range_max, P0,
     )
     return DiffusionData(;
         Name = Name,
@@ -148,7 +150,7 @@ function DiffusionData(
         Buffer = Buffer,
         Fluid = Fluid,
         D0 = D0,
-        D0_1σ = D0_1σ,
+        log_D0_1σ = log_D0_1σ,
         Ea = Ea,
         Ea_1σ = Ea_1σ,
         ΔV = ΔV,
@@ -220,7 +222,7 @@ end
 function SetChemicalDiffusion(
         name::F;
         D0 = nothing,
-        D0_1σ = nothing,
+        log_D0_1σ = nothing,
         Ea = nothing,
         Ea_1σ = nothing,
         ΔV = nothing,
@@ -230,7 +232,7 @@ function SetChemicalDiffusion(
         T_range_max = nothing,
         P0 = nothing,
     ) where {F}
-    kwargs = (; D0, D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, Charge, T_range_min, T_range_max, P0)
+    kwargs = (; D0, log_D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, Charge, T_range_min, T_range_max, P0)
     return Transform_ChemicalDiffusion(name, kwargs)
 end
 
@@ -238,7 +240,7 @@ function SetChemicalDiffusion(
         name::F,
         CharDim::GeoUnits{T};
         D0 = nothing,
-        D0_1σ = nothing,
+        log_D0_1σ = nothing,
         Ea = nothing,
         Ea_1σ = nothing,
         ΔV = nothing,
@@ -248,7 +250,7 @@ function SetChemicalDiffusion(
         T_range_max = nothing,
         P0 = nothing,
     ) where {F, T <: Union{GEO, SI}}
-    kwargs = (; D0, D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, Charge, T_range_min, T_range_max, P0)
+    kwargs = (; D0, log_D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, Charge, T_range_min, T_range_max, P0)
     return nondimensionalize(Transform_ChemicalDiffusion(name, kwargs), CharDim)
 end
 
@@ -270,7 +272,7 @@ end
 function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion)
 
     D0 = Value(pp.D0)
-    D0_1σ = Value(pp.D0_1σ)
+    log_D0_1σ = Value(pp.log_D0_1σ)
     Ea = Value(pp.Ea)
     Ea_1σ = Value(pp.Ea_1σ)
     ΔV = Value(pp.ΔV)
@@ -281,7 +283,6 @@ function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion)
     P0 = Value(pp.P0)
 
     D0_SI = uconvert(m^2 / s, D0)
-    D0_1σ_SI = uconvert(m^2 / s, D0_1σ)
     Ea_SI = uconvert(J / mol, pp.Ea)
     Ea_1σ_SI = uconvert(J / mol, pp.Ea_1σ)
     ΔV_SI = uconvert(m^3 / mol, pp.ΔV)
@@ -300,7 +301,7 @@ function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion)
         Crystallography = unsafe_string(pp.Crystallography),
         Buffer = unsafe_string(pp.Buffer),
         Fluid = unsafe_string(pp.Fluid),
-        D0 = D0_SI, D0_1σ = D0_1σ_SI,
+        D0 = D0_SI, log_D0_1σ = log_D0_1σ,
         Ea = Ea_SI, Ea_1σ = Ea_1σ_SI,
         ΔV = ΔV_SI, ΔV_1σ = ΔV_1σ_SI,
         Charge = Charge,
@@ -317,21 +318,20 @@ function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion, kwargs::Name
     f(a, b) = Value(GeoUnit(a))
     f(::Nothing, b) = Value(b)
 
-    (; D0, D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, Charge, T_range_min, T_range_max, P0) = kwargs
+    (; D0, log_D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, Charge, T_range_min, T_range_max, P0) = kwargs
 
     D0_new = f(D0, pp.D0)
-    D0_1σ_new = f(D0_1σ, pp.D0_1σ)
+    log_D0_1σ_new = f(log_D0_1σ, pp.log_D0_1σ)
     Ea_new = f(Ea, pp.Ea)
     Ea_1σ_new = f(Ea_1σ, pp.Ea_1σ)
     ΔV_new = f(ΔV, pp.ΔV)
     ΔV_1σ_new = f(ΔV_1σ, pp.ΔV_1σ)
-    Charge = f(Charge, pp.Charge)
+    Charge_new = f(Charge, pp.Charge)
     T_range_min_new = f(T_range_min, pp.T_range_min)
     T_range_max_new = f(T_range_max, pp.T_range_max)
     P0_new = f(P0, pp.P0)
 
     D0_SI = uconvert(m^2 / s, D0_new)
-    D0_1σ_SI = uconvert(m^2 / s, D0_1σ_new)
     Ea_SI = uconvert(J / mol, Ea_new)
     Ea_1σ_SI = uconvert(J / mol, Ea_1σ_new)
     ΔV_SI = uconvert(m^3 / mol, ΔV_new)
@@ -349,10 +349,10 @@ function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion, kwargs::Name
         Crystallography = unsafe_string(pp.Crystallography),
         Buffer = unsafe_string(pp.Buffer),
         Fluid = unsafe_string(pp.Fluid),
-        D0 = D0_SI, D0_1σ = D0_1σ_SI,
+        D0 = D0_SI, log_D0_1σ = log_D0_1σ_new,
         Ea = Ea_SI, Ea_1σ = Ea_1σ_SI,
         ΔV = ΔV_SI, ΔV_1σ = ΔV_1σ_SI,
-        Charge = Charge,
+        Charge = Charge_new,
         T_range_min = T_range_min_SI,
         T_range_max = T_range_max_SI,
         P0 = P0_SI,

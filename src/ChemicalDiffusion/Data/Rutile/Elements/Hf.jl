@@ -13,9 +13,10 @@ function Rt_Hf_Cherniak2007_perp_c()
         Species = "Hf",  # element or species being diffused
         Orientation = "⊥c",  # Crystal orientation from the diffusion experiment
         Crystallography = "Tetragonal",  # Crystallographic system of the mineral
-        Buffer = "QFM, NNO",  # Buffer condition (e.g., NNO) during the experiment
+        Buffer = "QFM, NNO, Air",  # Buffer condition (e.g., NNO) during the experiment
         Fluid = "Anhydrous",  # Fluid condition (e.g., anhydrous) during the experiment
         D0 = 2.5e-12m^2 / s,  # pre-exponential factor
+        log_D0_1σ = 2.70NoUnits,
         Ea = 227kJ / mol,  # activation energy
         Ea_1σ = 62kJ / mol,  # uncertainty at 1σ of the activation energy
         Charge = 4,  # charge of the cation
@@ -56,9 +57,10 @@ function Rt_Hf_Cherniak2007_para_c()
         Species = "Hf",
         Orientation = "Ξc",
         Crystallography = "Tetragonal",
-        Buffer = "QFM, NNO",
+        Buffer = "QFM, NNO, Air",
         Fluid = "Anhydrous",
         D0 = 9.1e-15m^2 / s,
+        log_D0_1σ = 1.59NoUnits,
         Ea = 169kJ / mol,
         Ea_1σ = 36kJ / mol,
         Charge = 4,  # charge of the cation

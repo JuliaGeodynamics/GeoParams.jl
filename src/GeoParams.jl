@@ -284,7 +284,8 @@ module GeoParams
 
 
     export Rutile,
-        Garnet
+        Garnet,
+        Melt
 
     # Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat
     using .MaterialParameters.HeatCapacity
