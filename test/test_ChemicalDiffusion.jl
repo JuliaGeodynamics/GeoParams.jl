@@ -346,11 +346,11 @@ using GeoParams
     @test  D ≈ 3.775836e-13 atol = 1.0e-18
 
     # Benchmark Th data from Holycross and Watson 2018 (HD 24/01/25)
-    Th_Melt_highH2O = Melt.Melt_La_Holycross2018_rhyolitic_highH2O
+    Th_Melt_highH2O = Melt.Melt_Th_Holycross2018_rhyolitic_highH2O
     Th_Melt_highH2O = SetChemicalDiffusion(Th_Melt_highH2O)
 
     D = ustrip(compute_D(Th_Melt_highH2O, T = 1123.15K))
-    @test  D ≈ 2.50401591567e-13 atol = 1.0e-18
+    @test  D ≈ 4.8068528511e-14 atol = 1.0e-18
 
     # Benchmark U data from Holycross and Watson 2018 (HD 24/01/25)
     U_Melt_highH2O = Melt.Melt_U_Holycross2018_rhyolitic_highH2O
