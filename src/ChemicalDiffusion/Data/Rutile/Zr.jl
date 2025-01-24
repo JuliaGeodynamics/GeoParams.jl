@@ -9,7 +9,7 @@ From Cherniak et al. (2007) (https://doi.org/10.1016/j.epsl.2007.06.027).
 function Rt_Zr_Cherniak2007_para_c()
     data = DiffusionData(
         Name = "Zr diffusion in Rutile (Ξc and anhydrous conditions) | Cherniak et al. (2007)",
-        Mineral = "Rutile",
+        Phase = "Rutile",
         Formula = "TiO2",
         Species = "Hf",
         Orientation = "Ξc",

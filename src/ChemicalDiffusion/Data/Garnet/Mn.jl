@@ -6,7 +6,7 @@ Diffusion data of Mn in garnet. Calibrated between 1100-1480°C and 0.14-0.43 GP
 function Grt_Mn_Chakraborty1992()
     data = DiffusionData(
         Name = "Mn diffusion in Garnet (C-O2) | Chakraborty and Ganguly (1992)",
-        Mineral = "Garnet",  # name of the mineral
+        Phase = "Garnet",  # name of the mineral
         Formula = "X3Y2(SiO4)3",  # chemical formula of the mineral
         Species = "Mn",  # element or species being diffused
         Orientation = "Isotropic",  # Crystal orientation from the diffusion experiment

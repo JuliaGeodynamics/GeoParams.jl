@@ -8,7 +8,7 @@ Diffusion data of Hf in rutile. With anhydrous conditions and perpendicular to c
 function Rt_Hf_Cherniak2007_perp_c()
     data = DiffusionData(
         Name = "Hf diffusion in Rutile (perpendicular to c-axis and anhydrous conditions) | Cherniak et al. (2007)",
-        Mineral = "Rutile",  # name of the mineral
+        Phase = "Rutile",  # name of the mineral
         Formula = "TiO2",  # chemical formula of the mineral
         Species = "Hf",  # element or species being diffused
         Orientation = "⊥c",  # Crystal orientation from the diffusion experiment
@@ -51,7 +51,7 @@ From Cherniak et al. (2007) (https://doi.org/10.1016/j.epsl.2007.06.027).
 function Rt_Hf_Cherniak2007_para_c()
     data = DiffusionData(
         Name = "Hf diffusion in Rutile (parallel to c-axis and anhydrous conditions) | Cherniak et al. (2007)",
-        Mineral = "Rutile",
+        Phase = "Rutile",
         Formula = "TiO2",
         Species = "Hf",
         Orientation = "Ξc",

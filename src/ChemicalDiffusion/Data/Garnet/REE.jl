@@ -8,7 +8,7 @@ From Bloch et al. (2020) (https://doi.org/10.1093/petrology/egaa055) combined wi
 function Grt_REE_Bloch2020_slow()
     data = DiffusionData(
         Name = "REE diffusion in Garnet (QFM) | Bloch et al. (2020)",
-        Mineral = "Garnet",  # name of the mineral
+        Phase = "Garnet",  # name of the mineral
         Formula = "X3Y2(SiO4)3",  # chemical formula of the mineral
         Species = "REE",  # element or species being diffused
         Orientation = "Isotropic",  # Crystal orientation from the diffusion experiment
@@ -52,7 +52,7 @@ From Bloch et al. (2020) (https://doi.org/10.1093/petrology/egaa055) combined wi
 function Grt_REE_Bloch2020_fast()
     data = DiffusionData(
         Name = "REE diffusion in Garnet (QFM) | Bloch et al. (2020)",
-        Mineral = "Garnet",  # name of the mineral
+        Phase = "Garnet",  # name of the mineral
         Formula = "X3Y2(SiO4)3",  # chemical formula of the mineral
         Species = "REE",  # element or species being diffused
         Orientation = "Isotropic",  # Crystal orientation from the diffusion experiment

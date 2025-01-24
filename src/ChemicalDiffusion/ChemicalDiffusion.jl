@@ -36,7 +36,7 @@ abstract type AbstractChemicalDiffusion{T} <: AbstractMaterialParam end
 @inline precision(::AbstractChemicalDiffusion{T}) where {T} = T
 
 """
-    DiffusionData(; Name, Mineral, Formula, Species, D0, D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, Charge, T_range, P0, Orientation, Crystallography, Buffer)
+    DiffusionData(; Name, Phase, Formula, Species, D0, D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, Charge, T_range, P0, Orientation, Crystallography, Buffer)
 
 Defines the diffusion data for the chemical diffusion of a given phase and species from an experiment.
 
@@ -54,7 +54,7 @@ where
 """
 struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10} <: AbstractChemicalDiffusion{T}
     Name::Ptr{UInt8}  # name of the diffusion experiment and paper
-    Mineral::Ptr{UInt8}  # name of the mineral
+    Phase::Ptr{UInt8}  # name of the phase
     Formula::Ptr{UInt8}  # chemical formula of the mineral
     Species::Ptr{UInt8}  # element or species being diffused
     Orientation::Ptr{UInt8}  # Crystal orientation from the diffusion experiment
@@ -75,7 +75,7 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10} <: AbstractChem
 
     function DiffusionData(;
             Name = "Unknown",  # name of the diffusion experiment and paper
-            Mineral = "Unknown",  # name of the mineral
+            Phase = "Unknown",  # name of the mineral
             Formula = "Unknown",  # chemical formula of the mineral
             Species = "Unknown",  # element or species being diffused
             Orientation = "Unknown",  # Crystal orientation from the diffusion experiment
@@ -120,7 +120,7 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10} <: AbstractChem
         U9 = typeof(T_range_minU).types[2]
         U10 = typeof(P0U).types[2]
         name = pointer(ptr2string(Name))
-        mineral = pointer(ptr2string(Mineral))
+        mineral = pointer(ptr2string(Phase))
         formula = pointer(ptr2string(Formula))
         species = pointer(ptr2string(Species))
         orientation = pointer(ptr2string(Orientation))
@@ -136,11 +136,11 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10} <: AbstractChem
 end
 
 function DiffusionData(
-        Name, Mineral, Formula, Species, Orientation, Crystallography, Buffer, Fluid, D0, D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, Charge, R, T_range_min, T_range_max, P0,
+        Name, Phase, Formula, Species, Orientation, Crystallography, Buffer, Fluid, D0, D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, Charge, R, T_range_min, T_range_max, P0,
     )
     return DiffusionData(;
         Name = Name,
-        Mineral = Mineral,
+        Phase = Phase,
         Formula = Formula,
         Species = Species,
         Orientation = Orientation,
@@ -209,7 +209,7 @@ end
 function show(io::IO, g::DiffusionData)
     return print(
         io,
-        "DiffusionData: Mineral = $(unsafe_string(g.Mineral)), Species = $(unsafe_string(g.Species)), D0 = $(Value(g.D0)), Ea = $(Value(g.Ea)), ΔV = $(Value(g.ΔV))",
+        "DiffusionData: Phase = $(unsafe_string(g.Phase)), Species = $(unsafe_string(g.Species)), D0 = $(Value(g.D0)), Ea = $(Value(g.Ea)), ΔV = $(Value(g.ΔV))",
     )
 end
 
@@ -293,7 +293,7 @@ function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion)
 
     args = (
         Name = unsafe_string(pp.Name),
-        Mineral = unsafe_string(pp.Mineral),
+        Phase = unsafe_string(pp.Phase),
         Formula = unsafe_string(pp.Formula),
         Species = unsafe_string(pp.Species),
         Orientation = unsafe_string(pp.Orientation),
@@ -342,7 +342,7 @@ function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion, kwargs::Name
 
     args = (
         Name = unsafe_string(pp.Name),
-        Mineral = unsafe_string(pp.Mineral),
+        Phase = unsafe_string(pp.Phase),
         Formula = unsafe_string(pp.Formula),
         Species = unsafe_string(pp.Species),
         Orientation = unsafe_string(pp.Orientation),
