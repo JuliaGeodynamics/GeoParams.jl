@@ -1,4 +1,3 @@
-
 """
     Rt_Li_Johnson1964_perp_c
 
@@ -16,8 +15,8 @@ function Rt_Li_Johnson1964_perp_c()
         Crystallography = "Tetragonal",
         Fluid = "Anhydrous",
         D0 = 0.295cm^2 / s,
-        log_D0_1σ = log(0.028)NoUnits, 
-        Ea = (0.330u"eV" * Unitful.Na),
+        log_D0_1σ = log(0.028)NoUnits,
+        Ea = (0.33u"eV" * Unitful.Na),
         Ea_1σ = (0.003u"eV" * Unitful.Na),
         Charge = 1,  # charge of the cation
         T_range_min = 80C,

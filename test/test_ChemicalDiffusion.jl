@@ -113,7 +113,7 @@ using GeoParams
     D = ustrip(compute_D(Pb_Rt, T = 1000K))
     @test D ≈ 3.409255712615271e-23 atol = 1.0e-25
 
-    # Benchmark Al data from Cherniak (2019) (ML 05/02/25)   
+    # Benchmark Al data from Cherniak (2019) (ML 05/02/25)
     Al_Rt = Rutile.Rt_Al_Cherniak2019_para_c
     Al_Rt = SetChemicalDiffusion(Al_Rt)
     D = ustrip(compute_D(Al_Rt, T = 1500K))
@@ -125,19 +125,19 @@ using GeoParams
     D = ustrip(compute_D(Si_Rt, T = 1500K))
     @test D ≈ 1.21914685899867e-21 atol = 1.0e-25
 
-    # Benchmark He data from Cherniak (2011) (ML 05/02/25)      
+    # Benchmark He data from Cherniak (2011) (ML 05/02/25)
     He_Rt = Rutile.Rt_He_Cherniak2011_para_c
     He_Rt = SetChemicalDiffusion(He_Rt)
     D = ustrip(compute_D(He_Rt, T = 500K))
     @test D ≈ 5.092947739473846e-21 atol = 1.0e-25
 
-    # Benchmark He data from Cherniak (2011) (ML 05/02/25) 
+    # Benchmark He data from Cherniak (2011) (ML 05/02/25)
     He_Rt = Rutile.Rt_He_Cherniak2011_perp_c
     He_Rt = SetChemicalDiffusion(He_Rt)
     D = ustrip(compute_D(He_Rt, T = 500K))
     @test D ≈ 1.7044309448370812e-23 atol = 1.0e-25
 
-     # Benchmark O data from Dennis (1993) (ML 05/02/25)
+    # Benchmark O data from Dennis (1993) (ML 05/02/25)
     O_Rt = Rutile.Rt_O_Dennis1993_perp_c_nat
     O_Rt = SetChemicalDiffusion(O_Rt)
     D = ustrip(compute_D(O_Rt, T = 1200K))
@@ -154,7 +154,7 @@ using GeoParams
     O_Rt = SetChemicalDiffusion(O_Rt)
     D = ustrip(compute_D(O_Rt, T = 1300K))
     @test D ≈ 1.0602928228258942e-17 atol = 1.0e-20
-    
+
     # Benchmark O data from Haul (1965) (ML 05/02/25)
     O_Rt = Rutile.Rt_O_Haul1965_unor
     O_Rt = SetChemicalDiffusion(O_Rt)
@@ -537,5 +537,3 @@ end
 #     O_Rt = SetChemicalDiffusion(O_Rt)
 #     D = ustrip(compute_D(O_Rt, T = 1300K))
 #     @test D ≈ 3.048663388262705e-16 atol = 1.0e-20
-
-        

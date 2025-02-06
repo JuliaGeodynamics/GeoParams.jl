@@ -100,9 +100,9 @@ function Rt_3H_Cathcart1979_perp_c()
         Crystallography = "Tetragonal",
         Fluid = "Anhydrous",
         D0 = 1.77e-2cm^2 / s,
-        log_D0_1σ = 4.3NoUnits, 
-        Ea = 107kJ/mol,
-        Ea_1σ = 4kJ/mol,
+        log_D0_1σ = 4.3NoUnits,
+        Ea = 107kJ / mol,
+        Ea_1σ = 4kJ / mol,
         Charge = 1,  # charge of the cation
         T_range_min = 250C,
         T_range_max = 900C
@@ -144,9 +144,9 @@ function Rt_3H_Cathcart1979_para_c()
         Crystallography = "Tetragonal",
         Fluid = "Anhydrous",
         D0 = 0.0085cm^2 / s,
-        log_D0_1σ = 4.1NoUnits, 
-        Ea = 72.2kJ/mol,
-        Ea_1σ = 6.2kJ/mol,
+        log_D0_1σ = 4.1NoUnits,
+        Ea = 72.2kJ / mol,
+        Ea_1σ = 6.2kJ / mol,
         Charge = 1,  # charge of the cation
         T_range_min = 250C,
         T_range_max = 900C
@@ -190,7 +190,7 @@ function Rt_H_Johnson1975_para_c()
         Crystallography = "Tetragonal",
         Fluid = "Anhydrous",
         D0 = 1.8e-3cm^2 / s,
-        log_D0_1σ = log(0.8e-3)NoUnits, 
+        log_D0_1σ = log(0.8e-3)NoUnits,
         Ea = (0.59u"eV" * Unitful.Na),
         Ea_1σ = (0.02u"eV" * Unitful.Na),
         Charge = 1,  # charge of the cation
@@ -235,7 +235,7 @@ function Rt_H_Johnson1975_perp_c()
         Crystallography = "Tetragonal",
         Fluid = "Anhydrous",
         D0 = 3.8e-1cm^2 / s,
-        log_D0_1σ = log(2.0e-1)NoUnits, 
+        log_D0_1σ = log(2.0e-1)NoUnits,
         Ea = (1.28u"eV" * Unitful.Na),
         Ea_1σ = (0.05u"eV" * Unitful.Na),
         Charge = 1,  # charge of the cation
