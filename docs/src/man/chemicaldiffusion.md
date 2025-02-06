@@ -2,15 +2,15 @@
 
 Some routines and experimental data for chemical diffusion in minerals and phases are implemented in this module. Contributions are welcome to extend the database.
 
-## Methods
-The following diffusion parameters are implemented:
-
-- Rutile:
+## Computational routines
+To compute the diffusion coefficient from the parameters, use this:
 ```@docs
-Rutile.Rt_Zr_Cherniak2007_para_c
-Rutile.Rt_Hf_Cherniak2007_para_c
-Rutile.Rt_Hf_Cherniak2007_perp_c
+GeoParams.MaterialParameters.ChemicalDiffusion.compute_D
+GeoParams.MaterialParameters.ChemicalDiffusion.compute_D!
 ```
+
+## Garnet
+The following diffusion parameters are implemented:
 
 - Garnet:
 ```@docs
@@ -20,6 +20,9 @@ Garnet.Grt_Fe_Chakraborty1992
 Garnet.Grt_REE_Bloch2020_slow
 Garnet.Grt_REE_Bloch2020_fast
 ```
+
+## Melt
+The following diffusion parameters are implemented:
 
 - Melt:
 ```@docs
@@ -64,11 +67,41 @@ Melt.U_Melt_Holycross2018_rhyolitic_highH2O
 Melt.U_Melt_Holycross2018_rhyolitic_mediumH2O
 ```
 
-## Computational routines
-To compute the diffusion coefficient from the parameters, use this:
+## Rutile
+The following diffusion parameters are implemented:
+
+- Rutile:
 ```@docs
-GeoParams.MaterialParameters.ChemicalDiffusion.compute_D
-GeoParams.MaterialParameters.ChemicalDiffusion.compute_D!
+Rutile.Rt_3H_Caskey1979_perp_c
+Rutile.Rt_3H_Caskey1979_para_c
+Rutile.Rt_3H_Cathcart1979_para_c
+Rutile.Rt_3H_Cathcart1979_perp_c
+Rutile.Rt_H_Johnson1975_para_c
+Rutile.Rt_H_Johnson1975_perp_c
+Rutile.Rt_He_Cherniak2011_para_c
+Rutile.Rt_He_Cherniak2011_perp_c
+Rutile.Rt_Li_Johnson1964_perp_c
+Rutile.Rt_O_Arita1979_para_c
+Rutile.Rt_O_Arita1979_para_c_Cr
+Rutile.Rt_O_Dennis1993_perp_c
+Rutile.Rt_O_Dennis1993_perp_c_nat
+Rutile.Rt_O_Derry1981_para_c
+Rutile.Rt_O_Haul1965_unor
+Rutile.Rt_O_Lundy1973_para_c
+Rutile.Rt_O_Lundy1973_perp_c
+Rutile.Rt_O_Moore1998_para_c_fast
+Rutile.Rt_O_Moore1998_para_c_slow
+Rutile.Rt_O_Venkatu1970
+Rutile.Rt_Al_Cherniak2019_para_c
+Rutile.Rt_Si_Cherniak2019_para_c
+Rutile.Rt_Ti_Hoshino1985_para_c
+Rutile.Rt_Ti_Hoshino1985_perp_c
+Rutile.Rt_Zr_Cherniak2007_para_c
+Rutile.Rt_Nb_Marschall2013_para_c
+Rutile.Rt_Hf_Cherniak2007_para_c
+Rutile.Rt_Hf_Cherniak2007_perp_c
+Rutile.Rt_Ta_Marschall2013_para_c
+Rutile.Rt_Pb_Cherniak2000_unor
 ```
 
 ## List of diffusion parameters

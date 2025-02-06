@@ -1,9 +1,20 @@
 module Rutile
 
 using GeoParams
+using Unitful
 
-include("Elements/Hf.jl")
+include("Elements/H.jl")
+include("Elements/He.jl")
+include("Elements/Li.jl")
+include("Elements/O.jl")
+include("Elements/Al.jl")
+include("Elements/Si.jl")
+include("Elements/Ti.jl")
 include("Elements/Zr.jl")
+include("Elements/Nb.jl")
+include("Elements/Hf.jl")
+include("Elements/Ta.jl")
+include("Elements/Pb.jl")
 
 """
     chemical_diffusion_list(search::String="")

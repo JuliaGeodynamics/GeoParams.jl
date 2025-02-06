@@ -71,6 +71,167 @@ using GeoParams
     D = ustrip(compute_D(Zr_Rt, T = 1273.15K))
     @test D ≈ 1.0390187e-21 atol = 1.0e-24
 
+    # Benchmark O data from Arita (1979) (ML 04/02/25)
+    O_Rt = Rutile.Rt_O_Arita1979_para_c
+    O_Rt = SetChemicalDiffusion(O_Rt)
+    D = ustrip(compute_D(O_Rt, T = 1200K))
+    @test D ≈ 4.03595865392e-18 atol = 1.0e-20
+
+    # Benchmark O data from Arita (1979) (ML 04/02/25)
+    O_Rt = Rutile.Rt_O_Arita1979_para_c_Cr
+    O_Rt = SetChemicalDiffusion(O_Rt)
+    D = ustrip(compute_D(O_Rt, T = 1200K))
+    @test D ≈ 2.6382416675592337e-17 atol = 1.0e-20
+
+    # Benchmark 3H data from Caskey (1974) (ML 05/02/25)
+    H_Rt = Rutile.Rt_3H_Caskey1979_para_c
+    H_Rt = SetChemicalDiffusion(H_Rt)
+    D = ustrip(compute_D(H_Rt, T = 400K))
+    @test D ≈ 8.62846851237345e-15 atol = 1.0e-20
+
+    # Benchmark 3H data from Caskey (1974) (ML 05/02/25)
+    H_Rt = Rutile.Rt_3H_Caskey1979_perp_c
+    H_Rt = SetChemicalDiffusion(H_Rt)
+    D = ustrip(compute_D(H_Rt, T = 400K))
+    @test D ≈ 1.879315663661693e-17 atol = 1.0e-20
+
+    # Benchmark 3H data from Cathcart (1979) (ML 05/02/25)
+    H_Rt = Rutile.Rt_3H_Cathcart1979_para_c
+    H_Rt = SetChemicalDiffusion(H_Rt)
+    D = ustrip(compute_D(H_Rt, T = 600K))
+    @test D ≈ 4.4052778406180927e-13 atol = 1.0e-20
+
+    # Benchmark 3H data from Cathcart (1979) (ML 05/02/25)
+    H_Rt = Rutile.Rt_3H_Cathcart1979_perp_c
+    H_Rt = SetChemicalDiffusion(H_Rt)
+    D = ustrip(compute_D(H_Rt, T = 600K))
+    @test D ≈ 8.569937964540059e-16 atol = 1.0e-20
+
+    # Benchmark Pb data from Cherniak (2000) (ML 05/02/25)
+    Pb_Rt = Rutile.Rt_Pb_Cherniak2000_unor
+    Pb_Rt = SetChemicalDiffusion(Pb_Rt)
+    D = ustrip(compute_D(Pb_Rt, T = 1000K))
+    @test D ≈ 3.409255712615271e-23 atol = 1.0e-25
+
+    # Benchmark Al data from Cherniak (2019) (ML 05/02/25)   
+    Al_Rt = Rutile.Rt_Al_Cherniak2019_para_c
+    Al_Rt = SetChemicalDiffusion(Al_Rt)
+    D = ustrip(compute_D(Al_Rt, T = 1500K))
+    @test D ≈ 3.909163612897716e-21 atol = 1.0e-25
+
+    # Benchmark Si data from Cherniak (2019) (ML 05/02/25)
+    Si_Rt = Rutile.Rt_Si_Cherniak2019_para_c
+    Si_Rt = SetChemicalDiffusion(Si_Rt)
+    D = ustrip(compute_D(Si_Rt, T = 1500K))
+    @test D ≈ 1.21914685899867e-21 atol = 1.0e-25
+
+    # Benchmark He data from Cherniak (2011) (ML 05/02/25)      
+    He_Rt = Rutile.Rt_He_Cherniak2011_para_c
+    He_Rt = SetChemicalDiffusion(He_Rt)
+    D = ustrip(compute_D(He_Rt, T = 500K))
+    @test D ≈ 5.092947739473846e-21 atol = 1.0e-25
+
+    # Benchmark He data from Cherniak (2011) (ML 05/02/25) 
+    He_Rt = Rutile.Rt_He_Cherniak2011_perp_c
+    He_Rt = SetChemicalDiffusion(He_Rt)
+    D = ustrip(compute_D(He_Rt, T = 500K))
+    @test D ≈ 1.7044309448370812e-23 atol = 1.0e-25
+
+     # Benchmark O data from Dennis (1993) (ML 05/02/25)
+    O_Rt = Rutile.Rt_O_Dennis1993_perp_c_nat
+    O_Rt = SetChemicalDiffusion(O_Rt)
+    D = ustrip(compute_D(O_Rt, T = 1200K))
+    @test D ≈ 5.121245802982152e-19 atol = 1.0e-20
+
+    # Benchmark O data from Dennis (1993) (ML 05/02/25)
+    O_Rt = Rutile.Rt_O_Dennis1993_perp_c
+    O_Rt = SetChemicalDiffusion(O_Rt)
+    D = ustrip(compute_D(O_Rt, T = 1000K))
+    @test D ≈ 2.3535182578640714e-21 atol = 1.0e-20
+
+    # Benchmark O data from Derry (1981) (ML 05/02/25)
+    O_Rt = Rutile.Rt_O_Derry1981_para_c
+    O_Rt = SetChemicalDiffusion(O_Rt)
+    D = ustrip(compute_D(O_Rt, T = 1300K))
+    @test D ≈ 1.0602928228258942e-17 atol = 1.0e-20
+    
+    # Benchmark O data from Haul (1965) (ML 05/02/25)
+    O_Rt = Rutile.Rt_O_Haul1965_unor
+    O_Rt = SetChemicalDiffusion(O_Rt)
+    D = ustrip(compute_D(O_Rt, T = 1000K))
+    @test D ≈ 1.468969532942727e-10 atol = 1.0e-15
+
+    # Benchmark Ti data from Haul (1965) (ML 05/02/25)
+    Ti_Rt = Rutile.Rt_Ti_Hoshino1985_perp_c
+    Ti_Rt = SetChemicalDiffusion(Ti_Rt)
+    D = ustrip(compute_D(Ti_Rt, T = 1400K))
+    @test D ≈ 4.517240188575952e-14 atol = 1.0e-20
+
+    # Benchmark Ti data from Haul (1965) (ML 05/02/25)
+    Ti_Rt = Rutile.Rt_Ti_Hoshino1985_para_c
+    Ti_Rt = SetChemicalDiffusion(Ti_Rt)
+    D = ustrip(compute_D(Ti_Rt, T = 1400K))
+    @test D ≈ 3.110886861417677e-14 atol = 1.0e-20
+
+    # Benchmark H data from Johnson (1975) (ML 05/02/25)
+    H_Rt = Rutile.Rt_H_Johnson1975_para_c
+    H_Rt = SetChemicalDiffusion(H_Rt)
+    D = ustrip(compute_D(H_Rt, T = 800K))
+    @test D ≈ 3.454904867938235e-11 atol = 1.0e-15
+
+    # Benchmark H data from Johnson (1975) (ML 05/02/25)
+    H_Rt = Rutile.Rt_H_Johnson1975_perp_c
+    H_Rt = SetChemicalDiffusion(H_Rt)
+    D = ustrip(compute_D(H_Rt, T = 800K))
+    @test D ≈ 3.2819994208474166e-13 atol = 1.0e-15
+
+    # Benchmark Li data from Johnson (1964) (ML 05/02/25)
+    Li_Rt = Rutile.Rt_Li_Johnson1964_perp_c
+    Li_Rt = SetChemicalDiffusion(Li_Rt)
+    D = ustrip(compute_D(Li_Rt, T = 300K))
+    @test D ≈ 8.434629531236313e-11 atol = 1.0e-15
+
+    # Benchmark O data from Lundy (1973) (ML 05/02/25)
+    O_Rt = Rutile.Rt_O_Lundy1973_para_c
+    O_Rt = SetChemicalDiffusion(O_Rt)
+    D = ustrip(compute_D(O_Rt, T = 1500K))
+    @test D ≈ 4.508484518586777e-6 atol = 1.0e-10
+
+    # Benchmark O data from Lundy (1973) (ML 05/02/25)
+    O_Rt = Rutile.Rt_O_Lundy1973_perp_c
+    O_Rt = SetChemicalDiffusion(O_Rt)
+    D = ustrip(compute_D(O_Rt, T = 1500K))
+    @test D ≈ 2.3612661335409755e-7 atol = 1.0e-10
+
+    # Benchmark Ta data from Marschall (2013) (ML 05/02/25)
+    Ta_Rt = Rutile.Rt_Ta_Marschall2013_para_c
+    Ta_Rt = SetChemicalDiffusion(Ta_Rt)
+    D = ustrip(compute_D(Ta_Rt, T = 1300K))
+    @test D ≈ 1.1191675198858428e-18 atol = 1.0e-20
+
+    # Benchmark Nb data from Marschall (2013) (ML 05/02/25)
+    Nb_Rt = Rutile.Rt_Nb_Marschall2013_para_c
+    Nb_Rt = SetChemicalDiffusion(Nb_Rt)
+    D = ustrip(compute_D(Nb_Rt, T = 1300K))
+    @test D ≈ 3.601108284843592e-18 atol = 1.0e-20
+
+    # Benchmark O data from Moore (1998) (ML 05/02/25)
+    O_Rt = Rutile.Rt_O_Moore1998_para_c_slow
+    O_Rt = SetChemicalDiffusion(O_Rt)
+    D = ustrip(compute_D(O_Rt, T = 1100K))
+    @test D ≈ 1.2611477676206804e-20 atol = 1.0e-25
+
+    # Benchmark O data from Moore (1998) (ML 05/02/25)
+    O_Rt = Rutile.Rt_O_Moore1998_para_c_fast
+    O_Rt = SetChemicalDiffusion(O_Rt)
+    D = ustrip(compute_D(O_Rt, T = 1100K))
+    @test D ≈ 2.6359652716031265e-19 atol = 1.0e-25
+
+    # Benchmark O data from Venkatu (1970) (ML 05/02/25)
+    O_Rt = Rutile.Rt_O_Venkatu1970
+    O_Rt = SetChemicalDiffusion(O_Rt)
+    D = ustrip(compute_D(O_Rt, T = 1300K))
+    @test D ≈ 3.048663388262705e-16 atol = 1.0e-20
     # -------------------------- Garnet --------------------------
 
     # Benchmark Fe data from Chakraborty 1992 (HD 18/01/25)
@@ -366,3 +527,15 @@ using GeoParams
     @test  D ≈ 1.556627767e-13 atol = 1.0e-18
 
 end
+
+
+# using GeoParams
+# using Test
+
+#     # Benchmark O data from Venkatu (1970) (ML 05/02/25)
+#     O_Rt = Rutile.Rt_O_Venkatu1970
+#     O_Rt = SetChemicalDiffusion(O_Rt)
+#     D = ustrip(compute_D(O_Rt, T = 1300K))
+#     @test D ≈ 3.048663388262705e-16 atol = 1.0e-20
+
+        
