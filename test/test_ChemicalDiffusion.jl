@@ -84,16 +84,16 @@ using GeoParams
     @test D ≈ 2.6382416675592337e-17 atol = 1.0e-20
 
     # Benchmark 3H data from Caskey (1974) (ML 05/02/25)
-    H_Rt = Rutile.Rt_3H_Caskey1979_para_c
+    H_Rt = Rutile.Rt_3H_Caskey1974_para_c
     H_Rt = SetChemicalDiffusion(H_Rt)
-    D = ustrip(compute_D(H_Rt, T = 400K))
-    @test D ≈ 8.62846851237345e-15 atol = 1.0e-20
+    D = ustrip(compute_D(H_Rt, T = 250C)) * 1.0e4
+    @test D ≈ 1.2548995650847654e-9 atol = 1.0e-12
 
     # Benchmark 3H data from Caskey (1974) (ML 05/02/25)
-    H_Rt = Rutile.Rt_3H_Caskey1979_perp_c
+    H_Rt = Rutile.Rt_3H_Caskey1974_perp_c
     H_Rt = SetChemicalDiffusion(H_Rt)
-    D = ustrip(compute_D(H_Rt, T = 400K))
-    @test D ≈ 1.879315663661693e-17 atol = 1.0e-20
+    D = ustrip(compute_D(H_Rt, T = 250C)) * 1.0e4
+    @test D ≈ 9.095989077149555e-12 atol = 1.0e-15
 
     # Benchmark 3H data from Cathcart (1979) (ML 05/02/25)
     H_Rt = Rutile.Rt_3H_Cathcart1979_para_c
@@ -527,13 +527,3 @@ using GeoParams
     @test  D ≈ 1.556627767e-13 atol = 1.0e-18
 
 end
-
-
-# using GeoParams
-# using Test
-
-#     # Benchmark O data from Venkatu (1970) (ML 05/02/25)
-#     O_Rt = Rutile.Rt_O_Venkatu1970
-#     O_Rt = SetChemicalDiffusion(O_Rt)
-#     D = ustrip(compute_D(O_Rt, T = 1300K))
-#     @test D ≈ 3.048663388262705e-16 atol = 1.0e-20

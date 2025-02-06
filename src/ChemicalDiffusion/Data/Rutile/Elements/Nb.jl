@@ -1,9 +1,8 @@
 """
     Rt_Nb_Marschall2013_para_c
 
-Diffusion data of Nb in rutile. With anhydrous conditions and parallel to c-axis. 
-Calibrated between 850-1250°C. From Cherniak et al. (2019) 
-(https://doi.org/10.1016/j.epsl.2013.05.055).
+Diffusion data of Nb in rutile. With anhydrous conditions and parallel to c-axis.
+Calibrated between 850-1250°C. From Cherniak et al. (2019) (https://doi.org/10.1016/j.epsl.2013.05.055).
 """
 function Rt_Nb_Marschall2013_para_c()
     data = DiffusionData(
@@ -24,21 +23,16 @@ function Rt_Nb_Marschall2013_para_c()
         T_range_max = 1250C  # temperature max of the experiment
     )
     info = MaterialParamsInfo(;
-        Comment = "Checked values by HD (15.01.25)",
+        Comment = "Checked values by ML (05.02.25)",
         BibTex_Reference = "
-            @article{Marschall2013,
-            author = {Horst R. Marschall and Ralf Dohmen and Thomas Ludwig},
-            doi = {10.1016/j.epsl.2013.05.055},
-            issn = {0012821X},
-            journal = {Earth and Planetary Science Letters},
-            keywords = {Diffusion,Nb-Ta,Partial melting,Rutile,TiO2},
-            month = {8},
-            pages = {361-371},
-            publisher = {Elsevier},
-            title = {Diffusion-induced fractionation of niobium and tantalum during continental crust formation},
-            volume = {375},
-            url = {http://dx.doi.org/10.1016/j.epsl.2013.05.055 https://linkinghub.elsevier.com/retrieve/pii/S0012821X13003166},
-            year = {2013},
+            @article{marschall2013diffusion,
+            title={Diffusion-induced fractionation of niobium and tantalum during continental crust formation},
+            author={Marschall, Horst R and Dohmen, Ralf and Ludwig, Thomas},
+            journal={Earth and Planetary Science Letters},
+            volume={375},
+            pages={361--371},
+            year={2013},
+            publisher={Elsevier}
             }
           ",
     )

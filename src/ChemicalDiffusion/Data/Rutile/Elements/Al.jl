@@ -1,7 +1,7 @@
 """
     Rt_Al_Cherniak2019_para_c
 
-Diffusion data of Al in rutile. With anhydrous conditions and parallel to c-axis. 
+Diffusion data of Al in rutile. With anhydrous conditions and parallel to c-axis.
 Calibrated between 1100-1400°C. From Cherniak et al. (2019) (https://doi.org/10.2138/am-2019-7030).
 """
 function Rt_Al_Cherniak2019_para_c()
@@ -23,19 +23,17 @@ function Rt_Al_Cherniak2019_para_c()
         T_range_max = 1400C  # temperature max of the experiment
     )
     info = MaterialParamsInfo(;
-        Comment = "Checked values by HD (15.01.25)",
+        Comment = "Checked values by ML (05.02.25)",
         BibTex_Reference = "
-          @article{Cherniak2019,
-            author = {Daniele J. Cherniak and E. Bruce Watson},
-            doi = {10.2138/am-2019-7030},
-            issn = {19453027},
-            issue = {11},
-            journal = {American Mineralogist},
-            keywords = {Rutherford backscattering,Rutile,aluminum,diffusion,geobarometry,geothermometry,nuclear reaction analysis,silicon},
-            pages = {1638-1649},
-            title = {Al and Si diffusion in rutile},
-            volume = {104},
-            year = {2019},
+            @article{cherniak2019and,
+            title={Al and Si diffusion in rutile},
+            author={Cherniak, Daniele J and Watson, E Bruce},
+            journal={American Mineralogist},
+            volume={104},
+            number={11},
+            pages={1638--1649},
+            year={2019},
+            publisher={Mineralogical Society of America}
             }
           ",
     )

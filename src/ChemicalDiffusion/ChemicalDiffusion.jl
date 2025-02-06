@@ -3,7 +3,7 @@ module ChemicalDiffusion
 using GeoParams
 using Unitful
 
-using Parameters, LaTeXStrings, Unitful
+using Parameters, LaTeXStrings, Unitful, MuladdMacro
 using ..Units
 using GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
 import GeoParams: param_info, ptr2string
@@ -194,15 +194,18 @@ end
 Computes the diffusion coefficient `D` [m^2/s] from the diffusion data `data` at temperature `T` [K] and pressure `P` [Pa].
 If `T` and `P` are provided without unit, the function assumes the units are in Kelvin and Pascal, respectively, and outputs the diffusion coefficient without unit based on the value in m^2/s.
 """
-@inline function compute_D(data::DiffusionData; T = 1K, P = 0Pa, fO2 = 1, kwargs...)
+@inline function compute_D(data::DiffusionData; T = 1K, P = 0Pa, fO2 = 1NoUnits, kwargs...)
 
     if P isa Quantity && T isa Quantity
         @unpack_units D0, Ea, ΔV, P0, R, afO2, bfO2, nfO2 = data
+
+        # convert to K to prevent affine error with Celsius
+        T = uconvert(K, T)
     else
         @unpack_val D0, Ea, ΔV, P0, R, afO2, bfO2, nfO2 = data
     end
 
-    D = D0 * (afO2 * (fO2^nfO2) / bfO2) * exp(-(Ea + (P - P0) * ΔV) / (R * T))
+    D = @muladd D0 * (afO2 * (fO2^nfO2) / bfO2) * exp(-(Ea + (P - P0) * ΔV) / (R * T))
 
     return D
 end
