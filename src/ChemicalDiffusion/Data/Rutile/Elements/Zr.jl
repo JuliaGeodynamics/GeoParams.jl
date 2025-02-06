@@ -11,7 +11,7 @@ function Rt_Zr_Cherniak2007_para_c()
         Name = "Zr diffusion in Rutile (Ξc and anhydrous conditions) | Cherniak et al. (2007)",
         Phase = "Rutile",
         Formula = "TiO2",
-        Species = "Hf",
+        Species = "Zr",
         Orientation = "Ξc",
         Crystallography = "Tetragonal",
         Buffer = "QFM, NNO, Air",
