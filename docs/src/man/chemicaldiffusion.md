@@ -10,9 +10,8 @@ GeoParams.MaterialParameters.ChemicalDiffusion.compute_D!
 ```
 
 ## Garnet
-The following diffusion parameters are implemented:
+The following diffusion parameters for Garnet are implemented:
 
-- Garnet:
 ```@docs
 Garnet.Grt_Mg_Chakraborty1992
 Garnet.Grt_Mn_Chakraborty1992
@@ -22,9 +21,8 @@ Garnet.Grt_REE_Bloch2020_fast
 ```
 
 ## Melt
-The following diffusion parameters are implemented:
+The following diffusion parameters for Melt are implemented:
 
-- Melt:
 ```@docs
 Melt.Sc_Melt_Holycross2018_rhyolitic_highH2O
 Melt.Sc_Melt_Holycross2018_rhyolitic_mediumH2O
@@ -68,12 +66,11 @@ Melt.U_Melt_Holycross2018_rhyolitic_mediumH2O
 ```
 
 ## Rutile
-The following diffusion parameters are implemented:
+The following diffusion parameters for Rutile are implemented:
 
-- Rutile:
 ```@docs
-Rutile.Rt_3H_Caskey1979_perp_c
-Rutile.Rt_3H_Caskey1979_para_c
+Rutile.Rt_3H_Caskey1974_perp_c
+Rutile.Rt_3H_Caskey1974_para_c
 Rutile.Rt_3H_Cathcart1979_para_c
 Rutile.Rt_3H_Cathcart1979_perp_c
 Rutile.Rt_H_Johnson1975_para_c
