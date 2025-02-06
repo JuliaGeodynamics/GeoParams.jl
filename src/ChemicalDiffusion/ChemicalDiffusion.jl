@@ -38,18 +38,20 @@ abstract type AbstractChemicalDiffusion{T} <: AbstractMaterialParam end
 @inline precision(::AbstractChemicalDiffusion{T}) where {T} = T
 
 """
-    DiffusionData(; Name, Phase, Formula, Species, Orientation, Crystallography, Buffer, Fluid, Doping, D0, log_D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, n, Charge, T_range, P0, )
+    DiffusionData(; Name, Phase, Formula, Species, Orientation, Crystallography, Buffer, Fluid, Doping, D0, log_D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, afO2, bfO2, nfO2, Charge, T_range, P0, )
 
 Defines the diffusion data for the chemical diffusion of a given phase and species from an experiment.
 
 The diffusion coefficient `D` [\\mathrm{[m^2/s]}] is given by an Arrhenius equation:
 ```math
-    D = D0 * fO2^n * \\exp\\left(-\\frac{Ea + PΔV} {RT}\\right)
+    D = D0 * (afO2 * (fO2^nfO2 / bfO2)) * \\exp\\left(-\\frac{Ea + PΔV} {RT}\\right)
 ```
 where
 - ``D0`` is the pre-exponential factor [\\mathrm{[m^2/s]}],
 - ``fO2`` is the oxygen fugacity,
-- ``n`` is the exponent for the fO2 dependency,
+- ``afO2`` is the prefactor for the fO2 dependency,
+- ``bfO2`` is the quotient for the fO2 dependency,
+- ``nfO2`` is the exponent for the fO2 dependency,
 - ``Ea`` is the activation energy [\\mathrm{[J/mol]}],
 - ``ΔV`` is the activation volume [\\mathrm{[cm^3/mol]}],
 - ``P`` is the pressure [\\mathrm{[Pa]},
@@ -189,9 +191,9 @@ end
 
 
 """
-    compute_D(data::DiffusionData; T=1K, P=0Pa, kwargs...)
+    compute_D(data::DiffusionData; T=1K, P=0Pa, fO2 = 1NoUnits, kwargs...)
 
-Computes the diffusion coefficient `D` [m^2/s] from the diffusion data `data` at temperature `T` [K] and pressure `P` [Pa].
+Computes the diffusion coefficient `D` [m^2/s] from the diffusion data `data` at temperature `T` [K], pressure `P` [Pa] and oxygen fugacity `fO2` [NoUnits].
 If `T` and `P` are provided without unit, the function assumes the units are in Kelvin and Pascal, respectively, and outputs the diffusion coefficient without unit based on the value in m^2/s.
 """
 @inline function compute_D(data::DiffusionData; T = 1K, P = 0Pa, fO2 = 1NoUnits, kwargs...)
@@ -211,9 +213,9 @@ If `T` and `P` are provided without unit, the function assumes the units are in 
 end
 
 """
-    compute_D!(D, data::DiffusionData; T=ones(size(D))K, P=zeros(size(D))Pa, kwargs...)
+    compute_D!(D, data::DiffusionData; T=ones(size(D))K, P=zeros(size(D))Pa, fO2 = ones(size(D)), kwargs...)
 
-In-place version of `compute_D(data::DiffusionData; T=1K, P=0Pa, kwargs...)`. `D` should be an array of the same size as T and P.
+In-place version of `compute_D(data::DiffusionData; T=1K, P=0Pa, fO2=0NoUnits, kwargs...)`. `D` should be an array of the same size as T, P and fO2.
 """
 function compute_D!(
         D::AbstractArray{_T, nDim},
