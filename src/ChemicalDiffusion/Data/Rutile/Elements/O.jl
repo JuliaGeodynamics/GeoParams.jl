@@ -24,7 +24,6 @@ function Rt_O_Arita1979_para_c()
         Comment = "Checked values by ML (05.02.25)",
         BibTex_Reference = "
           @article{Arita1979,
-            abstract = {Secondary ion mass spectrumètry has been applied for measuring the tracer diffusivity of oxygen in the c direction of single‐crystal rutile for a temperature range of 1150 to 1450 K at 6000 Pa pressure of oxygen gas. Specimens diffusion‐annealed in oxygen gas containing 18O were subsequently continuously sputtered and analyzed for 16O and 18O. The tracer diffusivity was determined from the depth profile of 18O, taking into account a surface exchange reaction of oxygen. The tracer diffusivity in Cr2O3‐doped rutile was 3 to 8 times larger than that in pure rutile. For pure rutile, the diffusivity is expressed by D(m2/s)=3.4×10−7, exp [‐251(kJ/mol)/RT], and for 0.08 mol% Cr2O3‐doped rutile, by D(m2/s)= 2.0×10−8 exp[‐204(KJ/mol)/RT]. The Cr2O3 doping had a catalytic effect on the rate constant of the surface exchange reaction on the c surface. The rate constant is represented, for pure rutile, by K(m/s)= 2.4×10−1 exp[‐246(KJ/mol)/RT], and for 0.08 mol% Cr2O3‐doped rutile, k(m/s)= 3.5×10−5 exp[‐131(KJ/mol)/RT]. Copyright © 1979, Wiley Blackwell. All rights reserved},
             author = {M. Arita and M. Hosoya and M. Kobayashi and M. Someno},
             doi = {10.1111/j.1151-2916.1979.tb19101.x},
             issn = {15512916},

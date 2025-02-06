@@ -27,7 +27,6 @@ function Rt_Pb_Cherniak2000_unor()
         Comment = "Checked values by HD (15.01.25)",
         BibTex_Reference = "
           @article{Cherniak2000,
-            abstract = {Diffusion of Pb was measured in natural and synthetic rutile under dry, 1 atmosphere conditions, using mixtures of Pb titanate or Pb sulfide and TiO2 as the sources of diffusant. Pb depth profiles were then measured with Rutherford Backscattering Spectrometry (RBS). Over the temperature range 700-1100 °C, the following Arrhenius relation was obtained for the synthetic rutile: D = 3.9 x 10-10exp(-250 ± 12 kJ mol-1/RT) m2s-1. Results for diffusion in natural and synthetic rutile were quite similar, despite significant differences in trace element compositions. Mean closure temperatures calculated from the diffusion parameters are around 600 °C for rutile grains of ~100 μm size. This is about 100 °C higher than rutile closure temperature determinations from past field-based studies, suggesting that rutile is more resistant to Pb loss through volume diffusion than previously thought.},
             author = {D. J. Cherniak},
             doi = {10.1007/PL00007671},
             issn = {00107999},
