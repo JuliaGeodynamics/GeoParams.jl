@@ -220,7 +220,7 @@ function compute_D!(
         D::AbstractArray{_T, nDim},
         data::DiffusionData;
         T = ones(size(D))K,
-        P = zeros(size(D))GPa,
+        P = ones(size(D))GPa,
         fO2 = ones(size(D)),
         kwargs...
     ) where {_T, nDim}
