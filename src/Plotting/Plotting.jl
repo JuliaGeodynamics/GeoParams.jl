@@ -1345,9 +1345,9 @@ fig, ax = PlotDiffusionCoefArrhenius((Fe_Grt, Mg_Grt, Mn_Grt), P= 1u"GPa", linew
 ```
 """
 function PlotDiffusionCoefArrhenius(
-        x::Union{Tuple{Vararg{DiffusionData}}, NTuple{N, DiffusionData} where N, DiffusionData};
-        P::Quantity=1u"GPa",
-        fO2=1NoUnits,
+        x::Union{Tuple{Vararg{DiffusionData}}, NTuple{N, DiffusionData} where {N}, DiffusionData};
+        P::Quantity = 1u"GPa",
+        fO2 = 1NoUnits,
         log_type::Symbol = :log10,
         linestyle::Symbol = :solid,
         linewidth = 1,
@@ -1376,12 +1376,12 @@ function PlotDiffusionCoefArrhenius(
 
     D = zeros(n * 2)
     for i in 1:n
-        D[i] = compute_D(x[i], T = T_min[i], P=P, fO2=fO2) |> upreferred |> ustrip
-        D[i + n] = compute_D(x[i], T = T_max[i], P=P, fO2=fO2) |> upreferred |> ustrip
+        D[i] = compute_D(x[i], T = T_min[i], P = P, fO2 = fO2) |> upreferred |> ustrip
+        D[i + n] = compute_D(x[i], T = T_max[i], P = P, fO2 = fO2) |> upreferred |> ustrip
     end
 
-    T_inv_min = 1e4 ./ T_min .|> upreferred .|> ustrip
-    T_inv_max = 1e4 ./ T_max .|> upreferred .|> ustrip
+    T_inv_min = 1.0e4 ./ T_min .|> upreferred .|> ustrip
+    T_inv_max = 1.0e4 ./ T_max .|> upreferred .|> ustrip
 
     if isnothing(fig)
         fig = Figure(; fontsize = 25, size = res)
@@ -1448,7 +1448,7 @@ function PlotDiffusionCoefArrhenius(
     T_max = uconvert.(u"°C", T_max) |> ustrip
 
     for i in 1:n
-        lines!(ax2, [T_min[i], T_max[i]], [D_log[i], D_log[i + n]], label = "", color=RGBAf(0,0, 0, 0))
+        lines!(ax2, [T_min[i], T_max[i]], [D_log[i], D_log[i + n]], label = "", color = RGBAf(0, 0, 0, 0))
     end
 
     linkyaxes!(ax1, ax2)
