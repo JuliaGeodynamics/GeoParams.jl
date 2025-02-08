@@ -27,22 +27,22 @@ Unidecode = "967fb449-e509-55aa-8007-234b4096b967"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [weakdeps]
-GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 
 [extensions]
-GeoParamsGLMakieExt = "GLMakie"
+GeoParamsMakieExt = "Makie"
 
 [compat]
 BibTeX = "0.1"
 DelimitedFiles = "1.0"
 ForwardDiff = "0.10.36, 0.10.37, 0.10.38"
-GLMakie = "0.8, 0.9, 0.10"
 InternedStrings = "0.7"
 Interpolations = "0.13, 0.14, 0.15"
 KernelDensitySJ = "0.2"
 LaTeXStrings = "1.2"
 LinearAlgebra = "1.0"
-Loess = "0.5,0.6"
+Loess = "0.5, 0.6"
+Makie = "0.21, 0.22"
 MuladdMacro = "0.2.4"
 Parameters = "0.12"
 Roots = "1.0, 2.0"
@@ -58,7 +58,7 @@ Unitful = "1.0"
 julia = "1.7"
 
 [extras]
-GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 

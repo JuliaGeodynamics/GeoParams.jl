@@ -1,7 +1,7 @@
 """
     Rt_Li_Johnson1964_perp_c
 
-Diffusion data of Li in rutile. With anhydrous conditions and perpendicular to c-axis. 
+Diffusion data of Li in rutile. With anhydrous conditions and perpendicular to c-axis.
 Calibrated between 80-360°C.
 From Johnson et al. (1964) (https://doi.org/10.1103/PhysRev.136.A284).
 """

@@ -13,17 +13,19 @@ import GeoParams: PlotStrainrateStress,
     Plot_ZirconAge_PDF,
     PlotDeformationMap,
     PlotStressTime_0D,
-    PlotPressureStressTime_0D
+    PlotPressureStressTime_0D,
+    PlotDiffusionCoefArrhenius
 
 # Make all `export`ed names from GeoParams.jl available
 using GeoParams
 # We also need the following un-`export`ed names
-using GeoParams: AbstractTempStruct
+using GeoParams: AbstractTempStruct, DiffusionData, ptr2string
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 using GeoParams.MaterialParameters.ConstitutiveRelationships
 using GeoParams.MaterialParameters.HeatCapacity: AbstractHeatCapacity, compute_heatcapacity
 using GeoParams.MaterialParameters.Conductivity: AbstractConductivity, compute_conductivity
 using GeoParams.MeltingParam: AbstractMeltingParam, compute_meltfraction
+
 
 using GeoParams.Units
 using GeoParams.MaterialParameters
@@ -45,7 +47,7 @@ Plots deviatoric stress versus deviatoric strain rate for a single or multiple c
 
 First, we retrieve the data for anorthite creeplaws
 ```julia-repl
-julia> import GeoParams.Diffusion, GeoParams.Dislocation 
+julia> import GeoParams.Diffusion, GeoParams.Dislocation
 julia> pp  = SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006);
 julia> pp1 = SetDislocationCreep(Dislocation.dry_anorthite_Rybacki_2006);
 ```
@@ -1009,7 +1011,7 @@ Creates a deformation mechanism map (T/εII vs. stress/viscosity or T/τII vs. s
 
 # Example
 ```julia
-julia> import GeoParams.Diffusion, GeoParams.Dislocation 
+julia> import GeoParams.Diffusion, GeoParams.Dislocation
 julia> v1 = SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006);
 julia> v2 = SetDislocationCreep(Dislocation.dry_anorthite_Rybacki_2006);
 julia> v = CompositeRheology(v1,v2)
@@ -1295,4 +1297,170 @@ function PlotPressureStressTime_0D(
     end
 
     return fig, ax1, ax2, P_MPa, Tau_II_MPa, t_vec
+end
+
+
+"""
+    fig, ax = PlotDiffusionCoefPlotDiffusionCoefArrhenius(x::Union{Tuple{Vararg{AbstractChemicalDiffusion}}, NTuple{N, AbstractChemicalDiffusion} where N, AbstractChemicalDiffusion};
+                                P=1u"GPa", fO2=1NoUnits, log_type=:log10, linestyle=:solid, linewidth=1, color=nothing, label=nothing,
+                                title="", fig=nothing, filename=nothing, res=(1200, 1200), legend=true, legendsize=15, position=:rt,
+                                labelsize=35, xlims=(nothing, nothing), ylims=(nothing, nothing))
+
+Creates a plot of log(D) versus 10^4/T for one or a tuple of `ChemicalDiffusionData` structures.
+
+# Optional parameters
+- `P`: Pressure (default: 1 GPa)
+- `fO2`: Oxygen fugacity (default: 1 NoUnits)
+- `log_type`: Logarithm type for `D` (default: :log10, options: :log10, :ln)
+- `linestyle`: Line style for the plot (default: :solid)
+- `linewidth`: Line width for the plot (default: 1)
+- `color`: Line color for the plot (default: nothing)
+- `label`: Label for the plot (default: nothing)
+- `title`: Title for the plot (default: "")
+- `fig`: Existing figure to plot on (default: nothing)
+- `filename`: Filename to save the plot (default: nothing)
+- `res`: Resolution of the plot (default: (1200, 1200))
+- `legend`: Whether to display the legend (default: true)
+- `legendsize`: Size of the legend text (default: 15)
+- `position`: Position of the legend (default: :rt)
+- `labelsize`: Size of the axis labels (default: 35)
+- `xlims`: Limits for the x-axis (default: (nothing, nothing))
+- `ylims`: Limits for the y-axis (default: (nothing, nothing))
+
+# Example
+
+```julia
+using GeoParams
+using GLMakie
+
+# obtain diffusion data
+Fe_Grt = Garnet.Grt_Fe_Chakraborty1992
+Fe_Grt = SetChemicalDiffusion(Fe_Grt)
+Mg_Grt = Garnet.Grt_Mg_Chakraborty1992
+Mg_Grt = SetChemicalDiffusion(Mg_Grt)
+Mn_Grt = Garnet.Grt_Mn_Chakraborty1992
+Mn_Grt = SetChemicalDiffusion(Mn_Grt)
+
+fig, ax = PlotDiffusionCoefArrhenius((Fe_Grt, Mg_Grt, Mn_Grt), P= 1u"GPa", linewidth=3)
+```
+"""
+function PlotDiffusionCoefArrhenius(
+        x::Union{Tuple{Vararg{DiffusionData}}, NTuple{N, DiffusionData} where {N}, DiffusionData};
+        P::Quantity = 1u"GPa",
+        fO2 = 1NoUnits,
+        log_type::Symbol = :log10,
+        linestyle::Symbol = :solid,
+        linewidth = 1,
+        color = nothing,
+        label = nothing,
+        title = "",
+        fig = nothing,
+        filename = nothing,
+        res = (1200, 1200),
+        legend = true,
+        legendsize = 25,
+        position = :rt,
+        labelsize = 35,
+        xlims = (nothing, nothing),
+        ylims = (nothing, nothing),
+    )
+
+    if isa(x, AbstractChemicalDiffusion)
+        x = (x,)
+    end
+
+    n = length(x)
+    name = ptr2string.(([x[i].Name for i in 1:n]))
+    T_min = Value.([x[i].T_range_min for i in 1:n])
+    T_max = Value.([x[i].T_range_max for i in 1:n])
+
+    D = zeros(n * 2)
+    for i in 1:n
+        D[i] = compute_D(x[i], T = T_min[i], P = P, fO2 = fO2) |> upreferred |> ustrip
+        D[i + n] = compute_D(x[i], T = T_max[i], P = P, fO2 = fO2) |> upreferred |> ustrip
+    end
+
+    T_inv_min = 1.0e4 ./ T_min .|> upreferred .|> ustrip
+    T_inv_max = 1.0e4 ./ T_max .|> upreferred .|> ustrip
+
+    if isnothing(fig)
+        fig = Figure(; fontsize = 25, size = res)
+    end
+
+    if log_type == :log10
+        D_log = log10.(D)
+    elseif log_type == :ln
+        D_log = log.(D)
+    end
+
+    ax1 = Axis(
+        fig[1, 1];
+        xlabel = "10⁴/T [K⁻¹]",
+        xlabelsize = labelsize,
+        ylabelsize = labelsize,
+        title = title,
+    )
+
+    if log_type == :log10
+        ax1.ylabel = "log₁₀ D (D in [m²/s])"
+    elseif log_type == :ln
+        ax1.ylabel = "ln D (D in [m²/s])"
+    end
+
+    if isnothing(label)
+        label = name
+    end
+
+    for i in 1:n
+        li = lines!(ax1, [T_inv_min[i], T_inv_max[i]], [D_log[i], D_log[i + n]])
+
+        if isa(label, Array) || isa(label, Tuple)
+            label_i = label[i]
+        else
+            label_i = label
+        end
+
+        plot_args = ObtainPlotArgs(i, "", "", linewidth, linestyle, color, label)
+
+        args = (linewidth = plot_args.linewidth, linestyle = plot_args.linestyle, color = plot_args.color, label = label_i)
+
+        customize_plot!(li, args)
+    end
+
+    if legend
+        axislegend(ax1; labelsize = legendsize, position = position)
+    end
+
+    ax2 = Axis(
+        fig[1, 1];
+        xlabel = "Temperature [°C]",
+        ylabel = "",
+        xlabelsize = labelsize,
+        ylabelsize = labelsize,
+        title = "",
+        xaxisposition = :top,
+        xreversed = true,
+    )
+
+    hidexdecorations!(ax2; grid = true, label = false, ticklabels = false, ticks = false)
+
+    T_min = uconvert.(u"°C", T_min) |> ustrip
+    T_max = uconvert.(u"°C", T_max) |> ustrip
+
+    for i in 1:n
+        lines!(ax2, [T_min[i], T_max[i]], [D_log[i], D_log[i + n]], label = "", color = RGBAf(0, 0, 0, 0))
+    end
+
+    linkyaxes!(ax1, ax2)
+
+    xlims!(ax1, xlims...)
+    ylims!(ax1, ylims...)
+
+    if !isnothing(filename)
+        save(filename, fig)
+    else
+        display(fig)
+    end
+
+    return fig, ax1
 end

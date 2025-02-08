@@ -95,12 +95,12 @@ function Rt_3H_Cathcart1979_perp_c()
         Orientation = "⊥c",
         Crystallography = "Tetragonal",
         Fluid = "Anhydrous",
-        D0 = 1.77e-2cm^2 / s,
-        log_D0_1σ = 4.3NoUnits,
-        Ea = 107kJ / mol,
-        Ea_1σ = 4kJ / mol,
+        D0 = 0.089cm^2 / s,
+        log_D0_1σ = log(1.5)NoUnits,
+        Ea = 187kJ / mol,
+        Ea_1σ = 25kJ / mol,
         Charge = 1,  # charge of the cation
-        T_range_min = 250C,
+        T_range_min = 500C,
         T_range_max = 900C
     )
     info = MaterialParamsInfo(;
@@ -142,7 +142,7 @@ function Rt_3H_Cathcart1979_para_c()
         Ea = 72.2kJ / mol,
         Ea_1σ = 6.2kJ / mol,
         Charge = 1,  # charge of the cation
-        T_range_min = 250C,
+        T_range_min = 500C,
         T_range_max = 900C
     )
     info = MaterialParamsInfo(;

@@ -2,11 +2,11 @@
     Rt_Nb_Marschall2013_para_c
 
 Diffusion data of Nb in rutile. With anhydrous conditions and parallel to c-axis.
-Calibrated between 850-1250°C. From Cherniak et al. (2019) (https://doi.org/10.1016/j.epsl.2013.05.055).
+Calibrated between 850-1250°C. From Marschall et al. (2013) (https://doi.org/10.1016/j.epsl.2013.05.055).
 """
 function Rt_Nb_Marschall2013_para_c()
     data = DiffusionData(
-        Name = "Nb diffusion in Rutile (parallel to c-axis and anhydrous conditions) | Cherniak et al. (2019)",
+        Name = "Nb diffusion in Rutile (parallel to c-axis and anhydrous conditions) | Marschall et al. (2013)",
         Phase = "Rutile",  # name of the mineral
         Formula = "TiO2",  # chemical formula of the mineral
         Species = "Nb",  # element or species being diffused

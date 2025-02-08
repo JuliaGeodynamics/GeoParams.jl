@@ -31,6 +31,7 @@ end
     @test Aqua.test_undefined_exports(GeoParams.Peierls).value
     @test Aqua.test_undefined_exports(GeoParams.NonLinearPeierls).value
     @test Aqua.test_undefined_exports(GeoParams.Tables).value
+    @test Aqua.test_undefined_exports(GeoParams.ChemicalDiffusion).value
 end
 
 @testset "Compats" begin

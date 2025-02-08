@@ -1,14 +1,30 @@
-using Documenter, GeoParams, GLMakie
+using Documenter, GeoParams, Makie
 push!(LOAD_PATH, "../src/")
 
 @info "Making documentation..."
 makedocs(;
     sitename = "GeoParams.jl",
     authors = "Boris Kaus and contributors",
-    modules = [GeoParams],
+    # add extension modules here for the docs.
+    modules = [
+        GeoParams,
+        isdefined(Base, :get_extension) ?
+            Base.get_extension(GeoParams, :GeoParamsMakieExt) :
+            GeoParams.GeoParamsMakieExt,
+    ],
     format = Documenter.HTML(;
         assets = ["assets/favicon.ico"],
-        prettyurls = get(ENV, "CI", nothing) == "true"
+        prettyurls = get(ENV, "CI", nothing) == "true",
+        mathengine =
+            Documenter.MathJax3(
+            Dict(  # use MathJax3 as engine for latex (to be able to reference equations)
+                :loader => Dict("load" => ["[tex]/physics"]),
+                :tex => Dict(
+                    "inlineMath" => [["\$", "\$"], ["\\(", "\\)"]],
+                    "tags" => "ams",
+                )
+            )
+        )
     ), # easier local build
     pages = [
         "Home" => "index.md",
@@ -22,7 +38,12 @@ makedocs(;
             "Viscosity" => "man/viscosity.md",
             "Elasticity" => "man/elasticity.md",
             "Plasticity" => "man/plasticity.md",
-            "Chemical Diffusion" => "man/chemicaldiffusion.md",
+            "Chemical Diffusion" => Any[
+                "Computational routines" => "man/chemicaldiffusion.md",
+                "Garnet" => "man/Garnet.md",
+                "Melt" => "man/Melt.md",
+                "Rutile" => "man/Rutile.md",
+            ],
             "Permeability" => "man/permeability.md",
             "Heat Capacity" => "man/heatcapacity.md",
             "Conductivity" => "man/conductivity.md",
