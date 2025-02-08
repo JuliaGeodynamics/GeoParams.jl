@@ -419,7 +419,7 @@ module GeoParams
     # Add plotting routines - only activated if the "GLMakie.jl" package is loaded
     #
     # Add function definitions here such that they can be exported from GeoParams.jl
-    # and extended in the GeoParamsGLMakieExt package extension or by the
+    # and extended in the GeoParamsMakieExt package extension or by the
     # GLMakie-specific code loaded by Requires.jl
     function PlotStrainrateStress end
     function PlotStressStrainrate end
@@ -435,6 +435,8 @@ module GeoParams
     function PlotStressTime_0D end
     function PlotPressureStressTime_0D end
     function StrengthEnvelopePlot end
+    function PlotDiffusionCoef end
+    function PlotDiffusionCoefArrhenius end
 
     export PlotStrainrateStress,
         PlotStressStrainrate,
@@ -449,7 +451,8 @@ module GeoParams
         PlotDeformationMap,
         PlotStressTime_0D,
         PlotPressureStressTime_0D,
-        StrengthEnvelopePlot
+        StrengthEnvelopePlot,
+        PlotDiffusionCoefArrhenius
 
     #Set functions aliases using @use
     include("aliases.jl")

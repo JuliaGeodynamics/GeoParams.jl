@@ -105,7 +105,7 @@ using GeoParams
     H_Rt = Rutile.Rt_3H_Cathcart1979_perp_c
     H_Rt = SetChemicalDiffusion(H_Rt)
     D = ustrip(compute_D(H_Rt, T = 600K))
-    @test D ≈ 8.569937964540059e-16 atol = 1.0e-20
+    @test D ≈ 4.676400903368401e-22 atol = 1.0e-20
 
     # Benchmark Pb data from Cherniak (2000) (ML 05/02/25)
     Pb_Rt = Rutile.Rt_Pb_Cherniak2000_unor
@@ -195,13 +195,13 @@ using GeoParams
     O_Rt = Rutile.Rt_O_Lundy1973_para_c
     O_Rt = SetChemicalDiffusion(O_Rt)
     D = ustrip(compute_D(O_Rt, T = 1500K))
-    @test D ≈ 4.508484518586777e-6 atol = 1.0e-10
+    @test D ≈ 8.620031762303065e-15 atol = 1.0e-18
 
     # Benchmark O data from Lundy (1973) (ML 05/02/25)
     O_Rt = Rutile.Rt_O_Lundy1973_perp_c
     O_Rt = SetChemicalDiffusion(O_Rt)
     D = ustrip(compute_D(O_Rt, T = 1500K))
-    @test D ≈ 2.3612661335409755e-7 atol = 1.0e-10
+    @test D ≈ 2.0601925964469966e-14 atol = 1.0e-18
 
     # Benchmark Ta data from Marschall (2013) (ML 05/02/25)
     Ta_Rt = Rutile.Rt_Ta_Marschall2013_para_c

@@ -19,7 +19,7 @@ include("Elements/Pb.jl")
 """
     chemical_diffusion_list(search::String="")
 
-List all available chemical diffusion data for melt.
+List all available chemical diffusion data for rutile.
 Includes an argument to search for a specific term, i.e. an element ("La") or an author.
 """
 function chemical_diffusion_list(search::String = "")

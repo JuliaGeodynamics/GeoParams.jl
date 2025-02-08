@@ -29,7 +29,6 @@ using .Melt
 # Exported modules of chemical diffusion data
 export Rutile, Garnet, Melt
 
-
 abstract type AbstractChemicalDiffusion{T} <: AbstractMaterialParam end
 
 @inline diffusion_database(f::F) where {F} = first(f())
@@ -191,12 +190,12 @@ end
 
 
 """
-    compute_D(data::DiffusionData; T=1K, P=0Pa, fO2 = 1NoUnits, kwargs...)
+    compute_D(data::DiffusionData; T=1K, P=1GPa, fO2 = 1NoUnits, kwargs...)
 
-Computes the diffusion coefficient `D` [m^2/s] from the diffusion data `data` at temperature `T` [K], pressure `P` [Pa] and oxygen fugacity `fO2` [NoUnits].
+Computes the diffusion coefficient `D` [m^2/s] from the diffusion data `data` at temperature `T` [K], pressure `P` [Pa] and oxygen fugacity `fO2` [NoUnits] from a structure of type `DiffusionData`.
 If `T` and `P` are provided without unit, the function assumes the units are in Kelvin and Pascal, respectively, and outputs the diffusion coefficient without unit based on the value in m^2/s.
 """
-@inline function compute_D(data::DiffusionData; T = 1K, P = 0Pa, fO2 = 1NoUnits, kwargs...)
+@inline function compute_D(data::DiffusionData; T = 1K, P = 1GPa, fO2 = 1NoUnits, kwargs...)
 
     if P isa Quantity && T isa Quantity
         @unpack_units D0, Ea, ΔV, P0, R, afO2, bfO2, nfO2 = data
@@ -215,13 +214,13 @@ end
 """
     compute_D!(D, data::DiffusionData; T=ones(size(D))K, P=zeros(size(D))Pa, fO2 = ones(size(D)), kwargs...)
 
-In-place version of `compute_D(data::DiffusionData; T=1K, P=0Pa, fO2=0NoUnits, kwargs...)`. `D` should be an array of the same size as T, P and fO2.
+In-place version of `compute_D(data::DiffusionData; T=1K, P=1GPa, fO2=0NoUnits, kwargs...)`. `D` should be an array of the same size as T, P and fO2.
 """
 function compute_D!(
         D::AbstractArray{_T, nDim},
         data::DiffusionData;
         T = ones(size(D))K,
-        P = zeros(size(D))Pa,
+        P = zeros(size(D))GPa,
         fO2 = ones(size(D)),
         kwargs...
     ) where {_T, nDim}

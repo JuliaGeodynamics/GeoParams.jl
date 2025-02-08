@@ -1,8 +1,8 @@
 """
     Rt_Pb_Cherniak2000_unor
 
-Diffusion data of Pb in rutile. With anhydrous conditions and unoriented. 
-Calibrated between 700-1100°C. From Cherniak et al. (2000) 
+Diffusion data of Pb in rutile. With anhydrous conditions and unoriented.
+Calibrated between 700-1100°C. From Cherniak et al. (2000)
 (https://doi.org/10.1007/PL00007671).
 """
 function Rt_Pb_Cherniak2000_unor()

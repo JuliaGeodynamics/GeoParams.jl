@@ -1,5 +1,5 @@
-# Package extension for adding GLMakie-based features to GeoParams.jl
-module GeoParamsGLMakieExt
+# Package extension for adding Makie-based features to GeoParams.jl
+module GeoParamsMakieExt
 
 using GeoParams
 
@@ -7,9 +7,9 @@ using GeoParams
 # Julia v1.9.0 does not load package extensions when their dependency is
 # loaded from the main environment.
 if VERSION >= v"1.9.1"
-    using GLMakie
+    using Makie
 else
-    using ..GLMakie
+    using ..Makie
 end
 
 include("../src/Plotting/Plotting.jl")

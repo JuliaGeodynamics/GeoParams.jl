@@ -273,10 +273,10 @@ function Rt_O_Lundy1973_para_c()
         Orientation = "Ξc",
         Crystallography = "Tetragonal",
         D0 = 0.046cm^2 / s,
-        Ea = 59.9u"cal/mol",
+        Ea = 59.9u"kcal/mol",
         Charge = -2,
-        T_range_min = 1200K,
-        T_range_max = 1500K
+        T_range_min = 1200C,
+        T_range_max = 1500C
     )
     info = MaterialParamsInfo(;
         Comment = "Checked values by ML (05.02.25)",
@@ -312,10 +312,10 @@ function Rt_O_Lundy1973_perp_c()
         Orientation = "⊥c",
         Crystallography = "Tetragonal",
         D0 = 0.0024cm^2 / s,
-        Ea = 48.5u"cal/mol",
+        Ea = 48.5u"kcal/mol",
         Charge = -2,
-        T_range_min = 1200K,
-        T_range_max = 1500K
+        T_range_min = 1200C,
+        T_range_max = 1500C
     )
     info = MaterialParamsInfo(;
         Comment = "Checked values by ML (05.02.25)",
@@ -355,8 +355,8 @@ function Rt_O_Moore1998_para_c_fast()
         Ea = 258.0e3J / mol,
         Ea_1σ = 22.0e3J / mol,
         Charge = -2,
-        T_range_min = 1200K,
-        T_range_max = 1500K
+        T_range_min = 750C,
+        T_range_max = 1000C
     )
     info = MaterialParamsInfo(;
         Comment = "Checked values by ML (05.02.25)",
@@ -397,8 +397,8 @@ function Rt_O_Moore1998_para_c_slow()
         Ea = 330.0e3J / mol,
         Ea_1σ = 15.0e3J / mol,
         Charge = -2,
-        T_range_min = 1200K,
-        T_range_max = 1500K
+        T_range_min = 750C,
+        T_range_max = 1000C
     )
     info = MaterialParamsInfo(;
         Comment = "Checked values by ML (05.02.25)",

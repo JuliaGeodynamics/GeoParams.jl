@@ -1,113 +1,93 @@
 # Chemical Diffusion
 
-Some routines and experimental data for chemical diffusion in minerals and phases are implemented in this module. Contributions are welcome to extend the database.
+Some routines and experimental data for chemical diffusion in minerals and phases are implemented in [GeoParams.jl](https://juliageodynamics.github.io/GeoParams.jl/stable/).
 
-## Computational routines
-To compute the diffusion coefficient from the parameters, use this:
+## Diffusion parameters from the literature
+
+Currently, three phases are implemented in independent modules: `Rutile`, `Garnet`, and `Melt`. Each phase has a list of diffusion parameters from the literature for different chemical elements. Other phases will be implemented in the future and contributions are welcome to extend the database.
+
+To initiate the diffusion parameters of an element of a phase, call the function `SetChemicalDiffusion`. For instance, to obtain the diffusion parameters of Hf in rutile, use:
+
+```julia
+using GeoParams
+
+Hf_Rt_para = Rutile.Rt_Hf_Cherniak2007_para_c
+Hf_Rt_para = SetChemicalDiffusion(Hf_Rt_para)
+```
+
+`Hf_Rt_para` is in this case a structure of type `DiffusionData` containing the diffusion parameters for Hf in rutile, from Cherniak et al. (2007).
+
+To know the available diffusion parameters for each phase, one may use `X.chemical_diffusion_list()`, where `X` is the phase of interest. This will return a vector containing the functions available.
+
+For instance, for garnet, using:
+
+```julia
+Garnet.chemical_diffusion_list()
+```
+
+will return:
+
+```julia
+5-element Vector{Function}:
+ Grt_Fe_Chakraborty1992 (generic function with 1 method)
+ Grt_Mg_Chakraborty1992 (generic function with 1 method)
+ Grt_Mn_Chakraborty1992 (generic function with 1 method)
+ Grt_REE_Bloch2020_fast (generic function with 1 method)
+ Grt_REE_Bloch2020_slow (generic function with 1 method)
+```
+
+## Diffusion parameters
+
+A diffusion coefficient ``D`` can be computed assuming the following general equation:
+
+```math
+    D = D_0 \left(a_{fO_2} \frac{{fO_2}^{n_{f{O_2}}}}{b_{f{O_2}}}\right) \exp \left(-\frac{Ea + (P - P0) \Delta V} {RT}\right),
+```
+
+where ``D_0`` is the pre-exponential factor, ``f{O_2}`` is the oxygen fugacity, ``a_{fO_2}``, ``b_{fO_2}``, and ``n_{fO_2}`` are the parameters on the ``f{O_2}`` dependency, ``Ea`` is the activation energy, ``P`` is the pressure, ``P0`` is the reference pressure, ``\Delta V`` is the activation volume, ``R`` is the gas constant, and ``T`` is the temperature.
+
+
+To compute the diffusion coefficient in-place, use the following functions:
+
 ```@docs
 GeoParams.MaterialParameters.ChemicalDiffusion.compute_D
 GeoParams.MaterialParameters.ChemicalDiffusion.compute_D!
 ```
 
-## Garnet
-The following diffusion parameters for Garnet are implemented:
+For instance, taking the previous example with Hf in Rutile:
 
-```@docs
-Garnet.Grt_Mg_Chakraborty1992
-Garnet.Grt_Mn_Chakraborty1992
-Garnet.Grt_Fe_Chakraborty1992
-Garnet.Grt_REE_Bloch2020_slow
-Garnet.Grt_REE_Bloch2020_fast
+```julia
+D = compute_D(Hf_Rt_para, T=1000C)
 ```
 
-## Melt
-The following diffusion parameters for Melt are implemented:
+## Plotting routines
 
-```@docs
-Melt.Sc_Melt_Holycross2018_rhyolitic_highH2O
-Melt.Sc_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.V_Melt_Holycross2018_rhyolitic_highH2O
-Melt.V_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.Y_Melt_Holycross2018_rhyolitic_highH2O
-Melt.Y_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.Zr_Melt_Holycross2018_rhyolitic_highH2O
-Melt.Zr_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.Hf_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.Nb_Melt_Holycross2018_rhyolitic_highH2O
-Melt.Nb_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.La_Melt_Holycross2018_rhyolitic_highH2O
-Melt.La_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.Ce_Melt_Holycross2018_rhyolitic_highH2O
-Melt.Ce_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.Pr_Melt_Holycross2018_rhyolitic_highH2O
-Melt.Pr_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.Nd_Melt_Holycross2018_rhyolitic_highH2O
-Melt.Nd_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.Sm_Melt_Holycross2018_rhyolitic_highH2O
-Melt.Sm_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.Eu_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.Gd_Melt_Holycross2018_rhyolitic_highH2O
-Melt.Gd_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.Tb_Melt_Holycross2018_rhyolitic_highH2O
-Melt.Tb_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.Dy_Melt_Holycross2018_rhyolitic_highH2O
-Melt.Dy_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.Ho_Melt_Holycross2018_rhyolitic_highH2O
-Melt.Ho_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.Er_Melt_Holycross2018_rhyolitic_highH2O
-Melt.Er_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.Yb_Melt_Holycross2018_rhyolitic_highH2O
-Melt.Yb_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.Lu_Melt_Holycross2018_rhyolitic_highH2O
-Melt.Lu_Melt_Holycross2018_rhyolitic_mediumH2O
-Melt.Th_Melt_Holycross2018_rhyolitic_highH2O
-Melt.U_Melt_Holycross2018_rhyolitic_highH2O
-Melt.U_Melt_Holycross2018_rhyolitic_mediumH2O
+It is often convenient to plot the diffusion coefficients vs 1000/T to compare different diffusion parameters from the literature and to check the implementation of the diffusion parameters.
+
+A function (`GeoParams.PlotDiffusionCoefArrhenius`) for that purpose is implemented using [Makie.jl](https://docs.makie.org/stable/).
+
+For instance, plotting the diffusion coefficients of Fe, Mg and Mn from Chakraborty and Ganguly (1992) can be done with:
+
+```julia
+using GeoParams
+using CairoMakie  # need to import explicitly a Makie backend for the extension to be loaded
+
+# obtain diffusion data
+Fe_Grt = Garnet.Grt_Fe_Chakraborty1992
+Fe_Grt = SetChemicalDiffusion(Fe_Grt)
+Mg_Grt = Garnet.Grt_Mg_Chakraborty1992
+Mg_Grt = SetChemicalDiffusion(Mg_Grt)
+Mn_Grt = Garnet.Grt_Mn_Chakraborty1992
+Mn_Grt = SetChemicalDiffusion(Mn_Grt)
+
+fig, ax = PlotDiffusionCoefArrhenius((Fe_Grt, Mg_Grt, Mn_Grt), P= 1u"GPa", linewidth=3,
+                                     label= ("Fe from Chakraborty and Ganguly (1992)",
+                                             "Mg from Chakraborty and Ganguly (1992)",
+                                             "Mn from Chakraborty and Ganguly (1992)"))
 ```
 
-## Rutile
-The following diffusion parameters for Rutile are implemented:
+which produces the following plot:
 
-```@docs
-Rutile.Rt_3H_Caskey1974_perp_c
-Rutile.Rt_3H_Caskey1974_para_c
-Rutile.Rt_3H_Cathcart1979_para_c
-Rutile.Rt_3H_Cathcart1979_perp_c
-Rutile.Rt_H_Johnson1975_para_c
-Rutile.Rt_H_Johnson1975_perp_c
-Rutile.Rt_He_Cherniak2011_para_c
-Rutile.Rt_He_Cherniak2011_perp_c
-Rutile.Rt_Li_Johnson1964_perp_c
-Rutile.Rt_O_Arita1979_para_c
-Rutile.Rt_O_Arita1979_para_c_Cr
-Rutile.Rt_O_Dennis1993_perp_c
-Rutile.Rt_O_Dennis1993_perp_c_nat
-Rutile.Rt_O_Derry1981_para_c
-Rutile.Rt_O_Haul1965_unor
-Rutile.Rt_O_Lundy1973_para_c
-Rutile.Rt_O_Lundy1973_perp_c
-Rutile.Rt_O_Moore1998_para_c_fast
-Rutile.Rt_O_Moore1998_para_c_slow
-Rutile.Rt_O_Venkatu1970
-Rutile.Rt_Al_Cherniak2019_para_c
-Rutile.Rt_Si_Cherniak2019_para_c
-Rutile.Rt_Ti_Hoshino1985_para_c
-Rutile.Rt_Ti_Hoshino1985_perp_c
-Rutile.Rt_Zr_Cherniak2007_para_c
-Rutile.Rt_Nb_Marschall2013_para_c
-Rutile.Rt_Hf_Cherniak2007_para_c
-Rutile.Rt_Hf_Cherniak2007_perp_c
-Rutile.Rt_Ta_Marschall2013_para_c
-Rutile.Rt_Pb_Cherniak2000_unor
-```
+![Initial conditions.](./assets/img/ChemicalDiffusion_garnetdiffusion.png)
 
-## List of diffusion parameters
-
-To know the available diffusion parameters for each phase, you can use `X.chemical_diffusion_list()`, where `X` is the phase of interest.
-For instance, for garnet, one can use `Garnet.chemical_diffusion_list()`. In addition, this function also takes an argument to search for a specific term, i.e. an element ("La") or an author.
-
-```@docs
-Rutile.chemical_diffusion_list
-Garnet.chemical_diffusion_list
-Melt.chemical_diffusion_list
-```
+More details on the function `GeoParams.PlotDiffusionCoefArrhenius` and its options can be found in the section [Plotting](@ref).
