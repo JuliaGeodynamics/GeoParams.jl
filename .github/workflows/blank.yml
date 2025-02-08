@@ -20,10 +20,9 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.9'
           - '1.10'
           - '1.11'
-          - 'nightly'
+          # - 'nightly'
         os:
           - ubuntu-latest
           - macOS-13
@@ -33,16 +32,13 @@ jobs:
         include:
           - os: macOS-latest
             arch: aarch64
-            version: '1.9'
-          - os: macOS-latest
-            arch: aarch64
             version: '1.10'
           - os: macOS-latest
             arch: aarch64
             version: '1.11'
-          - os: macOS-latest
-            arch: aarch64
-            version: 'nightly'
+          # - os: macOS-latest
+          #   arch: aarch64
+          #   version: 'nightly'
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
@@ -73,12 +69,12 @@ jobs:
         with:
           version: '1.10'
       - name: Install dependencies 1
-        run: sudo apt-get update && sudo apt-get install -y xorg-dev mesa-utils xvfb libgl1 freeglut3-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev        
+        run: sudo apt-get update && sudo apt-get install -y xorg-dev mesa-utils xvfb libgl1 freeglut3-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
       - name: Install dependencies 2
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
       - name: Build and deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} # For authentication with SSH deploy key
-        run: DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' 
+        run: DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24'
              julia --project=docs/ docs/make.jl
