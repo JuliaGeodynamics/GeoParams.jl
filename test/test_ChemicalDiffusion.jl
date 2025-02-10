@@ -232,7 +232,7 @@ using GeoParams
     O_Rt = SetChemicalDiffusion(O_Rt)
     D = ustrip(compute_D(O_Rt, T = 1300K))
     @test D ≈ 3.048663388262705e-16 atol = 1.0e-20
-    
+
     Co_Rt_perp = Rutile.Rt_Co_Sasaki1985_perp_c
     Co_Rt_perp = SetChemicalDiffusion(Co_Rt_perp)
     D = ustrip(compute_D(Co_Rt_perp, T = 800C))
@@ -257,12 +257,12 @@ using GeoParams
     Fe_Rt_perp = SetChemicalDiffusion(Fe_Rt_perp)
     D = ustrip(compute_D(Fe_Rt_perp, T = 800C))
     @test D ≈ 8.273167047133025e-15 atol = 1.0e-20
-    
+
     Mn_Rt_para = Rutile.Rt_Mn_Sasaki1985_para_c
     Mn_Rt_para = SetChemicalDiffusion(Mn_Rt_para)
     D = ustrip(compute_D(Mn_Rt_para, T = 800C))
     @test D ≈ 1.2493890840409632e-13 atol = 1.0e-15
-    
+
     Cr_Rt_para = Rutile.Rt_Cr_Sasaki1985_para_c
     Cr_Rt_para = SetChemicalDiffusion(Cr_Rt_para)
     D = ustrip(compute_D(Cr_Rt_para, T = 800C))
@@ -272,7 +272,7 @@ using GeoParams
     Cr_Rt_perp = SetChemicalDiffusion(Cr_Rt_perp)
     D = ustrip(compute_D(Cr_Rt_perp, T = 800C))
     @test D ≈ 1.6178619024648694e-16 atol = 1.0e-20
-    
+
     Sc_Rt_perp = Rutile.Rt_Sc_Sasaki1985_perp_c
     Sc_Rt_perp = SetChemicalDiffusion(Sc_Rt_perp)
     D = ustrip(compute_D(Sc_Rt_perp, T = 1000C))
@@ -282,7 +282,7 @@ using GeoParams
     Sc_Rt_para = SetChemicalDiffusion(Sc_Rt_para)
     D = ustrip(compute_D(Sc_Rt_para, T = 1000C))
     @test D ≈ 3.83332067613097e-16 atol = 1.0e-20
-    
+
     Zr_Rt_perp = Rutile.Rt_Zr_Sasaki1985_perp_c
     Zr_Rt_perp = SetChemicalDiffusion(Zr_Rt_perp)
     D = ustrip(compute_D(Zr_Rt_perp, T = 1200C))

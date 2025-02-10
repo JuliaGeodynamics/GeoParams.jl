@@ -47,8 +47,7 @@ end
     Rt_Zr_Sasaki1985_para_c
 
 Diffusion data of Zr in rutile. With anhydrous conditions, in air and parallel to c-axis.
-Calibrated between 1100-1500°C. From Sasaki et al. (1985) 
-(https://doi.org/10.1016/0022-3697(85)90129-5).
+Calibrated between 1100-1500°C. From Sasaki et al. (1985) (https://doi.org/10.1016/0022-3697(85)90129-5).
 """
 function Rt_Zr_Sasaki1985_para_c()
     data = DiffusionData(
@@ -93,8 +92,7 @@ end
     Rt_Zr_Sasaki1985_perp_c
 
 Diffusion data of Zr in rutile. With anhydrous conditions, in air and perpendicular to c-axis.
-Calibrated between 1100-1500°C. From Sasaki et al. (1985) 
-(https://doi.org/10.1016/0022-3697(85)90129-5).
+Calibrated between 1100-1500°C. From Sasaki et al. (1985) (https://doi.org/10.1016/0022-3697(85)90129-5).
 """
 function Rt_Zr_Sasaki1985_perp_c()
     data = DiffusionData(
