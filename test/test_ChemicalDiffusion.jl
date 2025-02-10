@@ -232,6 +232,62 @@ using GeoParams
     O_Rt = SetChemicalDiffusion(O_Rt)
     D = ustrip(compute_D(O_Rt, T = 1300K))
     @test D ≈ 3.048663388262705e-16 atol = 1.0e-20
+
+    Co_Rt_perp = Rutile.Rt_Co_Sasaki1985_perp_c
+    Co_Rt_perp = SetChemicalDiffusion(Co_Rt_perp)
+    D = ustrip(compute_D(Co_Rt_perp, T = 800C))
+    @test D ≈ 1.020559178134982e-13 atol = 1.0e-17
+
+    Co_Rt_para = Rutile.Rt_Co_Sasaki1985_para_c
+    Co_Rt_para = SetChemicalDiffusion(Co_Rt_para)
+    D = ustrip(compute_D(Co_Rt_para, T = 1000C))
+    @test D ≈ 8.60732099721113e-10 atol = 1.0e-15
+
+    Ni_Rt_para = Rutile.Rt_Ni_Sasaki1985_para_c
+    Ni_Rt_para = SetChemicalDiffusion(Ni_Rt_para)
+    D = ustrip(compute_D(Ni_Rt_para, T = 800C))
+    @test D ≈ 9.869257268868537e-12 atol = 1.0e-15
+
+    Fe_Rt_para = Rutile.Rt_Fe_Sasaki1985_para_c
+    Fe_Rt_para = SetChemicalDiffusion(Fe_Rt_para)
+    D = ustrip(compute_D(Fe_Rt_para, T = 800C))
+    @test D ≈ 2.9817184211026295e-13 atol = 1.0e-15
+
+    Fe_Rt_perp = Rutile.Rt_Fe_Sasaki1985_perp_c
+    Fe_Rt_perp = SetChemicalDiffusion(Fe_Rt_perp)
+    D = ustrip(compute_D(Fe_Rt_perp, T = 800C))
+    @test D ≈ 8.273167047133025e-15 atol = 1.0e-20
+
+    Mn_Rt_para = Rutile.Rt_Mn_Sasaki1985_para_c
+    Mn_Rt_para = SetChemicalDiffusion(Mn_Rt_para)
+    D = ustrip(compute_D(Mn_Rt_para, T = 800C))
+    @test D ≈ 1.2493890840409632e-13 atol = 1.0e-15
+
+    Cr_Rt_para = Rutile.Rt_Cr_Sasaki1985_para_c
+    Cr_Rt_para = SetChemicalDiffusion(Cr_Rt_para)
+    D = ustrip(compute_D(Cr_Rt_para, T = 800C))
+    @test D ≈ 2.609999677599472e-16 atol = 1.0e-20
+
+    Cr_Rt_perp = Rutile.Rt_Cr_Sasaki1985_perp_c
+    Cr_Rt_perp = SetChemicalDiffusion(Cr_Rt_perp)
+    D = ustrip(compute_D(Cr_Rt_perp, T = 800C))
+    @test D ≈ 1.6178619024648694e-16 atol = 1.0e-20
+
+    Sc_Rt_perp = Rutile.Rt_Sc_Sasaki1985_perp_c
+    Sc_Rt_perp = SetChemicalDiffusion(Sc_Rt_perp)
+    D = ustrip(compute_D(Sc_Rt_perp, T = 1000C))
+    @test D ≈ 1.8294646937240326e-16 atol = 1.0e-20
+
+    Sc_Rt_para = Rutile.Rt_Sc_Sasaki1985_para_c
+    Sc_Rt_para = SetChemicalDiffusion(Sc_Rt_para)
+    D = ustrip(compute_D(Sc_Rt_para, T = 1000C))
+    @test D ≈ 3.83332067613097e-16 atol = 1.0e-20
+
+    Zr_Rt_perp = Rutile.Rt_Zr_Sasaki1985_perp_c
+    Zr_Rt_perp = SetChemicalDiffusion(Zr_Rt_perp)
+    D = ustrip(compute_D(Zr_Rt_perp, T = 1200C))
+    @test D ≈ 5.1475495661321434e-17 atol = 1.0e-20
+
     # -------------------------- Garnet --------------------------
 
     # Benchmark Fe data from Chakraborty 1992 (HD 18/01/25)
