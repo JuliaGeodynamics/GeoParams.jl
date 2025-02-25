@@ -919,10 +919,10 @@ function isDimensional(MatParam::AbstractMaterialParam)
 end
 
 # Define a view for the GEO_Units structure
-function show(io::IO, g::GeoUnits)
+function show(io::IO, g::GeoUnits) where {T}
     return print(
         io,
-        "Employing $TYPE units \n",
+        "Employing $T units \n",
         "Characteristic values: \n",
         "         length:      $(g.length)\n",
         "         time:        $(round(ustrip(g.time), digits = 4)) $(unit(g.time))\n",
