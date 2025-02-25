@@ -14,6 +14,7 @@ import GeoParams.NonLinearPeierls
     @test Value(x1.q) == 1.0
     @test Value(x1.o) == 0.5
     @test Value(x1.A) == 5.7e11MPa^(-2.0) * s^(-1.0)
+    @test repr("text/plain", x1) isa String
 
     # perform a computation with the peierls creep laws
     # Calculate EpsII, using a set of pre-defined values

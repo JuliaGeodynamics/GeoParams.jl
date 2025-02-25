@@ -12,6 +12,7 @@ using GeoParams
     @test isbits(p)
     @test NumValue(p.ϕ) == 30
     @test isvolumetric(p) == false
+    @test repr("text/plain", p) isa String
 
     p_nd = p
     p_nd = nondimensionalize(p_nd, CharUnits_GEO)
