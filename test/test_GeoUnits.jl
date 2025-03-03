@@ -468,6 +468,6 @@ using GeoParams
     @test all(Temp_C_dim.val .≈ Depth.val .* 30)
 
     # Test show methods dont crash
-    @test repr("text/plain",  GeoUnit(100km)) isa String
-    @test repr("text/plain", GEO_units(;length=1e-2m, temperature = 1273.15K)) isa String
+    @test repr("text/plain", GeoUnit(100km)) isa String
+    @test repr("text/plain", GEO_units(; length = 1.0e-2m, temperature = 1273.15K)) isa String
 end
