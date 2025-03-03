@@ -13,6 +13,7 @@ import GeoParams.Peierls
     @test Value(x1.n) == 1.0
     @test Value(x1.q) == 2.0
     @test Value(x1.A) == 5.7e11s^(-1.0)
+    @test repr("text/plain", x1) isa String
 
     # perform a computation with the dislocation creep laws
     # Calculate EpsII, using a set of pre-defined values

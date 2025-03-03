@@ -7,6 +7,7 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
     @test isbits(x)
     @test param_info(x).Equation === L"k = cst"
     @test isdimensional(x) === true
+    @test repr("text/plain", x) isa String
 
     x = HazenPermeability()
     @test isbits(x)

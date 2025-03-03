@@ -13,6 +13,7 @@ import GeoParams.GBS
     @test Value(x1.n) == 3.5
     @test Value(x1.p) == -2.0
     @test Value(x1.A) == 6500.0MPa^(-3.5) * s^(-1) * µm^(2)
+    @test repr("text/plain", x1) isa String
 
     # perform a computation with the dislocation creep laws
     # Calculate EpsII, using a set of pre-defined values

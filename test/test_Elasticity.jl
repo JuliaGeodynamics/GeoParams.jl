@@ -11,6 +11,7 @@ using GeoParams
     info = param_info(a)
     @test isbits(a)
     @test NumValue(a.G) == 5.0e10
+    @test repr("text/plain", a) isa String
 
     a_nd = a
     a_nd = nondimensionalize(a_nd, CharUnits_GEO)

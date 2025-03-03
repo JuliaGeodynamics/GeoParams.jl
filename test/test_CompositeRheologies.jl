@@ -56,6 +56,9 @@ import GeoParams: Dislocation, Diffusion
 
     p4 = Parallel(c3, v3)                # Parallel element with composite one as well
 
+    @test repr("text/plain", c1) isa String
+    @test repr("text/plain", p1) isa String
+
     # Check that we can construct complicated rheological elements
     c = CompositeRheology(
         (
@@ -63,6 +66,7 @@ import GeoParams: Dislocation, Diffusion
         )
     )
     @test isa(c.elements[1], AbstractCreepLaw)
+    @test repr("text/plain", c) isa String
 
     c = CompositeRheology(
         (
@@ -70,6 +74,7 @@ import GeoParams: Dislocation, Diffusion
         )
     )
     @test isa(c.elements[3], AbstractCreepLaw)
+    @test repr("text/plain", c) isa String
 
     c = Parallel(
         CompositeRheology(
@@ -79,6 +84,7 @@ import GeoParams: Dislocation, Diffusion
         CompositeRheology(e1, p1),
     )
     @test isa(c.elements[2], AbstractCreepLaw)
+    @test repr("text/plain", c) isa String
 
     args = (T = 900.0, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)
     εII, τII = 2.0e-15, 2.0e6
