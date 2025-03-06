@@ -987,7 +987,7 @@ function Unitful.superscript(i::Float64)
 end
 
 function upgrade_GeoUnits(a) 
-    return GEO_units(length=a.length, temperature=a.temperature, stress=a.stress, viscosity=a.viscosity) 
+    return GEO_units(length = a.length, temperature = a.temperature, stress = a.stress, viscosity = a.viscosity) 
 end
 
 end
