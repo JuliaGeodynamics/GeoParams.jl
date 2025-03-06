@@ -89,7 +89,8 @@ export km,
     UnitValue,
     isdimensional,
     compute_units,
-    udim
+    udim,
+    upgrade_GeoUnits
 
 include("unpack.jl")    # adds macros for unpacking GeoUnit variables with or w/out units
 
@@ -983,6 +984,10 @@ function Unitful.superscript(i::Float64)
             error("unexpected character")
         end
     end
+end
+
+function upgrade_GeoUnits(a) 
+    return GEO_units(length=a.length, temperature=a.temperature, stress=a.stress, viscosity=a.viscosity) 
 end
 
 end
