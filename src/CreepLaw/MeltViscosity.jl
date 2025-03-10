@@ -3,6 +3,7 @@ using SpecialFunctions
 
 export LinearMeltViscosity,
     ViscosityPartialMelt_Costa_etal_2009,
+    GiordanoMeltViscosity,
     dεII_dτII,
     dτII_dεII,
     compute_εII!,
@@ -39,6 +40,8 @@ Typical parameters for rhyolite are: `A = -8.1590`, `B = 2.4050e+04K`, `T_0 = -4
     η0::GeoUnit{T, U2} = 1Pas               # scaling viscosity
 end
 LinearMeltViscosity(args...) = LinearMeltViscosity(convert.(GeoUnit, args)...)
+
+isDimensional(g::LinearMeltViscosity) = isDimensional(g.η0)
 
 function param_info(a::LinearMeltViscosity) # info about the struct
     return MaterialParamsInfo(;
@@ -290,6 +293,233 @@ function show(io::IO, g::ViscosityPartialMelt_Costa_etal_2009)
     return print(
         io,
         "Viscosity of partially molten rocks (after Costa et al. [2009]) using melt viscosity: η=$(g.η)",
+    )
+end
+#-------------------------------------------------------------------------
+"""
+    GiordanoMeltViscosity(; oxd_wt, η0)
+
+Defines the melt viscosity model after Giordano et al. (2008) given by
+```math
+    \\tau_{ij} = 2 \\eta \\dot{\\varepsilon}_{ij}
+```
+or
+```math
+    \\dot{\\varepsilon}_{ij}  = {\\tau_{ij}  \\over 2 \\eta }
+```
+where
+```math
+    \\eta = \\eta_0 * 10^{(AT + BT \\over (T - CT))}
+```
+
+## Parameters
+- `oxd_wt::NTuple{9,T}` : Melt composition as 9-element Tuple containing concentrations
+             in [wt%] of the following oxides ordered in the exact sequence \n
+             (SiO2 TiO2 Al2O3 FeO MgO CaO Na2O K2O H2O) \n
+             Default values are for a hydrous N-MORB
+
+## Reference
+- Giordano D, Russell JK, & Dingwell DB (2008). Viscosity of Magmatic Liquids: A Model. Earth & Planetary Science Letters, 271, 123-134. (https://dx.doi.org/10.1016/j.epsl.2008.03.038)
+
+"""
+@with_kw_noshow struct GiordanoMeltViscosity{T, U, U1, U2} <: AbstractCreepLaw{T}
+    oxd_wt::NTuple{9, T} = (50.42, 1.53,  15.13,  9.81, 7.76, 11.35, 2.83,  0.14, 1.0)
+    bb::NTuple{10, T} = (159.56, -173.34, 72.13, 75.69, -38.98, -84.08, 141.54, -2.43, -0.91, 17.62)
+    cc::NTuple{7, T}  = (2.75, 15.72, 8.32, 10.20, -12.29, -99.54, 0.3)
+    MW::NTuple{9, T}  = (60.0843, 79.8658, 101.961276, 71.8444, 40.3044,56.0774, 61.97894, 94.1960, 18.01528) # Molar weights
+    AT::GeoUnit{T, U} = -4.55NoUnits
+    BT::GeoUnit{T, U1}= 5515.26K
+    CT::GeoUnit{T, U1}= 489.21K
+    η0::GeoUnit{T, U2}= 1Pas                           # scaling viscosity
+end
+
+function GiordanoMeltViscosity(args...)
+    return GiordanoMeltViscosity(
+        args[1:4]..., convert.(GeoUnit, args[5:end])...)
+end
+
+function GiordanoMeltViscosity(oxd_wt::AbstractArray, args...)
+    return GiordanoMeltViscosity(oxd_wt, args[1:3]..., convert.(GeoUnit, args[4:end])...)
+end
+
+isDimensional(g::GiordanoMeltViscosity) = isDimensional(g.η0)
+
+function param_info(a::GiordanoMeltViscosity) # info about the struct
+    return MaterialParamsInfo(; Equation = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}; \eta=10^{(AT + BT \over (T - CT))}")
+end
+
+# function calculate_BT_CT!(BT, CT, oxd_wt, MW, bb, cc)
+function calculate_BT_CT(oxd_wt, MW, bb, cc)
+    tmp = ntuple(i -> oxd_wt[i], Val(8))
+    sum_oxd_wt  = sum(tmp)
+    α = (100.0 - oxd_wt[9]) / sum_oxd_wt
+    oxd_wt_norm = (
+        @.(tmp * α)...,
+        oxd_wt[9],
+    )
+    oxd_mol = oxd_wt_norm ./ MW
+    oxd_mol = oxd_mol ./ sum(oxd_mol) .* 100
+    # Load composition-basis matrix for multiplication against model-coefficients
+    siti = oxd_mol[1] + oxd_mol[2]
+    tial = oxd_mol[2] + oxd_mol[3]
+    fmm  = oxd_mol[4] + oxd_mol[5]
+    nak  = oxd_mol[7] + oxd_mol[8]
+    b1   = siti
+    b2   = oxd_mol[3]
+    b3   = oxd_mol[4]
+    b4   = oxd_mol[5]
+    b5   = oxd_mol[6]
+    b6   = oxd_mol[7] + oxd_mol[9]
+    b7   = oxd_mol[9] + log(1.0 + oxd_mol[9])
+    b12  =  siti * fmm
+    b13  = (siti + oxd_mol[3]) * (nak + oxd_mol[9])
+    b14  = oxd_mol[3] * nak
+
+    c1   = oxd_mol[1]
+    c2   = tial
+    c3   = fmm
+    c4   = oxd_mol[6]
+    c5   = nak
+    c6   = log(1 + oxd_mol[9])
+    c11  = (oxd_mol[3] + fmm + oxd_mol[6]) * (nak + oxd_mol[9])
+    bcf  = (b1, b2, b3, b4, b5, b6, b7, b12, b13, b14)
+    ccf  = (c1, c2, c3, c4, c5, c6, c11)
+
+    BT = sum(bb .* bcf)
+    CT = sum(cc .* ccf)
+    return BT, CT
+end
+
+
+#calculation routine
+function compute_εII(a::GiordanoMeltViscosity, TauII; T = one(precision(a)), kwargs...)
+    @unpack_val AT, BT, CT, η0 = a
+    oxd_wt, bb, cc, MW = a.oxd_wt, a.bb, a.cc, a.MW
+
+    BT, CT = calculate_BT_CT(oxd_wt, MW, bb, cc)
+
+    η =  η0 * 10 ^ (min(12, max(-6, AT + BT /(T - CT))))
+
+    ε = TauII / η * 0.5
+    return ε
+end
+
+function compute_εII(a::GiordanoMeltViscosity, TauII::Quantity; T = 1K, kwargs...)
+    @unpack_units AT, BT, CT, η0 = a
+    oxd_wt, bb, cc, MW = a.oxd_wt, a.bb, a.cc, a.MW
+
+    BT, CT = calculate_BT_CT(oxd_wt, MW, bb, cc)
+
+    η =  η0 * 10 ^ (min(12, max(-6, AT + BT /(T - CT))))
+    ε = TauII / η * 0.5
+    return ε
+end
+
+"""
+    compute_εII!(EpsII::AbstractArray{_T,N}, s::GiordanoMeltViscosity, TauII::AbstractArray{_T,N}; T, kwargs...)
+"""
+@inline function compute_εII!(
+        EpsII::AbstractArray{_T, N},
+        a::GiordanoMeltViscosity,
+        TauII::AbstractArray{_T, N};
+        T = ones(size(TauII))::AbstractArray{_T, N},
+        kwargs...,
+    ) where {N, _T}
+    @inbounds for i in eachindex(EpsII)
+        EpsII[i] = compute_εII(a, TauII[i]; T = T[i])
+    end
+    return nothing
+end
+
+@inline function dεII_dτII(a::GiordanoMeltViscosity, TauII::Quantity; T = 1K, kwargs...)
+    @unpack_units AT, BT, CT,η0 = a
+    oxd_wt, bb, cc, MW = a.oxd_wt, a.bb, a.cc, a.MW
+
+    BT, CT = calculate_BT_CT(oxd_wt, MW, bb, cc)
+
+    η =  η0 * 10 ^ (min(12, max(-6, AT + BT /(T - CT))))
+
+    return 0.5 * (1.0 / η)
+end
+
+@inline function dεII_dτII(a::GiordanoMeltViscosity, TauII; T = one(precision(a)), kwargs...)
+    @unpack_val AT, BT, CT, η0 = a
+    oxd_wt, bb, cc, MW = a.oxd_wt, a.bb, a.cc, a.MW
+
+    BT, CT = calculate_BT_CT(oxd_wt, MW, bb, cc)
+
+    η =  η0 * 10 ^ (min(12, max(-6, AT + BT /(T - CT))))
+
+    return 0.5 * (1.0 / η)
+end
+
+"""
+    compute_τII(s::GiordanoMeltViscosity, EpsII; kwargs...)
+
+Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor
+"""
+@inline function compute_τII(a::GiordanoMeltViscosity, EpsII; T = one(precision(a)), kwargs...)
+    @unpack_val AT, BT, CT, η0 = a
+    oxd_wt, bb, cc, MW = a.oxd_wt, a.bb, a.cc, a.MW
+
+    BT, CT = calculate_BT_CT(oxd_wt, MW, bb, cc)
+
+    η =  η0 * 10 ^ (min(12, max(-6, AT + BT /(T - CT))))
+
+    return 2 * η * EpsII
+end
+
+@inline function compute_τII(a::GiordanoMeltViscosity, EpsII::Quantity; T = 1K, kwargs...)
+    @unpack_units AT, BT, CT,η0 = a
+    oxd_wt, bb, cc, MW = a.oxd_wt, a.bb, a.cc, a.MW
+
+    BT, CT = calculate_BT_CT(oxd_wt, MW, bb, cc)
+
+    η =  η0 * 10 ^ (min(12, max(-6, AT + BT /(T - CT))))
+
+    return 2 * η * EpsII
+end
+
+@inline function compute_τII!(
+        TauII::AbstractArray{_T, N},
+        a::GiordanoMeltViscosity,
+        EpsII::AbstractArray{_T, N};
+        T = ones(size(TauII))::AbstractArray{_T, N},
+        kwargs...,
+    ) where {N, _T}
+    @inbounds for i in eachindex(TauII)
+        TauII[i] = compute_τII(a, EpsII[i]; T = T[i])
+    end
+    return nothing
+end
+
+@inline function dτII_dεII(a::GiordanoMeltViscosity, EpsII; T = one(precision(a)), kwargs...)
+    @unpack_val AT, BT, CT, η0 = a
+    oxd_wt, bb, cc, MW = a.oxd_wt, a.bb, a.cc, a.MW
+
+    BT, CT = calculate_BT_CT(oxd_wt, MW, bb, cc)
+
+    η =  η0 * 10 ^ (min(12, max(-6, AT + BT /(T - CT))))
+
+    return 2 * η
+end
+
+@inline function dτII_dεII(a::GiordanoMeltViscosity, EpsII::Quantity; T = 1K, kwargs...)
+    @unpack_units AT, BT, CT,η0 = a
+    oxd_wt, bb, cc, MW = a.oxd_wt, a.bb, a.cc, a.MW
+
+    BT, CT = calculate_BT_CT(oxd_wt, MW, bb, cc)
+
+    η =  η0 * 10 ^ (min(12, max(-6, AT + BT /(T - CT))))
+
+    return 2 * η
+end
+
+# Print info
+function show(io::IO, g::GiordanoMeltViscosity)
+    return print(
+        io,
+        "GiordanoMeltViscosity: η= $(UnitValue(g.η0)) * 10^(AT + BT / (T - CT)) with Oxide Comp $(g.oxd_wt)",
     )
 end
 #-------------------------------------------------------------------------

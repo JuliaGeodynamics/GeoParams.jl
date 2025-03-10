@@ -20,6 +20,8 @@ using GeoParams
     x = ViscosityPartialMelt_Costa_etal_2009()
     @test isbits(x)
 
+    x = GiordanoMeltViscosity()
+    @test isbits(x)
     # This tests the MaterialParameters structure
     CharUnits_GEO = GEO_units(; viscosity = 1.0e19, length = 1000km)
 
@@ -265,5 +267,52 @@ using GeoParams
 
     # ----
 
+    # Test melt viscosity from Giordano et al. (2008) ---------------------
+    x1 = GiordanoMeltViscosity()
+    @test  x1.AT.val == -4.55
+    @test  x1.oxd_wt == (50.42, 1.53, 15.13, 9.81, 7.76, 11.35, 2.83, 0.140, 1.0)
 
+    x1_D = GiordanoMeltViscosity(oxd_wt = (50.42, 1.53, 15.13, 9.81, 7.76, 11.35, 2.83, 0.140, 1.0))   # Rhyolite
+    @test isDimensional(x1_D) == true
+    x1_ND = nondimensionalize(x1_D, CharUnits_GEO)                 # check that we can nondimensionalize all entries within the struct
+    @test isDimensional(x1_ND) == false
+    @test  NumValue(x1_ND.AT) == -4.55
+    x1_D1 = dimensionalize(x1_ND, CharUnits_GEO)                    # check that we can dimensionalize it again
+    @test  Value(x1_D.AT) ≈ Value(x1_D1.AT)
+
+    # given Temp
+    args_D = (; T=1273K)
+    args_ND= (; T=nondimensionalize(1273K, CharUnits_GEO))
+    Tau_II = 1.0e6Pa
+    ε_D = compute_εII(x1_D,Tau_II, args_D)
+    @test ε_D ≈ 1630.1958046211573 / s                      # dimensional input
+    ε_ND = compute_εII(x1_ND, nondimensionalize(Tau_II, CharUnits_GEO), args_ND)
+    @test ε_ND ≈ 5.000000000000001e23
+    @test ε_ND * CharUnits_GEO.strainrate ≈ ε_D                          # non-dimensional
+
+    ε = [0.0; 0.0]
+    τ = [1.0e6; 2.0e6]
+    args_ND1 = (; T = 1000 * ones(size(τ)), ϕ = 0.5 * ones(size(τ)))
+    compute_εII!(ε, x1_D, τ, args_ND1)
+    @test ε ≈ [0.28278753646741084, 0.5655750729348217]
+
+    # Given strain rate
+    @test compute_τII(x1_D, 1.0e-13 / s, args_D) ≈ 6.133173099903555e-11Pa      # dimensional input
+    @test compute_τII(x1_ND, 1.0e-13, args_ND) ≈ 6.1331730999035554e-30                  # non-dimensional
+
+
+    ε = [0.0; 0.0]
+    compute_τII!(ε, x1_ND, [1.0e0; 2.0], args_ND1)
+    @test ε ≈ [5.6932943851735906e-24, 1.1386588770347181e-23]    # vector input
+
+    ## intermediate composition
+    oxd_int = (62.40, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.00)
+    x1_D_int = GiordanoMeltViscosity(oxd_wt = oxd_int)   # Rhyolite
+
+    @test dεII_dτII(x1_ND, nondimensionalize(Tau_II, CharUnits_GEO), args_ND) ≈ 1.630477378855857e16
+    @test dεII_dτII(x1_D_int, Tau_II, args_D) ≈ 0.001630477378855857*inv(Pas)
+    @test dτII_dεII(x1_ND, ε, args_ND) ≈ 6.133173099903555e-17
+    @test dτII_dεII(x1_D, 1e-15s^-1, args_D) ≈ 613.4232447202199Pas
+    η_ref = dτII_dεII(x1_D_int, 1e-15s^-1, args_D)/2
+    @test log10(ustrip.(η_ref)) ≈ (3.59)
 end

@@ -33,6 +33,10 @@ import ForwardDiff.derivative
     @test param_info(x).Equation === L"$\rho = \rho_0*(1 - \alpha*(T-T_0))$"
     @test isdimensional(x) === true
 
+    x = Vector_Density()
+    @test isbits(x) == false
+    @test param_info(x).Equation === L"\rho from a precomputed vector"
+
     x = BubbleFlow_Density()
     @test isbits(x)
     @test param_info(x).Equation === L"\rho = 1/((c_0-c)/rho_g + 1-(c_0-c)/\rho_m)"
@@ -42,6 +46,7 @@ import ForwardDiff.derivative
     @test isbits(x)
     @test param_info(x).Equation === L"\rho = \rho_g\delta + \rho_p(1 - \delta)"
     @test isdimensional(x) === true
+
 
     # This tests the MaterialParameters structure
     CharUnits_GEO = GEO_units(; viscosity = 1.0e19, length = 1000km)

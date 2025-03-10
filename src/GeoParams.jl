@@ -166,6 +166,7 @@ module GeoParams
         LinearViscous,
         LinearMeltViscosity,
         ViscosityPartialMelt_Costa_etal_2009,
+        GiordanoMeltViscosity,
         PowerlawViscous,
         ArrheniusType,
         CustomRheology,
