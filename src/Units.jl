@@ -711,6 +711,7 @@ end
     return nondimensionalize(z, g)
 end
 
+@inline _nondimensionalize(z::NTuple{N, GeoUnit}, g::Union{GeoUnits, Nothing}) where {N} = ntuple(i -> nondimensionalize(z[i], g), Val(N))
 @inline _nondimensionalize(z, ::Any) = z
 
 """
