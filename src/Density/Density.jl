@@ -420,7 +420,7 @@ end
 #-------------------------------------------------------------------------
 # DensityX density depending on Oxide composition
 """
-    DensityX(; oxd_wt)
+    DensityX(; oxd_wt = oxd_wt)
 
 Set a density depending on the oxide composition after the python script by Iacovino K & Till C (2019)
 
@@ -434,13 +434,14 @@ Set a density depending on the oxide composition after the python script by Iaco
 - Iacovino K & Till C (2019). DensityX: A program for calculating the densities of magmatic liquids up to 1,627 °C and 30 kbar. Volcanica 2(1), p 1-10. [doi:10.30909/vol.02.01.0110](https://dx.doi.org/10.30909/vol.02.01.0110)
 
 """
-struct DensityX{T, T1, T2, T3, T4, T5, U, U1, U2, U3} <: AbstractDensity{T}
+struct DensityX{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3} <: AbstractDensity{T}
     oxd_wt::NTuple{9, T}# Oxide weight percent
     MW::NTuple{9, T1}    # Molar weights g/mol
     MV::NTuple{9, T2}    # Partial molar volumes
     dVdT::NTuple{9, T3}  # Partial molar volumes
     dVdP::NTuple{9, T4}  # Partial molar volumes
     Tref::NTuple{9, T5} # Reference temperature in K
+    norm_MP::NTuple{9, T6} # Normalized molar proportions
     P0::GeoUnit{T, U}    # Pressure
     ρ0::GeoUnit{T, U1}
     sum_XMW::GeoUnit{T, U2}
@@ -448,24 +449,26 @@ struct DensityX{T, T1, T2, T3, T4, T5, U, U1, U2, U3} <: AbstractDensity{T}
 
     function DensityX(;
     oxd_wt = (50.42, 1.53,  15.13,  9.81, 7.76, 11.35, 2.83,  0.14, 1.0),
-    MW  = (0.0600843, 0.0798658, 0.101961276, 0.0718444, 0.0403044, 0.0560774, 0.06197894, 0.094196, 0.01801528) .* (kg/mol), # Molar weights g/mol
+    MW  = (0.0600855, 0.07988, 0.10196, 0.07185, 0.0403, 0.05608, 0.06198, 0.0942, 0.01802) .* (kg/mol), # Molar weights g/mol
     MV  = (2.686e-5, 2.832e-5, 3.742e-5, 1.268e-5, 1.202e-5, 1.69e-5, 2.965e-5, 4.728e-5, 2.29e-5).*(m^3/mol), # Partial molar volumes
     dVdT  = (0.0, 7.24e-9, 2.62e-9, 3.69e-9, 3.27e-9, 3.74e-9, 7.68e-9, 1.208e-8, 9.5e-9).*(m^3 / (mol*K)),
     dVdP  = (-1.89e-9, -2.31e-9, -2.26e-9, -4.5e-10, 2.7e-10, 3.4e-10, -2.4e-9, -6.75e-9, -3.2e-9).* (m^3/(mol*MPa)),
     Tref  = (1773.15, 1773.15, 1773.15, 1723.15, 1773.15, 1773.15, 1773.15, 1773.15, 1273.15).*K, # Reference temperature in K
+    norm_MP = (0.511, 0.012, 0.09, 0.083, 0.117, 0.123, 0.028, 0.001, 0.034).*NoUnits,
     P0 = 1e-1MPa,
     ρ0 = 2900.0kg / m^3,
     sum_XMW = 0.0kg / mol,
     sum_Vliq = 0.0m^3 / mol
     )
 
-    # sum_XMW = compute_XMW_Vliq(oxd_wt, MW)#, MV, dVdT, dVdP, Tref, P0, T, P)
-    # TrefU = convert.(GeoUnit, Tref)
+    sum_XMW, norm_MP = compute_XMW_norm_MP(oxd_wt, MW)
+
     MWU    = ntuple(i -> convert(GeoUnit, MW[i]), Val(9))
     MVU   = ntuple(i -> convert(GeoUnit, MV[i]), Val(9))
     dVdTU = ntuple(i -> convert(GeoUnit, dVdT[i]), Val(9))
     dVdPU = ntuple(i -> convert(GeoUnit, dVdP[i]), Val(9))
     TrefU = ntuple(i -> convert(GeoUnit, Tref[i]), Val(9))
+    norm_MPU = ntuple(i -> convert(GeoUnit, norm_MP[i]), Val(9))
     P0U   = convert(GeoUnit, P0)
     ρ0U   = convert(GeoUnit, ρ0)
     sum_XMWU = convert(GeoUnit, sum_XMW)
@@ -477,18 +480,19 @@ struct DensityX{T, T1, T2, T3, T4, T5, U, U1, U2, U3} <: AbstractDensity{T}
     T3 = eltype(dVdTU)
     T4 = eltype(dVdPU)
     T5 = eltype(TrefU)
+    T6 = eltype(norm_MPU)
     U  = typeof(P0U).types[2]
     U1 = typeof(ρ0U).types[2]
     U2 = typeof(sum_XMWU).types[2]
     U3 = typeof(sum_VliqU).types[2]
 
 
-    return new{T, T1, T2, T3, T4, T5, U, U1, U2, U3}(oxd_wt, MWU, MVU, dVdTU, dVdPU, TrefU, P0U, ρ0U,  sum_XMWU, sum_VliqU,)
+    return new{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3}(oxd_wt, MWU, MVU, dVdTU, dVdPU, TrefU, norm_MPU, P0U, ρ0U,  sum_XMWU, sum_VliqU,)
     end
 
-    function DensityX(oxd_wt, MW, MV, dVdT, dVdP, Tref, P0, ρ0, sum_XMW, sum_Vliq)
+    function DensityX(oxd_wt, MW, MV, dVdT, dVdP, Tref, norm_MP, P0, ρ0, sum_XMW, sum_Vliq)
         return DensityX(;
-        oxd_wt=oxd_wt, MW=MW, MV=MV, dVdT=dVdT, dVdP=dVdP, Tref=Tref, P0=P0, ρ0=ρ0, sum_XMW=sum_XMW, sum_Vliq=sum_Vliq,
+        oxd_wt=oxd_wt, MW=MW, MV=MV, dVdT=dVdT, dVdP=dVdP, Tref=Tref, norm_MP=norm_MP, P0=P0, ρ0=ρ0, sum_XMW=sum_XMW, sum_Vliq=sum_Vliq,
         )
     end
 end
@@ -499,12 +503,11 @@ function param_info(s::DensityX) # info about the struct
     return MaterialParamsInfo(; Equation = L"\rho from an oxide composition")
 end
 
-function compute_XMW_Vliq(oxd_wt, MW, MV, dVdT, dVdP, Tref, P0, T, P)
+function compute_XMW_norm_MP(oxd_wt, MW)
 
     tmp = ntuple(i -> oxd_wt[i], Val(9))
-    sum_oxd_wt  = sum(tmp)
     # Normalize original wt% values to 100% sum
-    norm_WP = tmp ./ sum_oxd_wt .* 100.0
+    norm_WP = tmp ./ sum(tmp) .* 100.0
 
     # Divide normalized wt% values by molecular weights
     part_MP = norm_WP ./ MW
@@ -513,15 +516,11 @@ function compute_XMW_Vliq(oxd_wt, MW, MV, dVdT, dVdP, Tref, P0, T, P)
     # Convert to mol fraction
     norm_MP = part_MP ./ sum_MP
 
-    # Calculate the partial Vliq for each oxide
-    part_Vliq = (MV .+ (dVdT .* (T .- Tref)) .+ (dVdP .* (P - P0))) .* norm_MP
-    sum_Vliq = sum(part_Vliq)
-
     # Calculate partial X*MW
     part_XMW = norm_MP .* MW
     sum_XMW = sum(part_XMW)
 
-    return sum_XMW, sum_Vliq
+    return sum_XMW, norm_MP
 end
 
 function (s::DensityX)(; P::Number, T::Number, kwargs...)
@@ -530,14 +529,13 @@ function (s::DensityX)(; P::Number, T::Number, kwargs...)
     else
         @unpack_val P0, ρ0, sum_XMW, sum_Vliq = s
     end
-    oxd_wt, MW, MV, dVdT, dVdP, Tref = s.oxd_wt, s.MW, s.MV, s.dVdT, s.dVdP, s.Tref
+    oxd_wt, MW, MV, dVdT, dVdP, Tref, norm_MP = s.oxd_wt, s.MW, s.MV, s.dVdT, s.dVdP, s.Tref, s.norm_MP
 
-    sum_XMW, sum_Vliq = compute_XMW_Vliq(oxd_wt, MW, MV, dVdT, dVdP, Tref, P0, T, P)
-
-    # part_Vliq = (MV .+ (dVdT .* (T .- Tref)) .+ (dVdP .* (P - P0))) .* norm_MP
-    # sum_Vliq = sum(part_Vliq)
+    sum_Vliq = sum(@. (MV + (dVdT * (T - Tref)) + (dVdP * (P - P0))) * norm_MP)
 
     return sum_XMW / sum_Vliq
+    # return sum_XMW / sum((MV + (dVdT * (T - Tref)) + (dVdP * (P - P0))) * norm_MP)
+
 end
 
 @inline (s::DensityX)(args) = s(; args...)

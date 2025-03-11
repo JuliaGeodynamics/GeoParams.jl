@@ -534,8 +534,14 @@ import ForwardDiff.derivative
     @test isdimensional(x_D) == true
     @test isdimensional(x_ND) == false
 
-    # args = (P = 1.5bar, T = 1473.15K)
-    # ρ = compute_density(x_D, args)
-    # @test ρ == 2626.0006270062877kg/m^3
+    args = (P = 1.5kbar, T = 1473.15K)
+    ρ = compute_density(x_D, args)
+    @test ρ == 2647.5159360862067kg/m^3
 
+    oxd_int = (62.40, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.00)
+    x_D_int = DensityX(oxd_wt=oxd_int)
+
+    args = (P = 150MPa, T = 1473.15K)
+    ρ = compute_density(x_D_int, args)
+    @test ρ ≈ 2365.65821kg/m^3
 end

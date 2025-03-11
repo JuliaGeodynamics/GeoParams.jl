@@ -297,7 +297,7 @@ function show(io::IO, g::ViscosityPartialMelt_Costa_etal_2009)
 end
 #-------------------------------------------------------------------------
 """
-    GiordanoMeltViscosity(; oxd_wt, η0)
+    GiordanoMeltViscosity(; oxd_wt = oxd_wt, η0=1Pas)
 
 Defines the melt viscosity model after Giordano et al. (2008) given by
 ```math
