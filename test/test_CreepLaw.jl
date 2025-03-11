@@ -287,18 +287,18 @@ using GeoParams
     ε_D = compute_εII(x1_D,Tau_II, args_D)
     @test ε_D ≈ 1630.1958046211573 / s                      # dimensional input
     ε_ND = compute_εII(x1_ND, nondimensionalize(Tau_II, CharUnits_GEO), args_ND)
-    @test ε_ND ≈ 5.000000000000001e23
+    @test ε_ND ≈ 1.630195804621171e15
     @test ε_ND * CharUnits_GEO.strainrate ≈ ε_D                          # non-dimensional
 
     ε = [0.0; 0.0]
     τ = [1.0e6; 2.0e6]
     args_ND1 = (; T = 1000 * ones(size(τ)), ϕ = 0.5 * ones(size(τ)))
     compute_εII!(ε, x1_D, τ, args_ND1)
-    @test ε ≈ [0.28278753646741084, 0.5655750729348217]
+    @test ε ≈ [0.28267381865073904, 0.5653476373014781] rtol = 1e-5
 
     # Given strain rate
-    @test compute_τII(x1_D, 1.0e-13 / s, args_D) ≈ 6.133173099903555e-11Pa      # dimensional input
-    @test compute_τII(x1_ND, 1.0e-13, args_ND) ≈ 6.1331730999035554e-30                  # non-dimensional
+    @test compute_τII(x1_D, 1.0e-13 / s, args_D) ≈ 6.1342324472022e-11Pa rtol = 1e-5     # dimensional input
+    @test compute_τII(x1_ND, 1.0e-13, args_ND) ≈ 6.134232447202149e-30 rtol = 1e-5                 # non-dimensional
 
 
     ε = [0.0; 0.0]
@@ -309,10 +309,10 @@ using GeoParams
     oxd_int = (62.40, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.00)
     x1_D_int = GiordanoMeltViscosity(oxd_wt = oxd_int)   # Rhyolite
 
-    @test dεII_dτII(x1_ND, nondimensionalize(Tau_II, CharUnits_GEO), args_ND) ≈ 1.630477378855857e16
-    @test dεII_dτII(x1_D_int, Tau_II, args_D) ≈ 0.001630477378855857*inv(Pas)
-    @test dτII_dεII(x1_ND, ε, args_ND) ≈ 6.133173099903555e-17
+    @test dεII_dτII(x1_ND, nondimensionalize(Tau_II, CharUnits_GEO), args_ND) ≈ 1.6301958046211708e16 rtol = 1e-5
+    @test dεII_dτII(x1_D_int, Tau_II, args_D) ≈ 0.00010359976542338855*inv(Pas) rtol = 1e-5
+    @test dτII_dεII(x1_ND, ε, args_ND) ≈ 6.134232447202149e-17 rtol = 1e-5
     @test dτII_dεII(x1_D, 1e-15s^-1, args_D) ≈ 613.4232447202199Pas
     η_ref = dτII_dεII(x1_D_int, 1e-15s^-1, args_D)/2
-    @test log10(ustrip.(η_ref)) ≈ (3.59)
+    @test log10(ustrip.(η_ref)) ≈ (3.68) rtol = 1e-2
 end

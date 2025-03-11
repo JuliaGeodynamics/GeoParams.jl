@@ -313,33 +313,62 @@ where
 ```
 
 ## Parameters
-- `oxd_wt::NTuple{9,T}` : Melt composition as 9-element Tuple containing concentrations
+- `oxd_wt::NTuple{9,T}`: Melt composition as 9-element Tuple containing concentrations
              in [wt%] of the following oxides ordered in the exact sequence \n
              (SiO2 TiO2 Al2O3 FeO MgO CaO Na2O K2O H2O) \n
-             Default values are for a hydrous N-MORB
+             Default values are for a hydrous N-MORB melt.
 
 ## Reference
 - Giordano D, Russell JK, & Dingwell DB (2008). Viscosity of Magmatic Liquids: A Model. Earth & Planetary Science Letters, 271, 123-134. (https://dx.doi.org/10.1016/j.epsl.2008.03.038)
 
 """
-@with_kw_noshow struct GiordanoMeltViscosity{T, U, U1, U2} <: AbstractCreepLaw{T}
-    oxd_wt::NTuple{9, T} = (50.42, 1.53,  15.13,  9.81, 7.76, 11.35, 2.83,  0.14, 1.0)
-    bb::NTuple{10, T} = (159.56, -173.34, 72.13, 75.69, -38.98, -84.08, 141.54, -2.43, -0.91, 17.62)
-    cc::NTuple{7, T}  = (2.75, 15.72, 8.32, 10.20, -12.29, -99.54, 0.3)
-    MW::NTuple{9, T}  = (60.0843, 79.8658, 101.961276, 71.8444, 40.3044,56.0774, 61.97894, 94.1960, 18.01528) # Molar weights
-    AT::GeoUnit{T, U} = -4.55NoUnits
-    BT::GeoUnit{T, U1}= 5515.26K
-    CT::GeoUnit{T, U1}= 489.21K
-    η0::GeoUnit{T, U2}= 1Pas                           # scaling viscosity
-end
+struct GiordanoMeltViscosity{T, T1, T2, U, U1, U2} <: AbstractCreepLaw{T}
+    oxd_wt::NTuple{9, T} # SiO2 TiO2 Al2O3 FeO MgO CaO Na2O K2O H2O
+    MW::NTuple{9, T} # Molar weights
+    bb::NTuple{10, T1} # model constants
+    cc::NTuple{7, T2}  # model constants
+    AT::GeoUnit{T, U}
+    BT::GeoUnit{T, U1}
+    CT::GeoUnit{T, U1}
+    η0::GeoUnit{T, U2} # scaling viscosity
 
-function GiordanoMeltViscosity(args...)
-    return GiordanoMeltViscosity(
-        args[1:4]..., convert.(GeoUnit, args[5:end])...)
-end
+    function GiordanoMeltViscosity(;
+        oxd_wt = (50.42, 1.53,  15.13,  9.81, 7.76, 11.35, 2.83,  0.14, 1.0),
+        MW = (60.0843, 79.8658, 101.961276, 71.8444, 40.3044,56.0774, 61.97894, 94.1960, 18.01528), # Molar weights
+        bb = (159.56, -173.34, 72.13, 75.69, -38.98, -84.08, 141.54, -2.43, -0.91, 17.62).*K,
+        cc = (2.75, 15.72, 8.32, 10.20, -12.29, -99.54, 0.3).*K,
+        AT = -4.55NoUnits,
+        BT = 5515.26K,
+        CT = 489.21K,
+        η0 = 1Pas
+        )
 
-function GiordanoMeltViscosity(oxd_wt::AbstractArray, args...)
-    return GiordanoMeltViscosity(oxd_wt, args[1:3]..., convert.(GeoUnit, args[4:end])...)
+        BT, CT = calculate_BT_CT(oxd_wt, MW, bb, cc)
+
+        ATU = convert(GeoUnit, AT)
+        BTU = convert(GeoUnit, BT)
+        CTU = convert(GeoUnit, CT)
+        η0U = convert(GeoUnit, η0)
+
+        bbU = ntuple(i -> convert(GeoUnit, bb[i]), 10)
+        ccU = ntuple(i -> convert(GeoUnit, cc[i]), 7)
+
+        T  = eltype(oxd_wt)
+        T1 = eltype(bbU)
+        T2 = eltype(ccU)
+        U  = typeof(ATU).types[2]
+        U1 = typeof(BTU).types[2]
+        U2 = typeof(η0U).types[2]
+
+        new{T, T1, T2, U, U1, U2}(oxd_wt, MW, bbU, ccU, ATU, BTU, CTU, η0U)
+    end
+
+    function GiordanoMeltViscosity(oxd_wt, MW, bb, cc, AT, BT, CT, η0)
+        return GiordanoMeltViscosity(;
+            oxd_wt = oxd_wt, MW = MW, bb = bb, cc = cc, AT = AT, BT = BT, CT = CT, η0 = η0
+        )
+    end
+
 end
 
 isDimensional(g::GiordanoMeltViscosity) = isDimensional(g.η0)
@@ -394,23 +423,17 @@ end
 #calculation routine
 function compute_εII(a::GiordanoMeltViscosity, TauII; T = one(precision(a)), kwargs...)
     @unpack_val AT, BT, CT, η0 = a
-    oxd_wt, bb, cc, MW = a.oxd_wt, a.bb, a.cc, a.MW
 
-    BT, CT = calculate_BT_CT(oxd_wt, MW, bb, cc)
+    η =  η0 * exp10(min(12, max(-6, AT + BT /(T - CT))))
 
-    η =  η0 * 10 ^ (min(12, max(-6, AT + BT /(T - CT))))
-
-    ε = TauII / η * 0.5
+    ε = (TauII / η) * 0.5
     return ε
 end
 
 function compute_εII(a::GiordanoMeltViscosity, TauII::Quantity; T = 1K, kwargs...)
     @unpack_units AT, BT, CT, η0 = a
-    oxd_wt, bb, cc, MW = a.oxd_wt, a.bb, a.cc, a.MW
 
-    BT, CT = calculate_BT_CT(oxd_wt, MW, bb, cc)
-
-    η =  η0 * 10 ^ (min(12, max(-6, AT + BT /(T - CT))))
+    η =  η0 * exp10(min(12, max(-6, AT + BT /(T - CT))))
     ε = TauII / η * 0.5
     return ε
 end
@@ -433,22 +456,16 @@ end
 
 @inline function dεII_dτII(a::GiordanoMeltViscosity, TauII::Quantity; T = 1K, kwargs...)
     @unpack_units AT, BT, CT,η0 = a
-    oxd_wt, bb, cc, MW = a.oxd_wt, a.bb, a.cc, a.MW
 
-    BT, CT = calculate_BT_CT(oxd_wt, MW, bb, cc)
-
-    η =  η0 * 10 ^ (min(12, max(-6, AT + BT /(T - CT))))
+    η =  η0 * exp10(min(12, max(-6, AT + BT /(T - CT))))
 
     return 0.5 * (1.0 / η)
 end
 
 @inline function dεII_dτII(a::GiordanoMeltViscosity, TauII; T = one(precision(a)), kwargs...)
     @unpack_val AT, BT, CT, η0 = a
-    oxd_wt, bb, cc, MW = a.oxd_wt, a.bb, a.cc, a.MW
 
-    BT, CT = calculate_BT_CT(oxd_wt, MW, bb, cc)
-
-    η =  η0 * 10 ^ (min(12, max(-6, AT + BT /(T - CT))))
+    η =  η0 * exp10(min(12, max(-6, AT + BT /(T - CT))))
 
     return 0.5 * (1.0 / η)
 end
@@ -460,22 +477,16 @@ Returns second invariant of the stress tensor given a 2nd invariant of strain ra
 """
 @inline function compute_τII(a::GiordanoMeltViscosity, EpsII; T = one(precision(a)), kwargs...)
     @unpack_val AT, BT, CT, η0 = a
-    oxd_wt, bb, cc, MW = a.oxd_wt, a.bb, a.cc, a.MW
 
-    BT, CT = calculate_BT_CT(oxd_wt, MW, bb, cc)
-
-    η =  η0 * 10 ^ (min(12, max(-6, AT + BT /(T - CT))))
+    η =  η0 * exp10(min(12, max(-6, AT + BT /(T - CT))))
 
     return 2 * η * EpsII
 end
 
 @inline function compute_τII(a::GiordanoMeltViscosity, EpsII::Quantity; T = 1K, kwargs...)
     @unpack_units AT, BT, CT,η0 = a
-    oxd_wt, bb, cc, MW = a.oxd_wt, a.bb, a.cc, a.MW
 
-    BT, CT = calculate_BT_CT(oxd_wt, MW, bb, cc)
-
-    η =  η0 * 10 ^ (min(12, max(-6, AT + BT /(T - CT))))
+    η =  η0 * exp10(min(12, max(-6, AT + BT /(T - CT))))
 
     return 2 * η * EpsII
 end
@@ -495,22 +506,16 @@ end
 
 @inline function dτII_dεII(a::GiordanoMeltViscosity, EpsII; T = one(precision(a)), kwargs...)
     @unpack_val AT, BT, CT, η0 = a
-    oxd_wt, bb, cc, MW = a.oxd_wt, a.bb, a.cc, a.MW
 
-    BT, CT = calculate_BT_CT(oxd_wt, MW, bb, cc)
-
-    η =  η0 * 10 ^ (min(12, max(-6, AT + BT /(T - CT))))
+    η =  η0 * exp10(min(12, max(-6, AT + BT /(T - CT))))
 
     return 2 * η
 end
 
 @inline function dτII_dεII(a::GiordanoMeltViscosity, EpsII::Quantity; T = 1K, kwargs...)
     @unpack_units AT, BT, CT,η0 = a
-    oxd_wt, bb, cc, MW = a.oxd_wt, a.bb, a.cc, a.MW
 
-    BT, CT = calculate_BT_CT(oxd_wt, MW, bb, cc)
-
-    η =  η0 * 10 ^ (min(12, max(-6, AT + BT /(T - CT))))
+    η =  η0 * exp10(min(12, max(-6, AT + BT /(T - CT))))
 
     return 2 * η
 end

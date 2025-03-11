@@ -67,6 +67,7 @@ module GeoParams
         GPa,
         MPa,
         Pa,
+        bar,
         kbar,
         Pas,
         K,
@@ -134,6 +135,7 @@ module GeoParams
         MeltDependent_Density,
         BubbleFlow_Density,
         GasPyroclast_Density,
+        DensityX,
         compute_density_ratio
 
     # Constitutive relationships laws

@@ -47,6 +47,10 @@ import ForwardDiff.derivative
     @test param_info(x).Equation === L"\rho = \rho_g\delta + \rho_p(1 - \delta)"
     @test isdimensional(x) === true
 
+    x = DensityX()
+    @test isbits(x)
+    @test param_info(x).Equation === L"$\rho from an oxide composition$"
+    @test isdimensional(x) === true
 
     # This tests the MaterialParameters structure
     CharUnits_GEO = GEO_units(; viscosity = 1.0e19, length = 1000km)
@@ -522,4 +526,16 @@ import ForwardDiff.derivative
 
     compute_density!(rho, rheologies, Phases, args_vec)
     @test rho[1] ≈ ρ
+
+    # DensityX ------------------------------------------------
+    CharUnits_GEO = GEO_units(; viscosity = 1.0e19, length = 1000km)
+    x_D = DensityX()
+    x_ND = nondimensionalize(x_D, CharUnits_GEO)
+    @test isdimensional(x_D) == true
+    @test isdimensional(x_ND) == false
+
+    # args = (P = 1.5bar, T = 1473.15K)
+    # ρ = compute_density(x_D, args)
+    # @test ρ == 2626.0006270062877kg/m^3
+
 end
