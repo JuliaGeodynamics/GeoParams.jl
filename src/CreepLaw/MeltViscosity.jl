@@ -424,7 +424,7 @@ end
 function compute_εII(a::GiordanoMeltViscosity, TauII; T = one(precision(a)), kwargs...)
     @unpack_val AT, BT, CT, η0 = a
 
-    η = η0 * exp10(min(12, max(-6, AT + BT / (T - CT))))
+    η = η0 * exp10(min(Inf, max(-6, AT + BT / (T - CT))))
 
     ε = (TauII / η) * 0.5
     return ε
@@ -433,7 +433,7 @@ end
 function compute_εII(a::GiordanoMeltViscosity, TauII::Quantity; T = 1K, kwargs...)
     @unpack_units AT, BT, CT, η0 = a
 
-    η = η0 * exp10(min(12, max(-6, AT + BT / (T - CT))))
+    η = η0 * exp10(min(Inf, max(-6, AT + BT / (T - CT))))
     ε = TauII / η * 0.5
     return ε
 end
@@ -457,7 +457,7 @@ end
 @inline function dεII_dτII(a::GiordanoMeltViscosity, TauII::Quantity; T = 1K, kwargs...)
     @unpack_units AT, BT, CT, η0 = a
 
-    η = η0 * exp10(min(12, max(-6, AT + BT / (T - CT))))
+    η = η0 * exp10(min(Inf, max(-6, AT + BT / (T - CT))))
 
     return 0.5 * (1.0 / η)
 end
@@ -465,7 +465,7 @@ end
 @inline function dεII_dτII(a::GiordanoMeltViscosity, TauII; T = one(precision(a)), kwargs...)
     @unpack_val AT, BT, CT, η0 = a
 
-    η = η0 * exp10(min(12, max(-6, AT + BT / (T - CT))))
+    η = η0 * exp10(min(Inf, max(-6, AT + BT / (T - CT))))
 
     return 0.5 * (1.0 / η)
 end
@@ -478,7 +478,7 @@ Returns second invariant of the stress tensor given a 2nd invariant of strain ra
 @inline function compute_τII(a::GiordanoMeltViscosity, EpsII; T = one(precision(a)), kwargs...)
     @unpack_val AT, BT, CT, η0 = a
 
-    η = η0 * exp10(min(12, max(-6, AT + BT / (T - CT))))
+    η = η0 * exp10(min(Inf, max(-6, AT + BT / (T - CT))))
 
     return 2 * η * EpsII
 end
@@ -486,7 +486,7 @@ end
 @inline function compute_τII(a::GiordanoMeltViscosity, EpsII::Quantity; T = 1K, kwargs...)
     @unpack_units AT, BT, CT, η0 = a
 
-    η = η0 * exp10(min(12, max(-6, AT + BT / (T - CT))))
+    η = η0 * exp10(min(Inf, max(-6, AT + BT / (T - CT))))
 
     return 2 * η * EpsII
 end
@@ -507,7 +507,7 @@ end
 @inline function dτII_dεII(a::GiordanoMeltViscosity, EpsII; T = one(precision(a)), kwargs...)
     @unpack_val AT, BT, CT, η0 = a
 
-    η = η0 * exp10(min(12, max(-6, AT + BT / (T - CT))))
+    η = η0 * exp10(min(Inf, max(-6, AT + BT / (T - CT))))
 
     return 2 * η
 end
@@ -515,7 +515,7 @@ end
 @inline function dτII_dεII(a::GiordanoMeltViscosity, EpsII::Quantity; T = 1K, kwargs...)
     @unpack_units AT, BT, CT, η0 = a
 
-    η = η0 * exp10(min(12, max(-6, AT + BT / (T - CT))))
+    η = η0 * exp10(min(Inf, max(-6, AT + BT / (T - CT))))
 
     return 2 * η
 end
