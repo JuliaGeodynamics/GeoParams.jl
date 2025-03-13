@@ -34,6 +34,7 @@ const g = u"g"
 const Pa = u"Pa"
 const MPa = u"MPa"
 const GPa = u"GPa"
+const bar = u"bar"
 const kbar = u"kbar"
 const Pas = u"Pa*s"
 const K = u"K"
@@ -57,6 +58,7 @@ export km,
     GPa,
     MPa,
     Pa,
+    bar,
     kbar,
     Pas,
     K,
@@ -85,6 +87,8 @@ export km,
     Value,
     Fun,
     NumValue,
+    unpack_units,
+    unpack_vals,
     Unit,
     UnitValue,
     isdimensional,
@@ -174,7 +178,8 @@ NumValue(v::Number) = v                                     # numeric value
 NumValue(v::AbstractArray) = v                              # numeric value
 Value(v::GeoUnit) = Unitful.Quantity.(v.val, v.unit)        # value, with units
 Fun(v::GeoUnit) = v.val
-
+unpack_units(x::NTuple{N, GeoUnit}) where {N} = ntuple(i -> x[i].unit * x[i].val, Val(N))
+unpack_vals(x::NTuple{N, GeoUnit}) where {N} = ntuple(i -> x[i].val, Val(N))
 
 function UnitValue(v::GeoUnit{T, U}) where {T, U}
     if v.isdimensional
@@ -711,6 +716,7 @@ end
     return nondimensionalize(z, g)
 end
 
+@inline _nondimensionalize(z::NTuple{N, GeoUnit}, g::Union{GeoUnits, Nothing}) where {N} = ntuple(i -> nondimensionalize(z[i], g), Val(N))
 @inline _nondimensionalize(z, ::Any) = z
 
 """

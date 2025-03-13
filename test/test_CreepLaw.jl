@@ -20,6 +20,8 @@ using GeoParams
     x = ViscosityPartialMelt_Costa_etal_2009()
     @test isbits(x)
 
+    x = GiordanoMeltViscosity()
+    @test isbits(x)
     # This tests the MaterialParameters structure
     CharUnits_GEO = GEO_units(; viscosity = 1.0e19, length = 1000km)
 
@@ -265,5 +267,106 @@ using GeoParams
 
     # ----
 
+    # Test melt viscosity from Giordano et al. (2008) ---------------------
+    x1 = GiordanoMeltViscosity()
+    @test  x1.AT.val == -4.55
+    @test  x1.oxd_wt == (50.42, 1.53, 15.13, 9.81, 7.76, 11.35, 2.83, 0.14, 1.0)
+
+    x1_D = GiordanoMeltViscosity(oxd_wt = (50.42, 1.53, 15.13, 9.81, 7.76, 11.35, 2.83, 0.14, 1.0))   # Rhyolite
+    @test isDimensional(x1_D) == true
+    x1_ND = nondimensionalize(x1_D, CharUnits_GEO)                 # check that we can nondimensionalize all entries within the struct
+    @test isDimensional(x1_ND) == false
+    @test  NumValue(x1_ND.AT) == -4.55
+    x1_D1 = dimensionalize(x1_ND, CharUnits_GEO)                    # check that we can dimensionalize it again
+    @test  Value(x1_D.AT) ≈ Value(x1_D1.AT)
+
+    # given Temp
+    args_D = (; T = 1273K)
+    args_ND = (; T = nondimensionalize(1273K, CharUnits_GEO))
+    Tau_II = 1.0e6Pa
+    ε_D = compute_εII(x1_D, Tau_II, args_D)
+    @test ε_D ≈ 1630.1958046211573 / s                      # dimensional input
+    ε_ND = compute_εII(x1_ND, nondimensionalize(Tau_II, CharUnits_GEO), args_ND)
+    @test ε_ND ≈ 1.630195804621171e15
+    @test ε_ND * CharUnits_GEO.strainrate ≈ ε_D                          # non-dimensional
+
+    ε = [0.0; 0.0]
+    τ = [1.0e6; 2.0e6]
+    args_ND1 = (; T = 1000 * ones(size(τ)), ϕ = 0.5 * ones(size(τ)))
+    compute_εII!(ε, x1_D, τ, args_ND1)
+    @test ε ≈ [0.28267381865073904, 0.5653476373014781] rtol = 1.0e-5
+
+    # Given strain rate
+    @test compute_τII(x1_D, 1.0e-13 / s, args_D) ≈ 6.1342324472022e-11Pa rtol = 1.0e-5     # dimensional input
+    @test compute_τII(x1_ND, 1.0e-13, args_ND) ≈ 6.134232447202149e-30 rtol = 1.0e-5                 # non-dimensional
+
+
+    ε = [0.0; 0.0]
+    compute_τII!(ε, x1_ND, [1.0e0; 2.0], args_ND1)
+    @test ε ≈ [5.6932943851735906e-24, 1.1386588770347181e-23]    # vector input
+
+    ## intermediate composition
+    oxd_int = (62.4, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.0)
+    x1_D_int = GiordanoMeltViscosity(oxd_wt = oxd_int)   # Rhyolite
+
+    @test dεII_dτII(x1_ND, nondimensionalize(Tau_II, CharUnits_GEO), args_ND) ≈ 1.6301958046211708e16 rtol = 1.0e-5
+    @test dεII_dτII(x1_D_int, Tau_II, args_D) ≈ 0.00010359976542338855 * inv(Pas) rtol = 1.0e-5
+    @test dτII_dεII(x1_ND, ε, args_ND) ≈ 6.134232447202149e-17 rtol = 1.0e-5
+    @test dτII_dεII(x1_D, 1.0e-15s^-1, args_D) ≈ 613.4232447202199Pas
+    η_ref = dτII_dεII(x1_D_int, 1.0e-15s^-1, args_D) / 2
+    @test log10(ustrip.(η_ref)) ≈ (3.68) rtol = 1.0e-2
+
+    # Create plot
+    T = Vector(700.0:1673) * K
+    η_MORB = zeros(size(T)) * Pas
+    η_intfels = zeros(size(T)) * Pas
+    η_rhyolite = zeros(size(T)) * Pas
+    η_MORB_scaled = zeros(size(T)) * Pas
+    η_intfels_scaled = zeros(size(T)) * Pas
+    η_rhyolite_scaled = zeros(size(T)) * Pas
+    x_MORB = GiordanoMeltViscosity(oxd_wt = (50.42, 1.53, 15.13, 9.81, 7.76, 11.35, 2.83, 0.14, 1.0))   # Rhyolite
+    x_int = GiordanoMeltViscosity(oxd_wt = (62.4, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.0))   # Rhyolite
+    x_rhyolite = GiordanoMeltViscosity(oxd_wt = (76.38, 0.06, 11.59, 1.03, 0.36, 3.25, 2.44, 4.66, 3.0))   # Rhyolite
+    x_MORB_scaled = GiordanoMeltViscosity(oxd_wt = (50.42, 1.53, 15.13, 9.81, 7.76, 11.35, 2.83, 0.14, 1.0), η0 = 1.0e15Pas)   # Rhyolite
+    x_int_scaled = GiordanoMeltViscosity(oxd_wt = (62.4, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.0), η0 = 1.0e15Pas)   # Rhyolite
+    x_rhyolite_scaled = GiordanoMeltViscosity(oxd_wt = (76.38, 0.06, 11.59, 1.03, 0.36, 3.25, 2.44, 4.66, 3.0), η0 = 1.0e15Pas)   # Rhyolite
+
+    εII = 1.0e5 / s
+    for i in eachindex(T)
+        args_D = (; T = T[i])
+        η_MORB[i] = compute_viscosity_εII(x_MORB, εII, (; T = T[i]))
+        η_intfels[i] = compute_viscosity_εII(x_int, εII, (; T = T[i]))
+        η_rhyolite[i] = compute_viscosity_εII(x_rhyolite, εII, (; T = T[i]))
+        η_MORB_scaled[i] = compute_viscosity_εII(x_MORB_scaled, εII, (; T = T[i]))
+        η_intfels_scaled[i] = compute_viscosity_εII(x_int_scaled, εII, (; T = T[i]))
+        η_rhyolite_scaled[i] = compute_viscosity_εII(x_rhyolite_scaled, εII, (; T = T[i]))
+    end
+    T_plots = 10000 ./ ustrip.(T)
+
+    # fig = Figure(size = (800, 600))
+    # ax = Axis(fig[1, 1], xlabel = "T [C]", ylabel = "log10(η [Pas])")
+    # lines!(ax, ustrip.(T) .- 273.15, log10.(ustrip.(η_MORB)), label = "MORB, εII=1e-5/s")
+    # lines!(ax, ustrip.(T) .- 273.15, log10.(ustrip.(η_intfels)), label = "Intermediate, εII=1e-5/s")
+    # lines!(ax, ustrip.(T) .- 273.15, log10.(ustrip.(η_rhyolite)), label = "Rhyolite, εII=1e-5/s")
+
+
+    # Legend(fig[1, 2], ax)
+    # fig
+
+    # fig = Figure(size = (800, 600))
+    # ax = Axis(fig[1, 1], xlabel = "T [C]", ylabel = "log10(η [Pas])")
+    # lines!(ax, ustrip.(T) .- 273.15, log10.(ustrip.(η_MORB_scaled)), label = "MORB_scaled, εII=1e-5/s, η0=1e15")
+    # lines!(ax, ustrip.(T) .- 273.15, log10.(ustrip.(η_intfels_scaled)), label = "Intermediate_scaled, εII=1e-5/s, η0=1e15")
+    # lines!(ax, ustrip.(T) .- 273.15, log10.(ustrip.(η_rhyolite_scaled)), label = "Rhyolite_scaled, εII=1e-5/s, η0=1e15")
+    # Legend(fig[1, 2], ax)
+    # fig
+    # fig2 = Figure(size = (800, 600))
+    # ax = Axis(fig2[1, 1], xlabel = "10000/T(K)", ylabel = "log10(η [Pas])")
+    # lines!(ax, T_plots, log10.(ustrip.(η_MORB)), label = "MORB, εII=1e-5/s")
+    # lines!(ax, T_plots, log10.(ustrip.(η_intfels)), label = "Intermediate, εII=1e-5/s")
+    # lines!(ax, T_plots, log10.(ustrip.(η_rhyolite)), label = "Rhyolite, εII=1e-5/s")
+    # # Legend(fig2[1, 2], ax, merge = true, position=:rt)
+    # Legend(fig2[1, 2], ax, position=:rt)
+    # fig2
 
 end

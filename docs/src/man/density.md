@@ -10,6 +10,7 @@ GeoParams.MaterialParameters.Density.Compressible_Density
 GeoParams.MaterialParameters.Density.MeltDependent_Density
 GeoParams.MaterialParameters.Density.BubbleFlow_Density
 GeoParams.MaterialParameters.Density.GasPyroclast_Density
+GeoParams.MaterialParameters.Density.DensityX
 ```
 ## Computational routines
 To evaluate density within a user routine, use this:

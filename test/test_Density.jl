@@ -33,6 +33,10 @@ import ForwardDiff.derivative
     @test param_info(x).Equation === L"$\rho = \rho_0*(1 - \alpha*(T-T_0))$"
     @test isdimensional(x) === true
 
+    x = Vector_Density()
+    @test isbits(x) == false
+    @test param_info(x).Equation === L"\rho from a precomputed vector"
+
     x = BubbleFlow_Density()
     @test isbits(x)
     @test param_info(x).Equation === L"\rho = 1/((c_0-c)/rho_g + 1-(c_0-c)/\rho_m)"
@@ -41,6 +45,11 @@ import ForwardDiff.derivative
     x = GasPyroclast_Density()
     @test isbits(x)
     @test param_info(x).Equation === L"\rho = \rho_g\delta + \rho_p(1 - \delta)"
+    @test isdimensional(x) === true
+
+    x = DensityX()
+    @test isbits(x)
+    @test param_info(x).Equation === L"$\rho from an oxide composition$"
     @test isdimensional(x) === true
 
     # This tests the MaterialParameters structure
@@ -517,4 +526,67 @@ import ForwardDiff.derivative
 
     compute_density!(rho, rheologies, Phases, args_vec)
     @test rho[1] ≈ ρ
+
+    # DensityX ------------------------------------------------
+    CharUnits_GEO = GEO_units(; viscosity = 1.0e19, length = 1000km)
+    x_D = DensityX()
+    x_ND = nondimensionalize(x_D, CharUnits_GEO)
+    @test isdimensional(x_D) == true
+    @test isdimensional(x_ND) == false
+
+    args = (P = 1.5kbar, T = 1473.15K)
+    ρ = compute_density(x_D, args)
+    @test ρ ≈ 2647.515936kg / m^3 # from the DensityX.xls
+
+    oxd_int = (62.4, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.0)
+    x_D_int = DensityX(oxd_wt = oxd_int)
+
+    args = (P = 150MPa, T = 1473.15K)
+    ρ = compute_density(x_D_int, args)
+    @test ρ ≈ 2365.65821kg / m^3 # from the DensityX.xls
+
+    x_ND_int = nondimensionalize(x_D_int, CharUnits_GEO)
+    args_ND = (P = nondimensionalize(150.0e6Pa, CharUnits_GEO), T = nondimensionalize(1473.15K, CharUnits_GEO))
+    ρ_ND = compute_density(x_ND_int, args_ND)
+    @test ρ_ND * CharUnits_GEO.density ≈ ρ
+
+    args = (P = 150.0e6, T = 1473.15)
+    ρ = compute_density(x_D_int, args)
+    @test ρ ≈ 2365.65821 # from the DensityX.xls
+
+    x = DensityX(oxd_wt = (62.4, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.0))
+    args = (P = 0.0, T = 273.15)
+    @test derivative(x -> compute_density(x_D, (P = args.P, T = x)), args.T) == -0.28465196140071125
+    @test derivative(x -> compute_density(x_D, (P = x, T = args.T)), args.P) == 1.8927791855898677e-7
+
+    rheologies = (
+        SetMaterialParams(;
+            Name = "Crust",
+            Phase = 0,
+            CreepLaws = (PowerlawViscous(), LinearViscous(; η = 1.0e23Pas)),
+            Density = DensityX(oxd_wt = (62.4, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.0)),
+        ),
+        SetMaterialParams(;
+            Name = "Lower Crust",
+            Phase = 1,
+            CreepLaws = (PowerlawViscous(; n = 5.0), LinearViscous(; η = 1.0e21Pas)),
+            Density = DensityX(),
+        ),
+    )
+
+    PhaseRatio = (0.5, 0.5)
+    args = (P = 150.0e6, T = 1473.15)
+    @test compute_density_ratio(PhaseRatio, rheologies, args) == compute_density(rheologies, PhaseRatio, args) ≈ 2506.58707
+
+    @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P = args.P, T = x)), args.T) ≈ -0.1998386959573645 rtol = 1.0e-5
+    @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P = x, T = args.T)), args.P) ≈ 1.571121768865102e-7  rtol = 1.0e-5
+
+    rho = zeros(size(Phases))
+    T = fill(1200.0 + 273.15, size(Phases))
+    P = fill(150.0e6, size(Phases))
+
+    args_vec = (P = P, T = T)
+
+    compute_density!(rho, rheologies, Phases, args_vec)
+    @test rho[1] ≈ 2365.65821 rtol = 1.0e-5
 end

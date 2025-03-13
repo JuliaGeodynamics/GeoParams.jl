@@ -52,6 +52,8 @@ module GeoParams
         isDimensional,
         Value,
         NumValue,
+        unpack_units,
+        unpack_val,
         Unit,
         UnitValue,
         isdimensional,
@@ -67,6 +69,7 @@ module GeoParams
         GPa,
         MPa,
         Pa,
+        bar,
         kbar,
         Pas,
         K,
@@ -134,6 +137,7 @@ module GeoParams
         MeltDependent_Density,
         BubbleFlow_Density,
         GasPyroclast_Density,
+        DensityX,
         compute_density_ratio
 
     # Constitutive relationships laws
@@ -166,6 +170,7 @@ module GeoParams
         LinearViscous,
         LinearMeltViscosity,
         ViscosityPartialMelt_Costa_etal_2009,
+        GiordanoMeltViscosity,
         PowerlawViscous,
         ArrheniusType,
         CustomRheology,
