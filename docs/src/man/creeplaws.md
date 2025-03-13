@@ -1,10 +1,13 @@
-# CreepLaws 
+# CreepLaws
 
 The following viscous creep laws are implemented:
 ```@docs
 GeoParams.LinearViscous
 GeoParams.PowerlawViscous
 GeoParams.DislocationCreep
+GeoParams.MaterialParameters.ConstitutiveRelationships.ViscosityPartialMelt_Costa_etal_2009
+GeoParams.MaterialParameters.ConstitutiveRelationships.LinearMeltViscosity
+GeoParams.MaterialParameters.ConstitutiveRelationships.GiordanoMeltViscosity
 GeoParams.MaterialParameters.ConstitutiveRelationships.DiffusionCreep
 GeoParams.MaterialParameters.ConstitutiveRelationships.SetDiffusionCreep
 ```

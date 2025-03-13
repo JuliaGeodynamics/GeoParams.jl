@@ -25,7 +25,7 @@ or
 ```
 where
 ```math
-    \\eta =   \\eta_0*10^( A + {B \\over (T - T0)});
+    \\eta =   \\eta_0*10^{A + \\frac{B}{T - T0}} ;
 ```
 and `\\eta_0` is the scaling viscosity, `A` and `B` are constants, and `T_0` is a reference temperature, and `T` is the temperature [in K].
 
@@ -309,14 +309,14 @@ or
 ```
 where
 ```math
-    \\eta = \\eta_0 * 10^{(AT + BT \\over (T - CT))}
+    \\eta = \\eta_0 * 10^{AT + \\frac{BT}{T - CT}}
 ```
 
 ## Parameters
 - `oxd_wt::NTuple{9,T}`: Melt composition as 9-element Tuple containing concentrations
-             in [wt%] of the following oxides ordered in the exact sequence \n
-             (SiO2 TiO2 Al2O3 FeO MgO CaO Na2O K2O H2O) \n
-             Default values are for a hydrous N-MORB melt.
+            in [wt%] of the following oxides ordered in the exact sequence \n
+            (SiO2 TiO2 Al2O3 FeO MgO CaO Na2O K2O H2O) \n
+            Default values are for a hydrous N-MORB melt.
 
 ## Reference
 - Giordano D, Russell JK, & Dingwell DB (2008). Viscosity of Magmatic Liquids: A Model. Earth & Planetary Science Letters, 271, 123-134. (https://dx.doi.org/10.1016/j.epsl.2008.03.038)
