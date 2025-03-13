@@ -52,6 +52,8 @@ module GeoParams
         isDimensional,
         Value,
         NumValue,
+        unpack_units,
+        unpack_val,
         Unit,
         UnitValue,
         isdimensional,

@@ -536,12 +536,57 @@ import ForwardDiff.derivative
 
     args = (P = 1.5kbar, T = 1473.15K)
     ρ = compute_density(x_D, args)
-    @test ρ == 2647.5159360862067kg/m^3
+    @test ρ ≈ 2647.515936kg/m^3 # from the DensityX.xls
 
     oxd_int = (62.40, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.00)
     x_D_int = DensityX(oxd_wt=oxd_int)
 
     args = (P = 150MPa, T = 1473.15K)
     ρ = compute_density(x_D_int, args)
-    @test ρ ≈ 2365.65821kg/m^3
+    @test ρ ≈ 2365.65821kg/m^3 # from the DensityX.xls
+
+    x_ND_int = nondimensionalize(x_D_int, CharUnits_GEO)
+    args_ND = (P=nondimensionalize(150e6Pa, CharUnits_GEO), T=nondimensionalize(1473.15K, CharUnits_GEO))
+    ρ_ND = compute_density(x_ND_int, args_ND)
+    @test ρ_ND * CharUnits_GEO.density ≈ ρ
+
+    args = (P = 150e6, T = 1473.15)
+    ρ = compute_density(x_D_int, args)
+    @test ρ ≈ 2365.65821 # from the DensityX.xls
+
+    x = DensityX(oxd_wt = (62.40, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.00))
+    args = (P = 0.0, T = 273.15)
+    @test derivative(x -> compute_density(x_D, (P = args.P, T = x)), args.T) == -0.28465196140071125
+    @test derivative(x -> compute_density(x_D, (P = x, T = args.T)), args.P) == 1.8927791855898677e-7
+
+    rheologies = (
+        SetMaterialParams(;
+            Name = "Crust",
+            Phase = 0,
+            CreepLaws = (PowerlawViscous(), LinearViscous(; η = 1.0e23Pas)),
+            Density = DensityX(oxd_wt = (62.40, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.00)),
+        ),
+        SetMaterialParams(;
+            Name = "Lower Crust",
+            Phase = 1,
+            CreepLaws = (PowerlawViscous(; n = 5.0), LinearViscous(; η = 1.0e21Pas)),
+            Density = DensityX(),
+        ),
+    )
+
+    PhaseRatio = (0.5, 0.5)
+    args = (P = 150e6, T = 1473.15)
+    @test compute_density_ratio(PhaseRatio, rheologies, args) == compute_density(rheologies, PhaseRatio, args) ≈ 2506.58707
+
+    @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P = args.P, T = x)), args.T) ≈ -0.1998386959573645 rtol = 1.0e-5
+    @test derivative(x -> compute_density_ratio(PhaseRatio, rheologies, (P = x, T = args.T)), args.P) ≈  1.571121768865102e-7  rtol = 1.0e-5
+
+    rho = zeros(size(Phases))
+    T = fill(1200.0 + 273.15, size(Phases))
+    P = fill(150e6, size(Phases))
+
+    args_vec = (P = P, T = T)
+
+    compute_density!(rho, rheologies, Phases, args_vec)
+    @test rho[1] ≈ 2365.65821 rtol = 1.0e-5
 end
