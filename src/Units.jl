@@ -178,8 +178,8 @@ NumValue(v::Number) = v                                     # numeric value
 NumValue(v::AbstractArray) = v                              # numeric value
 Value(v::GeoUnit) = Unitful.Quantity.(v.val, v.unit)        # value, with units
 Fun(v::GeoUnit) = v.val
-unpack_units(x::NTuple{N, GeoUnit}) where N = ntuple(i -> x[i].unit * x[i].val , Val(N))
-unpack_vals(x::NTuple{N, GeoUnit}) where N = ntuple(i -> x[i].val , Val(N))
+unpack_units(x::NTuple{N, GeoUnit}) where {N} = ntuple(i -> x[i].unit * x[i].val, Val(N))
+unpack_vals(x::NTuple{N, GeoUnit}) where {N} = ntuple(i -> x[i].val, Val(N))
 
 function UnitValue(v::GeoUnit{T, U}) where {T, U}
     if v.isdimensional

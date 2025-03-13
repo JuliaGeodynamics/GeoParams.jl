@@ -333,14 +333,14 @@ struct GiordanoMeltViscosity{T, T1, T2, U, U1, U2} <: AbstractCreepLaw{T}
     η0::GeoUnit{T, U2} # scaling viscosity
 
     function GiordanoMeltViscosity(;
-        oxd_wt = (50.42, 1.53,  15.13,  9.81, 7.76, 11.35, 2.83,  0.14, 1.0),
-        MW = (60.0843, 79.8658, 101.961276, 71.8444, 40.3044,56.0774, 61.97894, 94.1960, 18.01528), # Molar weights
-        bb = (159.56, -173.34, 72.13, 75.69, -38.98, -84.08, 141.54, -2.43, -0.91, 17.62).*K,
-        cc = (2.75, 15.72, 8.32, 10.20, -12.29, -99.54, 0.3).*K,
-        AT = -4.55NoUnits,
-        BT = 5515.26K,
-        CT = 489.21K,
-        η0 = 1Pas
+            oxd_wt = (50.42, 1.53, 15.13, 9.81, 7.76, 11.35, 2.83, 0.14, 1.0),
+            MW = (60.0843, 79.8658, 101.961276, 71.8444, 40.3044, 56.0774, 61.97894, 94.196, 18.01528), # Molar weights
+            bb = (159.56, -173.34, 72.13, 75.69, -38.98, -84.08, 141.54, -2.43, -0.91, 17.62) .* K,
+            cc = (2.75, 15.72, 8.32, 10.2, -12.29, -99.54, 0.3) .* K,
+            AT = -4.55NoUnits,
+            BT = 5515.26K,
+            CT = 489.21K,
+            η0 = 1Pas
         )
 
         BT, CT = calculate_BT_CT(oxd_wt, MW, bb, cc)
@@ -353,14 +353,14 @@ struct GiordanoMeltViscosity{T, T1, T2, U, U1, U2} <: AbstractCreepLaw{T}
         bbU = ntuple(i -> convert(GeoUnit, bb[i]), 10)
         ccU = ntuple(i -> convert(GeoUnit, cc[i]), 7)
 
-        T  = eltype(oxd_wt)
+        T = eltype(oxd_wt)
         T1 = eltype(bbU)
         T2 = eltype(ccU)
-        U  = typeof(ATU).types[2]
+        U = typeof(ATU).types[2]
         U1 = typeof(BTU).types[2]
         U2 = typeof(η0U).types[2]
 
-        new{T, T1, T2, U, U1, U2}(oxd_wt, MW, bbU, ccU, ATU, BTU, CTU, η0U)
+        return new{T, T1, T2, U, U1, U2}(oxd_wt, MW, bbU, ccU, ATU, BTU, CTU, η0U)
     end
 
     function GiordanoMeltViscosity(oxd_wt, MW, bb, cc, AT, BT, CT, η0)
@@ -380,7 +380,7 @@ end
 # function calculate_BT_CT!(BT, CT, oxd_wt, MW, bb, cc)
 function calculate_BT_CT(oxd_wt, MW, bb, cc)
     tmp = ntuple(i -> oxd_wt[i], Val(8))
-    sum_oxd_wt  = sum(tmp)
+    sum_oxd_wt = sum(tmp)
     α = (100.0 - oxd_wt[9]) / sum_oxd_wt
     oxd_wt_norm = (
         @.(tmp * α)...,
@@ -391,28 +391,28 @@ function calculate_BT_CT(oxd_wt, MW, bb, cc)
     # Load composition-basis matrix for multiplication against model-coefficients
     siti = oxd_mol[1] + oxd_mol[2]
     tial = oxd_mol[2] + oxd_mol[3]
-    fmm  = oxd_mol[4] + oxd_mol[5]
-    nak  = oxd_mol[7] + oxd_mol[8]
-    b1   = siti
-    b2   = oxd_mol[3]
-    b3   = oxd_mol[4]
-    b4   = oxd_mol[5]
-    b5   = oxd_mol[6]
-    b6   = oxd_mol[7] + oxd_mol[9]
-    b7   = oxd_mol[9] + log(1.0 + oxd_mol[9])
-    b12  =  siti * fmm
-    b13  = (siti + oxd_mol[3]) * (nak + oxd_mol[9])
-    b14  = oxd_mol[3] * nak
+    fmm = oxd_mol[4] + oxd_mol[5]
+    nak = oxd_mol[7] + oxd_mol[8]
+    b1 = siti
+    b2 = oxd_mol[3]
+    b3 = oxd_mol[4]
+    b4 = oxd_mol[5]
+    b5 = oxd_mol[6]
+    b6 = oxd_mol[7] + oxd_mol[9]
+    b7 = oxd_mol[9] + log(1.0 + oxd_mol[9])
+    b12 = siti * fmm
+    b13 = (siti + oxd_mol[3]) * (nak + oxd_mol[9])
+    b14 = oxd_mol[3] * nak
 
-    c1   = oxd_mol[1]
-    c2   = tial
-    c3   = fmm
-    c4   = oxd_mol[6]
-    c5   = nak
-    c6   = log(1 + oxd_mol[9])
-    c11  = (oxd_mol[3] + fmm + oxd_mol[6]) * (nak + oxd_mol[9])
-    bcf  = (b1, b2, b3, b4, b5, b6, b7, b12, b13, b14)
-    ccf  = (c1, c2, c3, c4, c5, c6, c11)
+    c1 = oxd_mol[1]
+    c2 = tial
+    c3 = fmm
+    c4 = oxd_mol[6]
+    c5 = nak
+    c6 = log(1 + oxd_mol[9])
+    c11 = (oxd_mol[3] + fmm + oxd_mol[6]) * (nak + oxd_mol[9])
+    bcf = (b1, b2, b3, b4, b5, b6, b7, b12, b13, b14)
+    ccf = (c1, c2, c3, c4, c5, c6, c11)
 
     BT = sum(bb .* bcf)
     CT = sum(cc .* ccf)
@@ -424,7 +424,7 @@ end
 function compute_εII(a::GiordanoMeltViscosity, TauII; T = one(precision(a)), kwargs...)
     @unpack_val AT, BT, CT, η0 = a
 
-    η =  η0 * exp10(min(12, max(-6, AT + BT /(T - CT))))
+    η = η0 * exp10(min(12, max(-6, AT + BT / (T - CT))))
 
     ε = (TauII / η) * 0.5
     return ε
@@ -433,7 +433,7 @@ end
 function compute_εII(a::GiordanoMeltViscosity, TauII::Quantity; T = 1K, kwargs...)
     @unpack_units AT, BT, CT, η0 = a
 
-    η =  η0 * exp10(min(12, max(-6, AT + BT /(T - CT))))
+    η = η0 * exp10(min(12, max(-6, AT + BT / (T - CT))))
     ε = TauII / η * 0.5
     return ε
 end
@@ -455,9 +455,9 @@ end
 end
 
 @inline function dεII_dτII(a::GiordanoMeltViscosity, TauII::Quantity; T = 1K, kwargs...)
-    @unpack_units AT, BT, CT,η0 = a
+    @unpack_units AT, BT, CT, η0 = a
 
-    η =  η0 * exp10(min(12, max(-6, AT + BT /(T - CT))))
+    η = η0 * exp10(min(12, max(-6, AT + BT / (T - CT))))
 
     return 0.5 * (1.0 / η)
 end
@@ -465,7 +465,7 @@ end
 @inline function dεII_dτII(a::GiordanoMeltViscosity, TauII; T = one(precision(a)), kwargs...)
     @unpack_val AT, BT, CT, η0 = a
 
-    η =  η0 * exp10(min(12, max(-6, AT + BT /(T - CT))))
+    η = η0 * exp10(min(12, max(-6, AT + BT / (T - CT))))
 
     return 0.5 * (1.0 / η)
 end
@@ -478,15 +478,15 @@ Returns second invariant of the stress tensor given a 2nd invariant of strain ra
 @inline function compute_τII(a::GiordanoMeltViscosity, EpsII; T = one(precision(a)), kwargs...)
     @unpack_val AT, BT, CT, η0 = a
 
-    η =  η0 * exp10(min(12, max(-6, AT + BT /(T - CT))))
+    η = η0 * exp10(min(12, max(-6, AT + BT / (T - CT))))
 
     return 2 * η * EpsII
 end
 
 @inline function compute_τII(a::GiordanoMeltViscosity, EpsII::Quantity; T = 1K, kwargs...)
-    @unpack_units AT, BT, CT,η0 = a
+    @unpack_units AT, BT, CT, η0 = a
 
-    η =  η0 * exp10(min(12, max(-6, AT + BT /(T - CT))))
+    η = η0 * exp10(min(12, max(-6, AT + BT / (T - CT))))
 
     return 2 * η * EpsII
 end
@@ -507,15 +507,15 @@ end
 @inline function dτII_dεII(a::GiordanoMeltViscosity, EpsII; T = one(precision(a)), kwargs...)
     @unpack_val AT, BT, CT, η0 = a
 
-    η =  η0 * exp10(min(12, max(-6, AT + BT /(T - CT))))
+    η = η0 * exp10(min(12, max(-6, AT + BT / (T - CT))))
 
     return 2 * η
 end
 
 @inline function dτII_dεII(a::GiordanoMeltViscosity, EpsII::Quantity; T = 1K, kwargs...)
-    @unpack_units AT, BT, CT,η0 = a
+    @unpack_units AT, BT, CT, η0 = a
 
-    η =  η0 * exp10(min(12, max(-6, AT + BT /(T - CT))))
+    η = η0 * exp10(min(12, max(-6, AT + BT / (T - CT))))
 
     return 2 * η
 end

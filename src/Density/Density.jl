@@ -116,7 +116,7 @@ function param_info(s::PT_Density) # info
 end
 
 # Calculation routine
-@inline function (ρ::PT_Density)(; P::Number=0e0, T::Number=0e0, kwargs...)
+@inline function (ρ::PT_Density)(; P::Number = 0.0e0, T::Number = 0.0e0, kwargs...)
     if T isa Quantity
         @unpack_units ρ0, α, β, P0, T0 = ρ
     else
@@ -435,7 +435,7 @@ Set a density depending on the oxide composition after the python script by Iaco
 
 """
 struct DensityX{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3} <: AbstractDensity{T}
-    oxd_wt::NTuple{9, T}# Oxide weight percent
+    oxd_wt::NTuple{9, T} # Oxide weight percent
     MW::NTuple{9, T1}    # Molar weights g/mol
     MV::NTuple{9, T2}    # Partial molar volumes
     dVdT::NTuple{9, T3}  # Partial molar volumes
@@ -448,51 +448,51 @@ struct DensityX{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3} <: AbstractDensity{T}
     sum_Vliq::GeoUnit{T, U3}
 
     function DensityX(;
-    oxd_wt = (50.42, 1.53,  15.13,  9.81, 7.76, 11.35, 2.83,  0.14, 1.0),
-    MW  = (0.0600855, 0.07988, 0.10196, 0.07185, 0.0403, 0.05608, 0.06198, 0.0942, 0.01802) .* (kg/mol), # Molar weights g/mol
-    MV  = (2.686e-5, 2.832e-5, 3.742e-5, 1.268e-5, 1.202e-5, 1.69e-5, 2.965e-5, 4.728e-5, 2.29e-5).*(m^3/mol), # Partial molar volumes
-    dVdT  = (0.0, 7.24e-9, 2.62e-9, 3.69e-9, 3.27e-9, 3.74e-9, 7.68e-9, 1.208e-8, 9.5e-9).*(m^3 / (mol*K)),
-    dVdP  = (-1.89e-15, -2.31e-15, -2.26e-15, -4.5e-16, 2.7e-16, 3.4e-16, -2.4e-15, -6.75e-15, -3.2e-15).* (m^3/(mol*Pa)),
-    Tref  = (1773.15, 1773.15, 1773.15, 1723.15, 1773.15, 1773.15, 1773.15, 1773.15, 1273.15).*K, # Reference temperature in K
-    norm_MP = (0.511, 0.012, 0.09, 0.083, 0.117, 0.123, 0.028, 0.001, 0.034).*NoUnits,
-    P0 = 1e5Pa,
-    ρ0 = 2900.0kg / m^3,
-    sum_XMW = 0.0kg / mol,
-    sum_Vliq = 0.0m^3 / mol
-    )
+            oxd_wt = (50.42, 1.53, 15.13, 9.81, 7.76, 11.35, 2.83, 0.14, 1.0),
+            MW = (0.0600855, 0.07988, 0.10196, 0.07185, 0.0403, 0.05608, 0.06198, 0.0942, 0.01802) .* (kg / mol), # Molar weights g/mol
+            MV = (2.686e-5, 2.832e-5, 3.742e-5, 1.268e-5, 1.202e-5, 1.69e-5, 2.965e-5, 4.728e-5, 2.29e-5) .* (m^3 / mol), # Partial molar volumes
+            dVdT = (0.0, 7.24e-9, 2.62e-9, 3.69e-9, 3.27e-9, 3.74e-9, 7.68e-9, 1.208e-8, 9.5e-9) .* (m^3 / (mol * K)),
+            dVdP = (-1.89e-15, -2.31e-15, -2.26e-15, -4.5e-16, 2.7e-16, 3.4e-16, -2.4e-15, -6.75e-15, -3.2e-15) .* (m^3 / (mol * Pa)),
+            Tref = (1773.15, 1773.15, 1773.15, 1723.15, 1773.15, 1773.15, 1773.15, 1773.15, 1273.15) .* K, # Reference temperature in K
+            norm_MP = (0.511, 0.012, 0.09, 0.083, 0.117, 0.123, 0.028, 0.001, 0.034) .* NoUnits,
+            P0 = 1.0e5Pa,
+            ρ0 = 2900.0kg / m^3,
+            sum_XMW = 0.0kg / mol,
+            sum_Vliq = 0.0m^3 / mol
+        )
 
-    sum_XMW, norm_MP = compute_XMW_norm_MP(oxd_wt, MW)
+        sum_XMW, norm_MP = compute_XMW_norm_MP(oxd_wt, MW)
 
-    MWU    = ntuple(i -> convert(GeoUnit, MW[i]), Val(9))
-    MVU   = ntuple(i -> convert(GeoUnit, MV[i]), Val(9))
-    dVdTU = ntuple(i -> convert(GeoUnit, dVdT[i]), Val(9))
-    dVdPU = ntuple(i -> convert(GeoUnit, dVdP[i]), Val(9))
-    TrefU = ntuple(i -> convert(GeoUnit, Tref[i]), Val(9))
-    norm_MPU = ntuple(i -> convert(GeoUnit, norm_MP[i]), Val(9))
-    P0U   = convert(GeoUnit, P0)
-    ρ0U   = convert(GeoUnit, ρ0)
-    sum_XMWU = convert(GeoUnit, sum_XMW)
-    sum_VliqU = convert(GeoUnit, sum_Vliq)
+        MWU = ntuple(i -> convert(GeoUnit, MW[i]), Val(9))
+        MVU = ntuple(i -> convert(GeoUnit, MV[i]), Val(9))
+        dVdTU = ntuple(i -> convert(GeoUnit, dVdT[i]), Val(9))
+        dVdPU = ntuple(i -> convert(GeoUnit, dVdP[i]), Val(9))
+        TrefU = ntuple(i -> convert(GeoUnit, Tref[i]), Val(9))
+        norm_MPU = ntuple(i -> convert(GeoUnit, norm_MP[i]), Val(9))
+        P0U = convert(GeoUnit, P0)
+        ρ0U = convert(GeoUnit, ρ0)
+        sum_XMWU = convert(GeoUnit, sum_XMW)
+        sum_VliqU = convert(GeoUnit, sum_Vliq)
 
-    T = eltype(oxd_wt)
-    T1 = eltype(MWU)
-    T2 = eltype(MVU)
-    T3 = eltype(dVdTU)
-    T4 = eltype(dVdPU)
-    T5 = eltype(TrefU)
-    T6 = eltype(norm_MPU)
-    U  = typeof(P0U).types[2]
-    U1 = typeof(ρ0U).types[2]
-    U2 = typeof(sum_XMWU).types[2]
-    U3 = typeof(sum_VliqU).types[2]
+        T = eltype(oxd_wt)
+        T1 = eltype(MWU)
+        T2 = eltype(MVU)
+        T3 = eltype(dVdTU)
+        T4 = eltype(dVdPU)
+        T5 = eltype(TrefU)
+        T6 = eltype(norm_MPU)
+        U = typeof(P0U).types[2]
+        U1 = typeof(ρ0U).types[2]
+        U2 = typeof(sum_XMWU).types[2]
+        U3 = typeof(sum_VliqU).types[2]
 
 
-    return new{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3}(oxd_wt, MWU, MVU, dVdTU, dVdPU, TrefU, norm_MPU, P0U, ρ0U,  sum_XMWU, sum_VliqU,)
+        return new{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3}(oxd_wt, MWU, MVU, dVdTU, dVdPU, TrefU, norm_MPU, P0U, ρ0U, sum_XMWU, sum_VliqU)
     end
 
     function DensityX(oxd_wt, MW, MV, dVdT, dVdP, Tref, norm_MP, P0, ρ0, sum_XMW, sum_Vliq)
         return DensityX(;
-        oxd_wt=oxd_wt, MW=MW, MV=MV, dVdT=dVdT, dVdP=dVdP, Tref=Tref, norm_MP=norm_MP, P0=P0, ρ0=ρ0, sum_XMW=sum_XMW, sum_Vliq=sum_Vliq,
+            oxd_wt = oxd_wt, MW = MW, MV = MV, dVdT = dVdT, dVdP = dVdP, Tref = Tref, norm_MP = norm_MP, P0 = P0, ρ0 = ρ0, sum_XMW = sum_XMW, sum_Vliq = sum_Vliq,
         )
     end
 end
@@ -523,20 +523,20 @@ function compute_XMW_norm_MP(oxd_wt, MW)
     return sum_XMW, norm_MP
 end
 
-function (s::DensityX)(; P::Number = 0e0, T::Number = 0e0, kwargs...)
+function (s::DensityX)(; P::Number = 0.0e0, T::Number = 0.0e0, kwargs...)
     P0, ρ0, sum_XMW, sum_Vliq, MV, dVdT, Tref, norm_MP, dVdP = if P isa Quantity
         (; MV, dVdT, dVdP, Tref, norm_MP) = s
-        @unpack_units P0, ρ0, sum_XMW, sum_Vliq  = s
+        @unpack_units P0, ρ0, sum_XMW, sum_Vliq = s
         P0, ρ0, sum_XMW, sum_Vliq, unpack_units(MV), unpack_units(dVdT), unpack_units(Tref), unpack_units(norm_MP), unpack_units(dVdP)
 
     else
         (; MV, dVdT, dVdP, Tref, norm_MP) = s
-        @unpack_val P0, ρ0, sum_XMW, sum_Vliq  = s
+        @unpack_val P0, ρ0, sum_XMW, sum_Vliq = s
         P0, ρ0, sum_XMW, sum_Vliq, unpack_vals(s.MV), unpack_vals(s.dVdT), unpack_vals(s.Tref), unpack_vals(s.norm_MP), unpack_vals(s.dVdP)
     end
 
     sum_Vliq = @muladd (MV[1] + (dVdT[1] * (T - Tref[1])) + (dVdP[1] * (P - P0))) * norm_MP[1]
-    Base.@nexprs 8 i -> sum_Vliq += @muladd (MV[i+1] + dVdT[i+1] * (T - Tref[i+1]) + dVdP[i+1] * (P - P0)) * norm_MP[i+1]
+    Base.@nexprs 8 i -> sum_Vliq += @muladd (MV[i + 1] + dVdT[i + 1] * (T - Tref[i + 1]) + dVdP[i + 1] * (P - P0)) * norm_MP[i + 1]
 
     return sum_XMW / sum_Vliq
 end
