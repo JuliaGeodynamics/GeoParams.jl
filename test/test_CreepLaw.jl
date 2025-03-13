@@ -315,4 +315,58 @@ using GeoParams
     @test dτII_dεII(x1_D, 1e-15s^-1, args_D) ≈ 613.4232447202199Pas
     η_ref = dτII_dεII(x1_D_int, 1e-15s^-1, args_D)/2
     @test log10(ustrip.(η_ref)) ≈ (3.68) rtol = 1e-2
+
+    # Create plot
+    T = Vector(700.0:1673) * K
+    η_MORB = zeros(size(T)) * Pas
+    η_intfels = zeros(size(T)) * Pas
+    η_rhyolite = zeros(size(T)) * Pas
+    η_MORB_scaled = zeros(size(T)) * Pas
+    η_intfels_scaled = zeros(size(T)) * Pas
+    η_rhyolite_scaled = zeros(size(T)) * Pas
+    x_MORB = GiordanoMeltViscosity(oxd_wt = (50.42, 1.53, 15.13, 9.81, 7.76, 11.35, 2.83, 0.140, 1.0))   # Rhyolite
+    x_int = GiordanoMeltViscosity(oxd_wt = (62.40, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.00))   # Rhyolite
+    x_rhyolite = GiordanoMeltViscosity(oxd_wt = (76.38, 0.06, 11.59, 1.03, 0.36, 3.25, 2.44, 4.66, 3.0))   # Rhyolite
+    x_MORB_scaled = GiordanoMeltViscosity(oxd_wt = (50.42, 1.53, 15.13, 9.81, 7.76, 11.35, 2.83, 0.140, 1.0), η0=1e15Pas)   # Rhyolite
+    x_int_scaled = GiordanoMeltViscosity(oxd_wt = (62.40, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.00), η0=1e15Pas)   # Rhyolite
+    x_rhyolite_scaled = GiordanoMeltViscosity(oxd_wt = (76.38, 0.06, 11.59, 1.03, 0.36, 3.25, 2.44, 4.66, 3.0), η0=1e15Pas)   # Rhyolite
+
+    εII = 1.0e5 / s
+    for i in eachindex(T)
+        args_D = (; T = T[i])
+        η_MORB[i] = compute_viscosity_εII(x_MORB, εII, (; T = T[i]))
+        η_intfels[i] = compute_viscosity_εII(x_int, εII, (; T = T[i]))
+        η_rhyolite[i] = compute_viscosity_εII(x_rhyolite, εII, (; T = T[i]))
+        η_MORB_scaled[i] = compute_viscosity_εII(x_MORB_scaled, εII, (; T = T[i]))
+        η_intfels_scaled[i] = compute_viscosity_εII(x_int_scaled, εII, (; T = T[i]))
+        η_rhyolite_scaled[i] = compute_viscosity_εII(x_rhyolite_scaled, εII, (; T = T[i]))
+    end
+    T_plots = 10000 ./ ustrip.(T)
+
+    # fig = Figure(size = (800, 600))
+    # ax = Axis(fig[1, 1], xlabel = "T [C]", ylabel = "log10(η [Pas])")
+    # lines!(ax, ustrip.(T) .- 273.15, log10.(ustrip.(η_MORB)), label = "MORB, εII=1e-5/s")
+    # lines!(ax, ustrip.(T) .- 273.15, log10.(ustrip.(η_intfels)), label = "Intermediate, εII=1e-5/s")
+    # lines!(ax, ustrip.(T) .- 273.15, log10.(ustrip.(η_rhyolite)), label = "Rhyolite, εII=1e-5/s")
+
+
+    # Legend(fig[1, 2], ax)
+    # fig
+
+    # fig = Figure(size = (800, 600))
+    # ax = Axis(fig[1, 1], xlabel = "T [C]", ylabel = "log10(η [Pas])")
+    # lines!(ax, ustrip.(T) .- 273.15, log10.(ustrip.(η_MORB_scaled)), label = "MORB_scaled, εII=1e-5/s, η0=1e15")
+    # lines!(ax, ustrip.(T) .- 273.15, log10.(ustrip.(η_intfels_scaled)), label = "Intermediate_scaled, εII=1e-5/s, η0=1e15")
+    # lines!(ax, ustrip.(T) .- 273.15, log10.(ustrip.(η_rhyolite_scaled)), label = "Rhyolite_scaled, εII=1e-5/s, η0=1e15")
+    # Legend(fig[1, 2], ax)
+    # fig
+    # fig2 = Figure(size = (800, 600))
+    # ax = Axis(fig2[1, 1], xlabel = "10000/T(K)", ylabel = "log10(η [Pas])")
+    # lines!(ax, T_plots, log10.(ustrip.(η_MORB)), label = "MORB, εII=1e-5/s")
+    # lines!(ax, T_plots, log10.(ustrip.(η_intfels)), label = "Intermediate, εII=1e-5/s")
+    # lines!(ax, T_plots, log10.(ustrip.(η_rhyolite)), label = "Rhyolite, εII=1e-5/s")
+    # # Legend(fig2[1, 2], ax, merge = true, position=:rt)
+    # Legend(fig2[1, 2], ax, position=:rt)
+    # fig2
+
 end
