@@ -850,6 +850,7 @@ Creates a TAS diagram plot
 - `displayLabel::Bool`: display the label of the lithology
 - `size::Tuple`: size of the plot
 - `fontsize::Int`: fontsize of the plot
+- `colormp::Symbol`: colormap to use
 
 ## Example
 ```julia
