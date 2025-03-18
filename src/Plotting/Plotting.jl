@@ -849,7 +849,7 @@ Creates a TAS diagram plot
 ## Optional parameters
 - `displayLabel::Bool`: display the label of the lithology
 - `size::Tuple`: size of the plot
-- `fontsize::Int`: fontsize of the plot
+- `fontsz::Int`: fontsize of the plot
 - `colormp::Symbol`: colormap to use
 
 ## Example
@@ -859,12 +859,12 @@ julia> point = [50.0 5.0;
 julia> Plot_TAS_diagram(point)
 ```
 """
-function Plot_TAS_diagram(point::AbstractArray{_T}; displayLabel = true, sz = (1500, 1500), fontsz = 18, colormp = :lipari) where {_T}
+function Plot_TAS_diagram(point::AbstractArray{_T}; displayLabel = true, sz = (1500, 1500), fontsize = 18, colormap = :lipari) where {_T}
     # get TAS diagram data from TASclassification routine
     ClassTASdata = TASclassificationData()
     @unpack litho, n_ver, ver = ClassTASdata
 
-    f = Figure(size = sz, fontsize = fontsz)
+    f = Figure(size = sz, fontsize = fontsize)
     p1 = GridLayout(f[1, 1])
     ax1 = Axis(
         p1[1, 1],
@@ -893,7 +893,7 @@ function Plot_TAS_diagram(point::AbstractArray{_T}; displayLabel = true, sz = (1
 
     # Ensure the number of colors matches the number of points
     num_points = size(point, 1)
-    colormap = cgrad(colormp, num_points; categorical = true)
+    colormap = cgrad(colormap, num_points; categorical = true)
     for i in 1:num_points
         scatter!(
             ax1, [point[i, 1]], [point[i, 2]], color = colormap[i], markersize = 10, strokewidth = 0.5,
