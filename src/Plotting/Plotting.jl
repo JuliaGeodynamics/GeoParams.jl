@@ -839,11 +839,26 @@ end
 
 
 """
-	plt = Plot_TAS_diagram(; displayLabel=true,size=(1500,1500), fontsize=18)
+	plt = Plot_TAS_diagram(point; displayLabel=true,size=(1500,1500), fontsize=18)
 
 Creates a TAS diagram plot
+
+## Input
+- `point::AbstractArray`: point to plot on the TAS diagram (SiO2, Na2O+K2O)
+
+## Optional parameters
+- `displayLabel::Bool`: display the label of the lithology
+- `size::Tuple`: size of the plot
+- `fontsize::Int`: fontsize of the plot
+
+## Example
+```julia
+julia> point = [50.0 5.0;
+                61.6 6.25]
+julia> Plot_TAS_diagram(point)
+```
 """
-function Plot_TAS_diagram(; displayLabel = true, sz = (1500, 1500), fontsz = 18)
+function Plot_TAS_diagram(point::AbstractArray{_T}; displayLabel = true, sz = (1500, 1500), fontsz = 18, colormp = :lipari) where {_T}
     # get TAS diagram data from TASclassification routine
     ClassTASdata = TASclassificationData()
     @unpack litho, n_ver, ver = ClassTASdata
@@ -861,18 +876,28 @@ function Plot_TAS_diagram(; displayLabel = true, sz = (1500, 1500), fontsz = 18)
     )
     n_poly = size(litho, 2)
     shift = 1
-    #=
+
     for poly in 1:n_poly
         shift_poly = shift:(shift + n_ver[poly] - 1)
-        x          = sum(ver[i, 1] for i in shift_poly) / n_ver[poly]
-        y          = sum(ver[i, 2] for i in shift_poly) / n_ver[poly]
-        ps         = [Point2f(ver[i, :]) for i in shift_poly]
+        x = sum(ver[i, 1] for i in shift_poly) / n_ver[poly]
+        y = sum(ver[i, 2] for i in shift_poly) / n_ver[poly]
+        ps = [Point2f(ver[i, :]) for i in shift_poly]
 
         poly!(ax1, ps, color = :white, strokecolor = :black, strokewidth = 1)
         if displayLabel
             text!(ax1, (x, y), text = "$poly")
         end
         shift += n_ver[poly]
+    end
+
+    # Ensure the number of colors matches the number of points
+    num_points = size(point, 1)
+    colormap = cgrad(colormp, num_points; categorical = true)
+    for i in 1:num_points
+        scatter!(
+            ax1, [point[i, 1]], [point[i, 2]], color = colormap[i], markersize = 10, strokewidth = 0.5,
+            strokecolor = :grey45, label = "Composition $i: ($(point[i, 1]), $(point[i, 2]))"
+        )
     end
     xlims!(ax1, 35, 100)
     ylims!(ax1, 0, 16)
@@ -882,11 +907,11 @@ function Plot_TAS_diagram(; displayLabel = true, sz = (1500, 1500), fontsz = 18)
         ax2 = Axis(
             p2[1, 1],
             bottomspinevisible = false,
-            xgridvisible       = false,
-            ygridvisible       = false,
-            rightspinevisible  = false,
-            leftspinevisible   = false,
-            topspinevisible    = false
+            xgridvisible = false,
+            ygridvisible = false,
+            rightspinevisible = false,
+            leftspinevisible = false,
+            topspinevisible = false
         )
         for i in 1:n_poly
             text!(ax2, 0, 16 - i * 3 / 4, text = (string(i) * ": " * litho[i]))
@@ -897,7 +922,7 @@ function Plot_TAS_diagram(; displayLabel = true, sz = (1500, 1500), fontsz = 18)
         rowsize!(p2, 1, 700)
         colsize!(p2, 1, 225)
     end
-    =#
+
     display(f)
 
     return f
