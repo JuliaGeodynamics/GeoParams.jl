@@ -9,9 +9,9 @@ function Melt_Mg_Sheng1992_basaltic()
         Phase = "Melt",
         Species = "Mg",
         Buffer = "Air",
-        D0 = 7791.9cm^2/s,
+        D0 = 7791.9cm^2 / s,
         Ea = 343u"kJ / mol",
-        Ea_1σ = (25/2)u"kJ / mol",
+        Ea_1σ = (25 / 2)u"kJ / mol",
         Charge = 2,
         T_range_min = 1250C,
         T_range_max = 1500C
