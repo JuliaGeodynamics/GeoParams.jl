@@ -4,6 +4,7 @@ using GeoParams
 
 include("Melt_helpers.jl")
 
+include("Elements/Mg.jl")
 include("Elements/Sc.jl")
 include("Elements/V.jl")
 include("Elements/Y.jl")

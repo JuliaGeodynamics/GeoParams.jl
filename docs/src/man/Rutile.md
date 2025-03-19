@@ -44,6 +44,8 @@ Rutile.Rt_Co_Sasaki1985_para_c
 Rutile.Rt_Co_Sasaki1985_perp_c
 Rutile.Rt_Ni_Sasaki1985_para_c
 Rutile.Rt_Zr_Cherniak2007_para_c
+Rutile.Rt_Zr_Sasaki1985_perp_c
+Rutile.Rt_Zr_Sasaki1985_para_c
 Rutile.Rt_Nb_Marschall2013_para_c
 Rutile.Rt_Hf_Cherniak2007_para_c
 Rutile.Rt_Hf_Cherniak2007_perp_c

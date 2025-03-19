@@ -290,6 +290,7 @@ module GeoParams
 
     export Rutile,
         Garnet,
+        Olivine,
         Melt
 
     # Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat

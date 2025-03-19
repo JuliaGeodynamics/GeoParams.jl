@@ -23,11 +23,13 @@ include("Data/Rutile/Rutile.jl")
 using .Rutile
 include("Data/Garnet/Garnet.jl")
 using .Garnet
+include("Data/Olivine/Olivine.jl")
+using .Olivine
 include("Data/Melt/Melt.jl")
 using .Melt
 
 # Exported modules of chemical diffusion data
-export Rutile, Garnet, Melt
+export Rutile, Garnet, Olivine, Melt
 
 abstract type AbstractChemicalDiffusion{T} <: AbstractMaterialParam end
 
