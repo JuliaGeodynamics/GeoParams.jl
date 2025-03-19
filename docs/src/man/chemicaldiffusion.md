@@ -4,7 +4,7 @@ Some routines and experimental data for chemical diffusion in minerals and phase
 
 ## Diffusion parameters from the literature
 
-Currently, three phases are implemented in independent modules: `Rutile`, `Garnet`, and `Melt`. Each phase has a list of diffusion parameters from the literature for different chemical elements. Other phases will be implemented in the future and contributions are welcome to extend the database.
+Currently, four phases are implemented in independent modules: `Rutile`, `Olivine`, `Garnet`, and `Melt`. Each phase has a list of diffusion parameters from the literature for different chemical elements. Other phases will be implemented in the future and contributions are welcome to extend the database.
 
 To initiate the diffusion parameters of an element of a phase, call the function `SetChemicalDiffusion`. For instance, to obtain the diffusion parameters of Hf in rutile, use:
 

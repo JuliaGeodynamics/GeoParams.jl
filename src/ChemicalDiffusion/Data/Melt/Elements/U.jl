@@ -1,10 +1,10 @@
 """
-    U_Melt_Holycross2018_rhyolitic_highH2O()
+    Melt_U_Holycross2018_rhyolitic_highH2O()
 
 Diffusion data of U in rhyolitic melt (76.77 wt% SiO2) with 6.2 wt% of H2O. Calibrated with experiments conducted between 850-935°C at 1 GPa with Ag capsules from synthetic glass.
 From Holycross and Watson (2018) (https://doi.org/10.1016/j.gca.2018.04.006).
 """
-function U_Melt_Holycross2018_rhyolitic_highH2O()
+function Melt_U_Holycross2018_rhyolitic_highH2O()
     return create_Melt_Holycross2018_data(;
         Name = "U diffusion in rhyolitic melt (6.2 wt% H2O) | Holycross and Watson (2018)",
         Species = "U",
@@ -19,12 +19,12 @@ function U_Melt_Holycross2018_rhyolitic_highH2O()
 end
 
 """
-    U_Melt_Holycross2018_rhyolitic_mediumH2O()
+    Melt_U_Holycross2018_rhyolitic_mediumH2O()
 
 Diffusion data of U in rhyolitic melt (76.77 wt% SiO2) with 4.1 wt% of H2O. Calibrated with experiments conducted between 960-1250°C at 1 GPa with Ni capsules from synthetic glass.
 From Holycross and Watson (2018) (https://doi.org/10.1016/j.gca.2018.04.006).
 """
-function U_Melt_Holycross2018_rhyolitic_mediumH2O()
+function Melt_U_Holycross2018_rhyolitic_mediumH2O()
     return create_Melt_Holycross2018_data(;
         Name = "U diffusion in rhyolitic melt (4.1 wt% H2O) | Holycross and Watson (2018)",
         Species = "U",

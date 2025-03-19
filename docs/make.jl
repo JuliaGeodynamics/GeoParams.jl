@@ -42,6 +42,7 @@ makedocs(;
                 "Computational routines" => "man/chemicaldiffusion.md",
                 "Garnet" => "man/Garnet.md",
                 "Melt" => "man/Melt.md",
+                "Olivine" => "man/Olivine.md",
                 "Rutile" => "man/Rutile.md",
             ],
             "Permeability" => "man/permeability.md",
