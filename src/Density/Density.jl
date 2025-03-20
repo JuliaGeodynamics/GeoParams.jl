@@ -495,12 +495,12 @@ struct Melt_DensityX{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3, U4, U5} <: Abstra
         U5 = typeof(sum_VliqU).types[2]
 
 
-        return new{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3,U4,U5}(oxd_wt, MWU, MVU, dVdTU, dVdPU, TrefU, norm_MPU, P0U, ρ0U, α, β, sum_XMWU, sum_VliqU)
+        return new{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3, U4, U5}(oxd_wt, MWU, MVU, dVdTU, dVdPU, TrefU, norm_MPU, P0U, ρ0U, α, β, sum_XMWU, sum_VliqU)
     end
 
     function Melt_DensityX(oxd_wt, MW, MV, dVdT, dVdP, Tref, norm_MP, P0, ρ0, α, β, sum_XMW, sum_Vliq)
         return Melt_DensityX(;
-            oxd_wt = oxd_wt, MW = MW, MV = MV, dVdT = dVdT, dVdP = dVdP, Tref = Tref, norm_MP = norm_MP, P0 = P0, ρ0 = ρ0, α=α, β=β ,sum_XMW = sum_XMW, sum_Vliq = sum_Vliq,
+            oxd_wt = oxd_wt, MW = MW, MV = MV, dVdT = dVdT, dVdP = dVdP, Tref = Tref, norm_MP = norm_MP, P0 = P0, ρ0 = ρ0, α = α, β = β, sum_XMW = sum_XMW, sum_Vliq = sum_Vliq,
         )
     end
 end
