@@ -489,8 +489,8 @@ struct Melt_DensityX{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3, U4, U5} <: Abstra
         T6 = eltype(norm_MPU)
         U = typeof(P0U).types[2]
         U1 = typeof(ρ0U).types[2]
-        U2 = typeof(α).types[2]
-        U3 = typeof(β).types[2]
+        U2 = typeof(αU).types[2]
+        U3 = typeof(βU).types[2]
         U4 = typeof(sum_XMWU).types[2]
         U5 = typeof(sum_VliqU).types[2]
 
