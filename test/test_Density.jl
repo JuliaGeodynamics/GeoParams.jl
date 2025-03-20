@@ -47,7 +47,7 @@ import ForwardDiff.derivative
     @test param_info(x).Equation === L"\rho = \rho_g\delta + \rho_p(1 - \delta)"
     @test isdimensional(x) === true
 
-    x = DensityX()
+    x = Melt_DensityX()
     @test isbits(x)
     @test param_info(x).Equation === L"$\rho from an oxide composition$"
     @test isdimensional(x) === true
@@ -527,23 +527,24 @@ import ForwardDiff.derivative
     compute_density!(rho, rheologies, Phases, args_vec)
     @test rho[1] ≈ ρ
 
-    # DensityX ------------------------------------------------
+    # Melt_DensityX ------------------------------------------------
     CharUnits_GEO = GEO_units(; viscosity = 1.0e19, length = 1000km)
-    x_D = DensityX()
+    x_D = Melt_DensityX()
     x_ND = nondimensionalize(x_D, CharUnits_GEO)
     @test isdimensional(x_D) == true
     @test isdimensional(x_ND) == false
 
     args = (P = 1.5kbar, T = 1473.15K)
     ρ = compute_density(x_D, args)
-    @test ρ ≈ 2647.515936kg / m^3 # from the DensityX.xls
+    @test ρ ≈ 2647.515936kg / m^3 # from the Melt_DensityX.xls
 
     oxd_int = (62.4, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.0)
-    x_D_int = DensityX(oxd_wt = oxd_int)
+    x_D_int = Melt_DensityX(oxd_wt = oxd_int)
 
     args = (P = 150MPa, T = 1473.15K)
     ρ = compute_density(x_D_int, args)
     @test ρ ≈ 2365.65821kg / m^3 # from the DensityX.xls
+    @test GeoParams.get_α(x_D_int) == 2.266e-4
 
     x_ND_int = nondimensionalize(x_D_int, CharUnits_GEO)
     args_ND = (P = nondimensionalize(150.0e6Pa, CharUnits_GEO), T = nondimensionalize(1473.15K, CharUnits_GEO))
@@ -552,9 +553,9 @@ import ForwardDiff.derivative
 
     args = (P = 150.0e6, T = 1473.15)
     ρ = compute_density(x_D_int, args)
-    @test ρ ≈ 2365.65821 # from the DensityX.xls
+    @test ρ ≈ 2365.65821 # from the Melt_DensityX.xls
 
-    x = DensityX(oxd_wt = (62.4, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.0))
+    x = Melt_DensityX(oxd_wt = (62.4, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.0))
     args = (P = 0.0, T = 273.15)
     @test derivative(x -> compute_density(x_D, (P = args.P, T = x)), args.T) == -0.28465196140071125
     @test derivative(x -> compute_density(x_D, (P = x, T = args.T)), args.P) == 1.8927791855898677e-7
@@ -564,13 +565,13 @@ import ForwardDiff.derivative
             Name = "Crust",
             Phase = 0,
             CreepLaws = (PowerlawViscous(), LinearViscous(; η = 1.0e23Pas)),
-            Density = DensityX(oxd_wt = (62.4, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.0)),
+            Density = Melt_DensityX(oxd_wt = (62.4, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.0)),
         ),
         SetMaterialParams(;
             Name = "Lower Crust",
             Phase = 1,
             CreepLaws = (PowerlawViscous(; n = 5.0), LinearViscous(; η = 1.0e21Pas)),
-            Density = DensityX(),
+            Density = Melt_DensityX(),
         ),
     )
 
