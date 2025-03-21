@@ -1352,6 +1352,8 @@ Creates a plot of log(D) versus 10^4/T for one or a tuple of `ChemicalDiffusionD
 - `labelsize`: Size of the axis labels (default: 35)
 - `xlims`: Limits for the x-axis (default: (nothing, nothing))
 - `ylims`: Limits for the y-axis (default: (nothing, nothing))
+- `ticklabelsize`: Size of the tick labels (default: 35)
+- `xlims2`: Limits for the x-axis of the second axis (temperature) (default: (nothing, nothing))
 
 # Example
 
@@ -1390,6 +1392,8 @@ function PlotDiffusionCoefArrhenius(
         labelsize = 35,
         xlims = (nothing, nothing),
         ylims = (nothing, nothing),
+        ticklabelsize = 35,
+        xlims2 = (nothing, nothing),
     )
 
     if isa(x, AbstractChemicalDiffusion)
@@ -1425,6 +1429,8 @@ function PlotDiffusionCoefArrhenius(
         xlabel = "10⁴/T [K⁻¹]",
         xlabelsize = labelsize,
         ylabelsize = labelsize,
+        xticklabelsize = ticklabelsize,
+        yticklabelsize = ticklabelsize,
         title = title,
     )
 
@@ -1467,6 +1473,8 @@ function PlotDiffusionCoefArrhenius(
         title = "",
         xaxisposition = :top,
         xreversed = true,
+        xticklabelsize = ticklabelsize,
+        yticklabelsize = ticklabelsize,
     )
 
     hidexdecorations!(ax2; grid = true, label = false, ticklabels = false, ticks = false)
@@ -1481,7 +1489,9 @@ function PlotDiffusionCoefArrhenius(
     linkyaxes!(ax1, ax2)
 
     xlims!(ax1, xlims...)
+    xlims!(ax2, xlims2...)
     ylims!(ax1, ylims...)
+    ylims!(ax2, ylims...)
 
     if !isnothing(filename)
         save(filename, fig)

@@ -1,7 +1,7 @@
 """
     Ol_Fe_Mg_Dohmen2007_perp_c()
 
-Interdiffusion data of Fe and Mg in natural gem quality olivine for all oxygen fugacities. Calibrated with experiments conducted between 700-1200°C at atmospheric pressure with oxygen fugacity between 1e-12 to 1e-5 and parallel to c axis. Note that the molar fraction of Fe is required to calculate the interdiffusion coefficient. To calculate the interdiffusion coefficient parallel to c, multiply the interdiffusion coefficient by 1e6.
+Interdiffusion data of Fe and Mg in natural gem quality olivine for all oxygen fugacities. Calibrated with experiments conducted between 700-1200°C at atmospheric pressure with oxygen fugacity between 1e-12 to 1e-5 and parallel to c axis from Dohmen et al. (2007) and data from the literature. Note that the molar fraction of Fe is required to calculate the interdiffusion coefficient. To calculate the interdiffusion coefficient parallel to c, multiply the interdiffusion coefficient by 1e6.
 From Dohmen and Chakraborty (2007) (https://doi.org/10.1007/s00269-007-0158-6).
 """
 function Ol_Fe_Mg_Dohmen2007_perp_c()
@@ -21,7 +21,7 @@ function Ol_Fe_Mg_Dohmen2007_perp_c()
         P0 = 1bar,
         Charge = 2,  # charge of the cation
         T_range_min = 700C,
-        T_range_max = 1200C
+        T_range_max = 1550C
     )
     info = MaterialParamsInfo(;
         Comment = "Checked values by HD (21.03.25)",
@@ -45,7 +45,7 @@ end
 """
     Ol_Fe_Mg_Dohmen2007_TaMED_perp_c()
 
-Interdiffusion data of Fe and Mg in natural gem quality olivine for the transition metal extrinsic (TaMED) mechanism. Calibrated with experiments conducted between 900-1200°C at atmospheric pressure with oxygen fugacity between 1e-10 to 1e-5 and parallel to c axis. Note that the molar fraction of Fe and the oxygen fugacity are required to calculate the interdiffusion coefficient. To calculate the interdiffusion coefficient parallel to c, multiply the interdiffusion coefficient by 1e6.
+Interdiffusion data of Fe and Mg for the transition metal extrinsic (TaMED) mechanism. Calibrated with experiments conducted between 900-1200°C at atmospheric pressure with oxygen fugacity between 1e-10 to 1e-5 and parallel to c axis from Dohmen et al., 2007 and data from the literature. Note that the molar fraction of Fe and the oxygen fugacity are required to calculate the interdiffusion coefficient. To calculate the interdiffusion coefficient parallel to c, multiply the interdiffusion coefficient by 1e6.
 From Dohmen and Chakraborty (2007) (https://doi.org/10.1007/s00269-007-0158-6).
 """
 function Ol_Fe_Mg_Dohmen2007_TaMED_perp_c()
@@ -67,7 +67,7 @@ function Ol_Fe_Mg_Dohmen2007_TaMED_perp_c()
         P0 = 1bar,
         Charge = 2,  # charge of the cation
         T_range_min = 900C,
-        T_range_max = 1200C
+        T_range_max = 1550C
     )
     info = MaterialParamsInfo(;
         Comment = "Checked values by HD (21.03.25)",
@@ -92,7 +92,7 @@ end
 """
     Ol_Fe_Mg_Dohmen2007_PED_perp_c()
 
-Interdiffusion data of Fe and Mg in natural gem quality olivine for the purely extrinsic (PED) mechanism. Calibrated with experiments conducted between 700-900°C at atmospheric pressure with oxygen fugacity between 1e-12 to 1e-10 and parallel to c axis. Note that the molar fraction of Fe is required to calculate the interdiffusion coefficient. To calculate the interdiffusion coefficient parallel to c, multiply the interdiffusion coefficient by 1e6.
+Interdiffusion data of Fe and Mg in natural gem quality olivine for the purely extrinsic (PED) mechanism. Calibrated with experiments conducted between 700-900°C at atmospheric pressure with oxygen fugacity between 1e-12 to 1e-10 and parallel to c axis from Dohmen et al. (2007) and data from the literature. Note that the molar fraction of Fe is required to calculate the interdiffusion coefficient. To calculate the interdiffusion coefficient parallel to c, multiply the interdiffusion coefficient by 1e6.
 From Dohmen and Chakraborty (2007) (https://doi.org/10.1007/s00269-007-0158-6).
 """
 function Ol_Fe_Mg_Dohmen2007_PED_perp_c()
