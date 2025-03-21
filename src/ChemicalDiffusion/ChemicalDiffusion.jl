@@ -198,7 +198,7 @@ end
 
 
 """
-    compute_D(data::DiffusionData; T=1K, P=1GPa, fO2 = 1NoUnits, X = 1 NoUnits, kwargs...)
+    compute_D(data::DiffusionData; T=1K, P=1GPa, fO2 = 1NoUnits, X = 0 NoUnits, kwargs...)
 
 Computes the diffusion coefficient `D` [m^2/s] from the diffusion data `data` at temperature `T` [K], pressure `P` [Pa], oxygen fugacity `fO2` [NoUnits] and composition dependency `X` [NoUnits] from a structure of type `DiffusionData`.
 If `T` and `P` are provided without unit, the function assumes the units are in Kelvin and Pascal, respectively, and outputs the diffusion coefficient without unit based on the value in m^2/s.
@@ -220,7 +220,7 @@ If `T` and `P` are provided without unit, the function assumes the units are in 
 end
 
 """
-    compute_D!(D, data::DiffusionData; T=ones(size(D))K, P=zeros(size(D))Pa, fO2 = ones(size(D)), kwargs...)
+    compute_D!(D, data::DiffusionData; T=ones(size(D))K, P=ones(size(D))Pa, fO2 = ones(size(D)), X = zeros(size(D)), kwargs...)
 
 In-place version of `compute_D(data::DiffusionData; T=1K, P=1GPa, fO2=0NoUnits, kwargs...)`. `D` should be an array of the same size as T, P and fO2.
 """
