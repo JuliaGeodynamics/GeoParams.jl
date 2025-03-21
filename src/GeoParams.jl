@@ -137,7 +137,7 @@ module GeoParams
         MeltDependent_Density,
         BubbleFlow_Density,
         GasPyroclast_Density,
-        DensityX,
+        Melt_DensityX,
         compute_density_ratio
 
     # Constitutive relationships laws

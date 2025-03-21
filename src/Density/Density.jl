@@ -32,7 +32,7 @@ export compute_density, # calculation routines
     MeltDependent_Density, # Melt dependent density
     BubbleFlow_Density, # Bubble flow density
     GasPyroclast_Density, # Gas-Pyroclast mixture density
-    DensityX,
+    Melt_DensityX,
     get_α
 
 # Define "empty" computational routines in case nothing is defined
@@ -418,9 +418,9 @@ function show(io::IO, g::GasPyroclast_Density)
     return print(io, "Gas-Pyroclast mixture density: ρ = ρgas*δ + ρmelt*(1-β); ρmelt=$(g.ρmelt); ρgas=$(g.ρgas); δ=$(UnitValue(g.δ)); β=$(UnitValue(g.β))")
 end
 #-------------------------------------------------------------------------
-# DensityX density depending on Oxide composition
+# Melt_DensityX density depending on Oxide composition
 """
-    DensityX(; oxd_wt = oxd_wt)
+    Melt_DensityX(; oxd_wt = oxd_wt)
 
 Set a density depending on the oxide composition after the python script by Iacovino K & Till C (2019)
 
@@ -434,7 +434,7 @@ Set a density depending on the oxide composition after the python script by Iaco
 - Iacovino K & Till C (2019). DensityX: A program for calculating the densities of magmatic liquids up to 1,627 °C and 30 kbar. Volcanica 2(1), p 1-10. [doi:10.30909/vol.02.01.0110](https://dx.doi.org/10.30909/vol.02.01.0110)
 
 """
-struct DensityX{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3} <: AbstractDensity{T}
+struct Melt_DensityX{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3, U4, U5} <: AbstractDensity{T}
     oxd_wt::NTuple{9, T} # Oxide weight percent
     MW::NTuple{9, T1}    # Molar weights g/mol
     MV::NTuple{9, T2}    # Partial molar volumes
@@ -444,12 +444,14 @@ struct DensityX{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3} <: AbstractDensity{T}
     norm_MP::NTuple{9, T6} # Normalized molar proportions
     P0::GeoUnit{T, U}    # Pressure
     ρ0::GeoUnit{T, U1}
-    sum_XMW::GeoUnit{T, U2}
-    sum_Vliq::GeoUnit{T, U3}
+    α::GeoUnit{T, U2}
+    β::GeoUnit{T, U3}
+    sum_XMW::GeoUnit{T, U4}
+    sum_Vliq::GeoUnit{T, U5}
 
-    function DensityX(;
+    function Melt_DensityX(;
             oxd_wt = (50.42, 1.53, 15.13, 9.81, 7.76, 11.35, 2.83, 0.14, 1.0),
-            MW = (0.0600855, 0.07988, 0.10196, 0.07185, 0.0403, 0.05608, 0.06198, 0.0942, 0.01802) .* (kg / mol), # Molar weights g/mol
+            MW = (0.0600855, 0.07988, 0.10196, 0.07185, 0.0403, 0.05608, 0.06198, 0.0942, 0.01802) .* (kg / mol), # Molar weights kg/mol
             MV = (2.686e-5, 2.832e-5, 3.742e-5, 1.268e-5, 1.202e-5, 1.69e-5, 2.965e-5, 4.728e-5, 2.29e-5) .* (m^3 / mol), # Partial molar volumes
             dVdT = (0.0, 7.24e-9, 2.62e-9, 3.69e-9, 3.27e-9, 3.74e-9, 7.68e-9, 1.208e-8, 9.5e-9) .* (m^3 / (mol * K)),
             dVdP = (-1.89e-15, -2.31e-15, -2.26e-15, -4.5e-16, 2.7e-16, 3.4e-16, -2.4e-15, -6.75e-15, -3.2e-15) .* (m^3 / (mol * Pa)),
@@ -457,6 +459,8 @@ struct DensityX{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3} <: AbstractDensity{T}
             norm_MP = (0.511, 0.012, 0.09, 0.083, 0.117, 0.123, 0.028, 0.001, 0.034) .* NoUnits,
             P0 = 1.0e5Pa,
             ρ0 = 2900.0kg / m^3,
+            α = 2.266e-4 / K,
+            β = 6.319e-11 / Pa,
             sum_XMW = 0.0kg / mol,
             sum_Vliq = 0.0m^3 / mol
         )
@@ -471,6 +475,8 @@ struct DensityX{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3} <: AbstractDensity{T}
         norm_MPU = ntuple(i -> convert(GeoUnit, norm_MP[i]), Val(9))
         P0U = convert(GeoUnit, P0)
         ρ0U = convert(GeoUnit, ρ0)
+        αU = convert(GeoUnit, α)
+        βU = convert(GeoUnit, β)
         sum_XMWU = convert(GeoUnit, sum_XMW)
         sum_VliqU = convert(GeoUnit, sum_Vliq)
 
@@ -483,23 +489,25 @@ struct DensityX{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3} <: AbstractDensity{T}
         T6 = eltype(norm_MPU)
         U = typeof(P0U).types[2]
         U1 = typeof(ρ0U).types[2]
-        U2 = typeof(sum_XMWU).types[2]
-        U3 = typeof(sum_VliqU).types[2]
+        U2 = typeof(αU).types[2]
+        U3 = typeof(βU).types[2]
+        U4 = typeof(sum_XMWU).types[2]
+        U5 = typeof(sum_VliqU).types[2]
 
 
-        return new{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3}(oxd_wt, MWU, MVU, dVdTU, dVdPU, TrefU, norm_MPU, P0U, ρ0U, sum_XMWU, sum_VliqU)
+        return new{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3, U4, U5}(oxd_wt, MWU, MVU, dVdTU, dVdPU, TrefU, norm_MPU, P0U, ρ0U, αU, βU, sum_XMWU, sum_VliqU)
     end
 
-    function DensityX(oxd_wt, MW, MV, dVdT, dVdP, Tref, norm_MP, P0, ρ0, sum_XMW, sum_Vliq)
-        return DensityX(;
-            oxd_wt = oxd_wt, MW = MW, MV = MV, dVdT = dVdT, dVdP = dVdP, Tref = Tref, norm_MP = norm_MP, P0 = P0, ρ0 = ρ0, sum_XMW = sum_XMW, sum_Vliq = sum_Vliq,
+    function Melt_DensityX(oxd_wt, MW, MV, dVdT, dVdP, Tref, norm_MP, P0, ρ0, α, β, sum_XMW, sum_Vliq)
+        return Melt_DensityX(;
+            oxd_wt = oxd_wt, MW = MW, MV = MV, dVdT = dVdT, dVdP = dVdP, Tref = Tref, norm_MP = norm_MP, P0 = P0, ρ0 = ρ0, α = α, β = β, sum_XMW = sum_XMW, sum_Vliq = sum_Vliq,
         )
     end
 end
 
-isdimensional(g::DensityX) = isdimensional(g.ρ0)
+isdimensional(g::Melt_DensityX) = isdimensional(g.ρ0)
 
-function param_info(s::DensityX) # info about the struct
+function param_info(s::Melt_DensityX) # info about the struct
     return MaterialParamsInfo(; Equation = L"\rho from an oxide composition")
 end
 
@@ -523,7 +531,7 @@ function compute_XMW_norm_MP(oxd_wt, MW)
     return sum_XMW, norm_MP
 end
 
-function (s::DensityX)(; P::Number = 0.0e0, T::Number = 0.0e0, kwargs...)
+function (s::Melt_DensityX)(; P::Number = 0.0e0, T::Number = 0.0e0, kwargs...)
     P0, ρ0, sum_XMW, sum_Vliq, MV, dVdT, Tref, norm_MP, dVdP = if P isa Quantity
         (; MV, dVdT, dVdP, Tref, norm_MP) = s
         @unpack_units P0, ρ0, sum_XMW, sum_Vliq = s
@@ -541,11 +549,11 @@ function (s::DensityX)(; P::Number = 0.0e0, T::Number = 0.0e0, kwargs...)
     return sum_XMW / sum_Vliq
 end
 
-@inline (s::DensityX)(args) = s(; args...)
-@inline compute_density(s::DensityX, args) = s(args)
+@inline (s::Melt_DensityX)(args) = s(; args...)
+@inline compute_density(s::Melt_DensityX, args) = s(args)
 
 # Print info
-function show(io::IO, g::DensityX)
+function show(io::IO, g::Melt_DensityX)
     return print(io, "Density from oxide composition with Oxide comp.: $(g.oxd_wt)")
 end
 
@@ -666,7 +674,7 @@ This assumes that the `PhaseRatio` of every point is specified as an Integer in 
 @inline compute_density_ratio(args::Vararg{Any, N}) where {N} = compute_param_times_frac(compute_density, args...)
 
 # extractor methods
-for type in (ConstantDensity, PT_Density, Compressible_Density, T_Density, MeltDependent_Density, Vector_Density, BubbleFlow_Density, GasPyroclast_Density, DensityX)
+for type in (ConstantDensity, PT_Density, Compressible_Density, T_Density, MeltDependent_Density, Vector_Density, BubbleFlow_Density, GasPyroclast_Density, Melt_DensityX)
     @extractors(type, :Density)
 end
 
