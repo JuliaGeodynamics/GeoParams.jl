@@ -41,10 +41,10 @@ will return:
 A diffusion coefficient ``D`` can be computed assuming the following general equation:
 
 ```math
-    D = D_0 \left(a_{fO_2} \frac{{fO_2}^{n_{f{O_2}}}}{b_{f{O_2}}}\right) \exp \left(-\frac{Ea + (P - P0) \Delta V} {RT}\right),
+    D = D_0 \left(\frac{{fO_2}}{d_{f{O_2}}}^{n_{f{O_2}}}\right) \exp(a_X * (X + b_X)) \exp \left(-\frac{Ea + (P - P0) \Delta V} {RT}\right),
 ```
 
-where ``D_0`` is the pre-exponential factor, ``f{O_2}`` is the oxygen fugacity, ``a_{fO_2}``, ``b_{fO_2}``, and ``n_{fO_2}`` are the parameters on the ``f{O_2}`` dependency, ``Ea`` is the activation energy, ``P`` is the pressure, ``P0`` is the reference pressure, ``\Delta V`` is the activation volume, ``R`` is the gas constant, and ``T`` is the temperature.
+where ``D_0`` is the pre-exponential factor, ``f{O_2}`` is the oxygen fugacity, ``d_{fO_2}`` and ``n_{fO_2}`` are the parameters on the ``f{O_2}`` dependency, ``X`` is a composition or activity, ``a_X`` and ``b_X`` are parameters, ``Ea`` is the activation energy, ``P`` is the pressure, ``P0`` is the reference pressure, ``\Delta V`` is the activation volume, ``R`` is the gas constant, and ``T`` is the temperature.
 
 
 To compute the diffusion coefficient in-place, use the following functions:
