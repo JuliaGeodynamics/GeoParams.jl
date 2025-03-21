@@ -333,6 +333,24 @@ using GeoParams
     D = ustrip(compute_D(Mg_Ol, T = 1100C))
     @test D ≈ 5.842036240487849e-19 atol = 1.0e-18
 
+    # Benchmark Fe-Mg data from Dohmen et al. 2007 (HD 21/03/25)
+    Fe_Mg_Ol = Olivine.Ol_Fe_Mg_Dohmen2007_perp_c
+    Fe_Mg_Ol = SetChemicalDiffusion(Fe_Mg_Ol)
+    D = ustrip(compute_D(Fe_Mg_Ol, T = 1000C, P=1e5Pa, X=0.1))
+    @test D ≈ 5.0226824e-18 atol = 1.0e-20
+
+    # Benchmark Fe-Mg TaMED data from Dohmen et al. 2007 (HD 21/03/25)
+    Fe_Mg_Ol_TaMED = Olivine.Ol_Fe_Mg_Dohmen2007_TaMED_perp_c
+    Fe_Mg_Ol_TaMED = SetChemicalDiffusion(Fe_Mg_Ol_TaMED)
+    D = ustrip(compute_D(Fe_Mg_Ol_TaMED, T = 1000C, P=1e5Pa, fO2=1e-7, X=0.1))
+    @test D ≈ 8.056327e-18 atol = 1.0e-20
+
+    # Benchmark Fe-Mg PED data from Dohmen et al. 2007 (HD 21/03/25)
+    Fe_Mg_Ol_PED = Olivine.Ol_Fe_Mg_Dohmen2007_PED_perp_c
+    Fe_Mg_Ol_PED = SetChemicalDiffusion(Fe_Mg_Ol_PED)
+    D = ustrip(compute_D(Fe_Mg_Ol_PED, T = 1000C, P=1e5Pa, X=0.1))
+    @test D ≈ 2.6683489e-18 atol = 1.0e-20
+
     # -------------------------- Rhyolitic Melt --------------------------
 
     # Benchmark Sc data from Holycross and Watson 2018 (HD 24/01/25)

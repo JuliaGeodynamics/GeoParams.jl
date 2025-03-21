@@ -3,6 +3,7 @@ module Olivine
 using GeoParams
 using Unitful
 
+include("Elements/Fe_Mg.jl")
 include("Elements/Mg.jl")
 
 """
