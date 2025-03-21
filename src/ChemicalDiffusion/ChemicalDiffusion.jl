@@ -45,7 +45,7 @@ Defines the diffusion data for the chemical diffusion of a given phase and speci
 
 The diffusion coefficient `D` [\\mathrm{[m^2/s]}] is given by an Arrhenius equation:
 ```math
-    D = D0 * ((fO2/ dfO2)^nfO2) * exp(aX * (X + bX)) * \\exp\\left(-\\frac{Ea + PΔV} {RT}\\right)
+    D = D0 * ((fO2/ dfO2)^nfO2) * \\exp(aX * (X + bX)) * \\exp\\left(-\\frac{Ea + PΔV} {RT}\\right)
 ```
 where
 - ``D0`` is the pre-exponential factor [\\mathrm{[m^2/s]}],
