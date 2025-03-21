@@ -1403,8 +1403,8 @@ function PlotDiffusionCoefArrhenius(
 
     D = zeros(n * 2)
     for i in 1:n
-        D[i] = compute_D(x[i], T = T_min[i], P = P, fO2 = fO2, X=X) |> upreferred |> ustrip
-        D[i + n] = compute_D(x[i], T = T_max[i], P = P, fO2 = fO2, X=X) |> upreferred |> ustrip
+        D[i] = compute_D(x[i], T = T_min[i], P = P, fO2 = fO2, X = X) |> upreferred |> ustrip
+        D[i + n] = compute_D(x[i], T = T_max[i], P = P, fO2 = fO2, X = X) |> upreferred |> ustrip
     end
 
     T_inv_min = 1.0e4 ./ T_min .|> upreferred .|> ustrip

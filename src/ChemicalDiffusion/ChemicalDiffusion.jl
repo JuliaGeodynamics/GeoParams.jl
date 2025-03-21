@@ -214,7 +214,7 @@ If `T` and `P` are provided without unit, the function assumes the units are in 
         @unpack_val D0, Ea, ΔV, P0, R, dfO2, nfO2, aX, bX = data
     end
 
-    D = @muladd D0 * (((fO2/dfO2)^nfO2)) * exp(aX * (X + bX)) * exp(-(Ea + (P - P0) * ΔV) / (R * T))
+    D = @muladd D0 * (((fO2 / dfO2)^nfO2)) * exp(aX * (X + bX)) * exp(-(Ea + (P - P0) * ΔV) / (R * T))
 
     return D
 end
