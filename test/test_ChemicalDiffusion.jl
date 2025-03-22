@@ -8,6 +8,7 @@ using StaticArrays
     x1 = DiffusionData()
     @test isbits(x1)
 
+    # test the diffusion data structure for multicomponent in melt
     x2 = MeltMulticompDiffusionData()
     @test isbits(x2)
 
@@ -58,6 +59,24 @@ using StaticArrays
     )
 
     @test phase.ChemDiffusion[1].D0.val ≈ 9.099999999999998
+
+    # test SetMaterialParams for multicomponent in melt
+    phase = SetMaterialParams(
+        Name = "Chemical Diffusion",
+        ChemDiffusion = melt_major
+    )
+
+    @test phase.ChemDiffusion[1].λD0[1,1].val ≈ 9.384642109767468e-7 atol = 1e-10
+
+    # test nondimensionalisation for multicomponent in melt
+    CharUnits_GEO = GEO_units(length = 10cm)
+    phase = SetMaterialParams(
+        Name = "Chemical Diffusion",
+        ChemDiffusion = melt_major,
+        CharDim = CharUnits_GEO
+    )
+
+    @test phase.ChemDiffusion[1].λD0[1,1] ≈ 9.384642109767466e8 atol = 1.0e5
 
     # test experimental data with literature values
 

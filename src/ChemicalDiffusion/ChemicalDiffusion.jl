@@ -249,8 +249,8 @@ struct MeltMulticompDiffusionData{T, U1, U2, U3, U4, U5, N, N_N} <: AbstractChem
         )
 
         # size of the matrices, which the number of de components
-        N = Int(n) - 1
-        N_N = N * N  # number of elements in the matrix
+        # check if n is an integer
+
 
         # Convert to GeoUnits
         nU = convert(GeoUnit, n)
@@ -275,6 +275,10 @@ struct MeltMulticompDiffusionData{T, U1, U2, U3, U4, U5, N, N_N} <: AbstractChem
         dependent_species = pointer(ptr2string(Dependent_Species))
         buffer = pointer(ptr2string(Buffer))
         fluid = pointer(ptr2string(Fluid))
+
+        # size for the matrices
+        N = (Int(nU.val) - 1)  # number of independent components
+        N_N = (N * N)  # number of elements in the matrix
 
         # Create struct
         return new{T, U1, U2, U3, U4, U5, N, N_N}(
