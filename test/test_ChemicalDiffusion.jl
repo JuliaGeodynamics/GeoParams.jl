@@ -1,5 +1,6 @@
 using Test
 using GeoParams
+using StaticArrays
 
 @testset "ChemicalDiffusion" begin
 
@@ -7,10 +8,19 @@ using GeoParams
     x1 = DiffusionData()
     @test isbits(x1)
 
+    # test the diffusion data structure for multicomponent in melt
+    x2 = MeltMulticompDiffusionData()
+    @test isbits(x2)
+
     # check auto unit conversion
     Hf_Rt_perp = Rutile.Rt_Hf_Cherniak2007_perp_c
     Hf_Rt_perp = SetChemicalDiffusion(Hf_Rt_perp; D0 = 10km^2 / s)
     @test Hf_Rt_perp.D0.val == 1.0e7
+
+    # check auto unit conversion for multicomponent in melt
+    melt_major = Melt.Melt_multicomponent_major_Guo2020_SiO2_basaltic
+    melt_major = SetMulticompChemicalDiffusion(melt_major)
+    @test melt_major.λD0[1, 1].val == 9.384642109767468e-7
 
     # test the diffusion parameter calculation
     D = ustrip(compute_D(x1))
@@ -49,6 +59,24 @@ using GeoParams
     )
 
     @test phase.ChemDiffusion[1].D0.val ≈ 9.099999999999998
+
+    # test SetMaterialParams for multicomponent in melt
+    phase = SetMaterialParams(
+        Name = "Chemical Diffusion",
+        ChemDiffusion = melt_major
+    )
+
+    @test phase.ChemDiffusion[1].λD0[1, 1].val ≈ 9.384642109767468e-7 atol = 1.0e-10
+
+    # test nondimensionalisation for multicomponent in melt
+    CharUnits_GEO = GEO_units(length = 10cm)
+    phase = SetMaterialParams(
+        Name = "Chemical Diffusion",
+        ChemDiffusion = melt_major,
+        CharDim = CharUnits_GEO
+    )
+
+    @test phase.ChemDiffusion[1].λD0[1, 1] ≈ 9.384642109767466e8 atol = 1.0e5
 
     # test experimental data with literature values
 
@@ -333,6 +361,24 @@ using GeoParams
     D = ustrip(compute_D(Mg_Ol, T = 1100C))
     @test D ≈ 5.842036240487849e-19 atol = 1.0e-18
 
+    # Benchmark Fe-Mg data from Dohmen et al. 2007 (HD 21/03/25)
+    Fe_Mg_Ol = Olivine.Ol_Fe_Mg_Dohmen2007_perp_c
+    Fe_Mg_Ol = SetChemicalDiffusion(Fe_Mg_Ol)
+    D = ustrip(compute_D(Fe_Mg_Ol, T = 1000C, P = 1.0e5Pa, X = 0.1))
+    @test D ≈ 5.0226824e-18 atol = 1.0e-20
+
+    # Benchmark Fe-Mg TaMED data from Dohmen et al. 2007 (HD 21/03/25)
+    Fe_Mg_Ol_TaMED = Olivine.Ol_Fe_Mg_Dohmen2007_TaMED_perp_c
+    Fe_Mg_Ol_TaMED = SetChemicalDiffusion(Fe_Mg_Ol_TaMED)
+    D = ustrip(compute_D(Fe_Mg_Ol_TaMED, T = 1000C, P = 1.0e5Pa, fO2 = 1.0e-7, X = 0.1))
+    @test D ≈ 8.056327e-18 atol = 1.0e-20
+
+    # Benchmark Fe-Mg PED data from Dohmen et al. 2007 (HD 21/03/25)
+    Fe_Mg_Ol_PED = Olivine.Ol_Fe_Mg_Dohmen2007_PED_perp_c
+    Fe_Mg_Ol_PED = SetChemicalDiffusion(Fe_Mg_Ol_PED)
+    D = ustrip(compute_D(Fe_Mg_Ol_PED, T = 1000C, P = 1.0e5Pa, X = 0.1))
+    @test D ≈ 2.6683489e-18 atol = 1.0e-20
+
     # -------------------------- Rhyolitic Melt --------------------------
 
     # Benchmark Sc data from Holycross and Watson 2018 (HD 24/01/25)
@@ -598,4 +644,22 @@ using GeoParams
     D = ustrip(compute_D(Melt_Mg, T = 1550C))
     @test  D ≈ 1.16044e-10 atol = 1.0e-15
 
+    # multicomponent diffusion
+    melt_multicomponent = Melt.Melt_multicomponent_major_Guo2020_SiO2_basaltic
+    melt_multicomponent = SetMulticompChemicalDiffusion(melt_multicomponent)
+
+    T = 1800
+    λ1 = melt_multicomponent.λD0[1, 1].val * exp(-melt_multicomponent.λEa[1, 1].val / (melt_multicomponent.R.val * T)) * 1.0e12
+    λ1_paper = exp(13.752 - 19636 / T)
+    @test λ1 ≈ λ1_paper atol = 1.0e-15
+
+    D = compute_D(melt_multicomponent, T = (1500C))
+    @test ustrip(D[1]) ≈ 1.882e-11 atol = 1.0e-15
+
+    # test compute_D! with multicomponent diffusion
+    T = ones(10) .* 1773.15K
+    D = [SMatrix{7, 7}(zeros(7, 7)) for _ in 1:10]m^2 / s
+
+    compute_D!(D, melt_multicomponent; T = T)
+    @test ustrip(D[1][1, 1]) ≈ 1.882e-11 atol = 1.0e-15
 end
