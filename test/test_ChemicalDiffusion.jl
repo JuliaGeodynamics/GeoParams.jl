@@ -66,7 +66,7 @@ using StaticArrays
         ChemDiffusion = melt_major
     )
 
-    @test phase.ChemDiffusion[1].λD0[1,1].val ≈ 9.384642109767468e-7 atol = 1e-10
+    @test phase.ChemDiffusion[1].λD0[1, 1].val ≈ 9.384642109767468e-7 atol = 1.0e-10
 
     # test nondimensionalisation for multicomponent in melt
     CharUnits_GEO = GEO_units(length = 10cm)
@@ -76,7 +76,7 @@ using StaticArrays
         CharDim = CharUnits_GEO
     )
 
-    @test phase.ChemDiffusion[1].λD0[1,1] ≈ 9.384642109767466e8 atol = 1.0e5
+    @test phase.ChemDiffusion[1].λD0[1, 1] ≈ 9.384642109767466e8 atol = 1.0e5
 
     # test experimental data with literature values
 
