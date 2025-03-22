@@ -630,7 +630,7 @@ using StaticArrays
     melt_multicomponent = SetMulticompChemicalDiffusion(melt_multicomponent)
 
     T = 1800
-    λ1 = melt_multicomponent.λD0[1, 1].val * exp(-melt_multicomponent.λEa[1, 1].val / (ustrip(Unitful.R) * T)) * 1e12
+    λ1 = melt_multicomponent.λD0[1, 1].val * exp(-melt_multicomponent.λEa[1, 1].val / (melt_multicomponent.R.val * T)) * 1.0e12
     λ1_paper = exp(13.752 - 19636 / T)
     @test λ1 ≈ λ1_paper atol = 1.0e-15
 
@@ -644,69 +644,3 @@ using StaticArrays
     compute_D!(D, melt_multicomponent; T = T)
     @test ustrip(D[1][1, 1]) ≈ 1.882e-11 atol = 1.0e-15
 end
-
-using GeoParams
-# multicomponent diffusion
-melt_multicomponent = Melt.Melt_multicomponent_major_Guo2020_SiO2_basaltic
-melt_multicomponent = SetMulticompChemicalDiffusion(melt_multicomponent)
-D = compute_D(melt_multicomponent, T = (1500C));
-
-# calculate eigenvalues
-λ = diag(melt_multicomponent.λD0.val) .* exp.(.- diag(melt_multicomponent.λEa.val) ./ (ustrip(Unitful.R) .* 1800)) *1e12
-
-T= 1800
-λpaper = [exp(13.752 - 19636 / T),
-    exp(14.737 - 20912 / T),
-    exp(14.897 - 19987 / T),
-    exp(12.375 - 13880 / T),
-    exp(15.063 - 18569 / T),
-    exp(15.083 - 18279 / T),
-    exp(12.180 - 10808 / T)]
-
-# define T as an array from 1500 to 1800
-T = range(1200, 2000, length = 10)
-λ1 = zeros(size(T))
-
-λ1 = exp.(13.752 .- 19636 ./ T)
-λ2 = exp.(14.737 .- 20912 ./ T)
-λ3 = exp.(14.897 .- 19987 ./ T)
-λ4 = exp.(12.375 .- 13880 ./ T)
-λ5 = exp.(15.063 .- 18569 ./ T)
-λ6 = exp.(15.083 .- 18279 ./ T)
-λ7 = exp.(12.180 .- 10808 ./ T)
-
-
-# do the same thing using λ = D0 * exp(-Ea / (R * T))
-
-λ1_ = @. melt_multicomponent.λD0[1, 1].val * exp(-melt_multicomponent.λEa[1, 1].val / (ustrip(Unitful.R) * T)) * 1e12
-λ2_ = @. melt_multicomponent.λD0[2, 2].val * exp(-melt_multicomponent.λEa[2, 2].val / (ustrip(Unitful.R) * T)) * 1e12
-λ3_ = @. melt_multicomponent.λD0[3, 3].val * exp(-melt_multicomponent.λEa[3, 3].val / (ustrip(Unitful.R) * T)) * 1e12
-λ4_ = @. melt_multicomponent.λD0[4, 4].val * exp(-melt_multicomponent.λEa[4, 4].val / (ustrip(Unitful.R) * T)) * 1e12
-λ5_ = @. melt_multicomponent.λD0[5, 5].val * exp(-melt_multicomponent.λEa[5, 5].val / (ustrip(Unitful.R) * T)) * 1e12
-λ6_ = @. melt_multicomponent.λD0[6, 6].val * exp(-melt_multicomponent.λEa[6, 6].val / (ustrip(Unitful.R) * T)) * 1e12
-λ7_ = @. melt_multicomponent.λD0[7, 7].val * exp(-melt_multicomponent.λEa[7, 7].val / (ustrip(Unitful.R) * T)) * 1e12
-
-using GLMakie
-
-# plot the λ values vs 1000/T
-fig = Figure(resolution = (800, 600))
-
-# in log scale for y
-ax = Axis(fig[1, 1], xlabel = "1000/T [1/K]", ylabel = "ln(λ [µm²/s])")
-
-lines!(ax, 1000 ./ T, log.(λ1_), color = :blue, linewidth = 2, label = "λ1")
-lines!(ax, 1000 ./ T, log.(λ2_), color = :red, linewidth = 2, label = "λ2")
-lines!(ax, 1000 ./ T, log.(λ3_), color = :green, linewidth = 2, label = "λ3")
-lines!(ax, 1000 ./ T, log.(λ4_), color = :yellow, linewidth = 2, label = "λ4")
-lines!(ax, 1000 ./ T, log.(λ5_), color = :purple, linewidth = 2, label = "λ5")
-lines!(ax, 1000 ./ T, log.(λ6_), color = :orange, linewidth = 2, label = "λ6")
-lines!(ax, 1000 ./ T, log.(λ7_), color = :black, linewidth = 2, label = "λ7")
-
-xlims!(ax, (0.54, .68))
-ylims!(ax, (0, 7))
-
-# add legend
-axislegend(ax)
-
-
-display(fig)

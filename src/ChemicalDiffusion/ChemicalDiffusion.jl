@@ -44,7 +44,7 @@ abstract type AbstractChemicalDiffusion{T} <: AbstractMaterialParam end
 """
     DiffusionData(; Name, Phase, Formula, Species, Orientation, Crystallography, Buffer, Fluid, Doping, D0, log_D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, dfO2, nfO2, aX, bX, Charge, T_range, P0)
 
-Defines the diffusion data for the chemical diffusion of a given phase and species from an experiment.
+Defines the diffusion data for the chemical diffusion of a given phase and species from experiments or natural data.
 
 The diffusion coefficient `D` [\\mathrm{[m^2/s]}] is given by an Arrhenius equation:
 ```math
@@ -199,7 +199,22 @@ function param_info(data::DiffusionData) # info about the struct
     )
 end
 
+"""
+    MeltMulticompDiffusionData(; Name, Phase, Formula, Species, Dependent_Species, Buffer, Fluid, n, λD0, λEa, w, R, T_range_min, T_range_max)
 
+Defines the diffusion data for the multicomponent chemical diffusion of a system of species in melt from experiments or natural data.
+
+The diffusion coefficient matrix `D` [m^2/s] is given by an Arrhenius equation:
+```math
+    D = w * λD0 * \\exp \\left( -\\frac{λEa} {RT}\\right) * w^{-1}
+```
+where
+- `w` is the eigenvector matrix,
+- `λD0` is the pre-exponential factor of the eigen values times identity matrix [m^2/s],
+- `λEa` is the activation energy of the eigen values times identity matrix [J/mol],
+- `R` is the gas constant [J/(mol K)],
+- `T` is the temperature [K].
+"""
 struct MeltMulticompDiffusionData{T, U1, U2, U3, U4, U5, N, N_N} <: AbstractChemicalDiffusion{T}
     Name::Ptr{UInt8}  # name of the diffusion experiment and paper
     Phase::Ptr{UInt8}  # name of the phase
@@ -211,7 +226,7 @@ struct MeltMulticompDiffusionData{T, U1, U2, U3, U4, U5, N, N_N} <: AbstractChem
     n::GeoUnit{T, U1}  # number of components
     λD0::GeoUnit{SMatrix{N, N, T, N_N}, U2}  # pre-exponential factor of the eigen values times identity matrix
     λEa::GeoUnit{SMatrix{N, N, T, N_N}, U3}  # activation energy of the eigen values times identity matrix
-    w::GeoUnit{SMatrix{N, N, T, N_N}, U1}  # eigen vector matrix
+    w::GeoUnit{SMatrix{N, N, T, N_N}, U1}  # eigenvector matrix
     R::GeoUnit{T, U4}  # gas constant
     T_range_min::GeoUnit{T, U5}  # minimum temperature of the T_range
     T_range_max::GeoUnit{T, U5}  # maximum temperature of the T_range
@@ -225,16 +240,16 @@ struct MeltMulticompDiffusionData{T, U1, U2, U3, U4, U5, N, N_N} <: AbstractChem
             Buffer = "Unknown",  # Buffer condition (e.g., NNO) during the experiment
             Fluid = "Unknown",  # Fluid condition (e.g., anhydrous) during the experiment
             n = 3NoUnits,  # number of components
-            λD0 = SMatrix{2 ,2}(0.0, 0.0, 0.0, 0.0)u"m^2/s",  # eigen values times identity matrix
-            λEa = SMatrix{2 ,2}(0.0, 0.0, 0.0, 0.0)u"J/mol",  # eigen values times identity matrix
-            w = SMatrix{2 ,2}(0.0, 0.0, 0.0, 0.0)NoUnits,  # eigen vector matrix
+            λD0 = SMatrix{2, 2}(0.0, 0.0, 0.0, 0.0)u"m^2/s",  # eigen values times identity matrix
+            λEa = SMatrix{2, 2}(0.0, 0.0, 0.0, 0.0)u"J/mol",  # eigen values times identity matrix
+            w = SMatrix{2, 2}(0.0, 0.0, 0.0, 0.0)NoUnits,  # eigenvector matrix
             R = Unitful.R,  # gas constant
             T_range_min = 0.0K,  # minimum temperature of the T_range
             T_range_max = 0.0K  # maximum temperature of the T_range
         )
 
         # size of the matrices, which the number of de components
-        N = Int(n)-1
+        N = Int(n) - 1
         N_N = N * N  # number of elements in the matrix
 
         # Convert to GeoUnits
@@ -322,6 +337,9 @@ end
 """
     compute_D(data::MeltMulticompDiffusionData; T=1K, kwargs...)
 
+Computes the diffusion coefficient matrix [m^2/s] from the diffusion data `data` at temperature `T` [K] from a structure of type `MeltMulticompDiffusionData`.
+If `T` is provided without unit, the function assumes the unit is in Kelvin and outputs the diffusion coefficient without unit based on the value in m^2/s.
+The output is a static matrix of size `n-1` x `n-1` where `n` is the number of components.
 """
 @inline function compute_D(data::MeltMulticompDiffusionData; T = 1K, kwargs...)
 
@@ -334,6 +352,7 @@ end
         @unpack_val λD0, λEa, w, R = data
     end
 
+    # calculate diffusion matrix using eigenvalues and eigenvectors (see Eq. 4 in Guo and Zhang, 2020)
     D = @muladd w * λD0 * exp(-λEa / (R * T)) * inv(w)
 
     return D
@@ -361,7 +380,6 @@ function compute_D!(
 end
 
 
-
 function show(io::IO, g::DiffusionData)
     return print(
         io,
@@ -369,8 +387,12 @@ function show(io::IO, g::DiffusionData)
     )
 end
 
-
-
+function show(io::IO, g::MeltMulticompDiffusionData)
+    return print(
+        io,
+        "DiffusionData: Phase = $(unsafe_string(g.Phase)), Species = $(unsafe_string(g.Species)), Dependent Species = $(unsafe_string(g.Dependent_Species)), Number of Components = $(Value(g.n))",
+    )
+end
 
 
 """
