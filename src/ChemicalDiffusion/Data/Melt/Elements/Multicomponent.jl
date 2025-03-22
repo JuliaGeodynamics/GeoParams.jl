@@ -10,7 +10,7 @@ function Melt_multicomponent_major_Guo2020_SiO2_basaltic()
         Phase = "Melt",
         Species = "TiO2–Al2O3–FeO–MgO–CaO–Na2O–K2O",
         Dependent_Species = "SiO2",
-        n = 8,
+        n = 8NoUnits,
         λD0 = SMatrix{7, 7}(exp(13.752), 0, 0, 0, 0, 0, 0, #=
                           =#0, exp(14.737), 0, 0, 0, 0, 0, #=
                           =#0, 0, exp(14.897), 0, 0, 0, 0, #=

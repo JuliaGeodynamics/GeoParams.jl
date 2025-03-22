@@ -7,10 +7,18 @@ using GeoParams
     x1 = DiffusionData()
     @test isbits(x1)
 
+    x1 = MeltMulticomponentDiffusionData()
+    @test isbits(x1)
+
     # check auto unit conversion
     Hf_Rt_perp = Rutile.Rt_Hf_Cherniak2007_perp_c
     Hf_Rt_perp = SetChemicalDiffusion(Hf_Rt_perp; D0 = 10km^2 / s)
     @test Hf_Rt_perp.D0.val == 1.0e7
+
+    # check auto unit conversion for multicomponent in melt
+    melt_major = Melt.Melt_multicomponent_major_Guo2020_SiO2_basaltic
+    melt_major = SetMulticomponentChemicalDiffusion(melt_major)
+    @test melt_major.λD0[1, 1].val == 9.384642109767468e-7
 
     # test the diffusion parameter calculation
     D = ustrip(compute_D(x1))
@@ -615,5 +623,9 @@ using GeoParams
     Melt_Mg = SetChemicalDiffusion(Melt_Mg)
     D = ustrip(compute_D(Melt_Mg, T = 1550C))
     @test  D ≈ 1.16044e-10 atol = 1.0e-15
+
+    # multicomponent diffusion
+    melt_multicomponent = Melt.Melt_multicomponent_major_Guo2020_SiO2_basaltic
+    melt_multicomponent = SetMulticomponentChemicalDiffusion(melt_multicomponent)
 
 end
