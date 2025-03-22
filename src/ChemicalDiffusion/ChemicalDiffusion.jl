@@ -13,11 +13,11 @@ import Base.show
 
 # Exported functions defined in this module
 export SetChemicalDiffusion,
-    SetMulticomponentChemicalDiffusion,
+    SetMulticompChemicalDiffusion,
     Transform_ChemicalDiffusion,
     AbstractChemicalDiffusion,
     DiffusionData,
-    MeltMulticomponentDiffusionData,
+    MeltMulticompDiffusionData,
     compute_D,
     compute_D!
 
@@ -200,7 +200,7 @@ function param_info(data::DiffusionData) # info about the struct
 end
 
 
-struct MeltMulticomponentDiffusionData{T, U1, U2, U3, U4, U5, N, N_N} <: AbstractChemicalDiffusion{T}
+struct MeltMulticompDiffusionData{T, U1, U2, U3, U4, U5, N, N_N} <: AbstractChemicalDiffusion{T}
     Name::Ptr{UInt8}  # name of the diffusion experiment and paper
     Phase::Ptr{UInt8}  # name of the phase
     Formula::Ptr{UInt8}  # chemical formula of the mineral
@@ -216,7 +216,7 @@ struct MeltMulticomponentDiffusionData{T, U1, U2, U3, U4, U5, N, N_N} <: Abstrac
     T_range_min::GeoUnit{T, U5}  # minimum temperature of the T_range
     T_range_max::GeoUnit{T, U5}  # maximum temperature of the T_range
 
-    function MeltMulticomponentDiffusionData(;
+    function MeltMulticompDiffusionData(;
             Name = "Unknown",  # name of the diffusion experiment and paper
             Phase = "Unknown",  # name of the mineral
             Formula = "Unknown",  # chemical formula of the mineral
@@ -268,10 +268,10 @@ struct MeltMulticomponentDiffusionData{T, U1, U2, U3, U4, U5, N, N_N} <: Abstrac
     end
 end
 
-function MeltMulticomponentDiffusionData(
+function MeltMulticompDiffusionData(
         Name, Phase, Formula, Species, Dependent_Species, Buffer, Fluid, n, λD0, λEa, w, R, T_range_min, T_range_max
     )
-    return MeltMulticomponentDiffusionData(;
+    return MeltMulticompDiffusionData(;
         Name = Name,
         Phase = Phase,
         Formula = Formula,
@@ -286,6 +286,12 @@ function MeltMulticomponentDiffusionData(
         R = R,
         T_range_min = T_range_min,
         T_range_max = T_range_max,
+    )
+end
+
+function param_info(data::MeltMulticompDiffusionData) # info about the struct
+    return MaterialParamsInfo(;
+        Equation = L"D = w * λD0 * \exp\left(-\frac{λEa} {RT}\right) * w^{-1}",
     )
 end
 
@@ -312,25 +318,48 @@ If `T` and `P` are provided without unit, the function assumes the units are in 
     return D
 end
 
-"""
-    compute_D!(D, data::DiffusionData; T=ones(size(D))K, P=ones(size(D))Pa, fO2 = ones(size(D)), X = zeros(size(D)), kwargs...)
 
-In-place version of `compute_D(data::DiffusionData; T=1K, P=1GPa, fO2=0NoUnits, kwargs...)`. `D` should be an array of the same size as T, P and fO2.
+"""
+    compute_D(data::MeltMulticompDiffusionData; T=1K, kwargs...)
+
+"""
+@inline function compute_D(data::MeltMulticompDiffusionData; T = 1K, kwargs...)
+
+    if T isa Quantity
+        @unpack_units λD0, λEa, w, R = data
+
+        # convert to K to prevent affine error with Celsius
+        T = uconvert(K, T)
+    else
+        @unpack_val λD0, λEa, w, R = data
+    end
+
+    D = @muladd w * λD0 * exp(-λEa / (R * T)) * inv(w)
+
+    return D
+end
+
+
+"""
+    compute_D!(D, data::AbstractChemicalDiffusion; T=ones(size(D))K, P=ones(size(D))Pa, fO2 = ones(size(D)), X = zeros(size(D)), kwargs...)
+
+In-place version of `compute_D(data::AbstractChemicalDiffusion; T=1K, P=1GPa, fO2=0NoUnits, kwargs...)`. `D` should be an array of the same size as T, P and fO2.
 """
 function compute_D!(
-        D::AbstractArray{_T, nDim},
-        data::DiffusionData;
+        D::AbstractArray,
+        data::AbstractChemicalDiffusion;
         T = ones(size(D))K,
         P = ones(size(D))GPa,
         fO2 = ones(size(D)),
         X = zeros(size(D)),
         kwargs...
-    ) where {_T, nDim}
+    )
 
     return @inbounds for i in eachindex(D)
         D[i] = compute_D(data; T = T[i], P = P[i], fO2 = fO2[i], X = X[i], kwargs...)
     end
 end
+
 
 
 function show(io::IO, g::DiffusionData)
@@ -339,6 +368,9 @@ function show(io::IO, g::DiffusionData)
         "DiffusionData: Phase = $(unsafe_string(g.Phase)), Species = $(unsafe_string(g.Species)), D0 = $(Value(g.D0)), Ea = $(Value(g.Ea)), ΔV = $(Value(g.ΔV))",
     )
 end
+
+
+
 
 
 """
@@ -388,9 +420,9 @@ function SetChemicalDiffusion(
 end
 
 """
-    SetMulticomponentChemicalDiffusion["Name of Chemical Diffusion"]
+    SetMulticompChemicalDiffusion["Name of Chemical Diffusion"]
 """
-function SetMulticomponentChemicalDiffusion(
+function SetMulticompChemicalDiffusion(
         name::F;
         n = nothing,
         λD0 = nothing,
@@ -405,7 +437,7 @@ function SetMulticomponentChemicalDiffusion(
     return Transform_ChemicalDiffusion(name, kwargs)
 end
 
-function SetMulticomponentChemicalDiffusion(
+function SetMulticompChemicalDiffusion(
         name::F,
         CharDim::GeoUnits{T};
         n = nothing,
@@ -438,8 +470,7 @@ function Transform_ChemicalDiffusion(p::AbstractChemicalDiffusion{T}, CharDim::G
     return nondimensionalize(Transform_ChemicalDiffusion(p), CharDim)
 end
 
-# function Transform_ChemicalDiffusion(pp::DiffusionData)
-function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion)
+function Transform_ChemicalDiffusion(pp::DiffusionData)
 
     D0 = Value(pp.D0)
     log_D0_1σ = Value(pp.log_D0_1σ)
@@ -491,8 +522,7 @@ function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion)
     return DiffusionData(; args...)
 end
 
-# function Transform_ChemicalDiffusion(pp::DiffusionData, kwargs::NamedTuple)
-function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion, kwargs::NamedTuple)
+function Transform_ChemicalDiffusion(pp::DiffusionData, kwargs::NamedTuple)
 
     f(a, b) = Value(GeoUnit(a))
     f(::Nothing, b) = Value(b)
@@ -550,7 +580,7 @@ function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion, kwargs::Name
 end
 
 
-function Transform_ChemicalDiffusion(pp::MeltMulticomponentDiffusionData)
+function Transform_ChemicalDiffusion(pp::MeltMulticompDiffusionData)
 
     n = Value(pp.n)
     λD0 = Value(pp.λD0)
@@ -582,11 +612,11 @@ function Transform_ChemicalDiffusion(pp::MeltMulticomponentDiffusionData)
     )
 
 
-    return MeltMulticomponentDiffusionData(; args...)
+    return MeltMulticompDiffusionData(; args...)
 end
 
 
-function Transform_ChemicalDiffusion(pp::MeltMulticomponentDiffusionData, kwargs::NamedTuple)
+function Transform_ChemicalDiffusion(pp::MeltMulticompDiffusionData, kwargs::NamedTuple)
 
     f(a, b) = Value(GeoUnit(a))
     f(::Nothing, b) = Value(b)
@@ -622,10 +652,7 @@ function Transform_ChemicalDiffusion(pp::MeltMulticomponentDiffusionData, kwargs
         T_range_max = T_range_max_SI,
     )
 
-
-    @show args.λD0
-
-    return MeltMulticomponentDiffusionData(; args...)
+    return MeltMulticompDiffusionData(; args...)
 end
 
 

@@ -282,13 +282,12 @@ module GeoParams
     using .MaterialParameters.ChemicalDiffusion
     export AbstractChemicalDiffusion,
         DiffusionData,
-        MeltMulticomponentDiffusionData,
+        MeltMulticompDiffusionData,
         compute_D,
         compute_D!,
         SetChemicalDiffusion,
-        SetMulticomponentChemicalDiffusion,
+        SetMulticompChemicalDiffusion,
         Transform_ChemicalDiffusion
-        # SetMulticomponentChemicalDiffusion,
 
 
     export Rutile,
