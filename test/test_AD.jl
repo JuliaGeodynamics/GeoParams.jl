@@ -110,7 +110,7 @@ for (name, backend) in zip(pkg, backends)
         @test AD.derivative(backend, x -> compute_D(Hf_Rt_para, T = 1273.15, P = x), P)[1] ≈ 0.0
 
         # test only if backend is ForwardDiff because it is not compatible with ReverseDiff
-        if backend == ForwardDiff
+        if name == "ForwardDiff"
             melt_major = Melt.Melt_multicomponent_major_Guo2020_SiO2_basaltic
             melt_major = SetMulticompChemicalDiffusion(melt_major)
             @test AD.derivative(backend, x -> compute_D(melt_major, T = x), T)[1][1] ≈ -1.34176e-16 atol = 1.0e-20
