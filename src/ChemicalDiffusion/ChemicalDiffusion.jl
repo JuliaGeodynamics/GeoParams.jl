@@ -357,7 +357,7 @@ The output is a static matrix of size `n-1` x `n-1` where `n` is the number of c
     end
 
     # calculate diffusion matrix using eigenvalues and eigenvectors (see Eq. 4 in Guo and Zhang, 2020)
-    D = @muladd w * λD0 * exp(-λEa / (R * T)) * inv(w)
+    D = w * (λD0 .* exp.(.- λEa ./ (R .* T))) * inv(w)
 
     return D
 end
