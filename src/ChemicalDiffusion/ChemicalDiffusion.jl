@@ -407,7 +407,7 @@ The output is a static matrix of size `n-1` x `n-1` where `n` is the number of c
     end
 
     # compute diagonal matrix of eigenvalues (see Table 8 in Guo and Zhang, 2020)
-    λ = λD0 .* exp.(-λEa ./ (R * T))
+    λ = λD0 .* exp.(.- λEa ./ (R * T))
 
     return λ
 end
