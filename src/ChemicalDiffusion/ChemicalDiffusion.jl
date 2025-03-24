@@ -227,6 +227,7 @@ struct MeltMulticompDiffusionData{T, U1, U2, U3, U4, U5, N, N_N} <: AbstractChem
     λD0::GeoUnit{SMatrix{N, N, T, N_N}, U2}  # pre-exponential factor of the eigen values times identity matrix
     λEa::GeoUnit{SMatrix{N, N, T, N_N}, U3}  # activation energy of the eigen values times identity matrix
     w::GeoUnit{SMatrix{N, N, T, N_N}, U1}  # eigenvector matrix
+    inv_w::GeoUnit{SMatrix{N, N, T, N_N}, U1}  # inverse of the eigenvector matrix
     R::GeoUnit{T, U4}  # gas constant
     T_range_min::GeoUnit{T, U5}  # minimum temperature of the T_range
     T_range_max::GeoUnit{T, U5}  # maximum temperature of the T_range
@@ -248,8 +249,8 @@ struct MeltMulticompDiffusionData{T, U1, U2, U3, U4, U5, N, N_N} <: AbstractChem
             T_range_max = 0.0K  # maximum temperature of the T_range
         )
 
-        # size of the matrices, which the number of de components
-        # check if n is an integer
+        # calculate inverse of the eigenvector matrix
+        inv_w = inv(w)
 
 
         # Convert to GeoUnits
@@ -257,6 +258,7 @@ struct MeltMulticompDiffusionData{T, U1, U2, U3, U4, U5, N, N_N} <: AbstractChem
         λD0U = convert(GeoUnit, λD0)
         λEaU = convert(GeoUnit, λEa)
         wU = convert(GeoUnit, w)
+        inv_wU = convert(GeoUnit, inv_w)
         RU = convert(GeoUnit, R)
         T_range_minU = convert(GeoUnit, T_range_min)
         T_range_maxU = convert(GeoUnit, T_range_max)
@@ -280,9 +282,11 @@ struct MeltMulticompDiffusionData{T, U1, U2, U3, U4, U5, N, N_N} <: AbstractChem
         N = (Int(nU.val) - 1)  # number of independent components
         N_N = (N * N)  # number of elements in the matrix
 
+
+
         # Create struct
         return new{T, U1, U2, U3, U4, U5, N, N_N}(
-            name, phase, formula, species, dependent_species, buffer, fluid, nU, λD0U, λEaU, wU, RU, T_range_minU, T_range_maxU
+            name, phase, formula, species, dependent_species, buffer, fluid, nU, λD0U, λEaU, wU, inv_wU, RU, T_range_minU, T_range_maxU
         )
     end
 end
@@ -348,16 +352,16 @@ The output is a static matrix of size `n-1` x `n-1` where `n` is the number of c
 @inline function compute_D(data::MeltMulticompDiffusionData; T = 1K, kwargs...)
 
     if T isa Quantity
-        @unpack_units λD0, λEa, w, R = data
+        @unpack_units λD0, λEa, w, inv_w, R = data
 
         # convert to K to prevent affine error with Celsius
         T = uconvert(K, T)
     else
-        @unpack_val λD0, λEa, w, R = data
+        @unpack_val λD0, λEa, w, inv_w, R = data
     end
 
     # calculate diffusion matrix using eigenvalues and eigenvectors (see Eq. 4 in Guo and Zhang, 2020)
-    D = w * (λD0 .* exp.(.- λEa ./ (R .* T))) * inv(w)
+    D = w * (λD0 .* exp.(.- λEa ./ (R .* T))) * inv_w
 
     return D
 end
