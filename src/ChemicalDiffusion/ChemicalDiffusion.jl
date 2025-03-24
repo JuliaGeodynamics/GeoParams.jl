@@ -244,13 +244,11 @@ struct MeltMulticompDiffusionData{T, U1, U2, U3, U4, U5, N, N_N} <: AbstractChem
             λD0 = SMatrix{2, 2}(0.0, 0.0, 0.0, 0.0)u"m^2/s",  # eigen values times identity matrix
             λEa = SMatrix{2, 2}(0.0, 0.0, 0.0, 0.0)u"J/mol",  # eigen values times identity matrix
             w = SMatrix{2, 2}(0.0, 0.0, 0.0, 0.0)NoUnits,  # eigenvector matrix
+            inv_w = SMatrix{2, 2}(0.0, 0.0, 0.0, 0.0)NoUnits,  # inverse of the eigenvector matrix
             R = Unitful.R,  # gas constant
             T_range_min = 0.0K,  # minimum temperature of the T_range
             T_range_max = 0.0K  # maximum temperature of the T_range
         )
-
-        # calculate inverse of the eigenvector matrix
-        inv_w = inv(w)
 
 
         # Convert to GeoUnits
@@ -282,8 +280,6 @@ struct MeltMulticompDiffusionData{T, U1, U2, U3, U4, U5, N, N_N} <: AbstractChem
         N = (Int(nU.val) - 1)  # number of independent components
         N_N = (N * N)  # number of elements in the matrix
 
-
-
         # Create struct
         return new{T, U1, U2, U3, U4, U5, N, N_N}(
             name, phase, formula, species, dependent_species, buffer, fluid, nU, λD0U, λEaU, wU, inv_wU, RU, T_range_minU, T_range_maxU
@@ -292,7 +288,7 @@ struct MeltMulticompDiffusionData{T, U1, U2, U3, U4, U5, N, N_N} <: AbstractChem
 end
 
 function MeltMulticompDiffusionData(
-        Name, Phase, Formula, Species, Dependent_Species, Buffer, Fluid, n, λD0, λEa, w, R, T_range_min, T_range_max
+        Name, Phase, Formula, Species, Dependent_Species, Buffer, Fluid, n, λD0, λEa, w, inv_w, R, T_range_min, T_range_max
     )
     return MeltMulticompDiffusionData(;
         Name = Name,
@@ -306,6 +302,7 @@ function MeltMulticompDiffusionData(
         λD0 = λD0,
         λEa = λEa,
         w = w,
+        inv_w = inv_w,
         R = R,
         T_range_min = T_range_min,
         T_range_max = T_range_max,
@@ -361,7 +358,7 @@ The output is a static matrix of size `n-1` x `n-1` where `n` is the number of c
     end
 
     # calculate diffusion matrix using eigenvalues and eigenvectors (see Eq. 4 in Guo and Zhang, 2020)
-    D = w * (λD0 .* exp.(.- λEa ./ (R .* T))) * inv_w
+    D = w * (λD0 .* exp.(.- λEa ./ (R * T))) * inv_w
 
     return D
 end
@@ -458,11 +455,12 @@ function SetMulticompChemicalDiffusion(
         λD0 = nothing,
         λEa = nothing,
         w = nothing,
+        inv_w = nothing,
         T_range_min = nothing,
         T_range_max = nothing,
     ) where {F}
 
-    kwargs = (; n, λD0, λEa, w, T_range_min, T_range_max)
+    kwargs = (; n, λD0, λEa, w, inv_w, T_range_min, T_range_max)
 
     return Transform_ChemicalDiffusion(name, kwargs)
 end
@@ -474,12 +472,13 @@ function SetMulticompChemicalDiffusion(
         λD0 = nothing,
         λEa = nothing,
         w = nothing,
+        inv_w = nothing,
         R = nothing,
         T_range_min = nothing,
         T_range_max = nothing,
     ) where {F, T <: Union{GEO, SI}}
 
-    kwargs = (; n, λD0, λEa, w, R, T_range_min, T_range_max)
+    kwargs = (; n, λD0, λEa, w, inv_w, R, T_range_min, T_range_max)
 
     return nondimensionalize(Transform_ChemicalDiffusion(name, kwargs), CharDim)
 end
@@ -616,7 +615,7 @@ function Transform_ChemicalDiffusion(pp::MeltMulticompDiffusionData)
     λD0 = Value(pp.λD0)
     λEa = Value(pp.λEa)
     w = Value(pp.w)
-    R = Value(pp.R)
+    inv_w =  Value(pp.inv_w)
     T_range_min = Value(pp.T_range_min)
     T_range_max = Value(pp.T_range_max)
 
@@ -637,6 +636,7 @@ function Transform_ChemicalDiffusion(pp::MeltMulticompDiffusionData)
         λD0 = λD0_SI,
         λEa = λEa_SI,
         w = w,
+        inv_w = inv_w,
         T_range_min = T_range_min_SI,
         T_range_max = T_range_max_SI,
     )
@@ -651,15 +651,15 @@ function Transform_ChemicalDiffusion(pp::MeltMulticompDiffusionData, kwargs::Nam
     f(a, b) = Value(GeoUnit(a))
     f(::Nothing, b) = Value(b)
 
-    (; n, λD0, λEa, w, T_range_min, T_range_max) = kwargs
+    (; n, λD0, λEa, w, inv_w, T_range_min, T_range_max) = kwargs
 
     n_new = f(n, pp.n)
     λD0_new = f(λD0, pp.λD0)
     λEa_new = f(λEa, pp.λEa)
     w_new = f(w, pp.w)
+    inv_w_new = f(inv_w, pp.inv_w)
     T_range_min_new = f(T_range_min, pp.T_range_min)
     T_range_max_new = f(T_range_max, pp.T_range_max)
-
 
     λD0_SI = uconvert.(m^2 / s, λD0_new)
     λEa_SI = uconvert.(J / mol, λEa_new)
@@ -678,6 +678,7 @@ function Transform_ChemicalDiffusion(pp::MeltMulticompDiffusionData, kwargs::Nam
         λD0 = λD0_SI,
         λEa = λEa_SI,
         w = w_new,
+        inv_w = inv_w_new,
         T_range_min = T_range_min_SI,
         T_range_max = T_range_max_SI,
     )
