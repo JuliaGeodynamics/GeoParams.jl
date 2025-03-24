@@ -639,12 +639,13 @@ using StaticArrays
 
     # -------------------------- Basaltic Melt --------------------------
 
+    # multicomponent diffusion from Sheng et al. (1992) (HD 19/03/25)
     Melt_Mg = Melt.Melt_Mg_Sheng1992_basaltic
     Melt_Mg = SetChemicalDiffusion(Melt_Mg)
     D = ustrip(compute_D(Melt_Mg, T = 1550C))
     @test  D ≈ 1.16044e-10 atol = 1.0e-15
 
-    # multicomponent diffusion
+    # multicomponent diffusion from Guo and Zhang (2020) (HD 24/03/25)
     melt_multicomponent = Melt.Melt_multicomponent_major_Guo2020_SiO2_basaltic
     melt_multicomponent = SetMulticompChemicalDiffusion(melt_multicomponent)
 
@@ -662,4 +663,15 @@ using StaticArrays
 
     compute_D!(D, melt_multicomponent; T = T)
     @test ustrip(D[1][1, 1]) ≈ 1.882e-11 atol = 1.0e-15
+
+    # test compute_λ
+    λ = compute_λ(melt_multicomponent, T = (1800K))
+    λ1 = ustrip(λ[1,1]) * 1.0e12
+    @test λ1 ≈ λ1_paper atol = 1.0e-15
+
+    T = ones(10) .* 1800K
+    λ = [SMatrix{7, 7}(zeros(7, 7)) for _ in 1:10]m^2 / s
+
+    compute_λ!(λ, melt_multicomponent; T = T)
+    @test (ustrip(λ[1][1, 1]) * 1.0e12) ≈ λ1_paper atol = 1.0e-15
 end

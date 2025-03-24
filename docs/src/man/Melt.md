@@ -33,6 +33,13 @@ The function `compute_D` can be used as usual to calculate the diffusion coeffic
  -2.59574e-13 m²·⁰ s⁻¹·⁰   7.36022e-13 m²·⁰ s⁻¹·⁰  -5.65377e-13 m²·⁰ s⁻¹·⁰     -2.34514e-12 m²·⁰ s⁻¹·⁰   3.67054e-12 m²·⁰ s⁻¹·⁰   3.13608e-12 m²·⁰ s⁻¹·⁰
 ```
 
+Additionally, the function `compute_λ` can be used directly to compute the diagonal matrix of the eigenvalues. This can be useful in the case when the diffusion matrix wants to be diagonalized:
+
+```@docs
+GeoParams.MaterialParameters.ChemicalDiffusion.compute_λ
+GeoParams.MaterialParameters.ChemicalDiffusion.compute_λ!
+```
+
 For trace-, self- or interdiffusion parameters for melt, the following functions are implemented:
 
 ```@docs

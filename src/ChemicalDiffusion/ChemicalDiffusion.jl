@@ -19,7 +19,9 @@ export SetChemicalDiffusion,
     DiffusionData,
     MeltMulticompDiffusionData,
     compute_D,
-    compute_D!
+    compute_D!,
+    compute_λ,
+    compute_λ!
 
 # load collection of chemical diffusion data
 include("Data/Rutile/Rutile.jl")
@@ -381,6 +383,48 @@ function compute_D!(
 
     return @inbounds for i in eachindex(D)
         D[i] = compute_D(data; T = T[i], P = P[i], fO2 = fO2[i], X = X[i], kwargs...)
+    end
+end
+
+
+"""
+    compute_λ(data::MeltMulticompDiffusionData; T=1K, kwargs...)
+
+Computes the diagonal matrix of eigenvalues [m^2/s] from the diffusion data `data` at temperature `T` [K] from a structure of type `MeltMulticompDiffusionData`.
+This is useful if the system needs to be diagonalized.
+If `T` is provided without unit, the function assumes the unit is in Kelvin and outputs the eigenvalues without unit based on the value in m^2/s.
+The output is a static matrix of size `n-1` x `n-1` where `n` is the number of components.
+"""
+@inline function compute_λ(data::MeltMulticompDiffusionData; T = 1K, kwargs...)
+
+    if T isa Quantity
+        @unpack_units λD0, λEa, w, inv_w, R = data
+
+        # convert to K to prevent affine error with Celsius
+        T = uconvert(K, T)
+    else
+        @unpack_val λD0, λEa, w, inv_w, R = data
+    end
+
+    # compute diagonal matrix of eigenvalues (see Table 8 in Guo and Zhang, 2020)
+    λ = λD0 .* exp.(-λEa ./ (R * T))
+
+    return λ
+end
+
+"""
+    compute_λ!(λ::AbstractArray, data::MeltMulticompDiffusionData; T = ones(size(λ))K, kwargs...)
+
+In-place version of `compute_λ(data::AbstractChemicalDiffusion; T=1K, kwargs...)`. `λ` should be an array of the same size as T.
+"""
+function compute_λ!(λ::AbstractArray,
+                    data::MeltMulticompDiffusionData;
+                    T = ones(size(λ))K,
+                    kwargs...
+                    )
+
+    return @inbounds for i in eachindex(λ)
+        λ[i] = compute_λ(data; T = T[i], kwargs...)
     end
 end
 
