@@ -1352,6 +1352,8 @@ Creates a plot of log(D) versus 10^4/T for one or a tuple of `ChemicalDiffusionD
 - `labelsize`: Size of the axis labels (default: 35)
 - `xlims`: Limits for the x-axis (default: (nothing, nothing))
 - `ylims`: Limits for the y-axis (default: (nothing, nothing))
+- `ticklabelsize`: Size of the tick labels (default: 35)
+- `xlims2`: Limits for the x-axis of the second axis (temperature) (default: (nothing, nothing))
 
 # Example
 
@@ -1374,6 +1376,7 @@ function PlotDiffusionCoefArrhenius(
         x::Union{Tuple{Vararg{DiffusionData}}, NTuple{N, DiffusionData} where {N}, DiffusionData};
         P::Quantity = 1u"GPa",
         fO2 = 1NoUnits,
+        X = 0NoUnits,
         log_type::Symbol = :log10,
         linestyle::Symbol = :solid,
         linewidth = 1,
@@ -1389,6 +1392,8 @@ function PlotDiffusionCoefArrhenius(
         labelsize = 35,
         xlims = (nothing, nothing),
         ylims = (nothing, nothing),
+        ticklabelsize = 35,
+        xlims2 = (nothing, nothing),
     )
 
     if isa(x, AbstractChemicalDiffusion)
@@ -1402,8 +1407,8 @@ function PlotDiffusionCoefArrhenius(
 
     D = zeros(n * 2)
     for i in 1:n
-        D[i] = compute_D(x[i], T = T_min[i], P = P, fO2 = fO2) |> upreferred |> ustrip
-        D[i + n] = compute_D(x[i], T = T_max[i], P = P, fO2 = fO2) |> upreferred |> ustrip
+        D[i] = compute_D(x[i], T = T_min[i], P = P, fO2 = fO2, X = X) |> upreferred |> ustrip
+        D[i + n] = compute_D(x[i], T = T_max[i], P = P, fO2 = fO2, X = X) |> upreferred |> ustrip
     end
 
     T_inv_min = 1.0e4 ./ T_min .|> upreferred .|> ustrip
@@ -1424,6 +1429,8 @@ function PlotDiffusionCoefArrhenius(
         xlabel = "10⁴/T [K⁻¹]",
         xlabelsize = labelsize,
         ylabelsize = labelsize,
+        xticklabelsize = ticklabelsize,
+        yticklabelsize = ticklabelsize,
         title = title,
     )
 
@@ -1466,6 +1473,8 @@ function PlotDiffusionCoefArrhenius(
         title = "",
         xaxisposition = :top,
         xreversed = true,
+        xticklabelsize = ticklabelsize,
+        yticklabelsize = ticklabelsize,
     )
 
     hidexdecorations!(ax2; grid = true, label = false, ticklabels = false, ticks = false)
@@ -1480,7 +1489,9 @@ function PlotDiffusionCoefArrhenius(
     linkyaxes!(ax1, ax2)
 
     xlims!(ax1, xlims...)
+    xlims!(ax2, xlims2...)
     ylims!(ax1, ylims...)
+    ylims!(ax2, ylims...)
 
     if !isnothing(filename)
         save(filename, fig)
