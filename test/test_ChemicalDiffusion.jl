@@ -1,5 +1,6 @@
 using Test
 using GeoParams
+using StaticArrays
 
 @testset "ChemicalDiffusion" begin
 
@@ -7,10 +8,19 @@ using GeoParams
     x1 = DiffusionData()
     @test isbits(x1)
 
+    # test the diffusion data structure for multicomponent in melt
+    x2 = MeltMulticompDiffusionData()
+    @test isbits(x2)
+
     # check auto unit conversion
     Hf_Rt_perp = Rutile.Rt_Hf_Cherniak2007_perp_c
     Hf_Rt_perp = SetChemicalDiffusion(Hf_Rt_perp; D0 = 10km^2 / s)
     @test Hf_Rt_perp.D0.val == 1.0e7
+
+    # check auto unit conversion for multicomponent in melt
+    melt_major = Melt.Melt_multicomponent_major_Guo2020_SiO2_basaltic
+    melt_major = SetMulticompChemicalDiffusion(melt_major)
+    @test melt_major.λD0[1, 1].val == 9.384642109767468e-7
 
     # test the diffusion parameter calculation
     D = ustrip(compute_D(x1))
@@ -49,6 +59,24 @@ using GeoParams
     )
 
     @test phase.ChemDiffusion[1].D0.val ≈ 9.099999999999998
+
+    # test SetMaterialParams for multicomponent in melt
+    phase = SetMaterialParams(
+        Name = "Chemical Diffusion",
+        ChemDiffusion = melt_major
+    )
+
+    @test phase.ChemDiffusion[1].λD0[1, 1].val ≈ 9.384642109767468e-7 atol = 1.0e-10
+
+    # test nondimensionalisation for multicomponent in melt
+    CharUnits_GEO = GEO_units(length = 10cm)
+    phase = SetMaterialParams(
+        Name = "Chemical Diffusion",
+        ChemDiffusion = melt_major,
+        CharDim = CharUnits_GEO
+    )
+
+    @test phase.ChemDiffusion[1].λD0[1, 1] ≈ 9.384642109767466e8 atol = 1.0e5
 
     # test experimental data with literature values
 
@@ -611,9 +639,39 @@ using GeoParams
 
     # -------------------------- Basaltic Melt --------------------------
 
+    # multicomponent diffusion from Sheng et al. (1992) (HD 19/03/25)
     Melt_Mg = Melt.Melt_Mg_Sheng1992_basaltic
     Melt_Mg = SetChemicalDiffusion(Melt_Mg)
     D = ustrip(compute_D(Melt_Mg, T = 1550C))
     @test  D ≈ 1.16044e-10 atol = 1.0e-15
 
+    # multicomponent diffusion from Guo and Zhang (2020) (HD 24/03/25)
+    melt_multicomponent = Melt.Melt_multicomponent_major_Guo2020_SiO2_basaltic
+    melt_multicomponent = SetMulticompChemicalDiffusion(melt_multicomponent)
+
+    T = 1800
+    λ1 = melt_multicomponent.λD0[1, 1].val * exp(-melt_multicomponent.λEa[1, 1].val / (melt_multicomponent.R.val * T)) * 1.0e12
+    λ1_paper = exp(13.752 - 19636 / T)
+    @test λ1 ≈ λ1_paper atol = 1.0e-15
+
+    D = compute_D(melt_multicomponent, T = (1500C))
+    @test ustrip(D[1]) ≈ 1.882e-11 atol = 1.0e-15
+
+    # test compute_D! with multicomponent diffusion
+    T = ones(10) .* 1773.15K
+    D = [SMatrix{7, 7}(zeros(7, 7)) for _ in 1:10]m^2 / s
+
+    compute_D!(D, melt_multicomponent; T = T)
+    @test ustrip(D[1][1, 1]) ≈ 1.882e-11 atol = 1.0e-15
+
+    # test compute_λ
+    λ = compute_λ(melt_multicomponent, T = (1800K))
+    λ1 = ustrip(λ[1, 1]) * 1.0e12
+    @test λ1 ≈ λ1_paper atol = 1.0e-15
+
+    T = ones(10) .* 1800K
+    λ = [SMatrix{7, 7}(zeros(7, 7)) for _ in 1:10]m^2 / s
+
+    compute_λ!(λ, melt_multicomponent; T = T)
+    @test (ustrip(λ[1][1, 1]) * 1.0e12) ≈ λ1_paper atol = 1.0e-15
 end

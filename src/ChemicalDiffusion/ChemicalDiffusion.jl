@@ -2,6 +2,7 @@ module ChemicalDiffusion
 
 using GeoParams
 using Unitful
+using StaticArrays
 
 using Parameters, LaTeXStrings, Unitful, MuladdMacro
 using ..Units
@@ -12,11 +13,15 @@ import Base.show
 
 # Exported functions defined in this module
 export SetChemicalDiffusion,
+    SetMulticompChemicalDiffusion,
     Transform_ChemicalDiffusion,
     AbstractChemicalDiffusion,
     DiffusionData,
+    MeltMulticompDiffusionData,
     compute_D,
-    compute_D!
+    compute_D!,
+    compute_λ,
+    compute_λ!
 
 # load collection of chemical diffusion data
 include("Data/Rutile/Rutile.jl")
@@ -41,7 +46,7 @@ abstract type AbstractChemicalDiffusion{T} <: AbstractMaterialParam end
 """
     DiffusionData(; Name, Phase, Formula, Species, Orientation, Crystallography, Buffer, Fluid, Doping, D0, log_D0_1σ, Ea, Ea_1σ, ΔV, ΔV_1σ, dfO2, nfO2, aX, bX, Charge, T_range, P0)
 
-Defines the diffusion data for the chemical diffusion of a given phase and species from an experiment.
+Defines the diffusion data for the chemical diffusion of a given phase and species from experiments or natural data.
 
 The diffusion coefficient `D` [\\mathrm{[m^2/s]}] is given by an Arrhenius equation:
 ```math
@@ -196,6 +201,122 @@ function param_info(data::DiffusionData) # info about the struct
     )
 end
 
+"""
+    MeltMulticompDiffusionData(; Name, Phase, Formula, Species, Dependent_Species, Buffer, Fluid, n, λD0, λEa, w, R, T_range_min, T_range_max)
+
+Defines the diffusion data for the multicomponent chemical diffusion of a system of species in melt from experiments or natural data.
+
+The diffusion coefficient matrix `D` [m^2/s] is given by an Arrhenius equation:
+```math
+    D = w * λD0 * \\exp \\left( -\\frac{λEa} {RT}\\right) * w^{-1}
+```
+where
+- `w` is the eigenvector matrix,
+- `λD0` is the pre-exponential factor of the eigen values times identity matrix [m^2/s],
+- `λEa` is the activation energy of the eigen values times identity matrix [J/mol],
+- `R` is the gas constant [J/(mol K)],
+- `T` is the temperature [K].
+"""
+struct MeltMulticompDiffusionData{T, U1, U2, U3, U4, U5, N, N_N} <: AbstractChemicalDiffusion{T}
+    Name::Ptr{UInt8}  # name of the diffusion experiment and paper
+    Phase::Ptr{UInt8}  # name of the phase
+    Formula::Ptr{UInt8}  # chemical formula of the mineral
+    Species::Ptr{UInt8}  # elements or species being diffused
+    Dependent_Species::Ptr{UInt8}  # dependent species
+    Buffer::Ptr{UInt8}  # Buffer condition (e.g., NNO) during the experiment
+    Fluid::Ptr{UInt8}  # Fluid condition (e.g., anhydrous) during the experiment
+    n::GeoUnit{T, U1}  # number of components
+    λD0::GeoUnit{SMatrix{N, N, T, N_N}, U2}  # pre-exponential factor of the eigen values times identity matrix
+    λEa::GeoUnit{SMatrix{N, N, T, N_N}, U3}  # activation energy of the eigen values times identity matrix
+    w::GeoUnit{SMatrix{N, N, T, N_N}, U1}  # eigenvector matrix
+    inv_w::GeoUnit{SMatrix{N, N, T, N_N}, U1}  # inverse of the eigenvector matrix
+    R::GeoUnit{T, U4}  # gas constant
+    T_range_min::GeoUnit{T, U5}  # minimum temperature of the T_range
+    T_range_max::GeoUnit{T, U5}  # maximum temperature of the T_range
+
+    function MeltMulticompDiffusionData(;
+            Name = "Unknown",  # name of the diffusion experiment and paper
+            Phase = "Unknown",  # name of the mineral
+            Formula = "Unknown",  # chemical formula of the mineral
+            Species = "Unknown",  # element or species being diffused
+            Dependent_Species = "Unknown",  # dependent species
+            Buffer = "Unknown",  # Buffer condition (e.g., NNO) during the experiment
+            Fluid = "Unknown",  # Fluid condition (e.g., anhydrous) during the experiment
+            n = 3NoUnits,  # number of components
+            λD0 = SMatrix{2, 2}(0.0, 0.0, 0.0, 0.0)u"m^2/s",  # eigen values times identity matrix
+            λEa = SMatrix{2, 2}(0.0, 0.0, 0.0, 0.0)u"J/mol",  # eigen values times identity matrix
+            w = SMatrix{2, 2}(0.0, 0.0, 0.0, 0.0)NoUnits,  # eigenvector matrix
+            inv_w = SMatrix{2, 2}(0.0, 0.0, 0.0, 0.0)NoUnits,  # inverse of the eigenvector matrix
+            R = Unitful.R,  # gas constant
+            T_range_min = 0.0K,  # minimum temperature of the T_range
+            T_range_max = 0.0K  # maximum temperature of the T_range
+        )
+
+
+        # Convert to GeoUnits
+        nU = convert(GeoUnit, n)
+        λD0U = convert(GeoUnit, λD0)
+        λEaU = convert(GeoUnit, λEa)
+        wU = convert(GeoUnit, w)
+        inv_wU = convert(GeoUnit, inv_w)
+        RU = convert(GeoUnit, R)
+        T_range_minU = convert(GeoUnit, T_range_min)
+        T_range_maxU = convert(GeoUnit, T_range_max)
+
+        # Extract struct types
+        T = typeof(λD0U[1]).types[1]
+        U1 = typeof(nU).types[2]
+        U2 = typeof(λD0U[1]).types[2]
+        U3 = typeof(λEaU[1]).types[2]
+        U4 = typeof(RU).types[2]
+        U5 = typeof(T_range_minU).types[2]
+        name = pointer(ptr2string(Name))
+        phase = pointer(ptr2string(Phase))
+        formula = pointer(ptr2string(Formula))
+        species = pointer(ptr2string(Species))
+        dependent_species = pointer(ptr2string(Dependent_Species))
+        buffer = pointer(ptr2string(Buffer))
+        fluid = pointer(ptr2string(Fluid))
+
+        # size for the matrices
+        N = (Int(nU.val) - 1)  # number of independent components
+        N_N = (N * N)  # number of elements in the matrix
+
+        # Create struct
+        return new{T, U1, U2, U3, U4, U5, N, N_N}(
+            name, phase, formula, species, dependent_species, buffer, fluid, nU, λD0U, λEaU, wU, inv_wU, RU, T_range_minU, T_range_maxU
+        )
+    end
+end
+
+function MeltMulticompDiffusionData(
+        Name, Phase, Formula, Species, Dependent_Species, Buffer, Fluid, n, λD0, λEa, w, inv_w, R, T_range_min, T_range_max
+    )
+    return MeltMulticompDiffusionData(;
+        Name = Name,
+        Phase = Phase,
+        Formula = Formula,
+        Species = Species,
+        Dependent_Species = Dependent_Species,
+        Buffer = Buffer,
+        Fluid = Fluid,
+        n = n,
+        λD0 = λD0,
+        λEa = λEa,
+        w = w,
+        inv_w = inv_w,
+        R = R,
+        T_range_min = T_range_min,
+        T_range_max = T_range_max,
+    )
+end
+
+function param_info(data::MeltMulticompDiffusionData) # info about the struct
+    return MaterialParamsInfo(;
+        Equation = L"D = w * λD0 * \exp\left(-\frac{λEa} {RT}\right) * w^{-1}",
+    )
+end
+
 
 """
     compute_D(data::DiffusionData; T=1K, P=1GPa, fO2 = 1NoUnits, X = 0 NoUnits, kwargs...)
@@ -219,23 +340,92 @@ If `T` and `P` are provided without unit, the function assumes the units are in 
     return D
 end
 
-"""
-    compute_D!(D, data::DiffusionData; T=ones(size(D))K, P=ones(size(D))Pa, fO2 = ones(size(D)), X = zeros(size(D)), kwargs...)
 
-In-place version of `compute_D(data::DiffusionData; T=1K, P=1GPa, fO2=0NoUnits, kwargs...)`. `D` should be an array of the same size as T, P and fO2.
+"""
+    compute_D(data::MeltMulticompDiffusionData; T=1K, kwargs...)
+
+Computes the diffusion coefficient matrix [m^2/s] from the diffusion data `data` at temperature `T` [K] from a structure of type `MeltMulticompDiffusionData`.
+If `T` is provided without unit, the function assumes the unit is in Kelvin and outputs the diffusion coefficient without unit based on the value in m^2/s.
+The output is a static matrix of size `n-1` x `n-1` where `n` is the number of components.
+"""
+@inline function compute_D(data::MeltMulticompDiffusionData; T = 1K, kwargs...)
+
+    if T isa Quantity
+        @unpack_units λD0, λEa, w, inv_w, R = data
+
+        # convert to K to prevent affine error with Celsius
+        T = uconvert(K, T)
+    else
+        @unpack_val λD0, λEa, w, inv_w, R = data
+    end
+
+    # calculate diffusion matrix using eigenvalues and eigenvectors (see Eq. 4 in Guo and Zhang, 2020)
+    D = w * (λD0 .* exp.(.- λEa ./ (R * T))) * inv_w
+
+    return D
+end
+
+
+"""
+    compute_D!(D, data::AbstractChemicalDiffusion; T=ones(size(D))K, P=ones(size(D))Pa, fO2 = ones(size(D)), X = zeros(size(D)), kwargs...)
+
+In-place version of `compute_D(data::AbstractChemicalDiffusion; T=1K, P=1GPa, fO2=0NoUnits, kwargs...)`. `D` should be an array of the same size as T, P and fO2.
 """
 function compute_D!(
-        D::AbstractArray{_T, nDim},
-        data::DiffusionData;
+        D::AbstractArray,
+        data::AbstractChemicalDiffusion;
         T = ones(size(D))K,
         P = ones(size(D))GPa,
         fO2 = ones(size(D)),
         X = zeros(size(D)),
         kwargs...
-    ) where {_T, nDim}
+    )
 
     return @inbounds for i in eachindex(D)
         D[i] = compute_D(data; T = T[i], P = P[i], fO2 = fO2[i], X = X[i], kwargs...)
+    end
+end
+
+
+"""
+    compute_λ(data::MeltMulticompDiffusionData; T=1K, kwargs...)
+
+Computes the diagonal matrix of eigenvalues [m^2/s] from the diffusion data `data` at temperature `T` [K] from a structure of type `MeltMulticompDiffusionData`.
+This is useful if the system needs to be diagonalized.
+If `T` is provided without unit, the function assumes the unit is in Kelvin and outputs the eigenvalues without unit based on the value in m^2/s.
+The output is a static matrix of size `n-1` x `n-1` where `n` is the number of components.
+"""
+@inline function compute_λ(data::MeltMulticompDiffusionData; T = 1K, kwargs...)
+
+    if T isa Quantity
+        @unpack_units λD0, λEa, w, inv_w, R = data
+
+        # convert to K to prevent affine error with Celsius
+        T = uconvert(K, T)
+    else
+        @unpack_val λD0, λEa, w, inv_w, R = data
+    end
+
+    # compute diagonal matrix of eigenvalues (see Table 8 in Guo and Zhang, 2020)
+    λ = λD0 .* exp.(.- λEa ./ (R * T))
+
+    return λ
+end
+
+"""
+    compute_λ!(λ::AbstractArray, data::MeltMulticompDiffusionData; T = ones(size(λ))K, kwargs...)
+
+In-place version of `compute_λ(data::AbstractChemicalDiffusion; T=1K, kwargs...)`. `λ` should be an array of the same size as T.
+"""
+function compute_λ!(
+        λ::AbstractArray,
+        data::MeltMulticompDiffusionData;
+        T = ones(size(λ))K,
+        kwargs...
+    )
+
+    return @inbounds for i in eachindex(λ)
+        λ[i] = compute_λ(data; T = T[i], kwargs...)
     end
 end
 
@@ -244,6 +434,13 @@ function show(io::IO, g::DiffusionData)
     return print(
         io,
         "DiffusionData: Phase = $(unsafe_string(g.Phase)), Species = $(unsafe_string(g.Species)), D0 = $(Value(g.D0)), Ea = $(Value(g.Ea)), ΔV = $(Value(g.ΔV))",
+    )
+end
+
+function show(io::IO, g::MeltMulticompDiffusionData)
+    return print(
+        io,
+        "DiffusionData: Phase = $(unsafe_string(g.Phase)), Species = $(unsafe_string(g.Species)), Dependent Species = $(unsafe_string(g.Dependent_Species)), Number of Components = $(Value(g.n))",
     )
 end
 
@@ -295,6 +492,44 @@ function SetChemicalDiffusion(
 end
 
 """
+    SetMulticompChemicalDiffusion["Name of Chemical Diffusion"]
+"""
+function SetMulticompChemicalDiffusion(
+        name::F;
+        n = nothing,
+        λD0 = nothing,
+        λEa = nothing,
+        w = nothing,
+        inv_w = nothing,
+        T_range_min = nothing,
+        T_range_max = nothing,
+    ) where {F}
+
+    kwargs = (; n, λD0, λEa, w, inv_w, T_range_min, T_range_max)
+
+    return Transform_ChemicalDiffusion(name, kwargs)
+end
+
+function SetMulticompChemicalDiffusion(
+        name::F,
+        CharDim::GeoUnits{T};
+        n = nothing,
+        λD0 = nothing,
+        λEa = nothing,
+        w = nothing,
+        inv_w = nothing,
+        R = nothing,
+        T_range_min = nothing,
+        T_range_max = nothing,
+    ) where {F, T <: Union{GEO, SI}}
+
+    kwargs = (; n, λD0, λEa, w, inv_w, R, T_range_min, T_range_max)
+
+    return nondimensionalize(Transform_ChemicalDiffusion(name, kwargs), CharDim)
+end
+
+
+"""
     Transform_ChemicalDiffusion(name)
 Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
 """
@@ -309,7 +544,7 @@ function Transform_ChemicalDiffusion(p::AbstractChemicalDiffusion{T}, CharDim::G
     return nondimensionalize(Transform_ChemicalDiffusion(p), CharDim)
 end
 
-function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion)
+function Transform_ChemicalDiffusion(pp::DiffusionData)
 
     D0 = Value(pp.D0)
     log_D0_1σ = Value(pp.log_D0_1σ)
@@ -361,7 +596,7 @@ function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion)
     return DiffusionData(; args...)
 end
 
-function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion, kwargs::NamedTuple)
+function Transform_ChemicalDiffusion(pp::DiffusionData, kwargs::NamedTuple)
 
     f(a, b) = Value(GeoUnit(a))
     f(::Nothing, b) = Value(b)
@@ -416,6 +651,84 @@ function Transform_ChemicalDiffusion(pp::AbstractChemicalDiffusion, kwargs::Name
     )
 
     return DiffusionData(; args...)
+end
+
+
+function Transform_ChemicalDiffusion(pp::MeltMulticompDiffusionData)
+
+    n = Value(pp.n)
+    λD0 = Value(pp.λD0)
+    λEa = Value(pp.λEa)
+    w = Value(pp.w)
+    inv_w = Value(pp.inv_w)
+    T_range_min = Value(pp.T_range_min)
+    T_range_max = Value(pp.T_range_max)
+
+    λD0_SI = uconvert(m^2 / s, λD0)
+    λEa_SI = uconvert(J / mol, λEa)
+    T_range_min_SI = uconvert(K, T_range_min)
+    T_range_max_SI = uconvert(K, T_range_max)
+
+    args = (
+        Name = unsafe_string(pp.Name),
+        Phase = unsafe_string(pp.Phase),
+        Formula = unsafe_string(pp.Formula),
+        Species = unsafe_string(pp.Species),
+        Dependent_Species = unsafe_string(pp.Dependent_Species),
+        Buffer = unsafe_string(pp.Buffer),
+        Fluid = unsafe_string(pp.Fluid),
+        n = n,
+        λD0 = λD0_SI,
+        λEa = λEa_SI,
+        w = w,
+        inv_w = inv_w,
+        T_range_min = T_range_min_SI,
+        T_range_max = T_range_max_SI,
+    )
+
+
+    return MeltMulticompDiffusionData(; args...)
+end
+
+
+function Transform_ChemicalDiffusion(pp::MeltMulticompDiffusionData, kwargs::NamedTuple)
+
+    f(a, b) = Value(GeoUnit(a))
+    f(::Nothing, b) = Value(b)
+
+    (; n, λD0, λEa, w, inv_w, T_range_min, T_range_max) = kwargs
+
+    n_new = f(n, pp.n)
+    λD0_new = f(λD0, pp.λD0)
+    λEa_new = f(λEa, pp.λEa)
+    w_new = f(w, pp.w)
+    inv_w_new = f(inv_w, pp.inv_w)
+    T_range_min_new = f(T_range_min, pp.T_range_min)
+    T_range_max_new = f(T_range_max, pp.T_range_max)
+
+    λD0_SI = uconvert.(m^2 / s, λD0_new)
+    λEa_SI = uconvert.(J / mol, λEa_new)
+    T_range_min_SI = uconvert(K, T_range_min_new)
+    T_range_max_SI = uconvert(K, T_range_max_new)
+
+    args = (
+        Name = unsafe_string(pp.Name),
+        Phase = unsafe_string(pp.Phase),
+        Formula = unsafe_string(pp.Formula),
+        Species = unsafe_string(pp.Species),
+        Dependent_Species = unsafe_string(pp.Dependent_Species),
+        Buffer = unsafe_string(pp.Buffer),
+        Fluid = unsafe_string(pp.Fluid),
+        n = n_new,
+        λD0 = λD0_SI,
+        λEa = λEa_SI,
+        w = w_new,
+        inv_w = inv_w_new,
+        T_range_min = T_range_min_SI,
+        T_range_max = T_range_max_SI,
+    )
+
+    return MeltMulticompDiffusionData(; args...)
 end
 
 

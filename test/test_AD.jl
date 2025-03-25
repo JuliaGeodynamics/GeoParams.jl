@@ -108,6 +108,14 @@ for (name, backend) in zip(pkg, backends)
         Hf_Rt_para = SetChemicalDiffusion(Hf_Rt_para)
         @test AD.derivative(backend, x -> compute_D(Hf_Rt_para, T = x, P = 0), T)[1] ≈ 2.7517698e-25 atol = 1.0e-28
         @test AD.derivative(backend, x -> compute_D(Hf_Rt_para, T = 1273.15, P = x), P)[1] ≈ 0.0
+
+        # test only if backend is ForwardDiff because it is not compatible with ReverseDiff
+        if name == "ForwardDiff"
+            melt_major = Melt.Melt_multicomponent_major_Guo2020_SiO2_basaltic
+            melt_major = SetMulticompChemicalDiffusion(melt_major)
+            @test AD.jacobian(backend, x -> compute_D(melt_major, T = x), T)[1][1] ≈ -1.34176e-16 atol = 1.0e-20
+        end
+
     end
 
 end

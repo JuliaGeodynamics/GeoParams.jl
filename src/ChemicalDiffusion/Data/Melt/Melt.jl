@@ -1,9 +1,12 @@
 module Melt
 
 using GeoParams
+using StaticArrays
+using Unitful
 
 include("Melt_helpers.jl")
 
+include("Elements/Multicomponent.jl")
 include("Elements/Mg.jl")
 include("Elements/Sc.jl")
 include("Elements/V.jl")
