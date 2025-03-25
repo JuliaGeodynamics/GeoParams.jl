@@ -417,11 +417,12 @@ end
 
 In-place version of `compute_λ(data::AbstractChemicalDiffusion; T=1K, kwargs...)`. `λ` should be an array of the same size as T.
 """
-function compute_λ!(λ::AbstractArray,
-                    data::MeltMulticompDiffusionData;
-                    T = ones(size(λ))K,
-                    kwargs...
-                    )
+function compute_λ!(
+        λ::AbstractArray,
+        data::MeltMulticompDiffusionData;
+        T = ones(size(λ))K,
+        kwargs...
+    )
 
     return @inbounds for i in eachindex(λ)
         λ[i] = compute_λ(data; T = T[i], kwargs...)
@@ -659,7 +660,7 @@ function Transform_ChemicalDiffusion(pp::MeltMulticompDiffusionData)
     λD0 = Value(pp.λD0)
     λEa = Value(pp.λEa)
     w = Value(pp.w)
-    inv_w =  Value(pp.inv_w)
+    inv_w = Value(pp.inv_w)
     T_range_min = Value(pp.T_range_min)
     T_range_max = Value(pp.T_range_max)
 

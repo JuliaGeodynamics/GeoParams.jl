@@ -666,7 +666,7 @@ using StaticArrays
 
     # test compute_λ
     λ = compute_λ(melt_multicomponent, T = (1800K))
-    λ1 = ustrip(λ[1,1]) * 1.0e12
+    λ1 = ustrip(λ[1, 1]) * 1.0e12
     @test λ1 ≈ λ1_paper atol = 1.0e-15
 
     T = ones(10) .* 1800K
