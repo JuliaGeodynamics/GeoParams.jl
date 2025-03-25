@@ -113,7 +113,7 @@ for (name, backend) in zip(pkg, backends)
         if name == "ForwardDiff"
             melt_major = Melt.Melt_multicomponent_major_Guo2020_SiO2_basaltic
             melt_major = SetMulticompChemicalDiffusion(melt_major)
-            @test AD.derivative(backend, x -> compute_D(melt_major, T = x), T)[1][1] ≈ -1.34176e-16 atol = 1.0e-20
+            @test AD.jacobian(backend, x -> compute_D(melt_major, T = x), T)[1][1] ≈ -1.34176e-16 atol = 1.0e-20
         end
 
     end
