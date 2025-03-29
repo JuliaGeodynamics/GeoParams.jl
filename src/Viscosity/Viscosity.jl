@@ -18,6 +18,23 @@ end
 
 @inline compute_viscosity_εII(v::LinearViscous, εII, args) = v.η.val
 @inline compute_viscosity_εII(v::ConstantElasticity, εII, args) = v.G * args.dt
+@inline compute_viscosity_εII(v::HerschelBulkley, εII, args) = compute_viscosity_εII(v, εII; args...)
+
+@inline function compute_viscosity_εII(v::HerschelBulkley, εII; T = 0.0, kwargs...)
+    η0, σ0, Kv, B = if εII isa Quantity
+        @unpack_units η0, σ0, Kv, B = v
+        η0, σ0, Kv, B 
+    else
+        @unpack_val η0, σ0, Kv, B = v
+        η0, σ0, Kv, B 
+    end
+    (; n, A) = v
+
+    KvT = Kv * A * exp(B * (T - 273.15))
+
+    η = (1 - exp(-η0 *εII / σ0)) * (σ0 + KvT * (εII^n))
+    return  η
+end
 
 # compute effective "creep" viscosity from deviatoric stress tensor
 """

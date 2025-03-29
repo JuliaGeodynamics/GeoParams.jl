@@ -16,7 +16,7 @@
 abstract type AbstractCreepLaw{T} <: AbstractConstitutiveLaw{T} end
 
 export isvolumetric,
-    LinearViscous, PowerlawViscous, CorrectionFactor, AbstractCreepLaw, ArrheniusType
+    LinearViscous, PowerlawViscous, CorrectionFactor, AbstractCreepLaw, ArrheniusType, HerschelBulkley
 
 isvolumetric(a::AbstractCreepLaw) = false
 
@@ -75,6 +75,7 @@ include("PeierlsCreep.jl")
 include("NonLinearPeierlsCreep.jl")
 include("CustomRheology.jl")
 include("MeltViscosity.jl")
+include("HerschelBulkley.jl")
 
 # Linear viscous rheology ------------------------------------------------
 """

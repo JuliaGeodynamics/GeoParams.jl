@@ -173,6 +173,7 @@ module GeoParams
         GiordanoMeltViscosity,
         PowerlawViscous,
         ArrheniusType,
+        HerschelBulkley,
         CustomRheology,
         DislocationCreep,
         SetDislocationCreep,
