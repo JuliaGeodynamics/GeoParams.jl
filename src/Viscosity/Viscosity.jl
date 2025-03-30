@@ -32,7 +32,7 @@ end
 
     KvT = Kv * A * exp(B * (T - 273.15))
 
-    η = (1 - exp(-η0 *εII / σ0)) * (σ0 + KvT * (εII^n))
+    η = (1 - exp(-η0 * εII / σ0)) * (σ0 + KvT * (εII^n)) / εII
     return  η
 end
 
