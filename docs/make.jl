@@ -64,4 +64,4 @@ deploydocs(
     devbranch = "main",
     branch = "gh-pages",
     push_preview = true,
- )
+)
