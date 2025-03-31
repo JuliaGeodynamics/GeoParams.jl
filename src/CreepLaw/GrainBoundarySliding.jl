@@ -24,7 +24,7 @@ Defines the flow law parameter of a grain boundary sliding.
 
 The grain boundary sliding, as used by experimentalists, is given by
 ```math
-     \\dot{\\gamma} = A \\sigma_\\mathrm{d} d^{\\mathrm{p}} \\exp\\left(-\\frac{E+PV}{RT}\\right) #ÄNDERN!!!!!!!!
+     \\dot{\\gamma} = A \\sigma_\\mathrm{d} d^{\\mathrm{p}} \\exp\\left(-\\frac{E+PV}{RT}\\right)
 ```
 where
 - ``p`` is the exponent of grain size
