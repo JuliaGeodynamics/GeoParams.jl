@@ -79,19 +79,19 @@ include("MeltViscosity.jl")
 # Linear viscous rheology ------------------------------------------------
 """
     LinearViscous(η=1e20Pa*s)
-    
-Defines a linear viscous creeplaw 
 
-The (isotopic) linear viscous rheology is given by  
-```math  
-    \\tau_{ij} = 2 \\eta \\dot{\\varepsilon}_{ij} 
+Defines a linear viscous creeplaw
+
+The (isotopic) linear viscous rheology is given by
+```math
+    \\tau_{ij} = 2 \\eta \\dot{\\varepsilon}_{ij}
 ```
 or
-```math  
-    \\dot{\\varepsilon}_{ij}  = {\\tau_{ij}  \\over 2 \\eta }
+```math
+    \\dot{\\varepsilon}_{ij} = \\frac{\\tau_{ij}}{2 \\eta}
 ```
 
-where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\\dot{\\varepsilon}_0``[1/s], and ``n`` the power law exponent []. 
+where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\\dot{\\varepsilon}_0``[1/s], and ``n`` the power law exponent [].
 """
 @with_kw_noshow struct LinearViscous{T, U} <: AbstractCreepLaw{T}
     η::GeoUnit{T, U} = 1.0e20Pa * s                # viscosity
@@ -111,7 +111,7 @@ function compute_εII(a::LinearViscous, TauII; kwargs...)
 end
 
 """
-    
+
     compute_εII!(EpsII::AbstractArray{_T,N}, s::LinearViscous, TauII::AbstractArray{_T,N})
 """
 function compute_εII!(
@@ -139,7 +139,7 @@ end
 """
     compute_τII(s::LinearViscous, EpsII; kwargs...)
 
-Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor 
+Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor
 """
 function compute_τII(a::LinearViscous, EpsII; kwargs...)
     @unpack η = a
@@ -178,20 +178,20 @@ end
 # ArrheniusType temperature dependent viscosity --------------------------
 """
     ArrheniusType()
-    
-Defines an Arrhenius-type linear viscosity in the form of 
-    \\eta = \\eta_{0} * \\exp\\left(\\frac{E_{\\eta}{T+T_{0}}-\\frac{E_{\\eta}{T_{\\eta}+T_{0}}\\right) 
 
-The (isotropic) linear viscous rheology is given by  
-```math  
-    \\tau_{ij} = 2 \\eta \\dot{\\varepsilon}_{ij} 
+Defines an Arrhenius-type linear viscosity in the form of
+    \\eta = \\eta_{0} * \\exp\\left(\\frac{E_{\\eta}{T+T_{0}}-\\frac{E_{\\eta}{T_{\\eta}+T_{0}}\\right)
+
+The (isotropic) linear viscous rheology is given by
+```math
+    \\tau_{ij} = 2 \\eta \\dot{\\varepsilon}_{ij}
 ```
 or
-```math  
-    \\dot{\\varepsilon}_{ij}  = {\\tau_{ij}  \\over 2 \\eta }
+```math
+    \\dot{\\varepsilon}_{ij}  = \\frac{\\tau_{ij}}{2 \\eta }
 ```
 
-where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\\dot{\\varepsilon}_0``[1/s], and ``n`` the power law exponent []. 
+where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\\dot{\\varepsilon}_0``[1/s], and ``n`` the power law exponent [].
 """
 @with_kw_noshow struct ArrheniusType{_T, U1, U2, U3} <: AbstractCreepLaw{_T}
     η0::GeoUnit{_T, U1} = 1.0NoUnits      # Pre-exponential factor
@@ -224,7 +224,7 @@ function compute_εII(a::ArrheniusType, TauII; T = one(precision(a)), kwargs...)
 end
 
 """
-    
+
     compute_εII!(EpsII::AbstractArray{_T,N}, s::ArrheniusType, TauII::AbstractArray{_T,N})
 """
 function compute_εII!(
@@ -250,7 +250,7 @@ end
 """
     compute_τII(s::ArrheniusType, EpsII; kwargs...)
 
-Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor 
+Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor
 """
 function compute_τII(a::ArrheniusType, EpsII; T = one(precision(a)), kwargs...)
     @unpack_val η0, E_η, T_O, T_η = a
@@ -292,11 +292,11 @@ end
 # Powerlaw viscous rheology ----------------------------------------------
 """
     PowerlawViscous(η0=1e18Pa*s, n=2.0NoUnits, ε0=1e-15/s)
-    
-Defines a power law viscous creeplaw as: 
 
-```math  
-    \\tau_{ij}^n  = 2 \\eta_0 \\left( \\dot{\\varepsilon}_{ij} \\over \\dot{\\varepsilon}_0 \\right)
+Defines a power law viscous creeplaw as:
+
+```math
+        \\tau_{ij}^n  = 2 \\eta_0 \\frac{\\dot{\\varepsilon}_{ij}}{\\dot{\\varepsilon}_0}
 ```
 where ``\\eta`` is the effective viscosity [Pa*s].
 """
@@ -330,7 +330,7 @@ end
 """
     compute_τII(s::PowerlawViscous, EpsII; kwargs...)
 
-Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor 
+Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor
 """
 function compute_τII(a::PowerlawViscous, EpsII; kwargs...)
     @unpack_val η0, n, ε0 = a
@@ -351,13 +351,13 @@ end
 """
     compute_εII(TauII, s:<AbstractCreepLaw, p::CreepLawVariables)
 
-Returns the strainrate invariant ``\\dot{\\varepsilon}_{II}`` for a given deviatoric stress 
+Returns the strainrate invariant ``\\dot{\\varepsilon}_{II}`` for a given deviatoric stress
 invariant ``\\tau_{II}`` for any of the viscous creep laws implemented.
 ``p`` is a struct that can hold various parameters (such as ``P``, ``T``) that the creep law
-may need for the calculations 
+may need for the calculations
 
-```math  
-    \\dot{\\varepsilon}_{II}   = f( \\tau_{II} ) 
+```math
+    \\dot{\\varepsilon}_{II}   = f( \\tau_{II} )
 ```
 
 """
@@ -366,13 +366,13 @@ computeCreepLaw_EpsII
 """
     computeCreepLaw_TauII(EpsII, s:<AbstractCreepLaw, p::CreepLawVariables)
 
-Returns the deviatoric stress invariant ``\\tau_{II}`` for a given strain rate  
+Returns the deviatoric stress invariant ``\\tau_{II}`` for a given strain rate
 invariant ``\\dot{\\varepsilon}_{II}`` for any of the viscous creep laws implemented.
 ``p`` is a struct that can hold various parameters (such as ``P``, ``T``) that the creep law
-may need for the calculations 
+may need for the calculations
 
-```math  
-    \\tau_{II}  = f( \\dot{\\varepsilon}_{II} ) 
+```math
+    \\tau_{II}  = f( \\dot{\\varepsilon}_{II} )
 ```
 
 """

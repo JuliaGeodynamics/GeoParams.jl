@@ -19,26 +19,26 @@ Apparatus defines the appartus type that shall be recreated (Axial Compression, 
 =#
 """
     GrainBoundarySliding(p = A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
-    
+
 Defines the flow law parameter of a grain boundary sliding.
 
-The grain boundary sliding, as used by experimentalists, is given by  
-```math  
+The grain boundary sliding, as used by experimentalists, is given by
+```math
      \\dot{\\gamma} = A \\sigma_\\mathrm{d} d^{\\mathrm{p}} \\exp\\left(-\\frac{E+PV}{RT}\\right) #ÄNDERN!!!!!!!!
 ```
-where 
+where
 - ``p`` is the exponent of grain size
-- ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` must be either pre-defined or substituted) 
-- ``E`` is the activation energy ``\\mathrm{[kJ/mol]}`` 
-- ``V`` is the activation volume ``\\mathrm{[m^3/mol]}`` 
-- ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}`` 
+- ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` must be either pre-defined or substituted)
+- ``E`` is the activation energy ``\\mathrm{[kJ/mol]}``
+- ``V`` is the activation volume ``\\mathrm{[m^3/mol]}``
+- ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}``
 - ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[MPa]}``
 
 The experimental parameters are converted into second invariants using the `Apparatus` variable that can be
 either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
 # Example
-```julia-repl 
+```julia-repl
 julia> x2 = GrainBoundarySliding(Name="test")
 GrainBoundarySliding: Name = test, n=1.0, p=-3.0, A=1.5 m³·⁰ MPa⁻¹·⁰ s⁻¹·⁰, E=500.0 kJ mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517)
 ```
@@ -126,9 +126,9 @@ end
 """
     compute_εII(a::GrainBoundarySliding, TauII::_T; T::_T, P=one(_T), f=one(_T), d=one(_T), kwargs...)
 
-Returns grain boundary sliding strainrate as a function of 2nd invariant of the stress tensor ``\\tau_{II}`` 
+Returns grain boundary sliding strainrate as a function of 2nd invariant of the stress tensor ``\\tau_{II}``
 ```math
-    \\dot{ε}_{II} = A τ_{II}^n d^{p} \\exp \\left(- {{E + PV} \\over RT} \\right)  #ÄNDERN!!!!!!!!
+    \\dot{ε}_{II} = A τ_{II}^n d^{p} \\exp \\left(- \\frac{E + PV}{RT} \\right)  #ÄNDERN!!!!!!!!
 ```
 
 
@@ -209,7 +209,7 @@ end
 """
     computeCreepLaw_TauII(EpsII::_T, a::GrainBoundarySliding; T::_T, P=zero(_T), d=one(_T), kwargs...)
 
-Returns grain boundary sliding stress as a function of 2nd invariant of the strain rate 
+Returns grain boundary sliding stress as a function of 2nd invariant of the strain rate
 """
 @inline function compute_τII(
         a::GrainBoundarySliding,
@@ -315,7 +315,7 @@ export SetGrainBoundarySliding
 
 """
     SetGrainBoundarySliding["Name of GBS"]
-This is a dictionary with pre-defined creep laws    
+This is a dictionary with pre-defined creep laws
 """
 function SetGrainBoundarySliding(
         name::F;

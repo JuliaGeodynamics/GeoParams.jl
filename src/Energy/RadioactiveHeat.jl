@@ -22,9 +22,9 @@ include("../Computations.jl")
 # Constant  -------------------------------------------------------
 """
     ConstantRadioactiveHeat(H_r=1e-6Watt/m^3)
-    
+
 Set a constant radioactive heat:
-```math  
+```math
     H_r  = cst
 ```
 where ``H_r`` is the radioactive heat source [``Watt/m^3``].
@@ -62,10 +62,10 @@ end
 # Exponential Depth-dependent  -------------------------------------------------------
 """
     ExpDepthDependent(H_0=1e-6Watt/m^3, h_r=10e3m, z_0=0m)
-    
-Sets an exponential depth-dependent radioactive 
-```math  
-    H_r  = H_0 \\exp \\left( {- {(z - z_0) \\over h_r}} \\right)
+
+Sets an exponential depth-dependent radioactive
+```math
+    H_r  = H_0 \\exp \\left( -\\frac{z - z_0}{h_r} \\right)
 ```
 where ``H_0`` is the radioactive heat source [``Watt/m^3``] at ``z=z_0`` which decays with depth over a characteristic distance ``h_r``.
 """

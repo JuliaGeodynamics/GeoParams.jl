@@ -1,7 +1,12 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+DocumenterVitepress = "4710194d-e776-4893-9690-8d956a29c365"
 GeoParams = "e018b62d-d9de-4a26-8697-af89c310ae38"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 
+[sources]
+GeoParams = {path = ".."}
+
 [compat]
-Documenter = "0.27"
+Documenter = "1"
+DocumenterVitepress = "0.1"

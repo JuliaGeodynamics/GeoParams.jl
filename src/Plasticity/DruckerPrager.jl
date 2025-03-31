@@ -5,27 +5,27 @@ export DruckerPrager
     DruckerPrager(ϕ=30, Ψ=0, C=10e6Pa)
 
 Sets parameters for Drucker-Prager plasticity, where the yield stress ``\\sigma_{y}`` is computed by
-```math  
+```math
     \\sigma_{y} = (P-P_f)\\tan(ϕ) + C
 ```
-with ``\\phi`` being the friction angle (in degrees), ``C`` cohesion, ``P`` dynamic pressure and ``P_f`` the fluid pressure (both positive under compression).  
+with ``\\phi`` being the friction angle (in degrees), ``C`` cohesion, ``P`` dynamic pressure and ``P_f`` the fluid pressure (both positive under compression).
 
-*Yielding* occurs when the second invariant of the deviatoric stress tensor, ``\\tau_{II}=(0.5\\tau_{ij}\\tau_{ij})^{0.5}`` touches the yield stress. 
-This can be computed with the yield function ``F`` and the plastic flow potential ``Q``, which are respectively given by 
-```math  
+*Yielding* occurs when the second invariant of the deviatoric stress tensor, ``\\tau_{II}=(0.5\\tau_{ij}\\tau_{ij})^{0.5}`` touches the yield stress.
+This can be computed with the yield function ``F`` and the plastic flow potential ``Q``, which are respectively given by
+```math
     F = \\tau_{II} - \\cos(ϕ)C - \\sin(ϕ)(P-P_f)
 ```
-```math  
-    Q = \\tau_{II} - \\sin(Ψ)(P-P_f) 
+```math
+    Q = \\tau_{II} - \\sin(Ψ)(P-P_f)
 ```
 Here, Ψ is the dilation angle, which must be zero for incompressible setups.
 
 Plasticity is activated when ``F(\\tau_{II}^{trial})`` (the yield function computed with a trial stress) is >0. In that case, plastic strainrate ``\\dot{\\varepsilon}^{pl}_{ij}`` is computed by:
-```math  
-    \\dot{\\varepsilon}^{pl}_{ij} =\\dot{\\lambda} {\\partial Q \\over \\partial \\sigma_{ij}}
+```math
+    \\dot{\\varepsilon}^{pl}_{ij} = \\dot{\\lambda} \\frac{\\partial Q}{\\partial \\sigma_{ij}}
 ```
-where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the resulting stress gives ``F(\\tau_{II}^{final})=0``, and ``\\sigma_{ij}=-P + \\tau_{ij}`` denotes the total stress tensor.   
-        
+where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the resulting stress gives ``F(\\tau_{II}^{final})=0``, and ``\\sigma_{ij}=-P + \\tau_{ij}`` denotes the total stress tensor.
+
 """
 @with_kw_noshow struct DruckerPrager{T, U, U1, S1 <: AbstractSoftening, S2 <: AbstractSoftening} <: AbstractPlasticity{T}
     softening_ϕ::S1 = NoSoftening()
@@ -104,7 +104,7 @@ function (s::DruckerPrager{_T, U, U1, NoSoftening, NoSoftening})(;
 end
 
 """
-    compute_yieldfunction(s::DruckerPrager; P, τII, Pf, kwargs...) 
+    compute_yieldfunction(s::DruckerPrager; P, τII, Pf, kwargs...)
 
 Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` pressure, and `Pf` fluid pressure.
 """
@@ -115,11 +115,11 @@ function compute_yieldfunction(
 end
 
 """
-    compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager{_T}; P::AbstractArray{_T,N}, τII::AbstractArray{_T,N}, Pf=zero(P)::AbstractArray{_T,N}, kwargs...) 
+    compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager{_T}; P::AbstractArray{_T,N}, τII::AbstractArray{_T,N}, Pf=zero(P)::AbstractArray{_T,N}, kwargs...)
 
 Computes the plastic yield function `F` for Drucker-Prager plasticity in an in-place manner.
-Required input arrays are pressure `P` and the second invariant of the deviatoric stress tensor `τII` at every point. 
-You can optionally provide an array with fluid pressure `Pf` as well. 
+Required input arrays are pressure `P` and the second invariant of the deviatoric stress tensor `τII` at every point.
+You can optionally provide an array with fluid pressure `Pf` as well.
 """
 function compute_yieldfunction!(
         F::AbstractArray{_T, N},
@@ -169,7 +169,7 @@ end
 ∂Q∂τII(p::DruckerPrager, τII::_T; P = zero(_T), kwargs...) where {_T} = 0.5
 
 """
-    compute_εII(p::DruckerPrager{_T,U,U1}, λdot::_T, τII::_T,  P) 
+    compute_εII(p::DruckerPrager{_T,U,U1}, λdot::_T, τII::_T,  P)
 
 This computes plastic strain rate invariant for a given ``λdot``
 """
@@ -202,8 +202,8 @@ end
 
 """
     lambda(F::T, p::DruckerPrager, ηve::T, ηvp::T; K=zero(T), dt=zero(T), h=zero(T), τij=(one(T), one(T), one(T)))
-    
-    Compute the plastic multiplier λ for a Drucker-Prager yield surface. `F` is the trial yield surface, 
+
+    Compute the plastic multiplier λ for a Drucker-Prager yield surface. `F` is the trial yield surface,
     `ηve` is the visco-elastic effective viscosity (i.e. `(1/G/dt + 1/η)⁻¹`), `ηvp` is a regularization term,
     `K` is the elastic bulk modulus, h is the harderning, and `τij`` is the stress tensor in Voigt notation.
     Equations from Duretz et al. 2019 G3
