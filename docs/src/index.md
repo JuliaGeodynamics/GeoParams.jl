@@ -5,7 +5,7 @@ layout: home
 
 hero:
   name: GeoParams.jl Docs
-  text: Providing a large number of material parameters for geodynamic simulations.
+  text: Material parameters for geoscientific models.
   tagline: Easily extendable material parameters for the direct use in numerical mo
   actions:
     - theme: brand
