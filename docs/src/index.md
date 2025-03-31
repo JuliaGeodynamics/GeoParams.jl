@@ -6,7 +6,7 @@ layout: home
 hero:
   name: GeoParams.jl Docs
   text: Material parameters for geoscientific models.
-  tagline: Easily extendable material parameters for the direct use in numerical mo
+  tagline: Easily extendable material parameters for the direct use in numerical simulations
   actions:
     - theme: brand
       text: Nondimensionalization
