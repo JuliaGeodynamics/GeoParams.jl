@@ -111,7 +111,7 @@ end
 
 function param_info(s::GrainBoundarySliding)
     name = ptr2string(s.Name)
-    eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}" #ÄNDERN!!!!!!!!!!!
+    eq = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}"
     if name == ""
         return MaterialParamsInfo(; Equation = eq)
     end
@@ -128,9 +128,8 @@ end
 
 Returns grain boundary sliding strainrate as a function of 2nd invariant of the stress tensor ``\\tau_{II}``
 ```math
-    \\dot{ε}_{II} = A τ_{II}^n d^{p} \\exp \\left(- \\frac{E + PV}{RT} \\right)  #ÄNDERN!!!!!!!!
+    \\dot{ε}_{II} = A τ_{II}^n d^{p} \\exp \\left(- \\frac{E + PV}{RT} \\right)
 ```
-
 
 """
 @inline function compute_εII(
