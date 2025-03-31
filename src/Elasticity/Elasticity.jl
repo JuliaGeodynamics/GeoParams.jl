@@ -98,16 +98,16 @@ end
 
 # Calculation routines
 """
-    compute_εII(s::ConstantElasticity{_T}, τII; τII_old, dt) 
+    compute_εII(s::ConstantElasticity{_T}, τII; τII_old, dt)
 
 Computes elastic strainrate given the deviatoric stress at the current (`τII`) and old timestep (`τII_old`), for a timestep `dt`:
-```math  
-    \\dot{\\varepsilon}^{el} = {1 \\over 2 G} {D \\tau_{II} \\over Dt } ≈ {1 \\over 2 G} {\\tau_{II}- \\tilde{\\tau}_{II}^{old} \\over dt }
+```math
+     \\dot{\\varepsilon}^{el} = \\frac{1}{2 G} \\frac{D \\tau_{II}}{Dt} \\approx \\frac{1}{2 G} \\frac{\\tau_{II} - \\tilde{\\tau}_{II}^{old}}{dt}
 ```
 Note that we here solve the scalar equation, which is sufficient for isotropic cases. In tensor form, it would be
 
-```math  
-    {\\dot{\\varepsilon}^{el}}_{ij} = {1 \\over 2 G} { \\tau_{ij} - \\tilde{{\\tau_{ij}}}^{old} \\over dt }
+```math
+    \\dot{\\varepsilon}^{el}_{ij} = \\frac{1}{2 G} \\frac{\\tau_{ij} - \\tilde{\\tau_{ij}}^{old}}{dt}
 ```
 here ``\\tilde{{\\tau_{ij}}}^{old}`` is the rotated old deviatoric stress tensor to ensure objectivity (this can be done with Jaumann derivative, or also by using the full rotational formula).
 
@@ -144,12 +144,12 @@ end
 end
 
 """
-    compute_εII!(ε_el::AbstractArray{_T,N}, s::ConstantElasticity{_T}; τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, dt::_T, kwargs...) 
+    compute_εII!(ε_el::AbstractArray{_T,N}, s::ConstantElasticity{_T}; τII::AbstractArray{_T,N}, τII_old::AbstractArray{_T,N}, dt::_T, kwargs...)
 
-In-place computation of the elastic shear strainrate for given deviatoric stress invariants at the previous (`τII_old`) and new (`τII`) timestep, as well as the timestep `dt`  
+In-place computation of the elastic shear strainrate for given deviatoric stress invariants at the previous (`τII_old`) and new (`τII`) timestep, as well as the timestep `dt`
 
-```math  
-    \\dot{\\varepsilon}^{el} = {1 \\over 2 G} {D \\tau_{II} \\over Dt } ≈ {1 \\over 2 G} {\\tau_{II}- \\tau_{II}^{old} \\over dt }
+```math
+     \\dot{\\varepsilon}^{el} = \\frac{1}{2 G} \\frac{D \\tau_{II}}{Dt} \\approx \\frac{1}{2 G} \\frac{\\tau_{II} - \\tau_{II}^{old}}{dt}
 ```
 
 """
@@ -168,11 +168,11 @@ function compute_εII!(
 end
 
 """
-    compute_τII!(τII::AbstractArray{_T,N}, s::ConstantElasticity{_T}. ε_el::AbstractArray{_T,N}; τII_old::AbstractArray{_T,N}, dt::_T, kwargs...) 
+    compute_τII!(τII::AbstractArray{_T,N}, s::ConstantElasticity{_T}. ε_el::AbstractArray{_T,N}; τII_old::AbstractArray{_T,N}, dt::_T, kwargs...)
 
-In-place update of the elastic stress for given deviatoric strainrate invariants and stres invariant at the old (`τII_old`) timestep, as well as the timestep `dt`  
+In-place update of the elastic stress for given deviatoric strainrate invariants and stres invariant at the old (`τII_old`) timestep, as well as the timestep `dt`
 
-```math  
+```math
     \\tau_{II} = 2 G dt \\dot{\\varepsilon}^{el} + \\tau_{II}^{old}
 ```
 
@@ -200,11 +200,11 @@ function show(io::IO, g::ConstantElasticity)
 end
 
 """
-    compute_εvol(s::ConstantElasticity{_T}, P; P_old, dt) 
+    compute_εvol(s::ConstantElasticity{_T}, P; P_old, dt)
 
 Computes elastic volumetric strainrate given the pressure at the current (`P`) and old timestep (`P_old`), for a timestep `dt`:
-```math  
-    \\dot{\\vartheta}^{el} = {1 \\over Kb} {D P \\over Dt } ≈ {1 \\over Kb} {P - \\tilde{P^{old} \\over dt }
+```math
+     \\dot{\\vartheta}^{el} = \\frac{1}{Kb} \\frac{D P}{Dt} \\approx \\frac{1}{Kb} \\frac{P - \\tilde{P}^{old}}{dt}
 ```
 
 """
@@ -240,11 +240,11 @@ end
 end
 
 """
-    compute_εvol!(s::ConstantElasticity{_T}, P; P_old, dt) 
+    compute_εvol!(s::ConstantElasticity{_T}, P; P_old, dt)
 
     In-place computation of the elastic volumetric strainrate given the pressure at the current (`P`) and old timestep (`P_old`), for a timestep `dt`:
-```math  
-    \\dot{\\vartheta}^{el} = {1 \\over Kb} {D P \\over Dt } ≈ {1 \\over Kb} {P - \\tilde{P^{old} \\over dt }
+```math
+    \\dot{\\vartheta}^{el} = \\frac{1}{Kb} \\frac{D P}{Dt} \\approx \\frac{1}{Kb} \\frac{P - \\tilde{P}^{old}}{dt}
 ```
 
 """
@@ -263,11 +263,11 @@ function compute_εvol!(
 end
 
 """
-    compute_p!(p::AbstractArray{_T,N}, s::ConstantElasticity{_T}. εvol_el::AbstractArray{_T,N}; P_old::AbstractArray{_T,N}, dt::_T, kwargs...) 
+    compute_p!(p::AbstractArray{_T,N}, s::ConstantElasticity{_T}. εvol_el::AbstractArray{_T,N}; P_old::AbstractArray{_T,N}, dt::_T, kwargs...)
 
-In-place update of the elastic pressure for given volumetric strainrate and pressure at the old (`P_old`) timestep, as well as the timestep `dt`  
+In-place update of the elastic pressure for given volumetric strainrate and pressure at the old (`P_old`) timestep, as well as the timestep `dt`
 
-```math  
+```math
     \\p = Kb dt \\dot{\\vartheta}^{el} + \\p^{old}
 ```
 

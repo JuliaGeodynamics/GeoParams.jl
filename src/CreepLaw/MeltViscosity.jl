@@ -21,7 +21,7 @@ Defines a simple temperature-dependent melt viscosity, given by
 ```
 or
 ```math
-    \\dot{\\varepsilon}_{ij}  = {\\tau_{ij}  \\over 2 \\eta }
+    \\dot{\\varepsilon}_{ij}  = \\frac{\\tau_{ij}}{2 \\eta}
 ```
 where
 ```math
@@ -305,7 +305,7 @@ Defines the melt viscosity model after Giordano et al. (2008) given by
 ```
 or
 ```math
-    \\dot{\\varepsilon}_{ij}  = {\\tau_{ij}  \\over 2 \\eta }
+    \\dot{\\varepsilon}_{ij}  = \\frac{\\tau_{ij}}{2 \\eta}
 ```
 where
 ```math

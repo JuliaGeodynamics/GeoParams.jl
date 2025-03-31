@@ -5,27 +5,27 @@ export DruckerPrager_regularised
     DruckerPrager_regularised(ϕ=30, Ψ=0, C=10e6Pa, η_vp=1e20Pa*s)
 
 Sets parameters for reularised Drucker-Prager plasticity, where the yield stress ``\\sigma_{y}`` is computed by
-```math  
-    \\sigma_{y} = (P-P_f)\\tan(ϕ) + C + 2η_vpε̇II_pl 
+```math
+    \\sigma_{y} = (P-P_f)\\tan(ϕ) + C + 2η_vpε̇II_pl
 ```
 with ``\\phi`` being the friction angle (in degrees), ``C`` cohesion, ``P`` dynamic pressure, ``P_f`` the fluid pressure (both positive under compression), ``η_vp`` the regularization viscosity and ``ε̇II_pl`` the invariant of the plastic strainrate
 
-*Yielding* occurs when the second invariant of the deviatoric stress tensor, ``\\tau_{II}=(0.5\\tau_{ij}\\tau_{ij})^{0.5}`` touches the yield stress. 
-This can be computed with the yield function ``F`` and the plastic flow potential ``Q``, which are respectively given by 
-```math  
+*Yielding* occurs when the second invariant of the deviatoric stress tensor, ``\\tau_{II}=(0.5\\tau_{ij}\\tau_{ij})^{0.5}`` touches the yield stress.
+This can be computed with the yield function ``F`` and the plastic flow potential ``Q``, which are respectively given by
+```math
     F = \\tau_{II} - \\cos(ϕ)C - \\sin(ϕ)(P-P_f) - 2 \\eta_{vp} \\dot{\\varepsilon}ε̇^{pl}_{II}
 ```
-```math  
-    Q = \\tau_{II} - \\sin(Ψ)(P-P_f) 
+```math
+    Q = \\tau_{II} - \\sin(Ψ)(P-P_f)
 ```
 Here, Ψ is the dilation angle, which must be zero for incompressible setups.
 
 Plasticity is activated when ``F(\\tau_{II}^{trial})`` (the yield function computed with a trial stress) is >0. In that case, plastic strainrate ``\\dot{\\varepsilon}^{pl}_{ij}`` is computed by:
-```math  
-    \\dot{\\varepsilon}^{pl}_{ij} =\\dot{\\lambda} {\\partial Q \\over \\partial \\sigma_{ij}}
+```math
+    \\dot{\\varepsilon}^{pl}_{ij} = \\dot{\\lambda} \\frac{\\partial Q}{\\partial \\sigma_{ij}}
 ```
-where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the resulting stress gives ``F(\\tau_{II}^{final})=0``, and ``\\sigma_{ij}=-P + \\tau_{ij}`` denotes the total stress tensor.   
-        
+where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the resulting stress gives ``F(\\tau_{II}^{final})=0``, and ``\\sigma_{ij}=-P + \\tau_{ij}`` denotes the total stress tensor.
+
 """
 @with_kw_noshow struct DruckerPrager_regularised{T, U, U1, U2, S1 <: AbstractSoftening, S2 <: AbstractSoftening} <: AbstractPlasticity{T}
     softening_ϕ::S1 = NoSoftening()
@@ -100,7 +100,7 @@ end
 
 
 """
-    compute_yieldfunction(s::DruckerPrager_regularised; P, τII, Pf, λ, kwargs...) 
+    compute_yieldfunction(s::DruckerPrager_regularised; P, τII, Pf, λ, kwargs...)
 
 Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` pressure, and `Pf` fluid pressure.
 """
@@ -111,11 +111,11 @@ function compute_yieldfunction(
 end
 
 """
-    compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager_regularised{_T}; P::AbstractArray{_T,N}, τII::AbstractArray{_T,N}, Pf=zero(P)::AbstractArray{_T,N}, λ=zero(P)::AbstractArray{_T,N}, kwargs...) 
+    compute_yieldfunction!(F::AbstractArray{_T,N}, s::DruckerPrager_regularised{_T}; P::AbstractArray{_T,N}, τII::AbstractArray{_T,N}, Pf=zero(P)::AbstractArray{_T,N}, λ=zero(P)::AbstractArray{_T,N}, kwargs...)
 
 Computes the plastic yield function `F` for Drucker-Prager plasticity in an in-place manner.
-Required input arrays are pressure `P` and the second invariant of the deviatoric stress tensor `τII` at every point. 
-You can optionally provide an array with fluid pressure `Pf` as well. 
+Required input arrays are pressure `P` and the second invariant of the deviatoric stress tensor `τII` at every point.
+You can optionally provide an array with fluid pressure `Pf` as well.
 """
 function compute_yieldfunction!(
         F::AbstractArray{_T, N},
@@ -166,7 +166,7 @@ end
 ∂Q∂τII(p::DruckerPrager_regularised, τII::_T; P = zero(_T), kwargs...) where {_T} = 0.5
 
 """
-    compute_εII(p::DruckerPrager_regularised{_T,U,U1}, λdot::_T, τII::_T,  P) 
+    compute_εII(p::DruckerPrager_regularised{_T,U,U1}, λdot::_T, τII::_T,  P)
 
 This computes plastic strain rate invariant for a given ``λdot``
 """

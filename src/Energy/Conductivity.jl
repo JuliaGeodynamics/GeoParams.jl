@@ -315,7 +315,7 @@ Sets a temperature (and pressure)-dependent conductivity parameterization as des
 The general for
 
 ```math
-    k = \\left( a_k +  {b_k \\over {T + c_k}} \\right) (1 + d_k P)
+    k = \\left( a_k +  \\frac{b_k}{T + c_k} \\right) (1 + d_k P)
 ```
 
 where ``k`` is the conductivity [``W/K/m``], and ``a_k,b_k,c_k,d_k`` are parameters that dependent on the temperature `T` and pressure `P`:

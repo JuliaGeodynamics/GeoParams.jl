@@ -22,27 +22,27 @@ Apparatus defines the appartus type that shall be recreated (Axial Compression, 
 =#
 """
     DiffusionCreep(r = 0NoUnits, p = A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
-    
+
 Defines the flow law parameter of a dislocation creep law.
 
-The (isotropic) diffusion creep law, as used by experimentalists, is given by  
-```math  
+The (isotropic) diffusion creep law, as used by experimentalists, is given by
+```math
      \\dot{\\gamma} = A \\sigma_\\mathrm{d} d^{\\mathrm{p}} f_\\mathrm{H2O}^r \\exp\\left(-\\frac{E+PV}{RT}\\right)
 ```
-where 
-- ``r`` is the exponent of fugacity dependence 
+where
+- ``r`` is the exponent of fugacity dependence
 - ``p`` is the exponent of grain size
-- ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` and ``r`` must be either pre-defined or substituted) 
-- ``E`` is the activation energy ``\\mathrm{[kJ/mol]}`` 
-- ``V`` is the activation volume ``\\mathrm{[m^3/mol]}`` 
-- ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}`` 
+- ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` and ``r`` must be either pre-defined or substituted)
+- ``E`` is the activation energy ``\\mathrm{[kJ/mol]}``
+- ``V`` is the activation volume ``\\mathrm{[m^3/mol]}``
+- ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}``
 - ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[MPa]}``
 
 The experimental parameters are converted into second invariants using the `Apparatus` variable that can be
 either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
 # Example
-```julia-repl 
+```julia-repl
 julia> x2 = DiffusionCreep(Name="test")
 DiffusionCreep: Name = test, n=1.0, r=0.0, p=-3.0, A=1.5 m³·⁰ MPa⁻¹·⁰ s⁻¹·⁰, E=500.0 kJ mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517)
 ```
@@ -134,9 +134,9 @@ end
 """
     compute_εII(a::DiffusionCreep, TauII::_T; T::_T, P=one(_T), f=one(_T), d=one(_T), kwargs...)
 
-Returns diffusion creep strainrate as a function of 2nd invariant of the stress tensor ``\\tau_{II}`` 
+Returns diffusion creep strainrate as a function of 2nd invariant of the stress tensor ``\\tau_{II}``
 ```math
-    \\dot{ε}_{II} = A τ_{II}^n d^{p} f_{H_2O}^r \\exp \\left(- {{E + PV} \\over RT} \\right)
+    \\dot{ε}_{II} = A τ_{II}^n d^{p} f_{H_2O}^r \\exp \\left(- \\frac{E + PV}{RT} \\right)
 ```
 
 
@@ -192,7 +192,7 @@ end
 """
     dεII_dτII(a::DiffusionCreep, TauII::_T; T::_T, P=zero(_T), f=one(_T), d=one(_T), kwargs...)
 
-returns the derivative of strainrate versus stress 
+returns the derivative of strainrate versus stress
 """
 @inline function dεII_dτII(
         a::DiffusionCreep,
@@ -227,7 +227,7 @@ end
 """
     computeCreepLaw_TauII(EpsII::_T, a::DiffusionCreep; T::_T, P=zero(_T), f=one(_T), d=one(_T), kwargs...)
 
-Returns diffusion creep stress as a function of 2nd invariant of the strain rate 
+Returns diffusion creep stress as a function of 2nd invariant of the strain rate
 """
 @inline function compute_τII(
         a::DiffusionCreep,
@@ -336,7 +336,7 @@ using .Diffusion
 
 """
     SetDiffusionCreep["Name of Diffusion Creep"]
-This is a dictionary with pre-defined creep laws    
+This is a dictionary with pre-defined creep laws
 """
 function SetDiffusionCreep(
         name::F;

@@ -37,10 +37,10 @@ include("../Computations.jl")
 
 Implements the T-dependent melting parameterisation used by Caricchi, Simpson et al. (as for example described in Simpson)
 ```math
-    \\theta = {(a - (T + c)) \\over b}
+    \\theta = \\frac{a - (T + c)}{b}
 ```
 ```math
-    \\phi_{melt} = {1.0 \\over (1.0 + e^\\theta)}
+    \\phi_{melt} = \\frac{1.0}{1.0 + e^\\theta}
 ```
 
 Note that T is in Kelvin. As default parameters we employ:
@@ -97,13 +97,13 @@ end
 
 Implements the a smooth 3rd order T-dependent melting parameterisation (as used by Melnik and coworkers)
 ```math
-    x = {  (T - 273.15) \\over 1000.0}
+    x = \\frac{T - 273.15}{1000.0}
 ```
 ```math
     \\theta = { a + b * x + c * x^2 + d * x^3}
 ```
 ```math
-    \\phi_{melt} = {1.0 \\over (1.0 + e^\\theta)}
+    \\phi_{melt} = \\frac{1.0}{1.0 + e^\\theta}
 ```
 Note that T is in Kelvin.
 
@@ -345,7 +345,7 @@ end
 
 Quadratic melt fraction parameterisation where melt fraction ``\\phi`` depends only on solidus (``T_s``) and liquidus (``T_l``) temperature:
 ```math
-    \\phi = 1.0 - \\left( {T_l - T} \\over {T_l - T_s} \\right)^2
+    \\phi = 1.0 - \\left( \\frac{T_l - T}{T_l - T_s} \\right)^2
 ```
 ```math
     \\phi = 1.0 \\textrm{ if } T>T_l
@@ -413,7 +413,7 @@ Melt fraction parameterisation that takes the assimilation of crustal host rocks
 
 Here, the fraction of molten and assimilated host rocks ``\\phi`` depends on the solidus (``T_s``) and liquidus (``T_l``) temperatures of the rocks, as well as on a parameter ``a=0.005``
 ```math
-    X = \\left( {T - T_s} \\over {T_l - T_s} \\right)
+    X = \\frac{T - T_s}{T_l - T_s}
 ```
 ```math
     \\phi = a \\cdot \\left( \\exp^{2ln(100)X} - 1.0 \\right) \\textrm{ if } X ≤ 0.5
@@ -553,11 +553,11 @@ This smoothens the melting parameterisation ``p`` around the solidus ``T_{sol}``
 using a smoothened Heaviside step functions for the solidus:
 
 ```math
-    H_{sol} =  {1.0 \\over { 1 + \\exp( -2 k_{sol} (T - T_{sol} - {2 \\over k_{sol}}) )  }}
+    H_{sol} =  \\frac{1.0}{1 + \\exp\\left(-2 k_{sol} \\left(T - T_{sol} - \\frac{2}{k_{sol}}\\right)\\right)}
 ```
 and liquidus:
 ```math
-    H_{liq} =  1.0 - {1.0 \\over { 1 + \\exp( -2 k_{liq} (T - T_{liq} + {2 \\over k_{liq}}) )  }}
+    H_{liq} =  1.0 - \\frac{1.0}{1 + \\exp\\left(-2 k_{liq} \\left(T - T_{liq} + \\frac{2}{k_{liq}}\\right)\\right)}
 ```
 The resulting melt fraction ``\\phi`` is computed from the original melt fraction ``\\phi_0`` (computed using one of the methods above) as:
 ```math
@@ -797,7 +797,7 @@ compute_dϕdT(args::Vararg{Any, N}) where {N} = compute_param(compute_dϕdT, arg
 """
     compute_dϕdT!(ϕ::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
 
-Computates the derivative of melt fraction `ϕ` versus temperature `T`, ``{\\partial \\phi} \\over {\\partial T}`` for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
+Computes the derivative of melt fraction `ϕ` versus temperature `T`, `\\frac{\\partial \\phi}{\\partial T}` for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This is employed, for example, in computing latent heat terms in an implicit manner.
 """
 compute_dϕdT!(args::Vararg{Any, N}) where {N} = compute_param!(compute_dϕdT, args...)
