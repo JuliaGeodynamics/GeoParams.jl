@@ -20,9 +20,6 @@ hero:
     - theme: alt
       text: API Reference 📚
       link: /man/listfunctions
-    - theme: alt
-      text: View on GitHub
-      link: https://github.com/JuliaGeodynamics/GeoParams.jl
   image:
     src: /logo.png
     alt: GeoParams.jl
