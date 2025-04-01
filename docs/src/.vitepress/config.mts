@@ -93,6 +93,7 @@ export default defineConfig({
     sidebar: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     editLink: 'REPLACE_ME_DOCUMENTER_VITEPRESS',
     socialLinks: [
+      { icon: 'github', link: 'REPLACE_ME_DOCUMENTER_VITEPRESS' },
       { icon: 'slack', link: 'https://julialang.org/slack/' }
     ],
     footer: {
