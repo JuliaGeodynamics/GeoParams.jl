@@ -37,7 +37,7 @@ makedocs(;
                 "Partial Melting" => "man/melting.md",
                 "Density" => "man/density.md",
             ],
-            "Constituitive Relationships" => Any[
+            "Constitutive Relationships" => Any[
             "Creep laws" => "man/creeplaws.md",
             "Custom rheology" => "man/customrheology.md",
             "Viscosity" => "man/viscosity.md",

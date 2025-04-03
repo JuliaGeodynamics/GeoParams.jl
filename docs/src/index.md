@@ -15,7 +15,7 @@ hero:
       text: Material Parameters 📚
       link: /man/materialparameters
     - theme: alt
-      text: Constituitive Relationships 🎯
+      text: Constitutive Relationships 🎯
       link: /man/creeplaws
     - theme: alt
       text: API Reference 📚
