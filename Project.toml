@@ -1,7 +1,7 @@
 name = "GeoParams"
 uuid = "e018b62d-d9de-4a26-8697-af89c310ae38"
 authors = ["Boris Kaus <kaus@uni-mainz.de>, Albert De Montserrat <albertdemontserratnavarro@erdw.ethz.ch>"]
-version = "0.7.3"
+version = "0.7.4"
 
 [deps]
 BibTeX = "7b0aa2c9-049f-5cec-894a-2b6b781bb25e"
@@ -35,14 +35,14 @@ GeoParamsMakieExt = "Makie"
 [compat]
 BibTeX = "0.1"
 DelimitedFiles = "1.0"
-ForwardDiff = "0.10.36, 0.10.37, 0.10.38"
+ForwardDiff = "0.10, 1.0"
 InternedStrings = "0.7"
 Interpolations = "0.13, 0.14, 0.15, 0.16"
 KernelDensitySJ = "0.2"
 LaTeXStrings = "1.2"
 LinearAlgebra = "1.0"
 Loess = "0.5, 0.6"
-Makie = "0.21, 0.22"
+Makie = "0.21 - 0.24"
 MuladdMacro = "0.2.4"
 Parameters = "0.12"
 Roots = "1.0, 2.0"
