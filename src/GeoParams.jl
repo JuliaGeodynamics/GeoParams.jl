@@ -128,6 +128,7 @@ module GeoParams
         ConduitDensity,
         No_Density,
         ConstantDensity,
+        ConstantMutableDensity,
         PT_Density,
         Compressible_Density,
         T_Density,

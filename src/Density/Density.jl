@@ -5,7 +5,7 @@ module Density
 # If you want to add a new method here, feel free to do so.
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
-using Parameters, Unitful, LaTeXStrings, MuladdMacro
+using Parameters, Unitful, LaTeXStrings, MuladdMacro, Adapt
 using ..Units
 using ..PhaseDiagrams
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, @extractors, add_extractor_functions
@@ -25,6 +25,7 @@ export compute_density, # calculation routines
     AbstractDensity,
     ConduitDensity,
     ConstantDensity, # constant
+    ConstantMutableDensity,
     PT_Density, # P & T dependent density
     Compressible_Density, # Compressible density
     T_Density, # T dependent density
@@ -85,6 +86,25 @@ end
 # Print info
 function show(io::IO, g::ConstantDensity)
     return print(io, "Constant density: ρ=$(UnitValue(g.ρ))")
+end
+#-------------------------------------------------------------------------
+@with_kw_noshow struct ConstantMutableDensity{_T, U} <: AbstractDensity{_T}
+    ρ::Base.RefValue{GeoUnit{_T, U}} = 2900.0kg / m^3 # density
+end
+ConstantMutableDensity(args...) = ConstantMutableDensity(Ref.(convert.(GeoUnit, args))...)
+
+Adapt.@adapt_structure ConstantMutableDensity
+
+isdimensional(s::ConstantMutableDensity) = isdimensional(s.ρ[])
+
+@inline (ρ::ConstantMutableDensity)(; args...) = ρ.ρ[].val
+@inline (ρ::ConstantMutableDensity)(args) = ρ(; args...)
+@inline compute_density(s::ConstantMutableDensity{_T}, args) where {_T} = s(; args...)
+@inline compute_density(s::ConstantMutableDensity{_T}) where {_T} = s()
+
+# This assumes that density always has a single parameter. If that is not the case, we will have to extend this (to be done)
+function param_info(s::ConstantMutableDensity) # info about the struct
+    return MaterialParamsInfo(; Equation = L"\rho = cst")
 end
 #-------------------------------------------------------------------------
 
