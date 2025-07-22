@@ -88,16 +88,17 @@ function show(io::IO, g::ConstantDensity)
     return print(io, "Constant density: ρ=$(UnitValue(g.ρ))")
 end
 #-------------------------------------------------------------------------
-@with_kw_noshow struct ConstantMutableDensity{_T, U} <: AbstractDensity{_T}
-    ρ::Base.RefValue{GeoUnit{_T, U}} = 2900.0kg / m^3 # density
+struct ConstantMutableDensity{_T} <: AbstractDensity{_T}
+    ρ::_T
+    # ρ::Base.RefValue{GeoUnit{_T, U}} = 2900.0kg / m^3 # density
 end
-ConstantMutableDensity(args...) = ConstantMutableDensity(Ref.(convert.(GeoUnit, args))...)
+# ConstantMutableDensity(args...) = ConstantMutableDensity(Ref.(convert.(GeoUnit, args))...)
 
 Adapt.@adapt_structure ConstantMutableDensity
 
 isdimensional(s::ConstantMutableDensity) = isdimensional(s.ρ[])
 
-@inline (ρ::ConstantMutableDensity)(; args...) = ρ.ρ[].val
+@inline (ρ::ConstantMutableDensity)(; args...) = ρ.ρ[]
 @inline (ρ::ConstantMutableDensity)(args) = ρ(; args...)
 @inline compute_density(s::ConstantMutableDensity{_T}, args) where {_T} = s(; args...)
 @inline compute_density(s::ConstantMutableDensity{_T}) where {_T} = s()
