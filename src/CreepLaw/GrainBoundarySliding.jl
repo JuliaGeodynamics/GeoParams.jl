@@ -116,7 +116,7 @@ function param_info(s::GrainBoundarySliding)
         return MaterialParamsInfo(; Equation = eq)
     end
 
-    inf = GrainBoundarySliding_info[name][2]
+    inf = GrainBoundarySliding_database_info(name)
     return MaterialParamsInfo(;
         Equation = eq, Comment = inf.Comment, BibTex_Reference = inf.BibTex_Reference
     )
@@ -306,7 +306,6 @@ end
 
 # load collection of grain boundary sliding laws
 include("Data/GrainBoundarySliding.jl")
-include("Data_deprecated/GrainBoundarySliding.jl")
 
 using .GBS
 

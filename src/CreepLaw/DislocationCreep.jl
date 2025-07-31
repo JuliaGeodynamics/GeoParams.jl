@@ -18,25 +18,25 @@ export DislocationCreep,
 # Dislocation Creep ------------------------------------------------
 """
     DislocationCreep(n = 1.0NoUnits, r = 0.0NoUnits, A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
-    
+
 Defines the flow law parameter of a dislocation creep law.
 
-The (isotropic) dislocation creep law, as used by experimentalists, is given by  
-```math  
+The (isotropic) dislocation creep law, as used by experimentalists, is given by
+```math
      \\dot{\\gamma} = A \\sigma_\\mathrm{d}^n f_\\mathrm{H2O}^r \\exp\\left(-\\frac{E+PV}{RT}\\right)
 ```
-where 
-- ``n`` is the power law exponent  
-- ``r`` is the exponent of fugacity dependence 
-- ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` and ``r`` must be either pre-defined or substituted) 
-- ``E`` is the activation energy ``\\mathrm{[kJ/mol]}`` 
-- ``V`` is the activation volume ``\\mathrm{[m^3/mol]}`` 
-- ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}`` 
+where
+- ``n`` is the power law exponent
+- ``r`` is the exponent of fugacity dependence
+- ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` and ``r`` must be either pre-defined or substituted)
+- ``E`` is the activation energy ``\\mathrm{[kJ/mol]}``
+- ``V`` is the activation volume ``\\mathrm{[m^3/mol]}``
+- ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}``
 - ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[MPa]}`` which are converted into second invariants using the `Apparatus` variable that can be
 either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
 # Example
-```julia-repl 
+```julia-repl
 julia> x2 = DislocationCreep(n=3)
 DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3 mol^-1, Apparatus=AxialCompression
 ```
@@ -225,9 +225,9 @@ end
 end
 
 """
-    compute_τII!(TauII::AbstractArray{_T,N}, a::DislocationCreep, EpsII::AbstractArray{_T,N}; 
-        P =       zero(TauII)::AbstractArray{_T,N}, 
-        T = ones(size(TauII))::AbstractArray{_T,N}, 
+    compute_τII!(TauII::AbstractArray{_T,N}, a::DislocationCreep, EpsII::AbstractArray{_T,N};
+        P =       zero(TauII)::AbstractArray{_T,N},
+        T = ones(size(TauII))::AbstractArray{_T,N},
         f = ones(size(TauII))::AbstractArray{_T,N})
 
 Computes the deviatoric stress invariant for a dislocation creep law
@@ -289,7 +289,6 @@ end
 
 # load collection of dislocation creep laws
 include("Data/DislocationCreep.jl")
-include("Data_deprecated/DislocationCreep.jl")
 
 using .Dislocation
 export SetDislocationCreep
@@ -300,7 +299,7 @@ function param_info(s::DislocationCreep)
     if name == ""
         return MaterialParamsInfo(; Equation = eq)
     end
-    inf = DislocationCreep_info[name][2]
+    inf = dislocation_database_info(name)
     return MaterialParamsInfo(;
         Equation = eq, Comment = inf.Comment, BibTex_Reference = inf.BibTex_Reference
     )
