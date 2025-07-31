@@ -22,7 +22,7 @@ jobs:
         version:
           - '1.10'
           - '1.11'
-          # - 'nightly'
+          - 'pre'
         os:
           - ubuntu-latest
           - macOS-13
@@ -36,9 +36,9 @@ jobs:
           - os: macOS-latest
             arch: aarch64
             version: '1.11'
-          # - os: macOS-latest
-          #   arch: aarch64
-          #   version: 'nightly'
+          - os: macOS-latest
+            arch: aarch64
+            version: 'pre'
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
