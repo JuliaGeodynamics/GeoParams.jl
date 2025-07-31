@@ -8,28 +8,28 @@ export NonLinearPeierlsCreep,
 # NonLinearPeierls Creep ------------------------------------------------
 """
     NonLinearPeierlsCreep(n = 1.0NoUnits, r = 0.0NoUnits, A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
-    
+
 Defines the flow law parameter of a non linear peierls creep law.
 
-The non linear peierls creep law, as used by experimentalists, is given by  
-```math  
+The non linear peierls creep law, as used by experimentalists, is given by
+```math
     \\dot{\\gamma} = A \\sigma_d \\exp{\\left( -\\frac{E}{RT} \\left( 1 - \\left( \\frac{\\sigma_d}{\\sigma_p} \\right) ^o \\right)^q\\right)}
 ```
-where 
-- ``n`` is the power law exponent  
-- ``q`` is the stress relation exponent  
-- ``o`` is the stress relation exponent (normally called p) 
-- ``r`` is the exponent of fugacity dependence 
-- ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` must be either pre-defined or substituted) 
-- ``E`` is the activation energy ``\\mathrm{[kJ/mol]}`` 
-- ``V`` is the activation volume ``\\mathrm{[m^3/mol]}`` 
-- ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}`` 
+where
+- ``n`` is the power law exponent
+- ``q`` is the stress relation exponent
+- ``o`` is the stress relation exponent (normally called p)
+- ``r`` is the exponent of fugacity dependence
+- ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` must be either pre-defined or substituted)
+- ``E`` is the activation energy ``\\mathrm{[kJ/mol]}``
+- ``V`` is the activation volume ``\\mathrm{[m^3/mol]}``
+- ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}``
 - ``\\sigma_\\mathrm{p}`` is the peierls stress ``\\mathrm{[MPa]}``
 - ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[MPa]}`` which are converted into second invariants using the `Apparatus` variable that can be
 either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
 # Example
-```julia-repl 
+```julia-repl
 julia> x2 = NonLinearPeierlsCreep(n=1)
 NonLinearPeierlsCreep: n=1, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, Apparatus=AxialCompression
 ```
@@ -161,7 +161,7 @@ end
     Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau::Float64, EpsII::Float64, args)
 
 Nonlinear iterations for Peierls creep stress using Newton-Raphson Iterations. Every number needs to be a child of type Real (don't use units here).
-The initial stress guess Tau should be at least in the same order of magnitude as the value of TauP is in the used creep law. Example: 1.75e9 is a 
+The initial stress guess Tau should be at least in the same order of magnitude as the value of TauP is in the used creep law. Example: 1.75e9 is a
 good initial guess for the preexisting "Wet Olivine | Mei et al. (2010)" creep law. Find the sweet spot in the Tau/TauP relation (initial guess/TauP)
 if the stress is diverging. Maximum iterations are by default 500 but can be changed as optional argument.
 """
@@ -206,14 +206,13 @@ end
 
 # load collection of peierls creep laws
 include("Data/NonLinearPeierlsCreep.jl")
-include("Data_deprecated/NonLinearPeierlsCreep.jl")
 
 using .NonLinearPeierls
 export SetNonLinearPeierlsCreep
 
 """
     SetNonLinearPeierlsCreep["Name of non linear peierls creep law"]
-This is a dictionary with pre-defined creep laws    
+This is a dictionary with pre-defined creep laws
 """
 function SetNonLinearPeierlsCreep(
         name::F;

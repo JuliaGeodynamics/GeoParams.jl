@@ -330,7 +330,6 @@ end
 
 # load collection of diffusion creep laws
 include("Data/DiffusionCreep.jl")
-include("Data_deprecated/DiffusionCreep.jl")
 
 using .Diffusion
 
