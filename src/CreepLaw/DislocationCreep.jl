@@ -299,7 +299,7 @@ function param_info(s::DislocationCreep)
     if name == ""
         return MaterialParamsInfo(; Equation = eq)
     end
-    inf = DislocationCreep_info[name][2]
+    inf = dislocation_database_info(name)
     return MaterialParamsInfo(;
         Equation = eq, Comment = inf.Comment, BibTex_Reference = inf.BibTex_Reference
     )

@@ -109,7 +109,7 @@ function param_info(s::NonLinearPeierlsCreep)
     if name == ""
         return MaterialParamsInfo(; Equation = eq)
     end
-    inf = NonLinearPeierlsCreep_info[name][2]
+    inf = nonlinear_peierls_database_info(name)
     return MaterialParamsInfo(;
         Equation = eq, Comment = inf.Comment, BibTex_Reference = inf.BibTex_Reference
     )

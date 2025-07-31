@@ -124,7 +124,7 @@ function param_info(s::DiffusionCreep)
         return MaterialParamsInfo(; Equation = eq)
     end
 
-    inf = DiffusionCreep_info[name][2]
+    inf = diffusion_database_info(name)
     return MaterialParamsInfo(;
         Equation = eq, Comment = inf.Comment, BibTex_Reference = inf.BibTex_Reference
     )
