@@ -421,7 +421,7 @@ module GeoParams
     # Define Table output functions
     include("Tables.jl")
     using .Tables
-    export detachFloatfromExponent, Phase2Dict, Dict2LatexTable, Phase2DictMd, Dict2MarkdownTable, ParameterTable
+    export detachFloatfromExponent, extract_parameters_from_phases, Dict2LatexTable, extract_parameters_from_phases_md, Dict2MarkdownTable, ParameterTable
 
     # Add 1D Strength Envelope
     include("./StrengthEnvelope/StrengthEnvelope.jl")

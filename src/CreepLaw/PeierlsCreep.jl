@@ -8,28 +8,28 @@ export PeierlsCreep,
 # Peierls Creep ------------------------------------------------
 """
     PeierlsCreep(n = 1.0NoUnits, r = 0.0NoUnits, A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
-    
+
 Defines the flow law parameter of a peierls creep law.
 
-The peierls creep law, as used by experimentalists, is given by  
-```math  
+The peierls creep law, as used by experimentalists, is given by
+```math
     \\dot{\\gamma} = A \\exp{\\left( -\\frac{E}{RT} \\left( 1 - \\left( \\frac{\\sigma_d}{\\sigma_p} \\right) ^o \\right)^q\\right)}
 ```
-where 
-- ``n`` is the power law exponent  
-- ``q`` is the stress relation exponent  
-- ``o`` is the stress relation exponent (normally called p) 
-- ``r`` is the exponent of fugacity dependence 
-- ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` must be either pre-defined or substituted) 
-- ``E`` is the activation energy ``\\mathrm{[kJ/mol]}`` 
-- ``V`` is the activation volume ``\\mathrm{[m^3/mol]}`` 
-- ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}`` 
+where
+- ``n`` is the power law exponent
+- ``q`` is the stress relation exponent
+- ``o`` is the stress relation exponent (normally called p)
+- ``r`` is the exponent of fugacity dependence
+- ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` must be either pre-defined or substituted)
+- ``E`` is the activation energy ``\\mathrm{[kJ/mol]}``
+- ``V`` is the activation volume ``\\mathrm{[m^3/mol]}``
+- ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}``
 - ``\\sigma_\\mathrm{p}`` is the peierls stress ``\\mathrm{[MPa]}``
 - ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[MPa]}`` which are converted into second invariants using the `Apparatus` variable that can be
 either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
 # Example
-```julia-repl 
+```julia-repl
 julia> x2 = PeierlsCreep(n=1)
 PeierlsCreep: Name = , n=1.0, q=2.0, o=1.0, TauP=8.5e9 Pa, A=5.7e11 s^-1.0, E=476.0 kJ mol^-1.0, FT=1.7320508075688772, FE=1.1547005383792517, Apparatus=1
 ```
@@ -109,7 +109,7 @@ function param_info(s::PeierlsCreep)
     if name == ""
         return MaterialParamsInfo(; Equation = eq)
     end
-    inf = PeierlsCreep_info[name][2]
+    inf = peierls_database_info(name)
     return MaterialParamsInfo(;
         Equation = eq, Comment = inf.Comment, BibTex_Reference = inf.BibTex_Reference
     )
@@ -189,7 +189,7 @@ end
 end
 
 """
-    compute_τII!(TauII::AbstractArray{_T,N}, a::PeierlsCreep, EpsII::AbstractArray{_T,N}; 
+    compute_τII!(TauII::AbstractArray{_T,N}, a::PeierlsCreep, EpsII::AbstractArray{_T,N};
         T = ones(size(TauII))::AbstractArray{_T,N}, args...)
 
 Computes the deviatoric stress invariant for a peierls creep law.
@@ -213,7 +213,7 @@ end
     dτII_dεII(v::PeierlsCreep, EpsII; args...)
 
 Computes the derivative `dτII/dεII` for a peierls creep law using automatic differentiation.
-    
+
 """
 
 function dτII_dεII(v::PeierlsCreep, EpsII; args...)
@@ -231,14 +231,13 @@ end
 
 # load collection of peierls creep laws
 include("Data/PeierlsCreep.jl")
-include("Data_deprecated/PeierlsCreep.jl")
 
 using .Peierls
 export SetPeierlsCreep
 
 """
     SetPeierlsCreep["Name of peierls creep law"]
-This is a dictionary with pre-defined creep laws    
+This is a dictionary with pre-defined creep laws
 """
 function SetPeierlsCreep(
         name::F;
