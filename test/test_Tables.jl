@@ -1,7 +1,8 @@
 using Test
 using GeoParams
 using Unidecode
-import GeoParams: Dislocation, Diffusion
+import GeoParams: Dislocation, Diffusion, GBS, Peierls, NonLinearPeierls
+import GeoParams.Tables: detachFloatfromExponent, extract_parameters_from_phases, Dict2LatexTable, extract_parameters_from_phases_md, Dict2MarkdownTable, ParameterTable, create_latex_symbol, get_material_reference_info
 
 @testset "Tables.jl" begin
     MatParam = (
@@ -47,8 +48,8 @@ import GeoParams: Dislocation, Diffusion
     @test num == "12.34567"
     @test ex == "-8"
 
-    # test Phase2Dict()
-    dict, ref = Phase2Dict(MatParam)
+    # test extract_parameters_from_phases()
+    dict, ref = extract_parameters_from_phases(MatParam)
     dval = MatParam[1].Density[1].ρ.val
     @test dict["ρ Density 1"][1] == "$dval"
     @test dict["ρ Density 1"][2] == "\\" * "$(unidecode("ρ"))"
@@ -63,8 +64,8 @@ import GeoParams: Dislocation, Diffusion
     @test dict["Name 1"][5] == ""
     @test dict["Name 1"][6] == ""
 
-    # test Phase2DictMd()
-    dictMd = Phase2DictMd(MatParam)
+    # test extract_parameters_from_phases_md()
+    dictMd = extract_parameters_from_phases_md(MatParam)
     dvalMd = MatParam[1].Density[1].ρ.val
     @test dictMd["ρ Density 1"][1] == "$dvalMd"
     @test dictMd["ρ Density 1"][2] == "ρ"
@@ -98,6 +99,8 @@ import GeoParams: Dislocation, Diffusion
     ParameterTable(MatParam)
     @test "ParameterTable.tex" in readdir()
     @test "References.bib" in readdir()
+    rm("ParameterTable.tex"; force = true)
+    rm("References.bib"; force = true)
 
     ParameterTable(MatParam; format = "TEX")
     @test "ParameterTable.tex" in readdir()
@@ -113,15 +116,32 @@ import GeoParams: Dislocation, Diffusion
     # for Markdown
     ParameterTable(MatParam; format = "Markdown")
     @test "ParameterTable.md" in readdir()
+    rm("ParameterTable.md"; force = true)
 
     ParameterTable(MatParam; format = "MD")
     @test "ParameterTable.md" in readdir()
     rm("ParameterTable.md"; force = true)
 
     filename = "TestTable"
-    ParameterTable(MatParam; format = "MaRkDoWn", filename = "TestTable")
+    ParameterTable(MatParam; format = "MaRkDoWn", filename = filename)
     @test "TestTable.md" in readdir()
     rm("TestTable.md"; force = true)
+
+    # test create_latex_symbol()
+    @test create_latex_symbol("ρ") == "\\rho"
+    @test create_latex_symbol("rho") == "\\rho"
+    @test create_latex_symbol("η0") == "\\eta_0"
+    @test create_latex_symbol("T0") == "T_0"
+    @test create_latex_symbol("P0") == "P_0"
+    @test create_latex_symbol("A_diff") == "A_{\\text{diff}}"
+    @test create_latex_symbol("n") == "n"
+    @test create_latex_symbol("E") == "E"
+
+    # test get_material_reference_info()
+    disl_creep = SetDislocationCreep(Dislocation.quartz_diorite_HansenCarter_1982)
+    ref_info = get_material_reference_info(disl_creep)
+    @test ref_info !== nothing
+    @test hasfield(typeof(ref_info), :BibTex_Reference)
 
     # test phase with CompositeRheology field
     v1 = SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006)
@@ -149,8 +169,8 @@ import GeoParams: Dislocation, Diffusion
         ),
     )
 
-    # test Phase2Dict() for CompositeRheology
-    dict, ref = Phase2Dict(MatParam)
+    # test extract_parameters_from_phases() for CompositeRheology
+    dict, ref = extract_parameters_from_phases(MatParam)
     dval = MatParam[2].CompositeRheology[1][3].η.val
     @test dict["η CompositeRheology LinVisc 2.3"][1] == "$dval"
     @test dict["η CompositeRheology LinVisc 2.3"][2] == "\\" * "$(unidecode("η"))"
@@ -160,8 +180,8 @@ import GeoParams: Dislocation, Diffusion
     @test dict["η CompositeRheology LinVisc 2.3"][5] == "1"
     @test dict["η CompositeRheology LinVisc 2.3"][6] == "LinVisc"
 
-    # test Phase2DictMd() for CompositeRheology
-    dictMd = Phase2DictMd(MatParam)
+    # test extract_parameters_from_phases_md() for CompositeRheology
+    dictMd = extract_parameters_from_phases_md(MatParam)
     dvalMd = MatParam[2].CompositeRheology[1][3].η.val
     @test dictMd["η CompositeRheology LinVisc 2.3"][1] == "$dvalMd"
     @test dictMd["η CompositeRheology LinVisc 2.3"][2] == "η"
