@@ -154,13 +154,15 @@ end
 
 Extract parameters from a single material parameter object recursively.
 """
-function extract_parameters_from_material(material::AbstractMaterialParam, phase_idx::Int, counters::Dict, params::Dict, refs::Dict, prefix::String="")
+function extract_parameters_from_material(material::AbstractMaterialParam, phase_idx::Int, counters::Dict, params::Dict, refs::Dict, prefix::String = "")
     rheo_type, rheo_subtype = get_rheology_info(material)
 
     # Only treat actual rheology laws as rheology types, not basic material properties
-    is_rheology = material isa Union{DislocationCreep, DiffusionCreep, LinearViscous, PowerlawViscous,
-                                   GrainBoundarySliding, PeierlsCreep, NonLinearPeierlsCreep,
-                                   LinearMeltViscosity, ViscosityPartialMelt_Costa_etal_2009, GiordanoMeltViscosity}
+    is_rheology = material isa Union{
+        DislocationCreep, DiffusionCreep, LinearViscous, PowerlawViscous,
+        GrainBoundarySliding, PeierlsCreep, NonLinearPeierlsCreep,
+        LinearMeltViscosity, ViscosityPartialMelt_Costa_etal_2009, GiordanoMeltViscosity,
+    }
 
     # Update counters if this is a rheology law
     if is_rheology
@@ -223,10 +225,11 @@ function extract_parameters_from_material(material::AbstractMaterialParam, phase
                 rheo_type,
                 string(phase_idx),
                 isempty(rheo_type) ? "" : string(get(counters, rheo_type, 0)),
-                rheo_subtype
+                rheo_subtype,
             )
         end
     end
+    return
 end
 
 """
@@ -234,8 +237,8 @@ end
 
 Recursively extract parameters from nested composite rheologies and parallel combinations.
 """
-function extract_parameters_recursive(obj, phase_idx::Int, counters::Dict, params::Dict, refs::Dict, prefix::String="")
-    if obj isa CompositeRheology
+function extract_parameters_recursive(obj, phase_idx::Int, counters::Dict, params::Dict, refs::Dict, prefix::String = "")
+    return if obj isa CompositeRheology
         # Build composite rheology summary
         composite_summary = build_composite_summary(obj)
         new_prefix = prefix * "Comp_"
@@ -290,7 +293,7 @@ end
 Extract parameters with composite rheology summary information.
 """
 function extract_parameters_recursive_with_composite(obj, phase_idx::Int, counters::Dict, params::Dict, refs::Dict, prefix::String, composite_summary::String)
-    if obj isa AbstractMaterialParam
+    return if obj isa AbstractMaterialParam
         # Extract parameters with composite summary
         extract_parameters_from_material_with_composite(obj, phase_idx, counters, params, refs, prefix, composite_summary)
     end
@@ -305,9 +308,11 @@ function extract_parameters_from_material_with_composite(material::AbstractMater
     rheo_type, rheo_subtype = get_rheology_info(material)
 
     # Only treat actual rheology laws as rheology types, not basic material properties
-    is_rheology = material isa Union{DislocationCreep, DiffusionCreep, LinearViscous, PowerlawViscous,
-                                   GrainBoundarySliding, PeierlsCreep, NonLinearPeierlsCreep,
-                                   LinearMeltViscosity, ViscosityPartialMelt_Costa_etal_2009, GiordanoMeltViscosity}
+    is_rheology = material isa Union{
+        DislocationCreep, DiffusionCreep, LinearViscous, PowerlawViscous,
+        GrainBoundarySliding, PeierlsCreep, NonLinearPeierlsCreep,
+        LinearMeltViscosity, ViscosityPartialMelt_Costa_etal_2009, GiordanoMeltViscosity,
+    }
 
     # Update counters if this is a rheology law
     if is_rheology
@@ -370,10 +375,11 @@ function extract_parameters_from_material_with_composite(material::AbstractMater
                 composite_summary,  # Use composite summary instead of individual rheo_type
                 string(phase_idx),
                 isempty(rheo_type) ? "" : string(get(counters, rheo_type, 0)),
-                rheo_subtype
+                rheo_subtype,
             )
         end
     end
+    return
 end
 
 """
@@ -504,7 +510,7 @@ Find a function in the given module that produces a material with the given name
 function find_function_in_module(mod::Module, name_str::String)
     try
         # Get all exported functions from the module
-        for name in names(mod; all=true, imported=false)
+        for name in names(mod; all = true, imported = false)
             if !startswith(string(name), "_") && name != :eval && name != :include
                 try
                     func = getfield(mod, name)
@@ -543,7 +549,7 @@ end
 Add bibliographic reference for a parameter if available using generic dispatch.
 """
 function add_parameter_reference!(param::AbstractMaterialParam, phase_idx::Int, references::Dict, global_counters::Dict, category_name::String)
-    try
+    return try
         # Use the new generic function to get MaterialParamsInfo
         info = get_material_reference_info(param)
 
@@ -594,6 +600,7 @@ function extract_parameters_from_single_param!(param::AbstractMaterialParam, pha
             push!(parameters_dict[param_symbol]["phases"], phase_idx)
         end
     end
+    return
 end
 
 """
@@ -691,7 +698,7 @@ end
 
 Creates a LaTeX table from the parameter dictionary.
 """
-function Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits=4)
+function Dict2LatexTable(d::Dict, refs::Dict; filename = "ParameterTable", rdigits = 4)
     # Create sorted pairs for iteration
     dictpairs = sort(collect(pairs(d)))
     refpairs = sort(collect(pairs(refs)))
@@ -927,10 +934,10 @@ function format_number(num::String, expo::String, dig::Int, rdigits::Int)
     elseif dig <= rdigits && expo == "1"
         return num
     elseif dig > rdigits && expo != "1"
-        rounded = round(parse(Float64, num); digits=rdigits)
+        rounded = round(parse(Float64, num); digits = rdigits)
         return "$(rounded) \\times 10^{$(expo)}"
     else
-        rounded = round(parse(Float64, num); digits=rdigits)
+        rounded = round(parse(Float64, num); digits = rdigits)
         return string(rounded)
     end
 end
@@ -944,13 +951,13 @@ function generate_flow_law_equations(dictpairs, phase_count::Int)
 
     for (_, data) in dictpairs
         if data[6] == "DislCreep" && !added_disl
-            equations *= "Dislocation Creep: & \\multicolumn{$(total_columns-1)}{l}{\$ \\dot{\\gamma} = A \\tau^n f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) \$}\\\\\n"
+            equations *= "Dislocation Creep: & \\multicolumn{$(total_columns - 1)}{l}{\$ \\dot{\\gamma} = A \\tau^n f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) \$}\\\\\n"
             added_disl = true
         elseif data[6] == "DiffCreep" && !added_diff
-            equations *= "Diffusion Creep: & \\multicolumn{$(total_columns-1)}{l}{\$ \\dot{\\gamma} = A \\tau^n d^p f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) \$}\\\\\n"
+            equations *= "Diffusion Creep: & \\multicolumn{$(total_columns - 1)}{l}{\$ \\dot{\\gamma} = A \\tau^n d^p f_{H2O}^r \\exp(-\\frac{E+PV}{RT}) \$}\\\\\n"
             added_diff = true
         elseif data[6] == "LinVisc" && !added_lin
-            equations *= "Linear viscosity: & \\multicolumn{$(total_columns-1)}{l}{\$ \\eta = \\frac{\\tau_{II}}{2\\dot{\\varepsilon_{II}}} \$}\\\\\n"
+            equations *= "Linear viscosity: & \\multicolumn{$(total_columns - 1)}{l}{\$ \\eta = \\frac{\\tau_{II}}{2\\dot{\\varepsilon_{II}}} \$}\\\\\n"
             added_lin = true
         end
     end
@@ -1084,8 +1091,8 @@ end
 
 Recursively extract parameters for Markdown format (preserves Unicode symbols).
 """
-function extract_parameters_recursive_md(obj, phase_idx::Int, counters::Dict, params::Dict, prefix::String="")
-    if obj isa CompositeRheology
+function extract_parameters_recursive_md(obj, phase_idx::Int, counters::Dict, params::Dict, prefix::String = "")
+    return if obj isa CompositeRheology
         # Build composite rheology summary
         composite_summary = build_composite_summary(obj)
         new_prefix = prefix * "Comp_"
@@ -1109,7 +1116,7 @@ end
 Extract parameters with composite rheology summary information for Markdown format.
 """
 function extract_parameters_recursive_md_with_composite(obj, phase_idx::Int, counters::Dict, params::Dict, prefix::String, composite_summary::String)
-    if obj isa AbstractMaterialParam
+    return if obj isa AbstractMaterialParam
         # Extract parameters with composite summary
         extract_parameters_from_material_md_with_composite(obj, phase_idx, counters, params, prefix, composite_summary)
     end
@@ -1120,13 +1127,15 @@ end
 
 Extract parameters from a single material parameter for Markdown format (preserves Unicode).
 """
-function extract_parameters_from_material_md(material::AbstractMaterialParam, phase_idx::Int, counters::Dict, params::Dict, prefix::String="")
+function extract_parameters_from_material_md(material::AbstractMaterialParam, phase_idx::Int, counters::Dict, params::Dict, prefix::String = "")
     rheo_type, rheo_subtype = get_rheology_info(material)
 
     # Only treat actual rheology laws as rheology types, not basic material properties
-    is_rheology = material isa Union{DislocationCreep, DiffusionCreep, LinearViscous, PowerlawViscous,
-                                   GrainBoundarySliding, PeierlsCreep, NonLinearPeierlsCreep,
-                                   LinearMeltViscosity, ViscosityPartialMelt_Costa_etal_2009, GiordanoMeltViscosity}
+    is_rheology = material isa Union{
+        DislocationCreep, DiffusionCreep, LinearViscous, PowerlawViscous,
+        GrainBoundarySliding, PeierlsCreep, NonLinearPeierlsCreep,
+        LinearMeltViscosity, ViscosityPartialMelt_Costa_etal_2009, GiordanoMeltViscosity,
+    }
 
     # Update counters if this is a rheology law
     if is_rheology
@@ -1174,10 +1183,11 @@ function extract_parameters_from_material_md(material::AbstractMaterialParam, ph
                 rheo_type,
                 string(phase_idx),
                 isempty(rheo_type) ? "" : string(get(counters, rheo_type, 0)),
-                rheo_subtype
+                rheo_subtype,
             )
         end
     end
+    return
 end
 
 """
@@ -1189,9 +1199,11 @@ function extract_parameters_from_material_md_with_composite(material::AbstractMa
     rheo_type, rheo_subtype = get_rheology_info(material)
 
     # Only treat actual rheology laws as rheology types, not basic material properties
-    is_rheology = material isa Union{DislocationCreep, DiffusionCreep, LinearViscous, PowerlawViscous,
-                                   GrainBoundarySliding, PeierlsCreep, NonLinearPeierlsCreep,
-                                   LinearMeltViscosity, ViscosityPartialMelt_Costa_etal_2009, GiordanoMeltViscosity}
+    is_rheology = material isa Union{
+        DislocationCreep, DiffusionCreep, LinearViscous, PowerlawViscous,
+        GrainBoundarySliding, PeierlsCreep, NonLinearPeierlsCreep,
+        LinearMeltViscosity, ViscosityPartialMelt_Costa_etal_2009, GiordanoMeltViscosity,
+    }
 
     # Update counters if this is a rheology law
     if is_rheology
@@ -1239,10 +1251,11 @@ function extract_parameters_from_material_md_with_composite(material::AbstractMa
                 composite_summary,  # Use composite summary instead of individual rheo_type
                 string(phase_idx),
                 isempty(rheo_type) ? "" : string(get(counters, rheo_type, 0)),
-                rheo_subtype
+                rheo_subtype,
             )
         end
     end
+    return
 end
 
 """
@@ -1250,7 +1263,7 @@ end
 
 Creates a Markdown table from the parameter dictionary.
 """
-function Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
+function Dict2MarkdownTable(d::Dict; filename = "ParameterTable", rdigits = 4)
     # Get phase count
     if !haskey(d, "Name 1")
         error("Invalid parameter dictionary: missing phase information")
@@ -1411,10 +1424,10 @@ function format_markdown_number(num::String, expo::String, dig::Int, rdigits::In
     elseif dig <= rdigits && expo == "1"
         return num
     elseif dig > rdigits && expo != "1"
-        rounded = round(parse(Float64, num); digits=rdigits)
+        rounded = round(parse(Float64, num); digits = rdigits)
         return "$(rounded) × 10^$(expo)"
     else
-        rounded = round(parse(Float64, num); digits=rdigits)
+        rounded = round(parse(Float64, num); digits = rdigits)
         return string(rounded)
     end
 end
@@ -1440,16 +1453,16 @@ ParameterTable(MatParam; format="latex", filename="MyTable")
 ParameterTable(MatParam; format="markdown", filename="MyTable")
 ```
 """
-function ParameterTable(phases; filename="ParameterTable", format="latex", rdigits=4)
+function ParameterTable(phases; filename = "ParameterTable", format = "latex", rdigits = 4)
     format_lower = lowercase(format)
 
     if format_lower in ("latex", "tex")
         d, refs = extract_parameters_from_phases(phases)
-        Dict2LatexTable(d, refs; filename=filename, rdigits=rdigits)
+        Dict2LatexTable(d, refs; filename = filename, rdigits = rdigits)
         @info "Created $(filename).tex and References.bib files."
     elseif format_lower in ("markdown", "md")
         d = extract_parameters_from_phases_md(phases)
-        Dict2MarkdownTable(d; filename=filename, rdigits=rdigits)
+        Dict2MarkdownTable(d; filename = filename, rdigits = rdigits)
         @info "Created $(filename).md file."
     else
         error("Unsupported format: $(format). Use 'latex' or 'markdown'.")
