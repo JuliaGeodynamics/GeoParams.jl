@@ -1,4 +1,3 @@
-
 """
     Grt_Ca_Carlson2006()
 
@@ -22,8 +21,8 @@ function Grt_Ca_Carlson2006()
         ΔV_1σ = 1.139cm^3 / mol,  # uncertainty at 1σ of the activation volume
         aX = 511.1NoUnits,  # correspond to the sensitivity of the frequency factor to unit-cell dimension (unit normally of 1/nm but here adimensional)
         bX = - 1.1525NoUnits,  # unit-cell dimension of the almandine endmember (unit normally of nm but here adimensional)
-        nfO2 = (1/6)NoUnits,  # exponent for the oxygen fugacity dependency
-        dfO2 = (1e-25)NoUnits,  # quotient for f(O2) dependency
+        nfO2 = (1 / 6)NoUnits,  # exponent for the oxygen fugacity dependency
+        dfO2 = (1.0e-25)NoUnits,  # quotient for f(O2) dependency
         Charge = 2,  # charge of the cation
         T_range_min = 500C,  # temperature min of the experiment
         T_range_max = 1500C,  # temperature max of the experiment
@@ -70,8 +69,8 @@ function Grt_Ca_Chu2015()
         ΔV_1σ = 0.14u"J / bar / mol",  # uncertainty at 1σ of the activation volume
         aX = 302.9NoUnits,  # correspond to the sensitivity of the frequency factor to unit-cell dimension (unit normally of 1/nm but here adimensional)
         bX = - 1.1525NoUnits,  # unit-cell dimension of the almandine endmember (unit normally of nm but here adimensional)
-        nfO2 = (1/6)NoUnits,  # exponent for the oxygen fugacity dependency
-        dfO2 = (1e-25)NoUnits,  # quotient for f(O2) dependency
+        nfO2 = (1 / 6)NoUnits,  # exponent for the oxygen fugacity dependency
+        dfO2 = (1.0e-25)NoUnits,  # quotient for f(O2) dependency
         Charge = 2,  # charge of the cation
         T_range_min = 500C,  # temperature min of the experiment
         T_range_max = 1500C,  # temperature max of the experiment

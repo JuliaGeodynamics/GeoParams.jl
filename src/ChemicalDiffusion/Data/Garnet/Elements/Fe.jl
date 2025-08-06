@@ -18,8 +18,8 @@ function Grt_Fe_Chakraborty1992()
         Ea_1σ = 8721u"cal/mol",  # uncertainty at 1σ of the activation energy
         ΔV = 5.6cm^3 / mol,  # activation volume
         ΔV_1σ = 2.9cm^3 / mol,  # uncertainty at 1σ of the activation volume
-        nfO2 = (1/6)NoUnits,  # exponent for the oxygen fugacity dependency
-        dfO2 = (1e-25)NoUnits,  # quotient for f(O2) dependency
+        nfO2 = (1 / 6)NoUnits,  # exponent for the oxygen fugacity dependency
+        dfO2 = (1.0e-25)NoUnits,  # quotient for f(O2) dependency
         Charge = 2,  # charge of the cation
         T_range_min = 1100C,  # temperature min of the experiment
         T_range_max = 1480C,  # temperature max of the experiment
@@ -67,8 +67,8 @@ function Grt_Fe_Carlson2006()
         ΔV_1σ = 0.799cm^3 / mol,  # uncertainty at 1σ of the activation volume
         aX = 465.7NoUnits,  # correspond to the sensitivity of the frequency factor to unit-cell dimension (unit normally of 1/nm but here adimensional)
         bX = - 1.1525NoUnits,  # unit-cell dimension of the almandine endmember (unit normally of nm but here adimensional)
-        nfO2 = (1/6)NoUnits,  # exponent for the oxygen fugacity dependency
-        dfO2 = (1e-25)NoUnits,  # quotient for f(O2) dependency
+        nfO2 = (1 / 6)NoUnits,  # exponent for the oxygen fugacity dependency
+        dfO2 = (1.0e-25)NoUnits,  # quotient for f(O2) dependency
         Charge = 2,  # charge of the cation
         T_range_min = 500C,  # temperature min of the experiment
         T_range_max = 1500C,  # temperature max of the experiment
@@ -112,12 +112,12 @@ function Grt_Fe_Chu2015()
         log_D0_1σ = 0.71NoUnits,
         Ea = 250.8u"kJ/mol",  # activation energy
         Ea_1σ = 9.13u"kJ/mol",  # uncertainty at 1σ of the activation energy
-        ΔV = 1.40u"J / bar / mol",  # activation volume
+        ΔV = 1.4u"J / bar / mol",  # activation volume
         ΔV_1σ = 0.13u"J / bar / mol",  # uncertainty at 1σ of the activation volume
         aX = 457.2NoUnits,  # correspond to the sensitivity of the frequency factor to unit-cell dimension (unit normally of 1/nm but here adimensional)
         bX = - 1.1525NoUnits,  # unit-cell dimension of the almandine endmember (unit normally of nm but here adimensional)
-        nfO2 = (1/6)NoUnits,  # exponent for the oxygen fugacity dependency
-        dfO2 = (1e-25)NoUnits,  # quotient for f(O2) dependency
+        nfO2 = (1 / 6)NoUnits,  # exponent for the oxygen fugacity dependency
+        dfO2 = (1.0e-25)NoUnits,  # quotient for f(O2) dependency
         Charge = 2,  # charge of the cation
         T_range_min = 500C,  # temperature min of the experiment
         T_range_max = 1500C,  # temperature max of the experiment

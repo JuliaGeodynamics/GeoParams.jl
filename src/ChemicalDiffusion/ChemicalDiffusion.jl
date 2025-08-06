@@ -324,7 +324,7 @@ end
 Computes the diffusion coefficient `D` [m^2/s] from the diffusion data `data` at temperature `T` [K], pressure `P` [Pa], oxygen fugacity `fO2` [NoUnits] and composition dependency `X` [NoUnits] from a structure of type `DiffusionData`.
 If `T` and `P` are provided without unit, the function assumes the units are in Kelvin and Pascal, respectively, and outputs the diffusion coefficient without unit based on the value in m^2/s.
 """
-@inline function compute_D(data::DiffusionData; T = 1K, P = 1GPa, fO2 = 1e-25NoUnits, X = 0NoUnits, kwargs...)
+@inline function compute_D(data::DiffusionData; T = 1K, P = 1GPa, fO2 = 1.0e-25NoUnits, X = 0NoUnits, kwargs...)
 
     if P isa Quantity && T isa Quantity
         @unpack_units D0, Ea, ΔV, P0, R, dfO2, nfO2, aX, bX = data
