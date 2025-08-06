@@ -336,6 +336,90 @@ using StaticArrays
     D = ustrip(uconvert(cm^2 / s, compute_D(Mn_Grt, T = 1373.15K, P = 1GPa)))
     @test D ≈ 6.909072e-14 atol = 1.0e-18
 
+    # end-member unit-cell dimensions
+    a0_Fe = 1.1525
+    a0_Mg = 1.1456
+    a0_Mn = 1.1614
+    a0_Ca = 1.1852
+
+    # compo for benchmark Carlson 2006 and Chu and Ague 2015 data
+    X = 0.7 * a0_Fe + 0.25 * a0_Mg + 0.025 * a0_Mn + 0.025 * a0_Ca
+
+    # Benchmark Fe data from Carlson 2006 (HD 06/08/25)
+    Fe_Grt = Garnet.Grt_Fe_Carlson2006
+    Fe_Grt = SetChemicalDiffusion(Fe_Grt)
+
+    D = ustrip(uconvert(m^2 / s, compute_D(Fe_Grt, T = 600C, P = 0.6GPa, X = X)))
+    D_log = log10(D)
+
+    # Table 6 from Chu and Ague (2015)
+    @test  D_log ≈ -24.11 atol = 1.0e-2
+
+    Mg_Grt = Garnet.Grt_Mg_Carlson2006
+    Mg_Grt = SetChemicalDiffusion(Mg_Grt)
+    D = ustrip(uconvert(m^2 / s, compute_D(Mg_Grt, T = 600C, P = 0.6GPa, X = X)))
+    D_log = log10(D)
+
+    # Table 6 from Chu and Ague (2015)
+    @test  D_log ≈ -23.71 atol = 1.0e-2
+
+    Mn_Grt = Garnet.Grt_Mn_Carlson2006
+    Mn_Grt = SetChemicalDiffusion(Mn_Grt)
+    D = ustrip(uconvert(m^2 / s, compute_D(Mn_Grt, T = 600C, P = 0.6GPa, X = X)))
+    D_log = log10(D)
+
+    # Table 6 from Chu and Ague (2015)
+    @test  D_log ≈ -23.97 atol = 1.0e-2
+
+    Ca_Grt = Garnet.Grt_Ca_Carlson2006
+    Ca_Grt = SetChemicalDiffusion(Ca_Grt)
+    D = ustrip(uconvert(m^2 / s, compute_D(Ca_Grt, T = 600C, P = 0.6GPa, X = X)))
+    D_log = log10(D)
+
+    # Table 6 from Chu and Ague (2015)
+    @test  D_log ≈ -24.1 atol = 1.0e-1
+
+    # Benchmark Fe data from Chu and Ague (2015) (HD 06/08/25)
+    Fe_Grt = Garnet.Grt_Fe_Chu2015
+    Fe_Grt = SetChemicalDiffusion(Fe_Grt)
+
+    D = ustrip(uconvert(m^2 / s, compute_D(Fe_Grt, T = 600C, P = 0.6GPa, X = X)))
+    D_log = log10(D)
+
+    # Table 6 from Chu and Ague (2015)
+    @test  D_log ≈ -23.63 atol = 1.0e-2
+
+    # Benchmark Mg data from Chu and Ague (2015) (HD 06/08/25)
+    Mg_Grt = Garnet.Grt_Mg_Chu2015
+    Mg_Grt = SetChemicalDiffusion(Mg_Grt)
+
+    D = ustrip(uconvert(m^2 / s, compute_D(Mg_Grt, T = 600C, P = 0.6GPa, X = X)))
+    D_log = log10(D)
+
+    # Table 6 from Chu and Ague (2015)
+    @test  D_log ≈ -24.08 atol = 1.0e-2
+
+    # Benchmark Mn data from Chu and Ague (2015) (HD 06/08/25)
+    Mn_Grt = Garnet.Grt_Mn_Chu2015
+    Mn_Grt = SetChemicalDiffusion(Mn_Grt)
+
+    D = ustrip(uconvert(m^2 / s, compute_D(Mn_Grt, T = 600C, P = 0.6GPa, X = X)))
+    D_log = log10(D)
+
+    # Table 6 from Chu and Ague (2015)
+    @test  D_log ≈ -23.15 atol = 1.0e-2
+
+    # Benchmark Ca data from Chu and Ague (2015) (HD 06/08/25)
+    Ca_Grt = Garnet.Grt_Ca_Chu2015
+    Ca_Grt = SetChemicalDiffusion(Ca_Grt)
+
+    D = ustrip(uconvert(m^2 / s, compute_D(Ca_Grt, T = 600C, P = 0.6GPa, X = X)))
+    D_log = log10(D)
+
+    # Table 6 from Chu and Ague (2015)
+    @test  D_log ≈ -25.0 atol = 1.0e-2
+
+
     # Benchmark REE data from Bloch 2020 (HD 23/01/25)
     REE_Grt_slow = Garnet.Grt_REE_Bloch2020_slow
     REE_Grt_slow = SetChemicalDiffusion(REE_Grt_slow)
