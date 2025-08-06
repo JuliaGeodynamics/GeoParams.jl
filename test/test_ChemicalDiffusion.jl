@@ -343,7 +343,7 @@ using StaticArrays
     a0_Ca = 1.1852
 
     # compo for benchmark Carlson 2006 and Chu and Ague 2015 data
-    X = 0.7*a0_Fe + 0.25*a0_Mg + 0.025*a0_Mn + 0.025*a0_Ca
+    X = 0.7 * a0_Fe + 0.25 * a0_Mg + 0.025 * a0_Mn + 0.025 * a0_Ca
 
     # Benchmark Fe data from Carlson 2006 (HD 06/08/25)
     Fe_Grt = Garnet.Grt_Fe_Carlson2006
@@ -353,7 +353,7 @@ using StaticArrays
     D_log = log10(D)
 
     # Table 6 from Chu and Ague (2015)
-    @test  D_log ≈ -24.11 atol = 1.0e-2
+    @test  D_log ≈ -24.1 atol = 1.0e-2
 
     Mg_Grt = Garnet.Grt_Mg_Carlson2006
     Mg_Grt = SetChemicalDiffusion(Mg_Grt)
@@ -407,7 +407,7 @@ using StaticArrays
     D_log = log10(D)
 
     # Table 6 from Chu and Ague (2015)
-    @test  D_log ≈ −23.15 atol = 1.0e-2
+    @test  D_log ≈ -23.15 atol = 1.0e-2
 
     # Benchmark Ca data from Chu and Ague (2015) (HD 06/08/25)
     Ca_Grt = Garnet.Grt_Ca_Chu2015
@@ -417,7 +417,7 @@ using StaticArrays
     D_log = log10(D)
 
     # Table 6 from Chu and Ague (2015)
-    @test  D_log ≈ -25.00 atol = 1.0e-2
+    @test  D_log ≈ -25.0 atol = 1.0e-2
 
 
     # Benchmark REE data from Bloch 2020 (HD 23/01/25)
