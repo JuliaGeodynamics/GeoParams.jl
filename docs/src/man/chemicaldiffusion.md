@@ -28,10 +28,16 @@ Garnet.chemical_diffusion_list()
 will return:
 
 ```julia
-5-element Vector{Function}:
+13-element Vector{Function}:
+Grt_Ca_Carlson2006 (generic function with 1 method)
+ Grt_Ca_Chu2015 (generic function with 1 method)
+ Grt_Fe_Carlson2006 (generic function with 1 method)
  Grt_Fe_Chakraborty1992 (generic function with 1 method)
- Grt_Mg_Chakraborty1992 (generic function with 1 method)
+ Grt_Fe_Chu2015 (generic function with 1 method)
+ ⋮
+ Grt_Mn_Carlson2006 (generic function with 1 method)
  Grt_Mn_Chakraborty1992 (generic function with 1 method)
+ Grt_Mn_Chu2015 (generic function with 1 method)
  Grt_REE_Bloch2020_fast (generic function with 1 method)
  Grt_REE_Bloch2020_slow (generic function with 1 method)
 ```

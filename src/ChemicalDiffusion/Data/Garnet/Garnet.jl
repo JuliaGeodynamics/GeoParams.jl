@@ -5,6 +5,7 @@ using GeoParams
 include("Elements/Fe.jl")
 include("Elements/Mg.jl")
 include("Elements/Mn.jl")
+include("Elements/Ca.jl")
 include("Elements/REE.jl")
 
 """
