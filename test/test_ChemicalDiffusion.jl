@@ -377,7 +377,7 @@ using StaticArrays
     D_log = log10(D)
 
     # Table 6 from Chu and Ague (2015)
-    @test  D_log ≈ -24.10 atol = 1.0e-2
+    @test  D_log ≈ -24.1 atol = 1.0e-2
 
     # Benchmark Fe data from Chu and Ague (2015) (HD 06/08/25)
     Fe_Grt = Garnet.Grt_Fe_Chu2015
