@@ -56,6 +56,37 @@ import ForwardDiff as FD
 
     # compute_heatcapacity!(Cp, Cp3, args)
 
+    # TP-dependent conductivity for different predefines cases
+    T = Vector{Float64}(250:100:1250)
+    P = 1.0e6 * ones(size(T)) / ustrip(uconvert(Pa, 1MPa))  # must be in MPa!
+    List = "LowerCrust", "Mantle", "OceanicCrust", "UpperCrust"
+    Sol_kT = 20.55712932736763, 28.700405819019323, 20.55712932736763, 19.940302462417037
+    for i in eachindex(List)
+        k_TP = Set_TP_Conductivity(List[i])
+        k = compute_conductivity(k_TP, P, T)         # note that P must be in MPa
+        @test sum(k) ≈ Sol_kT[i]
+
+        k_TP_nd = deepcopy(k_TP)
+        k_TP_nd = nondimensionalize(k_TP_nd, CharUnits_GEO)
+        T_nd = Float64.(ustrip.(T / CharUnits_GEO.Temperature))
+        P_nd = Float64.(ustrip(P / CharUnits_GEO.stress))
+        k_nd = compute_conductivity(k_TP_nd, P_nd, T_nd)
+
+        @test ustrip(sum(abs.(ustrip.(k_nd * CharUnits_GEO.conductivity) - k))) < 1.0e-11
+    end
+
+    # Test TP_Conductivity constructor directly
+    k_TP_direct = Set_TP_Conductivity("Mantle")
+    @test isbits(k_TP_direct)
+    @test k_TP_direct.Name == ('M', 'a', 'n', 't', 'l', 'e')
+
+    # Test with different rock types
+    for name in ["LowerCrust", "Mantle", "OceanicCrust", "UpperCrust"]
+        k_TP_test = Set_TP_Conductivity(name)
+        @test isbits(k_TP_test)
+        @test length(k_TP_test.Name) == length(name)
+    end
+
     # Test with arrays
     T_array = T * ones(10)'
     Cp_array = similar(T_array)
