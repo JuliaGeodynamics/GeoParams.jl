@@ -333,7 +333,7 @@ where ``k`` is the conductivity [``W/K/m``], and ``a_k,b_k,c_k,d_k`` are paramet
 end
 function TP_Conductivity(args...)
     return TP_Conductivity(
-        NTuple{length(args[1]), Char}(collect.(args[1])), convert.(GeoUnit, args[2:end])...
+        NTuple{length(args[1]), Char}(collect(args[1])), convert.(GeoUnit, args[2:end])...
     )
 end
 
