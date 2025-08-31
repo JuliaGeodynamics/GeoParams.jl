@@ -1353,7 +1353,6 @@ Creates a plot of log(D) versus 10^4/T for one or a tuple of `ChemicalDiffusionD
 - `xlims`: Limits for the x-axis (default: (nothing, nothing))
 - `ylims`: Limits for the y-axis (default: (nothing, nothing))
 - `ticklabelsize`: Size of the tick labels (default: 35)
-- `xlims2`: Limits for the x-axis of the second axis (temperature) (default: (nothing, nothing))
 
 # Example
 
@@ -1392,8 +1391,7 @@ function PlotDiffusionCoefArrhenius(
         labelsize = 35,
         xlims = (nothing, nothing),
         ylims = (nothing, nothing),
-        ticklabelsize = 35,
-        xlims2 = (nothing, nothing),
+        ticklabelsize = 35
     )
 
     if isa(x, AbstractChemicalDiffusion)
@@ -1464,6 +1462,7 @@ function PlotDiffusionCoefArrhenius(
         axislegend(ax1; labelsize = legendsize, position = position)
     end
 
+    # Create top axis for temperature in °C
     ax2 = Axis(
         fig[1, 1];
         xlabel = "Temperature [°C]",
@@ -1472,26 +1471,30 @@ function PlotDiffusionCoefArrhenius(
         ylabelsize = labelsize,
         title = "",
         xaxisposition = :top,
-        xreversed = true,
         xticklabelsize = ticklabelsize,
         yticklabelsize = ticklabelsize,
+        xgridvisible = false
     )
 
-    hidexdecorations!(ax2; grid = true, label = false, ticklabels = false, ticks = false)
+    # Define nice temperature ticks in °C
+    T_ticks_C = 0:100:2000  # adjust as needed
 
-    T_min = uconvert.(u"°C", T_min) |> ustrip
-    T_max = uconvert.(u"°C", T_max) |> ustrip
+    # Convert to bottom axis values (10^4/T in K⁻¹)
+    T_ticks_inv = 1.0e4 ./ (T_ticks_C .+ 273.15)  # same units as bottom axis
 
-    for i in 1:n
-        lines!(ax2, [T_min[i], T_max[i]], [D_log[i], D_log[i + n]], label = "", color = RGBAf(0, 0, 0, 0))
-    end
+    # Apply the transformed ticks and °C labels
+    ax2.xticks = (T_ticks_inv, string.(T_ticks_C))
 
-    linkyaxes!(ax1, ax2)
+    # Hide y decorations for the top axis
+    hideydecorations!(ax2; grid = true, label = false, ticks = false)
 
     xlims!(ax1, xlims...)
-    xlims!(ax2, xlims2...)
+    xlims!(ax2, ax1.xaxis.attributes.limits[])
     ylims!(ax1, ylims...)
-    ylims!(ax2, ylims...)
+    ylims!(ax2, ax1.yaxis.attributes.limits[])
+
+    linkyaxes!(ax1, ax2)
+    linkxaxes!(ax1, ax2)
 
     if !isnothing(filename)
         save(filename, fig)
