@@ -419,21 +419,20 @@ using StaticArrays
     # Table 6 from Chu and Ague (2015)
     @test  D_log ≈ -25.0 atol = 1.0e-2
 
-
-    # Benchmark REE data from Bloch 2020 (HD 23/01/25)
-    REE_Grt_slow = Garnet.Grt_REE_Bloch2020_slow
-    REE_Grt_slow = SetChemicalDiffusion(REE_Grt_slow)
-    D = ustrip(compute_D(REE_Grt_slow, T = 1323.15K))
-
-    D_paper = exp(-10.24 - (221057) / (2.303 * 8.31446261815324 * 1323.15))
-    @test D ≈ D_paper
-
-    # Benchmark REE data from Bloch 2020 (HD 23/01/25)
+    # Benchmark REE data from Bloch 2020 (HD 31/08/25)
     REE_Grt_fast = Garnet.Grt_REE_Bloch2020_fast
     REE_Grt_fast = SetChemicalDiffusion(REE_Grt_fast)
-    D = ustrip(compute_D(REE_Grt_fast, T = 1323.15K, P = 1.0GPa))
+    D = ustrip(compute_D(REE_Grt_fast, T = 1323.15K))
 
-    D_paper = exp(-9.28 - (265200 + 10800 * 1) / (2.303 * 8.31446261815324 * 1323.15))
+    D_paper = 10^(-10.24 - (221057) / (log(10) * 8.31446261815324 * 1323.15))
+    @test D ≈ D_paper
+
+    # Benchmark REE data from Bloch 2020 (HD 31/08/25)
+    REE_Grt_slow = Garnet.Grt_REE_Bloch2020_slow
+    REE_Grt_slow = SetChemicalDiffusion(REE_Grt_slow)
+    D = ustrip(compute_D(REE_Grt_slow, T = 1323.15K, P = 1.0GPa))
+
+    D_paper = 10^(-9.28 - (265200 + 10800 * 1) / (log(10) * 8.31446261815324 * 1323.15))
     @test D ≈ D_paper
 
 

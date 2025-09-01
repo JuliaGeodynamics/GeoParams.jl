@@ -32,7 +32,7 @@ features:
 
   - icon: ⚡
     title: Chemical diffusion
-    details: Calculate chemical diffusion in different minerals and melts.
+    details: Calculate chemical diffusion coefficients in different minerals and melts.
     link: man/chemicaldiffusion
 
   - icon: 📈
