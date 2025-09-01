@@ -1,6 +1,6 @@
 # Chemical Diffusion
 
-Some routines and experimental data for chemical diffusion in minerals and phases are implemented in [GeoParams.jl](https://juliageodynamics.github.io/GeoParams.jl/stable/).
+Some routines and experimental data to compute chemical diffusion coefficients in minerals and phases are implemented in [GeoParams.jl](https://juliageodynamics.github.io/GeoParams.jl/stable/).
 
 ## Diffusion parameters from the literature
 

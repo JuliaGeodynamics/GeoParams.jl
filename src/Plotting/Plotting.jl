@@ -1328,7 +1328,7 @@ end
 
 """
     fig, ax = PlotDiffusionCoefPlotDiffusionCoefArrhenius(x::Union{Tuple{Vararg{AbstractChemicalDiffusion}}, NTuple{N, AbstractChemicalDiffusion} where N, AbstractChemicalDiffusion};
-                                P=1u"GPa", fO2=1NoUnits, log_type=:log10, linestyle=:solid, linewidth=1, color=nothing, label=nothing,
+                                P=1u"GPa", fO2=1.0e-25NoUnits, log_type=:log10, linestyle=:solid, linewidth=1, color=nothing, label=nothing,
                                 title="", fig=nothing, filename=nothing, res=(1200, 1200), legend=true, legendsize=15, position=:rt,
                                 labelsize=35, xlims=(nothing, nothing), ylims=(nothing, nothing))
 
@@ -1336,7 +1336,7 @@ Creates a plot of log(D) versus 10^4/T for one or a tuple of `ChemicalDiffusionD
 
 # Optional parameters
 - `P`: Pressure (default: 1 GPa)
-- `fO2`: Oxygen fugacity (default: 1 NoUnits)
+- `fO2`: Oxygen fugacity (default: 1.0e-25 NoUnits (Graphite buffer))
 - `log_type`: Logarithm type for `D` (default: :log10, options: :log10, :ln)
 - `linestyle`: Line style for the plot (default: :solid)
 - `linewidth`: Line width for the plot (default: 1)
@@ -1358,7 +1358,7 @@ Creates a plot of log(D) versus 10^4/T for one or a tuple of `ChemicalDiffusionD
 
 ```julia
 using GeoParams
-using GLMakie
+using CairoMakie
 
 # obtain diffusion data
 Fe_Grt = Garnet.Grt_Fe_Chakraborty1992
@@ -1368,13 +1368,16 @@ Mg_Grt = SetChemicalDiffusion(Mg_Grt)
 Mn_Grt = Garnet.Grt_Mn_Chakraborty1992
 Mn_Grt = SetChemicalDiffusion(Mn_Grt)
 
-fig, ax = PlotDiffusionCoefArrhenius((Fe_Grt, Mg_Grt, Mn_Grt), P= 1u"GPa", linewidth=3)
+fig, ax = PlotDiffusionCoefArrhenius((Fe_Grt, Mg_Grt, Mn_Grt), P= 1u"GPa", linewidth=3,
+                                     label= ("Fe from Chakraborty and Ganguly (1992)",
+                                             "Mg from Chakraborty and Ganguly (1992)",
+                                             "Mn from Chakraborty and Ganguly (1992)"))
 ```
 """
 function PlotDiffusionCoefArrhenius(
         x::Union{Tuple{Vararg{DiffusionData}}, NTuple{N, DiffusionData} where {N}, DiffusionData};
         P::Quantity = 1u"GPa",
-        fO2 = 1NoUnits,
+        fO2 = 1.0e-25NoUnits,
         X = 0NoUnits,
         log_type::Symbol = :log10,
         linestyle::Symbol = :solid,
