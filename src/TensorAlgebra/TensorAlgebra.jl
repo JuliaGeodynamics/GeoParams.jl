@@ -48,7 +48,10 @@ end
 # Methods to compute the invariant of a tensor
 
 @inline function doubledot(A::T, B::T) where {T <: Union{SVector{3}, NTuple{3}}}
-    return (A[1] * B[1] + A[2] * B[2]) + 2 * (A[3] * B[3])
+    # Include the third diagonal component Tzz = -Txx - Tyy for 2D plane strain
+    Azz = -A[1] - A[2]  # Azz = -Axx - Ayy
+    Bzz = -B[1] - B[2]  # Bzz = -Bxx - Byy
+    return (A[1] * B[1] + A[2] * B[2] + Azz * Bzz) + 2 * (A[3] * B[3])
 end
 
 @inline function doubledot(A::T, B::T) where {T <: Union{SVector{6}, NTuple{6}}}
@@ -63,19 +66,19 @@ end
 @inline second_invariant(A::SVector) = √(0.5 * doubledot(A, A))
 @inline second_invariant(A::Matrix) = √(0.5 * sum(Ai * Ai for Ai in A))
 # So that is differentiable...
-@inline second_invariant(xx, yy, xy) = √(0.5 * (xx^2 + yy^2) + xy^2)
+@inline second_invariant(xx, yy, xy) = √(0.5 * (xx^2 + yy^2 + (-xx - yy)^2) + xy^2)
 @inline second_invariant(xx, yy, zz, yz, xz, xy) = √(0.5 * (xx^2 + yy^2 + zz^2) + xy^2 + yz^2 + xz^2)
 
 """
-    second_invariant_staggered(Aii::NTuple{2,T}, Axy::NTuple{4,T}) where {T} 
+    second_invariant_staggered(Aii::NTuple{2,T}, Axy::NTuple{4,T}) where {T}
 
-Computes the second invariant of the 2D tensor `A` when its off-diagonal components 
+Computes the second invariant of the 2D tensor `A` when its off-diagonal components
 need to be mapped from cell center to cell vertex.  `Aii` is a tuple containinig the diagonal
 terms of `A` at the i-th vertex, and `Axy` is a tuple that contains `A_xy` at the cell centers
 around the i-th vertex.
 """
 @inline function second_invariant_staggered(Aii::NTuple{2}, Axy::NTuple{4})
-    return √(0.5 * (Aii[1]^2 + Aii[2]^2) + average_pow2(Axy))
+    return √(0.5 * (Aii[1]^2 + Aii[2]^2 + (-Aii[1] - Aii[2])^2) + average_pow2(Axy))
 end
 
 @inline function second_invariant_staggered(Axx, Ayy, Axy::NTuple{4})
@@ -86,9 +89,9 @@ end
 end
 
 """
-    second_invariant_staggered(Aii::NTuple{3,T}, Ayz::NTuple{4,T}, Axz::NTuple{4,T}, Axy::NTuple{4,T}) where {T} 
+    second_invariant_staggered(Aii::NTuple{3,T}, Ayz::NTuple{4,T}, Axz::NTuple{4,T}, Axy::NTuple{4,T}) where {T}
 
-Computes the second invariant of the 2D tensor `A` when its off-diagonal components 
+Computes the second invariant of the 2D tensor `A` when its off-diagonal components
 need to be mapped from cell center to cell vertex. `Aii` is a tuple containinig the diagonal
 terms of `A` at the i-th vertex, and `Ayz`, `Axz`, and `Axy` are tuples that contain the off-diagonal components of the tensor
 at the cell centers around the i-th vertex.
@@ -116,22 +119,24 @@ end
 end
 
 """
-    second_invariant_staggered(Axx::NTuple{4,T}, Ayy::NTuple{4,T}, Axy::Number) where {T} 
+    second_invariant_staggered(Axx::NTuple{4,T}, Ayy::NTuple{4,T}, Axy::Number) where {T}
 
-Computes the second invariant of the 2D tensor `A` when its diagonal components 
+Computes the second invariant of the 2D tensor `A` when its diagonal components
 need to be mapped from cell center to cell vertex. `Axx`, and `Ayy` are tuples containinig the diagonal
 terms of `A` at the cell centers around the i-th vertex., and `Axy` is the xy component at the i-th vertex.
 """
 @inline function second_invariant_staggered(
         Axx::NTuple{4}, Ayy::NTuple{4}, Axy::Number
     )
-    return √(0.5 * (average_pow2(Axx) + average_pow2(Ayy)) + Axy^2)
+    # Compute Azz = -Axx - Ayy element-wise for plane strain
+    Azz = ntuple(i -> -Axx[i] - Ayy[i], Val(4))
+    return √(0.5 * (average_pow2(Axx) + average_pow2(Ayy) + average_pow2(Azz)) + Axy^2)
 end
 
 """
-    second_invariant_staggered(Axx::NTuple{4,T}, Ayy::NTuple{4,T}, Azz::NTuple{4,T}, Aij::NTuple{3,T}) where {T} 
+    second_invariant_staggered(Axx::NTuple{4,T}, Ayy::NTuple{4,T}, Azz::NTuple{4,T}, Aij::NTuple{3,T}) where {T}
 
-Computes the second invariant of the 2D tensor `A` when its diagonal components 
+Computes the second invariant of the 2D tensor `A` when its diagonal components
 need to be mapped from cell center to cell vertex. `Axx`, `Ayy`, and `Azz` are tuples containinig the diagonal
 terms of `A` at the cell centers around the i-th vertex., and `Aij` is a tuple that contains the off-diagonal
 components at the i-th vertex.
@@ -170,7 +175,7 @@ end
 """
     rotate_elastic_stress2D(ω, τ::T, dt) where T
 
-Bi-dimensional rotation of the elastic stress where τ is in the Voig notation 
+Bi-dimensional rotation of the elastic stress where τ is in the Voig notation
 and ω = 1/2(dux/dy - duy/dx)
 """
 @inline Base.@propagate_inbounds function rotate_elastic_stress2D(ω, τ, dt)
@@ -195,7 +200,7 @@ end
 """
     rotate_elastic_stress3D(ω, τ::T, dt) where T
 
-Trii-dimensional rotation of the elastic stress where τ is in the Voig notation and 
+Trii-dimensional rotation of the elastic stress where τ is in the Voig notation and
 ω = [duz/dy - duy/dz, dux/dz - duz/dx, duy/dx - dux/dy]
 """
 # from Anton's talk

@@ -74,7 +74,9 @@ end
 @testset "Tensor algebra" begin
     # J2 TENSOR INVARIANT: 2D TESTS
     τ_xx, τ_yy, τ_xy = 1.0, 2.0, 3.0
-    τII = √(0.5 * (τ_xx^2 + τ_yy^2) + τ_xy^2)
+    # Include the third diagonal component for plane strain: τ_zz = -τ_xx - τ_yy
+    τ_zz = -τ_xx - τ_yy  # = -1.0 - 2.0 = -3.0
+    τII = √(0.5 * (τ_xx^2 + τ_yy^2 + τ_zz^2) + τ_xy^2)
 
     # test standard 2D interfaces
     @test τII == second_invariant(τ_xx, τ_yy, τ_xy)
@@ -84,7 +86,8 @@ end
     # test for staggered grids
     τ_xy_ij = τ_xy_11, τ_xy_12, τ_xy_21, τ_xy_22 = 3.0, 3.0, 3.5, 3.5 # shear stress at the center of the cell around the grid nodes
     τ_xy2_av = sum(ij^2 for ij in τ_xy_ij) * 0.25
-    τII = √(0.5 * (τ_xx^2 + τ_yy^2) + τ_xy2_av)
+    # Include the third diagonal component in staggered calculation
+    τII = √(0.5 * (τ_xx^2 + τ_yy^2 + (-τ_xx - τ_yy)^2) + τ_xy2_av)
     @test τII == second_invariant_staggered(τ_xx, τ_yy, τ_xy_ij)
 
     # J2 TENSOR INVARIANT: 3D TESTS
