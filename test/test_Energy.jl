@@ -87,6 +87,18 @@ import ForwardDiff as FD
         @test length(k_TP_test.Name) == length(name)
     end
 
+    TP_indirect = TP_Conductivity(;
+        a = 1.72,
+        b = 807.0e0,
+        c = 350,
+        d = 0.0,
+    )
+    @test isbits(TP_indirect)
+    @test TP_indirect.a.val == 1.72
+    @test TP_indirect.b.val == 807.0
+    @test TP_indirect.c.val == 350
+    @test TP_indirect.d.val == 0.0
+
     # Test with arrays
     T_array = T * ones(10)'
     Cp_array = similar(T_array)

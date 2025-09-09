@@ -16,7 +16,7 @@ function StrengthEnvelopePlot(MatParam::NTuple{N, AbstractMaterialParamsStruct},
         title = "1D Strength Envelope (Linear T-profile, Ttop = 0C)"
         Ttop = 0C
         # Tbot controlled by slider
-    elseif typeof(TempType) == HalfspaceCoolTemp
+    elseif typeof(TempType) == HalfspaceCoolingTemp
         Ttype = 2
         title = "1D Strength Envelope (Halfspace-cooling T-profile, Ttop = 0C, Tmantle = 1350C)"
         Ttop = 0C
