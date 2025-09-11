@@ -365,7 +365,7 @@ function Transform_DislocationCreep(p::AbstractCreepLaw{T}, kwargs::NamedTuple) 
     r_new = isnothing(r) ? Value(p.r) : Value(GeoUnit(r))
     A_new = isnothing(A) ? p.A : GeoUnit(A)
     E_new = isnothing(E) ? Value(p.E) : Value(GeoUnit(E))
-    V_new = isnothing(E) ? Value(p.V) : Value(GeoUnit(V))
+    V_new = isnothing(V) ? Value(p.V) : Value(GeoUnit(V))
 
     A_Pa = uconvert(Pa^unit_power(A_new) / s, Value(A_new))
     E_J = uconvert(J / mol, E_new)
