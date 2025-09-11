@@ -382,7 +382,7 @@ function Transform_GrainBoundarySliding(pp::AbstractCreepLaw, kwargs::NamedTuple
     p_new = isnothing(p) ? Value(pp.p) : Value(GeoUnit(p))
     A_new = isnothing(A) ? pp.A : GeoUnit(A)
     E_new = isnothing(E) ? Value(pp.E) : Value(GeoUnit(E))
-    V_new = isnothing(E) ? Value(pp.V) : Value(GeoUnit(V))
+    V_new = isnothing(V) ? Value(pp.V) : Value(GeoUnit(V))
 
     power_Pa = f1(A_new)
     power_m = f2(A_new)
