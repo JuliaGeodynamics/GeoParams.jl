@@ -278,7 +278,7 @@ function Transform_NonLinearPeierlsCreep(p::AbstractCreepLaw, kwargs::NamedTuple
     o_new = isnothing(o) ? Value(p.o) : Value(GeoUnit(o))
     A_new = isnothing(A) ? p.A : GeoUnit(A)
     E_new = isnothing(E) ? Value(p.E) : Value(GeoUnit(E))
-    TauP_new = isnothing(E) ? Value(p.TauP) : Value(GeoUnit(TauP))
+    TauP_new = isnothing(TauP) ? Value(p.TauP) : Value(GeoUnit(TauP))
 
     TauP = uconvert(Pa, TauP_new)
     A_Pa = uconvert(Pa^(unit_power(A_new)) / s, Value(A_new))

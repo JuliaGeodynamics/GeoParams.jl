@@ -304,7 +304,7 @@ function Transform_PeierlsCreep(p::AbstractCreepLaw{T}, kwargs::NamedTuple) wher
     o_new = isnothing(o) ? Value(p.o) : Value(GeoUnit(o))
     A_new = isnothing(A) ? p.A : GeoUnit(A)
     E_new = isnothing(E) ? Value(p.E) : Value(GeoUnit(E))
-    TauP_new = isnothing(E) ? Value(p.TauP) : Value(GeoUnit(TauP))
+    TauP_new = isnothing(TauP) ? Value(p.TauP) : Value(GeoUnit(TauP))
 
     A_Pa = uconvert(s^(-1), Value(A_new))
     E_J = uconvert(J / mol, E_new)
