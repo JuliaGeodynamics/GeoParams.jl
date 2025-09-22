@@ -913,10 +913,10 @@ Converts the input arguments to their dimensional (unitful) form using `dimensio
 and then strips the units using `ustrip`. This function is useful when you want to 
 apply units to values and immediately retrieve their plain numeric values.
 """
-dimensionalize_and_strip(args::Vararg{Any, N}) where N = ustrip(dimensionalize(args...)) 
+dimensionalize_and_strip(args::Vararg{Any, N}) where {N} = ustrip(dimensionalize(args...))
 
 macro dimstrip(args...)
-    return quote 
+    return quote
         dimensionalize_and_strip($(esc.(args)...))
     end
 end
