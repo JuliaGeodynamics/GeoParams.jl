@@ -78,6 +78,8 @@ export km,
     AbstractGeoUnit,
     nondimensionalize,
     dimensionalize,
+    dimensionalize_and_strip,
+    @dimstrip,
     superscript,
     upreferred,
     GEO,
@@ -233,7 +235,6 @@ Base.size(v::GeoUnit) = size(v.val)
 Base.getindex(A::GeoUnit{T, U}, inds::Vararg{Int, N}) where {T, U, N} = GeoUnit(A.val[inds...], A.unit, A.isdimensional)
 Base.iterate(s::GeoUnit, i::Integer) = GeoUnit(s.val[i], s.unit, s.isdimensional)
 Base.iterate(S::GeoUnit, state = 1) = state > length(S) ? nothing : (state, state + 1)
-
 
 for op in (:+, :-, :*, :/)
 
@@ -634,7 +635,6 @@ function nondimensionalize(
     throw(ArgumentError("The input parameter should have units"))
 end
 
-
 # If it is an array, but has no units we cannot know how to nondimensionalize it
 nondimensionalize(param::AbstractArray{<:Number}, g::GeoUnits) = param
 
@@ -897,7 +897,6 @@ end
     dimensionalize(MatParam::NTuple{N, AbstractMaterialParamsStruct}, CharUnits::GeoUnits)
 
 dimensionalizes a tuple of material parameter structures (e.g., Density, CreepLaw)
-
 """
 function dimensionalize(
         MatParam::NTuple{N, AbstractMaterialParamsStruct}, g::Union{GeoUnits, Nothing}
@@ -906,6 +905,21 @@ function dimensionalize(
 end
 
 @inline udim(args::Vararg{Any, N}) where {N} = ustrip(dimensionalize(args...))
+
+"""
+    dimensionalize_and_strip(args...)
+
+Converts the input arguments to their dimensional (unitful) form using `dimensionalize`, 
+and then strips the units using `ustrip`. This function is useful when you want to 
+apply units to values and immediately retrieve their plain numeric values.
+"""
+dimensionalize_and_strip(args::Vararg{Any, N}) where N = ustrip(dimensionalize(args...)) 
+
+macro dimstrip(args...)
+    return quote 
+        dimensionalize_and_strip($(esc.(args)...))
+    end
+end
 
 """
     isDimensional(MatParam::AbstractMaterialParam)
