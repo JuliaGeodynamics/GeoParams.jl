@@ -81,5 +81,18 @@ julia> dimensionalize(σ_nd,CharDim)
 GeoUnit{dimensional, MPa}, 
 10.0
 ```
-
-
+Some times, for e.g. plotting, we need to dimensionalize some variable and strip it from its units. This can be done with `ustrip`
+```julia
+julia> ustrip(dimensionalize(σ_nd, MPa, CharDim))
+10.0
+```
+This is a bit verbose, so we provide a convenience function `dimensionalize_and_strip` that does this in one go:
+```julia
+julia> dimensionalize_and_strip(σ_nd, MPa, CharDim)
+10.0
+```
+or even better, a macro `@dimstrip` that does the same:
+```julia
+julia> @dimstrip σ_nd MPa CharDim
+10.0
+```

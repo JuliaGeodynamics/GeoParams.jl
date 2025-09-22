@@ -87,6 +87,8 @@ using GeoParams
     v_ND = nondimensionalize(3cm / yr, CharUnits_GEO)
     @test dimensionalize(v_ND, cm / yr, CharUnits_GEO) == 3.0cm / yr
     @test ustrip(dimensionalize(v_ND, cm / yr, CharUnits_GEO)) == udim(v_ND, cm / yr, CharUnits_GEO)
+    @test dimensionalize_and_strip(v_ND, cm / yr, CharUnits_GEO) == udim(v_ND, cm / yr, CharUnits_GEO)
+    @test (@dimstrip v_ND cm / yr CharUnits_GEO) == udim(v_ND, cm / yr, CharUnits_GEO)
 
     # test error handling
     @test_throws ArgumentError nondimensionalize(5, CharUnits_GEO)

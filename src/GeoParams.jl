@@ -44,6 +44,8 @@ module GeoParams
         AbstractGeoUnit,
         nondimensionalize,
         dimensionalize,
+        dimensionalize_and_strip,
+        @dimstrip,
         superscript,
         upreferred,
         GEO,
