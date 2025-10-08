@@ -40,11 +40,11 @@ import GeoParams.Diffusion
     args = (; T = T)
     TauII = 1.0e6
     ε = compute_εII(p, TauII, args)
-    @test ε ≈ 1.7722083485120549e-32
+    @test ε ≈ 1.4177666788096435e-25 
 
     # same but while removing the tensor correction
     ε_notensor = compute_εII(remove_tensor_correction(p), TauII, args)
-    @test ε_notensor ≈ 1.1814722323413693e-32
+    @test ε_notensor ≈ 9.451777858730959e-26
 
     # test with arrays
     τII_array = ones(10) * 1.0e6
@@ -104,36 +104,36 @@ import GeoParams.Diffusion
 
         # Do the same but using GeoParams:
         pp = if itest == 1
-            SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006)
+            SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006; d = gsiz * 1.0e-6m)
         elseif itest == 2
             SetDislocationCreep(GeoParams.Dislocation.dry_anorthite_Rybacki_2006)
         end
 
         # using SI units
-        τII = compute_τII(pp, eII / s, (; T = TK * K, d = gsiz * 1.0e-6m))
+        τII = compute_τII(pp, eII / s, (; T = TK * K))
         η = τII / (2 * eII / s)
         @test Tau ≈ ustrip(τII)
         @test mu ≈ ustrip(η)
 
-        εII = compute_εII(pp, τII, (; T = TK * K, d = gsiz * 1.0e-6m))
+        εII = compute_εII(pp, τII, (; T = TK * K))
         @test eII ≈ ustrip(εII)
 
         # using Floats
-        τII = compute_τII(pp, eII, (; T = TK, d = gsiz * 1.0e-6))
+        τII = compute_τII(pp, eII, (; T = TK))
         η = τII / (2 * eII)
         @test Tau ≈ τII
         @test mu ≈ η
 
-        εII = compute_εII(pp, τII, (; T = TK, d = gsiz * 1.0e-6))
+        εII = compute_εII(pp, τII, (; T = TK))
         @test eII ≈ ustrip(εII)
 
         # using arrays for some of the variables
         TK_vec = ones(10) .* TK
         eII_vec = ones(size(TK_vec)) * eII
         τII_vec = zero(eII_vec)
-        args = (; T = TK_vec, d = gsiz * 1.0e-6)
-        gsiz_vec = ones(size(TK_vec)) * gsiz * 1.0e-6
-        args1 = (; T = TK_vec, d = gsiz_vec)
+        args = (; T = TK_vec)
+        # gsiz_vec = ones(size(TK_vec)) * gsiz * 1.0e-6
+        args1 = (; T = TK_vec)
 
         compute_τII!(τII_vec, pp, eII_vec, args)
         η_vec = τII_vec ./ (2 * eII_vec)
@@ -174,4 +174,5 @@ import GeoParams.Diffusion
         ε_test = compute_εII(p, τ, args)
         @test ε ≈ ε_test
     end
+
 end

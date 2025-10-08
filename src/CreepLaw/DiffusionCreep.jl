@@ -47,8 +47,9 @@ julia> x2 = DiffusionCreep(Name="test")
 DiffusionCreep: Name = test, n=1.0, r=0.0, p=-3.0, A=1.5 m³·⁰ MPa⁻¹·⁰ s⁻¹·⁰, E=500.0 kJ mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517)
 ```
 """
-struct DiffusionCreep{T, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
+struct DiffusionCreep{T, U0, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
     Name::Ptr{UInt8}
+    d::GeoUnit{T, U0} # grain size
     n::GeoUnit{T, U1} # powerlaw exponent
     r::GeoUnit{T, U1} # exponent of water-fugacity
     p::GeoUnit{T, U1} # grain size exponent
@@ -62,6 +63,7 @@ struct DiffusionCreep{T, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
 
     function DiffusionCreep(;
             Name = "",
+            d = 5.0e-3m,
             n = 1NoUnits,
             r = 0NoUnits,
             p = -3NoUnits,
@@ -75,6 +77,7 @@ struct DiffusionCreep{T, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
         # Corrections from lab experiments
         FT, FE = CorrectionFactor(Apparatus)
         # Convert to GeoUnits
+        dU = convert(GeoUnit, d)
         nU = convert(GeoUnit, rat2float(n))
         rU = convert(GeoUnit, r)
         pU = convert(GeoUnit, p)
@@ -84,6 +87,7 @@ struct DiffusionCreep{T, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
         RU = convert(GeoUnit, R)
         # Extract struct types
         T = typeof(rU).types[1]
+        U0 = typeof(dU).types[2]
         U1 = typeof(rU).types[2]
         U2 = typeof(AU).types[2]
         U3 = typeof(EU).types[2]
@@ -91,16 +95,16 @@ struct DiffusionCreep{T, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
         U5 = typeof(RU).types[2]
         name = pointer(ptr2string(Name))
         # Create struct
-        return new{T, U1, U2, U3, U4, U5}(
-            name, nU, rU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
+        return new{T, U0, U1, U2, U3, U4, U5}(
+            name, dU, nU, rU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
         )
     end
 
 end
 
-function DiffusionCreep(Name, n, r, p, A, E, V, R, Apparatus, FT, FE)
+function DiffusionCreep(Name, d, n, r, p, A, E, V, R, Apparatus, FT, FE)
     return DiffusionCreep(;
-        Name = Name, n = n, r = r, p = p, A = A, E = E, V = V, R = R, Apparatus = Apparatus
+        Name = Name, d = d, n = n, r = r, p = p, A = A, E = E, V = V, R = R, Apparatus = Apparatus
     )
 end
 
@@ -113,7 +117,7 @@ with the curves of the original publications, as those publications usually do n
 function remove_tensor_correction(s::DiffusionCreep)
     # name = String(collect(s.Name))
     return DiffusionCreep(;
-        Name = unsafe_string(s.Name), n = s.n, r = s.r, p = s.p, A = s.A, E = s.E, V = s.V, Apparatus = Invariant
+        Name = unsafe_string(s.Name), d = s.d, n = s.n, r = s.r, p = s.p, A = s.A, E = s.E, V = s.V, Apparatus = Invariant
     )
 end
 
@@ -139,7 +143,6 @@ Returns diffusion creep strainrate as a function of 2nd invariant of the stress 
     \\dot{ε}_{II} = A τ_{II}^n d^{p} f_{H_2O}^r \\exp \\left(- \\frac{E + PV}{RT} \\right)
 ```
 
-
 """
 @inline function compute_εII(
         a::DiffusionCreep,
@@ -147,19 +150,18 @@ Returns diffusion creep strainrate as a function of 2nd invariant of the stress 
         T = one(precision(a)),
         P = zero(precision(a)),
         f = one(precision(a)),
-        d = one(precision(a)),
         kwargs...,
     )
-    @unpack_val n, r, p, A, E, V, R = a
+    @unpack_val d, n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
     return @pow A * (TauII * FT)^n * f^r * d^p * exp(-(E + P * V) / (R * T)) / FE
 end
 
 @inline function compute_εII(
-        a::DiffusionCreep, TauII::Quantity; T = 1K, P = 0Pa, f = 1NoUnits, d = 1.0e-3m, args...
+        a::DiffusionCreep, TauII::Quantity; T = 1K, P = 0Pa, f = 1NoUnits, args...
     )
-    @unpack_units n, r, p, A, E, V, R = a
+    @unpack_units d, n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
     ε = @pow A * (TauII * FT)^n * f^r * d^p * exp(-(E + P * V) / (R * T)) / FE
@@ -179,11 +181,10 @@ function compute_εII!(
         T = ones(size(TauII))::AbstractArray{_T, N},
         P = zero(TauII)::AbstractArray{_T, N},
         f = ones(size(TauII))::AbstractArray{_T, N},
-        d = ones(size(TauII))::AbstractArray{_T, N},
         kwargs...,
     ) where {N, _T}
     @inbounds for i in eachindex(EpsII)
-        EpsII[i] = compute_εII(a, TauII[i]; T = T[i], P = P[i], f = f[i], d = d[i])
+        EpsII[i] = compute_εII(a, TauII[i]; T = T[i], P = P[i], f = f[i])
     end
 
     return nothing
@@ -200,10 +201,9 @@ returns the derivative of strainrate versus stress
         T = one(precision(a)),
         P = zero(precision(a)),
         f = one(precision(a)),
-        d = one(precision(a)),
         kwargs...,
     )
-    @unpack_val n, r, p, A, E, V, R = a
+    @unpack_val d, n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
     return @pow (TauII * FT)^(n - 1) *
@@ -216,9 +216,9 @@ returns the derivative of strainrate versus stress
 end
 
 @inline function dεII_dτII(
-        a::DiffusionCreep, TauII::Quantity; T = 1K, P = 0Pa, f = 1NoUnits, d = 1m, kwargs...
+        a::DiffusionCreep, TauII::Quantity; T = 1K, P = 0Pa, f = 1NoUnits, kwargs...
     )
-    @unpack_units n, r, p, A, E, V, R = a
+    @unpack_units d, n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
     return @pow FT * f^r * d^p * A * FT * exp((-E - P * V) / (R * T)) * inv(FE)
@@ -235,10 +235,9 @@ Returns diffusion creep stress as a function of 2nd invariant of the strain rate
         T = one(precision(a)),
         P = zero(precision(a)),
         f = one(precision(a)),
-        d = one(precision(a)),
         kwargs...,
     )
-    @unpack_val n, r, p, A, E, V, R = a
+    @unpack_val d, n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
     n_inv = inv(n)
@@ -253,9 +252,9 @@ Returns diffusion creep stress as a function of 2nd invariant of the strain rate
 end
 
 @inline function compute_τII(
-        a::DiffusionCreep, EpsII::Quantity; T = 1K, P = 0Pa, f = 1NoUnits, d = 1m, kwargs...
+        a::DiffusionCreep, EpsII::Quantity; T = 1K, P = 0Pa, f = 1NoUnits, kwargs...
     )
-    @unpack_units n, r, p, A, E, V, R = a
+    @unpack_units d, n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
     n_inv = inv(n)
@@ -277,11 +276,10 @@ function compute_τII!(
         T = ones(size(TauII))::AbstractArray{_T, N},
         P = zero(TauII)::AbstractArray{_T, N},
         f = ones(size(TauII))::AbstractArray{_T, N},
-        d = ones(size(TauII))::AbstractArray{_T, N},
         kwargs...,
     ) where {N, _T}
     @inbounds for i in eachindex(EpsII)
-        TauII[i] = compute_τII(a, EpsII[i]; T = T[i], P = P[i], f = f[i], d = d[i])
+        TauII[i] = compute_τII(a, EpsII[i]; T = T[i], P = P[i], f = f[i])
     end
 
     return nothing
@@ -293,10 +291,9 @@ end
         T = one(precision(a)),
         P = zero(precision(a)),
         f = one(precision(a)),
-        d = one(precision(a)),
         kwargs...,
     )
-    @unpack_val n, r, p, A, E, V, R = a
+    @unpack_val d, n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
     n_inv = inv(n)
@@ -312,9 +309,9 @@ end
 end
 
 @inline function dτII_dεII(
-        a::DiffusionCreep, EpsII::Quantity; T = 1K, P = 0Pa, f = 1NoUnits, d = 1.0e-6m, kwargs...
+        a::DiffusionCreep, EpsII::Quantity; T = 1K, P = 0Pa, f = 1NoUnits, kwargs...
     )
-    @unpack_units r, p, A, E, V, R = a
+    @unpack_units d, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
     return (FE * inv(A) * f^(-r * n_inv) * d^(-p * n_inv) * exp((E + P * V) / (R * T))) / FT
@@ -339,6 +336,7 @@ This is a dictionary with pre-defined creep laws
 """
 function SetDiffusionCreep(
         name::F;
+        d = nothing,
         n = nothing,
         r = nothing,
         p = nothing,
@@ -346,13 +344,14 @@ function SetDiffusionCreep(
         E = nothing,
         V = nothing,
     ) where {F}
-    kwargs = (; n, r, p, A, E, V)
+    kwargs = (; d, n, r, p, A, E, V)
     return Transform_DiffusionCreep(name, kwargs)
 end
 
 function SetDiffusionCreep(
         name::F,
         CharDim::GeoUnits{T};
+        d = nothing,
         n = nothing,
         r = nothing,
         p = nothing,
@@ -360,7 +359,7 @@ function SetDiffusionCreep(
         E = nothing,
         V = nothing,
     ) where {F, T <: Union{GEO, SI}}
-    kwargs = (; n, r, p, A, E, V)
+    kwargs = (; d, n, r, p, A, E, V)
     return nondimensionalize(Transform_DiffusionCreep(name, kwargs), CharDim)
 end
 
@@ -380,9 +379,11 @@ function Transform_DiffusionCreep(p::AbstractCreepLaw{T}, CharDim::GeoUnits{U}) 
 end
 
 function Transform_DiffusionCreep(pp::AbstractCreepLaw{T}) where {T}
+
     @inline f1(A::T) where {T} = typeof(A).parameters[2].parameters[1][2].power
     @inline f2(A::T) where {T} = typeof(A).parameters[2].parameters[1][1].power
 
+    d = Value(pp.d)
     n = Value(pp.n)
     r = Value(pp.r)
     p = Value(pp.p)
@@ -392,7 +393,7 @@ function Transform_DiffusionCreep(pp::AbstractCreepLaw{T}) where {T}
     E_J = uconvert(J / mol, Value(pp.E))
     V_m3 = uconvert(m^3 / mol, Value(pp.V))
     Apparatus = pp.Apparatus
-    args = (Name = unsafe_string(pp.Name), n = n, p = p, r = r, A = A_Pa, E = E_J, V = V_m3, Apparatus = Apparatus)
+    args = (Name = unsafe_string(pp.Name), d = d, n = n, p = p, r = r, A = A_Pa, E = E_J, V = V_m3, Apparatus = Apparatus)
 
     return DiffusionCreep(; args...)
 end
@@ -402,7 +403,9 @@ function Transform_DiffusionCreep(pp::AbstractCreepLaw{T}, kwargs::NamedTuple) w
     @inline f1(A::T) where {T} = typeof(A).parameters[2].parameters[1][2].power
     @inline f2(A::T) where {T} = typeof(A).parameters[2].parameters[1][1].power
 
-    (; n, r, p, A, E, V) = kwargs
+    (; d, n, r, p, A, E, V) = kwargs
+
+    d_new = isnothing(d) ? Value(pp.d) : Value(GeoUnit(d))
 
     n_new = isnothing(n) ? Value(pp.n) : Value(GeoUnit(n))
     r_new = isnothing(r) ? Value(pp.r) : Value(GeoUnit(r))
@@ -417,7 +420,7 @@ function Transform_DiffusionCreep(pp::AbstractCreepLaw{T}, kwargs::NamedTuple) w
     E_J = uconvert(J / mol, E_new)
     V_m3 = uconvert(m^3 / mol, V_new)
     Apparatus = pp.Apparatus
-    args = (Name = unsafe_string(pp.Name), n = n_new, p = p_new, r = r_new, A = A_Pa, E = E_J, V = V_m3, Apparatus = Apparatus)
+    args = (Name = unsafe_string(pp.Name), d = d_new, n = n_new, p = p_new, r = r_new, A = A_Pa, E = E_J, V = V_m3, Apparatus = Apparatus)
 
     return DiffusionCreep(; args...)
 end
