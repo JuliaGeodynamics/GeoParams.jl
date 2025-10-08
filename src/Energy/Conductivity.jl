@@ -325,13 +325,14 @@ where ``k`` is the conductivity [``W/K/m``], and ``a_k,b_k,c_k,d_k`` are paramet
 - ``d_k`` = 0/MPa
 """
 @with_kw_noshow struct TP_Conductivity{T, N, U1, U2, U3, U4} <: AbstractConductivity{T}
-    Name::NTuple{N, Char} = ""                  # The name is encoded as a NTuple{Char} to make it isbits
-    a::GeoUnit{T, U1} = 1.18Watt / K / m        # empirical fitting term
-    b::GeoUnit{T, U2} = 474.0Watt / m         # empirical fitting term
-    c::GeoUnit{T, U3} = 77.0K               # empirical fitting term
-    d::GeoUnit{T, U4} = 0.0 / MPa             # empirical fitting term
+    Name::NTuple{N, Char} = ""            # The name is encoded as a NTuple{Char} to make it isbits
+    a::GeoUnit{T, U1} = 1.18Watt / K / m  # empirical fitting term
+    b::GeoUnit{T, U2} = 474.0Watt / m     # empirical fitting term
+    c::GeoUnit{T, U3} = 77.0K             # empirical fitting term
+    d::GeoUnit{T, U4} = 0.0 / MPa         # empirical fitting term
 end
-function TP_Conductivity(args...)
+
+function TP_Conductivity(args::Vararg{Any, 5})
     return TP_Conductivity(
         NTuple{length(args[1]), Char}(collect(args[1])), convert.(GeoUnit, args[2:end])...
     )
