@@ -63,7 +63,7 @@ struct DiffusionCreep{T, U0, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
 
     function DiffusionCreep(;
             Name = "",
-            d = 1.0e-3m,
+            d = 1.0e-6m,
             n = 1NoUnits,
             r = 0NoUnits,
             p = -3NoUnits,
@@ -142,7 +142,6 @@ Returns diffusion creep strainrate as a function of 2nd invariant of the stress 
 ```math
     \\dot{ε}_{II} = A τ_{II}^n d^{p} f_{H_2O}^r \\exp \\left(- \\frac{E + PV}{RT} \\right)
 ```
-
 
 """
 @inline function compute_εII(
