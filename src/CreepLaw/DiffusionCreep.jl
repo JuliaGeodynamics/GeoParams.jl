@@ -117,7 +117,7 @@ with the curves of the original publications, as those publications usually do n
 function remove_tensor_correction(s::DiffusionCreep)
     # name = String(collect(s.Name))
     return DiffusionCreep(;
-        Name = unsafe_string(s.Name), d=s.d, n = s.n, r = s.r, p = s.p, A = s.A, E = s.E, V = s.V, Apparatus = Invariant
+        Name = unsafe_string(s.Name), d = s.d, n = s.n, r = s.r, p = s.p, A = s.A, E = s.E, V = s.V, Apparatus = Invariant
     )
 end
 
