@@ -45,7 +45,7 @@ import GeoParams.Diffusion
     # same but while removing the tensor correction
     ε_notensor = compute_εII(remove_tensor_correction(p), TauII, args)
     @test ε_notensor ≈ 4.375823082745815e-34
-    
+
     # test with arrays
     τII_array = ones(10) * 1.0e6
     ε_array = similar(τII_array)
