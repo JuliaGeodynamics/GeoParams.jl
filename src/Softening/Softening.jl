@@ -1,5 +1,5 @@
-abstract type AbstractSoftening end
-abstract type AbstractNoSoftening end
+abstract type AbstractSoftening <: AbstractMaterialParam end
+abstract type AbstractNoSoftening <: AbstractMaterialParam end
 
 # struct NoSoftening end
 struct NoSoftening <: AbstractSoftening end
@@ -7,20 +7,36 @@ struct NoSoftening <: AbstractSoftening end
 @inline (softening::NoSoftening)(::Any, max_value, ::Vararg{Any, N}) where {N} = max_value
 
 ## Linear softening
-struct LinearSoftening{T} <: AbstractSoftening
-    hi::T
-    lo::T
-    max_value::T
-    min_value::T
-    slope::T
+struct LinearSoftening{T1,T2,T3} <: AbstractSoftening
+    hi::T1
+    lo::T1
+    max_value::T2
+    min_value::T2
+    slope::T3
 
-    function LinearSoftening(min_value::T, max_value::T, lo::T, hi::T) where {T}
-        slope = (max_value - min_value) / (hi - lo)
-        return new{T}(hi, lo, max_value, min_value, slope)
+    function LinearSoftening(min_value::T1, max_value::T1, lo::T2, hi::T2, slope::T3) where {T1,T2,T3}
+        hi_GU        = convert(GeoUnit, hi)
+        lo_GU        = convert(GeoUnit, lo)
+        max_value_GU = convert(GeoUnit, max_value)
+        min_value_GU = convert(GeoUnit, min_value)
+        slope_GU     = convert(GeoUnit, slope)
+
+        return new{typeof(hi_GU), typeof(max_value_GU), typeof(slope_GU)}(
+            hi_GU, lo_GU, max_value_GU, min_value_GU, slope_GU
+        )
     end
 end
 
-LinearSoftening(min_max_values::NTuple{2, T}, lo_hi::NTuple{2, T}) where {T} = LinearSoftening(min_max_values..., lo_hi...)
+function LinearSoftening(min_value::T1, max_value::T1, lo::T2, hi::T2) where {T1,T2}
+    slope = if T1 <: AbstractFloat
+        (max_value - min_value) / (hi - lo)
+    else
+        (max_value - min_value).val / (hi - lo)
+    end
+    return LinearSoftening(hi, lo, max_value, min_value, slope)
+end
+
+LinearSoftening(min_max_values::NTuple{2, T1}, lo_hi::NTuple{2, T2}) where {T1, T2} = LinearSoftening(min_max_values..., lo_hi...)
 
 @inline (softening::LinearSoftening)(args::Vararg{Any, N}) where {N} = softening(promote(args...)...)
 
@@ -36,14 +52,14 @@ end
 # (Duretz et al 2021; https://agupubs.onlinelibrary.wiley.com/doi/pdfdirect/10.1029/2021GC009675)
 using SpecialFunctions
 
-@with_kw_noshow struct NonLinearSoftening{T} <: AbstractSoftening
-    ξ₀::T = 0.0 # maximum value
-    Δ::T = 0.0 # amplitude of the softening (i.e. minimum value)
-    μ::T = 1.0 # mean of the softening
-    σ::T = 0.5 # standard deviation of the softening
+@with_kw_noshow struct NonLinearSoftening{T,U1,U2} <: AbstractSoftening
+    ξ₀::GeoUnit{T, U1} = 0.0NoUnits # maximum value
+    Δ::GeoUnit{T, U1}  = 0.0NoUnits # amplitude of the softening (i.e. minimum value)
+    μ::GeoUnit{T, U2}  = 1.0NoUnits # mean of the softening
+    σ::GeoUnit{T, U2}  = 0.5NoUnits # standard deviation of the softening
 end
 
-NonLinearSoftening(args::Vararg{Any, N}) where {N} = NonLinearSoftening(promote(args...)...)
+NonLinearSoftening(args::Vararg{Any, N}) where {N} = NonLinearSoftening(convert.(GeoUnit, promote(args...))...)
 
 @inline (softening::NonLinearSoftening)(args::Vararg{Any, N}) where {N} = softening(promote(args...)...)
 
@@ -52,10 +68,12 @@ NonLinearSoftening(args::Vararg{Any, N}) where {N} = NonLinearSoftening(promote(
 end
 
 # Non linear softening from Taras
-@with_kw_noshow struct DecaySoftening{T} <: AbstractSoftening
-    εref::T = 1.0e-13
-    n::T = 0.1
+@with_kw_noshow struct DecaySoftening{T,U1,U2} <: AbstractSoftening
+    εref::GeoUnit{T, U1} = 1.0e-13
+    n::GeoUnit{T, U2} = 0.1
 end
+
+DecaySoftening(args::Vararg{Any, N}) where {N} = DecaySoftening(convert.(GeoUnit, promote(args...))...)
 
 @inline (softening::DecaySoftening)(args::Vararg{Any, N}) where {N} = softening(promote(args...)...)
 
