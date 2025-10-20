@@ -80,7 +80,7 @@ using GeoParams, Test
     CharDim   = GEO_units(;length = 100km, viscosity = 1e21Pa*s)
 
     Coh = 1.0e6Pa
-    ls=LinearSoftening(Coh/2, Coh, 0.0NoUnits, 0.5NoUnits)
+    ls   = LinearSoftening(Coh/2, Coh, 0.0NoUnits, 0.5NoUnits)
 
     ls_nd = nondimensionalize(ls, CharDim)
     @test ls_nd.min_value.val == 0.05 
