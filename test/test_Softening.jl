@@ -75,4 +75,28 @@ using GeoParams, Test
     @test compute_yieldfunction(p4, args) ≈ 1.95e7
     @test compute_yieldfunction(p5, (P = P, τII = τII, EII = 0.0e0)) ≈ 1.9499974039493073e7
     @test compute_yieldfunction(p5, (P = P, τII = τII, EII = 10.0e0)) ≈ 1.9499982679491926e7
+
+    ### Test nondimensionalization
+    CharDim = GEO_units(; length = 100km, viscosity = 1.0e21Pa * s)
+
+    Coh = 1.0e6Pa
+    ls = LinearSoftening(Coh / 2, Coh, 0.0NoUnits, 0.5NoUnits)
+
+    ls_nd = nondimensionalize(ls, CharDim)
+    @test ls_nd.min_value.val == 0.05
+    @test ls_nd.max_value.val == 0.1
+    @test ls_nd.hi.val == 0.5
+    @test ls_nd.lo.val == 0
+
+    nls = NonLinearSoftening(ξ₀ = 30MPa, Δ = 10MPa)
+    nls_nd = nondimensionalize(nls, CharDim)
+
+    @test nls_nd.ξ₀.val == 3
+    @test nls_nd.Δ.val == 1
+
+    ds = DecaySoftening(εref = 1.0e-15 / s)
+    ds_nd = nondimensionalize(ds, CharDim)
+
+    @test ds_nd.εref.val == 0.1
+
 end
