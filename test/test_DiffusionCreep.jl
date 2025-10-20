@@ -40,7 +40,7 @@ import GeoParams.Diffusion
     args = (; T = T)
     TauII = 1.0e6
     ε = compute_εII(p, TauII, args)
-    @test ε ≈ 1.4177666788096435e-25 
+    @test ε ≈ 1.4177666788096435e-25
 
     # same but while removing the tensor correction
     ε_notensor = compute_εII(remove_tensor_correction(p), TauII, args)
