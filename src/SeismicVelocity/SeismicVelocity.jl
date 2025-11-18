@@ -9,8 +9,9 @@ using Parameters, LaTeXStrings, Unitful, MuladdMacro
 using ..Units
 using ..PhaseDiagrams
 using ..MaterialParameters: MaterialParamsInfo
-using Interpolations, Statistics
+using Statistics
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
+using GeoParams: LinearInterpolator, interpolate
 
 using Roots
 import Base.show, GeoParams.param_info
@@ -33,12 +34,12 @@ include("../Computations.jl")
 # Constant Velocity -------------------------------------------------------
 """
     ConstantSeismicVelocity(Vp=8.1 km/s, Vs=4.5km/s)
-    
+
 Set a constant seismic P and S-wave velocity:
-```math  
+```math
     V_p = cst
 ```
-```math  
+```math
     V_s = cst
 ```
 where ``V_p, V_s`` are the P-wave and S-wave velocities [``km/s``].
@@ -77,7 +78,7 @@ end
 
 """
     compute_pwave_velocity(s::PhaseDiagram_LookupTable, P,T)
-Interpolates Vp, Vs or VpVs velocity as a function of `T,P` from a lookup table  
+Interpolates Vp, Vs or VpVs velocity as a function of `T,P` from a lookup table
 """
 function compute_wave_velocity(s::PhaseDiagram_LookupTable; P, T, wave, kwargs...)
     fn = getfield(s, wave)
@@ -114,7 +115,7 @@ compute_wave_velocity(args...) = compute_param(compute_wave_velocity, args...)
 """
         Vp_cor,Vs_cor = melt_correction(  Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
 
-Corrects P- and S-wave velocities if the rock is partially molten. 
+Corrects P- and S-wave velocities if the rock is partially molten.
 
 Input:
 ====
@@ -156,7 +157,7 @@ function melt_correction(
         1.549, 4.814, 8.777, -0.290,
     )
     bij = (
-        -0.3238, 0.2341, 
+        -0.3238, 0.2341,
         -0.1819, 0.5103
     )
 
@@ -189,7 +190,7 @@ function melt_correction(
     # computation of the shear modulus ratio of the skeletal framework over the solid phase
     μsk_μ = fastpow(α, nμ)
 
-    # apply correction for the melt fraction to adiabatic bulk and shear modulii 
+    # apply correction for the melt fraction to adiabatic bulk and shear modulii
     ksk = ksk_k * Kb_S
     μsk = μsk_μ * Ks_S
 
@@ -228,7 +229,7 @@ end
 """
         Vs_cor = porosity_correction(  Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
 
-Corrects S-wave velocity at shallow depth as function of empirical porosity-depth profile. 
+Corrects S-wave velocity at shallow depth as function of empirical porosity-depth profile.
 
 Input:
 ====
@@ -276,7 +277,7 @@ function porosity_correction(
         1.549, 4.814, 8.777, -0.290,
     )
     bij = (
-        -0.3238, 0.2341, 
+        -0.3238, 0.2341,
         -0.1819, 0.5103
     )
     =#
@@ -304,7 +305,7 @@ function porosity_correction(
     #    aij[idx] * exp(aij[idx+1] * (ν - 0.25) + aij[idx+2] * (ν - 0.25)^3) + aij[idx+3]
     #end
 
-    # Takei (2002): 
+    # Takei (2002):
     a = ntuple(Val(3)) do i
         idx = 4*i-3 # linear offset index
         aij[idx] + aij[idx+1]*ν^1 + aij[idx+2]*ν^2 + aij[idx+3]*ν^3
@@ -328,7 +329,7 @@ function porosity_correction(
     # computation of the shear modulus ratio of the skeletal framework over the solid phase
     μsk_μ = fastpow(α, nμ)
 
-    # apply correction for the melt fraction to adiabatic bulk and shear modulii 
+    # apply correction for the melt fraction to adiabatic bulk and shear modulii
     ksk = ksk_k * Kb_S
     μsk = μsk_μ * Ks_S
 
@@ -357,7 +358,7 @@ This routine computes a correction of S-wave velocity for anelasticity
 
 Input:
 ====
-- `water`: water flag, 0 = dry; 1 = dampened; 2 = water saturated 
+- `water`: water flag, 0 = dry; 1 = dampened; 2 = water saturated
 - `Vs0`  : S-wave velocitiy of the solid phase (with or without melt correction)
 - `P`    : pressure given in Pa
 - `T`    : temperature given in °K
@@ -427,7 +428,7 @@ function anelastic_correction(water::Int64, Vs0::Float64, Pref::Float64, Tref::F
 end
 
 """
-    PD_corrected = correct_wavevelocities_phasediagrams(PD::PhaseDiagram_LookupTable,  
+    PD_corrected = correct_wavevelocities_phasediagrams(PD::PhaseDiagram_LookupTable,
                                 apply_porosity_correction=true, ρf=1000.0, α_porosity=0.5,
                                 apply_melt_correction=true, α_melt = 0.1,
                                 apply_anelasticity_correction=true, water=2)
@@ -538,17 +539,15 @@ function correct_wavevelocities_phasediagrams(
     # Store results ----
 
     # Create interpolation objects
-    Vs_corrected_intp = LinearInterpolation((T, P), Vs_corrected; extrapolation_bc = Flat())
-    Vp_corrected_intp = LinearInterpolation((T, P), Vp_corrected; extrapolation_bc = Flat())
-    VpVs_corrected_intp = LinearInterpolation(
-        (T, P), Vp_corrected ./ Vs_corrected; extrapolation_bc = Flat()
-    )
+    Vs_corrected_intp = interpolate((T, P), Vs_corrected)
+    Vp_corrected_intp = interpolate((T, P), Vp_corrected)
+    VpVs_corrected_intp = interpolate((T, P), Vp_corrected ./ Vs_corrected)
 
     # Initialize fields in the order they are defined in the PhaseDiagram_LookupTable structure
-    Struct_Fieldnames = fieldnames(PhaseDiagram_LookupTable)[4:end] # fieldnames from structure
+    Struct_Fieldnames = fieldnames(PhaseDiagram_LookupTable)[3:end] # fieldnames from structure
 
     # Process all fields that are present in the phase diagram (and non-dimensionalize if requested)
-    Struct_Fields = Vector{Union{Nothing, Interpolations.Extrapolation}}(
+    Struct_Fields = Vector{Union{Nothing, LinearInterpolator}}(
         nothing, length(Struct_Fieldnames)
     )
 
@@ -582,7 +581,7 @@ function correct_wavevelocities_phasediagrams(
 
     # Store in phase diagram structure
     PD_corrected = PhaseDiagram_LookupTable(
-        "Perple_X/MAGEMin/LaMEM", PD.HeaderText, PD.Name, Struct_Fields...
+        PD.Type, PD.Name, Struct_Fields...
     )
 
     return PD_corrected
@@ -665,22 +664,22 @@ function melt_correction_Takei(
 end
 
 """
-- Dean (1983), Elastic Moduli of Porous Sintered Materials as Modeled by a 
+- Dean (1983), Elastic Moduli of Porous Sintered Materials as Modeled by a
 Variable-Aspect-Ratio Self-Consistent Oblate-Spheroidal-Inclusion Theory
 
-- Phani (1996), Porosity-dependence of ultrasonic velocity in sintered 
-materials - a model based on the self-consistent spheroidal inclusion theory 
+- Phani (1996), Porosity-dependence of ultrasonic velocity in sintered
+materials - a model based on the self-consistent spheroidal inclusion theory
 """
 function θ_func(α::_T) where {_T}
     return α / ((1 - α^2)^(3 / 2)) * (acos(α) - α * (1 - α^2)^0.5)
 end
 
 """
-- Dean (1983), Elastic Moduli of Porous Sintered Materials as Modeled by a 
+- Dean (1983), Elastic Moduli of Porous Sintered Materials as Modeled by a
 Variable-Aspect-Ratio Self-Consistent Oblate-Spheroidal-Inclusion Theory
 
-- Phani (1996), Porosity-dependence of ultrasonic velocity in sintered 
-materials - a model based on the self-consistent spheroidal inclusion theory 
+- Phani (1996), Porosity-dependence of ultrasonic velocity in sintered
+materials - a model based on the self-consistent spheroidal inclusion theory
 """
 function f_func(α::_T) where {_T}
     θ = θ_func(α)
@@ -714,7 +713,7 @@ end
 function P0_func_deriv(α::_T, R::_T) where {_T}
     """
     d/dR (P0(R)) : Evaluated through SymPy:
-        
+
     from sympy import symbols, diff, Rational
     R, f, θ, α = symbols('R f θ α')
     F1 = 1 - Rational(3,2)*(f+θ) + R*(Rational(3,2)*f + Rational(5,2)*θ - Rational(4,3))

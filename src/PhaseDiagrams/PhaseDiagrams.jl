@@ -4,20 +4,48 @@ module PhaseDiagrams
 
 using ..Units
 using Unitful
-using DelimitedFiles, Interpolations
+using DelimitedFiles
 import Base.show
 using GeoParams: AbstractMaterialParam, AbstractPhaseDiagramsStruct
 import GeoParams.PerpleX_LaMEM_Diagram
+import GeoParams.ptr2string
+using Adapt
+using GeoParams: LinearInterpolator, interpolate
 
 export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
 
 """
     Contains data of a Phase Diagram that is regularly spaced in P & T
+
+# Fields
+- `Type::Ptr{UInt8}` : String pointer indicating the type of phase diagram (e.g., "Perple_X/MAGEMin/LaMEM")
+- `Name::Ptr{UInt8}` : String pointer to the name of the phase diagram file
+- `rockRho::Union{T, Nothing}` : Interpolation object for rock density
+- `meltRho::Union{T, Nothing}` : Interpolation object for melt density
+- `meltFrac::Union{T, Nothing}` : Interpolation object for melt fraction
+- `Rho::Union{T, Nothing}` : Interpolation object for total density
+- `rockVp::Union{T, Nothing}` : Interpolation object for rock P-wave velocity
+- `rockVs::Union{T, Nothing}` : Interpolation object for rock S-wave velocity
+- `rockVpVs::Union{T, Nothing}` : Interpolation object for rock Vp/Vs ratio
+- `meltVp::Union{T, Nothing}` : Interpolation object for melt P-wave velocity
+- `meltVs::Union{T, Nothing}` : Interpolation object for melt S-wave velocity
+- `meltVpVs::Union{T, Nothing}` : Interpolation object for melt Vp/Vs ratio
+- `Vp::Union{T, Nothing}` : Interpolation object for total P-wave velocity
+- `Vs::Union{T, Nothing}` : Interpolation object for total S-wave velocity
+- `VpVs::Union{T, Nothing}` : Interpolation object for total Vp/Vs ratio
+- `SpecificCp::Union{T, Nothing}` : Interpolation object for specific heat capacity
+- `solid_Vp::Union{T, Nothing}` : Interpolation object for solid P-wave velocity
+- `solid_Vs::Union{T, Nothing}` : Interpolation object for solid S-wave velocity
+- `melt_bulkModulus::Union{T, Nothing}` : Interpolation object for melt bulk modulus
+- `solid_bulkModulus::Union{T, Nothing}` : Interpolation object for solid bulk modulus
+- `solid_shearModulus::Union{T, Nothing}` : Interpolation object for solid shear modulus
+- `Vp_uncorrected::Union{T, Nothing}` : Interpolation object for uncorrected P-wave velocity
+- `Vs_uncorrected::Union{T, Nothing}` : Interpolation object for uncorrected S-wave velocity
 """
-struct PhaseDiagram_LookupTable{S, T} <: AbstractPhaseDiagramsStruct
-    Type::S
-    HeaderText::Vector{S}
-    Name::S
+struct PhaseDiagram_LookupTable{T} <: AbstractPhaseDiagramsStruct
+    Type::Ptr{UInt8}  # using Ptr{UInt8} to avoid issues with String on GPU
+    # HeaderText::Ptr{S}
+    Name::Ptr{UInt8}
     rockRho::Union{T, Nothing}
     meltRho::Union{T, Nothing}
     meltFrac::Union{T, Nothing}
@@ -31,7 +59,7 @@ struct PhaseDiagram_LookupTable{S, T} <: AbstractPhaseDiagramsStruct
     Vp::Union{T, Nothing}
     Vs::Union{T, Nothing}
     VpVs::Union{T, Nothing}
-    cpxFrac::Union{T, Nothing}
+    SpecificCp::Union{T, Nothing}
     solid_Vp::Union{T, Nothing}
     solid_Vs::Union{T, Nothing}
     melt_bulkModulus::Union{T, Nothing}
@@ -40,6 +68,9 @@ struct PhaseDiagram_LookupTable{S, T} <: AbstractPhaseDiagramsStruct
     Vp_uncorrected::Union{T, Nothing}           # will hold Vs velocity corrected for pores, fluids, & melt
     Vs_uncorrected::Union{T, Nothing}
 end
+
+# Make PhaseDiagram_LookupTable adaptable for GPU arrays
+Adapt.@adapt_structure PhaseDiagram_LookupTable
 
 """
     PD_Data = PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing, Punit = u"bar")
@@ -84,14 +115,15 @@ Internally, we employ linear interpolation, as provided by the [Interpolations.j
 Values outside the range of the diagram are set to the boundary of the diagram. The interpolation object is directly encoded in the `PhaseDiagram_LookupTable`` object.
 
 """
-function PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing, Punit = u"bar")
+function PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing, Punit = u"bar", type::AbstractString = "Perple_X/MAGEMin/LaMEM")
 
     # Read header:
     #  the first 50 lines are comments (freely useable), followed by data
     n = 55
-    # header = open(readlines, `head -n $(n) $(fname)`)
     header = open(readlines, fname)[1:55]
-    header_text = header[1:49]
+
+    name = pointer(ptr2string(fname))
+    type = pointer(ptr2string(type))
 
     # Parse the names of the columns in the data file
     fields = split(header[49], "[")[2:end]      # this line should contain the names and units of the columns in the file
@@ -116,9 +148,13 @@ function PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing, Punit = u"bar")
         fields_units[i] = uparse(unit_string)
     end
 
+    Punit = fields_units[findfirst(i -> fields_keys[i] in [:Pressure], 1:length(fields_keys))]
+    Tunit = fields_units[findfirst(i -> fields_keys[i] in [:Temperature], 1:length(fields_keys))]
     # Determine the range
-    T0 = parse(Float64, header[50]) * u"K"      # in K
-    dT = parse(Float64, header[51]) * u"K"
+    # T0 = parse(Float64, header[50]) * u"K"      # in K
+    T0 = parse(Float64, header[50]) * Tunit      # in K
+    # dT = parse(Float64, header[51]) * u"K"
+    dT = parse(Float64, header[51]) * Tunit
     numT = parse(Int64, header[52])
 
     P0 = parse(Float64, header[53]) * Punit    # in bar or Pa (will be convert to Pa later)
@@ -135,10 +171,10 @@ function PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing, Punit = u"bar")
     siz = (numT, numP)
 
     # Initialize fields in the order they are defined in the PhaseDiagram_LookupTable structure
-    Struct_Fieldnames = fieldnames(PhaseDiagram_LookupTable)[4:end] # fieldnames from structure
+    Struct_Fieldnames = fieldnames(PhaseDiagram_LookupTable)[3:end] # fieldnames from structure
 
     # Process all fields that are present in the phase diagram (and non-dimensionalize if requested)
-    Struct_Fields = Vector{Union{Nothing, Interpolations.Extrapolation}}(
+    Struct_Fields = Vector{Union{Nothing, LinearInterpolator}}(
         nothing, length(Struct_Fieldnames)
     )
 
@@ -168,7 +204,7 @@ function PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing, Punit = u"bar")
 
     # Store in phase diagram structure
     PD_data = PhaseDiagram_LookupTable(
-        "Perple_X/MAGEMin/LaMEM", header_text, fname, Struct_Fields...
+        type, name, Struct_Fields...
     )
 
     return PD_data
@@ -176,11 +212,11 @@ end
 
 # Print info
 function show(io::IO, d::PhaseDiagram_LookupTable)
-    T = d.rockRho.itp.knots[1]
-    P = d.rockRho.itp.knots[2]
+    T = d.rockRho.knots[1]
+    P = d.rockRho.knots[2]
 
-    println(io, "$(d.Type) Phase Diagram Lookup Table: ")
-    println(io, "                      File    :   $(d.Name)")
+    println(io, "$(ptr2string(d.Type)) Phase Diagram Lookup Table: ")
+    println(io, "                      File    :   $(ptr2string(d.Name))")
     println(io, "                      T       :   $(minimum(T)) - $(maximum(T))")
     println(io, "                      P       :   $(minimum(P)) - $(maximum(P))")
 
@@ -238,7 +274,7 @@ function CreateInterpolationObject_PhaseDiagram(
     end
 
     # Create interpolation object
-    intp_data = linear_interpolation((Tvec, Pvec), data; extrapolation_bc = Flat())
+    intp_data = interpolate((Tvec, Pvec), data)
 
     return intp_data
 end
@@ -265,17 +301,17 @@ function ComputeTotalField_withMeltFraction(
             !(isnothing(Struct_Fields[ind_solidData[1]])) &
             !(isnothing(Struct_Fields[ind_meltData[1]]))
         if Struct_Fields[ind_meltFrac[1]] != nothing
-            ϕ = Struct_Fields[ind_meltFrac[1]].itp.coefs      # melt fraction
-            S = Struct_Fields[ind_solidData[1]].itp.coefs      # solid property
-            M = Struct_Fields[ind_meltData[1]].itp.coefs      # melt property
+            ϕ = Struct_Fields[ind_meltFrac[1]].coefs      # melt fraction
+            S = Struct_Fields[ind_solidData[1]].coefs      # solid property
+            M = Struct_Fields[ind_meltData[1]].coefs      # melt property
 
             # Compute average
             Result = (1.0 .- ϕ) .* S .+ ϕ .* M
 
             # Create interpolation object of average
-            Tvec = Struct_Fields[ind_meltFrac[1]].itp.knots[1]       # temperature data
-            Pvec = Struct_Fields[ind_meltFrac[1]].itp.knots[2]       # pressure data
-            intp_Result = linear_interpolation((Tvec, Pvec), Result; extrapolation_bc = Flat())
+            Tvec = Struct_Fields[ind_meltFrac[1]].knots[1]       # temperature data
+            Pvec = Struct_Fields[ind_meltFrac[1]].knots[2]       # pressure data
+            intp_Result = interpolate((Tvec, Pvec), Result)
 
             # assign
             Struct_Fields[ind_totalData[1]] = intp_Result

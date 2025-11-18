@@ -112,6 +112,10 @@ module GeoParams
     export @unpack_units, @unpack_val
     export compute_units, udim
 
+    include("Interpolations.jl")
+    using .Interpolations
+    export LinearInterpolator, interpolate
+
     # Define Material Parameter structure
     include("MaterialParameters.jl")
     using .MaterialParameters
