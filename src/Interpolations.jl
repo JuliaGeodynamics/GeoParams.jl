@@ -43,24 +43,29 @@ function (itp::LinearInterpolator{T})(x::Real, y::Real) where T
     nx = length(x_knots)
     ny = length(y_knots)
 
-    # Find indices for x (temperature)
-    i = find_interval(x_knots, x_promoted)
-    # Find indices for y (pressure)
-    j = find_interval(y_knots, y_promoted)
+    # Clamp inputs to valid range (Flat extrapolation)
+    x_clamped = clamp(x_promoted, x_knots[1], x_knots[end])
+    y_clamped = clamp(y_promoted, y_knots[1], y_knots[end])
 
-    # Get local coordinates
-    if i ≥ nx
-        i = nx - 1
-        t = one(T)
+    # Find indices for clamped values
+    i = find_interval(x_knots, x_clamped)
+    j = find_interval(y_knots, y_clamped)
+
+    # Ensure indices are within bounds
+    i = clamp(i, 1, nx - 1)
+    j = clamp(j, 1, ny - 1)
+
+    # Calculate interpolation weights
+    t = if x_clamped ≥ x_knots[end]
+        one(T)
     else
-        t = (x - x_knots[i]) / (x_knots[i+1] - x_knots[i])
+        (x_clamped - x_knots[i]) / (x_knots[i+1] - x_knots[i])
     end
 
-    if j ≥ ny
-        j = length(y_knots) - 1
-        s = one(T)
+    s = if y_clamped ≥ y_knots[end]
+        one(T)
     else
-        s = (y - y_knots[j]) / (y_knots[j+1] - y_knots[j])
+        (y_clamped - y_knots[j]) / (y_knots[j+1] - y_knots[j])
     end
 
     # Bilinear interpolation
@@ -91,18 +96,16 @@ Returns an index that may be out of bounds for extrapolation handling.
 function find_interval(knots::AbstractVector{T}, x::T) where T
     n = length(knots)
 
-    # Handle out of bounds
-    if x <= knots[1]
-        return 1
-    elseif x >= knots[end]
-        return n
+    # Handle boundary cases
+    if x ≥ knots[end]
+        return n - 1  # Return n-1 for the last valid interval
     end
 
-    # Binary search for the interval
+    # Binary search
     left, right = 1, n
     while right - left > 1
         mid = (left + right) ÷ 2
-        if knots[mid] <= x
+        if knots[mid] ≤ x
             left = mid
         else
             right = mid

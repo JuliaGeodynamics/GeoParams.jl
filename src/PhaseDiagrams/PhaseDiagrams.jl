@@ -73,13 +73,14 @@ end
 Adapt.@adapt_structure PhaseDiagram_LookupTable
 
 """
-    PD_Data = PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing, Punit = u"bar")
+    PD_Data = PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing, type::AbstractString = "Perple_X/MAGEMin/LaMEM")
 
-Reads a precomputed phase diagram in the `LaMEM/Perple_X` format (which is a phase diagram computed using `Perple_X`, but formatted in a manner that is readable using LaMEM).
+Reads a precomputed phase diagram in the `Perple_X/MAGEMin/LaMEM` format (which is a phase diagram computed using `Perple_X/MAGEMin`, but formatted in a manner that is readable
+using LaMEM or potentially any other geodynamic code).
 The data is stored in the `PhaseDiagram_LookupTable` structure.
 
 If the `CharDim` object is specified, the values of all diagrams will be non-dimensionalized.
-The pressure unit in the file can be switched between `bar` and `Pa` using the `Punit` keyword (default is `u"bar"`).
+The type kwarg is a string that indicates the type of phase diagram (default is "Perple_X/MAGEMin/LaMEM").
 
 # Example
 
@@ -111,11 +112,10 @@ The units of the fields are automatically evaluated, and employed to non-dimensi
 
 # Algorithm
 
-Internally, we employ linear interpolation, as provided by the [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl) package.
-Values outside the range of the diagram are set to the boundary of the diagram. The interpolation object is directly encoded in the `PhaseDiagram_LookupTable`` object.
-
+Internally, we employ a linear 2D interpolation scheme for evaluating the phase diagram values at arbitrary (T,P) points using bilinear
+interpolation. Values outside the range of the diagram are set to the boundary of the diagram. The interpolation object is directly encoded in the `PhaseDiagram_LookupTable`` object.
 """
-function PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing, Punit = u"bar", type::AbstractString = "Perple_X/MAGEMin/LaMEM")
+function PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing, type::AbstractString = "Perple_X/MAGEMin/LaMEM", )
 
     # Read header:
     #  the first 50 lines are comments (freely useable), followed by data
