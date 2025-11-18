@@ -7,6 +7,7 @@ module HeatCapacity
 
 using Parameters, LaTeXStrings, Unitful
 using ..Units
+using ..PhaseDiagrams
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, @extractors, add_extractor_functions
 import Base.show, GeoParams.param_info
 import ..Units: isdimensional
@@ -224,9 +225,19 @@ end
 
 #-------------------------------------------------------------------------
 # Heat capacity from phase diagram
+function param_info(s::PhaseDiagram_LookupTable) # info about the struct
+    return MaterialParamsInfo(; Equation = L"\Cp = f_{PhaseDiagram}(T,P))")
+end
 
-# to be implemented - see density implementation
-#
+"""
+    compute_heatcapacity(P,T, s::PhaseDiagram_LookupTable)
+Interpolates heat capacity as a function of `T,P` from a lookup table
+"""
+@inline function compute_heatcapacity(s::PhaseDiagram_LookupTable; P, T, kwargs...)
+    fn = s.SpecificCp
+    return fn(T, P)
+end
+@inline compute_heatcapacity(s::PhaseDiagram_LookupTable, args) = compute_heatcapacity(s; args...)
 
 #-------------------------------------------------------------------------
 
