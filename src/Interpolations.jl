@@ -11,7 +11,7 @@ A custom 2D linear interpolation object that works on both CPU and GPU.
 Stores the knots (grid points) and coefficients (data values) for interpolation.
 """
 struct LinearInterpolator{T, A <: AbstractArray{T, 2}}
-    knots::Tuple{Vector{T}, Vector{T}}  # (T_vec, P_vec)
+    knots::Tuple{AbstractArray{T,1}, AbstractArray{T, 1}}  # (T_vec, P_vec)
     coefs::A                            # 2D data array
 end
 
@@ -19,11 +19,11 @@ end
 Adapt.@adapt_structure LinearInterpolator
 
 """
-    interpolate(knots::Tuple{Vector{T}, Vector{T}}, data::AbstractArray{T, 2})
+    interpolate(knots::Tuple{AbstractArray{T, 1}, AbstractArray{T, 1}}, data::AbstractArray{T, 2})
 
 Create a 2D linear interpolation object similar to Interpolations.jl's linear_interpolation function.
 """
-function interpolate(knots::Tuple{Vector{T}, Vector{T}}, data::AbstractArray{T, 2}) where T
+function interpolate(knots::Tuple{AbstractArray{T, 1}, AbstractArray{T, 1}}, data::AbstractArray{T, 2}) where T
     return LinearInterpolator(knots, data)
 end
 
