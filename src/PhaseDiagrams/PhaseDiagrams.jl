@@ -157,12 +157,21 @@ function PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing, type::AbstractS
     dT = parse(Float64, header[51]) * Tunit
     numT = parse(Int64, header[52])
 
+    # convert to GeoUnits if necessary
+    T0 = uconvert(u"K", T0)
+    dT = uconvert(u"K", dT)
+
     P0 = parse(Float64, header[53]) * Punit    # in bar or Pa (will be convert to Pa later)
     dP = parse(Float64, header[54]) * Punit
     numP = parse(Int64, header[55])
 
-    Tvec = T0:dT:(T0 + dT * (numT - 1))              # 1D vector
-    Pvec = P0:dP:(P0 + dP * (numP - 1))
+    # convert to GeoUnits if necessary
+    P0 = uconvert(u"Pa", P0)
+    dP = uconvert(u"Pa", dP)
+    Pmax = P0 + dP * (numP - 1)
+    Tmax = T0 + dT * (numT - 1)
+    # Tvec = T0:dT:(T0 + dT * (numT - 1))              # 1D vector
+    # Pvec = P0:dP:(P0 + dP * (numP - 1))
 
     # In the LaMEM/Perple_X file format, the first 50 lines are comments
     data = readdlm(fname; skipstart = 55, header = false)        # read numerical data
@@ -183,7 +192,7 @@ function PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing, type::AbstractS
         ind = findall(Struct_Fieldnames .== field)
         if length(ind) > 0
             Struct_Fields[ind[1]] = CreateInterpolationObject_PhaseDiagram(
-                data[:, i], Tvec, Pvec, siz, fields_units[i], CharDim
+                data[:, i], T0, dT, numT, Tmax, P0, dP, numP, Pmax, siz, fields_units[i], CharDim
             )
         end
     end
@@ -212,13 +221,13 @@ end
 
 # Print info
 function show(io::IO, d::PhaseDiagram_LookupTable)
-    T = d.rockRho.knots[1]
-    P = d.rockRho.knots[2]
+    # T = d.rockRho.knots[1]
+    # P = d.rockRho.knots[2]
 
     println(io, "$(ptr2string(d.Type)) Phase Diagram Lookup Table: ")
     println(io, "                      File    :   $(ptr2string(d.Name))")
-    println(io, "                      T       :   $(minimum(T)) - $(maximum(T))")
-    println(io, "                      P       :   $(minimum(P)) - $(maximum(P))")
+    println(io, "                      T       :   $(d.rockRho.T0) - $(d.rockRho.Tmax)")
+    println(io, "                      P       :   $(d.rockRho.P0) - $(d.rockRho.Pmax)")
 
     lst = fieldnames(typeof(d))
     str = ""
@@ -242,22 +251,30 @@ end
 
 # Internal routine that creates an interpolation object from a column of the data
 function CreateInterpolationObject_PhaseDiagram(
-        data_vec::AbstractArray{Float64, 1}, Tvec, Pvec, siz::Tuple{Int64, Int64}, units, CharDim
+        data_vec::AbstractArray{Float64, 1}, T0, dT, numT, Tmax, P0, dP, numP, Pmax, siz::Tuple{Int64, Int64}, units, CharDim
     )
     data_units = reshape(data_vec, siz) * units      # Create 2D array
 
-    # Convert to Pa & K
-    Pvec_Pa = Float64.(uconvert.(u"Pa", Pvec))
-    Tvec_K = Float64.(uconvert.(u"K", Tvec))
+    # # Convert to Pa & K
+    # Pvec_Pa = Float64.(uconvert.(u"Pa", Pvec))
+    # Tvec_K = Float64.(uconvert.(u"K", Tvec))
 
     # Optional: nondimensionalize values as well as T and P
     if CharDim == nothing
-        Pvec = ustrip.(Pvec_Pa)
-        Tvec = ustrip.(Tvec_K)
+        T0 = ustrip(T0)
+        dT = ustrip(dT)
+        P0 = ustrip(P0)
+        dP = ustrip(dP)
+        Tmax = ustrip(Tmax)
+        Pmax = ustrip(Pmax)
         data = ustrip.(data_units)
     else
-        Pvec = nondimensionalize(Pvec_Pa, CharDim)
-        Tvec = nondimensionalize(Tvec_K, CharDim)
+        P0 = nondimensionalize(P0, CharDim)
+        dP = nondimensionalize(dP, CharDim)
+        T0 = nondimensionalize(T0, CharDim)
+        dT = nondimensionalize(dT, CharDim)
+        Tmax = nondimensionalize(Tmax, CharDim)
+        Pmax = nondimensionalize(Pmax, CharDim)
 
         # data_tmp = data_units isa Matrix{<:GeoUnit} ? data_units : GeoUnit.(data_units)
         # data = nondimensionalize(data_tmp, CharDim)
@@ -266,15 +283,10 @@ function CreateInterpolationObject_PhaseDiagram(
         else
             data_units
         end
-        # # @show typeof(data)
-        # @show typeof(data)
-        # @show typeof(data_units)
-        # @show typeof(data_tmp)
-        # error()
     end
 
     # Create interpolation object
-    intp_data = interpolate((Tvec, Pvec), data)
+    intp_data = interpolate(T0, dT, numT, Tmax, P0, dP, numP, Pmax, data)
 
     return intp_data
 end
@@ -309,9 +321,18 @@ function ComputeTotalField_withMeltFraction(
             Result = (1.0 .- ϕ) .* S .+ ϕ .* M
 
             # Create interpolation object of average
-            Tvec = Struct_Fields[ind_meltFrac[1]].knots[1]       # temperature data
-            Pvec = Struct_Fields[ind_meltFrac[1]].knots[2]       # pressure data
-            intp_Result = interpolate((Tvec, Pvec), Result)
+            # Tvec = Struct_Fields[ind_meltFrac[1]].knots[1]       # temperature data
+            # Pvec = Struct_Fields[ind_meltFrac[1]].knots[2]       # pressure data
+            T0_new = Struct_Fields[ind_meltFrac[1]].T0
+            dT_new = Struct_Fields[ind_meltFrac[1]].dT
+            numT_new = Struct_Fields[ind_meltFrac[1]].numT
+            Tmax_new = Struct_Fields[ind_meltFrac[1]].Tmax
+            P0_new = Struct_Fields[ind_meltFrac[1]].P0
+            dP_new = Struct_Fields[ind_meltFrac[1]].dP
+            numP_new = Struct_Fields[ind_meltFrac[1]].numP
+            Pmax_new = Struct_Fields[ind_meltFrac[1]].Pmax
+            # intp_Result = interpolate((Tvec, Pvec), Result)
+            intp_Result = interpolate(T0_new, dT_new, numT_new, Tmax_new, P0_new, dP_new, numP_new, Pmax_new, Result)
 
             # assign
             Struct_Fields[ind_totalData[1]] = intp_Result

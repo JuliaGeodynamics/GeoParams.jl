@@ -11,7 +11,15 @@ A custom 2D linear interpolation object that works on both CPU and GPU.
 Stores the knots (grid points) and coefficients (data values) for interpolation.
 """
 struct LinearInterpolator{T, A <: AbstractArray{T, 2}}
-    knots::Tuple{AbstractArray{T,1}, AbstractArray{T, 1}}  # (T_vec, P_vec)
+    # knots::Tuple{AbstractArray{T,1}, AbstractArray{T, 1}}  # (T_vec, P_vec)
+    T0::T                           # Starting value in T direction
+    dT::T                           # Spacing in T direction
+    numT::Int                       # Number of knots in T direction
+    Tmax::T                         # Maximum value in T direction
+    P0::T                           # Starting value in P direction
+    dP::T                           # Spacing in P direction
+    numP::Int                       # Number of knots in P direction
+    Pmax::T                         # Maximum value in P direction
     coefs::A                            # 2D data array
 end
 
@@ -48,8 +56,8 @@ end
 
 Create a 2D linear interpolation object similar to Interpolations.jl's linear_interpolation function.
 """
-function interpolate(knots::Tuple{AbstractArray{T, 1}, AbstractArray{T, 1}}, data::AbstractArray{T, 2}) where T
-    return LinearInterpolator(knots, data)
+function interpolate(T0::T, dT::T, numT::Int, Tmax::T, P0::T, dP::T, numP::Int, Pmax::T, data::AbstractArray{T, 2}) where T
+    return LinearInterpolator(T0, dT, numT, Tmax, P0, dP, numP, Pmax, data)
 end
 
 """
@@ -62,35 +70,36 @@ function (itp::LinearInterpolator{T})(x::Real, y::Real) where T
     x_promoted = T(x)
     y_promoted = T(y)
 
-    x_knots, y_knots = itp.knots
+    # Extract parameters from struct (replaces x_knots, y_knots = itp.knots)
+    T0, dT, numT, Tmax = itp.T0, itp.dT, itp.numT, itp.Tmax
+    P0, dP, numP, Pmax = itp.P0, itp.dP, itp.numP, itp.Pmax
     data = itp.coefs
 
-    nx = length(x_knots)
-    ny = length(y_knots)
-
     # Clamp inputs to valid range (Flat extrapolation)
-    x_clamped = clamp(x_promoted, x_knots[1], x_knots[end])
-    y_clamped = clamp(y_promoted, y_knots[1], y_knots[end])
+    x_clamped = clamp(x_promoted, T0, Tmax)      # T0 instead of x_knots[1]
+    y_clamped = clamp(y_promoted, P0, Pmax)      # P0 instead of y_knots[1]
 
-    # Find indices for clamped values
-    i = find_interval(x_knots, x_clamped)
-    j = find_interval(y_knots, y_clamped)
+    # Find indices
+    i = clamp(floor(Int, (x_clamped - T0) / dT) + 1, 1, numT - 1)
+    j = clamp(floor(Int, (y_clamped - P0) / dP) + 1, 1, numP - 1)
 
-    # Ensure indices are within bounds
-    i = clamp(i, 1, nx - 1)
-    j = clamp(j, 1, ny - 1)
+    # Calculate knot values on-the-fly
+    x_i = T0 + (i - 1) * dT
+    x_i1 = x_i + dT
+    y_j = P0 + (j - 1) * dP
+    y_j1 = y_j + dP
 
     # Calculate interpolation weights
-    t = if x_clamped ≥ x_knots[end]
+    t = if x_clamped ≥ Tmax
         one(T)
     else
-        (x_clamped - x_knots[i]) / (x_knots[i+1] - x_knots[i])
+        (x_clamped - x_i) / (x_i1 - x_i)
     end
 
-    s = if y_clamped ≥ y_knots[end]
+    s = if y_clamped ≥ Pmax
         one(T)
     else
-        (y_clamped - y_knots[j]) / (y_knots[j+1] - y_knots[j])
+        (y_clamped - y_j) / (y_j1 - y_j)
     end
 
     # get corner values
