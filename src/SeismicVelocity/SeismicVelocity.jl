@@ -462,8 +462,8 @@ function correct_wavevelocities_phasediagrams(
     Vp_uncorrected = PD.Vp
 
     # Extract required data to apply corrections
-    Vs_corrected = PD.solid_Vs.itp.coefs   # Vs velocity of solid rocks
-    Vp_corrected = PD.solid_Vp.itp.coefs   # Vp velocity of solid rocks
+    Vs_corrected = PD.solid_Vs.coefs   # Vs velocity of solid rocks
+    Vp_corrected = PD.solid_Vp.coefs   # Vp velocity of solid rocks
 
     # Apply anelasticity correction
     if apply_anelasticity_correction == true
@@ -474,9 +474,9 @@ function correct_wavevelocities_phasediagrams(
 
     # Apply porosity correction
     if apply_porosity_correction == true
-        Kb_S = PD.solid_bulkModulus.itp.coefs    #  bulk modulus solid
-        Ks_S = PD.solid_shearModulus.itp.coefs   #  shear modulus solid
-        ρS = PD.rockRho.itp.coefs
+        Kb_S = PD.solid_bulkModulus.coefs    #  bulk modulus solid
+        Ks_S = PD.solid_shearModulus.coefs   #  shear modulus solid
+        ρS = PD.rockRho.coefs
         ρ_av = mean(ρS)           # average solid density
 
         for i in CartesianIndices(Vs_corrected)
@@ -489,12 +489,12 @@ function correct_wavevelocities_phasediagrams(
 
     # Apply melt correction
     if apply_melt_correction == true
-        Kb_L = PD.melt_bulkModulus.itp.coefs    #  bulk modulus melt
-        Kb_S = PD.solid_bulkModulus.itp.coefs   #  bulk modulus solid
-        Ks_S = PD.solid_shearModulus.itp.coefs  #  shear modulus solid
-        ρS = PD.rockRho.itp.coefs                 #  solid density
-        ρL = PD.meltRho.itp.coefs                 #  melt density
-        ϕ = PD.meltFrac.itp.coefs                #  melt fraction
+        Kb_L = PD.melt_bulkModulus.coefs    #  bulk modulus melt
+        Kb_S = PD.solid_bulkModulus.coefs   #  bulk modulus solid
+        Ks_S = PD.solid_shearModulus.coefs  #  shear modulus solid
+        ρS = PD.rockRho.coefs                 #  solid density
+        ρL = PD.meltRho.coefs                 #  melt density
+        ϕ = PD.meltFrac.coefs                #  melt fraction
 
         for i in CartesianIndices(Vs_corrected)
             if ϕ[i] > 0

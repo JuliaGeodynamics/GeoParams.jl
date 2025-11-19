@@ -18,6 +18,31 @@ end
 # Make LinearInterpolator adaptable for GPU arrays
 Adapt.@adapt_structure LinearInterpolator
 
+
+"""
+    lerp(a, b, t)
+
+Linear interpolation between values `a` and `b` with weight `t`.
+"""
+@inline lerp(a, b, t) = a + t * (b - a)
+
+
+"""
+    get_corners(F, i, j)
+
+Get the four corner values needed for bilinear interpolation.
+"""
+@inline Base.@propagate_inbounds function get_corners(F::AbstractArray{T, 2}, i::Int, j::Int) where T
+    i1, j1 = i + 1, j + 1
+    @inbounds begin
+        a = F[i, j]
+        b = F[i1, j]
+        c = F[i, j1]
+        d = F[i1, j1]
+    end
+    return a, b, c, d
+end
+
 """
     interpolate(knots::Tuple{AbstractArray{T, 1}, AbstractArray{T, 1}}, data::AbstractArray{T, 2})
 
@@ -68,18 +93,14 @@ function (itp::LinearInterpolator{T})(x::Real, y::Real) where T
         (y_clamped - y_knots[j]) / (y_knots[j+1] - y_knots[j])
     end
 
-    # Bilinear interpolation
-    v00 = data[i, j]
-    v10 = data[i+1, j]
-    v01 = data[i, j+1]
-    v11 = data[i+1, j+1]
+    # get corner values
+    a, b, c, d = get_corners(data, i, j)
 
     # Interpolate in x direction first
-    v0 = (one(T) - t) * v00 + t * v10
-    v1 = (one(T) - t) * v01 + t * v11
+    v0 = lerp(a, b, t)  # Interpolate bottom edge
+    v1 = lerp(c, d, t)  # Interpolate top edge
 
-    # Then interpolate in y direction
-    return (one(T) - s) * v0 + s * v1
+    return lerp(v0, v1, s)  # Final interpolation in y direction
 end
 
 # Vectorized evaluation

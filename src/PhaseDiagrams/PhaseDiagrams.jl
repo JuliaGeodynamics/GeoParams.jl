@@ -152,8 +152,8 @@ function PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing, type::AbstractS
     Tunit = fields_units[findfirst(i -> fields_keys[i] in [:Temperature], 1:length(fields_keys))]
     # Determine the range
     # T0 = parse(Float64, header[50]) * u"K"      # in K
-    T0 = parse(Float64, header[50]) * Tunit      # in K
     # dT = parse(Float64, header[51]) * u"K"
+    T0 = parse(Float64, header[50]) * Tunit      # in K
     dT = parse(Float64, header[51]) * Tunit
     numT = parse(Int64, header[52])
 
@@ -242,7 +242,7 @@ end
 
 # Internal routine that creates an interpolation object from a column of the data
 function CreateInterpolationObject_PhaseDiagram(
-        data_vec::Vector{Float64}, Tvec, Pvec, siz::Tuple{Int64, Int64}, units, CharDim
+        data_vec::AbstractArray{Float64, 1}, Tvec, Pvec, siz::Tuple{Int64, Int64}, units, CharDim
     )
     data_units = reshape(data_vec, siz) * units      # Create 2D array
 

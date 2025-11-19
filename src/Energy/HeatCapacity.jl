@@ -225,10 +225,6 @@ end
 
 #-------------------------------------------------------------------------
 # Heat capacity from phase diagram
-function param_info(s::PhaseDiagram_LookupTable) # info about the struct
-    return MaterialParamsInfo(; Equation = L"\Cp = f_{PhaseDiagram}(T,P))")
-end
-
 """
     compute_heatcapacity(P,T, s::PhaseDiagram_LookupTable)
 Interpolates heat capacity as a function of `T,P` from a lookup table
