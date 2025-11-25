@@ -123,7 +123,7 @@ module GeoParams
 
     # Phase Diagrams
     using .MaterialParameters.PhaseDiagrams
-    export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
+    export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram, MAGEMin_Diagram, MAGEMin_LookupTable
 
     # Density
     using .MaterialParameters.Density

@@ -6,7 +6,7 @@ module MeltingParam
 using Parameters, LaTeXStrings, Unitful, ForwardDiff
 using ..Units
 using GeoParams:
-    AbstractMaterialParam, PhaseDiagram_LookupTable, AbstractMaterialParamsStruct
+    AbstractMaterialParam, AbstractPhaseDiagramsStruct, AbstractMaterialParamsStruct
 import Base.show, GeoParams.param_info
 using ..MaterialParameters: MaterialParamsInfo
 using Setfield # allows modifying fields in immutable struct
@@ -673,18 +673,18 @@ end
 Computes melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
 """
 function compute_meltfraction(
-        p::PhaseDiagram_LookupTable; P::_T, T::_T, kwargs...
+        p::AbstractPhaseDiagramsStruct; P::_T, T::_T, kwargs...
     ) where {_T}
     return p.meltFrac.(T, P)
 end
 
-compute_meltfraction(p::PhaseDiagram_LookupTable, args) = compute_meltfraction(p; args...)
+compute_meltfraction(p::AbstractPhaseDiagramsStruct, args) = compute_meltfraction(p; args...)
 """
-    compute_meltfraction!(ϕ::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T:AbstractArray{<:AbstractFloat}, p::PhaseDiagram_LookupTable)
+    compute_meltfraction!(ϕ::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T:AbstractArray{<:AbstractFloat}, p::AbstractPhaseDiagramsStruct)
 
 In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
 """
-function compute_meltfraction!(p::PhaseDiagram_LookupTable, args) end
+function compute_meltfraction!(p::AbstractPhaseDiagramsStruct, args) end
 
 """
     compute_dϕdT(P,T, p::AbstractPhaseDiagramsStruct)
@@ -692,7 +692,7 @@ function compute_meltfraction!(p::PhaseDiagram_LookupTable, args) end
 Computes derivative of melt fraction vs T in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
 The derivative is computed by finite differencing.
 """
-function compute_dϕdT(p::PhaseDiagram_LookupTable; P::_T, T::_T, kwargs...) where {_T}
+function compute_dϕdT(p::AbstractPhaseDiagramsStruct; P::_T, T::_T, kwargs...) where {_T}
     dT = (maximum(T) - minimum(T)) * 0.5 * 1.0e-6 + 1.0e-6   # 1e-6 of the average T value
     ϕ1 = p.meltFrac.(T .+ dT, P)
     ϕ0 = p.meltFrac.(T, P)
@@ -701,17 +701,17 @@ function compute_dϕdT(p::PhaseDiagram_LookupTable; P::_T, T::_T, kwargs...) whe
     return dϕdT
 end
 
-compute_dϕdT(p::PhaseDiagram_LookupTable, args) = compute_dϕdT(p; args...)
+compute_dϕdT(p::AbstractPhaseDiagramsStruct, args) = compute_dϕdT(p; args...)
 
 """
-    compute_dϕdT!(dϕdT::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T:AbstractArray{<:AbstractFloat}, p::PhaseDiagram_LookupTable)
+    compute_dϕdT!(dϕdT::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T:AbstractArray{<:AbstractFloat}, p::AbstractPhaseDiagramsStruct)
 
 In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
 The derivative is computed by finite differencing.
 """
 # function compute_dϕdT!(
 #     dϕdT::AbstractArray{_T},
-#     p::PhaseDiagram_LookupTable;
+#     p::AbstractPhaseDiagramsStruct;
 #     P::AbstractArray{_T},
 #     T::AbstractArray{_T},
 #     kwargs...,
@@ -724,7 +724,7 @@ The derivative is computed by finite differencing.
 #     return nothing
 # end
 
-# compute_dϕdT!( ϕ::AbstractArray, p::PhaseDiagram_LookupTable, args) = compute_dϕdT!(p; args...)
+# compute_dϕdT!( ϕ::AbstractArray, p::AbstractPhaseDiagramsStruct, args) = compute_dϕdT!(p; args...)
 
 # fill methods programmatically
 for myType in (
