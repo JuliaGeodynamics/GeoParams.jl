@@ -112,6 +112,10 @@ module GeoParams
     export @unpack_units, @unpack_val
     export compute_units, udim
 
+    include("Interpolations.jl")
+    using .Interpolations
+    export LinearInterpolator, interpolate, interpolate_field
+
     # Define Material Parameter structure
     include("MaterialParameters.jl")
     using .MaterialParameters
@@ -119,7 +123,7 @@ module GeoParams
 
     # Phase Diagrams
     using .MaterialParameters.PhaseDiagrams
-    export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram
+    export PhaseDiagram_LookupTable, PerpleX_LaMEM_Diagram, MAGEMin_Diagram, MAGEMin_LookupTable
 
     # Density
     using .MaterialParameters.Density

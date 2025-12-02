@@ -785,7 +785,7 @@ julia> PlotPhaseDiagram(PD_data,:Rho)
 
 """
 function PlotPhaseDiagram(
-        p::PhaseDiagram_LookupTable, fieldn::Symbol; Tvec = nothing, Pvec = nothing
+        p::AbstractPhaseDiagramsStruct, fieldn::Symbol; Tvec = nothing, Pvec = nothing
     )
     data = getfield(p, fieldn)
     if isnothing(Tvec)
