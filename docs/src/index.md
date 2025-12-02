@@ -46,7 +46,8 @@ features:
     link: /man/contributing
 ---
 ```
-# GeoParams.jl
+
+## GeoParams.jl
 
 Typical geodynamic simulations involve a large number of material parameters that have units that are often inconvenient to be directly used in numerical models. This package has two main features that help with this:
 
