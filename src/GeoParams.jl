@@ -114,7 +114,7 @@ module GeoParams
 
     include("Interpolations.jl")
     using .Interpolations
-    export LinearInterpolator, interpolate
+    export LinearInterpolator, interpolate, interpolate_field
 
     # Define Material Parameter structure
     include("MaterialParameters.jl")

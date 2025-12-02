@@ -12,6 +12,7 @@ using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, @extractor
 import ..Units: isdimensional
 using ..MaterialParameters: No_MaterialParam, MaterialParamsInfo
 import Base.show, GeoParams.param_info
+using GeoParams: LinearInterpolator, interpolate, interpolate_field
 
 include("../Computations.jl")
 
@@ -598,13 +599,32 @@ function param_info(s::AbstractPhaseDiagramsStruct) # info about the struct
     return MaterialParamsInfo(; Equation = L"\rho = f_{PhaseDiagram}(T,P))")
 end
 
+# """
+#     compute_density(P,T, s::AbstractPhaseDiagramsStruct)
+# Interpolates density as a function of `T,P` from a lookup table
+# """
+# @inline function compute_density(s::AbstractPhaseDiagramsStruct; P, T, kwargs...)
+#     fn = s.Rho
+#     return fn(T, P)
+# end
+# @inline compute_density(s::AbstractPhaseDiagramsStruct, args) = compute_density(s; args...)
 """
     compute_density(P,T, s::AbstractPhaseDiagramsStruct)
 Interpolates density as a function of `T,P` from a lookup table
 """
-@inline function compute_density(s::AbstractPhaseDiagramsStruct; P, T, kwargs...)
-    fn = s.Rho
-    return fn(T, P)
+@inline function compute_density(s::AbstractPhaseDiagramsStruct; P = 0.0e0, T = 0.0e0, kwargs...)
+    data = s.Rho.coefs
+    T0   = s.Rho.T0
+    dT   = s.Rho.dT
+    numT = s.Rho.numT
+    Tmax = s.Rho.Tmax
+    P0   = s.Rho.P0
+    dP   = s.Rho.dP
+    numP = s.Rho.numP
+    Pmax = s.Rho.Pmax
+
+    rho = interpolate_field(T0, dT, numT, Tmax, P0, dP, numP, Pmax, data, T, P)
+    return rho
 end
 @inline compute_density(s::AbstractPhaseDiagramsStruct, args) = compute_density(s; args...)
 

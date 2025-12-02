@@ -425,7 +425,7 @@ function MAGEMin_Diagram(fname::String; CharDim = nothing, type::AbstractString 
     # # Initialize fields in the order they are defined in the PhaseDiagram_LookupTable structure
     Struct_Fieldnames = fieldnames(MAGEMin_LookupTable)[3:end] # fieldnames from structure
 
-    Struct_Fields = Vector{LinearInterpolator{Float64, Array{Float64,2}}}(
+    Struct_Fields = Vector{LinearInterpolator{Float64, Int64, Array{Float64,2}}}(
         undef, length(Struct_Fieldnames)
     )
 
