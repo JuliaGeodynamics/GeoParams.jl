@@ -316,7 +316,8 @@ end
 function compute_εII(a::PowerlawViscous, TauII; kwargs...)
     @unpack_val η0, n, ε0 = a
 
-    @pow EpsII = (TauII / η0)^(1 / n) * ε0
+    # @pow EpsII = (TauII / (2 * η0))^(1 / n) * ε0
+    @pow EpsII = (TauII / (2 * η0))^n  
 
     return EpsII
 end
@@ -335,7 +336,8 @@ Returns second invariant of the stress tensor given a 2nd invariant of strain ra
 function compute_τII(a::PowerlawViscous, EpsII; kwargs...)
     @unpack_val η0, n, ε0 = a
 
-    τII = @pow ε0 * η0 * (EpsII / ε0)^n
+    # τII = @pow ε0 * 2 * η0 * (EpsII / ε0)^n
+    @pow τII = 2 * η0 * (EpsII)^(1/n)
 
     return τII
 end
