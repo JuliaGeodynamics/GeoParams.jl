@@ -1,4 +1,4 @@
-if VERSION < v"1.13.0-alpha2"
+if VERSION < v"1.13"
     using Aqua, Test, GeoParams
 
     ## Failing tests: hard to fix in the current state of the pkg
