@@ -18,8 +18,7 @@ using GeoParams:
 
 
 # to remove at some point
-@warn "`Myrs` as a unit is deprecated. Use `Myr` instead."
-const Myrs = u"Myr"
+
 
 # Define a number of useful units
 const km = u"km"
@@ -51,7 +50,6 @@ export km,
     cm,
     mm,
     μm,
-    Myrs, # to remove at some point
     Myr,
     yr,
     s,
