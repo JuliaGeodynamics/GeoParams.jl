@@ -192,12 +192,12 @@ end
     τxy = τ[3]
 
     s2, c2 = s^2, c^2
-    sc2    = 2 * c * s
+    sc2 = 2 * c * s
 
     xx = @muladd c2 * τxx + s2 * τyy - sc2 * τxy
     yy = @muladd s2 * τxx + c2 * τyy + sc2 * τxy
     xy = @muladd (c2 - s2) * τxy + c * s * (τxx - τyy)
-   
+
     return xx, yy, xy
 end
 
