@@ -181,21 +181,25 @@ and ω = 1/2(dux/dy - duy/dx)
 @inline Base.@propagate_inbounds function rotate_elastic_stress2D(ω, τ, dt)
     θ = ω * dt
     # NOTE: inlining sincos speeds up considerably this kernel but breaks for < 1.8
-    sinθ, cosθ = sincos(θ)
+    s, c = @inline @fastmath sincos(θ)
     # rotate tensor
-    return tensor_rotation(τ, cosθ, sinθ)
+    return tensor_rotation(τ, s, c)
 end
 
-@inline function tensor_rotation(A, cosθ, sinθ)
-    A11 = A[1]
-    A22 = A[2]
-    A12 = A[3]
-    xx = @muladd  sinθ * (sinθ * A22 + cosθ * A12) + cosθ * (sinθ * A12 + cosθ * A11)
-    yy = @muladd -sinθ * (-sinθ * A11 + cosθ * A12) + cosθ * (-sinθ * A12 + cosθ * A22)
-    xy = @muladd -sinθ * (sinθ * A12 + cosθ * A11) + cosθ * (sinθ * A22 + cosθ * A12)
+@inline function tensor_rotation(τ, s, c)
+    τxx = τ[1]
+    τyy = τ[2]
+    τxy = τ[3]
+
+    s2, c2 = s^2, c^2
+    sc2 = 2 * c * s
+
+    xx = @muladd c2 * τxx + s2 * τyy - sc2 * τxy
+    yy = @muladd s2 * τxx + c2 * τyy + sc2 * τxy
+    xy = @muladd (c2 - s2) * τxy + c * s * (τxx - τyy)
+
     return xx, yy, xy
 end
-
 
 """
     rotate_elastic_stress3D(ω, τ::T, dt) where T
