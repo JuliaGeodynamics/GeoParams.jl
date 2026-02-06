@@ -8,10 +8,11 @@ module Density
 using Parameters, Unitful, LaTeXStrings, MuladdMacro
 using ..Units
 using ..PhaseDiagrams
-using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, @extractors, add_extractor_functions
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, @extractors, add_extractor_functions, AbstractPhaseDiagramsStruct
 import ..Units: isdimensional
 using ..MaterialParameters: No_MaterialParam, MaterialParamsInfo
 import Base.show, GeoParams.param_info
+using GeoParams: LinearInterpolator, interpolate, interpolate_field
 
 include("../Computations.jl")
 
@@ -594,25 +595,44 @@ end
 
 #-------------------------------------------------------------------------
 # Phase diagrams
-function param_info(s::PhaseDiagram_LookupTable) # info about the struct
+function param_info(s::AbstractPhaseDiagramsStruct) # info about the struct
     return MaterialParamsInfo(; Equation = L"\rho = f_{PhaseDiagram}(T,P))")
 end
 
+# """
+#     compute_density(P,T, s::AbstractPhaseDiagramsStruct)
+# Interpolates density as a function of `T,P` from a lookup table
+# """
+# @inline function compute_density(s::AbstractPhaseDiagramsStruct; P, T, kwargs...)
+#     fn = s.Rho
+#     return fn(T, P)
+# end
+# @inline compute_density(s::AbstractPhaseDiagramsStruct, args) = compute_density(s; args...)
 """
-    compute_density(P,T, s::PhaseDiagram_LookupTable)
+    compute_density(P,T, s::AbstractPhaseDiagramsStruct)
 Interpolates density as a function of `T,P` from a lookup table
 """
-@inline function compute_density(s::PhaseDiagram_LookupTable; P, T, kwargs...)
-    fn = s.Rho
-    return fn(T, P)
+@inline function compute_density(s::AbstractPhaseDiagramsStruct; P = 0.0e0, T = 0.0e0, kwargs...)
+    data = s.Rho.coefs
+    T0   = s.Rho.T0
+    dT   = s.Rho.dT
+    numT = s.Rho.numT
+    Tmax = s.Rho.Tmax
+    P0   = s.Rho.P0
+    dP   = s.Rho.dP
+    numP = s.Rho.numP
+    Pmax = s.Rho.Pmax
+
+    rho = interpolate_field(T0, dT, numT, Tmax, P0, dP, numP, Pmax, data, T, P)
+    return rho
 end
-@inline compute_density(s::PhaseDiagram_LookupTable, args) = compute_density(s; args...)
+@inline compute_density(s::AbstractPhaseDiagramsStruct, args) = compute_density(s; args...)
 
 """
-    compute_density!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::PhaseDiagram_LookupTable)
+    compute_density!(rho::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T::AbstractArray{<:AbstractFloat}, s::AbstractPhaseDiagramsStruct)
 In-place computation of density as a function of `T,P`, in case we are using a lookup table.
 """
-# function compute_density!(rho::AbstractArray{_T}, s::PhaseDiagram_LookupTable; P::AbstractArray{_T}=[zero(_T)],T::AbstractArray{_T}=[zero(_T)], kwargs...) where _T end
+# function compute_density!(rho::AbstractArray{_T}, s::AbstractPhaseDiagramsStruct; P::AbstractArray{_T}=[zero(_T)],T::AbstractArray{_T}=[zero(_T)], kwargs...) where _T end
 
 #------------------------------------------------------------------------------------------------------------------#
 # Computational routines needed for computations with the MaterialParams structure
