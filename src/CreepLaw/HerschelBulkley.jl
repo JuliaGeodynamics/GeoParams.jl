@@ -38,15 +38,6 @@ struct HerschelBulkley{T, U1, U2, U3} <: AbstractCreepLaw{T}
 end
 
 
-# function when eII is given 
-function HB_rheology(εII,η0,τ0,εr,ηr,n,ηl)
-    # compute viscosity using the Souza-Mendes approach
-     η = (1.0 - exp(-2.0*η0*εII/τ0)) * (0.5*τ0/εII  + ηr*(εII./εr)^(1/n - 1)) + ηl
-     return η
-end
-
-
-
 # @inline function HerschelBulkley(
 #     a::DislocationCreep,
 #     EpsII;
