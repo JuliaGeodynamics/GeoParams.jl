@@ -1,0 +1,38 @@
+
+
+struct HerschelBulkley{T, U1, U2, U3} <: AbstractCreepLaw{T}
+    n::T  # shear thinning exponent
+    η0::GeoUnit{T, U1} # "rigid" viscosity
+    τ0::GeoUnit{T, U2} # critical stress
+    ηr::GeoUnit{T, U1} # reference viscosity at the critical strain rate, which is given by 0.5*τ0/η0 and the critical temperature
+    Q::GeoUnit{T, U3} # temperature dependence of ηr, activation energy divided by R, unit is K
+    Tr::GeoUnit{T,U3} # reference temperature
+    function HerschelBulkley(;
+        n = 3,
+        η0 = 1e24Pa*s,
+        τ0 = 100e6Pa,
+        ηr = 1e20Pa*s,
+        Q  = 0K,
+        Tr = 1600K,
+        )
+        # Convert to GeoUnits
+        η0U = convert(GeoUnit, η0)
+        τ0U = convert(GeoUnit, τ0)
+        ηrU = convert(GeoUnit, ηr)
+        QU  = convert(GeoUnit,Q)
+        Tr  = convert(GeoUnit,Tr)
+        # Extract struct types
+        T = typeof(η0U).types[1]
+        U1 = typeof(η0U).types[2]
+        U2 = typeof(σ0U).types[2]
+        U3 = typeof(Tr).types[2]
+        # Create struct
+        return new{T, U1, U2, U3}(
+            n, η0U,τ0U,ηrU,QU, Tr
+        )
+    end
+
+    function HerschelBulkley(n, η0,τ0,ηr,Q,Tr)
+        return HerschelBulkley(;n = n, η0 = η0,τ0 = τ0,ηr = ηr,Q = Q,Tr = Tr)
+    end
+end
