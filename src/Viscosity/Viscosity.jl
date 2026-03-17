@@ -32,7 +32,7 @@ end
 
     ηT = ηr * exp(B * (Q * (1/T-1/Tr))) # temperature dependence
     εr = 0.5 * τ0/η0 # strain rate at which the Bingham yield stress is reached, this is defined as the reference strain rate
-    η = @fastpow (1.0 - exp(-2.0*η0*εII/τ0)) * (0.5*τ0/εII  + ηT*(εII./εr)^(1/n - 1))
+    η = @pow (1.0 - exp(-2.0*η0*εII/τ0)) * (0.5*τ0/εII  + ηT*(εII./εr)^(1/n - 1))
     return  η
 end
 
