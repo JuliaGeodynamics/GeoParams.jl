@@ -48,9 +48,10 @@ end
     (; n) = v
 
     ηT = ηr * exp(Q * (1/T-1/Tr)) # temperature dependence
-    
+    εr = 0.5 * τ0/η0 
+
     # define residual function --> could we also call compute_viscosity_εII here?
-    function fres(εII,τII,η0,τ0,ηT,n)
+    function fres(εII,τII,η0,τ0,ηT,n,εr)
         η = @pow (1.0 - exp(-2.0*η0*εII/τ0)) * (0.5*τ0/εII  + ηT*(εII/εr)^(1/n - 1))
         return 2.0 * η * εII - τII
     end
@@ -69,11 +70,11 @@ end
     tol    = 1e-8
     
     # compute the residual of the initial guess
-    res = fres(εII,τII,η0,τ0,ηT,n)
+    res = fres(εII,τII,η0,τ0,ηT,n,εr)
  
     if abs(res) > tol
         for _ in 1:it_max
-            f, dfdε = value_and_partial(εII -> fres(εII,τII,η0,τ0,ηT,n), εII) # value and dF/dεII via ForwardDiff
+            f, dfdε = value_and_partial(εII -> fres(εII,τII,η0,τ0,ηT,n,εr), εII) # value and dF/dεII via ForwardDiff
             Δε = f / dfdε
             εII -= Δε # adapt εII
             abs(Δε) / (abs(εII) + eps(typeof(εII))) < tol && break # stop if we are below the tolerance
