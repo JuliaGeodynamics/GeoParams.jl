@@ -22,6 +22,9 @@ using GeoParams
 
     x = GiordanoMeltViscosity()
     @test isbits(x)
+
+    x = HerschelBulkley()
+    @test isbits(x)
     # This tests the MaterialParameters structure
     CharUnits_GEO = GEO_units(; viscosity = 1.0e19, length = 1000km)
 
@@ -342,6 +345,48 @@ using GeoParams
         η_rhyolite_scaled[i] = compute_viscosity_εII(x_rhyolite_scaled, εII, (; T = T[i]))
     end
     T_plots = 10000 ./ ustrip.(T)
+
+
+    # Herschel-Bulkley viscosity (Regularized Bingham rheology)
+    x1 = HerschelBulkley()
+    @test x1.n == 3
+    @test x1.η0.val == 1e24
+    @test x1.τ0.val == 100e6
+    @test x1.ηr.val == 1e20
+    @test x1.Q.val == 0
+    @test x1.Tr.val == 1273
+
+    x1_D = HerschelBulkley()
+    @test isDimensional(x1_D) == true
+    x1_ND = nondimensionalize(x1_D, CharUnits_GEO)
+    @test isDimensional(x1_ND) == false
+    @test x1_ND.η0 * 1.0 == 1e5
+    @test x1_ND.τ0 * 1.0 ≈ 10.0
+    @test x1_ND.ηr * 1.0 == 1e1
+    @test x1_ND.Q * 1.0 == 0.0
+    @test x1_ND.Tr * 1.0 ≈ 1.0 rtol = 1.0e-3
+    @test dimensionalize(x1_ND, CharUnits_GEO) == x1_D
+
+    args = (; T = 1273K,)
+    Tau_II = 1.0e6Pa
+    compute_εII(x1_D, Tau_II, args)
+
+
+    # and strain rate
+    ε1 = 0.5
+    tau = compute_τII(x1, ε1, args)
+    @test tau ≈ 1.0
+    # using a vector input ------------------
+    T2 = [1.0; 0.9; 0.8]
+    # and stress
+    ε21 = [0.0; 0.0; 0.0]
+    τ21 = [1.0; 0.8; 0.9]
+    args = (T = T2,)
+    compute_εII!(ε21, x1, τ21, args)
+    # and strain rate
+    τ22 = [0.0; 0.0; 0.0]
+    ε22 = [0.5; 1.0; 0.2]
+    compute_τII!(τ22, x1, ε22, args)
 
     # fig = Figure(size = (800, 600))
     # ax = Axis(fig[1, 1], xlabel = "T [C]", ylabel = "log10(η [Pas])")
