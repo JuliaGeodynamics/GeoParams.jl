@@ -18,6 +18,75 @@ end
 
 @inline compute_viscosity_εII(v::LinearViscous, εII, args) = v.η.val
 @inline compute_viscosity_εII(v::ConstantElasticity, εII, args) = v.G * args.dt
+@inline compute_viscosity_εII(v::HerschelBulkley, εII, args) = compute_hb_viscosity_εII(v, εII; args...)
+
+#=
+@inline function compute_viscosity_εII(v::HerschelBulkley, εII; T = 1.0, kwargs...)
+    η0, τ0, ηr, Q, Tr = if εII isa Quantity
+        @unpack_units η0, τ0, ηr, Q, Tr = v
+        η0, τ0, ηr, Q, Tr 
+    else
+        @unpack_val η0, τ0, ηr, Q, Tr = v
+        η0, τ0, ηr, Q, Tr
+    end
+    (; n) = v
+
+    ηT = ηr * exp(Q * (1/T-1/Tr)) # temperature dependence
+    εr = 0.5 * τ0/η0 # strain rate at which the Bingham yield stress is reached, this is defined as the reference strain rate
+    η = @pow (1.0 - exp(-2.0*η0*εII/τ0)) * (0.5*τ0/εII  + ηT*(εII/εr)^(1/n - 1))
+    return  η
+end
+
+@inline function compute_viscosity_τII(v::HerschelBulkley, τII; T = one(precision(a)), kwargs...)
+
+    η0, τ0, ηr, Q, Tr = if τII isa Quantity
+        @unpack_units η0, τ0, ηr, Q, Tr = v
+        η0, τ0, ηr, Q, Tr 
+    else
+        @unpack_val η0, τ0, ηr, Q, Tr = v
+        η0, τ0, ηr, Q, Tr
+    end
+    (; n) = v
+
+    ηT = ηr * exp(Q * (1/T-1/Tr)) # temperature dependence
+    εr = 0.5 * τ0/η0 
+
+    # define residual function --> could we also call compute_viscosity_εII here?
+    function fres(εII,τII,η0,τ0,ηT,n,εr)
+        η = @pow (1.0 - exp(-2.0*η0*εII/τ0)) * (0.5*τ0/εII  + ηT*(εII/εr)^(1/n - 1))
+        return 2.0 * η * εII - τII
+    end
+
+    # define an initial guess for η
+    if τII < τ0
+        η = η0
+        εII = 0.5*τII/η0
+    elseif τII > τ0
+        εII = ((τII - τ0) / (2 * ηr * εr^(1 - one(n)/n)))^n
+        η = 0.5*τII/εII
+    end
+
+    # Newton-Raphson method to get a solution for η
+    it_max = 100
+    tol    = 1e-8
+    
+    # compute the residual of the initial guess
+    res = fres(εII,τII,η0,τ0,ηT,n,εr)
+ 
+    if abs(res) > tol
+        for _ in 1:it_max
+            f, dfdε = value_and_partial(εII -> fres(εII,τII,η0,τ0,ηT,n,εr), εII) # value and dF/dεII via ForwardDiff
+            Δε = f / dfdε
+            εII -= Δε # adapt εII
+            abs(Δε) / (abs(εII) + eps(typeof(εII))) < tol && break # stop if we are below the tolerance
+        end
+        η = @pow (1.0 - exp(-2.0*η0*εII/τ0)) * (0.5*τ0/εII  + ηT*(εII/εr)^(1/n - 1)) # --> could we also call compute_viscosity_εII here?
+    end
+    return η
+end
+
+=#
+
 
 # compute effective "creep" viscosity from deviatoric stress tensor
 """
@@ -33,6 +102,7 @@ end
 
 @inline compute_viscosity_τII(v::LinearViscous, τII, args) = v.η.val
 @inline compute_viscosity_τII(v::ConstantElasticity, τII, args) = v.G * args.dt
+@inline compute_viscosity_τII(v::HerschelBulkley, εII, args) = compute_hb_viscosity_τII(v, εII; args...)
 
 for fn in (:compute_viscosity_εII, :compute_viscosity_τII)
     @eval begin
