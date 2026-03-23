@@ -88,8 +88,6 @@ end
 =#
 
 
-
-
 # compute effective "creep" viscosity from deviatoric stress tensor
 """
     compute_viscosity_τII(s::AbstractConstitutiveLaw, τII, kwargs...)

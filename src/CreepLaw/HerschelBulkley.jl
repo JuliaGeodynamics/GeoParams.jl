@@ -12,21 +12,21 @@ struct HerschelBulkley{T, U1, U2, U3} <: AbstractCreepLaw{T}
     τ0::GeoUnit{T, U2} # critical stress
     ηr::GeoUnit{T, U1} # reference viscosity at the critical strain rate, which is given by 0.5*τ0/η0 and the critical temperature
     Q::GeoUnit{T, U3} # temperature dependence of ηr, activation energy divided by R, unit is K
-    Tr::GeoUnit{T,U3} # reference temperature
+    Tr::GeoUnit{T, U3} # reference temperature
     function HerschelBulkley(;
-        n = 3.0,
-        η0 = 1e24Pa*s,
-        τ0 = 100e6Pa,
-        ηr = 1e20Pa*s,
-        Q  = 0.0K,
-        Tr = 1273K,
+            n = 3.0,
+            η0 = 1.0e24Pa * s,
+            τ0 = 100.0e6Pa,
+            ηr = 1.0e20Pa * s,
+            Q = 0.0K,
+            Tr = 1273K,
         )
         # Convert to GeoUnits
         η0U = convert(GeoUnit, η0)
         τ0U = convert(GeoUnit, τ0)
         ηrU = convert(GeoUnit, ηr)
-        QU  = convert(GeoUnit,Q)
-        Tr  = convert(GeoUnit,Tr)
+        QU = convert(GeoUnit, Q)
+        Tr = convert(GeoUnit, Tr)
         # Extract struct types
         T = typeof(η0U).types[1]
         U1 = typeof(η0U).types[2]
@@ -34,12 +34,12 @@ struct HerschelBulkley{T, U1, U2, U3} <: AbstractCreepLaw{T}
         U3 = typeof(Tr).types[2]
         # Create struct
         return new{T, U1, U2, U3}(
-            n, η0U,τ0U,ηrU,QU, Tr
+            n, η0U, τ0U, ηrU, QU, Tr
         )
     end
 
-    function HerschelBulkley(n, η0,τ0,ηr,Q,Tr)
-        return HerschelBulkley(;n = n, η0 = η0,τ0 = τ0,ηr = ηr,Q = Q,Tr = Tr)
+    function HerschelBulkley(n, η0, τ0, ηr, Q, Tr)
+        return HerschelBulkley(; n = n, η0 = η0, τ0 = τ0, ηr = ηr, Q = Q, Tr = Tr)
     end
 end
 
@@ -61,12 +61,12 @@ end
 In-place function for the second invariant of the strain rate for Herschel-Bulkley rheology.
 """
 function compute_εII!(
-    EpsII::AbstractArray{_T, N},
-    a::HerschelBulkley,
-    TauII::AbstractArray{_T, N};
-    T = ones(size(TauII))::AbstractArray{_T, N},
-    kwargs...,
-) where {_T, N}
+        EpsII::AbstractArray{_T, N},
+        a::HerschelBulkley,
+        TauII::AbstractArray{_T, N};
+        T = ones(size(TauII))::AbstractArray{_T, N},
+        kwargs...,
+    ) where {_T, N}
     @inbounds for i in eachindex(EpsII)
         EpsII[i] = compute_εII(a, TauII[i]; T = T[i])
     end
@@ -96,12 +96,12 @@ end
 In-place function for the second invariant of the stress for Herschel-Bulkley rheology.
 """
 function compute_τII!(
-    TauII::AbstractArray{_T, N},
-    a::HerschelBulkley,
-    EpsII::AbstractArray{_T, N};
-    T = ones(size(EpsII)),
-    kwargs...,
-) where {_T, N}
+        TauII::AbstractArray{_T, N},
+        a::HerschelBulkley,
+        EpsII::AbstractArray{_T, N};
+        T = ones(size(EpsII)),
+        kwargs...,
+    ) where {_T, N}
     @inbounds for i in eachindex(TauII)
         TauII[i] = compute_τII(a, EpsII[i]; T = T[i])
     end
@@ -118,17 +118,17 @@ function to compute the viscosity if EpsII is given
 @inline function compute_hb_viscosity_εII(v::HerschelBulkley, εII; T = 1.0, kwargs...)
     η0, τ0, ηr, Q, Tr = if εII isa Quantity
         @unpack_units η0, τ0, ηr, Q, Tr = v
-        η0, τ0, ηr, Q, Tr 
+        η0, τ0, ηr, Q, Tr
     else
         @unpack_val η0, τ0, ηr, Q, Tr = v
         η0, τ0, ηr, Q, Tr
     end
     (; n) = v
 
-    ηT = ηr * exp(Q * (1/T-1/Tr)) # temperature dependence
-    εr = 0.5 * τ0/η0 # strain rate at which the Bingham yield stress is reached, this is defined as the reference strain rate
-    η = @pow (1.0 - exp(-2.0*η0*εII/τ0)) * (0.5*τ0/εII  + ηT*(εII/εr)^(one(n)/n - 1))
-    return  η
+    ηT = ηr * exp(Q * (1 / T - 1 / Tr)) # temperature dependence
+    εr = 0.5 * τ0 / η0 # strain rate at which the Bingham yield stress is reached, this is defined as the reference strain rate
+    η = @pow (1.0 - exp(-2.0 * η0 * εII / τ0)) * (0.5 * τ0 / εII + ηT * (εII / εr)^(one(n) / n - 1))
+    return η
 end
 
 
@@ -150,8 +150,8 @@ function to compute the viscosity if TauII is given
     end
     (; n) = v
 
-    ηT = ηr * exp(Q * (1/T - 1/Tr))
-    εr  = 0.5 * τ0 / η0
+    ηT = ηr * exp(Q * (1 / T - 1 / Tr))
+    εr = 0.5 * τ0 / η0
 
     # initial guess
     η = if τII < τ0
@@ -159,22 +159,22 @@ function to compute the viscosity if TauII is given
     elseif τII == τ0
         (1 - exp(-one(η0))) * (η0 + ηT)
     else
-        @pow (ηT / (1 - τ0/τII))^n * (τII / (2*εr))^(1-n)
+        @pow (ηT / (1 - τ0 / τII))^n * (τII / (2 * εr))^(1 - n)
     end
 
-    εII      = 0.5 * τII / η
+    εII = 0.5 * τII / η
     εII_unit = τII isa Quantity ? unit(εII) : one(εII)
 
     # strip ALL quantities to plain floats before Newton iteration
     # so that ForwardDiff never sees Quantity{Dual} types
     τII_s = ustrip(τII)
-    η0_s  = ustrip(η0)
-    τ0_s  = ustrip(τ0)
-    ηT_s  = ustrip(ηT)
-    εr_s  = ustrip(εr)
+    η0_s = ustrip(η0)
+    τ0_s = ustrip(τ0)
+    ηT_s = ustrip(ηT)
+    εr_s = ustrip(εr)
     εII_s = ustrip(εII)
 
-    tol    = 1e-10
+    tol = 1.0e-10
     it_max = 100
 
     for _ in 1:it_max
@@ -182,20 +182,20 @@ function to compute the viscosity if TauII is given
             ε -> fres_hb(ε, τII_s, η0_s, τ0_s, ηT_s, n, εr_s),  # all plain floats
             εII_s
         )
-        Δε     = f / dfdε
+        Δε = f / dfdε
         εII_s -= Δε
         abs(Δε) / (abs(εII_s) + eps(typeof(εII_s))) < tol && break
     end
 
     εII = εII_s * εII_unit
-    η   = @pow (1.0 - exp(-2.0*η0*εII/τ0)) * (0.5*τ0/εII + ηT*(εII/εr)^(one(n)/n - 1))
+    η = @pow (1.0 - exp(-2.0 * η0 * εII / τ0)) * (0.5 * τ0 / εII + ηT * (εII / εr)^(one(n) / n - 1))
 
     return η
 end
 
 # non-dimensional residual
 function fres_hb(εII::Number, τII::Number, η0::Number, τ0::Number, ηT::Number, n::Number, εr::Number)
-    η = @pow (1.0 - exp(-2.0*η0*εII/τ0)) * (0.5*τ0/εII + ηT*(εII/εr)^(one(n)/n - 1))
+    η = @pow (1.0 - exp(-2.0 * η0 * εII / τ0)) * (0.5 * τ0 / εII + ηT * (εII / εr)^(one(n) / n - 1))
     return 2.0 * η * εII - τII
 end
 

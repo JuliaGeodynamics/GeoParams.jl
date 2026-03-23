@@ -70,7 +70,7 @@ export param_info,
 for myType in (
         :LinearViscous, :LinearMeltViscosity, :ViscosityPartialMelt_Costa_etal_2009, :GiordanoMeltViscosity,
         :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType,
-        :GrainBoundarySliding, :PeierlsCreep, :NonLinearPeierlsCreep, :PowerlawViscous, :HerschelBulkley
+        :GrainBoundarySliding, :PeierlsCreep, :NonLinearPeierlsCreep, :PowerlawViscous, :HerschelBulkley,
     )
     @eval begin
         @inline compute_εII(a::$(myType), TauII, args) = compute_εII(a, TauII; args...)
