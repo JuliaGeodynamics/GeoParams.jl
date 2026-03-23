@@ -348,16 +348,21 @@ using GeoParams
 
 
     # Herschel-Bulkley viscosity (Regularized Bingham rheology)
-    x1 = HerschelBulkley()
-    @test x1.n == 3
-    @test x1.η0.val == 1e24
-    @test x1.τ0.val == 100e6
-    @test x1.ηr.val == 1e20
-    @test x1.Q.val == 0
-    @test x1.Tr.val == 1273
-
-    x1_D = HerschelBulkley()
+    x1_D = HerschelBulkley()    
     @test isDimensional(x1_D) == true
+    @test x1_D.n == 3
+    @test x1_D.η0.val == 1e24
+    @test x1_D.τ0.val == 100e6
+    @test x1_D.ηr.val == 1e20
+    @test x1_D.Q.val == 0
+    @test x1_D.Tr.val == 1273
+
+    @test x1_D.η0.unit == Pas
+    @test x1_D.τ0.unit == Pa
+    @test x1_D.ηr.unit == Pas
+    @test x1_D.Q.unit == K
+    @test x1_D.Tr.unit == K
+
     x1_ND = nondimensionalize(x1_D, CharUnits_GEO)
     @test isDimensional(x1_ND) == false
     @test x1_ND.η0 * 1.0 == 1e5
@@ -367,26 +372,120 @@ using GeoParams
     @test x1_ND.Tr * 1.0 ≈ 1.0 rtol = 1.0e-3
     @test dimensionalize(x1_ND, CharUnits_GEO) == x1_D
 
-    args = (; T = 1273K,)
-    Tau_II = 1.0e6Pa
-    compute_εII(x1_D, Tau_II, args)
+    # below yield case - dimensional
+    εt = 0.5e-20 * s^-1
+    τ1273 = compute_τII(x1_D, εt, (; T = 1273.0K))
+    
+    @test ustrip(τ1273) ≈ 2*x1_D.η0.val*ustrip(εt) rtol=1e-4 
+    ε1273 = compute_εII(x1_D, τ1273, (; T = 1273.0K))
+    @test εt ≈ ε1273 rtol = 1e-6 # see if we can recover the strain rate
+    
+    # below yield case - nondimensional
+    εr = 0.5 * x1_ND.τ0/x1_ND.η0 # yield strain rate
+    εt = 1e-4 * εr # well below the yield
+
+    τ1 = compute_τII(x1_ND, εt, (; T = 1.0))
+    @test τ1 ≈ 2*x1_ND.η0.val*ustrip(εt) rtol=1e-4 
+    ε1 = compute_εII(x1_ND, τ1, (; T = 1.0))
+    @test εt ≈ ε1 rtol = 1e-6 # see if we can revocer the strain rate
+
+    εt = [1e-4* εr; 1e-4 * εr]
+    τ1 = [1e3, 1e3] # initialize τ1
+    compute_τII!(τ1,x1_ND, εt, (; T = ones(size(εt))))
+    @test τ1 ≈ [2*x1_ND.η0.val*ustrip(εt[1]),2*x1_ND.η0.val*ustrip(εt[2])] rtol=1e-4
+
+    # above yield case, dimensional
+    x1_D = HerschelBulkley(
+    n  = 3.0,
+    η0 = 1e24Pa*s,
+    τ0 = 100e6Pa,
+    ηr = 1e20Pa*s,
+    Q  = 0.0K,
+    Tr = 1273K, 
+    )
+
+    εt       = 0.5e-9 * s^-1
+    εr       = 0.5 * x1_D.τ0.val/x1_D.η0.val # yield strain rate
+
+    η_approx =   0.5*x1_D.τ0.val/ustrip(εt) + x1_D.ηr.val*(ustrip(εt)/εr)^(one(x1_D.n)/x1_D.n - 1)
+    τ1273 = compute_τII(x1_D, εt ; T = 1273.0K)
+    ε1273 = compute_εII(x1_D,τ1273; T = 1273.0K)
+
+    @test ustrip(τ1273) ≈ 2*η_approx*ustrip(εt) rtol=1e-6
+    @test ε1273 ≈ εt rtol = 1e-6
+# 
+# 
+    x1_ND = nondimensionalize(x1_D, CharUnits_GEO)
+    εt_ND = nondimensionalize(εt, CharUnits_GEO)
+# 
+    τ1_ND = compute_τII(x1_ND, εt_ND ; T = 1.0)
+    ε1_ND = compute_εII(x1_ND,τ1_ND; T = 1.0)
+
+    @test ε1_ND ≈ εt_ND rtol = 1e-6
 
 
-    # and strain rate
-    ε1 = 0.5
-    tau = compute_τII(x1, ε1, args)
-    @test tau ≈ 1.0
-    # using a vector input ------------------
-    T2 = [1.0; 0.9; 0.8]
-    # and stress
-    ε21 = [0.0; 0.0; 0.0]
-    τ21 = [1.0; 0.8; 0.9]
-    args = (T = T2,)
-    compute_εII!(ε21, x1, τ21, args)
-    # and strain rate
-    τ22 = [0.0; 0.0; 0.0]
-    ε22 = [0.5; 1.0; 0.2]
-    compute_τII!(τ22, x1, ε22, args)
+    # temperature dependence test
+    x1_Q = HerschelBulkley(
+        n  = 3.0,
+        η0 = 1e24Pa*s,
+        τ0 = 100e6Pa,
+        ηr = 1e20Pa*s,
+        Q  = 63772.0K,   # E/R for olivine, E ≈ 530 kJ/mol
+        Tr = 1273K,
+    )
+
+    # compute ηT at both temperatures analytically
+    Q_val  = 63772.0
+    Tr_val = 1273.0
+    T1_val = 1273.0   # reference temperature → ηT = ηr
+    T2_val = 1473.0   # higher temperature   → ηT < ηr
+
+    ηT1 = x1_Q.ηr.val * exp(Q_val * (1/T1_val - 1/Tr_val))  # = 1e20
+    ηT2 = x1_Q.ηr.val * exp(Q_val * (1/T2_val - 1/Tr_val))  # << 1e20
+
+    εr_Q = 0.5 * x1_Q.τ0.val / x1_Q.η0.val  # reference strain rate
+
+    # --- above yield, dimensional ---
+    εt_Q = 0.5e-9 * s^-1  # well above yield
+
+    # at T = 1273K (reference): ηT = ηr, same as Q=0 case
+    τ_T1 = compute_τII(x1_Q, εt_Q; T = T1_val*K)
+    ε_T1 = compute_εII(x1_Q, τ_T1; T = T1_val*K)
+    η_approx_T1 = 0.5*x1_Q.τ0.val/ustrip(εt_Q) + ηT1*(ustrip(εt_Q)/εr_Q)^(one(x1_Q.n)/x1_Q.n - 1)
+    @test ustrip(τ_T1) ≈ 2*η_approx_T1*ustrip(εt_Q) rtol = 1e-6
+    @test ε_T1 ≈ εt_Q rtol = 1e-6
+
+    # at T = 1473K: ηT < ηr → lower viscosity → lower stress at same strain rate
+    τ_T2 = compute_τII(x1_Q, εt_Q; T = T2_val*K)
+    ε_T2 = compute_εII(x1_Q, τ_T2; T = T2_val*K)
+    η_approx_T2 = 0.5*x1_Q.τ0.val/ustrip(εt_Q) + ηT2*(ustrip(εt_Q)/εr_Q)^(one(x1_Q.n)/x1_Q.n - 1)
+    @test ustrip(τ_T2) ≈ 2*η_approx_T2*ustrip(εt_Q) rtol = 1e-6
+    @test ε_T2 ≈ εt_Q rtol = 1e-6
+
+    # monotonicity: higher T → lower τII at same εII (thermal softening)
+    @test ustrip(τ_T2) < ustrip(τ_T1)
+
+    # monotonicity: higher T → higher εII at same τII (thermal softening)
+    τ_fixed = compute_τII(x1_Q, εt_Q; T = T1_val*K)
+    ε_at_T1 = compute_εII(x1_Q, τ_fixed; T = T1_val*K)
+    ε_at_T2 = compute_εII(x1_Q, τ_fixed; T = T2_val*K)
+    @test ustrip(ε_at_T2) > ustrip(ε_at_T1)
+
+    # nondimensional temperature dependence
+    x1_Q_ND = nondimensionalize(x1_Q, CharUnits_GEO)
+    εt_ND   = nondimensionalize(εt_Q, CharUnits_GEO)
+    T1_ND   = nondimensionalize(T1_val*K, CharUnits_GEO)
+    T2_ND   = nondimensionalize(T2_val*K, CharUnits_GEO)
+
+    τ_T1_ND = compute_τII(x1_Q_ND, εt_ND; T = T1_ND)
+    τ_T2_ND = compute_τII(x1_Q_ND, εt_ND; T = T2_ND)
+
+    # ND results should be consistent with dimensional results after rescaling
+    @test ustrip(nondimensionalize(τ_T1, CharUnits_GEO)) ≈ τ_T1_ND rtol = 1e-6
+    @test ustrip(nondimensionalize(τ_T2, CharUnits_GEO)) ≈ τ_T2_ND rtol = 1e-6
+
+    # thermal softening should hold in ND as well
+    @test τ_T2_ND < τ_T1_ND
 
     # fig = Figure(size = (800, 600))
     # ax = Axis(fig[1, 1], xlabel = "T [C]", ylabel = "log10(η [Pas])")

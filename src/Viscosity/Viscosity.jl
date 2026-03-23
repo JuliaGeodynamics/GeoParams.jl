@@ -18,8 +18,9 @@ end
 
 @inline compute_viscosity_εII(v::LinearViscous, εII, args) = v.η.val
 @inline compute_viscosity_εII(v::ConstantElasticity, εII, args) = v.G * args.dt
-@inline compute_viscosity_εII(v::HerschelBulkley, εII, args) = compute_viscosity_εII(v, εII; args...)
+@inline compute_viscosity_εII(v::HerschelBulkley, εII, args) = compute_hb_viscosity_εII(v, εII; args...)
 
+#=
 @inline function compute_viscosity_εII(v::HerschelBulkley, εII; T = 1.0, kwargs...)
     η0, τ0, ηr, Q, Tr = if εII isa Quantity
         @unpack_units η0, τ0, ηr, Q, Tr = v
@@ -84,7 +85,7 @@ end
     return η
 end
 
-
+=#
 
 
 
@@ -103,6 +104,7 @@ end
 
 @inline compute_viscosity_τII(v::LinearViscous, τII, args) = v.η.val
 @inline compute_viscosity_τII(v::ConstantElasticity, τII, args) = v.G * args.dt
+@inline compute_viscosity_τII(v::HerschelBulkley, εII, args) = compute_hb_viscosity_τII(v, εII; args...)
 
 for fn in (:compute_viscosity_εII, :compute_viscosity_τII)
     @eval begin
