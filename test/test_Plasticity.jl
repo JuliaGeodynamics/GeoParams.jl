@@ -323,7 +323,7 @@ using GeoParams
         c_pl2 = CompositeRheology(ConstantElasticity(; G = G * Pa), pl2) # linear VEP
 
         # case where old stress is below yield & new stress is above
-        args = (τII_old = 9.00, P = 0.0, τII = 9.00)
+        args = (τII_old = 9.0, P = 0.0, τII = 9.0)
         F_old = compute_yieldfunction(c_pl.elements[3], args)
 
         #
@@ -344,7 +344,7 @@ using GeoParams
         info = param_info(p)
         @test isbits(p)
         @test NumValue(p.ϕ) == 30
-        @test NumValue(p.pT) == -1e5
+        @test NumValue(p.pT) == -1.0e5
         @test isvolumetric(p) == false
         @test repr("text/plain", p) isa String
 
@@ -433,7 +433,7 @@ using GeoParams
         fxx(τij) = 0.5 * dQτxx * τij[1] / second_invariant(τij)
         fyy(τij) = 0.5 * dQτyy * τij[2] / second_invariant(τij)
         fxy(τij) = dQτxy * τij[3] / second_invariant(τij)
-        solution2D = [  fxx(τij), fyy(τij), fxy(τij)]
+        solution2D = [fxx(τij), fyy(τij), fxy(τij)]
 
         # using tuples
         τij_tuple = (1.0, 2.0, 3.0)
@@ -455,7 +455,7 @@ using GeoParams
         dQτyz = ∂Q∂τII(p, second_invariant(τij))
         dQτxz = ∂Q∂τII(p, second_invariant(τij))
         dQτxy = ∂Q∂τII(p, second_invariant(τij))
-        gxx(τij) = 0.5 * dQτxx *τij[1] / second_invariant(τij)
+        gxx(τij) = 0.5 * dQτxx * τij[1] / second_invariant(τij)
         gyy(τij) = 0.5 * dQτyy * τij[2] / second_invariant(τij)
         gzz(τij) = 0.5 * dQτzz * τij[3] / second_invariant(τij)
         gyz(τij) = dQτyz * τij[4] / second_invariant(τij)

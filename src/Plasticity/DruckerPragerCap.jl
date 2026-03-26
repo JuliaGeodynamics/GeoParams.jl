@@ -92,7 +92,7 @@ as described in Popov et al. (2025), Geoscientific Model Development.
 - `η_vp::T`: The Duvaut-Lions regeularisation viscosity for the plasticity model.
 - `Pt::T`: The tensile strength (should be < 0).
 """
-@with_kw_noshow struct DruckerPragerCap{T, U, U1, U2, S1<:AbstractSoftening, S2<:AbstractSoftening} <: AbstractPlasticity{T}
+@with_kw_noshow struct DruckerPragerCap{T, U, U1, U2, S1 <: AbstractSoftening, S2 <: AbstractSoftening} <: AbstractPlasticity{T}
     softening_ϕ::S1 = NoSoftening()
     softening_C::S2 = NoSoftening()
     ϕ::GeoUnit{T, U} = 30NoUnits         # Friction angle
@@ -174,7 +174,8 @@ end
 
 # DPCap yield function
 function (s::DruckerPragerCap)(;
-        P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...)
+        P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...
+    )
     @unpack_val sinϕ, cosϕ, sinΨ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C = s.softening_C(EII, C)
@@ -398,5 +399,5 @@ for t in (:NTuple, :SVector)
 end
 
 function show(io::IO, s::DruckerPragerCap)
-     print(io, "DruckerPragerCap(ϕ=$(UnitValue(s.ϕ)), Ψ=$(UnitValue(s.Ψ)), C=$(UnitValue(s.C)), η_vp=$(UnitValue(s.η_vp)), pT=$(UnitValue(s.pT))")
+    return print(io, "DruckerPragerCap(ϕ=$(UnitValue(s.ϕ)), Ψ=$(UnitValue(s.Ψ)), C=$(UnitValue(s.C)), η_vp=$(UnitValue(s.η_vp)), pT=$(UnitValue(s.pT))")
 end
