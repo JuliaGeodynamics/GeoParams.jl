@@ -1,4 +1,4 @@
-# Plasticity 
+# Plasticity
 
 Plasticity is a non-linear rheology that is activated once stresses exceed a certain yield criteria.
 
@@ -7,7 +7,8 @@ The following plastic law are implemented:
 ```@docs
 GeoParams.MaterialParameters.ConstitutiveRelationships.DruckerPrager
 GeoParams.MaterialParameters.ConstitutiveRelationships.DruckerPrager_regularised
+GeoParams.MaterialParameters.ConstitutiveRelationships.DruckerPragerCap
 ```
 
-## Computational routines 
+## Computational routines
 Usually, plasticity should be defined as part of a `CompositeRheology` structure and calculations can be done as with all other rheology computations by using `compute_τII`.
