@@ -18,6 +18,9 @@ end
 
 @inline compute_viscosity_εII(v::LinearViscous, εII, args) = v.η.val
 @inline compute_viscosity_εII(v::ConstantElasticity, εII, args) = v.G * args.dt
+@inline compute_viscosity_εII(v::HerschelBulkley, εII, args) = compute_hb_viscosity_εII(v, εII; args...)
+
+
 
 # compute effective "creep" viscosity from deviatoric stress tensor
 """
@@ -33,6 +36,7 @@ end
 
 @inline compute_viscosity_τII(v::LinearViscous, τII, args) = v.η.val
 @inline compute_viscosity_τII(v::ConstantElasticity, τII, args) = v.G * args.dt
+@inline compute_viscosity_τII(v::HerschelBulkley, εII, args) = compute_hb_viscosity_τII(v, εII; args...)
 
 for fn in (:compute_viscosity_εII, :compute_viscosity_τII)
     @eval begin
