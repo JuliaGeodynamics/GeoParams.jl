@@ -35,7 +35,7 @@ DruckerPragerCap(args...) = DruckerPragerCap(args[1:2]..., convert.(GeoUnit, pro
 DruckerPragerCap(softening_ϕ::AbstractSoftening, softening_C::AbstractSoftening, args...) = DruckerPragerCap(softening_ϕ, softening_C, convert.(GeoUnit, promote(args...))...)
 function isvolumetric(s::DruckerPragerCap)
     @unpack_val Ψ = s
-    return Ψ == 0 ? false : true
+    return !iszero(Ψ)
 end
 
 function param_info(s::DruckerPragerCap)
@@ -60,19 +60,19 @@ Compute smooth tensile-cap parameters from Popov et al. (2025).
     sina = k * cosa
     py = (pT + c * cosa) * inv(one(T) - sina)
     Ry = py - pT
-    pd = py - Ry * sina
-    τd = k * pd + c # delimiter point
-    pq = pd + kq * τd
+    pd = @muladd py - Ry * sina
+    τd = @muladd k * pd + c # delimiter point
+    pq = @muladd pd + kq * τd
 
     return (; k, kq, c, a, b, py, Ry, pd, τd, pq)
 end
 
-@inline ismode2_yield(py, pd, τd, τII, P) = τII * (py - pd) >= τd * (py - P)
-@inline ismode2_flowpotential(pq, pd, τd, τII, P) = τII * (pq - pd) >= τd * (pq - P)
+@inline ismode2_yield(py, pd, τd, τII, P) = τII * (py - pd) ≥ τd * (py - P)
+@inline ismode2_flowpotential(pq, pd, τd, τII, P) = τII * (pq - pd) ≥ τd * (pq - P)
 
 @inline function compute_F(k, c, py, a, Ry, pd, τd, τII, P)
     F = if ismode2_yield(py, pd, τd, τII, P)
-        τII - k * P - c
+        @muladd τII - k * P - c
     else
         a * (hypot(τII, P - py) - Ry)
     end
