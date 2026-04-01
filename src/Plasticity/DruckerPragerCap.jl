@@ -63,8 +63,13 @@ Compute smooth tensile-cap parameters from Popov et al. (2025).
     pd = @muladd py - Ry * sina
     τd = @muladd k * pd + c # delimiter point
     pq = @muladd pd + kq * τd
+    ## plotting parameters (not needed for the model, but useful for plotting the yield surface and flow potential)
+    Rf = pq - pT
+    normvRf = sqrt((pd - pq)^2 + τd^2) * inv(Rf)
+    pdf = @muladd (pd - pq) * inv(normvRf) + pq
+    sdf = τd * inv(normvRf)
 
-    return (; k, kq, c, a, b, py, Ry, pd, τd, pq)
+    return (; k, kq, c, a, b, py, Ry, pd, τd, pq, Rf, pdf, sdf, normvRf)
 end
 
 @inline ismode2_yield(py, pd, τd, τII, P) = τII * (py - pd) ≥ τd * (py - P)
@@ -79,6 +84,18 @@ end
     return F
 end
 
+@inline function compute_Q(cp, τII, P)
+    Q = if ismode2_flowpotential(cp.pq, cp.pd, cp.τd, τII, P)
+        cons = cp.sdf - cp.kq * cp.pdf
+        @muladd τII - cp.kq * P - cons
+    else
+        cons = cp.Rf
+        Rq = hypot(τII, (P - cp.pq))
+        cp.b * (Rq - cons)
+    end
+end
+
+
 @inline function _dQdτII_dQdP(cp, τII, P)
     @unpack pq, pd, τd, b, kq = cp
 
@@ -87,7 +104,7 @@ end
     else
         Rq = hypot(τII, P - pq)
         if iszero(Rq)
-            return zero(τII), zero(τII)
+            return zero(τII), zero(P)
         end
         inv_Rq = inv(Rq)
         return 0.5 * b * τII * inv_Rq, - b * (P - pq) * inv_Rq
@@ -99,7 +116,7 @@ end
 function (s::DruckerPragerCap)(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...
     )
-    @unpack_val sinϕ, cosϕ, sinΨ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C = s.softening_C(EII, C)
     C *= perturbation_C
@@ -139,7 +156,7 @@ end
 function (s::DruckerPragerCap{_T, U, U1, U2, AbstractSoftening, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
     ) where {_T, U, U1, U2}
-    @unpack_val sinϕ, cosϕ, sinΨ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C *= perturbation_C
 
@@ -174,6 +191,42 @@ function compute_yieldfunction!(
     ) where {N, _T}
     @inbounds for i in eachindex(P)
         F[i] = compute_yieldfunction(s; P = P[i], τII = τII[i], Pf = Pf[i], EII = EII[i], perturbation_C = perturbation_C)
+    end
+    return nothing
+end
+
+function compute_flowpotential(
+        s::DruckerPragerCap;
+        P = 0.0,
+        τII = 0.0,
+        Pf = 0.0,
+        EII = 0.0,
+        perturbation_C = 1.0,
+        kwargs...,
+    )
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, C, pT = s
+    ϕ = s.softening_ϕ(EII, ϕ)
+    C = s.softening_C(EII, C)
+    C *= perturbation_C
+    sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
+
+    Q = compute_Q(cp, τII, P - Pf)
+    return Q
+end
+
+function compute_flowpotential!(
+        Q::AbstractArray{_T, N},
+        s::DruckerPragerCap;
+        P::AbstractArray{_T, N},
+        τII::AbstractArray{_T, N},
+        Pf::AbstractArray{_T, N} = zero(P),
+        EII::AbstractArray{_T, N} = zero(P),
+        perturbation_C = 1.0,
+        kwargs...,
+    ) where {N, _T}
+    @inbounds for i in eachindex(P)
+        Q[i] = compute_flowpotential(s; P = P[i], τII = τII[i], Pf = Pf[i], EII = EII[i], perturbation_C = perturbation_C)
     end
     return nothing
 end
@@ -239,7 +292,7 @@ function ∂F∂τII(
         return one(_T)
     else
         Ry = hypot(τII, (P - Pf) - cp.py)
-        return iszero(Ry) ? zero(_T) : cp.a * τII / Ry
+        return iszero(Ry) ? zero(_T) : cp.a * τII * inv(Ry)
     end
 end
 
@@ -264,7 +317,7 @@ function ∂F∂P(
         return -cp.k
     else
         Ry = hypot(τII, (P - Pf) - cp.py)
-        return iszero(Ry) ? zero(_T) : cp.a * ((P - Pf) - cp.py) / Ry
+        return iszero(Ry) ? zero(_T) : cp.a * ((P - Pf) - cp.py) * inv(Ry)
     end
 end
 
