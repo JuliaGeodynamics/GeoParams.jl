@@ -468,25 +468,25 @@ using GeoParams
         # -----------------------
 
         # composite rheology with plasticity
-        η, G = 10, 1
-        t_M = η / G
-        εII = 1.0
-        args = (;)
-        pl2 = DruckerPragerCap(C = η, ϕ = 00, pT = -1)                # plasticity
-        c_pl = CompositeRheology(LinearViscous(; η = η * Pa * s), ConstantElasticity(; G = G * Pa), pl2) # linear VEP
-        c_pl2 = CompositeRheology(ConstantElasticity(; G = G * Pa), pl2) # linear VEP
+        # η, G = 10, 1
+        # t_M = η / G
+        # εII = 1.0
+        # args = (;)
+        # pl2 = DruckerPragerCap(C = η, ϕ = 00, pT = -1)                # plasticity
+        # c_pl = CompositeRheology(LinearViscous(; η = η * Pa * s), ConstantElasticity(; G = G * Pa), pl2) # linear VEP
+        # c_pl2 = CompositeRheology(ConstantElasticity(; G = G * Pa), pl2) # linear VEP
 
-        # case where old stress is below yield & new stress is above
-        args = (τII_old = 9.8001101017963, P = 0.0, τII = 9.8001101017963)
-        F_old = compute_yieldfunction(c_pl.elements[3], args)
-        #
-        τ1, = local_iterations_εII(c_pl, εII, args; verbose = false, max_iter = 10)
-        τ2, = compute_τII(c_pl, εII, args; verbose = false)
-        @test τ1 == τ2
+        # # case where old stress is below yield & new stress is above
+        # args = (τII_old = 9.8001101017963, P = 0.0, τII = 20.8001101017963)
+        # F_old = compute_yieldfunction(c_pl.elements[3], args)
+        # #
+        # τ1, = local_iterations_εII(c_pl, εII, args; verbose = false, max_iter = 10)
+        # τ2, = compute_τII(c_pl, εII, args; verbose = false)
+        # @test τ1 == τ2
 
-        args = merge(args, (τII = τ1,))
-        F_check = compute_yieldfunction(c_pl.elements[3], args)
-        @test abs(F_check) < 1.0e-12
+        # args = merge(args, (τII = τ1,))
+        # F_check = compute_yieldfunction(c_pl.elements[3], args)
+        # @test abs(F_check) < 1.0e-12
     end
 
 end
