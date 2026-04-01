@@ -24,6 +24,7 @@ jobs:
         package:
           - {user: PTsolvers, repo: JustRelax.jl}
           - {user: boriskaus, repo: MagmaThermoKinematics.jl}
+          - {user: JuliaGeodynamics, repo: GeophysicalModelGenerator.jl}
 
     steps:
       - uses: actions/checkout@v6
