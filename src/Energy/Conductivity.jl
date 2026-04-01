@@ -333,12 +333,19 @@ where ``k`` is the conductivity [``W/K/m``], and ``a_k,b_k,c_k,d_k`` are paramet
 end
 
 function TP_Conductivity(name::AbstractString, a, b, c, d)
-    vals = convert.(GeoUnit, promote(a, b, c, d))
+    vals = convert.(GeoUnit, (a, b, c, d))
     return TP_Conductivity(Tuple(name), vals...)
 end
 
 function TP_Conductivity(name::NTuple{N, Char}, a, b, c, d) where {N}
-    vals = convert.(GeoUnit, promote(a, b, c, d))
+    ga, gb, gc, gd = convert.(GeoUnit, (a, b, c, d))
+    Tprom = promote_type(typeof(NumValue(ga)), typeof(NumValue(gb)), typeof(NumValue(gc)), typeof(NumValue(gd)))
+    vals = (
+        convert(GeoUnit{Tprom}, UnitValue(ga)),
+        convert(GeoUnit{Tprom}, UnitValue(gb)),
+        convert(GeoUnit{Tprom}, UnitValue(gc)),
+        convert(GeoUnit{Tprom}, UnitValue(gd)),
+    )
     return TP_Conductivity(name, vals...)
 end
 

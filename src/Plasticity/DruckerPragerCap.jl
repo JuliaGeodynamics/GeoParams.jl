@@ -41,7 +41,7 @@ end
 
 function param_info(s::DruckerPragerCap)
     return MaterialParamsInfo(;
-        Equation = L"F = \tau_{II} - kP - c \;\;\mathrm{or}\;\; a(\sqrt{\tau_{II}^2 + (P-p_y)^2} - R_y),\; Q \;\mathrm{piecewise\;DP/cap}",
+        Equation = L"F = \tau_{II} - kP - c \;\;\mathrm{or}\;\; a(\sqrt{\tau_{II}^2 + (P-p_y)^2} - R_y),\; Q = \tau_{II} - k_q P - \mathrm{const} \;\mathrm{or}\;\; b(\sqrt{\tau_{II}^2 + (P-p_q)^2} - R_f)",
     )
 end
 
