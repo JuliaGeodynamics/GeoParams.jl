@@ -212,6 +212,9 @@ end
 Base.convert(::Type{GeoUnit{T}}, v::Quantity) where {T} = GeoUnit(T.(v))
 Base.convert(::Type{GeoUnit{T}}, v::Number) where {T} = GeoUnit(T(v))
 Base.convert(::Type{GeoUnit{T}}, v::AbstractArray) where {T} = GeoUnit(T.(v))
+function Base.convert(::Type{GeoUnit{T, U}}, v::GeoUnit{S, U}) where {T, S, U}
+    return GeoUnit{T, U}(T.(v.val), v.unit, v.isdimensional)
+end
 
 #Base.convert(::Type{GeoUnit{T,U}},  v::T)    where {T,U}    =   GeoUnit{T,typeof(unit(v[1]))}(v)
 
@@ -907,8 +910,8 @@ end
 """
     dimensionalize_and_strip(args...)
 
-Converts the input arguments to their dimensional (unitful) form using `dimensionalize`, 
-and then strips the units using `ustrip`. This function is useful when you want to 
+Converts the input arguments to their dimensional (unitful) form using `dimensionalize`,
+and then strips the units using `ustrip`. This function is useful when you want to
 apply units to values and immediately retrieve their plain numeric values.
 """
 dimensionalize_and_strip(args::Vararg{Any, N}) where {N} = ustrip(dimensionalize(args...))

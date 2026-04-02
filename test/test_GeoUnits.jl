@@ -278,6 +278,11 @@ using GeoParams
     d = convert(GeoUnit{Float64}, [100 200])
     @test d.val == [100.0 200.0]
 
+    # Ensure GeoUnit precision conversion works for matching units
+    x32 = convert(GeoUnit, Int32(2) * MPa^(-3.5) / s)
+    x64 = convert(typeof(convert(GeoUnit, 1.0 * MPa^(-3.5) / s)), x32)
+    @test x64.val == 2.0
+
     # test broadcasting with float and unit arrays
     ar = [1.0 2; 4 5]            # Float array
     ar1 = [1.0km 2km; 4km 5km]    # Unit array
