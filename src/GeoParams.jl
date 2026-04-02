@@ -220,6 +220,7 @@ module GeoParams
         compute_yieldfunction!,
         DruckerPrager,
         DruckerPrager_regularised,
+        DruckerPragerCap,
         compute_plasticpotentialDerivative,
         ∂Q∂τ,
         ∂Q∂P, ∂Q∂τII,

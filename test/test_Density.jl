@@ -282,8 +282,8 @@ import ForwardDiff.derivative
     # test computing material properties when we have PhaseRatios, instead of Phase numbers
     PhaseRatio = zeros(size(Phases)..., length(Mat_tup))
     for i in CartesianIndices(Phases)
-        iz = Phases[i]
-        I = CartesianIndex(i, iz + 1)
+        j = Phases[i]
+        I = CartesianIndex(i, j + 1)
         PhaseRatio[I] = 1.0
     end
 

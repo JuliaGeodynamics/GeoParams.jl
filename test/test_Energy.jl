@@ -80,6 +80,16 @@ import ForwardDiff as FD
     @test isbits(k_TP_direct)
     @test k_TP_direct.Name == ('M', 'a', 'n', 't', 'l', 'e')
 
+    tp_name = Tuple("UpperCrust")
+    k_tp_tuple = TP_Conductivity(tp_name, 0.64Watt / K / m, 807Watt / m, 77K, 0 / MPa)
+    @test k_tp_tuple isa TP_Conductivity
+    @test k_tp_tuple.Name == tp_name
+    @test (typeof(k_tp_tuple.a.val) == typeof(k_tp_tuple.b.val)) &&
+          (typeof(k_tp_tuple.b.val) == typeof(k_tp_tuple.c.val)) &&
+          (typeof(k_tp_tuple.c.val) == typeof(k_tp_tuple.d.val))
+
+    k_tp_kw = TP_Conductivity(; Name = "UpperCrust", a = 0.64Watt / K / m, b = 807Watt / m, c = 77GeoParams.K, d = 0 / MPa)
+    @test k_tp_kw isa TP_Conductivity
     # Test with different rock types
     for name in ["LowerCrust", "Mantle", "OceanicCrust", "UpperCrust"]
         k_TP_test = Set_TP_Conductivity(name)
@@ -164,8 +174,8 @@ import ForwardDiff as FD
     # test if we provide phase ratios
     PhaseRatio = zeros(n, n, n, 3)
     for i in CartesianIndices(Phases)
-        iz = Phases[i]
-        I = CartesianIndex(i, iz)
+        j = Phases[i]
+        I = CartesianIndex(i, j)
         PhaseRatio[I] = 1.0
     end
     compute_heatcapacity!(Cp, Mat_tup, PhaseRatio, args)
@@ -328,8 +338,8 @@ import ForwardDiff as FD
 
     PhaseRatio = zeros(n, n, n, 3)
     for i in CartesianIndices(Phases)
-        iz = Phases[i]
-        I = CartesianIndex(i, iz)
+        j = Phases[i]
+        I = CartesianIndex(i, j)
         PhaseRatio[I] = 1.0
     end
 
@@ -401,8 +411,8 @@ import ForwardDiff as FD
 
     PhaseRatio = zeros(n, n, n, 3)
     for i in CartesianIndices(Phases)
-        iz = Phases[i]
-        I = CartesianIndex(i, iz)
+        j = Phases[i]
+        I = CartesianIndex(i, j)
         PhaseRatio[I] = 1.0
     end
 
@@ -472,8 +482,8 @@ import ForwardDiff as FD
 
     PhaseRatio = zeros(n, n, n, 3)
     for i in CartesianIndices(Phases)
-        iz = Phases[i]
-        I = CartesianIndex(i, iz)
+        j = Phases[i]
+        I = CartesianIndex(i, j)
         PhaseRatio[I] = 1.0
     end
 
