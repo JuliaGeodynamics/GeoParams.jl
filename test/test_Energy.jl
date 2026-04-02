@@ -174,8 +174,8 @@ import ForwardDiff as FD
     # test if we provide phase ratios
     PhaseRatio = zeros(n, n, n, 3)
     for i in CartesianIndices(Phases)
-        iz = Phases[i]
-        I = CartesianIndex(i, iz)
+        j = Phases[i]
+        I = CartesianIndex(i, j)
         PhaseRatio[I] = 1.0
     end
     compute_heatcapacity!(Cp, Mat_tup, PhaseRatio, args)
@@ -338,8 +338,8 @@ import ForwardDiff as FD
 
     PhaseRatio = zeros(n, n, n, 3)
     for i in CartesianIndices(Phases)
-        iz = Phases[i]
-        I = CartesianIndex(i, iz)
+        j = Phases[i]
+        I = CartesianIndex(i, j)
         PhaseRatio[I] = 1.0
     end
 
@@ -411,8 +411,8 @@ import ForwardDiff as FD
 
     PhaseRatio = zeros(n, n, n, 3)
     for i in CartesianIndices(Phases)
-        iz = Phases[i]
-        I = CartesianIndex(i, iz)
+        j = Phases[i]
+        I = CartesianIndex(i, j)
         PhaseRatio[I] = 1.0
     end
 
@@ -482,8 +482,8 @@ import ForwardDiff as FD
 
     PhaseRatio = zeros(n, n, n, 3)
     for i in CartesianIndices(Phases)
-        iz = Phases[i]
-        I = CartesianIndex(i, iz)
+        j = Phases[i]
+        I = CartesianIndex(i, j)
         PhaseRatio[I] = 1.0
     end
 
