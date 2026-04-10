@@ -167,7 +167,11 @@ function (s::DruckerPragerCap{_T, U, U1, U2, AbstractSoftening, NoSoftening})(;
     F = compute_F(cp.k, cp.c, cp.py, cp.a, cp.Ry, cp.pd, cp.τd, τII, P - Pf)
     return F
 end
+"""
+    compute_yieldfunction(s::DruckerPragerCap; P, τII, Pf, kwargs...)
 
+Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` pressure, and `Pf` fluid pressure.
+"""
 function compute_yieldfunction(
         s::DruckerPragerCap;
         P = 0.0,
@@ -180,6 +184,11 @@ function compute_yieldfunction(
     return s(; P = P, τII = τII, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
 end
 
+"""
+    compute_yieldfunction!(F, s::DruckerPragerCap; P, τII, Pf, kwargs...)
+
+Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` pressure, and `Pf` fluid pressure, and stores the result in `F`.
+"""
 function compute_yieldfunction!(
         F::AbstractArray{_T, N},
         s::DruckerPragerCap;
