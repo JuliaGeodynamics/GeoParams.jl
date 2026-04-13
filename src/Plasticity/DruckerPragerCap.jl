@@ -13,8 +13,8 @@ as described in Popov et al. (2025), Geoscientific Model Development.
 - `C::T`: The cohesion parameter.
 - `ϕ::T`: The friction angle (in degrees).
 - `Ψ::T`: The dilatancy angle (in degrees).
-- `η_vp::T`: The Duvaut-Lions regeularisation viscosity for the plasticity model.
-- `Pt::T`: The tensile strength (should be < 0).
+- `η_vp::T`: The Duvaut-Lions regularisation viscosity for the plasticity model.
+- `pT::T`: The tensile strength (should be < 0).
 """
 @with_kw_noshow struct DruckerPragerCap{T, U, U1, U2, S1 <: AbstractSoftening, S2 <: AbstractSoftening} <: AbstractPlasticity{T}
     softening_ϕ::S1 = NoSoftening()
@@ -97,7 +97,24 @@ end
 end
 
 
-@inline function _dQdτII_dQdP(cp, τII, P)
+"""
+    _Aτ_Ap(cp, τII, P)
+
+Flow-potential scalar coefficients from Popov et al. (2025), Eq. 43.
+
+The full tensor gradient of Q is decomposed in Eq. 21-22 as:
+
+    ∂Q/∂σ_ij = B_τ · τ_ij + B_p · δ_ij
+
+where B_τ and B_p are the tensor coefficients. Eq. 43 defines the scalar
+invariant-level coefficients A_τ and A_p, which relate to actual derivatives as:
+
+- A_τ = ∂Q/∂τII / 2     (half the actual τII-derivative of Q)
+- A_p = -∂Q/∂P          (negated actual P-derivative of Q)
+
+To recover actual derivatives:  ∂Q/∂τII = 2A_τ,  ∂Q/∂P = -A_p.
+"""
+@inline function _Aτ_Ap(cp, τII, P)
     @unpack pq, pd, τd, b, kq = cp
 
     if ismode2_flowpotential(pq, pd, τd, τII, P)
@@ -241,6 +258,7 @@ function compute_flowpotential!(
     return nothing
 end
 
+# ∂Q∂P: actual derivative ∂Q/∂P = -Ap
 function ∂Q∂P(
         s::DruckerPragerCap,
         P::_T;
@@ -258,10 +276,11 @@ function ∂Q∂P(
     sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
 
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
-    _, dQdP = _dQdτII_dQdP(cp, τII, P - Pf)
-    return dQdP
+    _, Ap =_Aτ_Ap(cp, τII, P - Pf)
+    return -Ap  # ∂Q/∂P = -Ap
 end
 
+# ∂Q∂τII: returns Aτ = ∂Q/∂τII / 2
 function ∂Q∂τII(
         s::DruckerPragerCap,
         τII::_T;
@@ -278,8 +297,8 @@ function ∂Q∂τII(
     sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
 
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
-    dQdτII, _ = _dQdτII_dQdP(cp, τII, P - Pf)
-    return dQdτII
+    Aτ, _ = _Aτ_Ap(cp, τII, P - Pf)
+    return Aτ
 end
 
 function ∂F∂τII(
@@ -333,53 +352,72 @@ end
 
 ∂F∂λ(s::DruckerPragerCap, τII::_T; P = zero(_T), kwargs...) where {_T} = zero(_T)
 
+# Component gradient functions for DruckerPragerCap
+#
+# These return actual derivatives ∂Q/∂τij, computed from the Popov Eq. 43
+# coefficients Aτ = ∂Q/∂τII / 2 via the chain rule:
+#
+#   ∂Q/∂τij = ∂Q/∂τII · ∂τII/∂τij = 2Aτ · ∂τII/∂τij
+#
+# where ∂τII/∂τij = 0.5·τij/τII  for diagonal (xx,yy,zz)
+#       ∂τII/∂τij =     τij/τII  for shear    (yz,xz,xy)
+#
+# Result:  diagonal → Aτ · τij / τII
+#          shear    → 2Aτ · τij / τII
+
 for t in (:NTuple, :SVector)
     @eval begin
+        # --- 3D (6-component Voigt) ---
+        # diagonal components: ∂Q/∂τij = Aτ * τij / τII
         function ∂Q∂τxx(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
-            dQdτII = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : 0.5 * dQdτII * τij[1] / τII
+            Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
+            return iszero(τII) ? zero(T) : Aτ * τij[1] / τII
         end
         function ∂Q∂τyy(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
-            dQdτII = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : 0.5 * dQdτII * τij[2] / τII
+            Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
+            return iszero(τII) ? zero(T) : Aτ * τij[2] / τII
         end
         function ∂Q∂τzz(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
-            dQdτII = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : 0.5 * dQdτII * τij[3] / τII
+            Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
+            return iszero(τII) ? zero(T) : Aτ * τij[3] / τII
         end
+        # shear components: ∂Q/∂τij = 2Aτ * τij / τII
         function ∂Q∂τyz(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
-            dQdτII = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : dQdτII * τij[4] / τII
+            Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
+            return iszero(τII) ? zero(T) : 2 * Aτ * τij[4] / τII
         end
         function ∂Q∂τxz(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
-            dQdτII = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : dQdτII * τij[5] / τII
+            Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
+            return iszero(τII) ? zero(T) : 2 * Aτ * τij[5] / τII
         end
         function ∂Q∂τxy(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
-            dQdτII = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : dQdτII * τij[6] / τII
+            Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
+            return iszero(τII) ? zero(T) : 2 * Aτ * τij[6] / τII
         end
 
+        # --- 2D (3-component Voigt) ---
+        # diagonal components: ∂Q/∂τij = Aτ * τij / τII
         function ∂Q∂τxx(p::DruckerPragerCap, τij::$(t){3, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
-            dQdτII = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : 0.5 * dQdτII * τij[1] / τII
+            Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
+            return iszero(τII) ? zero(T) : Aτ * τij[1] / τII
         end
         function ∂Q∂τyy(p::DruckerPragerCap, τij::$(t){3, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
-            dQdτII = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : 0.5 * dQdτII * τij[2] / τII
+            Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
+            return iszero(τII) ? zero(T) : Aτ * τij[2] / τII
         end
+        # shear component: ∂Q/∂τij = 2Aτ * τij / τII
         function ∂Q∂τxy(p::DruckerPragerCap, τij::$(t){3, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
-            dQdτII = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : dQdτII * τij[3] / τII
+            Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
+            return iszero(τII) ? zero(T) : 2 * Aτ * τij[3] / τII
         end
     end
 end
