@@ -18,8 +18,8 @@ function Rt_Zr_Cherniak2007_para_c()
         Fluid = "Anhydrous",
         D0 = 9.8e-15m^2 / s,
         log_D0_1σ = 1.25NoUnits,
-        Ea = 170kJ / mol,
-        Ea_1σ = 30kJ / mol,
+        Ea = 170e3J / mol,
+        Ea_1σ = 30e3J / mol,
         Charge = 4,  # charge of the cation
         T_range_min = 750C,
         T_range_max = 1100C
@@ -60,7 +60,7 @@ function Rt_Zr_Sasaki1985_para_c()
         Buffer = "air",
         Fluid = "Anhydrous",  # Fluid condition (e.g., anhydrous) during the experiment
         D0 = 2.29e-7m^2 / s,  # pre-exponential factor
-        Ea = 291kJ / mol,  # activation energy
+        Ea = 291e3J / mol,  # activation energy
         Charge = 4,  # charge of the cation
         T_range_min = 1100C,  # temperature min of the experiment
         T_range_max = 1500C  # temperature max of the experiment
@@ -104,7 +104,7 @@ function Rt_Zr_Sasaki1985_perp_c()
         Buffer = "air",
         Fluid = "Anhydrous",  # Fluid condition (e.g., anhydrous) during the experiment
         D0 = 8.38e-7m^2 / s,  # pre-exponential factor
-        Ea = 288kJ / mol,  # activation energy
+        Ea = 288e3J / mol,  # activation energy
         Charge = 4,  # charge of the cation
         T_range_min = 1100C,  # temperature min of the experiment
         T_range_max = 1500C  # temperature max of the experiment

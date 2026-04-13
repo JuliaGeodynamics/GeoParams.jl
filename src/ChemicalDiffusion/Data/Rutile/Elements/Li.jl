@@ -14,10 +14,10 @@ function Rt_Li_Johnson1964_perp_c()
         Orientation = "⊥c",
         Crystallography = "Tetragonal",
         Fluid = "Anhydrous",
-        D0 = 0.295cm^2 / s,
+        D0 = 2.95e-05m^2 / s,
         log_D0_1σ = log(0.028)NoUnits,
-        Ea = (0.33u"eV" * Unitful.Na),
-        Ea_1σ = (0.003u"eV" * Unitful.Na),
+        Ea = 31840.1596007J / mol,
+        Ea_1σ = 289.45599637J / mol,
         Charge = 1,  # charge of the cation
         T_range_min = 80C,
         T_range_max = 360C

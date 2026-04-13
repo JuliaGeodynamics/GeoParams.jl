@@ -3,7 +3,7 @@ export PeierlsCreep_info
 
 """
     SetPeierlsCreep["Name of peierls creep law"]
-This is a dictionary with pre-defined creep laws    
+This is a dictionary with pre-defined creep laws
 """
 # SetPeierlsCreep(name::String; kwargs...) = Transform_PeierlsCreep(name; kwargs)
 
@@ -25,7 +25,7 @@ const PeierlsCreep_info = Dict(
                     q = 1.0NoUnits,                        # grain size exponent
                     TauP = 8.5e9Pa,                         # Peierls stress
                     A = (5.7e11)s^(-1),    # material specific rheological parameter
-                    E = 536.0kJ / mol,                        # activation energy
+                    E = 536.0e3J / mol,                        # activation energy
                     Apparatus = AxialCompression,
                 ),
                 MaterialParamsInfo(;
@@ -57,7 +57,7 @@ const PeierlsCreep_info = Dict(
                     q = 0.5NoUnits,                        # grain size exponent
                     TauP = 15.0e9Pa,                         # Peierls stress
                     A = (1.0e6)s^(-1),    # material specific rheological parameter
-                    E = 450.0kJ / mol,                        # activation energy
+                    E = 450.0e3J / mol,                        # activation energy
                     Apparatus = AxialCompression,
                 ),
                 MaterialParamsInfo(;
@@ -88,7 +88,7 @@ const PeierlsCreep_info = Dict(
                     q = 0.5NoUnits,                        # grain size exponent
                     TauP = 3.8e9Pa,                         # Peierls stress
                     A = (1.0e6)s^(-1),    # material specific rheological parameter
-                    E = 566.0kJ / mol,                        # activation energy
+                    E = 566.0e3J / mol,                        # activation energy
                     Apparatus = AxialCompression,
                 ),
                 MaterialParamsInfo(;

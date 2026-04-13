@@ -181,7 +181,7 @@ module MaterialParameters
      Phase 2 : Lower Crust
         | [dimensional units]
         |
-        |-- Density           : P/T-dependent density: ρ0=3000 kg m⁻³, α=3.0e-5 K⁻¹, β=1.0e-9 Pa⁻¹, T0=0 °C, P0=0 MPa
+        |-- Density           : P/T-dependent density: ρ0=3000 kg m⁻³, α=3.0e-5 K⁻¹, β=1.0e-9 Pa⁻¹, T0=0 °C, P0=0 Pa
         |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻²
         |-- CreepLaws         : Powerlaw viscosity: η0=1.0e18 Pa s, n=5, ε0=1.0e-15 s⁻¹
         |                       Linear viscosity: η=1.0e21 Pa s

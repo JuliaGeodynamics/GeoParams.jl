@@ -18,8 +18,8 @@ function TestDiff()
         n = 1.0NoUnits,                         # power-law exponent
         r = 0.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = 2.070729911135297e-7MPa^(-1) * m^3 * s^(-1),    # material specific rheological parameter
-        E = 375.0kJ / mol,                      # activation energy
+        A = 1.0e-6 * (2.070729911135297e-7Pa^(-1) * m^3 * s^(-1)),    # material specific rheological parameter
+        E = 375.0e3J / mol,                      # activation energy
         V = 6.0e-6m^3 / mol,                    # activation Volume
         Apparatus = AxialCompression,
     )
@@ -37,8 +37,8 @@ function dry_anorthite_Rybacki_2006()
         n = 1.0NoUnits,                         # power-law exponent
         r = 0.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^12.1)MPa^(-1) * μm^3 * s^(-1),  # material specific rheological parameter
-        E = 460.0kJ / mol,                      # activation energy
+        A = 1.0e-6 * ((10^12.1)Pa^(-1) * m^3 * s^(-1)),  # material specific rheological parameter
+        E = 460.0e3J / mol,                      # activation energy
         V = 24.0e-6m^3 / mol,                     # activation Volume
         Apparatus = AxialCompression,
     )
@@ -65,8 +65,8 @@ function wet_olivine_Mei_2000a()
         n = 1.0NoUnits,                         # power-law exponent
         r = 1.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^4.7)MPa^(-1) * μm^3 * s^(-1), # material specific rheological parameter
-        E = 295.0kJ / mol,                      # activation energy
+        A = 1.0e-6 * ((10^4.7)Pa^(-1) * m^3 * s^(-1)), # material specific rheological parameter
+        E = 295.0e3J / mol,                      # activation energy
         V = 20.0e-6m^3 / mol,                     # activation Volume
         Apparatus = AxialCompression,
     )
@@ -94,8 +94,8 @@ function wet_olivine_Hirth_2003()
         n = 1.0NoUnits,                         # power-law exponent
         r = 1.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^7.4)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
-        E = 375.0kJ / mol,                        # activation energy
+        A = 1.0e-6 * ((10^7.4)Pa^(-1) * m^3 * s^(-1)),    # material specific rheological parameter
+        E = 375.0e3J / mol,                        # activation energy
         V = 20.0e-6m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
@@ -121,8 +121,8 @@ function dry_olivine_Hirth_2003()
         n = 1.0NoUnits,                         # power-law exponent
         r = 0.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^9.2)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
-        E = 375.0kJ / mol,                        # activation energy
+        A = 1.0e-6 * ((10^9.2)Pa^(-1) * m^3 * s^(-1)),    # material specific rheological parameter
+        E = 375.0e3J / mol,                        # activation energy
         V = 10.0e-6m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
@@ -148,8 +148,8 @@ function wet_olivine_Faul_2006()
         n = 1.4NoUnits,                         # power-law exponent
         r = 0.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^10.3)MPa^(-7 // 5) * μm^3 * s^(-1),    # material specific rheological parameter
-        E = 484.0kJ / mol,                        # activation energy
+        A = 3.9810717055349855e-09 * ((10^10.3)Pa^(-7 // 5) * m^3 * s^(-1)),    # material specific rheological parameter
+        E = 484.0e3J / mol,                        # activation energy
         V = 0.0m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
@@ -175,8 +175,8 @@ function dry_clinopyroxene_HierMajumder_2005()
         n = 1.0NoUnits,                         # power-law exponent
         r = 0.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = ((10^25.3) / 64.9e3)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
-        E = 760.0kJ / mol,                        # activation energy
+        A = 1.0e-6 * (((10^25.3) / 64.9e3)Pa^(-1) * m^3 * s^(-1)),    # material specific rheological parameter
+        E = 760.0e3J / mol,                        # activation energy
         V = 0.0m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
@@ -202,8 +202,8 @@ function wet_clinopyroxene_HierMajumder2005()
         n = 1.0NoUnits,                         # power-law exponent
         r = 1.4NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^7.9 / 64.9e3)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
-        E = 340.0kJ / mol,                        # activation energy
+        A = 1.0e-6 * ((10^7.9 / 64.9e3)Pa^(-1) * m^3 * s^(-1)),    # material specific rheological parameter
+        E = 340.0e3J / mol,                        # activation energy
         V = 14.0e-6m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
@@ -229,8 +229,8 @@ function dry_clinopyroxene_Bystricky_2001()
         n = 1.0NoUnits,                         # power-law exponent
         r = 0.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^15.1)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
-        E = 560.0kJ / mol,                        # activation energy
+        A = 1.0e-6 * ((10^15.1)Pa^(-1) * m^3 * s^(-1)),    # material specific rheological parameter
+        E = 560.0e3J / mol,                        # activation energy
         V = 0.0m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
@@ -258,8 +258,8 @@ function dry_diopside_Dimanov_2005()
         n = 1.0NoUnits,                         # power-law exponent
         r = 0.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^14)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
-        E = 528.0kJ / mol,                        # activation energy
+        A = 1.0e-6 * ((10^14)Pa^(-1) * m^3 * s^(-1)),    # material specific rheological parameter
+        E = 528.0e3J / mol,                        # activation energy
         V = 0.0m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
@@ -286,8 +286,8 @@ function wet_diopside_Dimanov_2005()
         n = 1.0NoUnits,                         # power-law exponent
         r = 0.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^8.1)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
-        E = 528.0kJ / mol,                        # activation energy
+        A = 1.0e-6 * ((10^8.1)Pa^(-1) * m^3 * s^(-1)),    # material specific rheological parameter
+        E = 528.0e3J / mol,                        # activation energy
         V = 0.0m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
@@ -314,8 +314,8 @@ function wet_clinopyroxene_Chen_2006()
         n = 1.0NoUnits,                         # power-law exponent
         r = 0.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^8.1)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
-        E = 528.0kJ / mol,                        # activation energy
+        A = 1.0e-6 * ((10^8.1)Pa^(-1) * m^3 * s^(-1)),    # material specific rheological parameter
+        E = 528.0e3J / mol,                        # activation energy
         V = 0.0m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
@@ -341,8 +341,8 @@ function dry_anorthite_Rybacki_2000()
         n = 1.0NoUnits,                         # power-law exponent
         r = 0.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^12.1)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
-        E = 467.0kJ / mol,                        # activation energy
+        A = 1.0e-6 * ((10^12.1)Pa^(-1) * m^3 * s^(-1)),    # material specific rheological parameter
+        E = 467.0e3J / mol,                        # activation energy
         V = 0.0m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
@@ -370,8 +370,8 @@ function wet_anorthite_rybacki_2000()
         n = 1.0NoUnits,                         # power-law exponent
         r = 0.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^1.7)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
-        E = 170.0kJ / mol,                        # activation energy
+        A = 1.0e-6 * ((10^1.7)Pa^(-1) * m^3 * s^(-1)),    # material specific rheological parameter
+        E = 170.0e3J / mol,                        # activation energy
         V = 0.0m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
@@ -399,8 +399,8 @@ function wet_anorthite_rybacki_2006()
         n = 1.0NoUnits,                         # power-law exponent
         r = 1.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^-0.7)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
-        E = 159.0kJ / mol,                        # activation energy
+        A = 1.0e-6 * ((10^-0.7)Pa^(-1) * m^3 * s^(-1)),    # material specific rheological parameter
+        E = 159.0e3J / mol,                        # activation energy
         V = 38.0e-6m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
@@ -427,8 +427,8 @@ function wet_quartzite_Rutter_2004()
         n = 1.0NoUnits,                         # power-law exponent
         r = 0.0NoUnits,                         # exponent of water-fugacity
         p = -2.0NoUnits,                        # grain size exponent
-        A = (10^-0.4)MPa^(-1) * μm^2 * s^(-1),    # material specific rheological parameter
-        E = 220.0kJ / mol,                        # activation energy
+        A = 1.0e-18 * ((10^-0.4)Pa^(-1) * m^2 * s^(-1)),    # material specific rheological parameter
+        E = 220.0e3J / mol,                        # activation energy
         V = 0.0m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )

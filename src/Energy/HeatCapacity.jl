@@ -116,7 +116,7 @@ end
 
 # LatentHeat by modifying heat capacity  ---------------------------------
 """
-    Latent_HeatCapacity(Cp=ConstantHeatCapacity(), Q_L=400kJ/kg)
+    Latent_HeatCapacity(Cp=ConstantHeatCapacity(), Q_L=400.0e3J/kg)
 
 This takes the effects of latent heat into account by modifying the heat capacity in the temperature equation:
 

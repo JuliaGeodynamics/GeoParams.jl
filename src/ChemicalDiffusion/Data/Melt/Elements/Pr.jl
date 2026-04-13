@@ -11,8 +11,8 @@ function Melt_Pr_Holycross2018_rhyolitic_highH2O()
         Buffer = "non-buffered",
         D0 = (10^(-4.95))u"m^2 / s",
         log_D0_1σ = (0.91 * 2.303)NoUnits,
-        Ea = (164.21)u"kJ/mol",
-        Ea_1σ = (20.24)u"kJ/mol",
+        Ea = (164.21e3)J / mol,
+        Ea_1σ = (20.24e3)J / mol,
         T_range_min = 850C,
         T_range_max = 935C
     )
@@ -31,8 +31,8 @@ function Melt_Pr_Holycross2018_rhyolitic_mediumH2O()
         Buffer = "NNO",
         D0 = (10^(-4.11))u"m^2 / s",
         log_D0_1σ = (0.27 * 2.303)NoUnits,
-        Ea = (198.74)u"kJ/mol",
-        Ea_1σ = (6.96)u"kJ/mol",
+        Ea = (198.74e3)J / mol,
+        Ea_1σ = (6.96e3)J / mol,
         T_range_min = 960C,
         T_range_max = 1250C
     )
