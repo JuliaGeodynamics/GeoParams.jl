@@ -16,8 +16,8 @@ function Grt_Fe_Chakraborty1992()
         D0 = (6.4 * 1.0e-4) * 1.0e-4m^2 / s,  # pre-exponential factor
         Ea = 275407.616J / mol,  # activation energy
         Ea_1σ = 36488.664J / mol,  # uncertainty at 1σ of the activation energy
-        ΔV = 5.6e-06m^3 / mol,  # activation volume
-        ΔV_1σ = 2.9e-06m^3 / mol,  # uncertainty at 1σ of the activation volume
+        ΔV = 5.6e-6m^3 / mol,  # activation volume
+        ΔV_1σ = 2.9e-6m^3 / mol,  # uncertainty at 1σ of the activation volume
         nfO2 = (1 / 6)NoUnits,  # exponent for the oxygen fugacity dependency
         dfO2 = (1.0e-25)NoUnits,  # quotient for f(O2) dependency
         Charge = 2,  # charge of the cation
@@ -63,8 +63,8 @@ function Grt_Fe_Carlson2006()
         log_D0_1σ = 0.776NoUnits,
         Ea = (264.55e3)J / mol,  # activation energy
         Ea_1σ = (4.63e3)J / mol,  # uncertainty at 1σ of the activation energy
-        ΔV = 1.3568e-05m^3 / mol,  # activation volume
-        ΔV_1σ = 7.99e-07m^3 / mol,  # uncertainty at 1σ of the activation volume
+        ΔV = 1.3568e-5m^3 / mol,  # activation volume
+        ΔV_1σ = 7.99e-7m^3 / mol,  # uncertainty at 1σ of the activation volume
         aX = 465.7NoUnits,  # correspond to the sensitivity of the frequency factor to unit-cell dimension (unit normally of 1/nm but here adimensional)
         bX = - 1.1525NoUnits,  # unit-cell dimension of the almandine endmember (unit normally of nm but here adimensional)
         nfO2 = (1 / 6)NoUnits,  # exponent for the oxygen fugacity dependency

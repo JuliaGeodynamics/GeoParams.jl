@@ -148,7 +148,7 @@ function wet_olivine_Faul_2006()
         n = 1.4NoUnits,                         # power-law exponent
         r = 0.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = 3.9810717055349855e-09 * ((10^10.3)Pa^(-7 // 5) * m^3 * s^(-1)),    # material specific rheological parameter
+        A = 3.9810717055349855e-9 * ((10^10.3)Pa^(-7 // 5) * m^3 * s^(-1)),    # material specific rheological parameter
         E = 484.0e3J / mol,                        # activation energy
         V = 0.0m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,

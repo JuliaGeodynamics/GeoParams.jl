@@ -17,8 +17,8 @@ function Rt_Hf_Cherniak2007_perp_c()
         Fluid = "Anhydrous",  # Fluid condition (e.g., anhydrous) during the experiment
         D0 = 2.5e-12m^2 / s,  # pre-exponential factor
         log_D0_1σ = 2.7NoUnits,
-        Ea = 227e3J / mol,  # activation energy
-        Ea_1σ = 62e3J / mol,  # uncertainty at 1σ of the activation energy
+        Ea = 227.0e3J / mol,  # activation energy
+        Ea_1σ = 62.0e3J / mol,  # uncertainty at 1σ of the activation energy
         Charge = 4,  # charge of the cation
         T_range_min = 750C,  # temperature min of the experiment
         T_range_max = 1050C  # temperature max of the experiment
@@ -61,8 +61,8 @@ function Rt_Hf_Cherniak2007_para_c()
         Fluid = "Anhydrous",
         D0 = 9.1e-15m^2 / s,
         log_D0_1σ = 1.59NoUnits,
-        Ea = 169e3J / mol,
-        Ea_1σ = 36e3J / mol,
+        Ea = 169.0e3J / mol,
+        Ea_1σ = 36.0e3J / mol,
         Charge = 4,  # charge of the cation
         T_range_min = 800C,
         T_range_max = 1000C

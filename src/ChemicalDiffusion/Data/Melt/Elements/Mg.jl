@@ -10,8 +10,8 @@ function Melt_Mg_Sheng1992_basaltic()
         Species = "Mg",
         Buffer = "Air",
         D0 = 0.77919m^2 / s,
-        Ea = (343e3)J / mol,
-        Ea_1σ = (25 / 2e3)J / mol,
+        Ea = (343.0e3)J / mol,
+        Ea_1σ = (25 / 2.0e3)J / mol,
         Charge = 2,
         T_range_min = 1250C,
         T_range_max = 1500C

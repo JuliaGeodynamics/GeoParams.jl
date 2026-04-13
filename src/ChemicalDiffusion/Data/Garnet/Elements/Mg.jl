@@ -16,8 +16,8 @@ function Grt_Mg_Chakraborty1992()
         D0 = (1.1 * 1.0e-3) * 1.0e-4m^2 / s,  # pre-exponential factor
         Ea = 284499.448J / mol,  # activation energy
         Ea_1σ = 37543.032J / mol,  # uncertainty at 1σ of the activation energy
-        ΔV = 5.299999999999999e-06m^3 / mol,  # activation volume
-        ΔV_1σ = 3e-06m^3 / mol,  # uncertainty at 1σ of the activation volume
+        ΔV = 5.299999999999999e-6m^3 / mol,  # activation volume
+        ΔV_1σ = 3.0e-6m^3 / mol,  # uncertainty at 1σ of the activation volume
         Charge = 2,  # charge of the cation
         T_range_min = 1100C,  # temperature min of the experiment
         T_range_max = 1480C,  # temperature max of the experiment
@@ -62,8 +62,8 @@ function Grt_Mg_Carlson2006()
         log_D0_1σ = 0.919NoUnits,
         Ea = (244.21e3)J / mol,  # activation energy
         Ea_1σ = (5.32e3)J / mol,  # uncertainty at 1σ of the activation energy
-        ΔV = 8.564999999999998e-06m^3 / mol,  # activation volume
-        ΔV_1σ = 6.47e-07m^3 / mol,  # uncertainty at 1σ of the activation volume
+        ΔV = 8.564999999999998e-6m^3 / mol,  # activation volume
+        ΔV_1σ = 6.47e-7m^3 / mol,  # uncertainty at 1σ of the activation volume
         aX = 419.9NoUnits,  # correspond to the sensitivity of the frequency factor to unit-cell dimension (unit normally of 1/nm but here adimensional)
         bX = - 1.1525NoUnits,  # unit-cell dimension of the almandine endmember (unit normally of nm but here adimensional)
         nfO2 = (1 / 6)NoUnits,  # exponent for the oxygen fugacity dependency

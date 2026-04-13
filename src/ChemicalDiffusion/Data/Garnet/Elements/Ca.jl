@@ -17,8 +17,8 @@ function Grt_Ca_Carlson2006()
         log_D0_1σ = 0.716NoUnits,
         Ea = (230.56e3)J / mol,  # activation energy
         Ea_1σ = (7.15e3)J / mol,  # uncertainty at 1σ of the activation energy
-        ΔV = 9.795e-06m^3 / mol,  # activation volume
-        ΔV_1σ = 1.139e-06m^3 / mol,  # uncertainty at 1σ of the activation volume
+        ΔV = 9.795e-6m^3 / mol,  # activation volume
+        ΔV_1σ = 1.139e-6m^3 / mol,  # uncertainty at 1σ of the activation volume
         aX = 511.1NoUnits,  # correspond to the sensitivity of the frequency factor to unit-cell dimension (unit normally of 1/nm but here adimensional)
         bX = - 1.1525NoUnits,  # unit-cell dimension of the almandine endmember (unit normally of nm but here adimensional)
         nfO2 = (1 / 6)NoUnits,  # exponent for the oxygen fugacity dependency

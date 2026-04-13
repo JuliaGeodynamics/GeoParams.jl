@@ -17,8 +17,8 @@ function Rt_Pb_Cherniak2000_unor()
         Fluid = "Anhydrous",  # Fluid condition (e.g., anhydrous) during the experiment
         D0 = 3.9e-10m^2 / s,  # pre-exponential factor
         log_D0_1σ = 1.04NoUnits,
-        Ea = 250e3J / mol,  # activation energy
-        Ea_1σ = 12e3J / mol,  # uncertainty at 1σ of the activation energy
+        Ea = 250.0e3J / mol,  # activation energy
+        Ea_1σ = 12.0e3J / mol,  # uncertainty at 1σ of the activation energy
         Charge = 2,  # charge of the cation
         T_range_min = 700C,  # temperature min of the experiment
         T_range_max = 1100C  # temperature max of the experiment

@@ -16,8 +16,8 @@ function Rt_Si_Cherniak2019_para_c()
         Fluid = "Anhydrous",  # Fluid condition (e.g., anhydrous) during the experiment
         D0 = 8.53e-13m^2 / s,  # pre-exponential factor
         log_D0_1σ = 2.4NoUnits,
-        Ea = 254e3J / mol,  # activation energy
-        Ea_1σ = 31e3J / mol,  # uncertainty at 1σ of the activation energy
+        Ea = 254.0e3J / mol,  # activation energy
+        Ea_1σ = 31.0e3J / mol,  # uncertainty at 1σ of the activation energy
         Charge = 4,  # charge of the cation
         T_range_min = 1100C,  # temperature min of the experiment
         T_range_max = 1450C  # temperature max of the experiment
