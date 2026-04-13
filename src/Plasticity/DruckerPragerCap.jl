@@ -88,7 +88,7 @@ end
 end
 
 @inline function compute_Q(cp, τII, P)
-    return Q = if ismode2_flowpotential(cp.pq, cp.pd, cp.τd, τII, P)
+    Q = if ismode2_flowpotential(cp.pq, cp.pd, cp.τd, τII, P)
         cons = cp.sdf - cp.kq * cp.pdf
         @muladd τII - cp.kq * P - cons
     else
@@ -96,6 +96,7 @@ end
         Rq = hypot(τII, (P - cp.pq))
         cp.b * (Rq - cons)
     end
+    return Q
 end
 
 
