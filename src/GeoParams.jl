@@ -218,6 +218,7 @@ module GeoParams
         AbstractPlasticity,
         compute_yieldfunction,
         compute_yieldfunction!,
+        compute_flowpotential,
         DruckerPrager,
         DruckerPrager_regularised,
         DruckerPragerCap,

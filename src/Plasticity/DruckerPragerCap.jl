@@ -16,9 +16,10 @@ as described in Popov et al. (2025), Geoscientific Model Development.
 - `η_vp::T`: The Duvaut-Lions regularisation viscosity for the plasticity model.
 - `pT::T`: The tensile strength (should be < 0).
 """
-@with_kw_noshow struct DruckerPragerCap{T, U, U1, U2, S1 <: AbstractSoftening, S2 <: AbstractSoftening} <: AbstractPlasticity{T}
+@with_kw_noshow struct DruckerPragerCap{T, U, U1, U2, S1 <: AbstractSoftening, S2 <: AbstractSoftening, S3 <: AbstractSoftening} <: AbstractPlasticity{T}
     softening_ϕ::S1 = NoSoftening()
     softening_C::S2 = NoSoftening()
+    softening_Ψ::S3 = NoSoftening()
     ϕ::GeoUnit{T, U} = 30NoUnits         # Friction angle
     Ψ::GeoUnit{T, U} = 0NoUnits          # Dilation angle
     # computational parameters (precomputed, to speed up later calculations)
@@ -32,8 +33,9 @@ as described in Popov et al. (2025), Geoscientific Model Development.
 end
 
 
-DruckerPragerCap(args...) = DruckerPragerCap(args[1:2]..., convert.(GeoUnit, promote(args[3:end]...))...)
-DruckerPragerCap(softening_ϕ::AbstractSoftening, softening_C::AbstractSoftening, args...) = DruckerPragerCap(softening_ϕ, softening_C, convert.(GeoUnit, promote(args...))...)
+DruckerPragerCap(args...) = DruckerPragerCap(args[1:3]..., convert.(GeoUnit, promote(args[4:end]...))...)
+DruckerPragerCap(softening_ϕ::AbstractSoftening, softening_C::AbstractSoftening, softening_Ψ::AbstractSoftening, args...) = DruckerPragerCap(softening_ϕ, softening_C, softening_Ψ, convert.(GeoUnit, promote(args...))...)
+
 function isvolumetric(s::DruckerPragerCap)
     @unpack_val Ψ = s
     return !iszero(Ψ)
@@ -134,22 +136,24 @@ end
 function (s::DruckerPragerCap)(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...
     )
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
+    Ψ = s.softening_Ψ(EII, Ψ)
     C = s.softening_C(EII, C)
     C *= perturbation_C
 
     sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
 
     F = compute_F(cp.k, cp.c, cp.py, cp.a, cp.Ry, cp.pd, cp.τd, τII, P - Pf)
     return F
 end
 
-function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, NoSoftening})(;
+function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, NoSoftening, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
     ) where {_T, U, U1, U2}
-    @unpack_val sinϕ, cosϕ, sinΨ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     C *= perturbation_C
 
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
@@ -158,10 +162,39 @@ function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, NoSoftening})(;
     return F
 end
 
-function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, AbstractSoftening})(;
+function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, NoSoftening, AbstractSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
     ) where {_T, U, U1, U2, AbstractSoftening}
-    @unpack_val sinϕ, cosϕ, sinΨ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    Ψ = s.softening_Ψ(EII, Ψ)
+    C *= perturbation_C
+    sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
+
+    cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
+
+    F = compute_F(cp.k, cp.c, cp.py, cp.a, cp.Ry, cp.pd, cp.τd, τII, P - Pf)
+    return F
+end
+
+function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, AbstractSoftening, AbstractSoftening})(;
+        P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
+    ) where {_T, U, U1, U2, AbstractSoftening}
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    C = s.softening_C(EII, C)
+    Ψ = s.softening_Ψ(EII, Ψ)
+    C *= perturbation_C
+    sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
+
+    cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
+
+    F = compute_F(cp.k, cp.c, cp.py, cp.a, cp.Ry, cp.pd, cp.τd, τII, P - Pf)
+    return F
+end
+
+function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, AbstractSoftening, NoSoftening})(;
+        P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
+    ) where {_T, U, U1, U2, AbstractSoftening}
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     C = s.softening_C(EII, C)
     C *= perturbation_C
 
@@ -171,14 +204,45 @@ function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, AbstractSoftening})(;
     return F
 end
 
-function (s::DruckerPragerCap{_T, U, U1, U2, AbstractSoftening, NoSoftening})(;
+function (s::DruckerPragerCap{_T, U, U1, U2, AbstractSoftening, AbstractSoftening, NoSoftening})(;
+        P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
+    ) where {_T, U, U1, U2, AbstractSoftening}
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    ϕ = s.softening_ϕ(EII, ϕ)
+    C = s.softening_C(EII, C)
+    C *= perturbation_C
+
+    sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
+
+    F = compute_F(cp.k, cp.c, cp.py, cp.a, cp.Ry, cp.pd, cp.τd, τII, P - Pf)
+    return F
+end
+
+function (s::DruckerPragerCap{_T, U, U1, U2, AbstractSoftening, NoSoftening, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
     ) where {_T, U, U1, U2}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C *= perturbation_C
 
     sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
+
+    F = compute_F(cp.k, cp.c, cp.py, cp.a, cp.Ry, cp.pd, cp.τd, τII, P - Pf)
+    return F
+end
+
+function (s::DruckerPragerCap{_T, U, U1, U2, AbstractSoftening, NoSoftening, AbstractSoftening})(;
+        P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
+    ) where {_T, U, U1, U2}
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    ϕ = s.softening_ϕ(EII, ϕ)
+    Ψ = s.softening_Ψ(EII, Ψ)
+    C *= perturbation_C
+
+    sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
 
     F = compute_F(cp.k, cp.c, cp.py, cp.a, cp.Ry, cp.pd, cp.τd, τII, P - Pf)
@@ -231,16 +295,20 @@ function compute_flowpotential(
         perturbation_C = 1.0,
         kwargs...,
     )
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
+    Ψ = s.softening_Ψ(EII, Ψ)
     C = s.softening_C(EII, C)
     C *= perturbation_C
     sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
 
     Q = compute_Q(cp, τII, P - Pf)
     return Q
 end
+
+@inline compute_flowpotential(s::DruckerPragerCap, args) = compute_flowpotential(s; args...)
 
 function compute_flowpotential!(
         Q::AbstractArray{_T, N},
@@ -268,19 +336,21 @@ function ∂Q∂P(
         perturbation_C = one(_T),
         kwargs...,
     ) where {_T}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
+    Ψ = s.softening_Ψ(EII, Ψ)
     C = s.softening_C(EII, C)
     C *= perturbation_C
 
     sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
 
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
     _, Ap =_Aτ_Ap(cp, τII, P - Pf)
     return -Ap  # ∂Q/∂P = -Ap
 end
 
-# ∂Q∂τII: returns Aτ = ∂Q/∂τII / 2
+
 function ∂Q∂τII(
         s::DruckerPragerCap,
         τII::_T;
@@ -290,11 +360,13 @@ function ∂Q∂τII(
         perturbation_C = one(_T),
         kwargs...,
     ) where {_T}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
+    Ψ = s.softening_Ψ(EII, Ψ)
     C = s.softening_C(EII, C)
     C *= perturbation_C
     sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
 
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
     Aτ, _ = _Aτ_Ap(cp, τII, P - Pf)
@@ -310,11 +382,13 @@ function ∂F∂τII(
         perturbation_C = one(_T),
         kwargs...,
     ) where {_T}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
+    Ψ = s.softening_Ψ(EII, Ψ)
     C = s.softening_C(EII, C)
     C *= perturbation_C
     sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
 
     if ismode2_yield(cp.py, cp.pd, cp.τd, τII, P - Pf)
@@ -334,11 +408,13 @@ function ∂F∂P(
         perturbation_C = one(_T),
         kwargs...,
     ) where {_T}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
+    Ψ = s.softening_Ψ(EII, Ψ)
     C = s.softening_C(EII, C)
     C *= perturbation_C
     sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
 
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
 
