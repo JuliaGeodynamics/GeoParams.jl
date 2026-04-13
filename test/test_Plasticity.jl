@@ -426,9 +426,9 @@ using GeoParams
         τij = (1.0, 2.0, 3.0)
         τII_test = second_invariant(τij)
         dQτII = ∂Q∂τII(p, τII_test)
-        fxx(τij) = 0.5 * dQτII * τij[1] / second_invariant(τij)
-        fyy(τij) = 0.5 * dQτII * τij[2] / second_invariant(τij)
-        fxy(τij) = dQτII * τij[3] / second_invariant(τij)
+        fxx(τij) = dQτII * τij[1] / second_invariant(τij)
+        fyy(τij) = dQτII * τij[2] / second_invariant(τij)
+        fxy(τij) = 2 * dQτII * τij[3] / second_invariant(τij)
         solution2D = [fxx(τij), fyy(τij), fxy(τij)]
 
         # using tuples
@@ -445,12 +445,12 @@ using GeoParams
         ## 3D
         τij = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
         dQτII = ∂Q∂τII(p, second_invariant(τij))
-        gxx(τij) = 0.5 * dQτII * τij[1] / second_invariant(τij)
-        gyy(τij) = 0.5 * dQτII * τij[2] / second_invariant(τij)
-        gzz(τij) = 0.5 * dQτII * τij[3] / second_invariant(τij)
-        gyz(τij) = dQτII * τij[4] / second_invariant(τij)
-        gxz(τij) = dQτII * τij[5] / second_invariant(τij)
-        gxy(τij) = dQτII * τij[6] / second_invariant(τij)
+        gxx(τij) = dQτII * τij[1] / second_invariant(τij)
+        gyy(τij) = dQτII * τij[2] / second_invariant(τij)
+        gzz(τij) = dQτII * τij[3] / second_invariant(τij)
+        gyz(τij) = 2 * dQτII * τij[4] / second_invariant(τij)
+        gxz(τij) = 2 * dQτII * τij[5] / second_invariant(τij)
+        gxy(τij) = 2 * dQτII * τij[6] / second_invariant(τij)
         solution3D = [gxx(τij), gyy(τij), gzz(τij), gyz(τij), gxz(τij), gxy(τij)]
 
         # using tuples
@@ -462,31 +462,31 @@ using GeoParams
         # using AD
         Q = second_invariant # where second_invariant is a function
         ad4 = ∂Q∂τ(Q, τij_tuple)
-        @test all(isapprox.(ad4 .* dQτII, Tuple(solution3D); rtol=1e-5))
-        @test all(isapprox.(compute_plasticpotentialDerivative(p, τij_tuple), ad4 .* dQτII; rtol=1e-5))
+        @test all(isapprox.(2 .* dQτII .* ad4, Tuple(solution3D); rtol = 1.0e-5))
+        @test all(isapprox.(compute_plasticpotentialDerivative(p, τij_tuple), 2 .* dQτII .* ad4; rtol = 1.0e-5))
 
         # -----------------------
 
         # composite rheology with plasticity
-        # η, G = 10, 1
-        # t_M = η / G
-        # εII = 1.0
-        # args = (;)
-        # pl2 = DruckerPragerCap(C = η, ϕ = 00, pT = -1)                # plasticity
-        # c_pl = CompositeRheology(LinearViscous(; η = η * Pa * s), ConstantElasticity(; G = G * Pa), pl2) # linear VEP
-        # c_pl2 = CompositeRheology(ConstantElasticity(; G = G * Pa), pl2) # linear VEP
+        η, G = 10, 1
+        t_M = η / G
+        εII = 1.0
+        args = (;)
+        pl2 = DruckerPragerCap(C = η, ϕ = 00, pT = -1)                # plasticity
+        c_pl = CompositeRheology(LinearViscous(; η = η * Pa * s), ConstantElasticity(; G = G * Pa), pl2) # linear VEP
+        c_pl2 = CompositeRheology(ConstantElasticity(; G = G * Pa), pl2) # linear VEP
 
-        # # case where old stress is below yield & new stress is above
-        # args = (τII_old = 9.8001101017963, P = 0.0, τII = 20.8001101017963)
-        # F_old = compute_yieldfunction(c_pl.elements[3], args)
-        # #
-        # τ1, = local_iterations_εII(c_pl, εII, args; verbose = false, max_iter = 10)
-        # τ2, = compute_τII(c_pl, εII, args; verbose = false)
-        # @test τ1 == τ2
+        # case where old stress is below yield & new stress is above
+        args = (τII_old = 9.8001101017963, P = 0.0, τII = 20.8001101017963)
+        F_old = compute_yieldfunction(c_pl.elements[3], args)
+        #
+        τ1, = local_iterations_εII(c_pl, εII, args; verbose = false, max_iter = 10)
+        τ2, = compute_τII(c_pl, εII, args; verbose = false)
+        @test τ1 == τ2
 
-        # args = merge(args, (τII = τ1,))
-        # F_check = compute_yieldfunction(c_pl.elements[3], args)
-        # @test abs(F_check) < 1.0e-12
+        args = merge(args, (τII = τ1,))
+        F_check = compute_yieldfunction(c_pl.elements[3], args)
+        @test abs(F_check) < 1.0e-12
     end
 
 end

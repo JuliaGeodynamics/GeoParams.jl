@@ -85,8 +85,8 @@ import ForwardDiff as FD
     @test k_tp_tuple isa TP_Conductivity
     @test k_tp_tuple.Name == tp_name
     @test (typeof(k_tp_tuple.a.val) == typeof(k_tp_tuple.b.val)) &&
-          (typeof(k_tp_tuple.b.val) == typeof(k_tp_tuple.c.val)) &&
-          (typeof(k_tp_tuple.c.val) == typeof(k_tp_tuple.d.val))
+        (typeof(k_tp_tuple.b.val) == typeof(k_tp_tuple.c.val)) &&
+        (typeof(k_tp_tuple.c.val) == typeof(k_tp_tuple.d.val))
 
     k_tp_kw = TP_Conductivity(; Name = "UpperCrust", a = 0.64Watt / K / m, b = 807Watt / m, c = 77GeoParams.K, d = 0 / MPa)
     @test k_tp_kw isa TP_Conductivity

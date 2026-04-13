@@ -13,12 +13,13 @@ as described in Popov et al. (2025), Geoscientific Model Development.
 - `C::T`: The cohesion parameter.
 - `ϕ::T`: The friction angle (in degrees).
 - `Ψ::T`: The dilatancy angle (in degrees).
-- `η_vp::T`: The Duvaut-Lions regeularisation viscosity for the plasticity model.
-- `Pt::T`: The tensile strength (should be < 0).
+- `η_vp::T`: The Duvaut-Lions regularisation viscosity for the plasticity model.
+- `pT::T`: The tensile strength (should be < 0).
 """
-@with_kw_noshow struct DruckerPragerCap{T, U, U1, U2, S1 <: AbstractSoftening, S2 <: AbstractSoftening} <: AbstractPlasticity{T}
+@with_kw_noshow struct DruckerPragerCap{T, U, U1, U2, S1 <: AbstractSoftening, S2 <: AbstractSoftening, S3 <: AbstractSoftening} <: AbstractPlasticity{T}
     softening_ϕ::S1 = NoSoftening()
     softening_C::S2 = NoSoftening()
+    softening_Ψ::S3 = NoSoftening()
     ϕ::GeoUnit{T, U} = 30NoUnits         # Friction angle
     Ψ::GeoUnit{T, U} = 0NoUnits          # Dilation angle
     # computational parameters (precomputed, to speed up later calculations)
@@ -32,8 +33,9 @@ as described in Popov et al. (2025), Geoscientific Model Development.
 end
 
 
-DruckerPragerCap(args...) = DruckerPragerCap(args[1:2]..., convert.(GeoUnit, promote(args[3:end]...))...)
-DruckerPragerCap(softening_ϕ::AbstractSoftening, softening_C::AbstractSoftening, args...) = DruckerPragerCap(softening_ϕ, softening_C, convert.(GeoUnit, promote(args...))...)
+DruckerPragerCap(args...) = DruckerPragerCap(args[1:3]..., convert.(GeoUnit, promote(args[4:end]...))...)
+DruckerPragerCap(softening_ϕ::AbstractSoftening, softening_C::AbstractSoftening, softening_Ψ::AbstractSoftening, args...) = DruckerPragerCap(softening_ϕ, softening_C, softening_Ψ, convert.(GeoUnit, promote(args...))...)
+
 function isvolumetric(s::DruckerPragerCap)
     @unpack_val Ψ = s
     return !iszero(Ψ)
@@ -94,10 +96,28 @@ end
         Rq = hypot(τII, (P - cp.pq))
         cp.b * (Rq - cons)
     end
+    return Q
 end
 
 
-@inline function _dQdτII_dQdP(cp, τII, P)
+"""
+    _Aτ_Ap(cp, τII, P)
+
+Flow-potential scalar coefficients from Popov et al. (2025), Eq. 43.
+
+The full tensor gradient of Q is decomposed in Eq. 21-22 as:
+
+    ∂Q/∂σ_ij = B_τ · τ_ij + B_p · δ_ij
+
+where B_τ and B_p are the tensor coefficients. Eq. 43 defines the scalar
+invariant-level coefficients A_τ and A_p, which relate to actual derivatives as:
+
+- A_τ = ∂Q/∂τII / 2     (half the actual τII-derivative of Q)
+- A_p = -∂Q/∂P          (negated actual P-derivative of Q)
+
+To recover actual derivatives:  ∂Q/∂τII = 2A_τ,  ∂Q/∂P = -A_p.
+"""
+@inline function _Aτ_Ap(cp, τII, P)
     @unpack pq, pd, τd, b, kq = cp
 
     if ismode2_flowpotential(pq, pd, τd, τII, P)
@@ -117,22 +137,24 @@ end
 function (s::DruckerPragerCap)(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...
     )
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
+    Ψ = s.softening_Ψ(EII, Ψ)
     C = s.softening_C(EII, C)
     C *= perturbation_C
 
     sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
 
     F = compute_F(cp.k, cp.c, cp.py, cp.a, cp.Ry, cp.pd, cp.τd, τII, P - Pf)
     return F
 end
 
-function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, NoSoftening})(;
+function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, NoSoftening, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
     ) where {_T, U, U1, U2}
-    @unpack_val sinϕ, cosϕ, sinΨ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     C *= perturbation_C
 
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
@@ -141,10 +163,39 @@ function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, NoSoftening})(;
     return F
 end
 
-function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, AbstractSoftening})(;
+function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, NoSoftening, AbstractSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
     ) where {_T, U, U1, U2, AbstractSoftening}
-    @unpack_val sinϕ, cosϕ, sinΨ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    Ψ = s.softening_Ψ(EII, Ψ)
+    C *= perturbation_C
+    sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
+
+    cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
+
+    F = compute_F(cp.k, cp.c, cp.py, cp.a, cp.Ry, cp.pd, cp.τd, τII, P - Pf)
+    return F
+end
+
+function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, AbstractSoftening, AbstractSoftening})(;
+        P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
+    ) where {_T, U, U1, U2, AbstractSoftening}
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    C = s.softening_C(EII, C)
+    Ψ = s.softening_Ψ(EII, Ψ)
+    C *= perturbation_C
+    sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
+
+    cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
+
+    F = compute_F(cp.k, cp.c, cp.py, cp.a, cp.Ry, cp.pd, cp.τd, τII, P - Pf)
+    return F
+end
+
+function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, AbstractSoftening, NoSoftening})(;
+        P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
+    ) where {_T, U, U1, U2, AbstractSoftening}
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     C = s.softening_C(EII, C)
     C *= perturbation_C
 
@@ -154,14 +205,45 @@ function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, AbstractSoftening})(;
     return F
 end
 
-function (s::DruckerPragerCap{_T, U, U1, U2, AbstractSoftening, NoSoftening})(;
+function (s::DruckerPragerCap{_T, U, U1, U2, AbstractSoftening, AbstractSoftening, NoSoftening})(;
+        P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
+    ) where {_T, U, U1, U2, AbstractSoftening}
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    ϕ = s.softening_ϕ(EII, ϕ)
+    C = s.softening_C(EII, C)
+    C *= perturbation_C
+
+    sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
+
+    F = compute_F(cp.k, cp.c, cp.py, cp.a, cp.Ry, cp.pd, cp.τd, τII, P - Pf)
+    return F
+end
+
+function (s::DruckerPragerCap{_T, U, U1, U2, AbstractSoftening, NoSoftening, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
     ) where {_T, U, U1, U2}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C *= perturbation_C
 
     sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
+
+    F = compute_F(cp.k, cp.c, cp.py, cp.a, cp.Ry, cp.pd, cp.τd, τII, P - Pf)
+    return F
+end
+
+function (s::DruckerPragerCap{_T, U, U1, U2, AbstractSoftening, NoSoftening, AbstractSoftening})(;
+        P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
+    ) where {_T, U, U1, U2}
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    ϕ = s.softening_ϕ(EII, ϕ)
+    Ψ = s.softening_Ψ(EII, Ψ)
+    C *= perturbation_C
+
+    sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
 
     F = compute_F(cp.k, cp.c, cp.py, cp.a, cp.Ry, cp.pd, cp.τd, τII, P - Pf)
@@ -214,16 +296,20 @@ function compute_flowpotential(
         perturbation_C = 1.0,
         kwargs...,
     )
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
+    Ψ = s.softening_Ψ(EII, Ψ)
     C = s.softening_C(EII, C)
     C *= perturbation_C
     sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
 
     Q = compute_Q(cp, τII, P - Pf)
     return Q
 end
+
+@inline compute_flowpotential(s::DruckerPragerCap, args) = compute_flowpotential(s; args...)
 
 function compute_flowpotential!(
         Q::AbstractArray{_T, N},
@@ -241,6 +327,7 @@ function compute_flowpotential!(
     return nothing
 end
 
+# ∂Q∂P: actual derivative ∂Q/∂P = -Ap
 function ∂Q∂P(
         s::DruckerPragerCap,
         P::_T;
@@ -250,17 +337,20 @@ function ∂Q∂P(
         perturbation_C = one(_T),
         kwargs...,
     ) where {_T}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
+    Ψ = s.softening_Ψ(EII, Ψ)
     C = s.softening_C(EII, C)
     C *= perturbation_C
 
     sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
 
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
-    _, dQdP = _dQdτII_dQdP(cp, τII, P - Pf)
-    return dQdP
+    _, Ap = _Aτ_Ap(cp, τII, P - Pf)
+    return -Ap  # ∂Q/∂P = -Ap
 end
+
 
 function ∂Q∂τII(
         s::DruckerPragerCap,
@@ -271,15 +361,17 @@ function ∂Q∂τII(
         perturbation_C = one(_T),
         kwargs...,
     ) where {_T}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
+    Ψ = s.softening_Ψ(EII, Ψ)
     C = s.softening_C(EII, C)
     C *= perturbation_C
     sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
 
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
-    dQdτII, _ = _dQdτII_dQdP(cp, τII, P - Pf)
-    return dQdτII
+    Aτ, _ = _Aτ_Ap(cp, τII, P - Pf)
+    return Aτ
 end
 
 function ∂F∂τII(
@@ -291,11 +383,13 @@ function ∂F∂τII(
         perturbation_C = one(_T),
         kwargs...,
     ) where {_T}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
+    Ψ = s.softening_Ψ(EII, Ψ)
     C = s.softening_C(EII, C)
     C *= perturbation_C
     sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
 
     if ismode2_yield(cp.py, cp.pd, cp.τd, τII, P - Pf)
@@ -315,11 +409,13 @@ function ∂F∂P(
         perturbation_C = one(_T),
         kwargs...,
     ) where {_T}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, C, pT = s
+    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
+    Ψ = s.softening_Ψ(EII, Ψ)
     C = s.softening_C(EII, C)
     C *= perturbation_C
     sinϕ, cosϕ = iszero(EII) ? (sinϕ, cosϕ) : sincosd(ϕ)
+    sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
 
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
 
@@ -333,53 +429,72 @@ end
 
 ∂F∂λ(s::DruckerPragerCap, τII::_T; P = zero(_T), kwargs...) where {_T} = zero(_T)
 
+# Component gradient functions for DruckerPragerCap
+#
+# These return actual derivatives ∂Q/∂τij, computed from the Popov Eq. 43
+# coefficients Aτ = ∂Q/∂τII / 2 via the chain rule:
+#
+#   ∂Q/∂τij = ∂Q/∂τII · ∂τII/∂τij = 2Aτ · ∂τII/∂τij
+#
+# where ∂τII/∂τij = 0.5·τij/τII  for diagonal (xx,yy,zz)
+#       ∂τII/∂τij =     τij/τII  for shear    (yz,xz,xy)
+#
+# Result:  diagonal → Aτ · τij / τII
+#          shear    → 2Aτ · τij / τII
+
 for t in (:NTuple, :SVector)
     @eval begin
+        # --- 3D (6-component Voigt) ---
+        # diagonal components: ∂Q/∂τij = Aτ * τij / τII
         function ∂Q∂τxx(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
-            dQdτII = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : 0.5 * dQdτII * τij[1] / τII
+            Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
+            return iszero(τII) ? zero(T) : Aτ * τij[1] / τII
         end
         function ∂Q∂τyy(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
-            dQdτII = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : 0.5 * dQdτII * τij[2] / τII
+            Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
+            return iszero(τII) ? zero(T) : Aτ * τij[2] / τII
         end
         function ∂Q∂τzz(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
-            dQdτII = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : 0.5 * dQdτII * τij[3] / τII
+            Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
+            return iszero(τII) ? zero(T) : Aτ * τij[3] / τII
         end
+        # shear components: ∂Q/∂τij = 2Aτ * τij / τII
         function ∂Q∂τyz(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
-            dQdτII = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : dQdτII * τij[4] / τII
+            Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
+            return iszero(τII) ? zero(T) : 2 * Aτ * τij[4] / τII
         end
         function ∂Q∂τxz(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
-            dQdτII = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : dQdτII * τij[5] / τII
+            Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
+            return iszero(τII) ? zero(T) : 2 * Aτ * τij[5] / τII
         end
         function ∂Q∂τxy(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
-            dQdτII = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : dQdτII * τij[6] / τII
+            Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
+            return iszero(τII) ? zero(T) : 2 * Aτ * τij[6] / τII
         end
 
+        # --- 2D (3-component Voigt) ---
+        # diagonal components: ∂Q/∂τij = Aτ * τij / τII
         function ∂Q∂τxx(p::DruckerPragerCap, τij::$(t){3, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
-            dQdτII = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : 0.5 * dQdτII * τij[1] / τII
+            Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
+            return iszero(τII) ? zero(T) : Aτ * τij[1] / τII
         end
         function ∂Q∂τyy(p::DruckerPragerCap, τij::$(t){3, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
-            dQdτII = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : 0.5 * dQdτII * τij[2] / τII
+            Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
+            return iszero(τII) ? zero(T) : Aτ * τij[2] / τII
         end
+        # shear component: ∂Q/∂τij = 2Aτ * τij / τII
         function ∂Q∂τxy(p::DruckerPragerCap, τij::$(t){3, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
-            dQdτII = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : dQdτII * τij[3] / τII
+            Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
+            return iszero(τII) ? zero(T) : 2 * Aτ * τij[3] / τII
         end
     end
 end
