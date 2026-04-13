@@ -5,6 +5,7 @@ struct NonConstantDensityTrait <: DensityTrait end
 # traits individual densities
 @inline isconstant(::ConstantDensity) = ConstantDensityTrait()
 @inline isconstant(::AbstractDensity) = NonConstantDensityTrait()
+@inline isconstant(::AbstractPhaseDiagramsStruct) = NonConstantDensityTrait()
 @inline isconstant(::T) where {T} = throw(ArgumentError("$T is an unsupported density type"))
 
 # compares two densities and return constant trait only and if only both are constant

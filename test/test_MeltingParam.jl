@@ -194,6 +194,12 @@ using StaticArrays
     plot(plt1, plt2, layout=(2,1))
     =#
 
+
+    Rhyolite = "test_data/MAGEMin_Rhyolite.in"
+    PD_MAGEMin = MAGEMin_Diagram(Rhyolite)
+    args = (; T = ustrip.(Tdata), P = fill(1.0e7, length(Tdata)))
+    compute_meltfraction!(phi_dim, PD_MAGEMin, args)
+    @test sum(phi_dim) ≈ 5.674678228571429
     #------------------------------
 
     # Test computation of melt parameterization for the whole computational domain, using arrays

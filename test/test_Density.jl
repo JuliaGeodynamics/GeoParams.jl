@@ -140,6 +140,15 @@ import ForwardDiff.derivative
     @test compute_density(PD_data, args) ≈ 3054.8671154189938 # named tuple syntax
     @test compute_density(PD_data; P = 1.0e7, T = 1500.0) ≈ 3054.8671154189938 # optional parameter syntax
 
+
+    Rhyolite = "test_data/MAGEMin_Rhyolite.in"
+
+    PD_MAGEMin = MAGEMin_Diagram(Rhyolite)
+    @test PD_MAGEMin.Rho(800.0, 1.0e7) ≈ 2701.3786579954285
+    @test PD_MAGEMin.meltFrac(800.0, 1.0e7) ≈ 0.0
+    @test PD_MAGEMin.meltRho(800.0, 1.0e7) ≈ 2000.0
+    @test PD_MAGEMin.rockRho(800.0, 1.0e7) ≈ 2701.3786579954285
+
     #  test extractors for more complex data strutcs
     r = SetMaterialParams(;
         Name = "Crust",
