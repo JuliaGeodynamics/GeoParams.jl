@@ -428,7 +428,7 @@ using GeoParams
         dQτII = ∂Q∂τII(p, τII_test)
         fxx(τij) = dQτII * τij[1] / second_invariant(τij)
         fyy(τij) = dQτII * τij[2] / second_invariant(τij)
-        fxy(τij) = 2* dQτII * τij[3] / second_invariant(τij)
+        fxy(τij) = 2 * dQτII * τij[3] / second_invariant(τij)
         solution2D = [fxx(τij), fyy(τij), fxy(τij)]
 
         # using tuples
@@ -448,9 +448,9 @@ using GeoParams
         gxx(τij) = dQτII * τij[1] / second_invariant(τij)
         gyy(τij) = dQτII * τij[2] / second_invariant(τij)
         gzz(τij) = dQτII * τij[3] / second_invariant(τij)
-        gyz(τij) = 2* dQτII * τij[4] / second_invariant(τij)
-        gxz(τij) = 2* dQτII * τij[5] / second_invariant(τij)
-        gxy(τij) = 2* dQτII * τij[6] / second_invariant(τij)
+        gyz(τij) = 2 * dQτII * τij[4] / second_invariant(τij)
+        gxz(τij) = 2 * dQτII * τij[5] / second_invariant(τij)
+        gxy(τij) = 2 * dQτII * τij[6] / second_invariant(τij)
         solution3D = [gxx(τij), gyy(τij), gzz(τij), gyz(τij), gxz(τij), gxy(τij)]
 
         # using tuples
@@ -463,7 +463,7 @@ using GeoParams
         Q = second_invariant # where second_invariant is a function
         ad4 = ∂Q∂τ(Q, τij_tuple)
         @test all(isapprox.(2 .* dQτII .* ad4, Tuple(solution3D); rtol = 1.0e-5))
-        @test all(isapprox.(compute_plasticpotentialDerivative(p, τij_tuple), 2 .* dQτII .* ad4 ; rtol = 1.0e-5))
+        @test all(isapprox.(compute_plasticpotentialDerivative(p, τij_tuple), 2 .* dQτII .* ad4; rtol = 1.0e-5))
 
         # -----------------------
 
