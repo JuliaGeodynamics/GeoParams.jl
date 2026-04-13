@@ -21,7 +21,6 @@ end
 @inline compute_viscosity_εII(v::HerschelBulkley, εII, args) = compute_hb_viscosity_εII(v, εII; args...)
 
 
-
 # compute effective "creep" viscosity from deviatoric stress tensor
 """
     compute_viscosity_τII(s::AbstractConstitutiveLaw, τII, kwargs...)

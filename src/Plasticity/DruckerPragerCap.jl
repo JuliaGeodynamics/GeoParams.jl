@@ -88,7 +88,7 @@ end
 end
 
 @inline function compute_Q(cp, τII, P)
-    Q = if ismode2_flowpotential(cp.pq, cp.pd, cp.τd, τII, P)
+    return Q = if ismode2_flowpotential(cp.pq, cp.pd, cp.τd, τII, P)
         cons = cp.sdf - cp.kq * cp.pdf
         @muladd τII - cp.kq * P - cons
     else
@@ -346,7 +346,7 @@ function ∂Q∂P(
     sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
 
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
-    _, Ap =_Aτ_Ap(cp, τII, P - Pf)
+    _, Ap = _Aτ_Ap(cp, τII, P - Pf)
     return -Ap  # ∂Q/∂P = -Ap
 end
 
