@@ -58,8 +58,8 @@ import GeoParams.Diffusion
     compute_εII!(ε_array, p, τII_array, args)
     @test ε_array[1] ≈ ε
 
-        #---------------------------
-        # This is data from a matlab script implementation of the rheology (which was again benchmarked vs. LaMEM)
+    #---------------------------
+    # This is data from a matlab script implementation of the rheology (which was again benchmarked vs. LaMEM)
     for itest in 1:2
         eII = 1.0e-22
         PPa = 0.0
