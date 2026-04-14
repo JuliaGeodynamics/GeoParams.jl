@@ -15,10 +15,10 @@ function Grt_Ca_Carlson2006()
         Fluid = "",  # Fluid condition (e.g., anhydrous) during the experiment
         D0 = exp(-22.572)u"m^2/s",  # pre-exponential factor
         log_D0_1σ = 0.716NoUnits,
-        Ea = 230.56u"kJ/mol",  # activation energy
-        Ea_1σ = 7.15u"kJ/mol",  # uncertainty at 1σ of the activation energy
-        ΔV = 9.795cm^3 / mol,  # activation volume
-        ΔV_1σ = 1.139cm^3 / mol,  # uncertainty at 1σ of the activation volume
+        Ea = (230.56e3)J / mol,  # activation energy
+        Ea_1σ = (7.15e3)J / mol,  # uncertainty at 1σ of the activation energy
+        ΔV = 9.795e-6m^3 / mol,  # activation volume
+        ΔV_1σ = 1.139e-6m^3 / mol,  # uncertainty at 1σ of the activation volume
         aX = 511.1NoUnits,  # correspond to the sensitivity of the frequency factor to unit-cell dimension (unit normally of 1/nm but here adimensional)
         bX = - 1.1525NoUnits,  # unit-cell dimension of the almandine endmember (unit normally of nm but here adimensional)
         nfO2 = (1 / 6)NoUnits,  # exponent for the oxygen fugacity dependency
@@ -26,7 +26,7 @@ function Grt_Ca_Carlson2006()
         Charge = 2,  # charge of the cation
         T_range_min = 500C,  # temperature min of the experiment
         T_range_max = 1500C,  # temperature max of the experiment
-        P0 = 0.0u"bar"  # pressure of calibration
+        P0 = 0.0Pa  # pressure of calibration
     )
     info = MaterialParamsInfo(;
         Comment = "Checked values by HD (06.08.25)",
@@ -63,8 +63,8 @@ function Grt_Ca_Chu2015()
         Crystallography = "Isometric",  # Crystallographic system of the mineral
         D0 = (10^(-6.36))u"m^2/s",  # pre-exponential factor
         log_D0_1σ = 0.92NoUnits,
-        Ea = 299.3u"kJ/mol",  # activation energy
-        Ea_1σ = 18.4u"kJ/mol",  # uncertainty at 1σ of the activation energy
+        Ea = (299.3e3)J / mol,  # activation energy
+        Ea_1σ = (18.4e3)J / mol,  # uncertainty at 1σ of the activation energy
         ΔV = 1.77u"J / bar / mol",  # activation volume
         ΔV_1σ = 0.14u"J / bar / mol",  # uncertainty at 1σ of the activation volume
         aX = 302.9NoUnits,  # correspond to the sensitivity of the frequency factor to unit-cell dimension (unit normally of 1/nm but here adimensional)

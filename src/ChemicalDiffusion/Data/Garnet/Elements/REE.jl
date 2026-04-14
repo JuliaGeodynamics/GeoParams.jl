@@ -21,7 +21,7 @@ function Grt_REE_Bloch2020_fast()
         Charge = 3,  # charge of the cation
         T_range_min = 950C,  # temperature min of the experiment
         T_range_max = 1050C,  # temperature max of the experiment
-        P0 = 1.0u"atm"  # pressure of calibration
+        P0 = 101325.0Pa  # pressure of calibration
     )
     info = MaterialParamsInfo(;
         Comment = "Checked values by HD (31.08.25). Values originally reported in log10 but converted here to ln.",

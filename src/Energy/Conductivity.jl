@@ -322,14 +322,14 @@ where ``k`` is the conductivity [``W/K/m``], and ``a_k,b_k,c_k,d_k`` are paramet
 - ``a_k`` = 1.18Watt/K/m
 - ``b_k`` = 474Watt/m
 - ``c_k`` = 77K
-- ``d_k`` = 0/MPa
+- ``d_k`` = 0/Pa
 """
 @with_kw_noshow struct TP_Conductivity{T, N, U1, U2, U3, U4} <: AbstractConductivity{T}
     Name::NTuple{N, Char} = ""            # The name is encoded as a NTuple{Char} to make it isbits
     a::GeoUnit{T, U1} = 1.18Watt / K / m  # empirical fitting term
     b::GeoUnit{T, U2} = 474.0Watt / m     # empirical fitting term
     c::GeoUnit{T, U3} = 77.0K             # empirical fitting term
-    d::GeoUnit{T, U4} = 0.0 / MPa         # empirical fitting term
+    d::GeoUnit{T, U4} = 0.0 / Pa         # empirical fitting term
 end
 
 function TP_Conductivity(name::AbstractString, a, b, c, d)
@@ -370,7 +370,7 @@ This is a dictionary with pre-defined laws:
 # Example
 ```julia
 julia> k=Set_TP_Conductivity["Mantle"]
-T/P dependent conductivity: k = (0.73 W K⁻¹ m⁻¹ + 1293 W m⁻¹/(T + 77 K))*(1 + 4.0e-5 MPa⁻¹*P)
+T/P dependent conductivity: k = (0.73 W K⁻¹ m⁻¹ + 1293 W m⁻¹/(T + 77 K))*(1 + 4.0e-11 Pa⁻¹*P)
 ```
 
 """
@@ -382,7 +382,7 @@ TP_Conductivity_info = Dict(
             "UpperCrust",
             (
                 TP_Conductivity(;
-                    Name = "UpperCrust", a = 0.64Watt / K / m, b = 807Watt / m, c = 77K, d = 0 / MPa
+                    Name = "UpperCrust", a = 0.64Watt / K / m, b = 807Watt / m, c = 77K, d = 0 / Pa
                 ),
                 MaterialParamsInfo(;
                     Comment = "Sediment/upper crust T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!",
@@ -393,7 +393,7 @@ TP_Conductivity_info = Dict(
             "LowerCrust",
             (
                 TP_Conductivity(;
-                    Name = "LowerCrust", a = 1.18Watt / K / m, b = 474Watt / m, c = 77K, d = 0 / MPa
+                    Name = "LowerCrust", a = 1.18Watt / K / m, b = 474Watt / m, c = 77K, d = 0 / Pa
                 ),
                 MaterialParamsInfo(;
                     Comment = "Lower crust T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!",
@@ -404,7 +404,7 @@ TP_Conductivity_info = Dict(
             "OceanicCrust",
             (
                 TP_Conductivity(;
-                    Name = "OceanicCrust", a = 1.18Watt / K / m, b = 474Watt / m, c = 77K, d = 0 / MPa
+                    Name = "OceanicCrust", a = 1.18Watt / K / m, b = 474Watt / m, c = 77K, d = 0 / Pa
                 ),
                 MaterialParamsInfo(;
                     Comment = "Oceanic crust T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!",
@@ -419,7 +419,7 @@ TP_Conductivity_info = Dict(
                     a = 0.73Watt / K / m,
                     b = 1293Watt / m,
                     c = 77K,
-                    d = 0.00004 / MPa,
+                    d = 4.0e-11 / Pa,
                 ),
                 MaterialParamsInfo(;
                     Comment = "Mantle T-dependent conductivity, as listed in table 21.2 of Gerya et al. | Reference still to be verified!",

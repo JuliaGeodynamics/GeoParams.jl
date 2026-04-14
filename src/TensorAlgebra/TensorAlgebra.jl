@@ -11,6 +11,9 @@ import Base: (:)
 
     elseif size(A) == (3, 3)
         return [A[1, 1], A[2, 2], A[3, 3], A[2, 3], A[1, 3], A[1, 2]]
+
+    else
+        throw(ArgumentError("Unsupported tensor size: $(size(A)). Only 2x2 and 3x3 tensors are supported."))
     end
 end
 
@@ -27,6 +30,9 @@ end
 
     elseif length(A) == 6
         return voigt2tensor_3x3(A)
+
+    else
+        throw(ArgumentError("Unsupported tensor size: $(size(A)). Only 2x2 and 3x3 tensors are supported."))
     end
 end
 
@@ -59,12 +65,13 @@ end
         2 * (A[4] * B[4] + A[5] * B[5] + A[6] * B[6])
 end
 
-@inline doubledot(A::SMatrix, B::SMatrix) = sum(A .* B)
+@inline doubledot(A::SMatrix, B::SMatrix) = mapreduce(*, +, A, B)
 
-@inline second_invariant(A::NTuple) = √(0.5 * doubledot(A, A))
-@inline second_invariant(A::SMatrix) = √(0.5 * doubledot(A, A))
-@inline second_invariant(A::SVector) = √(0.5 * doubledot(A, A))
-@inline second_invariant(A::Matrix) = √(0.5 * sum(Ai * Ai for Ai in A))
+@inline second_invariant(A) = √(0.5 * doubledot(A, A))
+# @inline second_invariant(A::NTuple) = √(0.5 * doubledot(A, A))
+# @inline second_invariant(A::SMatrix) = √(0.5 * doubledot(A, A))
+# @inline second_invariant(A::SVector) = √(0.5 * doubledot(A, A))
+# @inline second_invariant(A::Matrix) = √(0.5 * sum(Ai * Ai for Ai in A))
 # So that is differentiable...
 @inline second_invariant(xx, yy, xy) = √(0.5 * (xx^2 + yy^2 + (-xx - yy)^2) + xy^2)
 @inline second_invariant(xx, yy, zz, yz, xz, xy) = √(0.5 * (xx^2 + yy^2 + zz^2) + xy^2 + yz^2 + xz^2)
@@ -212,7 +219,8 @@ Trii-dimensional rotation of the elastic stress where τ is in the Voig notation
     # vorticity
     ω = √(sum(x^2 for x in ωi))
     # unit rotation axis
-    n = SVector{3, Float64}(inv(ω) * ωi[i] for i in 1:3)
+    invω = inv(ω)
+    n = SVector(ωi[1] * invω, ωi[2] * invω, ωi[3] * invω)
     # integrate rotation angle
     θ = dt * 0.5 * ω
     # Euler Rodrigues rotation matrix
@@ -235,4 +243,43 @@ end
     ]
     R2 = (1.0 - cosθ) .* (n * n')
     return R1 + R2
+end
+
+@inline Base.@propagate_inbounds function rotate_voigt3D(R, τ)
+    τxx = τ[1]
+    τyy = τ[2]
+    τzz = τ[3]
+    τyz = τ[4]
+    τxz = τ[5]
+    τxy = τ[6]
+
+    r11 = R[1, 1]; r12 = R[1, 2]; r13 = R[1, 3]
+    r21 = R[2, 1]; r22 = R[2, 2]; r23 = R[2, 3]
+    r31 = R[3, 1]; r32 = R[3, 2]; r33 = R[3, 3]
+
+    xx = @muladd r11 * r11 * τxx + r12 * r12 * τyy + r13 * r13 * τzz +
+        2 * r12 * r13 * τyz + 2 * r11 * r13 * τxz + 2 * r11 * r12 * τxy
+
+    yy = @muladd r21 * r21 * τxx + r22 * r22 * τyy + r23 * r23 * τzz +
+        2 * r22 * r23 * τyz + 2 * r21 * r23 * τxz + 2 * r21 * r22 * τxy
+
+    zz = @muladd r31 * r31 * τxx + r32 * r32 * τyy + r33 * r33 * τzz +
+        2 * r32 * r33 * τyz + 2 * r31 * r33 * τxz + 2 * r31 * r32 * τxy
+
+    yz = @muladd r21 * r31 * τxx + r22 * r32 * τyy + r23 * r33 * τzz +
+        (r22 * r33 + r23 * r32) * τyz +
+        (r21 * r33 + r23 * r31) * τxz +
+        (r21 * r32 + r22 * r31) * τxy
+
+    xz = @muladd r11 * r31 * τxx + r12 * r32 * τyy + r13 * r33 * τzz +
+        (r12 * r33 + r13 * r32) * τyz +
+        (r11 * r33 + r13 * r31) * τxz +
+        (r11 * r32 + r12 * r31) * τxy
+
+    xy = @muladd r11 * r21 * τxx + r12 * r22 * τyy + r13 * r23 * τzz +
+        (r12 * r23 + r13 * r22) * τyz +
+        (r11 * r23 + r13 * r21) * τxz +
+        (r11 * r22 + r12 * r21) * τxy
+
+    return SVector(xx, yy, zz, yz, xz, xy)
 end

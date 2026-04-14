@@ -40,11 +40,11 @@ import GeoParams.Diffusion
     args = (; T = T)
     TauII = 1.0e6
     ε = compute_εII(p, TauII, args)
-    @test ε ≈ 1.4177666788096435e-25
+    @test ε ≈ 1.4177666788096435e-7
 
     # same but while removing the tensor correction
     ε_notensor = compute_εII(remove_tensor_correction(p), TauII, args)
-    @test ε_notensor ≈ 9.451777858730959e-26
+    @test ε_notensor ≈ 9.451777858730959e-8
 
     # test with arrays
     τII_array = ones(10) * 1.0e6
@@ -76,7 +76,7 @@ import GeoParams.Diffusion
         MPa2Pa = 1.0e6            # MPa  -> Pa
         cm32m3 = 1.0e-6           # cm3  -> m3
         J2kJ = 1.0e-3           # Joul -> kJoule
-        A0 = 10.0 .^ (logA) # in MPa^-n s^-1 micrometer^m
+        A0 = 10.0 .^ (logA) # in MPa^-n s^-1 micrometer^m for the original benchmark
         m_gr = -m_gr0
         PMPa = PPa / MPa2Pa
 
@@ -88,16 +88,31 @@ import GeoParams.Diffusion
         )
         FG_s = 1 / (3^((npow[i_flow] + 1) ./ 2))
 
-        mu1 =
-            FG_e .* eII .^ (1 / npow[i_flow] - 1) *
-            A0[i_flow]^(-1.0 / npow[i_flow]) *
-            gsiz^(-m_gr[i_flow] / npow[i_flow]) *
-            fugH[i_flow]^(-r_fug[i_flow] / npow[i_flow]) *
-            exp(
-            (Qact[i_flow] + PMPa * MPa2Pa .* Vact[i_flow] * cm32m3 * J2kJ) /
-                (R * J2kJ * TK * npow[i_flow]),
-        )
-        mu = mu1 .* MPa2Pa #In Pa.s
+        if itest == 1
+            # Diffusion creep data is stored in SI as Pa^-n m^(-p) s^-1.
+            A_si = A0[i_flow] * MPa2Pa^(-npow[i_flow])
+            gsiz_si = gsiz * 1.0e-6
+            mu =
+                FG_e .* eII .^ (1 / npow[i_flow] - 1) *
+                A_si^(-1.0 / npow[i_flow]) *
+                gsiz_si^(-m_gr[i_flow] / npow[i_flow]) *
+                fugH[i_flow]^(-r_fug[i_flow] / npow[i_flow]) *
+                exp(
+                (Qact[i_flow] * 1.0e3 + PPa .* Vact[i_flow] * cm32m3) /
+                    (R * TK * npow[i_flow]),
+            )
+        else
+            mu1 =
+                FG_e .* eII .^ (1 / npow[i_flow] - 1) *
+                A0[i_flow]^(-1.0 / npow[i_flow]) *
+                gsiz^(-m_gr[i_flow] / npow[i_flow]) *
+                fugH[i_flow]^(-r_fug[i_flow] / npow[i_flow]) *
+                exp(
+                (Qact[i_flow] + PMPa * MPa2Pa .* Vact[i_flow] * cm32m3 * J2kJ) /
+                    (R * J2kJ * TK * npow[i_flow]),
+            )
+            mu = mu1 .* MPa2Pa #In Pa.s
+        end
         Tau = 2 * mu * eII     # stress
 
         #---------------------------

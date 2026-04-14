@@ -17,7 +17,7 @@ export DislocationCreep,
 
 # Dislocation Creep ------------------------------------------------
 """
-    DislocationCreep(n = 1.0NoUnits, r = 0.0NoUnits, A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
+    DislocationCreep(n = 1.0NoUnits, r = 0.0NoUnits, A = 1.5e-6Pa/s, E = 476.0e3J / mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
 
 Defines the flow law parameter of a dislocation creep law.
 
@@ -28,17 +28,17 @@ The (isotropic) dislocation creep law, as used by experimentalists, is given by
 where
 - ``n`` is the power law exponent
 - ``r`` is the exponent of fugacity dependence
-- ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` and ``r`` must be either pre-defined or substituted)
-- ``E`` is the activation energy ``\\mathrm{[kJ/mol]}``
+- ``A`` is a pre-exponential factor ``[\\mathrm{Pa}^{-n}s^{-1}]`` (if manually defined, ``n`` and ``r`` must be either pre-defined or substituted)
+- ``E`` is the activation energy ``\\mathrm{[J/mol]}``
 - ``V`` is the activation volume ``\\mathrm{[m^3/mol]}``
 - ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}``
-- ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[MPa]}`` which are converted into second invariants using the `Apparatus` variable that can be
+- ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[Pa]}`` which are converted into second invariants using the `Apparatus` variable that can be
 either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
 # Example
 ```julia-repl
 julia> x2 = DislocationCreep(n=3)
-DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3 mol^-1, Apparatus=AxialCompression
+DislocationCreep: n=3, r=0.0, A=1.5e-18 Pa^-3 s^-1, E=476.0e3 J mol^-1, V=6.0e-6 m^3 mol^-1, Apparatus=AxialCompression
 ```
 """
 struct DislocationCreep{T, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
@@ -331,7 +331,7 @@ function SetDislocationCreep(
 end
 
 """
-    Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
+    Transforms unitful inputs to SI base units such as Pa and J.
 """
 Transform_DislocationCreep(name::F) where {F} = Transform_DislocationCreep(dislocation_database(name))
 Transform_DislocationCreep(name::F, kwargs::NamedTuple) where {F} = Transform_DislocationCreep(dislocation_database(name), kwargs)

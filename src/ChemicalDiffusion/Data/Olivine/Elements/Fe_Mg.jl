@@ -18,7 +18,7 @@ function Ol_Fe_Mg_Dohmen2007_perp_c()
         ΔV = (7 * 1.0e-6)m^3 / mol,
         aX = (3 * 2.303)NoUnits,
         bX = -0.14NoUnits,
-        P0 = 1bar,
+        P0 = 1.0e5Pa,
         Charge = 2,  # charge of the cation
         T_range_min = 700C,
         T_range_max = 1550C
@@ -64,7 +64,7 @@ function Ol_Fe_Mg_Dohmen2007_TaMED_perp_c()
         dfO2 = 1.0e-7NoUnits,
         aX = (3 * 2.303)NoUnits,
         bX = -0.1NoUnits,
-        P0 = 1bar,
+        P0 = 1.0e5Pa,
         Charge = 2,  # charge of the cation
         T_range_min = 900C,
         T_range_max = 1550C
@@ -109,7 +109,7 @@ function Ol_Fe_Mg_Dohmen2007_PED_perp_c()
         ΔV = (7 * 1.0e-6)m^3 / mol,
         aX = (3 * 2.303)NoUnits,
         bX = -0.1NoUnits,
-        P0 = 1bar,
+        P0 = 1.0e5Pa,
         Charge = 2,  # charge of the cation
         T_range_min = 700C,
         T_range_max = 900C
