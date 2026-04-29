@@ -113,23 +113,23 @@ function (itp::LinearInterpolator{T, I})(x::Real, y::Real) where {T, I}
 end
 
 # Vectorized evaluation
-function (itp::LinearInterpolator{T})(x::AbstractArray, y::AbstractArray) where T
+function (itp::LinearInterpolator{T})(x::AbstractArray, y::AbstractArray) where {T}
     return itp.(x, y)
 end
 
 function interpolate_field(
-    T0::T,
-    dT::T,
-    numT::I,
-    Tmax::T,
-    P0::T,
-    dP::T,
-    numP::I,
-    Pmax::T,
-    data::A,
-    x::Real,
-    y::Real,
-) where {T, I, A <: AbstractArray{T, 2}}
+        T0::T,
+        dT::T,
+        numT::I,
+        Tmax::T,
+        P0::T,
+        dP::T,
+        numP::I,
+        Pmax::T,
+        data::A,
+        x::Real,
+        y::Real,
+    ) where {T, I, A <: AbstractArray{T, 2}}
 
     # Promote input types to the interpolator's element type
     x_promoted = T(x)
@@ -178,7 +178,7 @@ end
 Find the interval index i such that knots[i] <= x < knots[i+1].
 Returns an index that may be out of bounds for extrapolation handling.
 """
-function find_interval(knots::AbstractVector{T}, x::T) where T
+function find_interval(knots::AbstractVector{T}, x::T) where {T}
     n = length(knots)
 
     # Handle boundary cases
