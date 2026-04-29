@@ -10,7 +10,7 @@ import GeoParams.Peierls
     # Define a linear viscous creep law ---------------------------------
     x1 = PeierlsCreep()
     @test isbits(x1)
-    @test param_info(x1).Equation ===  L"$\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}$"
+    @test param_info(x1).Equation === L"$\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}$"
     str = sprint(show, x1)
     @test occursin("PeierlsCreep:", str)
     @test Value(x1.n) == 1.0

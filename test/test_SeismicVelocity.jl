@@ -111,11 +111,11 @@ using GeoParams
     @test Value(x_vararg.Vp) ≈ 8100m / s
 
     # anelastic_correction: water = 1 (damp) and water = 2 (wet)
-    Vs_dry  = anelastic_correction(0, 4.36734, 5.0, 1250.0)
+    Vs_dry = anelastic_correction(0, 4.36734, 5.0, 1250.0)
     Vs_damp = anelastic_correction(1, 4.36734, 5.0, 1250.0)
-    Vs_wet  = anelastic_correction(2, 4.36734, 5.0, 1250.0)
+    Vs_wet = anelastic_correction(2, 4.36734, 5.0, 1250.0)
     @test Vs_damp < 4.36734   # correction reduces velocity
-    @test Vs_wet  < 4.36734
+    @test Vs_wet < 4.36734
     @test Vs_dry > Vs_damp    # more water → larger correction
 
     # melt_correction_Takei: ϕ = 0 → velocities unchanged

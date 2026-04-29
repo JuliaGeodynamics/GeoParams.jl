@@ -332,7 +332,7 @@ import ForwardDiff as FD
     # Scalar TP_Conductivity via named-tuple args: d==0 branch and d!=0 branch
     k_tp = Set_TP_Conductivity("Mantle")
     @test compute_conductivity(k_tp, (; P = 0.0, T = 800.0)) ≈ compute_conductivity(k_tp, [0.0], [800.0])[1]
-    k_tp_pdep = TP_Conductivity(; Name = "Custom", a = 1.0Watt / K / m, b = 100Watt / m, c = 50K, d = 1e-5 / MPa)
+    k_tp_pdep = TP_Conductivity(; Name = "Custom", a = 1.0Watt / K / m, b = 100Watt / m, c = 50K, d = 1.0e-5 / MPa)
     @test compute_conductivity(k_tp_pdep, (; P = 1.0, T = 500.0)) > compute_conductivity(k_tp_pdep, (; P = 0.0, T = 500.0))
 
     # Check if we use arrays
