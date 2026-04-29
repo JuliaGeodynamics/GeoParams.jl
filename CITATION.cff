@@ -1,0 +1,67 @@
+# Official format description at https://citation-file-format.github.io
+cff-version: 1.2.0
+message: "Cite this release if you are using GeoParams.jl"
+authors:
+- affiliation: Johannes Gutenberg University Mainz
+  family-names: "Kaus"
+  given-names: "Boris J. P."
+  orcid: https://orcid.org/0000-0002-0247-8660
+- affiliation: ETH
+  family-names: "de Montserrat"
+  given-names: "Albert"
+  orcid: https://orcid.org/0000-0003-1694-3735
+- affiliation: Johannes Gutenberg University Mainz
+  family-names: "Aellig"
+  given-names: "Pascal S."
+  orcid: https://orcid.org/0009-0008-9039-5646
+- affiliation: Johannes Gutenberg University Mainz
+  family-names: "Dominguez"
+  given-names: "Hugo"
+  orcid: https://orcid.org/0009-0001-8425-0503
+- affiliation: Johannes Gutenberg University Mainz
+  family-names: "Medinger"
+  given-names: "Nils"
+- affiliation: Johannes Gutenberg University Mainz
+  family-names: "Riel"
+  given-names: "Nicolas"
+  orcid: https://orcid.org/0000-0002-5037-5519
+- affiliation: University of Buenos Aires
+  family-names: "Cosarinsky"
+  given-names: "Matthias"
+- affiliation: University of Bayreuth
+  family-names: "Spang"
+  given-names: "Arne"
+  orcid: https://orcid.org/0000-0002-6107-0403
+- affiliation: Johannes Gutenberg University Mainz
+  family-names: "Berlie"
+  given-names: "Nicolas"
+  orcid: https://orcid.org/0000-0003-4731-5520
+- affiliation: Johannes Gutenberg University Mainz
+  family-names: "Kiss"
+  given-names: "Daniel"
+- affiliation: Johannes Gutenberg University Mainz
+  family-names: "Ranocha"
+  given-names: "Hendrik"
+  orcid: https://orcid.org/0000-0002-3456-2277
+- affiliation: University of Lausanne
+  family-names: "R\xE4ss"
+  given-names: "Ludovic"
+  orcid: https://orcid.org/0000-0002-1136-899X
+- affiliation: Goethe University Frankfurt
+  family-names: "Fuchs"
+  given-names: "Lukas"
+  orcid: https://orcid.org/0000-0002-9165-6384
+- affiliation: Johannes Gutenberg University Mainz
+  family-names: "Frasunkiewicz"
+  given-names: "Jacob"
+  orcid: https://orcid.org/0009-0002-5049-4259
+- affiliation: University of Goettingen, Germany
+  family-names: "Luder"
+  given-names: "Mona"
+date-released: '2025-12-29'
+doi: 10.5281/zenodo.8089230
+license: "MIT"
+repository-code: https://github.com/JuliaGeodynamics/GeoParams.jl/tree/main
+title: 'JuliaGeodynamics/GeoParams.jl: v0.7.9'
+type: software
+version: v0.7.9

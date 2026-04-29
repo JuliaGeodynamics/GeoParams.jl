@@ -28,24 +28,24 @@ function local_iterations_εII(
 
     while ϵ > tol
         iter += 1
-        #= 
-            Newton scheme -> τII = τII - f(τII)/dfdτII. 
+        #=
+            Newton scheme -> τII = τII - f(τII)/dfdτII.
             Therefore,
                 f(τII) = εII - strain_rate_circuit(v, τII, args) = 0
-                dfdτII = - dεII_dτII(v, τII, args) 
+                dfdτII = - dεII_dτII(v, τII, args)
                 τII -= f / dfdτII
         =#
         τII = @muladd τII + (εII - compute_εII(v, τII, args)) * inv(dεII_dτII(v, τII, args))
         ϵ = abs(τII - τII_prev) * inv(τII)
         τII_prev = τII
-        # @print(verbose, " iter $(iter) $ϵ")
+        @print(verbose, " iter $(iter) $ϵ")
 
         T_check = ϵ isa Union{AbstractFloat, Integer}
         !(T_check) && break
     end
 
-    # @print(verbose, "final τII = $τII")
-    # @print(verbose, "---")
+    @print(verbose, "final τII = $τII")
+    @print(verbose, "---")
 
     return τII
 end
@@ -91,11 +91,11 @@ Performs local iterations versus stress for a given strain rate using AD
     ε_pl = 0.0
     while (ϵ > tol) && (iter < 10)
         iter += 1
-        #= 
-            Newton scheme -> τII = τII - f(τII)/dfdτII. 
+        #=
+            Newton scheme -> τII = τII - f(τII)/dfdτII.
             Therefore,
                 f(τII) = εII - compute_εII(v, τII, args) = 0
-                dfdτII = - dεII_dτII(v, τII, args) 
+                dfdτII = - dεII_dτII(v, τII, args)
                 τII -= f / dfdτII
         =#
 
@@ -184,11 +184,11 @@ end
     εII_prev = εII
     while ϵ > tol
         iter += 1
-        #= 
-            Newton scheme -> τII = τII - f(τII)/dfdτII. 
+        #=
+            Newton scheme -> τII = τII - f(τII)/dfdτII.
             Therefore,
                 f(τII) = εII - strain_rate_circuit(v, τII, args) = 0
-                dfdτII = - dεII_dτII(v, τII, args) 
+                dfdτII = - dεII_dτII(v, τII, args)
                 τII -= f / dfdτII
         =#
         εII = @muladd (τII - first(compute_τII(v, εII, args))) * inv(dτII_dεII(v, εII, args)) + εII
@@ -225,7 +225,7 @@ Performs local iterations versus pressure for a given total volumetric strain ra
     # Initial guess
     p = compute_p_harmonic(v, εvol, args)
 
-    # @print(verbose,"initial p = $p")
+    @print(verbose, "initial p = $p")
 
     # Local Iterations
     iter = 0
@@ -233,11 +233,11 @@ Performs local iterations versus pressure for a given total volumetric strain ra
     p_prev = p
     while ϵ > tol
         iter += 1
-        #= 
-            Newton scheme -> τII = τII - f(τII)/dfdτII. 
+        #=
+            Newton scheme -> τII = τII - f(τII)/dfdτII.
             Therefore,
                 f(τII) = εII - strain_rate_circuit(v, τII, args) = 0
-                dfdτII = - dεII_dτII(v, τII, args) 
+                dfdτII = - dεII_dτII(v, τII, args)
                 τII -= f / dfdτII
         =#
         p = @muladd (εvol - compute_εvol(v, p, args)) * inv(dεvol_dp(v, p, args)) + p
@@ -245,11 +245,11 @@ Performs local iterations versus pressure for a given total volumetric strain ra
         ϵ = abs(p - p_prev) * inv(abs(p))
         p_prev = p
 
-        # @print(verbose," iter $(iter) $ϵ")
+        @print(verbose, " iter $(iter) $ϵ")
     end
 
-    # @print(verbose,"final p = $p")
-    # @print(verbose,"---")
+    @print(verbose, "final p = $p")
+    @print(verbose, "---")
 
     return p
 end
@@ -318,7 +318,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         τ_initial = compute_τII_harmonic(c, εII_total, args)
     end
 
-    # @print(verbose,"τII guess = $τ_initial")
+    @print(verbose, "τII guess = $τ_initial")
 
     x = @MVector ones(_T, n)
     x .= εII_total
@@ -358,9 +358,9 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         x .+= dx
 
         ϵ = sum(abs.(dx) ./ (abs.(x)))
-        # @print(verbose," iter $(iter) $ϵ")
+        @print(verbose, " iter $(iter) $ϵ")
     end
-    # @print(verbose,"---")
+    @print(verbose, "---")
 
     if (iter == max_iter)
         error("iterations did not converge")
@@ -400,7 +400,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         τ_initial = compute_τII_harmonic(c, εII_total, args)
     end
 
-    # @print(verbose,"τII guess = $τ_initial")
+    @print(verbose, "τII guess = $τ_initial")
 
     x = @MVector zeros(_T, n)
     x[1] = τ_initial
@@ -441,9 +441,9 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         # @show dx x r J
 
         ϵ = sum(abs.(dx) ./ (abs.(x .+ 1.0e-9)))
-        # @print(verbose," iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
+        @print(verbose, " iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
     end
-    # @print(verbose,"---")
+    @print(verbose, "---")
     if (iter == max_iter)
         error("iterations did not converge")
     end
@@ -689,9 +689,9 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         x .+= dx
 
         ϵ = sum(abs.(dx) ./ (abs.(x .+ 1.0e-9)))
-        # @print(verbose," iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3])")
+        @print(verbose, " iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3])")
     end
-    # @print(verbose,"---")
+    @print(verbose, "---")
     if (iter == max_iter)
         error("iterations did not converge")
     end

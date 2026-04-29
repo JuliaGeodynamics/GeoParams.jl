@@ -35,17 +35,28 @@ for (name, backend) in zip(pkg, backends)
     end
 
     @testset "$name compatibility with: conductivity" begin
-        K = ConstantConductivity()
-        @test AD.derivative(backend, x -> compute_conductivity(K, (; T = x)), T)[1] == 0
+        k = ConstantConductivity()
+        @test AD.derivative(backend, x -> compute_conductivity(k, (; T = x)), T)[1] == 0
 
-        K = T_Conductivity_Whittington()
-        @test AD.derivative(backend, x -> compute_conductivity(K, (; T = x)), T)[1] ≈ -0.00019522103
+        # Regression: constructor must not attempt unit-dimension promotion across a,b,c,d.
+        cname = Tuple("UpperCrust")
+        K_nt = TP_Conductivity(cname, 0.64Watt / K / m, 807Watt / m, 77K, 0 / MPa)
+        @test K_nt isa TP_Conductivity
+        @test K_nt.Name == cname
+        @test (typeof(K_nt.a.val) == typeof(K_nt.b.val)) && (typeof(K_nt.b.val) == typeof(K_nt.c.val)) && (typeof(K_nt.c.val) == typeof(K_nt.d.val))
 
-        K = T_Conductivity_Whittington_parameterised()
-        @test AD.derivative(backend, x -> compute_conductivity(K, (; T = x)), T)[1] ≈ -0.00064766553
+        # This goes through the Parameters keyword constructor, which dispatches to String constructor.
+        K_kw = TP_Conductivity(; Name = "UpperCrust", a = 0.64Watt / K / m, b = 807Watt / m, c = 77K, d = 0 / MPa)
+        @test K_kw isa TP_Conductivity
 
-        K = TP_Conductivity()
-        @test AD.derivative(backend, x -> compute_conductivity(K, (; T = x)), T)[1] ≈ -0.0004086457
+        k = T_Conductivity_Whittington()
+        @test AD.derivative(backend, x -> compute_conductivity(k, (; T = x)), T)[1] ≈ -0.00019522103
+
+        k = T_Conductivity_Whittington_parameterised()
+        @test AD.derivative(backend, x -> compute_conductivity(k, (; T = x)), T)[1] ≈ -0.00064766553
+
+        k = TP_Conductivity()
+        @test AD.derivative(backend, x -> compute_conductivity(k, (; T = x)), T)[1] ≈ -0.0004086457
     end
 
     @testset "$name compatibility with: Diffusion" begin

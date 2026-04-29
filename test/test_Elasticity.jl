@@ -120,8 +120,8 @@ using GeoParams
     # test if we provide phase ratios
     PhaseRatio = zeros(n, n, n, 3)
     for i in CartesianIndices(Phases)
-        iz = Phases[i]
-        I = CartesianIndex(i, iz)
+        j = Phases[i]
+        I = CartesianIndex(i, j)
         PhaseRatio[I] = 1.0
     end
 

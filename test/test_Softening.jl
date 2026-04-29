@@ -76,6 +76,18 @@ using GeoParams, Test
     @test compute_yieldfunction(p5, (P = P, τII = τII, EII = 0.0e0)) ≈ 1.9499974039493073e7
     @test compute_yieldfunction(p5, (P = P, τII = τII, EII = 10.0e0)) ≈ 1.9499982679491926e7
 
+    # test DPCap with dilation-angle softening
+    softening_Ψ = LinearSoftening(0.0e0, 20.0e0, lo, hi)
+    p_cap = DruckerPragerCap(; Ψ = 20.0, softening_Ψ = softening_Ψ)
+
+    F_no_soft = compute_yieldfunction(p_cap, (P = P, τII = τII, EII = 0.0))
+    F_soft = compute_yieldfunction(p_cap, (P = P, τII = τII, EII = 1.0))
+    Q_no_soft = compute_flowpotential(p_cap, (P = P, τII = τII, EII = 0.0))
+    Q_soft = compute_flowpotential(p_cap, (P = P, τII = τII, EII = 1.0))
+
+    @test F_no_soft ≈ F_soft
+    @test !isapprox(Q_no_soft, Q_soft)
+
     ### Test nondimensionalization
     CharDim = GEO_units(; length = 100km, viscosity = 1.0e21Pa * s)
 

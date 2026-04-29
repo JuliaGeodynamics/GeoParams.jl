@@ -250,8 +250,8 @@ using StaticArrays
     # test computing material properties when we have PhaseRatios, instead of Phase numbers
     PhaseRatio = zeros(n, n, n, 5)
     for i in CartesianIndices(Phases)
-        iz = Phases[i]
-        I = CartesianIndex(i, iz)
+        j = Phases[i]
+        I = CartesianIndex(i, j)
         PhaseRatio[I] = 1.0
     end
 

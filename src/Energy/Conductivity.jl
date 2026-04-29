@@ -332,10 +332,21 @@ where ``k`` is the conductivity [``W/K/m``], and ``a_k,b_k,c_k,d_k`` are paramet
     d::GeoUnit{T, U4} = 0.0 / MPa         # empirical fitting term
 end
 
-function TP_Conductivity(args::Vararg{Any, 5})
-    return TP_Conductivity(
-        NTuple{length(args[1]), Char}(collect(args[1])), convert.(GeoUnit, args[2:end])...
+function TP_Conductivity(name::AbstractString, a, b, c, d)
+    vals = convert.(GeoUnit, (a, b, c, d))
+    return TP_Conductivity(Tuple(name), vals...)
+end
+
+function TP_Conductivity(name::NTuple{N, Char}, a, b, c, d) where {N}
+    ga, gb, gc, gd = convert.(GeoUnit, (a, b, c, d))
+    Tprom = promote_type(typeof(NumValue(ga)), typeof(NumValue(gb)), typeof(NumValue(gc)), typeof(NumValue(gd)))
+    vals = (
+        convert(GeoUnit{Tprom}, UnitValue(ga)),
+        convert(GeoUnit{Tprom}, UnitValue(gb)),
+        convert(GeoUnit{Tprom}, UnitValue(gc)),
+        convert(GeoUnit{Tprom}, UnitValue(gd)),
     )
+    return TP_Conductivity(name, vals...)
 end
 
 function param_info(s::TP_Conductivity)

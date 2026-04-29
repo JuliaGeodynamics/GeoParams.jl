@@ -18,8 +18,7 @@ using GeoParams:
 
 
 # to remove at some point
-@warn "`Myrs` as a unit is deprecated. Use `Myr` instead."
-const Myrs = u"Myr"
+
 
 # Define a number of useful units
 const km = u"km"
@@ -51,7 +50,6 @@ export km,
     cm,
     mm,
     μm,
-    Myrs, # to remove at some point
     Myr,
     yr,
     s,
@@ -161,15 +159,17 @@ end
 
 Base.convert(t::Type{GeoUnit{T, U}}, x::Quantity{T, U, X}) where {T, U, X} = GeoUnit(x)
 Base.convert(t::Type{GeoUnit{T, U}}, x::T) where {T, U} = GeoUnit(x)
+# Handle cross-type conversions (e.g. GeoUnit{Float32} → GeoUnit{Float64})
+Base.convert(::Type{GeoUnit{T, U}}, x::GeoUnit{S, U}) where {T, U, S} = GeoUnit{T, U}(T(x.val), x.unit, x.isdimensional)
 
 # Define methods to deal with cases when the input has integers
 GeoUnit(val::Union{Int64, AbstractArray{Int64}}) = GeoUnit(Float64.(val))
-GeoUnit(val::Union{Int32, AbstractArray{Int32}}) = GeoUnit(Float32.(val))
+GeoUnit(val::Union{Int32, AbstractArray{Int32}}) = GeoUnit(Float64.(val))
 function GeoUnit(val::Union{Quantity{Int64}, AbstractArray{<:Quantity{<:Int64}}})
     return GeoUnit(Float64.(val))
 end
 function GeoUnit(val::Union{Quantity{Int32}, AbstractArray{<:Quantity{<:Int32}}})
-    return GeoUnit(Float32.(val))
+    return GeoUnit(Float64.(val))
 end
 
 # helper functions
