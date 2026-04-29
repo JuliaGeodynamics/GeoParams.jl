@@ -1,30 +1,42 @@
 using Test, Statistics
-using GeoParams
+using GeoParams, LaTeXStrings
 
 @testset "CreepLaw" begin
 
     #Make sure structs are isbits
     x = LinearViscous()
     @test isbits(x)
+    @test param_info(x).Equation === L"$\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}$"
+    @test sprint(show, x) == "Linear viscosity: η=1.0e20"
     @test isvolumetric(x) == false
 
     x = PowerlawViscous()
     @test isbits(x)
+    @test sprint(show, x) == "Powerlaw viscosity: η0=1.0e18, n=2.0, ε0=1.0e-15 "
 
     x = ArrheniusType()
     @test isbits(x)
+    @test param_info(x).Equation === L"$\tau_{ij} = 2 \eta_0 exp( E_η/(T + T_O) + E_η/(T_η + T_O))  \dot{\varepsilon}_{ij}$"
+    @test sprint(show, x) == "ArrheniusType: η0 = 1.0, E_η = 23.03, T_O = 1.0, T_η = 1.0"
 
     x = LinearMeltViscosity()
     @test isbits(x)
+    @test param_info(x).Equation === L"$\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}; \eta=10^{A + \frac{B}{T-T_0}}$"
+    @test sprint(show, x) == "Linear melt viscosity: η=1.0 Pa s * 10^(-9.6012 + (13374.0 K / (T - 307.8043 K)))"
 
     x = ViscosityPartialMelt_Costa_etal_2009()
     @test isbits(x)
+    @test param_info(x).Equation === L"$Costa et al. (2009) effective viscosity parameterisation$"
+    @test sprint(show, x) == "Viscosity of partially molten rocks (after Costa et al. [2009]) using melt viscosity: η=Linear melt viscosity: η=1.0 Pa s * 10^(-9.6012 + (13374.0 K / (T - 307.8043 K)))"
 
     x = GiordanoMeltViscosity()
     @test isbits(x)
+    @test param_info(x).Equation === L"$\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}; \eta=10^{(AT + BT \over (T - CT))}$"
+    @test sprint(show, x) == "GiordanoMeltViscosity: η= 1.0 Pa s * 10^(AT + BT / (T - CT)) with Oxide Comp (50.42, 1.53, 15.13, 9.81, 7.76, 11.35, 2.83, 0.14, 1.0)"
 
     x = HerschelBulkley()
     @test isbits(x)
+    @test sprint(show, x) == "Hershel Bulkley viscosity: η0=1.0e24 Pa s, τ0=1.0e8 Pa, ηr=1.0e20 Pa s, n=3.0, Q=0.0 K, Tr=1273.0 K"
     # This tests the MaterialParameters structure
     CharUnits_GEO = GEO_units(; viscosity = 1.0e19, length = 1000km)
 

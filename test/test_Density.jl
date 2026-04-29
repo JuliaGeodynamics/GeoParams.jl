@@ -12,45 +12,54 @@ import ForwardDiff.derivative
     @test isbits(x)
     @test param_info(x).Equation === L"$\rho = cst$"
     @test isdimensional(x) === true
+    @test sprint(show, x) isa String
 
     x = PT_Density()
     @test isbits(x)
     @test param_info(x).Equation === L"$\rho = \rho_0(1.0-\alpha (T-T_0) + \beta (P-P_0)$"
     @test isdimensional(x) === true
+    @test sprint(show, x) isa String
 
     x = Compressible_Density()
     @test isbits(x)
     @test param_info(x).Equation === L"$\rho = \rho_0\exp(\beta*(P-P_0))$"
     @test isdimensional(x) === true
+    @test sprint(show, x) isa String
 
     x = MeltDependent_Density()
     @test isbits(x)
     @test param_info(x).Equation === L"$\rho =  \phi \rho_{\textrm{melt}} + (1-\phi) \\rho_{\textrm{solid}}$"
     @test isdimensional(x) === true
+    @test sprint(show, x) isa String
 
     x = T_Density()
     @test isbits(x)
     @test param_info(x).Equation === L"$\rho = \rho_0*(1 - \alpha*(T-T_0))$"
     @test isdimensional(x) === true
+    @test sprint(show, x) isa String
 
     x = Vector_Density()
     @test isbits(x) == false
     @test param_info(x).Equation === L"\rho from a precomputed vector"
+    @test sprint(show, x) isa String
 
     x = BubbleFlow_Density()
     @test isbits(x)
     @test param_info(x).Equation === L"\rho = 1/((c_0-c)/rho_g + 1-(c_0-c)/\rho_m)"
     @test isdimensional(x) === true
+    @test sprint(show, x) isa String
 
     x = GasPyroclast_Density()
     @test isbits(x)
     @test param_info(x).Equation === L"\rho = \rho_g\delta + \rho_p(1 - \delta)"
     @test isdimensional(x) === true
+    @test sprint(show, x) isa String
 
     x = Melt_DensityX()
     @test isbits(x)
     @test param_info(x).Equation === L"$\rho from an oxide composition$"
     @test isdimensional(x) === true
+    @test sprint(show, x) isa String
 
     # This tests the MaterialParameters structure
     CharUnits_GEO = GEO_units(; viscosity = 1.0e19, length = 1000km)

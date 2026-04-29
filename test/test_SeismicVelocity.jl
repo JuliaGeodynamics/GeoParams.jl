@@ -105,4 +105,21 @@ using GeoParams
 
     @test Vs_new[10] ≈ 2750.713407744307
     @test Vp_new[10] ≈ 5792.937134183798
+
+    # ConstantSeismicVelocity vararg constructor
+    x_vararg = ConstantSeismicVelocity(8100m / s, 4500m / s)
+    @test Value(x_vararg.Vp) ≈ 8100m / s
+
+    # anelastic_correction: water = 1 (damp) and water = 2 (wet)
+    Vs_dry  = anelastic_correction(0, 4.36734, 5.0, 1250.0)
+    Vs_damp = anelastic_correction(1, 4.36734, 5.0, 1250.0)
+    Vs_wet  = anelastic_correction(2, 4.36734, 5.0, 1250.0)
+    @test Vs_damp < 4.36734   # correction reduces velocity
+    @test Vs_wet  < 4.36734
+    @test Vs_dry > Vs_damp    # more water → larger correction
+
+    # melt_correction_Takei: ϕ = 0 → velocities unchanged
+    Vs_nomelt, Vp_nomelt = melt_correction_Takei(Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, 0.0, α)
+    @test Vs_nomelt ≈ Vs0 atol = 1.0
+    @test Vp_nomelt ≈ Vp0 atol = 1.0
 end

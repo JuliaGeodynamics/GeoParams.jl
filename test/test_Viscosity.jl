@@ -147,6 +147,43 @@ import ForwardDiff as FD
             P
         )
     end
+
+    # Direct dispatch to LinearViscous and ConstantElasticity variants
+    @testset "compute_viscosity_εII/τII direct dispatch" begin
+        lv = LinearViscous(; η = 5.0)
+        el_s = SetConstantElasticity(; G = 2.0, ν = 0.5)
+        a = (; dt = 3.0)
+
+        @test compute_viscosity_εII(lv, 0.0, a) == 5.0
+        @test compute_viscosity_εII(el_s, 0.0, a) == 2.0 * 3.0
+        @test compute_viscosity_τII(lv, 0.0, a) == 5.0
+        @test compute_viscosity_τII(el_s, 0.0, a) == 2.0 * 3.0
+
+        # Tensor (xx, yy, xy) form
+        xx, yy, xy = 0.01, 0.01, 0.01
+        @test compute_viscosity_εII(lv, xx, yy, xy, a) == 5.0
+        @test compute_viscosity_τII(lv, xx, yy, xy, a) == 5.0
+    end
+
+    # Multi-phase εII / τII with integer phase and phase ratios
+    @testset "multi-phase compute_viscosity_εII/τII" begin
+        rheologies_lv = (
+            SetMaterialParams(; CompositeRheology = CompositeRheology((LinearViscous(; η = 1.0),))),
+            SetMaterialParams(; CompositeRheology = CompositeRheology((LinearViscous(; η = 2.0),))),
+        )
+        a_lv = (;)
+
+        @test compute_viscosity_εII(rheologies_lv, 1, 0.0, a_lv) == 1.0
+        @test compute_viscosity_εII(rheologies_lv, 2, 0.0, a_lv) == 2.0
+        @test compute_viscosity_τII(rheologies_lv, 1, 0.0, a_lv) == 1.0
+        @test compute_viscosity_τII(rheologies_lv, 2, 0.0, a_lv) == 2.0
+
+        pr = (0.5, 0.5)
+        @test compute_viscosity_εII(rheologies_lv, pr, 0.0, a_lv) == 1.5
+        @test compute_viscosity_τII(rheologies_lv, pr, 0.0, a_lv) == 1.5
+        @test compute_viscosity_εII(rheologies_lv, SA[0.5, 0.5], 0.0, a_lv) == 1.5
+        @test compute_viscosity_τII(rheologies_lv, SA[0.5, 0.5], 0.0, a_lv) == 1.5
+    end
 end
 
 # using GLMakie
