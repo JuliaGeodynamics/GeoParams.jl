@@ -172,32 +172,4 @@ function interpolate_field(
     return lerp(v0, v1, s)  # Final interpolation in y direction
 end
 
-"""
-    find_interval(knots, x)
-
-Find the interval index i such that knots[i] <= x < knots[i+1].
-Returns an index that may be out of bounds for extrapolation handling.
-"""
-function find_interval(knots::AbstractVector{T}, x::T) where {T}
-    n = length(knots)
-
-    # Handle boundary cases
-    if x ≥ knots[end]
-        return n - 1  # Return n-1 for the last valid interval
-    end
-
-    # Binary search
-    left, right = 1, n
-    while right - left > 1
-        mid = (left + right) ÷ 2
-        if knots[mid] ≤ x
-            left = mid
-        else
-            right = mid
-        end
-    end
-
-    return left
-end
-
 end

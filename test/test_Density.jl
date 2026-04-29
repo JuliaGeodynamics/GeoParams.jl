@@ -172,6 +172,7 @@ import ForwardDiff.derivative
     # Do the same but non-dimensionalize the result
     CharDim = GEO_units()
     PD_data1 = PerpleX_LaMEM_Diagram(fname; CharDim = CharDim)
+    @test sprint(show, PD_data1) isa String
 
     rho_ND = PD_data1.Rho(
         nondimensionalize(1500.0K, CharDim), nondimensionalize(1.0e8 * Pa, CharDim)

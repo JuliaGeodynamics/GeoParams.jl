@@ -197,6 +197,7 @@ using StaticArrays
 
     Rhyolite = "test_data/MAGEMin_Rhyolite.in"
     PD_MAGEMin = MAGEMin_Diagram(Rhyolite)
+    @test sprint(show, PD_MAGEMin) isa String
     args = (; T = ustrip.(Tdata), P = fill(1.0e7, length(Tdata)))
     compute_meltfraction!(phi_dim, PD_MAGEMin, args)
     @test sum(phi_dim) ≈ 5.674678228571429
