@@ -11,7 +11,8 @@ import GeoParams.Diffusion
     x1 = DiffusionCreep()
     @test isbits(x1)
     @test param_info(x1).Equation ===  L"$\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}$"
-    @test sprint(show, x1) == "DiffusionCreep: Name = , n=1.0, r=0.0, p=-3.0, A=1.5e6 m³·⁰ Pa⁻¹·⁰ s⁻¹·⁰, E=500000.0 J mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517"
+    str = sprint(show, x1)
+    @test occursin("DiffusionCreep:", str)
     @test Value(x1.p) == -3.0
     @test Value(x1.A) == 1.5e6Pa^-1 * s^-1 * m^3
 

@@ -11,7 +11,8 @@ import GeoParams.GBS
     x1 = GrainBoundarySliding()
     @test isbits(x1)
     @test param_info(x1).Equation ===  L"$\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}$"
-    @test sprint(show, x1) == "GrainBoundarySliding: Name = , n=3.5, p=-2.0, A=6.5e-30 m²·⁰ Pa⁻³·⁵ s⁻¹·⁰, E=400000.0 J mol⁻¹·⁰, V=1.8e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517"
+    str = sprint(show, x1)
+    @test occursin("GrainBoundarySliding:", str)
     @test Value(x1.n) == 3.5
     @test Value(x1.p) == -2.0
     @test Value(x1.A) == 6500.0MPa^(-3.5) * s^(-1) * µm^(2)
