@@ -126,6 +126,7 @@ end
 @testset "Density traits" begin
     v1 = ConstantDensity()
     v2 = PT_Density()
+    v3 = MAGEMin_Diagram("test_data/MAGEMin_Rhyolite.in")
     d1 = SetMaterialParams(; Density = v1)
     d2 = SetMaterialParams(; Density = v2)
     r1 = (d1, d2)
@@ -133,6 +134,7 @@ end
 
     @test isconstant(v1) isa ConstantDensityTrait
     @test isconstant(v2) isa NonConstantDensityTrait
+    @test isconstant(v3) isa NonConstantDensityTrait
     @test isconstant(d1) isa ConstantDensityTrait
     @test isconstant(d2) isa NonConstantDensityTrait
     @test isconstant(r1) isa NonConstantDensityTrait
