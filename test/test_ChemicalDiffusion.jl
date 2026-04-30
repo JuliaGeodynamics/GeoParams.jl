@@ -7,11 +7,13 @@ using StaticArrays
     # test the diffusion data structure
     x1 = DiffusionData()
     @test isbits(x1)
-
+    @test sprint(show, x1) isa String
+    @test param_info(x1) isa MaterialParamsInfo
     # test the diffusion data structure for multicomponent in melt
     x2 = MeltMulticompDiffusionData()
     @test isbits(x2)
-
+    @test sprint(show, x2) isa String
+    @test param_info(x2) isa MaterialParamsInfo
     # check auto unit conversion
     Hf_Rt_perp = Rutile.Rt_Hf_Cherniak2007_perp_c
     Hf_Rt_perp = SetChemicalDiffusion(Hf_Rt_perp; D0 = 10km^2 / s)

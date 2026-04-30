@@ -8,6 +8,8 @@ using StaticArrays
     #Make sure structure is isbits
     x = MeltingParam_Caricchi()
     @test isbits(x)
+    @test param_info(x).Equation === L"$\phi = {1 \over {1 + \exp( {800-T[^oC] \over 23})}}$"
+    @test sprint(show, x) == "Caricchi et al. melting parameterization"
 
     # This tests the various melting parameterizations
     CharUnits_GEO = GEO_units(; viscosity = 1.0e19, length = 10km)
@@ -51,6 +53,8 @@ using StaticArrays
     # 5th order polynomial
     p = MeltingParam_5thOrder()
     @test isbits(p)
+    @test param_info(p).Equation === L"$\phi = aT^5 + bT^4 + cT^3 + dT^2 + eT + f$"
+    @test sprint(show, p) == "5th order polynomial melting curve: phi = 2.083291971482524e-12 T^5 + -1.239502833666574e-8T^4 + 2.938887604687626e-5T^3 + -0.034711533077108T^2 + 20.425403874539178T + -4790.664658179178  963.15 K ≤ T ≤ 1388.2 K"
     compute_meltfraction!(phi_dim, p, args)
     @test sum(phi_dim) ≈ 4.708427909521561
 
@@ -91,6 +95,8 @@ using StaticArrays
     # 4th order polynomial
     p = MeltingParam_4thOrder()
     @test isbits(p)
+    @test param_info(p).Equation === L"$\phi = bT^4 + cT^3 + dT^2 + eT + f$"
+    @test sprint(show, p) == "4th order polynomial melting curve: phi = -7.594512597174117e-10T^4 + 3.469192091489447e-6T^3 + -0.00592352980926T^2 + 4.482855645604745T + -1268.730161921053  963.15 K ≤ T ≤ 1270.15 K"
     compute_meltfraction!(phi_dim, p, args)
     @test sum(phi_dim) ≈ 4.853749635538406
 
@@ -132,6 +138,8 @@ using StaticArrays
     # Quadratic parameterisation
     p = MeltingParam_Quadratic()
     @test isbits(p)
+    @test param_info(p).Equation === L"$\phi = 1.0 - ((T_l - T)/(T_l - T_s))^2$"
+    @test sprint(show, p) == "Quadratic melting curve:  ϕ = 1.0 - ((Tₗ-T)/(Tₗ-Tₛ))² with Tₛ=963.15 K, Tₗ=1273.15 K "
     compute_meltfraction!(phi_dim, p, args)
     @test sum(phi_dim) ≈ 5.0894901144641
 
@@ -143,6 +151,9 @@ using StaticArrays
     #------------------------------
     # Assimilation parameterisation
     p = MeltingParam_Assimilation()
+    @test isbits(p)
+    @test param_info(p).Equation === L"$\phi = f(T_S,T_l,a) taking crustal assimilation into account.$"
+    @test sprint(show, p) == "Quadratic melting assimilation parameterisation after Spera & Bohrson (2001)"
     compute_meltfraction!(phi_dim, p, args)
     @test sum(phi_dim) ≈ 4.995
     dϕdT_dim = zeros(size(T))
@@ -156,6 +167,8 @@ using StaticArrays
     p_rhyolite = MeltingParam_Smooth3rdOrder(a = 3043.0, b = -10552.0, c = 12204.9, d = -4709.0)
     @test isbits(p_basalt)
     @test isbits(p_rhyolite)
+    @test param_info(p_basalt).Equation === L"$\phi = f(T)$"
+    @test sprint(show, p_basalt) == "Smooth 3rd order melting parameterization"
     compute_meltfraction!(phi_dim, p_basalt, args)
     @test sum(phi_dim) ≈ 2.963636933098781
 
@@ -194,6 +207,13 @@ using StaticArrays
     plot(plt1, plt2, layout=(2,1))
     =#
 
+
+    Rhyolite = "test_data/MAGEMin_Rhyolite.in"
+    PD_MAGEMin = MAGEMin_Diagram(Rhyolite)
+    @test sprint(show, PD_MAGEMin) isa String
+    args = (; T = ustrip.(Tdata), P = fill(1.0e7, length(Tdata)))
+    compute_meltfraction!(phi_dim, PD_MAGEMin, args)
+    @test sum(phi_dim) ≈ 5.674678228571429
     #------------------------------
 
     # Test computation of melt parameterization for the whole computational domain, using arrays

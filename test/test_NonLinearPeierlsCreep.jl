@@ -10,6 +10,8 @@ import GeoParams.NonLinearPeierls
     # Define a linear viscous creep law ---------------------------------
     x1 = NonLinearPeierlsCreep()
     @test isbits(x1)
+    str = sprint(show, x1)
+    @test occursin("NonLinearPeierlsCreep:", str)
     @test Value(x1.n) == 2.0
     @test Value(x1.q) == 1.0
     @test Value(x1.o) == 0.5

@@ -6,22 +6,27 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
     x = ConstantPermeability()
     @test isbits(x)
     @test param_info(x).Equation === L"k = cst"
+    str = sprint(show, x)
+    @test occursin("Constant permeability", str)
     @test isdimensional(x) === true
     @test repr("text/plain", x) isa String
 
     x = HazenPermeability()
     @test isbits(x)
     @test param_info(x).Equation === L"k = C \cdot D_{10}^2"
+    @test sprint(show, x) == "Hazen permeability: k = C * D10^2; C=1.0; D10=0.0001"
     @test isdimensional(x) === true
 
     x = PowerLawPermeability()
     @test isbits(x)
     @test param_info(x).Equation === L"k = c \cdot k_0 \cdot \phi^n"
+    @test sprint(show, x) == "Power-law permeability: k = c* k0 * ϕ^n; c = 1.0, k0=1.0e-12; n=3.0"
     @test isdimensional(x) === true
 
     x = CarmanKozenyPermeability()
     @test isbits(x)
     @test param_info(x).Equation === L"k = c \left(\frac{\phi}{\phi_0}\right)^n"
+    @test sprint(show, x) == "Carman-Kozeny permeability: k = c * (ϕ / ϕ0)^n; c=1.0; ϕ0=0.01; n=3.0"
 
     # Test the permeability calculations with units
     x1 = ConstantPermeability(; k = 1.0e-12m^2)
