@@ -211,7 +211,7 @@ Computes the stress for a Dislocation creep law given a certain strain rate
     FT, FE = a.FT, a.FE
     _n = inv(n)
 
-    return @pow A^-_n * (EpsII * FE)^_n * f^(-r * _n) * exp((E + P * V) / (n * R * T)) / FT
+    return @pow (EpsII * FE / A)^_n * f^(-r * _n) * exp((E + P * V) / (n * R * T)) / FT
 end
 
 @inline function compute_τII(
@@ -221,7 +221,7 @@ end
     FT, FE = a.FT, a.FE
     _n = inv(n)
 
-    return @pow A^-_n * f^(-r * _n) * (EpsII * FE)^_n * exp((E + P * V) / (n * R * T)) / FT
+    return @pow f^(-r * _n) * (EpsII * FE / A)^_n * exp((E + P * V) / (n * R * T)) / FT
 end
 
 """

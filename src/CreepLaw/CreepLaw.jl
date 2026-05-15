@@ -70,6 +70,7 @@ end
 @inline unit_power(A) = typeof(A).parameters[2].parameters[1][1].power
 include("DislocationCreep.jl")
 include("DiffusionCreep.jl")
+include("DiffusionCreepGrainSize.jl")
 include("GrainBoundarySliding.jl")
 include("PeierlsCreep.jl")
 include("NonLinearPeierlsCreep.jl")

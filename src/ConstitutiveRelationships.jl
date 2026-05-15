@@ -69,7 +69,7 @@ export param_info,
 # add methods programmatically
 for myType in (
         :LinearViscous, :LinearMeltViscosity, :ViscosityPartialMelt_Costa_etal_2009, :GiordanoMeltViscosity,
-        :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType,
+        :DiffusionCreep, :DiffusionCreepGrainSize, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType,
         :GrainBoundarySliding, :PeierlsCreep, :NonLinearPeierlsCreep, :PowerlawViscous, :HerschelBulkley,
     )
     @eval begin
