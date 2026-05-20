@@ -13,15 +13,15 @@ function Grt_Mg_Chakraborty1992()
         Crystallography = "Isometric",  # Crystallographic system of the mineral
         Buffer = "C-O2",  # Buffer condition (e.g., NNO) during the experiment
         Fluid = "C-H2O",  # Fluid condition (e.g., anhydrous) during the experiment
-        D0 = 1.1 * 1.0e-3cm^2 / s,  # pre-exponential factor
-        Ea = 67997u"cal/mol",  # activation energy
-        Ea_1σ = 8973u"cal/mol",  # uncertainty at 1σ of the activation energy
-        ΔV = 5.3cm^3 / mol,  # activation volume
-        ΔV_1σ = 3cm^3 / mol,  # uncertainty at 1σ of the activation volume
+        D0 = (1.1 * 1.0e-3) * 1.0e-4m^2 / s,  # pre-exponential factor
+        Ea = 284499.448J / mol,  # activation energy
+        Ea_1σ = 37543.032J / mol,  # uncertainty at 1σ of the activation energy
+        ΔV = 5.299999999999999e-6m^3 / mol,  # activation volume
+        ΔV_1σ = 3.0e-6m^3 / mol,  # uncertainty at 1σ of the activation volume
         Charge = 2,  # charge of the cation
         T_range_min = 1100C,  # temperature min of the experiment
         T_range_max = 1480C,  # temperature max of the experiment
-        P0 = 1.0u"bar"  # pressure of calibration
+        P0 = 1.0e5Pa  # pressure of calibration
     )
     info = MaterialParamsInfo(;
         Comment = "Checked values by HD (18.01.25)",
@@ -60,10 +60,10 @@ function Grt_Mg_Carlson2006()
         Fluid = "",  # Fluid condition (e.g., anhydrous) during the experiment
         D0 = exp(-19.947)u"m^2/s",  # pre-exponential factor
         log_D0_1σ = 0.919NoUnits,
-        Ea = 244.21u"kJ/mol",  # activation energy
-        Ea_1σ = 5.32u"kJ/mol",  # uncertainty at 1σ of the activation energy
-        ΔV = 8.565cm^3 / mol,  # activation volume
-        ΔV_1σ = 0.647cm^3 / mol,  # uncertainty at 1σ of the activation volume
+        Ea = (244.21e3)J / mol,  # activation energy
+        Ea_1σ = (5.32e3)J / mol,  # uncertainty at 1σ of the activation energy
+        ΔV = 8.564999999999998e-6m^3 / mol,  # activation volume
+        ΔV_1σ = 6.47e-7m^3 / mol,  # uncertainty at 1σ of the activation volume
         aX = 419.9NoUnits,  # correspond to the sensitivity of the frequency factor to unit-cell dimension (unit normally of 1/nm but here adimensional)
         bX = - 1.1525NoUnits,  # unit-cell dimension of the almandine endmember (unit normally of nm but here adimensional)
         nfO2 = (1 / 6)NoUnits,  # exponent for the oxygen fugacity dependency
@@ -71,7 +71,7 @@ function Grt_Mg_Carlson2006()
         Charge = 2,  # charge of the cation
         T_range_min = 500C,  # temperature min of the experiment
         T_range_max = 1500C,  # temperature max of the experiment
-        P0 = 0.0u"bar"  # pressure of calibration
+        P0 = 0.0Pa  # pressure of calibration
     )
     info = MaterialParamsInfo(;
         Comment = "Checked values by HD (06.08.25)",
@@ -109,8 +109,8 @@ function Grt_Mg_Chu2015()
         Crystallography = "Isometric",  # Crystallographic system of the mineral
         D0 = (10^(-8.28))u"m^2/s",  # pre-exponential factor
         log_D0_1σ = 0.7NoUnits,
-        Ea = 258.0u"kJ/mol",  # activation energy
-        Ea_1σ = 7.4u"kJ/mol",  # uncertainty at 1σ of the activation energy
+        Ea = (258.0e3)J / mol,  # activation energy
+        Ea_1σ = (7.4e3)J / mol,  # uncertainty at 1σ of the activation energy
         ΔV = 0.72u"J / bar / mol",  # activation volume
         ΔV_1σ = 0.09u"J / bar / mol",  # uncertainty at 1σ of the activation volume
         aX = 340.3NoUnits,  # correspond to the sensitivity of the frequency factor to unit-cell dimension (unit normally of 1/nm but here adimensional)

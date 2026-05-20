@@ -15,7 +15,7 @@ function Rt_Co_Sasaki1985_para_c()
         Buffer = "air",
         Fluid = "Anhydrous",  # Fluid condition (e.g., anhydrous) during the experiment
         D0 = 0.0002241m^2 / s,  # pre-exponential factor
-        Ea = 132kJ / mol,  # activation energy
+        Ea = 132.0e3J / mol,  # activation energy
         Charge = 3,  # charge of the cation
         T_range_min = 500C,  # temperature min of the experiment
         T_range_max = 900C  # temperature max of the experiment
@@ -56,7 +56,7 @@ function Rt_Co_Sasaki1985_perp_c()
         Buffer = "air",
         Fluid = "Anhydrous",  # Fluid condition (e.g., anhydrous) during the experiment
         D0 = 1.55e-7m^2 / s,  # pre-exponential factor
-        Ea = 127kJ / mol,  # activation energy
+        Ea = 127.0e3J / mol,  # activation energy
         Charge = 3,  # charge of the cation
         T_range_min = 800C,  # temperature min of the experiment
         T_range_max = 1050C  # temperature max of the experiment

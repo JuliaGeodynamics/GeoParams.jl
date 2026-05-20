@@ -18,7 +18,7 @@ R is the universal gas constant
 Apparatus defines the appartus type that shall be recreated (Axial Compression, Simple Shear, Invariant)
 =#
 """
-    GrainBoundarySliding(p = A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
+    GrainBoundarySliding(p = A = 1.5e-6Pa/s, E = 476.0e3J / mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
 
 Defines the flow law parameter of a grain boundary sliding.
 
@@ -28,11 +28,11 @@ The grain boundary sliding, as used by experimentalists, is given by
 ```
 where
 - ``p`` is the exponent of grain size
-- ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` must be either pre-defined or substituted)
-- ``E`` is the activation energy ``\\mathrm{[kJ/mol]}``
+- ``A`` is a pre-exponential factor ``[\\mathrm{Pa}^{-n}s^{-1}]`` (if manually defined, ``n`` must be either pre-defined or substituted)
+- ``E`` is the activation energy ``\\mathrm{[J/mol]}``
 - ``V`` is the activation volume ``\\mathrm{[m^3/mol]}``
 - ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}``
-- ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[MPa]}``
+- ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[Pa]}``
 
 The experimental parameters are converted into second invariants using the `Apparatus` variable that can be
 either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
@@ -40,7 +40,7 @@ either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law paramet
 # Example
 ```julia-repl
 julia> x2 = GrainBoundarySliding(Name="test")
-GrainBoundarySliding: Name = test, n=1.0, p=-3.0, A=1.5 m³·⁰ MPa⁻¹·⁰ s⁻¹·⁰, E=500.0 kJ mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517)
+GrainBoundarySliding: Name = test, n=1.0, p=-3.0, A=1.5e-6 m³·⁰ Pa⁻¹·⁰ s⁻¹·⁰, E=500.0e3 J mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517)
 ```
 """
 struct GrainBoundarySliding{T, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
@@ -342,7 +342,7 @@ end
 
 """
     Transform_GrainBoundarySliding(name)
-Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
+Transforms unitful inputs to SI base units such as Pa and J.
 """
 Transform_GrainBoundarySliding(name::F) where {F} = Transform_GrainBoundarySliding(GrainBoundarySliding_database(name))
 Transform_GrainBoundarySliding(name::F, kwargs::NamedTuple) where {F} = Transform_GrainBoundarySliding(GrainBoundarySliding_database(name), kwargs)

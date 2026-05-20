@@ -10,8 +10,8 @@ function dry_olivine_Mei_2010()
         q = 1.0NoUnits,                         # exponent of water-fugacity
         o = 0.5NoUnits,                        # grain size exponent
         TauP = 5.9e9Pa,                         # Peierls stress
-        A = (1.4e-7) * (2.0^((1.0 + (3.0 / 2.0)) / 2.0))MPa^(-2) * s^(-1),    # material specific rheological parameter
-        E = 320.0kJ / mol,                        # activation energy
+        A = 1.0e-12 * ((1.4e-7) * (2.0^((1.0 + (3.0 / 2.0)) / 2.0))Pa^(-2) * s^(-1)),    # material specific rheological parameter
+        E = 320.0e3J / mol,                        # activation energy
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
@@ -38,8 +38,8 @@ function test_Peierls()
         q = 1.0NoUnits,                         # exponent of water-fugacity
         o = 0.5NoUnits,                        # grain size exponent
         TauP = 5.9e9Pa,                         # Peierls stress
-        A = 4.55657940893437e-9MPa^(-2) * s^(-1),    # material specific rheological parameter
-        E = 320.0kJ / mol,                        # activation energy
+        A = 1.0e-12 * (4.55657940893437e-9Pa^(-2) * s^(-1)),    # material specific rheological parameter
+        E = 320.0e3J / mol,                        # activation energy
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;

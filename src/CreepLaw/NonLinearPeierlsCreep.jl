@@ -7,7 +7,7 @@ export NonLinearPeierlsCreep,
 
 # NonLinearPeierls Creep ------------------------------------------------
 """
-    NonLinearPeierlsCreep(n = 1.0NoUnits, r = 0.0NoUnits, A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
+    NonLinearPeierlsCreep(n = 1.0NoUnits, r = 0.0NoUnits, A = 1.5e-6Pa/s, E = 476.0e3J / mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
 
 Defines the flow law parameter of a non linear peierls creep law.
 
@@ -20,18 +20,18 @@ where
 - ``q`` is the stress relation exponent
 - ``o`` is the stress relation exponent (normally called p)
 - ``r`` is the exponent of fugacity dependence
-- ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` must be either pre-defined or substituted)
-- ``E`` is the activation energy ``\\mathrm{[kJ/mol]}``
+- ``A`` is a pre-exponential factor ``[\\mathrm{Pa}^{-n}s^{-1}]`` (if manually defined, ``n`` must be either pre-defined or substituted)
+- ``E`` is the activation energy ``\\mathrm{[J/mol]}``
 - ``V`` is the activation volume ``\\mathrm{[m^3/mol]}``
 - ``\\dot{\\gamma}`` is the strain rate ``\\mathrm{[1/s]}``
-- ``\\sigma_\\mathrm{p}`` is the peierls stress ``\\mathrm{[MPa]}``
-- ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[MPa]}`` which are converted into second invariants using the `Apparatus` variable that can be
+- ``\\sigma_\\mathrm{p}`` is the peierls stress ``\\mathrm{[Pa]}``
+- ``\\sigma_\\mathrm{d}`` is the differential stress ``\\mathrm{[Pa]}`` which are converted into second invariants using the `Apparatus` variable that can be
 either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
 # Example
 ```julia-repl
 julia> x2 = NonLinearPeierlsCreep(n=1)
-NonLinearPeierlsCreep: n=1, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, Apparatus=AxialCompression
+NonLinearPeierlsCreep: n=1, A=1.5e-18 Pa^-3 s^-1, E=476.0e3 J mol^-1, Apparatus=AxialCompression
 ```
 """
 struct NonLinearPeierlsCreep{T, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
@@ -242,7 +242,7 @@ function SetNonLinearPeierlsCreep(
 end
 
 """
-    Transforms units from GPa, MPa, kJ etc. to basic units such as Pa, J etc.
+    Transforms unitful inputs to SI base units such as Pa and J.
 """
 Transform_NonLinearPeierlsCreep(name::F) where {F} = Transform_NonLinearPeierlsCreep(nonlinear_peierls_database(name))
 Transform_NonLinearPeierlsCreep(name::F, kwargs::NamedTuple) where {F} = Transform_NonLinearPeierlsCreep(nonlinear_peierls_database(name), kwargs)

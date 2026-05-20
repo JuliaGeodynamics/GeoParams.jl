@@ -14,8 +14,8 @@ function Ol_Mg_Chakraborty1994_forsterite()
         Crystallography = "Orthorhombic",
         Buffer = "Air and CO-CO2 mixture",
         D0 = 9.6 * 1.0e-4m^2 / s,
-        Ea = 400u"kJ / mol",
-        Ea_1σ = (60 / 2)u"kJ / mol",
+        Ea = (400.0e3)J / mol,
+        Ea_1σ = (60 / 2.0e3)J / mol,
         Charge = 2,  # charge of the cation
         T_range_min = 1000C,
         T_range_max = 1300C

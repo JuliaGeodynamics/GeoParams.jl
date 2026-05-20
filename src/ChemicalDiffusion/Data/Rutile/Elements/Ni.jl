@@ -15,7 +15,7 @@ function Rt_Ni_Sasaki1985_para_c()
         Buffer = "air",
         Fluid = "Anhydrous",  # Fluid condition (e.g., anhydrous) during the experiment
         D0 = 1.34e-5m^2 / s,  # pre-exponential factor
-        Ea = 126kJ / mol,  # activation energy
+        Ea = 126.0e3J / mol,  # activation energy
         Charge = 2,  # charge of the cation
         T_range_min = 700C,  # temperature min of the experiment
         T_range_max = 900C  # temperature max of the experiment

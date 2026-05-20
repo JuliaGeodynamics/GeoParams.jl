@@ -25,10 +25,10 @@ include("../Computations.jl")
 
 # Constant  -------------------------------------------------------
 """
-    ConstantLatentHeat(Q_L=400kJ/kg)
-    
+    ConstantLatentHeat(Q_L=400.0e3J/kg)
+
 Set a constant latent heat:
-```math  
+```math
     Q_L  = cst
 ```
 where ``Q_L`` is the latent heat [``J/kg``].

@@ -58,18 +58,18 @@ import ForwardDiff as FD
 
     # TP-dependent conductivity for different predefines cases
     T = Vector{Float64}(250:100:1250)
-    P = 1.0e6 * ones(size(T)) / ustrip(uconvert(Pa, 1MPa))  # must be in MPa!
+    P = 1.0e6 * ones(size(T))  # pressure in Pa
     List = "LowerCrust", "Mantle", "OceanicCrust", "UpperCrust"
     Sol_kT = 20.55712932736763, 28.700405819019323, 20.55712932736763, 19.940302462417037
     for i in eachindex(List)
         k_TP = Set_TP_Conductivity(List[i])
-        k = compute_conductivity(k_TP, P, T)         # note that P must be in MPa
+        k = compute_conductivity(k_TP, P, T)
         @test sum(k) ≈ Sol_kT[i]
 
         k_TP_nd = deepcopy(k_TP)
         k_TP_nd = nondimensionalize(k_TP_nd, CharUnits_GEO)
         T_nd = Float64.(ustrip.(T / CharUnits_GEO.Temperature))
-        P_nd = Float64.(ustrip(P / CharUnits_GEO.stress))
+        P_nd = Float64.(ustrip.(NoUnits, P .* Pa ./ CharUnits_GEO.stress))
         k_nd = compute_conductivity(k_TP_nd, P_nd, T_nd)
 
         @test ustrip(sum(abs.(ustrip.(k_nd * CharUnits_GEO.conductivity) - k))) < 1.0e-11
@@ -362,18 +362,18 @@ import ForwardDiff as FD
 
     # TP-dependent conductivity for different predefines cases
     T = Vector{Float64}(250:100:1250)
-    P = 1.0e6 * ones(size(T)) / ustrip(uconvert(Pa, 1MPa))  # must be in MPa!
+    P = 1.0e6 * ones(size(T))  # pressure in Pa
     List = "LowerCrust", "Mantle", "OceanicCrust", "UpperCrust"
     Sol_kT = 20.55712932736763, 28.700405819019323, 20.55712932736763, 19.940302462417037
     for i in eachindex(List)
         k_TP = Set_TP_Conductivity(List[i])
-        k = compute_conductivity(k_TP, P, T)         # note that P must be in MPa
+        k = compute_conductivity(k_TP, P, T)
         @test sum(k) ≈ Sol_kT[i]
 
         k_TP_nd = deepcopy(k_TP)
         k_TP_nd = nondimensionalize(k_TP_nd, CharUnits_GEO)
         T_nd = Float64.(ustrip.(T / CharUnits_GEO.Temperature))
-        P_nd = Float64.(ustrip(P / CharUnits_GEO.stress))
+        P_nd = Float64.(ustrip.(NoUnits, P .* Pa ./ CharUnits_GEO.stress))
         k_nd = compute_conductivity(k_TP_nd, P_nd, T_nd)
 
         @test ustrip(sum(abs.(ustrip.(k_nd * CharUnits_GEO.conductivity) - k))) < 1.0e-11

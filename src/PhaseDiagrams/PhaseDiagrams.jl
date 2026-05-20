@@ -120,8 +120,8 @@ function PerpleX_LaMEM_Diagram(fname::String; CharDim = nothing)
     dT = parse(Float64, header[51]) * u"K"
     numT = parse(Int64, header[52])
 
-    P0 = parse(Float64, header[53]) * u"bar"    # in bar (will be convert to Pa later)
-    dP = parse(Float64, header[54]) * u"bar"
+    P0 = parse(Float64, header[53]) * 1.0e5Pa
+    dP = parse(Float64, header[54]) * 1.0e5Pa
     numP = parse(Int64, header[55])
 
     Tvec = T0:dT:(T0 + dT * (numT - 1))              # 1D vector

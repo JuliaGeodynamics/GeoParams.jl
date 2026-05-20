@@ -11,8 +11,8 @@ function Melt_Th_Holycross2018_rhyolitic_highH2O()
         Buffer = "non-buffered",
         D0 = (10^(-5.1))u"m^2 / s",
         log_D0_1σ = (1.11 * 2.303)NoUnits,
-        Ea = (176.71)u"kJ/mol",
-        Ea_1σ = (24.86)u"kJ/mol",
+        Ea = (176.71e3)J / mol,
+        Ea_1σ = (24.86e3)J / mol,
         T_range_min = 850C,
         T_range_max = 935C
     )

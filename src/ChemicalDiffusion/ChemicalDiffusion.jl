@@ -61,7 +61,7 @@ where
 - ``bX`` is the constant term for the composition dependency,
 - ``X`` is the molar fraction of the species,
 - ``Ea`` is the activation energy [\\mathrm{[J/mol]}],
-- ``ΔV`` is the activation volume [\\mathrm{[cm^3/mol]}],
+- ``ΔV`` is the activation volume [\\mathrm{[m^3/mol]}],
 - ``P`` is the pressure [\\mathrm{[Pa]},
 - ``T`` is the temperature [\\mathrm{[K]}],
 - ``R`` is the gas constant [\\mathrm{[J/(mol K)]}],
@@ -106,8 +106,8 @@ struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10} <: AbstractChem
             log_D0_1σ = 0.0NoUnits,  # uncertainty at 1σ of the pre-exponential factor in the log form
             Ea = 0.0J / mol,  # activation energy
             Ea_1σ = 0.0J / mol,  # uncertainty at 1σ of the activation energy
-            ΔV = 0.0cm^3 / mol,  # activation volume
-            ΔV_1σ = 0.0cm^3 / mol,  # uncertainty at 1σ of the activation volume
+            ΔV = 0.0m^3 / mol,  # activation volume
+            ΔV_1σ = 0.0m^3 / mol,  # uncertainty at 1σ of the activation volume
             dfO2 = 1.0NoUnits,  # quotient for f(O2) dependency
             nfO2 = 0.0NoUnits,  # exponent for f(O2) dependency
             aX = 1.0NoUnits, # prefactor for composition dependency
@@ -319,12 +319,12 @@ end
 
 
 """
-    compute_D(data::DiffusionData; T=1K, P=1GPa, fO2 = 1e-25NoUnits, X = 0 NoUnits, kwargs...)
+    compute_D(data::DiffusionData; T=1K, P=1.0e9Pa, fO2 = 1e-25NoUnits, X = 0 NoUnits, kwargs...)
 
 Computes the diffusion coefficient `D` [m^2/s] from the diffusion data `data` at temperature `T` [K], pressure `P` [Pa], oxygen fugacity `fO2` [NoUnits] and composition dependency `X` [NoUnits] from a structure of type `DiffusionData`.
 If `T` and `P` are provided without unit, the function assumes the units are in Kelvin and Pascal, respectively, and outputs the diffusion coefficient without unit based on the value in m^2/s.
 """
-@inline function compute_D(data::DiffusionData; T = 1K, P = 1GPa, fO2 = 1.0e-25NoUnits, X = 0NoUnits, kwargs...)
+@inline function compute_D(data::DiffusionData; T = 1K, P = 1.0e9Pa, fO2 = 1.0e-25NoUnits, X = 0NoUnits, kwargs...)
 
     if P isa Quantity && T isa Quantity
         @unpack_units D0, Ea, ΔV, P0, R, dfO2, nfO2, aX, bX = data
@@ -369,13 +369,13 @@ end
 """
     compute_D!(D, data::AbstractChemicalDiffusion; T=ones(size(D))K, P=ones(size(D))Pa, fO2 = ones(size(D)), X = zeros(size(D)), kwargs...)
 
-In-place version of `compute_D(data::AbstractChemicalDiffusion; T=1K, P=1GPa, fO2=0NoUnits, kwargs...)`. `D` should be an array of the same size as T, P and fO2.
+In-place version of `compute_D(data::AbstractChemicalDiffusion; T=1K, P=1.0e9Pa, fO2=0NoUnits, kwargs...)`. `D` should be an array of the same size as T, P and fO2.
 """
 function compute_D!(
         D::AbstractArray,
         data::AbstractChemicalDiffusion;
         T = ones(size(D))K,
-        P = ones(size(D))GPa,
+        P = ones(size(D)) * 1.0e9Pa,
         fO2 = ones(size(D)),
         X = zeros(size(D)),
         kwargs...
@@ -531,7 +531,7 @@ end
 
 """
     Transform_ChemicalDiffusion(name)
-Transforms units from MPa, kJ etc. to basic units such as Pa, J etc.
+Transforms unitful inputs to SI base units such as Pa and J.
 """
 Transform_ChemicalDiffusion(name::F) where {F} = Transform_ChemicalDiffusion(diffusion_database(name))
 Transform_ChemicalDiffusion(name::F, kwargs::NamedTuple) where {F} = Transform_ChemicalDiffusion(diffusion_database(name), kwargs)

@@ -90,7 +90,7 @@ end
 
 # Pressure & Temperature dependent density -------------------------------
 """
-    PT_Density(ρ0=2900kg/m^3, α=3e-5/K, β=1e-9/Pa, T0=0C, P=0MPa)
+    PT_Density(ρ0=2900kg/m^3, α=3e-5/K, β=1e-9/Pa, T0=0C, P=0Pa)
 
 Set a pressure and temperature-dependent density:
 ```math
@@ -104,7 +104,7 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference temperature ``T_0`` a
     α::GeoUnit{_T, U2} = 3.0e-5 / K       # T-dependence of density
     β::GeoUnit{_T, U3} = 1.0e-9 / Pa      # P-dependence of density
     T0::GeoUnit{_T, U4} = 0.0C           # Reference temperature
-    P0::GeoUnit{_T, U5} = 0.0MPa         # Reference pressure
+    P0::GeoUnit{_T, U5} = 0.0Pa         # Reference pressure
 end
 PT_Density(args...) = PT_Density(convert.(GeoUnit, args)...)
 isdimensional(s::PT_Density) = isdimensional(s.ρ0)
@@ -140,7 +140,7 @@ end
 
 # Pressure-dependent density -------------------------------
 """
-    Compressible_Density(ρ0=2900kg/m^3, β=1e-9/Pa, P₀=0MPa)
+    Compressible_Density(ρ0=2900kg/m^3, β=1e-9/Pa, P₀=0Pa)
 
 Set a pressure-dependent density:
 ```math
@@ -151,7 +151,7 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference pressure ``P_0`` and 
 @with_kw_noshow struct Compressible_Density{_T, U1, U2, U3} <: AbstractDensity{_T}
     ρ0::GeoUnit{_T, U1} = 2900.0kg / m^3 # density
     β::GeoUnit{_T, U2} = 1.0e-9 / Pa     # P-dependence of density
-    P0::GeoUnit{_T, U3} = 0.0MPa         # Reference pressure
+    P0::GeoUnit{_T, U3} = 0.0Pa         # Reference pressure
 end
 Compressible_Density(args...) = Compressible_Density(convert.(GeoUnit, args)...)
 isdimensional(s::Compressible_Density) = isdimensional(s.ρ0)
@@ -271,9 +271,9 @@ end
 
 # Conduit densities -------------------------------------------------
 """
-    BubbleFlow_Density(ρmelt=ConstantDensity(), ρgas=ConstantDensity(), c0=0e0, a=0.0041MPa^-1/2)
+    BubbleFlow_Density(ρmelt=ConstantDensity(), ρgas=ConstantDensity(), c0=0e0, a=4.1e-6Pa^-1/2)
 
-Defines the BubbleFlow_Density as described in Slezin (2003) with a default gas solubility constant of 0.0041MPa``^{-1/2}`` used in e.g. Sparks et al. (1978)
+Defines the BubbleFlow_Density as described in Slezin (2003) with a default gas solubility constant of 4.1e-6Pa``^{-1/2}`` used in e.g. Sparks et al. (1978)
 ```math
     \\rho = \\frac{1}{\\frac{c_0 - c}{\\rho_g} + \\frac{1-(c_0-c)}{\\rho_m}}
 ```
@@ -291,7 +291,7 @@ c =
 - `c0`: Total volatile content
 - `a`: Gas solubility constant (default: 4.1e-6Pa``^{-1/2}``) (after Sparks et al., 1978)
 
-Possible values for a are 3.2e-6-6.4e-6Pa``^{-1/2}`` where the lower value corresponds to mafic magmas at rather large pressures (400-600MPa) and the higher value to felsic magmas at low pressures (0 to 100-200MPa) (after Slezin (2003))
+Possible values for a are 3.2e-6-6.4e-6Pa``^{-1/2}`` where the lower value corresponds to mafic magmas at rather large pressures (4.0e8-6.0e8Pa) and the higher value to felsic magmas at low pressures (0 to 1.0e8-2.0e8Pa) (after Slezin (2003))
 
 # Example
 ```julia
@@ -299,7 +299,7 @@ rheology = SetMaterialParams(;
                       Phase=1,
                       CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e21Pa * s)),
                       Gravity=ConstantGravity(; g=9.81.0m / s^2),
-                      Density= BubbleFlow_Density(ρmelt=ConstantDensity(ρ=2900kg/m^3), ρgas=ConstantDensity(ρ=1kg/m^3), c0=0.0, a=0.0041MPa^-1//2),
+                      Density= BubbleFlow_Density(ρmelt=ConstantDensity(ρ=2900kg/m^3), ρgas=ConstantDensity(ρ=1kg/m^3), c0=0.0, a=4.1e-6Pa^-1//2),
                       )
 ```
 

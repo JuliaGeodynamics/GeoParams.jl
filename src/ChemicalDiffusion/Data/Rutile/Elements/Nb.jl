@@ -16,8 +16,8 @@ function Rt_Nb_Marschall2013_para_c()
         Fluid = "Anhydrous",  # Fluid condition (e.g., anhydrous) during the experiment
         D0 = 5.3e-3m^2 / s,  # pre-exponential factor
         log_D0_1σ = 0.4NoUnits,
-        Ea = 377.5kJ / mol,  # activation energy
-        Ea_1σ = 9.8kJ / mol,  # uncertainty at 1σ of the activation energy
+        Ea = 377.5e3J / mol,  # activation energy
+        Ea_1σ = 9.8e3J / mol,  # uncertainty at 1σ of the activation energy
         Charge = 5,  # charge of the cation
         T_range_min = 850C,  # temperature min of the experiment
         T_range_max = 1250C  # temperature max of the experiment

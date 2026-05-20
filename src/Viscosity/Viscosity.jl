@@ -100,10 +100,13 @@ end
     return quote
         Base.@_inline_meta
         η = zero(T)
-        Base.@nexprs $N i -> (
-            v_i = v[i];
-            !isplastic(v_i) && !iselastic(v_i) && (η += inv(fn(v_i, II, args)))
-        )
+        Base.@nexprs $N i -> begin
+            v_i = v[i]
+            if !isplastic(v_i) && !iselastic(v_i)
+                #  @show inv(fn(v_i, II, args))
+                η += inv(fn(v_i, II, args))
+            end
+        end
         return inv(η)
     end
 end
