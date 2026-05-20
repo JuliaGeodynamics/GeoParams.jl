@@ -32,9 +32,51 @@ as described in Popov et al. (2025), Geoscientific Model Development.
     pT::GeoUnit{T, U1} = -1.0e5Pa           # Tensile strength
 end
 
+DruckerPragerCap(args...) = _DruckerPragerCap(args[1:3]..., convert.(GeoUnit, args[4:end])...)
+function _DruckerPragerCap(
+        softening_ϕ::S1,
+        softening_C::S2,
+        softening_Ψ::S3,
+        ϕ::GeoUnit{T1, U},
+        Ψ::GeoUnit{T2, U},
+        sinϕ::GeoUnit{T3, U},
+        cosϕ::GeoUnit{T4, U},
+        sinΨ::GeoUnit{T5, U},
+        cosΨ::GeoUnit{T6, U},
+        C::GeoUnit{T7, U1},
+        η_vp::GeoUnit{T8, U2},
+        pT::GeoUnit{T9, U3},
+    ) where {
+        T1, T2, T3, T4, T5, T6, T7, T8, T9, U, U1, U2, U3,
+        S1 <: AbstractSoftening, S2 <: AbstractSoftening, S3 <: AbstractSoftening,
+    }
+    C, pT = _promote_cap_pressure_units(C, pT)
+    T = promote_type(T1, T2, T3, T4, T5, T6, T7, T8, T9)
+    U1p = typeof(C).parameters[2]
+    return DruckerPragerCap{T, U, U1p, U2, S1, S2, S3}(
+        softening_ϕ,
+        softening_C,
+        softening_Ψ,
+        convert(GeoUnit{T, U}, ϕ),
+        convert(GeoUnit{T, U}, Ψ),
+        convert(GeoUnit{T, U}, sinϕ),
+        convert(GeoUnit{T, U}, cosϕ),
+        convert(GeoUnit{T, U}, sinΨ),
+        convert(GeoUnit{T, U}, cosΨ),
+        convert(GeoUnit{T, U1p}, C),
+        convert(GeoUnit{T, U2}, η_vp),
+        convert(GeoUnit{T, U1p}, pT),
+    )
+end
 
-DruckerPragerCap(args...) = DruckerPragerCap(args[1:3]..., convert.(GeoUnit, promote(args[4:end]...))...)
-DruckerPragerCap(softening_ϕ::AbstractSoftening, softening_C::AbstractSoftening, softening_Ψ::AbstractSoftening, args...) = DruckerPragerCap(softening_ϕ, softening_C, softening_Ψ, convert.(GeoUnit, promote(args...))...)
+function _promote_cap_pressure_units(C::GeoUnit, pT::GeoUnit)
+    if !isdimensional(C) && isdimensional(pT)
+        return GeoUnit(C.val * pT.unit), pT
+    elseif isdimensional(C) && !isdimensional(pT)
+        return C, GeoUnit(pT.val * C.unit)
+    end
+    return C, pT
+end
 
 function isvolumetric(s::DruckerPragerCap)
     @unpack_val Ψ = s
