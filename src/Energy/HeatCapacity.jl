@@ -229,10 +229,7 @@ end
     compute_heatcapacity(P,T, s::AbstractPhaseDiagramsStruct)
 Interpolates heat capacity as a function of `T,P` from a lookup table
 """
-@inline function compute_heatcapacity(s::AbstractPhaseDiagramsStruct; P, T, kwargs...)
-    fn = s.SpecificCp
-    return fn(T, P)
-end
+@inline compute_heatcapacity(s::AbstractPhaseDiagramsStruct; P, T, kwargs...) = s.SpecificCp(T, P)
 @inline compute_heatcapacity(s::AbstractPhaseDiagramsStruct, args) = compute_heatcapacity(s; args...)
 
 #-------------------------------------------------------------------------

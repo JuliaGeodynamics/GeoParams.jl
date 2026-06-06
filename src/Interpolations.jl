@@ -11,7 +11,6 @@ A custom 2D linear interpolation object that works on both CPU and GPU.
 Stores the knots (grid points) and coefficients (data values) for interpolation.
 """
 struct LinearInterpolator{T, I, A <: AbstractArray{T, 2}}
-    # knots::Tuple{AbstractArray{T,1}, AbstractArray{T, 1}}  # (T_vec, P_vec)
     T0::T                           # Starting value in T direction
     dT::T                           # Spacing in T direction
     numT::I                       # Number of knots in T direction
@@ -32,7 +31,7 @@ Adapt.@adapt_structure LinearInterpolator
 
 Linear interpolation between values `a` and `b` with weight `t`.
 """
-@inline lerp(a, b, t) = a + t * (b - a)
+@inline lerp(a, b, t) = muladd(t, b, muladd(-t, a, a));
 
 
 """

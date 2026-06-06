@@ -613,15 +613,7 @@ end
 Interpolates density as a function of `T,P` from a lookup table
 """
 @inline function compute_density(s::AbstractPhaseDiagramsStruct; P = 0.0e0, T = 0.0e0, kwargs...)
-    data = s.Rho.coefs
-    T0 = s.Rho.T0
-    dT = s.Rho.dT
-    numT = s.Rho.numT
-    Tmax = s.Rho.Tmax
-    P0 = s.Rho.P0
-    dP = s.Rho.dP
-    numP = s.Rho.numP
-    Pmax = s.Rho.Pmax
+(; data, T0, dT, numT, Tmax, P0, dP, numP, Pmax) = s.Rho
 
     rho = interpolate_field(T0, dT, numT, Tmax, P0, dP, numP, Pmax, data, T, P)
     return rho
