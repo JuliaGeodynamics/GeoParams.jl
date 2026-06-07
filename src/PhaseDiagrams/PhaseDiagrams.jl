@@ -429,15 +429,6 @@ function MAGEMin_Diagram(fname::String; CharDim = nothing, type::AbstractString 
         undef, length(Struct_Fieldnames)
     )
 
-    # for i in 1:length(Struct_Fieldnames)
-    #     field = fields_keys[i]
-    #     ind = findall(Struct_Fieldnames .== field)
-    #     if length(ind) > 0
-    #         Struct_Fields[ind[1]] = CreateInterpolationObject_PhaseDiagram(
-    #             data[:, i], T0, dT, numT, Tmax, P0, dP, numP, Pmax, siz, fields_units[i], CharDim
-    #         )
-    #     end
-    # end
     for i in 1:6
         Struct_Fields[i] = CreateInterpolationObject_PhaseDiagram(
             data[:, i], T0, dT, numT, Tmax, P0, dP, numP, Pmax, siz, fields_units[i], CharDim
