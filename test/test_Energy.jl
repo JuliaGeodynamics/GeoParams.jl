@@ -239,6 +239,14 @@ import ForwardDiff as FD
 
     Cp_nd = compute_heatcapacity(x_ND, args_ND)
     @test compute_heatcapacity(x_D, args) ≈ dimensionalize(Cp_nd, J / kg / K, CharUnits_GEO).val
+
+    Cp_PD = zeros(11, 11)
+    Rhyolite = "test_data/MAGEMin_Rhyolite.in"
+    PD_MAGEMin = MAGEMin_Diagram(Rhyolite)
+    args = (; T = 1200.0 + 273, P = 1.0e7, index = 10)
+    compute_heatcapacity!(Cp_PD, PD_MAGEMin, args)
+    @test Cp_PD[1, 1] ≈ 1420.1926074594287
+
     # -----------------------
 
     # Conductivity ----------
@@ -256,6 +264,10 @@ import ForwardDiff as FD
     @test NumValue(cond.k) ≈ 3.8194500000000007
 
     @test compute_conductivity(cond; T = 100.0) ≈ 3.8194500000000007 # compute
+
+    # ConstantConductivity vararg constructor
+    cond_vararg = ConstantConductivity(2.0Watt / m / K)
+    @test NumValue(cond_vararg.k) == 2.0
 
     # Temperature-dependent conductivity
     # dimensional
@@ -280,6 +292,16 @@ import ForwardDiff as FD
     # Dimensionalize again and double-check the results
     @test sum(abs.(ustrip.(k_nd * CharUnits_GEO.conductivity) - k)) < 1.0e-11
 
+    # Scalar form (keyword T) hits a different code path than the array form
+    cond_w = T_Conductivity_Whittington()
+    @testset "T_Conductivity_Whittington scalar" begin
+        k_below = compute_conductivity(cond_w; T = 500.0)   # T < Tcutoff (846 K)
+        k_above = compute_conductivity(cond_w; T = 1100.0)  # T > Tcutoff
+        @test k_below ≈ compute_conductivity(cond_w, [500.0])[1]
+        @test k_above ≈ compute_conductivity(cond_w, [1100.0])[1]
+        @test k_below > k_above  # conductivity decreases at high T for this model
+    end
+
     # Temperature-dependent parameterised conductivity
     # dimensional
     T = collect(250.0e0:100:1250.0e0)
@@ -297,6 +319,21 @@ import ForwardDiff as FD
 
     # Dimensionalize again and double-check the results
     @test sum(abs.(ustrip.(k_nd * CharUnits_GEO.conductivity) - k)) < 1.0e-11
+
+    # Scalar form via named-tuple args (hits the functor code path)
+    cond_p = T_Conductivity_Whittington_parameterised()
+    @test compute_conductivity(cond_p, (; T = 500.0)) ≈ compute_conductivity(cond_p, [500.0])[1]
+
+    # TP_Conductivity string constructor (different from keyword constructor)
+    k_tp_str = TP_Conductivity("LowerCrust", 1.18Watt / K / m, 474Watt / m, 77K, 0 / MPa)
+    @test k_tp_str isa TP_Conductivity
+    @test k_tp_str.Name == Tuple("LowerCrust")
+
+    # Scalar TP_Conductivity via named-tuple args: d==0 branch and d!=0 branch
+    k_tp = Set_TP_Conductivity("Mantle")
+    @test compute_conductivity(k_tp, (; P = 0.0, T = 800.0)) ≈ compute_conductivity(k_tp, [0.0], [800.0])[1]
+    k_tp_pdep = TP_Conductivity(; Name = "Custom", a = 1.0Watt / K / m, b = 100Watt / m, c = 50K, d = 1.0e-5 / MPa)
+    @test compute_conductivity(k_tp_pdep, (; P = 1.0, T = 500.0)) > compute_conductivity(k_tp_pdep, (; P = 0.0, T = 500.0))
 
     # Check if we use arrays
     T_array = ustrip.(T) * ones(100)'
@@ -440,6 +477,9 @@ import ForwardDiff as FD
     H_r = compute_radioactive_heat(a)
     @test H_r ≈ 0.1
 
+    # Vararg constructors
+    @test ConstantRadioactiveHeat(1.0e-6Watt / m^3).H_r.val ≈ 1.0e-6
+
     # depth-dependent radioactive heating:
     a = ExpDepthDependentRadioactiveHeat()
     z = 10.0e3
@@ -447,12 +487,30 @@ import ForwardDiff as FD
     @test isbits(a)
     @test H_r ≈ 3.678794411714423e-7
 
+    # Typed scalar functor — z must be same type as struct parameter _T
+    @test compute_radioactive_heat(a; z = Float64(10.0e3)) ≈ 3.678794411714423e-7
+
+    # ExpDepthDependentRadioactiveHeat vararg constructor
+    a_vararg = ExpDepthDependentRadioactiveHeat(1.0e-6Watt / m^3, 10.0e3m, 0.0m)
+    @test a_vararg.H_0.val ≈ 1.0e-6
+
     Nx, Nz = 101, 101
     z = ones(Nx, Nz) * 10.0e3
     Hr = zero(z)
     compute_radioactive_heat!(Hr, a, (; z = z))
 
     @test sum(H_r) ≈ 3.678794411714423e-7
+
+    # Struct-based dispatch (AbstractMaterialParamsStruct path)
+    mp_heat = SetMaterialParams(; Name = "test_heat", Phase = 1, RadioactiveHeat = ConstantRadioactiveHeat())
+    @test compute_radioactive_heat(mp_heat, (;)) ≈ 1.0e-6
+    mp_no_heat = SetMaterialParams(; Name = "test_no_heat", Phase = 2)
+    @test compute_radioactive_heat(mp_no_heat, (;)) == 0.0
+
+    # in-place on an array via the vararg dispatcher
+    H_r_arr = zeros(3, 3)
+    compute_radioactive_heat!(H_r_arr, ConstantRadioactiveHeat(), (;))
+    @test all(H_r_arr .≈ 1.0e-6)
 
     # Check that it works if we give a phase array (including with an empty field)
     Mat_tup = (

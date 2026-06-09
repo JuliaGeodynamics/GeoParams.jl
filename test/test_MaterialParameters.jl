@@ -82,4 +82,31 @@ using GeoParams
     )
 
     @test isdimensional(MatParam[1].Density[1])
+
+    # Base.show for NTuple{N, MaterialParams}
+    buf = IOBuffer()
+    show(buf, (Phase1, Phase2))
+    @test !isempty(String(take!(buf)))
+
+    # ConvField with multiple creep laws (NTuple path)
+    Phase_multi = SetMaterialParams(;
+        Name = "multi_creep", Phase = 1,
+        CreepLaws = (LinearViscous(), PowerlawViscous()),
+    )
+    @test length(Phase_multi.CreepLaws) == 2
+
+    # ConvField error: maxAllowedFields exceeded for density
+    @test_throws Exception SetMaterialParams(;
+        Name = "bad_density", Phase = 1, Density = (ConstantDensity(), ConstantDensity())
+    )
+
+    # set_gravity: explicit Gravity supplied (not auto-set from Density)
+    Phase_grav = SetMaterialParams(;
+        Name = "with_gravity", Phase = 1,
+        Density = ConstantDensity(), Gravity = ConstantGravity(; g = 11.0m / s^2),
+    )
+    @test Phase_grav.Gravity[1].g.val ≈ 11.0
+
+    # nondimensionalize_phase: invalid CharDim triggers an error
+    @test_throws Exception SetMaterialParams(; Name = "bad_chardim", Phase = 1, CharDim = "invalid")
 end

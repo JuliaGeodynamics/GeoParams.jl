@@ -10,7 +10,9 @@ import GeoParams.Diffusion
     # Define a linear viscous creep law ---------------------------------
     x1 = DiffusionCreep()
     @test isbits(x1)
-    @test Value(x1.n) == 1.0
+    @test param_info(x1).Equation === L"$\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}$"
+    str = sprint(show, x1)
+    @test occursin("DiffusionCreep:", str)
     @test Value(x1.p) == -3.0
     @test Value(x1.A) == 1.5e6Pa^-1 * s^-1 * m^3
 
@@ -31,6 +33,7 @@ import GeoParams.Diffusion
     # compute a pure diffusion creep rheology
     diffusion_law = Diffusion.dry_anorthite_Rybacki_2006
     p = SetDiffusionCreep(diffusion_law; n = 1NoUnits)
+    @test isbits(p)
     @test p.n.val == 1.0
 
     # compute a pure diffusion creep rheology

@@ -8,6 +8,7 @@ module MaterialParameters
     using Parameters, LaTeXStrings, BibTeX
     using ..Units
     using Static
+    using Adapt
 
     import Base.show, Base.convert
     using GeoParams:
@@ -100,6 +101,8 @@ module MaterialParameters
         Melting::Vmelting = ()             #  Melting model
         SeismicVelocity::Vseismvel = ()    #  Seismic velocity
     end
+
+    Adapt.@adapt_structure MaterialParams
 
     """
         SetMaterialParams(; Name::String="", Phase::Int64=1,

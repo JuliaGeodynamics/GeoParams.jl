@@ -12,45 +12,54 @@ import ForwardDiff.derivative
     @test isbits(x)
     @test param_info(x).Equation === L"$\rho = cst$"
     @test isdimensional(x) === true
+    @test sprint(show, x) isa String
 
     x = PT_Density()
     @test isbits(x)
     @test param_info(x).Equation === L"$\rho = \rho_0(1.0-\alpha (T-T_0) + \beta (P-P_0)$"
     @test isdimensional(x) === true
+    @test sprint(show, x) isa String
 
     x = Compressible_Density()
     @test isbits(x)
     @test param_info(x).Equation === L"$\rho = \rho_0\exp(\beta*(P-P_0))$"
     @test isdimensional(x) === true
+    @test sprint(show, x) isa String
 
     x = MeltDependent_Density()
     @test isbits(x)
     @test param_info(x).Equation === L"$\rho =  \phi \rho_{\textrm{melt}} + (1-\phi) \\rho_{\textrm{solid}}$"
     @test isdimensional(x) === true
+    @test sprint(show, x) isa String
 
     x = T_Density()
     @test isbits(x)
     @test param_info(x).Equation === L"$\rho = \rho_0*(1 - \alpha*(T-T_0))$"
     @test isdimensional(x) === true
+    @test sprint(show, x) isa String
 
     x = Vector_Density()
     @test isbits(x) == false
     @test param_info(x).Equation === L"\rho from a precomputed vector"
+    @test sprint(show, x) isa String
 
     x = BubbleFlow_Density()
     @test isbits(x)
     @test param_info(x).Equation === L"\rho = 1/((c_0-c)/rho_g + 1-(c_0-c)/\rho_m)"
     @test isdimensional(x) === true
+    @test sprint(show, x) isa String
 
     x = GasPyroclast_Density()
     @test isbits(x)
     @test param_info(x).Equation === L"\rho = \rho_g\delta + \rho_p(1 - \delta)"
     @test isdimensional(x) === true
+    @test sprint(show, x) isa String
 
     x = Melt_DensityX()
     @test isbits(x)
     @test param_info(x).Equation === L"$\rho from an oxide composition$"
     @test isdimensional(x) === true
+    @test sprint(show, x) isa String
 
     # This tests the MaterialParameters structure
     CharUnits_GEO = GEO_units(; viscosity = 1.0e19, length = 1000km)
@@ -140,6 +149,15 @@ import ForwardDiff.derivative
     @test compute_density(PD_data, args) ≈ 3054.8671154189938 # named tuple syntax
     @test compute_density(PD_data; P = 1.0e7, T = 1500.0) ≈ 3054.8671154189938 # optional parameter syntax
 
+
+    Rhyolite = "test_data/MAGEMin_Rhyolite.in"
+
+    PD_MAGEMin = MAGEMin_Diagram(Rhyolite)
+    @test PD_MAGEMin.Rho(800.0, 1.0e7) ≈ 2701.3786579954285
+    @test PD_MAGEMin.meltFrac(800.0, 1.0e7) ≈ 0.0
+    @test PD_MAGEMin.meltRho(800.0, 1.0e7) ≈ 2000.0
+    @test PD_MAGEMin.rockRho(800.0, 1.0e7) ≈ 2701.3786579954285
+
     #  test extractors for more complex data strutcs
     r = SetMaterialParams(;
         Name = "Crust",
@@ -163,6 +181,7 @@ import ForwardDiff.derivative
     # Do the same but non-dimensionalize the result
     CharDim = GEO_units()
     PD_data1 = PerpleX_LaMEM_Diagram(fname; CharDim = CharDim)
+    @test sprint(show, PD_data1) isa String
 
     rho_ND = PD_data1.Rho(
         nondimensionalize(1500.0K, CharDim), nondimensionalize(1.0e8 * Pa, CharDim)

@@ -747,7 +747,7 @@ end
 @inline nondimensionalize_MatParam(::Tuple{}, phase_mat, ::Vararg{Any, N}) where {N} = phase_mat
 
 @inline _nondimensionalize_MatParam(field::AbstractMaterialParam, g) = nondimensionalize(field, g)
-@inline _nondimensionalize_MatParam(field::AbstractPhaseDiagramsStruct, g) = PerpleX_LaMEM_Diagram(field.Name; CharDim = g)
+@inline _nondimensionalize_MatParam(field::AbstractPhaseDiagramsStruct, g) = PerpleX_LaMEM_Diagram(unsafe_string(field.Name); CharDim = g)
 @inline _nondimensionalize_MatParam(field, g) = field
 
 function nondimensionalize_MatParam(
@@ -909,8 +909,8 @@ end
 """
     dimensionalize_and_strip(args...)
 
-Converts the input arguments to their dimensional (unitful) form using `dimensionalize`, 
-and then strips the units using `ustrip`. This function is useful when you want to 
+Converts the input arguments to their dimensional (unitful) form using `dimensionalize`,
+and then strips the units using `ustrip`. This function is useful when you want to
 apply units to values and immediately retrieve their plain numeric values.
 """
 dimensionalize_and_strip(args::Vararg{Any, N}) where {N} = ustrip(dimensionalize(args...))

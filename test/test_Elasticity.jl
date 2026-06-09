@@ -9,6 +9,8 @@ using GeoParams
     # ConstantElasticity ---------
     a = ConstantElasticity()
     info = param_info(a)
+    @test info.Equation === L"$Constant elasticity$"
+    @test sprint(show, a) == "Linear elasticity with shear modulus: G = 5.0e10 Pa, Poisson's ratio: ν = 0.5, bulk modulus: Kb = Inf Pa and Young's module: E=NaN Pa"
     @test isbits(a)
     @test NumValue(a.G) == 5.0e10
     @test repr("text/plain", a) isa String
@@ -45,6 +47,7 @@ using GeoParams
 
     # Test get_G and get_Kb with a composite rheology
     v1 = SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006) # SetPeierlsCreep("Dry Olivine | Goetze and Evans (1979)")
+    @test isbits(v1)
     v2 = SetDislocationCreep(Dislocation.dry_anorthite_Rybacki_2006)
     e1 = ConstantElasticity()           # elasticity
     # CompositeRheologies
