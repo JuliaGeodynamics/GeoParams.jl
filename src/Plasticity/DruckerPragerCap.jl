@@ -71,8 +71,10 @@ end
 
 function _promote_cap_pressure_units(C::GeoUnit, pT::GeoUnit)
     if !isdimensional(C) && isdimensional(pT)
+        @warn "DruckerPragerCap: C was given without units but pT carries units; interpreting C in $(pT.unit). " maxlog = 1
         return GeoUnit(C.val * pT.unit), pT
     elseif isdimensional(C) && !isdimensional(pT)
+        @warn "DruckerPragerCap: pT was given without units but C carries units; interpreting pT in $(C.unit). " maxlog = 1
         return C, GeoUnit(pT.val * C.unit)
     end
     return C, pT

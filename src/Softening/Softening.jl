@@ -28,11 +28,8 @@ struct LinearSoftening{T1, T2, T3} <: AbstractSoftening
 end
 
 function LinearSoftening(min_value::T1, max_value::T1, lo::T2, hi::T2) where {T1, T2}
-    slope = if T1 <: AbstractFloat
-        (max_value - min_value) / (hi - lo)
-    else
-        (max_value - min_value).val / (hi - lo)
-    end
+    # keep units here, so that the stored slope is consistently rescaled by nondimensionalize
+    slope = (max_value - min_value) / (hi - lo)
     return LinearSoftening(min_value, max_value, lo, hi, slope)
 end
 
@@ -40,12 +37,15 @@ LinearSoftening(min_max_values::NTuple{2, T1}, lo_hi::NTuple{2, T2}) where {T1, 
 
 @inline function (softening::LinearSoftening)(softening_var, max_value)
 
-    @unpack_val lo, hi, min_value, slope = softening
+    @unpack_val lo, hi, min_value = softening
 
     softening_var ≥ hi && return min_value
     softening_var ≤ lo && return max_value
 
-    return @muladd (1 - softening_var) * slope + min_value
+    # compute the slope on the fly from the current (consistently scaled) values,
+    # so that the result remains correct after nondimensionalization and for lo/hi ≠ (0, 1)
+    slope = (max_value - min_value) / (hi - lo)
+    return @muladd (hi - softening_var) * slope + min_value
 end
 
 ## Non linear softening
