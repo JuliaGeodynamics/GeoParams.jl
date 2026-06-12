@@ -76,6 +76,12 @@ import ForwardDiff as FD
     @test compute_elasticviscosity(rheologies2, 2, args) == el.G * dt
     @test compute_elasticviscosity(rheologies2, phase_ratio, args) == el.G * dt
 
+    # phase-ratio averaged elastoviscosity
+    @test compute_elastoviscosity_εII(rheologies2, phase_ratio, εII, args) == 0.8 * 0.5 + 1.3333333333333333 * 0.5
+    @test compute_elastoviscosity_τII(rheologies2, phase_ratio, τII, args) == 0.8 * 0.5 + 1.3333333333333333 * 0.5
+    @test compute_elastoviscosity_εII(rheologies2, SA[0.5, 0.5], εII, args) == 0.8 * 0.5 + 1.3333333333333333 * 0.5
+    @test compute_elastoviscosity_τII(rheologies2, SA[0.5, 0.5], τII, args) == 0.8 * 0.5 + 1.3333333333333333 * 0.5
+
     # Slightly more complex example ----------------------
     # function to compute strain rate
     @inline function custom_εII(a::CustomRheology, TauII; args...)

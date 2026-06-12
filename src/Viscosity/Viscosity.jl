@@ -145,7 +145,7 @@ for fn in (:compute_elastoviscosity_εII, :compute_elastoviscosity_τII)
         @generated function $fn(v::NTuple{N, AbstractMaterialParamsStruct}, phase, args) where {N}
             return quote
                 Base.@_inline_meta
-                Base.@nexprs $N i -> i == phase && (return $fn(v.CompositeRheology[i], args))
+                Base.@nexprs $N i -> i == phase && (return $$fn(v.CompositeRheology[i], args))
                 return 0.0
             end
         end
@@ -155,8 +155,8 @@ for fn in (:compute_elastoviscosity_εII, :compute_elastoviscosity_τII)
             return quote
                 Base.@_inline_meta
                 val = 0.0
-                Base.@nexprs $N1 i -> val += $fn(v[i].CompositeRheology[1], args...) * phase_ratio[i]
-                return 0.0
+                Base.@nexprs $N1 i -> val += $$fn(v[i].CompositeRheology[1], args...) * phase_ratio[i]
+                return val
             end
         end
     end
