@@ -27,7 +27,7 @@ include("../Computations.jl")
 
 # Constant Heat Capacity -------------------------------------------------------
 """
-    ConstantHeatCapacity(Cp=1050J/mol/kg)
+    ConstantHeatCapacity(Cp=1050J/kg/K)
 
 Set a constant heat capacity:
 ```math
@@ -67,7 +67,7 @@ Sets a temperature-dependent heat capacity following the parameterization of Whi
 
 where ``Cp`` is the heat capacity [``J/kg/K``], and ``a,b,c`` are parameters that dependent on the temperature ``T`` [``K``]:
 - a = 199.50 J/mol/K    if T<= 846 K
-- a = 199.50 J/mol/K    if T> 846 K
+- a = 229.32 J/mol/K    if T> 846 K
 - b = 0.0857J/mol/K^2   if T<= 846 K
 - b = 0.0323J/mol/K^2   if T> 846 K
 - c = 5e6J/mol*K        if T<= 846 K
@@ -101,8 +101,6 @@ end
         kwargs...
     ) where {_T, _T1}
     @unpack_val a0, a1, b0, b1, c0, c1, molmass, Tcutoff = a
-
-    Cp = a0 / molmass
 
     if T <= Tcutoff
         a, b, c = a0, b0, c0
