@@ -291,7 +291,7 @@ for op in (:+, :-, :*, :/)
         isdimensional_new = A.isdimensional * B.isdimensional
         new_value = broadcast($(op), upreferred.(UnitValue(A)), upreferred.(UnitValue(B)))
         if isdimensional_new
-            new_unit = unit(first(new_value))
+            new_unit = new_value isa Quantity ? unit(new_value) : unit(first(new_value))
         else
             if ($(op) == +) || ($(op) == -)
                 new_unit = Unit(A)
