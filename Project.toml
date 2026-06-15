@@ -58,9 +58,12 @@ Unitful = "1.0"
 julia = "1.10"
 
 [extras]
+AbstractDifferentiation = "c29ec348-61ec-40c8-8164-b8c60e9d9f3d"
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "Statistics"]
+test = ["AbstractDifferentiation", "Aqua", "ReverseDiff", "Statistics", "Test"]
