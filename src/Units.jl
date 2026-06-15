@@ -233,8 +233,7 @@ end
 Base.length(v::GeoUnit) = length(v.val)
 Base.size(v::GeoUnit) = size(v.val)
 Base.getindex(A::GeoUnit{T, U}, inds::Vararg{Int, N}) where {T, U, N} = GeoUnit(A.val[inds...], A.unit, A.isdimensional)
-Base.iterate(s::GeoUnit, i::Integer) = GeoUnit(s.val[i], s.unit, s.isdimensional)
-Base.iterate(S::GeoUnit, state = 1) = state > length(S) ? nothing : (state, state + 1)
+Base.iterate(S::GeoUnit, state = 1) = state > length(S) ? nothing : (GeoUnit(S.val[state], S.unit, S.isdimensional), state + 1)
 
 for op in (:+, :-, :*, :/)
 
@@ -289,7 +288,18 @@ for op in (:+, :-, :*, :/)
     @eval function Base.broadcasted(
             ::typeof($(op)), A::GeoUnit, B::GeoUnit
         )
-        return GeoUnit(broadcast($(op), NumValue(A), NumValue(B)), A.unit, A.isdimensional)
+        isdimensional_new = A.isdimensional * B.isdimensional
+        new_value = broadcast($(op), upreferred.(UnitValue(A)), upreferred.(UnitValue(B)))
+        if isdimensional_new
+            new_unit = unit(first(new_value))
+        else
+            if ($(op) == +) || ($(op) == -)
+                new_unit = Unit(A)
+            else
+                new_unit = $(op)(Unit(A), Unit(B))
+            end
+        end
+        return GeoUnit(ustrip.(new_value), new_unit, isdimensional_new)
     end
 
 end
@@ -864,7 +874,7 @@ Dimensionalizes all fields within the Material Parameters structure that contain
             field = getfield(phase_mat, param)
             dimensionalize_MatParam(field, phase_mat, param, g)
         end
-        phase_mat = set(phase_mat, Setfield.PropertyLens{:Nondimensional}(), true)
+        phase_mat = set(phase_mat, Setfield.PropertyLens{:Nondimensional}(), false)
         return phase_mat
     end
 end
@@ -888,7 +898,7 @@ end
 @inline function dimensionalize_MatParam(
         field::AbstractPhaseDiagramsStruct, phase_mat, param, g
     )
-    temp = PerpleX_LaMEM_Diagram(field.Name; CharDim = g)
+    temp = PerpleX_LaMEM_Diagram(unsafe_string(field.Name); CharDim = g)
     field_new = (temp,)
     return set(phase_mat, Setfield.PropertyLens{param}(), field_new)
 end
