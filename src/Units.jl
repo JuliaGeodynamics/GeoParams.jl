@@ -831,6 +831,7 @@ Dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
             field = $(fields)[i]
             _dimensionalize(MatParam, getfield(MatParam, field), g, field)
         end
+        return MatParam   # needed so zero-field structs (e.g. NoSoftening) return the struct, not `nothing`
     end
 end
 

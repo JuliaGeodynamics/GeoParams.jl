@@ -528,4 +528,26 @@ using GeoParams
         end
     end
 
+    @testset "plastic_strain / lambda" begin
+        mod = GeoParams.MaterialParameters.ConstitutiveRelationships
+        p = DruckerPrager(; ϕ = 30.0, Ψ = 10.0, C = 1.0e7Pa)
+        εvp = mod.plastic_strain(p, (1.0, 1.0, 1.0), 1.0e-15)
+        @test isfinite(εvp) && εvp > 0
+        @test isfinite(mod.lambda(1.0e6, p, 1.0e20, 1.0e19))
+        @test isfinite(mod.lambda(1.0e6, p, 1.0e20, 1.0e19; K = 2.0e10, dt = 1.0e3, h = 1.0e5, τij = (1.0e6, 1.0e6, 1.0e6)))
+    end
+
+    @testset "dimensionalize round-trip" begin
+        CharDim = GEO_units(; viscosity = 1.0e19, length = 10km)
+        @test dimensionalize(NoSoftening(), CharDim) === NoSoftening()
+        for p in (
+                DruckerPrager(; C = 1.0e7Pa, ϕ = 30.0),
+                DruckerPrager_regularised(; C = 1.0e7Pa, η_vp = 1.0e20Pa * s),
+                DruckerPragerCap(; C = 1.0e7Pa, pT = -5.0e5Pa, η_vp = 1.0e20Pa * s, Ψ = 10.0),
+            )
+            pd = dimensionalize(nondimensionalize(p, CharDim), CharDim)
+            @test pd.C.val ≈ p.C.val
+        end
+    end
+
 end
