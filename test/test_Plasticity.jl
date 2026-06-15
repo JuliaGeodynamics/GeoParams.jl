@@ -495,4 +495,37 @@ using GeoParams
         @test abs(F_check) < 1.0e-12
     end
 
+    @testset "no functor ambiguities" begin
+        # The specialized yield-function functors must each be a strict subtype of the
+        # generic one (free softening type vars bounded by AbstractSoftening), otherwise
+        # `compute_yieldfunction` throws a MethodError on real calls. Guard against the
+        # regression where the specializations were either dead or mutually ambiguous.
+        mod = GeoParams.MaterialParameters.ConstitutiveRelationships
+        amb = Test.detect_ambiguities(mod; recursive = false)
+        plast = filter(
+            m -> occursin("Plasticity", string(m[1].file)) || occursin("Plasticity", string(m[2].file)),
+            amb,
+        )
+        @test isempty(plast)
+
+        # every softening combination must dispatch and apply softening at EII > 0
+        sC = LinearSoftening(0.0e0, 1.0e7, 0.0e0, 1.0e0)
+        sϕ = LinearSoftening(15.0e0, 30.0e0, 0.0e0, 1.0e0)
+        sΨ = LinearSoftening(0.0e0, 20.0e0, 0.0e0, 1.0e0)
+        for p in (
+                DruckerPrager(; softening_C = sC),
+                DruckerPrager(; softening_ϕ = sϕ),
+                DruckerPrager(; softening_ϕ = sϕ, softening_C = sC),
+                DruckerPrager_regularised(; softening_C = sC),
+                DruckerPrager_regularised(; softening_ϕ = sϕ),
+                DruckerPragerCap(; Ψ = 20.0, softening_C = sC),
+                DruckerPragerCap(; Ψ = 20.0, softening_ϕ = sϕ, softening_Ψ = sΨ),
+                DruckerPragerCap(; Ψ = 20.0, softening_ϕ = sϕ, softening_C = sC, softening_Ψ = sΨ),
+            )
+            F0 = compute_yieldfunction(p; P = 1.0e6, τII = 2.0e7, EII = 0.0)
+            F1 = compute_yieldfunction(p; P = 1.0e6, τII = 2.0e7, EII = 1.0)
+            @test isfinite(F0) && isfinite(F1)
+        end
+    end
+
 end

@@ -59,7 +59,13 @@ using SpecialFunctions
     σ::GeoUnit{T, U2} = 0.5NoUnits # standard deviation of the softening
 end
 
-NonLinearSoftening(args::Vararg{Any, N}) where {N} = NonLinearSoftening(convert.(GeoUnit, promote(args...))...)
+# restrict the positional constructors to the field count and route them through the
+# keyword constructor, so that partial positional input does not recurse infinitely
+NonLinearSoftening(ξ₀, Δ) = NonLinearSoftening(; ξ₀ = ξ₀, Δ = Δ)
+function NonLinearSoftening(args::Vararg{Any, 4})
+    ξ₀, Δ, μ, σ = convert.(GeoUnit, promote(args...))
+    return NonLinearSoftening(; ξ₀ = ξ₀, Δ = Δ, μ = μ, σ = σ)
+end
 
 @inline function (softening::NonLinearSoftening)(softening_var, ::Vararg{Any, N}) where {N}
     @unpack_val ξ₀, Δ, μ, σ = softening
@@ -72,7 +78,10 @@ end
     n::GeoUnit{T, U2} = 0.1
 end
 
-DecaySoftening(args::Vararg{Any, N}) where {N} = DecaySoftening(convert.(GeoUnit, promote(args...))...)
+function DecaySoftening(args::Vararg{Any, 2})
+    εref, n = convert.(GeoUnit, promote(args...))
+    return DecaySoftening(; εref = εref, n = n)
+end
 
 @inline function (softening::DecaySoftening)(softening_var::T, max_value::T) where {T}
     @unpack_val εref, n = softening

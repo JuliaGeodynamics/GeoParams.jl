@@ -70,9 +70,9 @@ function (s::DruckerPrager_regularised)(;
     return F
 end
 
-function (s::DruckerPrager_regularised{_T, U, U1, NoSoftening, AbstractSoftening})(;
+function (s::DruckerPrager_regularised{_T, U, U1, U2, NoSoftening, S2})(;
         P = 0.0, τII = 0.0, Pf = 0.0, λ = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...
-    ) where {_T, U, U1, AbstractSoftening}
+    ) where {_T, U, U1, U2, S2 <: AbstractSoftening}
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
     C = s.softening_C(EII, C)
     C *= perturbation_C
@@ -82,9 +82,9 @@ function (s::DruckerPrager_regularised{_T, U, U1, NoSoftening, AbstractSoftening
     return F
 end
 
-function (s::DruckerPrager_regularised{_T, U, U1, AbstractSoftening, NoSoftening})(;
+function (s::DruckerPrager_regularised{_T, U, U1, U2, S1, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, λ = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...
-    ) where {_T, U, U1}
+    ) where {_T, U, U1, U2, S1 <: AbstractSoftening}
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C *= perturbation_C
@@ -96,9 +96,9 @@ function (s::DruckerPrager_regularised{_T, U, U1, AbstractSoftening, NoSoftening
     return F
 end
 
-function (s::DruckerPrager_regularised{_T, U, U1, NoSoftening, NoSoftening})(;
+function (s::DruckerPrager_regularised{_T, U, U1, U2, NoSoftening, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, λ = 0.0, perturbation_C = 1.0, kwargs...
-    ) where {_T, U, U1}
+    ) where {_T, U, U1, U2}
     @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
     C *= perturbation_C
     ε̇II_pl = λ * ∂Q∂τII(s, τII)  # plastic strainrate
@@ -179,17 +179,10 @@ end
 
 This computes plastic strain rate invariant for a given ``λdot``
 """
-function compute_εII(p::DruckerPrager_regularised{_T, U, U1}, λdot::_T, τII::_T, kwargs...) where {_T, U, U1}
-    args = merge(kwargs, (λ = λdot,))
+function compute_εII(p::DruckerPrager_regularised{_T, U, U1}, λdot::_T, τII::_T, args::NamedTuple = NamedTuple()) where {_T, U, U1}
+    args = merge(args, (λ = λdot,))
     F = compute_yieldfunction(p, args)
-    if F > 0
-        ε_pl = λdot * ∂Q∂τII(p, τII)
-
-    else
-        ε_pl = 0.0
-    end
-
-    return ε_pl
+    return F > 0 ? λdot * ∂Q∂τII(p, τII) : zero(_T)
 end
 
 # Print info

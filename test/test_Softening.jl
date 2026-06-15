@@ -143,4 +143,22 @@ using GeoParams, Test
         @test F_dim / char_stress ≈ F_nd
     end
 
+    # MPa-declared parameters must nondimensionalize identically to Pa-declared ones
+    p_MPa = DruckerPragerCap(; softening_C = NonLinearSoftening(; ξ₀ = 15.0MPa, Δ = 7.5MPa), C = 15.0MPa, ϕ = 30.0, η_vp = 1.0e19Pa * s, pT = -1.5MPa, Ψ = 15.0)
+    p_MPa_nd = nondimensionalize(p_MPa, CharDim)
+    @test p_MPa_nd.C.val ≈ p_cap_nd.C.val
+    @test p_MPa_nd.pT.val ≈ p_cap_nd.pT.val
+    @test p_MPa_nd.softening_C.ξ₀.val ≈ p_cap_nd.softening_C.ξ₀.val
+    @test p_MPa_nd.softening_C.Δ.val ≈ p_cap_nd.softening_C.Δ.val
+    for EII in (0.0, 0.5, 2.0)
+        F_Pa = compute_yieldfunction(p_cap_nd; P = 15.0, τII = 9.0, EII = EII)
+        F_MPa = compute_yieldfunction(p_MPa_nd; P = 15.0, τII = 9.0, EII = EII)
+        @test F_Pa ≈ F_MPa
+    end
+
+    # partial positional construction must not stack-overflow
+    nls2 = NonLinearSoftening(30.0, 10.0)
+    @test nls2.ξ₀.val == 30.0
+    @test nls2.Δ.val == 10.0
+
 end

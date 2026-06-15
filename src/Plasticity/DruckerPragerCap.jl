@@ -207,9 +207,9 @@ function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, NoSoftening, NoSofteni
     return F
 end
 
-function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, NoSoftening, AbstractSoftening})(;
+function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, NoSoftening, S3})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
-    ) where {_T, U, U1, U2, AbstractSoftening}
+    ) where {_T, U, U1, U2, S3 <: AbstractSoftening}
     @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     Ψ = s.softening_Ψ(EII, Ψ)
     C *= perturbation_C
@@ -221,9 +221,9 @@ function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, NoSoftening, AbstractS
     return F
 end
 
-function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, AbstractSoftening, AbstractSoftening})(;
+function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, S2, S3})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
-    ) where {_T, U, U1, U2, AbstractSoftening}
+    ) where {_T, U, U1, U2, S2 <: AbstractSoftening, S3 <: AbstractSoftening}
     @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     C = s.softening_C(EII, C)
     Ψ = s.softening_Ψ(EII, Ψ)
@@ -236,9 +236,9 @@ function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, AbstractSoftening, Abs
     return F
 end
 
-function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, AbstractSoftening, NoSoftening})(;
+function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, S2, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
-    ) where {_T, U, U1, U2, AbstractSoftening}
+    ) where {_T, U, U1, U2, S2 <: AbstractSoftening}
     @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     C = s.softening_C(EII, C)
     C *= perturbation_C
@@ -249,9 +249,9 @@ function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, AbstractSoftening, NoS
     return F
 end
 
-function (s::DruckerPragerCap{_T, U, U1, U2, AbstractSoftening, AbstractSoftening, NoSoftening})(;
+function (s::DruckerPragerCap{_T, U, U1, U2, S1, S2, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
-    ) where {_T, U, U1, U2, AbstractSoftening}
+    ) where {_T, U, U1, U2, S1 <: AbstractSoftening, S2 <: AbstractSoftening}
     @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C = s.softening_C(EII, C)
@@ -264,9 +264,9 @@ function (s::DruckerPragerCap{_T, U, U1, U2, AbstractSoftening, AbstractSoftenin
     return F
 end
 
-function (s::DruckerPragerCap{_T, U, U1, U2, AbstractSoftening, NoSoftening, NoSoftening})(;
+function (s::DruckerPragerCap{_T, U, U1, U2, S1, NoSoftening, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
-    ) where {_T, U, U1, U2}
+    ) where {_T, U, U1, U2, S1 <: AbstractSoftening}
     @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C *= perturbation_C
@@ -278,9 +278,9 @@ function (s::DruckerPragerCap{_T, U, U1, U2, AbstractSoftening, NoSoftening, NoS
     return F
 end
 
-function (s::DruckerPragerCap{_T, U, U1, U2, AbstractSoftening, NoSoftening, AbstractSoftening})(;
+function (s::DruckerPragerCap{_T, U, U1, U2, S1, NoSoftening, S3})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
-    ) where {_T, U, U1, U2}
+    ) where {_T, U, U1, U2, S1 <: AbstractSoftening, S3 <: AbstractSoftening}
     @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
     Ψ = s.softening_Ψ(EII, Ψ)

@@ -46,7 +46,7 @@ end
 
 # Wrapper for arbitrary args in the form of a NamedTuple
 function ∂Q∂τ(p::AbstractPlasticity, args::NamedTuple; kwargs...)
-    return ∂Q∂τ(Q, args.τij, kwargs...)
+    return ∂Q∂τ(p, args.τij; kwargs...)
 end
 #-------------------------------------------------------------------------
 
@@ -64,13 +64,13 @@ function plastic_strain(εvp::T, p::AbstractPlasticity{T}, τij, λ̇::T, dt::T)
     return εvp += plastic_strain(p, τij, λ̇) * dt
 end
 
-@inline function plastic_strain(p::AbstractPlasticity{T}, τij::T, λ̇::T) where {T}
+@inline function plastic_strain(p::AbstractPlasticity{T}, τij, λ̇::T) where {T}
     εvp_ij = plastic_strain_rate(p, τij, λ̇)
     εvp = √((2.0 / 3.0) * dot(εvp_ij, εvp_ij))
     return εvp
 end
 
-@inline plastic_strain_rate(p::AbstractPlasticity{T}, τij::T, λ̇::T) where {T} = ∂Q∂τ(p, τij) .* λ̇
+@inline plastic_strain_rate(p::AbstractPlasticity{T}, τij, λ̇::T) where {T} = ∂Q∂τ(p, τij) .* λ̇
 #-------------------------------------------------------------------------
 
 # Computational routines needed for computations with the MaterialParams structure
