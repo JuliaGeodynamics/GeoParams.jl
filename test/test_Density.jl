@@ -520,13 +520,13 @@ import ForwardDiff.derivative
             Name = "Crust",
             Phase = 0,
             CreepLaws = (PowerlawViscous(), LinearViscous(; η = 1.0e23Pas)),
-            Density = GasPyroclast_Density(δ = 0.05, β = 0.05),
+            Density = GasPyroclast_Density(δ = 0.05, β = 0.1),
         ),
         SetMaterialParams(;
             Name = "Lower Crust",
             Phase = 1,
             CreepLaws = (PowerlawViscous(; n = 5.0), LinearViscous(; η = 1.0e21Pas)),
-            Density = GasPyroclast_Density(δ = 0.05, β = 0.05),
+            Density = GasPyroclast_Density(δ = 0.05, β = 0.1),
         ),
     )
 
