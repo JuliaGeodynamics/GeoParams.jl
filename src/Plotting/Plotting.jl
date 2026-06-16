@@ -141,7 +141,7 @@ function PlotStrainrateStress(
         # Compute stress
         #compute_τII!(Tau_II, p, Eps_II, args_in)
         for j in eachindex(Tau_II)
-            Tau_II[j] = compute_τII(p, Eps_II[j], args)
+            Tau_II[j] = compute_τII(p, Eps_II[j], args_in)
         end
 
         Tau_II_MPa = Tau_II ./ 1.0e6
@@ -166,7 +166,7 @@ function PlotStrainrateStress(
     return fig, ax, Eps_II, Tau_II_MPa
 end
 
-# Gelper function that simplifies customising the plots
+# Helper function that simplifies customising the plots
 function ObtainPlotArgs(i, p, args_in, linewidth, linestyle, color, label_in)
     if isa(linewidth, Tuple)
         linewidth_in = linewidth[i]
@@ -308,7 +308,7 @@ function PlotStressStrainrate(
         # Compute stress
         #compute_εII!(Eps_II, p, Tau_II, args_in)       # Compute strainrate
         for j in eachindex(Tau_II)
-            Eps_II[j] = compute_εII(p, Tau_II[j], args)
+            Eps_II[j] = compute_εII(p, Tau_II[j], args_in)
         end
 
         η = Tau_II ./ (2 * Eps_II)                        # effective viscosity
@@ -404,7 +404,7 @@ function PlotStrainrateViscosity(
         # Compute stress
         #compute_τII!(Tau_II, p, Eps_II, args_in)
         for j in eachindex(Tau_II)
-            Tau_II[j] = compute_τII(p, Eps_II[j], args)
+            Tau_II[j] = compute_τII(p, Eps_II[j], args_in)
         end
 
         η = Tau_II ./ (2 * Eps_II)                        # effective viscosity
@@ -488,7 +488,6 @@ function PlotStressViscosity(
         else
             p = x
         end
-        @show typeof(p)
         if isa(args, Tuple)
             args_in = args[i]
         else
@@ -502,7 +501,7 @@ function PlotStressViscosity(
 
         #compute_εII!(Eps_II, p, Tau_II, args_in)       # Compute strainrate
         for j in eachindex(Tau_II)
-            Eps_II[j] = compute_εII(p, Tau_II[j], args)
+            Eps_II[j] = compute_εII(p, Tau_II[j], args_in)
         end
 
         η = Tau_II ./ (2 * Eps_II)                        # effective viscosity

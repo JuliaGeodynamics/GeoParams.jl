@@ -89,6 +89,14 @@ using GeoParams, LaTeXStrings
     @test compute_viscosity_εII(x2, τII, (;)) == 5.0e0
     @test compute_viscosity_τII(x2, εII, (;)) == 1.3606693841876538
 
+    @test dεII_dτII(x2, τII) ≈ ε0 * τII^((1 - n) / n) / (n * η0^(1 / n)) ≈ 0.15976791046681255
+    @test dτII_dεII(x2, εII) ≈ n * ε0 * η0 * εII^(n - 1) * (1 / ε0)^n ≈ 23.0
+
+    # regression with ε0 != 1 so that the ε0 factor in the derivatives is actually pinned
+    xp = PowerlawViscous(; η0 = 2.0, n = 3.0, ε0 = 1.0e-15)
+    @test dεII_dτII(xp, 5.0e5) ≈ 1.0e-15 * (5.0e5)^((1 - 3.0) / 3.0) / (3.0 * 2.0^(1 / 3.0)) ≈ 4.199736832982913e-20
+    @test dτII_dεII(xp, 2.0e-14) ≈ 3.0 * 1.0e-15 * 2.0 * (2.0e-14)^(3.0 - 1) * (1 / 1.0e-15)^3.0 ≈ 2399.999999999999
+
     x2 = PowerlawViscous()
     x2 = nondimensionalize(x2, CharUnits_GEO)
     @test NumValue(x2.ε0) == 0.001 # powerlaw
