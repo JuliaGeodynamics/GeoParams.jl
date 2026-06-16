@@ -472,4 +472,28 @@ using GeoParams
     # Test show methods dont crash
     @test repr("text/plain", GeoUnit(100km)) isa String
     @test repr("text/plain", GEO_units(; length = 1.0e-2m, temperature = 1273.15K)) isa String
+
+    # iterate: first element should be a GeoUnit, not the integer index
+    arr_gu = GeoUnit(Array(0km:1km:3km))
+    items = collect(arr_gu)
+    @test items[1] isa GeoUnit
+    @test items[1].val == 0.0
+    @test items[2].val == 1.0
+    @test Unit(items[1]) == km
+
+    # broadcasted GeoUnit .op GeoUnit: unit of result must be correct for * and /
+    CharDim = GEO_units(length = 40km, viscosity = 1.0e20Pa * s)
+    len_nd   = nondimensionalize(GeoUnit(1km), CharDim)
+    therm_nd = nondimensionalize(GeoUnit(30K / 1km), CharDim)
+    @test Unit(len_nd .+ len_nd) == Unit(len_nd)
+    @test Unit(len_nd .- len_nd) == Unit(len_nd)
+    @test Unit(len_nd .* therm_nd) == K
+    @test (len_nd ./ len_nd).val ≈ 1.0
+
+    # dimensionalize(::AbstractMaterialParamsStruct) must set Nondimensional = false
+    Phase = SetMaterialParams(; Name = "test", Phase = 1, Density = ConstantDensity())
+    Phase_nd  = nondimensionalize(Phase, CharDim)
+    @test Phase_nd.Nondimensional == true
+    Phase_dim = dimensionalize(Phase_nd, CharDim)
+    @test Phase_dim.Nondimensional == false
 end
