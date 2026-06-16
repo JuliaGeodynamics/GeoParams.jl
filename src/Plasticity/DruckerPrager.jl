@@ -69,9 +69,9 @@ function (s::DruckerPrager)(;
 end
 
 
-function (s::DruckerPrager{_T, U, U1, NoSoftening, AbstractSoftening})(;
+function (s::DruckerPrager{_T, U, U1, NoSoftening, S2})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...
-    ) where {_T, U, U1}
+    ) where {_T, U, U1, S2 <: AbstractSoftening}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
     C = s.softening_C(EII, C)
     C *= perturbation_C
@@ -80,9 +80,9 @@ function (s::DruckerPrager{_T, U, U1, NoSoftening, AbstractSoftening})(;
     return F
 end
 
-function (s::DruckerPrager{_T, U, U1, AbstractSoftening, NoSoftening})(;
+function (s::DruckerPrager{_T, U, U1, S1, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...
-    ) where {_T, U, U1}
+    ) where {_T, U, U1, S1 <: AbstractSoftening}
     @unpack_val sinϕ, cosϕ, ϕ, C = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C *= perturbation_C
@@ -173,16 +173,9 @@ end
 
 This computes plastic strain rate invariant for a given ``λdot``
 """
-function compute_εII(p::DruckerPrager{_T, U, U1}, λdot::_T, τII::_T, kwargs...) where {_T, U, U1}
-    F = compute_yieldfunction(p, kwargs)
-    if F > 0
-        ε_pl = λdot * ∂Q∂τII(p, τII)
-
-    else
-        ε_pl = 0.0
-    end
-
-    return ε_pl
+function compute_εII(p::DruckerPrager{_T, U, U1}, λdot::_T, τII::_T, args::NamedTuple = NamedTuple()) where {_T, U, U1}
+    F = compute_yieldfunction(p, args)
+    return F > 0 ? λdot * ∂Q∂τII(p, τII) : zero(_T)
 end
 
 # Print info
@@ -208,8 +201,8 @@ end
     `K` is the elastic bulk modulus, h is the harderning, and `τij`` is the stress tensor in Voigt notation.
     Equations from Duretz et al. 2019 G3
 """
-@inline function lambda(F::T, p::DruckerPrager, ηve::T, ηvp::T; K = zero(T), dt = zero(T), EII = zero(T), τij = (one(T), one(T), one(T))) where {T}
-    ϕ = s.softening_ϕ(p.cosϕ, EII)
-    return F * inv(ηve + ηvp + K * dt * p.sinΨ * p.sinϕ + h * cosdϕ * plastic_strain(p, τij, zero(T)))
+@inline function lambda(F::T, p::DruckerPrager, ηve::T, ηvp::T; K = zero(T), dt = zero(T), h = zero(T), τij = (one(T), one(T), one(T))) where {T}
+    @unpack_val sinϕ, cosϕ, sinΨ = p
+    return F * inv(ηve + ηvp + K * dt * sinΨ * sinϕ + h * cosϕ * plastic_strain(p, τij, zero(T)))
 end
 #-------------------------------------------------------------------------

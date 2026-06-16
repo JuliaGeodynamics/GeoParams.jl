@@ -111,4 +111,54 @@ using GeoParams, Test
 
     @test ds_nd.εref.val == 0.1
 
+    # the stored slope must carry units and be rescaled along with min/max values
+    @test isdimensional(ls.slope)
+    @test ls_nd.slope.val ≈ 0.1
+
+    # evaluation must be consistent across unit systems (regression for unscaled slope)
+    char_stress = 1.0e7 # 10 MPa
+    @test ls_nd(0.25, ls_nd.max_value.val) ≈ ls(0.25, ustrip(Coh)) / char_stress
+
+    # evaluation for softening ranges other than (lo, hi) = (0, 1)
+    @test ls(0.0, 1.0e6) ≈ 1.0e6
+    @test ls(0.25, 1.0e6) ≈ 0.75e6
+    @test ls(0.5, 1.0e6) ≈ 0.5e6
+
+    # softening nested in a plastic element must survive nondimensionalization
+    p_lin = DruckerPrager_regularised(; softening_C = LinearSoftening(5.0e6Pa, 1.0e7Pa, 0.0, 1.0), C = 1.0e7Pa, ϕ = 30.0, η_vp = 1.0e20Pa * s)
+    p_lin_nd = nondimensionalize(p_lin, CharDim)
+    for EII in (0.0, 0.5, 1.0)
+        F_dim = compute_yieldfunction(p_lin; P = 2.0e8, τII = 1.2e8, EII = EII)
+        F_nd = compute_yieldfunction(p_lin_nd; P = 2.0e8 / char_stress, τII = 1.2e8 / char_stress, EII = EII)
+        @test F_dim / char_stress ≈ F_nd
+    end
+
+    p_cap = DruckerPragerCap(; softening_C = NonLinearSoftening(; ξ₀ = 1.5e7Pa, Δ = 7.5e6Pa), C = 1.5e7Pa, ϕ = 30.0, η_vp = 1.0e19Pa * s, pT = -1.5e6Pa, Ψ = 15.0)
+    p_cap_nd = nondimensionalize(p_cap, CharDim)
+    @test p_cap_nd.softening_C.ξ₀.val ≈ 1.5
+    @test p_cap_nd.softening_C.Δ.val ≈ 0.75
+    for EII in (0.0, 0.5, 2.0)
+        F_dim = compute_yieldfunction(p_cap; P = 1.5e8, τII = 9.0e7, EII = EII)
+        F_nd = compute_yieldfunction(p_cap_nd; P = 1.5e8 / char_stress, τII = 9.0e7 / char_stress, EII = EII)
+        @test F_dim / char_stress ≈ F_nd
+    end
+
+    # MPa-declared parameters must nondimensionalize identically to Pa-declared ones
+    p_MPa = DruckerPragerCap(; softening_C = NonLinearSoftening(; ξ₀ = 15.0MPa, Δ = 7.5MPa), C = 15.0MPa, ϕ = 30.0, η_vp = 1.0e19Pa * s, pT = -1.5MPa, Ψ = 15.0)
+    p_MPa_nd = nondimensionalize(p_MPa, CharDim)
+    @test p_MPa_nd.C.val ≈ p_cap_nd.C.val
+    @test p_MPa_nd.pT.val ≈ p_cap_nd.pT.val
+    @test p_MPa_nd.softening_C.ξ₀.val ≈ p_cap_nd.softening_C.ξ₀.val
+    @test p_MPa_nd.softening_C.Δ.val ≈ p_cap_nd.softening_C.Δ.val
+    for EII in (0.0, 0.5, 2.0)
+        F_Pa = compute_yieldfunction(p_cap_nd; P = 15.0, τII = 9.0, EII = EII)
+        F_MPa = compute_yieldfunction(p_MPa_nd; P = 15.0, τII = 9.0, EII = EII)
+        @test F_Pa ≈ F_MPa
+    end
+
+    # partial positional construction must not stack-overflow
+    nls2 = NonLinearSoftening(30.0, 10.0)
+    @test nls2.ξ₀.val == 30.0
+    @test nls2.Δ.val == 10.0
+
 end

@@ -12,7 +12,7 @@ import GeoParams: second_invariant, second_invariant_staggered, value_and_partia
 using BibTeX
 using ..MaterialParameters: MaterialParamsInfo
 import Base.show
-using ForwardDiff, StaticArrays, Static
+using ForwardDiff, StaticArrays, Static, LinearAlgebra
 
 const AxialCompression, SimpleShear, Invariant = 1, 2, 3
 

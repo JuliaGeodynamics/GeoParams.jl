@@ -28,11 +28,8 @@ struct LinearSoftening{T1, T2, T3} <: AbstractSoftening
 end
 
 function LinearSoftening(min_value::T1, max_value::T1, lo::T2, hi::T2) where {T1, T2}
-    slope = if T1 <: AbstractFloat
-        (max_value - min_value) / (hi - lo)
-    else
-        (max_value - min_value).val / (hi - lo)
-    end
+    # keep units here, so that the stored slope is consistently rescaled by nondimensionalize
+    slope = (max_value - min_value) / (hi - lo)
     return LinearSoftening(min_value, max_value, lo, hi, slope)
 end
 
@@ -40,12 +37,15 @@ LinearSoftening(min_max_values::NTuple{2, T1}, lo_hi::NTuple{2, T2}) where {T1, 
 
 @inline function (softening::LinearSoftening)(softening_var, max_value)
 
-    @unpack_val lo, hi, min_value, slope = softening
+    @unpack_val lo, hi, min_value = softening
 
     softening_var ≥ hi && return min_value
     softening_var ≤ lo && return max_value
 
-    return @muladd (1 - softening_var) * slope + min_value
+    # compute the slope on the fly from the current (consistently scaled) values,
+    # so that the result remains correct after nondimensionalization and for lo/hi ≠ (0, 1)
+    slope = (max_value - min_value) / (hi - lo)
+    return @muladd (hi - softening_var) * slope + min_value
 end
 
 ## Non linear softening
@@ -59,7 +59,13 @@ using SpecialFunctions
     σ::GeoUnit{T, U2} = 0.5NoUnits # standard deviation of the softening
 end
 
-NonLinearSoftening(args::Vararg{Any, N}) where {N} = NonLinearSoftening(convert.(GeoUnit, promote(args...))...)
+# restrict the positional constructors to the field count and route them through the
+# keyword constructor, so that partial positional input does not recurse infinitely
+NonLinearSoftening(ξ₀, Δ) = NonLinearSoftening(; ξ₀ = ξ₀, Δ = Δ)
+function NonLinearSoftening(args::Vararg{Any, 4})
+    ξ₀, Δ, μ, σ = convert.(GeoUnit, promote(args...))
+    return NonLinearSoftening(; ξ₀ = ξ₀, Δ = Δ, μ = μ, σ = σ)
+end
 
 @inline function (softening::NonLinearSoftening)(softening_var, ::Vararg{Any, N}) where {N}
     @unpack_val ξ₀, Δ, μ, σ = softening
@@ -72,7 +78,10 @@ end
     n::GeoUnit{T, U2} = 0.1
 end
 
-DecaySoftening(args::Vararg{Any, N}) where {N} = DecaySoftening(convert.(GeoUnit, promote(args...))...)
+function DecaySoftening(args::Vararg{Any, 2})
+    εref, n = convert.(GeoUnit, promote(args...))
+    return DecaySoftening(; εref = εref, n = n)
+end
 
 @inline function (softening::DecaySoftening)(softening_var::T, max_value::T) where {T}
     @unpack_val εref, n = softening

@@ -495,4 +495,59 @@ using GeoParams
         @test abs(F_check) < 1.0e-12
     end
 
+    @testset "no functor ambiguities" begin
+        # The specialized yield-function functors must each be a strict subtype of the
+        # generic one (free softening type vars bounded by AbstractSoftening), otherwise
+        # `compute_yieldfunction` throws a MethodError on real calls. Guard against the
+        # regression where the specializations were either dead or mutually ambiguous.
+        mod = GeoParams.MaterialParameters.ConstitutiveRelationships
+        amb = Test.detect_ambiguities(mod; recursive = false)
+        plast = filter(
+            m -> occursin("Plasticity", string(m[1].file)) || occursin("Plasticity", string(m[2].file)),
+            amb,
+        )
+        @test isempty(plast)
+
+        # every softening combination must dispatch and apply softening at EII > 0
+        sC = LinearSoftening(0.0e0, 1.0e7, 0.0e0, 1.0e0)
+        sϕ = LinearSoftening(15.0e0, 30.0e0, 0.0e0, 1.0e0)
+        sΨ = LinearSoftening(0.0e0, 20.0e0, 0.0e0, 1.0e0)
+        for p in (
+                DruckerPrager(; softening_C = sC),
+                DruckerPrager(; softening_ϕ = sϕ),
+                DruckerPrager(; softening_ϕ = sϕ, softening_C = sC),
+                DruckerPrager_regularised(; softening_C = sC),
+                DruckerPrager_regularised(; softening_ϕ = sϕ),
+                DruckerPragerCap(; Ψ = 20.0, softening_C = sC),
+                DruckerPragerCap(; Ψ = 20.0, softening_ϕ = sϕ, softening_Ψ = sΨ),
+                DruckerPragerCap(; Ψ = 20.0, softening_ϕ = sϕ, softening_C = sC, softening_Ψ = sΨ),
+            )
+            F0 = compute_yieldfunction(p; P = 1.0e6, τII = 2.0e7, EII = 0.0)
+            F1 = compute_yieldfunction(p; P = 1.0e6, τII = 2.0e7, EII = 1.0)
+            @test isfinite(F0) && isfinite(F1)
+        end
+    end
+
+    @testset "plastic_strain / lambda" begin
+        mod = GeoParams.MaterialParameters.ConstitutiveRelationships
+        p = DruckerPrager(; ϕ = 30.0, Ψ = 10.0, C = 1.0e7Pa)
+        εvp = mod.plastic_strain(p, (1.0, 1.0, 1.0), 1.0e-15)
+        @test isfinite(εvp) && εvp > 0
+        @test isfinite(mod.lambda(1.0e6, p, 1.0e20, 1.0e19))
+        @test isfinite(mod.lambda(1.0e6, p, 1.0e20, 1.0e19; K = 2.0e10, dt = 1.0e3, h = 1.0e5, τij = (1.0e6, 1.0e6, 1.0e6)))
+    end
+
+    @testset "dimensionalize round-trip" begin
+        CharDim = GEO_units(; viscosity = 1.0e19, length = 10km)
+        @test dimensionalize(NoSoftening(), CharDim) === NoSoftening()
+        for p in (
+                DruckerPrager(; C = 1.0e7Pa, ϕ = 30.0),
+                DruckerPrager_regularised(; C = 1.0e7Pa, η_vp = 1.0e20Pa * s),
+                DruckerPragerCap(; C = 1.0e7Pa, pT = -5.0e5Pa, η_vp = 1.0e20Pa * s, Ψ = 10.0),
+            )
+            pd = dimensionalize(nondimensionalize(p, CharDim), CharDim)
+            @test pd.C.val ≈ p.C.val
+        end
+    end
+
 end
