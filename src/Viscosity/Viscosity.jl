@@ -1,21 +1,13 @@
 # extract elements from composite rheology
 @inline elements(v::Union{CompositeRheology, Parallel}) = v.elements
 
-# compute viscosity given second invariants of strain rate and deviatoric stress tensors
-@inline _viscosity(τII, εII) = τII / (2 * εII)
-
 # compute effective "creep" viscosity from strain rate tensor
 """
     compute_viscosity_εII(s::AbstractConstitutiveLaw, εII, kwargs...)
 
-Compute effective viscosity given a 2nd invariant of the deviatoric strain rate tensor, extra parameters are passed as a named tuple, e.g., (;T=T) 
+Compute effective viscosity given a 2nd invariant of the deviatoric strain rate tensor, extra parameters are passed as a named tuple, e.g., (;T=T)
 """
-@inline function compute_viscosity_εII(v::AbstractConstitutiveLaw, εII, args)
-    τII = compute_τII(v, εII, args)
-    η = _viscosity(τII, εII)
-    return η
-end
-
+@inline compute_viscosity_εII(v::AbstractConstitutiveLaw, εII, args) = compute_τII(v, εII, args) / (2 * εII)
 @inline compute_viscosity_εII(v::LinearViscous, εII, args) = v.η.val
 @inline compute_viscosity_εII(v::ConstantElasticity, εII, args) = v.G * args.dt
 @inline compute_viscosity_εII(v::HerschelBulkley, εII, args) = compute_hb_viscosity_εII(v, εII; args...)
@@ -25,14 +17,9 @@ end
 """
     compute_viscosity_τII(s::AbstractConstitutiveLaw, τII, kwargs...)
 
-Compute effective viscosity given a 2nd invariant of the deviatoric stress tensor and, extra parameters are passed as a named tuple, e.g., (;T=T) 
+Compute effective viscosity given a 2nd invariant of the deviatoric stress tensor and, extra parameters are passed as a named tuple, e.g., (;T=T)
 """
-@inline function compute_viscosity_τII(v::AbstractConstitutiveLaw, τII, args)
-    εII = compute_εII(v, τII, args)
-    η = _viscosity(τII, εII)
-    return η
-end
-
+@inline compute_viscosity_τII(v::AbstractConstitutiveLaw, τII, args) = τII / (2 * compute_εII(v, τII, args))
 @inline compute_viscosity_τII(v::LinearViscous, τII, args) = v.η.val
 @inline compute_viscosity_τII(v::ConstantElasticity, τII, args) = v.G * args.dt
 @inline compute_viscosity_τII(v::HerschelBulkley, εII, args) = compute_hb_viscosity_τII(v, εII; args...)
@@ -40,20 +27,13 @@ end
 for fn in (:compute_viscosity_εII, :compute_viscosity_τII)
     @eval begin
 
-        @inline function $fn(v::AbstractConstitutiveLaw, xx, yy, xy, args)
-            II = second_invariant(xx, yy, xy)
-            η = $fn(v, II, args)
-            return η
-        end
+        @inline $fn(v::AbstractConstitutiveLaw, xx, yy, xy, args) = $fn(v, second_invariant(xx, yy, xy), args)
 
         # For single phase versions MaterialParams
         @inline $fn(v::MaterialParams, args::Vararg{Any, N}) where {N} = $fn(v.CompositeRheology[1], args...)
 
         # compute effective "creep" viscosity from strain rate tensor given a composite rheology
-        @inline function $fn(v::CompositeRheology, II, args::Vararg{T, N}) where {T, N}
-            e = elements(v)
-            return compute_viscosity_II(e, $fn, II, args...)
-        end
+        @inline $fn(v::CompositeRheology, II, args...) = compute_viscosity_II(elements(v), $fn, II, args...)
 
     end
 end
@@ -108,17 +88,9 @@ end
     end
 end
 
-# compute effective "creep" viscosity from strain rate tensor given a composite rheology
-@inline function compute_viscosity_εII(v::Parallel, εII, args)
-    e = elements(v)
-    return compute_viscosity_II_parallel(e, compute_viscosity_εII, εII, args)
-end
-
-# compute effective "creep" viscosity from deviatoric stress tensor given a composite rheology
-@inline function compute_viscosity_τII(v::Parallel, τII, args)
-    e = elements(v)
-    return compute_viscosity_II_parallel(e, compute_viscosity_τII, τII, args)
-end
+# compute effective "creep" viscosity from strain rate/stress tensor given a parallel rheology
+@inline compute_viscosity_εII(v::Parallel, εII, args) = compute_viscosity_II_parallel(elements(v), compute_viscosity_εII, εII, args)
+@inline compute_viscosity_τII(v::Parallel, τII, args) = compute_viscosity_II_parallel(elements(v), compute_viscosity_τII, τII, args)
 
 # compute effective "creep" for a composite rheology where elements are in parallel
 @generated function compute_viscosity_II_parallel(v::NTuple{N, AbstractConstitutiveLaw}, fn::F, II, args) where {F, N}
@@ -131,9 +103,9 @@ end
 end
 
 # compute effective "visco-elastic" viscosity
-@inline compute_elastoviscosity(v::ConstantElasticity, η, dt) = (inv(η) + inv(v.G * dt)) |> inv
+@inline compute_elastoviscosity(v::ConstantElasticity, η, dt) = compute_elastoviscosity(v.G, η, dt)
 @inline compute_elastoviscosity(G, η, dt) = (inv(η) + inv(G * dt)) |> inv
-@inline compute_elastoviscosity(v::ConstantElasticity, η, args::NamedTuple) = compute_elastoviscosity(v, η, args.dt)
+@inline compute_elastoviscosity(v::ConstantElasticity, η, args::NamedTuple) = compute_elastoviscosity(v.G, η, args.dt)
 @inline compute_elastoviscosity(G, η, args::NamedTuple) = compute_elastoviscosity(G, η, args.dt)
 
 for fn in (:compute_elastoviscosity_εII, :compute_elastoviscosity_τII)
@@ -145,34 +117,25 @@ for fn in (:compute_elastoviscosity_εII, :compute_elastoviscosity_τII)
         @generated function $fn(v::NTuple{N, AbstractMaterialParamsStruct}, phase, args) where {N}
             return quote
                 Base.@_inline_meta
-                Base.@nexprs $N i -> i == phase && (return $fn(v.CompositeRheology[i], args))
+                Base.@nexprs $N i -> i == phase && (return $$fn(v.CompositeRheology[i], args))
                 return 0.0
             end
         end
 
-        # For multi phases given the i-th phase
+        # For multi phases given phase ratios
         @generated function $fn(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1, T}, SVector{N1, T}}, args::Vararg{Any, N2}) where {N1, N2, T}
             return quote
                 Base.@_inline_meta
                 val = 0.0
-                Base.@nexprs $N1 i -> val += $fn(v[i].CompositeRheology[1], args...) * phase_ratio[i]
-                return 0.0
+                Base.@nexprs $N1 i -> val += $$fn(v[i].CompositeRheology[1], args...) * phase_ratio[i]
+                return val
             end
         end
     end
 end
 
-# compute effective "creep" viscosity from strain rate tensor given a composite rheology
-@inline function compute_elastoviscosity_εII(v::CompositeRheology, εII, args)
-    e = elements(v)
-    return compute_elastoviscosity_II(e, compute_viscosity_εII, εII, args)
-end
-
-# compute effective "creep" viscosity from deviatoric stress tensor given a composite rheology
-@inline function compute_elastoviscosity_τII(v::CompositeRheology, τII, args)
-    e = elements(v)
-    return compute_elastoviscosity_II(e, compute_viscosity_τII, τII, args)
-end
+@inline compute_elastoviscosity_εII(v::CompositeRheology, εII, args) = compute_elastoviscosity_II(elements(v), compute_viscosity_εII, εII, args)
+@inline compute_elastoviscosity_τII(v::CompositeRheology, τII, args) = compute_elastoviscosity_II(elements(v), compute_viscosity_τII, τII, args)
 
 @generated function compute_elastoviscosity_II(v::NTuple{N, AbstractConstitutiveLaw}, fn::F, II, args) where {F, N}
     return quote
@@ -190,10 +153,7 @@ end
 @inline compute_viscosity(v::Union{LinearViscous, ConstantElasticity}, kwargs) = compute_viscosity(v; kwargs...)
 @inline compute_viscosity(v, kwargs) = throw("compute_viscosity only works for linear rheologies")
 
-# compute effective "creep" viscosity from strain rate tensor given a composite rheology
-@inline function compute_viscosity(v::CompositeRheology, args)
-    return compute_viscosity(elements(v), args)
-end
+@inline compute_viscosity(v::CompositeRheology, args) = compute_viscosity(elements(v), args)
 
 @generated function compute_viscosity(v::NTuple{N, AbstractConstitutiveLaw}, args) where {N}
     return quote
@@ -216,7 +176,7 @@ end
     end
 end
 
-# For multi phases given the i-th phase
+# For multi phases given phase ratios
 @generated function compute_viscosity(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1, T}, SVector{N1, T}}, args::Vararg{Any, N2}) where {N1, N2, T}
     return quote
         Base.@_inline_meta
@@ -226,9 +186,7 @@ end
     end
 end
 
-@inline function compute_elasticviscosity(v::CompositeRheology, args)
-    return compute_elasticviscosity(elements(v), args)
-end
+@inline compute_elasticviscosity(v::CompositeRheology, args) = compute_elasticviscosity(elements(v), args)
 
 @generated function compute_elasticviscosity(v::NTuple{N, AbstractMaterialParamsStruct}, phase, args) where {N}
     return quote
@@ -241,7 +199,6 @@ end
 @generated function compute_elasticviscosity(v::NTuple{N, AbstractConstitutiveLaw}, args) where {N}
     return quote
         Base.@_inline_meta
-        η = 0.0
         Base.@nexprs $N i -> iselastic(v[i]) && return compute_viscosity(v[i], args)
         return 0.0
     end
