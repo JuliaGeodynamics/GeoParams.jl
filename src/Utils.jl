@@ -22,7 +22,7 @@ end
 
 # Find inner tuple of maximum length
 function max_length_tuple(t::NTuple{N, Tuple}) where {N}
-    return find_max(ntuple(x -> length(t[x]), Val(N)))
+    return find_max_tuple(ntuple(x -> length(t[x]), Val(N)))
 end
 
 # broadcast getindex() to NamedTuples

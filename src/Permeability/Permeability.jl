@@ -69,7 +69,7 @@ function param_info(s::ConstantPermeability)
 end
 
 function compute_permeability!(k::AbstractArray, s::ConstantPermeability; kwargs...)
-    @unpack_val k_val = s
+    k_val = s.k.val
     k[:] .= k_val
     return nothing
 end

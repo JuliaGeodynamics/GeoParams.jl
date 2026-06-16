@@ -41,7 +41,7 @@ function validate_kwargkeys(kwargs::Dict, macroname::String)
     for k in keys(kwargs)
         if !(k in VALID_KWARGS)
             error(
-                "Invalid keyword argument in $macroname call: `$k`. Valid keyword arguments are: `$(join(valid_kwargs, "`, `"))`.",
+                "Invalid keyword argument in $macroname call: `$k`. Valid keyword arguments are: `$(join(VALID_KWARGS, "`, `"))`.",
             )
         end
     end

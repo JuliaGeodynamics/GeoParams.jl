@@ -34,6 +34,11 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
     @test GeoParams.get_k(x1) == 1.0e-12
     @test compute_permeability(x1) ≈ 1.0e-12
 
+    # in-place fill for a single ConstantPermeability struct
+    karr = zeros(3)
+    compute_permeability!(karr, x1)
+    @test all(karr .≈ 1.0e-12)
+
     x2 = HazenPermeability(; C = 1.0, D10 = 1.0e-4m)
     args = (; ϕ = 0.4)
     @test compute_permeability(x2, args) ≈ 1.0 * (0.1e-3)^2

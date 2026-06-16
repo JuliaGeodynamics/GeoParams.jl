@@ -298,7 +298,6 @@ function compute_εII(s::AbstractMaterialParamsStruct, args)
 end
 
 function compute_εvol(s::AbstractMaterialParamsStruct, args)
-    println("hllo")
     if isempty(s.Elasticity)
         return isempty(args) ? 0.0 : zero(typeof(args).types[1])  # return zero if not specified
     else
