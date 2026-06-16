@@ -787,7 +787,7 @@ julia> PlotPhaseDiagram(PD_data, :Rho)
 ```
 """
 function PlotPhaseDiagram(
-        p::AbstractPhaseDiagramsStruct, fieldn::Symbol; Tvec = nothing, Pvec = nothing, fig = nothing, filename = nothing
+        p::AbstractPhaseDiagramsStruct, fieldn::Symbol; Tvec = nothing, Pvec = nothing, fig = nothing, filename = nothing, colormap = :batlow
     )
     data = getfield(p, fieldn)
 
@@ -809,8 +809,9 @@ function PlotPhaseDiagram(
     if isnothing(fig)
         fig = Figure(; fontsize = 25, size = (1200, 1200))
     end
-    ax = Axis(fig[1, 1]; title = string(fieldn), xlabel = "T [K]", ylabel = "P [Pa]")
-    hm = heatmap!(ax, Tvec_K, Pvec_Pa, Z; colormap = :batlow)
+    diagram_name = basename(ptr2string(p.Name))   # name of the phase-diagram (.in) file
+    ax = Axis(fig[1, 1]; title = diagram_name, xlabel = "T [K]", ylabel = "P [Pa]")
+    hm = heatmap!(ax, Tvec_K, Pvec_Pa, Z; colormap = colormap)
     Colorbar(fig[1, 2], hm; label = string(fieldn))
 
     if !isnothing(filename)
