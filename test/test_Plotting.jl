@@ -5,7 +5,7 @@ import GeoParams.Dislocation, GeoParams.Diffusion, GeoParams.Garnet
 
 CairoMakie.activate!()
 
-# All figures are written to PNGs in a temp dir (forces the `save` path, never `display`),
+# All figures are written to pngs in a temp dir (forces the `save` path, never `display`),
 # which lets these run on a headless CI runner without OpenGL/xvfb.
 @testset "Plotting (headless / CairoMakie)" begin
     tmp = mktempdir()
