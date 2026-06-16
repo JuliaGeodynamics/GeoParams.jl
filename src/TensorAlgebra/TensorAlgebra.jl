@@ -226,7 +226,7 @@ end
 # Euler Rodrigues rotation matrix
 @inline function rodrigues_euler(θ, n)
     sinθ, cosθ = sincos(θ)
-    c0 = sinθ * cosθ
+    c0 = cosθ
     Base.@nexprs 3 i -> c_i = sinθ * n[i]
     R1 = @SMatrix [
         c0   -c_3   c_2

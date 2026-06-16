@@ -76,6 +76,12 @@ import ForwardDiff as FD
     @test compute_elasticviscosity(rheologies2, 2, args) == el.G * dt
     @test compute_elasticviscosity(rheologies2, phase_ratio, args) == el.G * dt
 
+    # integer-phase elastoviscosity (single phase picked by index)
+    @test compute_elastoviscosity_εII(rheologies2, 1, εII, args) == 0.8
+    @test compute_elastoviscosity_εII(rheologies2, 2, εII, args) == 1.3333333333333333
+    @test compute_elastoviscosity_τII(rheologies2, 1, τII, args) == 0.8
+    @test compute_elastoviscosity_τII(rheologies2, 2, τII, args) == 1.3333333333333333
+
     # phase-ratio averaged elastoviscosity
     @test compute_elastoviscosity_εII(rheologies2, phase_ratio, εII, args) == 0.8 * 0.5 + 1.3333333333333333 * 0.5
     @test compute_elastoviscosity_τII(rheologies2, phase_ratio, τII, args) == 0.8 * 0.5 + 1.3333333333333333 * 0.5
@@ -169,6 +175,11 @@ import ForwardDiff as FD
         xx, yy, xy = 0.01, 0.01, 0.01
         @test compute_viscosity_εII(lv, xx, yy, xy, a) == 5.0
         @test compute_viscosity_τII(lv, xx, yy, xy, a) == 5.0
+
+        # Parallel rheology: effective viscosity is the sum of element viscosities
+        par = CompositeRheology(Parallel(LinearViscous(; η = 2.0), LinearViscous(; η = 3.0)))
+        @test compute_viscosity_εII(par, 1.0, a) == 5.0
+        @test compute_viscosity_τII(par, 1.0, a) == 5.0
     end
 
     # Multi-phase εII / τII with integer phase and phase ratios

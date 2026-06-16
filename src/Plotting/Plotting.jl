@@ -141,7 +141,7 @@ function PlotStrainrateStress(
         # Compute stress
         #compute_τII!(Tau_II, p, Eps_II, args_in)
         for j in eachindex(Tau_II)
-            Tau_II[j] = compute_τII(p, Eps_II[j], args)
+            Tau_II[j] = compute_τII(p, Eps_II[j], args_in)
         end
 
         Tau_II_MPa = Tau_II ./ 1.0e6
@@ -166,7 +166,7 @@ function PlotStrainrateStress(
     return fig, ax, Eps_II, Tau_II_MPa
 end
 
-# Gelper function that simplifies customising the plots
+# Helper function that simplifies customising the plots
 function ObtainPlotArgs(i, p, args_in, linewidth, linestyle, color, label_in)
     if isa(linewidth, Tuple)
         linewidth_in = linewidth[i]
@@ -308,7 +308,7 @@ function PlotStressStrainrate(
         # Compute stress
         #compute_εII!(Eps_II, p, Tau_II, args_in)       # Compute strainrate
         for j in eachindex(Tau_II)
-            Eps_II[j] = compute_εII(p, Tau_II[j], args)
+            Eps_II[j] = compute_εII(p, Tau_II[j], args_in)
         end
 
         η = Tau_II ./ (2 * Eps_II)                        # effective viscosity
@@ -404,7 +404,7 @@ function PlotStrainrateViscosity(
         # Compute stress
         #compute_τII!(Tau_II, p, Eps_II, args_in)
         for j in eachindex(Tau_II)
-            Tau_II[j] = compute_τII(p, Eps_II[j], args)
+            Tau_II[j] = compute_τII(p, Eps_II[j], args_in)
         end
 
         η = Tau_II ./ (2 * Eps_II)                        # effective viscosity
@@ -488,7 +488,6 @@ function PlotStressViscosity(
         else
             p = x
         end
-        @show typeof(p)
         if isa(args, Tuple)
             args_in = args[i]
         else
@@ -502,7 +501,7 @@ function PlotStressViscosity(
 
         #compute_εII!(Eps_II, p, Tau_II, args_in)       # Compute strainrate
         for j in eachindex(Tau_II)
-            Eps_II[j] = compute_εII(p, Tau_II[j], args)
+            Eps_II[j] = compute_εII(p, Tau_II[j], args_in)
         end
 
         η = Tau_II ./ (2 * Eps_II)                        # effective viscosity
@@ -638,31 +637,29 @@ function PlotHeatCapacity(
 end
 
 
-# TO BE FIXED
 """
-    T,Kk,plt = PlotConductivity(Cp::AbstractConductivity; T=nothing, plt=nothing, lbl=nothing)
+    fig, ax, T, Cond = PlotConductivity(k::AbstractConductivity; T=nothing, P=nothing, fig=nothing, ax=nothing, lbl=nothing, filename=nothing)
 
 Creates a plot of temperature `T` vs. thermal conductivity, as specified in `k` (which can be temperature-dependent).
+Note: if you want to create plots you need to install and load a `Makie.jl` backend (e.g. `GLMakie.jl` or, for headless use, `CairoMakie.jl`).
 
 # Optional parameters
 - `T`: temperature range
-- `plt`: a previously generated plotting object
+- `P`: pressure (scalar or array matching `T`)
+- `fig`/`ax`: a previously generated figure/axis to plot into
 - `lbl`: label of the curve
+- `filename`: if provided, the figure is saved to this file instead of being displayed
 
 # Example
 ```
-julia> k = T_Conductivity_Whittacker()
-julia> T,KK,plt = PlotConductivity(k)
+julia> using CairoMakie, GeoParams
+julia> k = T_Conductivity_Whittington()
+julia> fig, ax, T, Cond = PlotConductivity(k)
+julia> save("Tdependent_conductivity.png", fig)
 ```
-you can now save the figure to disk with:
-```
-julia> using Plots
-julia> savefig(plt,"Tdependent_conductivity.png")
-```
-
 """
 function PlotConductivity(
-        k::AbstractConductivity; T = nothing, P = nothing, plt = nothing, lbl = nothing
+        k::AbstractConductivity; T = nothing, P = nothing, fig = nothing, ax = nothing, lbl = nothing, filename = nothing
     )
     if isnothing(T)
         T = collect(273.0:10:1250) * K
@@ -679,48 +676,55 @@ function PlotConductivity(
         Cond = ones(size(T)) * Cond
     end
 
-    if isnothing(plt)
-        plt = plot(ustrip(T), ustrip(Cond); label = lbl)
-    else
-        plt = plot!(ustrip(T), ustrip(Cond); label = lbl)
+    if isnothing(fig)
+        fig = Figure(; fontsize = 25, size = (1200, 1200))
     end
-    plot!(
-        plt;
-        xlabel = "Temperature [$(unit(T[1]))]",
-        ylabel = "Thermal conductivity [$(unit(Cond[1]))]",
-    )
-    gui(plt)
+    if isnothing(ax)
+        ax = Axis(
+            fig[1, 1];
+            xlabel = "Temperature [$(unit(T[1]))]",
+            ylabel = "Thermal conductivity [W m⁻¹ K⁻¹]",
+        )
+    end
 
-    return T, Cond, plt
+    li = lines!(ax, ustrip.(T), ustrip.(Cond))
+    if !isnothing(lbl)
+        li.label = lbl
+        axislegend(ax)
+    end
+
+    if !isnothing(filename)
+        save(filename, fig)
+    else
+        display(fig)
+    end
+
+    return fig, ax, T, Cond
 end
 
-# TO BE FIXED
 """
-    T,phi,plt = PlotMeltFraction(p::AbstractMeltingParam; T=nothing, plt=nothing, lbl=nothing)
+    T, phi, dϕdT = PlotMeltFraction(p::AbstractMeltingParam; T=nothing, P=nothing, fig=nothing, lbl=nothing, filename=nothing)
 
-Creates a plot of temperature `T` vs. melt fraction, as specified in `p`.
-The 1D curve can be evaluated at a specific pressure `P` which can be given as a scalar or as an array of the same size as `T`
+Creates a plot of temperature `T` vs. melt fraction (top) and `dϕ/dT` (bottom), as specified in `p`.
+The 1D curve can be evaluated at a specific pressure `P` which can be given as a scalar or as an array of the same size as `T`.
+Note: if you want to create plots you need to install and load a `Makie.jl` backend (e.g. `GLMakie.jl` or, for headless use, `CairoMakie.jl`).
 
 # Optional parameters
 - `T`: temperature range
 - `P`: pressure
-- `plt`: a previously generated plotting object
+- `fig`: a previously generated figure to plot into
 - `lbl`: label of the curve
+- `filename`: if provided, the figure is saved to this file instead of being displayed
 
 # Example
 ```
-julia> p          =  MeltingParam_Caricchi()
-julia> T,phi,dϕdT =  PlotMeltFraction(p)
+julia> using CairoMakie, GeoParams
+julia> p = MeltingParam_Caricchi()
+julia> T, phi, dϕdT = PlotMeltFraction(p)
 ```
-you can now save the figure to disk with:
-```
-julia> using Plots
-julia> savefig(plt,"MeltFraction.png")
-```
-
 """
 function PlotMeltFraction(
-        p::AbstractMeltingParam; T = nothing, P = nothing, plt = nothing, lbl = nothing
+        p::AbstractMeltingParam; T = nothing, P = nothing, fig = nothing, lbl = nothing, filename = nothing
     )
     if isnothing(T)
         T = (873.0:10:1500.0) * K
@@ -740,82 +744,83 @@ function PlotMeltFraction(
     compute_meltfraction!(phi, p, args)
     compute_dϕdT!(dϕdT, p, args)
 
-    if isnothing(plt)
-        plt1 = plot(T_C, ustrip(phi); label = lbl, ylabel = "Melt Fraction \\Phi")
-        plt2 = plot(T_C, ustrip(dϕdT); label = lbl, ylabel = "d\\Phi / dT")
-    else
-        plt1 = plot!(T_C, ustrip(phi); label = lbl, ylabel = "Melt Fraction \\Phi")
-        plt2 = plot!(T_C, ustrip(phi); label = lbl, ylabel = "d\\Phi / dT")
+    if isnothing(fig)
+        fig = Figure(; fontsize = 25, size = (1200, 1200))
     end
-    plt = plot!(plt1, plt2; xlabel = "Temperature [C]", layout = (2, 1))
+    ax1 = Axis(fig[1, 1]; xlabel = "Temperature [C]", ylabel = L"Melt fraction $\phi$")
+    ax2 = Axis(fig[2, 1]; xlabel = "Temperature [C]", ylabel = L"d\phi / dT")
+    l1 = lines!(ax1, T_C, ustrip.(phi))
+    l2 = lines!(ax2, T_C, ustrip.(dϕdT))
+    if !isnothing(lbl)
+        l1.label = lbl
+        l2.label = lbl
+        axislegend(ax1)
+    end
 
-    gui(plt)
+    if !isnothing(filename)
+        save(filename, fig)
+    else
+        display(fig)
+    end
 
     return T, phi, dϕdT
 end
 
-# BROKEN
 """
-    plt, data, Tvec, Pvec = PlotPhaseDiagram(p::PhaseDiagram_LookupTable; fieldname::Symbol, Tvec=nothing, Pvec=nothing)
+    fig, ax, Z, Tvec_K, Pvec_Pa = PlotPhaseDiagram(p::AbstractPhaseDiagramsStruct, fieldname::Symbol; Tvec=nothing, Pvec=nothing, fig=nothing, filename=nothing)
 
-Plots a phase diagram as a function of `T` (x-axis) and `P` (y-axis).
+Plots a phase diagram field `fieldname` as a function of `T` (x-axis, in K) and `P` (y-axis, in Pa).
 We either use the default ranges of the diagram, or you can specify the temperature and pressure ranges (while specifying units).
-The return arguments are the plotting object `plt` (so you can modify properties) as well as the data that is being plotted
+The return arguments are the figure/axis, the gridded data `Z` and the temperature/pressure vectors used.
+Note: if you want to create plots you need to install and load a `Makie.jl` backend (e.g. `GLMakie.jl` or, for headless use, `CairoMakie.jl`).
 
 Example
 =======
 ```julia
-julia> PD_Data = PerpleX_LaMEM_Diagram("./test/test_data/Peridotite.in")
-Perple_X/LaMEM Phase Diagram Lookup Table:
-                      File    :   Peridotite.in
-                      T       :   293.0 - 1573.000039
-                      P       :   1.0e7 - 2.9999999944e9
-                      fields  :   :meltRho, :meltRho, :meltFrac, :rockRho, :Rho, :rockVp
-                                  :rockVs, :rockVpVs, :meltVp, :meltVs, :meltVpVs
-                                  :Vp, :Vs, :VpVs, :cpxFrac
-julia> PlotPhaseDiagram(PD_data,:meltFrac, Tvec=(100:1:1400).*C, Pvec=(.1:.1:30).*kbar )
+julia> using CairoMakie, GeoParams
+julia> PD_data = PerpleX_LaMEM_Diagram("./test/test_data/Peridotite.in")
+julia> PlotPhaseDiagram(PD_data, :meltFrac, Tvec=(100:1:1400).*C, Pvec=(.1:.1:30).*kbar)
 ```
-This will generate the following plot
-![subet2](./assets/img/PhaseDiagram.png)
-
 You can also use the default pressure/temperature ranges in the diagrams:
 ```julia
-julia> PlotPhaseDiagram(PD_data,:Rho)
+julia> PlotPhaseDiagram(PD_data, :Rho)
 ```
-
 """
 function PlotPhaseDiagram(
-        p::AbstractPhaseDiagramsStruct, fieldn::Symbol; Tvec = nothing, Pvec = nothing
+        p::AbstractPhaseDiagramsStruct, fieldn::Symbol; Tvec = nothing, Pvec = nothing, fig = nothing, filename = nothing, colormap = :batlow
     )
     data = getfield(p, fieldn)
+
+    # temperature / pressure vectors (in K / Pa) used to evaluate the diagram
     if isnothing(Tvec)
-        Tvec_K = data.itp.knots[1]
-        Tvec = Tvec_K
+        Tvec_K = collect(range(data.T0, data.Tmax; length = data.numT))
     else
-        Tvec_K = Float64.(uconvert.(K, Tvec))
+        Tvec_K = Float64.(ustrip.(uconvert.(K, Tvec)))
     end
     if isnothing(Pvec)
-        Pvec_Pa = data.itp.knots[2]
-        Pvec = Pvec_Pa
+        Pvec_Pa = collect(range(data.P0, data.Pmax; length = data.numP))
     else
-        Pvec_Pa = Float64.(uconvert.(Pa, Pvec))
+        Pvec_Pa = Float64.(ustrip.(uconvert.(Pa, Pvec)))
     end
 
-    data_scalar = data(ustrip.(Tvec_K), ustrip.(Pvec_Pa))
+    # evaluate the field on the (T, P) grid -> size (length(Tvec_K), length(Pvec_Pa))
+    Z = [data(t, pp) for t in Tvec_K, pp in Pvec_Pa]
 
-    plt = heatmap(
-        ustrip.(Tvec),
-        ustrip.(Pvec),
-        data_scalar';
-        title = string(fieldn),
-        xlabel = "T [$(unit(Tvec[1]))]",
-        ylabel = "P [$(unit(Pvec[1]))]",
-        c = :batlow,
-    )
+    if isnothing(fig)
+        fig = Figure(; fontsize = 25, size = (1200, 1200))
+    end
+    diagram_name = basename(ptr2string(p.Name))   # name of the phase-diagram (.in) file
+    ax = Axis(fig[1, 1]; title = diagram_name, xlabel = "T [K]", ylabel = "P [Pa]")
+    hm = heatmap!(ax, Tvec_K, Pvec_Pa, Z; colormap = colormap)
+    Colorbar(fig[1, 2], hm; label = string(fieldn))
 
-    display(plt)
+    if !isnothing(filename)
+        save(filename, fig)
+    else
+        display(fig)
+    end
 
-    return plt, data_scalar, Tvec, Pvec
+    return fig, ax, Z, Tvec_K, Pvec_Pa
 end
 
 """

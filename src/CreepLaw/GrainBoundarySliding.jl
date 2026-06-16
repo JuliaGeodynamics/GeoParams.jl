@@ -276,7 +276,7 @@ end
 
     # derived symbolically
     return @pow (
-        A^-n_inv * d^(-p * n_inv) * (EpsII * FE)^n_inv * exp(-(E + P * V) / (R * T))^n_inv /
+        A^-n_inv * d^(-p * n_inv) * (EpsII * FE)^n_inv * exp(-(E + P * V) / (R * T))^-n_inv /
             (EpsII * FT * n)
     )
 end
@@ -291,7 +291,7 @@ end
 
     # derived symbolically
     return @pow (
-        A^-n_inv * d^(-p * n_inv) * (EpsII * FE)^n_inv * exp(-(E + P * V) / (R * T))^n_inv /
+        A^-n_inv * d^(-p * n_inv) * (EpsII * FE)^n_inv * exp(-(E + P * V) / (R * T))^-n_inv /
             (EpsII * FT * n)
     )
 end

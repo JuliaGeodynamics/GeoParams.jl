@@ -86,7 +86,7 @@ function DippingGravity(α::T1, θ::T2, g::T3) where {T1, T2, T3}
 end
 
 function param_info(s::DippingGravity) # info about the struct
-    return MaterialParamsInfo(; Equation = L"g = ($(s.gx, s.gy, s.gz)) m s^{-2}")
+    return MaterialParamsInfo(; Equation = L"g = (g_x, g_y, g_z) m s^{-2}")
 end
 
 # Calculation routine
@@ -97,7 +97,7 @@ end
 
 # Print info
 function show(io::IO, d::DippingGravity)
-    return print(io, "Gravitational acceleration: g=$((UnitValue(d.gz), UnitValue(d.gy), UnitValue(d.gz)))")
+    return print(io, "Gravitational acceleration: g=$((UnitValue(d.gx), UnitValue(d.gy), UnitValue(d.gz)))")
 end
 #-------------------------------------------------------------------------
 

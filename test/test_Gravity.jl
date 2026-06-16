@@ -19,8 +19,8 @@ using Test, GeoParams
     d = DippingGravity(90, 0, gravity)
     gᵢ = compute_gravity(d)
     @test isbits(d)
-    @test param_info(d).Equation === L"g = ($(s.gx, s.gy, s.gz)) m s^{-2}"
-    @test sprint(show, d) == "Gravitational acceleration: g=(9.81, 0.0, 9.81)"
+    @test param_info(d).Equation === L"g = (g_x, g_y, g_z) m s^{-2}"
+    @test sprint(show, d) == "Gravitational acceleration: g=(0.0, 0.0, 9.81)"
     @test gᵢ == (0.0e0, 0.0e0, gravity)
 
     α = 45

@@ -483,7 +483,7 @@ using GeoParams
 
     # broadcasted GeoUnit .op GeoUnit: unit of result must be correct for * and /
     CharDim = GEO_units(length = 40km, viscosity = 1.0e20Pa * s)
-    len_nd   = nondimensionalize(GeoUnit(1km), CharDim)
+    len_nd = nondimensionalize(GeoUnit(1km), CharDim)
     therm_nd = nondimensionalize(GeoUnit(30K / 1km), CharDim)
     @test Unit(len_nd .+ len_nd) == Unit(len_nd)
     @test Unit(len_nd .- len_nd) == Unit(len_nd)
@@ -492,7 +492,7 @@ using GeoParams
 
     # dimensionalize(::AbstractMaterialParamsStruct) must set Nondimensional = false
     Phase = SetMaterialParams(; Name = "test", Phase = 1, Density = ConstantDensity())
-    Phase_nd  = nondimensionalize(Phase, CharDim)
+    Phase_nd = nondimensionalize(Phase, CharDim)
     @test Phase_nd.Nondimensional == true
     Phase_dim = dimensionalize(Phase_nd, CharDim)
     @test Phase_dim.Nondimensional == false

@@ -204,7 +204,6 @@ function create_parallel_str(str)
         l_st2 = findnext("{", str, l_start[1] + 1)
         l_end2 = findprev("}", str, l_end[1] - 1)
 
-        @show l_st2, l_end2
         if !isnothing(l_st2)
             str_sub = str[(l_st2[1] + 1):(l_end2[1] - 1)]
             str_sub = replace(str_sub, ";" => "X")

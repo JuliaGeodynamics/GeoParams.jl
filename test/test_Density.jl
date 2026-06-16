@@ -486,7 +486,7 @@ import ForwardDiff.derivative
 
     # GasPyroclast Density
     CharUnits_GEO = GEO_units(; viscosity = 1.0e19, length = 1000km)
-    x_D = GasPyroclast_Density(δ = 0.05, β = 0.05)
+    x_D = GasPyroclast_Density(δ = 0.05, β = 0.1)
     x_ND = nondimensionalize(x_D, CharUnits_GEO)
     @test isdimensional(x_D) == true
     @test isdimensional(x_ND) == false
@@ -499,7 +499,7 @@ import ForwardDiff.derivative
 
     @test ρmelt ≈ 2200.0
     @test ρgas ≈ 1.0
-    @test ρ ≈ x_D.δ * ρgas + ρmelt * (1 - x_D.δ)
+    @test ρ ≈ x_D.δ * ρgas + ρmelt * (1 - x_D.β) * (1 - x_D.δ)
 
     x = GasPyroclast_Density(
         ρmelt = PT_Density(α = 1.0e-3),
@@ -520,13 +520,13 @@ import ForwardDiff.derivative
             Name = "Crust",
             Phase = 0,
             CreepLaws = (PowerlawViscous(), LinearViscous(; η = 1.0e23Pas)),
-            Density = GasPyroclast_Density(δ = 0.05, β = 0.05),
+            Density = GasPyroclast_Density(δ = 0.05, β = 0.1),
         ),
         SetMaterialParams(;
             Name = "Lower Crust",
             Phase = 1,
             CreepLaws = (PowerlawViscous(; n = 5.0), LinearViscous(; η = 1.0e21Pas)),
-            Density = GasPyroclast_Density(δ = 0.05, β = 0.05),
+            Density = GasPyroclast_Density(δ = 0.05, β = 0.1),
         ),
     )
 

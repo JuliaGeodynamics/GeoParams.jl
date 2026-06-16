@@ -562,10 +562,10 @@ function Transform_ChemicalDiffusion(pp::DiffusionData)
     P0 = Value(pp.P0)
 
     D0_SI = uconvert(m^2 / s, D0)
-    Ea_SI = uconvert(J / mol, pp.Ea)
-    Ea_1σ_SI = uconvert(J / mol, pp.Ea_1σ)
-    ΔV_SI = uconvert(m^3 / mol, pp.ΔV)
-    ΔV_1σ_SI = uconvert(m^3 / mol, pp.ΔV_1σ)
+    Ea_SI = uconvert(J / mol, Ea)
+    Ea_1σ_SI = uconvert(J / mol, Ea_1σ)
+    ΔV_SI = uconvert(m^3 / mol, ΔV)
+    ΔV_1σ_SI = uconvert(m^3 / mol, ΔV_1σ)
     T_range_min_SI = uconvert(K, T_range_min)
     T_range_max_SI = uconvert(K, T_range_max)
     P0_SI = uconvert(Pa, P0)
@@ -588,8 +588,8 @@ function Transform_ChemicalDiffusion(pp::DiffusionData)
         aX = aX,
         bX = bX,
         Charge = Charge,
-        T_range_min_SI = T_range_min_SI,
-        T_range_max_SI = T_range_max_SI,
+        T_range_min = T_range_min_SI,
+        T_range_max = T_range_max_SI,
         P0 = P0_SI,
     )
 

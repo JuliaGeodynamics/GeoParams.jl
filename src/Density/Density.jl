@@ -408,7 +408,7 @@ end
     ρgas = compute_density(rho.ρgas, kwargs)
     @unpack_val δ, β = rho
 
-    return @muladd ρgas * δ + ρmelt * (1 - β)
+    return @muladd ρgas * δ + ρmelt * (1 - β) * (1 - δ)
 end
 
 @inline (s::GasPyroclast_Density)(args) = s(; args...)
@@ -728,7 +728,7 @@ function get_α(rho::GasPyroclast_Density; kwargs...)
 
     @unpack_val δ, β = rho
 
-    return @muladd αgas * δ + αmelt * (1 - β)
+    return @muladd αgas * δ + αmelt * (1 - β) * (1 - δ)
 end
 
 get_α(rho::GasPyroclast_Density, args) = get_α(rho; args...)

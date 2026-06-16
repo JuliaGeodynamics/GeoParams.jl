@@ -67,7 +67,11 @@ In-place routine to compute constant conductivity
 """
 function compute_conductivity!(
         k_array::AbstractArray{_T, N}, s::ConstantConductivity; kwargs...
-    ) where {_T, N} end
+    ) where {_T, N}
+    @unpack_val k = s
+    k_array .= k
+    return nothing
+end
 
 # Print info
 function show(io::IO, g::ConstantConductivity)
