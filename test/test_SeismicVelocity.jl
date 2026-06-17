@@ -122,4 +122,49 @@ using GeoParams
     Vs_nomelt, Vp_nomelt = melt_correction_Takei(Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, 0.0, α)
     @test Vs_nomelt ≈ Vs0 atol = 1.0
     @test Vp_nomelt ≈ Vp0 atol = 1.0
+
+    # melt_correction_Takei: α = 1.0 → R_func is NaN → correction is skipped (else branch)
+    Vs_nan, Vp_nan = melt_correction_Takei(Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, 0.7, 1.0)
+    @test Vs_nan == Vs0
+    @test Vp_nan == Vp0
+
+    # melt_correction_Takei: extreme contrast clamps negative velocities to zero
+    Vs_clamp, Vp_clamp = melt_correction_Takei(1.0, 250.0, 162.0, 2000.0, 3300.0, 6000.0, 3000.0, 0.8, 0.1)
+    @test Vs_clamp == 0.0
+    @test Vp_clamp == 0.0
+
+    # melt_correction (Takei 1998, restored): matches the published reference values
+    Vp_cor, Vs_cor = melt_correction(26.0, 94.5, 61.0, 2802.0, 3198.0, 7.4, 4.36, 0.01, 0.15)
+    @test [Vp_cor, Vs_cor] ≈ [7.331657177397843, 4.314027804335563]
+
+    # porosity_correction (restored): guarded against unphysical negative velocities
+    Vs_poro = porosity_correction(94.5, 61.0, 1000.0, 3198.0, 4.36, 0.25, 0.25)
+    @test Vs_poro ≥ 0.0
+
+    # anelastic_correction: invalid water mode throws a descriptive error
+    @test_throws ArgumentError anelastic_correction(3, 4.36734, 5.0, 1250.0)
+
+    # compute_wave_velocity for a phase without a SeismicVelocity parametrization → 0
+    mat_noVs = SetMaterialParams(; Name = "noVs", Phase = 1)
+    @test compute_wave_velocity(mat_noVs, (1.0, 2.0)) == 0.0
+
+    # correct_wavevelocities_phasediagrams: full pipeline on a real lookup table
+    PD = PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in")
+
+    # default options (anelasticity + Takei melt + guarded porosity)
+    PD_def = correct_wavevelocities_phasediagrams(PD)
+    @test PD_def isa GeoParams.MaterialParameters.PhaseDiagrams.PhaseDiagram_LookupTable
+    @test PD_def.Vp_uncorrected !== nothing
+    @test PD_def.Vs_uncorrected !== nothing
+
+    # exercise the legacy (non-Takei) melt_correction branch as well
+    PD_legacy = correct_wavevelocities_phasediagrams(
+        PD; apply_porosity_correction = false, melt_correction_takei = false, water = 2
+    )
+    @test PD_legacy isa GeoParams.MaterialParameters.PhaseDiagrams.PhaseDiagram_LookupTable
+
+    # corrected velocities are stored as evaluatable interpolation objects
+    T0, P0 = PD.solid_Vs.T0, PD.solid_Vs.P0
+    @test PD_def.Vp(T0, P0) isa Real
+    @test PD_def.Vs(T0, P0) isa Real
 end
