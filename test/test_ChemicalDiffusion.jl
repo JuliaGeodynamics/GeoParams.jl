@@ -759,4 +759,11 @@ using StaticArrays
 
     compute_λ!(λ, melt_multicomponent; T = T)
     @test (ustrip(λ[1][1, 1]) * 1.0e12) ≈ λ1_paper atol = 1.0e-15
+
+    # unitless (plain-number) path of compute_D / compute_λ for multicomponent data
+    D_unitless = compute_D(melt_multicomponent; T = 1773.15)
+    @test D_unitless[1, 1] ≈ ustrip(compute_D(melt_multicomponent; T = 1773.15K)[1, 1]) atol = 1.0e-20
+
+    λ_unitless = compute_λ(melt_multicomponent; T = 1800.0)
+    @test (λ_unitless[1, 1] * 1.0e12) ≈ λ1_paper atol = 1.0e-15
 end

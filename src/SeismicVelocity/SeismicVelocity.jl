@@ -21,8 +21,8 @@ abstract type AbstractSeismicVelocity{T} <: AbstractMaterialParam end
 export compute_wave_velocity, # calculation routines
     compute_wave_velocity!, # calculation routines
     ConstantSeismicVelocity, # constant
-    # melt_correction,
-    # porosity_correction,
+    melt_correction,
+    porosity_correction,
     anelastic_correction,
     param_info,
     correct_wavevelocities_phasediagrams,
@@ -111,7 +111,6 @@ end
 compute_wave_velocity!(args...) = compute_param!(compute_wave_velocity, args...)
 compute_wave_velocity(args...) = compute_param(compute_wave_velocity, args...)
 
-#=
 """
         Vp_cor,Vs_cor = melt_correction(  Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
 
@@ -223,9 +222,7 @@ function melt_correction(
 
     return Vp_cor, Vs_cor
 end
-=#
 
-#=
 """
         Vs_cor = porosity_correction(  Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
 
@@ -294,28 +291,18 @@ function porosity_correction(
         -7.5395,-4.8676, -4.3182
     )
 
-    # Lines below are equivalent to:
-    a = zeros(3)
-    #for i in 1:4
-    #     a[i] =
-    #         aij[i, 1] * exp(aij[i, 2] * (ν - 0.25) + aij[i, 3] * (ν - 0.25)^3) + aij[i, 4]
-    #end
-    #a = ntuple(Val(3)) do i
-    #    idx = 4*i-3 # linear offset index
-    #    aij[idx] * exp(aij[idx+1] * (ν - 0.25) + aij[idx+2] * (ν - 0.25)^3) + aij[idx+3]
-    #end
-
     # Takei (2002):
     a = ntuple(Val(3)) do i
         idx = 4*i-3 # linear offset index
         aij[idx] + aij[idx+1]*ν^1 + aij[idx+2]*ν^2 + aij[idx+3]*ν^3
     end
 
-    # Lines below are equivalent to:
-    # b = zeros(2)
-    # for i in 1:2
-    #     b[i] = bij[i, 1] * ν + bij[i, 2]
-    # end
+    # FIXME: the shear coefficients `bij` above were switched to the Takei (2002)
+    # layout, but the `b`/`nμ` computation below still uses the old Takei (1998)
+    # 2x2 linear indexing. This yields an unphysically large `nμ` (~3.5) and hence
+    # a near-zero shear-modulus ratio, so `Vs_cor` can become negative. The result
+    # is clamped to >= 0 below as a guard. The correct Takei (2002) shear formula
+    # should replace this block.
     b = ntuple(Val(2)) do i
         idx = 2*i-1 # linear offset index
         bij[idx] * ν + bij[idx+1]
@@ -347,9 +334,11 @@ function porosity_correction(
     # get the correction values
     Vs_cor = Vs0 - Vs0 * ΔVs
 
+    # guard against unphysical negative velocities (see FIXME on the shear formula above)
+    Vs_cor = max(Vs_cor, zero(Vs_cor))
+
     return Vs_cor
 end
-=#
 
 """
         Vs_anel = anelastic_correction(water::Int64, Vs0::Float64,P::Float64,T::Float64)
@@ -410,8 +399,10 @@ function anelastic_correction(water::Int64, Vs0::Float64, Pref::Float64, Tref::F
         COH = 3000.0 * 1.0e-6 # for wet mantle (saturated water)
         r = 2               # for wet mantle
     else
-        print(
-            "water mode is not implemented. Valid values are 0 (dry),1 (dampened) and 2 (wet)",
+        throw(
+            ArgumentError(
+                "water mode $water is not implemented. Valid values are 0 (dry), 1 (dampened) and 2 (wet)",
+            ),
         )
     end
 
@@ -455,7 +446,10 @@ function correct_wavevelocities_phasediagrams(
     )
 
     # extract required data
-    T, P = PD.Rho.itp.knots   # T,P vectors of diagrams
+    # reconstruct the T,P knot vectors from the (regular) interpolation grid
+    grid = PD.solid_Vs
+    T = range(grid.T0, grid.Tmax; length = grid.numT)   # T vector of diagram
+    P = range(grid.P0, grid.Pmax; length = grid.numP)   # P vector of diagram
 
     # store original results correction
     Vs_uncorrected = PD.Vs
@@ -538,10 +532,11 @@ function correct_wavevelocities_phasediagrams(
 
     # Store results ----
 
-    # Create interpolation objects
-    Vs_corrected_intp = interpolate((T, P), Vs_corrected)
-    Vp_corrected_intp = interpolate((T, P), Vp_corrected)
-    VpVs_corrected_intp = interpolate((T, P), Vp_corrected ./ Vs_corrected)
+    # Create interpolation objects (reusing the grid spacing of the input diagram)
+    gp = (grid.T0, grid.dT, grid.numT, grid.Tmax, grid.P0, grid.dP, grid.numP, grid.Pmax)
+    Vs_corrected_intp = interpolate(gp..., Vs_corrected)
+    Vp_corrected_intp = interpolate(gp..., Vp_corrected)
+    VpVs_corrected_intp = interpolate(gp..., Vp_corrected ./ Vs_corrected)
 
     # Initialize fields in the order they are defined in the PhaseDiagram_LookupTable structure
     Struct_Fieldnames = fieldnames(PhaseDiagram_LookupTable)[3:end] # fieldnames from structure
