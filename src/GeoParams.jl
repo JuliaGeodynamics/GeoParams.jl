@@ -349,8 +349,8 @@ module GeoParams
         compute_wave_velocity!,
         ConstantSeismicVelocity,
         anelastic_correction,
-        # melt_correction,
-        # porosity_correction,
+        melt_correction,
+        porosity_correction,
         correct_wavevelocities_phasediagrams,
         melt_correction_Takei
 
