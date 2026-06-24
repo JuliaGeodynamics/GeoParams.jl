@@ -729,7 +729,7 @@ function PlotMeltFraction(
     if isnothing(T)
         T = (873.0:10:1500.0) * K
     end
-    T_C = ustrip(T) .- 273.15
+    T_C = ustrip.(T) .- 273.15
 
     if isnothing(P)
         P = 1.0e6Pa * ones(size(T))

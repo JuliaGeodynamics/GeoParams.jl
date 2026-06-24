@@ -4,7 +4,7 @@ import GeoParams: StrengthEnvelopePlot
 # Make all `export`ed names from GeoParams.jl available
 using GeoParams
 # We also need the following un-`export`ed names
-using GeoParams: AbstractTempStruct
+using GeoParams: AbstractTempStruct, extractFromResult, StrengthEnvelopeComp
 
 using Parameters
 
