@@ -140,4 +140,30 @@ import GeoParams.Dislocation
         # a = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)"; V=1e-6m^3 / mol)
         # @test Value(a.V) == 1e-6m^3 / mol
     end
+
+    # ---- param_info name->function resolution (find_creep_law) ----
+    # default (empty-name) law takes the early-return branch -> Equation only, no Comment/BibTex
+    info_default = param_info(DislocationCreep())
+    @test info_default isa MaterialParamsInfo
+    @test isempty(info_default.BibTex_Reference)
+
+    # named law: param_info resolves the builder from the stored Name and pulls the
+    # database Comment + BibTex. (Previously threw `String not callable`.)
+    v_named = SetDislocationCreep(Dislocation.dry_anorthite_Rybacki_2006)
+    info_named = param_info(v_named)
+    @test info_named isa MaterialParamsInfo
+    @test !isempty(info_named.BibTex_Reference)
+    # the resolved info must match calling the builder's database_info directly
+    @test info_named.BibTex_Reference ==
+        GeoParams.MaterialParameters.ConstitutiveRelationships.dislocation_database_info(Dislocation.dry_anorthite_Rybacki_2006).BibTex_Reference
+
+    # name not present in the database -> graceful fallback to Equation only (isnothing(f) branch)
+    v_unknown = DislocationCreep(; Name = "totally_made_up_law_xyz")
+    info_unknown = param_info(v_unknown)
+    @test info_unknown isa MaterialParamsInfo
+    @test isempty(info_unknown.BibTex_Reference)
+
+    # dimensional compute path: Quantity strain rate -> @unpack_units branch
+    τ_dim = compute_τII(v_named, 1.0e-15 / s, (; T = 1273.15K, P = 1.0e9Pa))
+    @test τ_dim isa Quantity
 end

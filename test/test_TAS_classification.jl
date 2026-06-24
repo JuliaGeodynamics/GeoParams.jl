@@ -38,4 +38,7 @@ using GeoParams, LinearAlgebra
         @test index == field[i]
         @test retrieveTASrockType(index; ClassTASdata = ClassTASdata) == name[i]
     end
+
+    # composition outside every TAS field -> classIndex = -1 (warning-print branch)
+    @test computeTASclassification([5.0, 20.0]; ClassTASdata = ClassTASdata) == -1
 end

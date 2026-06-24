@@ -102,4 +102,11 @@ import GeoParams.NonLinearPeierls
     args = (; T = 273 + 200.0)
     depsdtau = dεII_dτII(p, TauII; args...)
     @test depsdtau ≈ 1.339830415314779e-24
+
+    # param_info resolves the builder from the stored Name (find_creep_law)
+    info_named = param_info(SetNonLinearPeierlsCreep(NonLinearPeierls.dry_olivine_Mei_2010))
+    @test info_named isa MaterialParamsInfo
+    @test !isempty(info_named.BibTex_Reference)
+    @test isempty(param_info(NonLinearPeierlsCreep()).BibTex_Reference)                # empty-name early return
+    @test isempty(param_info(NonLinearPeierlsCreep(; Name = "nope_xyz")).BibTex_Reference)  # unknown -> fallback
 end

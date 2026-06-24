@@ -483,8 +483,8 @@ end
 # where ∂τII/∂τij = 0.5·τij/τII  for diagonal (xx,yy,zz)
 #       ∂τII/∂τij =     τij/τII  for shear    (yz,xz,xy)
 #
-# Result:  diagonal → Aτ · τij / τII
-#          shear    → 2Aτ · τij / τII
+# Result:  diagonal -> Aτ · τij / τII
+#          shear    -> 2Aτ · τij / τII
 
 for t in (:NTuple, :SVector)
     @eval begin

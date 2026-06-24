@@ -116,14 +116,14 @@ using GeoParams
     Vs_wet = anelastic_correction(2, 4.36734, 5.0, 1250.0)
     @test Vs_damp < 4.36734   # correction reduces velocity
     @test Vs_wet < 4.36734
-    @test Vs_dry > Vs_damp    # more water → larger correction
+    @test Vs_dry > Vs_damp    # more water -> larger correction
 
-    # melt_correction_Takei: ϕ = 0 → velocities unchanged
+    # melt_correction_Takei: ϕ = 0 -> velocities unchanged
     Vs_nomelt, Vp_nomelt = melt_correction_Takei(Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, 0.0, α)
     @test Vs_nomelt ≈ Vs0 atol = 1.0
     @test Vp_nomelt ≈ Vp0 atol = 1.0
 
-    # melt_correction_Takei: α = 1.0 → R_func is NaN → correction is skipped (else branch)
+    # melt_correction_Takei: α = 1.0 -> R_func is NaN -> correction is skipped (else branch)
     Vs_nan, Vp_nan = melt_correction_Takei(Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, 0.7, 1.0)
     @test Vs_nan == Vs0
     @test Vp_nan == Vp0
@@ -144,7 +144,7 @@ using GeoParams
     # anelastic_correction: invalid water mode throws a descriptive error
     @test_throws ArgumentError anelastic_correction(3, 4.36734, 5.0, 1250.0)
 
-    # compute_wave_velocity for a phase without a SeismicVelocity parametrization → 0
+    # compute_wave_velocity for a phase without a SeismicVelocity parametrization -> 0
     mat_noVs = SetMaterialParams(; Name = "noVs", Phase = 1)
     @test compute_wave_velocity(mat_noVs, (1.0, 2.0)) == 0.0
 

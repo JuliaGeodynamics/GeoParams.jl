@@ -97,6 +97,25 @@ import ForwardDiff as FD
         @test length(k_TP_test.Name) == length(name)
     end
 
+    # TP_Conductivity array call: d ≠ 0 branch + size-mismatch error guard
+    k_mantle = Set_TP_Conductivity("Mantle")   # d ≠ 0
+    Parr = fill(1.0e9, 4)
+    Tarr = fill(1000.0, 4)
+    karr = k_mantle(Parr, Tarr)
+    @test length(karr) == 4 && all(isfinite, karr)
+    @test_throws ErrorException k_mantle(fill(1.0e9, 3), fill(1000.0, 4))  # size(P) != size(T)
+
+    # Dimensional (Quantity-array) conductivity paths: an array of Quantities is not
+    # itself a Quantity, so these exercise the `eltype(T) <: Quantity` branches.
+    wh_arr = T_Conductivity_Whittington()
+    @test wh_arr([500.0, 1000.0]) ≈ ustrip.(wh_arr([500.0, 1000.0]K))      # unitless matches dimensional magnitude
+    @test eltype(wh_arr([500.0, 1000.0]K)) <: Quantity
+    whp_arr = T_Conductivity_Whittington_parameterised()
+    @test eltype(whp_arr([600.0, 700.0]K)) <: Quantity
+    @test eltype(k_mantle(Parr * Pa, Tarr * K)) <: Quantity                # TP dimensional, d ≠ 0
+    k_uppercrust = Set_TP_Conductivity("UpperCrust")                        # d == 0
+    @test eltype(k_uppercrust(Parr * Pa, Tarr * K)) <: Quantity
+
     TP_indirect = TP_Conductivity(;
         a = 1.72,
         b = 807.0e0,
@@ -427,6 +446,11 @@ import ForwardDiff as FD
     @test isbits(a)
     @test Q_L == 400.0e3
 
+    # Array-fill callable form: a(m, n) -> fill(Q_L, m, n)
+    arr_ql = a(3, 4)
+    @test size(arr_ql) == (3, 4)
+    @test all(==(400.0e3), arr_ql)
+
     a = nondimensionalize(a, CharUnits_GEO)
     Q_L = compute_latent_heat(a)
     @test Q_L ≈ 4.0e21
@@ -472,6 +496,11 @@ import ForwardDiff as FD
     H_r = compute_radioactive_heat(a)
     @test isbits(a)
     @test H_r ≈ 1.0e-6
+
+    # Array-fill callable form
+    arr_hr = a(2, 5)
+    @test size(arr_hr) == (2, 5)
+    @test all(≈(1.0e-6), arr_hr)
 
     a = nondimensionalize(a, CharUnits_GEO)
     H_r = compute_radioactive_heat(a)
@@ -653,6 +682,10 @@ import ForwardDiff as FD
     @test compute_shearheating(rheology[2], τ, ε, ε_el) == 5.4
     @test iszero(compute_shearheating(rheology, 1, τ, ε, ε_el))
     @test compute_shearheating(rheology, 2, τ, ε, ε_el) == 5.4
+
+    # material with no ShearHeat field set -> early `return 0.0` branch
+    mat_no_sh = SetMaterialParams(; Name = "NoSH", Phase = 1, Density = ConstantDensity())
+    @test compute_shearheating(mat_no_sh, τ, ε, ε_el) == 0.0
 
     # Test with phase ratios
     phase = SA[0.5, 0.5] # static array

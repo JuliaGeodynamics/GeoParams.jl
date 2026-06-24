@@ -82,4 +82,11 @@ import GeoParams.Peierls
         ε_test = compute_εII(p, τ, args)
         @test ε ≈ ε_test
     end
+
+    # param_info resolves the builder from the stored Name (find_creep_law)
+    info_named = param_info(SetPeierlsCreep(Peierls.dry_olivine_Goetze_1979))
+    @test info_named isa MaterialParamsInfo
+    @test !isempty(info_named.BibTex_Reference)
+    @test isempty(param_info(PeierlsCreep()).BibTex_Reference)                # empty-name early return
+    @test isempty(param_info(PeierlsCreep(; Name = "nope_xyz")).BibTex_Reference)  # unknown -> fallback
 end

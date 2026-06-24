@@ -457,8 +457,8 @@ using GeoParams, LaTeXStrings
     # compute ηT at both temperatures analytically
     Q_val = 63772.0
     Tr_val = 1273.0
-    T1_val = 1273.0   # reference temperature → ηT = ηr
-    T2_val = 1473.0   # higher temperature   → ηT < ηr
+    T1_val = 1273.0   # reference temperature -> ηT = ηr
+    T2_val = 1473.0   # higher temperature   -> ηT < ηr
 
     ηT1 = x1_Q.ηr.val * exp(Q_val * (1 / T1_val - 1 / Tr_val))  # = 1e20
     ηT2 = x1_Q.ηr.val * exp(Q_val * (1 / T2_val - 1 / Tr_val))  # << 1e20
@@ -475,17 +475,17 @@ using GeoParams, LaTeXStrings
     @test ustrip(τ_T1) ≈ 2 * η_approx_T1 * ustrip(εt_Q) rtol = 1.0e-6
     @test ε_T1 ≈ εt_Q rtol = 1.0e-6
 
-    # at T = 1473K: ηT < ηr → lower viscosity → lower stress at same strain rate
+    # at T = 1473K: ηT < ηr -> lower viscosity -> lower stress at same strain rate
     τ_T2 = compute_τII(x1_Q, εt_Q; T = T2_val * K)
     ε_T2 = compute_εII(x1_Q, τ_T2; T = T2_val * K)
     η_approx_T2 = 0.5 * x1_Q.τ0.val / ustrip(εt_Q) + ηT2 * (ustrip(εt_Q) / εr_Q)^(one(x1_Q.n) / x1_Q.n - 1)
     @test ustrip(τ_T2) ≈ 2 * η_approx_T2 * ustrip(εt_Q) rtol = 1.0e-6
     @test ε_T2 ≈ εt_Q rtol = 1.0e-6
 
-    # monotonicity: higher T → lower τII at same εII (thermal softening)
+    # monotonicity: higher T -> lower τII at same εII (thermal softening)
     @test ustrip(τ_T2) < ustrip(τ_T1)
 
-    # monotonicity: higher T → higher εII at same τII (thermal softening)
+    # monotonicity: higher T -> higher εII at same τII (thermal softening)
     τ_fixed = compute_τII(x1_Q, εt_Q; T = T1_val * K)
     ε_at_T1 = compute_εII(x1_Q, τ_fixed; T = T1_val * K)
     ε_at_T2 = compute_εII(x1_Q, τ_fixed; T = T2_val * K)

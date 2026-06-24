@@ -170,29 +170,26 @@ function compute_conductivity(s::T_Conductivity_Whittington{_T}; T = 0.0e0) wher
 end
 
 function (s::T_Conductivity_Whittington)(T::AbstractArray; kwargs...)
-    if T isa Quantity
+    if eltype(T) <: Quantity   # array of Quantities is not itself a Quantity
         @unpack_units a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
     else
         @unpack_val a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
     end
 
-    k = similar(T)   #creating an array makes 1 allocation
     inv_molmass = 1 / molmass # multiplication is considerably faster than division
-    @inbounds for i in eachindex(T)
-        if T[i] <= Tcutoff
+    # `map` lets the output element type follow the computation, so both the unitless
+    # and the dimensional (Quantity array) paths return a correctly-typed array.
+    return map(T) do Ti
+        if Ti <= Tcutoff
             a, b, c = a0, b0, c0
-            κ = d / T[i] - e
+            κ = d / Ti - e
         else
             a, b, c = a1, b1, c1
-            κ = f - g * T[i]
+            κ = f - g * Ti
         end
-        #  κ = κ*1e-6
-
-        Cp = (a + b * T[i] - c / T[i]^2) * inv_molmass # conductivity
-        k[i] = κ * rho * Cp       # compute conductivity from diffusivity
+        Cp = (a + b * Ti - c / Ti^2) * inv_molmass # conductivity
+        κ * rho * Cp       # compute conductivity from diffusivity
     end
-
-    return k
 end
 
 (s::T_Conductivity_Whittington)(T::AbstractArray, args...) = s(T; args...)
@@ -270,22 +267,18 @@ function (s::T_Conductivity_Whittington_parameterised{_T})(;
 end
 
 function (s::T_Conductivity_Whittington_parameterised)(T::AbstractArray; kwargs...)
-    if T isa Quantity
+    if eltype(T) <: Quantity   # array of Quantities is not itself a Quantity
         @unpack_units a, b, c, d, Ts = s
     else
         @unpack_val a, b, c, d, Ts = s
     end
 
-    k = similar(T)   # creating an array makes 1 allocation
-
-    @inbounds for i in eachindex(T)
+    # `map` lets the output element type follow the computation (unitless or Quantity).
+    return map(T) do Ti
         # Note: in general, we operate with SI units or the non-dimensional equivalent of that
-        # This parameterisation was developed
-        T_C = T[i] - Ts
-        k[i] = a * T_C^3 + b * T_C^2 + c * T_C + d
+        T_C = Ti - Ts
+        a * T_C^3 + b * T_C^2 + c * T_C + d
     end
-
-    return k
 end
 
 (s::T_Conductivity_Whittington_parameterised)(T::AbstractArray, args) = s(T; args...)
@@ -452,29 +445,22 @@ end
 function (s::TP_Conductivity{_T})(
         P::AbstractArray, T::AbstractArray; kwargs...
     ) where {_T}
-    if T isa Quantity
+    if eltype(T) <: Quantity   # array of Quantities is not itself a Quantity
         @unpack_units a, b, c, d = s
     else
         @unpack_val a, b, c, d = s
     end
 
-    k = similar(T)
-
-    @inbounds if ustrip(d) == 0
-        for i in eachindex(T)
-            k[i] = a + b / (T[i] + c)
-        end
-    else
-        if size(T) != size(P)
-            error("Size of P and T arrays should be the same")
-        end
-
-        for i in eachindex(T)
-            k[i] = (a + b / (T[i] + c)) * (1 + d * P[i])
-        end
+    d_is_zero = ustrip(d) == 0
+    if !d_is_zero && size(T) != size(P)
+        error("Size of P and T arrays should be the same")
     end
 
-    return k
+    # `map` lets the output element type follow the computation (unitless or Quantity).
+    return map(eachindex(T)) do i
+        base = a + b / (T[i] + c)
+        d_is_zero ? base : base * (1 + d * P[i])
+    end
 end
 
 

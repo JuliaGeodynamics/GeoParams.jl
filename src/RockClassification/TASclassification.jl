@@ -170,7 +170,7 @@ function computeTASclassification(
 
     if classIndex == -1
         print(
-            "could not find the proper TAS field. Is Na2O + K2O > 16wt%? do you have negative compositions?",
+            "could not find the proper TAS field. Is Na2O + K2O > 16wt%? Do you have negative compositions?",
         )
     end
 

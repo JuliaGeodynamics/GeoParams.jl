@@ -3,6 +3,7 @@ using GeoParams
 using Unidecode
 import GeoParams: Dislocation, Diffusion, GBS, Peierls, NonLinearPeierls
 import GeoParams.Tables: detachFloatfromExponent, extract_parameters_from_phases, Dict2LatexTable, extract_parameters_from_phases_md, Dict2MarkdownTable, ParameterTable, create_latex_symbol, get_material_reference_info
+import GeoParams.Tables: get_rheology_info, format_number, format_markdown_number
 
 @testset "Tables.jl" begin
     MatParam = (
@@ -190,4 +191,66 @@ import GeoParams.Tables: detachFloatfromExponent, extract_parameters_from_phases
     @test dictMd["η CompositeRheology LinVisc 2.3"][4] == "2"
     @test dictMd["η CompositeRheology LinVisc 2.3"][5] == "1"
     @test dictMd["η CompositeRheology LinVisc 2.3"][6] == "LinVisc"
+
+    # ---- get_material_reference_info: GBS / Peierls / NonLinearPeierls branches ----
+    v_gbs = SetGrainBoundarySliding(GBS.cold_dry_olivine_Hirth_2003)
+    @test get_material_reference_info(v_gbs) isa MaterialParamsInfo
+
+    v_peierls = SetPeierlsCreep(Peierls.dry_olivine_Demouchy_2013)
+    @test get_material_reference_info(v_peierls) isa MaterialParamsInfo
+
+    v_nlp = SetNonLinearPeierlsCreep(NonLinearPeierls.dry_olivine_Mei_2010)
+    @test get_material_reference_info(v_nlp) isa MaterialParamsInfo
+
+    # LinearViscous has no database entry -> returns nothing (fallback path)
+    @test get_material_reference_info(LinearViscous()) === nothing
+
+    # ---- get_rheology_info: cover all named branches + fallback ----
+    @test get_rheology_info(SetDislocationCreep(Dislocation.quartz_diorite_HansenCarter_1982)) == ("DislCreep", "DislCreep")
+    @test get_rheology_info(SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006)) == ("DiffCreep", "DiffCreep")
+    @test get_rheology_info(LinearViscous()) == ("LinVisc", "LinVisc")
+    @test get_rheology_info(PowerlawViscous()) == ("PowerVisc", "PowerVisc")
+    @test get_rheology_info(v_gbs) == ("GBS", "GBS")
+    @test get_rheology_info(v_peierls) == ("PeierlsCreep", "PeierlsCreep")
+    @test get_rheology_info(v_nlp) == ("NonLinPeierls", "NonLinPeierls")
+    @test get_rheology_info(LinearMeltViscosity()) == ("MeltVisc", "MeltVisc")
+    @test get_rheology_info(ViscosityPartialMelt_Costa_etal_2009()) == ("PartialMelt", "PartialMelt")
+    @test get_rheology_info(GiordanoMeltViscosity()) == ("GiordanoMelt", "GiordanoMelt")
+    # fallback: unknown type -> type name
+    r1, r2 = get_rheology_info(ConstantDensity())
+    @test r1 isa String && !isempty(r1)
+
+    # ---- ParameterTable with more field types (Elasticity, HeatCapacity, Conductivity) ----
+    MatParam3 = (
+        SetMaterialParams(;
+            Name = "Elastic Phase",
+            Phase = 1,
+            Density = ConstantDensity(),
+            Elasticity = ConstantElasticity(),
+            HeatCapacity = ConstantHeatCapacity(),
+            Conductivity = ConstantConductivity(),
+        ),
+    )
+    ParameterTable(MatParam3)
+    @test "ParameterTable.tex" in readdir()
+    rm("ParameterTable.tex"; force = true)
+    rm("References.bib"; force = true)
+
+    ParameterTable(MatParam3; format = "Markdown")
+    @test "ParameterTable.md" in readdir()
+    rm("ParameterTable.md"; force = true)
+
+    # ---- format_number / format_markdown_number: all four branches ----
+    # dig ≤ rdigits, expo ≠ "1"  -> scientific, no rounding
+    @test format_number("1.23", "6", 2, 4) == "1.23 \\times 10^{6}"
+    @test format_markdown_number("1.23", "6", 2, 4) == "1.23 × 10^6"
+    # dig ≤ rdigits, expo == "1"  -> plain
+    @test format_number("1.23", "1", 2, 4) == "1.23"
+    @test format_markdown_number("1.23", "1", 2, 4) == "1.23"
+    # dig > rdigits, expo ≠ "1"   -> rounded scientific
+    @test format_number("1.23456", "6", 5, 2) == "1.23 \\times 10^{6}"
+    @test format_markdown_number("1.23456", "6", 5, 2) == "1.23 × 10^6"
+    # dig > rdigits, expo == "1"  -> rounded plain
+    @test format_number("1.23456", "1", 5, 2) == "1.23"
+    @test format_markdown_number("1.23456", "1", 5, 2) == "1.23"
 end

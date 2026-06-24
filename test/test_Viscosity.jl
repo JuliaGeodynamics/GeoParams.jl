@@ -200,6 +200,23 @@ import ForwardDiff as FD
         @test compute_viscosity_τII(rheologies_lv, pr, 0.0, a_lv) == 1.5
         @test compute_viscosity_εII(rheologies_lv, SA[0.5, 0.5], 0.0, a_lv) == 1.5
         @test compute_viscosity_τII(rheologies_lv, SA[0.5, 0.5], 0.0, a_lv) == 1.5
+
+        # out-of-range phase index -> unmatched `@nexprs` fallthrough returns 0.0
+        @test compute_viscosity_εII(rheologies_lv, 9, 0.0, a_lv) == 0.0
+        @test compute_viscosity_τII(rheologies_lv, 9, 0.0, a_lv) == 0.0
+        @test compute_viscosity(rheologies_lv, 9, a_lv) == 0.0
+    end
+
+    @testset "multi-phase compute_elasticviscosity fallback" begin
+        el = ConstantElasticity()
+        rheologies_el = (
+            SetMaterialParams(; CompositeRheology = CompositeRheology((LinearViscous(; η = 1.0e20), el))),
+            SetMaterialParams(; CompositeRheology = CompositeRheology((LinearViscous(; η = 1.0e21), el))),
+        )
+        args_el = (; dt = 1.0e10)
+        @test compute_elasticviscosity(rheologies_el, 1, args_el) isa Number
+        # out-of-range phase index -> fallthrough returns 0.0
+        @test compute_elasticviscosity(rheologies_el, 9, args_el) == 0.0
     end
 end
 

@@ -84,8 +84,12 @@ end
                     @test p isa DiffusionData
                     @test sprint(show, p) isa String
                     # plain-float and dimensional (units) paths of compute_D
-                    @test compute_D(p; T = 1000.0, P = 1.0e9) isa Number
-                    @test compute_D(p; T = 1000.0K, P = 1.0e9Pa) isa Quantity
+                    @test compute_D(p; T = 1273.0, P = 1.0e9, X = 0.1, fO2 = 1.0e-7) isa Number
+                    @test compute_D(p; T = 1273.0K, P = 1.0e9Pa, X = 0.1NoUnits, fO2 = 1.0e-7NoUnits) isa Quantity
+                    # in-place path
+                    D_arr = zeros(3)
+                    compute_D!(D_arr, p; T = fill(1273.0, 3), P = fill(1.0e9, 3), X = fill(0.1, 3), fO2 = fill(1.0e-7, 3))
+                    @test all(isfinite, D_arr)
                 elseif data isa MeltMulticompDiffusionData
                     nmulti += 1
                     p = SetMulticompChemicalDiffusion(f)
@@ -97,5 +101,10 @@ end
             end
             @test ndiff + nmulti > 0
         end
+
+        # missing from test_ChemicalDiffusion.jl: Rt_Zr_Sasaki1985_para_c
+        Zr_para = SetChemicalDiffusion(Rutile.Rt_Zr_Sasaki1985_para_c)
+        D = ustrip(compute_D(Zr_para, T = 1200C))
+        @test D isa Float64 && D > 0
     end
 end
