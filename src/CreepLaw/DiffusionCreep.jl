@@ -128,7 +128,9 @@ function param_info(s::DiffusionCreep)
         return MaterialParamsInfo(; Equation = eq)
     end
 
-    inf = diffusion_database_info(name)
+    f = find_creep_law(Diffusion, name)
+    isnothing(f) && return MaterialParamsInfo(; Equation = eq)
+    inf = diffusion_database_info(f)
     return MaterialParamsInfo(;
         Equation = eq, Comment = inf.Comment, BibTex_Reference = inf.BibTex_Reference
     )
