@@ -26,6 +26,7 @@ end
 @testset "Data tables sweep" begin
     CharDim = GEO_units(; viscosity = 1.0e20, length = 1000km)
     args = (; T = 1373.0, P = 1.0e9, f = 1.0, d = 1.0e-3)
+    qargs = (; T = 1373.0K, P = 1.0e9Pa, f = 1.0, d = 1.0e-3m)   # dimensional args
 
     # ----- viscous creep-law databases -----
     creep_cases = (
@@ -57,6 +58,13 @@ end
                     τ = compute_τII(p, 1.0e-15, args)
                     @test τ isa Number && !isnan(τ)
                     @test dτII_dεII(p, 1.0e-15, args) isa Number
+                end
+                εq = compute_εII(p, 1.0e6Pa, qargs)
+                @test εq isa Quantity && !isnan(ustrip(εq))
+                if has_τII
+                    @test dεII_dτII(p, 1.0e6Pa, qargs) isa Quantity
+                    @test compute_τII(p, 1.0e-15 / s, qargs) isa Quantity
+                    @test dτII_dεII(p, 1.0e-15 / s, qargs) isa Quantity
                 end
             end
         end

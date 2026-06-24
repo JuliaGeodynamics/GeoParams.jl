@@ -45,6 +45,7 @@ CairoMakie.activate!()
     @testset "phase diagrams (Perple_X + MAGEMin)" begin
         PD = PerpleX_LaMEM_Diagram(joinpath(@__DIR__, "test_data", "Peridotite.in"))
         @test PlotPhaseDiagram(PD, :Rho; filename = png())[1] isa Figure
+        @test PlotPhaseDiagram(PD, :meltFrac; filename = png())[1] isa Figure
         PDm = MAGEMin_Diagram(joinpath(@__DIR__, "test_data", "MAGEMin_Rhyolite.in"))
         @test PlotPhaseDiagram(PDm, :Rho; filename = png())[1] isa Figure
         @test PlotPhaseDiagram(PDm, :meltFrac; filename = png())[1] isa Figure
@@ -64,6 +65,25 @@ CairoMakie.activate!()
         tM = [collect(0.0:1.0e5:1.0e6) for _ in 1:3]
         pdf = [exp.(-(tM[1] .- 5.0e5) .^ 2 ./ 1.0e11) for _ in 1:3]
         @test Plot_ZirconAge_PDF(tM, pdf, tM[1], pdf[1]) isa Figure
+    end
+
+    @testset "StrengthEnvelopePlot (all 3 temperature structures)" begin
+        SE_MatParam = (
+            SetMaterialParams(;
+                Name = "UC", Phase = 1, Density = ConstantDensity(; ρ = 2700kg / m^3),
+                CreepLaws = SetDislocationCreep(Dislocation.wet_quartzite_Ueda_2008),
+                Plasticity = DruckerPrager(; ϕ = 30.0, C = 10MPa),
+            ),
+            SetMaterialParams(;
+                Name = "LC", Phase = 2, Density = ConstantDensity(; ρ = 2900kg / m^3),
+                CreepLaws = SetDislocationCreep(Dislocation.plagioclase_An75_Ji_1993),
+                Plasticity = DruckerPrager(; ϕ = 20.0, C = 10MPa),
+            ),
+        )
+        SE_thick = [20, 20] * km
+        @test StrengthEnvelopePlot(SE_MatParam, SE_thick; TempType = LinTemp(), nz = 51) isa Figure
+        @test StrengthEnvelopePlot(SE_MatParam, SE_thick; TempType = HalfspaceCoolTemp(0C, 1350C, 10Myr, 0K / km, 1.0e-6m^2 / s), nz = 51) isa Figure
+        @test StrengthEnvelopePlot(SE_MatParam, SE_thick; TempType = ConstTemp(), nz = 51) isa Figure
     end
 
     # every figure that used `filename` was actually written

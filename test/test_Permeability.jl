@@ -110,4 +110,11 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
     SvPhaseRatio = SA[0.25, 0.25, 0.25, 0.25]
     @test compute_permeability_ratio(SvPhaseRatio, Mat_tup, args) == 9.26175950925951e-6  # Adjust this value based on expected results
 
+    # No_MaterialParam fallback + ConstantPermeability `(s)(args)` form + in-place w/ args
+    @test compute_permeability(GeoParams.No_MaterialParam{Float64}()) == 0.0
+    xc = ConstantPermeability(; k = 1.0e-12m^2)
+    @test xc((;)) ≈ 1.0e-12          # callable with an args NamedTuple
+    kk = zeros(3)
+    compute_permeability!(kk, xc, (;))
+    @test all(kk .≈ 1.0e-12)
 end

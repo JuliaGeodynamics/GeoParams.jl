@@ -1,6 +1,37 @@
 # Tests the GeoUnits
 using Test
 using GeoParams
+using Unitful
+
+@testset "GeoUnit conversions & equality" begin
+    # special constructors
+    @test GeoParams.GeoUnit(nothing).val === nothing
+    @test GeoParams.GeoUnit(x -> 2x) isa GeoUnit          # function-valued
+    @test GeoUnit{Float64}(5.0) isa GeoUnit
+
+    # convert from Int → Float
+    @test convert(GeoUnit, Int32(5)).val === 5.0f0
+    @test convert(GeoUnit, Int32[1, 2, 3]).val == Float32[1, 2, 3]
+    @test convert(GeoUnit, Int64[1, 2, 3]).val == Float64[1, 2, 3]
+    @test convert(GeoUnit, [1, 2, 3]).val == [1.0, 2.0, 3.0]
+    # Int32 Quantity array
+    @test convert(GeoUnit, Float32[1.0, 2.0]u"m").val isa AbstractArray{Float32}
+
+    # equality
+    @test isequal(GeoUnit(5.0), 5.0)
+    @test isequal(GeoUnit([1.0, 2.0]), [1.0, 2.0])
+    @test isequal(GeoUnit(5.0), GeoUnit(5.0))
+
+    # array interface
+    ga = convert(GeoUnit, [1.0, 2.0, 3.0]u"m")
+    @test size(ga) == (3,)
+    @test ga[1] isa GeoUnit                               # getindex(Vararg{Int})
+    @test convert(AbstractArray, ga) == ga.val
+
+    # promote_rule + broadcast against a Quantity array
+    @test GeoParams.promote_rule(GeoUnit, Quantity) === GeoUnit
+    @test GeoUnit(2.0) .* [1.0, 2.0]u"m" == [2.0, 4.0]u"m"
+end
 
 @testset "Units" begin
 

@@ -313,10 +313,19 @@ end
 @inline function dτII_dεII(
         a::DiffusionCreep, EpsII::Quantity; T = 1K, P = 0Pa, f = 1NoUnits, kwargs...
     )
-    @unpack_units d, r, p, A, E, V, R = a
+    @unpack_units d, n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    return (FE * inv(A) * f^(-r * n_inv) * d^(-p * n_inv) * exp((E + P * V) / (R * T))) / FT
+    n_inv = inv(n)
+
+    return @pow (
+        FE *
+            A^(-n_inv) *
+            f^(-r * n_inv) *
+            d^(-p * n_inv) *
+            (EpsII * FE)^(n_inv - 1) *
+            exp((E + P * V) / (n * R * T))
+    ) / FT
 end
 
 # Print info

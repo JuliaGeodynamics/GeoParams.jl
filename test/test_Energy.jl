@@ -54,6 +54,19 @@ import ForwardDiff as FD
     Cp = zero(T)
     @test compute_heatcapacity(Cp3, index = 10) == 1500.0
 
+    # show / param_info for every heat-capacity type + the vararg compute form
+    @test occursin("heat capacity", sprint(show, ConstantHeatCapacity()))
+    @test param_info(T_HeatCapacity_Whittington()) isa MaterialParamsInfo
+    @test sprint(show, T_HeatCapacity_Whittington()) isa String
+    lhc = Latent_HeatCapacity()
+    @test param_info(lhc) isa MaterialParamsInfo
+    @test sprint(show, lhc) isa String
+    # positional (Cp, Q_L) convenience constructor — the GeoParams vararg idiom
+    @test NumValue(Latent_HeatCapacity(T_HeatCapacity_Whittington(), 500.0e3J / kg).Q_L) == 500.0e3
+    @test param_info(Cp3) isa MaterialParamsInfo
+    @test sprint(show, Cp3) isa String
+    @test compute_heatcapacity(ConstantHeatCapacity(), (;)) isa Number   # vararg form
+
     # compute_heatcapacity!(Cp, Cp3, args)
 
     # TP-dependent conductivity for different predefines cases
@@ -115,6 +128,19 @@ import ForwardDiff as FD
     @test eltype(k_mantle(Parr * Pa, Tarr * K)) <: Quantity                # TP dimensional, d ≠ 0
     k_uppercrust = Set_TP_Conductivity("UpperCrust")                        # d == 0
     @test eltype(k_uppercrust(Parr * Pa, Tarr * K)) <: Quantity
+
+    # param_info + show for every conductivity type
+    for c in (ConstantConductivity(), T_Conductivity_Whittington(), T_Conductivity_Whittington_parameterised(), k_mantle)
+        @test param_info(c) isa MaterialParamsInfo
+        @test sprint(show, c) isa String
+    end
+    # ConstantConductivity array-fill callable + Integer-args compute + in-place
+    cc = ConstantConductivity()
+    @test size(cc(2, 3)) == (2, 3)
+    @test compute_conductivity(cc, 2, 3) == cc(2, 3)
+    karr2 = zeros(4)
+    compute_conductivity!(karr2, cc, (;))
+    @test all(karr2 .== NumValue(cc.k))
 
     TP_indirect = TP_Conductivity(;
         a = 1.72,
@@ -445,6 +471,9 @@ import ForwardDiff as FD
     Q_L = compute_latent_heat(a)
     @test isbits(a)
     @test Q_L == 400.0e3
+    @test param_info(a) isa MaterialParamsInfo
+    @test occursin("latent heat", sprint(show, a))
+    @test compute_latent_heat(a, (;)) == 400.0e3      # `s(args)` form
 
     # Array-fill callable form: a(m, n) -> fill(Q_L, m, n)
     arr_ql = a(3, 4)
@@ -529,6 +558,16 @@ import ForwardDiff as FD
     compute_radioactive_heat!(Hr, a, (; z = z))
 
     @test sum(H_r) ≈ 3.678794411714423e-7
+
+    # array functor + array compute_radioactive_heat (not just the in-place form)
+    z_arr = fill(10.0e3, 5)
+    @test all(a(z_arr) .≈ 3.678794411714423e-7)
+    @test all(compute_radioactive_heat(a, z_arr) .≈ 3.678794411714423e-7)
+    # show + param_info for both radioactive-heat types
+    @test occursin("radioactive heat", sprint(show, ConstantRadioactiveHeat()))
+    @test sprint(show, a) isa String
+    @test param_info(ConstantRadioactiveHeat()) isa MaterialParamsInfo
+    @test param_info(a) isa MaterialParamsInfo
 
     # Struct-based dispatch (AbstractMaterialParamsStruct path)
     mp_heat = SetMaterialParams(; Name = "test_heat", Phase = 1, RadioactiveHeat = ConstantRadioactiveHeat())

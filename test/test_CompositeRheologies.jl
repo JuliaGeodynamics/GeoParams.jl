@@ -86,6 +86,39 @@ import GeoParams: Dislocation, Diffusion
     @test isa(c.elements[2], AbstractCreepLaw)
     @test repr("text/plain", c) isa String
 
+    # ---- create_rheology_string / create_parallel_str (exported display helpers) ----
+    import GeoParams: create_rheology_string
+    crs(x) = create_rheology_string("", x)
+    # element dispatch: creep law, elasticity, plasticity
+    @test occursin("⟦", crs(v3))                       # AbstractCreepLaw
+    @test occursin("/", crs(e1))                       # AbstractElasticity
+    @test occursin("▬", crs(pl3))                      # AbstractPlasticity
+    # CompositeRheology (Tuple recursion) and Parallel (`{...}`) branches
+    s_comp = crs(CompositeRheology(v3, Parallel(v3, e1), pl3))
+    @test occursin("{", s_comp) && occursin("}", s_comp)
+    # nested Parallel inside Parallel
+    @test occursin("{", crs(CompositeRheology(Parallel(v3, Parallel(e1, v3)))))
+
+    cps = GeoParams.MaterialParameters.ConstitutiveRelationships.create_parallel_str
+    @test cps(s_comp) isa AbstractString               # has `{` → parallel-stacking path
+    @test cps(crs(CompositeRheology(v3, e1))) isa AbstractString   # no `{` → else branch
+
+    # ---- isplastic / isvolumetric type-parameter dispatch ----
+    @test isplastic(v3) == false                       # plain creep law
+    @test isplastic(pl3) == true                       # AbstractPlasticity
+    @test isplastic(CompositeRheology(pl3, v3)) == true        # composite w/ plastic
+    @test isplastic(CompositeRheology((v3,))) == false         # composite, no plastic
+    @test isvolumetric(CompositeRheology(e2, v3)) == true      # composite w/ volumetric (e2 has finite Kb)
+    @test isvolumetric(CompositeRheology((v3,))) == false
+
+    # ---- dimensional (Quantity) compute on a CompositeRheology ----
+    # (nreduce now seeds its accumulator from the first element, so unit-bearing results add)
+    c_visc = CompositeRheology((LinearViscous(; η = 1.0e20Pa * s), LinearViscous(; η = 2.0e20Pa * s)))
+    εq = compute_εII(c_visc, 1.0e6Pa, (;))
+    @test εq isa Quantity
+    @test ustrip(εq) ≈ compute_εII(c_visc, 1.0e6, (;))         # matches unitless
+    @test compute_εvol(CompositeRheology((ConstantElasticity(),)), 1.0e6Pa, (; P_old = 0.5e6Pa, dt = 1.0e6s)) isa Quantity
+
     args = (T = 900.0, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)
     εII, τII = 2.0e-15, 2.0e6
 

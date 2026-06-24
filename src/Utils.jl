@@ -76,9 +76,12 @@ end
 # Tuple iterators
 @generated function nreduce(f::F, v::NTuple{N, Any}) where {N, F}
     Base.@_inline_meta
+    N == 0 && return :(0.0)
+    # Seed the accumulator with `f(v[1])` (not `0.0`) so the result type follows the
+    # computation — otherwise a unitless `0.0` can't be added to dimensional (Quantity) results.
     return quote
-        val = 0.0
-        Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i])
+        val = @inbounds f(v[1])
+        Base.Cartesian.@nexprs $(N - 1) i -> val += @inbounds f(v[i + 1])
         return val
     end
 end
@@ -87,13 +90,36 @@ end
         f::F, v::NTuple{N, Any}, id_args::NTuple{N, Integer}, args::NTuple{NT, Any}
     ) where {N, NT, F <: Function}
     Base.@_inline_meta
+    N == 0 && return :(0.0)
     return quote
         @inline
-        val = 0.0
-        Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i], args[id_args[i]])
+        val = @inbounds f(v[1], args[id_args[1]])
+        Base.Cartesian.@nexprs $(N - 1) i -> val += @inbounds f(v[i + 1], args[id_args[i + 1]])
         return val
     end
 end
+
+## Old functions -> keep here as reference for now
+# @generated function nreduce(f::F, v::NTuple{N, Any}) where {N, F}
+#     Base.@_inline_meta
+#     return quote
+#         val = 0.0
+#         Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i])
+#         return val
+#     end
+# end
+
+# @generated function nreduce(
+#         f::F, v::NTuple{N, Any}, id_args::NTuple{N, Integer}, args::NTuple{NT, Any}
+#     ) where {N, NT, F <: Function}
+#     Base.@_inline_meta
+#     return quote
+#         @inline
+#         val = 0.0
+#         Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i], args[id_args[i]])
+#         return val
+#     end
+# end
 
 @generated function nphase(f::F, phase::Integer, v::NTuple{N, AbstractMaterialParamsStruct}) where {N, F <: Function}
     Base.@_inline_meta

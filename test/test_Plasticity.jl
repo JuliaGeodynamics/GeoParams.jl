@@ -1,5 +1,6 @@
 using Test
 using GeoParams
+using StaticArrays
 
 @testset "Plasticity.jl" begin
 
@@ -101,11 +102,9 @@ using GeoParams
         fxy(τij) = τij[3] / second_invariant(τij)
         solution2D = [fxx(τij), fyy(τij), fxy(τij)]
 
-        # # using StaticArrays
-        # τij_static = @SVector [1.0, 2.0, 3.0]
-        # out1 = ∂Q∂τ(p, τij_static)
-        # @test out1 == solution2D
-        # @test compute_plasticpotentialDerivative(p, τij_static) == ∂Q∂τ(p, τij_static)
+        # using StaticArrays (SVector{3} dispatch of ∂Q∂τ)
+        out1 = ∂Q∂τ(p, @SVector [1.0, 2.0, 3.0])
+        @test out1 isa SVector && collect(out1) ≈ solution2D
 
         # using tuples
         τij_tuple = (1.0, 2.0, 3.0)
@@ -128,11 +127,9 @@ using GeoParams
         gxy(τij) = τij[6] / second_invariant(τij)
         solution3D = [gxx(τij), gyy(τij), gzz(τij), gyz(τij), gxz(τij), gxy(τij)]
 
-        # # using StaticArrays
-        # τij_static = @SVector [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
-        # out3 = ∂Q∂τ(p, τij_static)
-        # @test out3 == solution3D
-        # @test compute_plasticpotentialDerivative(p, τij_static) == ∂Q∂τ(p, τij_static)
+        # using StaticArrays (SVector{6} dispatch of ∂Q∂τ)
+        out3 = ∂Q∂τ(p, @SVector [1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
+        @test out3 isa SVector && collect(out3) ≈ solution3D
 
         # using tuples
         τij_tuple = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
@@ -268,11 +265,9 @@ using GeoParams
         fxy(τij) = τij[3] / second_invariant(τij)
         solution2D = [fxx(τij), fyy(τij), fxy(τij)]
 
-        # # using StaticArrays
-        # τij_static = @SVector [1.0, 2.0, 3.0]
-        # out1 = ∂Q∂τ(p, τij_static)
-        # @test out1 == solution2D
-        # @test compute_plasticpotentialDerivative(p, τij_static) == ∂Q∂τ(p, τij_static)
+        # using StaticArrays (SVector{3} dispatch of ∂Q∂τ)
+        out1 = ∂Q∂τ(p, @SVector [1.0, 2.0, 3.0])
+        @test out1 isa SVector && collect(out1) ≈ solution2D
 
         # using tuples
         τij_tuple = (1.0, 2.0, 3.0)
@@ -295,11 +290,9 @@ using GeoParams
         gxy(τij) = τij[6] / second_invariant(τij)
         solution3D = [gxx(τij), gyy(τij), gzz(τij), gyz(τij), gxz(τij), gxy(τij)]
 
-        # # using StaticArrays
-        # τij_static = @SVector [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
-        # out3 = ∂Q∂τ(p, τij_static)
-        # @test out3 == solution3D
-        # @test compute_plasticpotentialDerivative(p, τij_static) == ∂Q∂τ(p, τij_static)
+        # using StaticArrays (SVector{6} dispatch of ∂Q∂τ)
+        out3 = ∂Q∂τ(p, @SVector [1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
+        @test out3 isa SVector && collect(out3) ≈ solution3D
 
         # using tuples
         τij_tuple = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
@@ -539,8 +532,14 @@ using GeoParams
         p = DruckerPrager(; ϕ = 30.0, Ψ = 10.0, C = 1.0e7Pa)
         εvp = mod.plastic_strain(p, (1.0, 1.0, 1.0), 1.0e-15)
         @test isfinite(εvp) && εvp > 0
+        # accumulating form: plastic_strain(εvp, p, τij, λ̇, dt)
+        εvp2 = mod.plastic_strain(0.0, p, (1.0, 1.0, 1.0), 1.0e-15, 1.0e3)
+        @test isfinite(εvp2) && εvp2 > 0
         @test isfinite(mod.lambda(1.0e6, p, 1.0e20, 1.0e19))
         @test isfinite(mod.lambda(1.0e6, p, 1.0e20, 1.0e19; K = 2.0e10, dt = 1.0e3, h = 1.0e5, τij = (1.0e6, 1.0e6, 1.0e6)))
+
+        # ∂Q∂τ with a NamedTuple argument (dispatches on args.τij)
+        @test ∂Q∂τ(p, (; τij = (1.0, 2.0, 3.0))) == ∂Q∂τ(p, (1.0, 2.0, 3.0))
     end
 
     @testset "dimensionalize round-trip" begin

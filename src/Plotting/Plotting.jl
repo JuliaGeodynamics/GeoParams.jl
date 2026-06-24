@@ -1118,6 +1118,7 @@ function PlotDeformationMap(
                 args_local = merge(args, (T = Tlocal, d = dlocal))
             end
             εII[i] = compute_εII(v, τlocal, args_local)       # compute strainrate (1/s)
+            η[i] = τlocal / (2 * εII[i])                       # effective viscosity (Pa s)
             ε_components = [ compute_εII(v[i], τlocal, args_local) for i in 1:n_components]
             ε_components = ε_components ./ sum(ε_components)
             mainDef[i] = argmax(ε_components)                 # index of max. strainrate
