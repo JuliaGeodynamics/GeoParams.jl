@@ -1,6 +1,6 @@
 using Test
 using GeoParams
-using CairoMakie                       # headless Makie backend -> triggers GeoParamsMakieExt
+using CairoMakie
 import GeoParams.Dislocation, GeoParams.Diffusion, GeoParams.Garnet
 
 CairoMakie.activate!()
@@ -55,6 +55,13 @@ CairoMakie.activate!()
         @test PlotStressTime_0D(ve; args = args, εII = 1.0e-15, Time = (1.0e0, 1.0e10), nt = 10, filename = png())[1] isa Figure
         @test PlotPressureStressTime_0D(ve; args = args, εII = 1.0e-15, εvol = -1.0e-18, Time = (1.0e0, 1.0e10), nt = 10, filename = png())[1] isa Figure
         @test PlotDeformationMap(comp; n = 20, filename = png()) isa Figure
+        # option branches (degenerate-data contours now guarded, so these no longer error)
+        @test PlotDeformationMap(comp; n = 20, strainrate = false, filename = png()) isa Figure
+        @test PlotDeformationMap(comp; n = 20, viscosity = true, filename = png()) isa Figure
+        @test PlotDeformationMap(comp; n = 20, grainsize = true, filename = png()) isa Figure
+        @test PlotDeformationMap(comp; n = 20, rotate_axes = true, filename = png()) isa Figure
+        @test PlotDeformationMap(comp; n = 20, annotate = true, filename = png()) isa Figure
+        @test PlotDeformationMap(comp; n = 20, log_stress = false, filename = png()) isa Figure
     end
 
     @testset "TAS / Arrhenius / zircon" begin

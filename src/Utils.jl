@@ -99,28 +99,6 @@ end
     end
 end
 
-## Old functions -> keep here as reference for now
-# @generated function nreduce(f::F, v::NTuple{N, Any}) where {N, F}
-#     Base.@_inline_meta
-#     return quote
-#         val = 0.0
-#         Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i])
-#         return val
-#     end
-# end
-
-# @generated function nreduce(
-#         f::F, v::NTuple{N, Any}, id_args::NTuple{N, Integer}, args::NTuple{NT, Any}
-#     ) where {N, NT, F <: Function}
-#     Base.@_inline_meta
-#     return quote
-#         @inline
-#         val = 0.0
-#         Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i], args[id_args[i]])
-#         return val
-#     end
-# end
-
 @generated function nphase(f::F, phase::Integer, v::NTuple{N, AbstractMaterialParamsStruct}) where {N, F <: Function}
     Base.@_inline_meta
     return quote

@@ -63,4 +63,18 @@ import GeoParams: fastpow, pow_check, find_ind, find_max_tuple, max_length_tuple
     # @print macro: println returns nothing; false branch returns nothing
     @test GeoParams.@print(true, "x") === nothing
     @test GeoParams.@print(false, "x") === nothing
+
+    # pow_check branches: x==1, n==1, n==0, general
+    @test GeoParams.pow_check(1.0, 5.0) == 1.0
+    @test GeoParams.pow_check(2.0, 1) == 2.0
+    @test GeoParams.pow_check(2.0, 0) == 1.0
+    @test GeoParams.pow_check(2.0, 3.0) ≈ 8.0
+    # fastpow: integer / float / quantity exponents
+    @test GeoParams.fastpow(2.0, 3) ≈ 8.0
+    @test GeoParams.fastpow(2.0, 3.5) ≈ 11.31370849898476 rtol = 1.0e-12
+    @test GeoParams.fastpow(2.0u"Pa", 2.0) ≈ 4.0u"Pa^2"
+    # substitute_walk rewrites `^` -> pow_check inside an expression (mutates, returns nothing)
+    ex = :(a^b)
+    @test GeoParams.substitute_walk(ex) === nothing
+    @test ex.args[1] == :pow_check
 end

@@ -22,6 +22,7 @@ using GeoParams
 using GeoParams: AbstractTempStruct, DiffusionData, ptr2string
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 using GeoParams.MaterialParameters.ConstitutiveRelationships
+using GeoParams.MaterialParameters.ConstitutiveRelationships: isplastic, compute_εII_nonplastic
 using GeoParams.MaterialParameters.HeatCapacity: AbstractHeatCapacity, compute_heatcapacity
 using GeoParams.MaterialParameters.Conductivity: AbstractConductivity, compute_conductivity
 using GeoParams.MeltingParam: AbstractMeltingParam, compute_meltfraction
@@ -1028,8 +1029,10 @@ end
                                 T = (10, 1000),                 # in C
                                 ε = (1e-22, 1e-8),              # in 1/s
                                 n = 400,                        # number of points
+                                viscosity_cutoff = (0, 25),     # viscosity cutoff in log10()
                                 rotate_axes = false,            # flip x & y axes
                                 strainrate = true,              # strainrate (otherwise stress)
+                                log_stress = true,              # log10-scale stress: axis on strainrate map, τII color on stress map; false = linear MPa
                                 viscosity = false,              # plot viscosity instead of strainrate/stress
                                 boundaries = true,              # plot deformation boundaries
                                 levels = 20,                    # number of contour levels
@@ -1070,12 +1073,15 @@ function PlotDeformationMap(
         T = (10, 1000),                 # in C
         ε = (1.0e-22, 1.0e-8),              # in 1/s
         n = 400,                        # number of points
+        viscosity_cutoff = (0, 25),     # viscosity cutoff value
         rotate_axes = false,            # flip x & y axes
         strainrate = true,              # strainrate (otherwise stress)
+        log_stress = true,              # log10-scale stress: axis on strainrate map, τII color on stress map; false = linear MPa
         viscosity = false,              # plot viscosity instead of strainrate/stress
         grainsize = false,              # plot strainrate with grainsize as x-axis
         depth = false,                  # plot strainrate with depth as x-axis
         boundaries = true,              # plot deformation boundaries
+        annotate = false,               # label each region with its dominant deformation mechanism
         levels = 30,                    # number of contour levels
         colormap = :viridis,
         filename = nothing,
@@ -1101,7 +1107,12 @@ function PlotDeformationMap(
     if strainrate
         # compute ε as a function of τ and T
 
-        σ_vec = 10.0 .^ Vector(range(log10(σ[1] * 1.0e6), log10(σ[2] * 1.0e6), n))        # in Pa, equally spaced in log10 space
+        # stress sample points (Pa): log10-spaced or linearly spaced depending on `log_stress`
+        σ_vec = if log_stress
+            10.0 .^ Vector(range(log10(σ[1] * 1.0e6), log10(σ[2] * 1.0e6), n))
+        else
+            Vector(range(σ[1] * 1.0e6, σ[2] * 1.0e6, n))
+        end
         εII = zeros(n + 1, n)
         η = zeros(n + 1, n)
         mainDef = zeros(n + 1, n)     # indicates the main components
@@ -1117,13 +1128,19 @@ function PlotDeformationMap(
                 Tlocal = T_vec[i[1]]
                 args_local = merge(args, (T = Tlocal, d = dlocal))
             end
+            if isplastic(v)
+                # Plastic elements compute their strainrate relative to the non-plastic strainrate
+                # ε_np, so it must be in `args`. Compute it per cell from the non-plastic part.
+                args_local = merge(args_local, (ε_np = compute_εII_nonplastic(v, τlocal, args_local),))
+            end
             εII[i] = compute_εII(v, τlocal, args_local)       # compute strainrate (1/s)
             η[i] = τlocal / (2 * εII[i])                       # effective viscosity (Pa s)
             ε_components = [ compute_εII(v[i], τlocal, args_local) for i in 1:n_components]
             ε_components = ε_components ./ sum(ε_components)
             mainDef[i] = argmax(ε_components)                 # index of max. strainrate
         end
-        log_σ = log10.(σ_vec ./ 1.0e6)
+        # stress axis values (MPa): log10 or linear, matching `log_stress`
+        σ_axis = log_stress ? log10.(σ_vec ./ 1.0e6) : σ_vec ./ 1.0e6
     else
         # compute τ as a function of ε and T
 
@@ -1150,25 +1167,40 @@ function PlotDeformationMap(
     T_plot = T_vec .- 273.15
 
     # determine axis of plot
+    # Creep laws extrapolated far outside their calibration produce absurd values (ε→1e-80 1/s,
+    # η = τ/2ε → 1e75 Pa·s). Clamp the plotted field to a physical window so the colormap/colorbar
+    # stay meaningful instead of being washed out by garbage extremes.
+    # ponytail: clim reuses the function's own physical-range kwargs; widen them if a real map needs it.
     if strainrate
         x = T_plot
         xlabel = "T [°C]"
-        y = log_σ
-        ylabel = L"\log_{10}(\tau_{II}) [MPa]"
+        y = σ_axis
+        ylabel = log_stress ? L"\log_{10}(\tau_{II}) [MPa]" : L"\tau_{II} [MPa]"
         label = L"\log_{10}(\varepsilon_{II}) [s^{-1}]"
         data = log10.(εII)
+        clim = (log10(ε[1]), log10(ε[2]))
     else
         x = T_plot
         xlabel = "T [°C]"
         y = log_ε
         ylabel = L"\log_{10}({\varepsilon}_{II}) [s^{-1}]"
-        label = L"\log_{10}(\tau_{II}) [MPa]"
-        data = log10.(τII / 1.0e6)
+        # τII spans many decades; show it in log10 by default (`log_stress`), else linear MPa
+        if log_stress
+            label = L"\log_{10}(\tau_{II}) [MPa]"
+            data = log10.(τII / 1.0e6)
+            clim = (log10(σ[1]), log10(σ[2]))
+        else
+            label = L"\tau_{II} [MPa]"
+            data = (τII / 1.0e6)
+            clim = ((σ[1]), (σ[2]))
+        end
     end
     if viscosity
         label = L"\log_{10}(\eta_{eff}) [Pa s]"
         data = log10.(η)
+        clim = viscosity_cutoff
     end
+    data = clamp.(data, clim[1], clim[2])
 
     if rotate_axes
         x, y = y, x
@@ -1183,23 +1215,45 @@ function PlotDeformationMap(
         fig[1, 1],
         title = "Deformation mechanism map",
         xlabel = xlabel, xlabelsize = fontsize,
-        xticks = -3:0.5:2,
         xminorticks = IntervalsBetween(5),
         xminorticksvisible = true,
         ylabel = ylabel, ylabelsize = fontsize,
-        yticks = -1:0.5:4,
         yminorticks = IntervalsBetween(5),
         yminorticksvisible = true
     )
 
-    c1 = heatmap!(ax, x, y, data, colormap = colormap)
+    c1 = heatmap!(ax, x, y, data, colormap = colormap, colorrange = clim)
 
-    if boundaries
-        # plot boundaries between deformation regimes
+    if boundaries && length(unique(vec(mainDef))) > 1
+        # plot boundaries between deformation regimes (skip if a single regime dominates
+        # everywhere — Makie's contour errors on a constant field)
         contour!(ax, x, y, mainDef, color = :red, linewidth = 2, linestyle = :solid, levels = n_components - 1)
     end
 
-    contour!(ax, x, y, data; color = :black, levels = -20:1:-2, labels = true, labelsize = 25, labelfont = :bold, labelcolor = :black)
+    if annotate
+        # Label each dominant-mechanism region at its centroid. `mainDef` holds the index of the
+        # dominant element per cell and shares `data`'s shape, so mainDef[ix,iy] ↔ (x[ix], y[iy])
+        # (consistent after `rotate_axes` since both are transposed together).
+        for idx in unique(vec(mainDef))
+            cells = findall(==(idx), mainDef)
+            cx = sum(c -> x[c[1]], cells) / length(cells)
+            cy = sum(c -> y[c[2]], cells) / length(cells)
+            name = string(nameof(typeof(v[Int(idx)])))
+            text!(ax, cx, cy; text = name, align = (:center, :center), color = :white, font = :bold, fontsize = fontsize * 0.55)
+        end
+    end
+
+    # Labelled iso-strain-rate contours (only meaningful for the strainrate map). Space the levels
+    # every 2 decades so the labels don't pile into an unreadable blob where the field is steep.
+    # Skip if the (clamped) field is constant or no contour level falls inside it — Makie's contour
+    # errors on a field with nothing to draw (e.g. strainrates entirely outside the `ε` window).
+    if strainrate && !viscosity
+        lo, hi = extrema(data)
+        levels_c = ceil(clim[1] / 2) * 2 : 2 : floor(clim[2] / 2) * 2
+        if lo < hi && any(l -> lo < l < hi, levels_c)
+            contour!(ax, x, y, data; color = :black, levels = levels_c, labels = true, labelsize = 18, labelfont = :bold, labelcolor = :black)
+        end
+    end
 
     Colorbar(fig[1, 2], c1, label = label, labelsize = fontsize)
 

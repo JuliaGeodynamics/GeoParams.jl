@@ -1,6 +1,9 @@
 using Test
 using GeoParams, ForwardDiff
 import GeoParams: Dislocation, Diffusion
+import GeoParams: compute_elements_εII, compute_εII_harmonic, compute_p_harmonic
+import GeoParams.MaterialParameters.ConstitutiveRelationships: compute_τII_harmonic
+import GeoParams: compute_elastoviscosity
 
 @testset "CompositeRheologies" begin
 
@@ -502,4 +505,60 @@ import GeoParams: Dislocation, Diffusion
 
     @test τ_vec1[end] ≈ τ_vec2[end]
     @test τ_vec1[end] > τ_vec[end]
+
+    @testset "composite rheology pretty-printing" begin
+        v1 = SetDislocationCreep(Dislocation.dry_anorthite_Rybacki_2006)
+        v2 = LinearViscous()
+        e1 = ConstantElasticity()
+        pl1 = DruckerPrager(; C = 1.0e6)
+
+        par   = Parallel(v1, v2)
+        comp  = CompositeRheology(v1, v2, e1)
+        nest  = CompositeRheology(v1, Parallel(v2, pl1))
+
+        for r in (par, comp, nest)
+            @test sprint(show, r) isa String
+        end
+
+        # exported helpers, exercised directly (Tuple / Parallel dispatch)
+        @test print_rheology_matrix((comp, par)) isa Matrix
+        @test print_rheology_matrix(par) isa Vector
+        @test print_rheology_matrix(nest) isa Vector
+        @test create_rheology_string("", (comp,)) isa String
+        @test create_rheology_string("", comp) isa String
+        @test create_rheology_string("", par) isa String
+
+        # composite (un)nondimensionalize + viscosity helpers
+        CharDim = GEO_units()
+        comp_nd = nondimensionalize(comp, CharDim)
+        @test dimensionalize(comp_nd, CharDim) isa CompositeRheology
+        args = (; T = 1.0e3)
+        # effective viscosities at εII = 1e-15 — regression values
+        @test computeViscosity_εII(comp, 1.0e-15, args)    ≈ 4.999999997499999e10 rtol = 1.0e-9
+        @test computeViscosity_εII(par, 1.0e-15, args)     ≈ 2.571135097575618e22 rtol = 1.0e-6
+        @test computeViscosity_εII_AD(comp, 1.0e-15, args) ≈ 4.999999997499999e10 rtol = 1.0e-9
+        @test computeViscosity_εII_AD(v1, 1.0e-15, args)   ≈ 2.561135097575618e22 rtol = 1.0e-6
+    end
+
+
+    @testset "CompositeRheology compute sweep" begin
+        v1 = SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003)
+        v2 = LinearViscous(; η = 1.0e21Pa * s)
+        c  = CompositeRheology(v1, v2)
+        args = (; T = 1.0e3)
+
+        εII = 1.0e-15
+        τ   = compute_τII(c, εII, args)[1]
+        @test τ ≈ 1.9999969463168385e6 rtol = 1.0e-6
+        @test compute_εII(c, τ, args) ≈ εII rtol = 1.0e-2
+        @test compute_εII_AD(c, τ, args) ≈ εII rtol = 1.0e-2
+        @test compute_τII_AD(c, εII, args) ≈ 1.9999969463168385e6 rtol = 1.0e-6
+        @test dτII_dεII(c, εII, args) ≈ 1.9999893121497317e21 rtol = 1.0e-6
+        @test compute_τII_harmonic(c, εII, args) ≈ 1.9573522134937493e6 rtol = 1.0e-6
+        @test compute_εII_harmonic(c, τ, args) ≈ 1.5268392494977225e-21 rtol = 1.0e-6
+        elem = compute_elements_εII(c, τ, args)
+        @test elem[1] ≈ 1.5268415807429352e-21 rtol = 1.0e-6
+        @test elem[2] ≈ 9.999984731584192e-16 rtol = 1.0e-6
+    end
+
 end

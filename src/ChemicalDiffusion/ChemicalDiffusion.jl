@@ -664,8 +664,8 @@ function Transform_ChemicalDiffusion(pp::MeltMulticompDiffusionData)
     T_range_min = Value(pp.T_range_min)
     T_range_max = Value(pp.T_range_max)
 
-    λD0_SI = uconvert(m^2 / s, λD0)
-    λEa_SI = uconvert(J / mol, λEa)
+    λD0_SI = uconvert.(m^2 / s, λD0)
+    λEa_SI = uconvert.(J / mol, λEa)
     T_range_min_SI = uconvert(K, T_range_min)
     T_range_max_SI = uconvert(K, T_range_max)
 

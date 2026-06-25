@@ -533,4 +533,34 @@ using GeoParams, LaTeXStrings
     # Legend(fig2[1, 2], ax, position=:rt)
     # fig2
 
+
+    @testset "<elt viscosity creep-law paths" begin
+        # τII at εII = 1e-15, T = 1100 K — regression values per parameterization
+        expected_τ = Dict(
+            :LinearMeltViscosity   => 3.81963716676184e-8,
+            :GiordanoMeltViscosity => 6.037654646933169e-11,
+        )
+        for a in (LinearMeltViscosity(), GiordanoMeltViscosity())
+            @test sprint(show, a) isa String
+            τ = compute_τII(a, 1.0e-15; T = 1100.0)
+            @test τ ≈ expected_τ[nameof(typeof(a))] rtol = 1.0e-6
+            @test compute_εII(a, τ; T = 1100.0) ≈ 1.0e-15 rtol = 1.0e-3   # round-trip
+            @test dεII_dτII(a, τ; T = 1100.0) isa Number
+            @test dτII_dεII(a, 1.0e-15; T = 1100.0) isa Number
+        end
+    end
+
+    @testset "Creep-law apparatus correction factors" begin
+        # (FT, FE) regression values per experimental apparatus
+        expected = (
+            GeoParams.AxialCompression => (1.7320508075688772, 1.1547005383792517),
+            GeoParams.SimpleShear      => (2.0, 2.0),
+            GeoParams.Invariant        => (1.0, 1.0),
+        )
+        for (app, ref) in expected
+            FT, FE = GeoParams.CorrectionFactor(DislocationCreep(; Apparatus = app))
+            @test FT ≈ ref[1] rtol = 1.0e-12
+            @test FE ≈ ref[2] rtol = 1.0e-12
+        end
+    end
 end

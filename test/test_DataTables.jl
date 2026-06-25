@@ -1,6 +1,7 @@
 using Test
 using GeoParams
 import GeoParams.Dislocation, GeoParams.Diffusion, GeoParams.GBS, GeoParams.Peierls, GeoParams.NonLinearPeierls
+import GeoParams: diffusion_database, diffusion_database_info, Transform_ChemicalDiffusion
 import GeoParams: Rutile, Garnet, Olivine, Melt
 
 # Enumerates the (un-exported) law-builder functions in a creep `Data` module that,
@@ -70,6 +71,25 @@ end
         end
     end
 
+     @testset "Transform creep-law databases" begin
+        # (law_list, Transform_*, Set*) for every creep-law family. Iterating exercises
+        # the per-law `show`, `Transform_*` (unit -> SI) and `Set*` paths on all data.
+        laws = (
+            (diffusion_law_list,            Transform_DiffusionCreep,         SetDiffusionCreep),
+            (dislocation_law_list,          Transform_DislocationCreep,       SetDislocationCreep),
+            (grainboundarysliding_law_list, Transform_GrainBoundarySliding,   SetGrainBoundarySliding),
+            (nonlinearpeierls_law_list,     Transform_NonLinearPeierlsCreep,  SetNonLinearPeierlsCreep),
+            (peierls_law_list,              Transform_PeierlsCreep,           SetPeierlsCreep),
+        )
+        for (list_fn, transform_fn, set_fn) in laws
+            for f in list_fn()
+                law = set_fn(f)
+                @test sprint(show, law) isa String
+                @test transform_fn(f) isa AbstractCreepLaw
+            end
+        end
+    end
+
     # ----- chemical-diffusion databases -----
     @testset "ChemicalDiffusion data" begin
         for mod in (Rutile, Garnet, Olivine, Melt)
@@ -114,5 +134,26 @@ end
         Zr_para = SetChemicalDiffusion(Rutile.Rt_Zr_Sasaki1985_para_c)
         D = ustrip(compute_D(Zr_para, T = 1200C))
         @test D isa Float64 && D > 0
+
+        for mod in (Rutile, Garnet, Olivine, Melt)
+            for f in mod.chemical_diffusion_list()
+                f isa Function || continue
+                d = diffusion_database(f)
+                @test sprint(show, d) isa String
+                @test param_info(d) isa MaterialParamsInfo
+                @test diffusion_database_info(f) isa MaterialParamsInfo
+                # unit -> SI transform (DiffusionData and MeltMulticompDiffusionData paths)
+                td = Transform_ChemicalDiffusion(f)
+                @test td isa AbstractChemicalDiffusion
+                @test sprint(show, td) isa String
+            end
+        end
+
+        # nondimensional Set path (SetMulticompChemicalDiffusion with CharDim)
+        CharDim = GEO_units()
+        mm = SetMulticompChemicalDiffusion(
+            Melt.Melt_multicomponent_major_Guo2020_SiO2_basaltic, CharDim,
+        )
+        @test mm isa AbstractChemicalDiffusion
     end
 end

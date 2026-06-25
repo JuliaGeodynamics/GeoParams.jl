@@ -144,6 +144,16 @@ import GeoParams: effective_ε
     εII_3dp = effective_εII(εxx, εyy, εzz, εyz, εxz, εxy, vv2, τxx_old, τyy_old, τzz_old, τyz_old, τxz_old, τxy_old, dt_eff, 1)
     @test εII_3dp isa Float64
 
+    # each elastic-parameter pair hits a different branch of SetConstantElasticity
+    @test SetConstantElasticity(; G = 3.0e10, ν = 0.3) isa ConstantElasticity
+    @test SetConstantElasticity(; Kb = 1.0e11, ν = 0.3) isa ConstantElasticity
+    @test SetConstantElasticity(; E = 1.0e11, ν = 0.3) isa ConstantElasticity
+    @test SetConstantElasticity(; Kb = 1.0e11, G = 3.0e10) isa ConstantElasticity
+
+    # compute_εII / compute_εvol on a phase without elasticity (isempty branch)
+    no_el = SetMaterialParams(; Phase = 2, Density = ConstantDensity())
+    @test compute_εII(no_el, (;)) == 0.0
+    @test compute_εvol(no_el, (;)) == 0.0
     #=
     # Check that it works if we give a phase array
     MatParam = (

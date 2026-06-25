@@ -143,4 +143,48 @@ using GeoParams
         bf = BubbleFlow_Density(ρmelt = PT_Density(α = 1.0e-3), ρgas = PT_Density(α = 1.0e-2), c0 = 0.01)
         @test GeoParams.get_α(bf, (; P = 1.0Pa)) isa Number   # P::Quantity -> @unpack_units branch
     end
+
+    @testset "Density / Viscosity / Conductivity routines" begin
+        # ConstantDensity in-place array (default ρ = 2900 kg/m³)
+        ρ = zeros(5)
+        compute_density!(ρ, ConstantDensity(); P = zeros(5), T = zeros(5))
+        @test all(ρ .== 2900.0)
+        compute_density!(ρ, ConstantDensity(), (; P = zeros(5), T = zeros(5)))
+        @test all(ρ .== 2900.0)
+
+        # Vector_Density show
+        vd = Vector_Density(; rho = collect(1.0:5.0))
+        @test sprint(show, vd) isa String
+
+        # visco-elastic viscosity helper — regression value
+        @test compute_elastoviscosity(ConstantElasticity(), 1.0e20, 1.0e3) ≈ 4.99999750000125e13 rtol = 1.0e-9
+        @test compute_elastoviscosity(ConstantElasticity(), 1.0e20, (; dt = 1.0e3)) ≈ 4.99999750000125e13 rtol = 1.0e-9
+
+        # constant conductivity in-place (default k = 3 W/m/K)
+        k = zeros(4)
+        compute_conductivity!(k, ConstantConductivity())
+        @test all(k .== 3.0)
+        @test compute_conductivity(ConstantConductivity()) == 3.0
+    end
+
+    @testset "conductivity / seismic / heat-capacity routines" begin
+        # temperature-dependent conductivity over an array (functor + positional args)
+        Tarr = collect(300.0:100.0:800.0)
+        for s in (T_Conductivity_Whittington(), T_Conductivity_Whittington_parameterised())
+            k = s(Tarr)
+            @test length(k) == length(Tarr)
+            @test all(>(0), k)
+            @test param_info(s) isa MaterialParamsInfo
+            @test sprint(show, s) isa String
+        end
+        # constant seismic velocity show + compute
+        sv = ConstantSeismicVelocity()
+        @test sprint(show, sv) isa String
+
+        # latent heat capacity construction + show
+        lhc = Latent_HeatCapacity()
+        @test sprint(show, lhc) isa String
+        @test compute_heatcapacity(lhc; T = 1000.0) isa Number
+    end
+
 end

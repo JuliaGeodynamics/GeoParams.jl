@@ -1,5 +1,5 @@
 export DruckerPragerCap
-export compute_tensile_cap, compute_flowpotential
+export compute_tensile_cap, compute_flowpotential, compute_flowpotential!
 
 
 # DruckerPragerCap  -------------------------------------------------------

@@ -4,7 +4,7 @@ using Unidecode
 import GeoParams: Dislocation, Diffusion, GBS, Peierls, NonLinearPeierls
 import GeoParams.Tables: detachFloatfromExponent, extract_parameters_from_phases, Dict2LatexTable, extract_parameters_from_phases_md, Dict2MarkdownTable, ParameterTable, create_latex_symbol, get_material_reference_info
 import GeoParams.Tables: get_rheology_info, format_number, format_markdown_number
-
+import GeoParams.Tables as Tbl
 @testset "Tables.jl" begin
     MatParam = (
         SetMaterialParams(;
@@ -253,4 +253,90 @@ import GeoParams.Tables: get_rheology_info, format_number, format_markdown_numbe
     # dig > rdigits, expo == "1"  -> rounded plain
     @test format_number("1.23456", "1", 5, 2) == "1.23"
     @test format_markdown_number("1.23456", "1", 5, 2) == "1.23"
+
+
+    @testset "parameter tables for rich composite phases" begin
+        # Complex multi-variable structs (BubbleFlow_Density with nested melt/gas
+        # densities; LinearMeltViscosity) inside a CompositeRheology exercise the
+        # composite-summary / recursive / multi-parameter branches of Tables.jl
+        # (latex & markdown) that simple single-variable phases never reach.
+        comp = CompositeRheology(
+            SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003),
+            SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006),
+            LinearMeltViscosity(),
+            ConstantElasticity(),
+            DruckerPrager(; C = 1.0e6),
+        )
+        phases = (
+            SetMaterialParams(;
+                Name = "Conduit", Phase = 1,
+                Density = BubbleFlow_Density(;
+                    ρmelt = ConstantDensity(ρ = 2900kg / m^3),
+                    ρgas = ConstantDensity(ρ = 1kg / m^3),
+                    c0 = 0.0, a = 0.0041MPa^(-1 // 2),
+                ),
+                CompositeRheology = comp,
+            ),
+            SetMaterialParams(;
+                Name = "Simple", Phase = 2,
+                Density = ConstantDensity(),
+                CreepLaws = LinearViscous(; η = 1.0e21Pa * s),
+            ),
+        )
+        for fmt in ("latex", "markdown")
+            ParameterTable(phases; filename = "ParTbl_test", format = fmt)
+        end
+        @test isfile("ParTbl_test.tex") || isfile("ParTbl_test.md")
+        for f in ("ParTbl_test.tex", "ParTbl_test.md", "References.bib")
+            rm(f; force = true)
+        end
+    end
+
+    @testset "Tables internal helpers" begin
+        dens = PT_Density()
+        cl   = SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003)
+        d = Dict{String, Any}()
+        for p in (dens, cl)
+            Tbl.extract_parameters_from_single_param!(p, 1, d)
+        end
+        @test !isempty(d)
+        @test Tbl.get_parameter_description("ρ") isa String
+        @test Tbl.get_parameter_description("nonexistent_symbol") isa String
+
+        refs = Dict{String, Any}()
+        counters = Dict("reference_counter" => 1)
+        Tbl.add_parameter_reference!(cl, 1, refs, counters, "CreepLaws")
+        @test counters["reference_counter"] >= 1
+    end
+
+
+    @testset "rich multi-phase parameter tables" begin
+        # phases with composite + parallel rheologies and bibliographic references
+        # drive the recursive / reference / markdown branches of Tables.jl
+        comp = CompositeRheology(
+            SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003),
+            Parallel(
+                SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006),
+                LinearViscous(; η = 1.0e21Pa * s),
+            ),
+            ConstantElasticity(),
+        )
+        phases = (
+            SetMaterialParams(; Name = "A", Phase = 1, Density = PT_Density(), CompositeRheology = comp),
+            SetMaterialParams(; Name = "B", Phase = 2, Density = ConstantDensity(),
+                CreepLaws = SetDislocationCreep(Dislocation.diabase_Caristan_1982)),
+        )
+        dict, ref = Tbl.extract_parameters_from_phases(phases)
+        @test !isempty(dict)
+        dmd = Tbl.extract_parameters_from_phases_md(phases)
+        @test !isempty(dmd)
+        Tbl.Dict2LatexTable(dict, ref; filename = "rt_test")
+        Tbl.Dict2MarkdownTable(dmd; filename = "rt_test")
+        @test isfile("rt_test.tex")
+        @test isfile("rt_test.md")
+        for f in ("rt_test.tex", "rt_test.md", "References.bib")
+            rm(f; force = true)
+        end
+    end
+
 end
