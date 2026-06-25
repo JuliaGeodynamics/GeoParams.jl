@@ -34,6 +34,46 @@ CairoMakie.activate!()
         @test PlotStrainrateStress(v_disl; args = args)[1] isa Figure
     end
 
+    @testset "display & per-curve tuple-arg branches" begin
+        vt = (v_disl, v_diff)
+        argt = (args, args)
+        # no filename -> display(fig) branch of each remaining plotter
+        @test PlotStressStrainrate(v_disl; args = args)[1] isa Figure
+        @test PlotStrainrateViscosity(v_disl; args = args)[1] isa Figure
+        @test PlotStressViscosity(v_disl; args = args)[1] isa Figure
+        @test PlotConductivity(ConstantConductivity())[1] isa Figure
+        @test PlotHeatCapacity(ConstantHeatCapacity())[1] isa Figure
+        T2, phi2, _ = PlotMeltFraction(MeltingParam_4thOrder())
+        @test length(phi2) == length(T2)
+        # per-curve args tuple (args[i] branches)
+        @test PlotStrainrateStress(vt; args = argt, filename = png())[1] isa Figure
+        @test PlotStressStrainrate(vt; args = argt, filename = png())[1] isa Figure
+        @test PlotStrainrateViscosity(vt; args = argt, filename = png())[1] isa Figure
+        @test PlotStressViscosity(vt; args = argt, filename = png())[1] isa Figure
+        # tuple styling + a CompositeRheology entry -> ObtainPlotArgs tuple/combined-label branches
+        @test PlotStrainrateStress(
+            (v_disl, comp); args = args,
+            color = (:red, :blue), linewidth = (1, 2), linestyle = (:dash, :solid),
+            label = ("disl", "composite"), filename = png(),
+        )[1] isa Figure
+        # 0D pressure-stress time evolution without filename (display branch)
+        @test PlotPressureStressTime_0D(ve; args = args, εII = 1.0e-15, εvol = -1.0e-18, Time = (1.0e0, 1.0e10), nt = 10)[1] isa Figure
+    end
+
+    @testset "more plot option branches" begin
+        # conductivity over an array with a legend label
+        @test PlotConductivity(ConstantConductivity(); T = collect(300.0:50:900.0)K, lbl = "k", filename = png())[1] isa Figure
+        @test PlotConductivity(ConstantConductivity(); T = [500.0]K, filename = png())[1] isa Figure
+        # melt fraction with scalar P + label (P-broadcast & label branches)
+        T3, phi3, _ = PlotMeltFraction(MeltingParam_4thOrder(); P = 1.0e6Pa, lbl = "ϕ")
+        @test length(phi3) == length(T3)
+        # diffusion-coefficient Arrhenius: ln scale + tuple input + per-curve labels
+        Fe = SetChemicalDiffusion(Garnet.Grt_Fe_Chakraborty1992)
+        @test PlotDiffusionCoefArrhenius((Fe, Fe); log_type = :ln, label = ("a", "b"), filename = png())[1] isa Figure
+        # stress map with linear (non-log) τII color
+        @test PlotDeformationMap(comp; n = 20, strainrate = false, log_stress = false, filename = png()) isa Figure
+    end
+
     @testset "energy & melt fraction" begin
         @test PlotConductivity(T_Conductivity_Whittington(); filename = png())[1] isa Figure
         @test PlotConductivity(ConstantConductivity(); filename = png())[1] isa Figure

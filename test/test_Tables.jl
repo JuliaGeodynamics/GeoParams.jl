@@ -341,4 +341,50 @@ import GeoParams.Tables as Tbl
         end
     end
 
+    @testset "category / reference helpers" begin
+        @test Tbl.get_rheology_full_name("DislCreep") == "Dislocation Creep"
+        @test Tbl.get_rheology_full_name("unknown_xyz") == "unknown_xyz"
+        @test Tbl.get_category_display_name("Conductivity") == "Thermal Conductivity"
+        @test Tbl.get_category_display_name("unknown_xyz") == "unknown_xyz"
+        @test Tbl.get_category_sort_order("Density") == 10
+        @test Tbl.get_category_sort_order("unknown_xyz") == 99
+
+        # reference info: melt-viscosity branch + named-creep-law database lookup
+        # (get_material_reference_info internally drives find_creep_law_function +
+        # get_database_info for each creep-law type)
+        @test Tbl.get_material_reference_info(LinearMeltViscosity()) isa MaterialParamsInfo
+        for cl in (
+                SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003),
+                SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006),
+                SetGrainBoundarySliding(GBS.cold_dry_olivine_Hirth_2003),
+                SetPeierlsCreep(Peierls.dry_olivine_Goetze_1979),
+            )
+            @test Tbl.get_material_reference_info(cl) isa MaterialParamsInfo
+            @test Tbl.find_creep_law_function(cl, unsafe_string(cl.Name)) isa Function
+        end
+    end
+
+    @testset "recursive composite extraction (latex & markdown)" begin
+        # a CompositeRheology nesting a Parallel -> drives the Comp_/Para_ recursive
+        # extraction branches (and the _with_composite variants) for both formats
+        comp = CompositeRheology(
+            SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003),
+            Parallel(
+                SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006),
+                LinearViscous(; η = 1.0e21Pa * s),
+            ),
+        )
+        # latex path
+        counters = Dict{String, Any}("flowlaw" => 0)
+        params = Dict{String, Any}()
+        refs = Dict{String, Any}()
+        Tbl.extract_parameters_recursive(comp, 1, counters, params, refs, "CompositeRheology_")
+        @test !isempty(params)
+        # markdown path (preserves Unicode symbols, no refs)
+        counters_md = Dict{String, Any}("flowlaw" => 0)
+        params_md = Dict{String, Any}()
+        Tbl.extract_parameters_recursive_md(comp, 1, counters_md, params_md, "CompositeRheology_")
+        @test !isempty(params_md)
+    end
+
 end

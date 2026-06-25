@@ -534,7 +534,7 @@ using GeoParams, LaTeXStrings
     # fig2
 
 
-    @testset "<elt viscosity creep-law paths" begin
+    @testset "melt viscosity creep-law paths" begin
         # τII at εII = 1e-15, T = 1100 K — regression values per parameterization
         expected_τ = Dict(
             :LinearMeltViscosity => 3.81963716676184e-8,
@@ -548,6 +548,21 @@ using GeoParams, LaTeXStrings
             @test dεII_dτII(a, τ; T = 1100.0) isa Number
             @test dτII_dεII(a, 1.0e-15; T = 1100.0) isa Number
         end
+
+        # dimensional (Quantity) derivative dispatches for LinearMeltViscosity — regression values
+        lmv = LinearMeltViscosity()
+        @test ustrip(dεII_dτII(lmv, 1.0e6Pa; T = 1100.0K)) ≈ 2.618049716087998e-8 rtol = 1.0e-9
+        @test ustrip(dτII_dεII(lmv, 1.0e-15 / s; T = 1100.0K)) ≈ 3.81963716676184e7 rtol = 1.0e-9
+
+        # partial-melt viscosity wrapper (Costa et al. 2009)
+        pm = ViscosityPartialMelt_Costa_etal_2009()
+        @test isDimensional(pm) == true
+        @test param_info(pm) isa MaterialParamsInfo
+        @test sprint(show, pm) isa String
+        @test isDimensional(GiordanoMeltViscosity()) == true
+        @test isDimensional(LinearMeltViscosity()) == true
+        # positional (melt-viscosity, ε0) constructor
+        @test ViscosityPartialMelt_Costa_etal_2009(LinearMeltViscosity(), 1.0 / s) isa AbstractCreepLaw
     end
 
     @testset "Creep-law apparatus correction factors" begin

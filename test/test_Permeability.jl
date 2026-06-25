@@ -117,4 +117,9 @@ using Test, GeoParams, StaticArrays, LaTeXStrings
     kk = zeros(3)
     compute_permeability!(kk, xc, (;))
     @test all(kk .≈ 1.0e-12)
+
+    # "empty" permeability routine for a phase without a permeability field
+    nmp = GeoParams.No_MaterialParam{Float64}()
+    @test compute_permeability(nmp) == 0.0
+    @test compute_permeability!(zeros(3), nmp) == 0.0
 end

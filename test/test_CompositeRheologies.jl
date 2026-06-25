@@ -114,6 +114,16 @@ import GeoParams: compute_elastoviscosity
     @test isvolumetric(CompositeRheology(e2, v3)) == true      # composite w/ volumetric (e2 has finite Kb)
     @test isvolumetric(CompositeRheology((v3,))) == false
 
+    # ---- Parallel: type-param dispatch + stress summation ----
+    par_vv = Parallel(v1, v2)                                   # two viscous elements
+    @test isplastic(par_vv) == false
+    @test isvolumetric(par_vv) == false
+    @test isplastic(Parallel(pl3, v3)) == true                 # parallel w/ plastic
+    parg = (T = 900.0, d = 100.0e-6)
+    τ_par = compute_τII(par_vv, 1.0e-15, parg)                 # sums τII of the elements
+    @test τ_par ≈ GeoParams.compute_τII_AD(par_vv, 1.0e-15, parg) rtol = 1.0e-10
+    @test compute_yieldfunction(Parallel(v1, v2), parg) |> isnan  # no plastic element -> NaN
+
     # ---- dimensional (Quantity) compute on a CompositeRheology ----
     # (nreduce now seeds its accumulator from the first element, so unit-bearing results add)
     c_visc = CompositeRheology((LinearViscous(; η = 1.0e20Pa * s), LinearViscous(; η = 2.0e20Pa * s)))
@@ -559,6 +569,19 @@ import GeoParams: compute_elastoviscosity
         elem = compute_elements_εII(c, τ, args)
         @test elem[1] ≈ 1.5268415807429352e-21 rtol = 1.0e-6
         @test elem[2] ≈ 9.999984731584192e-16 rtol = 1.0e-6
+    end
+
+    @testset "InverseCreepLaw + nested pretty-printing" begin
+        # InverseCreepLaw inner constructors (varargs & tuple)
+        icl1 = GeoParams.InverseCreepLaw(v1, v2)
+        icl2 = GeoParams.InverseCreepLaw((v1, v2))
+        @test icl1 isa GeoParams.InverseCreepLaw
+        @test icl2 isa GeoParams.InverseCreepLaw
+        # deeply nested composite/parallel -> exercises the multi-row/col matrix branches
+        nested = CompositeRheology(v1, Parallel(v2, Parallel(v1, v2)))
+        @test sprint(show, nested) isa String
+        @test print_rheology_matrix(Parallel(v1, Parallel(v2, v1))) isa Vector
+        @test print_rheology_matrix((nested, Parallel(v1, v2))) isa Matrix
     end
 
 end

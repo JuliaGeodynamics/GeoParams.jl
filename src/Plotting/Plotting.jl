@@ -674,7 +674,7 @@ function PlotConductivity(
 
     compute_conductivity!(Cond, k, args)
     if length(Cond) == 1
-        Cond = ones(size(T)) * Cond
+        Cond = ones(size(T)) * Cond[1]   # replicate the scalar value over T (not Vector*Vector)
     end
 
     if isnothing(fig)
@@ -688,7 +688,7 @@ function PlotConductivity(
         )
     end
 
-    li = lines!(ax, ustrip.(T), ustrip.(Cond))
+    li = scatterlines!(ax, ustrip.(T), ustrip.(Cond))
     if !isnothing(lbl)
         li.label = lbl
         axislegend(ax)

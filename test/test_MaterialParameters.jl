@@ -113,7 +113,9 @@ using GeoParams
     # show of a phase carrying a CompositeRheology -> exercises the print_composite branch
     Phase_comp = SetMaterialParams(;
         Name = "composite", Phase = 1,
-        CompositeRheology = CompositeRheology((LinearViscous(), ConstantElasticity())),
+        CompositeRheology = CompositeRheology((LinearViscous(), Parallel(LinearViscous(), ConstantElasticity()))),
     )
     @test sprint(show, Phase_comp) isa String
+    # NTuple{N,MaterialParams} show -> iterates print over each phase
+    @test sprint(show, (Phase_comp, Phase_comp)) isa String
 end

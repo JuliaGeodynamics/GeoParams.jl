@@ -557,4 +557,41 @@ using Unitful
         @test sprint(show, g) isa String
         @test g[1, 2] isa GeoParams.GeoUnit
     end
+
+    @testset "GeoUnit show & dimensionalize" begin
+        CharDim = GEO_units()
+        # show: dimensional and nondimensional branches + the GeoUnits container
+        @test sprint(show, GeoParams.GeoUnit(1.0u"Pa")) isa String   # dimensional branch
+        @test sprint(show, GeoParams.GeoUnit(2.0)) isa String        # nondimensional branch
+        @test sprint(show, CharDim) isa String
+
+        # dimensionalize round-trips nondimensionalize for a GeoUnit
+        nd = nondimensionalize(GeoParams.GeoUnit(1.0e6u"Pa"), CharDim)
+        dim = dimensionalize(nd, CharDim)
+        @test ustrip(GeoParams.Value(dim)) ≈ 1.0e6 rtol = 1.0e-9
+    end
+
+    @testset "GeoUnit arithmetic & broadcasting" begin
+        G = GeoParams.GeoUnit
+        gu = G(2.0u"Pa")
+        gu2 = G(3.0)
+        # GeoUnit <op> Quantity (returns a Quantity)
+        @test gu * 3.0u"Pa" == 6.0u"Pa^2"
+        @test 3.0u"Pa" * gu == 6.0u"Pa^2"
+        # GeoUnit <op> plain array -> values only (no units)
+        @test gu2 * [1.0, 2.0] == [3.0, 6.0]
+        @test [1.0, 2.0] * gu2 == [3.0, 6.0]
+        # GeoUnit broadcast with a Quantity array -> keeps units
+        @test gu2 .* [1.0u"Pa", 2.0u"Pa"] == [3.0u"Pa", 6.0u"Pa"]
+        @test [1.0u"Pa", 2.0u"Pa"] .* gu2 == [3.0u"Pa", 6.0u"Pa"]
+    end
+
+    @testset "dimensionalize (value, unit, CharDim) forms" begin
+        CharDim = GEO_units()
+        # 3-arg dimensionalize of a bare nondimensional value back to a unit
+        @test dimensionalize(0.1, u"Pa", CharDim) ≈ 1.0e6u"Pa" rtol = 1.0e-12
+        @test GeoParams.udim(0.1, u"Pa", CharDim) ≈ 1.0e6 rtol = 1.0e-12
+        # no characteristic units -> returned (with a warning) un-dimensionalized
+        @test dimensionalize(0.1, u"Pa", nothing) == 0.1
+    end
 end

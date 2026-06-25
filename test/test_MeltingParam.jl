@@ -372,4 +372,12 @@ using StaticArrays
         @test ϕ isa AbstractArray
     end
 
+    @testset "Vector_MeltingParam" begin
+        vm = Vector_MeltingParam(ϕ = fill(0.3, 10))
+        @test param_info(vm) isa MaterialParamsInfo
+        @test sprint(show, vm) isa String
+        @test vm(; index = 3) == 0.3            # precomputed melt fraction at an index
+        @test compute_dϕdT(vm; index = 3) == 0.0
+    end
+
 end

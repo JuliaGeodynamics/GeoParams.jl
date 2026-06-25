@@ -204,4 +204,13 @@ import GeoParams: effective_ε
     # -----------------------
     =#
 
+    @testset "elastic parameter & dispatch branches" begin
+        # default branch (no parameters given -> G = 26 GPa, ν = 0.4)
+        ed = SetConstantElasticity()
+        @test NumValue(ed.G) ≈ 26.0e9
+        # ν = 0.5 (incompressible) -> isvolumetric == false
+        @test isvolumetric(SetConstantElasticity(; G = 3.0e10, ν = 0.5)) == false
+        @test isvolumetric(SetConstantElasticity(; G = 3.0e10, ν = 0.25)) == true
+    end
+
 end

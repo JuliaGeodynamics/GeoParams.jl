@@ -109,4 +109,7 @@ import GeoParams.NonLinearPeierls
     @test !isempty(info_named.BibTex_Reference)
     @test isempty(param_info(NonLinearPeierlsCreep()).BibTex_Reference)                # empty-name early return
     @test isempty(param_info(NonLinearPeierlsCreep(; Name = "nope_xyz")).BibTex_Reference)  # unknown -> fallback
+
+    # nondimensional unit transform path
+    @test GeoParams.Transform_NonLinearPeierlsCreep(NonLinearPeierls.dry_olivine_Mei_2010, GEO_units()) isa AbstractCreepLaw
 end

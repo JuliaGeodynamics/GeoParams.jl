@@ -766,3 +766,20 @@ import ForwardDiff as FD
     @test H_s9 ≈ H_s12 ≈ 8.415
     @test all(iszero, (H_s10, H_s11, H_s13, H_s14))
 end
+
+@testset "Conductivity dispatch branches" begin
+    Tarr = collect(300.0:100.0:900.0)
+    k = zeros(length(Tarr))
+    # temperature-dependent conductivity over an array — regression values at T=300 K
+    compute_conductivity!(k, T_Conductivity_Whittington(), (; T = Tarr))
+    @test k[1] ≈ 3.8396002930832354 rtol = 1.0e-9
+    @test k[end] ≈ 1.9204488975556968 rtol = 1.0e-9
+    compute_conductivity!(k, T_Conductivity_Whittington_parameterised(), (; T = Tarr))
+    @test k[1] ≈ 3.83781682146175 rtol = 1.0e-9
+    # T/P-dependent conductivity: param_info + show (d == 0 branch)
+    tp = TP_Conductivity()
+    @test occursin("a_k", string(param_info(tp).Equation))
+    @test occursin("T/P dependent conductivity", sprint(show, tp))
+    # vararg compute_conductivity entry point
+    @test compute_conductivity(ConstantConductivity(); T = 500.0) == 3.0
+end

@@ -583,11 +583,30 @@ using StaticArrays
                 DruckerPragerCap(; Ψ = 20.0, softening_Ψ = sΨ),
                 DruckerPragerCap(; Ψ = 20.0, softening_ϕ = sϕ, softening_C = sC),
                 DruckerPragerCap(; Ψ = 20.0, softening_ϕ = sϕ, softening_Ψ = sΨ),
+                DruckerPragerCap(; Ψ = 20.0, softening_C = sC, softening_Ψ = sΨ),
                 DruckerPragerCap(; Ψ = 20.0, softening_ϕ = sϕ, softening_C = sC, softening_Ψ = sΨ),
             )
             @test compute_yieldfunction(ps; P = P, τII = τII, EII = 0.5) isa Number
             @test compute_flowpotential(ps; P = P, τII = τII, EII = 0.5) isa Number
         end
+    end
+
+    @testset "DruckerPrager generic (args, kwargs) interfaces" begin
+        p = DruckerPrager(; C = 1.0e6)
+        a = (; P = 1.0e6, τII = 2.0e7)
+        # functor + generic positional-args forms (regression values)
+        @test p(a) ≈ 1.863397459621556e7 rtol = 1.0e-9
+        @test compute_yieldfunction(p, a) ≈ 1.863397459621556e7 rtol = 1.0e-9
+        @test ∂Q∂P(p, a, (;)) == -0.0   # associated DP with Ψ = 0 -> ∂Q/∂P = 0
+
+        # ∂Q∂τ on a user function (AD gradient over a Vector)
+        Q(τ) = sqrt(sum(abs2, τ))
+        @test ∂Q∂τ(Q, [1.0, 2.0, 2.0]) ≈ [1 / 3, 2 / 3, 2 / 3] rtol = 1.0e-9
+        # 3-arg (args, kwargs) form + the MaterialParams plasticity dispatch
+        τ = @SVector [1.0, 2.0, 3.0]
+        @test ∂Q∂τ(p, τ, (;)) ≈ [0.125, 0.25, 0.75] rtol = 1.0e-9
+        mp = SetMaterialParams(; Phase = 1, Plasticity = DruckerPrager(; C = 1.0e6))
+        @test ∂Q∂τ(mp, τ) ≈ [0.125, 0.25, 0.75] rtol = 1.0e-9
     end
 
 end

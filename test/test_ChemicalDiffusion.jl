@@ -794,4 +794,9 @@ import GeoParams: diffusion_database, diffusion_database_info
 
     λ_unitless = compute_λ(melt_multicomponent; T = 1800.0)
     @test (λ_unitless[1, 1] * 1.0e12) ≈ λ1_paper atol = 1.0e-15
+
+    # nondimensional transform paths (Transform_*/Set* with a CharDim)
+    CharDim = GEO_units()
+    @test GeoParams.Transform_ChemicalDiffusion(Rutile.Rt_Hf_Cherniak2007_perp_c, CharDim) isa AbstractChemicalDiffusion
+    @test SetChemicalDiffusion(Rutile.Rt_Hf_Cherniak2007_perp_c, CharDim) isa AbstractChemicalDiffusion
 end
