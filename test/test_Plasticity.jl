@@ -561,15 +561,15 @@ using StaticArrays
         # regression values for the cap flow potential and its derivatives
         @test compute_flowpotential(p; P = P, τII = τII) ≈ 1.3360009139380395e7 rtol = 1.0e-9
         @test compute_flowpotential(p, (; P = P, τII = τII)) ≈ 1.3360009139380395e7 rtol = 1.0e-9
-        @test ∂Q∂P(p, P; τII = τII)   ≈ -0.31343077600453645 rtol = 1.0e-9
+        @test ∂Q∂P(p, P; τII = τII) ≈ -0.31343077600453645 rtol = 1.0e-9
         @test ∂Q∂τII(p, P; τII = τII) ≈ 0.06521675174605653 rtol = 1.0e-9
-        @test ∂F∂P(p, P; τII = τII)   ≈ -0.6037375326226843 rtol = 1.0e-9
+        @test ∂F∂P(p, P; τII = τII) ≈ -0.6037375326226843 rtol = 1.0e-9
         @test ∂F∂τII(p, P; τII = τII) ≈ 0.08062094643606207 rtol = 1.0e-9
 
         # array variant matches the scalar result
-        Pa  = fill(P, 5)
-        τa  = fill(τII, 5)
-        Q   = similar(Pa)
+        Pa = fill(P, 5)
+        τa = fill(τII, 5)
+        Q = similar(Pa)
         compute_flowpotential!(Q, p; P = Pa, τII = τa)
         @test Q[1] ≈ 1.3360009139380395e7 rtol = 1.0e-9
 

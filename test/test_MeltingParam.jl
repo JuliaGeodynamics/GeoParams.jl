@@ -350,19 +350,19 @@ using StaticArrays
         args = (; T = 1000.0)
         # regression values at T = 1000 K for each parameterization (ϕ, dϕ/dT)
         expected = Dict(
-            "MeltingParam_Caricchi"  => (0.03990867150277612, 0.0016659117148547591),
+            "MeltingParam_Caricchi" => (0.03990867150277612, 0.0016659117148547591),
             "MeltingParam_Quadratic" => (0.2236116285119667, 0.005684703433922994),
-            "MeltingParam_4thOrder"  => (0.33650619572740403, 0.005567262683439406),
+            "MeltingParam_4thOrder" => (0.33650619572740403, 0.005567262683439406),
         )
         for p in params
             @test sprint(show, p) isa String
-            ϕ  = compute_meltfraction(p, args)
+            ϕ = compute_meltfraction(p, args)
             dϕ = compute_dϕdT(p, args)
             @test 0 <= ϕ <= 1
             @test dϕ isa Number
             key = string(nameof(typeof(p)))
             if haskey(expected, key)
-                @test ϕ  ≈ expected[key][1] rtol = 1.0e-6
+                @test ϕ ≈ expected[key][1] rtol = 1.0e-6
                 @test dϕ ≈ expected[key][2] rtol = 1.0e-6
             end
         end

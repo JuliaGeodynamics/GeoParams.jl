@@ -294,7 +294,7 @@ import GeoParams.Tables as Tbl
 
     @testset "Tables internal helpers" begin
         dens = PT_Density()
-        cl   = SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003)
+        cl = SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003)
         d = Dict{String, Any}()
         for p in (dens, cl)
             Tbl.extract_parameters_from_single_param!(p, 1, d)
@@ -323,8 +323,10 @@ import GeoParams.Tables as Tbl
         )
         phases = (
             SetMaterialParams(; Name = "A", Phase = 1, Density = PT_Density(), CompositeRheology = comp),
-            SetMaterialParams(; Name = "B", Phase = 2, Density = ConstantDensity(),
-                CreepLaws = SetDislocationCreep(Dislocation.diabase_Caristan_1982)),
+            SetMaterialParams(;
+                Name = "B", Phase = 2, Density = ConstantDensity(),
+                CreepLaws = SetDislocationCreep(Dislocation.diabase_Caristan_1982)
+            ),
         )
         dict, ref = Tbl.extract_parameters_from_phases(phases)
         @test !isempty(dict)

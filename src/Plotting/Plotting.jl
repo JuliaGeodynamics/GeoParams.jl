@@ -1249,7 +1249,7 @@ function PlotDeformationMap(
     # errors on a field with nothing to draw (e.g. strainrates entirely outside the `ε` window).
     if strainrate && !viscosity
         lo, hi = extrema(data)
-        levels_c = ceil(clim[1] / 2) * 2 : 2 : floor(clim[2] / 2) * 2
+        levels_c = (ceil(clim[1] / 2) * 2):2:(floor(clim[2] / 2) * 2)
         if lo < hi && any(l -> lo < l < hi, levels_c)
             contour!(ax, x, y, data; color = :black, levels = levels_c, labels = true, labelsize = 18, labelfont = :bold, labelcolor = :black)
         end

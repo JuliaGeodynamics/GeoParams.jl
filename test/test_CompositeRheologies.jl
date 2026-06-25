@@ -512,9 +512,9 @@ import GeoParams: compute_elastoviscosity
         e1 = ConstantElasticity()
         pl1 = DruckerPrager(; C = 1.0e6)
 
-        par   = Parallel(v1, v2)
-        comp  = CompositeRheology(v1, v2, e1)
-        nest  = CompositeRheology(v1, Parallel(v2, pl1))
+        par = Parallel(v1, v2)
+        comp = CompositeRheology(v1, v2, e1)
+        nest = CompositeRheology(v1, Parallel(v2, pl1))
 
         for r in (par, comp, nest)
             @test sprint(show, r) isa String
@@ -534,21 +534,21 @@ import GeoParams: compute_elastoviscosity
         @test dimensionalize(comp_nd, CharDim) isa CompositeRheology
         args = (; T = 1.0e3)
         # effective viscosities at εII = 1e-15 — regression values
-        @test computeViscosity_εII(comp, 1.0e-15, args)    ≈ 4.999999997499999e10 rtol = 1.0e-9
-        @test computeViscosity_εII(par, 1.0e-15, args)     ≈ 2.571135097575618e22 rtol = 1.0e-6
+        @test computeViscosity_εII(comp, 1.0e-15, args) ≈ 4.999999997499999e10 rtol = 1.0e-9
+        @test computeViscosity_εII(par, 1.0e-15, args) ≈ 2.571135097575618e22 rtol = 1.0e-6
         @test computeViscosity_εII_AD(comp, 1.0e-15, args) ≈ 4.999999997499999e10 rtol = 1.0e-9
-        @test computeViscosity_εII_AD(v1, 1.0e-15, args)   ≈ 2.561135097575618e22 rtol = 1.0e-6
+        @test computeViscosity_εII_AD(v1, 1.0e-15, args) ≈ 2.561135097575618e22 rtol = 1.0e-6
     end
 
 
     @testset "CompositeRheology compute sweep" begin
         v1 = SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003)
         v2 = LinearViscous(; η = 1.0e21Pa * s)
-        c  = CompositeRheology(v1, v2)
+        c = CompositeRheology(v1, v2)
         args = (; T = 1.0e3)
 
         εII = 1.0e-15
-        τ   = compute_τII(c, εII, args)[1]
+        τ = compute_τII(c, εII, args)[1]
         @test τ ≈ 1.9999969463168385e6 rtol = 1.0e-6
         @test compute_εII(c, τ, args) ≈ εII rtol = 1.0e-2
         @test compute_εII_AD(c, τ, args) ≈ εII rtol = 1.0e-2

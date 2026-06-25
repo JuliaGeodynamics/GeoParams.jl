@@ -531,11 +531,11 @@ using Unitful
     end
 
     @testset "GeoUnit integer-quantity constructors" begin
-            # integer-quantity GeoUnit constructors -> promoted to Float64
-            @test GeoUnit(Int32(2)u"Pa") isa GeoUnit
-            @test GeoUnit(Int64(2)u"Pa") isa GeoUnit
-            @test GeoUnit([Int32(2), Int32(3)]u"Pa") isa GeoUnit
-            @test GeoUnit([Int64(2), Int64(3)]u"Pa") isa GeoUnit
+        # integer-quantity GeoUnit constructors -> promoted to Float64
+        @test GeoUnit(Int32(2)u"Pa") isa GeoUnit
+        @test GeoUnit(Int64(2)u"Pa") isa GeoUnit
+        @test GeoUnit([Int32(2), Int32(3)]u"Pa") isa GeoUnit
+        @test GeoUnit([Int64(2), Int64(3)]u"Pa") isa GeoUnit
     end
 
     @testset "nondimensionalize dispatch variants" begin
