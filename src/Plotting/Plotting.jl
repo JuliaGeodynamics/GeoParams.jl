@@ -1167,10 +1167,6 @@ function PlotDeformationMap(
     T_plot = T_vec .- 273.15
 
     # determine axis of plot
-    # Creep laws extrapolated far outside their calibration produce absurd values (ε→1e-80 1/s,
-    # η = τ/2ε → 1e75 Pa·s). Clamp the plotted field to a physical window so the colormap/colorbar
-    # stay meaningful instead of being washed out by garbage extremes.
-    # ponytail: clim reuses the function's own physical-range kwargs; widen them if a real map needs it.
     if strainrate
         x = T_plot
         xlabel = "T [°C]"
@@ -1225,15 +1221,11 @@ function PlotDeformationMap(
     c1 = heatmap!(ax, x, y, data, colormap = colormap, colorrange = clim)
 
     if boundaries && length(unique(vec(mainDef))) > 1
-        # plot boundaries between deformation regimes (skip if a single regime dominates
-        # everywhere — Makie's contour errors on a constant field)
+        # plot boundaries between deformation regimes
         contour!(ax, x, y, mainDef, color = :red, linewidth = 2, linestyle = :solid, levels = n_components - 1)
     end
 
     if annotate
-        # Label each dominant-mechanism region at its centroid. `mainDef` holds the index of the
-        # dominant element per cell and shares `data`'s shape, so mainDef[ix,iy] ↔ (x[ix], y[iy])
-        # (consistent after `rotate_axes` since both are transposed together).
         for idx in unique(vec(mainDef))
             cells = findall(==(idx), mainDef)
             cx = sum(c -> x[c[1]], cells) / length(cells)
@@ -1243,10 +1235,7 @@ function PlotDeformationMap(
         end
     end
 
-    # Labelled iso-strain-rate contours (only meaningful for the strainrate map). Space the levels
-    # every 2 decades so the labels don't pile into an unreadable blob where the field is steep.
-    # Skip if the (clamped) field is constant or no contour level falls inside it — Makie's contour
-    # errors on a field with nothing to draw (e.g. strainrates entirely outside the `ε` window).
+    # Labelled iso-strain-rate contours
     if strainrate && !viscosity
         lo, hi = extrema(data)
         levels_c = (ceil(clim[1] / 2) * 2):2:(floor(clim[2] / 2) * 2)
