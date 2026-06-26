@@ -89,4 +89,19 @@ import GeoParams.GBS
         ε_test = compute_εII(p, τ, args)
         @test ε ≈ ε_test
     end
+
+    # param_info resolves the builder from the stored Name (find_creep_law)
+    info_named = param_info(SetGrainBoundarySliding(GBS.cold_dry_olivine_Hirth_2003))
+    @test info_named isa MaterialParamsInfo
+    @test !isempty(info_named.BibTex_Reference)
+    @test isempty(param_info(GrainBoundarySliding()).BibTex_Reference)                # empty-name early return
+    @test isempty(param_info(GrainBoundarySliding(; Name = "nope_xyz")).BibTex_Reference)  # unknown -> fallback
+
+    # array stress computation + nondimensional unit transform
+    g = SetGrainBoundarySliding(GBS.cold_dry_olivine_Hirth_2003)
+    ε = fill(1.0e-15, 4)
+    τ = zeros(4)
+    compute_τII!(τ, g, ε; T = fill(1000.0, 4), P = zeros(4), d = fill(1.0e-3, 4))
+    @test τ[1] ≈ 1.2245742476954252e8 rtol = 1.0e-6
+    @test GeoParams.Transform_GrainBoundarySliding(GBS.cold_dry_olivine_Hirth_2003, GEO_units()) isa AbstractCreepLaw
 end

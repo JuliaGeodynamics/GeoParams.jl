@@ -159,7 +159,7 @@ end
 
 Base.convert(t::Type{GeoUnit{T, U}}, x::Quantity{T, U, X}) where {T, U, X} = GeoUnit(x)
 Base.convert(t::Type{GeoUnit{T, U}}, x::T) where {T, U} = GeoUnit(x)
-# Handle cross-type conversions (e.g. GeoUnit{Float32} → GeoUnit{Float64})
+# Handle cross-type conversions (e.g. GeoUnit{Float32} -> GeoUnit{Float64})
 Base.convert(::Type{GeoUnit{T, U}}, x::GeoUnit{S, U}) where {T, U, S} = GeoUnit{T, U}(T(x.val), x.unit, x.isdimensional)
 
 # Define methods to deal with cases when the input has integers

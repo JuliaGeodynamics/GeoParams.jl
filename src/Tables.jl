@@ -11,6 +11,7 @@ import GeoParams.Diffusion: diffusion_database_info
 import GeoParams.GBS: GrainBoundarySliding_database_info
 import GeoParams.Peierls: peierls_database_info
 import GeoParams.NonLinearPeierls: nonlinear_peierls_database_info
+import GeoParams.MaterialParameters.ConstitutiveRelationships: find_creep_law
 
 export detachFloatfromExponent, extract_parameters_from_phases, Dict2LatexTable, extract_parameters_from_phases_md, Dict2MarkdownTable, ParameterTable
 
@@ -487,60 +488,20 @@ get_database_info(material::AbstractMaterialParam, func::Function) = nothing
 Find the original function that created this material parameter based on its type and name.
 """
 function find_creep_law_function(material::AbstractMaterialParam, name_str::String)
-    # Get the appropriate module based on material type
-    if material isa DislocationCreep
-        return find_function_in_module(Dislocation, name_str)
+    mod = if material isa DislocationCreep
+        Dislocation
     elseif material isa DiffusionCreep
-        return find_function_in_module(Diffusion, name_str)
+        Diffusion
     elseif material isa GrainBoundarySliding
-        return find_function_in_module(GBS, name_str)
+        GBS
     elseif material isa PeierlsCreep
-        return find_function_in_module(Peierls, name_str)
+        Peierls
     elseif material isa NonLinearPeierlsCreep
-        return find_function_in_module(NonLinearPeierls, name_str)
+        NonLinearPeierls
+    else
+        return nothing
     end
-    return nothing
-end
-
-"""
-    find_function_in_module(mod::Module, name_str::String) -> Union{Function, Nothing}
-
-Find a function in the given module that produces a material with the given name.
-"""
-function find_function_in_module(mod::Module, name_str::String)
-    try
-        # Get all exported functions from the module
-        for name in names(mod; all = true, imported = false)
-            if !startswith(string(name), "_") && name != :eval && name != :include
-                try
-                    func = getfield(mod, name)
-                    if isa(func, Function)
-                        # Try calling the function to see if it produces the right name
-                        result = func()
-                        if isa(result, Tuple) && length(result) >= 2
-                            material_obj = result[1]
-                            if hasfield(typeof(material_obj), :Name)
-                                obj_name = if isa(material_obj.Name, Ptr)
-                                    unsafe_string(material_obj.Name)
-                                else
-                                    string(material_obj.Name)
-                                end
-                                if obj_name == name_str
-                                    return func
-                                end
-                            end
-                        end
-                    end
-                catch
-                    # Skip functions that can't be called or don't match
-                    continue
-                end
-            end
-        end
-    catch
-        # If module access fails, return nothing
-    end
-    return nothing
+    return find_creep_law(mod, name_str)
 end
 
 """

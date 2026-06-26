@@ -1,5 +1,6 @@
 using Test
 using GeoParams
+using StaticArrays
 
 @testset "Plasticity.jl" begin
 
@@ -101,11 +102,9 @@ using GeoParams
         fxy(τij) = τij[3] / second_invariant(τij)
         solution2D = [fxx(τij), fyy(τij), fxy(τij)]
 
-        # # using StaticArrays
-        # τij_static = @SVector [1.0, 2.0, 3.0]
-        # out1 = ∂Q∂τ(p, τij_static)
-        # @test out1 == solution2D
-        # @test compute_plasticpotentialDerivative(p, τij_static) == ∂Q∂τ(p, τij_static)
+        # using StaticArrays (SVector{3} dispatch of ∂Q∂τ)
+        out1 = ∂Q∂τ(p, @SVector [1.0, 2.0, 3.0])
+        @test out1 isa SVector && collect(out1) ≈ solution2D
 
         # using tuples
         τij_tuple = (1.0, 2.0, 3.0)
@@ -128,11 +127,9 @@ using GeoParams
         gxy(τij) = τij[6] / second_invariant(τij)
         solution3D = [gxx(τij), gyy(τij), gzz(τij), gyz(τij), gxz(τij), gxy(τij)]
 
-        # # using StaticArrays
-        # τij_static = @SVector [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
-        # out3 = ∂Q∂τ(p, τij_static)
-        # @test out3 == solution3D
-        # @test compute_plasticpotentialDerivative(p, τij_static) == ∂Q∂τ(p, τij_static)
+        # using StaticArrays (SVector{6} dispatch of ∂Q∂τ)
+        out3 = ∂Q∂τ(p, @SVector [1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
+        @test out3 isa SVector && collect(out3) ≈ solution3D
 
         # using tuples
         τij_tuple = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
@@ -268,11 +265,9 @@ using GeoParams
         fxy(τij) = τij[3] / second_invariant(τij)
         solution2D = [fxx(τij), fyy(τij), fxy(τij)]
 
-        # # using StaticArrays
-        # τij_static = @SVector [1.0, 2.0, 3.0]
-        # out1 = ∂Q∂τ(p, τij_static)
-        # @test out1 == solution2D
-        # @test compute_plasticpotentialDerivative(p, τij_static) == ∂Q∂τ(p, τij_static)
+        # using StaticArrays (SVector{3} dispatch of ∂Q∂τ)
+        out1 = ∂Q∂τ(p, @SVector [1.0, 2.0, 3.0])
+        @test out1 isa SVector && collect(out1) ≈ solution2D
 
         # using tuples
         τij_tuple = (1.0, 2.0, 3.0)
@@ -295,11 +290,9 @@ using GeoParams
         gxy(τij) = τij[6] / second_invariant(τij)
         solution3D = [gxx(τij), gyy(τij), gzz(τij), gyz(τij), gxz(τij), gxy(τij)]
 
-        # # using StaticArrays
-        # τij_static = @SVector [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
-        # out3 = ∂Q∂τ(p, τij_static)
-        # @test out3 == solution3D
-        # @test compute_plasticpotentialDerivative(p, τij_static) == ∂Q∂τ(p, τij_static)
+        # using StaticArrays (SVector{6} dispatch of ∂Q∂τ)
+        out3 = ∂Q∂τ(p, @SVector [1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
+        @test out3 isa SVector && collect(out3) ≈ solution3D
 
         # using tuples
         τij_tuple = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
@@ -347,6 +340,12 @@ using GeoParams
         @test info.Equation === L"$F = \tau_{II} - kP - c \;\;\mathrm{or}\;\; a(\sqrt{\tau_{II}^2 + (P-p_y)^2} - R_y),\; Q = \tau_{II} - k_q P - \mathrm{const} \;\mathrm{or}\;\; b(\sqrt{\tau_{II}^2 + (P-p_q)^2} - R_f)$"
         @test sprint(show, p) == "DruckerPragerCap(ϕ=30.0, Ψ=0.0, C=1.0e7 Pa, η_vp=1.0e20 Pa s, pT=-100000.0 Pa"
         @test isbits(p)
+
+        # mixed-units constructor: C/pT unit promotion warning branches
+        cp_mix1 = DruckerPragerCap(; C = 10.0e6, pT = -1.0e5Pa)   # C unitless, pT united
+        @test cp_mix1 isa DruckerPragerCap
+        cp_mix2 = DruckerPragerCap(; C = 10.0e6Pa, pT = -1.0e5)   # C united, pT unitless
+        @test cp_mix2 isa DruckerPragerCap
         @test NumValue(p.ϕ) == 30
         @test NumValue(p.pT) == -1.0e5
         @test isvolumetric(p) == false
@@ -533,8 +532,14 @@ using GeoParams
         p = DruckerPrager(; ϕ = 30.0, Ψ = 10.0, C = 1.0e7Pa)
         εvp = mod.plastic_strain(p, (1.0, 1.0, 1.0), 1.0e-15)
         @test isfinite(εvp) && εvp > 0
+        # accumulating form: plastic_strain(εvp, p, τij, λ̇, dt)
+        εvp2 = mod.plastic_strain(0.0, p, (1.0, 1.0, 1.0), 1.0e-15, 1.0e3)
+        @test isfinite(εvp2) && εvp2 > 0
         @test isfinite(mod.lambda(1.0e6, p, 1.0e20, 1.0e19))
         @test isfinite(mod.lambda(1.0e6, p, 1.0e20, 1.0e19; K = 2.0e10, dt = 1.0e3, h = 1.0e5, τij = (1.0e6, 1.0e6, 1.0e6)))
+
+        # ∂Q∂τ with a NamedTuple argument (dispatches on args.τij)
+        @test ∂Q∂τ(p, (; τij = (1.0, 2.0, 3.0))) == ∂Q∂τ(p, (1.0, 2.0, 3.0))
     end
 
     @testset "dimensionalize round-trip" begin
@@ -548,6 +553,60 @@ using GeoParams
             pd = dimensionalize(nondimensionalize(p, CharDim), CharDim)
             @test pd.C.val ≈ p.C.val
         end
+    end
+
+    @testset "DruckerPragerCap flow potential & derivatives" begin
+        p = DruckerPragerCap()
+        P, τII = 1.0e6, 20.0e6
+        # regression values for the cap flow potential and its derivatives
+        @test compute_flowpotential(p; P = P, τII = τII) ≈ 1.3360009139380395e7 rtol = 1.0e-9
+        @test compute_flowpotential(p, (; P = P, τII = τII)) ≈ 1.3360009139380395e7 rtol = 1.0e-9
+        @test ∂Q∂P(p, P; τII = τII) ≈ -0.31343077600453645 rtol = 1.0e-9
+        @test ∂Q∂τII(p, P; τII = τII) ≈ 0.06521675174605653 rtol = 1.0e-9
+        @test ∂F∂P(p, P; τII = τII) ≈ -0.6037375326226843 rtol = 1.0e-9
+        @test ∂F∂τII(p, P; τII = τII) ≈ 0.08062094643606207 rtol = 1.0e-9
+
+        # array variant matches the scalar result
+        Pa = fill(P, 5)
+        τa = fill(τII, 5)
+        Q = similar(Pa)
+        compute_flowpotential!(Q, p; P = Pa, τII = τa)
+        @test Q[1] ≈ 1.3360009139380395e7 rtol = 1.0e-9
+
+        # softening functor variants (EII > 0 path)
+        sC = LinearSoftening(0.0e0, 1.0e7, 0.0e0, 1.0e0)
+        sϕ = LinearSoftening(15.0e0, 30.0e0, 0.0e0, 1.0e0)
+        sΨ = LinearSoftening(0.0e0, 20.0e0, 0.0e0, 1.0e0)
+        for ps in (
+                DruckerPragerCap(; Ψ = 20.0, softening_C = sC),
+                DruckerPragerCap(; Ψ = 20.0, softening_ϕ = sϕ),
+                DruckerPragerCap(; Ψ = 20.0, softening_Ψ = sΨ),
+                DruckerPragerCap(; Ψ = 20.0, softening_ϕ = sϕ, softening_C = sC),
+                DruckerPragerCap(; Ψ = 20.0, softening_ϕ = sϕ, softening_Ψ = sΨ),
+                DruckerPragerCap(; Ψ = 20.0, softening_C = sC, softening_Ψ = sΨ),
+                DruckerPragerCap(; Ψ = 20.0, softening_ϕ = sϕ, softening_C = sC, softening_Ψ = sΨ),
+            )
+            @test compute_yieldfunction(ps; P = P, τII = τII, EII = 0.5) isa Number
+            @test compute_flowpotential(ps; P = P, τII = τII, EII = 0.5) isa Number
+        end
+    end
+
+    @testset "DruckerPrager generic (args, kwargs) interfaces" begin
+        p = DruckerPrager(; C = 1.0e6)
+        a = (; P = 1.0e6, τII = 2.0e7)
+        # functor + generic positional-args forms (regression values)
+        @test p(a) ≈ 1.863397459621556e7 rtol = 1.0e-9
+        @test compute_yieldfunction(p, a) ≈ 1.863397459621556e7 rtol = 1.0e-9
+        @test ∂Q∂P(p, a, (;)) == -0.0   # associated DP with Ψ = 0 -> ∂Q/∂P = 0
+
+        # ∂Q∂τ on a user function (AD gradient over a Vector)
+        Q(τ) = sqrt(sum(abs2, τ))
+        @test ∂Q∂τ(Q, [1.0, 2.0, 2.0]) ≈ [1 / 3, 2 / 3, 2 / 3] rtol = 1.0e-9
+        # 3-arg (args, kwargs) form + the MaterialParams plasticity dispatch
+        τ = @SVector [1.0, 2.0, 3.0]
+        @test ∂Q∂τ(p, τ, (;)) ≈ [0.125, 0.25, 0.75] rtol = 1.0e-9
+        mp = SetMaterialParams(; Phase = 1, Plasticity = DruckerPrager(; C = 1.0e6))
+        @test ∂Q∂τ(mp, τ) ≈ [0.125, 0.25, 0.75] rtol = 1.0e-9
     end
 
 end

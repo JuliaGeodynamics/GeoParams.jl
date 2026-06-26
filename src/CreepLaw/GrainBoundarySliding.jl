@@ -116,7 +116,9 @@ function param_info(s::GrainBoundarySliding)
         return MaterialParamsInfo(; Equation = eq)
     end
 
-    inf = GrainBoundarySliding_database_info(name)
+    f = find_creep_law(GBS, name)
+    isnothing(f) && return MaterialParamsInfo(; Equation = eq)
+    inf = GrainBoundarySliding_database_info(f)
     return MaterialParamsInfo(;
         Equation = eq, Comment = inf.Comment, BibTex_Reference = inf.BibTex_Reference
     )

@@ -1,5 +1,6 @@
 using Test
 using GeoParams
+import GeoParams: effective_ε
 
 @testset "Elasticity.jl" begin
 
@@ -95,6 +96,64 @@ using GeoParams
     compute_p!(p_array, a, εvol_el_array, argsp)
     @test p_array[1] ≈ 2.6e7
 
+    # iselastic
+    @test iselastic(a) == true
+    @test iselastic(LinearViscous()) == false
+
+    # effective_ε — 2D (scalar components, single phase via CompositeRheology)
+    cel = ConstantElasticity()
+    e = CompositeRheology((cel,))
+    εxx, εyy, εxy = 1.0e-15, -0.5e-15, 0.2e-15
+    τxx_old, τyy_old, τxy_old = 1.0e6, -0.5e6, 0.2e6
+    dt_eff = 1.0e6
+    εxx_e, εyy_e, εxy_e = effective_ε(εxx, εyy, εxy, e, τxx_old, τyy_old, τxy_old, dt_eff)
+    @test εxx_e ≈ εxx + τxx_old / (2 * NumValue(cel.G) * dt_eff)
+    @test εyy_e ≈ εyy + τyy_old / (2 * NumValue(cel.G) * dt_eff)
+
+    # effective_εII — 2D
+    εII_2d = effective_εII(εxx, εyy, εxy, e, τxx_old, τyy_old, τxy_old, dt_eff)
+    @test εII_2d isa Float64
+
+    # effective_ε — 3D (scalar components, single phase via CompositeRheology)
+    εzz, εyz, εxz = 0.0, 0.1e-15, 0.1e-15
+    τzz_old, τyz_old, τxz_old = 0.0, 0.1e6, 0.1e6
+    res3d = effective_ε(εxx, εyy, εzz, εyz, εxz, εxy, e, τxx_old, τyy_old, τzz_old, τyz_old, τxz_old, τxy_old, dt_eff)
+    @test length(res3d) == 6
+
+    # effective_εII — 3D
+    εII_3d = effective_εII(εxx, εyy, εzz, εyz, εxz, εxy, e, τxx_old, τyy_old, τzz_old, τyz_old, τxz_old, τxy_old, dt_eff)
+    @test εII_3d isa Float64
+
+    # effective_ε with phase — 2D
+    vv2 = (
+        SetMaterialParams(; Phase = 1, CompositeRheology = CompositeRheology((ConstantElasticity(),))),
+        SetMaterialParams(; Phase = 2, CompositeRheology = CompositeRheology((ConstantElasticity(),))),
+    )
+    εxx_ep, εyy_ep, εxy_ep = effective_ε(εxx, εyy, εxy, vv2, τxx_old, τyy_old, τxy_old, dt_eff, 1)
+    @test εxx_ep ≈ εxx_e
+
+    # effective_εII with phase — 2D
+    εII_2dp = effective_εII(εxx, εyy, εxy, vv2, τxx_old, τyy_old, τxy_old, dt_eff, 1)
+    @test εII_2dp ≈ εII_2d
+
+    # effective_ε with phase — 3D
+    res3dp = effective_ε(εxx, εyy, εzz, εyz, εxz, εxy, vv2, τxx_old, τyy_old, τzz_old, τyz_old, τxz_old, τxy_old, dt_eff, 1)
+    @test length(res3dp) == 6
+
+    # effective_εII with phase — 3D
+    εII_3dp = effective_εII(εxx, εyy, εzz, εyz, εxz, εxy, vv2, τxx_old, τyy_old, τzz_old, τyz_old, τxz_old, τxy_old, dt_eff, 1)
+    @test εII_3dp isa Float64
+
+    # each elastic-parameter pair hits a different branch of SetConstantElasticity
+    @test SetConstantElasticity(; G = 3.0e10, ν = 0.3) isa ConstantElasticity
+    @test SetConstantElasticity(; Kb = 1.0e11, ν = 0.3) isa ConstantElasticity
+    @test SetConstantElasticity(; E = 1.0e11, ν = 0.3) isa ConstantElasticity
+    @test SetConstantElasticity(; Kb = 1.0e11, G = 3.0e10) isa ConstantElasticity
+
+    # compute_εII / compute_εvol on a phase without elasticity (isempty branch)
+    no_el = SetMaterialParams(; Phase = 2, Density = ConstantDensity())
+    @test compute_εII(no_el, (;)) == 0.0
+    @test compute_εvol(no_el, (;)) == 0.0
     #=
     # Check that it works if we give a phase array
     MatParam = (
@@ -144,5 +203,14 @@ using GeoParams
 
     # -----------------------
     =#
+
+    @testset "elastic parameter & dispatch branches" begin
+        # default branch (no parameters given -> G = 26 GPa, ν = 0.4)
+        ed = SetConstantElasticity()
+        @test NumValue(ed.G) ≈ 26.0e9
+        # ν = 0.5 (incompressible) -> isvolumetric == false
+        @test isvolumetric(SetConstantElasticity(; G = 3.0e10, ν = 0.5)) == false
+        @test isvolumetric(SetConstantElasticity(; G = 3.0e10, ν = 0.25)) == true
+    end
 
 end

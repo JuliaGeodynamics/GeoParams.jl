@@ -609,4 +609,9 @@ import ForwardDiff.derivative
 
     compute_density!(rho, rheologies, Phases, args_vec)
     @test rho[1] ≈ 2365.65821 rtol = 1.0e-5
+
+    # "empty" density routine for a phase without a density field
+    nmp = GeoParams.No_MaterialParam{Float64}()
+    @test compute_density(nmp) == 0.0
+    @test compute_density!(zeros(3), nmp) == 0.0
 end

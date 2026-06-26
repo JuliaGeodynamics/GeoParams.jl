@@ -10,6 +10,7 @@
 **Checklist**
 - [ ] The PR title is descriptive and starts with the appropriate tag: `[BUGFIX]`, `[ADDITION]`, `[DOC]`, etc.
 - [ ] New tests were added, or old tests were updated
+- [ ] Are all lines covered by test? Code coverage should remain the same or increase
 - [ ] The new feature was added in a way that does not break public API
 - [ ] New documentation related to the new feature was added
 - [ ] The new code follows the [Runic Style](https://github.com/fredrikekre/Runic.jl)

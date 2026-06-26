@@ -223,6 +223,7 @@ module GeoParams
         compute_yieldfunction,
         compute_yieldfunction!,
         compute_flowpotential,
+        compute_flowpotential!,
         DruckerPrager,
         DruckerPrager_regularised,
         DruckerPragerCap,

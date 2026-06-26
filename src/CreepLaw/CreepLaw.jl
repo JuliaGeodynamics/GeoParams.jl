@@ -68,6 +68,29 @@ end
 @inline rat2float(x) = x
 
 @inline unit_power(A) = typeof(A).parameters[2].parameters[1][1].power
+
+"""
+    find_creep_law(mod::Module, name::AbstractString) -> Union{Function, Nothing}
+
+Law-builder in `mod` whose law `Name` matches `name`, or `nothing`. Used by `param_info`,
+since the `isbits` creep structs store the `Name`, not the builder `Function`.
+"""
+function find_creep_law(mod::Module, name::AbstractString)
+    for s in names(mod; all = true, imported = false)
+        (s === :eval || s === :include) && continue
+        startswith(string(s), "#") && continue
+        try
+            f = getfield(mod, s)
+            f isa Function || continue
+            data = first(f())
+            nm = data.Name isa Ptr ? unsafe_string(data.Name) : string(data.Name)
+            nm == name && return f
+        catch
+        end
+    end
+    return nothing
+end
+
 include("DislocationCreep.jl")
 include("DiffusionCreep.jl")
 include("GrainBoundarySliding.jl")

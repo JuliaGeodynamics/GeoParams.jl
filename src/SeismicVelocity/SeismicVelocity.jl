@@ -144,20 +144,20 @@ References:
 
 """
 function melt_correction(
-    Kb_L::_T, Kb_S::_T, Ks_S::_T, ρL::_T, ρS::_T, Vp0::_T, Vs0::_T, ϕ::_T, α::_T
-) where {_T<:Number}
+        Kb_L::_T, Kb_S::_T, Ks_S::_T, ρL::_T, ρS::_T, Vp0::_T, Vs0::_T, ϕ::_T, α::_T
+    ) where {_T <: Number}
 
     # Takei 1998: Approximation Formulae for Bulk and Shear Moduli of Isotropic Solid Skeleton
     ν = 0.25                         # poisson ratio
 
     aij = (
-        0.318, 6.780, 57.560,  0.182,
-        0.164, 4.290, 26.658,  0.464,
-        1.549, 4.814, 8.777, -0.290,
+        0.318, 6.78, 57.56, 0.182,
+        0.164, 4.29, 26.658, 0.464,
+        1.549, 4.814, 8.777, -0.29,
     )
     bij = (
         -0.3238, 0.2341,
-        -0.1819, 0.5103
+        -0.1819, 0.5103,
     )
 
     # Lines below are equivalent to:
@@ -167,8 +167,8 @@ function melt_correction(
     #         aij[i, 1] * exp(aij[i, 2] * (ν - 0.25) + aij[i, 3] * (ν - 0.25)^3) + aij[i, 4]
     # end
     a = ntuple(Val(3)) do i
-        idx = 4*i-3 # linear offset index
-        aij[idx] * exp(aij[idx+1] * (ν - 0.25) + aij[idx+2] * (ν - 0.25)^3) + aij[idx+3]
+        idx = 4 * i - 3 # linear offset index
+        aij[idx] * exp(aij[idx + 1] * (ν - 0.25) + aij[idx + 2] * (ν - 0.25)^3) + aij[idx + 3]
     end
 
     # Lines below are equivalent to:
@@ -177,8 +177,8 @@ function melt_correction(
     #     b[i] = bij[i, 1] * ν + bij[i, 2]
     # end
     b = ntuple(Val(2)) do i
-        idx = 2*i-1 # linear offset index
-        bij[idx] * ν + bij[idx+1]
+        idx = 2 * i - 1 # linear offset index
+        bij[idx] * ν + bij[idx + 1]
     end
 
     nk = a[1] * α + a[2] * (1.0 - α) + a[3] * α * (1.0 - α) * (0.5 - α)
@@ -209,11 +209,11 @@ function melt_correction(
     # Formulation of the fraction reduction of P-wave and S-wave
     ΔVp =
         (
-            (
-                (((β - 1.0) * ΛK) / ((β - 1.0) + ΛK) + 4.0 / 3.0 * γ * ΛG) /
+        (
+            (((β - 1.0) * ΛK) / ((β - 1.0) + ΛK) + 4.0 / 3.0 * γ * ΛG) /
                 (1.0 + 4.0 / 3.0 * γ)
-            ) - (1.0 - ρL / ρL)
-        ) * (ϕ * 0.5)
+        ) - (1.0 - ρL / ρL)
+    ) * (ϕ * 0.5)
     ΔVs = (ΛG - (1.0 - ρL / ρS)) * (ϕ * 0.5)
 
     # get the correction values
@@ -253,14 +253,14 @@ References:
 
 """
 function porosity_correction(
-    Kb_S::_T, Ks_S::_T, ρf::_T, ρS::_T, Vs0::_T, depth::_T, α::_T
-) where {_T<:Number}
+        Kb_S::_T, Ks_S::_T, ρf::_T, ρS::_T, Vs0::_T, depth::_T, α::_T
+    ) where {_T <: Number}
     # Empirical porosity-depth model for continental crust after Chen et al., 2020 (hydrogeology journal)
     m = 0.071
     n = 5.989
     ϕ0 = 0.474
 
-    ϕ = ϕ0 / fastpow((1.0+depth*m), n)
+    ϕ = ϕ0 / fastpow((1.0 + depth * m), n)
 
     # Takei 1998: Approximation Formulae for Bulk and Shear Moduli of Isotropic Solid Skeleton
     ν = 0.25 # poisson ratio
@@ -281,20 +281,20 @@ function porosity_correction(
 
     # Takei et al. 2002:
     aij = (
-        1.8625,  0.52594, -4.8397,  0.,
-        4.5001, -6.1551,  -4.3634,  0.0,
-       -5.6512, 6.9159,   29.595, -58.96
+        1.8625, 0.52594, -4.8397, 0.0,
+        4.5001, -6.1551, -4.3634, 0.0,
+        -5.6512, 6.9159, 29.595, -58.96,
     )
     bij = (
         1.6122, 0.13527, 0.0,
         4.5869, 3.6086, 0.0,
-        -7.5395,-4.8676, -4.3182
+        -7.5395, -4.8676, -4.3182,
     )
 
     # Takei (2002):
     a = ntuple(Val(3)) do i
-        idx = 4*i-3 # linear offset index
-        aij[idx] + aij[idx+1]*ν^1 + aij[idx+2]*ν^2 + aij[idx+3]*ν^3
+        idx = 4 * i - 3 # linear offset index
+        aij[idx] + aij[idx + 1] * ν^1 + aij[idx + 2] * ν^2 + aij[idx + 3] * ν^3
     end
 
     # FIXME: the shear coefficients `bij` above were switched to the Takei (2002)
@@ -304,8 +304,8 @@ function porosity_correction(
     # is clamped to >= 0 below as a guard. The correct Takei (2002) shear formula
     # should replace this block.
     b = ntuple(Val(2)) do i
-        idx = 2*i-1 # linear offset index
-        bij[idx] * ν + bij[idx+1]
+        idx = 2 * i - 1 # linear offset index
+        bij[idx] * ν + bij[idx + 1]
     end
 
     nk = a[1] * α + a[2] * (1.0 - α) + a[3] * α * (1.0 - α) * (0.5 - α)

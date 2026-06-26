@@ -82,4 +82,25 @@ import GeoParams.Peierls
         ε_test = compute_εII(p, τ, args)
         @test ε ≈ ε_test
     end
+
+    # param_info resolves the builder from the stored Name (find_creep_law)
+    info_named = param_info(SetPeierlsCreep(Peierls.dry_olivine_Goetze_1979))
+    @test info_named isa MaterialParamsInfo
+    @test !isempty(info_named.BibTex_Reference)
+    @test isempty(param_info(PeierlsCreep()).BibTex_Reference)                # empty-name early return
+    @test isempty(param_info(PeierlsCreep(; Name = "nope_xyz")).BibTex_Reference)  # unknown -> fallback
+
+    @testset "PeierlsCreep stress paths" begin
+        a = SetPeierlsCreep(Peierls.dry_olivine_Goetze_1979)
+        # dimensional (Quantity) compute_τII — regression value
+        τq = compute_τII(a, 1.0e-15 / s; T = 1000K)
+        @test ustrip(uconvert(u"Pa", τq)) ≈ 1.0589825917692536e9 rtol = 1.0e-6
+        # array compute_τII! matches the scalar result
+        ε = fill(1.0e-15, 4)
+        τ = similar(ε)
+        compute_τII!(τ, a, ε; T = fill(1000.0, 4))
+        @test τ[1] ≈ 1.0589825917692536e9 rtol = 1.0e-6
+        # AD derivative — regression value
+        @test dτII_dεII(a, 1.0e-15; T = 1000.0) ≈ 1.763880374042669e23 rtol = 1.0e-6
+    end
 end

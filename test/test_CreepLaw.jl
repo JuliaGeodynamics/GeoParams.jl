@@ -457,8 +457,8 @@ using GeoParams, LaTeXStrings
     # compute ηT at both temperatures analytically
     Q_val = 63772.0
     Tr_val = 1273.0
-    T1_val = 1273.0   # reference temperature → ηT = ηr
-    T2_val = 1473.0   # higher temperature   → ηT < ηr
+    T1_val = 1273.0   # reference temperature -> ηT = ηr
+    T2_val = 1473.0   # higher temperature   -> ηT < ηr
 
     ηT1 = x1_Q.ηr.val * exp(Q_val * (1 / T1_val - 1 / Tr_val))  # = 1e20
     ηT2 = x1_Q.ηr.val * exp(Q_val * (1 / T2_val - 1 / Tr_val))  # << 1e20
@@ -475,17 +475,17 @@ using GeoParams, LaTeXStrings
     @test ustrip(τ_T1) ≈ 2 * η_approx_T1 * ustrip(εt_Q) rtol = 1.0e-6
     @test ε_T1 ≈ εt_Q rtol = 1.0e-6
 
-    # at T = 1473K: ηT < ηr → lower viscosity → lower stress at same strain rate
+    # at T = 1473K: ηT < ηr -> lower viscosity -> lower stress at same strain rate
     τ_T2 = compute_τII(x1_Q, εt_Q; T = T2_val * K)
     ε_T2 = compute_εII(x1_Q, τ_T2; T = T2_val * K)
     η_approx_T2 = 0.5 * x1_Q.τ0.val / ustrip(εt_Q) + ηT2 * (ustrip(εt_Q) / εr_Q)^(one(x1_Q.n) / x1_Q.n - 1)
     @test ustrip(τ_T2) ≈ 2 * η_approx_T2 * ustrip(εt_Q) rtol = 1.0e-6
     @test ε_T2 ≈ εt_Q rtol = 1.0e-6
 
-    # monotonicity: higher T → lower τII at same εII (thermal softening)
+    # monotonicity: higher T -> lower τII at same εII (thermal softening)
     @test ustrip(τ_T2) < ustrip(τ_T1)
 
-    # monotonicity: higher T → higher εII at same τII (thermal softening)
+    # monotonicity: higher T -> higher εII at same τII (thermal softening)
     τ_fixed = compute_τII(x1_Q, εt_Q; T = T1_val * K)
     ε_at_T1 = compute_εII(x1_Q, τ_fixed; T = T1_val * K)
     ε_at_T2 = compute_εII(x1_Q, τ_fixed; T = T2_val * K)
@@ -533,4 +533,49 @@ using GeoParams, LaTeXStrings
     # Legend(fig2[1, 2], ax, position=:rt)
     # fig2
 
+
+    @testset "melt viscosity creep-law paths" begin
+        # τII at εII = 1e-15, T = 1100 K — regression values per parameterization
+        expected_τ = Dict(
+            :LinearMeltViscosity => 3.81963716676184e-8,
+            :GiordanoMeltViscosity => 6.037654646933169e-11,
+        )
+        for a in (LinearMeltViscosity(), GiordanoMeltViscosity())
+            @test sprint(show, a) isa String
+            τ = compute_τII(a, 1.0e-15; T = 1100.0)
+            @test τ ≈ expected_τ[nameof(typeof(a))] rtol = 1.0e-6
+            @test compute_εII(a, τ; T = 1100.0) ≈ 1.0e-15 rtol = 1.0e-3   # round-trip
+            @test dεII_dτII(a, τ; T = 1100.0) isa Number
+            @test dτII_dεII(a, 1.0e-15; T = 1100.0) isa Number
+        end
+
+        # dimensional (Quantity) derivative dispatches for LinearMeltViscosity — regression values
+        lmv = LinearMeltViscosity()
+        @test ustrip(dεII_dτII(lmv, 1.0e6Pa; T = 1100.0K)) ≈ 2.618049716087998e-8 rtol = 1.0e-9
+        @test ustrip(dτII_dεII(lmv, 1.0e-15 / s; T = 1100.0K)) ≈ 3.81963716676184e7 rtol = 1.0e-9
+
+        # partial-melt viscosity wrapper (Costa et al. 2009)
+        pm = ViscosityPartialMelt_Costa_etal_2009()
+        @test isDimensional(pm) == true
+        @test param_info(pm) isa MaterialParamsInfo
+        @test sprint(show, pm) isa String
+        @test isDimensional(GiordanoMeltViscosity()) == true
+        @test isDimensional(LinearMeltViscosity()) == true
+        # positional (melt-viscosity, ε0) constructor
+        @test ViscosityPartialMelt_Costa_etal_2009(LinearMeltViscosity(), 1.0 / s) isa AbstractCreepLaw
+    end
+
+    @testset "Creep-law apparatus correction factors" begin
+        # (FT, FE) regression values per experimental apparatus
+        expected = (
+            GeoParams.AxialCompression => (1.7320508075688772, 1.1547005383792517),
+            GeoParams.SimpleShear => (2.0, 2.0),
+            GeoParams.Invariant => (1.0, 1.0),
+        )
+        for (app, ref) in expected
+            FT, FE = GeoParams.CorrectionFactor(DislocationCreep(; Apparatus = app))
+            @test FT ≈ ref[1] rtol = 1.0e-12
+            @test FE ≈ ref[2] rtol = 1.0e-12
+        end
+    end
 end

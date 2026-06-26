@@ -54,6 +54,19 @@ import ForwardDiff as FD
     Cp = zero(T)
     @test compute_heatcapacity(Cp3, index = 10) == 1500.0
 
+    # show / param_info for every heat-capacity type + the vararg compute form
+    @test occursin("heat capacity", sprint(show, ConstantHeatCapacity()))
+    @test param_info(T_HeatCapacity_Whittington()) isa MaterialParamsInfo
+    @test sprint(show, T_HeatCapacity_Whittington()) isa String
+    lhc = Latent_HeatCapacity()
+    @test param_info(lhc) isa MaterialParamsInfo
+    @test sprint(show, lhc) isa String
+    # positional (Cp, Q_L) convenience constructor — the GeoParams vararg idiom
+    @test NumValue(Latent_HeatCapacity(T_HeatCapacity_Whittington(), 500.0e3J / kg).Q_L) == 500.0e3
+    @test param_info(Cp3) isa MaterialParamsInfo
+    @test sprint(show, Cp3) isa String
+    @test compute_heatcapacity(ConstantHeatCapacity(), (;)) isa Number   # vararg form
+
     # compute_heatcapacity!(Cp, Cp3, args)
 
     # TP-dependent conductivity for different predefines cases
@@ -96,6 +109,38 @@ import ForwardDiff as FD
         @test isbits(k_TP_test)
         @test length(k_TP_test.Name) == length(name)
     end
+
+    # TP_Conductivity array call: d ≠ 0 branch + size-mismatch error guard
+    k_mantle = Set_TP_Conductivity("Mantle")   # d ≠ 0
+    Parr = fill(1.0e9, 4)
+    Tarr = fill(1000.0, 4)
+    karr = k_mantle(Parr, Tarr)
+    @test length(karr) == 4 && all(isfinite, karr)
+    @test_throws ErrorException k_mantle(fill(1.0e9, 3), fill(1000.0, 4))  # size(P) != size(T)
+
+    # Dimensional (Quantity-array) conductivity paths: an array of Quantities is not
+    # itself a Quantity, so these exercise the `eltype(T) <: Quantity` branches.
+    wh_arr = T_Conductivity_Whittington()
+    @test wh_arr([500.0, 1000.0]) ≈ ustrip.(wh_arr([500.0, 1000.0]K))      # unitless matches dimensional magnitude
+    @test eltype(wh_arr([500.0, 1000.0]K)) <: Quantity
+    whp_arr = T_Conductivity_Whittington_parameterised()
+    @test eltype(whp_arr([600.0, 700.0]K)) <: Quantity
+    @test eltype(k_mantle(Parr * Pa, Tarr * K)) <: Quantity                # TP dimensional, d ≠ 0
+    k_uppercrust = Set_TP_Conductivity("UpperCrust")                        # d == 0
+    @test eltype(k_uppercrust(Parr * Pa, Tarr * K)) <: Quantity
+
+    # param_info + show for every conductivity type
+    for c in (ConstantConductivity(), T_Conductivity_Whittington(), T_Conductivity_Whittington_parameterised(), k_mantle)
+        @test param_info(c) isa MaterialParamsInfo
+        @test sprint(show, c) isa String
+    end
+    # ConstantConductivity array-fill callable + Integer-args compute + in-place
+    cc = ConstantConductivity()
+    @test size(cc(2, 3)) == (2, 3)
+    @test compute_conductivity(cc, 2, 3) == cc(2, 3)
+    karr2 = zeros(4)
+    compute_conductivity!(karr2, cc, (;))
+    @test all(karr2 .== NumValue(cc.k))
 
     TP_indirect = TP_Conductivity(;
         a = 1.72,
@@ -426,6 +471,14 @@ import ForwardDiff as FD
     Q_L = compute_latent_heat(a)
     @test isbits(a)
     @test Q_L == 400.0e3
+    @test param_info(a) isa MaterialParamsInfo
+    @test occursin("latent heat", sprint(show, a))
+    @test compute_latent_heat(a, (;)) == 400.0e3      # `s(args)` form
+
+    # Array-fill callable form: a(m, n) -> fill(Q_L, m, n)
+    arr_ql = a(3, 4)
+    @test size(arr_ql) == (3, 4)
+    @test all(==(400.0e3), arr_ql)
 
     a = nondimensionalize(a, CharUnits_GEO)
     Q_L = compute_latent_heat(a)
@@ -473,6 +526,11 @@ import ForwardDiff as FD
     @test isbits(a)
     @test H_r ≈ 1.0e-6
 
+    # Array-fill callable form
+    arr_hr = a(2, 5)
+    @test size(arr_hr) == (2, 5)
+    @test all(≈(1.0e-6), arr_hr)
+
     a = nondimensionalize(a, CharUnits_GEO)
     H_r = compute_radioactive_heat(a)
     @test H_r ≈ 0.1
@@ -500,6 +558,16 @@ import ForwardDiff as FD
     compute_radioactive_heat!(Hr, a, (; z = z))
 
     @test sum(H_r) ≈ 3.678794411714423e-7
+
+    # array functor + array compute_radioactive_heat (not just the in-place form)
+    z_arr = fill(10.0e3, 5)
+    @test all(a(z_arr) .≈ 3.678794411714423e-7)
+    @test all(compute_radioactive_heat(a, z_arr) .≈ 3.678794411714423e-7)
+    # show + param_info for both radioactive-heat types
+    @test occursin("radioactive heat", sprint(show, ConstantRadioactiveHeat()))
+    @test sprint(show, a) isa String
+    @test param_info(ConstantRadioactiveHeat()) isa MaterialParamsInfo
+    @test param_info(a) isa MaterialParamsInfo
 
     # Struct-based dispatch (AbstractMaterialParamsStruct path)
     mp_heat = SetMaterialParams(; Name = "test_heat", Phase = 1, RadioactiveHeat = ConstantRadioactiveHeat())
@@ -654,6 +722,10 @@ import ForwardDiff as FD
     @test iszero(compute_shearheating(rheology, 1, τ, ε, ε_el))
     @test compute_shearheating(rheology, 2, τ, ε, ε_el) == 5.4
 
+    # material with no ShearHeat field set -> early `return 0.0` branch
+    mat_no_sh = SetMaterialParams(; Name = "NoSH", Phase = 1, Density = ConstantDensity())
+    @test compute_shearheating(mat_no_sh, τ, ε, ε_el) == 0.0
+
     # Test with phase ratios
     phase = SA[0.5, 0.5] # static array
     @test compute_shearheating(rheology, phase, τ, ε, ε_el) == 2.7
@@ -693,4 +765,21 @@ import ForwardDiff as FD
     H_s14 = compute_shearheating(rheology[1], τ_3D_voigt, ε_3D_voigt, ε_el_3D_voigt)
     @test H_s9 ≈ H_s12 ≈ 8.415
     @test all(iszero, (H_s10, H_s11, H_s13, H_s14))
+end
+
+@testset "Conductivity dispatch branches" begin
+    Tarr = collect(300.0:100.0:900.0)
+    k = zeros(length(Tarr))
+    # temperature-dependent conductivity over an array — regression values at T=300 K
+    compute_conductivity!(k, T_Conductivity_Whittington(), (; T = Tarr))
+    @test k[1] ≈ 3.8396002930832354 rtol = 1.0e-9
+    @test k[end] ≈ 1.9204488975556968 rtol = 1.0e-9
+    compute_conductivity!(k, T_Conductivity_Whittington_parameterised(), (; T = Tarr))
+    @test k[1] ≈ 3.83781682146175 rtol = 1.0e-9
+    # T/P-dependent conductivity: param_info + show (d == 0 branch)
+    tp = TP_Conductivity()
+    @test occursin("a_k", string(param_info(tp).Equation))
+    @test occursin("T/P dependent conductivity", sprint(show, tp))
+    # vararg compute_conductivity entry point
+    @test compute_conductivity(ConstantConductivity(); T = 500.0) == 3.0
 end

@@ -177,3 +177,19 @@ dt = 1.0
 ω = 0.5
 # collocated grid
 τxx, τyy, τxy = 1.0, 1.5, 2.0
+
+@testset "second invariant: SMatrix & staggered" begin
+    # SMatrix dispatch
+    A = @SMatrix [1.0 2.0; 2.0 3.0]
+    @test GeoParams.doubledot(A, A) ≈ sum(A .* A) rtol = 1.0e-5
+    @test GeoParams.second_invariant(A) ≈ √(0.5 * sum(A .* A)) rtol = 1.0e-5
+    # identity fallbacks
+    M = [1.0 2.0; 3.0 4.0]
+    @test voigt2tensor(M) === M
+    @test GeoParams.staggered_tensor_average(5.0) == 5.0
+    # staggered: off-diagonals given per cell-center (NTuple{4}) — regression values
+    t4 = (0.1, 0.2, 0.3, 0.4)
+    @test GeoParams.second_invariant(1.0, 2.0, t4) ≈ 2.659887215654077 rtol = 1.0e-12        # 2D
+    @test GeoParams.second_invariant(1.0, 2.0, 3.0, t4, t4, t4) ≈ 2.6879360111431225 rtol = 1.0e-12  # 3D diag scalars
+    @test GeoParams.second_invariant(t4, t4, t4, 0.1, 0.2, 0.3) ≈ 0.5024937810560446 rtol = 1.0e-12   # 3D off-diag scalars
+end

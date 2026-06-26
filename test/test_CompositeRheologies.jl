@@ -1,6 +1,9 @@
 using Test
 using GeoParams, ForwardDiff
 import GeoParams: Dislocation, Diffusion
+import GeoParams: compute_elements_εII, compute_εII_harmonic, compute_p_harmonic
+import GeoParams.MaterialParameters.ConstitutiveRelationships: compute_τII_harmonic
+import GeoParams: compute_elastoviscosity
 
 @testset "CompositeRheologies" begin
 
@@ -85,6 +88,49 @@ import GeoParams: Dislocation, Diffusion
     )
     @test isa(c.elements[2], AbstractCreepLaw)
     @test repr("text/plain", c) isa String
+
+    # ---- create_rheology_string / create_parallel_str (exported display helpers) ----
+    import GeoParams: create_rheology_string
+    crs(x) = create_rheology_string("", x)
+    # element dispatch: creep law, elasticity, plasticity
+    @test occursin("⟦", crs(v3))                       # AbstractCreepLaw
+    @test occursin("/", crs(e1))                       # AbstractElasticity
+    @test occursin("▬", crs(pl3))                      # AbstractPlasticity
+    # CompositeRheology (Tuple recursion) and Parallel (`{...}`) branches
+    s_comp = crs(CompositeRheology(v3, Parallel(v3, e1), pl3))
+    @test occursin("{", s_comp) && occursin("}", s_comp)
+    # nested Parallel inside Parallel
+    @test occursin("{", crs(CompositeRheology(Parallel(v3, Parallel(e1, v3)))))
+
+    cps = GeoParams.MaterialParameters.ConstitutiveRelationships.create_parallel_str
+    @test cps(s_comp) isa AbstractString               # has `{` → parallel-stacking path
+    @test cps(crs(CompositeRheology(v3, e1))) isa AbstractString   # no `{` → else branch
+
+    # ---- isplastic / isvolumetric type-parameter dispatch ----
+    @test isplastic(v3) == false                       # plain creep law
+    @test isplastic(pl3) == true                       # AbstractPlasticity
+    @test isplastic(CompositeRheology(pl3, v3)) == true        # composite w/ plastic
+    @test isplastic(CompositeRheology((v3,))) == false         # composite, no plastic
+    @test isvolumetric(CompositeRheology(e2, v3)) == true      # composite w/ volumetric (e2 has finite Kb)
+    @test isvolumetric(CompositeRheology((v3,))) == false
+
+    # ---- Parallel: type-param dispatch + stress summation ----
+    par_vv = Parallel(v1, v2)                                   # two viscous elements
+    @test isplastic(par_vv) == false
+    @test isvolumetric(par_vv) == false
+    @test isplastic(Parallel(pl3, v3)) == true                 # parallel w/ plastic
+    parg = (T = 900.0, d = 100.0e-6)
+    τ_par = compute_τII(par_vv, 1.0e-15, parg)                 # sums τII of the elements
+    @test τ_par ≈ GeoParams.compute_τII_AD(par_vv, 1.0e-15, parg) rtol = 1.0e-10
+    @test compute_yieldfunction(Parallel(v1, v2), parg) |> isnan  # no plastic element -> NaN
+
+    # ---- dimensional (Quantity) compute on a CompositeRheology ----
+    # (nreduce now seeds its accumulator from the first element, so unit-bearing results add)
+    c_visc = CompositeRheology((LinearViscous(; η = 1.0e20Pa * s), LinearViscous(; η = 2.0e20Pa * s)))
+    εq = compute_εII(c_visc, 1.0e6Pa, (;))
+    @test εq isa Quantity
+    @test ustrip(εq) ≈ compute_εII(c_visc, 1.0e6, (;))         # matches unitless
+    @test compute_εvol(CompositeRheology((ConstantElasticity(),)), 1.0e6Pa, (; P_old = 0.5e6Pa, dt = 1.0e6s)) isa Quantity
 
     args = (T = 900.0, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)
     εII, τII = 2.0e-15, 2.0e6
@@ -469,4 +515,73 @@ import GeoParams: Dislocation, Diffusion
 
     @test τ_vec1[end] ≈ τ_vec2[end]
     @test τ_vec1[end] > τ_vec[end]
+
+    @testset "composite rheology pretty-printing" begin
+        v1 = SetDislocationCreep(Dislocation.dry_anorthite_Rybacki_2006)
+        v2 = LinearViscous()
+        e1 = ConstantElasticity()
+        pl1 = DruckerPrager(; C = 1.0e6)
+
+        par = Parallel(v1, v2)
+        comp = CompositeRheology(v1, v2, e1)
+        nest = CompositeRheology(v1, Parallel(v2, pl1))
+
+        for r in (par, comp, nest)
+            @test sprint(show, r) isa String
+        end
+
+        # exported helpers, exercised directly (Tuple / Parallel dispatch)
+        @test print_rheology_matrix((comp, par)) isa Matrix
+        @test print_rheology_matrix(par) isa Vector
+        @test print_rheology_matrix(nest) isa Vector
+        @test create_rheology_string("", (comp,)) isa String
+        @test create_rheology_string("", comp) isa String
+        @test create_rheology_string("", par) isa String
+
+        # composite (un)nondimensionalize + viscosity helpers
+        CharDim = GEO_units()
+        comp_nd = nondimensionalize(comp, CharDim)
+        @test dimensionalize(comp_nd, CharDim) isa CompositeRheology
+        args = (; T = 1.0e3)
+        # effective viscosities at εII = 1e-15 — regression values
+        @test computeViscosity_εII(comp, 1.0e-15, args) ≈ 4.999999997499999e10 rtol = 1.0e-9
+        @test computeViscosity_εII(par, 1.0e-15, args) ≈ 2.571135097575618e22 rtol = 1.0e-6
+        @test computeViscosity_εII_AD(comp, 1.0e-15, args) ≈ 4.999999997499999e10 rtol = 1.0e-9
+        @test computeViscosity_εII_AD(v1, 1.0e-15, args) ≈ 2.561135097575618e22 rtol = 1.0e-6
+    end
+
+
+    @testset "CompositeRheology compute sweep" begin
+        v1 = SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003)
+        v2 = LinearViscous(; η = 1.0e21Pa * s)
+        c = CompositeRheology(v1, v2)
+        args = (; T = 1.0e3)
+
+        εII = 1.0e-15
+        τ = compute_τII(c, εII, args)[1]
+        @test τ ≈ 1.9999969463168385e6 rtol = 1.0e-6
+        @test compute_εII(c, τ, args) ≈ εII rtol = 1.0e-2
+        @test compute_εII_AD(c, τ, args) ≈ εII rtol = 1.0e-2
+        @test compute_τII_AD(c, εII, args) ≈ 1.9999969463168385e6 rtol = 1.0e-6
+        @test dτII_dεII(c, εII, args) ≈ 1.9999893121497317e21 rtol = 1.0e-6
+        @test compute_τII_harmonic(c, εII, args) ≈ 1.9573522134937493e6 rtol = 1.0e-6
+        @test compute_εII_harmonic(c, τ, args) ≈ 1.5268392494977225e-21 rtol = 1.0e-6
+        elem = compute_elements_εII(c, τ, args)
+        @test elem[1] ≈ 1.5268415807429352e-21 rtol = 1.0e-6
+        @test elem[2] ≈ 9.999984731584192e-16 rtol = 1.0e-6
+    end
+
+    @testset "InverseCreepLaw + nested pretty-printing" begin
+        # InverseCreepLaw inner constructors (varargs & tuple)
+        icl1 = GeoParams.InverseCreepLaw(v1, v2)
+        icl2 = GeoParams.InverseCreepLaw((v1, v2))
+        @test icl1 isa GeoParams.InverseCreepLaw
+        @test icl2 isa GeoParams.InverseCreepLaw
+        # deeply nested composite/parallel -> exercises the multi-row/col matrix branches
+        nested = CompositeRheology(v1, Parallel(v2, Parallel(v1, v2)))
+        @test sprint(show, nested) isa String
+        @test print_rheology_matrix(Parallel(v1, Parallel(v2, v1))) isa Vector
+        @test print_rheology_matrix((nested, Parallel(v1, v2))) isa Matrix
+    end
+
 end

@@ -109,4 +109,13 @@ using GeoParams
 
     # nondimensionalize_phase: invalid CharDim triggers an error
     @test_throws Exception SetMaterialParams(; Name = "bad_chardim", Phase = 1, CharDim = "invalid")
+
+    # show of a phase carrying a CompositeRheology -> exercises the print_composite branch
+    Phase_comp = SetMaterialParams(;
+        Name = "composite", Phase = 1,
+        CompositeRheology = CompositeRheology((LinearViscous(), Parallel(LinearViscous(), ConstantElasticity()))),
+    )
+    @test sprint(show, Phase_comp) isa String
+    # NTuple{N,MaterialParams} show -> iterates print over each phase
+    @test sprint(show, (Phase_comp, Phase_comp)) isa String
 end

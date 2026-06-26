@@ -1,6 +1,7 @@
 using Test
 using GeoParams
 using StaticArrays
+import GeoParams: diffusion_database, diffusion_database_info
 
 @testset "ChemicalDiffusion" begin
 
@@ -18,6 +19,33 @@ using StaticArrays
     Hf_Rt_perp = Rutile.Rt_Hf_Cherniak2007_perp_c
     Hf_Rt_perp = SetChemicalDiffusion(Hf_Rt_perp; D0 = 10km^2 / s)
     @test Hf_Rt_perp.D0.val == 1.0e7
+
+    # diffusion_database_info: retrieves the MaterialParamsInfo (second return value)
+    info = diffusion_database_info(Rutile.Rt_Hf_Cherniak2007_perp_c)
+    @test info isa MaterialParamsInfo
+    @test !isempty(info.BibTex_Reference)
+
+    info_grt = diffusion_database_info(Garnet.Grt_Fe_Chakraborty1992)
+    @test info_grt isa MaterialParamsInfo
+
+    # chemical_diffusion_list: exercises the namespace-scan utility in each module
+    rutile_list = Rutile.chemical_diffusion_list()
+    @test length(rutile_list) > 0
+    @test all(x -> x isa Function, rutile_list)
+
+    garnet_list = Garnet.chemical_diffusion_list()
+    @test length(garnet_list) > 0
+    garnet_fe_list = Garnet.chemical_diffusion_list("Fe")
+    @test length(garnet_fe_list) > 0
+    @test all(x -> x isa Function, garnet_fe_list)
+
+    olivine_list = Olivine.chemical_diffusion_list()
+    @test length(olivine_list) > 0
+
+    melt_list = Melt.chemical_diffusion_list()
+    @test length(melt_list) > 0
+    melt_mg_list = Melt.chemical_diffusion_list("Mg")
+    @test length(melt_mg_list) > 0
 
     # check auto unit conversion for multicomponent in melt
     melt_major = Melt.Melt_multicomponent_major_Guo2020_SiO2_basaltic
@@ -766,4 +794,9 @@ using StaticArrays
 
     λ_unitless = compute_λ(melt_multicomponent; T = 1800.0)
     @test (λ_unitless[1, 1] * 1.0e12) ≈ λ1_paper atol = 1.0e-15
+
+    # nondimensional transform paths (Transform_*/Set* with a CharDim)
+    CharDim = GEO_units()
+    @test GeoParams.Transform_ChemicalDiffusion(Rutile.Rt_Hf_Cherniak2007_perp_c, CharDim) isa AbstractChemicalDiffusion
+    @test SetChemicalDiffusion(Rutile.Rt_Hf_Cherniak2007_perp_c, CharDim) isa AbstractChemicalDiffusion
 end

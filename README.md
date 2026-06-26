@@ -1,7 +1,7 @@
 <h1> <img src="docs/src/assets/logo.png" alt="GeoParams.jl" width="50"> GeoParams.jl </h1>
 
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliageodynamics.github.io/GeoParams.jl/dev/)
-[![CI](https://github.com/JuliaGeodynamics/GeoParams.jl/actions/workflows/blank.yml/badge.svg)](https://github.com/JuliaGeodynamics/GeoParams.jl/actions/workflows/blank.yml)
+[![CI](https://github.com/JuliaGeodynamics/GeoParams.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/JuliaGeodynamics/GeoParams.jl/actions/workflows/CI.yml)
 [![DOI](https://zenodo.org/badge/369433137.svg)](https://zenodo.org/doi/10.5281/zenodo.8089230)
 [![codecov](https://codecov.io/gh/JuliaGeodynamics/GeoParams.jl/graph/badge.svg?token=6ADNQI2WHC)](https://codecov.io/gh/JuliaGeodynamics/GeoParams.jl)
 
@@ -133,15 +133,15 @@ You can add pre-defined non-linear creep laws as:
 julia> Phase = SetMaterialParams(Name="Viscous Matrix", Phase=2,
                                  Density   = ConstantDensity(),
                                  CompositeRheology = CompositeRheology(
-                                                        SetDislocationCreep(Dislocation.wet_olivine_Hirth_2003),  
+                                                        SetDislocationCreep(Dislocation.wet_olivine_Hirth_2003),
                                                         LinearViscous(η=1e23Pa*s))
                                 )
 Phase 2 : Viscous Matrix
         | [dimensional units]
-        | 
-        |-- Name              : Viscous Matrix 
-        |-- Density           : Constant density: ρ=2900.0 kg m⁻³·⁰ 
-        |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻²·⁰ 
+        |
+        |-- Name              : Viscous Matrix
+        |-- Density           : Constant density: ρ=2900.0 kg m⁻³·⁰
+        |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻²·⁰
         |-- CompositeRheology : --⟦▪̲̅▫̲̅▫̲̅▫̲̅----⟦▪̲̅▫̲̅▫̲̅▫̲̅--
 ```
 Note that the functions `dislocation_law_list()` and `diffusion_law_list()` list all pre-defined creep laws, so for an overview type:

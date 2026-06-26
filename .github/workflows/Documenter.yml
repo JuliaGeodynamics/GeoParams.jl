@@ -7,12 +7,12 @@ on:
     tags: '*'
     paths-ignore:
       - '.github/workflows/SpellCheck.yml'
-      - '.github/workflows/blank.yml'
+      - '.github/workflows/CI.yml'
       - '.github/workflows/TagBot.yml'
   pull_request:
     paths-ignore:
       - '.github/workflows/SpellCheck.yml'
-      - '.github/workflows/blank.yml'
+      - '.github/workflows/CI.yml'
       - '.github/workflows/TagBot.yml'
   workflow_dispatch:
 
