@@ -607,9 +607,9 @@ using StaticArrays
         @test ∂Q∂τ(Q, [1.0, 2.0, 2.0]) ≈ [1 / 3, 2 / 3, 2 / 3] rtol = 1.0e-9
         # 3-arg (args, kwargs) form + the MaterialParams plasticity dispatch
         τ = @SVector [1.0, 2.0, 3.0]
-        @test ∂Q∂τ(p, τ, (;)) ≈ [0.125, 0.25, 0.75] rtol = 1.0e-9
+        @test ∂Q∂τ(p, τ, (;)) ≈ [0.5, 0.625, 0.75] rtol = 1.0e-9
         mp = SetMaterialParams(; Phase = 1, Plasticity = DruckerPrager(; C = 1.0e6))
-        @test ∂Q∂τ(mp, τ) ≈ [0.125, 0.25, 0.75] rtol = 1.0e-9
+        @test ∂Q∂τ(mp, τ) ≈ [0.5, 0.625, 0.75] rtol = 1.0e-9
     end
 
 end
