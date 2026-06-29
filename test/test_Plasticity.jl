@@ -429,12 +429,12 @@ using StaticArrays
         @test num_alloc == 0
 
         # Test plastic potential derivatives
-        ## 2D
+        ## 2D — constrained gradient: τzz = -τxx - τyy is a function of stored components
         τij = (1.0, 2.0, 3.0)
         τII_test = second_invariant(τij)
         dQτII = ∂Q∂τII(p, τII_test)
-        fxx(τij) = dQτII * τij[1] / second_invariant(τij)
-        fyy(τij) = dQτII * τij[2] / second_invariant(τij)
+        fxx(τij) = dQτII * (τij[1] + 0.5 * τij[2]) / second_invariant(τij)
+        fyy(τij) = dQτII * (0.5 * τij[1] + τij[2]) / second_invariant(τij)
         fxy(τij) = 2 * dQτII * τij[3] / second_invariant(τij)
         solution2D = [fxx(τij), fyy(τij), fxy(τij)]
 
@@ -444,10 +444,11 @@ using StaticArrays
         @test out2 == Tuple(solution2D)
         @test compute_plasticpotentialDerivative(p, τij_tuple) == ∂Q∂τ(p, τij_tuple)
 
-        # using AD
+        # using AD — must agree with analytical constrained gradient scaled by Aτ
         Q = second_invariant # where second_invariant is a function
         ad2 = ∂Q∂τ(Q, τij_tuple)
         @test ad2 == (0.5, 0.625, 0.75)
+        @test all(isapprox.(dQτII .* collect(ad2), [out2[1], out2[2], out2[3] / 2]; rtol = 1.0e-5))
 
         ## 3D
         τij = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)

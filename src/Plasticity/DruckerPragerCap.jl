@@ -523,16 +523,16 @@ for t in (:NTuple, :SVector)
         end
 
         # --- 2D (3-component Voigt) ---
-        # diagonal components: ∂Q/∂τij = Aτ * τij / τII
+        # diagonal components: τzz = -τxx - τyy (constraint) adds cross-terms to the gradient
         function ∂Q∂τxx(p::DruckerPragerCap, τij::$(t){3, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
             Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : Aτ * τij[1] / τII
+            return iszero(τII) ? zero(T) : Aτ * (τij[1] + 0.5 * τij[2]) / τII
         end
         function ∂Q∂τyy(p::DruckerPragerCap, τij::$(t){3, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
             Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
-            return iszero(τII) ? zero(T) : Aτ * τij[2] / τII
+            return iszero(τII) ? zero(T) : Aτ * (0.5 * τij[1] + τij[2]) / τII
         end
         # shear component: ∂Q/∂τij = 2Aτ * τij / τII
         function ∂Q∂τxy(p::DruckerPragerCap, τij::$(t){3, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
