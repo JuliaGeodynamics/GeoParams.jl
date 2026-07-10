@@ -18,18 +18,18 @@ include("../Computations.jl")
 
 abstract type AbstractSolubility{T} <: AbstractMaterialParam end
 
-export compute_dissolved,           # (m_h2o, m_co2) mass fractions
-    compute_dissolved!,             # in-place, fills two arrays
-    compute_dissolved_ratio,        # phase-ratio mix of both outputs
-    ∂dissolved_∂P,                  # ForwardDiff partials, both outputs
+export compute_dissolved, # (m_h2o, m_co2) mass fractions
+    compute_dissolved!, # in-place, fills two arrays
+    compute_dissolved_ratio, # phase-ratio mix of both outputs
+    ∂dissolved_∂P, # ForwardDiff partials, both outputs
     ∂dissolved_∂T,
     ∂dissolved_∂Xco2,
     param_info,
     AbstractSolubility,
-    Liu2005_Solubility,             # silicic (rhyolite)
-    Mafic_Solubility,               # mafic (basalt), CO2 block still Liu rhyolite
-    GasMixture,                     # H2O-CO2 gas-mixture properties
-    compute_gas_heatcapacity,       # mass-weighted specific heat c_g(X_co2)
+    Liu2005_Solubility, # silicic (rhyolite)
+    Mafic_Solubility, # mafic (basalt), CO2 block still Liu rhyolite
+    GasMixture, # H2O-CO2 gas-mixture properties
+    compute_gas_heatcapacity, # mass-weighted specific heat c_g(X_co2)
     effective_molar_mass            # m_g(X_co2)
 
 # Empty routine when no solubility is defined
@@ -67,8 +67,10 @@ struct Liu2005_Solubility{T, U1, U2} <: AbstractSolubility{T}
     Tref::GeoUnit{T, U2}      # temperature scale of the fit (1 K)
 
     function Liu2005_Solubility(;
-            coeffs = (354.94, 9.623, -1.5223, 1.2439e-3, -1.084e-4, -1.362e-5,
-                5668.0, -55.99, 0.4133, 2.041e-3),
+            coeffs = (
+                354.94, 9.623, -1.5223, 1.2439e-3, -1.084e-4, -1.362e-5,
+                5668.0, -55.99, 0.4133, 2.041e-3,
+            ),
             Pref = 1.0e6Pa, Tref = 1.0K
         )
         PrefU = convert(GeoUnit, Pref)
@@ -135,10 +137,12 @@ struct Mafic_Solubility{T, U1, U2} <: AbstractSolubility{T}
     Pref::GeoUnit{T, U2}      # pressure scale of the fit (1 MPa)
 
     function Mafic_Solubility(;
-            coeffs = (2.99622526644026, 0.00322422830627781, -9.1389095360385,
+            coeffs = (
+                2.99622526644026, 0.00322422830627781, -9.1389095360385,
                 0.0336065247530767, 0.00747236662935722, -0.0000150329805347769,
                 -0.01233608521548, -4.14842647942619e-6, -0.655454303068124,
-                -7.35270395041104e-6, 5668.0, -55.99, 0.4133, 2.041e-3),
+                -7.35270395041104e-6, 5668.0, -55.99, 0.4133, 2.041e-3,
+            ),
             T0 = 273.15K, Tref = 1.0K, Pref = 1.0e6Pa
         )
         T0U = convert(GeoUnit, T0)

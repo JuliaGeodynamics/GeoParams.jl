@@ -32,8 +32,10 @@ const No_MaterialParam = GeoParams.MaterialParameters.No_MaterialParam
     CharDim = GEO_units(; viscosity = 1.0e19, length = 1000km)
     s_nd = nondimensionalize(s, CharDim)
     @test isdimensional(s_nd) === false
-    mh_nd, mc_nd = compute_dissolved(s_nd,
-        nondimensionalize(2.0e8Pa, CharDim), nondimensionalize(1200.0K, CharDim), 0.0)
+    mh_nd, mc_nd = compute_dissolved(
+        s_nd,
+        nondimensionalize(2.0e8Pa, CharDim), nondimensionalize(1200.0K, CharDim), 0.0
+    )
     @test mh_nd ≈ mh
     @test mc_nd == 0.0
 
@@ -70,8 +72,10 @@ const No_MaterialParam = GeoParams.MaterialParameters.No_MaterialParam
     # nondim invariance
     m_nd = nondimensionalize(m, CharDim)
     @test isdimensional(m_nd) === false
-    @test compute_dissolved(m_nd,
-        nondimensionalize(2.0e8Pa, CharDim), nondimensionalize(1200.0K, CharDim), 0.0)[1] ≈ mmh
+    @test compute_dissolved(
+        m_nd,
+        nondimensionalize(2.0e8Pa, CharDim), nondimensionalize(1200.0K, CharDim), 0.0
+    )[1] ≈ mmh
     # derivatives exist and are finite
     @test all(isfinite, ∂dissolved_∂T(m, P0, T0, X0))
 
