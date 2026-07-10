@@ -755,8 +755,8 @@ end
 end
 
 function compute_dϕdT!(dϕdT::AbstractArray, p::MeltingParam_Volatile; T::AbstractArray, kwargs...)
-    for i in eachindex(T)
-        dϕdT[i] = compute_dϕdT(p; T = T[i])
+    for i in eachindex(dϕdT, T)
+        dϕdT[i] = compute_dϕdT(p; T = T[i], kwargs...)
     end
     return nothing
 end

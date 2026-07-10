@@ -416,6 +416,12 @@ using StaticArrays
         compute_dϕdT!(darr, p; T = Tarr)
         @test darr[2] ≈ compute_dϕdT(p; T = 1100.0)
 
+        # in-place dϕ/dT must honor the volatile args, not silently drop them
+        darr_wet = zeros(3)
+        compute_dϕdT!(darr_wet, p; T = Tarr, P = 2.0e8, mH2O = 0.04, mCO2 = 0.0)
+        @test darr_wet[2] ≈ compute_dϕdT(p; T = 1100.0, P = 2.0e8, mH2O = 0.04, mCO2 = 0.0)
+        @test darr_wet[2] != darr[2]   # water changes the derivative
+
         # dimensional Quantity input (the @unpack_units branch)
         @test p(; T = 1100.0K, P = 200.0MPa, mH2O = 0.04) ≈ ϕ_wet rtol = 1.0e-6
 

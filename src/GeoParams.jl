@@ -391,6 +391,7 @@ module GeoParams
     using .MaterialParameters.Solubility
     export compute_dissolved,
         compute_dissolved!,
+        compute_dissolved_ratio,
         ∂dissolved_∂P,
         ∂dissolved_∂T,
         ∂dissolved_∂Xco2,

@@ -595,7 +595,6 @@ Set a density depending on the oxide composition after the python script by Iaco
 
 ## References
 - Iacovino K & Till C (2019). DensityX: A program for calculating the densities of magmatic liquids up to 1,627 °C and 30 kbar. Volcanica 2(1), p 1-10. [doi:10.30909/vol.02.01.0110](https://dx.doi.org/10.30909/vol.02.01.0110)
-
 """
 struct Melt_DensityX{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3, U4, U5} <: AbstractDensity{T}
     oxd_wt::NTuple{9, T} # Oxide weight percent

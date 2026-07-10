@@ -102,6 +102,29 @@ const No_MaterialParam = GeoParams.MaterialParameters.No_MaterialParam
     # phase-struct scalar dispatch
     @test compute_dissolved(phases[1], (; P = 2.0e8, T = 1200.0, X_co2 = 0.0))[1] ≈ mh
 
+    # integer-phase selection returns the selected phase's tuple
+    argp = (; P = 2.0e8, T = 1200.0, X_co2 = 0.3)
+    @test compute_dissolved(phases, 2, argp) == compute_dissolved(phases[2], argp)
+
+    # phase-ratio mixing: bulk mass-fraction average, both outputs mixed
+    ratios = SA[0.25, 0.75]
+    mixed = compute_dissolved_ratio(ratios, phases, argp)
+    ref_h = 0.25 * compute_dissolved(phases[1], argp)[1] + 0.75 * compute_dissolved(phases[2], argp)[1]
+    ref_c = 0.25 * compute_dissolved(phases[1], argp)[2] + 0.75 * compute_dissolved(phases[2], argp)[2]
+    @test mixed[1] ≈ ref_h
+    @test mixed[2] ≈ ref_c
+    @test compute_dissolved_ratio(Tuple(ratios), phases, argp) == mixed   # NTuple ratios too
+    # ratios sum to 1 with equal phases -> the phase value itself
+    @test all(compute_dissolved_ratio(SA[1.0, 0.0], phases, argp) .≈ compute_dissolved(phases[1], argp))
+
+    # a phase with no solubility model contributes nothing (no BoundsError)
+    phases0 = (phases[1], SetMaterialParams(; Phase = 2))
+    @test compute_dissolved(phases0, 2, argp) === (0.0, 0.0)
+    @test compute_dissolved_ratio(SA[0.5, 0.5], phases0, argp)[1] ≈ 0.5 * compute_dissolved(phases[1], argp)[1]
+
+    @test @inferred(compute_dissolved(s, 2.0e8, 1200.0, 0.3)) isa Tuple{Float64, Float64}
+    @test @inferred(compute_dissolved_ratio(ratios, phases, argp)) isa Tuple{Float64, Float64}
+
     # Gas-mixture properties ----------------------------------------------
     g = GasMixture()
     @test isbits(g)

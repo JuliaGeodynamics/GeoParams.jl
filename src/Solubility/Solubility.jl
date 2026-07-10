@@ -4,12 +4,6 @@ module Solubility
 # Degruyter & Huber (2014)-type magma-chamber models. Each closure returns
 # *both* dissolved H2O and dissolved CO2 mass fractions at a point, because the
 # two share the partial pressures Pw = P(1-X_co2), Pc = P·X_co2.
-#
-# The empirical fits are in specific units (MPa, K/°C). Following the package
-# convention (see GiordanoMeltViscosity), the dimensionless fit coefficients are
-# stored as a plain NTuple, while the dimensional reference quantities that set
-# those units are GeoUnit fields; the closures are written in terms of the
-# dimensionless groups P/Pref, (T-T0)/Tref, Tref/T, so they nondimensionalize.
 
 using Parameters, Unitful, LaTeXStrings, MuladdMacro
 using ForwardDiff, StaticArrays
@@ -26,6 +20,7 @@ abstract type AbstractSolubility{T} <: AbstractMaterialParam end
 
 export compute_dissolved,           # (m_h2o, m_co2) mass fractions
     compute_dissolved!,             # in-place, fills two arrays
+    compute_dissolved_ratio,        # phase-ratio mix of both outputs
     ∂dissolved_∂P,                  # ForwardDiff partials, both outputs
     ∂dissolved_∂T,
     ∂dissolved_∂Xco2,
@@ -236,7 +231,7 @@ Mass-weighted specific heat of the H2O–CO2 gas mixture; zero at `X_co2 == 0`
     @unpack_val Cp_h2o, Cp_co2, M_h2o, M_co2 = s
     iszero(X_co2) && return zero(Cp_h2o * X_co2)
     m_g = M_h2o * (1 - X_co2) + M_co2 * X_co2
-    return (M_h2o * Cp_h2o * (1 - X_co2) + M_co2 * Cp_co2 * X_co2) / m_g
+    return (M_h2o * Cp_h2o * (1 - X_co2) + M_co2 * Cp_co2 * X_co2) * inv(m_g)
 end
 
 # Shared keyword / NamedTuple entry points -----------------------------------
@@ -245,8 +240,11 @@ end
 end
 @inline compute_dissolved(s::AbstractSolubility, args::NamedTuple) = compute_dissolved(s; args...)
 
-# Phase-struct dispatch
-@inline compute_dissolved(s::AbstractMaterialParamsStruct, args) = compute_dissolved(s.Solubility[1], args)
+# Phase-struct dispatch; a phase with no solubility model contributes nothing.
+@inline function compute_dissolved(s::AbstractMaterialParamsStruct, args)
+    isempty(s.Solubility) && return (0.0e0, 0.0e0)
+    return compute_dissolved(s.Solubility[1], args)
+end
 
 # ForwardDiff partials — replace the reference's hand-coded analytic partials.
 # Each returns (∂m_h2o/∂·, ∂m_co2/∂·).
@@ -270,25 +268,21 @@ pressure. Companions [`∂dissolved_∂T`](@ref), [`∂dissolved_∂Xco2`](@ref)
 """
 ∂dissolved_∂Xco2(s::AbstractSolubility, P, T, X_co2) = Tuple(ForwardDiff.derivative(x -> _dissolved_svec(s, P, T, x), X_co2))
 
-# In-place multiphase: fills two arrays (tuple output has no scalar phase-ratio
-# form, so this does not route through compute_param!).
+# Two output arrays, so this cannot route through the single-array `compute_param!`.
 """
     compute_dissolved!(m_h2o, m_co2, MatParam, Phases, args)
 
-In-place dissolved H2O and CO2 for a domain: `MatParam` an `NTuple` of phase
-structs, `Phases` an integer phase array, `args` a NamedTuple of `P, T, X_co2`
-(scalars or index-matched arrays). Also accepts a single solubility or phase
-struct in place of `(MatParam, Phases)`.
+In-place dissolved H2O and CO2 over a domain. `args` is a NamedTuple of `P, T,
+X_co2` index-matched to the output arrays. Also accepts a single solubility or
+phase struct in place of `(MatParam, Phases)`.
 """
 function compute_dissolved!(
         m_h2o::AbstractArray, m_co2::AbstractArray,
         MatParam::NTuple{N, AbstractMaterialParamsStruct}, Phases::AbstractArray, args
     ) where {N}
     for I in eachindex(m_h2o, m_co2, Phases)
-        argsi = _args_at(args, I)
-        mh, mc = compute_dissolved(MatParam, Phases[I], argsi)
-        m_h2o[I] = mh
-        m_co2[I] = mc
+        argsi = (; zip(keys(args), getindex.(values(args), I))...)
+        m_h2o[I], m_co2[I] = compute_dissolved(MatParam, Phases[I], argsi)
     end
     return nothing
 end
@@ -298,21 +292,34 @@ function compute_dissolved!(
         s::Union{AbstractSolubility, AbstractMaterialParamsStruct}, args
     )
     for I in eachindex(m_h2o, m_co2)
-        argsi = _args_at(args, I)
-        mh, mc = compute_dissolved(s, argsi)
-        m_h2o[I] = mh
-        m_co2[I] = mc
+        argsi = (; zip(keys(args), getindex.(values(args), I))...)
+        m_h2o[I], m_co2[I] = compute_dissolved(s, argsi)
     end
     return nothing
 end
 
-# Per-index slice of a NamedTuple of scalars/arrays (mirrors compute_param!)
-@inline function _args_at(args::NamedTuple, I)
-    v = getindex.(values(args), I)   # scalar overload makes this work for scalars too
-    return (; zip(keys(args), v)...)
-end
+# Integer-phase selection / single struct over a domain (mirrors compute_meltfraction).
+compute_dissolved(args::Vararg{Any, N}) where {N} = compute_param(compute_dissolved, args...)
 
-# Multiphase phase-selection (single point); routes tuple through compute_param
-@inline compute_dissolved(args::Vararg{Any, N}) where {N} = compute_param(compute_dissolved, args...)
+# Phase-ratio mix of both outputs (mirrors compute_meltfraction_ratio). The
+# shared compute_param_times_frac sums a scalar, so the two-element output gets
+# its own unrolled dot-product, evaluating each phase once.
+compute_dissolved_ratio(args::Vararg{Any, N}) where {N} = compute_dissolved_times_frac(compute_dissolved, args...)
+
+@generated function compute_dissolved_times_frac(
+        fn::F, PhaseRatios::Union{NTuple{N, T}, SVector{N, T}}, MatParam::NTuple{N, AbstractMaterialParamsStruct}, argsi
+    ) where {F <: Function, N, T}
+    return quote
+        mh = zero($T)
+        mc = zero($T)
+        Base.Cartesian.@nexprs $N i -> begin
+            hᵢ, cᵢ = fn(MatParam[i], argsi)
+            r = @inbounds PhaseRatios[i]
+            mh += hᵢ * r
+            mc += cᵢ * r
+        end
+        return (mh, mc)
+    end
+end
 
 end
