@@ -54,8 +54,10 @@ module MaterialParameters
     include("./Energy/RadioactiveHeat.jl")
     include("./Energy/Shearheating.jl")
     include("./SeismicVelocity/SeismicVelocity.jl")
+    include("./Solubility/Solubility.jl")
 
     using .Density: AbstractDensity, ConduitDensity
+    using .Solubility: AbstractSolubility
     using .ConstitutiveRelationships: print_rheology_matrix
 
 
@@ -81,6 +83,7 @@ module MaterialParameters
             Vpermeability <: Tuple,
             Vmelting <: Tuple,
             Vseismvel <: Tuple,
+            Vsolubility <: Tuple,
         } <: AbstractMaterialParamsStruct
         Name::Ptr{UInt8}                   #  Phase name
         Phase::Int64 = 1                   #  Number of the phase (optional)
@@ -100,6 +103,7 @@ module MaterialParameters
         Permeability::Vpermeability = ()   #  Permeability
         Melting::Vmelting = ()             #  Melting model
         SeismicVelocity::Vseismvel = ()    #  Seismic velocity
+        Solubility::Vsolubility = ()       #  Volatile solubility (dissolved H2O/CO2)
     end
 
     Adapt.@adapt_structure MaterialParams
@@ -121,6 +125,7 @@ module MaterialParameters
                             Permeability        =   nothing,
                             Melting             =   nothing,
                             SeismicVelocity     =   nothing,
+                            Solubility          =   nothing,
                             CharDim::GeoUnits   =   nothing)
 
     Sets material parameters for a given phase.
@@ -210,6 +215,7 @@ module MaterialParameters
             Permeability = nothing,
             Melting = nothing,
             SeismicVelocity = nothing,
+            Solubility = nothing,
             CharDim = nothing,
         )
         return SetMaterialParams(
@@ -230,6 +236,7 @@ module MaterialParameters
             ConvField(Permeability, :Permeability; maxAllowedFields = 1),
             ConvField(Melting, :Melting; maxAllowedFields = 1),
             ConvField(SeismicVelocity, :SeismicVelocity; maxAllowedFields = 1),
+            ConvField(Solubility, :Solubility; maxAllowedFields = 1),
             CharDim,
         )
     end
@@ -252,6 +259,7 @@ module MaterialParameters
             Permeability,
             Melting,
             SeismicVelocity,
+            Solubility,
             CharDim,
         )
 
@@ -275,6 +283,7 @@ module MaterialParameters
             Permeability,
             Melting,
             SeismicVelocity,
+            Solubility,
         )
 
         # [optionally] non-dimensionalize the struct

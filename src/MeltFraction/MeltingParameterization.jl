@@ -3,7 +3,8 @@ module MeltingParam
 # If you want to add a new method here, feel free to do so.
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
-using Parameters, LaTeXStrings, Unitful, ForwardDiff
+using Parameters, LaTeXStrings, Unitful, ForwardDiff, MuladdMacro
+using SpecialFunctions: erfc
 using ..Units
 using GeoParams:
     AbstractMaterialParam, AbstractPhaseDiagramsStruct, AbstractMaterialParamsStruct
@@ -25,6 +26,7 @@ export compute_meltfraction,
     MeltingParam_5thOrder,
     MeltingParam_Quadratic,
     MeltingParam_Assimilation,
+    MeltingParam_Volatile,
     Vector_MeltingParam,
     SmoothMelting
 
@@ -667,6 +669,103 @@ function show(io::IO, g::SmoothMelting)
 end
 #-------------------------------------------------------------------------
 
+# MeltingParam_Volatile  -------------------------------------------------
+"""
+    MeltingParam_Volatile(; a_coeffs, b_coeffs, c_coeffs, T0=273K, Tref=1K, Pref=1e6Pa)
+
+Volatile-dependent silicic melting parameterisation used by Degruyter & Huber
+(2014). The crystal fraction follows a complementary error function whose
+amplitude `a`, width `b`, and centre `c` depend on the dissolved water and CO2
+contents and pressure:
+```math
+    \\varepsilon_x = a\\,\\mathrm{erfc}\\!\\big(b\\,(T_C - c)\\big),
+    \\qquad \\phi = 1 - \\varepsilon_x
+```
+with ``T_C = (T - T_0)/T_{ref}`` (numerically °C) and each of ``a, b, c`` a
+quadratic polynomial in ``x = 100\\,m_{H_2O}``, ``y = 100\\,m_{CO_2}`` (dissolved
+mass fractions, in wt%) and ``z = P/P_{ref}`` (numerically MPa). Dissolved water
+depresses the liquidus, so more water shifts the curve to lower temperature —
+the crystallization→exsolution (second-boiling) feedback of the D&H model. The
+returned quantity is the **melt fraction** ``\\phi``; the exsolved-gas fraction
+``\\varepsilon_g`` is a solver state and is not subtracted here.
+
+The dimensionless polynomial coefficients are stored as plain `NTuple`s; only the
+reference scales `T0`, `Tref`, `Pref` are `GeoUnit`s, so the parameterisation
+nondimensionalizes. Dissolved contents `mH2O`, `mCO2` are dimensionless and pass
+through `args`.
+
+# References
+- Degruyter, W., Huber, C. (2014), A model for the eruption frequency of upper crustal silicic magma chambers, EPSL 403, 117-130, https://doi.org/10.1016/j.epsl.2014.06.047
+"""
+struct MeltingParam_Volatile{T, U1, U2} <: AbstractMeltingParam{T}
+    a_coeffs::NTuple{10, T}   # erfc amplitude polynomial in (x, y, z)
+    b_coeffs::NTuple{10, T}   # erfc width polynomial
+    c_coeffs::NTuple{10, T}   # erfc centre polynomial (°C)
+    T0::GeoUnit{T, U1}        # Kelvin -> Celsius reference offset (273 K)
+    Tref::GeoUnit{T, U1}      # temperature scale of the fit (1 K)
+    Pref::GeoUnit{T, U2}      # pressure scale of the fit (1 MPa)
+
+    function MeltingParam_Volatile(;
+            a_coeffs = (0.36, -0.02, -0.06, 8.6e-4, 0.0024, 6.27e-5, 3.57e-5, -0.0026, 0.003, -1.16e-6),
+            b_coeffs = (0.0071, 0.0049, 0.0043, -4.08e-5, -7.85e-4, -1.3e-5, 3.97e-6, 6.29e-4, -0.0025, 8.51e-8),
+            c_coeffs = (863.09, -36.9, 48.81, -0.17, -1.52, -0.04, -0.04, 4.57, -7.79, 4.65e-4),
+            T0 = 273.0K, Tref = 1.0K, Pref = 1.0e6Pa
+        )
+        T0U = convert(GeoUnit, T0)
+        TrefU = convert(GeoUnit, Tref)
+        PrefU = convert(GeoUnit, Pref)
+        T = typeof(PrefU).types[1]
+        U1 = typeof(T0U).types[2]
+        U2 = typeof(PrefU).types[2]
+        return new{T, U1, U2}(T.(a_coeffs), T.(b_coeffs), T.(c_coeffs), T0U, TrefU, PrefU)
+    end
+    MeltingParam_Volatile(a_coeffs, b_coeffs, c_coeffs, T0, Tref, Pref) =
+        MeltingParam_Volatile(; a_coeffs, b_coeffs, c_coeffs, T0, Tref, Pref)
+end
+
+function param_info(s::MeltingParam_Volatile)
+    return MaterialParamsInfo(; Equation = L"\phi = 1 - a\,\mathrm{erfc}(b(T_C - c))")
+end
+
+# quadratic in (x, y, z): 1, x, y, z, xy, xz, yz, x², y², z²
+@inline function _volatile_poly(k::NTuple{10}, x, y, z)
+    return @muladd k[1] + k[2] * x + k[3] * y + k[4] * z + k[5] * x * y + k[6] * x * z +
+        k[7] * y * z + k[8] * x^2 + k[9] * y^2 + k[10] * z^2
+end
+
+@inline function (p::MeltingParam_Volatile)(; T, P = 0.0e0, mH2O = 0.0e0, mCO2 = 0.0e0, kwargs...)
+    if T isa Quantity
+        @unpack_units T0, Tref, Pref = p
+    else
+        @unpack_val T0, Tref, Pref = p
+    end
+    x = 100 * mH2O            # wt%
+    y = 100 * mCO2            # wt%
+    z = P / Pref              # ∝ P in MPa
+    TC = (T - T0) / Tref      # ∝ T in °C
+    a = _volatile_poly(p.a_coeffs, x, y, z)
+    b = _volatile_poly(p.b_coeffs, x, y, z)
+    c = _volatile_poly(p.c_coeffs, x, y, z)
+    εx = a * erfc(b * (TC - c))
+    return 1 - εx
+end
+
+@inline function compute_dϕdT(p::MeltingParam_Volatile; T, P = 0.0e0, mH2O = 0.0e0, mCO2 = 0.0e0, kwargs...)
+    return ForwardDiff.derivative(t -> p(; T = t, P, mH2O, mCO2), T)
+end
+
+function compute_dϕdT!(dϕdT::AbstractArray, p::MeltingParam_Volatile; T::AbstractArray, kwargs...)
+    for i in eachindex(T)
+        dϕdT[i] = compute_dϕdT(p; T = T[i])
+    end
+    return nothing
+end
+
+function show(io::IO, g::MeltingParam_Volatile)
+    return print(io, "Volatile-dependent silicic melting (Degruyter & Huber 2014): ϕ = 1 - a*erfc(b*(T_C - c))")
+end
+#-------------------------------------------------------------------------
+
 """
     compute_meltfraction(P,T, p::AbstractPhaseDiagramsStruct)
 
@@ -734,6 +833,7 @@ for myType in (
         :MeltingParam_4thOrder,
         :MeltingParam_Quadratic,
         :MeltingParam_Assimilation,
+        :MeltingParam_Volatile,
         :Vector_MeltingParam,
         :SmoothMelting,
     )

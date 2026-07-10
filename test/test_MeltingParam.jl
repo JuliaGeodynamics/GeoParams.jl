@@ -380,4 +380,57 @@ using StaticArrays
         @test compute_dϕdT(vm; index = 3) == 0.0
     end
 
+    @testset "MeltingParam_Volatile" begin
+        p = MeltingParam_Volatile()
+        @test isbits(p)
+        @test param_info(p).Equation isa LaTeXString
+        @test occursin("Volatile-dependent", sprint(show, p))
+
+        # melt fraction stays a fraction
+        ϕ_dry = p(; T = 1100.0, P = 2.0e8, mH2O = 0.0, mCO2 = 0.0)
+        @test 0.0 <= ϕ_dry <= 1.0
+
+        # dissolved water depresses the liquidus -> more melt at fixed T
+        ϕ_wet = p(; T = 1100.0, P = 2.0e8, mH2O = 0.04, mCO2 = 0.0)
+        @test ϕ_wet > ϕ_dry
+
+        # hotter -> more melt (erfc monotone)
+        @test p(; T = 1200.0, P = 2.0e8, mH2O = 0.04) > ϕ_wet
+
+        # compute_meltfraction / callable-with-args forms agree
+        args = (; T = 1100.0, P = 2.0e8, mH2O = 0.04, mCO2 = 0.0)
+        @test compute_meltfraction(p, args) == ϕ_wet
+        @test p(args) == ϕ_wet
+
+        # dϕ/dT by ForwardDiff vs central finite difference
+        d = compute_dϕdT(p; T = 1100.0, P = 2.0e8, mH2O = 0.04, mCO2 = 0.0)
+        h = 1.0e-2
+        fd = (p(; T = 1100.0 + h, P = 2.0e8, mH2O = 0.04) - p(; T = 1100.0 - h, P = 2.0e8, mH2O = 0.04)) / (2h)
+        @test d ≈ fd rtol = 1.0e-4
+        # more melt as it heats up -> dϕ/dT > 0
+        @test d > 0
+
+        # in-place dϕ/dT
+        Tarr = [1050.0, 1100.0, 1150.0]
+        darr = zeros(3)
+        compute_dϕdT!(darr, p; T = Tarr)
+        @test darr[2] ≈ compute_dϕdT(p; T = 1100.0)
+
+        # dimensional Quantity input (the @unpack_units branch)
+        @test p(; T = 1100.0K, P = 200.0MPa, mH2O = 0.04) ≈ ϕ_wet rtol = 1.0e-6
+
+        # nondimensionalization: ϕ is a fraction -> invariant
+        CharDim = GEO_units(; viscosity = 1.0e19, length = 1000km)
+        p_nd = nondimensionalize(p, CharDim)
+        @test p_nd(;
+            T = nondimensionalize(1100.0K, CharDim),
+            P = nondimensionalize(2.0e8Pa, CharDim),
+            mH2O = 0.04, mCO2 = 0.0,
+        ) ≈ ϕ_wet
+
+        # through SetMaterialParams
+        ph = SetMaterialParams(; Phase = 1, Melting = MeltingParam_Volatile())
+        @test compute_meltfraction(ph, args) ≈ ϕ_wet
+    end
+
 end

@@ -142,6 +142,9 @@ module GeoParams
         MeltDependent_Density,
         BubbleFlow_Density,
         GasPyroclast_Density,
+        RedlichKwong_Density,
+        IdealGas_Density,
+        ThreePhase_Density,
         Melt_DensityX,
         compute_density_ratio
 
@@ -369,6 +372,7 @@ module GeoParams
         MeltingParam_5thOrder,
         MeltingParam_Quadratic,
         MeltingParam_Assimilation,
+        MeltingParam_Volatile,
         Vector_MeltingParam,
         SmoothMelting
 
@@ -383,6 +387,19 @@ module GeoParams
         HazenPermeability,
         PowerLawPermeability,
         CarmanKozenyPermeability
+
+    using .MaterialParameters.Solubility
+    export compute_dissolved,
+        compute_dissolved!,
+        ∂dissolved_∂P,
+        ∂dissolved_∂T,
+        ∂dissolved_∂Xco2,
+        AbstractSolubility,
+        Liu2005_Solubility,
+        Mafic_Solubility,
+        GasMixture,
+        compute_gas_heatcapacity,
+        effective_molar_mass
 
     include("Traits/rheology.jl")
     export RheologyTrait
