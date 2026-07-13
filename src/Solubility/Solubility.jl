@@ -107,7 +107,7 @@ X_co2)` and `compute_dissolved(s, args::NamedTuple)`.
     Tr = Tref / T                   # ∝ 1/T [K]
 
 Pw_sqrt  = sqrt(Pw)     # Pw^0.5
-Pw_15    = Pw * sPw     # Pw^1.5
+Pw_15    = Pw * Pw_sqrt     # Pw^1.5
 
 meq  = @muladd (b1 * Pw_sqrt + b2 * Pw + b3 * Pw_15) * Tr + b4 * Pw_15 + Pc * (b5 * Pw_sqrt + b6 * Pw)
 Cco2 = @muladd Pc * ((c1 + c2 * Pw) * Tr + c3 * Pw_sqrt + c4 * Pw_15)
