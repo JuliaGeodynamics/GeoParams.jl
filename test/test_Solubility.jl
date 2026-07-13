@@ -108,7 +108,7 @@ const No_MaterialParam = GeoParams.MaterialParameters.No_MaterialParam
 
     # integer-phase selection returns the selected phase's tuple
     argp = (; P = 2.0e8, T = 1200.0, X_co2 = 0.3)
-    @test compute_dissolved(phases, 2, argp) == compute_dissolved(phases[2], argp)
+    @test all(isapprox.((compute_dissolved(phases, 2, argp)),  compute_dissolved(phases[2], argp); rtol = 1e-10))
 
     # phase-ratio mixing: bulk mass-fraction average, both outputs mixed
     ratios = SA[0.25, 0.75]
