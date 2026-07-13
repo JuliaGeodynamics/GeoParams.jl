@@ -106,8 +106,11 @@ X_co2)` and `compute_dissolved(s, args::NamedTuple)`.
     Pc = P * X_co2 / Pref           # ∝ CO2 partial pressure in MPa
     Tr = Tref / T                   # ∝ 1/T [K]
 
-    meq = @muladd @pow (b1 * Pw^0.5 + b2 * Pw + b3 * Pw^1.5) * Tr + b4 * Pw^1.5 + Pc * (b5 * Pw^0.5 + b6 * Pw)
-    Cco2 = @muladd @pow Pc * (c1 + c2 * Pw) * Tr + Pc * (c3 * Pw^0.5 + c4 * Pw^1.5)
+Pw_sqrt  = sqrt(Pw)     # Pw^0.5
+Pw_15    = Pw * sPw     # Pw^1.5
+
+meq  = @muladd (b1 * Pw_sqrt + b2 * Pw + b3 * Pw_15) * Tr + b4 * Pw_15 + Pc * (b5 * Pw_sqrt + b6 * Pw)
+Cco2 = @muladd Pc * ((c1 + c2 * Pw) * Tr + c3 * Pw_sqrt + c4 * Pw_15)
 
     return (1.0e-2 * meq, 1.0e-6 * Cco2)   # wt% -> fraction ; ppm -> fraction
 end
@@ -170,14 +173,18 @@ end
     end
     Tc = (T - T0) / Tref            # ∝ T in °C
     Pm = P / Pref                   # ∝ P in MPa
-    meq = @muladd b1 + b2 * Tc + b3 * X_co2 + b4 * Pm + b5 * Tc * X_co2 + b6 * Tc * Pm +
-        b7 * X_co2 * Pm + b8 * Tc^2 + b9 * X_co2^2 + b10 * Pm^2
+meq = @muladd b1 +
+    Tc * (b2 + b8 * Tc + b5 * X_co2 + b6 * Pm) +
+    X_co2 * (b3 + b9 * X_co2 + b7 * Pm) +
+    Pm * (b4 + b10 * Pm)
 
     # CO2 block: Liu (2005) rhyolite
     Pw = Pm * (1 - X_co2)
     Pc = Pm * X_co2
     Tr = Tref / T
-    Cco2 = @muladd @pow Pc * (c1 + c2 * Pw) * Tr + Pc * (c3 * Pw^0.5 + c4 * Pw^1.5)
+Pw_sqrt = sqrt(Pw)        # Pw^0.5
+Pw_15   = Pw * Pw_sqrt    # Pw^1.5
+Cco2 = @muladd Pc * ((c1 + c2 * Pw) * Tr + c3 * Pw_sqrt + c4 * Pw_15)
 
     return (1.0e-2 * meq, 1.0e-6 * Cco2)
 end
@@ -316,7 +323,8 @@ compute_dissolved_ratio(args::Vararg{Any, N}) where {N} = compute_dissolved_time
     return quote
         mh = zero($T)
         mc = zero($T)
-        Base.Cartesian.@nexprs $N i -> begin
+        Base.@nexprs $N i -> begin
+             @inline
             hᵢ, cᵢ = fn(MatParam[i], argsi)
             r = @inbounds PhaseRatios[i]
             mh += hᵢ * r

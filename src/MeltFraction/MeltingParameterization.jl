@@ -729,8 +729,10 @@ end
 
 # quadratic in (x, y, z): 1, x, y, z, xy, xz, yz, x², y², z²
 @inline function _volatile_poly(k::NTuple{10}, x, y, z)
-    return @muladd k[1] + k[2] * x + k[3] * y + k[4] * z + k[5] * x * y + k[6] * x * z +
-        k[7] * y * z + k[8] * x^2 + k[9] * y^2 + k[10] * z^2
+ return @muladd k[1] +
+        x * (k[2] + k[8] * x + k[5] * y + k[6] * z) +
+        y * (k[3] + k[9] * y + k[7] * z) +
+        z * (k[4] + k[10] * z)
 end
 
 @inline function (p::MeltingParam_Volatile)(; T, P = 0.0e0, mH2O = 0.0e0, mCO2 = 0.0e0, kwargs...)
