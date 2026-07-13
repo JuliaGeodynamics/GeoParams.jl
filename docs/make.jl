@@ -38,11 +38,11 @@ makedocs(;
                 "Density" => "man/density.md",
             ],
             "Constitutive Relationships" => Any[
-            "Creep laws" => "man/creeplaws.md",
-            "Custom rheology" => "man/customrheology.md",
-            "Viscosity" => "man/viscosity.md",
-            "Elasticity" => "man/elasticity.md",
-            "Plasticity" => "man/plasticity.md",
+                "Creep laws" => "man/creeplaws.md",
+                "Custom rheology" => "man/customrheology.md",
+                "Viscosity" => "man/viscosity.md",
+                "Elasticity" => "man/elasticity.md",
+                "Plasticity" => "man/plasticity.md",
             ],
             "Chemical Diffusion" => Any[
                 "Computational routines" => "man/chemicaldiffusion.md",

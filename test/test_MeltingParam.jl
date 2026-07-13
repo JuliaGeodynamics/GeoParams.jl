@@ -2,6 +2,7 @@ using Test
 using LinearAlgebra
 using GeoParams
 using StaticArrays
+using LaTeXStrings
 
 @testset "MeltingParam.jl" begin
 
@@ -208,7 +209,7 @@ using StaticArrays
     =#
 
 
-    Rhyolite = "test_data/MAGEMin_Rhyolite.in"
+    Rhyolite = joinpath(@__DIR__, "test_data", "MAGEMin_Rhyolite.in")
     PD_MAGEMin = MAGEMin_Diagram(Rhyolite)
     @test sprint(show, PD_MAGEMin) isa String
     args = (; T = ustrip.(Tdata), P = fill(1.0e7, length(Tdata)))
@@ -219,7 +220,7 @@ using StaticArrays
     # Test computation of melt parameterization for the whole computational domain, using arrays
     MatParam = Vector{MaterialParams}(undef, 5)
     MatParam[1] = SetMaterialParams(;
-        Name = "Mantle", Phase = 1, Melting = PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in")
+        Name = "Mantle", Phase = 1, Melting = PerpleX_LaMEM_Diagram(joinpath(@__DIR__, "test_data", "Peridotite_dry.in"))
     )
 
     MatParam[2] = SetMaterialParams(;

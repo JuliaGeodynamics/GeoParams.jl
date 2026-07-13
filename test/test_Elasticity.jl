@@ -1,6 +1,9 @@
 using Test
 using GeoParams
+using LaTeXStrings
 import GeoParams: effective_ε
+import GeoParams.Diffusion
+import GeoParams.Dislocation
 
 @testset "Elasticity.jl" begin
 

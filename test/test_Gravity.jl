@@ -1,4 +1,5 @@
 using Test, GeoParams
+using LaTeXStrings
 
 @testset "Gravity" begin
 

@@ -1,5 +1,6 @@
 using Test
 using GeoParams
+using LaTeXStrings
 import GeoParams.Peierls
 
 @testset "PeierlsCreep" begin

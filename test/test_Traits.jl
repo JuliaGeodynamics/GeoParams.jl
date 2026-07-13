@@ -126,7 +126,7 @@ end
 @testset "Density traits" begin
     v1 = ConstantDensity()
     v2 = PT_Density()
-    v3 = MAGEMin_Diagram("test_data/MAGEMin_Rhyolite.in")
+    v3 = MAGEMin_Diagram(joinpath(@__DIR__, "test_data", "MAGEMin_Rhyolite.in"))
     d1 = SetMaterialParams(; Density = v1)
     d2 = SetMaterialParams(; Density = v2)
     r1 = (d1, d2)
