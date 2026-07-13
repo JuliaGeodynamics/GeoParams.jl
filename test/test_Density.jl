@@ -1,6 +1,12 @@
 using Test, GeoParams, StaticArrays, LaTeXStrings
 import ForwardDiff.derivative
+
 @testset "Density.jl" begin
+
+    #Set alias for density function
+    if !isdefined(Main, :GeoParamsAliases)
+        eval(:(@use GeoParamsAliases density = ρ))
+    end
 
     #Make sure that structs are isbits
     x = ConstantDensity()
@@ -278,9 +284,10 @@ import ForwardDiff.derivative
     num_alloc = @allocated compute_density!(rho, Mat_tup1, Phases, args)   #      287.416 μs (0 allocations: 0 bytes)
     @test sum(rho) / 400^2 ≈ 2575.250013499998
     # @test num_alloc ≤ 32
-
+    #Same test using function alias
     rho = zeros(size(Phases))
     compute_density!(rho, Mat_tup1, Phases, args)
+    ρ!(rho, Mat_tup1, Phases, args)
     num_alloc = @allocated compute_density!(rho, Mat_tup1, Phases, args)
     @test sum(rho) / 400^2 ≈ 2575.250013499998
     # @test num_alloc ≤ 32
