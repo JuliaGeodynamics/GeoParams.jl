@@ -1,6 +1,7 @@
 using Test
 using GeoParams
 using StaticArrays
+using LaTeXStrings
 
 @testset "Plasticity.jl" begin
 

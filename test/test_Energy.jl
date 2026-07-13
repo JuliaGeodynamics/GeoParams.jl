@@ -286,7 +286,7 @@ import ForwardDiff as FD
     @test compute_heatcapacity(x_D, args) ≈ dimensionalize(Cp_nd, J / kg / K, CharUnits_GEO).val
 
     Cp_PD = zeros(11, 11)
-    Rhyolite = "test_data/MAGEMin_Rhyolite.in"
+    Rhyolite = joinpath(@__DIR__, "test_data", "MAGEMin_Rhyolite.in")
     PD_MAGEMin = MAGEMin_Diagram(Rhyolite)
     args = (; T = 1200.0 + 273, P = 1.0e7, index = 10)
     compute_heatcapacity!(Cp_PD, PD_MAGEMin, args)

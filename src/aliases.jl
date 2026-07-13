@@ -94,5 +94,5 @@ function create_module(caller::Module, modulename::Symbol, kwargs_expr::Expr...)
 end
 
 function use_module(caller::Module, modulename::Symbol)
-    return @eval(caller, using $(Symbol(caller)).$modulename)
+    return @eval(caller, using .$modulename)
 end

@@ -2,6 +2,7 @@ using Test
 using LinearAlgebra
 using GeoParams
 using StaticArrays
+using LaTeXStrings
 
 @testset "MeltingParam.jl" begin
 
@@ -208,7 +209,7 @@ using StaticArrays
     =#
 
 
-    Rhyolite = "test_data/MAGEMin_Rhyolite.in"
+    Rhyolite = joinpath(@__DIR__, "test_data", "MAGEMin_Rhyolite.in")
     PD_MAGEMin = MAGEMin_Diagram(Rhyolite)
     @test sprint(show, PD_MAGEMin) isa String
     args = (; T = ustrip.(Tdata), P = fill(1.0e7, length(Tdata)))
@@ -219,7 +220,7 @@ using StaticArrays
     # Test computation of melt parameterization for the whole computational domain, using arrays
     MatParam = Vector{MaterialParams}(undef, 5)
     MatParam[1] = SetMaterialParams(;
-        Name = "Mantle", Phase = 1, Melting = PerpleX_LaMEM_Diagram("test_data/Peridotite_dry.in")
+        Name = "Mantle", Phase = 1, Melting = PerpleX_LaMEM_Diagram(joinpath(@__DIR__, "test_data", "Peridotite_dry.in"))
     )
 
     MatParam[2] = SetMaterialParams(;
@@ -378,6 +379,65 @@ using StaticArrays
         @test sprint(show, vm) isa String
         @test vm(; index = 3) == 0.3            # precomputed melt fraction at an index
         @test compute_dϕdT(vm; index = 3) == 0.0
+    end
+
+    @testset "MeltingParam_Volatile" begin
+        p = MeltingParam_Volatile()
+        @test isbits(p)
+        @test param_info(p).Equation isa LaTeXString
+        @test occursin("Volatile-dependent", sprint(show, p))
+
+        # melt fraction stays a fraction
+        ϕ_dry = p(; T = 1100.0, P = 2.0e8, mH2O = 0.0, mCO2 = 0.0)
+        @test 0.0 <= ϕ_dry <= 1.0
+
+        # dissolved water depresses the liquidus -> more melt at fixed T
+        ϕ_wet = p(; T = 1100.0, P = 2.0e8, mH2O = 0.04, mCO2 = 0.0)
+        @test ϕ_wet > ϕ_dry
+
+        # hotter -> more melt (erfc monotone)
+        @test p(; T = 1200.0, P = 2.0e8, mH2O = 0.04) > ϕ_wet
+
+        # compute_meltfraction / callable-with-args forms agree
+        args = (; T = 1100.0, P = 2.0e8, mH2O = 0.04, mCO2 = 0.0)
+        @test compute_meltfraction(p, args) == ϕ_wet
+        @test p(args) == ϕ_wet
+
+        # dϕ/dT by ForwardDiff vs central finite difference
+        d = compute_dϕdT(p; T = 1100.0, P = 2.0e8, mH2O = 0.04, mCO2 = 0.0)
+        h = 1.0e-2
+        fd = (p(; T = 1100.0 + h, P = 2.0e8, mH2O = 0.04) - p(; T = 1100.0 - h, P = 2.0e8, mH2O = 0.04)) / (2h)
+        @test d ≈ fd rtol = 1.0e-4
+        # more melt as it heats up -> dϕ/dT > 0
+        @test d > 0
+
+        # in-place dϕ/dT
+        Tarr = [1050.0, 1100.0, 1150.0]
+        darr = zeros(3)
+        compute_dϕdT!(darr, p; T = Tarr)
+        @test darr[2] ≈ compute_dϕdT(p; T = 1100.0)
+
+        # in-place dϕ/dT must honor the volatile args, not silently drop them
+        darr_wet = zeros(3)
+        compute_dϕdT!(darr_wet, p; T = Tarr, P = 2.0e8, mH2O = 0.04, mCO2 = 0.0)
+        @test darr_wet[2] ≈ compute_dϕdT(p; T = 1100.0, P = 2.0e8, mH2O = 0.04, mCO2 = 0.0)
+        @test darr_wet[2] != darr[2]   # water changes the derivative
+
+        # dimensional Quantity input (the @unpack_units branch)
+        @test p(; T = 1100.0K, P = 200.0MPa, mH2O = 0.04) ≈ ϕ_wet rtol = 1.0e-6
+
+        # nondimensionalization: ϕ is a fraction -> invariant
+        CharDim = GEO_units(; viscosity = 1.0e19, length = 1000km)
+        p_nd = nondimensionalize(p, CharDim)
+        @test p_nd(;
+            T = nondimensionalize(1100.0K, CharDim),
+            P = nondimensionalize(2.0e8Pa, CharDim),
+            mH2O = 0.04, mCO2 = 0.0,
+        ) ≈ ϕ_wet
+
+        # through SetMaterialParams
+        ph = SetMaterialParams(; Phase = 1, Melting = MeltingParam_Volatile())
+        @test compute_meltfraction(ph, args) ≈ ϕ_wet
     end
 
 end

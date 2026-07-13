@@ -9,6 +9,7 @@ using Parameters, Unitful, LaTeXStrings, MuladdMacro
 using ..Units
 using ..PhaseDiagrams
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, @extractors, add_extractor_functions, AbstractPhaseDiagramsStruct
+using GeoParams: fastpow, pow_check, @pow
 import ..Units: isdimensional
 using ..MaterialParameters: No_MaterialParam, MaterialParamsInfo
 import Base.show, GeoParams.param_info
@@ -33,6 +34,9 @@ export compute_density, # calculation routines
     MeltDependent_Density, # Melt dependent density
     BubbleFlow_Density, # Bubble flow density
     GasPyroclast_Density, # Gas-Pyroclast mixture density
+    RedlichKwong_Density, # Modified Redlich-Kwong gas EOS (Huber et al. 2010)
+    IdealGas_Density, # Ideal-gas EOS
+    ThreePhase_Density, # melt + crystal + gas mixture density
     Melt_DensityX,
     get_α
 
@@ -418,6 +422,164 @@ end
 function show(io::IO, g::GasPyroclast_Density)
     return print(io, "Gas-Pyroclast mixture density: ρ = ρgas*δ + ρmelt*(1-β); ρmelt=$(g.ρmelt); ρgas=$(g.ρgas); δ=$(UnitValue(g.δ)); β=$(UnitValue(g.β))")
 end
+
+# Gas equation-of-state densities -----------------------------------------
+"""
+    RedlichKwong_Density(; coeffs=(-112.528, 127.811, 112.04), T0=273.15K, Tref=1K, Pref=1e5Pa, ρref=1e3kg/m^3)
+
+Modified Redlich–Kwong gas density of Huber et al. (2010), as used by Degruyter
+& Huber (2014). Fitted for H2O gas over roughly ``873 < T < 1173`` K and
+``30 < P < 400`` MPa:
+```math
+    \\rho_g = \\rho_{ref}\\left(a_1\\,\\tau^{-0.381} + a_2\\,\\varpi^{-1.135}
+             + a_3\\,\\tau^{-0.411}\\varpi^{0.033}\\right),
+    \\quad \\tau = \\frac{T - T_0}{T_{ref}},\\ \\varpi = \\frac{P}{P_{ref}}
+```
+The fit's specific units (°C, bar) enter through the reference quantities: with
+`T0=273.15K`, `Tref=1K` the group ``\\tau`` equals ``T`` in °C, and with
+`Pref=1e5Pa` (1 bar) ``\\varpi`` equals ``P`` in bar. Because ``\\tau`` and
+``\\varpi`` are ratios of like-dimensioned quantities, the expression is
+dimensionally homogeneous and nondimensionalizes cleanly: only the reference
+`GeoUnit`s scale, the fitted dimensionless `coeffs` do not. The parameterisation
+ignores gas composition (pseudo-pure H2O), matching the reference.
+
+# References
+- Huber, C., Bachmann, O., Dufek, J. (2010), The limitations of melting on the reactivation of silicic mushes, JVGR 195, 97-105, https://doi.org/10.1016/j.jvolgeores.2010.06.006
+- Degruyter, W., Huber, C. (2014), A model for the eruption frequency of upper crustal silicic magma chambers, EPSL 403, 117-130, https://doi.org/10.1016/j.epsl.2014.06.047
+"""
+struct RedlichKwong_Density{T, U1, U2, U3} <: AbstractDensity{T}
+    coeffs::NTuple{3, T}      # dimensionless fit coefficients (Huber et al. 2010)
+    T0::GeoUnit{T, U1}        # Kelvin -> Celsius reference offset
+    Tref::GeoUnit{T, U1}      # temperature scale of the fit (1 K)
+    Pref::GeoUnit{T, U2}      # pressure scale of the fit (1 bar)
+    ρref::GeoUnit{T, U3}      # density scale of the fit (1e3 kg/m³)
+
+    function RedlichKwong_Density(;
+            coeffs = (-112.528, 127.811, 112.04),
+            T0 = 273.15K, Tref = 1.0K, Pref = 1.0e5Pa, ρref = 1.0e3kg / m^3
+        )
+        T0U = convert(GeoUnit, T0)
+        TrefU = convert(GeoUnit, Tref)
+        PrefU = convert(GeoUnit, Pref)
+        ρrefU = convert(GeoUnit, ρref)
+        T = typeof(ρrefU).types[1]
+        U1 = typeof(T0U).types[2]
+        U2 = typeof(PrefU).types[2]
+        U3 = typeof(ρrefU).types[2]
+        return new{T, U1, U2, U3}(T.(coeffs), T0U, TrefU, PrefU, ρrefU)
+    end
+    RedlichKwong_Density(coeffs, T0, Tref, Pref, ρref) = RedlichKwong_Density(; coeffs, T0, Tref, Pref, ρref)
+end
+isdimensional(s::RedlichKwong_Density) = isdimensional(s.ρref)
+
+function param_info(s::RedlichKwong_Density)
+    return MaterialParamsInfo(; Equation = L"\rho_g = \rho_{ref}(a_1 \tau^{-0.381} + a_2 \varpi^{-1.135} + a_3 \tau^{-0.411} \varpi^{0.033})")
+end
+
+@inline function (rho::RedlichKwong_Density)(; P = 0.0e0, T = 0.0e0, kwargs...)
+    a1, a2, a3 = rho.coeffs
+    if P isa Quantity
+        @unpack_units T0, Tref, Pref, ρref = rho
+    else
+        @unpack_val T0, Tref, Pref, ρref = rho
+    end
+    τ = (T - T0) / Tref            # ∝ T in °C
+    ω = P / Pref                   # ∝ P in bar
+    return @muladd @pow (a1 * τ^(-0.381) + a2 * ω^(-1.135) + a3 * τ^(-0.411) * ω^0.033) * ρref
+end
+@inline (s::RedlichKwong_Density)(args) = s(; args...)
+@inline compute_density(s::RedlichKwong_Density, args) = s(args)
+
+function show(io::IO, g::RedlichKwong_Density)
+    return print(io, "Redlich-Kwong gas density (Huber et al. 2010): ρg = ρref*(a1*τ^-0.381 + a2*ω^-1.135 + a3*τ^-0.411*ω^0.033)")
+end
+
+"""
+    IdealGas_Density(; Rs=461.5J/kg/K)
+
+Ideal-gas density
+```math
+    \\rho_g = \\frac{P}{R_s T}
+```
+with specific gas constant `Rs` (default: water vapor, ``R/M_w = 8.314/0.01802``).
+Unlike [`RedlichKwong_Density`](@ref) this is dimensionally homogeneous, so it
+nondimensionalizes cleanly and serves as the analytic derivative check for the
+Redlich–Kwong fit.
+"""
+@with_kw_noshow struct IdealGas_Density{_T, U1} <: AbstractDensity{_T}
+    Rs::GeoUnit{_T, U1} = 461.5J / kg / K   # specific gas constant
+end
+IdealGas_Density(args...) = IdealGas_Density(convert.(GeoUnit, args)...)
+isdimensional(s::IdealGas_Density) = isdimensional(s.Rs)
+
+function param_info(s::IdealGas_Density)
+    return MaterialParamsInfo(; Equation = L"\rho_g = P/(R_s T)")
+end
+
+@inline function (rho::IdealGas_Density)(; P = 0.0e0, T = 0.0e0, kwargs...)
+    if P isa Quantity
+        @unpack_units Rs = rho
+    else
+        @unpack_val Rs = rho
+    end
+    return P / (Rs * T)
+end
+@inline (s::IdealGas_Density)(args) = s(; args...)
+@inline compute_density(s::IdealGas_Density, args) = s(args)
+
+function show(io::IO, g::IdealGas_Density)
+    return print(io, "Ideal-gas density: ρg = P/(Rs*T); Rs=$(UnitValue(g.Rs))")
+end
+
+# Three-phase (melt + crystal + gas) mixture density ----------------------
+"""
+    ThreePhase_Density(; ρmelt=ConstantDensity(ρ=2300kg/m^3), ρx=ConstantDensity(ρ=2600kg/m^3), ρgas=RedlichKwong_Density(), ρ=2400kg/m^3)
+
+Volume-fraction mixture density of a melt + crystal + gas magma (Degruyter &
+Huber 2014):
+```math
+    \\rho = \\varepsilon_m \\rho_m + \\varepsilon_g \\rho_g + \\varepsilon_x \\rho_x,
+    \\qquad \\varepsilon_m = 1 - \\varepsilon_x - \\varepsilon_g
+```
+The gas and crystal volume fractions `ϕ_gas`, `ϕ_x` are inputs (from the solver's
+ODE state / a melting law), passed through `args`; the sub-densities receive the
+same `args` (e.g. `P`, `T`) so an equation-of-state gas density is evaluated in
+place. `ρ` is a dimensional-tracking sentinel.
+
+# Arguments
+- `ρmelt`: melt-phase density
+- `ρx`: crystal-phase density
+- `ρgas`: gas-phase density (e.g. [`RedlichKwong_Density`](@ref))
+
+# References
+- Degruyter, W., Huber, C. (2014), A model for the eruption frequency of upper crustal silicic magma chambers, EPSL 403, 117-130, https://doi.org/10.1016/j.epsl.2014.06.047
+"""
+@with_kw_noshow struct ThreePhase_Density{_T, U, S1 <: AbstractDensity, S2 <: AbstractDensity, S3 <: AbstractDensity} <: AbstractDensity{_T}
+    ρmelt::S1 = ConstantDensity(ρ = 2300kg / m^3)   # melt
+    ρx::S2 = ConstantDensity(ρ = 2600kg / m^3)      # crystals
+    ρgas::S3 = RedlichKwong_Density()               # gas
+    ρ::GeoUnit{_T, U} = 2400.0kg / m^3              # dimensional-tracking sentinel
+end
+ThreePhase_Density(args...) = ThreePhase_Density(args[1], args[2], args[3], convert.(GeoUnit, args[4:end])...)
+isdimensional(s::ThreePhase_Density) = isdimensional(s.ρ)
+
+function param_info(s::ThreePhase_Density)
+    return MaterialParamsInfo(; Equation = L"\rho = \varepsilon_m \rho_m + \varepsilon_g \rho_g + \varepsilon_x \rho_x")
+end
+
+@inline function (rho::ThreePhase_Density)(; ϕ_gas = 0.0e0, ϕ_x = 0.0e0, kwargs...)
+    ρm = compute_density(rho.ρmelt, kwargs)
+    ρx = compute_density(rho.ρx, kwargs)
+    ρg = compute_density(rho.ρgas, kwargs)   # kwargs carries P,T for an EOS gas density
+    ϕ_m = 1 - ϕ_x - ϕ_gas
+    return @muladd ϕ_m * ρm + ϕ_gas * ρg + ϕ_x * ρx
+end
+@inline (s::ThreePhase_Density)(args) = s(; args...)
+@inline compute_density(s::ThreePhase_Density, args) = s(args)
+
+function show(io::IO, g::ThreePhase_Density)
+    return print(io, "Three-phase density: ρ = ϕ_m*ρmelt + ϕ_gas*ρgas + ϕ_x*ρx; ρmelt=$(g.ρmelt); ρx=$(g.ρx); ρgas=$(g.ρgas)")
+end
 #-------------------------------------------------------------------------
 # Melt_DensityX density depending on Oxide composition
 """
@@ -433,7 +595,6 @@ Set a density depending on the oxide composition after the python script by Iaco
 
 ## References
 - Iacovino K & Till C (2019). DensityX: A program for calculating the densities of magmatic liquids up to 1,627 °C and 30 kbar. Volcanica 2(1), p 1-10. [doi:10.30909/vol.02.01.0110](https://dx.doi.org/10.30909/vol.02.01.0110)
-
 """
 struct Melt_DensityX{T, T1, T2, T3, T4, T5, T6, U, U1, U2, U3, U4, U5} <: AbstractDensity{T}
     oxd_wt::NTuple{9, T} # Oxide weight percent
@@ -686,7 +847,7 @@ This assumes that the `PhaseRatio` of every point is specified as an Integer in 
 @inline compute_density_ratio(args::Vararg{Any, N}) where {N} = compute_param_times_frac(compute_density, args...)
 
 # extractor methods
-for type in (ConstantDensity, PT_Density, Compressible_Density, T_Density, MeltDependent_Density, Vector_Density, BubbleFlow_Density, GasPyroclast_Density, Melt_DensityX)
+for type in (ConstantDensity, PT_Density, Compressible_Density, T_Density, MeltDependent_Density, Vector_Density, BubbleFlow_Density, GasPyroclast_Density, RedlichKwong_Density, IdealGas_Density, ThreePhase_Density, Melt_DensityX)
     @extractors(type, :Density)
 end
 

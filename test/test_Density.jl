@@ -1,5 +1,6 @@
 using Test, GeoParams, StaticArrays, LaTeXStrings
 import ForwardDiff.derivative
+
 @testset "Density.jl" begin
 
     #Set alias for density function
@@ -138,7 +139,7 @@ import ForwardDiff.derivative
     @test derivative(x -> compute_density(Compressible_Density(), (P = x, T = args.T)), args.P) ≈ 2.90000290000145e-6 rtol = 1.0e-6
 
     # Read Phase diagram interpolation object
-    fname = "test_data/Peridotite_dry.in"
+    fname = joinpath(@__DIR__, "test_data", "Peridotite_dry.in")
     PD_data = PerpleX_LaMEM_Diagram(fname)
     @test PD_data.meltFrac(1500, 1.0e7) ≈ 0.2538048323727155
     @test PD_data.Rho(1500, 1.0e7) ≈ 3054.8671154189938
@@ -150,7 +151,7 @@ import ForwardDiff.derivative
     @test compute_density(PD_data; P = 1.0e7, T = 1500.0) ≈ 3054.8671154189938 # optional parameter syntax
 
 
-    Rhyolite = "test_data/MAGEMin_Rhyolite.in"
+    Rhyolite = joinpath(@__DIR__, "test_data", "MAGEMin_Rhyolite.in")
 
     PD_MAGEMin = MAGEMin_Diagram(Rhyolite)
     @test PD_MAGEMin.Rho(800.0, 1.0e7) ≈ 2701.3786579954285
@@ -205,7 +206,7 @@ import ForwardDiff.derivative
         Name = "Mantle",
         Phase = 0,
         CreepLaws = (PowerlawViscous(), LinearViscous(; η = 1.0e23Pa * s)),
-        Density = PerpleX_LaMEM_Diagram("test_data/sediments_1.in"),
+        Density = PerpleX_LaMEM_Diagram(joinpath(@__DIR__, "test_data", "sediments_1.in")),
     )
 
     MatParam[2] = SetMaterialParams(;
@@ -283,9 +284,9 @@ import ForwardDiff.derivative
     num_alloc = @allocated compute_density!(rho, Mat_tup1, Phases, args)   #      287.416 μs (0 allocations: 0 bytes)
     @test sum(rho) / 400^2 ≈ 2575.250013499998
     # @test num_alloc ≤ 32
-
     #Same test using function alias
     rho = zeros(size(Phases))
+    compute_density!(rho, Mat_tup1, Phases, args)
     ρ!(rho, Mat_tup1, Phases, args)
     num_alloc = @allocated compute_density!(rho, Mat_tup1, Phases, args)
     @test sum(rho) / 400^2 ≈ 2575.250013499998
