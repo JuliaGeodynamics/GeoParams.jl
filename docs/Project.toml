@@ -9,4 +9,4 @@ GeoParams = {path = ".."}
 
 [compat]
 Documenter = "1"
-DocumenterVitepress = "0.1"
+DocumenterVitepress = "0.1, 0.2, 0.3"

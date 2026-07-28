@@ -36,6 +36,7 @@ makedocs(;
                 "Gravity" => "man/gravity.md",
                 "Partial Melting" => "man/melting.md",
                 "Density" => "man/density.md",
+                "Solubility" => "man/solubility.md",
             ],
             "Constitutive Relationships" => Any[
                 "Creep laws" => "man/creeplaws.md",

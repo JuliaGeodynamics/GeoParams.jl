@@ -10,6 +10,8 @@ GeoParams.MeltingParam.MeltingParam_5thOrder
 GeoParams.MeltingParam.MeltingParam_4thOrder
 GeoParams.MeltingParam.MeltingParam_Quadratic
 GeoParams.MeltingParam.MeltingParam_Assimilation
+GeoParams.MeltingParam.MeltingParam_Volatile
+GeoParams.MeltingParam.MeltingParam_MaficVolatile
 GeoParams.MeltingParam.SmoothMelting
 ```
 ## Computational routines
