@@ -339,6 +339,20 @@ using GeoParams, LaTeXStrings
     η_ref = dτII_dεII(x1_D_int, 1.0e-15s^-1, args_D) / 2
     @test log10(ustrip.(η_ref)) ≈ (3.68) rtol = 1.0e-2
 
+    # mH2O kwarg: per-call melt water override --------
+    # default (no mH2O) matches passing the struct's own frozen water content
+    @test compute_εII(x1_D, Tau_II, args_D) == compute_εII(x1_D, Tau_II; T = 1273K, mH2O = x1_D.oxd_wt[9] / 100)
+    # more water -> lower viscosity -> higher strain rate for the same stress
+    ε_wet = compute_εII(x1_D, Tau_II; T = 1273K, mH2O = 0.05)
+    @test ε_wet > ε_D
+    # εII <-> τII round-trip with a shared mH2O override
+    τ_back = compute_τII(x1_D, ε_wet; T = 1273K, mH2O = 0.05)
+    @test τ_back ≈ Tau_II rtol = 1.0e-8
+    # derivatives stay reciprocal under the same override
+    @test dεII_dτII(x1_D, Tau_II; T = 1273K, mH2O = 0.03) * dτII_dεII(x1_D, ε_D; T = 1273K, mH2O = 0.03) ≈ 1.0 rtol = 1.0e-8
+    # Quantity dispatch: mH2O must not be silently dropped via kwargs...
+    @test compute_εII(x1_D, Tau_II; T = 1273K, mH2O = 0.05) != compute_εII(x1_D, Tau_II; T = 1273K)
+
     # Create plot
     T = Vector(700.0:1673) * K
     η_MORB = zeros(size(T)) * Pas

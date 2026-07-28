@@ -56,6 +56,13 @@ const No_MaterialParam = GeoParams.MaterialParameters.No_MaterialParam
     # degenerate X_co2 = 0: CO2 output and its pressure sensitivity vanish
     @test ∂dissolved_∂P(s, P0, T0, 0.0)[2] == 0.0
 
+    # find_Xco2: invert compute_dissolved for X_co2 given a target m_h2o
+    m_target = compute_dissolved(s, P0, T0, X0)[1]
+    @test find_Xco2(s, P0, T0, m_target) ≈ X0 atol = 1.0e-6
+    @test find_Xco2(s, P0, T0, compute_dissolved(s, P0, T0, 0.0)[1]) ≈ 0.0 atol = 1.0e-6
+    @test find_Xco2(s, P0, T0, compute_dissolved(s, P0, T0, 1.0)[1]) ≈ 1.0 atol = 1.0e-6
+    @test_throws ErrorException find_Xco2(s, P0, T0, 10.0) # exceeds achievable range
+
     # Mafic ----------------------------------------------------------------
     m = Mafic_Solubility()
     @test isbits(m)
@@ -78,6 +85,10 @@ const No_MaterialParam = GeoParams.MaterialParameters.No_MaterialParam
     )[1] ≈ mmh
     # derivatives exist and are finite
     @test all(isfinite, ∂dissolved_∂T(m, P0, T0, X0))
+
+    # find_Xco2 for the mafic law too (generic over AbstractSolubility)
+    mm_target = compute_dissolved(m, P0, T0, X0)[1]
+    @test find_Xco2(m, P0, T0, mm_target) ≈ X0 atol = 1.0e-6
 
     # empty-parameter fallback
     @test compute_dissolved(No_MaterialParam()) === (0.0, 0.0)

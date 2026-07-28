@@ -23,6 +23,21 @@ using ForwardDiff: derivative
     # dimensional Quantity input hits the @unpack_units branch
     @test ustrip(kg / m^3, rk(; P = 200.0MPa, T = 1200.0K)) ≈ rk(; P = 2.0e8, T = 1200.0) rtol = 1.0e-6
 
+    # degenerate P/T fail fast with a clear DomainError instead of silently
+    # returning Inf (P=0) or throwing an opaque complex-exponentiation error
+    @test_throws DomainError rk(; P = 0.0, T = 1200.0)
+    @test_throws DomainError rk(; P = -1.0e5, T = 1200.0)
+    @test_throws DomainError rk(; P = 2.0e8, T = 200.0)          # T below the 273.15K reference
+    @test_throws DomainError rk(; P = 2.0e8, T = 273.15)          # exactly at the reference (τ=0)
+    @test_throws DomainError rk(; P = 0.0Pa, T = 1200.0K)         # Quantity path, not silently dropped
+    # a cell with no gas phase must not depend on the gas EOS at all: ρgas is
+    # only evaluated when ϕ_gas != 0, so an out-of-domain P/T never reaches a
+    # strict EOS like RedlichKwong_Density when there is no gas to poison
+    tp_guard = ThreePhase_Density(; ρgas = RedlichKwong_Density())
+    @test isfinite(compute_density(tp_guard, (; P = 0.0, T = 1200.0, ϕ_gas = 0.0, ϕ_x = 0.3)))
+    # but a genuinely gas-bearing cell still hits (and must respect) the guard
+    @test_throws DomainError compute_density(tp_guard, (; P = 0.0, T = 1200.0, ϕ_gas = 0.2, ϕ_x = 0.3))
+
     # custom coefficients through the keyword constructor
     rk2 = RedlichKwong_Density(; coeffs = (-100.0, 120.0, 110.0))
     @test rk2.coeffs == (-100.0, 120.0, 110.0)
@@ -67,7 +82,7 @@ using ForwardDiff: derivative
     # Three-phase density --------------------------------------------------
     tp = ThreePhase_Density(;
         ρmelt = ConstantDensity(ρ = 2300kg / m^3),
-        ρx = ConstantDensity(ρ = 2600kg / m^3),
+        ρsolid = ConstantDensity(ρ = 2600kg / m^3),
         ρgas = ConstantDensity(ρ = 1kg / m^3),
     )
     @test isbits(tp)
@@ -83,7 +98,7 @@ using ForwardDiff: derivative
     # adding gas lowers the density
     @test tp(; ϕ_gas = 0.1, ϕ_x = 0.4) < tp(; ϕ_gas = 0.0, ϕ_x = 0.4)
 
-    # default gas is Redlich-Kwong: mixture responds to P, T through the EOS
+    # default gas is ideal-gas: mixture responds to P, T through the EOS
     tp_rk = ThreePhase_Density()
     ρmix = tp_rk(; ϕ_gas = 0.2, ϕ_x = 0.3, P = 2.0e8, T = 1200.0)
     @test 0 < ρmix < 2600

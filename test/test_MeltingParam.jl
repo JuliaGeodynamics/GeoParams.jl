@@ -346,6 +346,7 @@ using LaTeXStrings
             MeltingParam_4thOrder(),
             MeltingParam_Quadratic(),
             MeltingParam_Assimilation(),
+            MeltingParam_Volatile(),
             SmoothMelting(),
         )
         args = (; T = 1000.0)
@@ -438,6 +439,65 @@ using LaTeXStrings
         # through SetMaterialParams
         ph = SetMaterialParams(; Phase = 1, Melting = MeltingParam_Volatile())
         @test compute_meltfraction(ph, args) ≈ ϕ_wet
+    end
+
+    @testset "MeltingParam_MaficVolatile" begin
+        p = MeltingParam_MaficVolatile()
+        @test isbits(p)
+        @test param_info(p).Equation isa LaTeXString
+        @test occursin("mafic", sprint(show, p))
+
+        # melt fraction stays a fraction, in the fit's interior and clamped outside it
+        ϕ = p(; T = 1200.0, P = 2.0e8, mH2O = 0.03, mCO2 = 0.0)
+        @test 0.0 <= ϕ <= 1.0
+        @test ϕ ≈ 0.4118665258837746 rtol = 1.0e-10   # cross-checked against a literal translation of parameters_melting_curve_mafic.m
+
+        # hotter -> more melt (in-domain, non-clamped)
+        @test p(; T = 1250.0, P = 2.0e8, mH2O = 0.03) > ϕ
+
+        # outside the linear fit's [0,1] range, ε_x resets to 0 (ϕ = 1) -- ported
+        # verbatim from the reference's own boundary handling, not a GeoParams addition
+        @test p(; T = 900.0, P = 5.0e7, mH2O = 0.005, mCO2 = 0.002) == 1.0
+
+        # compute_meltfraction / callable-with-args forms agree
+        args = (; T = 1200.0, P = 2.0e8, mH2O = 0.03, mCO2 = 0.0)
+        @test compute_meltfraction(p, args) == ϕ
+        @test p(args) == ϕ
+
+        # dϕ/dT by ForwardDiff vs central finite difference (interior point, away from the clamp)
+        d = compute_dϕdT(p; T = 1200.0, P = 2.0e8, mH2O = 0.03, mCO2 = 0.0)
+        h = 1.0e-2
+        fd = (p(; T = 1200.0 + h, P = 2.0e8, mH2O = 0.03) - p(; T = 1200.0 - h, P = 2.0e8, mH2O = 0.03)) / (2h)
+        @test d ≈ fd rtol = 1.0e-4
+        @test d > 0   # hotter -> more melt
+
+        # in-place dϕ/dT
+        Tarr = [1150.0, 1200.0, 1250.0]
+        darr = zeros(3)
+        compute_dϕdT!(darr, p; T = Tarr)
+        @test darr[2] ≈ compute_dϕdT(p; T = 1200.0)
+
+        # in-place dϕ/dT must honor the volatile args, not silently drop them
+        darr_wet = zeros(3)
+        compute_dϕdT!(darr_wet, p; T = Tarr, P = 2.0e8, mH2O = 0.03, mCO2 = 0.0)
+        @test darr_wet[2] ≈ compute_dϕdT(p; T = 1200.0, P = 2.0e8, mH2O = 0.03, mCO2 = 0.0)
+        @test darr_wet[2] != darr[2]
+
+        # dimensional Quantity input (the @unpack_units branch)
+        @test p(; T = 1200.0K, P = 200.0MPa, mH2O = 0.03) ≈ ϕ rtol = 1.0e-6
+
+        # nondimensionalization: ϕ is a fraction -> invariant
+        CharDim = GEO_units(; viscosity = 1.0e19, length = 1000km)
+        p_nd = nondimensionalize(p, CharDim)
+        @test p_nd(;
+            T = nondimensionalize(1200.0K, CharDim),
+            P = nondimensionalize(2.0e8Pa, CharDim),
+            mH2O = 0.03, mCO2 = 0.0,
+        ) ≈ ϕ
+
+        # through SetMaterialParams
+        ph = SetMaterialParams(; Phase = 1, Melting = MeltingParam_MaficVolatile())
+        @test compute_meltfraction(ph, args) ≈ ϕ
     end
 
 end

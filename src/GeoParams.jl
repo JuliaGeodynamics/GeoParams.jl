@@ -373,6 +373,7 @@ module GeoParams
         MeltingParam_Quadratic,
         MeltingParam_Assimilation,
         MeltingParam_Volatile,
+        MeltingParam_MaficVolatile,
         Vector_MeltingParam,
         SmoothMelting
 
@@ -395,6 +396,7 @@ module GeoParams
         ∂dissolved_∂P,
         ∂dissolved_∂T,
         ∂dissolved_∂Xco2,
+        find_Xco2,
         AbstractSolubility,
         Liu2005_Solubility,
         Mafic_Solubility,

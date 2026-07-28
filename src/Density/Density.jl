@@ -443,8 +443,14 @@ dimensionally homogeneous and nondimensionalizes cleanly: only the reference
 `GeoUnit`s scale, the fitted dimensionless `coeffs` do not. The parameterisation
 ignores gas composition (pseudo-pure H2O), matching the reference.
 
+Throws a `DomainError` for `T ≤ 273.15K` or `P ≤ 0` (`τ ≤ 0` or `ω ≤ 0`):
+`τ^(-0.381)`/`τ^(-0.411)` and `ω^(-1.135)` require a positive base, so those
+inputs would otherwise silently return `Inf` or throw an opaque low-level `DomainError` about
+complex exponentiation (`T < 273.15K`) with no indication of the actual
+constraint.
+
 # References
-- Huber, C., Bachmann, O., Dufek, J. (2010), The limitations of melting on the reactivation of silicic mushes, JVGR 195, 97-105, https://doi.org/10.1016/j.jvolgeores.2010.06.006
+- Huber C., Bachmann O. , Manga M., Two Competing Effects of Volatiles on Heat Transfer in Crystal-rich Magmas: Thermal Insulation vs Defrosting, Journal of Petrology, 847–867, https://doi.org/10.1093/petrology/egq003
 - Degruyter, W., Huber, C. (2014), A model for the eruption frequency of upper crustal silicic magma chambers, EPSL 403, 117-130, https://doi.org/10.1016/j.epsl.2014.06.047
 """
 struct RedlichKwong_Density{T, U1, U2, U3} <: AbstractDensity{T}
@@ -485,13 +491,15 @@ end
     end
     τ = (T - T0) / Tref            # ∝ T in °C
     ω = P / Pref                   # ∝ P in bar
+    τ > 0 || throw(DomainError(T, "RedlichKwong_Density: T=$T is at or below the 273.15K reference (τ=$τ °C-equivalent ≤ 0); τ^(-0.381) is undefined there"))
+    ω > 0 || throw(DomainError(P, "RedlichKwong_Density: P=$P is at or below zero (ω=$ω bar-equivalent ≤ 0); ω^(-1.135) is undefined there"))
     return @muladd @pow (a1 * τ^(-0.381) + a2 * ω^(-1.135) + a3 * τ^(-0.411) * ω^0.033) * ρref
 end
 @inline (s::RedlichKwong_Density)(args) = s(; args...)
 @inline compute_density(s::RedlichKwong_Density, args) = s(args)
 
 function show(io::IO, g::RedlichKwong_Density)
-    return print(io, "Redlich-Kwong gas density (Huber et al. 2010): ρg = ρref*(a1*τ^-0.381 + a2*ω^-1.135 + a3*τ^-0.411*ω^0.033)")
+    return print(io, "Redlich-Kwong gas density (Huber et al. 2010): ρgas = ρref*(a1*τ^-0.381 + a2*ω^-1.135 + a3*τ^-0.411*ω^0.033)")
 end
 
 """
@@ -528,12 +536,12 @@ end
 @inline compute_density(s::IdealGas_Density, args) = s(args)
 
 function show(io::IO, g::IdealGas_Density)
-    return print(io, "Ideal-gas density: ρg = P/(Rs*T); Rs=$(UnitValue(g.Rs))")
+    return print(io, "Ideal-gas density: ρgas = P/(Rs*T); Rs=$(UnitValue(g.Rs))")
 end
 
 # Three-phase (melt + crystal + gas) mixture density ----------------------
 """
-    ThreePhase_Density(; ρmelt=ConstantDensity(ρ=2300kg/m^3), ρx=ConstantDensity(ρ=2600kg/m^3), ρgas=RedlichKwong_Density(), ρ=2400kg/m^3)
+    ThreePhase_Density(; ρmelt=ConstantDensity(ρ=2300kg/m^3), ρsolid=ConstantDensity(ρ=2600kg/m^3), ρgas=RedlichKwong_Density(), ρ=2400kg/m^3)
 
 Volume-fraction mixture density of a melt + crystal + gas magma (Degruyter &
 Huber 2014):
@@ -546,9 +554,14 @@ ODE state / a melting law), passed through `args`; the sub-densities receive the
 same `args` (e.g. `P`, `T`) so an equation-of-state gas density is evaluated in
 place. `ρ` is a dimensional-tracking sentinel.
 
+`ρgas` is only evaluated when `ϕ_gas != 0`: a cell with no exsolved gas never
+depends on the gas closure at all, so a strict EOS like
+[`RedlichKwong_Density`](@ref) (which throws outside its calibration window)
+cannot fail on a `ϕ_gas=0` cell regardless of `P`, `T`.
+
 # Arguments
 - `ρmelt`: melt-phase density
-- `ρx`: crystal-phase density
+- `ρsolid`: crystal-phase density
 - `ρgas`: gas-phase density (e.g. [`RedlichKwong_Density`](@ref))
 
 # References
@@ -556,8 +569,8 @@ place. `ρ` is a dimensional-tracking sentinel.
 """
 @with_kw_noshow struct ThreePhase_Density{_T, U, S1 <: AbstractDensity, S2 <: AbstractDensity, S3 <: AbstractDensity} <: AbstractDensity{_T}
     ρmelt::S1 = ConstantDensity(ρ = 2300kg / m^3)   # melt
-    ρx::S2 = ConstantDensity(ρ = 2600kg / m^3)      # crystals
-    ρgas::S3 = RedlichKwong_Density()               # gas
+    ρsolid::S2 = ConstantDensity(ρ = 2600kg / m^3)      # crystals
+    ρgas::S3 = IdealGas_Density()               # gas
     ρ::GeoUnit{_T, U} = 2400.0kg / m^3              # dimensional-tracking sentinel
 end
 ThreePhase_Density(args...) = ThreePhase_Density(args[1], args[2], args[3], convert.(GeoUnit, args[4:end])...)
@@ -568,17 +581,20 @@ function param_info(s::ThreePhase_Density)
 end
 
 @inline function (rho::ThreePhase_Density)(; ϕ_gas = 0.0e0, ϕ_x = 0.0e0, kwargs...)
-    ρm = compute_density(rho.ρmelt, kwargs)
-    ρx = compute_density(rho.ρx, kwargs)
-    ρg = compute_density(rho.ρgas, kwargs)   # kwargs carries P,T for an EOS gas density
+    ρmelt = compute_density(rho.ρmelt, kwargs)
+    ρsolid = compute_density(rho.ρsolid, kwargs)
+    # Skip the gas EOS entirely when no gas is present: a zero-weighted term
+    # must not depend on ρgas's domain restrictions (e.g. RedlichKwong_Density
+    # throws outside its calibration window regardless of ϕ_gas).
+    ρgas = iszero(ϕ_gas) ? zero(ρmelt) : compute_density(rho.ρgas, kwargs)
     ϕ_m = 1 - ϕ_x - ϕ_gas
-    return @muladd ϕ_m * ρm + ϕ_gas * ρg + ϕ_x * ρx
+    return @muladd ϕ_m * ρmelt + ϕ_gas * ρgas + ϕ_x * ρsolid
 end
 @inline (s::ThreePhase_Density)(args) = s(; args...)
 @inline compute_density(s::ThreePhase_Density, args) = s(args)
 
 function show(io::IO, g::ThreePhase_Density)
-    return print(io, "Three-phase density: ρ = ϕ_m*ρmelt + ϕ_gas*ρgas + ϕ_x*ρx; ρmelt=$(g.ρmelt); ρx=$(g.ρx); ρgas=$(g.ρgas)")
+    return print(io, "Three-phase density: ρ = ϕ_m*ρmelt + ϕ_gas*ρgas + ϕ_x*ρsolid; ρmelt=$(g.ρmelt); ρsolid=$(g.ρsolid); ρgas=$(g.ρgas)")
 end
 #-------------------------------------------------------------------------
 # Melt_DensityX density depending on Oxide composition
@@ -592,6 +608,13 @@ Set a density depending on the oxide composition after the python script by Iaco
              in [wt%] of the following oxides ordered in the exact sequence \n
              (SiO2 TiO2 Al2O3 FeO MgO CaO Na2O K2O H2O) \n
              Default values are for a hydrous N-MORB composition
+
+The callable also accepts an `mH2O` keyword (melt water content, mass
+fraction) that overrides the struct's own `oxd_wt[9]` for that call,
+recomputing only the water-dependent aggregates. `mH2O` is accepted as
+given: GeoParams does not check it for consistency with any `Solubility` or
+other closure's dissolved-water output — that is the caller's/solver's
+responsibility.
 
 ## References
 - Iacovino K & Till C (2019). DensityX: A program for calculating the densities of magmatic liquids up to 1,627 °C and 30 kbar. Volcanica 2(1), p 1-10. [doi:10.30909/vol.02.01.0110](https://dx.doi.org/10.30909/vol.02.01.0110)
@@ -693,16 +716,32 @@ function compute_XMW_norm_MP(oxd_wt, MW)
     return sum_XMW, norm_MP
 end
 
-function (s::Melt_DensityX)(; P::Number = 0.0e0, T::Number = 0.0e0, kwargs...)
+function (s::Melt_DensityX)(; P::Number = 0.0e0, T::Number = 0.0e0, mH2O = s.oxd_wt[9] / 100, kwargs...)
+    # mH2O overrides the struct's own frozen water content for this call; the
+    # water-dependent aggregates (sum_XMW, norm_MP) are only recomputed when
+    # it actually differs, so the default path stays exactly as fast as
+    # before this kwarg existed. mH2O is accepted as given: GeoParams does
+    # not check it for consistency with any Solubility/other closure's
+    # dissolved water — that is the caller's/solver's responsibility.
     P0, ρ0, sum_XMW, sum_Vliq, MV, dVdT, Tref, norm_MP, dVdP = if P isa Quantity
         (; MV, dVdT, dVdP, Tref, norm_MP) = s
         @unpack_units P0, ρ0, sum_XMW, sum_Vliq = s
-        P0, ρ0, sum_XMW, sum_Vliq, unpack_units(MV), unpack_units(dVdT), unpack_units(Tref), unpack_units(norm_MP), unpack_units(dVdP)
+        norm_MPv = unpack_units(norm_MP)
+        if mH2O != s.oxd_wt[9] / 100
+            oxd_wt = Base.setindex(s.oxd_wt, 100 * mH2O, 9)
+            sum_XMW, norm_MPv = compute_XMW_norm_MP(oxd_wt, unpack_units(s.MW))
+        end
+        P0, ρ0, sum_XMW, sum_Vliq, unpack_units(MV), unpack_units(dVdT), unpack_units(Tref), norm_MPv, unpack_units(dVdP)
 
     else
         (; MV, dVdT, dVdP, Tref, norm_MP) = s
         @unpack_val P0, ρ0, sum_XMW, sum_Vliq = s
-        P0, ρ0, sum_XMW, sum_Vliq, unpack_vals(s.MV), unpack_vals(s.dVdT), unpack_vals(s.Tref), unpack_vals(s.norm_MP), unpack_vals(s.dVdP)
+        norm_MPv = unpack_vals(norm_MP)
+        if mH2O != s.oxd_wt[9] / 100
+            oxd_wt = Base.setindex(s.oxd_wt, 100 * mH2O, 9)
+            sum_XMW, norm_MPv = compute_XMW_norm_MP(oxd_wt, unpack_vals(s.MW))
+        end
+        P0, ρ0, sum_XMW, sum_Vliq, unpack_vals(MV), unpack_vals(dVdT), unpack_vals(Tref), norm_MPv, unpack_vals(dVdP)
     end
 
     sum_Vliq = @muladd (MV[1] + (dVdT[1] * (T - Tref[1])) + (dVdP[1] * (P - P0))) * norm_MP[1]
