@@ -66,7 +66,8 @@ end
 ConstantDensity(args...) = ConstantDensity(convert.(GeoUnit, args)...)
 isdimensional(s::ConstantDensity) = isdimensional(s.ρ)
 
-@inline (ρ::ConstantDensity)(; args...) = ρ.ρ.val
+@inline (ρ::ConstantDensity)(; P = 0.0e0, T = 0.0e0, args...) =
+    (P isa Quantity || T isa Quantity) ? UnitValue(ρ.ρ) : ρ.ρ.val
 @inline (ρ::ConstantDensity)(args) = ρ(; args...)
 @inline compute_density(s::ConstantDensity{_T}, args) where {_T} = s(; args...)
 @inline compute_density(s::ConstantDensity{_T}) where {_T} = s()
@@ -443,11 +444,10 @@ dimensionally homogeneous and nondimensionalizes cleanly: only the reference
 `GeoUnit`s scale, the fitted dimensionless `coeffs` do not. The parameterisation
 ignores gas composition (pseudo-pure H2O), matching the reference.
 
-Throws a `DomainError` for `T ≤ 273.15K` or `P ≤ 0` (`τ ≤ 0` or `ω ≤ 0`):
-`τ^(-0.381)`/`τ^(-0.411)` and `ω^(-1.135)` require a positive base, so those
-inputs would otherwise silently return `Inf` or throw an opaque low-level `DomainError` about
-complex exponentiation (`T < 273.15K`) with no indication of the actual
-constraint.
+Returns `NaN` for `T ≤ 273.15K` or `P ≤ 0` (`τ ≤ 0` or `ω ≤ 0`), since
+`τ^(-0.381)`/`τ^(-0.411)` and `ω^(-1.135)` require a positive base: raising to
+those exponents would otherwise throw an opaque low-level `DomainError` about
+complex exponentiation.
 
 # References
 - Huber C., Bachmann O. , Manga M., Two Competing Effects of Volatiles on Heat Transfer in Crystal-rich Magmas: Thermal Insulation vs Defrosting, Journal of Petrology, 847–867, https://doi.org/10.1093/petrology/egq003
@@ -491,9 +491,11 @@ end
     end
     τ = (T - T0) / Tref            # ∝ T in °C
     ω = P / Pref                   # ∝ P in bar
-    τ > 0 || throw(DomainError(T, "RedlichKwong_Density: T=$T is at or below the 273.15K reference (τ=$τ °C-equivalent ≤ 0); τ^(-0.381) is undefined there"))
-    ω > 0 || throw(DomainError(P, "RedlichKwong_Density: P=$P is at or below zero (ω=$ω bar-equivalent ≤ 0); ω^(-1.135) is undefined there"))
-    return @muladd @pow (a1 * τ^(-0.381) + a2 * ω^(-1.135) + a3 * τ^(-0.411) * ω^0.033) * ρref
+    # τ^(-0.381)/ω^(-1.135) undefined otherwise. No physically sensible clamp
+    # exists for a fitted gas density, so it NaN's
+    τ > 0 && ω > 0 || return ρref * oftype(ustrip(ρref), NaN)
+    e1, e2, e3, e4 = oftype(a1, -0.381), oftype(a1, -1.135), oftype(a1, -0.411), oftype(a1, 0.033)
+    return @muladd @pow (a1 * τ^e1 + a2 * ω^e2 + a3 * τ^e3 * ω^e4) * ρref
 end
 @inline (s::RedlichKwong_Density)(args) = s(; args...)
 @inline compute_density(s::RedlichKwong_Density, args) = s(args)
@@ -527,9 +529,9 @@ end
 @inline function (rho::IdealGas_Density)(; P = 0.0e0, T = 0.0e0, kwargs...)
     if P isa Quantity
         @unpack_units Rs = rho
-    else
-        @unpack_val Rs = rho
+        return uconvert(kg / m^3, P / (Rs * T))   # P/(Rs*T) reduces to kg*Pa/J otherwise
     end
+    @unpack_val Rs = rho
     return P / (Rs * T)
 end
 @inline (s::IdealGas_Density)(args) = s(; args...)
@@ -556,8 +558,8 @@ place. `ρ` is a dimensional-tracking sentinel.
 
 `ρgas` is only evaluated when `ϕ_gas != 0`: a cell with no exsolved gas never
 depends on the gas closure at all, so a strict EOS like
-[`RedlichKwong_Density`](@ref) (which throws outside its calibration window)
-cannot fail on a `ϕ_gas=0` cell regardless of `P`, `T`.
+[`RedlichKwong_Density`](@ref) (which returns `NaN` outside its calibration
+window) cannot poison a `ϕ_gas=0` cell regardless of `P`, `T`.
 
 # Arguments
 - `ρmelt`: melt-phase density
@@ -585,7 +587,7 @@ end
     ρsolid = compute_density(rho.ρsolid, kwargs)
     # Skip the gas EOS entirely when no gas is present: a zero-weighted term
     # must not depend on ρgas's domain restrictions (e.g. RedlichKwong_Density
-    # throws outside its calibration window regardless of ϕ_gas).
+    # returns NaN outside its calibration window regardless of ϕ_gas).
     ρgas = iszero(ϕ_gas) ? zero(ρmelt) : compute_density(rho.ρgas, kwargs)
     ϕ_m = 1 - ϕ_x - ϕ_gas
     return @muladd ϕ_m * ρmelt + ϕ_gas * ρgas + ϕ_x * ρsolid

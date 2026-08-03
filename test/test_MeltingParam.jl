@@ -424,6 +424,19 @@ using LaTeXStrings
         @test darr_wet[2] ≈ compute_dϕdT(p; T = 1100.0, P = 2.0e8, mH2O = 0.04, mCO2 = 0.0)
         @test darr_wet[2] != darr[2]   # water changes the derivative
 
+        # per-cell P / mH2O / mCO2 arrays, mixed with domain-wide scalars
+        darr_arr = zeros(3)
+        compute_dϕdT!(
+            darr_arr, p;
+            T = Tarr, P = fill(2.0e8, 3), mH2O = [0.0, 0.04, 0.02], mCO2 = 0.0,
+        )
+        @test darr_arr[2] ≈ darr_wet[2]
+        @test darr_arr[1] ≈ compute_dϕdT(p; T = 1050.0, P = 2.0e8, mH2O = 0.0, mCO2 = 0.0)
+
+        # Float32 struct stays Float32
+        p32 = MeltingParam_Volatile(; T0 = 273.0f0K, Tref = 1.0f0K, Pref = 1.0f6Pa)
+        @test p32(; T = 1100.0f0, P = 2.0f8, mH2O = 0.04f0, mCO2 = 0.0f0) isa Float32
+
         # dimensional Quantity input (the @unpack_units branch)
         @test p(; T = 1100.0K, P = 200.0MPa, mH2O = 0.04) ≈ ϕ_wet rtol = 1.0e-6
 
@@ -455,9 +468,9 @@ using LaTeXStrings
         # hotter -> more melt (in-domain, non-clamped)
         @test p(; T = 1250.0, P = 2.0e8, mH2O = 0.03) > ϕ
 
-        # outside the linear fit's [0,1] range, ε_x resets to 0 (ϕ = 1) -- ported
-        # verbatim from the reference's own boundary handling, not a GeoParams addition
-        @test p(; T = 900.0, P = 5.0e7, mH2O = 0.005, mCO2 = 0.002) == 1.0
+        @test p(; T = 900.0, P = 5.0e7, mH2O = 0.005, mCO2 = 0.002) == 0.0
+        @test p(; T = 1600.0, P = 2.0e8, mH2O = 0.01, mCO2 = 0.0) == 1.0
+        @test compute_meltfraction(p, (; T = 900.0, P = 5.0e7, mH2O = 0.005)) == 0.0
 
         # compute_meltfraction / callable-with-args forms agree
         args = (; T = 1200.0, P = 2.0e8, mH2O = 0.03, mCO2 = 0.0)
@@ -471,17 +484,20 @@ using LaTeXStrings
         @test d ≈ fd rtol = 1.0e-4
         @test d > 0   # hotter -> more melt
 
-        # in-place dϕ/dT
-        Tarr = [1150.0, 1200.0, 1250.0]
-        darr = zeros(3)
-        compute_dϕdT!(darr, p; T = Tarr)
-        @test darr[2] ≈ compute_dϕdT(p; T = 1200.0)
-
         # in-place dϕ/dT must honor the volatile args, not silently drop them
+        Tarr = [1150.0, 1200.0, 1250.0]
         darr_wet = zeros(3)
         compute_dϕdT!(darr_wet, p; T = Tarr, P = 2.0e8, mH2O = 0.03, mCO2 = 0.0)
         @test darr_wet[2] ≈ compute_dϕdT(p; T = 1200.0, P = 2.0e8, mH2O = 0.03, mCO2 = 0.0)
-        @test darr_wet[2] != darr[2]
+
+        darr_dry = zeros(3)
+        compute_dϕdT!(darr_dry, p; T = Tarr)
+        @test all(iszero, darr_dry)
+
+        # per-cell P / mH2O arrays, mixed with domain-wide scalars
+        darr_arr = zeros(3)
+        compute_dϕdT!(darr_arr, p; T = Tarr, P = fill(2.0e8, 3), mH2O = fill(0.03, 3), mCO2 = 0.0)
+        @test darr_arr ≈ darr_wet
 
         # dimensional Quantity input (the @unpack_units branch)
         @test p(; T = 1200.0K, P = 200.0MPa, mH2O = 0.03) ≈ ϕ rtol = 1.0e-6

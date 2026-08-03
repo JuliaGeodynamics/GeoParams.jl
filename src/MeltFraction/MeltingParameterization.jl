@@ -758,10 +758,12 @@ end
 end
 
 function compute_dϕdT!(dϕdT::AbstractArray, p::MeltingParam_Volatile; T::AbstractArray, kwargs...)
-    for i in eachindex(dϕdT, T)
-        dϕdT[i] = compute_dϕdT(p; T = T[i], kwargs...)
+    args = (; T, kwargs...)
+    return @inbounds for I in eachindex(dϕdT)
+        k = keys(args)
+        v = getindex.(values(args), I)
+        dϕdT[I] = compute_dϕdT(p, (; zip(k, v)...))
     end
-    return nothing
 end
 
 function show(io::IO, g::MeltingParam_Volatile)
@@ -778,10 +780,21 @@ temperature, `ε_x = a*T_C + b`, with slope `a` and intercept `b` each a
 degree-2 polynomial in `(100*mH2O, 100*mCO2, P/Pref)` — the same polynomial
 form as [`MeltingParam_Volatile`](@ref)'s `a`/`b`/`c`, just combined linearly
 instead of through `erfc`. `ϕ = 1 - ε_x` (`ε_g` is added by the solver, not
-here). Ported from the reference: outside the fit's domain a linear model
-has no natural saturation, so `ε_x` is reset to `0` whenever it leaves
-`[0,1]`, matching the reference's own boundary handling exactly (not a
-GeoParams addition).
+here).
+
+A linear model has no saturation, so `ε_x` leaves `[0,1]` outside a narrow
+temperature window (~100-200 K wide; at 200 MPa: 1337-1443 K dry, 1221-1436 K
+at 1 wt% H2O, 1010-1417 K at 2 wt%). `compute_meltfraction` clamps `ε_x` to
+`[0,1]` there instead of returning it as computed:
+
+- colder than the window, the fit predicts ``\\varepsilon_x > 1``, clamped to
+  ``1`` (``\\phi=0``, fully solid);
+- hotter than the window, it predicts ``\\varepsilon_x < 0``, clamped to
+  ``0`` (``\\phi=1``, fully liquid).
+
+Both clamps are the physically sensible reading, but the value is still an
+extrapolation past the fit's calibration, not a measurement — no warning is
+raised when this triggers.
 
 # References
 - Degruyter, W., Huber, C. (2014), A model for the eruption frequency of upper crustal silicic magma chambers, EPSL 403, 117-130, https://doi.org/10.1016/j.epsl.2014.06.047
@@ -827,8 +840,10 @@ end
     a = _volatile_poly(p.a_coeffs, x, y, z)
     b = _volatile_poly(p.b_coeffs, x, y, z)
     εx = a * TC + b
-    εx = (εx < 0 || εx > 1) ? zero(εx) : εx
-    return 1 - εx
+    # No natural saturation in a linear fit: clamp to the physically sensible
+    # endpoint (fully solid above the fit, fully liquid below it) rather than
+    # extrapolate. Directional, unlike a fixed reset to a single endpoint.
+    return 1 - clamp(εx, zero(εx), oneunit(εx))
 end
 
 @inline function compute_dϕdT(p::MeltingParam_MaficVolatile; T, P = 0.0e0, mH2O = 0.0e0, mCO2 = 0.0e0, kwargs...)
@@ -836,10 +851,12 @@ end
 end
 
 function compute_dϕdT!(dϕdT::AbstractArray, p::MeltingParam_MaficVolatile; T::AbstractArray, kwargs...)
-    for i in eachindex(dϕdT, T)
-        dϕdT[i] = compute_dϕdT(p; T = T[i], kwargs...)
+    args = (; T, kwargs...)
+    return @inbounds for I in eachindex(dϕdT)
+        k = keys(args)
+        v = getindex.(values(args), I)
+        dϕdT[I] = compute_dϕdT(p, (; zip(k, v)...))
     end
-    return nothing
 end
 
 function show(io::IO, g::MeltingParam_MaficVolatile)

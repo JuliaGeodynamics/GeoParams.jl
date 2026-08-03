@@ -113,7 +113,7 @@ X_co2)` and `compute_dissolved(s, args::NamedTuple)`.
     meq = @muladd (b1 * Pw_sqrt + b2 * Pw + b3 * Pw_15) * Tr + b4 * Pw_15 + Pc * (b5 * Pw_sqrt + b6 * Pw)
     Cco2 = @muladd Pc * ((c1 + c2 * Pw) * Tr + c3 * Pw_sqrt + c4 * Pw_15)
 
-    return (1.0e-2 * meq, 1.0e-6 * Cco2)   # wt% -> fraction ; ppm -> fraction
+    return (meq / 100, Cco2 / 1000000)   # wt% -> fraction ; ppm -> fraction
 end
 
 function show(io::IO, s::Liu2005_Solubility)
@@ -128,7 +128,10 @@ Coupled H2O–CO2 solubility for mafic (basalt) melt. Dissolved H2O follows the
 mafic polynomial of the Scholz/Degruyter–Huber reference in the dimensionless
 groups ``T_C = (T-T_0)/T_{ref}`` (numerically °C) and ``P_m = P/P_{ref}``
 (numerically MPa); dissolved CO2 reuses the Liu (2005) rhyolite CO2 block.
-Nondimensionalizes like [`Liu2005_Solubility`](@ref).
+Nondimensionalizes like [`Liu2005_Solubility`](@ref). The H2O polynomial has
+no floor at zero and goes negative outside its calibration (high `X_co2`,
+low `P`); the dissolved H2O output is floored at zero rather than returned
+as a negative mass fraction.
 
 # References
 - Degruyter, W., Huber, C. (2014), A model for the eruption frequency of upper crustal silicic magma chambers, EPSL 403, 117-130, https://doi.org/10.1016/j.epsl.2014.06.047
@@ -187,7 +190,13 @@ end
     Pw_15 = Pw * Pw_sqrt    # Pw^1.5
     Cco2 = @muladd Pc * ((c1 + c2 * Pw) * Tr + c3 * Pw_sqrt + c4 * Pw_15)
 
-    return (1.0e-2 * meq, 1.0e-6 * Cco2)
+    # The mafic H2O polynomial has no floor at zero and goes negative at high
+    # X_co2 / low P, reachable well inside a magma chamber's P-T range. A
+    # negative dissolved mass fraction cannot be physical, so floor rather
+    # than extrapolate.
+    meq = max(meq, zero(meq))
+
+    return (meq / 100, Cco2 / 1000000)
 end
 
 function show(io::IO, s::Mafic_Solubility)
@@ -207,8 +216,11 @@ and the mass-weighted specific heat is
 ```math
     c_g = \\frac{M_{H_2O} c_{H_2O}(1-X_{co2}) + M_{CO_2} c_{CO_2} X_{co2}}{m_g}
 ```
-with the reference convention ``c_g = 0`` at ``X_{co2}=0``. All fields are
-`GeoUnit`s, so the struct nondimensionalizes.
+with the reference convention ``c_g = 0`` at ``X_{co2}=0`` — a discontinuity,
+since the formula's own limit as ``X_{co2} \\to 0`` is ``c_{H_2O}``.
+
+All fields are `GeoUnit`s, so the struct nondimensionalizes, but both accessors
+read values rather than `Quantity`s: neither return carries units.
 """
 @with_kw_noshow struct GasMixture{T, U1, U2} <: AbstractMaterialParam
     Cp_h2o::GeoUnit{T, U1} = 3880.0J / kg / K   # specific heat of H2O gas
@@ -296,6 +308,7 @@ iteration fails to converge within `max_iter` steps — this never returns a
 clamped or out-of-tolerance answer.
 """
 function find_Xco2(s::AbstractSolubility, P, T, m_h2o_target; X0 = 0.5, tol = 1.0e-8, max_iter = 50)
+    m_h2o_target ≥ 0 || throw(DomainError(m_h2o_target, "find_Xco2: a dissolved H2O mass fraction cannot be negative"))
     f(x) = compute_dissolved(s, P, T, x)[1] - m_h2o_target
     lo, hi = 0.0, 1.0
     flo, fhi = f(lo), f(hi)
