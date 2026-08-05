@@ -77,7 +77,7 @@ jobs:
         with:
           include-matrix: false
       - name: Test GeoParamsDynamicUnits extension
-        run: julia --startup-file=no -e 'using Pkg; Pkg.activate(; temp=true); Pkg.develop(PackageSpec(path=pwd())); Pkg.test("GeoParams"; test_args=["test_DynamicUnitsExtension"], julia_args=["--startup-file=no"])'
+        run: julia --startup-file=no -e 'using Pkg; Pkg.activate(; temp=true); Pkg.develop([PackageSpec(path="lib/GeoParamsUnits"), PackageSpec(path="lib/GeoParamsDynamicUnits"), PackageSpec(path=pwd())]); include("test/DynamicUnitsExtension.jl")'
 
   run_tests:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
@@ -114,8 +114,18 @@ jobs:
       - uses: julia-actions/cache@v3
         with:
           include-matrix: false
+      # Julia 1.10 ignores Project.toml's [sources], so the unregistered lib/
+      # subpackages have to be developed explicitly. They go into a temporary
+      # environment because developing them into the checkout would promote the
+      # GeoParamsDynamicUnits weak dependency to a strong one.
+      - name: Run tests
+        if: matrix.version == 'lts'
+        shell: bash
+        run: julia --startup-file=no --color=yes -e 'using Pkg; Pkg.activate(; temp=true); Pkg.develop([PackageSpec(path="lib/GeoParamsUnits"), PackageSpec(path="lib/GeoParamsDynamicUnits"), PackageSpec(path=pwd())]); Pkg.test("GeoParams")'
       - uses: julia-actions/julia-buildpkg@latest
+        if: matrix.version != 'lts'
       - uses: julia-actions/julia-runtest@latest
+        if: matrix.version != 'lts'
         with:
           coverage: ${{ matrix.version == '1' && matrix.os == 'ubuntu-latest' && matrix.arch == 'x64' }}
       - uses: julia-actions/julia-processcoverage@v1
@@ -135,7 +145,7 @@ jobs:
       - name: Install dependencies 1
         run: sudo apt-get update && sudo apt-get install -y xorg-dev mesa-utils xvfb libgl1 freeglut3-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
       - name: Install dependencies 2
-        run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+        run: julia --project=docs/ -e 'using Pkg; Pkg.develop([PackageSpec(path="lib/GeoParamsUnits"), PackageSpec(path="lib/GeoParamsDynamicUnits"), PackageSpec(path=pwd())]); Pkg.instantiate()'
       - name: Build and deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token

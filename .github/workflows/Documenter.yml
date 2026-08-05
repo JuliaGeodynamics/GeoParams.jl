@@ -36,7 +36,7 @@ jobs:
       - uses: julia-actions/cache@v3
       - uses: julia-actions/julia-buildpkg@latest
       - name: Install dependencies
-        run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+        run: julia --project=docs/ -e 'using Pkg; Pkg.develop([PackageSpec(path="lib/GeoParamsUnits"), PackageSpec(path="lib/GeoParamsDynamicUnits"), PackageSpec(path=pwd())]); Pkg.instantiate()'
       - name: Build and deploy
         uses: julia-actions/julia-docdeploy@v1
         env:
