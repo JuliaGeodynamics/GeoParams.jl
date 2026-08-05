@@ -8,9 +8,9 @@ Create a nondimensionalization object in which we specify characteristic values,
 A dimensional parameter can be transformed into a non-dimensional one with `nondimensionalize`.
 
 The units API is also available independently through `GeoParamsUnits` and
-`GeoParamsDynamicUnits`. Both packages are installed with GeoParams, while `GeoParamsUnits`
-remains the default backend, preserving `GeoParams.Units` and the existing Unitful-based API.
-Loading `GeoParamsDynamicUnits` activates an extension that accepts DynamicQuantities
+`GeoParamsDynamicUnits`. `GeoParamsUnits` is installed as the default backend, preserving
+`GeoParams.Units` and the existing Unitful-based API. Installing and loading the optional
+`GeoParamsDynamicUnits` package activates an extension that accepts DynamicQuantities
 quantities, `GeoUnit` values, and `GeoUnits` characteristic scales at the GeoParams boundary.
 
 ```julia

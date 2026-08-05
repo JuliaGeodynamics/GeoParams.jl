@@ -61,9 +61,9 @@ temperature, and the custom geoscience units provided by the packages.
 
 ## Loading and storage behavior
 
-Both sibling packages are installed with GeoParams so local `lib/` dependencies resolve on the
-minimum supported Julia version. The dynamic backend is not loaded by `using GeoParams`; the
-extension activates only after `GeoParamsDynamicUnits` is explicitly loaded.
+`GeoParamsUnits` is installed with GeoParams as its default backend. `GeoParamsDynamicUnits` is
+an optional dependency: install and load it explicitly when DynamicQuantities interoperability
+is needed. The extension activates only after `GeoParamsDynamicUnits` is loaded.
 
 GeoParams material structures continue to store `GeoParamsUnits.GeoUnit`. Keeping this stable
 preserves the existing public types and serialized representation. The extension therefore
