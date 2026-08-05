@@ -10,6 +10,7 @@ makedocs(;
     repo = Remotes.GitHub("JuliaGeodynamics", "GeoParams.jl"),
     modules = [
         GeoParams,
+        GeoParams.Units,
         isdefined(Base, :get_extension) ?
             Base.get_extension(GeoParams, :GeoParamsMakieExt) :
             GeoParams.GeoParamsMakieExt,
@@ -24,6 +25,7 @@ makedocs(;
         "Home" => "index.md",
         "User Guide" => Any[
             "GeoUnit" => "man/geounit.md",
+            "Unit backends" => "man/unitbackends.md",
             "Nondimensionalization" => "man/nondimensionalize.md",
             "Material Parameters" => Any[
                 "Overview" => "man/materialparameters.md",

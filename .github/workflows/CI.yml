@@ -13,6 +13,72 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  dynamic_units_tests:
+    name: GeoParamsDynamicUnits - Julia ${{ matrix.version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - 'lts'
+          - '1'
+          - 'pre'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: ${{ matrix.version }}
+          arch: x64
+      - uses: julia-actions/cache@v3
+        with:
+          include-matrix: false
+      - name: Test GeoParamsDynamicUnits
+        run: julia --startup-file=no -e 'using Pkg; Pkg.activate(; temp=true); Pkg.develop(PackageSpec(path="lib/GeoParamsDynamicUnits")); Pkg.test("GeoParamsDynamicUnits")'
+
+  units_tests:
+    name: GeoParamsUnits - Julia ${{ matrix.version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - 'lts'
+          - '1'
+          - 'pre'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: ${{ matrix.version }}
+          arch: x64
+      - uses: julia-actions/cache@v3
+        with:
+          include-matrix: false
+      - name: Test GeoParamsUnits
+        run: julia --startup-file=no -e 'using Pkg; Pkg.activate(; temp=true); Pkg.develop(PackageSpec(path="lib/GeoParamsUnits")); Pkg.test("GeoParamsUnits")'
+
+  units_integration_tests:
+    name: GeoParams unit extension - Julia ${{ matrix.version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - 'lts'
+          - '1'
+          - 'pre'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: ${{ matrix.version }}
+          arch: x64
+      - uses: julia-actions/cache@v3
+        with:
+          include-matrix: false
+      - name: Test GeoParamsDynamicUnits extension
+        run: julia --startup-file=no -e 'using Pkg; Pkg.activate(; temp=true); Pkg.develop(PackageSpec(path=pwd())); Pkg.test("GeoParams"; test_args=["test_DynamicUnitsExtension"], julia_args=["--startup-file=no"])'
+
   run_tests:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}

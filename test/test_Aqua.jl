@@ -42,7 +42,10 @@ if VERSION ≤ v"1.12.3"
             check_extras = false,
             check_weakdeps = true,
         ).anynonpass
-        @test Aqua.test_stale_deps(GeoParams).value
+        # GeoParamsDynamicUnits is installed as a regular dependency so Julia 1.10 can resolve
+        # the unregistered sibling package during Pkg.test. It is intentionally loaded only as
+        # an extension trigger and must therefore be excluded from Aqua's load-time check.
+        @test Aqua.test_stale_deps(GeoParams; ignore = [:GeoParamsDynamicUnits]).value
     end
 
     @testset "Persistent tasks" begin

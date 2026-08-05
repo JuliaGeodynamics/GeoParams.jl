@@ -6,6 +6,7 @@ module MaterialParameters
     using Unitful: Energy
     using Unitful
     using Parameters, LaTeXStrings, BibTeX
+    import ..Units
     using ..Units
     using Static
     using Adapt

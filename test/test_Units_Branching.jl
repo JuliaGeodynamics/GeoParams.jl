@@ -93,8 +93,8 @@ using GeoParams
         @test_throws ErrorException NO_units(; stress = 1Pa)
         @test_throws ErrorException NO_units(; viscosity = 1Pas)
 
-        # superscript override: rational exponent display path
-        @test GeoParams.Unitful.superscript(1 // 2) isa String
+        # Public exponent-formatting helper
+        @test GeoParams.superscript(1 // 2) isa String
     end
 
     # ---- Computations: phase-integer and SVector phase-ratio paths ----

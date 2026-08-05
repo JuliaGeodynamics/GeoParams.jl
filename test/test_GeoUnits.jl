@@ -1,9 +1,13 @@
 # Tests the GeoUnits
 using Test
 using GeoParams
+using GeoParamsUnits
 using Unitful
 
 @testset "GeoUnits" begin
+    @test GeoParams.Units === GeoParamsUnits
+    @test GeoParams.GeoUnit === GeoParamsUnits.GeoUnit
+
     @testset "GeoUnit conversions & equality" begin
         # special constructors
         @test GeoParams.GeoUnit(nothing).val === nothing

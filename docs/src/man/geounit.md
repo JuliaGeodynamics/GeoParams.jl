@@ -1,5 +1,8 @@
 # `GeoUnit`
 
+The examples on this page use GeoParams' default Unitful-backed implementation. The same API is
+available from `GeoParamsDynamicUnits`; see [Unit backends](@ref) for details.
+
 Most parameters have physical units (100km, 9.81 ms⁻²). Yet, within numerical solvers it is usually not a good idea to compute with the actual SI units as they (at least in geosciences) tend to result in very large/small numbers, which can cause in roundoff errors. 
 Therefore, we usually convert the dimensional units into non-dimensional ones befeore starting computations. The results can than be converted back to more convenient units for us when we generate the output (plots, for example).
 

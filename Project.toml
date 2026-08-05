@@ -1,13 +1,15 @@
 name = "GeoParams"
 uuid = "e018b62d-d9de-4a26-8697-af89c310ae38"
 authors = ["Boris Kaus <kaus@uni-mainz.de>, Albert De Montserrat <albertdemontserratnavarro@erdw.ethz.ch>"]
-version = "0.7.18"
+version = "0.8.0"
 
 [deps]
 Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 BibTeX = "7b0aa2c9-049f-5cec-894a-2b6b781bb25e"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+GeoParamsDynamicUnits = "0fee25e6-607b-4c1a-93f2-e1559c16915b"
+GeoParamsUnits = "c07019ba-3645-4ece-93fb-16ab17bcb287"
 InternedStrings = "7d512f48-7fb1-5a58-b986-67e6dc259f01"
 KernelDensitySJ = "49dc5b4e-6806-4504-b2cc-a81764e7a38b"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
@@ -26,10 +28,15 @@ UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 Unidecode = "967fb449-e509-55aa-8007-234b4096b967"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
+[sources]
+GeoParamsDynamicUnits = {path = "lib/GeoParamsDynamicUnits"}
+GeoParamsUnits = {path = "lib/GeoParamsUnits"}
+
 [weakdeps]
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 
 [extensions]
+GeoParamsDynamicUnitsExt = "GeoParamsDynamicUnits"
 GeoParamsMakieExt = "Makie"
 
 [compat]
@@ -38,6 +45,8 @@ BibTeX = "0.1"
 CairoMakie = "0.12 - 0.15"
 DelimitedFiles = "1.0"
 ForwardDiff = "1.4.1"
+GeoParamsUnits = "0.1"
+GeoParamsDynamicUnits = "0.1"
 InternedStrings = "0.7"
 JET = "0.9, 0.10"
 KernelDensitySJ = "0.2"
