@@ -103,13 +103,14 @@ module GeoParams
     include("TensorAlgebra/TensorAlgebra.jl")
     export second_invariant, second_invariant_staggered, rotate_elastic_stress
 
-    # note that this throws a "Method definition warning regarding superscript"; that is expected & safe
-    #  as we add a nicer way to create output of superscripts. I have been unable to get rid of this warning,
-    #  as I am indeed redefining a method originally defined in Unitful
-    include("Units.jl")
+    # Preserve the historical `GeoParams.Units` module path while loading the
+    # independently usable package from `lib/GeoParamsUnits`.
+    import GeoParamsUnits as Units
     using .Units
     export @unpack_units, @unpack_val
     export compute_units, udim
+
+    include("UnitsIntegration.jl")
 
     include("Interpolations.jl")
     using .Interpolations

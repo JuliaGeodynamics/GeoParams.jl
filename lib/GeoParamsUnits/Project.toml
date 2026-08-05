@@ -1,0 +1,22 @@
+name = "GeoParamsUnits"
+uuid = "c07019ba-3645-4ece-93fb-16ab17bcb287"
+authors = ["Boris Kaus <kaus@uni-mainz.de>", "Albert De Montserrat <albertdemontserratnavarro@erdw.ethz.ch>"]
+version = "0.1.0"
+
+[deps]
+UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
+Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
+
+[compat]
+Aqua = "0.8"
+Test = "1"
+UnPack = "1"
+Unitful = "1"
+julia = "1.10"
+
+[extras]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Aqua", "Test"]

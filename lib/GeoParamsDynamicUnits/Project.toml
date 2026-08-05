@@ -1,0 +1,22 @@
+name = "GeoParamsDynamicUnits"
+uuid = "0fee25e6-607b-4c1a-93f2-e1559c16915b"
+authors = ["Boris Kaus <kaus@uni-mainz.de>", "Albert De Montserrat <albertdemontserratnavarro@erdw.ethz.ch>"]
+version = "0.1.0"
+
+[deps]
+DynamicQuantities = "06fc5a27-2a28-4c7c-a15d-362465fb6821"
+UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
+
+[compat]
+Aqua = "0.8"
+DynamicQuantities = "1.13"
+Test = "1"
+UnPack = "1"
+julia = "1.10"
+
+[extras]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Aqua", "Test"]

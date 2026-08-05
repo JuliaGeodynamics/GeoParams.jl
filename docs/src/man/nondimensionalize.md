@@ -7,11 +7,33 @@ Create a nondimensionalization object in which we specify characteristic values,
 
 A dimensional parameter can be transformed into a non-dimensional one with `nondimensionalize`.
 
+The units API is also available independently through `GeoParamsUnits` and
+`GeoParamsDynamicUnits`. `GeoParamsUnits` is installed as the default backend, preserving
+`GeoParams.Units` and the existing Unitful-based API. Installing and loading the optional
+`GeoParamsDynamicUnits` package activates an extension that accepts DynamicQuantities
+quantities, `GeoUnit` values, and `GeoUnits` characteristic scales at the GeoParams boundary.
+
+```julia
+using GeoParams
+import GeoParamsDynamicUnits as DUnits
+
+density = ConstantDensity(; ρ = 2900 * DUnits.kg / DUnits.m^3)
+scales = DUnits.GEO_units()
+density_nd = nondimensionalize(density, scales)
+```
+
+Material-parameter storage continues to use `GeoParamsUnits.GeoUnit` internally. This keeps the
+existing public API and serialized material types stable while allowing DynamicQuantities input
+and characteristic units through the extension. Explicit `convert` methods are provided between
+the two packages' `GeoUnit` and `GeoUnits` types.
+
+See [Unit backends](@ref) for standalone loading, backend comparison, conversion examples, and
+the extension's storage contract.
+
 # Specify characteristic values
 Characteristic values can be defined in 3 ways.
 
 ```@docs
-GeoParams.Units
 AbstractGeoUnit
 GeoUnit
 GeoUnits

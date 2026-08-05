@@ -44,6 +44,11 @@ features:
     title: Extensibility
     details: Provides a natural repository for contributions of various new creep laws and other rheological features for use by the larger community.
     link: /man/contributing
+
+  - icon: 📐
+    title: Unit backends
+    details: Use the Unitful default or interoperate with DynamicQuantities through a package extension.
+    link: /man/unitbackends
 ---
 ```
 

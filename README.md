@@ -21,6 +21,7 @@ NOTE: The package remains under development and the API is not yet fully fixed. 
 ### Contents
 - [Contents](#contents)
 - [1. Nondimensionalization](#1-nondimensionalization)
+  - [1.1 Unit backends](#11-unit-backends)
 - [2. Material parameters](#2-material-parameters)
   - [2.1 Constant density, constant linear viscosity](#21-constant-density-constant-linear-viscosity)
   - [2.2 Nonlinear creep laws](#22-nonlinear-creep-laws)
@@ -71,6 +72,20 @@ or convert them to different units:
 julia> uconvert(Pa^-3.05*s^-1, A)
 3.157479571851836e-20 Pa⁻³·⁰⁵ s⁻¹
 ```
+
+#### 1.1 Unit backends
+
+The units API is available as two standalone packages under `lib/`:
+
+- [`GeoParamsUnits`](lib/GeoParamsUnits) uses Unitful and remains GeoParams' default backend.
+- [`GeoParamsDynamicUnits`](lib/GeoParamsDynamicUnits) provides the same exported API using
+  DynamicQuantities.
+
+Loading `GeoParamsDynamicUnits` alongside GeoParams activates an extension that accepts dynamic
+quantities and characteristic scales while preserving the existing GeoParams material-storage
+types. See the [unit backend documentation](https://juliageodynamics.github.io/GeoParams.jl/dev/man/unitbackends)
+for examples and the precise compatibility contract.
+
 ### 2. Material parameters
 
 All geodynamic simulations require specifying material parameters, such as (nonlinear) viscous constitutive relationships or an equation of state. These parameters are usually specified per `phase`. Here, we provide a framework that simplifies doing that. Thanks to the flexibility of julia, we can actually directly embed the function that does the computations in the structure itself, which makes it straightforward to extend it and add new creep laws (which can directly be used in the solvers).
