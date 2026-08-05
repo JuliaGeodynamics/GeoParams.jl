@@ -674,10 +674,11 @@ end
 """
     MeltingParam_Volatile(; a_coeffs, b_coeffs, c_coeffs, T0=273K, Tref=1K, Pref=1e6Pa)
 
-Volatile-dependent silicic melting parameterisation used by Degruyter & Huber
-(2014). The crystal fraction follows a complementary error function whose
-amplitude `a`, width `b`, and centre `c` depend on the dissolved water and CO2
-contents and pressure:
+Volatile-dependent silicic crystallinity-temperature curve fitted by Scholz et
+al. (2023) to rhyolite-MELTS runs, for use in Degruyter & Huber (2014)-type
+magma-chamber box models. The crystal fraction follows a complementary error
+function whose amplitude `a`, width `b`, and centre `c` depend on the dissolved
+water and CO2 contents and pressure:
 ```math
     \\varepsilon_x = a\\,\\mathrm{erfc}\\!\\big(b\\,(T_C - c)\\big),
     \\qquad \\phi = 1 - \\varepsilon_x
@@ -685,17 +686,25 @@ contents and pressure:
 with ``T_C = (T - T_0)/T_{ref}`` (numerically °C) and each of ``a, b, c`` a
 quadratic polynomial in ``x = 100\\,m_{H_2O}``, ``y = 100\\,m_{CO_2}`` (dissolved
 mass fractions, in wt%) and ``z = P/P_{ref}`` (numerically MPa). Dissolved water
-depresses the liquidus, so more water shifts the curve to lower temperature —
-the crystallization→exsolution (second-boiling) feedback of the D&H model. The
+depresses the liquidus, so more water shifts the curve to lower temperature. The
 returned quantity is the **melt fraction** ``\\phi``; the exsolved-gas fraction
 ``\\varepsilon_g`` is a solver state and is not subtracted here.
+
+The fit is calibrated only over crystal fractions from 0 up to ~0.5-0.6 (the
+"eruptible" range these box models track); `2a` is the crystal fraction at the
+cold end of the fit and is bounded to `[0.5, 1]` by construction, so `ϕ` has a
+positive floor `1 - 2a` rather than reaching 0 — this is intentional, not a
+missing clamp.
 
 The dimensionless polynomial coefficients are stored as plain `NTuple`s; only the
 reference scales `T0`, `Tref`, `Pref` are `GeoUnit`s, so the parameterisation
 nondimensionalizes. Dissolved contents `mH2O`, `mCO2` are dimensionless and pass
 through `args`.
 
+![MeltingParam_Volatile](./assets/img/MeltingParam_Volatile.png)
+
 # References
+- Scholz, K., Townsend, M., Huber, C., Troch, J., Bachmann, O., Coonin, A.N. (2023), Investigating the impact of an exsolved H2O-CO2 phase on magma chamber growth and longevity: A thermomechanical model, G-cubed 24, e2023GC011151, https://doi.org/10.1029/2023GC011151 (Eq. 9-12, silicic crystallinity-temperature curve)
 - Degruyter, W., Huber, C. (2014), A model for the eruption frequency of upper crustal silicic magma chambers, EPSL 403, 117-130, https://doi.org/10.1016/j.epsl.2014.06.047
 """
 struct MeltingParam_Volatile{T, U1, U2} <: AbstractMeltingParam{T}
@@ -767,16 +776,16 @@ function compute_dϕdT!(dϕdT::AbstractArray, p::MeltingParam_Volatile; T::Abstr
 end
 
 function show(io::IO, g::MeltingParam_Volatile)
-    return print(io, "Volatile-dependent silicic melting (Degruyter & Huber 2014): ϕ = 1 - a*erfc(b*(T_C - c))")
+    return print(io, "Volatile-dependent silicic melting (Scholz et al. 2023): ϕ = 1 - a*erfc(b*(T_C - c))")
 end
 #-------------------------------------------------------------------------
 """
     MeltingParam_MaficVolatile(; a_coeffs, b_coeffs, T0=273K, Tref=1K, Pref=1e6Pa)
 
-Volatile-dependent mafic melting parameterisation used by Degruyter & Huber
-(2014)-type magma-chamber models (Scholz `MagmaChamberBoxModel`
-`crystal_fraction_mafic.m`/`parameters_melting_curve_mafic.m`): linear in
-temperature, `ε_x = a*T_C + b`, with slope `a` and intercept `b` each a
+Volatile-dependent mafic crystallinity-temperature curve fitted by Scholz et
+al. (2023) to rhyolite-MELTS runs, for use in Degruyter & Huber (2014)-type
+magma-chamber box models: linear in temperature, `ε_x = a*T_C + b`, with slope
+`a` and intercept `b` each a
 degree-2 polynomial in `(100*mH2O, 100*mCO2, P/Pref)` — the same polynomial
 form as [`MeltingParam_Volatile`](@ref)'s `a`/`b`/`c`, just combined linearly
 instead of through `erfc`. `ϕ = 1 - ε_x` (`ε_g` is added by the solver, not
@@ -797,6 +806,7 @@ extrapolation past the fit's calibration, not a measurement — no warning is
 raised when this triggers.
 
 # References
+- Scholz, K., Townsend, M., Huber, C., Troch, J., Bachmann, O., Coonin, A.N. (2023), Investigating the impact of an exsolved H2O-CO2 phase on magma chamber growth and longevity: A thermomechanical model, G-cubed 24, e2023GC011151, https://doi.org/10.1029/2023GC011151 (Eq. 14-16, mafic crystallinity-temperature curve)
 - Degruyter, W., Huber, C. (2014), A model for the eruption frequency of upper crustal silicic magma chambers, EPSL 403, 117-130, https://doi.org/10.1016/j.epsl.2014.06.047
 """
 struct MeltingParam_MaficVolatile{T, U1, U2} <: AbstractMeltingParam{T}
@@ -860,7 +870,7 @@ function compute_dϕdT!(dϕdT::AbstractArray, p::MeltingParam_MaficVolatile; T::
 end
 
 function show(io::IO, g::MeltingParam_MaficVolatile)
-    return print(io, "Volatile-dependent mafic melting (Degruyter & Huber 2014): ϕ = 1 - (a*T_C + b)")
+    return print(io, "Volatile-dependent mafic melting (Scholz et al. 2023): ϕ = 1 - (a*T_C + b)")
 end
 #-------------------------------------------------------------------------
 
