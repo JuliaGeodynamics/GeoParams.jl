@@ -730,7 +730,8 @@ function (s::Melt_DensityX)(; P::Number = 0.0e0, T::Number = 0.0e0, mH2O = s.oxd
         @unpack_units P0, ρ0, sum_XMW, sum_Vliq = s
         norm_MPv = unpack_units(norm_MP)
         if mH2O != s.oxd_wt[9] / 100
-            oxd_wt = Base.setindex(s.oxd_wt, 100 * mH2O, 9)
+            oxd_wt = 100 * mH2O
+            s.oxd_wt[9] = oxd_wt
             sum_XMW, norm_MPv = compute_XMW_norm_MP(oxd_wt, unpack_units(s.MW))
         end
         P0, ρ0, sum_XMW, sum_Vliq, unpack_units(MV), unpack_units(dVdT), unpack_units(Tref), norm_MPv, unpack_units(dVdP)
