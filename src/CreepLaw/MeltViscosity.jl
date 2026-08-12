@@ -441,7 +441,7 @@ end
         @unpack_val AT, BT, CT, η0 = a
     end
     if mH2O != a.oxd_wt[9] / 100
-        oxd_wt = Base.setindex(a.oxd_wt, 100 * mH2O, 9)
+        oxd_wt = oxd_wt = a.oxd_wt[1:8]..., 100 * mH2O
         bb, cc = T isa Quantity ? (unpack_units(a.bb), unpack_units(a.cc)) : (unpack_vals(a.bb), unpack_vals(a.cc))
         BT, CT = calculate_BT_CT(oxd_wt, a.MW, bb, cc)
     end
