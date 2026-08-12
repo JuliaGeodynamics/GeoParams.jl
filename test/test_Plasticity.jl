@@ -96,10 +96,10 @@ using LaTeXStrings
         @test num_alloc == 0
 
         # Test plastic potential derivatives
-        ## 2D — constrained gradient: τzz = -τxx - τyy is a function of stored components
+        ## 2D physical tensor flow direction
         τij = (1.0, 2.0, 3.0)
-        fxx(τij) = (τij[1] + 0.5 * τij[2]) / second_invariant(τij)
-        fyy(τij) = (0.5 * τij[1] + τij[2]) / second_invariant(τij)
+        fxx(τij) = 0.5 * τij[1] / second_invariant(τij)
+        fyy(τij) = 0.5 * τij[2] / second_invariant(τij)
         fxy(τij) = τij[3] / second_invariant(τij)
         solution2D = [fxx(τij), fyy(τij), fxy(τij)]
 
@@ -113,11 +113,9 @@ using LaTeXStrings
         @test out2 == Tuple(solution2D)
         @test compute_plasticpotentialDerivative(p, τij_tuple) == ∂Q∂τ(p, τij_tuple)
 
-        # using AD — must agree with the analytical constrained gradient
-        Q = second_invariant # where second_invariant is a function
-        ad2 = ∂Q∂τ(Q, τij_tuple)
-        @test ad2 == (0.5, 0.625, 0.75)
-        @test collect(out1) ≈ collect(ad2)
+        # must agree with the equivalent explicit 3D tensor flow direction
+        out2_as_3D = ∂Q∂τ(p, (τij[1], τij[2], -τij[1] - τij[2], 0.0, 0.0, τij[3]))
+        @test all(isapprox.(out2, (out2_as_3D[1], out2_as_3D[2], out2_as_3D[6])))
 
         ## 3D
         τij = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
@@ -260,10 +258,10 @@ using LaTeXStrings
         # @test num_alloc <= 32
 
         # Test plastic potential derivatives
-        ## 2D — constrained gradient: τzz = -τxx - τyy is a function of stored components
+        ## 2D physical tensor flow direction
         τij = (1.0, 2.0, 3.0)
-        fxx(τij) = (τij[1] + 0.5 * τij[2]) / second_invariant(τij)
-        fyy(τij) = (0.5 * τij[1] + τij[2]) / second_invariant(τij)
+        fxx(τij) = 0.5 * τij[1] / second_invariant(τij)
+        fyy(τij) = 0.5 * τij[2] / second_invariant(τij)
         fxy(τij) = τij[3] / second_invariant(τij)
         solution2D = [fxx(τij), fyy(τij), fxy(τij)]
 
@@ -277,11 +275,9 @@ using LaTeXStrings
         @test out2 == Tuple(solution2D)
         @test compute_plasticpotentialDerivative(p, τij_tuple) == ∂Q∂τ(p, τij_tuple)
 
-        # using AD — must agree with the analytical constrained gradient
-        Q = second_invariant # where second_invariant is a function
-        ad2 = ∂Q∂τ(Q, τij_tuple)
-        @test ad2 == (0.5, 0.625, 0.75)
-        @test collect(out1) ≈ collect(ad2)
+        # must agree with the equivalent explicit 3D tensor flow direction
+        out2_as_3D = ∂Q∂τ(p, (τij[1], τij[2], -τij[1] - τij[2], 0.0, 0.0, τij[3]))
+        @test all(isapprox.(out2, (out2_as_3D[1], out2_as_3D[2], out2_as_3D[6])))
 
         ## 3D
         τij = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
@@ -430,12 +426,12 @@ using LaTeXStrings
         @test num_alloc == 0
 
         # Test plastic potential derivatives
-        ## 2D — constrained gradient: τzz = -τxx - τyy is a function of stored components
+        ## 2D physical tensor flow direction
         τij = (1.0, 2.0, 3.0)
         τII_test = second_invariant(τij)
         dQτII = ∂Q∂τII(p, τII_test)
-        fxx(τij) = dQτII * (τij[1] + 0.5 * τij[2]) / second_invariant(τij)
-        fyy(τij) = dQτII * (0.5 * τij[1] + τij[2]) / second_invariant(τij)
+        fxx(τij) = dQτII * τij[1] / second_invariant(τij)
+        fyy(τij) = dQτII * τij[2] / second_invariant(τij)
         fxy(τij) = 2 * dQτII * τij[3] / second_invariant(τij)
         solution2D = [fxx(τij), fyy(τij), fxy(τij)]
 
@@ -445,11 +441,9 @@ using LaTeXStrings
         @test out2 == Tuple(solution2D)
         @test compute_plasticpotentialDerivative(p, τij_tuple) == ∂Q∂τ(p, τij_tuple)
 
-        # using AD — must agree with analytical constrained gradient scaled by Aτ
-        Q = second_invariant # where second_invariant is a function
-        ad2 = ∂Q∂τ(Q, τij_tuple)
-        @test ad2 == (0.5, 0.625, 0.75)
-        @test all(isapprox.(dQτII .* collect(ad2), [out2[1], out2[2], out2[3] / 2]; rtol = 1.0e-5))
+        # must agree with the equivalent explicit 3D tensor flow direction
+        out2_as_3D = ∂Q∂τ(p, (τij[1], τij[2], -τij[1] - τij[2], 0.0, 0.0, τij[3]))
+        @test all(isapprox.(out2, (out2_as_3D[1], out2_as_3D[2], out2_as_3D[6])))
 
         ## 3D
         τij = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
@@ -608,9 +602,9 @@ using LaTeXStrings
         @test ∂Q∂τ(Q, [1.0, 2.0, 2.0]) ≈ [1 / 3, 2 / 3, 2 / 3] rtol = 1.0e-9
         # 3-arg (args, kwargs) form + the MaterialParams plasticity dispatch
         τ = @SVector [1.0, 2.0, 3.0]
-        @test ∂Q∂τ(p, τ, (;)) ≈ [0.5, 0.625, 0.75] rtol = 1.0e-9
+        @test ∂Q∂τ(p, τ, (;)) ≈ [0.125, 0.25, 0.75] rtol = 1.0e-9
         mp = SetMaterialParams(; Phase = 1, Plasticity = DruckerPrager(; C = 1.0e6))
-        @test ∂Q∂τ(mp, τ) ≈ [0.5, 0.625, 0.75] rtol = 1.0e-9
+        @test ∂Q∂τ(mp, τ) ≈ [0.125, 0.25, 0.75] rtol = 1.0e-9
     end
 
 end
