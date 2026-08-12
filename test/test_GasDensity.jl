@@ -23,6 +23,21 @@ using ForwardDiff: derivative
     # dimensional Quantity input hits the @unpack_units branch
     @test ustrip(kg / m^3, rk(; P = 200.0MPa, T = 1200.0K)) ≈ rk(; P = 2.0e8, T = 1200.0) rtol = 1.0e-6
 
+    # degenerate P/T return NaN instead of silently returning Inf (P=0) or
+    # throwing an opaque complex-exponentiation error
+    @test isnan(rk(; P = 0.0, T = 1200.0))
+    @test isnan(rk(; P = -1.0e5, T = 1200.0))
+    @test isnan(rk(; P = 2.0e8, T = 200.0))          # T below the 273.15K reference
+    @test isnan(rk(; P = 2.0e8, T = 273.15))          # exactly at the reference (τ=0)
+    @test isnan(rk(; P = 0.0Pa, T = 1200.0K))         # Quantity path, not silently dropped
+    # a cell with no gas phase must not depend on the gas EOS at all: ρgas is
+    # only evaluated when ϕ_gas != 0, so an out-of-domain P/T never reaches a
+    # strict EOS like RedlichKwong_Density when there is no gas to poison
+    tp_guard = ThreePhase_Density(; ρgas = RedlichKwong_Density())
+    @test isfinite(compute_density(tp_guard, (; P = 0.0, T = 1200.0, ϕ_gas = 0.0, ϕ_x = 0.3)))
+    # but a genuinely gas-bearing cell still hits (and must respect) the guard
+    @test isnan(compute_density(tp_guard, (; P = 0.0, T = 1200.0, ϕ_gas = 0.2, ϕ_x = 0.3)))
+
     # custom coefficients through the keyword constructor
     rk2 = RedlichKwong_Density(; coeffs = (-100.0, 120.0, 110.0))
     @test rk2.coeffs == (-100.0, 120.0, 110.0)
@@ -67,7 +82,7 @@ using ForwardDiff: derivative
     # Three-phase density --------------------------------------------------
     tp = ThreePhase_Density(;
         ρmelt = ConstantDensity(ρ = 2300kg / m^3),
-        ρx = ConstantDensity(ρ = 2600kg / m^3),
+        ρsolid = ConstantDensity(ρ = 2600kg / m^3),
         ρgas = ConstantDensity(ρ = 1kg / m^3),
     )
     @test isbits(tp)
@@ -83,7 +98,7 @@ using ForwardDiff: derivative
     # adding gas lowers the density
     @test tp(; ϕ_gas = 0.1, ϕ_x = 0.4) < tp(; ϕ_gas = 0.0, ϕ_x = 0.4)
 
-    # default gas is Redlich-Kwong: mixture responds to P, T through the EOS
+    # default gas is ideal-gas: mixture responds to P, T through the EOS
     tp_rk = ThreePhase_Density()
     ρmix = tp_rk(; ϕ_gas = 0.2, ϕ_x = 0.3, P = 2.0e8, T = 1200.0)
     @test 0 < ρmix < 2600
@@ -97,4 +112,24 @@ using ForwardDiff: derivative
     # SetMaterialParams accepts the new densities in the Density slot
     ph = SetMaterialParams(; Phase = 1, Density = RedlichKwong_Density())
     @test compute_density(ph, (; P = 2.0e8, T = 1200.0)) ≈ rk(; P = 2.0e8, T = 1200.0)
+
+    # Quantity input through the mixture: a unit-aware gas EOS and a
+    # ConstantDensity melt/solid must not mix a Quantity with a bare number
+    for gas in (IdealGas_Density(), ConstantDensity(ρ = 1kg / m^3))
+        tpq = ThreePhase_Density(; ρgas = gas)
+        ρq = compute_density(tpq, (; P = 2.0e8Pa, T = 1200.0K, ϕ_gas = 0.05, ϕ_x = 0.4))
+        @test ρq isa Quantity
+        # ustrip to kg/m^3 only succeeds if the mixture is dimensionally a density
+        @test ustrip(kg / m^3, ρq) ≈ compute_density(tpq, (; P = 2.0e8, T = 1200.0, ϕ_gas = 0.05, ϕ_x = 0.4)) rtol = 1.0e-6
+    end
+    # the gas EOS returns kg/m^3, not an unreduced equivalent
+    @test unit(ig(; P = 100.0MPa, T = 1000.0K)) === unit(1.0kg / m^3)
+
+    # Float32 structs stay Float32 end-to-end (GPU kernels are eltype-strict)
+    rk32 = RedlichKwong_Density(;
+        coeffs = (-112.528f0, 127.811f0, 112.04f0),
+        T0 = 273.15f0K, Tref = 1.0f0K, Pref = 1.0f5Pa, ρref = 1.0f3kg / m^3,
+    )
+    @test rk32(; P = 2.0f8, T = 1200.0f0) isa Float32
+    @test IdealGas_Density(; Rs = 461.5f0J / kg / K)(; P = 1.0f8, T = 1000.0f0) isa Float32
 end

@@ -318,6 +318,13 @@ where
             (SiO2 TiO2 Al2O3 FeO MgO CaO Na2O K2O H2O) \n
             Default values are for a hydrous N-MORB melt.
 
+`compute_εII`/`compute_τII` (and their derivatives) also accept an `mH2O`
+keyword (melt water content, mass fraction) that overrides the struct's own
+`oxd_wt[9]` for that call, recomputing only the water-dependent aggregates.
+`mH2O` is accepted as given: GeoParams does not check it for consistency
+with any `Solubility` or other closure's dissolved-water output — that is
+the caller's/solver's responsibility.
+
 ## Reference
 - Giordano D, Russell JK, & Dingwell DB (2008). Viscosity of Magmatic Liquids: A Model. Earth & Planetary Science Letters, 271, 123-134. (https://dx.doi.org/10.1016/j.epsl.2008.03.038)
 
@@ -419,23 +426,37 @@ function calculate_BT_CT(oxd_wt, MW, bb, cc)
     return BT, CT
 end
 
-
-#calculation routine
-function compute_εII(a::GiordanoMeltViscosity, TauII; T = one(precision(a)), kwargs...)
-    @unpack_val AT, BT, CT, η0 = a
-
-    η = η0 * exp10(min(Inf, max(-6, AT + BT / (T - CT))))
-
-    ε = (TauII / η) * 0.5
-    return ε
+# Shared viscosity evaluation for all compute_εII/compute_τII/d·_d· dispatches
+# below. `mH2O` (melt water content, mass fraction) defaults to the struct's
+# own frozen `oxd_wt[9]`; BT/CT are only recomputed when it's overridden, so
+# the default call path stays exactly as fast as before this kwarg existed —
+# `calculate_BT_CT` was precomputed in the constructor precisely so the
+# hot-loop callable is O(1). `mH2O` is accepted as given: GeoParams does not
+# check it for consistency with any `Solubility`/other closure's dissolved
+# water — that is the caller/solver's responsibility.
+@inline function _giordano_η(a::GiordanoMeltViscosity, T; mH2O = a.oxd_wt[9] / 100)
+    if T isa Quantity
+        @unpack_units AT, BT, CT, η0 = a
+    else
+        @unpack_val AT, BT, CT, η0 = a
+    end
+    if mH2O != a.oxd_wt[9] / 100
+        oxd_wt = oxd_wt = a.oxd_wt[1:8]..., 100 * mH2O
+        bb, cc = T isa Quantity ? (unpack_units(a.bb), unpack_units(a.cc)) : (unpack_vals(a.bb), unpack_vals(a.cc))
+        BT, CT = calculate_BT_CT(oxd_wt, a.MW, bb, cc)
+    end
+    return η0 * exp10(min(Inf, max(-6, AT + BT / (T - CT))))
 end
 
-function compute_εII(a::GiordanoMeltViscosity, TauII::Quantity; T = 1K, kwargs...)
-    @unpack_units AT, BT, CT, η0 = a
+#calculation routine
+function compute_εII(a::GiordanoMeltViscosity, TauII; T = one(precision(a)), mH2O = a.oxd_wt[9] / 100, kwargs...)
+    η = _giordano_η(a, T; mH2O)
+    return (TauII / η) * 0.5
+end
 
-    η = η0 * exp10(min(Inf, max(-6, AT + BT / (T - CT))))
-    ε = TauII / η * 0.5
-    return ε
+function compute_εII(a::GiordanoMeltViscosity, TauII::Quantity; T = 1K, mH2O = a.oxd_wt[9] / 100, kwargs...)
+    η = _giordano_η(a, T; mH2O)
+    return TauII / η * 0.5
 end
 
 """
@@ -449,24 +470,18 @@ end
         kwargs...,
     ) where {N, _T}
     @inbounds for i in eachindex(EpsII)
-        EpsII[i] = compute_εII(a, TauII[i]; T = T[i])
+        EpsII[i] = compute_εII(a, TauII[i]; T = T[i], kwargs...)
     end
     return nothing
 end
 
-@inline function dεII_dτII(a::GiordanoMeltViscosity, TauII::Quantity; T = 1K, kwargs...)
-    @unpack_units AT, BT, CT, η0 = a
-
-    η = η0 * exp10(min(Inf, max(-6, AT + BT / (T - CT))))
-
+@inline function dεII_dτII(a::GiordanoMeltViscosity, TauII::Quantity; T = 1K, mH2O = a.oxd_wt[9] / 100, kwargs...)
+    η = _giordano_η(a, T; mH2O)
     return 0.5 * (1.0 / η)
 end
 
-@inline function dεII_dτII(a::GiordanoMeltViscosity, TauII; T = one(precision(a)), kwargs...)
-    @unpack_val AT, BT, CT, η0 = a
-
-    η = η0 * exp10(min(Inf, max(-6, AT + BT / (T - CT))))
-
+@inline function dεII_dτII(a::GiordanoMeltViscosity, TauII; T = one(precision(a)), mH2O = a.oxd_wt[9] / 100, kwargs...)
+    η = _giordano_η(a, T; mH2O)
     return 0.5 * (1.0 / η)
 end
 
@@ -475,19 +490,13 @@ end
 
 Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor
 """
-@inline function compute_τII(a::GiordanoMeltViscosity, EpsII; T = one(precision(a)), kwargs...)
-    @unpack_val AT, BT, CT, η0 = a
-
-    η = η0 * exp10(min(Inf, max(-6, AT + BT / (T - CT))))
-
+@inline function compute_τII(a::GiordanoMeltViscosity, EpsII; T = one(precision(a)), mH2O = a.oxd_wt[9] / 100, kwargs...)
+    η = _giordano_η(a, T; mH2O)
     return 2 * η * EpsII
 end
 
-@inline function compute_τII(a::GiordanoMeltViscosity, EpsII::Quantity; T = 1K, kwargs...)
-    @unpack_units AT, BT, CT, η0 = a
-
-    η = η0 * exp10(min(Inf, max(-6, AT + BT / (T - CT))))
-
+@inline function compute_τII(a::GiordanoMeltViscosity, EpsII::Quantity; T = 1K, mH2O = a.oxd_wt[9] / 100, kwargs...)
+    η = _giordano_η(a, T; mH2O)
     return 2 * η * EpsII
 end
 
@@ -499,24 +508,18 @@ end
         kwargs...,
     ) where {N, _T}
     @inbounds for i in eachindex(TauII)
-        TauII[i] = compute_τII(a, EpsII[i]; T = T[i])
+        TauII[i] = compute_τII(a, EpsII[i]; T = T[i], kwargs...)
     end
     return nothing
 end
 
-@inline function dτII_dεII(a::GiordanoMeltViscosity, EpsII; T = one(precision(a)), kwargs...)
-    @unpack_val AT, BT, CT, η0 = a
-
-    η = η0 * exp10(min(Inf, max(-6, AT + BT / (T - CT))))
-
+@inline function dτII_dεII(a::GiordanoMeltViscosity, EpsII; T = one(precision(a)), mH2O = a.oxd_wt[9] / 100, kwargs...)
+    η = _giordano_η(a, T; mH2O)
     return 2 * η
 end
 
-@inline function dτII_dεII(a::GiordanoMeltViscosity, EpsII::Quantity; T = 1K, kwargs...)
-    @unpack_units AT, BT, CT, η0 = a
-
-    η = η0 * exp10(min(Inf, max(-6, AT + BT / (T - CT))))
-
+@inline function dτII_dεII(a::GiordanoMeltViscosity, EpsII::Quantity; T = 1K, mH2O = a.oxd_wt[9] / 100, kwargs...)
+    η = _giordano_η(a, T; mH2O)
     return 2 * η
 end
 

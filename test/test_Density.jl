@@ -575,6 +575,16 @@ import ForwardDiff.derivative
     ρ = compute_density(x_D_int, args)
     @test ρ ≈ 2365.65821 # from the Melt_DensityX.xls
 
+    # mH2O kwarg: per-call melt water override --------------------------
+    # default (no mH2O) matches passing the struct's own frozen water content
+    @test compute_density(x_D_int, args) == compute_density(x_D_int, (; args..., mH2O = x_D_int.oxd_wt[9] / 100))
+    # more water -> lower density (water lowers melt density)
+    ρ_wet = compute_density(x_D_int, (; args..., mH2O = 0.05))
+    @test ρ_wet < ρ
+    # Quantity dispatch: mH2O must not be silently dropped via kwargs...
+    args_Q = (P = 150.0e6Pa, T = 1473.15K)
+    @test compute_density(x_D_int, (; args_Q..., mH2O = 0.05)) != compute_density(x_D_int, args_Q)
+
     x = Melt_DensityX(oxd_wt = (62.4, 0.55, 20.01, 0.03, 3.22, 9.08, 3.52, 0.93, 2.0))
     args = (P = 0.0, T = 273.15)
     @test derivative(x -> compute_density(x_D, (P = args.P, T = x)), args.T) == -0.28465196140071125

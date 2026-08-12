@@ -24,6 +24,7 @@ export compute_dissolved, # (m_h2o, m_co2) mass fractions
     ∂dissolved_∂P, # ForwardDiff partials, both outputs
     ∂dissolved_∂T,
     ∂dissolved_∂Xco2,
+    find_Xco2, # Newton-invert compute_dissolved for X_co2 given target m_h2o
     param_info,
     AbstractSolubility,
     Liu2005_Solubility, # silicic (rhyolite)
@@ -106,13 +107,13 @@ X_co2)` and `compute_dissolved(s, args::NamedTuple)`.
     Pc = P * X_co2 / Pref           # ∝ CO2 partial pressure in MPa
     Tr = Tref / T                   # ∝ 1/T [K]
 
-Pw_sqrt  = sqrt(Pw)     # Pw^0.5
-Pw_15    = Pw * Pw_sqrt     # Pw^1.5
+    Pw_sqrt = sqrt(Pw)     # Pw^0.5
+    Pw_15 = Pw * Pw_sqrt     # Pw^1.5
 
-meq  = @muladd (b1 * Pw_sqrt + b2 * Pw + b3 * Pw_15) * Tr + b4 * Pw_15 + Pc * (b5 * Pw_sqrt + b6 * Pw)
-Cco2 = @muladd Pc * ((c1 + c2 * Pw) * Tr + c3 * Pw_sqrt + c4 * Pw_15)
+    meq = @muladd (b1 * Pw_sqrt + b2 * Pw + b3 * Pw_15) * Tr + b4 * Pw_15 + Pc * (b5 * Pw_sqrt + b6 * Pw)
+    Cco2 = @muladd Pc * ((c1 + c2 * Pw) * Tr + c3 * Pw_sqrt + c4 * Pw_15)
 
-    return (1.0e-2 * meq, 1.0e-6 * Cco2)   # wt% -> fraction ; ppm -> fraction
+    return (meq / 100, Cco2 / 1000000)   # wt% -> fraction ; ppm -> fraction
 end
 
 function show(io::IO, s::Liu2005_Solubility)
@@ -127,7 +128,10 @@ Coupled H2O–CO2 solubility for mafic (basalt) melt. Dissolved H2O follows the
 mafic polynomial of the Scholz/Degruyter–Huber reference in the dimensionless
 groups ``T_C = (T-T_0)/T_{ref}`` (numerically °C) and ``P_m = P/P_{ref}``
 (numerically MPa); dissolved CO2 reuses the Liu (2005) rhyolite CO2 block.
-Nondimensionalizes like [`Liu2005_Solubility`](@ref).
+Nondimensionalizes like [`Liu2005_Solubility`](@ref). The H2O polynomial has
+no floor at zero and goes negative outside its calibration (high `X_co2`,
+low `P`); the dissolved H2O output is floored at zero rather than returned
+as a negative mass fraction.
 
 # References
 - Degruyter, W., Huber, C. (2014), A model for the eruption frequency of upper crustal silicic magma chambers, EPSL 403, 117-130, https://doi.org/10.1016/j.epsl.2014.06.047
@@ -173,20 +177,26 @@ end
     end
     Tc = (T - T0) / Tref            # ∝ T in °C
     Pm = P / Pref                   # ∝ P in MPa
-meq = @muladd b1 +
-    Tc * (b2 + b8 * Tc + b5 * X_co2 + b6 * Pm) +
-    X_co2 * (b3 + b9 * X_co2 + b7 * Pm) +
-    Pm * (b4 + b10 * Pm)
+    meq = @muladd b1 +
+        Tc * (b2 + b8 * Tc + b5 * X_co2 + b6 * Pm) +
+        X_co2 * (b3 + b9 * X_co2 + b7 * Pm) +
+        Pm * (b4 + b10 * Pm)
 
     # CO2 block: Liu (2005) rhyolite
     Pw = Pm * (1 - X_co2)
     Pc = Pm * X_co2
     Tr = Tref / T
-Pw_sqrt = sqrt(Pw)        # Pw^0.5
-Pw_15   = Pw * Pw_sqrt    # Pw^1.5
-Cco2 = @muladd Pc * ((c1 + c2 * Pw) * Tr + c3 * Pw_sqrt + c4 * Pw_15)
+    Pw_sqrt = sqrt(Pw)        # Pw^0.5
+    Pw_15 = Pw * Pw_sqrt    # Pw^1.5
+    Cco2 = @muladd Pc * ((c1 + c2 * Pw) * Tr + c3 * Pw_sqrt + c4 * Pw_15)
 
-    return (1.0e-2 * meq, 1.0e-6 * Cco2)
+    # The mafic H2O polynomial has no floor at zero and goes negative at high
+    # X_co2 / low P, reachable well inside a magma chamber's P-T range. A
+    # negative dissolved mass fraction cannot be physical, so floor rather
+    # than extrapolate.
+    meq = max(meq, zero(meq))
+
+    return (meq / 100, Cco2 / 1000000)
 end
 
 function show(io::IO, s::Mafic_Solubility)
@@ -206,8 +216,11 @@ and the mass-weighted specific heat is
 ```math
     c_g = \\frac{M_{H_2O} c_{H_2O}(1-X_{co2}) + M_{CO_2} c_{CO_2} X_{co2}}{m_g}
 ```
-with the reference convention ``c_g = 0`` at ``X_{co2}=0``. All fields are
-`GeoUnit`s, so the struct nondimensionalizes.
+with the reference convention ``c_g = 0`` at ``X_{co2}=0`` — a discontinuity,
+since the formula's own limit as ``X_{co2} \\to 0`` is ``c_{H_2O}``.
+
+All fields are `GeoUnit`s, so the struct nondimensionalizes, but both accessors
+read values rather than `Quantity`s: neither return carries units.
 """
 @with_kw_noshow struct GasMixture{T, U1, U2} <: AbstractMaterialParam
     Cp_h2o::GeoUnit{T, U1} = 3880.0J / kg / K   # specific heat of H2O gas
@@ -279,6 +292,50 @@ pressure. Companions [`∂dissolved_∂T`](@ref), [`∂dissolved_∂Xco2`](@ref)
 """
 ∂dissolved_∂Xco2(s::AbstractSolubility, P, T, X_co2) = Tuple(ForwardDiff.derivative(x -> _dissolved_svec(s, P, T, x), X_co2))
 
+"""
+    find_Xco2(s::AbstractSolubility, P, T, m_h2o_target; X0=0.5, tol=1e-8, max_iter=50) -> X_co2
+
+Invert [`compute_dissolved`](@ref) for the gas composition: solve for
+`X_co2 ∈ [0,1]` such that `compute_dissolved(s, P, T, X_co2)[1] ==
+m_h2o_target`, at fixed pressure `P` and temperature `T`. Uses a safeguarded
+Newton iteration (via [`∂dissolved_∂Xco2`](@ref)) bracketed by bisection, so
+an out-of-bounds Newton step always falls back to a bisection halving
+instead of leaving `[0,1]`.
+
+Throws an `ErrorException` if `m_h2o_target` is infeasible at this `P,T`
+(outside the achievable range between `X_co2=0` and `X_co2=1`) or if the
+iteration fails to converge within `max_iter` steps — this never returns a
+clamped or out-of-tolerance answer.
+"""
+function find_Xco2(s::AbstractSolubility, P, T, m_h2o_target; X0 = 0.5, tol = 1.0e-8, max_iter = 50)
+    m_h2o_target ≥ 0 || throw(DomainError(m_h2o_target, "find_Xco2: a dissolved H2O mass fraction cannot be negative"))
+    f(x) = compute_dissolved(s, P, T, x)[1] - m_h2o_target
+    lo, hi = 0.0, 1.0
+    flo, fhi = f(lo), f(hi)
+    if flo * fhi > 0 && abs(flo) > tol && abs(fhi) > tol
+        error("find_Xco2: m_h2o_target=$m_h2o_target is infeasible at P=$P, T=$T (residuals $flo at X_co2=0, $fhi at X_co2=1 have the same sign)")
+    end
+
+    x = clamp(X0, lo, hi)
+    iter, fx = 0, f(x)
+    while abs(fx) > tol && iter < max_iter
+        iter += 1
+        # keep [lo,hi] bracketing a sign change, regardless of whether
+        # compute_dissolved is increasing or decreasing in X_co2
+        if fx * flo > 0
+            lo, flo = x, fx
+        else
+            hi = x
+        end
+        fp = ∂dissolved_∂Xco2(s, P, T, x)[1]
+        x_newton = iszero(fp) ? NaN : x - fx / fp
+        x = (isnan(x_newton) || x_newton < lo || x_newton > hi) ? (lo + hi) / 2 : x_newton
+        fx = f(x)
+    end
+    abs(fx) > tol && error("find_Xco2: iterations did not converge (|residual|=$(abs(fx)) after $max_iter iterations)")
+    return x
+end
+
 # Two output arrays, so this cannot route through the single-array `compute_param!`.
 """
     compute_dissolved!(m_h2o, m_co2, MatParam, Phases, args)
@@ -324,7 +381,7 @@ compute_dissolved_ratio(args::Vararg{Any, N}) where {N} = compute_dissolved_time
         mh = zero($T)
         mc = zero($T)
         Base.@nexprs $N i -> begin
-             @inline
+            @inline
             hᵢ, cᵢ = fn(MatParam[i], argsi)
             r = @inbounds PhaseRatios[i]
             mh += hᵢ * r

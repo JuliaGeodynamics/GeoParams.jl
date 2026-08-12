@@ -56,6 +56,13 @@ const No_MaterialParam = GeoParams.MaterialParameters.No_MaterialParam
     # degenerate X_co2 = 0: CO2 output and its pressure sensitivity vanish
     @test ∂dissolved_∂P(s, P0, T0, 0.0)[2] == 0.0
 
+    # find_Xco2: invert compute_dissolved for X_co2 given a target m_h2o
+    m_target = compute_dissolved(s, P0, T0, X0)[1]
+    @test find_Xco2(s, P0, T0, m_target) ≈ X0 atol = 1.0e-6
+    @test find_Xco2(s, P0, T0, compute_dissolved(s, P0, T0, 0.0)[1]) ≈ 0.0 atol = 1.0e-6
+    @test find_Xco2(s, P0, T0, compute_dissolved(s, P0, T0, 1.0)[1]) ≈ 1.0 atol = 1.0e-6
+    @test_throws ErrorException find_Xco2(s, P0, T0, 10.0) # exceeds achievable range
+
     # Mafic ----------------------------------------------------------------
     m = Mafic_Solubility()
     @test isbits(m)
@@ -78,6 +85,16 @@ const No_MaterialParam = GeoParams.MaterialParameters.No_MaterialParam
     )[1] ≈ mmh
     # derivatives exist and are finite
     @test all(isfinite, ∂dissolved_∂T(m, P0, T0, X0))
+
+    # find_Xco2 for the mafic law too (generic over AbstractSolubility)
+    mm_target = compute_dissolved(m, P0, T0, X0)[1]
+    @test find_Xco2(m, P0, T0, mm_target) ≈ X0 atol = 1.0e-6
+    @test_throws DomainError find_Xco2(m, P0, T0, -0.005)   # not a mass fraction
+
+    # the mafic H2O polynomial has no floor at zero and goes negative outside
+    # its calibration; dissolved H2O cannot be negative, so it is floored at
+    # zero rather than handed back as an unphysical mass fraction
+    @test compute_dissolved(m, 3.0e7, 1000.0, 0.9)[1] == 0.0
 
     # empty-parameter fallback
     @test compute_dissolved(No_MaterialParam()) === (0.0, 0.0)
@@ -125,6 +142,12 @@ const No_MaterialParam = GeoParams.MaterialParameters.No_MaterialParam
     phases0 = (phases[1], SetMaterialParams(; Phase = 2))
     @test compute_dissolved(phases0, 2, argp) === (0.0, 0.0)
     @test compute_dissolved_ratio(SA[0.5, 0.5], phases0, argp)[1] ≈ 0.5 * compute_dissolved(phases[1], argp)[1]
+
+    # Float32 structs stay Float32 end-to-end
+    s32 = Liu2005_Solubility(; Pref = 1.0f6Pa, Tref = 1.0f0K)
+    @test @inferred(compute_dissolved(s32, 2.0f8, 1200.0f0, 0.3f0)) isa Tuple{Float32, Float32}
+    m32 = Mafic_Solubility(; T0 = 273.15f0K, Tref = 1.0f0K, Pref = 1.0f6Pa)
+    @test @inferred(compute_dissolved(m32, 2.0f8, 1200.0f0, 0.3f0)) isa Tuple{Float32, Float32}
 
     @test @inferred(compute_dissolved(s, 2.0e8, 1200.0, 0.3)) isa Tuple{Float64, Float64}
     @test @inferred(compute_dissolved_ratio(ratios, phases, argp)) isa Tuple{Float64, Float64}

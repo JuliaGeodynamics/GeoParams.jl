@@ -27,6 +27,7 @@ export compute_meltfraction,
     MeltingParam_Quadratic,
     MeltingParam_Assimilation,
     MeltingParam_Volatile,
+    MeltingParam_MaficVolatile,
     Vector_MeltingParam,
     SmoothMelting
 
@@ -673,10 +674,11 @@ end
 """
     MeltingParam_Volatile(; a_coeffs, b_coeffs, c_coeffs, T0=273K, Tref=1K, Pref=1e6Pa)
 
-Volatile-dependent silicic melting parameterisation used by Degruyter & Huber
-(2014). The crystal fraction follows a complementary error function whose
-amplitude `a`, width `b`, and centre `c` depend on the dissolved water and CO2
-contents and pressure:
+Volatile-dependent silicic crystallinity-temperature curve fitted by Scholz et
+al. (2023) to rhyolite-MELTS runs, for use in Degruyter & Huber (2014)-type
+magma-chamber box models. The crystal fraction follows a complementary error
+function whose amplitude `a`, width `b`, and centre `c` depend on the dissolved
+water and CO2 contents and pressure:
 ```math
     \\varepsilon_x = a\\,\\mathrm{erfc}\\!\\big(b\\,(T_C - c)\\big),
     \\qquad \\phi = 1 - \\varepsilon_x
@@ -684,17 +686,25 @@ contents and pressure:
 with ``T_C = (T - T_0)/T_{ref}`` (numerically °C) and each of ``a, b, c`` a
 quadratic polynomial in ``x = 100\\,m_{H_2O}``, ``y = 100\\,m_{CO_2}`` (dissolved
 mass fractions, in wt%) and ``z = P/P_{ref}`` (numerically MPa). Dissolved water
-depresses the liquidus, so more water shifts the curve to lower temperature —
-the crystallization→exsolution (second-boiling) feedback of the D&H model. The
+depresses the liquidus, so more water shifts the curve to lower temperature. The
 returned quantity is the **melt fraction** ``\\phi``; the exsolved-gas fraction
 ``\\varepsilon_g`` is a solver state and is not subtracted here.
+
+The fit is calibrated only over crystal fractions from 0 up to ~0.5-0.6 (the
+"eruptible" range these box models track); `2a` is the crystal fraction at the
+cold end of the fit and is bounded to `[0.5, 1]` by construction, so `ϕ` has a
+positive floor `1 - 2a` rather than reaching 0 — this is intentional, not a
+missing clamp.
 
 The dimensionless polynomial coefficients are stored as plain `NTuple`s; only the
 reference scales `T0`, `Tref`, `Pref` are `GeoUnit`s, so the parameterisation
 nondimensionalizes. Dissolved contents `mH2O`, `mCO2` are dimensionless and pass
 through `args`.
 
+![MeltingParam_Volatile](./assets/img/MeltingParam_Volatile.png)
+
 # References
+- Scholz, K., Townsend, M., Huber, C., Troch, J., Bachmann, O., Coonin, A.N. (2023), Investigating the impact of an exsolved H2O-CO2 phase on magma chamber growth and longevity: A thermomechanical model, G-cubed 24, e2023GC011151, https://doi.org/10.1029/2023GC011151 (Eq. 9-12, silicic crystallinity-temperature curve)
 - Degruyter, W., Huber, C. (2014), A model for the eruption frequency of upper crustal silicic magma chambers, EPSL 403, 117-130, https://doi.org/10.1016/j.epsl.2014.06.047
 """
 struct MeltingParam_Volatile{T, U1, U2} <: AbstractMeltingParam{T}
@@ -729,7 +739,7 @@ end
 
 # quadratic in (x, y, z): 1, x, y, z, xy, xz, yz, x², y², z²
 @inline function _volatile_poly(k::NTuple{10}, x, y, z)
- return @muladd k[1] +
+    return @muladd k[1] +
         x * (k[2] + k[8] * x + k[5] * y + k[6] * z) +
         y * (k[3] + k[9] * y + k[7] * z) +
         z * (k[4] + k[10] * z)
@@ -757,14 +767,110 @@ end
 end
 
 function compute_dϕdT!(dϕdT::AbstractArray, p::MeltingParam_Volatile; T::AbstractArray, kwargs...)
-    for i in eachindex(dϕdT, T)
-        dϕdT[i] = compute_dϕdT(p; T = T[i], kwargs...)
+    args = (; T, kwargs...)
+    return @inbounds for I in eachindex(dϕdT)
+        k = keys(args)
+        v = getindex.(values(args), I)
+        dϕdT[I] = compute_dϕdT(p, (; zip(k, v)...))
     end
-    return nothing
 end
 
 function show(io::IO, g::MeltingParam_Volatile)
-    return print(io, "Volatile-dependent silicic melting (Degruyter & Huber 2014): ϕ = 1 - a*erfc(b*(T_C - c))")
+    return print(io, "Volatile-dependent silicic melting (Scholz et al. 2023): ϕ = 1 - a*erfc(b*(T_C - c))")
+end
+#-------------------------------------------------------------------------
+"""
+    MeltingParam_MaficVolatile(; a_coeffs, b_coeffs, T0=273K, Tref=1K, Pref=1e6Pa)
+
+Volatile-dependent mafic crystallinity-temperature curve fitted by Scholz et
+al. (2023) to rhyolite-MELTS runs, for use in Degruyter & Huber (2014)-type
+magma-chamber box models: linear in temperature, `ε_x = a*T_C + b`, with slope
+`a` and intercept `b` each a
+degree-2 polynomial in `(100*mH2O, 100*mCO2, P/Pref)` — the same polynomial
+form as [`MeltingParam_Volatile`](@ref)'s `a`/`b`/`c`, just combined linearly
+instead of through `erfc`. `ϕ = 1 - ε_x` (`ε_g` is added by the solver, not
+here).
+
+A linear model has no saturation, so `ε_x` leaves `[0,1]` outside a narrow
+temperature window (~100-200 K wide; at 200 MPa: 1337-1443 K dry, 1221-1436 K
+at 1 wt% H2O, 1010-1417 K at 2 wt%). `compute_meltfraction` clamps `ε_x` to
+`[0,1]` there instead of returning it as computed:
+
+- colder than the window, the fit predicts ``\\varepsilon_x > 1``, clamped to
+  ``1`` (``\\phi=0``, fully solid);
+- hotter than the window, it predicts ``\\varepsilon_x < 0``, clamped to
+  ``0`` (``\\phi=1``, fully liquid).
+
+Both clamps are the physically sensible reading, but the value is still an
+extrapolation past the fit's calibration, not a measurement — no warning is
+raised when this triggers.
+
+# References
+- Scholz, K., Townsend, M., Huber, C., Troch, J., Bachmann, O., Coonin, A.N. (2023), Investigating the impact of an exsolved H2O-CO2 phase on magma chamber growth and longevity: A thermomechanical model, G-cubed 24, e2023GC011151, https://doi.org/10.1029/2023GC011151 (Eq. 14-16, mafic crystallinity-temperature curve)
+- Degruyter, W., Huber, C. (2014), A model for the eruption frequency of upper crustal silicic magma chambers, EPSL 403, 117-130, https://doi.org/10.1016/j.epsl.2014.06.047
+"""
+struct MeltingParam_MaficVolatile{T, U1, U2} <: AbstractMeltingParam{T}
+    a_coeffs::NTuple{10, T}   # linear-slope polynomial in (x, y, z)
+    b_coeffs::NTuple{10, T}   # intercept polynomial
+    T0::GeoUnit{T, U1}        # Kelvin -> Celsius reference offset (273 K)
+    Tref::GeoUnit{T, U1}      # temperature scale of the fit (1 K)
+    Pref::GeoUnit{T, U2}      # pressure scale of the fit (1 MPa)
+
+    function MeltingParam_MaficVolatile(;
+            a_coeffs = (-0.0106007180771044, 0.00642879427079997, -0.000362698886591479, 6.33762356329763e-6, -0.0000409319695736593, -0.0000020971242285322, 3.66354014084072e-7, -0.00127225661031757, 0.000219802992993448, -1.4241625041626e-9),
+            b_coeffs = (12.1982401917454, -7.49690626527448, 0.398381500262876, -0.00632911929609247, 0.0571369994114008, 0.00216190962922558, -0.000409810092770206, 1.48907741502382, -0.251451720536687, 1.36630369630388e-6),
+            T0 = 273.0K, Tref = 1.0K, Pref = 1.0e6Pa
+        )
+        T0U = convert(GeoUnit, T0)
+        TrefU = convert(GeoUnit, Tref)
+        PrefU = convert(GeoUnit, Pref)
+        T = typeof(PrefU).types[1]
+        U1 = typeof(T0U).types[2]
+        U2 = typeof(PrefU).types[2]
+        return new{T, U1, U2}(T.(a_coeffs), T.(b_coeffs), T0U, TrefU, PrefU)
+    end
+    MeltingParam_MaficVolatile(a_coeffs, b_coeffs, T0, Tref, Pref) =
+        MeltingParam_MaficVolatile(; a_coeffs, b_coeffs, T0, Tref, Pref)
+end
+
+function param_info(s::MeltingParam_MaficVolatile)
+    return MaterialParamsInfo(; Equation = L"\phi = 1 - (a T_C + b)")
+end
+
+@inline function (p::MeltingParam_MaficVolatile)(; T, P = 0.0e0, mH2O = 0.0e0, mCO2 = 0.0e0, kwargs...)
+    if T isa Quantity
+        @unpack_units T0, Tref, Pref = p
+    else
+        @unpack_val T0, Tref, Pref = p
+    end
+    x = 100 * mH2O            # wt%
+    y = 100 * mCO2            # wt%
+    z = P / Pref              # ∝ P in MPa
+    TC = (T - T0) / Tref      # ∝ T in °C
+    a = _volatile_poly(p.a_coeffs, x, y, z)
+    b = _volatile_poly(p.b_coeffs, x, y, z)
+    εx = a * TC + b
+    # No natural saturation in a linear fit: clamp to the physically sensible
+    # endpoint (fully solid above the fit, fully liquid below it) rather than
+    # extrapolate. Directional, unlike a fixed reset to a single endpoint.
+    return 1 - clamp(εx, zero(εx), oneunit(εx))
+end
+
+@inline function compute_dϕdT(p::MeltingParam_MaficVolatile; T, P = 0.0e0, mH2O = 0.0e0, mCO2 = 0.0e0, kwargs...)
+    return ForwardDiff.derivative(t -> p(; T = t, P, mH2O, mCO2), T)
+end
+
+function compute_dϕdT!(dϕdT::AbstractArray, p::MeltingParam_MaficVolatile; T::AbstractArray, kwargs...)
+    args = (; T, kwargs...)
+    return @inbounds for I in eachindex(dϕdT)
+        k = keys(args)
+        v = getindex.(values(args), I)
+        dϕdT[I] = compute_dϕdT(p, (; zip(k, v)...))
+    end
+end
+
+function show(io::IO, g::MeltingParam_MaficVolatile)
+    return print(io, "Volatile-dependent mafic melting (Scholz et al. 2023): ϕ = 1 - (a*T_C + b)")
 end
 #-------------------------------------------------------------------------
 
@@ -836,6 +942,7 @@ for myType in (
         :MeltingParam_Quadratic,
         :MeltingParam_Assimilation,
         :MeltingParam_Volatile,
+        :MeltingParam_MaficVolatile,
         :Vector_MeltingParam,
         :SmoothMelting,
     )
