@@ -166,8 +166,8 @@ for t in (:NTuple, :SVector)
         ∂Q∂τxz(::DruckerPrager_regularised, τij::$(t){6, T}) where {T} = τij[5] / second_invariant(τij)
         ∂Q∂τxy(::DruckerPrager_regularised, τij::$(t){6, T}) where {T} = τij[6] / second_invariant(τij)
         ## 2D derivatives
-        ∂Q∂τxx(::DruckerPrager_regularised, τij::$(t){3, T}) where {T} = (τij[1] + 0.5 * τij[2]) / second_invariant(τij)
-        ∂Q∂τyy(::DruckerPrager_regularised, τij::$(t){3, T}) where {T} = (0.5 * τij[1] + τij[2]) / second_invariant(τij)
+        ∂Q∂τxx(::DruckerPrager_regularised, τij::$(t){3, T}) where {T} = 0.5 * τij[1] / second_invariant(τij)
+        ∂Q∂τyy(::DruckerPrager_regularised, τij::$(t){3, T}) where {T} = 0.5 * τij[2] / second_invariant(τij)
         ∂Q∂τxy(::DruckerPrager_regularised, τij::$(t){3, T}) where {T} = τij[3] / second_invariant(τij)
     end
 end
