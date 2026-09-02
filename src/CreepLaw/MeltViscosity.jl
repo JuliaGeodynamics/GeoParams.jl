@@ -214,7 +214,7 @@ function viscosity_correction(c_vf, Strain_Rate)
     γ = Tc(3.987815) * tanh(Tc(0.8908) * θ + Tc(3.24)) + Tc(5.099645)
     num = 1 + (c_vf / ϕ_max)^δ
     x = sqrt(Tc(π)) * c_vf / (2 * α * ϕ_max) * (1 + (c_vf / ϕ_max)^γ)
-    den = (1 - α * erf(x))^(Tc(2.5) * ϕ_max)
+    den = (1 - α * erf(x))^(5 // 2 * ϕ_max)
     mu_r = num / den
     return mu_r
 end
@@ -476,23 +476,23 @@ end
     else
         @unpack_val Tc AT, BT, CT, η0 = a
     end
-    if mH2O != a.oxd_wt[9] / 100
+    if mH2O != convert_precision(Tc, a.oxd_wt[9] / 100)
         oxd_wt = oxd_wt = a.oxd_wt[1:8]..., 100 * mH2O
         bb, cc = T isa Quantity ? (unpack_units(a.bb), unpack_units(a.cc)) : (unpack_vals(a.bb), unpack_vals(a.cc))
         BT, CT = calculate_BT_CT(oxd_wt, a.MW, bb, cc)
     end
-    return η0 * exp10(min(Inf, max(-6, AT + BT / (T - CT))))
+    return η0 * exp10(max(-6, AT + BT / (T - CT)))
 end
 
 #calculation routine
 function compute_εII(a::GiordanoMeltViscosity, TauII; T = one(precision(a)), mH2O = a.oxd_wt[9] / 100, kwargs...)
     η = _giordano_η(a, T; mH2O)
-    return (TauII / η) * 0.5
+    return TauII / η / 2
 end
 
 function compute_εII(a::GiordanoMeltViscosity, TauII::Quantity; T = 1K, mH2O = a.oxd_wt[9] / 100, kwargs...)
     η = _giordano_η(a, T; mH2O)
-    return TauII / η * 0.5
+    return TauII / η / 2
 end
 
 """
