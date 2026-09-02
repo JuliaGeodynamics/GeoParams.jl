@@ -163,7 +163,7 @@ for myType in (:ExpDepthDependentRadioactiveHeat, :ConstantRadioactiveHeat)
     end
 end
 
-compute_radioactive_heat(args::Vararg{Any, N}) where {N} = compute_param(compute_radioactive_heat, args...)
+compute_radioactive_heat(MatParam, arg, args::Vararg{Any, N}) where {N} = compute_param(compute_radioactive_heat, MatParam, arg, args...)
 compute_radioactive_heat!(args::Vararg{Any, N}) where {N} = compute_param!(compute_radioactive_heat, args...)
 
 # extractor methods

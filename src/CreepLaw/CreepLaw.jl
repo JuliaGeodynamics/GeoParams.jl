@@ -129,35 +129,43 @@ end
 
 # Calculation routines for linear viscous rheologies
 function compute_εII(a::LinearViscous, TauII; kwargs...)
-    @unpack η = a
+    Tc = precision_of(TauII)
+    η = if TauII isa Quantity
+        @unpack_units Tc η = a
+        η
+    else
+        @unpack_val Tc η = a
+        η
+    end
 
-    return (TauII / η) * 0.5
+    return TauII / η / 2
 end
 
 """
 
-    compute_εII!(EpsII::AbstractArray{_T,N}, s::LinearViscous, TauII::AbstractArray{_T,N})
+    compute_εII!(EpsII::AbstractArray, s::LinearViscous, TauII::AbstractArray)
 """
 function compute_εII!(
-        EpsII::AbstractArray{_T, N}, a::LinearViscous, TauII::AbstractArray{_T, N}; kwargs...
+        EpsII::AbstractArray{_T, N}, a::LinearViscous, TauII::AbstractArray; kwargs...
     ) where {N, _T}
-    if TauII[1] isa Quantity
-        @unpack_units η = a
-    else
-        @unpack_val η = a
-    end
-
-    @inbounds for i in eachindex(EpsII)
-        EpsII[i] = compute_εII(a, TauII[i])
+    for i in each_argument_index(EpsII, TauII)
+        EpsII[i] = compute_εII(a, convert_precision(_T, TauII[i]))
     end
 
     return nothing
 end
 
 function dεII_dτII(a::LinearViscous, TauII; kwargs...)
-    @unpack η = a
+    Tc = precision_of(TauII)
+    η = if TauII isa Quantity
+        @unpack_units Tc η = a
+        η
+    else
+        @unpack_val Tc η = a
+        η
+    end
 
-    return 0.5 * (1.0 / η)
+    return inv(2 * η)
 end
 
 """
@@ -166,29 +174,37 @@ end
 Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor
 """
 function compute_τII(a::LinearViscous, EpsII; kwargs...)
-    @unpack η = a
+    Tc = precision_of(EpsII)
+    η = if EpsII isa Quantity
+        @unpack_units Tc η = a
+        η
+    else
+        @unpack_val Tc η = a
+        η
+    end
 
     return 2 * (η * EpsII)
 end
 
 function compute_τII!(
-        TauII::AbstractArray{_T, N}, a::LinearViscous, EpsII::AbstractArray{_T, N}; kwargs...
+        TauII::AbstractArray{_T, N}, a::LinearViscous, EpsII::AbstractArray; kwargs...
     ) where {N, _T}
-    if EpsII[1] isa Quantity
-        @unpack_units η = a
-    else
-        @unpack_val η = a
-    end
-
-    @inbounds for i in eachindex(EpsII)
-        TauII[i] = compute_τII(a, EpsII[i])
+    for i in each_argument_index(TauII, EpsII)
+        TauII[i] = compute_τII(a, convert_precision(_T, EpsII[i]))
     end
 
     return nothing
 end
 
 function dτII_dεII(a::LinearViscous, EpsII; kwargs...)
-    @unpack η = a
+    Tc = precision_of(EpsII)
+    η = if EpsII isa Quantity
+        @unpack_units Tc η = a
+        η
+    else
+        @unpack_val Tc η = a
+        η
+    end
 
     return 2 * η
 end
@@ -242,9 +258,11 @@ end
 
 # Calculation routines for linear viscous rheologies
 function compute_εII(a::ArrheniusType, TauII; T = one(precision(a)), kwargs...)
-    @unpack_val η0, E_η, T_O, T_η = a
+    Tc = precision_of(TauII)
+    T = convert_precision(Tc, T)
+    @unpack_val Tc η0, E_η, T_O, T_η = a
     η = η0 * exp(E_η / (T + T_O) - E_η / (T_η + T_O))
-    return (TauII / η) * 0.5
+    return TauII / (2 * η)
 end
 
 """
@@ -254,21 +272,23 @@ end
 function compute_εII!(
         EpsII::AbstractArray{_T, N},
         a::ArrheniusType,
-        TauII::AbstractArray{_T, N};
-        T = ones(size(TauII))::AbstractArray{_T, N},
+        TauII::AbstractArray;
+        T = one(_T),
         kwargs...,
     ) where {N, _T}
-    @inbounds for i in eachindex(EpsII)
-        EpsII[i] = compute_εII(a, TauII[i]; T = T[i])
+    for i in each_argument_index(EpsII, TauII, T)
+        EpsII[i] = compute_εII(a, convert_precision(_T, TauII[i]); T = argument_at(T, i))
     end
 
     return nothing
 end
 
 function dεII_dτII(a::ArrheniusType, TauII; T = one(precision(a)), kwargs...)
-    @unpack_val η0, E_η, T_O, T_η = a
+    Tc = precision_of(TauII)
+    T = convert_precision(Tc, T)
+    @unpack_val Tc η0, E_η, T_O, T_η = a
     η = η0 * exp(E_η / (T + T_O) - E_η / (T_η + T_O))
-    return 0.5 * inv(η)
+    return inv(2 * η)
 end
 
 """
@@ -277,7 +297,9 @@ end
 Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor
 """
 function compute_τII(a::ArrheniusType, EpsII; T = one(precision(a)), kwargs...)
-    @unpack_val η0, E_η, T_O, T_η = a
+    Tc = precision_of(EpsII)
+    T = convert_precision(Tc, T)
+    @unpack_val Tc η0, E_η, T_O, T_η = a
 
     η = η0 * exp(E_η / (T + T_O) - E_η / (T_η + T_O))
 
@@ -287,19 +309,21 @@ end
 function compute_τII!(
         TauII::AbstractArray{_T, N},
         a::ArrheniusType,
-        EpsII::AbstractArray{_T, N};
-        T = ones(size(EpsII))::AbstractArray{_T, N},
+        EpsII::AbstractArray;
+        T = one(_T),
         kwargs...,
     ) where {N, _T}
-    @inbounds for i in eachindex(EpsII)
-        TauII[i] = compute_τII(a, EpsII[i]; T = T[i])
+    for i in each_argument_index(TauII, EpsII, T)
+        TauII[i] = compute_τII(a, convert_precision(_T, EpsII[i]); T = argument_at(T, i))
     end
 
     return nothing
 end
 
 function dτII_dεII(a::ArrheniusType, EpsII; T = one(precision(a)), kwargs...)
-    @unpack_val η0, E_η, T_O, T_η = a
+    Tc = precision_of(EpsII)
+    T = convert_precision(Tc, T)
+    @unpack_val Tc η0, E_η, T_O, T_η = a
     η = η0 * exp(E_η / (T + T_O) - E_η / (T_η + T_O))
 
     return 2 * η
@@ -338,7 +362,8 @@ end
 
 # Calculation routines for linear viscous rheologies
 function compute_εII(a::PowerlawViscous, TauII; kwargs...)
-    @unpack_val η0, n, ε0 = a
+    Tc = precision_of(TauII)
+    @unpack_val Tc η0, n, ε0 = a
 
     @pow EpsII = (TauII / η0)^(1 / n) * ε0
 
@@ -346,7 +371,8 @@ function compute_εII(a::PowerlawViscous, TauII; kwargs...)
 end
 
 function dεII_dτII(a::PowerlawViscous, TauII; kwargs...)
-    @unpack_val η0, n, ε0 = a
+    Tc = precision_of(TauII)
+    @unpack_val Tc η0, n, ε0 = a
 
     return @pow ε0 * (TauII^((1 - n) / n)) / (n * (η0^(1 / n)))
 end
@@ -357,7 +383,8 @@ end
 Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor
 """
 function compute_τII(a::PowerlawViscous, EpsII; kwargs...)
-    @unpack_val η0, n, ε0 = a
+    Tc = precision_of(EpsII)
+    @unpack_val Tc η0, n, ε0 = a
 
     τII = @pow ε0 * η0 * (EpsII / ε0)^n
 
@@ -365,7 +392,8 @@ function compute_τII(a::PowerlawViscous, EpsII; kwargs...)
 end
 
 function dτII_dεII(a::PowerlawViscous, EpsII; kwargs...)
-    @unpack_val η0, n, ε0 = a
+    Tc = precision_of(EpsII)
+    @unpack_val Tc η0, n, ε0 = a
 
     return @pow n * ε0 * η0 * EpsII^(n - 1) * (1 / ε0)^n
 end

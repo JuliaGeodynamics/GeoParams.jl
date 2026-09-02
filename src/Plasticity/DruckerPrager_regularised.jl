@@ -58,7 +58,9 @@ end
 function (s::DruckerPrager_regularised)(;
         P = 0.0, τII = 0.0, Pf = 0.0, λ = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...
     )
-    @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
+    Tc = precision_of(P)
+    τII, Pf, λ, EII, perturbation_C = convert_precision(Tc, (τII, Pf, λ, EII, perturbation_C))
+    @unpack_val Tc sinϕ, cosϕ, ϕ, C, η_vp = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C = s.softening_C(EII, C)
     C *= perturbation_C
@@ -73,7 +75,9 @@ end
 function (s::DruckerPrager_regularised{_T, U, U1, U2, NoSoftening, S2})(;
         P = 0.0, τII = 0.0, Pf = 0.0, λ = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...
     ) where {_T, U, U1, U2, S2 <: AbstractSoftening}
-    @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
+    Tc = precision_of(P)
+    τII, Pf, λ, EII, perturbation_C = convert_precision(Tc, (τII, Pf, λ, EII, perturbation_C))
+    @unpack_val Tc sinϕ, cosϕ, ϕ, C, η_vp = s
     C = s.softening_C(EII, C)
     C *= perturbation_C
 
@@ -85,7 +89,9 @@ end
 function (s::DruckerPrager_regularised{_T, U, U1, U2, S1, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, λ = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...
     ) where {_T, U, U1, U2, S1 <: AbstractSoftening}
-    @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
+    Tc = precision_of(P)
+    τII, Pf, λ, EII, perturbation_C = convert_precision(Tc, (τII, Pf, λ, EII, perturbation_C))
+    @unpack_val Tc sinϕ, cosϕ, ϕ, C, η_vp = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C *= perturbation_C
 
@@ -99,7 +105,9 @@ end
 function (s::DruckerPrager_regularised{_T, U, U1, U2, NoSoftening, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, λ = 0.0, perturbation_C = 1.0, kwargs...
     ) where {_T, U, U1, U2}
-    @unpack_val sinϕ, cosϕ, ϕ, C, η_vp = s
+    Tc = precision_of(P)
+    τII, Pf, λ, perturbation_C = convert_precision(Tc, (τII, Pf, λ, perturbation_C))
+    @unpack_val Tc sinϕ, cosϕ, ϕ, C, η_vp = s
     C *= perturbation_C
     ε̇II_pl = λ * ∂Q∂τII(s, τII)  # plastic strainrate
     F = τII - cosϕ * C - sinϕ * (P - Pf) - 2 * η_vp * ε̇II_pl # with fluid pressure (set to zero by default)
@@ -114,8 +122,8 @@ end
 Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` pressure, and `Pf` fluid pressure.
 """
 function compute_yieldfunction(
-        s::DruckerPrager_regularised{_T}; P = 0.0, τII = 0.0, Pf = 0.0, λ = 0.0, EII = 0.0, perturbation_C = 1.0
-    ) where {_T}
+        s::DruckerPrager_regularised; P = 0.0, τII = 0.0, Pf = 0.0, λ = 0.0, EII = 0.0, perturbation_C = 1.0
+    )
     return s(; P = P, τII = τII, Pf = Pf, λ = λ, EII = EII, perturbation_C = perturbation_C)
 end
 
@@ -127,16 +135,16 @@ Required input arrays are pressure `P` and the second invariant of the deviatori
 You can optionally provide an array with fluid pressure `Pf` as well.
 """
 function compute_yieldfunction!(
-        F::AbstractArray{_T, N},
-        s::DruckerPrager_regularised{_T};
-        P::AbstractArray{_T, N},
-        τII::AbstractArray{_T, N},
-        Pf = zero(P)::AbstractArray{_T, N},
-        λ = zero(P)::AbstractArray{_T, N},
-        EII::AbstractArray{_T, N} = zero(P),
+        F::AbstractArray,
+        s::DruckerPrager_regularised;
+        P::AbstractArray,
+        τII::AbstractArray,
+        Pf = zero(P),
+        λ = zero(P),
+        EII = zero(P),
         kwargs...,
-    ) where {N, _T}
-    @inbounds for i in eachindex(P)
+    )
+    for i in eachindex(F)
         F[i] = compute_yieldfunction(s; P = P[i], τII = τII[i], Pf = Pf[i], λ = λ[i], EII = EII[i])
     end
 

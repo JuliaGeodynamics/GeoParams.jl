@@ -109,6 +109,7 @@ module GeoParams
     include("Units.jl")
     using .Units
     export @unpack_units, @unpack_val
+    export precision_of, convert_precision
     export compute_units, udim
 
     include("Interpolations.jl")

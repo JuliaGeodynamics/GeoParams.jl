@@ -89,7 +89,7 @@ for myType in (:ConstantLatentHeat,)
     end
 end
 
-compute_latent_heat(args::Vararg{Any, N}) where {N} = compute_param(compute_latent_heat, args...)
+compute_latent_heat(MatParam, arg, args::Vararg{Any, N}) where {N} = compute_param(compute_latent_heat, MatParam, arg, args...)
 compute_latent_heat!(args::Vararg{Any, N}) where {N} = compute_param!(compute_latent_heat, args...)
 
 end

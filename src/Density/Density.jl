@@ -79,7 +79,8 @@ end
 
 # Calculation routines
 function compute_density!(rho::AbstractArray, s::ConstantDensity; kwargs...)
-    @unpack_val ρ = s
+    Tc = precision_of(rho)
+    @unpack_val Tc ρ = s
     rho[:] .= ρ
     return nothing
 end
@@ -123,13 +124,15 @@ end
 
 # Calculation routine
 @inline function (ρ::PT_Density)(; P::Number = 0.0e0, T::Number = 0.0e0, kwargs...)
+    Tc = precision_of(P)
+    T = convert_precision(Tc, T)
     if T isa Quantity
-        @unpack_units ρ0, α, β, P0, T0 = ρ
+        @unpack_units Tc ρ0, α, β, P0, T0 = ρ
     else
-        @unpack_val   ρ0, α, β, P0, T0 = ρ
+        @unpack_val Tc ρ0, α, β, P0, T0 = ρ
     end
 
-    return @muladd ρ0 * (1.0 - α * (T - T0) + β * (P - P0))
+    return @muladd ρ0 * (1 - α * (T - T0) + β * (P - P0))
 end
 
 @inline (ρ::PT_Density)(args) = ρ(; args...)
@@ -166,11 +169,12 @@ function param_info(s::Compressible_Density) # info about the struct
     return MaterialParamsInfo(; Equation = L"\rho = \rho_0\exp(\beta*(P-P_0))")
 end
 
-function (s::Compressible_Density{_T})(; P = 0.0e0, kwargs...) where {_T}
+function (s::Compressible_Density)(; P = 0.0e0, kwargs...)
+    Tc = precision_of(P)
     if P isa Quantity
-        @unpack_units ρ0, β, P0 = s
+        @unpack_units Tc ρ0, β, P0 = s
     else
-        @unpack_val   ρ0, β, P0 = s
+        @unpack_val Tc ρ0, β, P0 = s
     end
 
     return ρ0 * exp(β * (P - P0))
@@ -210,11 +214,12 @@ function param_info(s::T_Density) # info about the struct
     return MaterialParamsInfo(; Equation = L"\rho = \rho_0*(1 - \alpha*(T-T_0))")
 end
 
-function (s::T_Density{_T})(; T = 0.0e0, kwargs...) where {_T}
+function (s::T_Density)(; T = 0.0e0, kwargs...)
+    Tc = precision_of(T)
     if T isa Quantity
-        @unpack_units ρ0, α, T0 = s
+        @unpack_units Tc ρ0, α, T0 = s
     else
-        @unpack_val   ρ0, α, T0 = s
+        @unpack_val Tc ρ0, α, T0 = s
     end
 
     return @muladd ρ0 * (1 - α * (T - T0))
@@ -329,13 +334,14 @@ function param_info(s::BubbleFlow_Density) # info about the struct
 end
 
 # Calculation routines
-@inline function (rho::BubbleFlow_Density{_T})(; P = 0.0e0, kwargs...) where {_T}
+@inline function (rho::BubbleFlow_Density)(; P = 0.0e0, kwargs...)
+    Tc = precision_of(P)
     ρmelt = compute_density(rho.ρmelt, kwargs)
     ρgas = compute_density(rho.ρgas, kwargs)
     if P isa Quantity
-        @unpack_units c0, a = rho
+        @unpack_units Tc c0, a = rho
     else
-        @unpack_val c0, a = rho
+        @unpack_val Tc c0, a = rho
     end
 
     cutoff = c0^2 / a^2
@@ -483,18 +489,20 @@ function param_info(s::RedlichKwong_Density)
 end
 
 @inline function (rho::RedlichKwong_Density)(; P = 0.0e0, T = 0.0e0, kwargs...)
-    a1, a2, a3 = rho.coeffs
+    Tc = precision_of(P)
+    T = convert_precision(Tc, T)
+    a1, a2, a3 = convert_precision(Tc, rho.coeffs)
     if P isa Quantity
-        @unpack_units T0, Tref, Pref, ρref = rho
+        @unpack_units Tc T0, Tref, Pref, ρref = rho
     else
-        @unpack_val T0, Tref, Pref, ρref = rho
+        @unpack_val Tc T0, Tref, Pref, ρref = rho
     end
     τ = (T - T0) / Tref            # ∝ T in °C
     ω = P / Pref                   # ∝ P in bar
     # τ^(-0.381)/ω^(-1.135) undefined otherwise. No physically sensible clamp
     # exists for a fitted gas density, so it NaN's
     τ > 0 && ω > 0 || return ρref * oftype(ustrip(ρref), NaN)
-    e1, e2, e3, e4 = oftype(a1, -0.381), oftype(a1, -1.135), oftype(a1, -0.411), oftype(a1, 0.033)
+    e1, e2, e3, e4 = -Tc(0.381), -Tc(1.135), -Tc(0.411), Tc(0.033)
     return @muladd @pow (a1 * τ^e1 + a2 * ω^e2 + a3 * τ^e3 * ω^e4) * ρref
 end
 @inline (s::RedlichKwong_Density)(args) = s(; args...)
@@ -527,11 +535,13 @@ function param_info(s::IdealGas_Density)
 end
 
 @inline function (rho::IdealGas_Density)(; P = 0.0e0, T = 0.0e0, kwargs...)
+    Tc = precision_of(P)
+    T = convert_precision(Tc, T)
     if P isa Quantity
-        @unpack_units Rs = rho
+        @unpack_units Tc Rs = rho
         return uconvert(kg / m^3, P / (Rs * T))   # P/(Rs*T) reduces to kg*Pa/J otherwise
     end
-    @unpack_val Rs = rho
+    @unpack_val Tc Rs = rho
     return P / (Rs * T)
 end
 @inline (s::IdealGas_Density)(args) = s(; args...)
@@ -719,6 +729,8 @@ function compute_XMW_norm_MP(oxd_wt, MW)
 end
 
 function (s::Melt_DensityX)(; P::Number = 0.0e0, T::Number = 0.0e0, mH2O = s.oxd_wt[9] / 100, kwargs...)
+    Tc = precision_of(P)
+    T, mH2O = convert_precision(Tc, T), convert_precision(Tc, mH2O)
     # mH2O overrides the struct's own frozen water content for this call; the
     # water-dependent aggregates (sum_XMW, norm_MP) are only recomputed when
     # it actually differs, so the default path stays exactly as fast as
@@ -727,7 +739,7 @@ function (s::Melt_DensityX)(; P::Number = 0.0e0, T::Number = 0.0e0, mH2O = s.oxd
     # dissolved water — that is the caller's/solver's responsibility.
     P0, ρ0, sum_XMW, sum_Vliq, MV, dVdT, Tref, norm_MP, dVdP = if P isa Quantity
         (; MV, dVdT, dVdP, Tref, norm_MP) = s
-        @unpack_units P0, ρ0, sum_XMW, sum_Vliq = s
+        @unpack_units Tc P0, ρ0, sum_XMW, sum_Vliq = s
         norm_MPv = unpack_units(norm_MP)
         if mH2O != s.oxd_wt[9] / 100
             oxd_wt = oxd_wt = s.oxd_wt[1:8]..., 100 * mH2O
@@ -737,7 +749,7 @@ function (s::Melt_DensityX)(; P::Number = 0.0e0, T::Number = 0.0e0, mH2O = s.oxd
 
     else
         (; MV, dVdT, dVdP, Tref, norm_MP) = s
-        @unpack_val P0, ρ0, sum_XMW, sum_Vliq = s
+        @unpack_val Tc P0, ρ0, sum_XMW, sum_Vliq = s
         norm_MPv = unpack_vals(norm_MP)
         if mH2O != s.oxd_wt[9] / 100
             oxd_wt = oxd_wt = s.oxd_wt[1:8]..., 100 * mH2O
@@ -884,7 +896,7 @@ In-place computation of density `rho` for the whole domain and all phases, in ca
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 """
 @inline compute_density!(args::Vararg{Any, N}) where {N} = compute_param!(compute_density, args...) #Multiple dispatch to rest of routines found in Computations.jl
-@inline compute_density(args::Vararg{Any, N}) where {N} = compute_param(compute_density, args...)
+@inline compute_density(MatParam, arg, args::Vararg{Any, N}) where {N} = compute_param(compute_density, MatParam, arg, args...)
 @inline compute_density_ratio(args::Vararg{Any, N}) where {N} = compute_param_times_frac(compute_density, args...)
 
 # extractor methods
@@ -903,12 +915,13 @@ end
 get_α(rho::MeltDependent_Density, args) = get_α(rho; args...)
 
 function get_α(rho::BubbleFlow_Density; P::T = 0.0, kwargs...) where {T}
+    Tc = precision_of(P)
     αmelt = rho.ρmelt.α.val
     αgas = rho.ρgas.α.val
     if P isa Quantity
-        @unpack_units c0, a = rho
+        @unpack_units Tc c0, a = rho
     else
-        @unpack_val c0, a = rho
+        @unpack_val Tc c0, a = rho
     end
 
     cutoff = c0^2 / a^2

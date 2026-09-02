@@ -117,18 +117,24 @@ end
         f = one(precision(a)),
         args...,
     )
-    @unpack_val n, r, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(TauII)
+    T, P, f = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, f)
+    @unpack_val Tc n, r, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     ε = @pow A * (TauII * FT)^n * f^r * exp(-(E + P * V) / (R * T)) / FE
-    return ε
+    return retry_wider(ε, TauII) do τ
+        compute_εII(a, τ; T, P, f)
+    end
 end
 
 @inline function compute_εII(
         a::DislocationCreep, TauII::Quantity; T = 1K, P = 0Pa, f = 1NoUnits, args...
     )
-    @unpack_units n, r, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(TauII)
+    T, P, f = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, f)
+    @unpack_units Tc n, r, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     ε = @pow A * (TauII * FT)^n * f^r * exp(-(E + P * V) / (R * T)) / FE
 
@@ -138,14 +144,20 @@ end
 function compute_εII!(
         EpsII::AbstractArray{_T, N},
         a::DislocationCreep,
-        TauII::AbstractArray{_T, N};
-        P = zero(TauII)::AbstractArray{_T, N},
-        T = ones(size(TauII))::AbstractArray{_T, N},
-        f = ones(size(TauII))::AbstractArray{_T, N},
+        TauII::AbstractArray;
+        P = zero(_T),
+        T = one(_T),
+        f = one(_T),
         kwargs...,
     ) where {N, _T}
-    @inbounds for i in eachindex(EpsII)
-        EpsII[i] = compute_εII(a, TauII[i]; T = T[i], P = P[i], f = f[i])
+    for i in each_argument_index(EpsII, TauII, T, P, f)
+        EpsII[i] = compute_εII(
+            a,
+            convert_precision(_T, TauII[i]);
+            T = argument_at(T, i),
+            P = argument_at(P, i),
+            f = argument_at(f, i),
+        )
     end
 
     return nothing
@@ -159,23 +171,30 @@ end
         f = one(precision(a)),
         args...,
     )
-    @unpack_val n, r, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(TauII)
+    T, P, f = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, f)
+    @unpack_val Tc n, r, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
-    return @pow (FT * TauII)^(n - 1) *
+    dε = @pow (FT * TauII)^(n - 1) *
         f^r *
         A *
         FT *
         n *
         exp(-(E + P * V) / (R * T)) *
         inv(FE)
+    return retry_wider(dε, TauII) do τ
+        dεII_dτII(a, τ; T, P, f)
+    end
 end
 
 @inline function dεII_dτII(
         a::DislocationCreep, TauII::Quantity; T = 1K, P = 0Pa, f = 1NoUnits, args...
     )
-    @unpack_units n, r, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(TauII)
+    T, P, f = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, f)
+    @unpack_units Tc n, r, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     return @pow (FT * TauII)^(n - 1) *
         f^r *
@@ -200,49 +219,65 @@ Computes the stress for a Dislocation creep law given a certain strain rate
         f = one(precision(a)),
         args...,
     )
+    Tc = precision_of(EpsII)
+    T, P, f = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, f)
     n, r, A, E, V, R = if EpsII isa Quantity
-        @unpack_units n, r, A, E, V, R = a
+        @unpack_units Tc n, r, A, E, V, R = a
         n, r, A, E, V, R
     else
-        @unpack_val n, r, A, E, V, R = a
+        @unpack_val Tc n, r, A, E, V, R = a
         n, r, A, E, V, R
     end
 
-    FT, FE = a.FT, a.FE
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
     _n = inv(n)
 
-    return @pow A^-_n * (EpsII * FE)^_n * f^(-r * _n) * exp((E + P * V) / (n * R * T)) / FT
+    τ = @pow A^-_n * (EpsII * FE)^_n * f^(-r * _n) * exp((E + P * V) / (n * R * T)) / FT
+    return retry_wider(τ, EpsII) do ε
+        compute_τII(a, ε; T, P, f)
+    end
 end
 
 @inline function compute_τII(
         a::DislocationCreep, EpsII::Quantity; P = 0Pa, T = 1K, f = 1NoUnits, args...
     )
-    @unpack_units n, r, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(EpsII)
+    P, T, f = convert_precision(Tc, P), convert_precision(Tc, T), convert_precision(Tc, f)
+    @unpack_units Tc n, r, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
     _n = inv(n)
 
     return @pow A^-_n * f^(-r * _n) * (EpsII * FE)^_n * exp((E + P * V) / (n * R * T)) / FT
 end
 
 """
-    compute_τII!(TauII::AbstractArray{_T,N}, a::DislocationCreep, EpsII::AbstractArray{_T,N};
-        P =       zero(TauII)::AbstractArray{_T,N},
-        T = ones(size(TauII))::AbstractArray{_T,N},
-        f = ones(size(TauII))::AbstractArray{_T,N})
+    compute_τII!(TauII::AbstractArray{_T,N}, a::DislocationCreep, EpsII::AbstractArray;
+        P = zero(_T),
+        T = one(_T),
+        f = one(_T))
 
-Computes the deviatoric stress invariant for a dislocation creep law
+Computes the deviatoric stress invariant for a dislocation creep law.
+
+Each of `P`, `T`, and `f` may be a scalar, applied to every element, or an array
+indexed alongside `EpsII`.
 """
 function compute_τII!(
         TauII::AbstractArray{_T, N},
         a::DislocationCreep,
-        EpsII::AbstractArray{_T, N};
-        T = ones(size(TauII))::AbstractArray{_T, N},
-        P = zero(TauII)::AbstractArray{_T, N},
-        f = ones(size(TauII))::AbstractArray{_T, N},
+        EpsII::AbstractArray;
+        T = one(_T),
+        P = zero(_T),
+        f = one(_T),
         kwargs...,
     ) where {N, _T}
-    @inbounds for i in eachindex(TauII)
-        TauII[i] = compute_τII(a, EpsII[i]; T = T[i], P = P[i], f = f[i])
+    for i in each_argument_index(TauII, EpsII, T, P, f)
+        TauII[i] = compute_τII(
+            a,
+            convert_precision(_T, EpsII[i]);
+            T = argument_at(T, i),
+            P = argument_at(P, i),
+            f = argument_at(f, i),
+        )
     end
 
     return nothing
@@ -256,21 +291,27 @@ end
         f = one(precision(a)),
         args...,
     )
-    @unpack_val n, r, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(EpsII)
+    T, P, f = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, f)
+    @unpack_val Tc n, r, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
     _n = inv(n)
 
-
-    return @pow (
+    dτ = @pow (
         FE * A^-_n * f^(-r * _n) * (EpsII * FE)^(_n - 1) * exp((E + P * V) / (R * T * n))
     ) / (FT * n)
+    return retry_wider(dτ, EpsII) do ε
+        dτII_dεII(a, ε; T, P, f)
+    end
 end
 
 @inline function dτII_dεII(
         a::DislocationCreep, EpsII::Quantity; P = 0Pa, T = 1K, f = 1NoUnits, args...
     )
-    @unpack_units n, r, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(EpsII)
+    P, T, f = convert_precision(Tc, P), convert_precision(Tc, T), convert_precision(Tc, f)
+    @unpack_units Tc n, r, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
     _n = inv(n)
 
     return @pow (

@@ -717,6 +717,9 @@ import ForwardDiff as FD
             Name = "Crust", Phase = 2, ShearHeat = ConstantShearheating(Χ = 1.0NoUnits),
         ),
     )
+    # τ and ε are required: without them the call would dispatch back to itself
+    @test_throws MethodError compute_shearheating(ConstantShearheating(), (;))
+
     @test iszero(compute_shearheating(rheology[1], τ, ε, ε_el))
     @test compute_shearheating(rheology[2], τ, ε, ε_el) == 5.4
     @test iszero(compute_shearheating(rheology, 1, τ, ε, ε_el))

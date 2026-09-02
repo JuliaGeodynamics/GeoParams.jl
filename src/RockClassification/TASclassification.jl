@@ -86,8 +86,6 @@ end
         [77.0 0.0; 100.0 0.0; 100.0 16.0; 69.0 16.0; 69.0 8.0]
     ]
 
-    p::Matrix{Float64} = zeros(2, 2)
-    v::Matrix{Float64} = zeros(2, 2)
 end
 
 """
@@ -128,11 +126,14 @@ This routine was developed based the TAS classification of Le Maitre et al., 200
 function computeTASclassification(
         point::AbstractArray{_T}; ClassTASdata::TASclassificationData = TASclassificationData()
     ) where {_T}
-    @unpack litho, n_ver, ver, p, v = ClassTASdata
+    @unpack litho, n_ver, ver = ClassTASdata
 
-    p[1, 1] = 0.0
+    # segment endpoints, in the float type of the composition being classified;
+    # `testIntersection` requires both to share an element type
+    Tv = float(_T)
+    p = zeros(Tv, 2, 2)
+    v = zeros(Tv, 2, 2)
     p[2, 1] = point[1]
-    p[1, 2] = 0.0
     p[2, 2] = point[2]
 
     # set the classIndex to -1 to track for issue

@@ -32,6 +32,19 @@ end
     return (; zip(k, v)...)
 end
 
+# Element `i` of a keyword argument that may be given per-element or as a single
+# value shared by every element.
+@inline argument_at(x::Number, i) = x
+@inline argument_at(x, i) = x[i]
+
+# Index range for an in-place routine whose keyword arguments may each be a scalar
+# or an array. Scalars stand in for `dest`, so `eachindex` reports any array whose
+# axes do not match it.
+@inline _sized(dest, x::Number) = dest
+@inline _sized(dest, x) = x
+@inline each_argument_index(dest, args::Vararg{Any, N}) where {N} =
+    eachindex(dest, map(a -> _sized(dest, a), args)...)
+
 # fast exponential
 @inline fastpow(x::Number, n::Integer) = x^n
 
@@ -55,6 +68,34 @@ end
         fastpow(x, n)
     end
 end
+
+"""
+    retry_wider(f, y, x)
+
+`y`, unless it left the range of the type it was computed in — infinite from an
+intermediate that overflowed, or zero from one that underflowed — in which case
+`f(x)` recomputes it from a wider `x` and the result is narrowed back to `y`'s
+type and units.
+
+Creep laws in SI units assemble ordinary strain rates out of factors such as a
+prefactor of 1e-55 and a stress raised to `n`, which reaches 1e39: `Float32`
+holds the answer but not the way there. `Float64` is its own widening, so
+nothing is ever retried there and the branch is free.
+"""
+@inline function retry_wider(f::F, y, x) where {F}
+    W = _wider(precision_of(x))
+    W === precision_of(x) && return y
+    (isfinite(y) && (!iszero(y) || iszero(x))) && return y
+    return _narrow_like(y, f(convert_precision(W, x)))
+end
+
+@inline _wider(::Type{Float16}) = Float32
+@inline _wider(::Type{Float32}) = Float64
+@inline _wider(::Type{T}) where {T} = T
+
+# `x` in the number type and units of `y`
+@inline _narrow_like(y::Quantity, x) = oftype(ustrip(y), ustrip(unit(y), x)) * unit(y)
+@inline _narrow_like(y, x) = oftype(y, x)
 
 macro pow(ex)
     substitute_walk(ex)

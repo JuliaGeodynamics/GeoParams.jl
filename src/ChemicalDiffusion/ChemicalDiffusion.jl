@@ -325,14 +325,16 @@ Computes the diffusion coefficient `D` [m^2/s] from the diffusion data `data` at
 If `T` and `P` are provided without unit, the function assumes the units are in Kelvin and Pascal, respectively, and outputs the diffusion coefficient without unit based on the value in m^2/s.
 """
 @inline function compute_D(data::DiffusionData; T = 1K, P = 1GPa, fO2 = 1.0e-25NoUnits, X = 0NoUnits, kwargs...)
+    Tc = precision_of(T)
+    P, fO2, X = convert_precision(Tc, (P, fO2, X))
 
     if P isa Quantity && T isa Quantity
-        @unpack_units D0, Ea, ΔV, P0, R, dfO2, nfO2, aX, bX = data
+        @unpack_units Tc D0, Ea, ΔV, P0, R, dfO2, nfO2, aX, bX = data
 
         # convert to K to prevent affine error with Celsius
         T = uconvert(K, T)
     else
-        @unpack_val D0, Ea, ΔV, P0, R, dfO2, nfO2, aX, bX = data
+        @unpack_val Tc D0, Ea, ΔV, P0, R, dfO2, nfO2, aX, bX = data
     end
 
     D = D0 * (((fO2 / dfO2)^nfO2)) * exp(aX * (X + bX) - (Ea + (P - P0) * ΔV) / (R * T))
@@ -349,14 +351,15 @@ If `T` is provided without unit, the function assumes the unit is in Kelvin and 
 The output is a static matrix of size `n-1` x `n-1` where `n` is the number of components.
 """
 @inline function compute_D(data::MeltMulticompDiffusionData; T = 1K, kwargs...)
+    Tc = precision_of(T)
 
     if T isa Quantity
-        @unpack_units λD0, λEa, w, inv_w, R = data
+        @unpack_units Tc λD0, λEa, w, inv_w, R = data
 
         # convert to K to prevent affine error with Celsius
         T = uconvert(K, T)
     else
-        @unpack_val λD0, λEa, w, inv_w, R = data
+        @unpack_val Tc λD0, λEa, w, inv_w, R = data
     end
 
     # calculate diffusion matrix using eigenvalues and eigenvectors (see Eq. 4 in Guo and Zhang, 2020)
@@ -396,14 +399,15 @@ If `T` is provided without unit, the function assumes the unit is in Kelvin and 
 The output is a static matrix of size `n-1` x `n-1` where `n` is the number of components.
 """
 @inline function compute_λ(data::MeltMulticompDiffusionData; T = 1K, kwargs...)
+    Tc = precision_of(T)
 
     if T isa Quantity
-        @unpack_units λD0, λEa, w, inv_w, R = data
+        @unpack_units Tc λD0, λEa, w, inv_w, R = data
 
         # convert to K to prevent affine error with Celsius
         T = uconvert(K, T)
     else
-        @unpack_val λD0, λEa, w, inv_w, R = data
+        @unpack_val Tc λD0, λEa, w, inv_w, R = data
     end
 
     # compute diagonal matrix of eigenvalues (see Table 8 in Guo and Zhang, 2020)

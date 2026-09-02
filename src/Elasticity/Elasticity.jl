@@ -115,22 +115,28 @@ here ``\\tilde{{\\tau_{ij}}}^{old}`` is the rotated old deviatoric stress tensor
 @inline function compute_εII(
         a::ConstantElasticity, τII; τII_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
-    @unpack_val G = a
-    ε_el = 0.5 * (τII - τII_old) / (G * dt)
+    Tc = precision_of(τII)
+    τII_old, dt = convert_precision(Tc, τII_old), convert_precision(Tc, dt)
+    @unpack_val Tc G = a
+    ε_el = (τII - τII_old) / (2 * G * dt)
     return ε_el
 end
 
 @inline function dεII_dτII(
         a::ConstantElasticity, τII; τII_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
-    @unpack_val G = a
-    return 0.5 * inv(G * dt)
+    Tc = precision_of(τII)
+    τII_old, dt = convert_precision(Tc, τII_old), convert_precision(Tc, dt)
+    @unpack_val Tc G = a
+    return inv(2 * G * dt)
 end
 
 @inline function compute_τII(
         a::ConstantElasticity, εII; τII_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
-    @unpack_val G = a
+    Tc = precision_of(εII)
+    τII_old, dt = convert_precision(Tc, τII_old), convert_precision(Tc, dt)
+    @unpack_val Tc G = a
     τII = 2 * G * dt * εII + τII_old
 
     return τII
@@ -139,7 +145,8 @@ end
 @inline function dτII_dεII(
         a::ConstantElasticity, τII_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
-    @unpack_val G = a
+    Tc = precision_of(dt)
+    @unpack_val Tc G = a
     return 2 * G * dt
 end
 
@@ -156,13 +163,13 @@ In-place computation of the elastic shear strainrate for given deviatoric stress
 function compute_εII!(
         ε_el::AbstractArray{T, N},
         p::ConstantElasticity,
-        τII::AbstractArray{T, N};
+        τII::AbstractArray;
         τII_old::AbstractArray{T1, N},
         dt::T,
         kwargs...,
     ) where {N, T, T1}
-    @inbounds for i in eachindex(τII)
-        ε_el[i] = compute_εII(p, τII[i]; τII_old = τII_old[i], dt = dt)
+    for i in each_argument_index(ε_el, τII, τII_old)
+        ε_el[i] = compute_εII(p, convert_precision(T, τII[i]); τII_old = argument_at(τII_old, i), dt = dt)
     end
     return nothing
 end
@@ -180,13 +187,13 @@ In-place update of the elastic stress for given deviatoric strainrate invariants
 function compute_τII!(
         τII::AbstractArray{T, N},
         p::ConstantElasticity,
-        ε_el::AbstractArray{T, N};
+        ε_el::AbstractArray;
         τII_old::AbstractArray{T1, N},
         dt,
         kwargs...,
     ) where {N, T, T1}
-    @inbounds for i in eachindex(ε_el)
-        τII[i] = compute_τII(p, ε_el[i]; τII_old = τII_old[i], dt = dt)
+    for i in each_argument_index(τII, ε_el, τII_old)
+        τII[i] = compute_τII(p, convert_precision(T, ε_el[i]); τII_old = argument_at(τII_old, i), dt = dt)
     end
     return nothing
 end
@@ -211,7 +218,9 @@ Computes elastic volumetric strainrate given the pressure at the current (`P`) a
 @inline function compute_εvol(
         a::ConstantElasticity, P; P_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
-    @unpack_val Kb = a
+    Tc = precision_of(P)
+    P_old, dt = convert_precision(Tc, P_old), convert_precision(Tc, dt)
+    @unpack_val Tc Kb = a
     εvol_el = - (P - P_old) / (Kb * dt)
     return εvol_el
 end
@@ -219,14 +228,18 @@ end
 @inline function dεvol_dp(
         a::ConstantElasticity, P; P_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
-    @unpack_val Kb = a
+    Tc = precision_of(P)
+    P_old, dt = convert_precision(Tc, P_old), convert_precision(Tc, dt)
+    @unpack_val Tc Kb = a
     return - inv(Kb * dt)
 end
 
 @inline function compute_p(
         a::ConstantElasticity, εvol; P_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
-    @unpack_val Kb = a
+    Tc = precision_of(εvol)
+    P_old, dt = convert_precision(Tc, P_old), convert_precision(Tc, dt)
+    @unpack_val Tc Kb = a
     P = - Kb * dt * εvol + P_old
 
     return P
@@ -235,7 +248,8 @@ end
 @inline function dp_dεvol(
         a::ConstantElasticity, P_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
-    @unpack_val Kb = a
+    Tc = precision_of(dt)
+    @unpack_val Tc Kb = a
     return -Kb * dt
 end
 
@@ -251,13 +265,13 @@ end
 function compute_εvol!(
         εvol_el::AbstractArray{T, N},
         a::ConstantElasticity,
-        P::AbstractArray{T, N};
+        P::AbstractArray;
         P_old::AbstractArray{T1, N},
         dt,
         kwargs...,
     ) where {N, T, T1}
-    @inbounds for i in eachindex(P)
-        εvol_el[i] = compute_εvol(a, P[i]; P_old = P_old[i], dt = dt)
+    for i in each_argument_index(εvol_el, P, P_old)
+        εvol_el[i] = compute_εvol(a, convert_precision(T, P[i]); P_old = argument_at(P_old, i), dt = dt)
     end
     return nothing
 end
@@ -275,13 +289,13 @@ In-place update of the elastic pressure for given volumetric strainrate and pres
 function compute_p!(
         P::AbstractArray{T, N},
         a::ConstantElasticity,
-        εvol_el::AbstractArray{T1, N};
+        εvol_el::AbstractArray;
         P_old::AbstractArray{T2, N},
         dt,
         kwargs...,
-    ) where {N, T, T1, T2}
-    @inbounds for i in eachindex(εvol_el)
-        P[i] = compute_p(a, εvol_el[i]; P_old = P_old[i], dt = dt)
+    ) where {N, T, T2}
+    for i in each_argument_index(P, εvol_el, P_old)
+        P[i] = compute_p(a, convert_precision(T, εvol_el[i]); P_old = argument_at(P_old, i), dt = dt)
     end
     return nothing
 end

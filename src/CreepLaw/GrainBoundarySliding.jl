@@ -136,14 +136,16 @@ Returns grain boundary sliding strainrate as a function of 2nd invariant of the 
 """
 @inline function compute_εII(
         a::GrainBoundarySliding,
-        TauII::_T;
+        TauII;
         T = one(precision(a)),
         P = zero(precision(a)),
         d = one(precision(a)),
         args...,
-    ) where {_T}
-    @unpack_val n, p, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    )
+    Tc = precision_of(TauII)
+    T, P, d = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, d)
+    @unpack_val Tc n, p, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     ε = @pow A * (TauII * FT)^n * d^p * exp(-(E + P * V) / (R * T)) / FE
 
@@ -153,8 +155,10 @@ end
 @inline function compute_εII(
         a::GrainBoundarySliding, TauII::Quantity; T = 1K, P = 0Pa, d = 1.0e-3m, args...
     )
-    @unpack_units n, p, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(TauII)
+    T, P, d = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, d)
+    @unpack_units Tc n, p, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     ε = @pow A * (TauII * FT)^n * d^p * exp(-(E + P * V) / (R * T)) / FE
 
@@ -169,14 +173,20 @@ Computes strainrate as a function of stress
 function compute_εII!(
         EpsII::AbstractArray{_T, N},
         a::GrainBoundarySliding,
-        TauII::AbstractArray{_T, N};
-        T = ones(size(TauII))::AbstractArray{_T, N},
-        P = zero(TauII)::AbstractArray{_T, N},
-        d = ones(size(TauII))::AbstractArray{_T, N},
+        TauII::AbstractArray;
+        T = one(_T),
+        P = zero(_T),
+        d = one(_T),
         kwargs...,
     ) where {N, _T}
-    @inbounds for i in eachindex(EpsII)
-        EpsII[i] = compute_εII(a, TauII[i]; T = T[i], P = P[i], d = d[i])
+    for i in each_argument_index(EpsII, TauII, T, P, d)
+        EpsII[i] = compute_εII(
+            a,
+            convert_precision(_T, TauII[i]);
+            T = argument_at(T, i),
+            P = argument_at(P, i),
+            d = argument_at(d, i),
+        )
     end
 
     return nothing
@@ -184,14 +194,16 @@ end
 
 @inline function dεII_dτII(
         a::GrainBoundarySliding,
-        TauII::_T;
+        TauII;
         T = one(precision(a)),
         P = zero(precision(a)),
         d = one(precision(a)),
         args...,
-    ) where {_T}
-    @unpack_val n, p, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    )
+    Tc = precision_of(TauII)
+    T, P, d = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, d)
+    @unpack_val Tc n, p, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     # computed symbolically
     return @pow (A * d^p * n * (TauII * FT)^n * exp(-(E + P * V) / (R * T))) / (FE * TauII)
@@ -200,8 +212,10 @@ end
 @inline function dεII_dτII(
         a::GrainBoundarySliding, TauII::Quantity; T = 1K, P = 0Pa, d = 1.0e-3m, args...
     )
-    @unpack_units n, p, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(TauII)
+    T, P, d = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, d)
+    @unpack_units Tc n, p, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     #computed symbolically
     return @pow (A * d^p * n * (TauII * FT)^n * exp(-(E + P * V) / (R * T))) / (FE * TauII)
@@ -214,14 +228,16 @@ Returns grain boundary sliding stress as a function of 2nd invariant of the stra
 """
 @inline function compute_τII(
         a::GrainBoundarySliding,
-        EpsII::_T;
+        EpsII;
         T = one(precision(a)),
         P = zero(precision(a)),
         d = one(precision(a)),
         kwargs...,
-    ) where {_T}
-    @unpack_val n, p, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    )
+    Tc = precision_of(EpsII)
+    T, P, d = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, d)
+    @unpack_val Tc n, p, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     n_inv = inv(n)
 
@@ -235,8 +251,10 @@ end
 @inline function compute_τII(
         a::GrainBoundarySliding, EpsII::Quantity; T = 1K, P = 0Pa, d = 1m, kwargs...
     )
-    @unpack_units n, p, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(EpsII)
+    T, P, d = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, d)
+    @unpack_units Tc n, p, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     n_inv = inv(n)
 
@@ -250,14 +268,20 @@ end
 function compute_τII!(
         TauII::AbstractArray{_T, N},
         a::GrainBoundarySliding,
-        EpsII::AbstractArray{_T, N};
-        T = ones(size(TauII))::AbstractArray{_T, N},
-        P = zero(TauII)::AbstractArray{_T, N},
-        d = ones(size(TauII))::AbstractArray{_T, N},
+        EpsII::AbstractArray;
+        T = one(_T),
+        P = zero(_T),
+        d = one(_T),
         kwargs...,
     ) where {N, _T}
-    @inbounds for i in eachindex(EpsII)
-        TauII[i] = compute_τII(a, EpsII[i]; T = T[i], P = P[i], d = d[i])
+    for i in each_argument_index(TauII, EpsII, T, P, d)
+        TauII[i] = compute_τII(
+            a,
+            convert_precision(_T, EpsII[i]);
+            T = argument_at(T, i),
+            P = argument_at(P, i),
+            d = argument_at(d, i),
+        )
     end
 
     return nothing
@@ -265,14 +289,16 @@ end
 
 @inline function dτII_dεII(
         a::GrainBoundarySliding,
-        EpsII::_T;
+        EpsII;
         T = one(precision(a)),
         P = zero(precision(a)),
         d = one(precision(a)),
         args...,
-    ) where {_T}
-    @unpack_val n, p, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    )
+    Tc = precision_of(EpsII)
+    T, P, d = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, d)
+    @unpack_val Tc n, p, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     n_inv = inv(n)
 
@@ -286,8 +312,10 @@ end
 @inline function dτII_dεII(
         a::GrainBoundarySliding, EpsII::Quantity; T = 1K, P = 0Pa, d = 1.0e-3m, args...
     )
-    @unpack_units n, p, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(EpsII)
+    T, P, d = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, d)
+    @unpack_units Tc n, p, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     n_inv = inv(n)
 

@@ -120,22 +120,26 @@ end
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
 @inline function compute_εII(
-        a::NonLinearPeierlsCreep, TauII::_T; T = one(precision(a)), args...
-    ) where {_T}
-    @unpack_val n, q, o, TauP, A, E, R = a
-    FT, FE = a.FT, a.FE
+        a::NonLinearPeierlsCreep, TauII; T = one(precision(a)), args...
+    )
+    Tc = precision_of(TauII)
+    T = convert_precision(Tc, T)
+    @unpack_val Tc n, q, o, TauP, A, E, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
-    ε = @pow A * (TauII * FT)^n * exp(-(E / (R * T)) * (1.0 - ((TauII * FT) / TauP)^o)^q) /
+    ε = @pow A * (TauII * FT)^n * exp(-(E / (R * T)) * (1 - ((TauII * FT) / TauP)^o)^q) /
         FE
 
     return ε
 end
 
 @inline function compute_εII(a::NonLinearPeierlsCreep, TauII::Quantity; T = 1K, args...)
-    @unpack_units n, q, o, TauP, A, E, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(TauII)
+    T = convert_precision(Tc, T)
+    @unpack_units Tc n, q, o, TauP, A, E, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
-    ε = @pow A * (TauII * FT)^n * exp(-(E / (R * T)) * (1.0 - ((TauII * FT) / TauP)^o)^q) /
+    ε = @pow A * (TauII * FT)^n * exp(-(E / (R * T)) * (1 - ((TauII * FT) / TauP)^o)^q) /
         FE
 
     return ε
@@ -144,12 +148,12 @@ end
 function compute_εII!(
         EpsII::AbstractArray{_T, N},
         a::NonLinearPeierlsCreep,
-        TauII::AbstractArray{_T, N};
-        T = ones(size(TauII))::AbstractArray{_T, N},
+        TauII::AbstractArray;
+        T = one(_T),
         args...,
     ) where {N, _T}
-    @inbounds for i in eachindex(EpsII)
-        EpsII[i] = compute_εII(a, TauII[i]; T = T[i])
+    for i in each_argument_index(EpsII, TauII, T)
+        EpsII[i] = compute_εII(a, convert_precision(_T, TauII[i]); T = argument_at(T, i))
     end
 
     return nothing
@@ -160,7 +164,7 @@ function dεII_dτII(a::NonLinearPeierlsCreep, TauII; args...)
 end
 
 """
-    Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau::Float64, EpsII::Float64, args)
+    Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau, EpsII, args)
 
 Nonlinear iterations for Peierls creep stress using Newton-Raphson Iterations. Every number needs to be a child of type Real (don't use units here).
 The initial stress guess Tau should be at least in the same order of magnitude as the value of TauP is in the used creep law. Example: 1.75e9 is a

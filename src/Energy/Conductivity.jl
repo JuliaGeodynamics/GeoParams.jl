@@ -65,10 +65,9 @@ compute_conductivity(s::ConstantConductivity, I::Integer...) = s(I...)
 
 In-place routine to compute constant conductivity
 """
-function compute_conductivity!(
-        k_array::AbstractArray{_T, N}, s::ConstantConductivity; kwargs...
-    ) where {_T, N}
-    @unpack_val k = s
+function compute_conductivity!(k_array::AbstractArray, s::ConstantConductivity; kwargs...)
+    Tc = precision_of(k_array)
+    @unpack_val Tc k = s
     k_array .= k
     return nothing
 end
@@ -151,11 +150,12 @@ function param_info(s::T_Conductivity_Whittington) # info about the structwhere 
 end
 
 # Calculation routine
-function (s::T_Conductivity_Whittington{_T})(; T = 0.0e0, kwargs...) where {_T}
+function (s::T_Conductivity_Whittington)(; T = 0.0e0, kwargs...)
+    Tc = precision_of(T)
     if T isa Quantity
-        @unpack_units a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
+        @unpack_units Tc a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
     else
-        @unpack_val a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
+        @unpack_val Tc a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
     end
 
     if T ≤ Tcutoff
@@ -253,13 +253,14 @@ function param_info(s::T_Conductivity_Whittington_parameterised) # info about th
 end
 
 # Calculation routine
-function (s::T_Conductivity_Whittington_parameterised{_T})(;
+function (s::T_Conductivity_Whittington_parameterised)(;
         T = 0.0e0, kwargs...
-    ) where {_T}
+    )
+    Tc = precision_of(T)
     if T isa Quantity
-        @unpack_units a, b, c, d, Ts = s
+        @unpack_units Tc a, b, c, d, Ts = s
     else
-        @unpack_val a, b, c, d, Ts = s
+        @unpack_val Tc a, b, c, d, Ts = s
     end
 
     T_C = T - Ts
@@ -427,11 +428,13 @@ TP_Conductivity_info = Dict(
 )
 
 # Calculation routine
-function (s::TP_Conductivity{_T})(; P = 0.0e0, T = 0.0e0, kwargs...) where {_T}
+function (s::TP_Conductivity)(; P = 0.0e0, T = 0.0e0, kwargs...)
+    Tc = precision_of(P)
+    T = convert_precision(Tc, T)
     if T isa Quantity
-        @unpack_units a, b, c, d = s
+        @unpack_units Tc a, b, c, d = s
     else
-        @unpack_val a, b, c, d = s
+        @unpack_val Tc a, b, c, d = s
     end
 
     if ustrip(d) == 0
@@ -442,13 +445,14 @@ function (s::TP_Conductivity{_T})(; P = 0.0e0, T = 0.0e0, kwargs...) where {_T}
 end
 
 
-function (s::TP_Conductivity{_T})(
+function (s::TP_Conductivity)(
         P::AbstractArray, T::AbstractArray; kwargs...
-    ) where {_T}
+    )
+    Tc = precision_of(T)
     if eltype(T) <: Quantity   # array of Quantities is not itself a Quantity
-        @unpack_units a, b, c, d = s
+        @unpack_units Tc a, b, c, d = s
     else
-        @unpack_val a, b, c, d = s
+        @unpack_val Tc a, b, c, d = s
     end
 
     d_is_zero = ustrip(d) == 0
@@ -551,7 +555,7 @@ compute_conductivity!(k::AbstractArray{T,N}, PhaseRatios::AbstractArray{T, M}, P
 In-place computation of conductivity `k` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 """
-compute_conductivity(args::Vararg{Any, N}) where {N} = compute_param(compute_conductivity, args...)
+compute_conductivity(MatParam, arg, args::Vararg{Any, N}) where {N} = compute_param(compute_conductivity, MatParam, arg, args...)
 compute_conductivity!(args::Vararg{Any, N}) where {N} = compute_param!(compute_conductivity, args...)
 
 # extractor methods

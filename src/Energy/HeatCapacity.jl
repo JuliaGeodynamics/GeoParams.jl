@@ -296,7 +296,7 @@ This assumes that the `Phase` of every point is specified as an Integer in the `
 """
 compute_heatcapacity!()
 
-compute_heatcapacity(args::Vararg{Any, N}) where {N} = compute_param(compute_heatcapacity, args...)
+compute_heatcapacity(MatParam, arg, args::Vararg{Any, N}) where {N} = compute_param(compute_heatcapacity, MatParam, arg, args...)
 compute_heatcapacity!(args::Vararg{Any, N}) where {N} = compute_param!(compute_heatcapacity, args...)
 
 # extractor methods

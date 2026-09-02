@@ -97,11 +97,12 @@ the CO2 mole fraction of the gas). Also callable as `compute_dissolved(s; P, T,
 X_co2)` and `compute_dissolved(s, args::NamedTuple)`.
 """
 @inline function compute_dissolved(s::Liu2005_Solubility, P, T, X_co2)
+    Tc = precision_of(P)
     b1, b2, b3, b4, b5, b6, c1, c2, c3, c4 = s.coeffs
     if P isa Quantity
-        @unpack_units Pref, Tref = s
+        @unpack_units Tc Pref, Tref = s
     else
-        @unpack_val Pref, Tref = s
+        @unpack_val Tc Pref, Tref = s
     end
     Pw = P * (1 - X_co2) / Pref     # ∝ H2O partial pressure in MPa
     Pc = P * X_co2 / Pref           # ∝ CO2 partial pressure in MPa
@@ -169,16 +170,17 @@ function param_info(s::Mafic_Solubility)
 end
 
 @inline function compute_dissolved(s::Mafic_Solubility, P, T, X_co2)
+    Tc = precision_of(P)
     b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, c1, c2, c3, c4 = s.coeffs
     if P isa Quantity
-        @unpack_units T0, Tref, Pref = s
+        @unpack_units Tc T0, Tref, Pref = s
     else
-        @unpack_val T0, Tref, Pref = s
+        @unpack_val Tc T0, Tref, Pref = s
     end
-    Tc = (T - T0) / Tref            # ∝ T in °C
+    Tn = (T - T0) / Tref            # ∝ T in °C
     Pm = P / Pref                   # ∝ P in MPa
     meq = @muladd b1 +
-        Tc * (b2 + b8 * Tc + b5 * X_co2 + b6 * Pm) +
+        Tn * (b2 + b8 * Tn + b5 * X_co2 + b6 * Pm) +
         X_co2 * (b3 + b9 * X_co2 + b7 * Pm) +
         Pm * (b4 + b10 * Pm)
 
@@ -241,7 +243,8 @@ end
 Effective molar mass of the H2O–CO2 gas mixture at CO2 mole fraction `X_co2`.
 """
 @inline function effective_molar_mass(s::GasMixture, X_co2)
-    @unpack_val M_h2o, M_co2 = s   # X_co2 is dimensionless; a nondimensionalized struct yields nondim output
+    Tc = precision_of(X_co2)
+    @unpack_val Tc M_h2o, M_co2 = s   # X_co2 is dimensionless; a nondimensionalized struct yields nondim output
     return M_h2o * (1 - X_co2) + M_co2 * X_co2
 end
 
@@ -252,7 +255,8 @@ Mass-weighted specific heat of the H2O–CO2 gas mixture; zero at `X_co2 == 0`
 (reference convention).
 """
 @inline function compute_gas_heatcapacity(s::GasMixture, X_co2)
-    @unpack_val Cp_h2o, Cp_co2, M_h2o, M_co2 = s
+    Tc = precision_of(X_co2)
+    @unpack_val Tc Cp_h2o, Cp_co2, M_h2o, M_co2 = s
     iszero(X_co2) && return zero(Cp_h2o * X_co2)
     m_g = M_h2o * (1 - X_co2) + M_co2 * X_co2
     return (M_h2o * Cp_h2o * (1 - X_co2) + M_co2 * Cp_co2 * X_co2) * inv(m_g)
@@ -367,7 +371,7 @@ function compute_dissolved!(
 end
 
 # Integer-phase selection / single struct over a domain (mirrors compute_meltfraction).
-compute_dissolved(args::Vararg{Any, N}) where {N} = compute_param(compute_dissolved, args...)
+compute_dissolved(MatParam, arg, args::Vararg{Any, N}) where {N} = compute_param(compute_dissolved, MatParam, arg, args...)
 
 # Phase-ratio mix of both outputs (mirrors compute_meltfraction_ratio). The
 # shared compute_param_times_frac sums a scalar, so the two-element output gets

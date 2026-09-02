@@ -36,8 +36,12 @@ end
 LinearSoftening(min_max_values::NTuple{2, T1}, lo_hi::NTuple{2, T2}) where {T1, T2} = LinearSoftening(min_max_values..., lo_hi...)
 
 @inline function (softening::LinearSoftening)(softening_var, max_value)
+    Tc = precision_of(softening_var)
+    # every branch must return the same type, so the softened parameter joins
+    # the evaluation precision before any of them is taken
+    max_value = convert_precision(Tc, max_value)
 
-    @unpack_val lo, hi, min_value = softening
+    @unpack_val Tc lo, hi, min_value = softening
 
     softening_var ≥ hi && return min_value
     softening_var ≤ lo && return max_value
@@ -68,8 +72,9 @@ function NonLinearSoftening(args::Vararg{Any, 4})
 end
 
 @inline function (softening::NonLinearSoftening)(softening_var, ::Vararg{Any, N}) where {N}
-    @unpack_val ξ₀, Δ, μ, σ = softening
-    return ξ₀ - 0.5 * Δ * erfc(- (softening_var - μ) / σ)
+    Tc = precision_of(softening_var)
+    @unpack_val Tc ξ₀, Δ, μ, σ = softening
+    return ξ₀ - Δ * erfc(- (softening_var - μ) / σ) / 2
 end
 
 # Non linear softening from Taras
@@ -84,7 +89,9 @@ function DecaySoftening(args::Vararg{Any, 2})
 end
 
 @inline function (softening::DecaySoftening)(softening_var::T, max_value::T) where {T}
-    @unpack_val εref, n = softening
+    Tc = precision_of(softening_var)
+    max_value = convert_precision(Tc, max_value)
+    @unpack_val Tc εref, n = softening
 
     return @pow max_value * inv((softening_var / εref + 1)^n)
 end
