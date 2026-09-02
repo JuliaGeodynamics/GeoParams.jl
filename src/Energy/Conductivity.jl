@@ -107,7 +107,7 @@ where ``Cp`` is the heat capacity [``J/mol/K``], and ``a,b,c`` are parameters th
 - b = 0.0323J/mol/K^2   if T> 846 K
 - c = 5e6J/mol*K        if T<= 846 K
 - c = 47.9e-6J/mol*K    if T> 846 K
-- d = 576.3m^2/s*K
+- d = 567.3m^2/s*K
 - e = 0.062m^2/s
 - f = 0.732m^2/s
 - g = 0.000135m^2/s/K
@@ -138,7 +138,7 @@ julia> T,k,plt = PlotConductivity(p)
     molmass::GeoUnit{T, U4} = 0.22178kg / mol               # average molar mass
     Tcutoff::GeoUnit{T, U5} = 846.0K                      # cutoff temperature
     rho::GeoUnit{T, U6} = 2700kg / m^3                  # Density they use for an average crust
-    d::GeoUnit{T, U7} = 576.3 * 1.0e-6m^2 / s * K           # diffusivity parameterization
+    d::GeoUnit{T, U7} = 567.3 * 1.0e-6m^2 / s * K           # diffusivity parameterization
     e::GeoUnit{T, U8} = 0.062 * 1.0e-6m^2 / s             # diffusivity parameterization
     f::GeoUnit{T, U8} = 0.732 * 1.0e-6m^2 / s             # diffusivity parameterization
     g::GeoUnit{T, U9} = 0.000135 * 1.0e-6m^2 / s / K        # diffusivity parameterization
