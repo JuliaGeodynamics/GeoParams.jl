@@ -109,7 +109,7 @@ for myType in (:ConstantSeismicVelocity, :PhaseDiagram_LookupTable)
 end
 
 compute_wave_velocity!(args...) = compute_param!(compute_wave_velocity, args...)
-compute_wave_velocity(args...) = compute_param(compute_wave_velocity, args...)
+compute_wave_velocity(MatParam, arg, args...) = compute_param(compute_wave_velocity, MatParam, arg, args...)
 
 """
         Vp_cor,Vs_cor = melt_correction(  Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
@@ -341,7 +341,7 @@ function porosity_correction(
 end
 
 """
-        Vs_anel = anelastic_correction(water::Int64, Vs0::Float64,P::Float64,T::Float64)
+        Vs_anel = anelastic_correction(water::Integer, Vs0, P, T)
 
 This routine computes a correction of S-wave velocity for anelasticity
 
@@ -368,35 +368,37 @@ References:
 
 
 """
-function anelastic_correction(water::Int64, Vs0::Float64, Pref::Float64, Tref::Float64)
-    R = 8.31446261815324     # gas constant
+function anelastic_correction(water::Integer, Vs0, Pref, Tref)
+    Tc = precision_of(Vs0)
+    Pref, Tref = convert_precision(Tc, Pref), convert_precision(Tc, Tref)
+    R = Tc(8.31446261815324)     # gas constant
 
     # values based on fitting experimental constraints (Behn et al., 2009)
-    α = 0.27
-    B0 = 1.28e8          # m/s
-    dref = 1.24e-5       # m
-    COHref = 50.0 * 1.0e-6 # 50H/1e6Si
+    α = Tc(0.27)
+    B0 = Tc(1.28e8)          # m/s
+    dref = Tc(1.24e-5)       # m
+    COHref = Tc(50.0e-6)     # 50H/1e6Si
 
-    Gref = 1.09
-    Eref = 505.0e3 # J/mol
-    Vref = 1.2e-5  # m3*mol
+    Gref = Tc(1.09)
+    Eref = Tc(505.0e3) # J/mol
+    Vref = Tc(1.2e-5)  # m3*mol
 
     G = 1
-    E = 420.0e3              # J/mol (activation energy)
-    V = 1.2e-5               # m3*mol (activation volume)
+    E = Tc(420.0e3)              # J/mol (activation energy)
+    V = Tc(1.2e-5)               # m3*mol (activation volume)
 
     # using remaining values from Cobden et al., 2018
-    ω = 0.01                 # Hz (frequency to match for studied seismic system)
-    d = 1.0e-2                 # m (grain size)
+    ω = Tc(0.01)                 # Hz (frequency to match for studied seismic system)
+    d = Tc(1.0e-2)               # m (grain size)
 
     if water == 0
-        COH = 50.0 * 1.0e-6   # for dry mantle
+        COH = Tc(50.0e-6)     # for dry mantle
         r = 0               # for dry mantle
     elseif water == 1
-        COH = 1000.0 * 1.0e-6 # for damp mantle
+        COH = Tc(1000.0e-6)   # for damp mantle
         r = 1               # for damp mantle
     elseif water == 2
-        COH = 3000.0 * 1.0e-6 # for wet mantle (saturated water)
+        COH = Tc(3000.0e-6)   # for wet mantle (saturated water)
         r = 2               # for wet mantle
     else
         throw(
@@ -413,7 +415,7 @@ function anelastic_correction(water::Int64, Vs0::Float64, Pref::Float64, Tref::F
 
     Qinv = @pow (B * d^(-G) * inv(ω) * exp(-(Pref * V + E) / (R * Tref)))^α
 
-    Vs_anel = Vs0 * (1.0 - (Qinv) / (2.0 * tan(π * α * 0.5)))
+    Vs_anel = Vs0 * (1 - Qinv / (2 * tan(π * α / 2)))
 
     return Vs_anel
 end

@@ -120,19 +120,23 @@ end
 # Calculation routines for linear viscous rheologies
 # All inputs must be non-dimensionalized (or converted to consistent units) GeoUnits
 @inline function compute_εII(
-        a::PeierlsCreep, TauII::_T; T = one(precision(a)), args...
-    ) where {_T}
-    @unpack_val n, q, o, TauP, A, E, R = a
-    FT, FE = a.FT, a.FE
+        a::PeierlsCreep, TauII; T = one(precision(a)), args...
+    )
+    Tc = precision_of(TauII)
+    T = convert_precision(Tc, T)
+    @unpack_val Tc n, q, o, TauP, A, E, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
-    ε = @pow (A * exp(-(E / (R * T)) * ((1.0 - ((FT * TauII) / TauP)^o)^q))) / FE
+    ε = @pow (A * exp(-(E / (R * T)) * ((1 - ((FT * TauII) / TauP)^o)^q))) / FE
 
     return ε
 end
 
 @inline function compute_εII(a::PeierlsCreep, TauII::Quantity; T = 1K, args...)
-    @unpack_units n, q, o, TauP, A, E, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(TauII)
+    T = convert_precision(Tc, T)
+    @unpack_units Tc n, q, o, TauP, A, E, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     ε = @pow (A * exp(-(E / (R * T)) * ((1 - (((FT * TauII) / TauP)^o))^q))) / FE
 
@@ -142,12 +146,12 @@ end
 function compute_εII!(
         EpsII::AbstractArray{_T, N},
         a::PeierlsCreep,
-        TauII::AbstractArray{_T, N};
-        T = ones(size(TauII))::AbstractArray{_T, N},
+        TauII::AbstractArray;
+        T = one(_T),
         kwargs...,
     ) where {N, _T}
-    @inbounds for i in eachindex(EpsII)
-        EpsII[i] = compute_εII(a, TauII[i]; T = T[i])
+    for i in each_argument_index(EpsII, TauII, T)
+        EpsII[i] = compute_εII(a, convert_precision(_T, TauII[i]); T = argument_at(T, i))
     end
 
     return nothing
@@ -164,48 +168,54 @@ Computes the stress for a peierls creep law given a certain strain rate.
 
 """
 @inline function compute_τII(
-        a::PeierlsCreep, EpsII::_T; T = one(precision(a)), args...
-    ) where {_T}
-    @unpack_val n, q, o, TauP, A, E, R = a
+        a::PeierlsCreep, EpsII; T = one(precision(a)), args...
+    )
+    Tc = precision_of(EpsII)
+    T = convert_precision(Tc, T)
+    @unpack_val Tc n, q, o, TauP, A, E, R = a
 
-    FT, FE = a.FT, a.FE
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     q_inv = inv(q)
     o_inv = inv(o)
 
-    τ = @pow (TauP * (1.0 - (-((R * T * log((FE * EpsII) / A)) / E))^q_inv)^o_inv) / FT
+    τ = @pow (TauP * (1 - (-((R * T * log((FE * EpsII) / A)) / E))^q_inv)^o_inv) / FT
 
     return τ
 end
 
 @inline function compute_τII(a::PeierlsCreep, EpsII::Quantity; T = 1K, args...)
-    @unpack_units n, q, o, TauP, A, E, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(EpsII)
+    T = convert_precision(Tc, T)
+    @unpack_units Tc n, q, o, TauP, A, E, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     q_inv = inv(q)
     o_inv = inv(o)
 
-    τ = @pow (TauP * (1.0 - (-((R * T * log((FE * EpsII) / A)) / E))^q_inv)^o_inv) / FT
+    τ = @pow (TauP * (1 - (-((R * T * log((FE * EpsII) / A)) / E))^q_inv)^o_inv) / FT
 
     return τ
 end
 
 """
-    compute_τII!(TauII::AbstractArray{_T,N}, a::PeierlsCreep, EpsII::AbstractArray{_T,N};
-        T = ones(size(TauII))::AbstractArray{_T,N}, args...)
+    compute_τII!(TauII::AbstractArray{_T,N}, a::PeierlsCreep, EpsII::AbstractArray;
+        T = one(_T), args...)
 
 Computes the deviatoric stress invariant for a peierls creep law.
+
+`T` may be a scalar, applied to every element, or an array indexed alongside `EpsII`.
 
 """
 function compute_τII!(
         TauII::AbstractArray{_T, N},
         a::PeierlsCreep,
-        EpsII::AbstractArray{_T, N};
-        T = ones(size(TauII))::AbstractArray{_T, N},
+        EpsII::AbstractArray;
+        T = one(_T),
         kwargs...,
     ) where {N, _T}
-    @inbounds for i in eachindex(TauII)
-        TauII[i] = compute_τII(a, EpsII[i]; T = T[i])
+    for i in each_argument_index(TauII, EpsII, T)
+        TauII[i] = compute_τII(a, convert_precision(_T, EpsII[i]); T = argument_at(T, i))
     end
 
     return nothing

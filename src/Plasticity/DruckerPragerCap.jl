@@ -165,14 +165,14 @@ To recover actual derivatives:  ∂Q/∂τII = 2A_τ,  ∂Q/∂P = -A_p.
     @unpack pq, pd, τd, b, kq = cp
 
     if ismode2_flowpotential(pq, pd, τd, τII, P)
-        return 0.5, kq
+        return one(τII) / 2, kq
     else
         Rq = hypot(τII, P - pq)
         if iszero(Rq)
             return zero(τII), zero(P)
         end
         inv_Rq = inv(Rq)
-        return 0.5 * b * τII * inv_Rq, - b * (P - pq) * inv_Rq
+        return b * τII * inv_Rq / 2, - b * (P - pq) * inv_Rq
     end
 end
 
@@ -181,7 +181,9 @@ end
 function (s::DruckerPragerCap)(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...
     )
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    Tc = precision_of(P)
+    τII, Pf, EII, perturbation_C = convert_precision(Tc, (τII, Pf, EII, perturbation_C))
+    @unpack_val Tc sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
     Ψ = s.softening_Ψ(EII, Ψ)
     C = s.softening_C(EII, C)
@@ -198,7 +200,9 @@ end
 function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, NoSoftening, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
     ) where {_T, U, U1, U2}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    Tc = precision_of(P)
+    τII, Pf, EII, perturbation_C = convert_precision(Tc, (τII, Pf, EII, perturbation_C))
+    @unpack_val Tc sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     C *= perturbation_C
 
     cp = compute_tensile_cap(sinϕ, cosϕ, sinΨ, C, pT)
@@ -210,7 +214,9 @@ end
 function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, NoSoftening, S3})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
     ) where {_T, U, U1, U2, S3 <: AbstractSoftening}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    Tc = precision_of(P)
+    τII, Pf, EII, perturbation_C = convert_precision(Tc, (τII, Pf, EII, perturbation_C))
+    @unpack_val Tc sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     Ψ = s.softening_Ψ(EII, Ψ)
     C *= perturbation_C
     sinΨ = iszero(EII) ? sinΨ : sind(Ψ)
@@ -224,7 +230,9 @@ end
 function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, S2, S3})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
     ) where {_T, U, U1, U2, S2 <: AbstractSoftening, S3 <: AbstractSoftening}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    Tc = precision_of(P)
+    τII, Pf, EII, perturbation_C = convert_precision(Tc, (τII, Pf, EII, perturbation_C))
+    @unpack_val Tc sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     C = s.softening_C(EII, C)
     Ψ = s.softening_Ψ(EII, Ψ)
     C *= perturbation_C
@@ -239,7 +247,9 @@ end
 function (s::DruckerPragerCap{_T, U, U1, U2, NoSoftening, S2, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
     ) where {_T, U, U1, U2, S2 <: AbstractSoftening}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    Tc = precision_of(P)
+    τII, Pf, EII, perturbation_C = convert_precision(Tc, (τII, Pf, EII, perturbation_C))
+    @unpack_val Tc sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     C = s.softening_C(EII, C)
     C *= perturbation_C
 
@@ -252,7 +262,9 @@ end
 function (s::DruckerPragerCap{_T, U, U1, U2, S1, S2, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
     ) where {_T, U, U1, U2, S1 <: AbstractSoftening, S2 <: AbstractSoftening}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    Tc = precision_of(P)
+    τII, Pf, EII, perturbation_C = convert_precision(Tc, (τII, Pf, EII, perturbation_C))
+    @unpack_val Tc sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C = s.softening_C(EII, C)
     C *= perturbation_C
@@ -267,7 +279,9 @@ end
 function (s::DruckerPragerCap{_T, U, U1, U2, S1, NoSoftening, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
     ) where {_T, U, U1, U2, S1 <: AbstractSoftening}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    Tc = precision_of(P)
+    τII, Pf, EII, perturbation_C = convert_precision(Tc, (τII, Pf, EII, perturbation_C))
+    @unpack_val Tc sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C *= perturbation_C
 
@@ -281,7 +295,9 @@ end
 function (s::DruckerPragerCap{_T, U, U1, U2, S1, NoSoftening, S3})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...,
     ) where {_T, U, U1, U2, S1 <: AbstractSoftening, S3 <: AbstractSoftening}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    Tc = precision_of(P)
+    τII, Pf, EII, perturbation_C = convert_precision(Tc, (τII, Pf, EII, perturbation_C))
+    @unpack_val Tc sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
     Ψ = s.softening_Ψ(EII, Ψ)
     C *= perturbation_C
@@ -316,16 +332,16 @@ end
 Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` pressure, and `Pf` fluid pressure, and stores the result in `F`.
 """
 function compute_yieldfunction!(
-        F::AbstractArray{_T, N},
+        F::AbstractArray,
         s::DruckerPragerCap;
-        P::AbstractArray{_T, N},
-        τII::AbstractArray{_T, N},
-        Pf::AbstractArray{_T, N} = zero(P),
-        EII::AbstractArray{_T, N} = zero(P),
+        P::AbstractArray,
+        τII::AbstractArray,
+        Pf = zero(P),
+        EII = zero(P),
         perturbation_C = 1.0,
         kwargs...,
-    ) where {N, _T}
-    @inbounds for i in eachindex(P)
+    )
+    for i in eachindex(F)
         F[i] = compute_yieldfunction(s; P = P[i], τII = τII[i], Pf = Pf[i], EII = EII[i], perturbation_C = perturbation_C)
     end
     return nothing
@@ -340,7 +356,9 @@ function compute_flowpotential(
         perturbation_C = 1.0,
         kwargs...,
     )
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    Tc = precision_of(P)
+    τII, Pf, EII, perturbation_C = convert_precision(Tc, (τII, Pf, EII, perturbation_C))
+    @unpack_val Tc sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
     Ψ = s.softening_Ψ(EII, Ψ)
     C = s.softening_C(EII, C)
@@ -356,16 +374,16 @@ end
 @inline compute_flowpotential(s::DruckerPragerCap, args) = compute_flowpotential(s; args...)
 
 function compute_flowpotential!(
-        Q::AbstractArray{_T, N},
+        Q::AbstractArray,
         s::DruckerPragerCap;
-        P::AbstractArray{_T, N},
-        τII::AbstractArray{_T, N},
-        Pf::AbstractArray{_T, N} = zero(P),
-        EII::AbstractArray{_T, N} = zero(P),
+        P::AbstractArray,
+        τII::AbstractArray,
+        Pf = zero(P),
+        EII = zero(P),
         perturbation_C = 1.0,
         kwargs...,
-    ) where {N, _T}
-    @inbounds for i in eachindex(P)
+    )
+    for i in eachindex(Q)
         Q[i] = compute_flowpotential(s; P = P[i], τII = τII[i], Pf = Pf[i], EII = EII[i], perturbation_C = perturbation_C)
     end
     return nothing

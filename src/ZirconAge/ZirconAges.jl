@@ -137,7 +137,7 @@ function compute_zircons_Ttpath(
     )
 
     # find the number of timesteps during which the temperature is > Tmin and < Tsat
-    length_trace = Vector{Float64}(undef, length(ID_col_er))
+    length_trace = Vector{_T}(undef, length(ID_col_er))
     for i in 1:length(ID_col_er)
         length_trace[i] = length(
             findall(
@@ -154,15 +154,15 @@ function compute_zircons_Ttpath(
     VALID_min_time = findmin(Tt_paths_Temp1[id, ID_col_lgst_tr])
     ID_min_time = VALID_min_time[2]
     max_age_spread = maximum(length_trace) * Δt
-    epsilon = range(2.0; step = -0.002, stop = 0.0)
-    time_rescaled = range(0.0; stop = max_age_spread, length = length(epsilon))
-    radius_rescaled = cumsum(epsilon / 5.0)
+    epsilon = range(_T(2.0); step = _T(-0.002), stop = zero(_T))
+    time_rescaled = range(zero(_T); stop = max_age_spread, length = length(epsilon))
+    radius_rescaled = cumsum(epsilon / 5)
     n_zr = zero(Tt_paths_Temp1)
 
     compute_number_zircons!(n_zr, Tt_paths_Temp1, ZirconData) # computes the number of zircons for every path
 
     #Considering that only the zircon with a diameter of 100 micron or larger are analysed for each trace
-    min_radius = 0.0
+    min_radius = zero(_T)
     min_step_n = floor((min_radius * max_age_spread) / maximum(radius_rescaled) / Δt) #minimum length of a trace to have a zircon of at least 100 micron diameter
 
     ID_col_er = getindex.(ID_col_er, 2)
@@ -176,11 +176,11 @@ function compute_zircons_Ttpath(
     n_zr = replace!(n_zr, NaN => 0.0)
     number_zircons = sum(n_zr[:, ID_col_er_1]; dims = 2)
 
-    zr_select = similar(Tt_paths_Temp, Float64) .= 0.0
+    zr_select = fill!(similar(Tt_paths_Temp), 0)
     zr_select[Tt_paths_Temp .> 0.0] .= 1.0
     n_zrc2_0 = zr_select .* n_zr
     sz = size(n_zrc2_0[:, ID_col_er_1], 1)
-    ages_eruptible = collect(Float64, 1.0:Δt:(sz * Δt))
+    ages_eruptible = collect(_T, 1:Δt:(sz * Δt))
 
     # calculate temperature average
     T_av_time = zero(Tt_paths_Temp1)

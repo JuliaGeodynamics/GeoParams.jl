@@ -3,6 +3,8 @@
 """
 module Units
 using Unitful
+using Adapt
+using ForwardDiff: Dual, value
 import Unitful: superscript
 using Parameters
 using Setfield # allows modifying fields in immutable struct
@@ -126,6 +128,8 @@ struct GeoUnit{T, U}
     isdimensional::Bool
 end
 
+Adapt.@adapt_structure GeoUnit
+
 # Different ways of specifying the GeoUnit:
 function GeoUnit(val)
     return GeoUnit{typeof(ustrip.(val)), typeof(unit(val[1]))}(
@@ -183,6 +187,8 @@ Value(v::GeoUnit) = Unitful.Quantity.(v.val, v.unit)        # value, with units
 Fun(v::GeoUnit) = v.val
 unpack_units(x::NTuple{N, GeoUnit}) where {N} = ntuple(i -> x[i].unit * x[i].val, Val(N))
 unpack_vals(x::NTuple{N, GeoUnit}) where {N} = ntuple(i -> x[i].val, Val(N))
+unpack_vals(::Type{T}, x::NTuple{N, GeoUnit}) where {T, N} =
+    ntuple(i -> convert_precision(T, x[i].val), Val(N))
 
 function UnitValue(v::GeoUnit{T, U}) where {T, U}
     if v.isdimensional

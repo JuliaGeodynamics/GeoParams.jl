@@ -59,7 +59,8 @@ end
 ConstantPermeability(args...) = ConstantPermeability(convert.(GeoUnit, args)...)
 isdimensional(s::ConstantPermeability) = isdimensional(s.k)
 
-@inline (s::ConstantPermeability)(; args...) = s.k.val
+@inline (s::ConstantPermeability)(; args...) =
+    convert_precision(precision_of(values(args)), s.k.val)
 @inline (s::ConstantPermeability)(args) = s(; args...)
 @inline compute_permeability(s::ConstantPermeability{_T}, args) where {_T} = s(; args...)
 @inline compute_permeability(s::ConstantPermeability{_T}) where {_T} = s()
@@ -117,12 +118,9 @@ function param_info(s::HazenPermeability)
     return MaterialParamsInfo(; Equation = L"k = C \cdot D_{10}^2")
 end
 
-function (s::HazenPermeability{_T})(; kwargs...) where {_T}
-    if kwargs isa Quantity
-        @unpack_units C, D10 = s
-    else
-        @unpack_val   C, D10 = s
-    end
+function (s::HazenPermeability)(; kwargs...)
+    Tc = precision_of(values(kwargs))
+    @unpack_val Tc C, D10 = s
 
     return C * D10^2
 end
@@ -174,11 +172,12 @@ function param_info(s::PowerLawPermeability)
     return MaterialParamsInfo(; Equation = L"k = c \cdot k_0 \cdot \phi^n")
 end
 
-function (s::PowerLawPermeability{_T})(; ϕ = 1.0e-2, kwargs...) where {_T}
+function (s::PowerLawPermeability)(; ϕ = 1.0e-2, kwargs...)
+    Tc = precision_of(ϕ)
     if ϕ isa Quantity
-        @unpack_units c, k0, n = s
+        @unpack_units Tc c, k0, n = s
     else
-        @unpack_val   c, k0, n = s
+        @unpack_val Tc c, k0, n = s
     end
 
     return c * k0 * fastpow(ϕ, n)
@@ -228,11 +227,12 @@ function param_info(s::CarmanKozenyPermeability)
     return MaterialParamsInfo(; Equation = L"k = c \left(\frac{\phi}{\phi_0}\right)^n")
 end
 
-function (s::CarmanKozenyPermeability{_T})(; ϕ = 1.0e-2, kwargs...) where {_T}
+function (s::CarmanKozenyPermeability)(; ϕ = 1.0e-2, kwargs...)
+    Tc = precision_of(ϕ)
     if ϕ isa Quantity
-        @unpack_units c, ϕ0, n = s
+        @unpack_units Tc c, ϕ0, n = s
     else
-        @unpack_val   c, ϕ0, n = s
+        @unpack_val Tc c, ϕ0, n = s
     end
 
     return @pow c * (ϕ / ϕ0)^n
@@ -264,7 +264,7 @@ In-place computation of permeability `k` for the whole domain and all phases, in
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 """
 @inline compute_permeability!(args::Vararg{Any, N}) where {N} = compute_param!(compute_permeability, args...)
-@inline compute_permeability(args::Vararg{Any, N}) where {N} = compute_param(compute_permeability, args...)
+@inline compute_permeability(MatParam, arg, args::Vararg{Any, N}) where {N} = compute_param(compute_permeability, MatParam, arg, args...)
 @inline compute_permeability_ratio(args::Vararg{Any, N}) where {N} = compute_param_times_frac(compute_permeability, args...)
 
 # extractor methods

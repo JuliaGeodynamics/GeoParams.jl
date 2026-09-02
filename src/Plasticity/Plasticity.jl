@@ -1,7 +1,7 @@
 # If you want to add a new method here, feel free to do so.
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 abstract type AbstractPlasticity{T} <: AbstractConstitutiveLaw{T} end
-abstract type AbstractPlasticPotential{Float64} <: AbstractConstitutiveLaw{Float64} end
+abstract type AbstractPlasticPotential{T} <: AbstractConstitutiveLaw{T} end
 
 export AbstractPlasticity,
     isvolumetric,
@@ -105,23 +105,23 @@ for myType in (:DruckerPrager, :DruckerPrager_regularised, :DruckerPragerCap)
     end
 end
 
-compute_yieldfunction(args...) = compute_param(compute_yieldfunction, args...)
+compute_yieldfunction(MatParam, arg, args...) = compute_param(compute_yieldfunction, MatParam, arg, args...)
 compute_yieldfunction!(args...) = compute_param!(compute_yieldfunction, args...)
-compute_plasticpotentialDerivative(args...) = compute_param(∂Q∂τ, args...)
+compute_plasticpotentialDerivative(MatParam, arg, args...) = compute_param(∂Q∂τ, MatParam, arg, args...)
 ∂Q∂τ(p::AbstractMaterialParamsStruct, args) = compute_plasticpotentialDerivative(p, args)
-∂Q∂τ(args...) = compute_param(∂Q∂τ, args...)
-∂Q∂τII(args...) = compute_param(∂Q∂τII, args...)
+∂Q∂τ(MatParam, arg, args...) = compute_param(∂Q∂τ, MatParam, arg, args...)
+∂Q∂τII(MatParam, arg, args...) = compute_param(∂Q∂τII, MatParam, arg, args...)
 
 function compute_plasticpotentialDerivative(p::AbstractMaterialParamsStruct, args)
     return ∂Q∂τ(p.Plasticity[1], args)
 end
 
-∂Q∂P(args...) = compute_param(∂Q∂P, args...)
+∂Q∂P(MatParam, arg, args...) = compute_param(∂Q∂P, MatParam, arg, args...)
 
 function ∂Q∂P(p::AbstractMaterialParamsStruct, args)
     return ∂Q∂P(p.Plasticity[1], args)
 end
 
-lambda(args...) = compute_param(lambda, args...)
-plastic_strain_rate(args...) = compute_param(plastic_strain_rate, args...)
-plastic_strain(args...) = compute_param(plastic_strain, args...)
+lambda(MatParam, arg, args...) = compute_param(lambda, MatParam, arg, args...)
+plastic_strain_rate(MatParam, arg, args...) = compute_param(plastic_strain_rate, MatParam, arg, args...)
+plastic_strain(MatParam, arg, args...) = compute_param(plastic_strain, MatParam, arg, args...)

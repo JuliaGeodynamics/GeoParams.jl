@@ -27,10 +27,11 @@ using StaticArrays
         fn::F, MatParam::NTuple{N, AbstractMaterialParamsStruct}, Phase::Int64, args::Vararg{Any, NA}
     ) where {F <: Function, N, NA}
     return quote
-        Base.@_inline_meta
-        Base.Cartesian.@nexprs $N i ->
-        @inbounds (MatParam[i].Phase == Phase) && return fn(MatParam[i], args...)
-        return 0.0
+        @inline
+        Base.Cartesian.@nexprs $N i -> (MatParam[i].Phase == Phase) && return fn(MatParam[i], args...)
+        # The no-match fallback must carry `fn`'s return type: a bare `0.0` would widen
+        # every call's inferred type to `Union{T, Float64}`.
+        return zero(Base.promote_op(fn, typeof(MatParam[1]), map(typeof, args)...))
     end
 end
 
@@ -52,8 +53,12 @@ end
     return compute_param(fn, Tuple(MatParam), Phase, args...)
 end
 
-@inline function compute_param(fn::F, MatParam::Union{AbstractMaterialParamsStruct, AbstractMaterialParam}, args::Vararg{Any, NA}) where {F <: Function, NA}
-    return fn(MatParam, args...)
+# At least one argument beyond `MatParam` is required, here and in the variadic
+# `compute_*` fallbacks that forward here: together those two would make `fn(MatParam)`
+# dispatch to itself. Parameters whose value takes no arguments supply their own
+# single-argument `compute_*` method, which is more specific than the fallback.
+@inline function compute_param(fn::F, MatParam::Union{AbstractMaterialParamsStruct, AbstractMaterialParam}, arg, args::Vararg{Any, NA}) where {F <: Function, NA}
+    return fn(MatParam, arg, args...)
 end
 
 # @inline function compute_param(fn::F, MatParam::AbstractMaterialParamsStruct, args::Vararg{Any, NA}) where {F <: Function, NA}

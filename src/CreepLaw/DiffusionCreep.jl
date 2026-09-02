@@ -154,8 +154,10 @@ Returns diffusion creep strainrate as a function of 2nd invariant of the stress 
         f = one(precision(a)),
         kwargs...,
     )
-    @unpack_val d, n, r, p, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(TauII)
+    T, P, f = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, f)
+    @unpack_val Tc d, n, r, p, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     return @pow A * (TauII * FT)^n * f^r * d^p * exp(-(E + P * V) / (R * T)) / FE
 end
@@ -163,8 +165,10 @@ end
 @inline function compute_εII(
         a::DiffusionCreep, TauII::Quantity; T = 1K, P = 0Pa, f = 1NoUnits, args...
     )
-    @unpack_units d, n, r, p, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(TauII)
+    T, P, f = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, f)
+    @unpack_units Tc d, n, r, p, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     ε = @pow A * (TauII * FT)^n * f^r * d^p * exp(-(E + P * V) / (R * T)) / FE
 
@@ -179,14 +183,20 @@ Computes strainrate as a function of stress
 function compute_εII!(
         EpsII::AbstractArray{_T, N},
         a::DiffusionCreep,
-        TauII::AbstractArray{_T, N};
-        T = ones(size(TauII))::AbstractArray{_T, N},
-        P = zero(TauII)::AbstractArray{_T, N},
-        f = ones(size(TauII))::AbstractArray{_T, N},
+        TauII::AbstractArray;
+        T = one(_T),
+        P = zero(_T),
+        f = one(_T),
         kwargs...,
     ) where {N, _T}
-    @inbounds for i in eachindex(EpsII)
-        EpsII[i] = compute_εII(a, TauII[i]; T = T[i], P = P[i], f = f[i])
+    for i in each_argument_index(EpsII, TauII, T, P, f)
+        EpsII[i] = compute_εII(
+            a,
+            convert_precision(_T, TauII[i]);
+            T = argument_at(T, i),
+            P = argument_at(P, i),
+            f = argument_at(f, i),
+        )
     end
 
     return nothing
@@ -205,8 +215,10 @@ returns the derivative of strainrate versus stress
         f = one(precision(a)),
         kwargs...,
     )
-    @unpack_val d, n, r, p, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(TauII)
+    T, P, f = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, f)
+    @unpack_val Tc d, n, r, p, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     return @pow (TauII * FT)^(n - 1) *
         f^r *
@@ -220,8 +232,10 @@ end
 @inline function dεII_dτII(
         a::DiffusionCreep, TauII::Quantity; T = 1K, P = 0Pa, f = 1NoUnits, kwargs...
     )
-    @unpack_units d, n, r, p, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(TauII)
+    T, P, f = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, f)
+    @unpack_units Tc d, n, r, p, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     return @pow FT * f^r * d^p * A * FT * exp((-E - P * V) / (R * T)) * inv(FE)
 end
@@ -239,8 +253,10 @@ Returns diffusion creep stress as a function of 2nd invariant of the strain rate
         f = one(precision(a)),
         kwargs...,
     )
-    @unpack_val d, n, r, p, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(EpsII)
+    T, P, f = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, f)
+    @unpack_val Tc d, n, r, p, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     n_inv = inv(n)
 
@@ -256,8 +272,10 @@ end
 @inline function compute_τII(
         a::DiffusionCreep, EpsII::Quantity; T = 1K, P = 0Pa, f = 1NoUnits, kwargs...
     )
-    @unpack_units d, n, r, p, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(EpsII)
+    T, P, f = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, f)
+    @unpack_units Tc d, n, r, p, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     n_inv = inv(n)
 
@@ -274,14 +292,20 @@ end
 function compute_τII!(
         TauII::AbstractArray{_T, N},
         a::DiffusionCreep,
-        EpsII::AbstractArray{_T, N};
-        T = ones(size(TauII))::AbstractArray{_T, N},
-        P = zero(TauII)::AbstractArray{_T, N},
-        f = ones(size(TauII))::AbstractArray{_T, N},
+        EpsII::AbstractArray;
+        T = one(_T),
+        P = zero(_T),
+        f = one(_T),
         kwargs...,
     ) where {N, _T}
-    @inbounds for i in eachindex(EpsII)
-        TauII[i] = compute_τII(a, EpsII[i]; T = T[i], P = P[i], f = f[i])
+    for i in each_argument_index(TauII, EpsII, T, P, f)
+        TauII[i] = compute_τII(
+            a,
+            convert_precision(_T, EpsII[i]);
+            T = argument_at(T, i),
+            P = argument_at(P, i),
+            f = argument_at(f, i),
+        )
     end
 
     return nothing
@@ -295,8 +319,10 @@ end
         f = one(precision(a)),
         kwargs...,
     )
-    @unpack_val d, n, r, p, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(EpsII)
+    T, P, f = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, f)
+    @unpack_val Tc d, n, r, p, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     n_inv = inv(n)
 
@@ -313,8 +339,10 @@ end
 @inline function dτII_dεII(
         a::DiffusionCreep, EpsII::Quantity; T = 1K, P = 0Pa, f = 1NoUnits, kwargs...
     )
-    @unpack_units d, n, r, p, A, E, V, R = a
-    FT, FE = a.FT, a.FE
+    Tc = precision_of(EpsII)
+    T, P, f = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, f)
+    @unpack_units Tc d, n, r, p, A, E, V, R = a
+    FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     n_inv = inv(n)
 

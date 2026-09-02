@@ -76,7 +76,7 @@ end
 function CompTempStruct(Z, t::HalfspaceCoolTemp)
     @unpack Tsurface, Tmantle, Age, Adiabat, kappa = t
 
-    Temp = zeros(Float64, length(Z))K
+    Temp = zeros(precision_of(Z), length(Z))K
 
     MantleAdiabaticT = Tmantle .+ Adiabat * abs.(Z)    # Adiabatic temperature of mantle
 
@@ -101,7 +101,7 @@ Parameters:
 """
 function LithPres(MatParam, Phases, ρ, T, dz, g)
     nz = length(T)
-    P = zeros(Float64, nz)
+    P = zeros(precision_of(T), nz)
 
     tol = 1.0e-6
     n = 0
@@ -136,7 +136,7 @@ end
 function solveStress(MatParam, Phases, ε, P, T)
     # solve for stress
     nz = length(T)
-    τ = zeros(Float64, nz)
+    τ = zeros(precision_of(T), nz)
     for i in 1:nz
         Pres = P[i]
         Temp = T[i]
@@ -155,11 +155,7 @@ function solveStress(MatParam, Phases, ε, P, T)
 end
 
 function extractFromResult(res, ind, nz)
-    x = zeros(Float64, nz)
-    for i in 1:nz
-        x[i] = res[ind][i].val
-    end
-    return x
+    return [res[ind][i].val for i in 1:nz]
 end
 
 """
@@ -214,7 +210,7 @@ function StrengthEnvelopeComp(MatParam::NTuple{N, AbstractMaterialParamsStruct},
     T = nondimensionalize(T, CharDim)
 
     # pressure and density
-    ρ = zeros(Float64, nz)
+    ρ = zeros(precision_of(T), nz)
     P = LithPres(MatParam, Phases, ρ, T, dz, g)
 
     # solve for stress
