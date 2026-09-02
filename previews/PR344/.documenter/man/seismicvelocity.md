@@ -25,7 +25,7 @@ $$    V_s = cst$$
 where $V_p, V_s$ are the P-wave and S-wave velocities [$km/s$].
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/SeismicVelocity/SeismicVelocity.jl#L35-L46" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/SeismicVelocity/SeismicVelocity.jl#L35-L46" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -88,7 +88,7 @@ The routine uses the reduction formulation of Karato (1993), using the quality f
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/SeismicVelocity/SeismicVelocity.jl#L343-L370" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/SeismicVelocity/SeismicVelocity.jl#L343-L370" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

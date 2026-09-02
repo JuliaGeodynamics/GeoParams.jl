@@ -72,7 +72,7 @@ ParameterTable(MatParam; format="markdown", filename="MyTable")
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Tables.jl#L1396-L1416" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Tables.jl#L1396-L1416" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -101,7 +101,7 @@ Dict2LatexTable(d::Dict, refs::Dict; filename="ParameterTable", rdigits=4)
 Creates a LaTeX table from the parameter dictionary.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Tables.jl#L657-L661" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Tables.jl#L657-L661" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -118,7 +118,7 @@ Dict2MarkdownTable(d::Dict; filename="ParameterTable", rdigits=4)
 Creates a Markdown table from the parameter dictionary.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Tables.jl#L1222-L1226" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Tables.jl#L1222-L1226" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -135,7 +135,7 @@ detachFloatfromExponent(str::String) -> (Int, String, String)
 Returns the number of decimal places, the number without exponent, and the exponent. Returns "1" for the exponent if the input number has no exponent.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Tables.jl#L125-L130" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Tables.jl#L125-L130" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

@@ -23,7 +23,7 @@ $$    H_r  = cst$$
 where $H_r$ is the radioactive heat source [$Watt/m^3$].
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/RadioactiveHeat.jl#L23-L31" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/RadioactiveHeat.jl#L23-L31" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -44,7 +44,7 @@ $$    H_r  = H_0 \exp \left( -\frac{z - z_0}{h_r} \right)$$
 where $H_0$ is the radioactive heat source [$Watt/m^3$] at $z=z_0$ which decays with depth over a characteristic distance $h_r$.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/RadioactiveHeat.jl#L63-L71" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/RadioactiveHeat.jl#L64-L72" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

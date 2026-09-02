@@ -39,7 +39,7 @@ julia> fig,ax,T,Cp_vec = PlotHeatCapacity(Cp)
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Plotting/Plotting.jl#L536-L551" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Plotting/Plotting.jl#L536-L551" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -78,7 +78,7 @@ julia> save("Tdependent_conductivity.png", fig)
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Plotting/Plotting.jl#L641-L661" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Plotting/Plotting.jl#L641-L661" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -117,7 +117,7 @@ julia> PlotPhaseDiagram(PD_data, :Rho)
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Plotting/Plotting.jl#L770-L789" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Plotting/Plotting.jl#L772-L791" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -181,7 +181,7 @@ julia> PlotDeformationMap(v,  strainrate=false, viscosity=true, levels=Vector(18
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Plotting/Plotting.jl#L1026-L1067" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Plotting/Plotting.jl#L1028-L1069" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -260,7 +260,7 @@ fig, ax = PlotDiffusionCoefArrhenius((Fe_Grt, Mg_Grt, Mn_Grt), P= 1u"GPa", linew
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Plotting/Plotting.jl#L1378-L1425" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Plotting/Plotting.jl#L1380-L1427" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

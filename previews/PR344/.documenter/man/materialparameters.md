@@ -19,7 +19,7 @@ Structure that holds information (Equation, Comment, BibTex_Reference) about a g
 Usually used in combination with `param_info(the_parameter_of_interest)`
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MaterialParameters.jl#L26-L34" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MaterialParameters.jl#L26-L34" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -123,7 +123,7 @@ julia> MatParam
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MaterialParameters.jl#L111-L199" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MaterialParameters.jl#L111-L199" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -140,7 +140,7 @@ MaterialParams
 Structure that holds all material parameters for a given phase
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MaterialParameters.jl#L64-L69" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MaterialParameters.jl#L64-L69" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

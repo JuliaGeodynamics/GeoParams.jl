@@ -32,7 +32,7 @@ with the dimensionless partial pressures $P_w = P(1-X_{co2})/P_{ref}$ and $P_c =
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Solubility/Solubility.jl#L40-L64" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Solubility/Solubility.jl#L40-L64" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -55,7 +55,7 @@ Coupled H2O–CO2 solubility for mafic (basalt) melt. Dissolved H2O follows the 
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Solubility/Solubility.jl#L125-L140" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Solubility/Solubility.jl#L125-L140" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -82,7 +82,7 @@ with the reference convention $c_g = 0$ at $X_{co2}=0$ — a discontinuity, sinc
 All fields are `GeoUnit`s, so the struct nondimensionalizes, but both accessors read values rather than `Quantity`s: neither return carries units.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Solubility/Solubility.jl#L209-L226" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Solubility/Solubility.jl#L209-L226" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -103,7 +103,7 @@ compute_dissolved(s::AbstractSolubility, P, T, X_co2) -> (m_h2o, m_co2)
 Dissolved H2O and CO2 mass fractions of the melt (`P` in Pa, `T` in K, `X_co2` the CO2 mole fraction of the gas). Also callable as `compute_dissolved(s; P, T, X_co2)` and `compute_dissolved(s, args::NamedTuple)`.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Solubility/Solubility.jl#L92-L98" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Solubility/Solubility.jl#L92-L98" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -120,7 +120,7 @@ compute_dissolved!(m_h2o, m_co2, MatParam, Phases, args)
 In-place dissolved H2O and CO2 over a domain. `args` is a NamedTuple of `P, T, X_co2` index-matched to the output arrays. Also accepts a single solubility or phase struct in place of `(MatParam, Phases)`.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Solubility/Solubility.jl#L344-L350" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Solubility/Solubility.jl#L344-L350" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -139,7 +139,7 @@ Partial derivatives (via `ForwardDiff`, useful for implicit/Newton solves) are a
 ForwardDiff partial derivatives of [`compute_dissolved`](/man/solubility#GeoParams.MaterialParameters.Solubility.compute_dissolved) with respect to pressure. Companions [`∂dissolved_∂T`](/man/solubility#GeoParams.MaterialParameters.Solubility.∂dissolved_∂T), [`∂dissolved_∂Xco2`](/man/solubility#GeoParams.MaterialParameters.Solubility.∂dissolved_∂Xco2).
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Solubility/Solubility.jl#L281-L286" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Solubility/Solubility.jl#L281-L286" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -154,7 +154,7 @@ ForwardDiff partial derivatives of [`compute_dissolved`](/man/solubility#GeoPara
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Solubility/Solubility.jl#L289-L291" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Solubility/Solubility.jl#L289-L291" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -169,7 +169,7 @@ ForwardDiff partial derivatives of [`compute_dissolved`](/man/solubility#GeoPara
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Solubility/Solubility.jl#L294-L296" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Solubility/Solubility.jl#L294-L296" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -190,7 +190,7 @@ Invert [`compute_dissolved`](/man/solubility#GeoParams.MaterialParameters.Solubi
 Throws an `ErrorException` if `m_h2o_target` is infeasible at this `P,T` (outside the achievable range between `X_co2=0` and `X_co2=1`) or if the iteration fails to converge within `max_iter` steps — this never returns a clamped or out-of-tolerance answer.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Solubility/Solubility.jl#L299-L313" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Solubility/Solubility.jl#L299-L313" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -209,7 +209,7 @@ compute_gas_heatcapacity(s::GasMixture, X_co2)
 Mass-weighted specific heat of the H2O–CO2 gas mixture; zero at `X_co2 == 0` (reference convention).
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Solubility/Solubility.jl#L251-L256" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Solubility/Solubility.jl#L251-L256" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -226,7 +226,7 @@ effective_molar_mass(s::GasMixture, X_co2)
 Effective molar mass of the H2O–CO2 gas mixture at CO2 mole fraction `X_co2`.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Solubility/Solubility.jl#L240-L244" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Solubility/Solubility.jl#L240-L244" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

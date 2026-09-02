@@ -21,7 +21,7 @@ Parameters:
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/StrengthEnvelope/StrengthEnvelope.jl#L8-L15" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/StrengthEnvelope/StrengthEnvelope.jl#L8-L15" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -44,7 +44,7 @@ Parameters:
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/StrengthEnvelope/StrengthEnvelope.jl#L33-L41" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/StrengthEnvelope/StrengthEnvelope.jl#L33-L41" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -71,7 +71,7 @@ Parameters:
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/StrengthEnvelope/StrengthEnvelope.jl#L57-L67" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/StrengthEnvelope/StrengthEnvelope.jl#L57-L67" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -94,7 +94,7 @@ Parameters:
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/StrengthEnvelope/StrengthEnvelope.jl#L21-L29" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/StrengthEnvelope/StrengthEnvelope.jl#L21-L29" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -125,7 +125,7 @@ Parameters:
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/StrengthEnvelope/StrengthEnvelope.jl#L89-L101" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/StrengthEnvelope/StrengthEnvelope.jl#L89-L101" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -167,7 +167,7 @@ julia> StrengthEnvelopeComp(MatParam, Thickness, LinTemp(), ε=1e-15/s)
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/StrengthEnvelope/StrengthEnvelope.jl#L161-L183" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/StrengthEnvelope/StrengthEnvelope.jl#L161-L183" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -209,7 +209,7 @@ julia> StrengthEnvelopePlot(MatParam, Thickness, LinTemp())
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/StrengthEnvelope/StrengthEnvelope.jl#L228-L251" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/StrengthEnvelope/StrengthEnvelope.jl#L228-L251" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

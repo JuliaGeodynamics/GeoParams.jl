@@ -21,7 +21,7 @@ Set a constant value for the gravitational acceleration:
 $$    g  = 9.81 m s^{-2}$$
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/GravitationalAcceleration/GravitationalAcceleration.jl#L19-L26" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/GravitationalAcceleration/GravitationalAcceleration.jl#L19-L26" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -40,7 +40,7 @@ Set a constant value for the gravitational acceleration with dip and strike angl
 $$    g  = R_z  R_y  9.81 m s^{-2} $$
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/GravitationalAcceleration/GravitationalAcceleration.jl#L50-L57" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/GravitationalAcceleration/GravitationalAcceleration.jl#L50-L57" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -58,7 +58,7 @@ compute_gravity(s:&lt;AbstractGravity)
 Returns the gravitational acceleration 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/GravitationalAcceleration/GravitationalAcceleration.jl#L120-L125" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/GravitationalAcceleration/GravitationalAcceleration.jl#L120-L125" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

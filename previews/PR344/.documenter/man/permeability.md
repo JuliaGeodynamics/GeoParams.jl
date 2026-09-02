@@ -36,7 +36,7 @@ rheology = SetMaterialParams(;
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Permeability/Permeability.jl#L37-L55" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Permeability/Permeability.jl#L37-L55" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -74,7 +74,7 @@ rheology = SetMaterialParams(;
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Permeability/Permeability.jl#L86-L108" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Permeability/Permeability.jl#L87-L109" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -116,7 +116,7 @@ rheology = SetMaterialParams(;
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Permeability/Permeability.jl#L139-L163" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Permeability/Permeability.jl#L137-L161" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -156,7 +156,7 @@ rheology = SetMaterialParams(;
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Permeability/Permeability.jl#L196-L219" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Permeability/Permeability.jl#L194-L217" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -177,7 +177,7 @@ compute_permeability!(k::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMateri
 In-place computation of permeability `k` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays. This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Permeability/Permeability.jl#L262-L267" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Permeability/Permeability.jl#L260-L265" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -194,7 +194,7 @@ compute_permeability(k::AbstractPermeability, args)
 Computation of permeability `k` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Permeability/Permeability.jl#L252-L256" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Permeability/Permeability.jl#L250-L254" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

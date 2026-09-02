@@ -37,7 +37,7 @@ Which gives a reasonable fit to experimental data of granodioritic composition (
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MeltFraction/MeltingParameterization.jl#L38-L60" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MeltFraction/MeltingParameterization.jl#L38-L60" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -78,7 +78,7 @@ $$a=3043.0,  b=-10552.0, c=12204.9, d = -4709.0$$
 **References**
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MeltFraction/MeltingParameterization.jl#L100-L131" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MeltFraction/MeltingParameterization.jl#L100-L131" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -113,7 +113,7 @@ The default values are for a composite liquid-line-of-descent:
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MeltFraction/MeltingParameterization.jl#L183-L204" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MeltFraction/MeltingParameterization.jl#L183-L204" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -146,7 +146,7 @@ The default values are for Tonalite experiments from Marxer and Ulmer (2019):
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MeltFraction/MeltingParameterization.jl#L267-L287" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MeltFraction/MeltingParameterization.jl#L267-L287" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -177,7 +177,7 @@ Temperature `T` is in Kelvin.
 This was used, among others, in Tierney et al. (2016) Geology
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MeltFraction/MeltingParameterization.jl#L354-L373" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MeltFraction/MeltingParameterization.jl#L354-L373" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -222,7 +222,7 @@ $$   T_s=973.15, T_l=1173.15, a=0.005$$
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MeltFraction/MeltingParameterization.jl#L422-L457" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MeltFraction/MeltingParameterization.jl#L422-L457" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -258,7 +258,7 @@ The dimensionless polynomial coefficients are stored as plain `NTuple`s; only th
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MeltFraction/MeltingParameterization.jl#L688-L723" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MeltFraction/MeltingParameterization.jl#L687-L722" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -289,7 +289,7 @@ Both clamps are the physically sensible reading, but the value is still an extra
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MeltFraction/MeltingParameterization.jl#L798-L827" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MeltFraction/MeltingParameterization.jl#L797-L826" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -358,7 +358,7 @@ The derivative no longer has a jump now:
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MeltFraction/MeltingParameterization.jl#L564-L615" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MeltFraction/MeltingParameterization.jl#L564-L615" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -379,7 +379,7 @@ compute_meltfraction!(ϕ::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:Abs
 In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MeltFraction/MeltingParameterization.jl#L907-L911" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MeltFraction/MeltingParameterization.jl#L906-L910" target="_blank" rel="noreferrer">source</a></Badge>
 
 
 
@@ -391,7 +391,7 @@ compute_meltfraction(ϕ::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<
 In-place computation of melt fraction ϕ for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MeltFraction/MeltingParameterization.jl#L999-L1003" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MeltFraction/MeltingParameterization.jl#L998-L1002" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -408,7 +408,7 @@ compute_meltfraction(P,T, p::AbstractPhaseDiagramsStruct)
 Computes melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MeltFraction/MeltingParameterization.jl#L895-L899" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MeltFraction/MeltingParameterization.jl#L894-L898" target="_blank" rel="noreferrer">source</a></Badge>
 
 
 
@@ -420,7 +420,7 @@ Computes melt fraction in case we use a phase diagram lookup table. The table sh
 Computation of melt fraction ϕ for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MeltFraction/MeltingParameterization.jl#L991-L995" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MeltFraction/MeltingParameterization.jl#L990-L994" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -439,7 +439,7 @@ compute_dϕdT!(ϕ::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integ
 Computes the derivative of melt fraction `ϕ` versus temperature `T`, `\frac{\partial \phi}{\partial T}` for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays. This is employed, for example, in computing latent heat terms in an implicit manner.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MeltFraction/MeltingParameterization.jl#L1024-L1029" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MeltFraction/MeltingParameterization.jl#L1023-L1028" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -456,7 +456,7 @@ compute_dϕdT(P,T, p::AbstractPhaseDiagramsStruct)
 Computes derivative of melt fraction vs T in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified. The derivative is computed by finite differencing.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MeltFraction/MeltingParameterization.jl#L914-L919" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MeltFraction/MeltingParameterization.jl#L913-L918" target="_blank" rel="noreferrer">source</a></Badge>
 
 
 
@@ -468,7 +468,7 @@ Computes derivative of melt fraction vs T in case we use a phase diagram lookup 
 Computates the derivative of melt fraction ϕ versus temperature `T` for the whole domain and all phases, in case an array with phase properties `MatParam` is provided, along with `P` and `T` arrays. This is employed in computing latent heat terms in an implicit manner, for example
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/MeltFraction/MeltingParameterization.jl#L1016-L1021" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/MeltFraction/MeltingParameterization.jl#L1015-L1020" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -512,7 +512,7 @@ julia> T, phi, dϕdT = PlotMeltFraction(p)
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Plotting/Plotting.jl#L706-L726" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Plotting/Plotting.jl#L707-L727" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

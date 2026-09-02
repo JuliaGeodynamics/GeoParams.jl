@@ -23,7 +23,7 @@ $$    Cp  = cst$$
 where $Cp$ is the thermal heat capacity [$J/kg/K$].
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/HeatCapacity.jl#L29-L37" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/HeatCapacity.jl#L29-L37" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -60,7 +60,7 @@ where $Cp$ is the heat capacity [$J/kg/K$], and $a,b,c$ are parameters that depe
 Note that this is slightly different than the equation in the manuscript, as Cp is in J/kg/K (rather than $J/mol/K$ as in eq.3/4 of the paper)
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/HeatCapacity.jl#L60-L78" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/HeatCapacity.jl#L61-L79" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -81,7 +81,7 @@ compute_heatcapacity(a::Vector_HeatCapacity; index::Int64, kwargs...)
 Pointwise calculation of heat capacity from a vector where `index` is the index of the point
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/HeatCapacity.jl#L181-L185" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/HeatCapacity.jl#L180-L184" target="_blank" rel="noreferrer">source</a></Badge>
 
 
 
@@ -93,7 +93,7 @@ compute_heatcapacity(P,T, s::AbstractPhaseDiagramsStruct)
 Interpolates heat capacity as a function of `T,P` from a lookup table
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/HeatCapacity.jl#L226-L229" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/HeatCapacity.jl#L225-L228" target="_blank" rel="noreferrer">source</a></Badge>
 
 
 
@@ -138,7 +138,7 @@ julia> Cp =compute_heatcapacity!(Cp, Cp2, args)
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/HeatCapacity.jl#L236-L269" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/HeatCapacity.jl#L235-L268" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -155,7 +155,7 @@ compute_heatcapacity!(Cp::AbstractArray{<:AbstractFloat}, MatParam::AbstractArra
 In-place computation of heat capacity `Cp` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays. This assumes that the `Phase` of every point is specified as an Integer in the `Phases` array.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/HeatCapacity.jl#L291-L296" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/HeatCapacity.jl#L290-L295" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

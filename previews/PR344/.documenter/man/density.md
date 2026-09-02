@@ -23,7 +23,7 @@ $$    \rho  = cst$$
 where $\rho$ is the density [$kg/m^3$].
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Density/Density.jl#L54-L62" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Density/Density.jl#L54-L62" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -44,7 +44,7 @@ $$    \rho  = \rho_0 (1.0 - \alpha (T-T_0) + \beta  (P-P_0) )$$
 where $\rho_0$ is the density [$kg/m^3$] at reference temperature $T_0$ and pressure $P_0$, $\alpha$ is the temperature dependence of density and $\beta$ the pressure dependence.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Density/Density.jl#L99-L108" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Density/Density.jl#L101-L110" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -65,7 +65,7 @@ $$    \rho  = \rho_0 (1 - \alpha * (T - T\_0) )$$
 where $\rho_0$ is the density [$kg/m^3$] at reference temperature $T_0$ and $\alpha$ the temperature dependence.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Density/Density.jl#L196-L204" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Density/Density.jl#L198-L206" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -86,7 +86,7 @@ $$    \rho  = \rho_0 \exp(β*(P - P\_0))$$
 where $\rho_0$ is the density [$kg/m^3$] at reference pressure $P_0$ and $\beta$ the pressure dependence.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Density/Density.jl#L151-L159" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Density/Density.jl#L153-L161" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -109,7 +109,7 @@ where $\rho$ is the average density [$kg/m^3$], $\rho_{\textrm{melt}}$ the melt 
 Note that any density formulation can be used for melt and solid.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Density/Density.jl#L241-L251" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Density/Density.jl#L243-L253" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -166,7 +166,7 @@ rheology = SetMaterialParams(;
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Density/Density.jl#L284-L320" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Density/Density.jl#L286-L322" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -215,7 +215,7 @@ rheology = SetMaterialParams(;
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Density/Density.jl#L367-L399" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Density/Density.jl#L369-L401" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -249,7 +249,7 @@ The callable also accepts an `mH2O` keyword (melt water content, mass fraction) 
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Density/Density.jl#L613-L635" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Density/Density.jl#L616-L638" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -280,7 +280,7 @@ Returns `NaN` for `T ≤ 273.15K` or `P ≤ 0` (`τ ≤ 0` or `ω ≤ 0`), since
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Density/Density.jl#L434-L461" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Density/Density.jl#L437-L464" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -301,7 +301,7 @@ $$    \rho_g = \frac{P}{R_s T}$$
 with specific gas constant `Rs` (default: water vapor, $R/M_w = 8.314/0.01802$). Unlike [`RedlichKwong_Density`](/man/density#GeoParams.MaterialParameters.Density.RedlichKwong_Density) this is dimensionally homogeneous, so it nondimensionalizes cleanly and serves as the analytic derivative check for the Redlich–Kwong fit.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Density/Density.jl#L515-L526" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Density/Density.jl#L518-L529" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -337,7 +337,7 @@ The gas and crystal volume fractions `ϕ_gas`, `ϕ_x` are inputs (from the solve
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Density/Density.jl#L555-L581" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Density/Density.jl#L558-L584" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -358,7 +358,7 @@ compute_density(P,T, s::AbstractPhaseDiagramsStruct)
 Interpolates density as a function of `T,P` from a lookup table
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Density/Density.jl#L825-L828" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Density/Density.jl#L828-L831" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -426,7 +426,7 @@ compute_density!(rho::AbstractArray{_T, N}, MatParam::NTuple{K,AbstractMaterialP
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays. This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Density/Density.jl#L850-L897" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Density/Density.jl#L853-L900" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

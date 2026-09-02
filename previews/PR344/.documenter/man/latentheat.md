@@ -23,7 +23,7 @@ $$    Q_L  = cst$$
 where $Q_L$ is the latent heat [$J/kg$].
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/LatentHeat.jl#L27-L35" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/LatentHeat.jl#L27-L35" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -50,7 +50,7 @@ $$C_p^{\textrm{new}}  = C_p + \frac{\partial \phi}{\partial T} Q_L$$
 where $Q_L$ is the latent heat [$J/kg$], and $\frac{\partial \phi}{\partial T}$ is the derivative of the melt fraction with respect to temperature
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/HeatCapacity.jl#L117-L132" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/HeatCapacity.jl#L115-L130" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

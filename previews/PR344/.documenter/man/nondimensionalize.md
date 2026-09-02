@@ -27,7 +27,7 @@ This provides units and creates a non-dimensionalization object
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Units.jl#L1-L3" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Units.jl#L1-L3" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -41,7 +41,7 @@ AbstractGeoUnit
 Abstract supertype for geo units.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Units.jl#L103-L107" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Units.jl#L103-L107" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -59,7 +59,7 @@ With the GeoUnit struct, this information is retained, and we can thus redimensi
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Units.jl#L117-L124" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Units.jl#L117-L124" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -76,7 +76,7 @@ Structure that holds parameters used for non-dimensionalization
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Units.jl#L328-L332" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Units.jl#L330-L334" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -123,7 +123,7 @@ Characteristic values:
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Units.jl#L381-L412" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Units.jl#L383-L414" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -160,7 +160,7 @@ julia> CharUnits = SI_units(length=1km)
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Units.jl#L451-L470" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Units.jl#L453-L472" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -191,7 +191,7 @@ Characteristic values:
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Units.jl#L509-L525" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Units.jl#L511-L527" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -230,7 +230,7 @@ julia> α
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/unpack.jl#L68-L95" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/unpack.jl#L87-L114" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -264,7 +264,7 @@ julia> α
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/unpack.jl#L104-L124" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/unpack.jl#L123-L143" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -326,7 +326,7 @@ julia> upreferred(A)
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Units.jl#L559-L593" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Units.jl#L561-L595" target="_blank" rel="noreferrer">source</a></Badge>
 
 
 
@@ -338,7 +338,7 @@ param = nondimensionalize(param::NTuple{N,Quantity}, g::GeoUnits{TYPE})
 nondimensionalizes a tuple of parameters
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Units.jl#L669-L673" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Units.jl#L671-L675" target="_blank" rel="noreferrer">source</a></Badge>
 
 
 
@@ -352,7 +352,7 @@ Non-dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
 ****
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Units.jl#L706-L711" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Units.jl#L708-L713" target="_blank" rel="noreferrer">source</a></Badge>
 
 
 
@@ -364,7 +364,7 @@ nondimensionalize(phase_mat::MaterialParams, g::GeoUnits{TYPE})
 nondimensionalizes all fields within the Material Parameters structure that contain material parameters
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Units.jl#L737-L741" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Units.jl#L739-L743" target="_blank" rel="noreferrer">source</a></Badge>
 
 
 
@@ -376,7 +376,7 @@ MatParam_ND = nondimensionalize(MatParam::NTuple{N, AbstractMaterialParamsStruct
 Non-dimensionalizes a tuple of material parameter structures (e.g., Density, CreepLaw)
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Units.jl#L777-L782" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Units.jl#L779-L784" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -404,7 +404,7 @@ julia> v_dim     =   dimensionalize(v_ND, cm/yr, CharUnits)
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Units.jl#L789-L803" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Units.jl#L791-L805" target="_blank" rel="noreferrer">source</a></Badge>
 
 
 
@@ -416,7 +416,7 @@ dimensionalize(MatParam::AbstractMaterialParam, CharUnits::GeoUnits{TYPE})
 Dimensionalizes a material parameter structure (e.g., Density, CreepLaw)
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Units.jl#L830-L835" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Units.jl#L832-L837" target="_blank" rel="noreferrer">source</a></Badge>
 
 
 
@@ -428,7 +428,7 @@ Dimensionalize(phase_mat::MaterialParams, g::GeoUnits{TYPE})
 Dimensionalizes all fields within the Material Parameters structure that contain material parameters
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Units.jl#L864-L868" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Units.jl#L866-L870" target="_blank" rel="noreferrer">source</a></Badge>
 
 
 
@@ -440,7 +440,7 @@ dimensionalize(MatParam::NTuple{N, AbstractMaterialParamsStruct}, CharUnits::Geo
 dimensionalizes a tuple of material parameter structures (e.g., Density, CreepLaw)
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Units.jl#L911-L915" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Units.jl#L913-L917" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -457,7 +457,7 @@ isDimensional(MatParam::AbstractMaterialParam)
 `true` if MatParam is in dimensional units.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Units.jl#L939-L943" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Units.jl#L941-L945" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

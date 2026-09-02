@@ -23,7 +23,7 @@ $$    k  = cst$$
 where $k$ is the thermal conductivity [$W/m/K$].
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/Conductivity.jl#L28-L36" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/Conductivity.jl#L28-L36" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -62,7 +62,7 @@ where $Cp$ is the heat capacity [$J/mol/K$], and $a,b,c$ are parameters that dep
   
 - c = 47.9e-6J/mol*K    if T&gt; 846 K
   
-- d = 576.3m^2/s*K
+- d = 567.3m^2/s*K
   
 - e = 0.062m^2/s
   
@@ -87,7 +87,7 @@ julia> T,k,plt = PlotConductivity(p)
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/Conductivity.jl#L82-L128" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/Conductivity.jl#L83-L129" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -116,7 +116,7 @@ The comparison of this parameterisation vs. the original one is:
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/Conductivity.jl#L217-L235" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/Conductivity.jl#L219-L237" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -145,7 +145,7 @@ where $k$ is the conductivity [$W/K/m$], and $a_k,b_k,c_k,d_k$ are parameters th
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/Conductivity.jl#L309-L324" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/Conductivity.jl#L311-L326" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -178,7 +178,7 @@ T/P dependent conductivity: k = (0.73 W K⁻¹ m⁻¹ + 1293 W m⁻¹/(T + 77 K)
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/Conductivity.jl#L359-L374" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/Conductivity.jl#L361-L376" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -218,7 +218,7 @@ julia> Cp = ComputeHeatCapacity(0,T,cp)
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/Conductivity.jl#L504-L523" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/Conductivity.jl#L506-L525" target="_blank" rel="noreferrer">source</a></Badge>
 
 
 
@@ -236,7 +236,7 @@ compute_conductivity!(k::AbstractArray{T,N}, PhaseRatios::AbstractArray{T, M}, P
 In-place computation of conductivity `k` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays. This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/Conductivity.jl#L545-L557" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/Conductivity.jl#L547-L559" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -253,7 +253,7 @@ compute_conductivity(k_array::AbstractArray{<:AbstractFloat,N},P::AbstractArray{
 In-place routine to compute constant conductivity
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/Conductivity.jl#L63-L67" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/Conductivity.jl#L64-L68" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

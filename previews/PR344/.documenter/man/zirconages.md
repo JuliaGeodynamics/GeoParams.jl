@@ -19,7 +19,7 @@ ZirconAgeData
 Struct that holds default parameters for the calculations
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/ZirconAge/ZirconAges.jl#L27-L31" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/ZirconAge/ZirconAges.jl#L27-L31" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -40,7 +40,7 @@ time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average, time_years, prob, age
 This computes the PDF (probability density function) with zircon age data from Vectors with Tt-paths	
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/ZirconAge/ZirconAges.jl#L296-L301" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/ZirconAge/ZirconAges.jl#L296-L301" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -83,7 +83,7 @@ This routine was developed based on an R-routine provided as electronic suppleme
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/ZirconAge/ZirconAges.jl#L98-L120" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/ZirconAge/ZirconAges.jl#L98-L120" target="_blank" rel="noreferrer">source</a></Badge>
 
 
 
@@ -97,7 +97,7 @@ This accepts Vector{Vector} as input for time and temperature of each Tt-path. H
 Internally, we interpolate this into a 2D matrix and a longer vector that includes all paths and a single vector with times 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/ZirconAge/ZirconAges.jl#L205-L212" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/ZirconAge/ZirconAges.jl#L205-L212" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -114,7 +114,7 @@ zircon_age_PDF(ages_eruptible::AbstractArray{Float64,1}, number_zircons::Abstrac
 Compute probability density functions for zircon age path's describes in `number_zircons` with age `ages_eruptible` (both computed ). `bandwidth` is the smoothening window of the resulting curves (in years), whereas `n_analyses` are the number of analyses done. 	
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/ZirconAge/ZirconAges.jl#L256-L260" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/ZirconAge/ZirconAges.jl#L256-L260" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

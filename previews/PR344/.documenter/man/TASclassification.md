@@ -19,7 +19,7 @@ Struct that holds default parameters for the TAS diagram
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/RockClassification/TASclassification.jl#L47-L51" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/RockClassification/TASclassification.jl#L47-L51" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -47,7 +47,7 @@ Output:
 This routine was developed based the TAS classification of Le Maitre et al., 2002
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/RockClassification/TASclassification.jl#L111-L125" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/RockClassification/TASclassification.jl#L111-L125" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -71,7 +71,7 @@ Output:
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/RockClassification/TASclassification.jl#L91-L103" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/RockClassification/TASclassification.jl#L91-L103" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

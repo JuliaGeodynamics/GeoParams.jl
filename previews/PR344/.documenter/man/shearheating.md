@@ -27,7 +27,7 @@ Shear heating is computed as
 $$H_s = \Chi \cdot \tau_{ij}(\dot{\varepsilon}_{ij} - \dot{\varepsilon}^{el}_{ij})$$
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/Shearheating.jl#L23-L37" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/Shearheating.jl#L23-L37" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -60,7 +60,7 @@ $$H_s = \Chi \cdot \tau_{ij} ( \dot{\varepsilon}_{ij} - \dot{\varepsilon}^{el}_{
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/Shearheating.jl#L91-L106" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/Shearheating.jl#L91-L106" target="_blank" rel="noreferrer">source</a></Badge>
 
 
 
@@ -82,7 +82,7 @@ $$H_s = \Chi \cdot \tau_{ij}  \dot{\varepsilon}_{ij}$$
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/Shearheating.jl#L109-L122" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/Shearheating.jl#L109-L122" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -122,7 +122,7 @@ $$2D: \tau_{ij} = \left(
 Since $\tau_{zx}=\tau_{xz}$, most geodynamic codes only take one of the terms into account; shear heating requires all components to be used!
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/Shearheating.jl#L127-L154" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/Shearheating.jl#L127-L154" target="_blank" rel="noreferrer">source</a></Badge>
 
 
 
@@ -144,7 +144,7 @@ $$H_s = \Chi \cdot \tau_{ij}  \dot{\varepsilon}_{ij}$$
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Energy/Shearheating.jl#L157-L170" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Energy/Shearheating.jl#L157-L170" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

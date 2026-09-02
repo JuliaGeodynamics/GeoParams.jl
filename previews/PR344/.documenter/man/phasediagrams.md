@@ -64,7 +64,7 @@ The fields that are available depend on what is listed in the diagram file. The 
 Internally, we employ a linear 2D interpolation scheme for evaluating the phase diagram values at arbitrary (T,P) points using bilinear interpolation. Values outside the range of the diagram are set to the boundary of the diagram. The interpolation object is directly encoded in the `PhaseDiagram_LookupTable`` object.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/PhaseDiagrams/PhaseDiagrams.jl#L75-L117" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/PhaseDiagrams/PhaseDiagrams.jl#L75-L117" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -127,7 +127,7 @@ Contains data of a Phase Diagram that is regularly spaced in P & T
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/PhaseDiagrams/PhaseDiagrams.jl#L17-L44" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/PhaseDiagrams/PhaseDiagrams.jl#L17-L44" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

@@ -70,7 +70,7 @@ compute_D(data::DiffusionData; T=1K, P=1GPa, fO2 = 1e-25NoUnits, X = 0 NoUnits, 
 Computes the diffusion coefficient `D` [m^2/s] from the diffusion data `data` at temperature `T` [K], pressure `P` [Pa], oxygen fugacity `fO2` [NoUnits] and composition dependency `X` [NoUnits] from a structure of type `DiffusionData`. If `T` and `P` are provided without unit, the function assumes the units are in Kelvin and Pascal, respectively, and outputs the diffusion coefficient without unit based on the value in m^2/s.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/ChemicalDiffusion/ChemicalDiffusion.jl#L321-L326" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/ChemicalDiffusion/ChemicalDiffusion.jl#L321-L326" target="_blank" rel="noreferrer">source</a></Badge>
 
 
 
@@ -82,7 +82,7 @@ compute_D(data::MeltMulticompDiffusionData; T=1K, kwargs...)
 Computes the diffusion coefficient matrix [m^2/s] from the diffusion data `data` at temperature `T` [K] from a structure of type `MeltMulticompDiffusionData`. If `T` is provided without unit, the function assumes the unit is in Kelvin and outputs the diffusion coefficient without unit based on the value in m^2/s. The output is a static matrix of size `n-1` x `n-1` where `n` is the number of components.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/ChemicalDiffusion/ChemicalDiffusion.jl#L346-L352" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/ChemicalDiffusion/ChemicalDiffusion.jl#L346-L352" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -99,7 +99,7 @@ compute_D!(D, data::AbstractChemicalDiffusion; T=ones(size(D))K, P=ones(size(D))
 In-place version of `compute_D(data::AbstractChemicalDiffusion; T=1K, P=1GPa, fO2=0NoUnits, kwargs...)`. `D` should be an array of the same size as T, P and fO2.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/ChemicalDiffusion/ChemicalDiffusion.jl#L372-L376" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/ChemicalDiffusion/ChemicalDiffusion.jl#L372-L376" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 

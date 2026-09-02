@@ -39,7 +39,7 @@ $$    \dot{\varepsilon}^{pl}_{ij} = \dot{\lambda} \frac{\partial Q}{\partial \si
 where $\dot{\lambda}$ is a (scalar) that is nonzero and chosen such that the resulting stress gives $F(\tau_{II}^{final})=0$, and $\sigma_{ij}=-P + \tau_{ij}$ denotes the total stress tensor.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Plasticity/DruckerPrager.jl#L4-L29" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Plasticity/DruckerPrager.jl#L4-L29" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -74,7 +74,7 @@ $$    \dot{\varepsilon}^{pl}_{ij} = \dot{\lambda} \frac{\partial Q}{\partial \si
 where $\dot{\lambda}$ is a (scalar) that is nonzero and chosen such that the resulting stress gives $F(\tau_{II}^{final})=0$, and $\sigma_{ij}=-P + \tau_{ij}$ denotes the total stress tensor.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Plasticity/DruckerPrager_regularised.jl#L4-L29" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Plasticity/DruckerPrager_regularised.jl#L4-L29" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -103,7 +103,7 @@ Sets parameters for Drucker-Prager-Cap plasticity for mode-1 and mode-2 plastici
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/1a8e4f8dddc2ccb8a3f977ae466234307cc4b304/src/Plasticity/DruckerPragerCap.jl#L6-L18" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/fe1e2fd766bac30f9615d0d78f80f1e017d794a0/src/Plasticity/DruckerPragerCap.jl#L6-L18" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
