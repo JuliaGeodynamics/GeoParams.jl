@@ -46,7 +46,8 @@ end
 
 # Calculation routine
 @inline function compute_heatcapacity(a::ConstantHeatCapacity; kwargs...)
-    @unpack_val Cp = a
+    Tc = precision_of(values(kwargs))
+    @unpack_val Tc Cp = a
     return Cp
 end
 
@@ -95,22 +96,19 @@ function param_info(s::T_HeatCapacity_Whittington) # info about the struct
 end
 
 # Calculation routine
-@inline function compute_heatcapacity(
-        a::T_HeatCapacity_Whittington{_T};
-        T::_T1 = 0.0,
-        kwargs...
-    ) where {_T, _T1}
-    @unpack_val a0, a1, b0, b1, c0, c1, molmass, Tcutoff = a
-
-    if T <= Tcutoff
-        a, b, c = a0, b0, c0
+@inline function compute_heatcapacity(a::T_HeatCapacity_Whittington; T, kwargs...)
+    Tc = precision_of(T)
+    if T isa Quantity
+        @unpack_units Tc a0, a1, b0, b1, c0, c1, molmass, Tcutoff = a
     else
-        a, b, c = a1, b1, c1
+        @unpack_val Tc a0, a1, b0, b1, c0, c1, molmass, Tcutoff = a
     end
 
-    Cp = (a + b * T - c / T^2) / molmass
-
-    return Cp
+    if T ≤ Tcutoff
+        return (a0 + b0 * T - c0 / T^2) / molmass
+    else
+        return (a1 + b1 * T - c1 / T^2) / molmass
+    end
 end
 
 # LatentHeat by modifying heat capacity  ---------------------------------
@@ -145,10 +143,11 @@ end
 # Calculation routine
 @inline function compute_heatcapacity(
         a::Latent_HeatCapacity{_T};
-        dϕdT::_T1 = 0.0,
+        dϕdT = 0,
         kwargs...
-    ) where {_T, _T1}
-    @unpack_val Q_L = a
+    ) where {_T}
+    Tc = precision_of((; dϕdT, kwargs...))
+    @unpack_val Tc Q_L = a
 
     Cp = compute_heatcapacity(a.Cp, kwargs)
 

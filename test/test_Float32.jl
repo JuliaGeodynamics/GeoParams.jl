@@ -135,9 +135,13 @@ end
     end
 
     @testset "default Float64 calls are unchanged" begin
+        # Reference values, not bit patterns: the creep law's exp/pow chain and the
+        # density's `@muladd` both land a few ULP apart across libm versions and
+        # architectures, so an exact comparison passes only where it was recorded.
+        # This tolerance is still ~4 orders tighter than any real regression.
         law = SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003)
-        @test compute_εII(law, 1.0e6; T = 1200.0, P = 1.0e9) === 1.3638005232835048e-18
-        @test compute_density(PT_Density(), (; P = 1.0e9, T = 1200.0)) === 5695.599999999999
+        @test compute_εII(law, 1.0e6; T = 1200.0, P = 1.0e9) ≈ 1.3638005232835048e-18 rtol = RTOL[Float64]
+        @test compute_density(PT_Density(), (; P = 1.0e9, T = 1200.0)) ≈ 5695.599999999999 rtol = RTOL[Float64]
     end
 
     @testset "scratch storage follows the input precision" begin
@@ -168,16 +172,82 @@ end
     end
 
     @testset "no allocations on the scalar and in-place paths" begin
+        # Measure through a function barrier. `@allocated` written directly in a
+        # testset body measures an unoptimized top-level thunk, in which the
+        # keyword splat of the `compute_*(law, x, args)` forwarding methods is
+        # materialized rather than elided — which is a property of the harness,
+        # not of the code under test.
+        allocs(f::F, args::Vararg{Any, N}) where {F, N} = (f(args...); @allocated f(args...))
+
         law = SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003)
         τ, args = 1.0f6, (; T = 1200.0, P = 1.0e9)
         τv = fill(τ, 4)
         εv = similar(τv)
         ε = compute_εII(law, τ, args)
-        compute_εII!(εv, law, τv)
-        compute_τII!(τv, law, εv)
-        @test @allocated(compute_εII(law, τ, args)) == 0
-        @test @allocated(compute_τII(law, ε, args)) == 0
-        @test @allocated(compute_εII!(εv, law, τv)) == 0
-        @test @allocated(compute_τII!(τv, law, εv)) == 0
+        @test allocs(compute_εII, law, τ, args) == 0
+        @test allocs(compute_τII, law, ε, args) == 0
+        @test allocs(compute_εII!, εv, law, τv) == 0
+        @test allocs(compute_τII!, τv, law, εv) == 0
+    end
+
+    # Every concrete law of a family is swept, so a law added later is covered
+    # without touching this file.
+    @testset "every law follows its argument precision" begin
+        MP = GeoParams.MaterialParameters
+        args32 = (;
+            T = 1.0f3, P = 1.0f8, τII = 1.0f6, τII_old = 0.0f0, εII = 1.0f-15,
+            εvol = 1.0f-16, ϕ = 0.1f0, dt = 1.0f0, z = 1.0f3, d = 1.0f-3, f = 1.0f0,
+        )
+        cases = (
+            (:density, MP.Density.AbstractDensity, l -> compute_density(l, args32)),
+            (:conductivity, MP.Conductivity.AbstractConductivity, l -> compute_conductivity(l, args32)),
+            (:heatcapacity, MP.HeatCapacity.AbstractHeatCapacity, l -> compute_heatcapacity(l, args32)),
+            (:radioactive_heat, MP.RadioactiveHeat.AbstractRadioactiveHeat, l -> compute_radioactive_heat(l, args32)),
+            (:latent_heat, MP.LatentHeat.AbstractLatentHeat, l -> compute_latent_heat(l, args32)),
+            (:meltfraction, GeoParams.MeltingParam.AbstractMeltingParam, l -> compute_meltfraction(l, args32)),
+            (:permeability, GeoParams.AbstractPermeability, l -> compute_permeability(l, args32)),
+            (:creep_εII, GeoParams.AbstractCreepLaw, l -> compute_εII(l, args32.τII, args32)),
+            (:creep_τII, GeoParams.AbstractCreepLaw, l -> compute_τII(l, args32.εII, args32)),
+            (:yieldfunction, GeoParams.AbstractPlasticity, l -> compute_yieldfunction(l, args32)),
+        )
+        # Laws the sweep cannot drive, with the reason. Not precision failures.
+        unsupported = Dict(
+            (:density, :Vector_Density) => "reads ρ from a user vector; needs an `index`",
+            (:heatcapacity, :Vector_HeatCapacity) => "reads Cp from a user vector; needs an `index`",
+            (:meltfraction, :Vector_MeltingParam) => "reads ϕ from a user vector; needs an `index`",
+            (:creep_εII, :HerschelBulkley) => "default parameters do not converge at this τII",
+            (:creep_τII, :NonLinearPeierlsCreep) => "no compute_τII method",
+        )
+        # Scanning GeoParams' own bindings keeps the sweep to this package's laws;
+        # `subtypes` would also pick up laws defined by any other loaded package.
+        concrete_laws(family) = sort!(
+            Type[
+                t for t in (getfield(GeoParams, n) for n in names(GeoParams; all = true) if isdefined(GeoParams, n))
+                    if t isa Type && !isabstracttype(t) && t <: family
+            ];
+            by = nameof,
+        )
+
+        for (name, family, call) in cases
+            @testset "$name/$(nameof(T))" for T in concrete_laws(family)
+                haskey(unsupported, (name, nameof(T))) && continue
+                @test call(T()) isa Float32
+            end
+        end
+    end
+
+    # Phase dispatch must not widen either: neither the matched branch nor the
+    # no-match fallback may introduce a Float64.
+    @testset "phase dispatch" begin
+        args32 = (; T = 1.0f3, P = 1.0f8)
+        phases = (
+            SetMaterialParams(; Phase = 1, Density = PT_Density()),
+            SetMaterialParams(; Phase = 2, Density = PT_Density()),
+        )
+        @test compute_density(phases, 1, args32) isa Float32
+        @test compute_density(phases, 99, args32) === 0.0f0
+        @test compute_density(phases, (0.4f0, 0.6f0), args32) isa Float32
+        @test GeoParams.nphase(v -> compute_density(v, args32), 99, phases) === 0.0f0
+        @test GeoParams.nphase_ratio(v -> compute_density(v, args32), (0.4f0, 0.6f0), phases) isa Float32
     end
 end

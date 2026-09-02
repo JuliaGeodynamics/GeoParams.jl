@@ -187,6 +187,8 @@ Value(v::GeoUnit) = Unitful.Quantity.(v.val, v.unit)        # value, with units
 Fun(v::GeoUnit) = v.val
 unpack_units(x::NTuple{N, GeoUnit}) where {N} = ntuple(i -> x[i].unit * x[i].val, Val(N))
 unpack_vals(x::NTuple{N, GeoUnit}) where {N} = ntuple(i -> x[i].val, Val(N))
+unpack_vals(::Type{T}, x::NTuple{N, GeoUnit}) where {T, N} =
+    ntuple(i -> convert_precision(T, x[i].val), Val(N))
 
 function UnitValue(v::GeoUnit{T, U}) where {T, U}
     if v.isdimensional

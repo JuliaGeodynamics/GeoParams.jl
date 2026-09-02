@@ -45,12 +45,13 @@ end
 
 # Calculation routine
 function (s::ConstantConductivity)(; kwargs...)
-    @unpack_val k = s
+    Tc = precision_of(values(kwargs))
+    @unpack_val Tc k = s
 
     return k
 end
 
-compute_conductivity(s::ConstantConductivity; kwargs...) = s()
+compute_conductivity(s::ConstantConductivity; kwargs...) = s(; kwargs...)
 
 function (s::ConstantConductivity)(I::Integer...)
     @unpack_val k = s
@@ -150,7 +151,7 @@ function param_info(s::T_Conductivity_Whittington) # info about the structwhere 
 end
 
 # Calculation routine
-function (s::T_Conductivity_Whittington)(; T = 0.0e0, kwargs...)
+function (s::T_Conductivity_Whittington)(; T, kwargs...)
     Tc = precision_of(T)
     if T isa Quantity
         @unpack_units Tc a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
@@ -165,15 +166,16 @@ function (s::T_Conductivity_Whittington)(; T = 0.0e0, kwargs...)
     end
 end
 
-function compute_conductivity(s::T_Conductivity_Whittington{_T}; T = 0.0e0) where {_T}
+function compute_conductivity(s::T_Conductivity_Whittington; T, kwargs...)
     return s(; T = T)
 end
 
 function (s::T_Conductivity_Whittington)(T::AbstractArray; kwargs...)
+    Tc = precision_of(T)
     if eltype(T) <: Quantity   # array of Quantities is not itself a Quantity
-        @unpack_units a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
+        @unpack_units Tc a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
     else
-        @unpack_val a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
+        @unpack_val Tc a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
     end
 
     inv_molmass = 1 / molmass # multiplication is considerably faster than division

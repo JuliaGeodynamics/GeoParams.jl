@@ -27,10 +27,11 @@ using StaticArrays
         fn::F, MatParam::NTuple{N, AbstractMaterialParamsStruct}, Phase::Int64, args::Vararg{Any, NA}
     ) where {F <: Function, N, NA}
     return quote
-        Base.@_inline_meta
-        Base.Cartesian.@nexprs $N i ->
-        @inbounds (MatParam[i].Phase == Phase) && return fn(MatParam[i], args...)
-        return 0.0
+        @inline
+        Base.Cartesian.@nexprs $N i -> (MatParam[i].Phase == Phase) && return fn(MatParam[i], args...)
+        # The no-match fallback must carry `fn`'s return type: a bare `0.0` would widen
+        # every call's inferred type to `Union{T, Float64}`.
+        return zero(Base.promote_op(fn, typeof(MatParam[1]), map(typeof, args)...))
     end
 end
 

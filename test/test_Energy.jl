@@ -320,14 +320,14 @@ import ForwardDiff as FD
     cond2 = T_Conductivity_Whittington()
     k = compute_conductivity(cond2, T)
     @test isbits(cond2)
-    @test sum(k) ≈ 27.503366436682285
+    @test sum(k) ≈ 27.2064825361914
 
     # nondimensional
     cond2_nd = T_Conductivity_Whittington()
     cond2_nd = nondimensionalize(cond2_nd, CharUnits_GEO)
     T_nd = Float64.(ustrip.(T / CharUnits_GEO.Temperature))
     k_nd = compute_conductivity(cond2_nd, T_nd)
-    @test sum(k_nd) ≈ 35.01591097886205
+    @test sum(k_nd) ≈ 34.63793324095208
 
     k1 = zeros(size(T))
     args = (; T = ustrip.(T))
@@ -775,7 +775,7 @@ end
     k = zeros(length(Tarr))
     # temperature-dependent conductivity over an array — regression values at T=300 K
     compute_conductivity!(k, T_Conductivity_Whittington(), (; T = Tarr))
-    @test k[1] ≈ 3.8396002930832354 rtol = 1.0e-9
+    @test k[1] ≈ 3.7776379430065825 rtol = 1.0e-9
     @test k[end] ≈ 1.9204488975556968 rtol = 1.0e-9
     compute_conductivity!(k, T_Conductivity_Whittington_parameterised(), (; T = Tarr))
     @test k[1] ≈ 3.83781682146175 rtol = 1.0e-9

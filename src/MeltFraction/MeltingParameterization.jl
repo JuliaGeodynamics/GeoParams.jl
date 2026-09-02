@@ -477,9 +477,9 @@ function (p::MeltingParam_Assimilation)(; T, kwargs...)
     X = (T - T_s) / (T_l - T_s)
 
     if X <= 0.5
-        ϕ = a * (exp(2 * log(100) * X) - 1)
+        ϕ = a * (exp(2 * log(Tc(100)) * X) - 1)
     else
-        ϕ = 1 - a * exp(2 * log(100) * (1 - X))
+        ϕ = 1 - a * exp(2 * log(Tc(100)) * (1 - X))
     end
     if p.apply_bounds
         if T > T_l
@@ -633,13 +633,12 @@ SmoothMelting(p::AbstractMeltingParam) = SmoothMelting(; p = p)
 function (param::SmoothMelting)(; T, kwargs...)
     Tc = precision_of(T)
     @unpack_val Tc k_sol, k_liq = param
+    @unpack_val Tc T_s, T_l = param.p
 
     ϕ = param.p(; T, kwargs...)     # Melt fraction computed in usual manner
 
-    T_s = param.p.T_s
     H_s = inv(1 + exp(-2 * k_sol * (T - T_s - (2 / k_sol))))
 
-    T_l = param.p.T_l
     H_l = 1 - inv(1 + exp(-2 * k_liq * (T - T_l + (2 / k_liq))))
 
     # Apply heaviside smoothening above liquidus & below solidus
@@ -771,9 +770,9 @@ end
     y = 100 * mCO2            # wt%
     z = P / Pref              # ∝ P in MPa
     TC = (T - T0) / Tref      # ∝ T in °C
-    a = _volatile_poly(p.a_coeffs, x, y, z)
-    b = _volatile_poly(p.b_coeffs, x, y, z)
-    c = _volatile_poly(p.c_coeffs, x, y, z)
+    a = _volatile_poly(convert_precision(Tc, p.a_coeffs), x, y, z)
+    b = _volatile_poly(convert_precision(Tc, p.b_coeffs), x, y, z)
+    c = _volatile_poly(convert_precision(Tc, p.c_coeffs), x, y, z)
     εx = a * erfc(b * (TC - c))
     return 1 - εx
 end
@@ -865,8 +864,8 @@ end
     y = 100 * mCO2            # wt%
     z = P / Pref              # ∝ P in MPa
     TC = (T - T0) / Tref      # ∝ T in °C
-    a = _volatile_poly(p.a_coeffs, x, y, z)
-    b = _volatile_poly(p.b_coeffs, x, y, z)
+    a = _volatile_poly(convert_precision(Tc, p.a_coeffs), x, y, z)
+    b = _volatile_poly(convert_precision(Tc, p.b_coeffs), x, y, z)
     εx = a * TC + b
     # No natural saturation in a linear fit: clamp to the physically sensible
     # endpoint (fully solid above the fit, fully liquid below it) rather than

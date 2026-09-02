@@ -18,6 +18,25 @@ parameters into a tracked number instead would put constants on the AD tape.
 @inline precision_of(x::AbstractArray) = precision_of(zero(eltype(x)))
 @inline precision_of(x::Tuple) = precision_of(zero(eltype(x)))
 
+"""
+    precision_of(args::NamedTuple)
+
+Evaluation precision for a law whose value does not depend on any particular
+argument, taken from the arguments the caller supplied. The float arguments
+promote together; arguments expressing no precision preference are skipped, and
+with none left the result is `Float64`.
+"""
+@inline precision_of(args::NamedTuple) = _promote_precision(Union{}, values(args)...)
+
+@inline _promote_precision(::Type{T}) where {T} = T
+@inline _promote_precision(::Type{Union{}}) = Float64
+@inline _promote_precision(::Type{T}, x, rest...) where {T} =
+    _promote_precision(_prefer(T, x), rest...)
+
+@inline _prefer(::Type{T}, v::AbstractFloat) where {T} = promote_type(T, typeof(v))
+@inline _prefer(::Type{T}, v::Quantity) where {T} = _prefer(T, ustrip(v))
+@inline _prefer(::Type{T}, ::Any) where {T} = T
+
 @inline _precision_of(::T) where {T <: AbstractFloat} = T
 @inline _precision_of(::Any) = Float64
 # A dual number is differentiated at the precision of the value it carries.

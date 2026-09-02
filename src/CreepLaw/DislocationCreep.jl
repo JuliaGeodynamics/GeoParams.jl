@@ -221,13 +221,7 @@ Computes the stress for a Dislocation creep law given a certain strain rate
     )
     Tc = precision_of(EpsII)
     T, P, f = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, f)
-    n, r, A, E, V, R = if EpsII isa Quantity
-        @unpack_units Tc n, r, A, E, V, R = a
-        n, r, A, E, V, R
-    else
-        @unpack_val Tc n, r, A, E, V, R = a
-        n, r, A, E, V, R
-    end
+    @unpack_val Tc n, r, A, E, V, R = a
 
     FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
     _n = inv(n)

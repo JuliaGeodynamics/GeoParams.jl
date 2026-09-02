@@ -59,7 +59,8 @@ end
 ConstantPermeability(args...) = ConstantPermeability(convert.(GeoUnit, args)...)
 isdimensional(s::ConstantPermeability) = isdimensional(s.k)
 
-@inline (s::ConstantPermeability)(; args...) = s.k.val
+@inline (s::ConstantPermeability)(; args...) =
+    convert_precision(precision_of(values(args)), s.k.val)
 @inline (s::ConstantPermeability)(args) = s(; args...)
 @inline compute_permeability(s::ConstantPermeability{_T}, args) where {_T} = s(; args...)
 @inline compute_permeability(s::ConstantPermeability{_T}) where {_T} = s()
@@ -117,12 +118,9 @@ function param_info(s::HazenPermeability)
     return MaterialParamsInfo(; Equation = L"k = C \cdot D_{10}^2")
 end
 
-function (s::HazenPermeability{_T})(; kwargs...) where {_T}
-    if kwargs isa Quantity
-        @unpack_units C, D10 = s
-    else
-        @unpack_val   C, D10 = s
-    end
+function (s::HazenPermeability)(; kwargs...)
+    Tc = precision_of(values(kwargs))
+    @unpack_val Tc C, D10 = s
 
     return C * D10^2
 end

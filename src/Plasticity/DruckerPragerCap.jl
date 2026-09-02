@@ -165,14 +165,14 @@ To recover actual derivatives:  ∂Q/∂τII = 2A_τ,  ∂Q/∂P = -A_p.
     @unpack pq, pd, τd, b, kq = cp
 
     if ismode2_flowpotential(pq, pd, τd, τII, P)
-        return 0.5, kq
+        return one(τII) / 2, kq
     else
         Rq = hypot(τII, P - pq)
         if iszero(Rq)
             return zero(τII), zero(P)
         end
         inv_Rq = inv(Rq)
-        return 0.5 * b * τII * inv_Rq, - b * (P - pq) * inv_Rq
+        return b * τII * inv_Rq / 2, - b * (P - pq) * inv_Rq
     end
 end
 

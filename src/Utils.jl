@@ -145,7 +145,9 @@ end
     return quote
         @inline
         Base.Cartesian.@nexprs $N i -> @inbounds v[i].Phase === phase && return f(v[i])
-        return 0.0
+        # The no-match fallback must carry `f`'s return type: a bare `0.0` would widen
+        # every call's inferred type to `Union{T, Float64}`.
+        return zero(Base.promote_op(f, typeof(v[1])))
     end
 end
 
@@ -153,8 +155,10 @@ end
     Base.@_inline_meta
     return quote
         @inline
-        val = 0.0
-        Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i]) * phase_ratio[i]
+        # Seed the accumulator with the first term (not `0.0`) so the result type follows
+        # the computation rather than being widened to Float64.
+        val = @inbounds f(v[1]) * phase_ratio[1]
+        Base.Cartesian.@nexprs $(N - 1) i -> val += @inbounds f(v[i + 1]) * phase_ratio[i + 1]
         return val
     end
 end

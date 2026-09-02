@@ -66,8 +66,10 @@ end
 ConstantDensity(args...) = ConstantDensity(convert.(GeoUnit, args)...)
 isdimensional(s::ConstantDensity) = isdimensional(s.ρ)
 
-@inline (ρ::ConstantDensity)(; P = 0.0e0, T = 0.0e0, args...) =
-    (P isa Quantity || T isa Quantity) ? UnitValue(ρ.ρ) : ρ.ρ.val
+@inline function (ρ::ConstantDensity)(; P = 0, T = 0, args...)
+    (P isa Quantity || T isa Quantity) && return UnitValue(ρ.ρ)
+    return convert_precision(precision_of((; P, T)), ρ.ρ.val)
+end
 @inline (ρ::ConstantDensity)(args) = ρ(; args...)
 @inline compute_density(s::ConstantDensity{_T}, args) where {_T} = s(; args...)
 @inline compute_density(s::ConstantDensity{_T}) where {_T} = s()
@@ -415,9 +417,10 @@ end
 
 # Calculation routines
 @inline function (rho::GasPyroclast_Density{_T})(; kwargs...) where {_T}
+    Tc = precision_of(values(kwargs))
     ρmelt = compute_density(rho.ρmelt, kwargs)
     ρgas = compute_density(rho.ρgas, kwargs)
-    @unpack_val δ, β = rho
+    @unpack_val Tc δ, β = rho
 
     return @muladd ρgas * δ + ρmelt * (1 - β) * (1 - δ)
 end
@@ -592,7 +595,7 @@ function param_info(s::ThreePhase_Density)
     return MaterialParamsInfo(; Equation = L"\rho = \varepsilon_m \rho_m + \varepsilon_g \rho_g + \varepsilon_x \rho_x")
 end
 
-@inline function (rho::ThreePhase_Density)(; ϕ_gas = 0.0e0, ϕ_x = 0.0e0, kwargs...)
+@inline function (rho::ThreePhase_Density)(; ϕ_gas = 0, ϕ_x = 0, kwargs...)
     ρmelt = compute_density(rho.ρmelt, kwargs)
     ρsolid = compute_density(rho.ρsolid, kwargs)
     # Skip the gas EOS entirely when no gas is present: a zero-weighted term
@@ -750,12 +753,12 @@ function (s::Melt_DensityX)(; P::Number = 0.0e0, T::Number = 0.0e0, mH2O = s.oxd
     else
         (; MV, dVdT, dVdP, Tref, norm_MP) = s
         @unpack_val Tc P0, ρ0, sum_XMW, sum_Vliq = s
-        norm_MPv = unpack_vals(norm_MP)
-        if mH2O != s.oxd_wt[9] / 100
+        norm_MPv = unpack_vals(Tc, norm_MP)
+        if mH2O != convert_precision(Tc, s.oxd_wt[9] / 100)
             oxd_wt = oxd_wt = s.oxd_wt[1:8]..., 100 * mH2O
-            sum_XMW, norm_MPv = compute_XMW_norm_MP(oxd_wt, unpack_vals(s.MW))
+            sum_XMW, norm_MPv = compute_XMW_norm_MP(oxd_wt, unpack_vals(Tc, s.MW))
         end
-        P0, ρ0, sum_XMW, sum_Vliq, unpack_vals(MV), unpack_vals(dVdT), unpack_vals(Tref), norm_MPv, unpack_vals(dVdP)
+        P0, ρ0, sum_XMW, sum_Vliq, unpack_vals(Tc, MV), unpack_vals(Tc, dVdT), unpack_vals(Tc, Tref), norm_MPv, unpack_vals(Tc, dVdP)
     end
 
     sum_Vliq = @muladd (MV[1] + (dVdT[1] * (T - Tref[1])) + (dVdP[1] * (P - P0))) * norm_MP[1]

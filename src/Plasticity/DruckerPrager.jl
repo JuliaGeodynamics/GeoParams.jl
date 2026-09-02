@@ -174,7 +174,7 @@ for t in (:NTuple, :SVector)
     end
 end
 
-∂Q∂τII(p::DruckerPrager, τII::_T; P = zero(_T), kwargs...) where {_T} = 0.5
+∂Q∂τII(p::DruckerPrager, τII::_T; P = zero(_T), kwargs...) where {_T} = one(_T) / 2
 
 """
     compute_εII(p::DruckerPrager{_T,U,U1}, λdot::_T, τII::_T,  P)

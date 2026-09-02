@@ -180,7 +180,7 @@ for t in (:NTuple, :SVector)
     end
 end
 
-∂Q∂τII(p::DruckerPrager_regularised, τII::_T; P = zero(_T), kwargs...) where {_T} = 0.5
+∂Q∂τII(p::DruckerPrager_regularised, τII::_T; P = zero(_T), kwargs...) where {_T} = one(_T) / 2
 
 """
     compute_εII(p::DruckerPrager_regularised{_T,U,U1}, λdot::_T, τII::_T,  P)
