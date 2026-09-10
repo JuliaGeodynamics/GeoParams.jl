@@ -169,6 +169,11 @@ end
             4.262794766379919,
         ),
     )
+
+    τ0 = (1.0, 2.0, 3.0, 0.1, 0.2, 0.3)
+    @test GeoParams.rotate_elastic_stress3D((0.0, 0.0, 0.0), τ0, dt) == τ0
+    τ32 = Float32.(τ0)
+    @test eltype(GeoParams.rotate_elastic_stress3D((0.5f0, -0.4f0, 0.2f0), τ32, 1f-3)) == Float32
 end
 
 

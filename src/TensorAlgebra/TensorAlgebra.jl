@@ -61,6 +61,16 @@ end
 
 @inline doubledot(A::SMatrix, B::SMatrix) = sum(A .* B)
 
+"""
+    second_invariant(A)
+    second_invariant(xx, yy, xy)
+    second_invariant(xx, yy, zz, yz, xz, xy)
+
+Computes the second invariant ``\\sqrt{\\tfrac{1}{2} A_{ij}A_{ij}}`` of a deviatoric tensor `A`.
+The tensor may be given as an `NTuple`, `SVector`, `SMatrix`, or `Matrix`, or by its independent
+components (Voigt order) for the 2D (`xx, yy, xy`) or 3D (`xx, yy, zz, yz, xz, xy`) case; the
+component forms are differentiable.
+"""
 @inline second_invariant(A::NTuple) = √(0.5 * doubledot(A, A))
 @inline second_invariant(A::SMatrix) = √(0.5 * doubledot(A, A))
 @inline second_invariant(A::SVector) = √(0.5 * doubledot(A, A))
@@ -167,6 +177,13 @@ end
 
 # Methods to rotate the elastic stress
 
+"""
+    rotate_elastic_stress(ω, τ, dt)
+
+Applies the Jaumann co-rotation to the elastic stress tensor `τ` (in Voigt notation) over a time
+step `dt`, given the vorticity `ω`. Dispatches to the 2D or 3D rotation depending on the length of
+`ω`.
+"""
 @inline rotate_elastic_stress(ω, τ, dt) = _rotate_elastic_stress(ω, staggered_tensor_average(τ), dt)
 
 @inline _rotate_elastic_stress(ω::Union{AbstractVector, NTuple}, τ, dt) = rotate_elastic_stress3D(ω, τ, dt)
@@ -211,10 +228,11 @@ Trii-dimensional rotation of the elastic stress where τ is in the Voig notation
 @inline Base.@propagate_inbounds function rotate_elastic_stress3D(ωi, τ, dt)
     # vorticity
     ω = √(sum(x^2 for x in ωi))
+    iszero(ω) && return τ
     # unit rotation axis
-    n = SVector{3, Float64}(inv(ω) * ωi[i] for i in 1:3)
+    n = SVector(ωi) ./ ω
     # integrate rotation angle
-    θ = dt * 0.5 * ω
+    θ = dt * ω / 2
     # Euler Rodrigues rotation matrix
     R = rodrigues_euler(θ, n)
     # rotate tensor
@@ -233,6 +251,6 @@ end
         c_3    c0  -c_1
         -c_2   c_1    c0
     ]
-    R2 = (1.0 - cosθ) .* (n * n')
+    R2 = (one(cosθ) - cosθ) .* (n * n')
     return R1 + R2
 end
