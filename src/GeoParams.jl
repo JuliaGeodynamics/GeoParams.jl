@@ -9,7 +9,6 @@ This package has two main features that help with this:
 The material parameter object is designed to be extensible and can be passed on to the solvers, such that new creep laws or features can be readily added.
 We also implement some typically used creep law parameters, together with tools to plot them versus and compare our results with those of published papers (to minimize mistakes).
 """
-
 module GeoParams
 
     using Parameters         # helps setting default parameters in structures
@@ -32,7 +31,6 @@ module GeoParams
 
     export @u_str,
         uconvert,
-        upreffered,
         unit,
         ustrip,
         NoUnits, #  Units
@@ -55,7 +53,6 @@ module GeoParams
         Value,
         NumValue,
         unpack_units,
-        unpack_val,
         Unit,
         UnitValue,
         isdimensional,
@@ -84,16 +81,57 @@ module GeoParams
         μW,
         Quantity
 
-    export AbstractGeoUnit1, GeoUnit1
-
     #
-    abstract type AbstractMaterialParam end                                    # structure that holds material parameters (density, elasticity, viscosity)
-    abstract type AbstractMaterialParamsStruct end                             # will hold all info for a phase
-    abstract type AbstractPhaseDiagramsStruct <: AbstractMaterialParam end    # will hold all info for phase diagrams
+    """
+        AbstractMaterialParam
+
+    Supertype of every individual material property parameterization (density, elasticity,
+    viscosity, conductivity, …). Concrete subtypes are callable and evaluate the property they
+    describe.
+    """
+    abstract type AbstractMaterialParam end
+
+    """
+        AbstractMaterialParamsStruct
+
+    Supertype of the per-phase container that bundles all `AbstractMaterialParam`s belonging to a
+    single material phase (see `MaterialParams`).
+    """
+    abstract type AbstractMaterialParamsStruct end
+
+    """
+        AbstractPhaseDiagramsStruct <: AbstractMaterialParam
+
+    Supertype of material parameters obtained by interpolating a precomputed phase diagram lookup
+    table as a function of pressure and temperature.
+    """
+    abstract type AbstractPhaseDiagramsStruct <: AbstractMaterialParam end
+
+    """
+        AbstractConstitutiveLaw{T} <: AbstractMaterialParam
+
+    Supertype of the constitutive laws that relate stress and strain rate (creep laws, elasticity,
+    plasticity). `T` is the numeric element type.
+    """
     abstract type AbstractConstitutiveLaw{T} <: AbstractMaterialParam end
+
+    """
+        AbstractComposite <: AbstractMaterialParam
+
+    Supertype of composite rheologies that combine several constitutive laws (see
+    [`CompositeRheology`](@ref) and [`Parallel`](@ref)).
+    """
     abstract type AbstractComposite <: AbstractMaterialParam end
 
     function PerpleX_LaMEM_Diagram end                                         # necessary as we already use this function in Units, but only define it later in PhaseDiagrams
+
+    """
+        param_info(s::AbstractMaterialParam) -> MaterialParamsInfo
+
+    Returns a `MaterialParamsInfo` describing the parameterization `s`: its governing equation (as a
+    `LaTeXString`) and, where available, a comment and BibTeX reference. Each concrete
+    material-parameter type provides its own method.
+    """
     function param_info end
     export AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct
 
@@ -131,14 +169,12 @@ module GeoParams
         param_info,
         AbstractDensity,
         ConduitDensity,
-        No_Density,
         ConstantDensity,
         PT_Density,
         Compressible_Density,
         T_Density,
         Vector_Density,
         PhaseDiagram_LookupTable,
-        Read_LaMEM_Perple_X_Diagram,
         MeltDependent_Density,
         BubbleFlow_Density,
         GasPyroclast_Density,
@@ -198,11 +234,6 @@ module GeoParams
         Transform_GrainBoundarySliding,
         Transform_PeierlsCreep,
         Transform_NonLinearPeierlsCreep,
-        DislocationCreep_data,
-        DiffusionCreep_data,
-        GrainBoundarySliding_data,
-        PeierlsCreep_data,
-        NonLinearPeierlsCreep_data,
         Peierls_stress_iterations,
 
         #       Elasticity
@@ -239,15 +270,12 @@ module GeoParams
         AbstractConstitutiveLaw,
         AbstractComposite,
         computeViscosity_εII,
-        computeViscosity_εII!,
         computeViscosity_εII_AD,
         local_iterations_εII,
         local_iterations_εII_AD,
         local_iterations_τII,
         local_iterations_τII_AD,
-        computeViscosity,
         InverseCreepLaw,
-        KelvinVoigt,
         CompositeRheology,
         Parallel,
         create_rheology_string, print_rheology_matrix,
@@ -434,10 +462,15 @@ module GeoParams
         return [getfield(m, Symbol(x)) for x in out if !isnothing(tryparse(Int, string(x[end]))) || endswith(x, "a") || endswith(x, "b")]
     end
 
+    "Returns the list of pre-defined diffusion creep laws (entries of the `Diffusion` submodule)."
     diffusion_law_list() = creeplaw_list(Diffusion)
+    "Returns the list of pre-defined dislocation creep laws (entries of the `Dislocation` submodule)."
     dislocation_law_list() = creeplaw_list(Dislocation)
+    "Returns the list of pre-defined grain-boundary-sliding creep laws (entries of the `GBS` submodule)."
     grainboundarysliding_law_list() = creeplaw_list(GBS)
+    "Returns the list of pre-defined non-linear Peierls creep laws (entries of the `NonLinearPeierls` submodule)."
     nonlinearpeierls_law_list() = creeplaw_list(NonLinearPeierls)
+    "Returns the list of pre-defined Peierls creep laws (entries of the `Peierls` submodule)."
     peierls_law_list() = creeplaw_list(Peierls)
 
     export diffusion_law_list,
@@ -460,21 +493,110 @@ module GeoParams
     # Add function definitions here such that they can be exported from GeoParams.jl
     # and extended in the GeoParamsMakieExt package extension or by the
     # GLMakie-specific code loaded by Requires.jl
+    # Each plotting routine is a stub here and implemented in the `GeoParamsMakieExt`
+    # package extension; a `Makie.jl` backend (e.g. `GLMakie.jl`, or `CairoMakie.jl`
+    # for headless use) must be loaded for the methods to become available.
+
+    """
+        PlotStrainrateStress(x; kwargs...)
+
+    Plots deviatoric stress versus deviatoric strain rate for one or more creep laws `x`.
+    """
     function PlotStrainrateStress end
+
+    """
+        PlotStressStrainrate(x; kwargs...)
+
+    Plots deviatoric strain rate versus deviatoric stress for one or more creep laws `x`
+    (the transpose of [`PlotStrainrateStress`](@ref)).
+    """
     function PlotStressStrainrate end
+
+    """
+        PlotStrainrateViscosity(x; kwargs...)
+
+    Plots effective viscosity versus deviatoric strain rate for one or more creep laws `x`.
+    """
     function PlotStrainrateViscosity end
+
+    """
+        PlotStressViscosity(x; kwargs...)
+
+    Plots effective viscosity versus deviatoric stress for one or more creep laws `x`.
+    """
     function PlotStressViscosity end
+
+    """
+        PlotHeatCapacity(Cp::AbstractHeatCapacity; kwargs...)
+
+    Plots heat capacity as a function of temperature for the parameterization `Cp`.
+    """
     function PlotHeatCapacity end
+
+    """
+        PlotConductivity(k::AbstractConductivity; kwargs...)
+
+    Plots thermal conductivity as a function of temperature for the parameterization `k`.
+    """
     function PlotConductivity end
+
+    """
+        PlotMeltFraction(p::AbstractMeltingParam; kwargs...)
+
+    Plots melt fraction and `dϕ/dT` as a function of temperature for the parameterization `p`.
+    """
     function PlotMeltFraction end
+
+    """
+        PlotPhaseDiagram(p::AbstractPhaseDiagramsStruct, fieldname::Symbol; kwargs...)
+
+    Plots the field `fieldname` of a phase diagram as a function of temperature (x-axis) and pressure (y-axis).
+    """
     function PlotPhaseDiagram end
+
+    """
+        Plot_TAS_diagram(point; kwargs...)
+
+    Plots a TAS (total-alkali versus silica) classification diagram for the given composition `point`.
+    """
     function Plot_TAS_diagram end
+
+    """
+        Plot_ZirconAge_PDF(time_Ma, PDF_zircons, time_Ma_average, PDF_zircon_average)
+
+    Plots the zircon-age probability density function computed from a simulation.
+    """
     function Plot_ZirconAge_PDF end
+
+    """
+        PlotDeformationMap(v; kwargs...)
+
+    Plots a deformation-mechanism map (deformation regime as a function of temperature and stress or strain rate) for the rheology `v`.
+    """
     function PlotDeformationMap end
+
+    """
+        PlotStressTime_0D(x; εII, kwargs...)
+
+    Plots the stress evolution over time of a 0-D visco-elasto-(plastic) model for the rheology `x`.
+    """
     function PlotStressTime_0D end
+
+    """
+        PlotPressureStressTime_0D(x; εII, εvol, kwargs...)
+
+    Plots the pressure and stress evolution over time of a 0-D visco-elasto-(plastic) model for the rheology `x`.
+    """
     function PlotPressureStressTime_0D end
+
     function StrengthEnvelopePlot end
     function PlotDiffusionCoef end
+
+    """
+        PlotDiffusionCoefArrhenius(x; kwargs...)
+
+    Arrhenius plot of the diffusion coefficient (`log(D)` versus `10⁴/T`) for one or more `ChemicalDiffusionData` structures `x`.
+    """
     function PlotDiffusionCoefArrhenius end
 
     export PlotStrainrateStress,
@@ -509,6 +631,24 @@ module GeoParams
             @inline $(fun)(::Union{NonElasticRheologyTrait, AbstractCreepLaw, AbstractPlasticity, AbstractConstitutiveLaw}) = 0
         end
     end
+
+    """
+        get_G(r)
+
+    Returns the elastic shear modulus `G` of the rheology `r` (a `ConstantElasticity`,
+    [`CompositeRheology`](@ref), or `MaterialParams`), summing the contributions of elastic elements
+    and returning `0` when `r` is non-elastic. Also available as `get_shearmodulus`.
+    """
+    get_G
+
+    """
+        get_Kb(r)
+
+    Returns the elastic bulk modulus `Kb` of the rheology `r` (a `ConstantElasticity`,
+    [`CompositeRheology`](@ref), or `MaterialParams`), summing the contributions of elastic elements
+    and returning `0` when `r` is non-elastic. Also available as `get_bulkmodulus`.
+    """
+    get_Kb
 
     export get_G, get_Kb
 

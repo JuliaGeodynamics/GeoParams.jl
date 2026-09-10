@@ -118,7 +118,7 @@ compute_gravity(MatParam::AbstractMaterialParamsStruct) = compute_gravity(MatPar
 
 # Help info for the calculation routines
 """
-compute_gravity(s:<AbstractGravity)
+compute_gravity(s::AbstractGravity)
 
 Returns the gravitational acceleration 
 

@@ -17,7 +17,18 @@ using GeoParams: LinearInterpolator, interpolate, interpolate_field
 
 include("../Computations.jl")
 
+"""
+    AbstractDensity{T} <: AbstractMaterialParam
+
+Supertype of density parameterizations (e.g. [`ConstantDensity`](@ref), [`PT_Density`](@ref)).
+"""
 abstract type AbstractDensity{T} <: AbstractMaterialParam end
+
+"""
+    ConduitDensity{T} <: AbstractDensity{T}
+
+Supertype of density parameterizations for volcanic conduit flow.
+"""
 abstract type ConduitDensity{T} <: AbstractDensity{T} end
 
 export compute_density, # calculation routines
@@ -777,16 +788,17 @@ function param_info(s::Vector_Density) # info about the struct
 end
 
 # Calculation routine
-"""
-    compute_density(s::Vector_Density; index::Int64, kwargs...)
-
-Pointwise calculation of density from a vector where `index` is the index of the point
-"""
 @inline function (s::Vector_Density)(; index::Int64, kwargs...)
     return s.rho[index]
 end
 
 @inline (s::Vector_Density)(args) = s(; args...)
+
+"""
+    compute_density(s::Vector_Density; index::Int64, kwargs...)
+
+Pointwise calculation of density from a vector where `index` is the index of the point
+"""
 @inline compute_density(s::Vector_Density, args) = s(args)
 
 # Print info
@@ -885,6 +897,12 @@ This assumes that the `PhaseRatio` of every point is specified as an Integer in 
 """
 @inline compute_density!(args::Vararg{Any, N}) where {N} = compute_param!(compute_density, args...) #Multiple dispatch to rest of routines found in Computations.jl
 @inline compute_density(args::Vararg{Any, N}) where {N} = compute_param(compute_density, args...)
+"""
+    compute_density_ratio(phase_ratios, MatParam, args)
+
+Returns the phase-fraction-weighted average density at a point, summing each phase's density
+([`compute_density`](@ref)) times its fraction in `phase_ratios`.
+"""
 @inline compute_density_ratio(args::Vararg{Any, N}) where {N} = compute_param_times_frac(compute_density, args...)
 
 # extractor methods

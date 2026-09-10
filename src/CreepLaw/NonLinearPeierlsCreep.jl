@@ -172,6 +172,12 @@ function PeierlsResidual(rheo::NonLinearPeierlsCreep, TauII, EpsII, args)
 end
 
 # implement nonlinear iterations function to iterate until stable stress value
+"""
+    Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau, EpsII, args; max_iter=500)
+
+Iteratively solves for the deviatoric stress consistent with the strain rate `EpsII` for the
+nonlinear Peierls creep law `rheo`, starting from `Tau`, using Newton iterations up to `max_iter`.
+"""
 function Peierls_stress_iterations(
         rheo::NonLinearPeierlsCreep, Tau, EpsII, args; max_iter = 500
     )

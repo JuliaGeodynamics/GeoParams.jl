@@ -103,6 +103,14 @@ end
 end
 
 # compute effective "visco-elastic" viscosity
+"""
+    compute_elastoviscosity(v, η, dt)
+    compute_elastoviscosity(G, η, dt)
+
+Returns the effective visco-elastic viscosity that combines a viscous viscosity `η` and elasticity
+(shear modulus `G`, or a `ConstantElasticity` `v`) over a time step `dt`, as the harmonic sum
+`(1/η + 1/(G·dt))⁻¹`. The time step may instead be passed via `args.dt`.
+"""
 @inline compute_elastoviscosity(v::ConstantElasticity, η, dt) = compute_elastoviscosity(v.G, η, dt)
 @inline compute_elastoviscosity(G, η, dt) = (inv(η) + inv(G * dt)) |> inv
 @inline compute_elastoviscosity(v::ConstantElasticity, η, args::NamedTuple) = compute_elastoviscosity(v.G, η, args.dt)
@@ -134,7 +142,20 @@ for fn in (:compute_elastoviscosity_εII, :compute_elastoviscosity_τII)
     end
 end
 
+"""
+    compute_elastoviscosity_εII(v, εII, args)
+
+Returns the effective visco-elastic viscosity of the rheology `v` evaluated from the deviatoric
+strain rate `εII`, combining the non-plastic elements harmonically.
+"""
 @inline compute_elastoviscosity_εII(v::CompositeRheology, εII, args) = compute_elastoviscosity_II(elements(v), compute_viscosity_εII, εII, args)
+
+"""
+    compute_elastoviscosity_τII(v, τII, args)
+
+Returns the effective visco-elastic viscosity of the rheology `v` evaluated from the deviatoric
+stress `τII`, combining the non-plastic elements harmonically.
+"""
 @inline compute_elastoviscosity_τII(v::CompositeRheology, τII, args) = compute_elastoviscosity_II(elements(v), compute_viscosity_τII, τII, args)
 
 @generated function compute_elastoviscosity_II(v::NTuple{N, AbstractConstitutiveLaw}, fn::F, II, args) where {F, N}
@@ -148,6 +169,14 @@ end
 
 # special cases for constant viscosity and elasticity
 
+"""
+    compute_viscosity(v, args)
+
+Returns the effective viscosity of the linear rheology `v` (a `LinearViscous`, `ConstantElasticity`,
+[`CompositeRheology`](@ref), or `MaterialParams`), combining non-plastic elements harmonically. For
+multiple phases, `v` may be a tuple of `MaterialParams` indexed by a phase or weighted by phase
+ratios. Throws for non-linear rheologies.
+"""
 @inline compute_viscosity(v::LinearViscous; kwargs...) = v.η.val
 @inline compute_viscosity(v::ConstantElasticity; dt = 0.0, kwargs...) = v.G * dt
 @inline compute_viscosity(v::Union{LinearViscous, ConstantElasticity}, kwargs) = compute_viscosity(v; kwargs...)
@@ -186,6 +215,12 @@ end
     end
 end
 
+"""
+    compute_elasticviscosity(v, args)
+
+Returns the viscosity contributed by the elastic elements of the rheology `v` alone (`G·dt`),
+combining them harmonically for a composite rheology.
+"""
 @inline compute_elasticviscosity(v::CompositeRheology, args) = compute_elasticviscosity(elements(v), args)
 
 @generated function compute_elasticviscosity(v::NTuple{N, AbstractMaterialParamsStruct}, phase, args) where {N}

@@ -1,6 +1,13 @@
 # Pretty printing for CompositeRheologies
 
 # returns a matrix with strings in the right order
+"""
+    print_rheology_matrix(v)
+
+Returns a vector of strings laying out the rheological elements of `v` (a tuple,
+[`CompositeRheology`](@ref), [`Parallel`](@ref), or `MaterialParams`) as an ASCII diagram, used
+when displaying composite rheologies in the REPL.
+"""
 function print_rheology_matrix(v::Tuple)
 
     n = 40
@@ -154,6 +161,13 @@ print_rheology_matrix(v::AbstractPlasticity) = ["--▬▬▬__--"]
 #print_rheology_matrix(v::DruckerPrager)      = ["-dp▬▬__--"] # we can further
 
 
+"""
+    create_rheology_string(str, rheo_Comp)
+
+Appends to the string `str` a compact symbolic representation of the rheological elements in
+`rheo_Comp` (a [`CompositeRheology`](@ref), [`Parallel`](@ref) assembly, or individual law), used
+to build the one-line REPL summary of a composite rheology.
+"""
 function create_rheology_string(str, rheo_Comp::CompositeRheology)
 
     rheology = rheo_Comp.elements
@@ -240,6 +254,13 @@ end
 
 # Center strings
 cpad(s, n::Integer, p = " ") = rpad(lpad(s, div(n + textwidth(s), 2), p), n, p)
+"""
+    InverseCreepLaw(v...)
+
+Groups the constitutive laws `v` whose strain-rate contributions add reciprocally, i.e. whose
+effective viscosities combine as `1/η = Σ 1/ηᵢ`. Used internally when assembling composite
+rheologies.
+"""
 struct InverseCreepLaw{N} <: AbstractConstitutiveLaw{Float64}
     v::NTuple{N, AbstractConstitutiveLaw}
 

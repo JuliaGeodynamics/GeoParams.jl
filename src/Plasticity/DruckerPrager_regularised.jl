@@ -26,6 +26,10 @@ Plasticity is activated when ``F(\\tau_{II}^{trial})`` (the yield function compu
 ```
 where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the resulting stress gives ``F(\\tau_{II}^{final})=0``, and ``\\sigma_{ij}=-P + \\tau_{ij}`` denotes the total stress tensor.
 
+# Example
+```julia
+julia> pl = DruckerPrager_regularised(ϕ=30, C=10e6Pa, η_vp=1e20Pa*s)
+```
 """
 @with_kw_noshow struct DruckerPrager_regularised{T, U, U1, U2, S1 <: AbstractSoftening, S2 <: AbstractSoftening} <: AbstractPlasticity{T}
     softening_ϕ::S1 = NoSoftening()

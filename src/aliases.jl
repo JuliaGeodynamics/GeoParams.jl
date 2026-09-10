@@ -14,6 +14,14 @@ const VALID_KWARGS = (
     :meltfraction,
 )
 
+"""
+    @use GeoParamsAliases property = alias ...
+
+Creates a `GeoParamsAliases` module in the calling scope defining short-hand alias functions for the
+`compute_*` routines. Each keyword maps one of the supported properties (e.g. `density`,
+`conductivity`, `heatcapacity`, …) to the name you want to call it by. For example,
+`@use GeoParamsAliases density = ρ` makes `ρ` an alias for `compute_density`.
+"""
 macro use(args...)
     checkargs(args...)
     esc(create_module(__module__, args...))

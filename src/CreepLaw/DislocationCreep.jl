@@ -307,6 +307,16 @@ function param_info(s::DislocationCreep)
     )
 end
 
+"""
+    SetDislocationCreep(name::AbstractString; n, r, A, E, V)
+    SetDislocationCreep(name::AbstractString, CharDim::GeoUnits; n, r, A, E, V)
+
+Returns a `DislocationCreep` rheology built from the pre-defined creep law `name` (e.g. one of
+the entries in `Dislocation`), converting its parameters from the units used in the literature
+(MPa, kJ, …) to SI units. Any of the keyword arguments `n`, `r`, `A`, `E`, `V` overrides the
+corresponding tabulated parameter. If `CharDim` is supplied, the result is nondimensionalized
+with those characteristic dimensions.
+"""
 function SetDislocationCreep(
         name::F;
         n = nothing,

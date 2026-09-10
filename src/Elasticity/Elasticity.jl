@@ -1,6 +1,11 @@
 # If you want to add a new method here, feel free to do so.
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
+"""
+    AbstractElasticity{T} <: AbstractConstitutiveLaw{T}
+
+Supertype of elastic constitutive laws (e.g. [`ConstantElasticity`](@ref)).
+"""
 abstract type AbstractElasticity{T} <: AbstractConstitutiveLaw{T} end
 
 export compute_εII, # calculation routines
@@ -90,6 +95,12 @@ end
     return ν == 0.5 ? false : true
 end
 
+"""
+    iselastic(v) -> Bool
+
+Returns `true` if `v` is an elastic constitutive law (an [`AbstractElasticity`](@ref)), and `false`
+otherwise.
+"""
 @inline iselastic(v::AbstractElasticity) = true
 @inline iselastic(v) = false
 
@@ -216,6 +227,12 @@ Computes elastic volumetric strainrate given the pressure at the current (`P`) a
     return εvol_el
 end
 
+"""
+    dεvol_dp(a::ConstantElasticity, P; P_old, dt, kwargs...)
+
+Returns the derivative of the elastic volumetric strain with respect to pressure, `∂εvol/∂P = -1/(Kb·dt)`,
+for the elasticity `a` over time step `dt`.
+"""
 @inline function dεvol_dp(
         a::ConstantElasticity, P; P_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
@@ -223,6 +240,12 @@ end
     return - inv(Kb * dt)
 end
 
+"""
+    compute_p(v, εvol, args)
+
+Returns the pressure produced by the volumetric strain `εvol` for the rheology `v`. For elasticity
+`P = -Kb·dt·εvol + P_old`; for a [`Parallel`](@ref) assembly the pressures of the elements are summed.
+"""
 @inline function compute_p(
         a::ConstantElasticity, εvol; P_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
@@ -232,6 +255,12 @@ end
     return P
 end
 
+"""
+    dp_dεvol(a::ConstantElasticity, args)
+
+Returns the derivative of pressure with respect to the volumetric strain, `∂P/∂εvol = -Kb·dt`, for
+the elasticity `a` over time step `dt`.
+"""
 @inline function dp_dεvol(
         a::ConstantElasticity, P_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
@@ -334,6 +363,14 @@ function effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
     return effective_ε((εxx, εyy, εxy), v, (τxx_old, τyy_old, τxy_old), dt)
 end
 
+"""
+    effective_εII(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
+
+Returns the second invariant of the effective (visco-elastic) strain rate, which augments the
+deviatoric strain-rate components with the stress-rate contribution of the old stresses
+`(τxx_old, τyy_old, τxy_old)` for the elasticity in `v` over time step `dt`. The 3D form takes the
+full six components.
+"""
 function effective_εII(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
     εxx, εyy, εxy = effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
     εII = second_invariant(εxx, εyy, εxy)

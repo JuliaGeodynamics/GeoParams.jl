@@ -228,8 +228,7 @@ Also returned are `Tii` (second invariant of the deviatoric stress tensor), and 
 Also required as input is `MatParam`, the material parameters for every phase and `phase`, an integer array of `size(Exx)` that indicates the phase of every point.
 
 This function assumes that strainrate points are collocated and that `Exx`,`Eyy`,`Exy` are at the same points.
-# """
-
+"""
 function compute_τij!(
         Txx::AbstractArray{_T},
         Tyy::AbstractArray{_T},
