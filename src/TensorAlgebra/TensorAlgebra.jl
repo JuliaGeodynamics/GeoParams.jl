@@ -228,7 +228,7 @@ Trii-dimensional rotation of the elastic stress where τ is in the Voig notation
 @inline Base.@propagate_inbounds function rotate_elastic_stress3D(ωi, τ, dt)
     # vorticity
     ω = √(sum(x^2 for x in ωi))
-    iszero(ω) && return τ
+    iszero(ω) && return SVector(τ)
     # unit rotation axis
     n = SVector(ωi) ./ ω
     # integrate rotation angle
