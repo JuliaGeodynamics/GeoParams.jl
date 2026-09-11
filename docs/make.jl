@@ -3,6 +3,8 @@ using DocumenterVitepress
 using GeoParams, Makie
 # push!(LOAD_PATH, "../src/")
 
+DocMeta.setdocmeta!(GeoParams, :DocTestSetup, :(using GeoParams); recursive = true)
+
 @info "Making documentation..."
 makedocs(;
     sitename = "GeoParams.jl",
@@ -14,7 +16,8 @@ makedocs(;
             Base.get_extension(GeoParams, :GeoParamsMakieExt) :
             GeoParams.GeoParamsMakieExt,
     ],
-    warnonly = Documenter.except(:footnote),
+    checkdocs = :exports,
+    warnonly = [:missing_docs],
     format = DocumenterVitepress.MarkdownVitepress(
         repo = "github.com/JuliaGeodynamics/GeoParams.jl",
         devbranch = "main",
@@ -59,12 +62,13 @@ makedocs(;
             "1D Strength Envelope" => "man/strengthenvelope.md",
         ],
         "Plotting" => "man/plotting.md",
+        "Parameter tables" => "man/tables.md",
         "List of functions" => "man/listfunctions.md",
         "Contributing" => "man/contributing.md",
     ],
 )
 
-deploydocs(
+DocumenterVitepress.deploydocs(
     repo = "github.com/JuliaGeodynamics/GeoParams.jl",
     devbranch = "main",
     branch = "gh-pages",

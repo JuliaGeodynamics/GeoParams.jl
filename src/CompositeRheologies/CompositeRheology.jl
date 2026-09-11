@@ -66,7 +66,7 @@ function show(io::IO, g::AbstractComposite)
 
     # Compose a string with rheological elements, so we have an overview in the REPL
     str = print_rheology_matrix(g)
-    println.(str)
+    println.(Ref(io), str)
 
     return nothing
 end

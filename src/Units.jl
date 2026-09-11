@@ -277,14 +277,13 @@ Base.convert(::Type{GeoUnit{T}}, v::AbstractArray) where {T} = GeoUnit(T.(v))
 
 Base.promote_rule(::Type{GeoUnit}, ::Type{Quantity}) = GeoUnit
 
-function Base.show(io::IO, x::GeoUnit{T, U}) where {T, U} # output
-    val = x.val
-    if x.isdimensional == true
-        println("GeoUnit{dimensional, $(x.unit)}, ")
-    else
-        println("GeoUnit{nondimensional, $(x.unit)}, ")
-    end
-    return show(io, MIME("text/plain"), val)
+# Compact form: the bare value, so interpolating a GeoUnit yields the number it wraps.
+Base.show(io::IO, x::GeoUnit) = show(io, MIME("text/plain"), x.val)
+
+function Base.show(io::IO, ::MIME"text/plain", x::GeoUnit{T, U}) where {T, U}
+    dimensionality = x.isdimensional ? "dimensional" : "nondimensional"
+    println(io, "GeoUnit{$dimensionality, $(x.unit)}, ")
+    return show(io, MIME("text/plain"), x.val)
 end
 
 # define a few basic routines so we can easily operate with GeoUnits
