@@ -49,14 +49,17 @@ Defines a constant permeability value for a given material.
 - `k`: The permeability value in square meters (m^2). Default is `1e-12 m^2`.
 
 # Example
-```julia
-rheology = SetMaterialParams(;
-                      Phase=1,
-                      CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e21Pa * s)),
-                      Gravity=ConstantGravity(; g=9.81.0m / s^2),
-                      Density= MeltDependent_Density(),
-                      Permeability = ConstantPermeability(; k=1e-12m^2),
-                      )
+```jldoctest
+julia> rheology = SetMaterialParams(;
+           Phase = 1,
+           CreepLaws = (PowerlawViscous(), LinearViscous(; η = 1e21Pa * s)),
+           Gravity = ConstantGravity(; g = 9.81m / s^2),
+           Density = MeltDependent_Density(),
+           Permeability = ConstantPermeability(; k = 1e-12m^2),
+       );
+
+julia> rheology.Permeability[1]
+Constant permeability: k=1.0e-12 m²·⁰
 ```
 """
 @with_kw_noshow struct ConstantPermeability{_T, U} <: AbstractPermeability{_T}
@@ -102,14 +105,17 @@ Defines the Hazen permeability equation for a given material.
 - `D10`: The effective grain size. Default is `1e-4 m`.
 
 # Example
-```julia
-rheology = SetMaterialParams(;
-                      Phase=1,
-                      CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e21Pa * s)),
-                      Gravity=ConstantGravity(; g=9.81.0m / s^2),
-                      Density= MeltDependent_Density(),
-                      Permeability = HazenPermeability(; C=1.0, D10=1e-4m),
-                      )
+```jldoctest
+julia> rheology = SetMaterialParams(;
+           Phase = 1,
+           CreepLaws = (PowerlawViscous(), LinearViscous(; η = 1e21Pa * s)),
+           Gravity = ConstantGravity(; g = 9.81m / s^2),
+           Density = MeltDependent_Density(),
+           Permeability = HazenPermeability(; C = 1.0, D10 = 1e-4m),
+       );
+
+julia> rheology.Permeability[1]
+Hazen permeability: k = C * D10^2; C=1.0; D10=0.0001
 ```
 """
 @with_kw_noshow struct HazenPermeability{_T, U1, U2} <: AbstractPermeability{_T}
@@ -157,14 +163,17 @@ Defines the power-law permeability equation for a given material.
 - `n`: The exponent. Default is `3`.
 
 # Example
-```julia
-rheology = SetMaterialParams(;
-                      Phase=1,
-                      CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e21Pa * s)),
-                      Gravity=ConstantGravity(; g=9.81.0m / s^2),
-                      Density= MeltDependent_Density(),
-                      Permeability = PowerLawPermeability(; c=1.0, k0=1e-12m^2, ϕ=1e-2, n=3),
-                      )
+```jldoctest
+julia> rheology = SetMaterialParams(;
+           Phase = 1,
+           CreepLaws = (PowerlawViscous(), LinearViscous(; η = 1e21Pa * s)),
+           Gravity = ConstantGravity(; g = 9.81m / s^2),
+           Density = MeltDependent_Density(),
+           Permeability = PowerLawPermeability(; c = 1.0, k0 = 1e-12m^2, ϕ = 1e-2, n = 3),
+       );
+
+julia> rheology.Permeability[1]
+Power-law permeability: k = c* k0 * ϕ^n; c = 1.0, k0=1.0e-12; n=3.0
 ```
 """
 @with_kw_noshow struct PowerLawPermeability{_T, U1, U2, U3, U4} <: AbstractPermeability{_T}
@@ -212,14 +221,17 @@ Defines the Carman-Kozeny permeability equation for a given material.
 - `n`: The exponent. Default is `3`.
 
 # Example
-```julia
-rheology = SetMaterialParams(;
-                      Phase=1,
-                      CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e21Pa * s)),
-                      Gravity=ConstantGravity(; g=9.81.0m / s^2),
-                      Density= MeltDependent_Density(),
-                      Permeability = CarmanKozenyPermeability(; c=1.0m^2, ϕ0=0.01, n=3),
-                      )
+```jldoctest
+julia> rheology = SetMaterialParams(;
+           Phase = 1,
+           CreepLaws = (PowerlawViscous(), LinearViscous(; η = 1e21Pa * s)),
+           Gravity = ConstantGravity(; g = 9.81m / s^2),
+           Density = MeltDependent_Density(),
+           Permeability = CarmanKozenyPermeability(; c = 1.0m^2, ϕ0 = 0.01, n = 3),
+       );
+
+julia> rheology.Permeability[1]
+Carman-Kozeny permeability: k = c * (ϕ / ϕ0)^n; c=1.0; ϕ0=0.01; n=3.0
 ```
 """
 @with_kw_noshow struct CarmanKozenyPermeability{_T, U1, U2, U3} <: AbstractPermeability{_T}

@@ -10,10 +10,13 @@ type parameters record how many elements are parallel, plastic, or volumetric, w
 whether nonlinear iterations are required to evaluate the composite.
 
 # Example
-```julia
+```jldoctest
 julia> el = SetConstantElasticity(; G=5e10, ν=0.5);
+
 julia> pw = SetDislocationCreep(GeoParams.Dislocation.wet_olivine_Hirth_2003);
+
 julia> c  = CompositeRheology(el, pw)
+--/\\/\\/----⟦▪̲̅▫̲̅▫̲̅▫̲̅--
 ```
 """
 struct CompositeRheology{

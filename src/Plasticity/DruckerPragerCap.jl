@@ -28,8 +28,9 @@ with `η_vp` providing Duvaut-Lions (Duretz-type) viscoplastic regularisation.
 - `pT::T`: The tensile strength (should be < 0).
 
 # Example
-```julia
+```jldoctest
 julia> pl = DruckerPragerCap(ϕ=30, C=10e6Pa, pT=-1e5Pa)
+DruckerPragerCap(ϕ=30.0, Ψ=0.0, C=1.0e7 Pa, η_vp=1.0e20 Pa s, pT=-100000.0 Pa)
 ```
 """
 @with_kw_noshow struct DruckerPragerCap{T, U, U1, U2, S1 <: AbstractSoftening, S2 <: AbstractSoftening, S3 <: AbstractSoftening} <: AbstractPlasticity{T}
@@ -574,5 +575,5 @@ for t in (:NTuple, :SVector)
 end
 
 function show(io::IO, s::DruckerPragerCap)
-    return print(io, "DruckerPragerCap(ϕ=$(UnitValue(s.ϕ)), Ψ=$(UnitValue(s.Ψ)), C=$(UnitValue(s.C)), η_vp=$(UnitValue(s.η_vp)), pT=$(UnitValue(s.pT))")
+    return print(io, "DruckerPragerCap(ϕ=$(UnitValue(s.ϕ)), Ψ=$(UnitValue(s.Ψ)), C=$(UnitValue(s.C)), η_vp=$(UnitValue(s.η_vp)), pT=$(UnitValue(s.pT)))")
 end

@@ -244,25 +244,32 @@ Currently available:
 - Latent_HeatCapacity
 
 # Example
-Using dimensional units
-```julia
-julia> T = 250.0:100:1250
-julia> Cp2 = T_HeatCapacity_Whittington()
-julia> Cp = similar(T)
-julia> args = (; T=T)
-julia> Cp =compute_heatcapacity!(Cp, Cp2, args)
-11-element Vector nitful.Quantity{Float64, 𝐋² 𝚯⁻¹ 𝐓⁻², Unitful.FreeUnits{(kg⁻¹, J, K⁻¹), 𝐋² 𝚯⁻¹ 𝐓⁻², nothing}}}:
-635.4269997294616 J kg⁻¹ K⁻¹
-850.7470171764261 J kg⁻¹ K⁻¹
-962.0959598489883 J kg⁻¹ K⁻¹
-1037.542043377064 J kg⁻¹ K⁻¹
-1097.351792196648 J kg⁻¹ K⁻¹
-1149.274556367170 J kg⁻¹ K⁻¹
-1157.791505094840 J kg⁻¹ K⁻¹
-1172.355487419726 J kg⁻¹ K⁻¹
-1186.919469744596 J kg⁻¹ K⁻¹
-1201.483452069455 J kg⁻¹ K⁻¹
-1216.0474343943067 J kg⁻¹ K⁻¹
+```jldoctest
+julia> cp = T_HeatCapacity_Whittington()
+T-dependent heat capacity following Whittington et al. (2009) for average crust.
+
+julia> compute_heatcapacity(cp, (; T = 1000.0))
+1179.6374785821629
+```
+
+The in-place [`compute_heatcapacity!`](@ref) fills a preallocated array instead:
+
+```jldoctest
+julia> cp = T_HeatCapacity_Whittington();
+
+julia> T = collect(250.0:250.0:1250.0);
+
+julia> Cp = similar(T);
+
+julia> compute_heatcapacity!(Cp, cp, (; T = T));
+
+julia> Cp
+5-element Vector{Float64}:
+  635.4269997294616
+ 1002.5701145279105
+ 1149.2745563671706
+ 1179.6374785821629
+ 1216.0474343943067
 ```
 
 

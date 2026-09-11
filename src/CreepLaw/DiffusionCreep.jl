@@ -42,9 +42,9 @@ The experimental parameters are converted into second invariants using the `Appa
 either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
 # Example
-```julia-repl
+```jldoctest
 julia> x2 = DiffusionCreep(Name="test")
-DiffusionCreep: Name = test, n=1.0, r=0.0, p=-3.0, A=1.5 m³·⁰ MPa⁻¹·⁰ s⁻¹·⁰, E=500.0 kJ mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517)
+DiffusionCreep: Name = test, n=1.0, r=0.0, p=-3.0, A=1.5e6 m³·⁰ Pa⁻¹·⁰ s⁻¹·⁰, E=500000.0 J mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517
 ```
 """
 struct DiffusionCreep{T, U0, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}

@@ -36,9 +36,9 @@ where
 either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
 # Example
-```julia-repl
+```jldoctest
 julia> x2 = DislocationCreep(n=3)
-DislocationCreep: n=3, r=0.0, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, V=6.0e-6 m^3 mol^-1, Apparatus=AxialCompression
+DislocationCreep: Name = , n=3.0, r=0.0, A=1.5e6 Pa⁻³·⁰ s⁻¹·⁰, E=476000.0 J mol⁻¹·⁰, V=6.0e-6 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517, Apparatus=1
 ```
 """
 struct DislocationCreep{T, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}

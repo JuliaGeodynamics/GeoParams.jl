@@ -28,9 +28,9 @@ where
 either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
 # Example
-```julia-repl
+```jldoctest
 julia> x2 = NonLinearPeierlsCreep(n=1)
-NonLinearPeierlsCreep: n=1, A=1.5 MPa^-3 s^-1, E=476.0 kJ mol^-1, Apparatus=AxialCompression
+NonLinearPeierlsCreep: Name = , n=1.0, q=1.0, o=0.5, TauP=8.5e9 Pa, A=0.57 Pa⁻²·⁰ s⁻¹·⁰, E=476000.0 J mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517, Apparatus=1
 ```
 """
 struct NonLinearPeierlsCreep{T, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}

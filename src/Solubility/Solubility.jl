@@ -16,6 +16,16 @@ import Base.show, GeoParams.param_info
 
 include("../Computations.jl")
 
+"""
+    AbstractSolubility{T} <: AbstractMaterialParam
+
+Supertype of the coupled H2O-CO2 solubility closures. A subtype gives the
+dissolved H2O and CO2 mass fractions of a melt as a function of pressure,
+temperature and gas composition; see [`compute_dissolved`](@ref).
+
+Implemented closures are [`Liu2005_Solubility`](@ref) for silicic melts and
+[`Mafic_Solubility`](@ref) for mafic melts.
+"""
 abstract type AbstractSolubility{T} <: AbstractMaterialParam end
 
 export compute_dissolved, # (m_h2o, m_co2) mass fractions
@@ -372,6 +382,14 @@ compute_dissolved(args::Vararg{Any, N}) where {N} = compute_param(compute_dissol
 # Phase-ratio mix of both outputs (mirrors compute_meltfraction_ratio). The
 # shared compute_param_times_frac sums a scalar, so the two-element output gets
 # its own unrolled dot-product, evaluating each phase once.
+"""
+    compute_dissolved_ratio(PhaseRatios, MatParam::NTuple{N,AbstractMaterialParamsStruct}, args) -> (m_h2o, m_co2)
+
+Dissolved H2O and CO2 mass fractions at a point whose composition is a mixture of
+`N` phases. `PhaseRatios[i]` is the volume fraction of phase `i`, summing to one,
+and the result is the fraction-weighted average of [`compute_dissolved`](@ref)
+over all phases. Each phase is evaluated exactly once.
+"""
 compute_dissolved_ratio(args::Vararg{Any, N}) where {N} = compute_dissolved_times_frac(compute_dissolved, args...)
 
 @generated function compute_dissolved_times_frac(

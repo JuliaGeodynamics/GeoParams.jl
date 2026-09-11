@@ -337,7 +337,7 @@ using LaTeXStrings
         p = DruckerPragerCap()
         info = param_info(p)
         @test info.Equation === L"$F = \tau_{II} - kP - c \;\;\mathrm{or}\;\; a(\sqrt{\tau_{II}^2 + (P-p_y)^2} - R_y),\; Q = \tau_{II} - k_q P - \mathrm{const} \;\mathrm{or}\;\; b(\sqrt{\tau_{II}^2 + (P-p_q)^2} - R_f)$"
-        @test sprint(show, p) == "DruckerPragerCap(ϕ=30.0, Ψ=0.0, C=1.0e7 Pa, η_vp=1.0e20 Pa s, pT=-100000.0 Pa"
+        @test sprint(show, p) == "DruckerPragerCap(ϕ=30.0, Ψ=0.0, C=1.0e7 Pa, η_vp=1.0e20 Pa s, pT=-100000.0 Pa)"
         @test isbits(p)
 
         # mixed-units constructor: C/pT unit promotion warning branches
