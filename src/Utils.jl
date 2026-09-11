@@ -114,7 +114,7 @@ end
     end
 end
 
-@generated function nphase_ratio(f::F, phase_ratio::Union{SVector{N, T}, NTuple{N, T}}, v::NTuple{N, AbstractMaterialParamsStruct}) where {N, F, T}
+@generated function nphase_ratio(f::F, phase_ratio::Union{SVector{N}, NTuple{N}}, v::NTuple{N, AbstractMaterialParamsStruct}) where {N, F}
     Base.@_inline_meta
     return quote
         @inline

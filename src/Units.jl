@@ -6,6 +6,7 @@ using Unitful
 import Unitful: superscript
 using Parameters
 using Setfield # allows modifying fields in immutable struct
+using ForwardDiff
 
 import Base:
     show, isapprox, isequal, convert, length, size, getindex, setindex!, getproperty, iterate
@@ -255,6 +256,7 @@ Base.isequal(x::GeoUnit, y::GeoUnit) = Base.isequal(x.val, y.val)
 
 Base.convert(::Type{<:AbstractArray}, v::GeoUnit) = v.val
 Base.convert(::Type{<:Real}, v::GeoUnit) = v.val
+Base.convert(::Type{ForwardDiff.Dual{T, V, N}}, v::GeoUnit) where {T, V, N} = convert(ForwardDiff.Dual{T, V, N}, v.val)
 Base.convert(::Type{GeoUnit}, v::Number) = GeoUnit(v)
 Base.convert(::Type{GeoUnit}, v::Int32) = GeoUnit(Float32(v))
 Base.convert(::Type{GeoUnit}, v::Int64) = GeoUnit(Float64(v))
@@ -643,7 +645,7 @@ julia> upreferred(A)
 3.1574795718518295e-20 m³·⁰⁵ s⁵·¹ kg⁻³·⁰⁵
 ```
 """
-function nondimensionalize(param::GeoUnit{T, U}, g::Union{GeoUnits{TYPE}, Nothing}) where {T, U, TYPE}
+function nondimensionalize(param::GeoUnit{T, U}, g::Union{GeoUnits, Nothing}) where {T, U}
 
     if param.isdimensional
         char_val = compute_units(param, g)
@@ -842,6 +844,11 @@ function nondimensionalize(
         MatParam::NTuple{N, AbstractMaterialParamsStruct}, g::GeoUnits
     ) where {N}
     return ntuple(i -> nondimensionalize(MatParam[i], g), Val(N))
+end
+
+# An empty tuple satisfies the element-type constraint of every tuple method above.
+function nondimensionalize(::Tuple{}, ::GeoUnits)
+    throw(ArgumentError("cannot nondimensionalize an empty tuple of parameters"))
 end
 
 """

@@ -1,5 +1,4 @@
 export PeierlsCreep,
-    Peierls_info,
     remove_tensor_correction,
     dεII_dτII,
     dτII_dεII,

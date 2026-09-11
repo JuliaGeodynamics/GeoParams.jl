@@ -375,11 +375,11 @@ compute_dissolved(args::Vararg{Any, N}) where {N} = compute_param(compute_dissol
 compute_dissolved_ratio(args::Vararg{Any, N}) where {N} = compute_dissolved_times_frac(compute_dissolved, args...)
 
 @generated function compute_dissolved_times_frac(
-        fn::F, PhaseRatios::Union{NTuple{N, T}, SVector{N, T}}, MatParam::NTuple{N, AbstractMaterialParamsStruct}, argsi
-    ) where {F <: Function, N, T}
+        fn::F, PhaseRatios::Union{NTuple{N}, SVector{N}}, MatParam::NTuple{N, AbstractMaterialParamsStruct}, argsi
+    ) where {F <: Function, N}
     return quote
-        mh = zero($T)
-        mc = zero($T)
+        mh = zero($(eltype(PhaseRatios)))
+        mc = zero($(eltype(PhaseRatios)))
         Base.@nexprs $N i -> begin
             @inline
             hᵢ, cᵢ = fn(MatParam[i], argsi)

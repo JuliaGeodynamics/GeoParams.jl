@@ -1,5 +1,4 @@
 export NonLinearPeierlsCreep,
-    NonLinearPeierlsCreep_info,
     dεII_dτII,
     remove_tensor_correction,
     Peierls_stress_iterations,

@@ -35,11 +35,11 @@ using StaticArrays
 end
 
 @generated function compute_param(
-        fn::F, MatParam::NTuple{N, AbstractMaterialParamsStruct}, phase_ratios::Union{SVector{N, T}, NTuple{N, T}}, args::Vararg{Any, NA}
-    ) where {F <: Function, N, T, NA}
+        fn::F, MatParam::NTuple{N, AbstractMaterialParamsStruct}, phase_ratios::Union{SVector{N}, NTuple{N}}, args::Vararg{Any, NA}
+    ) where {F <: Function, N, NA}
     return quote
         Base.@_inline_meta
-        x = zero($T)
+        x = zero($(eltype(phase_ratios)))
         Base.Cartesian.@nexprs $N i ->
         @inbounds  x += fn(MatParam[i], args...) * phase_ratios[i]
         return x
@@ -125,11 +125,11 @@ end
 
 #Multiplies parameter with the fraction of a phase
 @generated function compute_param_times_frac(
-        fn::F, PhaseRatios::Union{NTuple{N, T}, SVector{N, T}}, MatParam::NTuple{N, AbstractMaterialParamsStruct}, argsi
-    ) where {F <: Function, N, T}
+        fn::F, PhaseRatios::Union{NTuple{N}, SVector{N}}, MatParam::NTuple{N, AbstractMaterialParamsStruct}, argsi
+    ) where {F <: Function, N}
     # Unrolled dot product
     return quote
-        val = zero($T)
+        val = zero($(eltype(PhaseRatios)))
         Base.Cartesian.@nexprs $N i -> val += @inbounds PhaseRatios[i] * fn(MatParam[i], argsi)
         return val
     end

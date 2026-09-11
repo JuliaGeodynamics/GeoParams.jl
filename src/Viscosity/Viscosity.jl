@@ -131,7 +131,7 @@ for fn in (:compute_elastoviscosity_εII, :compute_elastoviscosity_τII)
         end
 
         # For multi phases given phase ratios
-        @generated function $fn(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1, T}, SVector{N1, T}}, args::Vararg{Any, N2}) where {N1, N2, T}
+        @generated function $fn(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1}, SVector{N1}}, args::Vararg{Any, N2}) where {N1, N2}
             return quote
                 Base.@_inline_meta
                 val = 0.0
@@ -206,13 +206,18 @@ end
 end
 
 # For multi phases given phase ratios
-@generated function compute_viscosity(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1, T}, SVector{N1, T}}, args::Vararg{Any, N2}) where {N1, N2, T}
+@generated function compute_viscosity(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1}, SVector{N1}}, args::Vararg{Any, N2}) where {N1, N2}
     return quote
         Base.@_inline_meta
         val = 0.0
         Base.@nexprs $N1 i -> val += compute_viscosity(v[i].CompositeRheology[1], args...) * phase_ratio[i]
         return val
     end
+end
+
+# An empty tuple satisfies the element-type constraint of both tuple methods above.
+function compute_viscosity(::Tuple{}, ::Union{Tuple{}, SVector{0}})
+    throw(ArgumentError("cannot compute viscosity from an empty tuple"))
 end
 
 """
@@ -246,4 +251,9 @@ end
         Base.@nexprs $N1 i -> val += compute_elasticviscosity(v[i].CompositeRheology[1], args...) * phase_ratio[i]
         return val
     end
+end
+
+# An empty tuple satisfies the element-type constraint of both tuple methods above.
+function compute_elasticviscosity(::Tuple{}, ::Union{Tuple{}, SVector{0}})
+    throw(ArgumentError("cannot compute elastic viscosity from an empty tuple"))
 end

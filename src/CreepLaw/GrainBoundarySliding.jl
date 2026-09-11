@@ -1,6 +1,5 @@
 export GrainBoundarySliding,
     Transform_GrainBoundarySliding,
-    GrainBoundarySliding_info,
     remove_tensor_correction,
     compute_εII!,
     compute_εII,

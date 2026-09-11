@@ -26,9 +26,7 @@ export compute_εII, # calculation routines
     AbstractElasticity,
     isvolumetric,
     iselastic,
-    effective_εII, effective_ε,
-    get_G,
-    get_Kb
+    effective_εII, effective_ε
 
 # ConstantElasticity  -------------------------------------------------------
 """
