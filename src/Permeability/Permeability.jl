@@ -11,6 +11,12 @@ import Base.show, GeoParams.param_info
 
 include("../Computations.jl")
 
+"""
+    AbstractPermeability{T} <: AbstractMaterialParam
+
+Supertype of permeability parameterizations (e.g. [`ConstantPermeability`](@ref),
+[`CarmanKozenyPermeability`](@ref)).
+"""
 abstract type AbstractPermeability{T} <: AbstractMaterialParam end
 
 export compute_permeability, # calculation routines
@@ -265,6 +271,12 @@ This assumes that the `PhaseRatio` of every point is specified as an Integer in 
 """
 @inline compute_permeability!(args::Vararg{Any, N}) where {N} = compute_param!(compute_permeability, args...)
 @inline compute_permeability(args::Vararg{Any, N}) where {N} = compute_param(compute_permeability, args...)
+"""
+    compute_permeability_ratio(phase_ratios, MatParam, args)
+
+Returns the phase-fraction-weighted average permeability at a point, summing each phase's
+permeability ([`compute_permeability`](@ref)) times its fraction in `phase_ratios`.
+"""
 @inline compute_permeability_ratio(args::Vararg{Any, N}) where {N} = compute_param_times_frac(compute_permeability, args...)
 
 # extractor methods

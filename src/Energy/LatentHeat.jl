@@ -66,7 +66,7 @@ end
 
 # Help info for the calculation routines
 """
-    Ql = compute_latent_heat(s:<AbstractLatentHeat)
+    Ql = compute_latent_heat(s::AbstractLatentHeat)
 
 Returns the latent heat `Q_L`
 
@@ -89,7 +89,18 @@ for myType in (:ConstantLatentHeat,)
     end
 end
 
+"""
+    compute_latent_heat(s::AbstractLatentHeat)
+
+Returns the latent heat for the parameterization `s`.
+"""
 compute_latent_heat(args::Vararg{Any, N}) where {N} = compute_param(compute_latent_heat, args...)
+
+"""
+    compute_latent_heat!(Q_L, s, args)
+
+In-place version of [`compute_latent_heat`](@ref) that fills the array `Q_L` for the whole domain.
+"""
 compute_latent_heat!(args::Vararg{Any, N}) where {N} = compute_param!(compute_latent_heat, args...)
 
 end

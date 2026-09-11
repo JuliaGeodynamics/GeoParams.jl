@@ -1,3 +1,9 @@
+"""
+    module Rutile
+
+Collection of pre-defined chemical-diffusion parameterizations ([`DiffusionData`](@ref)) for
+diffusion of various elements in rutile, taken from the experimental literature.
+"""
 module Rutile
 
 using GeoParams

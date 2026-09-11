@@ -13,6 +13,12 @@
 # include("Data/NonLinearPeierlsCreep.jl")
 # include("Data/PeierlsCreep.jl")
 
+"""
+    AbstractCreepLaw{T} <: AbstractConstitutiveLaw{T}
+
+Supertype of viscous creep laws (e.g. [`LinearViscous`](@ref), diffusion, dislocation and Peierls
+creep) that relate deviatoric stress and strain rate.
+"""
 abstract type AbstractCreepLaw{T} <: AbstractConstitutiveLaw{T} end
 
 export isvolumetric,
@@ -21,6 +27,13 @@ export isvolumetric,
 isvolumetric(a::AbstractCreepLaw) = false
 
 # This computes correction factors to go from experimental data to tensor format
+"""
+    CorrectionFactor(a::AbstractCreepLaw) -> (FT, FE)
+
+Returns the stress and strain-rate correction factors `(FT, FE)` that convert flow-law parameters
+from the experimental apparatus geometry (`a.Apparatus`, e.g. axial compression or simple shear) to
+the tensor (second-invariant) convention used internally.
+"""
 function CorrectionFactor(a::AbstractCreepLaw{_T}) where {_T}
     apparatus = a.Apparatus
     if apparatus == AxialCompression
@@ -373,7 +386,7 @@ end
 
 # Help info for the calculation routines
 """
-    compute_εII(TauII, s:<AbstractCreepLaw, p::CreepLawVariables)
+    compute_εII(TauII, s::AbstractCreepLaw, p::CreepLawVariables)
 
 Returns the strainrate invariant ``\\dot{\\varepsilon}_{II}`` for a given deviatoric stress
 invariant ``\\tau_{II}`` for any of the viscous creep laws implemented.
@@ -388,7 +401,7 @@ may need for the calculations
 computeCreepLaw_EpsII
 
 """
-    computeCreepLaw_TauII(EpsII, s:<AbstractCreepLaw, p::CreepLawVariables)
+    computeCreepLaw_TauII(EpsII, s::AbstractCreepLaw, p::CreepLawVariables)
 
 Returns the deviatoric stress invariant ``\\tau_{II}`` for a given strain rate
 invariant ``\\dot{\\varepsilon}_{II}`` for any of the viscous creep laws implemented.

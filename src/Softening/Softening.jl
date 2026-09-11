@@ -1,12 +1,31 @@
+"""
+    AbstractSoftening <: AbstractMaterialParam
+
+Supertype of strain-softening laws that reduce a material parameter (e.g. cohesion or friction
+angle) as a function of accumulated strain. Concrete subtypes are callable as `(s)(strain, value)`
+and return the softened value. See [`LinearSoftening`](@ref), [`NonLinearSoftening`](@ref),
+[`DecaySoftening`](@ref), and [`NoSoftening`](@ref).
+"""
 abstract type AbstractSoftening <: AbstractMaterialParam end
 abstract type AbstractNoSoftening <: AbstractMaterialParam end
 
-# struct NoSoftening end
+"""
+    NoSoftening()
+
+Softening law that applies no softening: calling it returns the input value unchanged. This is the
+default for material parameters that do not soften.
+"""
 struct NoSoftening <: AbstractSoftening end
 
 @inline (softening::NoSoftening)(::Any, max_value, ::Vararg{Any, N}) where {N} = max_value
 
-## Linear softening
+"""
+    LinearSoftening(min_value, max_value, lo, hi)
+    LinearSoftening(min_max_values::NTuple{2}, lo_hi::NTuple{2})
+
+Softening law that ramps a parameter linearly from `max_value` to `min_value` as the softening
+variable increases from `lo` to `hi`, holding the end values constant outside `[lo, hi]`.
+"""
 struct LinearSoftening{T1, T2, T3} <: AbstractSoftening
     min_value::T2
     max_value::T2
@@ -52,6 +71,13 @@ end
 # (Duretz et al 2021; https://agupubs.onlinelibrary.wiley.com/doi/pdfdirect/10.1029/2021GC009675)
 using SpecialFunctions
 
+"""
+    NonLinearSoftening(; ξ₀=0, Δ=0, μ=1, σ=0.5)
+
+Nonlinear softening law of Duretz et al. (2021), where the parameter follows a complementary error
+function of the softening variable: `ξ₀ - 0.5Δ·erfc(-(x-μ)/σ)`, with maximum value `ξ₀`, softening
+amplitude `Δ`, mean `μ`, and standard deviation `σ`.
+"""
 @with_kw_noshow struct NonLinearSoftening{T, U1, U2} <: AbstractSoftening
     ξ₀::GeoUnit{T, U1} = 0.0NoUnits # maximum value
     Δ::GeoUnit{T, U1} = 0.0NoUnits # amplitude of the softening (i.e. minimum value)
@@ -73,6 +99,12 @@ end
 end
 
 # Non linear softening from Taras
+"""
+    DecaySoftening(; εref=1e-13, n=0.1)
+
+Softening law that decays a parameter as `max_value / (x/εref + 1)^n`, where `x` is the softening
+variable, `εref` a reference value, and `n` the decay exponent.
+"""
 @with_kw_noshow struct DecaySoftening{T, U1, U2} <: AbstractSoftening
     εref::GeoUnit{T, U1} = 1.0e-13
     n::GeoUnit{T, U2} = 0.1

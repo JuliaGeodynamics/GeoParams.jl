@@ -36,6 +36,12 @@ using .Melt
 # Exported modules of chemical diffusion data
 export Rutile, Garnet, Olivine, Melt
 
+"""
+    AbstractChemicalDiffusion{T} <: AbstractMaterialParam
+
+Supertype of chemical-diffusion parameterizations that give a diffusion coefficient as a function
+of temperature, pressure, and composition (see [`DiffusionData`](@ref)).
+"""
 abstract type AbstractChemicalDiffusion{T} <: AbstractMaterialParam end
 
 @inline diffusion_database(f::F) where {F} = first(f())
@@ -65,6 +71,14 @@ where
 - ``P`` is the pressure [\\mathrm{[Pa]},
 - ``T`` is the temperature [\\mathrm{[K]}],
 - ``R`` is the gas constant [\\mathrm{[J/(mol K)]}],
+
+All keyword arguments are optional and default to a neutral value (zero, or a value that removes
+the corresponding dependency), so only the parameters relevant to a given calibration need to be set.
+
+# Example
+```julia
+julia> data = DiffusionData(; Name="Fe in Grt", Phase="Garnet", Species="Fe", D0=1e-9m^2/s, Ea=250e3J/mol)
+```
 """
 struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10} <: AbstractChemicalDiffusion{T}
     Name::Ptr{UInt8}  # name of the diffusion experiment and paper

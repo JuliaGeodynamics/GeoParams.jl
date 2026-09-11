@@ -6,8 +6,19 @@ export compute_tensile_cap, compute_flowpotential, compute_flowpotential!
 """
     DruckerPragerCap(ϕ=30, Ψ=0, C=10e6Pa, η_vp=1e20Pa*s, Pt=-1e5Pa)
 
-Sets parameters for Drucker-Prager-Cap plasticity for mode-1 and mode-2 plasticity,
-as described in Popov et al. (2025), Geoscientific Model Development.
+Sets parameters for Drucker-Prager-Cap plasticity, as described in Popov et al. (2025),
+Geoscientific Model Development. The yield surface has two branches selected by the stress state:
+a mode-2 Drucker-Prager shear branch at high pressure and a mode-1 tensile cap near the tensile
+strength `pT`. The yield function ``F`` and plastic flow potential ``Q`` are
+```math
+    F = \\tau_{II} - kP - c \\quad\\text{or}\\quad a\\left(\\sqrt{\\tau_{II}^2 + (P-p_y)^2} - R_y\\right)
+```
+```math
+    Q = \\tau_{II} - k_q P - \\text{const} \\quad\\text{or}\\quad b\\left(\\sqrt{\\tau_{II}^2 + (P-p_q)^2} - R_f\\right)
+```
+where the first form is the shear branch and the second the tensile cap. As in [`DruckerPrager`](@ref),
+plastic strain rate is ``\\dot{\\varepsilon}^{pl}_{ij} = \\dot{\\lambda}\\,\\partial Q/\\partial \\sigma_{ij}``,
+with `η_vp` providing Duvaut-Lions (Duretz-type) viscoplastic regularisation.
 
 # Fields
 - `C::T`: The cohesion parameter.
@@ -15,6 +26,11 @@ as described in Popov et al. (2025), Geoscientific Model Development.
 - `Ψ::T`: The dilatancy angle (in degrees).
 - `η_vp::T`: The Duvaut-Lions regularisation viscosity for the plasticity model.
 - `pT::T`: The tensile strength (should be < 0).
+
+# Example
+```julia
+julia> pl = DruckerPragerCap(ϕ=30, C=10e6Pa, pT=-1e5Pa)
+```
 """
 @with_kw_noshow struct DruckerPragerCap{T, U, U1, U2, S1 <: AbstractSoftening, S2 <: AbstractSoftening, S3 <: AbstractSoftening} <: AbstractPlasticity{T}
     softening_ϕ::S1 = NoSoftening()
@@ -331,6 +347,14 @@ function compute_yieldfunction!(
     return nothing
 end
 
+"""
+    compute_flowpotential(s::DruckerPragerCap; P, τII, Pf=0, EII=0, kwargs...)
+
+Returns the value of the plastic flow potential `Q` of the Drucker-Prager-Cap law `s` at the given
+pressure `P`, second stress invariant `τII`, fluid pressure `Pf`, and accumulated plastic strain
+`EII` (which activates any softening). See [`compute_flowpotential!`](@ref) for the in-place,
+array-valued version.
+"""
 function compute_flowpotential(
         s::DruckerPragerCap;
         P = 0.0,
@@ -355,6 +379,12 @@ end
 
 @inline compute_flowpotential(s::DruckerPragerCap, args) = compute_flowpotential(s; args...)
 
+"""
+    compute_flowpotential!(Q, s::DruckerPragerCap; P, τII, Pf=0, EII=0, kwargs...)
+
+In-place version of [`compute_flowpotential`](@ref) that fills the array `Q` with the flow-potential
+value at each point of the input arrays `P`, `τII`, `Pf`, and `EII`.
+"""
 function compute_flowpotential!(
         Q::AbstractArray{_T, N},
         s::DruckerPragerCap;

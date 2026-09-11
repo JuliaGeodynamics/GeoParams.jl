@@ -6,6 +6,13 @@ export HerschelBulkley,
     compute_hb_viscosity_εII,
     compute_hb_viscosity_τII
 
+"""
+    HerschelBulkley(; n=3.0, η0=1e24Pa*s, τ0=100e6Pa, ηr=1e20Pa*s, Q, Tr)
+
+A Herschel-Bulkley creep law: a temperature-dependent viscoplastic fluid with a yield stress `τ0`,
+"rigid" viscosity `η0`, shear-thinning exponent `n`, and reference viscosity `ηr` at reference
+temperature `Tr`, with `Q` the activation energy divided by the gas constant.
+"""
 struct HerschelBulkley{T, U1, U2, U3} <: AbstractCreepLaw{T}
     n::T  # shear thinning exponent
     η0::GeoUnit{T, U1} # "rigid" viscosity

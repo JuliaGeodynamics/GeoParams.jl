@@ -140,7 +140,7 @@ end
 
 # Help info for the calculation routines
 """
-    H_r = compute_radioactive_heat(s:<AbstractRadioactiveHeat)
+    H_r = compute_radioactive_heat(s::AbstractRadioactiveHeat)
 
 Returns the radioactive heat `H_r`
 
@@ -148,7 +148,7 @@ Returns the radioactive heat `H_r`
 #compute_radioactive_heat()
 
 """
-    compute_radioactive_heat!(H_r, s:<AbstractRadioactiveHeat, z)
+    compute_radioactive_heat!(H_r, s::AbstractRadioactiveHeat, z)
 
 In-place computation of radioactive heat `H_r`
 
@@ -163,7 +163,18 @@ for myType in (:ExpDepthDependentRadioactiveHeat, :ConstantRadioactiveHeat)
     end
 end
 
+"""
+    compute_radioactive_heat(s::AbstractRadioactiveHeat, args)
+
+Returns the radioactive heat production for the parameterization `s` (which may depend on depth `z`).
+"""
 compute_radioactive_heat(args::Vararg{Any, N}) where {N} = compute_param(compute_radioactive_heat, args...)
+
+"""
+    compute_radioactive_heat!(H_r, s, args)
+
+In-place version of [`compute_radioactive_heat`](@ref) that fills the array `H_r` for the whole domain.
+"""
 compute_radioactive_heat!(args::Vararg{Any, N}) where {N} = compute_param!(compute_radioactive_heat, args...)
 
 # extractor methods

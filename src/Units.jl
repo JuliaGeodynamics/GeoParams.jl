@@ -107,8 +107,27 @@ abstract type AbstractGeoUnit{TYPE, DIMENSIONAL} <: Number end
 
 abstract type AbstractUnitType end
 
+"""
+    GEO <: AbstractUnitType
+
+Unit system tag for "geological" units (km, Myr, MPa, …), convenient for geodynamic input. See
+[`GEO_units`](@ref).
+"""
 struct GEO <: AbstractUnitType end
+
+"""
+    SI <: AbstractUnitType
+
+Unit system tag for SI units (m, s, Pa, …). See [`SI_units`](@ref).
+"""
 struct SI <: AbstractUnitType end
+
+"""
+    NONE <: AbstractUnitType
+
+Unit system tag for a dimensionless system, in which all quantities are treated as plain numbers.
+See [`NO_units`](@ref).
+"""
 struct NONE <: AbstractUnitType end
 
 # The GeoUnit struct encodes dimensional info in the type info
@@ -173,17 +192,54 @@ function GeoUnit(val::Union{Quantity{Int32}, AbstractArray{<:Quantity{<:Int32}}}
 end
 
 # helper functions
+"""
+    Unit(v::GeoUnit)
+
+Returns the `Unitful` unit of the [`GeoUnit`](@ref) `v` (without its numeric value).
+"""
 Unit(v::GeoUnit{T, U}) where {T, U} = Unitful.unit(v.unit * 1)
+"""
+    isdimensional(v) -> Bool
+
+Returns `true` if `v` is a [`GeoUnit`](@ref) that still carries dimensional units, and `false` if
+it has been nondimensionalized (or is a plain `Number`).
+"""
 isdimensional(v::GeoUnit{T, U}) where {T, U} = v.isdimensional                 # is it a nondimensional number or not?
 isdimensional(v::Number) = false                            # nope
+"""
+    NumValue(v)
+
+Returns the bare numeric value of a [`GeoUnit`](@ref) `v`, stripped of units. For a plain `Number`
+or `AbstractArray`, returns `v` unchanged.
+"""
 NumValue(v::GeoUnit) = v.val                                # numeric value, with no units
 NumValue(v::Number) = v                                     # numeric value
 NumValue(v::AbstractArray) = v                              # numeric value
+
+"""
+    Value(v::GeoUnit)
+
+Returns the value of the [`GeoUnit`](@ref) `v` as a `Unitful.Quantity`, i.e. combining its numeric
+value with its units.
+"""
 Value(v::GeoUnit) = Unitful.Quantity.(v.val, v.unit)        # value, with units
 Fun(v::GeoUnit) = v.val
+
+"""
+    unpack_units(x::NTuple{N, GeoUnit})
+
+Returns a tuple of the dimensional values (numeric value times units) of the [`GeoUnit`](@ref)s in
+`x`.
+"""
 unpack_units(x::NTuple{N, GeoUnit}) where {N} = ntuple(i -> x[i].unit * x[i].val, Val(N))
 unpack_vals(x::NTuple{N, GeoUnit}) where {N} = ntuple(i -> x[i].val, Val(N))
 
+"""
+    UnitValue(v::GeoUnit)
+
+Returns the value of the [`GeoUnit`](@ref) `v` with units ([`Value`](@ref)) if it is dimensional, or
+its bare numeric value ([`NumValue`](@ref)) if it has been nondimensionalized.
+"""
 function UnitValue(v::GeoUnit{T, U}) where {T, U}
     if v.isdimensional
         return Value(v)             # returns value with units
@@ -681,6 +737,12 @@ nondimensionalize(args...) = nondimensionalize(Tuple(args[1:(end - 1)]), args[en
 @inline dimension_types(::Unitful.Dimensions{T}) where {T} = T
 
 # This computes the characteristic value
+"""
+    compute_units(param::GeoUnit, g::GeoUnits)
+
+Returns the characteristic value of `param`'s physical dimension in the characteristic-units system
+`g`, used to nondimensionalize (or re-dimensionalize) quantities of that dimension.
+"""
 function compute_units(
         param::GeoUnit{<:Union{T, AbstractArray{T}}, U}, g::GeoUnits
     ) where {T, U}
@@ -915,6 +977,12 @@ function dimensionalize(
     return ntuple(i -> dimensionalize(MatParam[i], g), Val(N))
 end
 
+"""
+    udim(args...)
+
+Dimensionalizes the input `args` with [`dimensionalize`](@ref) and strips the units, returning the
+plain numeric value(s). Equivalent to [`dimensionalize_and_strip`](@ref).
+"""
 @inline udim(args::Vararg{Any, N}) where {N} = ustrip(dimensionalize(args...))
 
 """
@@ -926,6 +994,11 @@ apply units to values and immediately retrieve their plain numeric values.
 """
 dimensionalize_and_strip(args::Vararg{Any, N}) where {N} = ustrip(dimensionalize(args...))
 
+"""
+    @dimstrip(args...)
+
+Macro form of [`dimensionalize_and_strip`](@ref): dimensionalizes `args` and strips the units.
+"""
 macro dimstrip(args...)
     return quote
         dimensionalize_and_strip($(esc.(args)...))

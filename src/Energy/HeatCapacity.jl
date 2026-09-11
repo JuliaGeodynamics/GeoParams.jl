@@ -234,7 +234,7 @@ Interpolates heat capacity as a function of `T,P` from a lookup table
 
 # Help info for the calculation routines
 """
-    Cp = compute_heatcapacity(s:<AbstractHeatCapacity, P, T)
+    Cp = compute_heatcapacity(s::AbstractHeatCapacity, P, T)
 
 Returns the heat capacity `Cp` at any temperature `T` and pressure `P` using any of the heat capacity laws implemented.
 

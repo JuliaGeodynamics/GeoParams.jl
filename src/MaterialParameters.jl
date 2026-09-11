@@ -14,7 +14,12 @@ module MaterialParameters
     using GeoParams:
         AbstractMaterialParam, AbstractMaterialParamsStruct, AbstractPhaseDiagramsStruct, AbstractComposite, ptr2string
 
-    # Define an "empty" Material parameter structure
+    """
+        No_MaterialParam{_T}()
+
+    Placeholder [`AbstractMaterialParam`](@ref) representing the absence of a given property, used to
+    pad the per-phase parameter fields so that every phase has the same field layout.
+    """
     struct No_MaterialParam{_T} <: AbstractMaterialParam end
     No_MaterialParam() = No_MaterialParam{Float64}()
 

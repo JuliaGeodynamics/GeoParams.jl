@@ -1,5 +1,11 @@
 # If you want to add a new method here, feel free to do so.
 # Remember to also export the function name in GeoParams.jl (in addition to here)
+"""
+    AbstractPlasticity{T} <: AbstractConstitutiveLaw{T}
+
+Supertype of plastic constitutive laws such as [`DruckerPrager`](@ref), which define a yield
+function and a plastic flow potential.
+"""
 abstract type AbstractPlasticity{T} <: AbstractConstitutiveLaw{T} end
 abstract type AbstractPlasticPotential{Float64} <: AbstractConstitutiveLaw{Float64} end
 
@@ -16,6 +22,61 @@ include("DruckerPrager.jl")    # DP plasticity
 include("DruckerPrager_regularised.jl")    # regularized DP plasticity
 include("DruckerPragerCap.jl")    # DP plasticity with tensile cap
 
+"""
+    ∂Q∂τ(p::AbstractPlasticity, τij; kwargs...)
+
+Returns the gradient of the plastic flow potential `Q` with respect to the deviatoric stress tensor
+`τij` (given as a 3- or 6-component `NTuple`/`SVector`), i.e. the direction of plastic flow
+``\\partial Q/\\partial \\tau_{ij}``. Also accessible as [`compute_plasticpotentialDerivative`](@ref).
+"""
+function ∂Q∂τ end
+
+"""
+    ∂Q∂τII(p::AbstractPlasticity, τII; kwargs...)
+
+Returns the derivative of the plastic flow potential `Q` with respect to the second invariant of the
+deviatoric stress, ``\\partial Q/\\partial \\tau_{II}``.
+"""
+function ∂Q∂τII end
+
+"""
+    ∂Q∂P(p::AbstractPlasticity, args; kwargs...)
+
+Returns the derivative of the plastic flow potential `Q` with respect to pressure,
+``\\partial Q/\\partial P``, which controls the dilatancy of the plastic flow.
+"""
+function ∂Q∂P end
+
+"""
+    ∂F∂τII(p::AbstractPlasticity, args; kwargs...)
+
+Returns the derivative of the yield function `F` with respect to the second invariant of the
+deviatoric stress, ``\\partial F/\\partial \\tau_{II}``.
+"""
+function ∂F∂τII end
+
+"""
+    ∂F∂P(p::AbstractPlasticity, args; kwargs...)
+
+Returns the derivative of the yield function `F` with respect to pressure, ``\\partial F/\\partial P``.
+"""
+function ∂F∂P end
+
+"""
+    ∂F∂λ(p::AbstractPlasticity, args; kwargs...)
+
+Returns the derivative of the yield function `F` with respect to the plastic multiplier `λ`, used in
+the return-mapping iteration.
+"""
+function ∂F∂λ end
+
+"""
+    compute_plasticpotentialDerivative(p, args)
+
+Returns the gradient of the plastic flow potential with respect to the deviatoric stress tensor for
+the plasticity law or `MaterialParams` `p`; equivalent to [`∂Q∂τ`](@ref).
+"""
+function compute_plasticpotentialDerivative end
 
 # Thin convenience wrappers
 # 3D

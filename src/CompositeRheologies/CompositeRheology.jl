@@ -1,8 +1,20 @@
 # All related to the CompositeRheology struct
 
 """
-    Structure that holds composite rheologies (e.g., visco-elasto-viscoplastic),
-    but also indicates (in the name) whether we need to perform non-linear iterations.
+    CompositeRheology(elements...)
+
+Composes the constitutive `elements` (creep laws, elasticity, plasticity, [`Parallel`](@ref)
+assemblies, …) in series: every element is subjected to the same deviatoric stress, and the
+total deviatoric strain rate is the sum of the strain rates of the individual elements. The
+type parameters record how many elements are parallel, plastic, or volumetric, which determines
+whether nonlinear iterations are required to evaluate the composite.
+
+# Example
+```julia
+julia> el = SetConstantElasticity(; G=5e10, ν=0.5);
+julia> pw = SetDislocationCreep(GeoParams.Dislocation.wet_olivine_Hirth_2003);
+julia> c  = CompositeRheology(el, pw)
+```
 """
 struct CompositeRheology{
         T, N,
@@ -62,16 +74,33 @@ end
 
 # HELPER FUNCTIONS
 
-# determine if 3 element is plastic or not
+"""
+    isplastic(v) -> Bool
+
+Returns `true` if the rheological element `v` is a plastic law, or if the [`CompositeRheology`](@ref)
+`v` contains at least one plastic element.
+"""
 @inline isplastic(v) = false;
 @inline isplastic(v::AbstractPlasticity) = true;
 @inline isplastic(v::CompositeRheology{T, N, Npar, is_parallel, Nplast, is_plastic}) where {T, N, Npar, is_parallel, Nplast, is_plastic} = true;
 @inline isplastic(v::CompositeRheology{T, N, Npar, is_parallel, 0, is_plastic}) where {T, N, Npar, is_parallel, is_plastic} = false;
 
+"""
+    isvolumetric(v) -> Bool
+
+Returns `true` if the rheological element `v` produces volumetric (dilational) deformation, or if
+the [`CompositeRheology`](@ref) `v` contains at least one such element.
+"""
 @inline isvolumetric(v) = false;
 @inline isvolumetric(v::CompositeRheology{T, N, Npar, is_parallel, Nplast, is_plastic, 0, is_vol}) where {T, N, Npar, is_parallel, Nplast, is_plastic, is_vol} = false;
 @inline isvolumetric(v::CompositeRheology{T, N, Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol}) where {T, N, Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol} = true;
 
+"""
+    isvolumetricplastic(v::CompositeRheology) -> Bool
+
+Returns `true` if the [`CompositeRheology`](@ref) `v` contains an element that is simultaneously
+plastic and volumetric.
+"""
 @inline isvolumetricplastic(v::CompositeRheology{T, N, Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol, volumetricplasticity}) where {T, N, Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol, volumetricplasticity} = volumetricplasticity;
 
 """
@@ -290,6 +319,13 @@ end
     end
 end
 
+"""
+    dτII_dεII_AD(v, εII, args)
+
+Returns the derivative of the deviatoric stress with respect to the deviatoric strain rate,
+`∂τII/∂εII`, for the composite or parallel rheology `v`, computed by forward-mode automatic
+differentiation of [`compute_τII_AD`](@ref).
+"""
 dτII_dεII_AD(v::Union{Parallel, CompositeRheology}, εII, args) = ForwardDiff.derivative(x -> compute_τII_AD(v, x, args), εII)
 
 

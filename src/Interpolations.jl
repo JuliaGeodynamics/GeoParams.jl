@@ -116,6 +116,13 @@ function (itp::LinearInterpolator{T})(x::AbstractArray, y::AbstractArray) where 
     return itp.(x, y)
 end
 
+"""
+    interpolate_field(T0, dT, numT, Tmax, P0, dP, numP, Pmax, coefs, T, P)
+
+Bilinearly interpolates a field stored on a regular temperature-pressure grid at the query point
+`(T, P)`. The grid is described by its origin (`T0`, `P0`), spacing (`dT`, `dP`), number of nodes
+(`numT`, `numP`), and extent (`Tmax`, `Pmax`); `coefs` holds the gridded field values.
+"""
 function interpolate_field(
         T0::T,
         dT::T,

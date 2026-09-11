@@ -1,5 +1,18 @@
 """
-Put rheological elements in parallel 
+    Parallel(elements...)
+
+Composes the constitutive `elements` in parallel: every element is subjected to the same
+strain rate, and the total deviatoric stress is the sum of the stresses carried by the
+individual elements. This is the dual of [`CompositeRheology`](@ref) (series composition) and
+is used, for example, to build visco-elasto-viscoplastic assemblies where several mechanisms
+share a common strain rate.
+
+# Example
+```julia
+julia> v  = SetDislocationCreep(GeoParams.Dislocation.wet_olivine_Hirth_2003);
+julia> pl = DruckerPrager();
+julia> p  = Parallel(v, pl)
+```
 """
 struct Parallel{T, N, Nplast, is_plastic, Nvol, is_vol} <: AbstractConstitutiveLaw{T}
     elements::T
@@ -60,6 +73,13 @@ function compute_εII(
 end
 
 # Here we do need to do iterations
+"""
+    compute_εII_AD(v, τII, args; tol=1e-6, verbose=false)
+
+Computes the deviatoric strain rate `εII` from stress `τII` for the rheology `v`, using
+automatic-differentiation-based Newton iterations (via [`local_iterations_τII_AD`](@ref)) when `v`
+requires them.
+"""
 function compute_εII_AD(v::Parallel, τII, args; tol = 1.0e-6, verbose = false)
     return local_iterations_τII_AD(v, τII, args; tol = tol, verbose = verbose)
 end
@@ -68,6 +88,12 @@ end
 compute_τII(v::Parallel{T, N}, εII::_T, args; tol = 1.0e-6, verbose = false) where {T, _T, N} = nreduce(vi -> first(compute_τII(vi, εII, args)), v.elements)
 compute_τII(v::Parallel{T, N}, εII::Quantity, args; tol = 1.0e-6, verbose = false) where {T, N} = nreduce(vi -> first(compute_τII(vi, εII, args)), v.elements)
 
+"""
+    compute_τII_AD(v, εII, args; tol=1e-6, verbose=false)
+
+Computes the deviatoric stress `τII` from strain rate `εII` for the rheology `v`. Counterpart to
+[`compute_εII_AD`](@ref) used in the automatic-differentiation stress/strain-rate inversion.
+"""
 compute_τII_AD(v::Parallel{T, N}, εII::_T, args; tol = 1.0e-6, verbose = false) where {T, N, _T} = first(compute_τII(v, εII, args))
 
 # sum P for parallel elements:

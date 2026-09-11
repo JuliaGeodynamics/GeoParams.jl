@@ -169,6 +169,13 @@ function compute_εII(v::AbstractPlasticity, τII::_T, args; tol = 1.0e-6, verbo
 end
 
 
+"""
+    local_iterations_τII_AD(v, τII, args; tol=1e-6, verbose=false)
+
+Solves for the deviatoric strain rate consistent with the imposed stress `τII` for a parallel
+rheology `v` by Newton iterations, using forward-mode automatic differentiation for the Jacobian.
+Iterates until the residual is below `tol`.
+"""
 @inline function local_iterations_τII_AD(
         v::Parallel, τII::T, args; tol = 1.0e-6, verbose = false
     ) where {T}

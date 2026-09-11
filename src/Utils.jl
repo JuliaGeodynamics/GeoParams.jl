@@ -26,6 +26,12 @@ function max_length_tuple(t::NTuple{N, Tuple}) where {N}
 end
 
 # broadcast getindex() to NamedTuples
+"""
+    ntuple_idx(args::NamedTuple, I...)
+
+Indexes each array-valued field of the `NamedTuple` `args` at the indices `I`, returning a new
+`NamedTuple` with the same keys and the scalar values at that position.
+"""
 @inline function ntuple_idx(args::NamedTuple, I::Vararg{Integer, N}) where {N}
     k = keys(args)
     v = getindex.(values(args), I...)
@@ -131,8 +137,12 @@ macro print(a1, a2)
     return :($(esc(a1)) === true ? println($(esc(a2))) : nothing)
 end
 
-# Deriving the given function f with initial guess x using ForwardDiff
-# while returning the value for the function and its derivative in df as Dual number
+"""
+    value_and_partial(f, x::Real) -> (f(x), f'(x))
+
+Evaluates the scalar function `f` and its first derivative at `x` in a single forward-mode
+automatic-differentiation pass using `ForwardDiff`.
+"""
 @inline function value_and_partial(f::F, x::R) where {F, R <: Real}
     T = typeof(ForwardDiff.Tag(f, R))
     df = f(ForwardDiff.Dual{T}(x, one(x)))
