@@ -579,7 +579,7 @@ julia> p_s = SmoothMelting(p = MeltingParam_4thOrder(), k_liq = 0.21/K)
 4th order polynomial melting curve: phi = -7.594512597174117e-10T^4 + 3.469192091489447e-6T^3 + -0.00592352980926T^2 + 4.482855645604745T + -1268.730161921053  963.15 K ≤ T ≤ 1270.15 K with smooth Heaviside function smoothening using k_sol=0.2 K⁻¹·⁰, k_liq=0.21 K⁻¹·⁰
 ```
 
-With a Makie backend loaded, [`PlotMeltFraction`](@ref) returns the curve and its
+With a Makie backend loaded, [`PlotMeltFraction`](@ref GeoParams.PlotMeltFraction) returns the curve and its
 derivative for both the original and the smoothened parameterisation:
 
 ```julia
