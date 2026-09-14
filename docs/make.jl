@@ -3,6 +3,11 @@ using DocumenterVitepress
 using GeoParams, Makie
 # push!(LOAD_PATH, "../src/")
 
+# Unitful defaults to unicode exponents (e.g. `m⁻³·⁰`) only on macOS unless this
+# is set explicitly. The doctests in the docstrings expect the unicode form, so
+# force it here to keep results identical across the OSes that build the docs.
+ENV["UNITFUL_FANCY_EXPONENTS"] = "true"
+
 DocMeta.setdocmeta!(GeoParams, :DocTestSetup, :(using GeoParams); recursive = true)
 
 @info "Making documentation..."
