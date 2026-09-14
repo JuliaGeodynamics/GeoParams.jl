@@ -117,8 +117,7 @@ This looks like:
 
 ![subet1](./assets/img/Conductivity_Whittington.png)
 
-Example
-===
+# Example
 ```julia
 julia> using GLMakie, GeoParams
 julia> p=T_Conductivity_Whittington();
@@ -356,20 +355,21 @@ function param_info(s::TP_Conductivity)
 end
 
 """
-    Set_TP_Conductivity["Name of temperature(-pressure) dependent conductivity"]
+    Set_TP_Conductivity(name::String)
 
-This is a dictionary with pre-defined laws:
+Returns the pre-defined temperature(-pressure) dependent conductivity law `name`.
+
+Available laws:
 - "UpperCrust"
 - "LowerCrust"
 - "OceanicCrust"
 - "Mantle"
 
 # Example
-```julia
-julia> k=Set_TP_Conductivity["Mantle"]
-T/P dependent conductivity: k = (0.73 W K⁻¹ m⁻¹ + 1293 W m⁻¹/(T + 77 K))*(1 + 4.0e-5 MPa⁻¹*P)
+```jldoctest
+julia> k = Set_TP_Conductivity("Mantle")
+T/P dependent conductivity: Name = Mantle, k = (0.73 + 1293.0/(T + 77.0))*(1 + 4.0e-5*P)
 ```
-
 """
 Set_TP_Conductivity(name::String) = TP_Conductivity_info[name][1]
 
@@ -510,9 +510,10 @@ Currently available:
 - TP\\_Conductivity
 
 # Example
-```julia
+```jldoctest
 julia> k = T_Conductivity_Whittington();
-julia> compute_conductivity(k; T=1000.0)
+
+julia> compute_conductivity(k; T = 1000.0)
 1.9014576517265882
 ```
 

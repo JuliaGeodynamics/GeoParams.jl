@@ -1,6 +1,6 @@
 # Contributing
 
-This page details the some of the guidelines that should be followed when contributing to this package.
+This page details some of the guidelines that should be followed when contributing to this package.
 
 You can contribute for example by adding new creep laws or by adding new constitutive relationships. If you invest a bit of time now, it will save others in the community a lot of time! The simplest way to do this is by cloning the repository, and creating a new branch for your feature. Once you are happy with what you added (and after you added a test to ensure that it will keep working with future changes), create a pull request and we will evaluate & merge it.
 

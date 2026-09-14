@@ -1,3 +1,9 @@
+```@meta
+DocTestSetup = quote
+    using GeoParams
+end
+```
+
 # User-defined rheology
 
 `CustomRheology` allows the user to interface with `GeoParams.jl` API for rheology calculations: 
@@ -21,7 +27,7 @@ and the viscosity $\eta$ is temperature-dependant
 where $\eta_0$ and $T_{\eta}$ are the respective reference viscosity and temperature, $T_o$ is the offset temperature, $T$ is the local temperature, and $E$ is activation energy. 
 
 Before defining the functions to compute $\tau$ and $\dot{\varepsilon}$, it is convenient to define a helper function to compute the viscosity:
-```julia
+```jldoctest custom
 @inline function custom_viscosity(
     a::CustomRheology; T = 0.0, kwargs...
 )
@@ -29,10 +35,14 @@ Before defining the functions to compute $\tau$ and $\dot{\varepsilon}$, it is c
     η = η0 * exp(E / (T + To) - E / (Tη + To))
     return  η
 end
+
+# output
+
+custom_viscosity (generic function with 1 method)
 ```
 Then we just need to define two simple functions to compue the second invariants of $\tau_{ij}$ and $\dot{\varepsilon}_{ij}$:
 
-```julia
+```jldoctest custom
 # function to compute deviatoric stress
 @inline function custom_τII(
     a::CustomRheology, EpsII; kwargs...
@@ -48,11 +58,15 @@ end
     η = custom_viscosity(a; kwargs...)
     return (TauII / η) * 0.5
 end
+
+# output
+
+custom_εII (generic function with 1 method)
 ```
 Note that the key word argument `kwargs...` is needed in all the above functions for compatibility with `GeoParams.jl`. 
 
 Finally, we need a `NamedTuple` containing the physical parameters needed by `custom_τII` and `custom_εII`:
-```julia
+```jldoctest custom
 # constant parameters, these are typically wrapped into a struct (compulsory)
 parameters = (;
     η0 = 1.0,
@@ -60,16 +74,21 @@ parameters = (;
     To = 1.0,
     Tη = 1.0,
 )
+
+# output
+
+(η0 = 1.0, E = 23.03, To = 1.0, Tη = 1.0)
 ```
 
 Then the `CustomRheology` object is created
-```julia
-a = CustomRheology(custom_εII, custom_τII, parameters)
+```jldoctest custom
+julia> v = CustomRheology(custom_εII, custom_τII, parameters);
+
 ```
 
 Now we can use our new rheology object with `GeoParams.jl` methods:
 
-```julia-repl
+```jldoctest custom
 julia> args = (; T=0.5)
 (T = 0.5,)
 
@@ -91,7 +110,7 @@ julia> dτdε = dτII_dεII(v, εII, args)
  
 And also works for composite rheologies:
 
-```julia-repl
+```jldoctest custom
 julia> el = ConstantElasticity(; G=1.0)
 Linear elasticity with shear modulus: G = 1.0, Poisson's ratio: ν = 0.5, bulk modulus: Kb = Inf and Young's module: E=NaN
 

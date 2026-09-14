@@ -1,3 +1,9 @@
+```@meta
+DocTestSetup = quote
+    using GeoParams
+end
+```
+
 # Chemical Diffusion
 
 Some routines and experimental data to compute chemical diffusion coefficients in minerals and phases are implemented in [GeoParams.jl](https://juliageodynamics.github.io/GeoParams.jl/stable/).
@@ -8,11 +14,11 @@ Currently, four phases are implemented in independent modules: `Rutile`, `Olivin
 
 To initiate the diffusion parameters of an element of a phase, call the function `SetChemicalDiffusion`. For instance, to obtain the diffusion parameters of Hf in rutile, use:
 
-```julia
-using GeoParams
+```jldoctest chemdiff
+julia> Hf_Rt_para = Rutile.Rt_Hf_Cherniak2007_para_c;
 
-Hf_Rt_para = Rutile.Rt_Hf_Cherniak2007_para_c
-Hf_Rt_para = SetChemicalDiffusion(Hf_Rt_para)
+julia> Hf_Rt_para = SetChemicalDiffusion(Hf_Rt_para);
+
 ```
 
 `Hf_Rt_para` is in this case a structure of type `DiffusionData` containing the diffusion parameters for Hf in rutile, from Cherniak et al. (2007).
@@ -29,7 +35,7 @@ will return:
 
 ```julia
 13-element Vector{Function}:
-Grt_Ca_Carlson2006 (generic function with 1 method)
+ Grt_Ca_Carlson2006 (generic function with 1 method)
  Grt_Ca_Chu2015 (generic function with 1 method)
  Grt_Fe_Carlson2006 (generic function with 1 method)
  Grt_Fe_Chakraborty1992 (generic function with 1 method)
@@ -62,8 +68,9 @@ GeoParams.MaterialParameters.ChemicalDiffusion.compute_D!
 
 For instance, taking the previous example with Hf in Rutile:
 
-```julia
-D = compute_D(Hf_Rt_para, T=1000C)
+```jldoctest chemdiff
+julia> D = compute_D(Hf_Rt_para, T=1000C)
+1.060390363878261e-21 m²·⁰ s⁻¹·⁰
 ```
 
 ## Plotting routines

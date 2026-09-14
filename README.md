@@ -4,6 +4,8 @@
 [![CI](https://github.com/JuliaGeodynamics/GeoParams.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/JuliaGeodynamics/GeoParams.jl/actions/workflows/CI.yml)
 [![DOI](https://zenodo.org/badge/369433137.svg)](https://zenodo.org/doi/10.5281/zenodo.8089230)
 [![codecov](https://codecov.io/gh/JuliaGeodynamics/GeoParams.jl/graph/badge.svg?token=6ADNQI2WHC)](https://codecov.io/gh/JuliaGeodynamics/GeoParams.jl)
+[![Aqua QA](https://juliatesting.github.io/Aqua.jl/dev/assets/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
+[![version](https://juliahub.com/docs/General/GeoParams/stable/version.svg)](https://juliahub.com/ui/Packages/General/GeoParams)
 
 Typical geodynamic simulations involve a large number of material parameters and nonlinear constitutive relationships. A large part of the work in writing a new code is benchmarking and debugging the implementation of such material parameters, which involve *point-wise* calculations that are independent of the discretisation method (finite difference, finite element, finite volume).
 
@@ -16,7 +18,7 @@ The material parameter object is designed to be extensible and can be passed on 
 
 We also implement some typically used creep law parameters, together with tools to plot them versus and compare our results with those of published papers (to minimize mistakes).
 
-NOTE: The package remains under development and the API is not yet fully fixed. Therefore feel free to look at it, but be aware that things may still change when you incorporate it into your codes. Comments/ideas/suggestions are highly apprecciated!
+NOTE: The package remains under development and the API is not yet fully fixed. Therefore feel free to look at it, but be aware that things may still change when you incorporate it into your codes. Comments/ideas/suggestions are highly appreciated!
 
 ### Contents
 - [Contents](#contents)
@@ -58,18 +60,18 @@ You can use 3 `types`:
 Once a `CharDim` structure is created, you can use the derived parameters, for example:
 ```julia
 julia> CharDim.strainrate
-1.0e-13 s⁻¹
+1.0e-13 s⁻¹·⁰
 ```
 You can also non-dimensionalize parameters:
 ```julia
 julia> A    =   6.3e-2MPa^-3.05*s^-1
-0.063 MPa⁻³·⁰⁵ s⁻¹
+0.063 MPa⁻³·⁰⁵ s⁻¹·⁰
 julia> A_ND =   nondimensionalize(A, CharDim);
 ```
 or convert them to different units:
 ```julia
 julia> uconvert(Pa^-3.05*s^-1, A)
-3.157479571851836e-20 Pa⁻³·⁰⁵ s⁻¹
+3.157479571851836e-20 Pa⁻³·⁰⁵ s⁻¹·⁰
 ```
 ### 2. Material parameters
 
@@ -84,9 +86,10 @@ julia> MatParam = SetMaterialParams(Name="Viscous Matrix", Phase=2,
 Phase 2 : Viscous Matrix
         | [dimensional units]
         |
-        |-- Density           : Constant density: ρ=2900 kg m⁻³
-        |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻²
-        |-- CreepLaws         : Linear viscosity: η=1.0e23 Pa s
+        |-- Name              : Viscous Matrix
+        |-- Density           : Constant density: ρ=2900.0 kg m⁻³·⁰
+        |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻²·⁰
+        |-- CreepLaws         : Linear viscosity: η=1.0e23
 ```
 The same but with non-dimensionalization of all parameters:
 ```julia
@@ -97,7 +100,8 @@ julia> MatParam = SetMaterialParams(Name="Viscous Matrix", Phase=2,
 Phase 2 : Viscous Matrix
         | [non-dimensional units]
         |
-        |-- Density           : Constant density: ρ=2.8999999999999996e-18
+        |-- Name              : Viscous Matrix
+        |-- Density           : Constant density: ρ=2.9e-18
         |-- Gravity           : Gravitational acceleration: g=9.81e20
         |-- CreepLaws         : Linear viscosity: η=999.9999999999998
 ```
@@ -116,13 +120,15 @@ julia> MatParam
 Phase 1 : Viscous Matrix
         | [non-dimensional units]
         |
-        |-- Density           : Constant density: ρ=2.8999999999999996e-18
+        |-- Name              : Viscous Matrix
+        |-- Density           : Constant density: ρ=2.9e-18
         |-- Gravity           : Gravitational acceleration: g=9.81e20
         |-- CreepLaws         : Linear viscosity: η=999.9999999999998
 Phase 2 : Viscous Sinker
         | [non-dimensional units]
         |
-        |-- Density           : P/T-dependent density: ρ0=2.8999999999999996e-18, α=0.038194500000000006, β=0.01, T0=0.21454659702313156, P0=0.0
+        |-- Name              : Viscous Sinker
+        |-- Density           : P/T-dependent density: ρ0=2.9e-18, α=0.038194500000000006, β=0.01, T0=0.21454659702313156, P0=0.0
         |-- Gravity           : Gravitational acceleration: g=9.81e20
         |-- CreepLaws         : Linear viscosity: η=9.999999999999998
 ```
@@ -130,6 +136,7 @@ Phase 2 : Viscous Sinker
 #### 2.2 Nonlinear creep laws
 You can add pre-defined non-linear creep laws as:
 ```julia
+julia> import GeoParams.Dislocation
 julia> Phase = SetMaterialParams(Name="Viscous Matrix", Phase=2,
                                  Density   = ConstantDensity(),
                                  CompositeRheology = CompositeRheology(
@@ -147,14 +154,14 @@ Phase 2 : Viscous Matrix
 Note that the functions `dislocation_law_list()` and `diffusion_law_list()` list all pre-defined creep laws, so for an overview type:
 ```julia
 julia> dislocation_law_list()
-40-element Vector{Function}:
+42-element Vector{Function}:
+ diabase_Caristan_1982 (generic function with 1 method)
  dry_anorthite_Rybacki_2000 (generic function with 1 method)
- dry_olivine_Hirth_2003 (generic function with 1 method)
- dry_olivine_Karato_2003 (generic function with 1 method)
- dry_quartzite_Jaoul_1984 (generic function with 1 method)
+ dry_anorthite_Rybacki_2006 (generic function with 1 method)
+ dry_clinopyroxene_Bystricky_Mackwell_2001 (generic function with 1 method)
  ⋮
- wet_omphacite_Zhang_2006 (generic function with 1 method)
- wet_quartzite_Hirth_2001 (generic function with 1 method)
+ wet_quartzite_Tokle_2019 (generic function with 1 method)
+ wet_quartzite_Ueda_2008 (generic function with 1 method)
 ```
 
 ### 3. Plotting and output
@@ -205,7 +212,7 @@ MatParam = (SetMaterialParams(Name="Crust", Phase=0,
 Using a density that employs a phase diagram (which depends on pressure and temperature) can be invoked with:
 ```julia
 MatParam = (SetMaterialParams(Name="Mantle", Phase=0,
-                Density   = PerpleX_LaMEM_Diagram("test_data/Peridotite.in"), );
+                Density   = PerpleX_LaMEM_Diagram("test/test_data/Peridotite.in")),)
 ```
 
 Importantly, you *do not have to change your code* if you want to use a new density parameterisation, as implementing this in `GeoParams` is sufficient.

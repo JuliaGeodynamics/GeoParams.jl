@@ -76,8 +76,9 @@ All keyword arguments are optional and default to a neutral value (zero, or a va
 the corresponding dependency), so only the parameters relevant to a given calibration need to be set.
 
 # Example
-```julia
+```jldoctest
 julia> data = DiffusionData(; Name="Fe in Grt", Phase="Garnet", Species="Fe", D0=1e-9m^2/s, Ea=250e3J/mol)
+DiffusionData: Phase = Garnet, Species = Fe, D0 = 1.0e-9 m²·⁰ s⁻¹·⁰, Ea = 250000.0 J mol⁻¹·⁰, ΔV = 0.0 cm³·⁰ mol⁻¹·⁰
 ```
 """
 struct DiffusionData{T, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10} <: AbstractChemicalDiffusion{T}

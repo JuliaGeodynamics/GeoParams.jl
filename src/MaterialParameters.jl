@@ -141,22 +141,24 @@ module MaterialParameters
     # Examples
 
     Define two viscous creep laws & constant density:
-    ```julia-repl
+    ```jldoctest
     julia> Phase = SetMaterialParams(Name="Viscous Matrix",
                            Density   = ConstantDensity(),
                            CreepLaws = (PowerlawViscous(), LinearViscous(η=1e21Pa*s)))
     Phase 1 : Viscous Matrix
             | [dimensional units]
             |
-            |-- Density           : Constant density: ρ=2900 kg m⁻³
-            |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻²
-            |-- CreepLaws         : Powerlaw viscosity: η0=1.0e18 Pa s, n=2.0, ε0=1.0e-15 s⁻¹
-            |                       Linear viscosity: η=1.0e21 Pa s
+            |-- Name              : Viscous Matrix
+            |-- Density           : Constant density: ρ=2900.0 kg m⁻³·⁰
+            |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻²·⁰
+            |-- CreepLaws         : Powerlaw viscosity: η0=1.0e18, n=2.0, ε0=1.0e-15
+            |                       Linear viscosity: η=1.0e21
     ```
 
     Define two viscous creep laws & P/T dependent density and nondimensionalize
-    ```julia-repl
+    ```jldoctest; filter = r"ρ0=[-0-9.e]+,"
     julia> CharUnits_GEO   =   GEO_units(viscosity=1e19, length=1000km);
+
     julia> Phase = SetMaterialParams(Name="Viscous Matrix", Phase=33,
                                   Density   = PT_Density(),
                                   CreepLaws = (PowerlawViscous(n=3), LinearViscous(η=1e23Pa*s)),
@@ -164,40 +166,48 @@ module MaterialParameters
     Phase 33: Viscous Matrix
             | [non-dimensional units]
             |
+            |-- Name              : Viscous Matrix
             |-- Density           : P/T-dependent density: ρ0=2.9e-16, α=0.038194500000000006, β=0.01, T0=0.21454659702313156, P0=0.0
             |-- Gravity           : Gravitational acceleration: g=9.810000000000002e18
-            |-- CreepLaws         : Powerlaw viscosity: η0=0.1, n=3, ε0=0.001
+            |-- CreepLaws         : Powerlaw viscosity: η0=0.1, n=3.0, ε0=0.001
             |                       Linear viscosity: η=10000.0
     ```
 
     You can also create an array that holds several parameters:
-    ```julia-repl
+    ```jldoctest
     julia> MatParam        =   Array{MaterialParams, 1}(undef, 2);
+
     julia> Phase           =   1;
+
     julia> MatParam[Phase] =   SetMaterialParams(Name="Upper Crust", Phase=Phase,
                                 CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
                                 Density  = ConstantDensity(ρ=2900kg/m^3));
+
     julia> Phase           =   2;
+
     julia> MatParam[Phase] =   SetMaterialParams(Name="Lower Crust", Phase=Phase,
                                 CreepLaws= (PowerlawViscous(n=5), LinearViscous(η=1e21Pa*s)),
                                 Density  = PT_Density(ρ0=3000kg/m^3));
+
     julia> MatParam
     2-element Vector{MaterialParams}:
      Phase 1 : Upper Crust
-        | [dimensional units]
-        |
-        |-- Density           : Constant density: ρ=2900 kg m⁻³
-        |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻²
-        |-- CreepLaws         : Powerlaw viscosity: η0=1.0e18 Pa s, n=2.0, ε0=1.0e-15 s⁻¹
-        |                       Linear viscosity: η=1.0e23 Pa s
+            | [dimensional units]
+            |
+            |-- Name              : Upper Crust
+            |-- Density           : Constant density: ρ=2900.0 kg m⁻³·⁰
+            |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻²·⁰
+            |-- CreepLaws         : Powerlaw viscosity: η0=1.0e18, n=2.0, ε0=1.0e-15
+            |                       Linear viscosity: η=1.0e23
 
      Phase 2 : Lower Crust
-        | [dimensional units]
-        |
-        |-- Density           : P/T-dependent density: ρ0=3000 kg m⁻³, α=3.0e-5 K⁻¹, β=1.0e-9 Pa⁻¹, T0=0 °C, P0=0 MPa
-        |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻²
-        |-- CreepLaws         : Powerlaw viscosity: η0=1.0e18 Pa s, n=5, ε0=1.0e-15 s⁻¹
-        |                       Linear viscosity: η=1.0e21 Pa s
+            | [dimensional units]
+            |
+            |-- Name              : Lower Crust
+            |-- Density           : P/T-dependent density: ρ0=3000.0 kg m⁻³·⁰, α=3.0e-5 K⁻¹·⁰, β=1.0e-9 Pa⁻¹·⁰, T0=0.0 °C, P0=0.0 MPa
+            |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻²·⁰
+            |-- CreepLaws         : Powerlaw viscosity: η0=1.0e18, n=5.0, ε0=1.0e-15
+            |                       Linear viscosity: η=1.0e21
     ```
 
 

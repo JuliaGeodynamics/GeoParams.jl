@@ -288,7 +288,7 @@ end
 
 # Conduit densities -------------------------------------------------
 """
-    BubbleFlow_Density(ρmelt=ConstantDensity(), ρgas=ConstantDensity(), c0=0e0, a=0.0041MPa^-1/2)
+    BubbleFlow_Density(ρmelt=ConstantDensity(), ρgas=ConstantDensity(), c0=0e0, a=0.0041MPa^(-1//2))
 
 Defines the BubbleFlow_Density as described in Slezin (2003) with a default gas solubility constant of 0.0041MPa``^{-1/2}`` used in e.g. Sparks et al. (1978)
 ```math
@@ -311,13 +311,21 @@ c =
 Possible values for a are 3.2e-6-6.4e-6Pa``^{-1/2}`` where the lower value corresponds to mafic magmas at rather large pressures (400-600MPa) and the higher value to felsic magmas at low pressures (0 to 100-200MPa) (after Slezin (2003))
 
 # Example
-```julia
-rheology = SetMaterialParams(;
-                      Phase=1,
-                      CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e21Pa * s)),
-                      Gravity=ConstantGravity(; g=9.81.0m / s^2),
-                      Density= BubbleFlow_Density(ρmelt=ConstantDensity(ρ=2900kg/m^3), ρgas=ConstantDensity(ρ=1kg/m^3), c0=0.0, a=0.0041MPa^-1//2),
-                      )
+```jldoctest
+julia> rheology = SetMaterialParams(;
+           Phase = 1,
+           CreepLaws = (PowerlawViscous(), LinearViscous(; η = 1e21Pa * s)),
+           Gravity = ConstantGravity(; g = 9.81m / s^2),
+           Density = BubbleFlow_Density(;
+               ρmelt = ConstantDensity(ρ = 2900kg / m^3),
+               ρgas = ConstantDensity(ρ = 1kg / m^3),
+               c0 = 0.0,
+               a = 0.0041MPa^(-1 // 2),
+           ),
+       );
+
+julia> rheology.Density[1]
+Bubble flow density: ρ = 1/((c0-c)/ρgas + (1-(c0-c))/ρmelt); ρmelt=Constant density: ρ=2900.0 kg m⁻³·⁰; ρgas=Constant density: ρ=1.0 kg m⁻³·⁰; c0=0.0; a=0.0041 MPa⁻⁰·⁵
 ```
 
 # References
@@ -390,13 +398,21 @@ with
 - `β`: Gas volume fraction enclosed within the particles
 
 # Example
-```julia
-rheology = SetMaterialParams(;
-                      Phase=1,
-                      CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e21Pa * s)),
-                      Gravity=ConstantGravity(; g=9.81.0m / s^2),
-                      Density= GasPyroclast_Density(ρmelt=ConstantDensity(ρ=2900kg/m^3), ρgas=ConstantDensity(ρ=1kg/m^3), δ=0.0, β=0.0),
-                      )
+```jldoctest
+julia> rheology = SetMaterialParams(;
+           Phase = 1,
+           CreepLaws = (PowerlawViscous(), LinearViscous(; η = 1e21Pa * s)),
+           Gravity = ConstantGravity(; g = 9.81m / s^2),
+           Density = GasPyroclast_Density(;
+               ρmelt = ConstantDensity(ρ = 2900kg / m^3),
+               ρgas = ConstantDensity(ρ = 1kg / m^3),
+               δ = 0.0,
+               β = 0.0,
+           ),
+       );
+
+julia> rheology.Density[1]
+Gas-Pyroclast mixture density: ρ = ρgas*δ + ρmelt*(1-β); ρmelt=Constant density: ρ=2900.0 kg m⁻³·⁰; ρgas=Constant density: ρ=1.0 kg m⁻³·⁰; δ=0.0; β=0.0
 ```
 
 # References
@@ -853,40 +869,34 @@ end
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `Phase` of every point is specified as an Integer in the `Phases` array.
 # Example
-```julia
-julia> MatParam = (SetMaterialParams(Name="Mantle", Phase=1,
-                        CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
-                        Density   = PT_Density()
-                        ),
-                    SetMaterialParams(Name="Crust", Phase=2,
-                        CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pas)),
-                        Density   = ConstantDensity(ρ=2900kg/m^3))
-                  );
-julia> Phases = ones(Int64,10,10);
-julia> Phases[:,5:end] .= 2
-julia> rho     = zeros(size(Phases))
-julia> T       =  ones(size(Phases))
-julia> P       =  ones(size(Phases))*10
-julia> args = (P=P, T=T)
+```jldoctest
+julia> MatParam = (
+           SetMaterialParams(Name = "Mantle", Phase = 1,
+               CreepLaws = (PowerlawViscous(), LinearViscous(η = 1e23Pa * s)),
+               Density = PT_Density()),
+           SetMaterialParams(Name = "Crust", Phase = 2,
+               CreepLaws = (PowerlawViscous(), LinearViscous(η = 1e23Pa * s)),
+               Density = ConstantDensity(ρ = 2900kg / m^3)),
+       );
+
+julia> Phases = ones(Int64, 2, 4); Phases[:, 3:end] .= 2;
+
+julia> rho = zeros(size(Phases));
+
+julia> args = (P = ones(size(Phases)) * 10, T = ones(size(Phases)));
+
 julia> compute_density!(rho, MatParam, Phases, args)
+
 julia> rho
-10×10 Matrix{Float64}:
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+2×4 Matrix{Float64}:
+ 2899.91  2899.91  2900.0  2900.0
+ 2899.91  2899.91  2900.0  2900.0
 ```
+
 The routine is made to minimize allocations:
 ```julia
-julia> using BenchmarkTools
-julia> @btime compute_density!(\$rho, \$MatParam, \$Phases, P=\$P, T=\$T)
-    203.468 μs (0 allocations: 0 bytes)
+using BenchmarkTools
+@btime compute_density!(\$rho, \$MatParam, \$Phases, P = \$P, T = \$T)
 ```
 _________________________________________________________________________________________________________
 

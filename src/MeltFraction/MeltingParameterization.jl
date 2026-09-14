@@ -570,32 +570,26 @@ The width of the smoothening zones is controlled by ``k_{sol}, k_{liq}`` (larger
 
 This is important, as jumps in the derivative ``dϕ/dT`` can cause numerical instabilities in latent heat computations, which is prevented with this smoothening.
 
-Example
-====
+# Example
 
-Let's consider a 4th order parameterisation:
-```julia
-julia> using GLMakie, GeoParams
-julia> p = MeltingParam_4thOrder();
-julia> T= collect(650.0:1:1050.) .+ 273.15;
-julia> T,phi,dϕdT =  PlotMeltFraction(p,T=T);
+Smoothening a 4th order parameterisation, with a sharper liquidus than solidus:
+
+```jldoctest
+julia> p_s = SmoothMelting(p = MeltingParam_4thOrder(), k_liq = 0.21/K)
+4th order polynomial melting curve: phi = -7.594512597174117e-10T^4 + 3.469192091489447e-6T^3 + -0.00592352980926T^2 + 4.482855645604745T + -1268.730161921053  963.15 K ≤ T ≤ 1270.15 K with smooth Heaviside function smoothening using k_sol=0.2 K⁻¹·⁰, k_liq=0.21 K⁻¹·⁰
 ```
 
-The same but with smoothening:
+With a Makie backend loaded, [`PlotMeltFraction`](@ref GeoParams.PlotMeltFraction) returns the curve and its
+derivative for both the original and the smoothened parameterisation:
+
 ```julia
-julia> p_s = SmoothMelting(p=MeltingParam_4thOrder(), k_liq=0.21/K);
-4th order polynomial melting curve: phi = -7.594512597174117e-10T^4 + 3.469192091489447e-6T^3 + -0.00592352980926T^2 + 4.482855645604745T + -1268.730161921053  963.15 K ≤ T ≤ 1270.15 K with smooth Heaviside function smoothening using k_sol=0.1 K⁻¹·⁰, k_liq=0.11 K⁻¹·⁰
-julia> T_s,phi_s,dϕdT_s =  PlotMeltFraction(p_s,T=T);
+using GLMakie, GeoParams
+p = MeltingParam_4thOrder()
+T = collect(650.0:1:1050.0) .+ 273.15
+T, phi, dϕdT = PlotMeltFraction(p, T = T)
+T_s, phi_s, dϕdT_s = PlotMeltFraction(p_s, T = T)
 ```
 
-We can create plots of this with:
-```julia
-julia> plt1 = plot(T.-273.15, phi, ylabel="Melt Fraction ϕ", color=:red, label="original", xlabel="Temperature [C]")
-julia> plt1 = plot(plt1, T.-273.15, phi_s,  color=:black, label="smoothened", legend=:bottomright)
-julia> plt2 = plot(T.-273.15, dϕdT, ylabel="dϕ/dT", color=:red, label="original", xlabel="Temperature [C]")
-julia> plt2 = plot(plt2, T.-273.15, dϕdT_s,  color=:black, label="smoothened", legend=:topright)
-julia> plot!(plt1,plt2,   xlabel="Temperature [C]", layout=(2,1))
-```
 The derivative no longer has a jump now:
 
 ![MeltingParam_Smooth](./assets/img/MeltingParam_Smooth.png)

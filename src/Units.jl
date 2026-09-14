@@ -277,14 +277,13 @@ Base.convert(::Type{GeoUnit{T}}, v::AbstractArray) where {T} = GeoUnit(T.(v))
 
 Base.promote_rule(::Type{GeoUnit}, ::Type{Quantity}) = GeoUnit
 
-function Base.show(io::IO, x::GeoUnit{T, U}) where {T, U} # output
-    val = x.val
-    if x.isdimensional == true
-        println("GeoUnit{dimensional, $(x.unit)}, ")
-    else
-        println("GeoUnit{nondimensional, $(x.unit)}, ")
-    end
-    return show(io, MIME("text/plain"), val)
+# Compact form: the bare value, so interpolating a GeoUnit yields the number it wraps.
+Base.show(io::IO, x::GeoUnit) = show(io, MIME("text/plain"), x.val)
+
+function Base.show(io::IO, ::MIME"text/plain", x::GeoUnit{T, U}) where {T, U}
+    dimensionality = x.isdimensional ? "dimensional" : "nondimensional"
+    println(io, "GeoUnit{$dimensionality, $(x.unit)}, ")
+    return show(io, MIME("text/plain"), x.val)
 end
 
 # define a few basic routines so we can easily operate with GeoUnits
@@ -442,7 +441,7 @@ which is more convenient for typical geodynamic simulations than SI units
 The characteristic values given as input can be in arbitrary units (`km` or `m`), provided the unit is specified.
 
 # Examples:
-```julia-repl
+```jldoctest
 julia> CharUnits = GEO_units()
 Employing GEO units
 Characteristic values:
@@ -450,11 +449,12 @@ Characteristic values:
          time:        0.3169 Myr
          stress:      10 MPa
          temperature: 1000.0 °C
+
 julia> CharUnits.velocity
-1.0e-7 m s⁻¹
+1.0e-7 m s⁻¹·⁰
 ```
 If we instead have a crustal-scale simulation, it is likely more appropriate to use a different characteristic `length`:
-```julia-repl
+```jldoctest
 julia> CharUnits = GEO_units(length=10km)
 Employing GEO units
 Characteristic values:
@@ -508,7 +508,7 @@ end
 Specify the characteristic values using SI units
 
 # Examples:
-```julia-repl
+```jldoctest
 julia> CharUnits = SI_units(length=1000m)
 Employing SI units
 Characteristic values:
@@ -518,8 +518,14 @@ Characteristic values:
          temperature: 1000.0 K
 ```
 Note that the same can be achieved if the input is given in `km`:
-```julia-repl
+```jldoctest
 julia> CharUnits = SI_units(length=1km)
+Employing SI units
+Characteristic values:
+         length:      1000 m
+         time:        1.0e19 s
+         stress:      10 Pa
+         temperature: 1000.0 K
 ```
 """
 function SI_units(; length = 1000m, temperature = 1000K, stress = 10Pa, viscosity = 1.0e20Pas)
@@ -566,8 +572,9 @@ end
 Specify the characteristic values in non-dimensional units
 
 # Examples:
-```julia-repl
+```jldoctest
 julia> using GeoParams;
+
 julia> CharUnits = NO_units()
 Employing NONE units
 Characteristic values:
@@ -616,33 +623,38 @@ end
 Nondimensionalizes `param` using the characteristic values specified in `CharUnits`
 
 # Example 1
-```julia-repl
+```jldoctest
 julia> using GeoParams;
+
 julia> CharUnits =   GEO_units();
+
 julia> v         =   3cm/yr
-3 cm yr⁻¹
+3 cm yr⁻¹·⁰
+
 julia> v_ND      =   nondimensionalize(v, CharUnits)
 0.009506426344208684
 ```
 # Example 2
 In geodynamics one sometimes encounters more funky units
-```julia-repl
+```jldoctest nondimensionalize_funky
 julia> CharUnits =   GEO_units();
+
 julia> A         =   6.3e-2MPa^-3.05*s^-1
-0.063 MPa⁻³·⁰⁵ s⁻¹
+0.063 MPa⁻³·⁰⁵ s⁻¹·⁰
+
 julia> A_ND      =   nondimensionalize(A, CharUnits)
 7.068716262102384e14
 ```
 
 In case you are interested to see how the units of `A` look like in different units, use this function from the [Unitful](https://github.com/PainterQubits/Unitful.jl) package:
-```julia-repl
+```jldoctest nondimensionalize_funky
 julia> uconvert(u"Pa^-3.05*s^-1",A)
-3.157479571851836e-20 Pa⁻³·⁰⁵
+3.157479571851836e-20 Pa⁻³·⁰⁵ s⁻¹·⁰
 ```
 and to see it decomposed in the basic `SI` units of length, mass and time:
-```julia-repl
+```jldoctest nondimensionalize_funky
 julia> upreferred(A)
-3.1574795718518295e-20 m³·⁰⁵ s⁵·¹ kg⁻³·⁰⁵
+3.1574795718518295e-20 m³·⁰⁵ s⁵·¹ kg⁻³·⁰⁵
 ```
 """
 function nondimensionalize(param::GeoUnit{T, U}, g::Union{GeoUnits, Nothing}) where {T, U}
@@ -857,12 +869,14 @@ end
 Dimensionalizes `param` into the dimensions `param_dim` using the characteristic values specified in `CharUnits`.
 
 # Example
-```julia-repl
+```jldoctest
 julia> CharUnits =   GEO_units();
+
 julia> v_ND      =   nondimensionalize(3cm/yr, CharUnits)
-0.031688087814028945
+0.009506426344208684
+
 julia> v_dim     =   dimensionalize(v_ND, cm/yr, CharUnits)
-3.0 cm yr⁻¹
+3.0 cm yr⁻¹·⁰
 ```
 
 """

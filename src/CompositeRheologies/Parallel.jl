@@ -8,10 +8,15 @@ is used, for example, to build visco-elasto-viscoplastic assemblies where severa
 share a common strain rate.
 
 # Example
-```julia
+```jldoctest
 julia> v  = SetDislocationCreep(GeoParams.Dislocation.wet_olivine_Hirth_2003);
+
 julia> pl = DruckerPrager();
+
 julia> p  = Parallel(v, pl)
+Parallel:
+|--⟦▪̲̅▫̲̅▫̲̅▫̲̅--|
+|--▬▬▬__--|
 ```
 """
 struct Parallel{T, N, Nplast, is_plastic, Nvol, is_vol} <: AbstractConstitutiveLaw{T}
@@ -46,7 +51,7 @@ function show(io::IO, a::Parallel)
 
     # Compose a string with rheological elements, so we have an overview in the REPL
     str = print_rheology_matrix(a)
-    println.(str)
+    println.(Ref(io), str)
 
     return nothing
 end

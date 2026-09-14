@@ -12,24 +12,26 @@ There are optional arguments which can be given in `ParameterTable`. Those are `
 Example 1:
 ```julia
 julia> MatParam = SetMaterialParams(Name="Viscous Matrix", Phase=1,
-                                     Density   = ConstantDensity(),
-                                     CreepLaws = LinearViscous(η=1e23Pa*s))
+                                    Density   = ConstantDensity(),
+                                    CreepLaws = LinearViscous(η=1e23Pa*s));
 
 julia> ParameterTable(MatParam, format="tex", filename="ParameterTable", rdigits=4)
+[ Info: Created ParameterTable.tex and References.bib files.
 ```
 ![latex](./assets/img/LaTeX_table.PNG)
 
 Example 2:
 ```julia
 julia> ParameterTable(MatParam, format="md", filename="ParameterTable", rdigits=4)
+[ Info: Created ParameterTable.md file.
 ```
 ![markdown](./assets/img/markdown_table.PNG)
 
 
 ```@docs
 GeoParams.ParameterTable
-GeoParams.Phase2Dict
-GeoParams.Phase2DictMd
+GeoParams.extract_parameters_from_phases
+GeoParams.extract_parameters_from_phases_md
 GeoParams.Dict2LatexTable
 GeoParams.Dict2MarkdownTable
 GeoParams.detachFloatfromExponent

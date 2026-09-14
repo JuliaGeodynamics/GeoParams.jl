@@ -27,8 +27,9 @@ Plasticity is activated when ``F(\\tau_{II}^{trial})`` (the yield function compu
 where ``\\dot{\\lambda}`` is a (scalar) that is nonzero and chosen such that the resulting stress gives ``F(\\tau_{II}^{final})=0``, and ``\\sigma_{ij}=-P + \\tau_{ij}`` denotes the total stress tensor.
 
 # Example
-```julia
+```jldoctest
 julia> pl = DruckerPrager(ϕ=30, C=10e6Pa)
+Drucker-Prager plasticity with: C = 1.0e7 Pa, ϕ = 30.0ᵒ, Ψ = 0.0ᵒ
 ```
 """
 @with_kw_noshow struct DruckerPrager{T, U, U1, S1 <: AbstractSoftening, S2 <: AbstractSoftening} <: AbstractPlasticity{T}
