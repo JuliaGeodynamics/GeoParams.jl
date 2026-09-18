@@ -2,7 +2,7 @@
 
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliageodynamics.github.io/GeoParams.jl/dev/)
 [![CI](https://github.com/JuliaGeodynamics/GeoParams.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/JuliaGeodynamics/GeoParams.jl/actions/workflows/CI.yml)
-[![DOI](https://zenodo.org/badge/369433137.svg)](https://zenodo.org/doi/10.5281/zenodo.8089230)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8089230.svg)](https://zenodo.org/doi/10.5281/zenodo.8089230)
 [![codecov](https://codecov.io/gh/JuliaGeodynamics/GeoParams.jl/graph/badge.svg?token=6ADNQI2WHC)](https://codecov.io/gh/JuliaGeodynamics/GeoParams.jl)
 [![Aqua QA](https://juliatesting.github.io/Aqua.jl/dev/assets/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 [![version](https://juliahub.com/docs/General/GeoParams/stable/version.svg)](https://juliahub.com/ui/Packages/General/GeoParams)
