@@ -607,4 +607,26 @@ using LaTeXStrings
         @test ∂Q∂τ(mp, τ) ≈ [0.125, 0.25, 0.75] rtol = 1.0e-9
     end
 
+    @testset "∂Q∂τ forwards state keywords" begin
+        CR = GeoParams.MaterialParameters.ConstitutiveRelationships
+        p = DruckerPragerCap(; C = 1.0, ϕ = 30.0, Ψ = 0.0, η_vp = 0.1, pT = -0.5)
+        state = (; P = -0.8, Pf = 0.1, EII = 0.3, perturbation_C = 0.9)
+        τ2 = (0.3, -0.3, 1.0)
+        τ3 = (0.3, -0.1, -0.2, 0.4, 0.5, 1.0)
+        for τ in (τ2, τ3), conv in (identity, SVector{length(τ)} ∘ collect)
+            t = conv(τ)
+            g = ∂Q∂τ(p, t; state...)
+            @test g[1] == CR.∂Q∂τxx(p, t; state...)
+            @test g[2] == CR.∂Q∂τyy(p, t; state...)
+            @test g[end] == CR.∂Q∂τxy(p, t; state...)
+            @test g[end] != ∂Q∂τ(p, t)[end]   # state matters on the cap
+            @test CR.plastic_strain_rate(p, t, 2.0; state...) == g .* 2.0
+        end
+        # state keywords are accepted (and ignored) by pressure-independent potentials
+        for pp in (DruckerPrager(), DruckerPrager_regularised())
+            @test ∂Q∂τ(pp, τ2; state...) == ∂Q∂τ(pp, τ2)
+            @test ∂Q∂τ(pp, τ3; state...) == ∂Q∂τ(pp, τ3)
+        end
+    end
+
 end

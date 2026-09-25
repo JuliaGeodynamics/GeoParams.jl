@@ -28,6 +28,9 @@ include("DruckerPragerCap.jl")    # DP plasticity with tensile cap
 Returns the gradient of the plastic flow potential `Q` with respect to the deviatoric stress tensor
 `τij` (given as a 3- or 6-component `NTuple`/`SVector`), i.e. the direction of plastic flow
 ``\\partial Q/\\partial \\tau_{ij}``. Also accessible as [`compute_plasticpotentialDerivative`](@ref).
+
+Keyword arguments (e.g. `P`, `Pf`, `EII`, `perturbation_C`) are forwarded to the component functions
+and define the state at which the gradient is evaluated.
 """
 function ∂Q∂τ end
 
@@ -36,6 +39,10 @@ function ∂Q∂τ end
 
 Returns the derivative of the plastic flow potential `Q` with respect to the second invariant of the
 deviatoric stress, ``\\partial Q/\\partial \\tau_{II}``.
+
+For [`DruckerPragerCap`](@ref) the returned value is `Aτ = (∂Q/∂τII)/2`: the diagonal components of
+[`∂Q∂τ`](@ref) are `Aτ * τij / τII` and the shear components are `2Aτ * τij / τII`
+(engineering-shear convention), so `∂Q∂τII` is half the full derivative.
 """
 function ∂Q∂τII end
 
@@ -81,20 +88,20 @@ function compute_plasticpotentialDerivative end
 # Thin convenience wrappers
 # 3D
 function ∂Q∂τ(p::AbstractPlasticity, τij::SVector{6}; kwargs...)
-    return @SVector [∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τzz(p, τij), ∂Q∂τyz(p, τij), ∂Q∂τxz(p, τij), ∂Q∂τxy(p, τij)]
+    return @SVector [∂Q∂τxx(p, τij; kwargs...), ∂Q∂τyy(p, τij; kwargs...), ∂Q∂τzz(p, τij; kwargs...), ∂Q∂τyz(p, τij; kwargs...), ∂Q∂τxz(p, τij; kwargs...), ∂Q∂τxy(p, τij; kwargs...)]
 end
 
 function ∂Q∂τ(p::AbstractPlasticity, τij::NTuple{6}; kwargs...)
-    return ∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τzz(p, τij), ∂Q∂τyz(p, τij), ∂Q∂τxz(p, τij), ∂Q∂τxy(p, τij)
+    return ∂Q∂τxx(p, τij; kwargs...), ∂Q∂τyy(p, τij; kwargs...), ∂Q∂τzz(p, τij; kwargs...), ∂Q∂τyz(p, τij; kwargs...), ∂Q∂τxz(p, τij; kwargs...), ∂Q∂τxy(p, τij; kwargs...)
 end
 
 # 2D
 function ∂Q∂τ(p::AbstractPlasticity, τij::SVector{3}; kwargs...)
-    return @SVector [∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τxy(p, τij)]
+    return @SVector [∂Q∂τxx(p, τij; kwargs...), ∂Q∂τyy(p, τij; kwargs...), ∂Q∂τxy(p, τij; kwargs...)]
 end
 
 function ∂Q∂τ(p::AbstractPlasticity, τij::NTuple{3}; kwargs...)
-    return ∂Q∂τxx(p, τij), ∂Q∂τyy(p, τij), ∂Q∂τxy(p, τij)
+    return ∂Q∂τxx(p, τij; kwargs...), ∂Q∂τyy(p, τij; kwargs...), ∂Q∂τxy(p, τij; kwargs...)
 end
 
 # Compute partial derivatives of a generic user-defined Q using AD
@@ -121,17 +128,17 @@ end
     
     Integrate the finite plastic strain. Equations from Duretz et al. 2019 G3
 """
-function plastic_strain(εvp::T, p::AbstractPlasticity{T}, τij, λ̇::T, dt::T) where {T}
-    return εvp += plastic_strain(p, τij, λ̇) * dt
+function plastic_strain(εvp::T, p::AbstractPlasticity{T}, τij, λ̇::T, dt::T; kwargs...) where {T}
+    return εvp += plastic_strain(p, τij, λ̇; kwargs...) * dt
 end
 
-@inline function plastic_strain(p::AbstractPlasticity{T}, τij, λ̇::T) where {T}
-    εvp_ij = plastic_strain_rate(p, τij, λ̇)
+@inline function plastic_strain(p::AbstractPlasticity{T}, τij, λ̇::T; kwargs...) where {T}
+    εvp_ij = plastic_strain_rate(p, τij, λ̇; kwargs...)
     εvp = √((2.0 / 3.0) * dot(εvp_ij, εvp_ij))
     return εvp
 end
 
-@inline plastic_strain_rate(p::AbstractPlasticity{T}, τij, λ̇::T) where {T} = ∂Q∂τ(p, τij) .* λ̇
+@inline plastic_strain_rate(p::AbstractPlasticity{T}, τij, λ̇::T; kwargs...) where {T} = ∂Q∂τ(p, τij; kwargs...) .* λ̇
 #-------------------------------------------------------------------------
 
 # Computational routines needed for computations with the MaterialParams structure
