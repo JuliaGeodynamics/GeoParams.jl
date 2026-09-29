@@ -208,6 +208,6 @@ end
 """
 @inline function lambda(F::T, p::DruckerPrager, ηve::T, ηvp::T; K = zero(T), dt = zero(T), h = zero(T), τij = (one(T), one(T), one(T))) where {T}
     @unpack_val sinϕ, cosϕ, sinΨ = p
-    return F * inv(ηve + ηvp + K * dt * sinΨ * sinϕ + h * cosϕ * plastic_strain(p, τij, zero(T)))
+    return F * inv(ηve + ηvp + K * dt * sinΨ * sinϕ + h * cosϕ * dt * plastic_strain(p, τij, one(T)))
 end
 #-------------------------------------------------------------------------

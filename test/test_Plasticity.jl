@@ -535,6 +535,13 @@ using LaTeXStrings
         @test isfinite(εvp2) && εvp2 > 0
         @test isfinite(mod.lambda(1.0e6, p, 1.0e20, 1.0e19))
         @test isfinite(mod.lambda(1.0e6, p, 1.0e20, 1.0e19; K = 2.0e10, dt = 1.0e3, h = 1.0e5, τij = (1.0e6, 1.0e6, 1.0e6)))
+        # hardening enters through dε_pl/dλ̇ = plastic_strain(p, τij, 1)
+        τij = (1.0e6, -5.0e5, 3.0e5)
+        kw = (K = 2.0e10, dt = 1.0e10, τij = τij)
+        λ_h = mod.lambda(1.0e6, p, 1.0e20, 1.0e19; h = 1.0e10, kw...)
+        @test λ_h < mod.lambda(1.0e6, p, 1.0e20, 1.0e19; h = 0.0, kw...)
+        denom = 1.0e20 + 1.0e19 + 2.0e10 * 1.0e10 * sind(10) * sind(30) + 1.0e10 * cosd(30) * 1.0e10 * mod.plastic_strain(p, τij, 1.0)
+        @test λ_h ≈ 1.0e6 / denom
 
         # ∂Q∂τ with a NamedTuple argument (dispatches on args.τij)
         @test ∂Q∂τ(p, (; τij = (1.0, 2.0, 3.0))) == ∂Q∂τ(p, (1.0, 2.0, 3.0))
