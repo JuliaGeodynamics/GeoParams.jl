@@ -40,7 +40,7 @@ include("../Computations.jl")
 
 Implements the T-dependent melting parameterisation used by Caricchi, Simpson et al. (as for example described in Simpson)
 ```math
-    \\theta = \\frac{a - (T + c)}{b}
+    \\theta = \\frac{a - (T - c)}{b}
 ```
 ```math
     \\phi_{melt} = \\frac{1.0}{1.0 + e^\\theta}
@@ -232,8 +232,6 @@ function (p::MeltingParam_5thOrder)(; T, kwargs...)
 
     return ϕ
 end
-
-compute_dϕdT(p::MeltingParam_5thOrder, T, kwargs...) = compute_dϕdT(p; T, kwargs...)
 
 function compute_dϕdT(p::MeltingParam_5thOrder; T, kwargs...)
     @unpack_val a, b, c, d, e, T_s, T_l = p
@@ -603,6 +601,8 @@ end
 
 # Set default values:
 function SmoothMelting(; p = MeltingParam_4thOrder(), k_sol = 0.2 / K, k_liq = 0.2 / K)
+    all(f -> hasfield(typeof(p), f), (:T_s, :T_l, :apply_bounds)) ||
+        throw(ArgumentError("SmoothMelting requires a melting parameterization with solidus `T_s`, liquidus `T_l` and `apply_bounds`; got $(nameof(typeof(p)))"))
     k_sol = convert(GeoUnit, k_sol)
     k_liq = convert(GeoUnit, k_liq)
     p = @set p.apply_bounds = false

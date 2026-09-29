@@ -278,6 +278,8 @@ using LaTeXStrings
 
     # Test smoothening of the melting curves:
     p = SmoothMelting(; p = MeltingParam_5thOrder())
+    @test_throws "SmoothMelting requires a melting parameterization with solidus" SmoothMelting(MeltingParam_Caricchi())
+    @test_throws "SmoothMelting requires a melting parameterization with solidus" SmoothMelting(MeltingParam_Volatile())
     @test isbits(p)
     T = collect(250:100:1250) * K .+ 273.15K
     phi_dim = zeros(size(T))
