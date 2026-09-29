@@ -333,9 +333,9 @@ end
 Defines a power law viscous creeplaw as:
 
 ```math
-        \\tau_{ij}^n  = 2 \\eta_0 \\frac{\\dot{\\varepsilon}_{ij}}{\\dot{\\varepsilon}_0}
+        \\tau_{II} = \\eta_0 \\dot{\\varepsilon}_0 \\left( \\frac{\\dot{\\varepsilon}_{II}}{\\dot{\\varepsilon}_0} \\right)^n
 ```
-where ``\\eta`` is the effective viscosity [Pa*s].
+where ``\\eta_0`` is the reference viscosity [Pa*s] and ``\\dot{\\varepsilon}_0`` the reference strain rate [1/s].
 """
 @with_kw_noshow struct PowerlawViscous{T, U1, U2, U3} <: AbstractCreepLaw{T}
     η0::GeoUnit{T, U1} = 1.0e18Pa * s       # reference viscosity
@@ -353,7 +353,7 @@ end
 function compute_εII(a::PowerlawViscous, TauII; kwargs...)
     @unpack_val η0, n, ε0 = a
 
-    @pow EpsII = (TauII / η0)^(1 / n) * ε0
+    @pow EpsII = (TauII / (η0 * ε0))^(1 / n) * ε0
 
     return EpsII
 end
@@ -361,7 +361,7 @@ end
 function dεII_dτII(a::PowerlawViscous, TauII; kwargs...)
     @unpack_val η0, n, ε0 = a
 
-    return @pow ε0 * (TauII^((1 - n) / n)) / (n * (η0^(1 / n)))
+    return @pow (TauII / (η0 * ε0))^((1 - n) / n) / (n * η0)
 end
 
 """

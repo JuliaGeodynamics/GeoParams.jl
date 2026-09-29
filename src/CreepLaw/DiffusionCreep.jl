@@ -117,7 +117,7 @@ with the curves of the original publications, as those publications usually do n
 function remove_tensor_correction(s::DiffusionCreep)
     # name = String(collect(s.Name))
     return DiffusionCreep(;
-        Name = unsafe_string(s.Name), d = s.d, n = s.n, r = s.r, p = s.p, A = s.A, E = s.E, V = s.V, Apparatus = Invariant
+        Name = unsafe_string(s.Name), d = s.d, n = s.n, r = s.r, p = s.p, A = s.A, E = s.E, V = s.V, R = s.R, Apparatus = Invariant
     )
 end
 
@@ -213,6 +213,7 @@ returns the derivative of strainrate versus stress
         d^p *
         A *
         FT *
+        n *
         exp((-E - P * V) / (R * T)) *
         inv(FE)
 end
@@ -223,7 +224,14 @@ end
     @unpack_units d, n, r, p, A, E, V, R = a
     FT, FE = a.FT, a.FE
 
-    return @pow FT * f^r * d^p * A * FT * exp((-E - P * V) / (R * T)) * inv(FE)
+    return @pow (TauII * FT)^(n - 1) *
+        f^r *
+        d^p *
+        A *
+        FT *
+        n *
+        exp((-E - P * V) / (R * T)) *
+        inv(FE)
 end
 
 """
@@ -262,8 +270,7 @@ end
     n_inv = inv(n)
 
     τ = @pow A^(-n_inv) *
-        EpsII *
-        FE *
+        (EpsII * FE)^n_inv *
         f^(-r * n_inv) *
         d^(-p * n_inv) *
         exp((E + P * V) / (n * R * T)) / FT
@@ -307,7 +314,7 @@ end
             d^(-p * n_inv) *
             (EpsII * FE)^(n_inv - 1) *
             exp((E + P * V) / (n * R * T))
-    ) / FT
+    ) / (FT * n)
 end
 
 @inline function dτII_dεII(
@@ -325,7 +332,7 @@ end
             d^(-p * n_inv) *
             (EpsII * FE)^(n_inv - 1) *
             exp((E + P * V) / (n * R * T))
-    ) / FT
+    ) / (FT * n)
 end
 
 # Print info

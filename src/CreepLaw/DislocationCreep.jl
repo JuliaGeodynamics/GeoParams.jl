@@ -103,7 +103,7 @@ function remove_tensor_correction(s::DislocationCreep)
     name = ptr2string(s.Name)
 
     return DislocationCreep(;
-        Name = name, n = s.n, r = s.r, A = s.A, E = s.E, V = s.V, Apparatus = Invariant
+        Name = name, n = s.n, r = s.r, A = s.A, E = s.E, V = s.V, R = s.R, Apparatus = Invariant
     )
 end
 
