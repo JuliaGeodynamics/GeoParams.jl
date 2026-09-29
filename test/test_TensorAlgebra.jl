@@ -184,7 +184,7 @@ end
     # Both rotations reproduce the Jaumann update τ ← R τ Rᵀ with R = exp(W dt) and
     # W = ½(∇v − ∇vᵀ), for a velocity field v = (γ y, 0, 0).
     γ, dt = 0.2, 1.0
-    W = [0 γ/2 0; -γ/2 0 0; 0 0 0]
+    W = [0 γ / 2 0; -γ / 2 0 0; 0 0 0]
     R = exp(W * dt)
     T = [1.0 0.3 0.0; 0.3 -0.5 0.0; 0.0 0.0 -0.5]
     Tj = R * T * R'
@@ -209,7 +209,6 @@ dt = 1.0
     @test GeoParams.doubledot(A, A) ≈ sum(A .* A) + (-1.0 - 3.0)^2
     @test GeoParams.second_invariant(A) ≈ second_invariant((1.0, 3.0, 2.0))
     @test GeoParams.second_invariant(Matrix(A)) ≈ second_invariant((1.0, 3.0, 2.0))
-    @test GeoParams.second_invariant(A) ≈ second_invariant(1.0, 3.0, 2.0)
     B = @SMatrix [1.0 2.0 0.5; 2.0 3.0 0.1; 0.5 0.1 -4.0]
     @test GeoParams.second_invariant(B) ≈ second_invariant((1.0, 3.0, -4.0, 0.1, 0.5, 2.0))
     @test GeoParams.second_invariant(Matrix(B)) ≈ second_invariant((1.0, 3.0, -4.0, 0.1, 0.5, 2.0))

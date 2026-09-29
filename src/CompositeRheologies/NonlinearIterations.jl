@@ -1,8 +1,8 @@
 # NONLINEAR ITERATION SCHEMES
 """
-    τII =local_iterations_εII(v::CompositeRheology{T,N,0}, εII::_T, args; tol=1e-6, verbose=false)
+    τII =local_iterations_εII(v::CompositeRheology{T,N,0}, εII::_T, args; tol=1e-6, verbose=false, max_iter=1000)
 
-Performs local iterations versus stress for a given total strain rate for a given `CompositeRheology` element that does NOT include `Parallel` elements
+Performs local iterations versus stress for a given total strain rate for a given `CompositeRheology` element that does NOT include `Parallel` elements. Throws an error if the tolerance is not reached within `max_iter` iterations.
 """
 function local_iterations_εII(
         v::CompositeRheology{
@@ -49,9 +49,9 @@ function local_iterations_εII(
 end
 
 """
-    τII = local_iterations_εII_AD(v::CompositeRheology{T,N}, εII::_T, args; tol=1e-6, verbose=false)
+    τII = local_iterations_εII_AD(v::CompositeRheology{T,N}, εII::_T, args; tol=1e-6, verbose=false, max_iter=1000)
 
-Performs local iterations versus stress for a given strain rate using AD
+Performs local iterations versus stress for a given strain rate using AD. Throws an error if the tolerance is not reached within `max_iter` iterations.
 """
 @inline function local_iterations_εII_AD(
         v::CompositeRheology{
@@ -130,9 +130,9 @@ Performs local iterations versus stress for a given strain rate using AD
 end
 
 """
-    compute_εII(v::AbstractPlasticity, τII::_T, args; tol=1e-6, verbose=true)
+    compute_εII(v::AbstractPlasticity, τII::_T, args; tol=1e-6, verbose=false, max_iter=100)
 
-Performs local iterations to compute the plastic strainrate. Note that the non-plastic strainrate, ε_np, should be part of `args`
+Performs local iterations to compute the plastic strainrate. Note that the non-plastic strainrate, ε_np, should be part of `args`. Throws an error if the tolerance is not reached within `max_iter` iterations.
 """
 function compute_εII(v::AbstractPlasticity, τII::_T, args; tol = 1.0e-6, verbose = false, max_iter = 100) where {_T}
 
@@ -171,11 +171,11 @@ end
 
 
 """
-    local_iterations_τII_AD(v, τII, args; tol=1e-6, verbose=false)
+    local_iterations_τII_AD(v, τII, args; tol=1e-6, verbose=false, max_iter=1000)
 
 Solves for the deviatoric strain rate consistent with the imposed stress `τII` for a parallel
 rheology `v` by Newton iterations, using forward-mode automatic differentiation for the Jacobian.
-Iterates until the residual is below `tol`.
+Iterates until the relative change is below `tol`, and throws an error if that takes more than `max_iter` iterations.
 """
 @inline function local_iterations_τII_AD(
         v::Parallel, τII::T, args; tol = 1.0e-6, verbose = false, max_iter = 1000
@@ -215,9 +215,9 @@ Iterates until the residual is below `tol`.
 end
 
 """
-    p =local_iterations_εvol(v::CompositeRheology{T,N,0}, εvol::_T, args; tol=1e-6, verbose=false)
+    p =local_iterations_εvol(v::CompositeRheology{T,N,0}, εvol::_T, args; tol=1e-6, verbose=false, max_iter=1000)
 
-Performs local iterations versus pressure for a given total volumetric strain rate for a given `CompositeRheology` element that does NOT include `Parallel` elements
+Performs local iterations versus pressure for a given total volumetric strain rate for a given `CompositeRheology` element that does NOT include `Parallel` elements. Throws an error if the tolerance is not reached within `max_iter` iterations.
 """
 @inline function local_iterations_εvol(
         v::CompositeRheology{
@@ -265,7 +265,7 @@ Performs local iterations versus pressure for a given total volumetric strain ra
 end
 
 """
-Performs local iterations versus strain rate for a given stress
+Performs local iterations versus strain rate for a given stress. Throws an error if the tolerance is not reached within `max_iter` iterations.
 """
 @inline function local_iterations_τII(
         v::Parallel{T, N},
