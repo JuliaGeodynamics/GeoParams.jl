@@ -1,9 +1,9 @@
-using Test
+using Test, ForwardDiff
 using GeoParams
 import GeoParams.Interpolations: LinearInterpolator, interpolate, interpolate_field, lerp, get_corners
 
 @testset "Interpolations.jl" begin
-    # 2x2 unit grid:  f(0,0)=1, f(1,0)=2, f(0,1)=3, f(1,1)=4
+    # 2x2 unit grid:  f(0,0)=1, f(1,0)=3, f(0,1)=2, f(1,1)=4
     data = [1.0 2.0; 3.0 4.0]
     itp = interpolate(0.0, 1.0, 2, 1.0, 0.0, 1.0, 2, 1.0, data)
     @test itp isa LinearInterpolator
@@ -37,4 +37,15 @@ import GeoParams.Interpolations: LinearInterpolator, interpolate, interpolate_fi
     @test v ≈ 2.5
     # edge clamp through interpolate_field too
     @test interpolate_field(0.0, 1.0, 2, 1.0, 0.0, 1.0, 2, 1.0, data, 2.0, 2.0) ≈ 4.0
+
+    # the table must match the grid
+    @test_throws DimensionMismatch interpolate(0.0, 1.0, 3, 2.0, 0.0, 1.0, 2, 1.0, data)
+    @test_throws "Tmax = 5.0 is inconsistent" interpolate(0.0, 1.0, 2, 5.0, 0.0, 1.0, 2, 1.0, data)
+    @test_throws "at least 2 knots" interpolate(0.0, 1.0, 1, 0.0, 0.0, 1.0, 1, 0.0, ones(1, 1))
+    @test_throws BoundsError get_corners(data, 2, 2)
+
+    # dual numbers pass through: f(x, 0) = 1 + 2x on [0, 1]
+    @test ForwardDiff.derivative(x -> itp(x, 0.0), 0.3) ≈ 2.0
+    # Float32 tables keep their precision for Float64 queries
+    @test interpolate(0.0f0, 1.0f0, 2, 1.0f0, 0.0f0, 1.0f0, 2, 1.0f0, Float32.(data))(0.5, 0.5) isa Float32
 end
