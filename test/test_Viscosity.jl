@@ -201,10 +201,10 @@ import ForwardDiff as FD
         @test compute_viscosity_εII(rheologies_lv, SA[0.5, 0.5], 0.0, a_lv) == 1.5
         @test compute_viscosity_τII(rheologies_lv, SA[0.5, 0.5], 0.0, a_lv) == 1.5
 
-        # out-of-range phase index -> unmatched `@nexprs` fallthrough returns 0.0
-        @test compute_viscosity_εII(rheologies_lv, 9, 0.0, a_lv) == 0.0
-        @test compute_viscosity_τII(rheologies_lv, 9, 0.0, a_lv) == 0.0
-        @test compute_viscosity(rheologies_lv, 9, a_lv) == 0.0
+        # a phase id that is not in the tuple is an error
+        @test_throws "phase not found in MaterialParams" compute_viscosity_εII(rheologies_lv, 9, 0.0, a_lv)
+        @test_throws "phase not found in MaterialParams" compute_viscosity_τII(rheologies_lv, 9, 0.0, a_lv)
+        @test_throws "phase not found in MaterialParams" compute_viscosity(rheologies_lv, 9, a_lv)
 
         # phases are looked up by their `Phase` id, not their position in the tuple
         rheologies_ids = (
@@ -215,7 +215,7 @@ import ForwardDiff as FD
         @test compute_viscosity_εII(rheologies_ids, 5, 1.0, a_lv) == 2.0
         @test compute_viscosity_τII(rheologies_ids, 5, 1.0, a_lv) == 2.0
         @test compute_elastoviscosity_εII(rheologies_ids, 5, 1.0, a_lv) == 2.0
-        @test compute_viscosity(rheologies_ids, 2, a_lv) == 0.0
+        @test_throws "phase not found in MaterialParams" compute_viscosity(rheologies_ids, 2, a_lv)
     end
 
     @testset "multi-phase compute_elasticviscosity fallback" begin
@@ -226,8 +226,8 @@ import ForwardDiff as FD
         )
         args_el = (; dt = 1.0e10)
         @test compute_elasticviscosity(rheologies_el, 1, args_el) isa Number
-        # out-of-range phase index -> fallthrough returns 0.0
-        @test compute_elasticviscosity(rheologies_el, 9, args_el) == 0.0
+        @test_throws "phase not found in MaterialParams" compute_elasticviscosity(rheologies_el, 9, args_el)
+        @test_throws "phase not found in MaterialParams" compute_elastoviscosity_εII(rheologies_el, 9, 1.0, args_el)
     end
 end
 

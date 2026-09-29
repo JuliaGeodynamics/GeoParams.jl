@@ -44,7 +44,7 @@ end
     return quote
         Base.@_inline_meta
         Base.@nexprs $N1 i -> v[i].Phase == phase && (return compute_viscosity_εII(v[i], args...))
-        return 0.0
+        throw(ArgumentError("phase not found in MaterialParams"))
     end
 end
 
@@ -52,7 +52,7 @@ end
     return quote
         Base.@_inline_meta
         Base.@nexprs $N1 i -> v[i].Phase == phase && (return compute_viscosity_τII(v[i], args...))
-        return 0.0
+        throw(ArgumentError("phase not found in MaterialParams"))
     end
 end
 
@@ -126,7 +126,7 @@ for fn in (:compute_elastoviscosity_εII, :compute_elastoviscosity_τII)
             return quote
                 Base.@_inline_meta
                 Base.@nexprs $N i -> v[i].Phase == phase && (return $$fn(v[i].CompositeRheology[1], args...))
-                return 0.0
+                throw(ArgumentError("phase not found in MaterialParams"))
             end
         end
 
@@ -201,7 +201,7 @@ end
     return quote
         Base.@_inline_meta
         Base.@nexprs $N i -> v[i].Phase == phase && (return compute_viscosity(v[i].CompositeRheology[1], args))
-        return 0.0
+        throw(ArgumentError("phase not found in MaterialParams"))
     end
 end
 
@@ -232,7 +232,7 @@ combining them harmonically for a composite rheology.
     return quote
         Base.@_inline_meta
         Base.@nexprs $N i -> v[i].Phase == phase && (return compute_elasticviscosity(v[i].CompositeRheology[1], args))
-        return 0.0
+        throw(ArgumentError("phase not found in MaterialParams"))
     end
 end
 

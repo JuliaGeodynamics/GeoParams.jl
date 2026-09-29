@@ -110,6 +110,7 @@ end
         @inline
         Base.Cartesian.@nexprs $N i ->
         (MatParam[i].Phase == Phase) && return compute_gravity(MatParam[i].Gravity[1])
+        throw(ArgumentError("phase not found in MaterialParams"))
     end
 end
 

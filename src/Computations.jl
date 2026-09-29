@@ -30,7 +30,7 @@ using StaticArrays
         Base.@_inline_meta
         Base.Cartesian.@nexprs $N i ->
         @inbounds (MatParam[i].Phase == Phase) && return fn(MatParam[i], args...)
-        return 0.0
+        throw(ArgumentError("phase not found in MaterialParams"))
     end
 end
 

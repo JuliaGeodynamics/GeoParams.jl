@@ -20,6 +20,7 @@ import ForwardDiff.derivative
     @test param_info(x).Equation === L"$\rho = \rho_0(1.0-\alpha (T-T_0) + \beta (P-P_0)$"
     @test isdimensional(x) === true
     @test sprint(show, x) isa String
+    @test_throws "phase not found in MaterialParams" compute_density((SetMaterialParams(; Phase = 1, Density = x),), 7, (;))
     # the default reference temperature (0 °C) applies to numeric (K) and unitful inputs alike
     @test x(; T = 273.15, P = 0.0) ≈ 2900.0
     @test x(; T = 273.15K, P = 0.0Pa) ≈ 2900.0kg / m^3
@@ -239,7 +240,7 @@ import ForwardDiff.derivative
     )
     Mat_tup = Tuple(MatParam)  # create a tuple to avoid allocations
 
-    MatParam1 = Vector{AbstractMaterialParamsStruct}(undef, 4)
+    MatParam1 = Vector{AbstractMaterialParamsStruct}(undef, 5)
     MatParam1[1] = SetMaterialParams(;
         Name = "Crust",
         Phase = 0,
@@ -264,6 +265,12 @@ import ForwardDiff.derivative
         CreepLaws = LinearViscous(; η = 1.0e21Pas),
         Density = ConstantDensity(),
     )
+    MatParam1[5] = SetMaterialParams(;
+        Name = "Lower Crust",
+        Phase = 4,
+        CreepLaws = LinearViscous(; η = 1.0e21Pas),
+        Density = ConstantDensity(),
+    )
     Mat_tup1 = Tuple(MatParam1)
 
     # test computing material properties
@@ -285,14 +292,14 @@ import ForwardDiff.derivative
     # Test computing density when Mat_tup1 is provided as a tuple
     compute_density!(rho, Mat_tup1, Phases, args)
     num_alloc = @allocated compute_density!(rho, Mat_tup1, Phases, args)   #      287.416 μs (0 allocations: 0 bytes)
-    @test sum(rho) / 400^2 ≈ 2575.250013499998
+    @test sum(rho) / 400^2 ≈ 2945.000013499998
     # @test num_alloc ≤ 32
     #Same test using function alias
     rho = zeros(size(Phases))
     compute_density!(rho, Mat_tup1, Phases, args)
     ρ!(rho, Mat_tup1, Phases, args)
     num_alloc = @allocated compute_density!(rho, Mat_tup1, Phases, args)
-    @test sum(rho) / 400^2 ≈ 2575.250013499998
+    @test sum(rho) / 400^2 ≈ 2945.000013499998
     # @test num_alloc ≤ 32
 
     # Test for single phase
@@ -313,14 +320,14 @@ import ForwardDiff.derivative
     compute_density!(rho, Mat_tup1, PhaseRatio, args)
 
     num_alloc = @allocated compute_density!(rho, Mat_tup1, PhaseRatio, args) #   136.776 μs (0 allocations: 0 bytes)
-    @test sum(rho) / 400^2 ≈ 2575.250013499998
+    @test sum(rho) / 400^2 ≈ 2945.000013499998
     @test num_alloc == 0           # for some reason this does indicate allocations but @btime does not
 
     # Test calling the routine with only pressure as input.
     # This is ok for Mat_tup1, as it only has constant & P-dependent densities.
     # Note, however, that if you have P & T dependent densities and do this it will use 0 as default value for T
     compute_density!(rho, Mat_tup1, PhaseRatio, (; P = P))
-    @test sum(rho) / 400^2 ≈ 2575.250013499998
+    @test sum(rho) / 400^2 ≈ 2945.000013499998
 
     # In case we only want to compute with T, do this:
     #  NOTE that in this example the results are actually wrong (as some functions require P as well)
@@ -421,7 +428,7 @@ import ForwardDiff.derivative
 
     args_vec = (P = P, T = T, ϕ = ϕ)
 
-    compute_density!(rho, rheologies, Phases, args_vec)
+    compute_density!(rho, rheologies, min.(Phases, 1), args_vec)   # `rheologies` defines phases 0 and 1
     @test rho[1] ≈ ρ
     # Conduit densities ----------------------------------------
     # BubbleFlow Density
@@ -484,7 +491,7 @@ import ForwardDiff.derivative
 
     args_vec = (P = P, T = T)
 
-    compute_density!(rho, rheologies, Phases, args_vec)
+    compute_density!(rho, rheologies, min.(Phases, 1), args_vec)   # `rheologies` defines phases 0 and 1
     @test rho[1] ≈ ρ
 
 
@@ -547,7 +554,7 @@ import ForwardDiff.derivative
 
     args_vec = (P = P, T = T)
 
-    compute_density!(rho, rheologies, Phases, args_vec)
+    compute_density!(rho, rheologies, min.(Phases, 1), args_vec)   # `rheologies` defines phases 0 and 1
     @test rho[1] ≈ ρ
 
     # Melt_DensityX ------------------------------------------------
@@ -621,7 +628,7 @@ import ForwardDiff.derivative
 
     args_vec = (P = P, T = T)
 
-    compute_density!(rho, rheologies, Phases, args_vec)
+    compute_density!(rho, rheologies, min.(Phases, 1), args_vec)   # `rheologies` defines phases 0 and 1
     @test rho[1] ≈ 2365.65821 rtol = 1.0e-5
 
     # "empty" density routine for a phase without a density field
