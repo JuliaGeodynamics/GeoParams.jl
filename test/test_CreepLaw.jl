@@ -612,13 +612,15 @@ using GeoParams, LaTeXStrings
             @test dτII_dεII(v, εII, args) ≈ ForwardDiff.derivative(x -> compute_τII(v, x, args), εII)
         end
         # the unitful methods must agree with the numeric ones
-        for v in laws[2:5]
+        for v in laws[2:end]
             εII = compute_εII(v, τII, args)
             @test ustrip(upreferred(compute_εII(v, τII * Pa; uargs...))) ≈ εII
             @test ustrip(upreferred(compute_τII(v, εII / s; uargs...))) ≈ τII
             @test ustrip(upreferred(dεII_dτII(v, τII * Pa; uargs...))) ≈ dεII_dτII(v, τII, args)
             @test ustrip(upreferred(dτII_dεII(v, εII / s; uargs...))) ≈ dτII_dεII(v, εII, args)
         end
+        npc = NonLinearPeierlsCreep()
+        @test ustrip(upreferred(dεII_dτII(npc, 1.0e9Pa; T = 1500.0K))) ≈ dεII_dτII(npc, 1.0e9, (; T = 1500.0))
         # removing the tensor correction must keep the gas constant
         for v in (DislocationCreep(; R = 8.0J / mol / K), DiffusionCreep(; R = 8.0J / mol / K))
             @test remove_tensor_correction(v).R.val == 8.0

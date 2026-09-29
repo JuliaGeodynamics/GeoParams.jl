@@ -82,6 +82,14 @@ end
 
 @inline unit_power(A) = typeof(A).parameters[2].parameters[1][1].power
 
+# Derivative of a unitful scalar function: ForwardDiff acts on the stripped value.
+function derivative_with_units(f::F, x::Quantity) where {F}
+    ux = unit(x)
+    uy = unit(f(x))
+    d = ForwardDiff.derivative(ξ -> ustrip(uy, f(ξ * ux)), ustrip(x))
+    return d * uy / ux
+end
+
 """
     find_creep_law(mod::Module, name::AbstractString) -> Union{Function, Nothing}
 

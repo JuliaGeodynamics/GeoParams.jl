@@ -156,6 +156,10 @@ function dεII_dτII(a::PeierlsCreep, TauII; args...)
     return ForwardDiff.derivative(x -> compute_εII(a, x; args...), TauII)
 end
 
+function dεII_dτII(a::PeierlsCreep, TauII::Quantity; args...)
+    return derivative_with_units(x -> compute_εII(a, x; args...), TauII)
+end
+
 """
     compute_τII(a::PeierlsCreep, EpsII; P, T, f, args...)
 
@@ -219,6 +223,10 @@ Computes the derivative `dτII/dεII` for a peierls creep law using automatic di
 
 function dτII_dεII(v::PeierlsCreep, EpsII; args...)
     return ForwardDiff.derivative(x -> compute_τII(v, x; args...), EpsII)
+end
+
+function dτII_dεII(v::PeierlsCreep, EpsII::Quantity; args...)
+    return derivative_with_units(x -> compute_τII(v, x; args...), EpsII)
 end
 
 # Print info
