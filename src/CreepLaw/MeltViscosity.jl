@@ -39,7 +39,7 @@ Typical parameters for rhyolite are: `A = -8.1590`, `B = 2.4050e+04K`, `T_0 = -4
     T0::GeoUnit{T, U1} = 307.8043K          # reference T
     η0::GeoUnit{T, U2} = 1Pas               # scaling viscosity
 end
-LinearMeltViscosity(args...) = LinearMeltViscosity(convert.(GeoUnit, args)...)
+LinearMeltViscosity(args...) = promote_construct(LinearMeltViscosity, args...)
 
 isDimensional(g::LinearMeltViscosity) = isDimensional(g.η0)
 

@@ -51,7 +51,7 @@ function CompositeRheology(v::T) where {T}
     return CompositeRheology{typeof(v), n, Npar, is_parallel, Nplast, is_plastic, Nvol, is_vol, vol_plastic}(v)
 end
 CompositeRheology(a, b...) = CompositeRheology((a, b...))
-CompositeRheology(a::Parallel) = CompositeRheology((a,))
+CompositeRheology(a::Union{Parallel, AbstractConstitutiveLaw}) = CompositeRheology((a,))
 
 @generated function getindex(p::CompositeRheology{T, N}, I::Int64) where {T, N}
     return quote

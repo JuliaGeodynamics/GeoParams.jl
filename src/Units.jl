@@ -95,7 +95,8 @@ export km,
     isdimensional,
     compute_units,
     udim,
-    upgrade_GeoUnits
+    upgrade_GeoUnits,
+    promote_construct
 
 include("unpack.jl")    # adds macros for unpacking GeoUnit variables with or w/out units
 
@@ -146,8 +147,17 @@ struct GeoUnit{T, U}
     isdimensional::Bool
 end
 
+# Affine temperatures (°C) are stored in K: the numeric compute routines treat stored
+# temperatures as absolute values.
+_absolute(val) = val
+function _absolute(val::Union{Quantity, AbstractArray{<:Quantity}})
+    u = unit(first(val))
+    return u isa Unitful.AffineUnits ? uconvert.(upreferred(u), val) : val
+end
+
 # Different ways of specifying the GeoUnit:
 function GeoUnit(val)
+    val = _absolute(val)
     return GeoUnit{typeof(ustrip.(val)), typeof(unit(val[1]))}(
         ustrip.(val), unit(val[1]), isa(val[1], Union{Unitful.FreeUnits, Unitful.Quantity})
     )
@@ -162,6 +172,7 @@ function GeoUnit(fun::F) where {F <: Function}
 end
 
 function GeoUnit{T}(val) where {T}
+    val = _absolute(val)
     return GeoUnit{T, typeof(unit(val[1]))}(
         T.(ustrip.(val)),
         unit(val[1]),
@@ -254,8 +265,8 @@ Base.isequal(x::GeoUnit, y::Number) = Base.isequal(x.val, y)
 Base.isequal(x::GeoUnit, y::AbstractArray) = Base.isequal(x.val, y)
 Base.isequal(x::GeoUnit, y::GeoUnit) = Base.isequal(x.val, y.val)
 
-Base.convert(::Type{<:AbstractArray}, v::GeoUnit) = v.val
-Base.convert(::Type{<:Real}, v::GeoUnit) = v.val
+Base.convert(::Type{T}, v::GeoUnit) where {T <: AbstractArray} = convert(T, v.val)
+Base.convert(::Type{T}, v::GeoUnit) where {T <: Real} = convert(T, v.val)
 Base.convert(::Type{ForwardDiff.Dual{T, V, N}}, v::GeoUnit) where {T, V, N} = convert(ForwardDiff.Dual{T, V, N}, v.val)
 Base.convert(::Type{GeoUnit}, v::Number) = GeoUnit(v)
 Base.convert(::Type{GeoUnit}, v::Int32) = GeoUnit(Float32(v))
@@ -276,6 +287,34 @@ Base.convert(::Type{GeoUnit{T}}, v::AbstractArray) where {T} = GeoUnit(T.(v))
 #Base.convert(::Type{GeoUnit{T,U}},  v::T)    where {T,U}    =   GeoUnit{T,typeof(unit(v[1]))}(v)
 
 Base.promote_rule(::Type{GeoUnit}, ::Type{Quantity}) = GeoUnit
+
+"""
+    promote_construct(X, args...)
+
+Positional fallback constructor for material-parameter structs whose fields are `GeoUnit`s
+sharing one numeric type: numbers and quantities in `args` are converted to `GeoUnit`, all
+`GeoUnit`s are promoted to a common element type, and `X` is called with the result. Other
+arguments (`Bool` flags, nested parameter structs, ...) are passed through unchanged. Throws an
+`ArgumentError` if the arguments cannot be converted to a form that `X`'s own constructor accepts.
+"""
+function promote_construct(::Type{X}, args::Vararg{Any, N}) where {X, N}
+    converted = map(_to_geounit, args)
+    T = mapreduce(_geounit_eltype, promote_type, converted; init = Union{})
+    promoted = map(x -> _with_eltype(T, x), converted)
+    promoted === args &&
+        throw(ArgumentError("no $(nameof(X)) constructor accepts arguments of types $(typeof(args))"))
+    return X(promoted...)
+end
+
+_to_geounit(x::Bool) = x
+_to_geounit(x::Number) = convert(GeoUnit, x)
+_to_geounit(x) = x
+
+_geounit_eltype(x::GeoUnit{<:AbstractFloat}) = typeof(x.val)
+_geounit_eltype(x) = Union{}
+
+_with_eltype(::Type{T}, x::GeoUnit{<:AbstractFloat, U}) where {T <: AbstractFloat, U} = GeoUnit{T, U}(T(x.val), x.unit, x.isdimensional)
+_with_eltype(::Type, x) = x
 
 # Compact form: the bare value, so interpolating a GeoUnit yields the number it wraps.
 Base.show(io::IO, x::GeoUnit) = show(io, MIME("text/plain"), x.val)

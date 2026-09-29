@@ -238,7 +238,7 @@ read values rather than `Quantity`s: neither return carries units.
     M_h2o::GeoUnit{T, U2} = 18.02e-3kg / mol    # molar mass H2O
     M_co2::GeoUnit{T, U2} = 44.01e-3kg / mol    # molar mass CO2
 end
-GasMixture(args...) = GasMixture(convert.(GeoUnit, args)...)
+GasMixture(args...) = promote_construct(GasMixture, args...)
 isdimensional(s::GasMixture) = isdimensional(s.Cp_h2o)
 
 function param_info(s::GasMixture)

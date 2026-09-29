@@ -38,10 +38,10 @@ Structure that holds parameters for constant, isotropic, linear elasticity.
     G::GeoUnit{T, U} = 5.0e10Pa                                             # Elastic shear modulus
     ν::GeoUnit{T, U1} = 0.5NoUnits                                         # Poisson ratio
     Kb::GeoUnit{T, U} = 2 * G * (1 + ν) / (3 * (1 - 2 * ν))                          # Elastic bulk modulus
-    E::GeoUnit{T, U} = 9 * Kb * G / (3 * Kb + G)                                  # Elastic Young's modulus
+    E::GeoUnit{T, U} = 2 * G * (1 + ν)                                  # Elastic Young's modulus
 end
 
-ConstantElasticity(args...) = ConstantElasticity(convert.(GeoUnit, args)...)
+ConstantElasticity(args...) = promote_construct(ConstantElasticity, args...)
 
 
 # Add multiple dispatch here to allow specifying combinations of 2 elastic parameters (say ν & E), to compute the others
@@ -56,7 +56,7 @@ function SetConstantElasticity(; G = nothing, ν = nothing, E = nothing, Kb = no
     end
     if (!isnothing(G) && !isnothing(ν))
         Kb = 2 * G * (1 + ν) / (3 * (1 - 2 * ν))     # Bulk modulus
-        E = 9 * Kb * G / (3 * Kb + G)              # Youngs modulus
+        E = 2 * G * (1 + ν)                        # Youngs modulus
     elseif (!isnothing(Kb) && !isnothing(ν))
         G = (3 * Kb * (1 - 2 * ν)) / (2 * (1 + ν))
         E = 9 * Kb * G / (3 * Kb + G)              # Youngs modulus
@@ -146,7 +146,7 @@ end
 end
 
 @inline function dτII_dεII(
-        a::ConstantElasticity, τII_old = zero(precision(a)), dt = one(precision(a)), kwargs...
+        a::ConstantElasticity, εII; τII_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
     @unpack_val G = a
     return 2 * G * dt
@@ -260,7 +260,7 @@ Returns the derivative of pressure with respect to the volumetric strain, `∂P/
 the elasticity `a` over time step `dt`.
 """
 @inline function dp_dεvol(
-        a::ConstantElasticity, P_old = zero(precision(a)), dt = one(precision(a)), kwargs...
+        a::ConstantElasticity, εvol; P_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
     @unpack_val Kb = a
     return -Kb * dt

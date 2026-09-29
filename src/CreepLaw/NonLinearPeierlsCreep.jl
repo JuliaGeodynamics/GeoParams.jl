@@ -158,6 +158,10 @@ function dεII_dτII(a::NonLinearPeierlsCreep, TauII; args...)
     return ForwardDiff.derivative(x -> compute_εII(a, x; args...), TauII)
 end
 
+function dεII_dτII(a::NonLinearPeierlsCreep, TauII::Quantity; args...)
+    return derivative_with_units(x -> compute_εII(a, x; args...), TauII)
+end
+
 """
     Peierls_stress_iterations(rheo::NonLinearPeierlsCreep, Tau::Float64, EpsII::Float64, args)
 

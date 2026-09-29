@@ -37,7 +37,7 @@ where ``k`` is the thermal conductivity [``W/m/K``].
 @with_kw_noshow struct ConstantConductivity{T, U} <: AbstractConductivity{T}
     k::GeoUnit{T, U} = 3.0Watt / m / K
 end
-ConstantConductivity(args...) = ConstantConductivity(convert.(GeoUnit, args)...)
+ConstantConductivity(args...) = promote_construct(ConstantConductivity, args...)
 
 function param_info(s::ConstantConductivity) # info about the struct
     return MaterialParamsInfo(; Equation = L"k = cst")
@@ -143,7 +143,7 @@ julia> T,k,plt = PlotConductivity(p)
     f::GeoUnit{T, U8} = 0.732 * 1.0e-6m^2 / s             # diffusivity parameterization
     g::GeoUnit{T, U9} = 0.000135 * 1.0e-6m^2 / s / K        # diffusivity parameterization
 end
-T_Conductivity_Whittington(args...) = T_Conductivity_Whittington(convert.(GeoUnit, args)...)
+T_Conductivity_Whittington(args...) = promote_construct(T_Conductivity_Whittington, args...)
 
 function param_info(s::T_Conductivity_Whittington) # info about the structwhere {_T,N}
     return MaterialParamsInfo(; Equation = L"k = f(T) ")

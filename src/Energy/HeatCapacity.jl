@@ -38,7 +38,7 @@ where ``Cp`` is the thermal heat capacity [``J/kg/K``].
 @with_kw_noshow struct ConstantHeatCapacity{T, U} <: AbstractHeatCapacity{T}
     Cp::GeoUnit{T, U} = 1050J / kg / K                # heat capacity
 end
-ConstantHeatCapacity(args...) = ConstantHeatCapacity(convert.(GeoUnit, args)...)
+ConstantHeatCapacity(args...) = promote_construct(ConstantHeatCapacity, args...)
 
 function param_info(s::ConstantHeatCapacity) # info about the struct
     return MaterialParamsInfo(; Equation = L"c_p = cst")
@@ -88,7 +88,7 @@ Note that this is slightly different than the equation in the manuscript, as Cp 
     molmass::GeoUnit{T, U4} = 0.22178kg / mol               # average molar mass
     Tcutoff::GeoUnit{T, U5} = 846K                        # cutoff temperature
 end
-T_HeatCapacity_Whittington(args...) = T_HeatCapacity_Whittington(convert.(GeoUnit, args)...)
+T_HeatCapacity_Whittington(args...) = promote_construct(T_HeatCapacity_Whittington, args...)
 
 function param_info(s::T_HeatCapacity_Whittington) # info about the struct
     return MaterialParamsInfo(; Equation = L"c_p = (a + b*T - c/T^2)/m")
@@ -134,7 +134,7 @@ where ``Q_L`` is the latent heat [``J/kg``], and ``\\frac{\\partial \\phi}{\\par
     Cp::S1 = ConstantHeatCapacity()
     Q_L::GeoUnit{T, U} = 400.0e3J / kg                            # Latent heat
 end
-Latent_HeatCapacity(args...) = Latent_HeatCapacity(args[1], convert.(GeoUnit, args[2:end])...)
+Latent_HeatCapacity(args...) = promote_construct(Latent_HeatCapacity, args...)
 Latent_HeatCapacity(Cp::AbstractHeatCapacity, args...) = Latent_HeatCapacity(Cp, convert.(GeoUnit, args)...)
 isdimensional(g::Latent_HeatCapacity) = isdimensional(g.Q_L)
 

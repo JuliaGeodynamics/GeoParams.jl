@@ -32,7 +32,7 @@ where ``H_r`` is the radioactive heat source [``Watt/m^3``].
 @with_kw_noshow struct ConstantRadioactiveHeat{T, U} <: AbstractRadioactiveHeat{T}
     H_r::GeoUnit{T, U} = 1.0e-6Watt / m^3
 end
-ConstantRadioactiveHeat(args...) = ConstantRadioactiveHeat(convert.(GeoUnit, args)...)
+ConstantRadioactiveHeat(args...) = promote_construct(ConstantRadioactiveHeat, args...)
 
 function param_info(s::ConstantRadioactiveHeat) # info about the struct
     return MaterialParamsInfo(; Equation = L"H_r = cst")

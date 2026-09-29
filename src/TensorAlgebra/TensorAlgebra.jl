@@ -60,6 +60,8 @@ end
 end
 
 @inline doubledot(A::SMatrix, B::SMatrix) = sum(A .* B)
+# 2D plane strain: include Azz = -Axx - Ayy, as in the Voigt form
+@inline doubledot(A::SMatrix{2, 2}, B::SMatrix{2, 2}) = sum(A .* B) + (A[1, 1] + A[2, 2]) * (B[1, 1] + B[2, 2])
 
 """
     second_invariant(A)
@@ -74,7 +76,7 @@ component forms are differentiable.
 @inline second_invariant(A::NTuple) = √(0.5 * doubledot(A, A))
 @inline second_invariant(A::SMatrix) = √(0.5 * doubledot(A, A))
 @inline second_invariant(A::SVector) = √(0.5 * doubledot(A, A))
-@inline second_invariant(A::Matrix) = √(0.5 * sum(Ai * Ai for Ai in A))
+@inline second_invariant(A::Matrix) = size(A) == (2, 2) ? second_invariant(SMatrix{2, 2}(A)) : √(0.5 * sum(Ai * Ai for Ai in A))
 # So that is differentiable...
 @inline second_invariant(xx, yy, xy) = √(0.5 * (xx^2 + yy^2 + (-xx - yy)^2) + xy^2)
 @inline second_invariant(xx, yy, zz, yz, xz, xy) = √(0.5 * (xx^2 + yy^2 + zz^2) + xy^2 + yz^2 + xz^2)
@@ -193,7 +195,7 @@ step `dt`, given the vorticity `ω`. Dispatches to the 2D or 3D rotation dependi
     rotate_elastic_stress2D(ω, τ::T, dt) where T
 
 Bi-dimensional rotation of the elastic stress where τ is in the Voig notation
-and ω = 1/2(dux/dy - duy/dx)
+and ω = 1/2(duy/dx - dux/dy)
 """
 @inline Base.@propagate_inbounds function rotate_elastic_stress2D(ω, τ, dt)
     θ = ω * dt

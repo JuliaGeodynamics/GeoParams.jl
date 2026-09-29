@@ -112,7 +112,7 @@ And also works for composite rheologies:
 
 ```jldoctest custom
 julia> el = ConstantElasticity(; G=1.0)
-Linear elasticity with shear modulus: G = 1.0, Poisson's ratio: ν = 0.5, bulk modulus: Kb = Inf and Young's module: E=NaN
+Linear elasticity with shear modulus: G = 1.0, Poisson's ratio: ν = 0.5, bulk modulus: Kb = Inf and Young's module: E=3.0
 
 julia> c = CompositeRheology(v, el)
 --?????----/\/\/--

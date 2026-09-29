@@ -190,6 +190,9 @@ import ForwardDiff as FD
         SetMaterialParams(;
             Name = "Crust", Phase = 2, HeatCapacity = ConstantHeatCapacity(; Cp = 1100J / kg / K)
         ),
+        SetMaterialParams(;
+            Name = "Crust1", Phase = 3, HeatCapacity = ConstantHeatCapacity(; Cp = 1200J / kg / K)
+        ),
     )
 
     # test computing material properties
@@ -209,7 +212,7 @@ import ForwardDiff as FD
     # check with array of constant properties (and no required input args)
     args1 = (;)
     compute_heatcapacity!(Cp, Mat_tup1, Phases, args1)    # computation routine w/out P (not used in most heat capacity formulations)
-    @test sum(Cp[1, 1, k] for k in axes(Cp, 3)) ≈ 52950.0
+    @test sum(Cp[1, 1, k] for k in axes(Cp, 3)) ≈ 114150.0
 
     num_alloc = @allocated compute_heatcapacity!(Cp, Mat_tup, Phases, args)
     @test sum(Cp[1, 1, k] for k in axes(Cp, 3)) ≈ 134023.72170619245

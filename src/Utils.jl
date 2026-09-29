@@ -105,12 +105,14 @@ end
     end
 end
 
+@noinline phase_not_found() = throw(ArgumentError("phase not found in MaterialParams"))
+
 @generated function nphase(f::F, phase::Integer, v::NTuple{N, AbstractMaterialParamsStruct}) where {N, F <: Function}
     Base.@_inline_meta
     return quote
         @inline
         Base.Cartesian.@nexprs $N i -> @inbounds v[i].Phase === phase && return f(v[i])
-        return 0.0
+        phase_not_found()
     end
 end
 

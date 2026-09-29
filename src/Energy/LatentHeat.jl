@@ -36,7 +36,7 @@ where ``Q_L`` is the latent heat [``J/kg``].
 @with_kw_noshow struct ConstantLatentHeat{T, U} <: AbstractLatentHeat{T}
     Q_L::GeoUnit{T, U} = 400.0e3J / kg                # Latent heat
 end
-ConstantLatentHeat(args...) = ConstantLatentHeat(convert.(GeoUnit, args)...)
+ConstantLatentHeat(args...) = promote_construct(ConstantLatentHeat, args...)
 
 function param_info(s::ConstantLatentHeat) # info about the struct
     return MaterialParamsInfo(; Equation = L"Q_L = cst")

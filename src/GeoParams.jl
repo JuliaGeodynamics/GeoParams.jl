@@ -21,7 +21,8 @@ using MuladdMacro
 
 import Base: getindex
 
-# overload to account for cases where this is an integer
+# Scalars and Symbols index to themselves, so the compute routines (and downstream packages such
+# as JustRelax) can index array-valued and scalar arguments alike.
 for T in (:Real, :Symbol)
     @eval begin
         Base.getindex(val::$(T), I::Vararg{Integer, N}) where {N} = val

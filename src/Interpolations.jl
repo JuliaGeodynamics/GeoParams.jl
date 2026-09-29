@@ -41,12 +41,10 @@ Get the four corner values needed for bilinear interpolation.
 """
 @inline Base.@propagate_inbounds function get_corners(F::AbstractArray{T, 2}, i::I, j::I) where {T, I}
     i1, j1 = i + 1, j + 1
-    @inbounds begin
-        a = F[i, j]
-        b = F[i1, j]
-        c = F[i, j1]
-        d = F[i1, j1]
-    end
+    a = F[i, j]
+    b = F[i1, j]
+    c = F[i, j1]
+    d = F[i1, j1]
     return a, b, c, d
 end
 
@@ -56,8 +54,17 @@ end
 Create a 2D linear interpolation object similar to Interpolations.jl's linear_interpolation function.
 """
 function interpolate(T0::T, dT::T, numT::I, Tmax::T, P0::T, dP::T, numP::I, Pmax::T, data::AbstractArray{T, 2}) where {T, I}
+    size(data) == (numT, numP) ||
+        throw(DimensionMismatch("interpolation table has size $(size(data)), but the grid has ($numT, $numP) knots"))
+    (numT ≥ 2 && numP ≥ 2) || throw(ArgumentError("interpolation grid needs at least 2 knots in each direction"))
+    Tmax ≈ T0 + (numT - 1) * dT || throw(ArgumentError("Tmax = $Tmax is inconsistent with T0 + (numT - 1) * dT = $(T0 + (numT - 1) * dT)"))
+    Pmax ≈ P0 + (numP - 1) * dP || throw(ArgumentError("Pmax = $Pmax is inconsistent with P0 + (numP - 1) * dP = $(P0 + (numP - 1) * dP)"))
     return LinearInterpolator(T0, dT, numT, Tmax, P0, dP, numP, Pmax, data)
 end
+
+# Plain numbers are converted to the table's type; other `Real`s (e.g. dual numbers) pass through.
+@inline _to_grid_type(::Type{T}, x::Union{AbstractFloat, Integer}) where {T} = T(x)
+@inline _to_grid_type(::Type, x) = x
 
 """
     (itp::LinearInterpolator)(x, y)
@@ -66,8 +73,8 @@ Evaluate the interpolation at point (x, y) using bilinear interpolation.
 """
 function (itp::LinearInterpolator{T, I})(x::Real, y::Real) where {T, I}
     # Promote input types to the interpolator's element type
-    x_promoted = T(x)
-    y_promoted = T(y)
+    x_promoted = _to_grid_type(T, x)
+    y_promoted = _to_grid_type(T, y)
 
     # Extract parameters from struct (replaces x_knots, y_knots = itp.knots)
     T0, dT, numT, Tmax = itp.T0, itp.dT, itp.numT, itp.Tmax
@@ -138,8 +145,8 @@ function interpolate_field(
     ) where {T, I, A <: AbstractArray{T, 2}}
 
     # Promote input types to the interpolator's element type
-    x_promoted = T(x)
-    y_promoted = T(y)
+    x_promoted = _to_grid_type(T, x)
+    y_promoted = _to_grid_type(T, y)
 
     # Clamp inputs to valid range (Flat extrapolation)
     x_clamped = clamp(x_promoted, T0, Tmax)      # T0 instead of x_knots[1]

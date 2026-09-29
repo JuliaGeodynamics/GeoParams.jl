@@ -40,7 +40,7 @@ include("../Computations.jl")
 
 Implements the T-dependent melting parameterisation used by Caricchi, Simpson et al. (as for example described in Simpson)
 ```math
-    \\theta = \\frac{a - (T + c)}{b}
+    \\theta = \\frac{a - (T - c)}{b}
 ```
 ```math
     \\phi_{melt} = \\frac{1.0}{1.0 + e^\\theta}
@@ -64,7 +64,7 @@ References
     c::GeoUnit{T, U} = 273.15K # shift from C to K
     apply_bounds::Bool = true
 end
-MeltingParam_Caricchi(args...) = MeltingParam_Caricchi(convert.(GeoUnit, args)...)
+MeltingParam_Caricchi(args...) = promote_construct(MeltingParam_Caricchi, args...)
 
 function param_info(s::MeltingParam_Caricchi) # info about the struct
     return MaterialParamsInfo(;
@@ -210,7 +210,7 @@ The default values are for a composite liquid-line-of-descent:
     T_l::GeoUnit{T, U} = 1388.2K
     apply_bounds::Bool = true
 end
-MeltingParam_5thOrder(args...) = MeltingParam_5thOrder(convert.(GeoUnit, args)...)
+MeltingParam_5thOrder(args...) = promote_construct(MeltingParam_5thOrder, args...)
 
 function param_info(s::MeltingParam_5thOrder) # info about the struct
     return MaterialParamsInfo(; Equation = L"\phi = aT^5 + bT^4 + cT^3 + dT^2 + eT + f")
@@ -232,8 +232,6 @@ function (p::MeltingParam_5thOrder)(; T, kwargs...)
 
     return ϕ
 end
-
-compute_dϕdT(p::MeltingParam_5thOrder, T, kwargs...) = compute_dϕdT(p; T, kwargs...)
 
 function compute_dϕdT(p::MeltingParam_5thOrder; T, kwargs...)
     @unpack_val a, b, c, d, e, T_s, T_l = p
@@ -289,7 +287,7 @@ The default values are for Tonalite experiments from Marxer and Ulmer (2019):
     T_l::GeoUnit{T, U} = 1270.15K
     apply_bounds::Bool = true
 end
-MeltingParam_4thOrder(args...) = MeltingParam_4thOrder(convert.(GeoUnit, args)...)
+MeltingParam_4thOrder(args...) = promote_construct(MeltingParam_4thOrder, args...)
 
 function param_info(s::MeltingParam_4thOrder) # info about the struct
     return MaterialParamsInfo(; Equation = L"\phi = bT^4 + cT^3 + dT^2 + eT + f")
@@ -368,7 +366,7 @@ This was used, among others, in Tierney et al. (2016) Geology
     T_l::GeoUnit{T, U} = 1273.15K
     apply_bounds::Bool = true
 end
-MeltingParam_Quadratic(args...) = MeltingParam_Quadratic(convert.(GeoUnit, args)...)
+MeltingParam_Quadratic(args...) = promote_construct(MeltingParam_Quadratic, args...)
 
 function param_info(s::MeltingParam_Quadratic) # info about the struct
     return MaterialParamsInfo(; Equation = L"\phi = 1.0 - ((T_l - T)/(T_l - T_s))^2")
@@ -451,7 +449,7 @@ References
     a::GeoUnit{T, U1} = 0.005NoUnits
     apply_bounds::Bool = true
 end
-MeltingParam_Assimilation(args...) = MeltingParam_Assimilation(convert.(GeoUnit, args)...)
+MeltingParam_Assimilation(args...) = promote_construct(MeltingParam_Assimilation, args...)
 
 function param_info(s::MeltingParam_Assimilation) # info about the struct
     return MaterialParamsInfo(;
@@ -603,6 +601,8 @@ end
 
 # Set default values:
 function SmoothMelting(; p = MeltingParam_4thOrder(), k_sol = 0.2 / K, k_liq = 0.2 / K)
+    all(f -> hasfield(typeof(p), f), (:T_s, :T_l, :apply_bounds)) ||
+        throw(ArgumentError("SmoothMelting requires a melting parameterization with solidus `T_s`, liquidus `T_l` and `apply_bounds`; got $(nameof(typeof(p)))"))
     k_sol = convert(GeoUnit, k_sol)
     k_liq = convert(GeoUnit, k_liq)
     p = @set p.apply_bounds = false
@@ -880,13 +880,6 @@ function compute_meltfraction(
 end
 
 compute_meltfraction(p::AbstractPhaseDiagramsStruct, args) = compute_meltfraction(p; args...)
-"""
-    compute_meltfraction!(ϕ::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T:AbstractArray{<:AbstractFloat}, p::AbstractPhaseDiagramsStruct)
-
-In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
-"""
-function compute_meltfraction!(p::AbstractPhaseDiagramsStruct, args) end
-
 """
     compute_dϕdT(P,T, p::AbstractPhaseDiagramsStruct)
 

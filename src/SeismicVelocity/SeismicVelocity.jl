@@ -48,7 +48,7 @@ where ``V_p, V_s`` are the P-wave and S-wave velocities [``km/s``].
     Vp::GeoUnit{T, U} = 8.1e3m / s               # P-wave velocity
     Vs::GeoUnit{T, U} = 4.5e3m / s               # S-wave velocity
 end
-ConstantSeismicVelocity(args...) = ConstantSeismicVelocity(convert.(GeoUnit, args)...)
+ConstantSeismicVelocity(args...) = promote_construct(ConstantSeismicVelocity, args...)
 
 function param_info(s::ConstantSeismicVelocity) # info about the struct
     return MaterialParamsInfo(; Equation = L"v_p = cst \\ v_s = cst")

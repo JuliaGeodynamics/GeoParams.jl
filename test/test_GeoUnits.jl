@@ -10,8 +10,17 @@ using Unitful
         @test GeoParams.GeoUnit(x -> 2x) isa GeoUnit          # function-valued
         @test GeoUnit{Float64}(5.0) isa GeoUnit
 
+        # affine temperatures are stored in K
+        @test GeoUnit(25.0C).val ≈ 298.15
+        @test Unit(GeoUnit(25.0C)) == K
+        @test GeoUnit([0.0, 100.0]C).val ≈ [273.15, 373.15]
+        @test GeoUnit{Float32}(0.0C).val ≈ 273.15f0
+
         # convert from Int → Float
         @test convert(GeoUnit, Int32(5)).val === 5.0f0
+        # converting a GeoUnit to a number type returns that type
+        @test convert(Float32, GeoUnit(2.0)) === 2.0f0
+        @test convert(Vector{Float32}, GeoUnit([1.0, 2.0])) isa Vector{Float32}
         @test convert(GeoUnit, Int32[1, 2, 3]).val == Float32[1, 2, 3]
         @test convert(GeoUnit, Int64[1, 2, 3]).val == Float64[1, 2, 3]
         @test convert(GeoUnit, [1, 2, 3]).val == [1.0, 2.0, 3.0]
@@ -177,7 +186,8 @@ using Unitful
         @test convert(GeoUnit, Vector(10.1:0.1:20)).val == 10.1:0.1:20
         @test Unit(convert(GeoUnit, 10km / s)) == km / s
         @test convert(Float64, GeoUnit(10.2)) == 10.2
-        @test convert(Float64, GeoUnit([10.2 11.2])) == [10.2 11.2]
+        @test_throws MethodError convert(Float64, GeoUnit([10.2 11.2]))   # use NumValue to strip an array
+        @test convert(Matrix{Float64}, GeoUnit([10.2 11.2])) == [10.2 11.2]
 
         a = GeoUnit(3km)
         b = GeoUnit(2000m)
@@ -498,8 +508,8 @@ using Unitful
         @test all(Temp_K_dim.val .≈ (Depth.val .* 30 .+ 273.15))
 
         Gradient_C = nondimensionalize(GeoUnit(0C), CharDim) .+ Geotherm_C * Depth_nondim
-        Temp_C_dim = dimensionalize(Gradient_C, CharDim)
-        @test all(Temp_C_dim.val .≈ Depth.val .* 30)
+        Temp_C_dim = dimensionalize(Gradient_C, CharDim)   # °C inputs are stored and returned in K
+        @test all(Temp_C_dim.val .≈ (Depth.val .* 30 .+ 273.15))
 
         # Test show methods dont crash
         @test repr("text/plain", GeoUnit(100km)) isa String
@@ -528,6 +538,18 @@ using Unitful
         @test Phase_nd.Nondimensional == true
         Phase_dim = dimensionalize(Phase_nd, CharDim)
         @test Phase_dim.Nondimensional == false
+    end
+
+    @testset "mixed-precision constructors" begin
+        # a Float32 keyword among Float64 defaults promotes instead of recursing
+        @test LinearViscous(; η = 1.0f20).η.val isa Float64
+        @test PT_Density(; ρ0 = 2900.0f0kg / m^3).ρ0.val isa Float64
+        @test DruckerPrager(; C = 1.0f7Pa).C.val isa Float64
+        @test MeltingParam_Quadratic(; T_s = 963.0f0K).T_s.val isa Float64
+        # uniform Float32 input stays Float32
+        @test LinearViscous(; η = 1.0f20, η_val = 1.0f0).η.val isa Float32
+        @test ConstantDensity(; ρ = 2900.0f0kg / m^3).ρ.val isa Float32
+        @test_throws "no ConstantDensity constructor accepts arguments" ConstantDensity("oops")
     end
 
     @testset "GeoUnit integer-quantity constructors" begin

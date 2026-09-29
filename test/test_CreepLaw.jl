@@ -1,4 +1,4 @@
-using Test, Statistics
+using Test, Statistics, ForwardDiff
 using GeoParams, LaTeXStrings
 
 @testset "CreepLaw" begin
@@ -94,7 +94,7 @@ using GeoParams, LaTeXStrings
 
     # regression with ε0 != 1 so that the ε0 factor in the derivatives is actually pinned
     xp = PowerlawViscous(; η0 = 2.0, n = 3.0, ε0 = 1.0e-15)
-    @test dεII_dτII(xp, 5.0e5) ≈ 1.0e-15 * (5.0e5)^((1 - 3.0) / 3.0) / (3.0 * 2.0^(1 / 3.0)) ≈ 4.199736832982913e-20
+    @test dεII_dτII(xp, 5.0e5) ≈ (5.0e5 / (2.0 * 1.0e-15))^((1 - 3.0) / 3.0) / (3.0 * 2.0) ≈ 4.1997368329829155e-15
     @test dτII_dεII(xp, 2.0e-14) ≈ 3.0 * 1.0e-15 * 2.0 * (2.0e-14)^(3.0 - 1) * (1 / 1.0e-15)^3.0 ≈ 2399.999999999999
 
     x2 = PowerlawViscous()
@@ -590,6 +590,40 @@ using GeoParams, LaTeXStrings
             FT, FE = GeoParams.CorrectionFactor(DislocationCreep(; Apparatus = app))
             @test FT ≈ ref[1] rtol = 1.0e-12
             @test FE ≈ ref[2] rtol = 1.0e-12
+        end
+    end
+
+    @testset "Creep-law inverse and derivative consistency" begin
+        args = (T = 1500.0, P = 1.0e9, f = 1.0, d = 1.0e-3)
+        uargs = (T = 1500.0K, P = 1.0e9Pa, f = 1.0NoUnits, d = 1.0e-3m)
+        laws = (
+            PowerlawViscous(; η0 = 2.0, n = 3.0, ε0 = 1.0e-15),
+            DislocationCreep(; n = 3.5NoUnits, r = 1.2NoUnits, A = 1.0e-16Pa^(-3.5) / s),
+            DiffusionCreep(; n = 1NoUnits),
+            DiffusionCreep(; n = 3NoUnits, A = 1.5e6Pa^(-3) / s * m^3),
+            GrainBoundarySliding(),
+            PeierlsCreep(),
+        )
+        τII = 1.0e6
+        for v in laws
+            εII = compute_εII(v, τII, args)
+            @test compute_τII(v, εII, args) ≈ τII
+            @test dεII_dτII(v, τII, args) ≈ ForwardDiff.derivative(x -> compute_εII(v, x, args), τII)
+            @test dτII_dεII(v, εII, args) ≈ ForwardDiff.derivative(x -> compute_τII(v, x, args), εII)
+        end
+        # the unitful methods must agree with the numeric ones
+        for v in laws[2:end]
+            εII = compute_εII(v, τII, args)
+            @test ustrip(upreferred(compute_εII(v, τII * Pa; uargs...))) ≈ εII
+            @test ustrip(upreferred(compute_τII(v, εII / s; uargs...))) ≈ τII
+            @test ustrip(upreferred(dεII_dτII(v, τII * Pa; uargs...))) ≈ dεII_dτII(v, τII, args)
+            @test ustrip(upreferred(dτII_dεII(v, εII / s; uargs...))) ≈ dτII_dεII(v, εII, args)
+        end
+        npc = NonLinearPeierlsCreep()
+        @test ustrip(upreferred(dεII_dτII(npc, 1.0e9Pa; T = 1500.0K))) ≈ dεII_dτII(npc, 1.0e9, (; T = 1500.0))
+        # removing the tensor correction must keep the gas constant
+        for v in (DislocationCreep(; R = 8.0J / mol / K), DiffusionCreep(; R = 8.0J / mol / K))
+            @test remove_tensor_correction(v).R.val == 8.0
         end
     end
 end
