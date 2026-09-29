@@ -38,10 +38,10 @@ import ForwardDiff as FD
 
     rheologies1 = (
         SetMaterialParams(;
-            CompositeRheology = CompositeRheology((LinearViscous(; η = 1),))
+            Phase = 1, CompositeRheology = CompositeRheology((LinearViscous(; η = 1),))
         ),
         SetMaterialParams(;
-            CompositeRheology = CompositeRheology((LinearViscous(; η = 2),))
+            Phase = 2, CompositeRheology = CompositeRheology((LinearViscous(; η = 2),))
         ),
     )
 
@@ -59,10 +59,10 @@ import ForwardDiff as FD
 
     rheologies2 = (
         SetMaterialParams(;
-            CompositeRheology = CompositeRheology((LinearViscous(; η = 1), el))
+            Phase = 1, CompositeRheology = CompositeRheology((LinearViscous(; η = 1), el))
         ),
         SetMaterialParams(;
-            CompositeRheology = CompositeRheology((LinearViscous(; η = 2), el))
+            Phase = 2, CompositeRheology = CompositeRheology((LinearViscous(; η = 2), el))
         ),
     )
 
@@ -185,8 +185,8 @@ import ForwardDiff as FD
     # Multi-phase εII / τII with integer phase and phase ratios
     @testset "multi-phase compute_viscosity_εII/τII" begin
         rheologies_lv = (
-            SetMaterialParams(; CompositeRheology = CompositeRheology((LinearViscous(; η = 1.0),))),
-            SetMaterialParams(; CompositeRheology = CompositeRheology((LinearViscous(; η = 2.0),))),
+            SetMaterialParams(; Phase = 1, CompositeRheology = CompositeRheology((LinearViscous(; η = 1.0),))),
+            SetMaterialParams(; Phase = 2, CompositeRheology = CompositeRheology((LinearViscous(; η = 2.0),))),
         )
         a_lv = (;)
 
@@ -205,13 +205,24 @@ import ForwardDiff as FD
         @test compute_viscosity_εII(rheologies_lv, 9, 0.0, a_lv) == 0.0
         @test compute_viscosity_τII(rheologies_lv, 9, 0.0, a_lv) == 0.0
         @test compute_viscosity(rheologies_lv, 9, a_lv) == 0.0
+
+        # phases are looked up by their `Phase` id, not their position in the tuple
+        rheologies_ids = (
+            SetMaterialParams(; Phase = 1, CompositeRheology = CompositeRheology((LinearViscous(; η = 1.0),))),
+            SetMaterialParams(; Phase = 5, CompositeRheology = CompositeRheology((LinearViscous(; η = 2.0),))),
+        )
+        @test compute_viscosity(rheologies_ids, 5, a_lv) == 2.0
+        @test compute_viscosity_εII(rheologies_ids, 5, 1.0, a_lv) == 2.0
+        @test compute_viscosity_τII(rheologies_ids, 5, 1.0, a_lv) == 2.0
+        @test compute_elastoviscosity_εII(rheologies_ids, 5, 1.0, a_lv) == 2.0
+        @test compute_viscosity(rheologies_ids, 2, a_lv) == 0.0
     end
 
     @testset "multi-phase compute_elasticviscosity fallback" begin
         el = ConstantElasticity()
         rheologies_el = (
-            SetMaterialParams(; CompositeRheology = CompositeRheology((LinearViscous(; η = 1.0e20), el))),
-            SetMaterialParams(; CompositeRheology = CompositeRheology((LinearViscous(; η = 1.0e21), el))),
+            SetMaterialParams(; Phase = 1, CompositeRheology = CompositeRheology((LinearViscous(; η = 1.0e20), el))),
+            SetMaterialParams(; Phase = 2, CompositeRheology = CompositeRheology((LinearViscous(; η = 1.0e21), el))),
         )
         args_el = (; dt = 1.0e10)
         @test compute_elasticviscosity(rheologies_el, 1, args_el) isa Number

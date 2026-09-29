@@ -43,7 +43,7 @@ end
 @generated function compute_viscosity_εII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase::Int, args::Vararg{Any, N2}) where {N1, N2}
     return quote
         Base.@_inline_meta
-        Base.@nexprs $N1 i -> i == phase && (return compute_viscosity_εII(v[i], args...))
+        Base.@nexprs $N1 i -> v[i].Phase == phase && (return compute_viscosity_εII(v[i], args...))
         return 0.0
     end
 end
@@ -51,7 +51,7 @@ end
 @generated function compute_viscosity_τII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase::Int, args::Vararg{Any, N2}) where {N1, N2}
     return quote
         Base.@_inline_meta
-        Base.@nexprs $N1 i -> i == phase && (return compute_viscosity_τII(v[i], args...))
+        Base.@nexprs $N1 i -> v[i].Phase == phase && (return compute_viscosity_τII(v[i], args...))
         return 0.0
     end
 end
@@ -125,7 +125,7 @@ for fn in (:compute_elastoviscosity_εII, :compute_elastoviscosity_τII)
         @generated function $fn(v::NTuple{N, AbstractMaterialParamsStruct}, phase::Int, args::Vararg{Any, N2}) where {N, N2}
             return quote
                 Base.@_inline_meta
-                Base.@nexprs $N i -> i == phase && (return $$fn(v[i].CompositeRheology[1], args...))
+                Base.@nexprs $N i -> v[i].Phase == phase && (return $$fn(v[i].CompositeRheology[1], args...))
                 return 0.0
             end
         end
@@ -200,7 +200,7 @@ end
 @generated function compute_viscosity(v::NTuple{N, AbstractMaterialParamsStruct}, phase, args) where {N}
     return quote
         Base.@_inline_meta
-        Base.@nexprs $N i -> i == phase && (return compute_viscosity(v[i].CompositeRheology[1], args))
+        Base.@nexprs $N i -> v[i].Phase == phase && (return compute_viscosity(v[i].CompositeRheology[1], args))
         return 0.0
     end
 end
@@ -231,7 +231,7 @@ combining them harmonically for a composite rheology.
 @generated function compute_elasticviscosity(v::NTuple{N, AbstractMaterialParamsStruct}, phase, args) where {N}
     return quote
         Base.@_inline_meta
-        Base.@nexprs $N i -> i == phase && (return compute_elasticviscosity(v[i].CompositeRheology[1], args))
+        Base.@nexprs $N i -> v[i].Phase == phase && (return compute_elasticviscosity(v[i].CompositeRheology[1], args))
         return 0.0
     end
 end
