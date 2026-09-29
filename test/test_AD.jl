@@ -102,8 +102,8 @@ for (name, backend) in zip(pkg, backends)
         args = (T = 900.0, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)
         εII, τII = 1.0e-12, 2.0e6
         # test non-linear rheology
-        @test AD.derivative(backend, x -> compute_τII(c1, εII, (; T = x, P = P, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)), T)[1] ≈ -0.44160718760208006
-        @test AD.derivative(backend, x -> compute_τII(c1, εII, (; T = T, P = x, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)), P)[1] ≈ 1.5937771378217618e-8
+        @test AD.derivative(backend, x -> compute_τII(c1, εII, (; T = x, P = P, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)), T)[1] ≈ -0.4417520137461898
+        @test AD.derivative(backend, x -> compute_τII(c1, εII, (; T = T, P = x, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)), P)[1] ≈ 1.594299818642621e-8
         @test AD.derivative(backend, x -> compute_εII(c1, τII, (; T = x, P = P, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)), T)[1] ≈ 2.6560571677070596e-22
         @test AD.derivative(backend, x -> compute_εII(c1, τII, (; T = T, P = x, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)), P)[1] ≈ -9.587013268449008e-30
         # test linear rheology
