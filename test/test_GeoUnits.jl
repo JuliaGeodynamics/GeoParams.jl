@@ -10,6 +10,12 @@ using Unitful
         @test GeoParams.GeoUnit(x -> 2x) isa GeoUnit          # function-valued
         @test GeoUnit{Float64}(5.0) isa GeoUnit
 
+        # affine temperatures are stored in K
+        @test GeoUnit(25.0C).val ≈ 298.15
+        @test Unit(GeoUnit(25.0C)) == K
+        @test GeoUnit([0.0, 100.0]C).val ≈ [273.15, 373.15]
+        @test GeoUnit{Float32}(0.0C).val ≈ 273.15f0
+
         # convert from Int → Float
         @test convert(GeoUnit, Int32(5)).val === 5.0f0
         @test convert(GeoUnit, Int32[1, 2, 3]).val == Float32[1, 2, 3]
@@ -498,8 +504,8 @@ using Unitful
         @test all(Temp_K_dim.val .≈ (Depth.val .* 30 .+ 273.15))
 
         Gradient_C = nondimensionalize(GeoUnit(0C), CharDim) .+ Geotherm_C * Depth_nondim
-        Temp_C_dim = dimensionalize(Gradient_C, CharDim)
-        @test all(Temp_C_dim.val .≈ Depth.val .* 30)
+        Temp_C_dim = dimensionalize(Gradient_C, CharDim)   # °C inputs are stored and returned in K
+        @test all(Temp_C_dim.val .≈ (Depth.val .* 30 .+ 273.15))
 
         # Test show methods dont crash
         @test repr("text/plain", GeoUnit(100km)) isa String

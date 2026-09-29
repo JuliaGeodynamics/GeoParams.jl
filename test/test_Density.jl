@@ -20,6 +20,9 @@ import ForwardDiff.derivative
     @test param_info(x).Equation === L"$\rho = \rho_0(1.0-\alpha (T-T_0) + \beta (P-P_0)$"
     @test isdimensional(x) === true
     @test sprint(show, x) isa String
+    # the default reference temperature (0 °C) applies to numeric (K) and unitful inputs alike
+    @test x(; T = 273.15, P = 0.0) ≈ 2900.0
+    @test x(; T = 273.15K, P = 0.0Pa) ≈ 2900.0kg / m^3
 
     x = Compressible_Density()
     @test isbits(x)
@@ -297,7 +300,7 @@ import ForwardDiff.derivative
 
     # If we employ a phase diagram many allocations occur:
     compute_density!(rho, Mat_tup, Phases, args)   #        37.189 ms (1439489 allocations: 26.85 MiB)     - the allocations are from the phase diagram
-    @test sum(rho) / 400^2 ≈ 2895.5241895725003
+    @test sum(rho) / 400^2 ≈ 2901.4651983749986
 
     # test computing material properties when we have PhaseRatios, instead of Phase numbers
     PhaseRatio = zeros(size(Phases)..., length(Mat_tup))
@@ -322,7 +325,7 @@ import ForwardDiff.derivative
     # In case we only want to compute with T, do this:
     #  NOTE that in this example the results are actually wrong (as some functions require P as well)
     compute_density!(rho, Mat_tup, PhaseRatio, (P = zeros(size(T)), T = T, index = fill(10, size(T))))
-    @test sum(rho) / 400^2 ≈ 2895.524175
+    @test sum(rho) / 400^2 ≈ 2901.4651875
 
     #Test computation of density given a single phase and P,T as scalars
     Phase, P, T = 0, 1.0, 1.0

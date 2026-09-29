@@ -146,8 +146,17 @@ struct GeoUnit{T, U}
     isdimensional::Bool
 end
 
+# Affine temperatures (°C) are stored in K: the numeric compute routines treat stored
+# temperatures as absolute values.
+_absolute(val) = val
+function _absolute(val::Union{Quantity, AbstractArray{<:Quantity}})
+    u = unit(first(val))
+    return u isa Unitful.AffineUnits ? uconvert.(upreferred(u), val) : val
+end
+
 # Different ways of specifying the GeoUnit:
 function GeoUnit(val)
+    val = _absolute(val)
     return GeoUnit{typeof(ustrip.(val)), typeof(unit(val[1]))}(
         ustrip.(val), unit(val[1]), isa(val[1], Union{Unitful.FreeUnits, Unitful.Quantity})
     )
@@ -162,6 +171,7 @@ function GeoUnit(fun::F) where {F <: Function}
 end
 
 function GeoUnit{T}(val) where {T}
+    val = _absolute(val)
     return GeoUnit{T, typeof(unit(val[1]))}(
         T.(ustrip.(val)),
         unit(val[1]),
