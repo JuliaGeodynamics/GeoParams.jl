@@ -205,8 +205,14 @@ dt = 1.0
 @testset "second invariant: SMatrix & staggered" begin
     # SMatrix dispatch
     A = @SMatrix [1.0 2.0; 2.0 3.0]
-    @test GeoParams.doubledot(A, A) ≈ sum(A .* A) rtol = 1.0e-5
-    @test GeoParams.second_invariant(A) ≈ √(0.5 * sum(A .* A)) rtol = 1.0e-5
+    # 2×2 tensors include the plane-strain τzz = -τxx - τyy, like the Voigt form
+    @test GeoParams.doubledot(A, A) ≈ sum(A .* A) + (-1.0 - 3.0)^2
+    @test GeoParams.second_invariant(A) ≈ second_invariant((1.0, 3.0, 2.0))
+    @test GeoParams.second_invariant(Matrix(A)) ≈ second_invariant((1.0, 3.0, 2.0))
+    @test GeoParams.second_invariant(A) ≈ second_invariant(1.0, 3.0, 2.0)
+    B = @SMatrix [1.0 2.0 0.5; 2.0 3.0 0.1; 0.5 0.1 -4.0]
+    @test GeoParams.second_invariant(B) ≈ second_invariant((1.0, 3.0, -4.0, 0.1, 0.5, 2.0))
+    @test GeoParams.second_invariant(Matrix(B)) ≈ second_invariant((1.0, 3.0, -4.0, 0.1, 0.5, 2.0))
     # identity fallbacks
     M = [1.0 2.0; 3.0 4.0]
     @test voigt2tensor(M) === M

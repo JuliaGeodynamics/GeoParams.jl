@@ -881,13 +881,6 @@ end
 
 compute_meltfraction(p::AbstractPhaseDiagramsStruct, args) = compute_meltfraction(p; args...)
 """
-    compute_meltfraction!(ϕ::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T:AbstractArray{<:AbstractFloat}, p::AbstractPhaseDiagramsStruct)
-
-In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
-"""
-function compute_meltfraction!(p::AbstractPhaseDiagramsStruct, args) end
-
-"""
     compute_dϕdT(P,T, p::AbstractPhaseDiagramsStruct)
 
 Computes derivative of melt fraction vs T in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
