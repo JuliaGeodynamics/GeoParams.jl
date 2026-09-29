@@ -4,7 +4,7 @@ module GravitationalAcceleration
 
 using Parameters, LaTeXStrings, Unitful, StaticArrays
 using ..Units
-using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, phase_not_found
 import Base.show, GeoParams.param_info
 using ..MaterialParameters: MaterialParamsInfo
 
@@ -110,7 +110,7 @@ end
         @inline
         Base.Cartesian.@nexprs $N i ->
         (MatParam[i].Phase == Phase) && return compute_gravity(MatParam[i].Gravity[1])
-        throw(ArgumentError("phase not found in MaterialParams"))
+        phase_not_found()
     end
 end
 

@@ -1,4 +1,4 @@
-using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, phase_not_found
 using ..Units
 using Parameters, Unitful
 using StaticArrays
@@ -30,7 +30,7 @@ using StaticArrays
         Base.@_inline_meta
         Base.Cartesian.@nexprs $N i ->
         @inbounds (MatParam[i].Phase == Phase) && return fn(MatParam[i], args...)
-        throw(ArgumentError("phase not found in MaterialParams"))
+        phase_not_found()
     end
 end
 
