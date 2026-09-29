@@ -193,7 +193,7 @@ step `dt`, given the vorticity `ω`. Dispatches to the 2D or 3D rotation dependi
     rotate_elastic_stress2D(ω, τ::T, dt) where T
 
 Bi-dimensional rotation of the elastic stress where τ is in the Voig notation
-and ω = 1/2(dux/dy - duy/dx)
+and ω = 1/2(duy/dx - dux/dy)
 """
 @inline Base.@propagate_inbounds function rotate_elastic_stress2D(ω, τ, dt)
     θ = ω * dt

@@ -1,4 +1,4 @@
-using Test, GeoParams, StaticArrays
+using Test, GeoParams, StaticArrays, LinearAlgebra
 import GeoParams: tensor2voigt, voigt2tensor
 
 @testset "Tensor to Voigt notation" begin
@@ -180,6 +180,19 @@ end
     τ32 = Float32.(τ0)
     @test eltype(@inferred GeoParams.rotate_elastic_stress3D((0.5f0, -0.4f0, 0.2f0), τ32, 1.0f-3)) == Float32
     @test eltype(@inferred GeoParams.rotate_elastic_stress3D((0.0f0, 0.0f0, 0.0f0), τ32, 1.0f-3)) == Float32
+
+    # Both rotations reproduce the Jaumann update τ ← R τ Rᵀ with R = exp(W dt) and
+    # W = ½(∇v − ∇vᵀ), for a velocity field v = (γ y, 0, 0).
+    γ, dt = 0.2, 1.0
+    W = [0 γ/2 0; -γ/2 0 0; 0 0 0]
+    R = exp(W * dt)
+    T = [1.0 0.3 0.0; 0.3 -0.5 0.0; 0.0 0.0 -0.5]
+    Tj = R * T * R'
+    # 2D: ω = ½(∂vy/∂x − ∂vx/∂y)
+    @test all(GeoParams.rotate_elastic_stress2D(-γ / 2, (T[1, 1], T[2, 2], T[1, 2]), dt) .≈ (Tj[1, 1], Tj[2, 2], Tj[1, 2]))
+    # 3D: ω = ∇ × v
+    τ3 = (T[1, 1], T[2, 2], T[3, 3], T[2, 3], T[1, 3], T[1, 2])
+    @test all(GeoParams.rotate_elastic_stress3D((0.0, 0.0, -γ), τ3, dt) .≈ (Tj[1, 1], Tj[2, 2], Tj[3, 3], Tj[2, 3], Tj[1, 3], Tj[1, 2]))
 end
 
 
