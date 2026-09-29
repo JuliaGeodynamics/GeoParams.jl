@@ -14,7 +14,7 @@ import GeoParams.Dislocation
     a = ConstantElasticity()
     info = param_info(a)
     @test info.Equation === L"$Constant elasticity$"
-    @test sprint(show, a) == "Linear elasticity with shear modulus: G = 5.0e10 Pa, Poisson's ratio: ν = 0.5, bulk modulus: Kb = Inf Pa and Young's module: E=NaN Pa"
+    @test sprint(show, a) == "Linear elasticity with shear modulus: G = 5.0e10 Pa, Poisson's ratio: ν = 0.5, bulk modulus: Kb = Inf Pa and Young's module: E=1.5e11 Pa"
     @test isbits(a)
     @test NumValue(a.G) == 5.0e10
     @test repr("text/plain", a) isa String
@@ -77,9 +77,15 @@ import GeoParams.Dislocation
     @test compute_εvol(a, p, argsp) ≈ -5.0e-11  # compute
     @test compute_p(a, 1.0e-15, argsp) ≈ 4.9999e6
     @test dεII_dτII(a, τII, argsτ) ≈ 1.0e-17
-    @test dτII_dεII(a, τII_old, dt, argsτ) ≈ 1.0e17
+    @test dτII_dεII(a, 1.0e-15, argsτ) ≈ 1.0e17
     @test dεvol_dp(a, p, argsp) ≈ -1.0e-17
-    @test dp_dεvol(a, P_old, dt, argsp) ≈ -1.0e17
+    @test dp_dεvol(a, 1.0e-15, argsp) ≈ -1.0e17
+    @test SetConstantElasticity(; G = 3.0e10, ν = 0.5).E.val ≈ 9.0e10
+
+    # elasticity inside a parallel element (Kelvin-Voigt) solves
+    kv = CompositeRheology(LinearViscous(; η = 1.0e21Pa * s), Parallel(ConstantElasticity(), LinearViscous(; η = 1.0e20Pa * s)))
+    τ_kv = first(compute_τII(kv, 1.0e-15, argsτ))
+    @test compute_εII(kv, τ_kv, argsτ) ≈ 1.0e-15
 
     # Test with arrays
     τII_old_array = ones(10) * 15.0e6
