@@ -180,7 +180,7 @@ ratios. Throws for non-linear rheologies.
 @inline compute_viscosity(v::LinearViscous; kwargs...) = v.η.val
 @inline compute_viscosity(v::ConstantElasticity; dt = 0.0, kwargs...) = v.G * dt
 @inline compute_viscosity(v::Union{LinearViscous, ConstantElasticity}, kwargs) = compute_viscosity(v; kwargs...)
-@inline compute_viscosity(v, kwargs) = throw("compute_viscosity only works for linear rheologies")
+@inline compute_viscosity(v, kwargs) = throw(ArgumentError("compute_viscosity only works for linear rheologies"))
 
 @inline compute_viscosity(v::CompositeRheology, args) = compute_viscosity(elements(v), args)
 

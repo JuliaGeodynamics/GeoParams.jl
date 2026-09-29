@@ -18,6 +18,7 @@ import ForwardDiff as FD
     @test compute_viscosity(el, args) == G * dt
     @test compute_viscosity(creep, args) == η0
     @test compute_viscosity(rheology, args) == 1 / (1 / η0 + 1 / G / dt)
+    @test_throws "compute_viscosity only works for linear rheologies" compute_viscosity(DislocationCreep(), args)
 
     # Test differentiability
     @test FD.derivative(x -> compute_viscosity(el, (; P = P, T = x, dt = dt)), T) == 0.0

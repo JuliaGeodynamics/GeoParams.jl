@@ -163,7 +163,7 @@ for myType in (:DruckerPrager, :DruckerPrager_regularised, :DruckerPragerCap)
         ∂F∂τII(p::$(myType), args, kwargs) = ∂F∂τII(p, args; kwargs...)
 
         compute_yieldfunction(p::$(myType), args) = p(args)
-        compute_εII(p::$(myType), args) = compute_εII(p, args...)
+        compute_εII(p::$(myType), args) = compute_εII(p, args.λ, args.τII, args)
 
         function compute_yieldfunction!(
                 H::AbstractArray{_T, N}, p::$(myType){_T}, args

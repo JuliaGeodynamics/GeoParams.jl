@@ -264,8 +264,8 @@ Base.isequal(x::GeoUnit, y::Number) = Base.isequal(x.val, y)
 Base.isequal(x::GeoUnit, y::AbstractArray) = Base.isequal(x.val, y)
 Base.isequal(x::GeoUnit, y::GeoUnit) = Base.isequal(x.val, y.val)
 
-Base.convert(::Type{<:AbstractArray}, v::GeoUnit) = v.val
-Base.convert(::Type{<:Real}, v::GeoUnit) = v.val
+Base.convert(::Type{T}, v::GeoUnit) where {T <: AbstractArray} = convert(T, v.val)
+Base.convert(::Type{T}, v::GeoUnit) where {T <: Real} = convert(T, v.val)
 Base.convert(::Type{ForwardDiff.Dual{T, V, N}}, v::GeoUnit) where {T, V, N} = convert(ForwardDiff.Dual{T, V, N}, v.val)
 Base.convert(::Type{GeoUnit}, v::Number) = GeoUnit(v)
 Base.convert(::Type{GeoUnit}, v::Int32) = GeoUnit(Float32(v))

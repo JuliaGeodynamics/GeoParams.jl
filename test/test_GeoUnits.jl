@@ -18,6 +18,9 @@ using Unitful
 
         # convert from Int → Float
         @test convert(GeoUnit, Int32(5)).val === 5.0f0
+        # converting a GeoUnit to a number type returns that type
+        @test convert(Float32, GeoUnit(2.0)) === 2.0f0
+        @test convert(Vector{Float32}, GeoUnit([1.0, 2.0])) isa Vector{Float32}
         @test convert(GeoUnit, Int32[1, 2, 3]).val == Float32[1, 2, 3]
         @test convert(GeoUnit, Int64[1, 2, 3]).val == Float64[1, 2, 3]
         @test convert(GeoUnit, [1, 2, 3]).val == [1.0, 2.0, 3.0]
@@ -183,7 +186,8 @@ using Unitful
         @test convert(GeoUnit, Vector(10.1:0.1:20)).val == 10.1:0.1:20
         @test Unit(convert(GeoUnit, 10km / s)) == km / s
         @test convert(Float64, GeoUnit(10.2)) == 10.2
-        @test convert(Float64, GeoUnit([10.2 11.2])) == [10.2 11.2]
+        @test_throws MethodError convert(Float64, GeoUnit([10.2 11.2]))   # use NumValue to strip an array
+        @test convert(Matrix{Float64}, GeoUnit([10.2 11.2])) == [10.2 11.2]
 
         a = GeoUnit(3km)
         b = GeoUnit(2000m)

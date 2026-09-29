@@ -526,6 +526,9 @@ using LaTeXStrings
     end
 
     @testset "plastic_strain / lambda" begin
+        # plastic strain rate from named multiplier and stress
+        dp = DruckerPrager(; C = 1.0e6Pa)
+        @test compute_εII(dp, (; λ = 2.0, τII = 1.0e8, P = 0.0)) == compute_εII(dp, 2.0, 1.0e8, (; τII = 1.0e8, P = 0.0))
         mod = GeoParams.MaterialParameters.ConstitutiveRelationships
         p = DruckerPrager(; ϕ = 30.0, Ψ = 10.0, C = 1.0e7Pa)
         εvp = mod.plastic_strain(p, (1.0, 1.0, 1.0), 1.0e-15)

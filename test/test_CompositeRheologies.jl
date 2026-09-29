@@ -127,6 +127,8 @@ import GeoParams: compute_elastoviscosity
     # ---- dimensional (Quantity) compute on a CompositeRheology ----
     # (nreduce now seeds its accumulator from the first element, so unit-bearing results add)
     c_visc = CompositeRheology((LinearViscous(; η = 1.0e20Pa * s), LinearViscous(; η = 2.0e20Pa * s)))
+    # a single element does not need to be wrapped in a tuple
+    @test CompositeRheology(LinearViscous()).elements == CompositeRheology((LinearViscous(),)).elements
     εq = compute_εII(c_visc, 1.0e6Pa, (;))
     @test εq isa Quantity
     @test ustrip(εq) ≈ compute_εII(c_visc, 1.0e6, (;))         # matches unitless
