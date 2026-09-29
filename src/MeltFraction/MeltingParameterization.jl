@@ -64,7 +64,7 @@ References
     c::GeoUnit{T, U} = 273.15K # shift from C to K
     apply_bounds::Bool = true
 end
-MeltingParam_Caricchi(args...) = MeltingParam_Caricchi(convert.(GeoUnit, args)...)
+MeltingParam_Caricchi(args...) = promote_construct(MeltingParam_Caricchi, args...)
 
 function param_info(s::MeltingParam_Caricchi) # info about the struct
     return MaterialParamsInfo(;
@@ -210,7 +210,7 @@ The default values are for a composite liquid-line-of-descent:
     T_l::GeoUnit{T, U} = 1388.2K
     apply_bounds::Bool = true
 end
-MeltingParam_5thOrder(args...) = MeltingParam_5thOrder(convert.(GeoUnit, args)...)
+MeltingParam_5thOrder(args...) = promote_construct(MeltingParam_5thOrder, args...)
 
 function param_info(s::MeltingParam_5thOrder) # info about the struct
     return MaterialParamsInfo(; Equation = L"\phi = aT^5 + bT^4 + cT^3 + dT^2 + eT + f")
@@ -287,7 +287,7 @@ The default values are for Tonalite experiments from Marxer and Ulmer (2019):
     T_l::GeoUnit{T, U} = 1270.15K
     apply_bounds::Bool = true
 end
-MeltingParam_4thOrder(args...) = MeltingParam_4thOrder(convert.(GeoUnit, args)...)
+MeltingParam_4thOrder(args...) = promote_construct(MeltingParam_4thOrder, args...)
 
 function param_info(s::MeltingParam_4thOrder) # info about the struct
     return MaterialParamsInfo(; Equation = L"\phi = bT^4 + cT^3 + dT^2 + eT + f")
@@ -366,7 +366,7 @@ This was used, among others, in Tierney et al. (2016) Geology
     T_l::GeoUnit{T, U} = 1273.15K
     apply_bounds::Bool = true
 end
-MeltingParam_Quadratic(args...) = MeltingParam_Quadratic(convert.(GeoUnit, args)...)
+MeltingParam_Quadratic(args...) = promote_construct(MeltingParam_Quadratic, args...)
 
 function param_info(s::MeltingParam_Quadratic) # info about the struct
     return MaterialParamsInfo(; Equation = L"\phi = 1.0 - ((T_l - T)/(T_l - T_s))^2")
@@ -449,7 +449,7 @@ References
     a::GeoUnit{T, U1} = 0.005NoUnits
     apply_bounds::Bool = true
 end
-MeltingParam_Assimilation(args...) = MeltingParam_Assimilation(convert.(GeoUnit, args)...)
+MeltingParam_Assimilation(args...) = promote_construct(MeltingParam_Assimilation, args...)
 
 function param_info(s::MeltingParam_Assimilation) # info about the struct
     return MaterialParamsInfo(;

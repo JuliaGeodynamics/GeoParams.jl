@@ -38,7 +38,7 @@ H_s = \\Chi \\cdot \\tau_{ij}(\\dot{\\varepsilon}_{ij} - \\dot{\\varepsilon}^{el
 @with_kw_noshow struct ConstantShearheating{T, U} <: AbstractShearheating{T}
     Χ::GeoUnit{T, U} = 0.0 * NoUnits
 end
-ConstantShearheating(args...) = ConstantShearheating(convert.(GeoUnit, args)...)
+ConstantShearheating(args...) = promote_construct(ConstantShearheating, args...)
 
 function param_info(s::ConstantShearheating) # info about the struct
     return MaterialParamsInfo(;

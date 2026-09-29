@@ -45,8 +45,8 @@ Regularized Drucker-Prager plasticity with: C = 1.0e7 Pa, ϕ = 30.0ᵒ, Ψ = 0.0
     η_vp::GeoUnit{T, U2} = 1.0e20Pa * s      # regularisation viscosity
 end
 
-DruckerPrager_regularised(args...) = DruckerPrager_regularised(args[1:2]..., convert.(GeoUnit, args[3:end])...)
-DruckerPrager_regularised(softening_ϕ::AbstractSoftening, softening_C::AbstractSoftening, args::Vararg{GeoUnit, N}) where {N} = DruckerPrager_regularised(softening_ϕ, softening_C, convert.(GeoUnit, args)...)
+DruckerPrager_regularised(args...) = promote_construct(DruckerPrager_regularised, args...)
+DruckerPrager_regularised(softening_ϕ::AbstractSoftening, softening_C::AbstractSoftening, args::Vararg{GeoUnit, N}) where {N} = promote_construct(DruckerPrager_regularised, softening_ϕ, softening_C, args...)
 
 function isvolumetric(s::DruckerPrager_regularised)
     @unpack_val Ψ = s

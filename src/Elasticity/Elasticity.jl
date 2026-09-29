@@ -41,7 +41,7 @@ Structure that holds parameters for constant, isotropic, linear elasticity.
     E::GeoUnit{T, U} = 2 * G * (1 + ν)                                  # Elastic Young's modulus
 end
 
-ConstantElasticity(args...) = ConstantElasticity(convert.(GeoUnit, args)...)
+ConstantElasticity(args...) = promote_construct(ConstantElasticity, args...)
 
 
 # Add multiple dispatch here to allow specifying combinations of 2 elastic parameters (say ν & E), to compute the others

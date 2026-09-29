@@ -540,6 +540,18 @@ using Unitful
         @test Phase_dim.Nondimensional == false
     end
 
+    @testset "mixed-precision constructors" begin
+        # a Float32 keyword among Float64 defaults promotes instead of recursing
+        @test LinearViscous(; η = 1.0f20).η.val isa Float64
+        @test PT_Density(; ρ0 = 2900.0f0kg / m^3).ρ0.val isa Float64
+        @test DruckerPrager(; C = 1.0f7Pa).C.val isa Float64
+        @test MeltingParam_Quadratic(; T_s = 963.0f0K).T_s.val isa Float64
+        # uniform Float32 input stays Float32
+        @test LinearViscous(; η = 1.0f20, η_val = 1.0f0).η.val isa Float32
+        @test ConstantDensity(; ρ = 2900.0f0kg / m^3).ρ.val isa Float32
+        @test_throws "no ConstantDensity constructor accepts arguments" ConstantDensity("oops")
+    end
+
     @testset "GeoUnit integer-quantity constructors" begin
         # integer-quantity GeoUnit constructors -> promoted to Float64
         @test GeoUnit(Int32(2)u"Pa") isa GeoUnit

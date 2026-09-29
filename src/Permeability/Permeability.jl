@@ -65,7 +65,7 @@ Constant permeability: k=1.0e-12 m²·⁰
 @with_kw_noshow struct ConstantPermeability{_T, U} <: AbstractPermeability{_T}
     k::GeoUnit{_T, U} = 1.0e-12m^2 # permeability
 end
-ConstantPermeability(args...) = ConstantPermeability(convert.(GeoUnit, args)...)
+ConstantPermeability(args...) = promote_construct(ConstantPermeability, args...)
 isdimensional(s::ConstantPermeability) = isdimensional(s.k)
 
 @inline (s::ConstantPermeability)(; args...) = s.k.val
@@ -122,7 +122,7 @@ Hazen permeability: k = C * D10^2; C=1.0; D10=0.0001
     C::GeoUnit{_T, U1} = 1.0 * NoUnits # Hazen constant
     D10::GeoUnit{_T, U2} = 1.0e-4 * m    # Effective grain size
 end
-HazenPermeability(args...) = HazenPermeability(convert.(GeoUnit, args)...)
+HazenPermeability(args...) = promote_construct(HazenPermeability, args...)
 isdimensional(s::HazenPermeability) = isdimensional(s.D10)
 
 function param_info(s::HazenPermeability)
@@ -182,7 +182,7 @@ Power-law permeability: k = c* k0 * ϕ^n; c = 1.0, k0=1.0e-12; n=3.0
     ϕ::GeoUnit{_T, U3} = 1.0e-2 * NoUnits # reference porosity
     n::GeoUnit{_T, U4} = 3 * NoUnits    # exponent
 end
-PowerLawPermeability(args...) = PowerLawPermeability(convert.(GeoUnit, args)...)
+PowerLawPermeability(args...) = promote_construct(PowerLawPermeability, args...)
 isdimensional(s::PowerLawPermeability) = isdimensional(s.k0)
 
 function param_info(s::PowerLawPermeability)
@@ -239,7 +239,7 @@ Carman-Kozeny permeability: k = c * (ϕ / ϕ0)^n; c=1.0; ϕ0=0.01; n=3.0
     ϕ0::GeoUnit{_T, U2} = 0.01 * NoUnits # reference porosity
     n::GeoUnit{_T, U3} = 3 * NoUnits    # exponent
 end
-CarmanKozenyPermeability(args...) = CarmanKozenyPermeability(convert.(GeoUnit, args)...)
+CarmanKozenyPermeability(args...) = promote_construct(CarmanKozenyPermeability, args...)
 # isdimensional(s::CarmanKozenyPermeability) = isdimensional(s.c)
 
 function param_info(s::CarmanKozenyPermeability)

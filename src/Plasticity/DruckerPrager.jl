@@ -44,8 +44,8 @@ Drucker-Prager plasticity with: C = 1.0e7 Pa, ϕ = 30.0ᵒ, Ψ = 0.0ᵒ
     C::GeoUnit{T, U1} = 10.0e6Pa # Cohesion
 end
 
-DruckerPrager(args...) = DruckerPrager(args[1:2]..., convert.(GeoUnit, args[3:end])...)
-DruckerPrager(softening_ϕ::AbstractSoftening, softening_C::AbstractSoftening, args...) = DruckerPrager(softening_ϕ, softening_C, convert.(GeoUnit, args)...)
+DruckerPrager(args...) = promote_construct(DruckerPrager, args...)
+DruckerPrager(softening_ϕ::AbstractSoftening, softening_C::AbstractSoftening, args...) = promote_construct(DruckerPrager, softening_ϕ, softening_C, args...)
 
 function isvolumetric(s::DruckerPrager)
     @unpack_val Ψ = s

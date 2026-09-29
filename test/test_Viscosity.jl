@@ -219,6 +219,19 @@ import ForwardDiff as FD
         @test_throws "phase not found in MaterialParams" compute_viscosity(rheologies_ids, 2, a_lv)
     end
 
+    @testset "Float32 viscosities stay Float32" begin
+        lv32 = LinearViscous(; η = 1.0f20, η_val = 1.0f0)
+        el32 = ConstantElasticity(; G = 5.0f10Pa, ν = 0.5f0)
+        mp32 = (SetMaterialParams(; Phase = 1, CompositeRheology = CompositeRheology((lv32, el32))),)
+        a32 = (; dt = 1.0f10)
+        @test @inferred(compute_viscosity(mp32[1].CompositeRheology[1], a32)) isa Float32
+        @test @inferred(compute_viscosity(mp32, 1, a32)) isa Float32
+        @test @inferred(compute_viscosity(mp32, (1.0f0,), a32)) isa Float32
+        @test @inferred(compute_viscosity_εII(mp32, 1, 1.0f-15, a32)) isa Float32
+        @test @inferred(compute_elastoviscosity_εII(mp32, 1, 1.0f-15, a32)) isa Float32
+        @test @inferred(compute_elasticviscosity(mp32, 1, a32)) isa Float32
+    end
+
     @testset "multi-phase compute_elasticviscosity fallback" begin
         el = ConstantElasticity()
         rheologies_el = (
