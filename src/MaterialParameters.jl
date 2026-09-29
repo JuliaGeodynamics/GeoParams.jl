@@ -204,7 +204,7 @@ module MaterialParameters
             | [dimensional units]
             |
             |-- Name              : Lower Crust
-            |-- Density           : P/T-dependent density: ρ0=3000.0 kg m⁻³·⁰, α=3.0e-5 K⁻¹·⁰, β=1.0e-9 Pa⁻¹·⁰, T0=0.0 °C, P0=0.0 MPa
+            |-- Density           : P/T-dependent density: ρ0=3000.0 kg m⁻³·⁰, α=3.0e-5 K⁻¹·⁰, β=1.0e-9 Pa⁻¹·⁰, T0=273.15 K, P0=0.0 MPa
             |-- Gravity           : Gravitational acceleration: g=9.81 m s⁻²·⁰
             |-- CreepLaws         : Powerlaw viscosity: η0=1.0e18, n=5.0, ε0=1.0e-15
             |                       Linear viscosity: η=1.0e21

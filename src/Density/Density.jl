@@ -883,14 +883,14 @@ julia> Phases = ones(Int64, 2, 4); Phases[:, 3:end] .= 2;
 
 julia> rho = zeros(size(Phases));
 
-julia> args = (P = ones(size(Phases)) * 10, T = ones(size(Phases)));
+julia> args = (P = ones(size(Phases)) * 10, T = ones(size(Phases)) * 273.15);
 
 julia> compute_density!(rho, MatParam, Phases, args)
 
 julia> rho
 2×4 Matrix{Float64}:
- 2899.91  2899.91  2900.0  2900.0
- 2899.91  2899.91  2900.0  2900.0
+ 2900.0  2900.0  2900.0  2900.0
+ 2900.0  2900.0  2900.0  2900.0
 ```
 
 The routine is made to minimize allocations:
