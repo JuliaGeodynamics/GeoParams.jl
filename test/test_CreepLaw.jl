@@ -465,6 +465,14 @@ import GeoParams: ntuple_idx
         x = compute_εII(hb, τ0; T = 1273.0) * 2η0 / τ0
         fx = exp(-x) * (1 + r * cbrt(x)) + (1 - exp(-x)) * r / (3 * cbrt(x)^2)
         @test ForwardDiff.derivative(t -> compute_εII(hb, t; T = 1273.0), τ0) ≈ 1 / (2η0 * fx)
+        @test dεII_dτII(hb, τ0, (; T = 1273.0)) ≈ 1 / (2η0 * fx)
+        ε = compute_εII(hb, 2τ0; T = 1273.0)
+        @test dτII_dεII(hb, ε, (; T = 1273.0)) * dεII_dτII(hb, 2τ0, (; T = 1273.0)) ≈ 1
+
+        # the local iteration of a series composite needs dεII_dτII of each element
+        c = CompositeRheology(hb, LinearViscous(η = 1.0e21Pa * s))
+        τ = compute_τII(c, 1.0e-14, (; T = 1273.0))
+        @test compute_εII(hb, τ; T = 1273.0) + τ / 2.0e21 ≈ 1.0e-14
     end
 
     # temperature dependence test

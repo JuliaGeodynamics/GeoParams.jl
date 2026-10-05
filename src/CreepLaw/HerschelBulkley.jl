@@ -58,6 +58,9 @@ function compute_εII(a::HerschelBulkley, TauII::Quantity; T = 1K, kwargs...)
     return compute_hb_εII(a, TauII; T)
 end
 
+dεII_dτII(a::HerschelBulkley, TauII; T = one(precision(a)), kwargs...) = value_and_partial(τ -> compute_εII(a, τ; T), TauII)[2]
+dτII_dεII(a::HerschelBulkley, EpsII; T = one(precision(a)), kwargs...) = value_and_partial(ε -> compute_τII(a, ε; T), EpsII)[2]
+
 """
     compute_εII!(EpsII::AbstractArray{_T, N}, a::HerschelBulkley, TauII::AbstractArray; T = one(_T), kwargs...)
 
