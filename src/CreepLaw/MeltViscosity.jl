@@ -229,7 +229,12 @@ end
     ε = compute_εII(a.η, TauII, kwargs)
     η_melt = TauII / (2 * ε)
     # viscosity correction factor
-    ηr = viscosity_correction(1 - ϕ, convert_precision(Tc, ε / a.ε0))
+    if ε isa Quantity
+        @unpack_units Tc ε0 = a
+    else
+        @unpack_val Tc ε0 = a
+    end
+    ηr = viscosity_correction(1 - ϕ, convert_precision(Tc, ε / ε0))
     η = ηr * η_melt
     return TauII / (2 * η)
 end
@@ -271,7 +276,12 @@ Returns second invariant of the stress tensor given a 2nd invariant of strain ra
     τ = compute_τII(a.η, EpsII, kwargs)
     η_melt = τ / (2 * EpsII)
     # viscosity correction factor
-    ηr = viscosity_correction(1 - ϕ, convert_precision(Tc, EpsII / a.ε0))
+    if EpsII isa Quantity
+        @unpack_units Tc ε0 = a
+    else
+        @unpack_val Tc ε0 = a
+    end
+    ηr = viscosity_correction(1 - ϕ, convert_precision(Tc, EpsII / ε0))
     η = ηr * η_melt
     return 2 * η * EpsII
 end
@@ -287,7 +297,8 @@ end
     η_melt = τ / (2 * EpsII)
 
     # viscosity correction factor
-    ηr = viscosity_correction(1 - ϕ, convert_precision(Tc, EpsII / a.ε0))
+    @unpack_units Tc ε0 = a
+    ηr = viscosity_correction(1 - ϕ, convert_precision(Tc, EpsII / ε0))
 
     η = ηr * η_melt
     return 2 * η * EpsII
@@ -513,12 +524,12 @@ end
 
 @inline function dεII_dτII(a::GiordanoMeltViscosity, TauII::Quantity; T = 1K, mH2O = a.oxd_wt[9] / 100, kwargs...)
     η = _giordano_η(a, T; mH2O)
-    return 0.5 * (1.0 / η)
+    return inv(2 * η)
 end
 
 @inline function dεII_dτII(a::GiordanoMeltViscosity, TauII; T = one(precision(a)), mH2O = a.oxd_wt[9] / 100, kwargs...)
     η = _giordano_η(a, T; mH2O)
-    return 0.5 * (1.0 / η)
+    return inv(2 * η)
 end
 
 """

@@ -8,8 +8,8 @@
 Compute effective viscosity given a 2nd invariant of the deviatoric strain rate tensor, extra parameters are passed as a named tuple, e.g., (;T=T)
 """
 @inline compute_viscosity_εII(v::AbstractConstitutiveLaw, εII, args) = compute_τII(v, εII, args) / (2 * εII)
-@inline compute_viscosity_εII(v::LinearViscous, εII, args) = v.η.val
-@inline compute_viscosity_εII(v::ConstantElasticity, εII, args) = v.G * args.dt
+@inline compute_viscosity_εII(v::LinearViscous, εII, args) = convert_precision(precision_of(merge((; εII), args)), v.η.val)
+@inline compute_viscosity_εII(v::ConstantElasticity, εII, args) = _elastic_viscosity(v, args.dt)
 @inline compute_viscosity_εII(v::HerschelBulkley, εII, args) = compute_hb_viscosity_εII(v, εII; args...)
 
 
@@ -20,8 +20,8 @@ Compute effective viscosity given a 2nd invariant of the deviatoric strain rate 
 Compute effective viscosity given a 2nd invariant of the deviatoric stress tensor and, extra parameters are passed as a named tuple, e.g., (;T=T)
 """
 @inline compute_viscosity_τII(v::AbstractConstitutiveLaw, τII, args) = τII / (2 * compute_εII(v, τII, args))
-@inline compute_viscosity_τII(v::LinearViscous, τII, args) = v.η.val
-@inline compute_viscosity_τII(v::ConstantElasticity, τII, args) = v.G * args.dt
+@inline compute_viscosity_τII(v::LinearViscous, τII, args) = convert_precision(precision_of(merge((; τII), args)), v.η.val)
+@inline compute_viscosity_τII(v::ConstantElasticity, τII, args) = _elastic_viscosity(v, args.dt)
 @inline compute_viscosity_τII(v::HerschelBulkley, εII, args) = compute_hb_viscosity_τII(v, εII; args...)
 
 for fn in (:compute_viscosity_εII, :compute_viscosity_τII)
@@ -111,9 +111,13 @@ Returns the effective visco-elastic viscosity that combines a viscous viscosity 
 (shear modulus `G`, or a `ConstantElasticity` `v`) over a time step `dt`, as the harmonic sum
 `(1/η + 1/(G·dt))⁻¹`. The time step may instead be passed via `args.dt`.
 """
-@inline compute_elastoviscosity(v::ConstantElasticity, η, dt) = compute_elastoviscosity(v.G, η, dt)
-@inline compute_elastoviscosity(G, η, dt) = (inv(η) + inv(G * dt)) |> inv
-@inline compute_elastoviscosity(v::ConstantElasticity, η, args::NamedTuple) = compute_elastoviscosity(v.G, η, args.dt)
+@inline function compute_elastoviscosity(v::ConstantElasticity, η, dt)
+    Tc = precision_of((; η, dt))
+    @unpack_val Tc G = v
+    return compute_elastoviscosity(G, η, dt)
+end
+@inline compute_elastoviscosity(G, η, dt) = η / (1 + η / (G * dt))
+@inline compute_elastoviscosity(v::ConstantElasticity, η, args::NamedTuple) = compute_elastoviscosity(v, η, args.dt)
 @inline compute_elastoviscosity(G, η, args::NamedTuple) = compute_elastoviscosity(G, η, args.dt)
 
 for fn in (:compute_elastoviscosity_εII, :compute_elastoviscosity_τII)
@@ -177,8 +181,13 @@ Returns the effective viscosity of the linear rheology `v` (a `LinearViscous`, `
 multiple phases, `v` may be a tuple of `MaterialParams` indexed by a phase or weighted by phase
 ratios. Throws for non-linear rheologies.
 """
-@inline compute_viscosity(v::LinearViscous; kwargs...) = v.η.val
-@inline compute_viscosity(v::ConstantElasticity; dt = 0.0, kwargs...) = v.G * dt
+@inline compute_viscosity(v::LinearViscous; kwargs...) = convert_precision(precision_of(NamedTuple(kwargs)), v.η.val)
+@inline compute_viscosity(v::ConstantElasticity; dt = 0.0, kwargs...) = _elastic_viscosity(v, dt)
+@inline function _elastic_viscosity(v::ConstantElasticity, dt)
+    Tc = precision_of(dt)
+    @unpack_val Tc G = v
+    return G * dt
+end
 @inline compute_viscosity(v::Union{LinearViscous, ConstantElasticity}, kwargs) = compute_viscosity(v; kwargs...)
 @inline compute_viscosity(v, kwargs) = throw(ArgumentError("compute_viscosity only works for linear rheologies"))
 

@@ -460,6 +460,13 @@ import GeoParams: ntuple_idx
     @test ε1_ND ≈ εt_ND rtol = 1.0e-6
 
 
+    # derivative at the yield stress: dεII/dτII = 1 / (2 η0 f'(x)), f the residual in x = εII/εr
+    let hb = HerschelBulkley(), τ0 = 1.0e8, η0 = 1.0e24, r = 1.0e-4
+        x = compute_εII(hb, τ0; T = 1273.0) * 2η0 / τ0
+        fx = exp(-x) * (1 + r * cbrt(x)) + (1 - exp(-x)) * r / (3 * cbrt(x)^2)
+        @test ForwardDiff.derivative(t -> compute_εII(hb, t; T = 1273.0), τ0) ≈ 1 / (2η0 * fx)
+    end
+
     # temperature dependence test
     x1_Q = HerschelBulkley(
         n = 3.0,

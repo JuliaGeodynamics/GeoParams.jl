@@ -1,5 +1,6 @@
 using Test
 using GeoParams
+import ForwardDiff
 import GeoParams: precision_of, convert_precision, argument_at
 import GeoParams.Dislocation, GeoParams.Diffusion
 
@@ -214,7 +215,6 @@ end
             (:density, :Vector_Density) => "reads ρ from a user vector; needs an `index`",
             (:heatcapacity, :Vector_HeatCapacity) => "reads Cp from a user vector; needs an `index`",
             (:meltfraction, :Vector_MeltingParam) => "reads ϕ from a user vector; needs an `index`",
-            (:creep_εII, :HerschelBulkley) => "default parameters do not converge at this τII",
             (:creep_τII, :NonLinearPeierlsCreep) => "no compute_τII method",
         )
         # Scanning GeoParams' own bindings keeps the sweep to this package's laws;
@@ -276,5 +276,48 @@ end
         λ32 = CR.lambda(1.0f6, p, 1.0f20, 1.0f19; K = 1.0f10, dt = 1.0f10, h = 1.0f5, τij = τ3)
         @test λ32 isa Float32
         @test λ32 ≈ CR.lambda(1.0e6, p, 1.0e20, 1.0e19; K = 1.0e10, dt = 1.0e10, h = 1.0e5, τij = (1.0, 2.0, 3.0)) rtol = RTOL[Float32]
+    end
+
+    @testset "arg-independent laws follow the precision of their arguments" begin
+        CR = GeoParams.MaterialParameters.ConstitutiveRelationships
+        args = (; T = 1.0f3, P = 1.0f8, dt = 1.0f10)
+        @test compute_viscosity(LinearViscous(), args) isa Float32
+        @test compute_viscosity(ConstantElasticity(), args) isa Float32
+        @test compute_viscosity_εII(LinearViscous(), 1.0f-15, args) isa Float32
+        @test compute_viscosity_τII(LinearViscous(), 1.0f6, args) isa Float32
+        @test compute_viscosity_εII(ConstantElasticity(), 1.0f-15, args) isa Float32
+        @test compute_elastoviscosity(ConstantElasticity(), 1.0f20, 1.0f10) isa Float32
+        for p in (DruckerPrager(), DruckerPrager_regularised())
+            @test CR.∂Q∂P(p, 1.0f8) isa Float32
+            @test CR.∂F∂P(p, 1.0f8) isa Float32
+        end
+    end
+
+    @testset "melt, solubility and Herschel-Bulkley laws" begin
+        @test compute_dϕdT(SmoothMelting(); T = 1.0f3) isa Float32
+        cs = ViscosityPartialMelt_Costa_etal_2009()
+        @test dτII_dεII(cs, 1.0f-15; ϕ = 0.1f0, T = 1.0f3) isa Float32
+        @test dεII_dτII(cs, 1.0f6; ϕ = 0.1f0, T = 1.0f3) isa Float32
+        gm = GiordanoMeltViscosity()
+        @test dεII_dτII(gm, 1.0f6; T = 1.0f3) isa Float32
+        for s in (Liu2005_Solubility(), Mafic_Solubility())
+            @test all(x -> x isa Float32, compute_dissolved(s; P = 1.0f8, T = 1.1f3, X_co2 = 0.5f0))
+            @test all(x -> x isa Float32, compute_dissolved(s; P = 1.0f8, T = 1.1f3))
+        end
+        # laboratory-scale viscosities: the Newton residual must stay inside Float32 range
+        hb = HerschelBulkley()
+        for τ in (1.0f0, 1.0f6, 1.0f8, 1.0f9)
+            ε32 = compute_εII(hb, τ; T = 1.0f3)
+            @test ε32 isa Float32
+            @test ε32 ≈ compute_εII(hb, Float64(τ); T = 1.0e3) rtol = 1.0e-4
+        end
+        # derivatives stay finite and accurate where 1/η² underflows Float32
+        for τ in (5.0e7, 2.0e8, 1.0e9)
+            d32 = ForwardDiff.derivative(t -> compute_εII(hb, t; T = 1.0f3), Float32(τ))
+            d64 = ForwardDiff.derivative(t -> compute_εII(hb, t; T = 1.0e3), τ)
+            @test d32 isa Float32
+            @test d32 ≈ d64 rtol = 1.0e-3
+        end
+        @test precision_of((; T = ForwardDiff.Dual(1.0f3, 1.0f0))) === Float32
     end
 end

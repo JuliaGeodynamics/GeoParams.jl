@@ -125,7 +125,7 @@ end
 
 """
     plastic_strain(εvp::T, p::AbstractPlasticity{T}, τij, λ̇::T, dt::T)
-    
+
     Integrate the finite plastic strain. Equations from Duretz et al. 2019 G3
 """
 function plastic_strain(εvp::T, p::AbstractPlasticity{T}, τij, λ̇::T, dt::T; kwargs...) where {T}

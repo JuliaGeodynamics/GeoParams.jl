@@ -645,9 +645,9 @@ function compute_dϕdT(param::SmoothMelting; T, kwargs...)
     Tc = precision_of(T)
     @unpack_val Tc k_sol, k_liq = param
 
+    @unpack_val Tc T_s, T_l = param.p
+
     # compute heaviside functions & derivatives of that vs. T
-    T_s = param.p.T_s
-    T_l = param.p.T_l
 
     f_s(T) = inv(1 + exp(-2 * k_sol * (T - T_s - (2 / k_sol))))
     f_l(T) = 1 - inv(1 + exp(-2 * k_liq * (T - T_l + (2 / k_liq))))

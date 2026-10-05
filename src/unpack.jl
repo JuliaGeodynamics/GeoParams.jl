@@ -8,11 +8,11 @@ export precision_of, convert_precision
 Scalar type in which a calculation seeded by `x` should be evaluated. Units are
 stripped and arrays and tuples report their element type.
 
-Only a float selects its own type. Anything else — an integer, or a number that
-wraps a value for automatic differentiation — expresses no precision preference
-and selects `Float64`, which leaves the stored parameters alone and lets
-ordinary promotion carry the result back into the caller's type. Forcing
-parameters into a tracked number instead would put constants on the AD tape.
+A float selects its own type, and a dual number the type of the value it carries.
+Anything else, such as an integer, expresses no precision preference and selects
+`Float64`, which leaves the stored parameters alone and lets ordinary promotion
+carry the result back into the caller's type. Parameters are only ever converted to
+the plain float type, never into a tracked number, so constants stay off the AD tape.
 """
 @inline precision_of(x) = _precision_of(ustrip(x))
 @inline precision_of(x::AbstractArray) = precision_of(zero(eltype(x)))
@@ -35,6 +35,7 @@ with none left the result is `Float64`.
 
 @inline _prefer(::Type{T}, v::AbstractFloat) where {T} = promote_type(T, typeof(v))
 @inline _prefer(::Type{T}, v::Quantity) where {T} = _prefer(T, ustrip(v))
+@inline _prefer(::Type{T}, d::Dual) where {T} = _prefer(T, value(d))
 @inline _prefer(::Type{T}, ::Any) where {T} = T
 
 @inline _precision_of(::T) where {T <: AbstractFloat} = T

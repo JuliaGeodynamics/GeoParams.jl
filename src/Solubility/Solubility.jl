@@ -108,7 +108,7 @@ X_co2)` and `compute_dissolved(s, args::NamedTuple)`.
 """
 @inline function compute_dissolved(s::Liu2005_Solubility, P, T, X_co2)
     Tc = precision_of(P)
-    b1, b2, b3, b4, b5, b6, c1, c2, c3, c4 = s.coeffs
+    b1, b2, b3, b4, b5, b6, c1, c2, c3, c4 = convert_precision(Tc, s.coeffs)
     if P isa Quantity
         @unpack_units Tc Pref, Tref = s
     else
@@ -181,7 +181,7 @@ end
 
 @inline function compute_dissolved(s::Mafic_Solubility, P, T, X_co2)
     Tc = precision_of(P)
-    b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, c1, c2, c3, c4 = s.coeffs
+    b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, c1, c2, c3, c4 = convert_precision(Tc, s.coeffs)
     if P isa Quantity
         @unpack_units Tc T0, Tref, Pref = s
     else
@@ -273,7 +273,7 @@ Mass-weighted specific heat of the H2O–CO2 gas mixture; zero at `X_co2 == 0`
 end
 
 # Shared keyword / NamedTuple entry points -----------------------------------
-@inline function compute_dissolved(s::AbstractSolubility; P = 0.0e0, T = 0.0e0, X_co2 = 0.0e0, kwargs...)
+@inline function compute_dissolved(s::AbstractSolubility; P = 0.0e0, T = 0.0e0, X_co2 = zero(precision_of(P)), kwargs...)
     return compute_dissolved(s, P, T, X_co2)
 end
 @inline compute_dissolved(s::AbstractSolubility, args::NamedTuple) = compute_dissolved(s; args...)
