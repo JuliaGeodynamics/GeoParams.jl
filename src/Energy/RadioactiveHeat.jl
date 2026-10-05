@@ -132,7 +132,7 @@ end
 # Computational routines needed for computations with the MaterialParams structure
 function compute_radioactive_heat(s::AbstractMaterialParamsStruct, args::Vararg{Any, N}) where {N}
     if isempty(s.RadioactiveHeat)
-        return 0.0  # return zero if not specified
+        return isempty(args) ? 0.0 : zero(precision_of(first(args)))  # return zero if not specified
     else
         return compute_radioactive_heat(s.RadioactiveHeat[1], args...)
     end

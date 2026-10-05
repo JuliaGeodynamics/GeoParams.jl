@@ -548,7 +548,7 @@ function (g::Vector_MeltingParam)(; index, kwargs...)
 end
 
 function compute_dϕdT(g::Vector_MeltingParam; kwargs...)
-    return 0.0
+    return zero(eltype(g.ϕ))
 end
 
 # Print info
@@ -647,16 +647,17 @@ function compute_dϕdT(param::SmoothMelting; T, kwargs...)
 
     @unpack_val Tc T_s, T_l = param.p
 
-    # compute heaviside functions & derivatives of that vs. T
-
-    f_s(T) = inv(1 + exp(-2 * k_sol * (T - T_s - (2 / k_sol))))
-    f_l(T) = 1 - inv(1 + exp(-2 * k_liq * (T - T_l + (2 / k_liq))))
-
-    H_s, dHs_dT = value_and_partial(f_s, T)
-    H_l, dHl_dT = value_and_partial(f_l, T)
+    # Heaviside functions σ(x) = 1/(1 + exp(-x)) and their derivatives σ' = σ(1 - σ):
+    # exp overflows far from the transition (below ~1040 K in Float32), so σ' must
+    # not be differentiated through exp, where it becomes Inf/Inf = NaN.
+    H_s = inv(1 + exp(-2 * k_sol * (T - T_s - (2 / k_sol))))
+    σ_l = inv(1 + exp(-2 * k_liq * (T - T_l + (2 / k_liq))))
+    H_l = 1 - σ_l
+    dHs_dT = 2 * k_sol * H_s * (1 - H_s)
+    dHl_dT = -2 * k_liq * σ_l * H_l
 
     # melt fraction & derivative
-    dϕdT = compute_dϕdT(param.p; T = T)
+    dϕdT = compute_dϕdT(param.p; T, kwargs...)
     ϕ = param.p(; T, kwargs...)
 
     # The derivative of the function
@@ -960,7 +961,7 @@ end
 # Computational routines needed for computations with the MaterialParams structure
 function compute_meltfraction(s::AbstractMaterialParamsStruct, args)
     if isempty(s.Melting) #in case there is a phase with no melting parametrization
-        return 0.0e0 # return zero if not specified
+        return zero(precision_of(args)) # return zero if not specified
     else
         return compute_meltfraction(s.Melting[1], args)
     end
@@ -968,7 +969,7 @@ end
 
 function compute_dϕdT(s::AbstractMaterialParamsStruct, args)
     if isempty(s.Melting) #in case there is a phase with no melting parametrization
-        return 0.0e0 # return zero if not specified
+        return zero(precision_of(args)) # return zero if not specified
     else
         return compute_dϕdT(s.Melting[1], args)
     end

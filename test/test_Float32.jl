@@ -205,6 +205,7 @@ end
             (:radioactive_heat, MP.RadioactiveHeat.AbstractRadioactiveHeat, l -> compute_radioactive_heat(l, args32)),
             (:latent_heat, MP.LatentHeat.AbstractLatentHeat, l -> compute_latent_heat(l, args32)),
             (:meltfraction, GeoParams.MeltingParam.AbstractMeltingParam, l -> compute_meltfraction(l, args32)),
+            (:dϕdT, GeoParams.MeltingParam.AbstractMeltingParam, l -> compute_dϕdT(l, args32)),
             (:permeability, GeoParams.AbstractPermeability, l -> compute_permeability(l, args32)),
             (:creep_εII, GeoParams.AbstractCreepLaw, l -> compute_εII(l, args32.τII, args32)),
             (:creep_τII, GeoParams.AbstractCreepLaw, l -> compute_τII(l, args32.εII, args32)),
@@ -215,6 +216,7 @@ end
             (:density, :Vector_Density) => "reads ρ from a user vector; needs an `index`",
             (:heatcapacity, :Vector_HeatCapacity) => "reads Cp from a user vector; needs an `index`",
             (:meltfraction, :Vector_MeltingParam) => "reads ϕ from a user vector; needs an `index`",
+            (:dϕdT, :Vector_MeltingParam) => "precision is that of the user vector",
             (:creep_τII, :NonLinearPeierlsCreep) => "no compute_τII method",
         )
         # Scanning GeoParams' own bindings keeps the sweep to this package's laws;
@@ -249,6 +251,19 @@ end
         @test_throws "phase not found in MaterialParams" GeoParams.nphase(v -> compute_density(v, args32), 99, phases)
         @test GeoParams.nphase_ratio(v -> compute_density(v, args32), (0.4f0, 0.6f0), phases) isa Float32
 
+        no_laws = SetMaterialParams(; Phase = 1)
+        for (f, args) in (
+                (compute_meltfraction, args32),
+                (compute_dϕdT, args32),
+                (compute_radioactive_heat, (; z = 1.0f3)),
+            )
+            @test f(no_laws, args) === 0.0f0
+            @test f((no_laws,), 1, args) === 0.0f0
+            @test f((no_laws,), (1.0f0,), args) === 0.0f0
+            @test f(no_laws, (;)) === 0.0
+        end
+        @test compute_radioactive_heat(no_laws) === 0.0
+
         # every family's phase-dispatch method agrees with a direct evaluation
         CR = GeoParams.MaterialParameters.ConstitutiveRelationships
         a = (; T = 1.0f3, P = 1.0f8, τII = 1.0f6, ϕ = 0.1f0)
@@ -262,6 +277,13 @@ end
             Plasticity = DruckerPrager(Ψ = 10),
             SeismicVelocity = ConstantSeismicVelocity(),
         )
+        for (f, args) in (
+                (compute_meltfraction, a),
+                (compute_dϕdT, a),
+                (compute_radioactive_heat, (; z = 1.0f3)),
+            )
+            @test f((no_laws, mp), (0.5f0, 0.5f0), args) isa Float32
+        end
         τ3 = (1.0f6, 2.0f6, 3.0f6)
         for (f, x) in (
                 (compute_conductivity, (a,)),
@@ -331,6 +353,11 @@ end
 
     @testset "melt, solubility and Herschel-Bulkley laws" begin
         @test compute_dϕdT(SmoothMelting(); T = 1.0f3) isa Float32
+        # exp in the Heaviside smoothing overflows Float32 well inside the solidus
+        for p in (SmoothMelting(), SmoothMelting(MeltingParam_5thOrder()))
+            @test all(t -> isfinite(compute_dϕdT(p; T = Float32(t))), 300:10:2000)
+        end
+        @test compute_dϕdT(Vector_MeltingParam(; ϕ = Float32[0.1]); index = 1) === 0.0f0
         cs = ViscosityPartialMelt_Costa_etal_2009()
         @test dτII_dεII(cs, 1.0f-15; ϕ = 0.1f0, T = 1.0f3) isa Float32
         @test dεII_dτII(cs, 1.0f6; ϕ = 0.1f0, T = 1.0f3) isa Float32
