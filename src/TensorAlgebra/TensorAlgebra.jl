@@ -73,13 +73,13 @@ The tensor may be given as an `NTuple`, `SVector`, `SMatrix`, or `Matrix`, or by
 components (Voigt order) for the 2D (`xx, yy, xy`) or 3D (`xx, yy, zz, yz, xz, xy`) case; the
 component forms are differentiable.
 """
-@inline second_invariant(A::NTuple) = √(0.5 * doubledot(A, A))
-@inline second_invariant(A::SMatrix) = √(0.5 * doubledot(A, A))
-@inline second_invariant(A::SVector) = √(0.5 * doubledot(A, A))
-@inline second_invariant(A::Matrix) = size(A) == (2, 2) ? second_invariant(SMatrix{2, 2}(A)) : √(0.5 * sum(Ai * Ai for Ai in A))
+@inline second_invariant(A::NTuple) = √(doubledot(A, A) / 2)
+@inline second_invariant(A::SMatrix) = √(doubledot(A, A) / 2)
+@inline second_invariant(A::SVector) = √(doubledot(A, A) / 2)
+@inline second_invariant(A::Matrix) = size(A) == (2, 2) ? second_invariant(SMatrix{2, 2}(A)) : √(sum(Ai * Ai for Ai in A) / 2)
 # So that is differentiable...
-@inline second_invariant(xx, yy, xy) = √(0.5 * (xx^2 + yy^2 + (-xx - yy)^2) + xy^2)
-@inline second_invariant(xx, yy, zz, yz, xz, xy) = √(0.5 * (xx^2 + yy^2 + zz^2) + xy^2 + yz^2 + xz^2)
+@inline second_invariant(xx, yy, xy) = √((xx^2 + yy^2 + (-xx - yy)^2) / 2 + xy^2)
+@inline second_invariant(xx, yy, zz, yz, xz, xy) = √((xx^2 + yy^2 + zz^2) / 2 + xy^2 + yz^2 + xz^2)
 
 """
     second_invariant_staggered(Aii::NTuple{2,T}, Axy::NTuple{4,T}) where {T}
@@ -90,7 +90,7 @@ terms of `A` at the i-th vertex, and `Axy` is a tuple that contains `A_xy` at th
 around the i-th vertex.
 """
 @inline function second_invariant_staggered(Aii::NTuple{2}, Axy::NTuple{4})
-    return √(0.5 * (Aii[1]^2 + Aii[2]^2 + (-Aii[1] - Aii[2])^2) + average_pow2(Axy))
+    return √((Aii[1]^2 + Aii[2]^2 + (-Aii[1] - Aii[2])^2) / 2 + average_pow2(Axy))
 end
 
 @inline function second_invariant_staggered(Axx, Ayy, Axy::NTuple{4})
@@ -112,7 +112,7 @@ at the cell centers around the i-th vertex.
         Aii::NTuple{3}, Ayz::NTuple{4}, Axz::NTuple{4}, Axy::NTuple{4}
     )
     return √(
-        0.5 * (Aii[1]^2 + Aii[2]^2 + Aii[3]^2) +
+        (Aii[1]^2 + Aii[2]^2 + Aii[3]^2) / 2 +
             average_pow2(Ayz) +
             average_pow2(Axz) +
             average_pow2(Axy),
@@ -142,7 +142,7 @@ terms of `A` at the cell centers around the i-th vertex., and `Axy` is the xy co
     )
     # Compute Azz = -Axx - Ayy element-wise for plane strain
     Azz = ntuple(i -> -Axx[i] - Ayy[i], Val(4))
-    return √(0.5 * (average_pow2(Axx) + average_pow2(Ayy) + average_pow2(Azz)) + Axy^2)
+    return √((average_pow2(Axx) + average_pow2(Ayy) + average_pow2(Azz)) / 2 + Axy^2)
 end
 
 """
@@ -157,7 +157,7 @@ components at the i-th vertex.
         Axx::NTuple{4}, Ayy::NTuple{4}, Azz::NTuple{4}, Aij::NTuple{3}
     )
     return √(
-        0.5 * (average_pow2(Axx) + average_pow2(Ayy) + average_pow2(Azz)) +
+        (average_pow2(Axx) + average_pow2(Ayy) + average_pow2(Azz)) / 2 +
             Aij[1]^2 +
             Aij[2]^2 +
             Aij[3]^2,

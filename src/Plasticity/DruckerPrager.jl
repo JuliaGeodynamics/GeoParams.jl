@@ -166,15 +166,15 @@ end
 for t in (:NTuple, :SVector)
     @eval begin
         ## 3D derivatives
-        ∂Q∂τxx(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = 0.5 * τij[1] / second_invariant(τij)
-        ∂Q∂τyy(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = 0.5 * τij[2] / second_invariant(τij)
-        ∂Q∂τzz(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = 0.5 * τij[3] / second_invariant(τij)
+        ∂Q∂τxx(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = τij[1] / (2 * second_invariant(τij))
+        ∂Q∂τyy(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = τij[2] / (2 * second_invariant(τij))
+        ∂Q∂τzz(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = τij[3] / (2 * second_invariant(τij))
         ∂Q∂τyz(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = τij[4] / second_invariant(τij)
         ∂Q∂τxz(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = τij[5] / second_invariant(τij)
         ∂Q∂τxy(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = τij[6] / second_invariant(τij)
         ## 2D derivatives
-        ∂Q∂τxx(p::DruckerPrager, τij::$(t){3, T}; kwargs...) where {T} = 0.5 * τij[1] / second_invariant(τij)
-        ∂Q∂τyy(p::DruckerPrager, τij::$(t){3, T}; kwargs...) where {T} = 0.5 * τij[2] / second_invariant(τij)
+        ∂Q∂τxx(p::DruckerPrager, τij::$(t){3, T}; kwargs...) where {T} = τij[1] / (2 * second_invariant(τij))
+        ∂Q∂τyy(p::DruckerPrager, τij::$(t){3, T}; kwargs...) where {T} = τij[2] / (2 * second_invariant(τij))
         ∂Q∂τxy(p::DruckerPrager, τij::$(t){3, T}; kwargs...) where {T} = τij[3] / second_invariant(τij)
     end
 end

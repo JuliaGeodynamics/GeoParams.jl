@@ -149,7 +149,7 @@ julia> @unpack_units ρ,α = r
 Density{Float64}(100.0, 4.0e-5)
 
 julia> α
-4.0e-5 K⁻¹·⁰
+4.0e-5 K⁻¹·⁰
 ```
 """
 macro unpack_units(args)

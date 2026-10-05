@@ -430,7 +430,8 @@ function ∂Q∂P(
         perturbation_C = one(_T),
         kwargs...,
     ) where {_T}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    Tc = precision_of(P)
+    @unpack_val Tc sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
     Ψ = s.softening_Ψ(EII, Ψ)
     C = s.softening_C(EII, C)
@@ -454,7 +455,8 @@ function ∂Q∂τII(
         perturbation_C = one(_T),
         kwargs...,
     ) where {_T}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    Tc = precision_of(P)
+    @unpack_val Tc sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
     Ψ = s.softening_Ψ(EII, Ψ)
     C = s.softening_C(EII, C)
@@ -476,7 +478,8 @@ function ∂F∂τII(
         perturbation_C = one(_T),
         kwargs...,
     ) where {_T}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    Tc = precision_of(P)
+    @unpack_val Tc sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
     Ψ = s.softening_Ψ(EII, Ψ)
     C = s.softening_C(EII, C)
@@ -502,7 +505,8 @@ function ∂F∂P(
         perturbation_C = one(_T),
         kwargs...,
     ) where {_T}
-    @unpack_val sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
+    Tc = precision_of(P)
+    @unpack_val Tc sinϕ, cosϕ, sinΨ, ϕ, Ψ, C, pT = s
     ϕ = s.softening_ϕ(EII, ϕ)
     Ψ = s.softening_Ψ(EII, Ψ)
     C = s.softening_C(EII, C)

@@ -132,13 +132,13 @@ function plastic_strain(εvp::T, p::AbstractPlasticity{T}, τij, λ̇::T, dt::T;
     return εvp += plastic_strain(p, τij, λ̇; kwargs...) * dt
 end
 
-@inline function plastic_strain(p::AbstractPlasticity{T}, τij, λ̇::T; kwargs...) where {T}
+@inline function plastic_strain(p::AbstractPlasticity, τij, λ̇::Number; kwargs...)
     εvp_ij = plastic_strain_rate(p, τij, λ̇; kwargs...)
-    εvp = √((2.0 / 3.0) * dot(εvp_ij, εvp_ij))
+    εvp = √(2 * dot(εvp_ij, εvp_ij) / 3)
     return εvp
 end
 
-@inline plastic_strain_rate(p::AbstractPlasticity{T}, τij, λ̇::T; kwargs...) where {T} = ∂Q∂τ(p, τij; kwargs...) .* λ̇
+@inline plastic_strain_rate(p::AbstractPlasticity, τij, λ̇::Number; kwargs...) = ∂Q∂τ(p, τij; kwargs...) .* λ̇
 #-------------------------------------------------------------------------
 
 # Computational routines needed for computations with the MaterialParams structure
@@ -193,3 +193,8 @@ end
 lambda(MatParam, arg, args...) = compute_param(lambda, MatParam, arg, args...)
 plastic_strain_rate(MatParam, arg, args...) = compute_param(plastic_strain_rate, MatParam, arg, args...)
 plastic_strain(MatParam, arg, args...) = compute_param(plastic_strain, MatParam, arg, args...)
+
+# `compute_param` hands a single phase's struct to `fn`; unwrap its plasticity law so the
+# catch-alls above are not re-entered.
+plastic_strain_rate(p::AbstractMaterialParamsStruct, τij, λ̇; kwargs...) = plastic_strain_rate(p.Plasticity[1], τij, λ̇; kwargs...)
+plastic_strain(p::AbstractMaterialParamsStruct, τij, λ̇; kwargs...) = plastic_strain(p.Plasticity[1], τij, λ̇; kwargs...)

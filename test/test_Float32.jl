@@ -249,4 +249,32 @@ end
         @test_throws "phase not found in MaterialParams" GeoParams.nphase(v -> compute_density(v, args32), 99, phases)
         @test GeoParams.nphase_ratio(v -> compute_density(v, args32), (0.4f0, 0.6f0), phases) isa Float32
     end
+
+    @testset "plastic flow direction and multiplier" begin
+        CR = GeoParams.MaterialParameters.ConstitutiveRelationships
+        τ3 = (1.0f0, 2.0f0, 3.0f0)
+        τ6 = (1.0f0, 2.0f0, 3.0f0, 4.0f0, 5.0f0, 6.0f0)
+        for p in (DruckerPrager(), DruckerPrager_regularised())
+            @test CR.∂Q∂τxx(p, τ3) isa Float32
+            @test CR.∂Q∂τxy(p, τ3) isa Float32
+            @test CR.∂Q∂τzz(p, τ6) isa Float32
+            @test CR.∂Q∂τyz(p, τ6) isa Float32
+        end
+        @test second_invariant(τ3) isa Float32
+        @test second_invariant(τ6) isa Float32
+        A4 = ntuple(i -> Float32(i), 4)
+        @test second_invariant_staggered(A4, A4, 1.0f0) isa Float32
+        @test second_invariant_staggered(A4, A4, A4, (1.0f0, 2.0f0, 3.0f0)) isa Float32
+        pc = DruckerPragerCap()
+        for g in (CR.∂Q∂τxx, CR.∂Q∂τyy, CR.∂Q∂τxy)
+            @test g(pc, τ3; P = 1.0f6) isa Float32
+        end
+        mp = SetMaterialParams(; Phase = 1, Plasticity = DruckerPrager())
+        @test CR.plastic_strain(mp, τ3, 1.0f-15) isa Float32
+        @test CR.plastic_strain((mp,), 1, τ3, 1.0f-15) isa Float32
+        p = DruckerPrager()
+        λ32 = CR.lambda(1.0f6, p, 1.0f20, 1.0f19; K = 1.0f10, dt = 1.0f10, h = 1.0f5, τij = τ3)
+        @test λ32 isa Float32
+        @test λ32 ≈ CR.lambda(1.0e6, p, 1.0e20, 1.0e19; K = 1.0e10, dt = 1.0e10, h = 1.0e5, τij = (1.0, 2.0, 3.0)) rtol = RTOL[Float32]
+    end
 end
