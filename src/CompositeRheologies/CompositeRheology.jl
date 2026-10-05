@@ -346,7 +346,7 @@ _compute_εII_nonplastic(v::AbstractPlasticity, TauII, args) = 0.0
 """
     compute_τII_harmonic(v::CompositeRheology, EpsII, args)
 
-Harmonic average of stress of all elements in a `CompositeRheology` structure that are not || elements
+Harmonic average of stress of all elements in a `CompositeRheology` structure, except plastic ones and || elements that contain them
 """
 function compute_τII_harmonic(v::CompositeRheology, EpsII, args; tol = 1.0e-6, verbose = false)
     return inv(nreduce(vi -> first(_compute_τII_harmonic_element(vi, EpsII, args)), v.elements))
@@ -354,6 +354,8 @@ end
 _compute_τII_harmonic_element(v, EpsII, args) = inv(first(compute_τII(v, EpsII, args)))
 _compute_τII_harmonic_element(v::AbstractPlasticity, EpsII, args) = 0.0
 _compute_τII_harmonic_element(v::Parallel{T, N, Nplast, is_plastic}, EpsII, args) where {T, N, Nplast, is_plastic} = 0.0
+# a non-plastic || element contributes like a serial one; without it a composite of only || elements has no finite guess
+_compute_τII_harmonic_element(v::Parallel{T, N, 0}, EpsII, args) where {T, N} = inv(first(compute_τII(v, EpsII, args)))
 
 """
     compute_p_harmonic(v::CompositeRheology, EpsVol, args)
