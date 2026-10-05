@@ -248,6 +248,38 @@ end
         @test compute_density(phases, (0.4f0, 0.6f0), args32) isa Float32
         @test_throws "phase not found in MaterialParams" GeoParams.nphase(v -> compute_density(v, args32), 99, phases)
         @test GeoParams.nphase_ratio(v -> compute_density(v, args32), (0.4f0, 0.6f0), phases) isa Float32
+
+        # every family's phase-dispatch method agrees with a direct evaluation
+        CR = GeoParams.MaterialParameters.ConstitutiveRelationships
+        a = (; T = 1.0f3, P = 1.0f8, τII = 1.0f6, ϕ = 0.1f0)
+        mp = SetMaterialParams(;
+            Phase = 1,
+            Conductivity = T_Conductivity_Whittington(),
+            HeatCapacity = T_HeatCapacity_Whittington(),
+            LatentHeat = ConstantLatentHeat(),
+            RadioactiveHeat = ExpDepthDependentRadioactiveHeat(),
+            Melting = MeltingParam_Caricchi(),
+            Plasticity = DruckerPrager(Ψ = 10),
+            SeismicVelocity = ConstantSeismicVelocity(),
+        )
+        τ3 = (1.0f6, 2.0f6, 3.0f6)
+        for (f, x) in (
+                (compute_conductivity, (a,)),
+                (compute_heatcapacity, (a,)),
+                (compute_latent_heat, (a,)),
+                (compute_radioactive_heat, ((; z = 1.0f3),)),
+                (compute_meltfraction, (a,)),
+                (compute_dϕdT, (a,)),
+                (compute_yieldfunction, (a,)),
+                (CR.∂Q∂τ, (τ3,)),
+                (CR.∂Q∂τII, (1.0f6,)),
+                (CR.∂Q∂P, (1.0f8,)),
+                (CR.plastic_strain_rate, (τ3, 1.0f-15)),
+            )
+            @test f((mp,), 1, x...) === f(mp, x...)
+            @test eltype(f(mp, x...)) === Float32
+        end
+        @test compute_wave_velocity((mp,), 1, (; wave = :Vp)) == compute_wave_velocity(mp, (; wave = :Vp))
     end
 
     @testset "plastic flow direction and multiplier" begin
@@ -269,6 +301,10 @@ end
         for g in (CR.∂Q∂τxx, CR.∂Q∂τyy, CR.∂Q∂τxy)
             @test g(pc, τ3; P = 1.0f6) isa Float32
         end
+        # shear (Drucker-Prager) branch of the flow potential, Q = τII - sinΨ⋅P
+        pc10 = DruckerPragerCap(Ψ = 10)
+        @test CR.∂Q∂τII(pc10, 1.0f6; P = 1.0f8) === 0.5f0
+        @test CR.∂Q∂P(pc10, 1.0f8; τII = 1.0f6) ≈ -sind(10.0f0)
         mp = SetMaterialParams(; Phase = 1, Plasticity = DruckerPrager())
         @test CR.plastic_strain(mp, τ3, 1.0f-15) isa Float32
         @test CR.plastic_strain((mp,), 1, τ3, 1.0f-15) isa Float32
@@ -319,5 +355,66 @@ end
             @test d32 ≈ d64 rtol = 1.0e-3
         end
         @test precision_of((; T = ForwardDiff.Dual(1.0f3, 1.0f0))) === Float32
+
+        τ = Float32[1.0f6, 2.0f8]
+        ε_ref = [compute_εII(hb, t; T = 1.0f3) for t in τ]
+        ε = similar(τ)
+        compute_εII!(ε, hb, τ; T = 1.0f3)
+        @test ε == ε_ref
+        compute_εII!(ε, hb, τ; T = fill(1.0f3, 2))
+        @test ε == ε_ref
+        η = compute_viscosity_τII(hb, 2.0f8, (; T = 1.0f3))
+        @test η isa Float32
+        @test η ≈ 2.0f8 / (2 * ε_ref[2]) rtol = RTOL[Float32]
+        @test_throws "compute_hb_εII: iterations did not converge" compute_εII(hb, NaN32; T = 1.0f3)
+    end
+
+    # Float32 intermediates of the dislocation-creep derivatives leave the
+    # Float32 range for answers that are inside it; the result is recomputed
+    # in Float64 and narrowed back.
+    @testset "wider recomputation on overflow and underflow" begin
+        f(x) = x * x / x
+        @test GeoParams.retry_wider(f, f(1.0f30), 1.0f30) === 1.0f30      # overflow
+        @test GeoParams.retry_wider(f, f(1.0f-30), 1.0f-30) === 1.0f-30    # underflow
+        @test GeoParams.retry_wider(f, f(Float16(300)), Float16(300)) === Float16(300)
+        @test GeoParams.retry_wider(f, Inf, 1.0e300) === Inf               # Float64 is not widened
+
+        law = SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003)
+        d32 = dτII_dεII(law, 1.0f-20; T = 400.0f0, P = 1.0f9)
+        @test d32 isa Float32
+        @test isfinite(d32)
+        @test d32 ≈ dτII_dεII(law, 1.0e-20; T = 400.0, P = 1.0e9) rtol = RTOL[Float32]
+        # the Float64 value, 7e-51, lies below the Float32 range
+        @test dεII_dτII(law, 1.0f0; T = 800.0f0, P = 1.0f9) ===
+            Float32(dεII_dτII(law, 1.0; T = 800.0, P = 1.0e9))
+    end
+
+    @testset "unitful input to property and creep laws" begin
+        lv = LinearViscous(η = 1.0e20Pa * s)
+        @test dεII_dτII(lv, 1.0e6Pa) == 5.0e-21 / (Pa * s)
+        @test compute_τII(lv, 1.0e-15 / s) ≈ 2.0e5Pa
+        @test dτII_dεII(lv, 1.0e-15 / s) == 2.0e20Pa * s
+
+        cs = ViscosityPartialMelt_Costa_etal_2009()
+        @test ustrip(compute_τII(cs, 1.0e-15 / s; ϕ = 0.1, T = 1000.0K)) ≈
+            compute_τII(cs, 1.0e-15; ϕ = 0.1, T = 1000.0)
+        @test ustrip(compute_heatcapacity(T_HeatCapacity_Whittington(); T = 1000.0K)) ≈
+            compute_heatcapacity(T_HeatCapacity_Whittington(); T = 1000.0)
+        # a porosity given in percent keeps its unit
+        @test unit(PowerLawPermeability()(; ϕ = 10.0u"percent")) == u"m^2 * percent^3"
+        @test unit(CarmanKozenyPermeability()(; ϕ = 10.0u"percent")) == u"m^2 * percent^3"
+
+        @test precision_of((; T = 1.0f3K)) === Float32
+    end
+
+    @testset "typed unpacking of array-valued parameters" begin
+        nt64 = (; x = GeoUnit([1.0, 2.0]))
+        GeoParams.@unpack_val Float32 x = nt64
+        @test x == Float32[1, 2]
+        @test eltype(x) === Float32
+
+        nt32 = (; x = GeoUnit(Float32[1, 2]))
+        GeoParams.@unpack_val Float32 x = nt32
+        @test x === nt32.x.val                  # already Float32: not copied
     end
 end

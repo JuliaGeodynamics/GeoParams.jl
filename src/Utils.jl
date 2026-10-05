@@ -81,7 +81,7 @@ end
 `y`, unless it left the range of the type it was computed in — infinite from an
 intermediate that overflowed, or zero from one that underflowed — in which case
 `f(x)` recomputes it from a wider `x` and the result is narrowed back to `y`'s
-type and units.
+type.
 
 Creep laws in SI units assemble ordinary strain rates out of factors such as a
 prefactor of 1e-55 and a stress raised to `n`, which reaches 1e39: `Float32`
@@ -99,8 +99,6 @@ end
 @inline _wider(::Type{Float32}) = Float64
 @inline _wider(::Type{T}) where {T} = T
 
-# `x` in the number type and units of `y`
-@inline _narrow_like(y::Quantity, x) = oftype(ustrip(y), ustrip(unit(y), x)) * unit(y)
 @inline _narrow_like(y, x) = oftype(y, x)
 
 macro pow(ex)

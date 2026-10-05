@@ -190,7 +190,10 @@ function ∂Q∂P(p::AbstractMaterialParamsStruct, args)
     return ∂Q∂P(p.Plasticity[1], args)
 end
 
-lambda(MatParam, arg, args...) = compute_param(lambda, MatParam, arg, args...)
+function ∂Q∂τII(p::AbstractMaterialParamsStruct, args)
+    return ∂Q∂τII(p.Plasticity[1], args)
+end
+
 plastic_strain_rate(MatParam, arg, args...) = compute_param(plastic_strain_rate, MatParam, arg, args...)
 plastic_strain(MatParam, arg, args...) = compute_param(plastic_strain, MatParam, arg, args...)
 

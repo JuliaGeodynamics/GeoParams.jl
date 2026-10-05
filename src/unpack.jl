@@ -15,8 +15,7 @@ carry the result back into the caller's type. Parameters are only ever converted
 the plain float type, never into a tracked number, so constants stay off the AD tape.
 """
 @inline precision_of(x) = _precision_of(ustrip(x))
-@inline precision_of(x::AbstractArray) = precision_of(zero(eltype(x)))
-@inline precision_of(x::Tuple) = precision_of(zero(eltype(x)))
+@inline precision_of(x::Union{AbstractArray, Tuple}) = precision_of(zero(eltype(x)))
 
 """
     precision_of(args::NamedTuple)

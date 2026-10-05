@@ -276,11 +276,7 @@ Returns second invariant of the stress tensor given a 2nd invariant of strain ra
     τ = compute_τII(a.η, EpsII, kwargs)
     η_melt = τ / (2 * EpsII)
     # viscosity correction factor
-    if EpsII isa Quantity
-        @unpack_units Tc ε0 = a
-    else
-        @unpack_val Tc ε0 = a
-    end
+    @unpack_val Tc ε0 = a
     ηr = viscosity_correction(1 - ϕ, convert_precision(Tc, EpsII / ε0))
     η = ηr * η_melt
     return 2 * η * EpsII
