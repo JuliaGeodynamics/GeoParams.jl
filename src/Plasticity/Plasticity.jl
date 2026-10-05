@@ -194,7 +194,6 @@ lambda(MatParam, arg, args...) = compute_param(lambda, MatParam, arg, args...)
 plastic_strain_rate(MatParam, arg, args...) = compute_param(plastic_strain_rate, MatParam, arg, args...)
 plastic_strain(MatParam, arg, args...) = compute_param(plastic_strain, MatParam, arg, args...)
 
-# `compute_param` hands a single phase's struct to `fn`; unwrap its plasticity law so the
-# catch-alls above are not re-entered.
+# `compute_param` hands a single phase's struct to `fn`
 plastic_strain_rate(p::AbstractMaterialParamsStruct, τij, λ̇; kwargs...) = plastic_strain_rate(p.Plasticity[1], τij, λ̇; kwargs...)
 plastic_strain(p::AbstractMaterialParamsStruct, τij, λ̇; kwargs...) = plastic_strain(p.Plasticity[1], τij, λ̇; kwargs...)
