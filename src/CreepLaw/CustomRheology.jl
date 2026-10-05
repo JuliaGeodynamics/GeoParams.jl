@@ -1,5 +1,13 @@
 export CustomRheology, dεII_dτII, dτII_dεII, compute_εII, compute_τII
 
+"""
+    CustomRheology(strain, stress, args)
+
+A user-defined constitutive law. `strain` and `stress` are functions computing, respectively, the
+deviatoric strain rate from stress and the deviatoric stress from strain rate; each is called as
+`f(a::CustomRheology, x; kwargs...)`. `args` is a `NamedTuple` of parameters accessible to those
+functions as `a.args`.
+"""
 struct CustomRheology{F1, F2, T} <: AbstractConstitutiveLaw{Float64}
     strain::F1 # function to compute strain rate
     stress::F2 # function to compute deviatoric stress

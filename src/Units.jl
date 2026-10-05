@@ -8,6 +8,7 @@ using ForwardDiff: Dual, value
 import Unitful: superscript
 using Parameters
 using Setfield # allows modifying fields in immutable struct
+using ForwardDiff
 
 import Base:
     show, isapprox, isequal, convert, length, size, getindex, setindex!, getproperty, iterate
@@ -96,7 +97,8 @@ export km,
     isdimensional,
     compute_units,
     udim,
-    upgrade_GeoUnits
+    upgrade_GeoUnits,
+    promote_construct
 
 include("unpack.jl")    # adds macros for unpacking GeoUnit variables with or w/out units
 
@@ -109,8 +111,27 @@ abstract type AbstractGeoUnit{TYPE, DIMENSIONAL} <: Number end
 
 abstract type AbstractUnitType end
 
+"""
+    GEO <: AbstractUnitType
+
+Unit system tag for "geological" units (km, Myr, MPa, …), convenient for geodynamic input. See
+[`GEO_units`](@ref).
+"""
 struct GEO <: AbstractUnitType end
+
+"""
+    SI <: AbstractUnitType
+
+Unit system tag for SI units (m, s, Pa, …). See [`SI_units`](@ref).
+"""
 struct SI <: AbstractUnitType end
+
+"""
+    NONE <: AbstractUnitType
+
+Unit system tag for a dimensionless system, in which all quantities are treated as plain numbers.
+See [`NO_units`](@ref).
+"""
 struct NONE <: AbstractUnitType end
 
 # The GeoUnit struct encodes dimensional info in the type info
@@ -130,8 +151,17 @@ end
 
 Adapt.@adapt_structure GeoUnit
 
+# Affine temperatures (°C) are stored in K: the numeric compute routines treat stored
+# temperatures as absolute values.
+_absolute(val) = val
+function _absolute(val::Union{Quantity, AbstractArray{<:Quantity}})
+    u = unit(first(val))
+    return u isa Unitful.AffineUnits ? uconvert.(upreferred(u), val) : val
+end
+
 # Different ways of specifying the GeoUnit:
 function GeoUnit(val)
+    val = _absolute(val)
     return GeoUnit{typeof(ustrip.(val)), typeof(unit(val[1]))}(
         ustrip.(val), unit(val[1]), isa(val[1], Union{Unitful.FreeUnits, Unitful.Quantity})
     )
@@ -146,6 +176,7 @@ function GeoUnit(fun::F) where {F <: Function}
 end
 
 function GeoUnit{T}(val) where {T}
+    val = _absolute(val)
     return GeoUnit{T, typeof(unit(val[1]))}(
         T.(ustrip.(val)),
         unit(val[1]),
@@ -177,19 +208,56 @@ function GeoUnit(val::Union{Quantity{Int32}, AbstractArray{<:Quantity{<:Int32}}}
 end
 
 # helper functions
+"""
+    Unit(v::GeoUnit)
+
+Returns the `Unitful` unit of the [`GeoUnit`](@ref) `v` (without its numeric value).
+"""
 Unit(v::GeoUnit{T, U}) where {T, U} = Unitful.unit(v.unit * 1)
+"""
+    isdimensional(v) -> Bool
+
+Returns `true` if `v` is a [`GeoUnit`](@ref) that still carries dimensional units, and `false` if
+it has been nondimensionalized (or is a plain `Number`).
+"""
 isdimensional(v::GeoUnit{T, U}) where {T, U} = v.isdimensional                 # is it a nondimensional number or not?
 isdimensional(v::Number) = false                            # nope
+"""
+    NumValue(v)
+
+Returns the bare numeric value of a [`GeoUnit`](@ref) `v`, stripped of units. For a plain `Number`
+or `AbstractArray`, returns `v` unchanged.
+"""
 NumValue(v::GeoUnit) = v.val                                # numeric value, with no units
 NumValue(v::Number) = v                                     # numeric value
 NumValue(v::AbstractArray) = v                              # numeric value
+
+"""
+    Value(v::GeoUnit)
+
+Returns the value of the [`GeoUnit`](@ref) `v` as a `Unitful.Quantity`, i.e. combining its numeric
+value with its units.
+"""
 Value(v::GeoUnit) = Unitful.Quantity.(v.val, v.unit)        # value, with units
 Fun(v::GeoUnit) = v.val
+
+"""
+    unpack_units(x::NTuple{N, GeoUnit})
+
+Returns a tuple of the dimensional values (numeric value times units) of the [`GeoUnit`](@ref)s in
+`x`.
+"""
 unpack_units(x::NTuple{N, GeoUnit}) where {N} = ntuple(i -> x[i].unit * x[i].val, Val(N))
 unpack_vals(x::NTuple{N, GeoUnit}) where {N} = ntuple(i -> x[i].val, Val(N))
 unpack_vals(::Type{T}, x::NTuple{N, GeoUnit}) where {T, N} =
     ntuple(i -> convert_precision(T, x[i].val), Val(N))
 
+"""
+    UnitValue(v::GeoUnit)
+
+Returns the value of the [`GeoUnit`](@ref) `v` with units ([`Value`](@ref)) if it is dimensional, or
+its bare numeric value ([`NumValue`](@ref)) if it has been nondimensionalized.
+"""
 function UnitValue(v::GeoUnit{T, U}) where {T, U}
     if v.isdimensional
         return Value(v)             # returns value with units
@@ -203,8 +271,9 @@ Base.isequal(x::GeoUnit, y::Number) = Base.isequal(x.val, y)
 Base.isequal(x::GeoUnit, y::AbstractArray) = Base.isequal(x.val, y)
 Base.isequal(x::GeoUnit, y::GeoUnit) = Base.isequal(x.val, y.val)
 
-Base.convert(::Type{<:AbstractArray}, v::GeoUnit) = v.val
-Base.convert(::Type{<:Real}, v::GeoUnit) = v.val
+Base.convert(::Type{T}, v::GeoUnit) where {T <: AbstractArray} = convert(T, v.val)
+Base.convert(::Type{T}, v::GeoUnit) where {T <: Real} = convert(T, v.val)
+Base.convert(::Type{ForwardDiff.Dual{T, V, N}}, v::GeoUnit) where {T, V, N} = convert(ForwardDiff.Dual{T, V, N}, v.val)
 Base.convert(::Type{GeoUnit}, v::Number) = GeoUnit(v)
 Base.convert(::Type{GeoUnit}, v::Int32) = GeoUnit(Float32(v))
 Base.convert(::Type{GeoUnit}, v::Int64) = GeoUnit(Float64(v))
@@ -225,14 +294,41 @@ Base.convert(::Type{GeoUnit{T}}, v::AbstractArray) where {T} = GeoUnit(T.(v))
 
 Base.promote_rule(::Type{GeoUnit}, ::Type{Quantity}) = GeoUnit
 
-function Base.show(io::IO, x::GeoUnit{T, U}) where {T, U} # output
-    val = x.val
-    if x.isdimensional == true
-        println("GeoUnit{dimensional, $(x.unit)}, ")
-    else
-        println("GeoUnit{nondimensional, $(x.unit)}, ")
-    end
-    return show(io, MIME("text/plain"), val)
+"""
+    promote_construct(X, args...)
+
+Positional fallback constructor for material-parameter structs whose fields are `GeoUnit`s
+sharing one numeric type: numbers and quantities in `args` are converted to `GeoUnit`, all
+`GeoUnit`s are promoted to a common element type, and `X` is called with the result. Other
+arguments (`Bool` flags, nested parameter structs, ...) are passed through unchanged. Throws an
+`ArgumentError` if the arguments cannot be converted to a form that `X`'s own constructor accepts.
+"""
+function promote_construct(::Type{X}, args::Vararg{Any, N}) where {X, N}
+    converted = map(_to_geounit, args)
+    T = mapreduce(_geounit_eltype, promote_type, converted; init = Union{})
+    promoted = map(x -> _with_eltype(T, x), converted)
+    promoted === args &&
+        throw(ArgumentError("no $(nameof(X)) constructor accepts arguments of types $(typeof(args))"))
+    return X(promoted...)
+end
+
+_to_geounit(x::Bool) = x
+_to_geounit(x::Number) = convert(GeoUnit, x)
+_to_geounit(x) = x
+
+_geounit_eltype(x::GeoUnit{<:AbstractFloat}) = typeof(x.val)
+_geounit_eltype(x) = Union{}
+
+_with_eltype(::Type{T}, x::GeoUnit{<:AbstractFloat, U}) where {T <: AbstractFloat, U} = GeoUnit{T, U}(T(x.val), x.unit, x.isdimensional)
+_with_eltype(::Type, x) = x
+
+# Compact form: the bare value, so interpolating a GeoUnit yields the number it wraps.
+Base.show(io::IO, x::GeoUnit) = show(io, MIME("text/plain"), x.val)
+
+function Base.show(io::IO, ::MIME"text/plain", x::GeoUnit{T, U}) where {T, U}
+    dimensionality = x.isdimensional ? "dimensional" : "nondimensional"
+    println(io, "GeoUnit{$dimensionality, $(x.unit)}, ")
+    return show(io, MIME("text/plain"), x.val)
 end
 
 # define a few basic routines so we can easily operate with GeoUnits
@@ -390,7 +486,7 @@ which is more convenient for typical geodynamic simulations than SI units
 The characteristic values given as input can be in arbitrary units (`km` or `m`), provided the unit is specified.
 
 # Examples:
-```julia-repl
+```jldoctest
 julia> CharUnits = GEO_units()
 Employing GEO units
 Characteristic values:
@@ -398,11 +494,12 @@ Characteristic values:
          time:        0.3169 Myr
          stress:      10 MPa
          temperature: 1000.0 °C
+
 julia> CharUnits.velocity
-1.0e-7 m s⁻¹
+1.0e-7 m s⁻¹·⁰
 ```
 If we instead have a crustal-scale simulation, it is likely more appropriate to use a different characteristic `length`:
-```julia-repl
+```jldoctest
 julia> CharUnits = GEO_units(length=10km)
 Employing GEO units
 Characteristic values:
@@ -456,7 +553,7 @@ end
 Specify the characteristic values using SI units
 
 # Examples:
-```julia-repl
+```jldoctest
 julia> CharUnits = SI_units(length=1000m)
 Employing SI units
 Characteristic values:
@@ -466,8 +563,14 @@ Characteristic values:
          temperature: 1000.0 K
 ```
 Note that the same can be achieved if the input is given in `km`:
-```julia-repl
+```jldoctest
 julia> CharUnits = SI_units(length=1km)
+Employing SI units
+Characteristic values:
+         length:      1000 m
+         time:        1.0e19 s
+         stress:      10 Pa
+         temperature: 1000.0 K
 ```
 """
 function SI_units(; length = 1000m, temperature = 1000K, stress = 10Pa, viscosity = 1.0e20Pas)
@@ -514,8 +617,9 @@ end
 Specify the characteristic values in non-dimensional units
 
 # Examples:
-```julia-repl
+```jldoctest
 julia> using GeoParams;
+
 julia> CharUnits = NO_units()
 Employing NONE units
 Characteristic values:
@@ -564,36 +668,41 @@ end
 Nondimensionalizes `param` using the characteristic values specified in `CharUnits`
 
 # Example 1
-```julia-repl
+```jldoctest
 julia> using GeoParams;
+
 julia> CharUnits =   GEO_units();
+
 julia> v         =   3cm/yr
-3 cm yr⁻¹
+3 cm yr⁻¹·⁰
+
 julia> v_ND      =   nondimensionalize(v, CharUnits)
 0.009506426344208684
 ```
 # Example 2
 In geodynamics one sometimes encounters more funky units
-```julia-repl
+```jldoctest nondimensionalize_funky
 julia> CharUnits =   GEO_units();
+
 julia> A         =   6.3e-2MPa^-3.05*s^-1
-0.063 MPa⁻³·⁰⁵ s⁻¹
+0.063 MPa⁻³·⁰⁵ s⁻¹·⁰
+
 julia> A_ND      =   nondimensionalize(A, CharUnits)
 7.068716262102384e14
 ```
 
 In case you are interested to see how the units of `A` look like in different units, use this function from the [Unitful](https://github.com/PainterQubits/Unitful.jl) package:
-```julia-repl
+```jldoctest nondimensionalize_funky
 julia> uconvert(u"Pa^-3.05*s^-1",A)
-3.157479571851836e-20 Pa⁻³·⁰⁵
+3.157479571851836e-20 Pa⁻³·⁰⁵ s⁻¹·⁰
 ```
 and to see it decomposed in the basic `SI` units of length, mass and time:
-```julia-repl
+```jldoctest nondimensionalize_funky
 julia> upreferred(A)
-3.1574795718518295e-20 m³·⁰⁵ s⁵·¹ kg⁻³·⁰⁵
+3.1574795718518295e-20 m³·⁰⁵ s⁵·¹ kg⁻³·⁰⁵
 ```
 """
-function nondimensionalize(param::GeoUnit{T, U}, g::Union{GeoUnits{TYPE}, Nothing}) where {T, U, TYPE}
+function nondimensionalize(param::GeoUnit{T, U}, g::Union{GeoUnits, Nothing}) where {T, U}
 
     if param.isdimensional
         char_val = compute_units(param, g)
@@ -687,6 +796,12 @@ nondimensionalize(args...) = nondimensionalize(Tuple(args[1:(end - 1)]), args[en
 @inline dimension_types(::Unitful.Dimensions{T}) where {T} = T
 
 # This computes the characteristic value
+"""
+    compute_units(param::GeoUnit, g::GeoUnits)
+
+Returns the characteristic value of `param`'s physical dimension in the characteristic-units system
+`g`, used to nondimensionalize (or re-dimensionalize) quantities of that dimension.
+"""
 function compute_units(
         param::GeoUnit{<:Union{T, AbstractArray{T}}, U}, g::GeoUnits
     ) where {T, U}
@@ -788,18 +903,25 @@ function nondimensionalize(
     return ntuple(i -> nondimensionalize(MatParam[i], g), Val(N))
 end
 
+# An empty tuple satisfies the element-type constraint of every tuple method above.
+function nondimensionalize(::Tuple{}, ::GeoUnits)
+    throw(ArgumentError("cannot nondimensionalize an empty tuple of parameters"))
+end
+
 """
     dimensionalize(param, param_dim::Unitful.FreeUnits, CharUnits::GeoUnits{TYPE})
 
 Dimensionalizes `param` into the dimensions `param_dim` using the characteristic values specified in `CharUnits`.
 
 # Example
-```julia-repl
+```jldoctest
 julia> CharUnits =   GEO_units();
+
 julia> v_ND      =   nondimensionalize(3cm/yr, CharUnits)
-0.031688087814028945
+0.009506426344208684
+
 julia> v_dim     =   dimensionalize(v_ND, cm/yr, CharUnits)
-3.0 cm yr⁻¹
+3.0 cm yr⁻¹·⁰
 ```
 
 """
@@ -921,6 +1043,12 @@ function dimensionalize(
     return ntuple(i -> dimensionalize(MatParam[i], g), Val(N))
 end
 
+"""
+    udim(args...)
+
+Dimensionalizes the input `args` with [`dimensionalize`](@ref) and strips the units, returning the
+plain numeric value(s). Equivalent to [`dimensionalize_and_strip`](@ref).
+"""
 @inline udim(args::Vararg{Any, N}) where {N} = ustrip(dimensionalize(args...))
 
 """
@@ -932,6 +1060,11 @@ apply units to values and immediately retrieve their plain numeric values.
 """
 dimensionalize_and_strip(args::Vararg{Any, N}) where {N} = ustrip(dimensionalize(args...))
 
+"""
+    @dimstrip(args...)
+
+Macro form of [`dimensionalize_and_strip`](@ref): dimensionalizes `args` and strips the units.
+"""
 macro dimstrip(args...)
     return quote
         dimensionalize_and_strip($(esc.(args)...))

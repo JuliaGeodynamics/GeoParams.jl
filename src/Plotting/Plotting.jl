@@ -240,8 +240,7 @@ end
 
 Same as `PlotStrainrateStress` but with stress (in MPa) versus strainrate (in 1/s) instead.
 
-Example
-===
+# Example
 
 ```julia
 julia> import GeoParams.Dislocation, GeoParams.Diffusion;
@@ -777,8 +776,7 @@ We either use the default ranges of the diagram, or you can specify the temperat
 The return arguments are the figure/axis, the gridded data `Z` and the temperature/pressure vectors used.
 Note: if you want to create plots you need to install and load a `Makie.jl` backend (e.g. `GLMakie.jl` or, for headless use, `CairoMakie.jl`).
 
-Example
-=======
+# Example
 ```julia
 julia> using CairoMakie, GeoParams
 julia> PD_data = PerpleX_LaMEM_Diagram("./test/test_data/Peridotite.in")
@@ -1378,7 +1376,7 @@ end
 
 
 """
-    fig, ax = PlotDiffusionCoefPlotDiffusionCoefArrhenius(x::Union{Tuple{Vararg{AbstractChemicalDiffusion}}, NTuple{N, AbstractChemicalDiffusion} where N, AbstractChemicalDiffusion};
+    fig, ax = PlotDiffusionCoefArrhenius(x::Union{Tuple{Vararg{AbstractChemicalDiffusion}}, NTuple{N, AbstractChemicalDiffusion} where N, AbstractChemicalDiffusion};
                                 P=1u"GPa", fO2=1.0e-25NoUnits, log_type=:log10, linestyle=:solid, linewidth=1, color=nothing, label=nothing,
                                 title="", fig=nothing, filename=nothing, res=(1200, 1200), legend=true, legendsize=15, position=:rt,
                                 labelsize=35, xlims=(nothing, nothing), ylims=(nothing, nothing))

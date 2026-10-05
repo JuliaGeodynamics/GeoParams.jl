@@ -1,6 +1,11 @@
 # If you want to add a new method here, feel free to do so.
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
+"""
+    AbstractElasticity{T} <: AbstractConstitutiveLaw{T}
+
+Supertype of elastic constitutive laws (e.g. [`ConstantElasticity`](@ref)).
+"""
 abstract type AbstractElasticity{T} <: AbstractConstitutiveLaw{T} end
 
 export compute_εII, # calculation routines
@@ -21,9 +26,7 @@ export compute_εII, # calculation routines
     AbstractElasticity,
     isvolumetric,
     iselastic,
-    effective_εII, effective_ε,
-    get_G,
-    get_Kb
+    effective_εII, effective_ε
 
 # ConstantElasticity  -------------------------------------------------------
 """
@@ -35,10 +38,10 @@ Structure that holds parameters for constant, isotropic, linear elasticity.
     G::GeoUnit{T, U} = 5.0e10Pa                                             # Elastic shear modulus
     ν::GeoUnit{T, U1} = 0.5NoUnits                                         # Poisson ratio
     Kb::GeoUnit{T, U} = 2 * G * (1 + ν) / (3 * (1 - 2 * ν))                          # Elastic bulk modulus
-    E::GeoUnit{T, U} = 9 * Kb * G / (3 * Kb + G)                                  # Elastic Young's modulus
+    E::GeoUnit{T, U} = 2 * G * (1 + ν)                                  # Elastic Young's modulus
 end
 
-ConstantElasticity(args...) = ConstantElasticity(convert.(GeoUnit, args)...)
+ConstantElasticity(args...) = promote_construct(ConstantElasticity, args...)
 
 
 # Add multiple dispatch here to allow specifying combinations of 2 elastic parameters (say ν & E), to compute the others
@@ -53,7 +56,7 @@ function SetConstantElasticity(; G = nothing, ν = nothing, E = nothing, Kb = no
     end
     if (!isnothing(G) && !isnothing(ν))
         Kb = 2 * G * (1 + ν) / (3 * (1 - 2 * ν))     # Bulk modulus
-        E = 9 * Kb * G / (3 * Kb + G)              # Youngs modulus
+        E = 2 * G * (1 + ν)                        # Youngs modulus
     elseif (!isnothing(Kb) && !isnothing(ν))
         G = (3 * Kb * (1 - 2 * ν)) / (2 * (1 + ν))
         E = 9 * Kb * G / (3 * Kb + G)              # Youngs modulus
@@ -90,6 +93,12 @@ end
     return ν == 0.5 ? false : true
 end
 
+"""
+    iselastic(v) -> Bool
+
+Returns `true` if `v` is an elastic constitutive law (an [`AbstractElasticity`](@ref)), and `false`
+otherwise.
+"""
 @inline iselastic(v::AbstractElasticity) = true
 @inline iselastic(v) = false
 
@@ -143,7 +152,7 @@ end
 end
 
 @inline function dτII_dεII(
-        a::ConstantElasticity, τII_old = zero(precision(a)), dt = one(precision(a)), kwargs...
+        a::ConstantElasticity, εII; τII_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
     Tc = precision_of(dt)
     @unpack_val Tc G = a
@@ -225,6 +234,12 @@ Computes elastic volumetric strainrate given the pressure at the current (`P`) a
     return εvol_el
 end
 
+"""
+    dεvol_dp(a::ConstantElasticity, P; P_old, dt, kwargs...)
+
+Returns the derivative of the elastic volumetric strain with respect to pressure, `∂εvol/∂P = -1/(Kb·dt)`,
+for the elasticity `a` over time step `dt`.
+"""
 @inline function dεvol_dp(
         a::ConstantElasticity, P; P_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
@@ -234,6 +249,12 @@ end
     return - inv(Kb * dt)
 end
 
+"""
+    compute_p(v, εvol, args)
+
+Returns the pressure produced by the volumetric strain `εvol` for the rheology `v`. For elasticity
+`P = -Kb·dt·εvol + P_old`; for a [`Parallel`](@ref) assembly the pressures of the elements are summed.
+"""
 @inline function compute_p(
         a::ConstantElasticity, εvol; P_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
@@ -245,8 +266,14 @@ end
     return P
 end
 
+"""
+    dp_dεvol(a::ConstantElasticity, args)
+
+Returns the derivative of pressure with respect to the volumetric strain, `∂P/∂εvol = -Kb·dt`, for
+the elasticity `a` over time step `dt`.
+"""
 @inline function dp_dεvol(
-        a::ConstantElasticity, P_old = zero(precision(a)), dt = one(precision(a)), kwargs...
+        a::ConstantElasticity, εvol; P_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
     Tc = precision_of(dt)
     @unpack_val Tc Kb = a
@@ -348,6 +375,14 @@ function effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
     return effective_ε((εxx, εyy, εxy), v, (τxx_old, τyy_old, τxy_old), dt)
 end
 
+"""
+    effective_εII(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
+
+Returns the second invariant of the effective (visco-elastic) strain rate, which augments the
+deviatoric strain-rate components with the stress-rate contribution of the old stresses
+`(τxx_old, τyy_old, τxy_old)` for the elasticity in `v` over time step `dt`. The 3D form takes the
+full six components.
+"""
 function effective_εII(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
     εxx, εyy, εxy = effective_ε(εxx, εyy, εxy, v, τxx_old, τyy_old, τxy_old, dt)
     εII = second_invariant(εxx, εyy, εxy)

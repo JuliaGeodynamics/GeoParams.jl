@@ -17,7 +17,18 @@ using GeoParams: LinearInterpolator, interpolate, interpolate_field
 
 include("../Computations.jl")
 
+"""
+    AbstractDensity{T} <: AbstractMaterialParam
+
+Supertype of density parameterizations (e.g. [`ConstantDensity`](@ref), [`PT_Density`](@ref)).
+"""
 abstract type AbstractDensity{T} <: AbstractMaterialParam end
+
+"""
+    ConduitDensity{T} <: AbstractDensity{T}
+
+Supertype of density parameterizations for volcanic conduit flow.
+"""
 abstract type ConduitDensity{T} <: AbstractDensity{T} end
 
 export compute_density, # calculation routines
@@ -63,7 +74,7 @@ where ``\\rho`` is the density [``kg/m^3``].
 @with_kw_noshow struct ConstantDensity{_T, U} <: AbstractDensity{_T}
     ρ::GeoUnit{_T, U} = 2900.0kg / m^3 # density
 end
-ConstantDensity(args...) = ConstantDensity(convert.(GeoUnit, args)...)
+ConstantDensity(args...) = promote_construct(ConstantDensity, args...)
 isdimensional(s::ConstantDensity) = isdimensional(s.ρ)
 
 @inline function (ρ::ConstantDensity)(; P = 0, T = 0, args...)
@@ -115,7 +126,7 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference temperature ``T_0`` a
     T0::GeoUnit{_T, U4} = 0.0C           # Reference temperature
     P0::GeoUnit{_T, U5} = 0.0MPa         # Reference pressure
 end
-PT_Density(args...) = PT_Density(convert.(GeoUnit, args)...)
+PT_Density(args...) = promote_construct(PT_Density, args...)
 isdimensional(s::PT_Density) = isdimensional(s.ρ0)
 
 function param_info(s::PT_Density) # info
@@ -164,7 +175,7 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference pressure ``P_0`` and 
     β::GeoUnit{_T, U2} = 1.0e-9 / Pa     # P-dependence of density
     P0::GeoUnit{_T, U3} = 0.0MPa         # Reference pressure
 end
-Compressible_Density(args...) = Compressible_Density(convert.(GeoUnit, args)...)
+Compressible_Density(args...) = promote_construct(Compressible_Density, args...)
 isdimensional(s::Compressible_Density) = isdimensional(s.ρ0)
 
 function param_info(s::Compressible_Density) # info about the struct
@@ -209,7 +220,7 @@ where ``\\rho_0`` is the density [``kg/m^3``] at reference temperature ``T_0`` a
     α::GeoUnit{_T, U2} = 3.0e-5 / K       # T-dependence of density
     T0::GeoUnit{_T, U3} = 273.15K        # Reference temperature
 end
-T_Density(args...) = T_Density(convert.(GeoUnit, args)...)
+T_Density(args...) = promote_construct(T_Density, args...)
 isdimensional(s::T_Density) = isdimensional(s.ρ0)
 
 function param_info(s::T_Density) # info about the struct
@@ -257,7 +268,7 @@ Note that any density formulation can be used for melt and solid.
     ρ::GeoUnit{_T, U} = 2900.0kg / m^3          # to keep track on whether this struct is dimensional or not
 end
 
-MeltDependent_Density(args...) = MeltDependent_Density(args[1], args[2], convert.(GeoUnit, args[3:end])...)
+MeltDependent_Density(args...) = promote_construct(MeltDependent_Density, args...)
 isdimensional(s::MeltDependent_Density) = isdimensional(s.ρsolid)
 
 # This assumes that density always has a single parameter. If that is not the case, we will have to extend this (to be done)
@@ -284,7 +295,7 @@ end
 
 # Conduit densities -------------------------------------------------
 """
-    BubbleFlow_Density(ρmelt=ConstantDensity(), ρgas=ConstantDensity(), c0=0e0, a=0.0041MPa^-1/2)
+    BubbleFlow_Density(ρmelt=ConstantDensity(), ρgas=ConstantDensity(), c0=0e0, a=0.0041MPa^(-1//2))
 
 Defines the BubbleFlow_Density as described in Slezin (2003) with a default gas solubility constant of 0.0041MPa``^{-1/2}`` used in e.g. Sparks et al. (1978)
 ```math
@@ -307,13 +318,21 @@ c =
 Possible values for a are 3.2e-6-6.4e-6Pa``^{-1/2}`` where the lower value corresponds to mafic magmas at rather large pressures (400-600MPa) and the higher value to felsic magmas at low pressures (0 to 100-200MPa) (after Slezin (2003))
 
 # Example
-```julia
-rheology = SetMaterialParams(;
-                      Phase=1,
-                      CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e21Pa * s)),
-                      Gravity=ConstantGravity(; g=9.81.0m / s^2),
-                      Density= BubbleFlow_Density(ρmelt=ConstantDensity(ρ=2900kg/m^3), ρgas=ConstantDensity(ρ=1kg/m^3), c0=0.0, a=0.0041MPa^-1//2),
-                      )
+```jldoctest
+julia> rheology = SetMaterialParams(;
+           Phase = 1,
+           CreepLaws = (PowerlawViscous(), LinearViscous(; η = 1e21Pa * s)),
+           Gravity = ConstantGravity(; g = 9.81m / s^2),
+           Density = BubbleFlow_Density(;
+               ρmelt = ConstantDensity(ρ = 2900kg / m^3),
+               ρgas = ConstantDensity(ρ = 1kg / m^3),
+               c0 = 0.0,
+               a = 0.0041MPa^(-1 // 2),
+           ),
+       );
+
+julia> rheology.Density[1]
+Bubble flow density: ρ = 1/((c0-c)/ρgas + (1-(c0-c))/ρmelt); ρmelt=Constant density: ρ=2900.0 kg m⁻³·⁰; ρgas=Constant density: ρ=1.0 kg m⁻³·⁰; c0=0.0; a=0.0041 MPa⁻⁰·⁵
 ```
 
 # References
@@ -328,7 +347,7 @@ rheology = SetMaterialParams(;
     ρ::GeoUnit{_T, U3} = 2900.0kg / m^3          # to keep track on whether this struct is dimensional or not
 end
 
-BubbleFlow_Density(args...) = BubbleFlow_Density(args[1], args[2], convert.(GeoUnit, args[3:end])...)
+BubbleFlow_Density(args...) = promote_construct(BubbleFlow_Density, args...)
 isdimensional(s::BubbleFlow_Density) = isdimensional(s.ρmelt)
 
 function param_info(s::BubbleFlow_Density) # info about the struct
@@ -387,13 +406,21 @@ with
 - `β`: Gas volume fraction enclosed within the particles
 
 # Example
-```julia
-rheology = SetMaterialParams(;
-                      Phase=1,
-                      CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e21Pa * s)),
-                      Gravity=ConstantGravity(; g=9.81.0m / s^2),
-                      Density= GasPyroclast_Density(ρmelt=ConstantDensity(ρ=2900kg/m^3), ρgas=ConstantDensity(ρ=1kg/m^3), δ=0.0, β=0.0),
-                      )
+```jldoctest
+julia> rheology = SetMaterialParams(;
+           Phase = 1,
+           CreepLaws = (PowerlawViscous(), LinearViscous(; η = 1e21Pa * s)),
+           Gravity = ConstantGravity(; g = 9.81m / s^2),
+           Density = GasPyroclast_Density(;
+               ρmelt = ConstantDensity(ρ = 2900kg / m^3),
+               ρgas = ConstantDensity(ρ = 1kg / m^3),
+               δ = 0.0,
+               β = 0.0,
+           ),
+       );
+
+julia> rheology.Density[1]
+Gas-Pyroclast mixture density: ρ = ρgas*δ + ρmelt*(1-β); ρmelt=Constant density: ρ=2900.0 kg m⁻³·⁰; ρgas=Constant density: ρ=1.0 kg m⁻³·⁰; δ=0.0; β=0.0
 ```
 
 # References
@@ -407,7 +434,7 @@ rheology = SetMaterialParams(;
     ρ::GeoUnit{_T, U3} = 2900.0kg / m^3         # to keep track on whether this struct is dimensional or not
 end
 
-GasPyroclast_Density(args...) = GasPyroclast_Density(args[1], args[2], convert.(GeoUnit, args[3:end])...)
+GasPyroclast_Density(args...) = promote_construct(GasPyroclast_Density, args...)
 isdimensional(s::GasPyroclast_Density) = isdimensional(s.ρmelt)
 
 function param_info(s::GasPyroclast_Density) # info about the struct
@@ -530,7 +557,7 @@ Redlich–Kwong fit.
 @with_kw_noshow struct IdealGas_Density{_T, U1} <: AbstractDensity{_T}
     Rs::GeoUnit{_T, U1} = 461.5J / kg / K   # specific gas constant
 end
-IdealGas_Density(args...) = IdealGas_Density(convert.(GeoUnit, args)...)
+IdealGas_Density(args...) = promote_construct(IdealGas_Density, args...)
 isdimensional(s::IdealGas_Density) = isdimensional(s.Rs)
 
 function param_info(s::IdealGas_Density)
@@ -588,7 +615,7 @@ window) cannot poison a `ϕ_gas=0` cell regardless of `P`, `T`.
     ρgas::S3 = IdealGas_Density()               # gas
     ρ::GeoUnit{_T, U} = 2400.0kg / m^3              # dimensional-tracking sentinel
 end
-ThreePhase_Density(args...) = ThreePhase_Density(args[1], args[2], args[3], convert.(GeoUnit, args[4:end])...)
+ThreePhase_Density(args...) = promote_construct(ThreePhase_Density, args...)
 isdimensional(s::ThreePhase_Density) = isdimensional(s.ρ)
 
 function param_info(s::ThreePhase_Density)
@@ -792,16 +819,17 @@ function param_info(s::Vector_Density) # info about the struct
 end
 
 # Calculation routine
-"""
-    compute_density(s::Vector_Density; index::Int64, kwargs...)
-
-Pointwise calculation of density from a vector where `index` is the index of the point
-"""
 @inline function (s::Vector_Density)(; index::Int64, kwargs...)
     return s.rho[index]
 end
 
 @inline (s::Vector_Density)(args) = s(; args...)
+
+"""
+    compute_density(s::Vector_Density; index::Int64, kwargs...)
+
+Pointwise calculation of density from a vector where `index` is the index of the point
+"""
 @inline compute_density(s::Vector_Density, args) = s(args)
 
 # Print info
@@ -856,40 +884,34 @@ end
 In-place computation of density `rho` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `Phase` of every point is specified as an Integer in the `Phases` array.
 # Example
-```julia
-julia> MatParam = (SetMaterialParams(Name="Mantle", Phase=1,
-                        CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pa*s)),
-                        Density   = PT_Density()
-                        ),
-                    SetMaterialParams(Name="Crust", Phase=2,
-                        CreepLaws= (PowerlawViscous(), LinearViscous(η=1e23Pas)),
-                        Density   = ConstantDensity(ρ=2900kg/m^3))
-                  );
-julia> Phases = ones(Int64,10,10);
-julia> Phases[:,5:end] .= 2
-julia> rho     = zeros(size(Phases))
-julia> T       =  ones(size(Phases))
-julia> P       =  ones(size(Phases))*10
-julia> args = (P=P, T=T)
+```jldoctest
+julia> MatParam = (
+           SetMaterialParams(Name = "Mantle", Phase = 1,
+               CreepLaws = (PowerlawViscous(), LinearViscous(η = 1e23Pa * s)),
+               Density = PT_Density()),
+           SetMaterialParams(Name = "Crust", Phase = 2,
+               CreepLaws = (PowerlawViscous(), LinearViscous(η = 1e23Pa * s)),
+               Density = ConstantDensity(ρ = 2900kg / m^3)),
+       );
+
+julia> Phases = ones(Int64, 2, 4); Phases[:, 3:end] .= 2;
+
+julia> rho = zeros(size(Phases));
+
+julia> args = (P = ones(size(Phases)) * 10, T = ones(size(Phases)) * 273.15);
+
 julia> compute_density!(rho, MatParam, Phases, args)
+
 julia> rho
-10×10 Matrix{Float64}:
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
- 2899.91  2899.91  2899.91  2899.91  2900.0  2900.0  2900.0  2900.0  2900.0  2900.0
+2×4 Matrix{Float64}:
+ 2900.0  2900.0  2900.0  2900.0
+ 2900.0  2900.0  2900.0  2900.0
 ```
+
 The routine is made to minimize allocations:
 ```julia
-julia> using BenchmarkTools
-julia> @btime compute_density!(\$rho, \$MatParam, \$Phases, P=\$P, T=\$T)
-    203.468 μs (0 allocations: 0 bytes)
+using BenchmarkTools
+@btime compute_density!(\$rho, \$MatParam, \$Phases, P = \$P, T = \$T)
 ```
 _________________________________________________________________________________________________________
 
@@ -900,6 +922,12 @@ This assumes that the `PhaseRatio` of every point is specified as an Integer in 
 """
 @inline compute_density!(args::Vararg{Any, N}) where {N} = compute_param!(compute_density, args...) #Multiple dispatch to rest of routines found in Computations.jl
 @inline compute_density(MatParam, arg, args::Vararg{Any, N}) where {N} = compute_param(compute_density, MatParam, arg, args...)
+"""
+    compute_density_ratio(phase_ratios, MatParam, args)
+
+Returns the phase-fraction-weighted average density at a point, summing each phase's density
+([`compute_density`](@ref)) times its fraction in `phase_ratios`.
+"""
 @inline compute_density_ratio(args::Vararg{Any, N}) where {N} = compute_param_times_frac(compute_density, args...)
 
 # extractor methods

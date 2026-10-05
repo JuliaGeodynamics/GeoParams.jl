@@ -36,7 +36,7 @@ where ``Q_L`` is the latent heat [``J/kg``].
 @with_kw_noshow struct ConstantLatentHeat{T, U} <: AbstractLatentHeat{T}
     Q_L::GeoUnit{T, U} = 400.0e3J / kg                # Latent heat
 end
-ConstantLatentHeat(args...) = ConstantLatentHeat(convert.(GeoUnit, args)...)
+ConstantLatentHeat(args...) = promote_construct(ConstantLatentHeat, args...)
 
 function param_info(s::ConstantLatentHeat) # info about the struct
     return MaterialParamsInfo(; Equation = L"Q_L = cst")
@@ -67,7 +67,7 @@ end
 
 # Help info for the calculation routines
 """
-    Ql = compute_latent_heat(s:<AbstractLatentHeat)
+    Ql = compute_latent_heat(s::AbstractLatentHeat)
 
 Returns the latent heat `Q_L`
 
@@ -90,7 +90,18 @@ for myType in (:ConstantLatentHeat,)
     end
 end
 
+"""
+    compute_latent_heat(s::AbstractLatentHeat)
+
+Returns the latent heat for the parameterization `s`.
+"""
 compute_latent_heat(MatParam, arg, args::Vararg{Any, N}) where {N} = compute_param(compute_latent_heat, MatParam, arg, args...)
+
+"""
+    compute_latent_heat!(Q_L, s, args)
+
+In-place version of [`compute_latent_heat`](@ref) that fills the array `Q_L` for the whole domain.
+"""
 compute_latent_heat!(args::Vararg{Any, N}) where {N} = compute_param!(compute_latent_heat, args...)
 
 end

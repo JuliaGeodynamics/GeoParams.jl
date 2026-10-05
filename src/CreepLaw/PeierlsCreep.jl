@@ -1,5 +1,4 @@
 export PeierlsCreep,
-    Peierls_info,
     remove_tensor_correction,
     dεII_dτII,
     dτII_dεII,
@@ -29,9 +28,9 @@ where
 either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
 # Example
-```julia-repl
+```jldoctest
 julia> x2 = PeierlsCreep(n=1)
-PeierlsCreep: Name = , n=1.0, q=2.0, o=1.0, TauP=8.5e9 Pa, A=5.7e11 s^-1.0, E=476.0 kJ mol^-1.0, FT=1.7320508075688772, FE=1.1547005383792517, Apparatus=1
+PeierlsCreep: Name = , n=1.0, q=2.0, o=1.0, TauP=8.5e9 Pa, A=5.7e11 s⁻¹·⁰, E=476000.0 J mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517, Apparatus=1
 ```
 """
 struct PeierlsCreep{T, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
@@ -161,6 +160,10 @@ function dεII_dτII(a::PeierlsCreep, TauII; args...)
     return ForwardDiff.derivative(x -> compute_εII(a, x; args...), TauII)
 end
 
+function dεII_dτII(a::PeierlsCreep, TauII::Quantity; args...)
+    return derivative_with_units(x -> compute_εII(a, x; args...), TauII)
+end
+
 """
     compute_τII(a::PeierlsCreep, EpsII; P, T, f, args...)
 
@@ -230,6 +233,10 @@ Computes the derivative `dτII/dεII` for a peierls creep law using automatic di
 
 function dτII_dεII(v::PeierlsCreep, EpsII; args...)
     return ForwardDiff.derivative(x -> compute_τII(v, x; args...), EpsII)
+end
+
+function dτII_dεII(v::PeierlsCreep, EpsII::Quantity; args...)
+    return derivative_with_units(x -> compute_τII(v, x; args...), EpsII)
 end
 
 # Print info

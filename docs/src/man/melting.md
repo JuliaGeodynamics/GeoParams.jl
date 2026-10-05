@@ -31,7 +31,4 @@ Also note that phase diagrams can be imported using `PerpleX_LaMEM_Diagram`, whi
 The computational routines work with that as well.
 
 # Plotting routines
-You can use the routine `PlotMeltFraction` to create a plot, provided that the `GLMakie` package has been loaded
-```@docs
-GeoParams.PlotMeltFraction
-```
+You can use the routine [`PlotMeltFraction`](@ref GeoParams.PlotMeltFraction) to create a plot, provided that a `Makie` backend has been loaded.

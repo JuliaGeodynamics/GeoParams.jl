@@ -113,8 +113,8 @@ using GeoParams
         ρ_mix = compute_density(phases_tup, ratio, (;))
         @test ρ_mix ≈ 0.4 * 2900.0 + 0.6 * 3100.0
 
-        # nphase fallback: phase index present in no material -> 0.0
-        @test compute_density(phases_tup, 99, (;)) == 0.0
+        # a phase index present in no material is an error
+        @test_throws "phase not found in MaterialParams" compute_density(phases_tup, 99, (;))
 
         # compute_param! with a PhaseRatio array of the wrong rank -> error guard
         rho2d = zeros(4, 4)                # N = 2 -> PhaseRatio must be 3D

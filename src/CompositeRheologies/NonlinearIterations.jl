@@ -1,8 +1,8 @@
 # NONLINEAR ITERATION SCHEMES
 """
-    τII =local_iterations_εII(v::CompositeRheology{T,N,0}, εII::_T, args; tol=1e-6, verbose=false)
+    τII =local_iterations_εII(v::CompositeRheology{T,N,0}, εII::_T, args; tol=1e-6, verbose=false, max_iter=1000)
 
-Performs local iterations versus stress for a given total strain rate for a given `CompositeRheology` element that does NOT include `Parallel` elements
+Performs local iterations versus stress for a given total strain rate for a given `CompositeRheology` element that does NOT include `Parallel` elements. Throws an error if the tolerance is not reached within `max_iter` iterations.
 """
 function local_iterations_εII(
         v::CompositeRheology{
@@ -14,7 +14,7 @@ function local_iterations_εII(
         },         # no volumetric plasticity
         εII::_T,
         args;
-        tol = 1.0e-6, verbose = false
+        tol = 1.0e-6, verbose = false, max_iter = 1000
     ) where {N, T, _T, is_parallel, is_plastic, Nvol, is_vol}
 
     # Initial guess
@@ -26,7 +26,7 @@ function local_iterations_εII(
     ϵ = 2.0 * tol
     τII_prev = τII
 
-    while ϵ > tol
+    while (ϵ > tol) && (iter < max_iter)
         iter += 1
         #=
             Newton scheme -> τII = τII - f(τII)/dfdτII.
@@ -36,13 +36,11 @@ function local_iterations_εII(
                 τII -= f / dfdτII
         =#
         τII = @muladd τII + (εII - compute_εII(v, τII, args)) * inv(dεII_dτII(v, τII, args))
-        ϵ = abs(τII - τII_prev) * inv(τII)
+        ϵ = abs(τII - τII_prev) * inv(abs(τII))
         τII_prev = τII
         @print(verbose, " iter $(iter) $ϵ")
-
-        T_check = ϵ isa Union{AbstractFloat, Integer}
-        !(T_check) && break
     end
+    ϵ > tol && error("local iterations did not converge")
 
     @print(verbose, "final τII = $τII")
     @print(verbose, "---")
@@ -51,9 +49,9 @@ function local_iterations_εII(
 end
 
 """
-    τII = local_iterations_εII_AD(v::CompositeRheology{T,N}, εII::_T, args; tol=1e-6, verbose=false)
+    τII = local_iterations_εII_AD(v::CompositeRheology{T,N}, εII::_T, args; tol=1e-6, verbose=false, max_iter=1000)
 
-Performs local iterations versus stress for a given strain rate using AD
+Performs local iterations versus stress for a given strain rate using AD. Throws an error if the tolerance is not reached within `max_iter` iterations.
 """
 @inline function local_iterations_εII_AD(
         v::CompositeRheology{
@@ -66,7 +64,7 @@ Performs local iterations versus stress for a given strain rate using AD
         },
         εII::_T,
         args;
-        tol = 1.0e-6, verbose = false
+        tol = 1.0e-6, verbose = false, max_iter = 1000
     ) where {N, T, _T, Npar, is_par, Nplast, is_plastic, Nvol, is_vol}
 
     # Initial guess
@@ -89,7 +87,7 @@ Performs local iterations versus stress for a given strain rate using AD
     ϵ = 2.0 * tol
     τII_prev = τII
     ε_pl = 0.0
-    while (ϵ > tol) && (iter < 10)
+    while (ϵ > tol) && (iter < max_iter)
         iter += 1
         #=
             Newton scheme -> τII = τII - f(τII)/dfdτII.
@@ -120,10 +118,11 @@ Performs local iterations versus stress for a given strain rate using AD
 
         τII = @muladd f * inv(dεII_dτII) + τII
 
-        ϵ = abs(τII - τII_prev) * inv(τII)
+        ϵ = abs(τII - τII_prev) * inv(abs(τII))
         τII_prev = τII
         # @print(verbose, " iter $(iter) $ϵ τII=$τII")
     end
+    ϵ > tol && error("local iterations did not converge")
     # @print(verbose, "final τII = $τII")
     # @print(verbose, "---")
 
@@ -131,11 +130,11 @@ Performs local iterations versus stress for a given strain rate using AD
 end
 
 """
-    compute_εII(v::AbstractPlasticity, τII::_T, args; tol=1e-6, verbose=true)
+    compute_εII(v::AbstractPlasticity, τII::_T, args; tol=1e-6, verbose=false, max_iter=100)
 
-Performs local iterations to compute the plastic strainrate. Note that the non-plastic strainrate, ε_np, should be part of `args`
+Performs local iterations to compute the plastic strainrate. Note that the non-plastic strainrate, ε_np, should be part of `args`. Throws an error if the tolerance is not reached within `max_iter` iterations.
 """
-function compute_εII(v::AbstractPlasticity, τII::_T, args; tol = 1.0e-6, verbose = false) where {_T}
+function compute_εII(v::AbstractPlasticity, τII::_T, args; tol = 1.0e-6, verbose = false, max_iter = 100) where {_T}
 
     η_np = (τII - args.τII_old) / (2.0 * args.ε_np)
 
@@ -145,7 +144,7 @@ function compute_εII(v::AbstractPlasticity, τII::_T, args; tol = 1.0e-6, verbo
     λ = 0.0
     ϵ = 2.0 * tol
     τII_pl = τII
-    while (ϵ > tol) && (iter < 100) && (F > 0.0)
+    while (ϵ > tol) && (iter < max_iter) && (F > 0.0)
         #   τII_pl = τII -  2*η_np*λ*∂Q∂τII
         #   F(τII_pl)
         #   dF/dλ = (dF/dτII)*(dτII/dλ) = (dF/dτII)*(2*η_np*∂Q∂τII)
@@ -163,14 +162,23 @@ function compute_εII(v::AbstractPlasticity, τII::_T, args; tol = 1.0e-6, verbo
         # @print(verbose, "    plastic iter $(iter) ϵ=$ϵ λ=$λ, F=$F")
     end
 
+    (ϵ > tol) && (F > 0.0) && error("plastic iterations did not converge")
+
     ε_pl = λ * ∂Q∂τII(v, τII_pl, args)
 
     return ε_pl
 end
 
 
+"""
+    local_iterations_τII_AD(v, τII, args; tol=1e-6, verbose=false, max_iter=1000)
+
+Solves for the deviatoric strain rate consistent with the imposed stress `τII` for a parallel
+rheology `v` by Newton iterations, using forward-mode automatic differentiation for the Jacobian.
+Iterates until the relative change is below `tol`, and throws an error if that takes more than `max_iter` iterations.
+"""
 @inline function local_iterations_τII_AD(
-        v::Parallel, τII::T, args; tol = 1.0e-6, verbose = false
+        v::Parallel, τII::T, args; tol = 1.0e-6, verbose = false, max_iter = 1000
     ) where {T}
 
     # Initial guess
@@ -182,7 +190,7 @@ end
     iter = 0
     ϵ = 2.0 * tol
     εII_prev = εII
-    while ϵ > tol
+    while (ϵ > tol) && (iter < max_iter)
         iter += 1
         #=
             Newton scheme -> τII = τII - f(τII)/dfdτII.
@@ -193,11 +201,12 @@ end
         =#
         εII = @muladd (τII - first(compute_τII(v, εII, args))) * inv(dτII_dεII(v, εII, args)) + εII
 
-        ϵ = abs(εII - εII_prev) * inv(εII)
+        ϵ = abs(εII - εII_prev) * inv(abs(εII))
         εII_prev = εII
         # @print(verbose," iter $(iter) $ϵ")
 
     end
+    ϵ > tol && error("local iterations did not converge")
 
     # @print(verbose,"final εII = $εII")
     # @print(verbose,"---")
@@ -206,9 +215,9 @@ end
 end
 
 """
-    p =local_iterations_εvol(v::CompositeRheology{T,N,0}, εvol::_T, args; tol=1e-6, verbose=false)
+    p =local_iterations_εvol(v::CompositeRheology{T,N,0}, εvol::_T, args; tol=1e-6, verbose=false, max_iter=1000)
 
-Performs local iterations versus pressure for a given total volumetric strain rate for a given `CompositeRheology` element that does NOT include `Parallel` elements
+Performs local iterations versus pressure for a given total volumetric strain rate for a given `CompositeRheology` element that does NOT include `Parallel` elements. Throws an error if the tolerance is not reached within `max_iter` iterations.
 """
 @inline function local_iterations_εvol(
         v::CompositeRheology{
@@ -219,7 +228,7 @@ Performs local iterations versus pressure for a given total volumetric strain ra
         },
         εvol::_T,
         args;
-        tol = 1.0e-6, verbose = false
+        tol = 1.0e-6, verbose = false, max_iter = 1000
     ) where {N, T, _T, is_parallel, is_plastic, Nvol, is_vol}
 
     # Initial guess
@@ -231,7 +240,7 @@ Performs local iterations versus pressure for a given total volumetric strain ra
     iter = 0
     ϵ = 2.0 * tol
     p_prev = p
-    while ϵ > tol
+    while (ϵ > tol) && (iter < max_iter)
         iter += 1
         #=
             Newton scheme -> τII = τII - f(τII)/dfdτII.
@@ -247,6 +256,7 @@ Performs local iterations versus pressure for a given total volumetric strain ra
 
         @print(verbose, " iter $(iter) $ϵ")
     end
+    ϵ > tol && error("local iterations did not converge")
 
     @print(verbose, "final p = $p")
     @print(verbose, "---")
@@ -255,14 +265,14 @@ Performs local iterations versus pressure for a given total volumetric strain ra
 end
 
 """
-Performs local iterations versus strain rate for a given stress
+Performs local iterations versus strain rate for a given stress. Throws an error if the tolerance is not reached within `max_iter` iterations.
 """
 @inline function local_iterations_τII(
         v::Parallel{T, N},
         τII::_T,
         args;
         tol = 1.0e-6,
-        verbose = false, n = 1
+        verbose = false, n = 1, max_iter = 1000
     ) where {T, N, _T}
 
     # Initial guess (harmonic average of ε of each element)
@@ -273,16 +283,17 @@ Performs local iterations versus strain rate for a given stress
     ϵ = 2 * tol
     εII_prev = εII
 
-    while ϵ > tol
+    while (ϵ > tol) && (iter < max_iter)
         iter += 1
         f = τII - first(compute_τII(v, εII, args))
         dfdεII = -dτII_dεII(v, εII, args)
         εII -= f / dfdεII
 
-        ϵ = abs(εII - εII_prev) / εII
+        ϵ = abs(εII - εII_prev) / abs(εII)
         εII_prev = εII
         # @print(verbose," iter $(iter) $ϵ")
     end
+    ϵ > tol && error("local iterations did not converge")
     # @print(verbose,"---")
 
     return εII
@@ -362,9 +373,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     end
     @print(verbose, "---")
 
-    if (iter == max_iter)
-        error("iterations did not converge")
-    end
+    ϵ > tol && error("iterations did not converge")
 
     return (x...,)
 end
@@ -444,9 +453,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         @print(verbose, " iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
     end
     @print(verbose, "---")
-    if (iter == max_iter)
-        error("iterations did not converge")
-    end
+    ϵ > tol && error("iterations did not converge")
 
 
     return (x...,)
@@ -692,9 +699,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         @print(verbose, " iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3])")
     end
     @print(verbose, "---")
-    if (iter == max_iter)
-        error("iterations did not converge")
-    end
+    ϵ > tol && error("iterations did not converge")
 
     return (x...,)
 end

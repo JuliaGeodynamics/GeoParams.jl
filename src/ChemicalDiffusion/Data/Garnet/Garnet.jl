@@ -1,3 +1,9 @@
+"""
+    module Garnet
+
+Collection of pre-defined chemical-diffusion parameterizations ([`DiffusionData`](@ref)) for
+diffusion of various elements in garnet, taken from the experimental literature.
+"""
 module Garnet
 
 using GeoParams

@@ -13,6 +13,12 @@
 # include("Data/NonLinearPeierlsCreep.jl")
 # include("Data/PeierlsCreep.jl")
 
+"""
+    AbstractCreepLaw{T} <: AbstractConstitutiveLaw{T}
+
+Supertype of viscous creep laws (e.g. [`LinearViscous`](@ref), diffusion, dislocation and Peierls
+creep) that relate deviatoric stress and strain rate.
+"""
 abstract type AbstractCreepLaw{T} <: AbstractConstitutiveLaw{T} end
 
 export isvolumetric,
@@ -21,6 +27,13 @@ export isvolumetric,
 isvolumetric(a::AbstractCreepLaw) = false
 
 # This computes correction factors to go from experimental data to tensor format
+"""
+    CorrectionFactor(a::AbstractCreepLaw) -> (FT, FE)
+
+Returns the stress and strain-rate correction factors `(FT, FE)` that convert flow-law parameters
+from the experimental apparatus geometry (`a.Apparatus`, e.g. axial compression or simple shear) to
+the tensor (second-invariant) convention used internally.
+"""
 function CorrectionFactor(a::AbstractCreepLaw{_T}) where {_T}
     apparatus = a.Apparatus
     if apparatus == AxialCompression
@@ -68,6 +81,14 @@ end
 @inline rat2float(x) = x
 
 @inline unit_power(A) = typeof(A).parameters[2].parameters[1][1].power
+
+# Derivative of a unitful scalar function: ForwardDiff acts on the stripped value.
+function derivative_with_units(f::F, x::Quantity) where {F}
+    ux = unit(x)
+    uy = unit(f(x))
+    d = ForwardDiff.derivative(ξ -> ustrip(uy, f(ξ * ux)), ustrip(x))
+    return d * uy / ux
+end
 
 """
     find_creep_law(mod::Module, name::AbstractString) -> Union{Function, Nothing}
@@ -121,7 +142,12 @@ where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\
     η::GeoUnit{T, U} = 1.0e20Pa * s                # viscosity
     η_val::T = 1.0
 end
-LinearViscous(args...) = LinearViscous(convert(GeoUnit, args[1]), args[2])
+function LinearViscous(η, η_val)
+    ηU = convert(GeoUnit, η)
+    T = promote_type(typeof(ηU.val), typeof(η_val))
+    U = typeof(ηU.unit)
+    return LinearViscous{T, U}(GeoUnit{T, U}(T(ηU.val), ηU.unit, ηU.isdimensional), T(η_val))
+end
 
 function param_info(a::LinearViscous) # info about the struct
     return MaterialParamsInfo(; Equation = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}")
@@ -239,16 +265,8 @@ where ``\\eta_0`` is the reference viscosity [Pa*s] at reference strain rate ``\
     T_O::GeoUnit{_T, U3} = 1.0NoUnits      # Offset temperature
     T_η::GeoUnit{_T, U3} = 1.0NoUnits      # Reference temperature at which viscosity is unity
 end
-#ArrheniusType(args...) = ArrheniusType(args[1], args[2], args[3], args[4])
 
-function ArrheniusType(args...)
-    return ArrheniusType(
-        convert(GeoUnit, args[1]),
-        convert(GeoUnit, args[2]),
-        convert(GeoUnit, args[3]),
-        convert(GeoUnit, args[4]),
-    )
-end
+ArrheniusType(args...) = promote_construct(ArrheniusType, args...)
 
 function param_info(a::ArrheniusType) # info about the struct
     return MaterialParamsInfo(;
@@ -344,16 +362,16 @@ end
 Defines a power law viscous creeplaw as:
 
 ```math
-        \\tau_{ij}^n  = 2 \\eta_0 \\frac{\\dot{\\varepsilon}_{ij}}{\\dot{\\varepsilon}_0}
+        \\tau_{II} = \\eta_0 \\dot{\\varepsilon}_0 \\left( \\frac{\\dot{\\varepsilon}_{II}}{\\dot{\\varepsilon}_0} \\right)^n
 ```
-where ``\\eta`` is the effective viscosity [Pa*s].
+where ``\\eta_0`` is the reference viscosity [Pa*s] and ``\\dot{\\varepsilon}_0`` the reference strain rate [1/s].
 """
 @with_kw_noshow struct PowerlawViscous{T, U1, U2, U3} <: AbstractCreepLaw{T}
     η0::GeoUnit{T, U1} = 1.0e18Pa * s       # reference viscosity
     n::GeoUnit{T, U2} = 2.0 * NoUnits     # powerlaw exponent
     ε0::GeoUnit{T, U3} = 1.0e-15 / s          # reference strainrate
 end
-PowerlawViscous(a...) = PowerlawViscous(convert.(GeoUnit, a)...)
+PowerlawViscous(a...) = promote_construct(PowerlawViscous, a...)
 
 # Print info
 function show(io::IO, g::PowerlawViscous)
@@ -365,7 +383,7 @@ function compute_εII(a::PowerlawViscous, TauII; kwargs...)
     Tc = precision_of(TauII)
     @unpack_val Tc η0, n, ε0 = a
 
-    @pow EpsII = (TauII / η0)^(1 / n) * ε0
+    @pow EpsII = (TauII / (η0 * ε0))^(1 / n) * ε0
 
     return EpsII
 end
@@ -374,7 +392,7 @@ function dεII_dτII(a::PowerlawViscous, TauII; kwargs...)
     Tc = precision_of(TauII)
     @unpack_val Tc η0, n, ε0 = a
 
-    return @pow ε0 * (TauII^((1 - n) / n)) / (n * (η0^(1 / n)))
+    return @pow (TauII / (η0 * ε0))^((1 - n) / n) / (n * η0)
 end
 
 """
@@ -401,7 +419,7 @@ end
 
 # Help info for the calculation routines
 """
-    compute_εII(TauII, s:<AbstractCreepLaw, p::CreepLawVariables)
+    compute_εII(TauII, s::AbstractCreepLaw, p::CreepLawVariables)
 
 Returns the strainrate invariant ``\\dot{\\varepsilon}_{II}`` for a given deviatoric stress
 invariant ``\\tau_{II}`` for any of the viscous creep laws implemented.
@@ -416,7 +434,7 @@ may need for the calculations
 computeCreepLaw_EpsII
 
 """
-    computeCreepLaw_TauII(EpsII, s:<AbstractCreepLaw, p::CreepLawVariables)
+    computeCreepLaw_TauII(EpsII, s::AbstractCreepLaw, p::CreepLawVariables)
 
 Returns the deviatoric stress invariant ``\\tau_{II}`` for a given strain rate
 invariant ``\\dot{\\varepsilon}_{II}`` for any of the viscous creep laws implemented.

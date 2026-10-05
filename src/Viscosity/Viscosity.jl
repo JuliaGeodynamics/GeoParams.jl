@@ -43,16 +43,16 @@ end
 @generated function compute_viscosity_εII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase::Int, args::Vararg{Any, N2}) where {N1, N2}
     return quote
         Base.@_inline_meta
-        Base.@nexprs $N1 i -> i == phase && (return compute_viscosity_εII(v[i], args...))
-        return 0.0
+        Base.@nexprs $N1 i -> v[i].Phase == phase && (return compute_viscosity_εII(v[i], args...))
+        phase_not_found()
     end
 end
 
 @generated function compute_viscosity_τII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase::Int, args::Vararg{Any, N2}) where {N1, N2}
     return quote
         Base.@_inline_meta
-        Base.@nexprs $N1 i -> i == phase && (return compute_viscosity_τII(v[i], args...))
-        return 0.0
+        Base.@nexprs $N1 i -> v[i].Phase == phase && (return compute_viscosity_τII(v[i], args...))
+        phase_not_found()
     end
 end
 
@@ -60,7 +60,7 @@ end
 @generated function compute_viscosity_εII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1}, SVector{N1}}, args::Vararg{Any, N2}) where {N1, N2}
     return quote
         Base.@_inline_meta
-        val = 0.0
+        val = false
         Base.@nexprs $N1 i -> val += compute_viscosity_εII(v[i], args...) * phase_ratio[i]
         return val
     end
@@ -69,7 +69,7 @@ end
 @generated function compute_viscosity_τII(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1}, SVector{N1}}, args::Vararg{Any, N2}) where {N1, N2}
     return quote
         Base.@_inline_meta
-        val = 0.0
+        val = false
         Base.@nexprs $N1 i -> val += compute_viscosity_τII(v[i], args...) * phase_ratio[i]
         return val
     end
@@ -96,13 +96,21 @@ end
 @generated function compute_viscosity_II_parallel(v::NTuple{N, AbstractConstitutiveLaw}, fn::F, II, args) where {F, N}
     return quote
         Base.@_inline_meta
-        η = 0.0
+        η = false
         Base.@nexprs $N i -> η += fn(v[i], II, args)
         return η
     end
 end
 
 # compute effective "visco-elastic" viscosity
+"""
+    compute_elastoviscosity(v, η, dt)
+    compute_elastoviscosity(G, η, dt)
+
+Returns the effective visco-elastic viscosity that combines a viscous viscosity `η` and elasticity
+(shear modulus `G`, or a `ConstantElasticity` `v`) over a time step `dt`, as the harmonic sum
+`(1/η + 1/(G·dt))⁻¹`. The time step may instead be passed via `args.dt`.
+"""
 @inline compute_elastoviscosity(v::ConstantElasticity, η, dt) = compute_elastoviscosity(v.G, η, dt)
 @inline compute_elastoviscosity(G, η, dt) = (inv(η) + inv(G * dt)) |> inv
 @inline compute_elastoviscosity(v::ConstantElasticity, η, args::NamedTuple) = compute_elastoviscosity(v.G, η, args.dt)
@@ -117,16 +125,16 @@ for fn in (:compute_elastoviscosity_εII, :compute_elastoviscosity_τII)
         @generated function $fn(v::NTuple{N, AbstractMaterialParamsStruct}, phase::Int, args::Vararg{Any, N2}) where {N, N2}
             return quote
                 Base.@_inline_meta
-                Base.@nexprs $N i -> i == phase && (return $$fn(v[i].CompositeRheology[1], args...))
-                return 0.0
+                Base.@nexprs $N i -> v[i].Phase == phase && (return $$fn(v[i].CompositeRheology[1], args...))
+                phase_not_found()
             end
         end
 
         # For multi phases given phase ratios
-        @generated function $fn(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1, T}, SVector{N1, T}}, args::Vararg{Any, N2}) where {N1, N2, T}
+        @generated function $fn(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1}, SVector{N1}}, args::Vararg{Any, N2}) where {N1, N2}
             return quote
                 Base.@_inline_meta
-                val = 0.0
+                val = false
                 Base.@nexprs $N1 i -> val += $$fn(v[i].CompositeRheology[1], args...) * phase_ratio[i]
                 return val
             end
@@ -134,13 +142,26 @@ for fn in (:compute_elastoviscosity_εII, :compute_elastoviscosity_τII)
     end
 end
 
+"""
+    compute_elastoviscosity_εII(v, εII, args)
+
+Returns the effective visco-elastic viscosity of the rheology `v` evaluated from the deviatoric
+strain rate `εII`, combining the non-plastic elements harmonically.
+"""
 @inline compute_elastoviscosity_εII(v::CompositeRheology, εII, args) = compute_elastoviscosity_II(elements(v), compute_viscosity_εII, εII, args)
+
+"""
+    compute_elastoviscosity_τII(v, τII, args)
+
+Returns the effective visco-elastic viscosity of the rheology `v` evaluated from the deviatoric
+stress `τII`, combining the non-plastic elements harmonically.
+"""
 @inline compute_elastoviscosity_τII(v::CompositeRheology, τII, args) = compute_elastoviscosity_II(elements(v), compute_viscosity_τII, τII, args)
 
 @generated function compute_elastoviscosity_II(v::NTuple{N, AbstractConstitutiveLaw}, fn::F, II, args) where {F, N}
     return quote
         Base.@_inline_meta
-        η = 0.0
+        η = false
         Base.@nexprs $N i -> !isplastic(v[i]) && (η += inv(fn(v[i], II, args)))
         return inv(η)
     end
@@ -148,17 +169,25 @@ end
 
 # special cases for constant viscosity and elasticity
 
+"""
+    compute_viscosity(v, args)
+
+Returns the effective viscosity of the linear rheology `v` (a `LinearViscous`, `ConstantElasticity`,
+[`CompositeRheology`](@ref), or `MaterialParams`), combining non-plastic elements harmonically. For
+multiple phases, `v` may be a tuple of `MaterialParams` indexed by a phase or weighted by phase
+ratios. Throws for non-linear rheologies.
+"""
 @inline compute_viscosity(v::LinearViscous; kwargs...) = v.η.val
 @inline compute_viscosity(v::ConstantElasticity; dt = 0.0, kwargs...) = v.G * dt
 @inline compute_viscosity(v::Union{LinearViscous, ConstantElasticity}, kwargs) = compute_viscosity(v; kwargs...)
-@inline compute_viscosity(v, kwargs) = throw("compute_viscosity only works for linear rheologies")
+@inline compute_viscosity(v, kwargs) = throw(ArgumentError("compute_viscosity only works for linear rheologies"))
 
 @inline compute_viscosity(v::CompositeRheology, args) = compute_viscosity(elements(v), args)
 
 @generated function compute_viscosity(v::NTuple{N, AbstractConstitutiveLaw}, args) where {N}
     return quote
         Base.@_inline_meta
-        η = 0.0
+        η = false
         Base.@nexprs $N i -> !isplastic(v[i]) && (η += inv(compute_viscosity(v[i], args)))
         return inv(η)
     end
@@ -171,28 +200,39 @@ end
 @generated function compute_viscosity(v::NTuple{N, AbstractMaterialParamsStruct}, phase, args) where {N}
     return quote
         Base.@_inline_meta
-        Base.@nexprs $N i -> i == phase && (return compute_viscosity(v[i].CompositeRheology[1], args))
-        return 0.0
+        Base.@nexprs $N i -> v[i].Phase == phase && (return compute_viscosity(v[i].CompositeRheology[1], args))
+        phase_not_found()
     end
 end
 
 # For multi phases given phase ratios
-@generated function compute_viscosity(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1, T}, SVector{N1, T}}, args::Vararg{Any, N2}) where {N1, N2, T}
+@generated function compute_viscosity(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1}, SVector{N1}}, args::Vararg{Any, N2}) where {N1, N2}
     return quote
         Base.@_inline_meta
-        val = 0.0
+        val = false
         Base.@nexprs $N1 i -> val += compute_viscosity(v[i].CompositeRheology[1], args...) * phase_ratio[i]
         return val
     end
 end
 
+# An empty tuple satisfies the element-type constraint of both tuple methods above.
+function compute_viscosity(::Tuple{}, ::Union{Tuple{}, SVector{0}})
+    throw(ArgumentError("cannot compute viscosity from an empty tuple"))
+end
+
+"""
+    compute_elasticviscosity(v, args)
+
+Returns the viscosity contributed by the elastic elements of the rheology `v` alone (`G·dt`),
+combining them harmonically for a composite rheology.
+"""
 @inline compute_elasticviscosity(v::CompositeRheology, args) = compute_elasticviscosity(elements(v), args)
 
 @generated function compute_elasticviscosity(v::NTuple{N, AbstractMaterialParamsStruct}, phase, args) where {N}
     return quote
         Base.@_inline_meta
-        Base.@nexprs $N i -> i == phase && (return compute_elasticviscosity(v[i].CompositeRheology[1], args))
-        return 0.0
+        Base.@nexprs $N i -> v[i].Phase == phase && (return compute_elasticviscosity(v[i].CompositeRheology[1], args))
+        phase_not_found()
     end
 end
 
@@ -207,8 +247,13 @@ end
 @generated function compute_elasticviscosity(v::NTuple{N1, AbstractMaterialParamsStruct}, phase_ratio::Union{NTuple{N1}, SVector{N1}}, args::Vararg{Any, N2}) where {N1, N2}
     return quote
         Base.@_inline_meta
-        val = 0.0
+        val = false
         Base.@nexprs $N1 i -> val += compute_elasticviscosity(v[i].CompositeRheology[1], args...) * phase_ratio[i]
         return val
     end
+end
+
+# An empty tuple satisfies the element-type constraint of both tuple methods above.
+function compute_elasticviscosity(::Tuple{}, ::Union{Tuple{}, SVector{0}})
+    throw(ArgumentError("cannot compute elastic viscosity from an empty tuple"))
 end

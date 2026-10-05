@@ -38,7 +38,7 @@ H_s = \\Chi \\cdot \\tau_{ij}(\\dot{\\varepsilon}_{ij} - \\dot{\\varepsilon}^{el
 @with_kw_noshow struct ConstantShearheating{T, U} <: AbstractShearheating{T}
     Χ::GeoUnit{T, U} = 0.0 * NoUnits
 end
-ConstantShearheating(args...) = ConstantShearheating(convert.(GeoUnit, args)...)
+ConstantShearheating(args...) = promote_construct(ConstantShearheating, args...)
 
 function param_info(s::ConstantShearheating) # info about the struct
     return MaterialParamsInfo(;
@@ -89,7 +89,7 @@ end
 
 # Help info for the calculation routines
 """
-    H_s = compute_shearheating(s:<AbstractShearheating, τ, ε, ε_el)
+    H_s = compute_shearheating(s::AbstractShearheating, τ, ε, ε_el)
 
 Computes the shear heating source term
 
@@ -107,7 +107,7 @@ H_s = \\Chi \\cdot \\tau_{ij} ( \\dot{\\varepsilon}_{ij} - \\dot{\\varepsilon}^{
 compute_shearheating(s::AbstractShearheating, τ, ε, ε_el)
 
 """
-    H_s = ComputeShearheating(s:<AbstractShearheating, τ, ε)
+    H_s = ComputeShearheating(s::AbstractShearheating, τ, ε)
 
 Computes the shear heating source term when there is no elasticity
 
@@ -125,7 +125,7 @@ H_s = \\Chi \\cdot \\tau_{ij}  \\dot{\\varepsilon}_{ij}
 end
 
 """
-    compute_shearheating!(H_s, s:<AbstractShearheating,  τ, ε, ε_el)
+    compute_shearheating!(H_s, s::AbstractShearheating,  τ, ε, ε_el)
 
 Computes the shear heating source term in-place
 
@@ -155,7 +155,7 @@ Since ``\\tau_{zx}=\\tau_{xz}``, most geodynamic codes only take one of the term
 compute_shearheating!(H_s, s::AbstractShearheating, τ, ε, ε_el)
 
 """
-    compute_shearheating!(H_s, s:<AbstractShearheating, τ, ε)
+    compute_shearheating!(H_s, s::AbstractShearheating, τ, ε)
 
 Computes the shear heating source term `H_s` in-place when there is no elasticity
 

@@ -37,7 +37,7 @@ where ``k`` is the thermal conductivity [``W/m/K``].
 @with_kw_noshow struct ConstantConductivity{T, U} <: AbstractConductivity{T}
     k::GeoUnit{T, U} = 3.0Watt / m / K
 end
-ConstantConductivity(args...) = ConstantConductivity(convert.(GeoUnit, args)...)
+ConstantConductivity(args...) = promote_construct(ConstantConductivity, args...)
 
 function param_info(s::ConstantConductivity) # info about the struct
     return MaterialParamsInfo(; Equation = L"k = cst")
@@ -117,8 +117,7 @@ This looks like:
 
 ![subet1](./assets/img/Conductivity_Whittington.png)
 
-Example
-===
+# Example
 ```julia
 julia> using GLMakie, GeoParams
 julia> p=T_Conductivity_Whittington();
@@ -144,7 +143,7 @@ julia> T,k,plt = PlotConductivity(p)
     f::GeoUnit{T, U8} = 0.732 * 1.0e-6m^2 / s             # diffusivity parameterization
     g::GeoUnit{T, U9} = 0.000135 * 1.0e-6m^2 / s / K        # diffusivity parameterization
 end
-T_Conductivity_Whittington(args...) = T_Conductivity_Whittington(convert.(GeoUnit, args)...)
+T_Conductivity_Whittington(args...) = promote_construct(T_Conductivity_Whittington, args...)
 
 function param_info(s::T_Conductivity_Whittington) # info about the structwhere {_T,N}
     return MaterialParamsInfo(; Equation = L"k = f(T) ")
@@ -359,20 +358,21 @@ function param_info(s::TP_Conductivity)
 end
 
 """
-    Set_TP_Conductivity["Name of temperature(-pressure) dependent conductivity"]
+    Set_TP_Conductivity(name::String)
 
-This is a dictionary with pre-defined laws:
+Returns the pre-defined temperature(-pressure) dependent conductivity law `name`.
+
+Available laws:
 - "UpperCrust"
 - "LowerCrust"
 - "OceanicCrust"
 - "Mantle"
 
 # Example
-```julia
-julia> k=Set_TP_Conductivity["Mantle"]
-T/P dependent conductivity: k = (0.73 W K⁻¹ m⁻¹ + 1293 W m⁻¹/(T + 77 K))*(1 + 4.0e-5 MPa⁻¹*P)
+```jldoctest
+julia> k = Set_TP_Conductivity("Mantle")
+T/P dependent conductivity: Name = Mantle, k = (0.73 + 1293.0/(T + 77.0))*(1 + 4.0e-5*P)
 ```
-
 """
 Set_TP_Conductivity(name::String) = TP_Conductivity_info[name][1]
 
@@ -504,9 +504,11 @@ end
 
 # Help info for the calculation routines
 """
-    k = compute_conductivity(P, T, s:<AbstractConductivity)
+    k = compute_conductivity(s::AbstractConductivity; P, T)
+    k = compute_conductivity(s::AbstractConductivity, args)
 
-Returns the thermal conductivity `k` at any temperature `T` and pressure `P` using any of the parameterizations implemented.
+Returns the thermal conductivity `k` for the parameterization `s`, evaluated at the temperature `T`
+and pressure `P` passed either as keyword arguments or as a `NamedTuple` `args`.
 
 Currently available:
 - ConstantConductivity
@@ -514,11 +516,11 @@ Currently available:
 - TP\\_Conductivity
 
 # Example
-Using dimensional units
-```julia
-julia> T  = (250:100:1250)*K;
-julia> cp = T_HeatCapacity_Whittington()
-julia> Cp = ComputeHeatCapacity(0,T,cp)
+```jldoctest
+julia> k = T_Conductivity_Whittington();
+
+julia> compute_conductivity(k; T = 1000.0)
+1.9014576517265882
 ```
 
 
@@ -544,6 +546,8 @@ function compute_conductivity(s::AbstractMaterialParamsStruct, args)
     return s.Conductivity[1](args)
 end
 
+compute_conductivity(MatParam, arg, args::Vararg{Any, N}) where {N} = compute_param(compute_conductivity, MatParam, arg, args...)
+
 """
     compute_conductivity!(K::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},Temp::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
 
@@ -552,12 +556,11 @@ This assumes that the `Phase` of every point is specified as an Integer in the `
 
 _________________________________________________________________________________________________________
 
-compute_conductivity!(k::AbstractArray{T,N}, PhaseRatios::AbstractArray{T, M}, P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
+    compute_conductivity!(k::AbstractArray{T,N}, PhaseRatios::AbstractArray{T, M}, P::AbstractArray{<:AbstractFloat,N},T::AbstractArray{<:AbstractFloat,N}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})
 
 In-place computation of conductivity `k` for the whole domain and all phases, in case a vector with phase properties `MatParam` is provided, along with `P` and `T` arrays.
 This assumes that the `PhaseRatio` of every point is specified as an Integer in the `PhaseRatios` array, which has one dimension more than the data arrays (and has a phase fraction between 0-1)
 """
-compute_conductivity(MatParam, arg, args::Vararg{Any, N}) where {N} = compute_param(compute_conductivity, MatParam, arg, args...)
 compute_conductivity!(args::Vararg{Any, N}) where {N} = compute_param!(compute_conductivity, args...)
 
 # extractor methods

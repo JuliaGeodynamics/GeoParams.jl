@@ -127,6 +127,8 @@ import GeoParams: compute_elastoviscosity
     # ---- dimensional (Quantity) compute on a CompositeRheology ----
     # (nreduce now seeds its accumulator from the first element, so unit-bearing results add)
     c_visc = CompositeRheology((LinearViscous(; η = 1.0e20Pa * s), LinearViscous(; η = 2.0e20Pa * s)))
+    # a single element does not need to be wrapped in a tuple
+    @test CompositeRheology(LinearViscous()).elements == CompositeRheology((LinearViscous(),)).elements
     εq = compute_εII(c_visc, 1.0e6Pa, (;))
     @test εq isa Quantity
     @test ustrip(εq) ≈ compute_εII(c_visc, 1.0e6, (;))         # matches unitless
@@ -584,4 +586,18 @@ import GeoParams: compute_elastoviscosity
         @test print_rheology_matrix((nested, Parallel(v1, v2))) isa Matrix
     end
 
+    @testset "local iterations convergence" begin
+        c = CompositeRheology(DislocationCreep(; n = 3.5NoUnits, A = 1.0e-16Pa^(-3.5) / s), LinearViscous(; η = 1.0e22Pas))
+        args = (T = 1500.0, P = 1.0e9)
+        εII = 1.0e-14
+        τII = compute_τII(c, εII, args)
+        @test compute_εII(c, τII, args) ≈ εII rtol = 1.0e-6
+        # forward-mode AD iterates to the same converged stress
+        τ_dual = compute_τII(c, ForwardDiff.Dual(εII, 1.0), args)
+        @test ForwardDiff.value(τ_dual) ≈ τII rtol = 1.0e-10
+        # running out of iterations is an error, not a silently unconverged result
+        @test_throws "local iterations did not converge" local_iterations_εII(c, εII, args; max_iter = 1)
+        p = Parallel(DislocationCreep(; n = 3.5NoUnits, A = 1.0e-16Pa^(-3.5) / s), LinearViscous(; η = 1.0e22Pas))
+        @test_throws "local iterations did not converge" local_iterations_τII(p, 1.0e6, args; max_iter = 1)
+    end
 end

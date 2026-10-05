@@ -6,7 +6,7 @@ module ConstitutiveRelationships
 using Parameters, LaTeXStrings, Unitful, MuladdMacro
 using ..Units
 using GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
-import GeoParams: param_info, fastpow, pow_check, retry_wider, nphase, ntuple_idx, argument_at, each_argument_index, @print, @pow, ptr2string
+import GeoParams: param_info, fastpow, pow_check, retry_wider, nphase, phase_not_found, ntuple_idx, argument_at, each_argument_index, @print, @pow, ptr2string
 import GeoParams: second_invariant, second_invariant_staggered, value_and_partial, @extractors, add_extractor_functions
 using BibTeX
 using ..MaterialParameters: MaterialParamsInfo
@@ -38,26 +38,17 @@ export param_info,
     compute_τII!,
     compute_τII,
     compute_τII_AD,
-    computeViscosity_τII,
-    computeViscosity_τII!,
     computeViscosity_εII,
-    computeViscosity_εII!,
     local_iterations_εII,
     local_iterations_εII_AD,
     local_iterations_τII,
     local_iterations_τII_AD,
-    computeViscosity,
-    strain_rate_circuit,
-    stress_circuit,
     InverseCreepLaw,
-    KelvinVoigt,
     Parallel,
     CompositeRheology,
     AbstractComposite,
     AbstractConstitutiveLaw,
     AxialCompression, SimpleShear, Invariant,
-    get_G,
-    get_Kb,
     iselastic,
     AbstractSoftening,
     NoSoftening,

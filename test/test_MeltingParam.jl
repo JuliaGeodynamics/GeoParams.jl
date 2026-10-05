@@ -278,6 +278,8 @@ using LaTeXStrings
 
     # Test smoothening of the melting curves:
     p = SmoothMelting(; p = MeltingParam_5thOrder())
+    @test_throws "SmoothMelting requires a melting parameterization with solidus" SmoothMelting(MeltingParam_Caricchi())
+    @test_throws "SmoothMelting requires a melting parameterization with solidus" SmoothMelting(MeltingParam_Volatile())
     @test isbits(p)
     T = collect(250:100:1250) * K .+ 273.15K
     phi_dim = zeros(size(T))
@@ -316,6 +318,7 @@ using LaTeXStrings
             Density = PT_Density(),
         ),
         SetMaterialParams(; Name = "LowerCrust", Phase = 4, Density = PT_Density()),
+        SetMaterialParams(; Name = "Air", Phase = 5),
     )
 
     ϕ = zeros(size(Phases))
@@ -331,10 +334,10 @@ using LaTeXStrings
 
     # test PhaseRatio and StaticArrays PhaseRatios as input
     args = (P = 0.0, T = 1000.0 + 273.15)
-    PhaseRatio = (0.25, 0.25, 0.25, 0.25)
+    PhaseRatio = (0.25, 0.25, 0.25, 0.25, 0.0)
     @test 0.6991003705903673 ≈ compute_meltfraction_ratio(PhaseRatio, Mat_tup, args)
 
-    SvPhaseRatio = SA[0.25, 0.25, 0.25, 0.25]
+    SvPhaseRatio = SA[0.25, 0.25, 0.25, 0.25, 0.0]
     @test 0.6991003705903673 ≈ compute_meltfraction_ratio(SvPhaseRatio, Mat_tup, args)
 
 

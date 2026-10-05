@@ -42,9 +42,9 @@ The experimental parameters are converted into second invariants using the `Appa
 either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
 # Example
-```julia-repl
+```jldoctest
 julia> x2 = DiffusionCreep(Name="test")
-DiffusionCreep: Name = test, n=1.0, r=0.0, p=-3.0, A=1.5 m³·⁰ MPa⁻¹·⁰ s⁻¹·⁰, E=500.0 kJ mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517)
+DiffusionCreep: Name = test, n=1.0, r=0.0, p=-3.0, A=1.5e6 m³·⁰ Pa⁻¹·⁰ s⁻¹·⁰, E=500000.0 J mol⁻¹·⁰, V=2.4e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517
 ```
 """
 struct DiffusionCreep{T, U0, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
@@ -117,7 +117,7 @@ with the curves of the original publications, as those publications usually do n
 function remove_tensor_correction(s::DiffusionCreep)
     # name = String(collect(s.Name))
     return DiffusionCreep(;
-        Name = unsafe_string(s.Name), d = s.d, n = s.n, r = s.r, p = s.p, A = s.A, E = s.E, V = s.V, Apparatus = Invariant
+        Name = unsafe_string(s.Name), d = s.d, n = s.n, r = s.r, p = s.p, A = s.A, E = s.E, V = s.V, R = s.R, Apparatus = Invariant
     )
 end
 
@@ -225,6 +225,7 @@ returns the derivative of strainrate versus stress
         d^p *
         A *
         FT *
+        n *
         exp((-E - P * V) / (R * T)) *
         inv(FE)
 end
@@ -237,7 +238,14 @@ end
     @unpack_units Tc d, n, r, p, A, E, V, R = a
     FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
-    return @pow FT * f^r * d^p * A * FT * exp((-E - P * V) / (R * T)) * inv(FE)
+    return @pow (TauII * FT)^(n - 1) *
+        f^r *
+        d^p *
+        A *
+        FT *
+        n *
+        exp((-E - P * V) / (R * T)) *
+        inv(FE)
 end
 
 """
@@ -280,8 +288,7 @@ end
     n_inv = inv(n)
 
     τ = @pow A^(-n_inv) *
-        EpsII *
-        FE *
+        (EpsII * FE)^n_inv *
         f^(-r * n_inv) *
         d^(-p * n_inv) *
         exp((E + P * V) / (n * R * T)) / FT
@@ -333,7 +340,7 @@ end
             d^(-p * n_inv) *
             (EpsII * FE)^(n_inv - 1) *
             exp((E + P * V) / (n * R * T))
-    ) / FT
+    ) / (FT * n)
 end
 
 @inline function dτII_dεII(
@@ -353,7 +360,7 @@ end
             d^(-p * n_inv) *
             (EpsII * FE)^(n_inv - 1) *
             exp((E + P * V) / (n * R * T))
-    ) / FT
+    ) / (FT * n)
 end
 
 # Print info

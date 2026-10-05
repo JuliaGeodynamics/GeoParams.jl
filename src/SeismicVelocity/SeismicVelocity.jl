@@ -48,7 +48,7 @@ where ``V_p, V_s`` are the P-wave and S-wave velocities [``km/s``].
     Vp::GeoUnit{T, U} = 8.1e3m / s               # P-wave velocity
     Vs::GeoUnit{T, U} = 4.5e3m / s               # S-wave velocity
 end
-ConstantSeismicVelocity(args...) = ConstantSeismicVelocity(convert.(GeoUnit, args)...)
+ConstantSeismicVelocity(args...) = promote_construct(ConstantSeismicVelocity, args...)
 
 function param_info(s::ConstantSeismicVelocity) # info about the struct
     return MaterialParamsInfo(; Equation = L"v_p = cst \\ v_s = cst")
@@ -77,8 +77,10 @@ end
 #end
 
 """
-    compute_pwave_velocity(s::PhaseDiagram_LookupTable, P,T)
-Interpolates Vp, Vs or VpVs velocity as a function of `T,P` from a lookup table
+    compute_wave_velocity(s::PhaseDiagram_LookupTable; P, T, wave, kwargs...)
+
+Interpolates the seismic wave velocity selected by `wave` (e.g. `:Vp`, `:Vs`, `:VpVs`)
+as a function of pressure `P` and temperature `T` from the lookup table `s`.
 """
 function compute_wave_velocity(s::PhaseDiagram_LookupTable; P, T, wave, kwargs...)
     fn = getfield(s, wave)
@@ -108,6 +110,12 @@ for myType in (:ConstantSeismicVelocity, :PhaseDiagram_LookupTable)
     end
 end
 
+"""
+    compute_wave_velocity!(V, s, args)
+
+In-place version of [`compute_wave_velocity`](@ref) that fills the array `V` with the seismic wave
+velocity over the whole domain.
+"""
 compute_wave_velocity!(args...) = compute_param!(compute_wave_velocity, args...)
 compute_wave_velocity(MatParam, arg, args...) = compute_param(compute_wave_velocity, MatParam, arg, args...)
 
@@ -224,7 +232,7 @@ function melt_correction(
 end
 
 """
-        Vs_cor = porosity_correction(  Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
+        Vs_cor = porosity_correction(Kb_S, Ks_S, ρf, ρS, Vs0, depth, α)
 
 Corrects S-wave velocity at shallow depth as function of empirical porosity-depth profile.
 
@@ -232,7 +240,7 @@ Input:
 ====
 - `Kb_S`: adiabatic bulk modulus of the solid phase
 - `Ks_S`: shear modulus of the solid phase
-- `ρL`  : density of the melt
+- `ρf`  : density of the pore fluid
 - `ρS`  : density of the solid phase
 - `Vs0` : initial S-wave velocity of the solid phase
 - `depth`: in kilometers
@@ -241,7 +249,7 @@ Input:
 
 Output:
 ====
-- `Vs_cor` : corrected P-wave and S-wave velocities for water-filled porosity
+- `Vs_cor` : S-wave velocity corrected for water-filled porosity
 
 The routine is based on the equilibrium geometry model for the solid skeleton of Takei et al., 1998.
 
@@ -349,8 +357,8 @@ Input:
 ====
 - `water`: water flag, 0 = dry; 1 = dampened; 2 = water saturated
 - `Vs0`  : S-wave velocitiy of the solid phase (with or without melt correction)
-- `P`    : pressure given in Pa
-- `T`    : temperature given in °K
+- `Pref` : pressure given in Pa
+- `Tref` : temperature given in °K
 
 Output:
 ====

@@ -1,3 +1,9 @@
+"""
+    module Melt
+
+Collection of pre-defined chemical-diffusion parameterizations ([`DiffusionData`](@ref)) for
+diffusion of various elements in silicate melt, taken from the experimental literature.
+"""
 module Melt
 
 using GeoParams

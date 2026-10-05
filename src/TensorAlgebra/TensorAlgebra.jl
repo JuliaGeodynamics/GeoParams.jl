@@ -60,11 +60,23 @@ end
 end
 
 @inline doubledot(A::SMatrix, B::SMatrix) = sum(A .* B)
+# 2D plane strain: include Azz = -Axx - Ayy, as in the Voigt form
+@inline doubledot(A::SMatrix{2, 2}, B::SMatrix{2, 2}) = sum(A .* B) + (A[1, 1] + A[2, 2]) * (B[1, 1] + B[2, 2])
 
+"""
+    second_invariant(A)
+    second_invariant(xx, yy, xy)
+    second_invariant(xx, yy, zz, yz, xz, xy)
+
+Computes the second invariant ``\\sqrt{\\tfrac{1}{2} A_{ij}A_{ij}}`` of a deviatoric tensor `A`.
+The tensor may be given as an `NTuple`, `SVector`, `SMatrix`, or `Matrix`, or by its independent
+components (Voigt order) for the 2D (`xx, yy, xy`) or 3D (`xx, yy, zz, yz, xz, xy`) case; the
+component forms are differentiable.
+"""
 @inline second_invariant(A::NTuple) = √(0.5 * doubledot(A, A))
 @inline second_invariant(A::SMatrix) = √(0.5 * doubledot(A, A))
 @inline second_invariant(A::SVector) = √(0.5 * doubledot(A, A))
-@inline second_invariant(A::Matrix) = √(0.5 * sum(Ai * Ai for Ai in A))
+@inline second_invariant(A::Matrix) = size(A) == (2, 2) ? second_invariant(SMatrix{2, 2}(A)) : √(0.5 * sum(Ai * Ai for Ai in A))
 # So that is differentiable...
 @inline second_invariant(xx, yy, xy) = √(0.5 * (xx^2 + yy^2 + (-xx - yy)^2) + xy^2)
 @inline second_invariant(xx, yy, zz, yz, xz, xy) = √(0.5 * (xx^2 + yy^2 + zz^2) + xy^2 + yz^2 + xz^2)
@@ -167,6 +179,13 @@ end
 
 # Methods to rotate the elastic stress
 
+"""
+    rotate_elastic_stress(ω, τ, dt)
+
+Applies the Jaumann co-rotation to the elastic stress tensor `τ` (in Voigt notation) over a time
+step `dt`, given the vorticity `ω`. Dispatches to the 2D or 3D rotation depending on the length of
+`ω`.
+"""
 @inline rotate_elastic_stress(ω, τ, dt) = _rotate_elastic_stress(ω, staggered_tensor_average(τ), dt)
 
 @inline _rotate_elastic_stress(ω::Union{AbstractVector, NTuple}, τ, dt) = rotate_elastic_stress3D(ω, τ, dt)
@@ -176,7 +195,7 @@ end
     rotate_elastic_stress2D(ω, τ::T, dt) where T
 
 Bi-dimensional rotation of the elastic stress where τ is in the Voig notation
-and ω = 1/2(dux/dy - duy/dx)
+and ω = 1/2(duy/dx - dux/dy)
 """
 @inline Base.@propagate_inbounds function rotate_elastic_stress2D(ω, τ, dt)
     θ = ω * dt
@@ -211,6 +230,7 @@ Tri-dimensional rotation of the elastic stress where τ is in the Voig notation 
 @inline Base.@propagate_inbounds function rotate_elastic_stress3D(ωi, τ, dt)
     # vorticity
     ω = √(sum(x^2 for x in ωi))
+    iszero(ω) && return SVector(τ)
     # unit rotation axis
     n = SVector{3}(inv(ω) * ωi[i] for i in 1:3)
     # integrate rotation angle
@@ -233,6 +253,6 @@ end
         c_3    c0  -c_1
         -c_2   c_1    c0
     ]
-    R2 = (1 - cosθ) .* (n * n')
+    R2 = (one(cosθ) - cosθ) .* (n * n')
     return R1 + R2
 end

@@ -16,6 +16,16 @@ import Base.show, GeoParams.param_info
 
 include("../Computations.jl")
 
+"""
+    AbstractSolubility{T} <: AbstractMaterialParam
+
+Supertype of the coupled H2O-CO2 solubility closures. A subtype gives the
+dissolved H2O and CO2 mass fractions of a melt as a function of pressure,
+temperature and gas composition; see [`compute_dissolved`](@ref).
+
+Implemented closures are [`Liu2005_Solubility`](@ref) for silicic melts and
+[`Mafic_Solubility`](@ref) for mafic melts.
+"""
 abstract type AbstractSolubility{T} <: AbstractMaterialParam end
 
 export compute_dissolved, # (m_h2o, m_co2) mass fractions
@@ -230,7 +240,7 @@ read values rather than `Quantity`s: neither return carries units.
     M_h2o::GeoUnit{T, U2} = 18.02e-3kg / mol    # molar mass H2O
     M_co2::GeoUnit{T, U2} = 44.01e-3kg / mol    # molar mass CO2
 end
-GasMixture(args...) = GasMixture(convert.(GeoUnit, args)...)
+GasMixture(args...) = promote_construct(GasMixture, args...)
 isdimensional(s::GasMixture) = isdimensional(s.Cp_h2o)
 
 function param_info(s::GasMixture)
@@ -376,14 +386,22 @@ compute_dissolved(MatParam, arg, args::Vararg{Any, N}) where {N} = compute_param
 # Phase-ratio mix of both outputs (mirrors compute_meltfraction_ratio). The
 # shared compute_param_times_frac sums a scalar, so the two-element output gets
 # its own unrolled dot-product, evaluating each phase once.
+"""
+    compute_dissolved_ratio(PhaseRatios, MatParam::NTuple{N,AbstractMaterialParamsStruct}, args) -> (m_h2o, m_co2)
+
+Dissolved H2O and CO2 mass fractions at a point whose composition is a mixture of
+`N` phases. `PhaseRatios[i]` is the volume fraction of phase `i`, summing to one,
+and the result is the fraction-weighted average of [`compute_dissolved`](@ref)
+over all phases. Each phase is evaluated exactly once.
+"""
 compute_dissolved_ratio(args::Vararg{Any, N}) where {N} = compute_dissolved_times_frac(compute_dissolved, args...)
 
 @generated function compute_dissolved_times_frac(
-        fn::F, PhaseRatios::Union{NTuple{N, T}, SVector{N, T}}, MatParam::NTuple{N, AbstractMaterialParamsStruct}, argsi
-    ) where {F <: Function, N, T}
+        fn::F, PhaseRatios::Union{NTuple{N}, SVector{N}}, MatParam::NTuple{N, AbstractMaterialParamsStruct}, argsi
+    ) where {F <: Function, N}
     return quote
-        mh = zero($T)
-        mc = zero($T)
+        mh = zero($(eltype(PhaseRatios)))
+        mc = zero($(eltype(PhaseRatios)))
         Base.@nexprs $N i -> begin
             @inline
             hᵢ, cᵢ = fn(MatParam[i], argsi)

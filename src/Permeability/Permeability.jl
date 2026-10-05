@@ -11,6 +11,12 @@ import Base.show, GeoParams.param_info
 
 include("../Computations.jl")
 
+"""
+    AbstractPermeability{T} <: AbstractMaterialParam
+
+Supertype of permeability parameterizations (e.g. [`ConstantPermeability`](@ref),
+[`CarmanKozenyPermeability`](@ref)).
+"""
 abstract type AbstractPermeability{T} <: AbstractMaterialParam end
 
 export compute_permeability, # calculation routines
@@ -43,20 +49,23 @@ Defines a constant permeability value for a given material.
 - `k`: The permeability value in square meters (m^2). Default is `1e-12 m^2`.
 
 # Example
-```julia
-rheology = SetMaterialParams(;
-                      Phase=1,
-                      CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e21Pa * s)),
-                      Gravity=ConstantGravity(; g=9.81.0m / s^2),
-                      Density= MeltDependent_Density(),
-                      Permeability = ConstantPermeability(; k=1e-12m^2),
-                      )
+```jldoctest
+julia> rheology = SetMaterialParams(;
+           Phase = 1,
+           CreepLaws = (PowerlawViscous(), LinearViscous(; η = 1e21Pa * s)),
+           Gravity = ConstantGravity(; g = 9.81m / s^2),
+           Density = MeltDependent_Density(),
+           Permeability = ConstantPermeability(; k = 1e-12m^2),
+       );
+
+julia> rheology.Permeability[1]
+Constant permeability: k=1.0e-12 m²·⁰
 ```
 """
 @with_kw_noshow struct ConstantPermeability{_T, U} <: AbstractPermeability{_T}
     k::GeoUnit{_T, U} = 1.0e-12m^2 # permeability
 end
-ConstantPermeability(args...) = ConstantPermeability(convert.(GeoUnit, args)...)
+ConstantPermeability(args...) = promote_construct(ConstantPermeability, args...)
 isdimensional(s::ConstantPermeability) = isdimensional(s.k)
 
 @inline (s::ConstantPermeability)(; args...) =
@@ -97,21 +106,24 @@ Defines the Hazen permeability equation for a given material.
 - `D10`: The effective grain size. Default is `1e-4 m`.
 
 # Example
-```julia
-rheology = SetMaterialParams(;
-                      Phase=1,
-                      CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e21Pa * s)),
-                      Gravity=ConstantGravity(; g=9.81.0m / s^2),
-                      Density= MeltDependent_Density(),
-                      Permeability = HazenPermeability(; C=1.0, D10=1e-4m),
-                      )
+```jldoctest
+julia> rheology = SetMaterialParams(;
+           Phase = 1,
+           CreepLaws = (PowerlawViscous(), LinearViscous(; η = 1e21Pa * s)),
+           Gravity = ConstantGravity(; g = 9.81m / s^2),
+           Density = MeltDependent_Density(),
+           Permeability = HazenPermeability(; C = 1.0, D10 = 1e-4m),
+       );
+
+julia> rheology.Permeability[1]
+Hazen permeability: k = C * D10^2; C=1.0; D10=0.0001
 ```
 """
 @with_kw_noshow struct HazenPermeability{_T, U1, U2} <: AbstractPermeability{_T}
     C::GeoUnit{_T, U1} = 1.0 * NoUnits # Hazen constant
     D10::GeoUnit{_T, U2} = 1.0e-4 * m    # Effective grain size
 end
-HazenPermeability(args...) = HazenPermeability(convert.(GeoUnit, args)...)
+HazenPermeability(args...) = promote_construct(HazenPermeability, args...)
 isdimensional(s::HazenPermeability) = isdimensional(s.D10)
 
 function param_info(s::HazenPermeability)
@@ -149,14 +161,17 @@ Defines the power-law permeability equation for a given material.
 - `n`: The exponent. Default is `3`.
 
 # Example
-```julia
-rheology = SetMaterialParams(;
-                      Phase=1,
-                      CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e21Pa * s)),
-                      Gravity=ConstantGravity(; g=9.81.0m / s^2),
-                      Density= MeltDependent_Density(),
-                      Permeability = PowerLawPermeability(; c=1.0, k0=1e-12m^2, ϕ=1e-2, n=3),
-                      )
+```jldoctest
+julia> rheology = SetMaterialParams(;
+           Phase = 1,
+           CreepLaws = (PowerlawViscous(), LinearViscous(; η = 1e21Pa * s)),
+           Gravity = ConstantGravity(; g = 9.81m / s^2),
+           Density = MeltDependent_Density(),
+           Permeability = PowerLawPermeability(; c = 1.0, k0 = 1e-12m^2, ϕ = 1e-2, n = 3),
+       );
+
+julia> rheology.Permeability[1]
+Power-law permeability: k = c* k0 * ϕ^n; c = 1.0, k0=1.0e-12; n=3.0
 ```
 """
 @with_kw_noshow struct PowerLawPermeability{_T, U1, U2, U3, U4} <: AbstractPermeability{_T}
@@ -165,7 +180,7 @@ rheology = SetMaterialParams(;
     ϕ::GeoUnit{_T, U3} = 1.0e-2 * NoUnits # reference porosity
     n::GeoUnit{_T, U4} = 3 * NoUnits    # exponent
 end
-PowerLawPermeability(args...) = PowerLawPermeability(convert.(GeoUnit, args)...)
+PowerLawPermeability(args...) = promote_construct(PowerLawPermeability, args...)
 isdimensional(s::PowerLawPermeability) = isdimensional(s.k0)
 
 function param_info(s::PowerLawPermeability)
@@ -205,14 +220,17 @@ Defines the Carman-Kozeny permeability equation for a given material.
 - `n`: The exponent. Default is `3`.
 
 # Example
-```julia
-rheology = SetMaterialParams(;
-                      Phase=1,
-                      CreepLaws=(PowerlawViscous(), LinearViscous(; η=1e21Pa * s)),
-                      Gravity=ConstantGravity(; g=9.81.0m / s^2),
-                      Density= MeltDependent_Density(),
-                      Permeability = CarmanKozenyPermeability(; c=1.0m^2, ϕ0=0.01, n=3),
-                      )
+```jldoctest
+julia> rheology = SetMaterialParams(;
+           Phase = 1,
+           CreepLaws = (PowerlawViscous(), LinearViscous(; η = 1e21Pa * s)),
+           Gravity = ConstantGravity(; g = 9.81m / s^2),
+           Density = MeltDependent_Density(),
+           Permeability = CarmanKozenyPermeability(; c = 1.0m^2, ϕ0 = 0.01, n = 3),
+       );
+
+julia> rheology.Permeability[1]
+Carman-Kozeny permeability: k = c * (ϕ / ϕ0)^n; c=1.0; ϕ0=0.01; n=3.0
 ```
 """
 @with_kw_noshow struct CarmanKozenyPermeability{_T, U1, U2, U3} <: AbstractPermeability{_T}
@@ -220,7 +238,7 @@ rheology = SetMaterialParams(;
     ϕ0::GeoUnit{_T, U2} = 0.01 * NoUnits # reference porosity
     n::GeoUnit{_T, U3} = 3 * NoUnits    # exponent
 end
-CarmanKozenyPermeability(args...) = CarmanKozenyPermeability(convert.(GeoUnit, args)...)
+CarmanKozenyPermeability(args...) = promote_construct(CarmanKozenyPermeability, args...)
 # isdimensional(s::CarmanKozenyPermeability) = isdimensional(s.c)
 
 function param_info(s::CarmanKozenyPermeability)
@@ -265,6 +283,12 @@ This assumes that the `PhaseRatio` of every point is specified as an Integer in 
 """
 @inline compute_permeability!(args::Vararg{Any, N}) where {N} = compute_param!(compute_permeability, args...)
 @inline compute_permeability(MatParam, arg, args::Vararg{Any, N}) where {N} = compute_param(compute_permeability, MatParam, arg, args...)
+"""
+    compute_permeability_ratio(phase_ratios, MatParam, args)
+
+Returns the phase-fraction-weighted average permeability at a point, summing each phase's
+permeability ([`compute_permeability`](@ref)) times its fraction in `phase_ratios`.
+"""
 @inline compute_permeability_ratio(args::Vararg{Any, N}) where {N} = compute_param_times_frac(compute_permeability, args...)
 
 # extractor methods

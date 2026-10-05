@@ -29,7 +29,7 @@ using Test, GeoParams
     @testset "argument-carrying calls are unaffected" begin
         args = (; P = 1.0e9, T = 1000.0, ϕ = 0.1)
 
-        @test compute_density(PT_Density(), args) ≈ 5713.0
+        @test compute_density(PT_Density(), args) ≈ 5736.764050000001
         @test compute_conductivity(TP_Conductivity(), args) ≈ 1.6201114206128133
         @test compute_permeability(CarmanKozenyPermeability(), args) ≈ 1000.0
 
@@ -38,15 +38,15 @@ using Test, GeoParams
             SetMaterialParams(; Phase = 2, Density = ConstantDensity()),
         )
 
-        @test compute_density(rheologies, 1, args) ≈ 5713.0
+        @test compute_density(rheologies, 1, args) ≈ 5736.764050000001
         @test compute_density(rheologies, 2, args) ≈ 2900.0
-        @test compute_density(rheologies, (0.5, 0.5), args) ≈ 4306.5
+        @test compute_density(rheologies, (0.5, 0.5), args) ≈ 4318.382025000001
 
         ρ = zeros(3)
         compute_density!(
             ρ, rheologies, [1, 2, 1], (; P = fill(1.0e9, 3), T = fill(1000.0, 3))
         )
-        @test ρ ≈ [5713.0, 2900.0, 5713.0]
+        @test ρ ≈ [5736.764050000001, 2900.0, 5736.764050000001]
     end
 
 end

@@ -98,16 +98,23 @@ This is a modification of the `@unpack` macro from `UnPack.jl`, which retrieves
 the full variables.
 
 # Example
-```julia
+```jldoctest
 julia> struct Density{T}
         ρ::GeoUnit{T}
         α::GeoUnit{T}
        end
+
 julia> r = Density(GeoUnit(100kg/m^3),GeoUnit(4e-5/K));
+
 julia> @unpack_val ρ,α = r
+Density{Float64}(100.0, 4.0e-5)
+
 julia> α
 4.0e-5
+
 julia> @unpack_val Float32 ρ,α = r
+Density{Float64}(100.0, 4.0e-5)
+
 julia> α
 4.0f-5
 ```
@@ -130,13 +137,17 @@ variables must be `GeoUnit`s.
 The second form gives each quantity numerical type `T`.
 
 # Example
-```julia
+```jldoctest
 julia> struct Density{T}
         ρ::GeoUnit{T}
         α::GeoUnit{T}
        end
+
 julia> r = Density(GeoUnit(100kg/m^3),GeoUnit(4e-5/K));
+
 julia> @unpack_units ρ,α = r
+Density{Float64}(100.0, 4.0e-5)
+
 julia> α
 4.0e-5 K⁻¹·⁰
 ```

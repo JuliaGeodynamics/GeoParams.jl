@@ -3,6 +3,13 @@ using DocumenterVitepress
 using GeoParams, Makie
 # push!(LOAD_PATH, "../src/")
 
+# Unitful defaults to unicode exponents (e.g. `m⁻³·⁰`) only on macOS unless this
+# is set explicitly. The doctests in the docstrings expect the unicode form, so
+# force it here to keep results identical across the OSes that build the docs.
+ENV["UNITFUL_FANCY_EXPONENTS"] = "true"
+
+DocMeta.setdocmeta!(GeoParams, :DocTestSetup, :(using GeoParams); recursive = true)
+
 @info "Making documentation..."
 makedocs(;
     sitename = "GeoParams.jl",
@@ -14,7 +21,8 @@ makedocs(;
             Base.get_extension(GeoParams, :GeoParamsMakieExt) :
             GeoParams.GeoParamsMakieExt,
     ],
-    warnonly = Documenter.except(:footnote),
+    checkdocs = :exports,
+    warnonly = [:missing_docs],
     format = DocumenterVitepress.MarkdownVitepress(
         repo = "github.com/JuliaGeodynamics/GeoParams.jl",
         devbranch = "main",
@@ -59,12 +67,13 @@ makedocs(;
             "1D Strength Envelope" => "man/strengthenvelope.md",
         ],
         "Plotting" => "man/plotting.md",
+        "Parameter tables" => "man/tables.md",
         "List of functions" => "man/listfunctions.md",
         "Contributing" => "man/contributing.md",
     ],
 )
 
-deploydocs(
+DocumenterVitepress.deploydocs(
     repo = "github.com/JuliaGeodynamics/GeoParams.jl",
     devbranch = "main",
     branch = "gh-pages",

@@ -348,6 +348,13 @@ function ComputeTotalField_withMeltFraction(
     return Struct_Fields
 end
 
+"""
+    MAGEMin_LookupTable{T} <: AbstractPhaseDiagramsStruct
+
+Holds a precomputed MAGEMin phase-diagram lookup table, storing the melt density, melt fraction,
+rock density, P- and S-wave velocities, specific heat, and bulk density as functions of pressure
+and temperature. Construct one with [`MAGEMin_Diagram`](@ref).
+"""
 struct MAGEMin_LookupTable{T} <: AbstractPhaseDiagramsStruct
     Type::Ptr{UInt8}  # using Ptr{UInt8} to avoid issues with String on GPU
     Name::Ptr{UInt8}
@@ -362,6 +369,12 @@ end
 
 Adapt.@adapt_structure MAGEMin_LookupTable
 
+"""
+    MAGEMin_Diagram(fname::String; CharDim=nothing, type="MAGEMin")
+
+Reads a MAGEMin phase-diagram file `fname` and returns a [`MAGEMin_LookupTable`](@ref). If `CharDim`
+is supplied, the resulting table is nondimensionalized with those characteristic dimensions.
+"""
 function MAGEMin_Diagram(fname::String; CharDim = nothing, type::AbstractString = "MAGEMin")
 
     # Read header:

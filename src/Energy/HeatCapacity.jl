@@ -38,7 +38,7 @@ where ``Cp`` is the thermal heat capacity [``J/kg/K``].
 @with_kw_noshow struct ConstantHeatCapacity{T, U} <: AbstractHeatCapacity{T}
     Cp::GeoUnit{T, U} = 1050J / kg / K                # heat capacity
 end
-ConstantHeatCapacity(args...) = ConstantHeatCapacity(convert.(GeoUnit, args)...)
+ConstantHeatCapacity(args...) = promote_construct(ConstantHeatCapacity, args...)
 
 function param_info(s::ConstantHeatCapacity) # info about the struct
     return MaterialParamsInfo(; Equation = L"c_p = cst")
@@ -89,7 +89,7 @@ Note that this is slightly different than the equation in the manuscript, as Cp 
     molmass::GeoUnit{T, U4} = 0.22178kg / mol               # average molar mass
     Tcutoff::GeoUnit{T, U5} = 846K                        # cutoff temperature
 end
-T_HeatCapacity_Whittington(args...) = T_HeatCapacity_Whittington(convert.(GeoUnit, args)...)
+T_HeatCapacity_Whittington(args...) = promote_construct(T_HeatCapacity_Whittington, args...)
 
 function param_info(s::T_HeatCapacity_Whittington) # info about the struct
     return MaterialParamsInfo(; Equation = L"c_p = (a + b*T - c/T^2)/m")
@@ -132,7 +132,7 @@ where ``Q_L`` is the latent heat [``J/kg``], and ``\\frac{\\partial \\phi}{\\par
     Cp::S1 = ConstantHeatCapacity()
     Q_L::GeoUnit{T, U} = 400.0e3J / kg                            # Latent heat
 end
-Latent_HeatCapacity(args...) = Latent_HeatCapacity(args[1], convert.(GeoUnit, args[2:end])...)
+Latent_HeatCapacity(args...) = promote_construct(Latent_HeatCapacity, args...)
 Latent_HeatCapacity(Cp::AbstractHeatCapacity, args...) = Latent_HeatCapacity(Cp, convert.(GeoUnit, args)...)
 isdimensional(g::Latent_HeatCapacity) = isdimensional(g.Q_L)
 
@@ -233,7 +233,7 @@ Interpolates heat capacity as a function of `T,P` from a lookup table
 
 # Help info for the calculation routines
 """
-    Cp = compute_heatcapacity(s:<AbstractHeatCapacity, P, T)
+    Cp = compute_heatcapacity(s::AbstractHeatCapacity, P, T)
 
 Returns the heat capacity `Cp` at any temperature `T` and pressure `P` using any of the heat capacity laws implemented.
 
@@ -243,25 +243,32 @@ Currently available:
 - Latent_HeatCapacity
 
 # Example
-Using dimensional units
-```julia
-julia> T = 250.0:100:1250
-julia> Cp2 = T_HeatCapacity_Whittington()
-julia> Cp = similar(T)
-julia> args = (; T=T)
-julia> Cp =compute_heatcapacity!(Cp, Cp2, args)
-11-element Vector nitful.Quantity{Float64, 𝐋² 𝚯⁻¹ 𝐓⁻², Unitful.FreeUnits{(kg⁻¹, J, K⁻¹), 𝐋² 𝚯⁻¹ 𝐓⁻², nothing}}}:
-635.4269997294616 J kg⁻¹ K⁻¹
-850.7470171764261 J kg⁻¹ K⁻¹
-962.0959598489883 J kg⁻¹ K⁻¹
-1037.542043377064 J kg⁻¹ K⁻¹
-1097.351792196648 J kg⁻¹ K⁻¹
-1149.274556367170 J kg⁻¹ K⁻¹
-1157.791505094840 J kg⁻¹ K⁻¹
-1172.355487419726 J kg⁻¹ K⁻¹
-1186.919469744596 J kg⁻¹ K⁻¹
-1201.483452069455 J kg⁻¹ K⁻¹
-1216.0474343943067 J kg⁻¹ K⁻¹
+```jldoctest
+julia> cp = T_HeatCapacity_Whittington()
+T-dependent heat capacity following Whittington et al. (2009) for average crust.
+
+julia> compute_heatcapacity(cp, (; T = 1000.0))
+1179.6374785821629
+```
+
+The in-place [`compute_heatcapacity!`](@ref) fills a preallocated array instead:
+
+```jldoctest
+julia> cp = T_HeatCapacity_Whittington();
+
+julia> T = collect(250.0:250.0:1250.0);
+
+julia> Cp = similar(T);
+
+julia> compute_heatcapacity!(Cp, cp, (; T = T));
+
+julia> Cp
+5-element Vector{Float64}:
+  635.4269997294616
+ 1002.5701145279105
+ 1149.2745563671706
+ 1179.6374785821629
+ 1216.0474343943067
 ```
 
 

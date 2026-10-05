@@ -1,6 +1,7 @@
 # List of all functions
 
-This page details the some of the guidelines that should be followed when contributing to this package.
+Every function and type documented in this manual, linked to the page that
+describes it.
 
 ```@index
 ```

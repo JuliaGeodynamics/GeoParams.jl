@@ -1,4 +1,4 @@
-using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, phase_not_found
 using ..Units
 using Parameters, Unitful
 using StaticArrays
@@ -29,18 +29,16 @@ using StaticArrays
     return quote
         @inline
         Base.Cartesian.@nexprs $N i -> (MatParam[i].Phase == Phase) && return fn(MatParam[i], args...)
-        # The no-match fallback must carry `fn`'s return type: a bare `0.0` would widen
-        # every call's inferred type to `Union{T, Float64}`.
-        return zero(Base.promote_op(fn, typeof(MatParam[1]), map(typeof, args)...))
+        phase_not_found()
     end
 end
 
 @generated function compute_param(
-        fn::F, MatParam::NTuple{N, AbstractMaterialParamsStruct}, phase_ratios::Union{SVector{N, T}, NTuple{N, T}}, args::Vararg{Any, NA}
-    ) where {F <: Function, N, T, NA}
+        fn::F, MatParam::NTuple{N, AbstractMaterialParamsStruct}, phase_ratios::Union{SVector{N}, NTuple{N}}, args::Vararg{Any, NA}
+    ) where {F <: Function, N, NA}
     return quote
         Base.@_inline_meta
-        x = zero($T)
+        x = zero($(eltype(phase_ratios)))
         Base.Cartesian.@nexprs $N i ->
         @inbounds  x += fn(MatParam[i], args...) * phase_ratios[i]
         return x
@@ -130,11 +128,11 @@ end
 
 #Multiplies parameter with the fraction of a phase
 @generated function compute_param_times_frac(
-        fn::F, PhaseRatios::Union{NTuple{N, T}, SVector{N, T}}, MatParam::NTuple{N, AbstractMaterialParamsStruct}, argsi
-    ) where {F <: Function, N, T}
+        fn::F, PhaseRatios::Union{NTuple{N}, SVector{N}}, MatParam::NTuple{N, AbstractMaterialParamsStruct}, argsi
+    ) where {F <: Function, N}
     # Unrolled dot product
     return quote
-        val = zero($T)
+        val = zero($(eltype(PhaseRatios)))
         Base.Cartesian.@nexprs $N i -> val += @inbounds PhaseRatios[i] * fn(MatParam[i], argsi)
         return val
     end

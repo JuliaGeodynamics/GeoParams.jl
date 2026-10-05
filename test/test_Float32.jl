@@ -64,9 +64,8 @@ end
             @test typeof(dεII_dτII(el, τ; τII_old = 0.0, dt = 1.0)) === T
             @test typeof(compute_εvol(el, τ; P_old = 0.0, dt = 1.0)) === T
             @test typeof(compute_p(el, ε; P_old = 0.0, dt = 1.0)) === T
-            # these two take τII_old/dt positionally, ahead of an args tuple
-            @test typeof(dτII_dεII(el, zero(T), one(T), NamedTuple())) === T
-            @test typeof(dp_dεvol(el, zero(T), one(T), NamedTuple())) === T
+            @test typeof(dτII_dεII(el, zero(T); τII_old = zero(T), dt = one(T))) === T
+            @test typeof(dp_dεvol(el, zero(T); P_old = zero(T), dt = one(T))) === T
         end
     end
 
@@ -141,7 +140,7 @@ end
         # This tolerance is still ~4 orders tighter than any real regression.
         law = SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003)
         @test compute_εII(law, 1.0e6; T = 1200.0, P = 1.0e9) ≈ 1.3638005232835048e-18 rtol = RTOL[Float64]
-        @test compute_density(PT_Density(), (; P = 1.0e9, T = 1200.0)) ≈ 5695.599999999999 rtol = RTOL[Float64]
+        @test compute_density(PT_Density(), (; P = 1.0e9, T = 1200.0)) ≈ 5719.36405 rtol = RTOL[Float64]
     end
 
     @testset "scratch storage follows the input precision" begin
@@ -245,9 +244,9 @@ end
             SetMaterialParams(; Phase = 2, Density = PT_Density()),
         )
         @test compute_density(phases, 1, args32) isa Float32
-        @test compute_density(phases, 99, args32) === 0.0f0
+        @test_throws "phase not found in MaterialParams" compute_density(phases, 99, args32)
         @test compute_density(phases, (0.4f0, 0.6f0), args32) isa Float32
-        @test GeoParams.nphase(v -> compute_density(v, args32), 99, phases) === 0.0f0
+        @test_throws "phase not found in MaterialParams" GeoParams.nphase(v -> compute_density(v, args32), 99, phases)
         @test GeoParams.nphase_ratio(v -> compute_density(v, args32), (0.4f0, 0.6f0), phases) isa Float32
     end
 end

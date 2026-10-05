@@ -4,7 +4,7 @@ module GravitationalAcceleration
 
 using Parameters, LaTeXStrings, Unitful, StaticArrays
 using ..Units
-using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
+using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, phase_not_found
 import Base.show, GeoParams.param_info
 using ..MaterialParameters: MaterialParamsInfo
 
@@ -27,7 +27,7 @@ Set a constant value for the gravitational acceleration:
 @with_kw_noshow struct ConstantGravity{_T, U} <: AbstractGravity{_T}
     g::GeoUnit{_T, U} = 9.81m / s^2               # gravitational acceleration
 end
-ConstantGravity(args...) = ConstantGravity(convert.(GeoUnit, args)...)
+ConstantGravity(args...) = promote_construct(ConstantGravity, args...)
 
 function param_info(s::ConstantGravity) # info about the struct
     return MaterialParamsInfo(; Equation = L"g = 9.81 m s^{-2}")
@@ -61,7 +61,7 @@ Set a constant value for the gravitational acceleration with dip and strike angl
     gy::GeoUnit{_T, U} = 0.0e0m / s^2  # gravitational acceleration
     gz::GeoUnit{_T, U} = 9.81m / s^2 # gravitational acceleration
 end
-DippingGravity(args...) = DippingGravity(convert.(GeoUnit, args)...)
+DippingGravity(args...) = promote_construct(DippingGravity, args...)
 
 function DippingGravity(α::T1, θ::T2, g::T3) where {T1, T2, T3}
     T = promote_type(T1, T2, T3)
@@ -110,6 +110,7 @@ end
         @inline
         Base.Cartesian.@nexprs $N i ->
         (MatParam[i].Phase == Phase) && return compute_gravity(MatParam[i].Gravity[1])
+        phase_not_found()
     end
 end
 
@@ -118,7 +119,7 @@ compute_gravity(MatParam::AbstractMaterialParamsStruct) = compute_gravity(MatPar
 
 # Help info for the calculation routines
 """
-compute_gravity(s:<AbstractGravity)
+compute_gravity(s::AbstractGravity)
 
 Returns the gravitational acceleration 
 
