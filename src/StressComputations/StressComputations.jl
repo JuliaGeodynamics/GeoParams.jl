@@ -22,7 +22,7 @@ function compute_τij(v, εij::NTuple{N, T}, args, τij_old::NTuple{N, T}) where
 
     # args = merge(args, (τII_old=0,))
     τII = first(compute_τII(v, εII, args))
-    η_eff = 0.5 * τII / εII
+    η_eff = τII / (2 * εII)
     τij = 2 * η_eff .* ε_eff
 
     return τij, τII
@@ -45,7 +45,7 @@ function compute_p_τij(
 
     args = merge(args, (τII_old = 0, P_old = P_old))
     P, τII = compute_p_τII(v, εII, εvol, args)
-    η_eff = 0.5 * τII / εII
+    η_eff = τII / (2 * εII)
     τij = 2 * η_eff .* ε_eff
 
     return P, τij, τII, η_eff
@@ -68,7 +68,7 @@ function compute_τij(
 
     # args = merge(args, (τII_old=0,))
     τII = first(compute_τII(v, εII, args))
-    η_eff = 0.5 * τII / εII
+    η_eff = τII / (2 * εII)
     τij = 2 * η_eff .* ε_eff_averaged
 
     return τij, τII, η_eff
@@ -94,9 +94,9 @@ function compute_p_τij(
     ε_eff_averaged = staggered_tensor_average(ε_eff)
     εvol = volumetric_strainrate(staggered_tensor_average(εij))
 
-    args = merge(args, (P_old = P_old, τII_old = 0.0))
+    args = merge(args, (P_old = P_old, τII_old = 0))
     P, τII, = compute_p_τII(v, εII, εvol, args)
-    η_eff = 0.5 * τII / εII
+    η_eff = τII / (2 * εII)
     τij = 2 * η_eff .* ε_eff_averaged
 
     return P, τij, τII, η_eff
@@ -123,7 +123,7 @@ function compute_τij(
 
     # args = merge(args, (τII_old=0,))
     τII = nphase(vi -> first(compute_τII(vi.CompositeRheology[1], εII, args)), phase, v)
-    η_eff = 0.5 * τII / εII
+    η_eff = τII / (2 * εII)
     τij = 2 * η_eff .* ε_eff
 
     return τij, τII, η_eff
@@ -151,7 +151,7 @@ function compute_p_τij(
 
     args = merge(args, (τII_old = 0, P_old = P_old))
     P, τII = nphase(vi -> compute_p_τII(vi.CompositeRheology[1], εII, εvol, args), phase, v)
-    η_eff = 0.5 * τII / εII
+    η_eff = τII / (2 * εII)
     τij = 2 * η_eff .* ε_eff
 
     return P, τij, τII, η_eff
@@ -180,7 +180,7 @@ function compute_τij(
     τII = nphase(
         vi -> first(compute_τII(vi.CompositeRheology[1], εII, args)), phases[1][1], v
     )
-    η_eff = 0.5 * τII / εII
+    η_eff = τII / (2 * εII)
     τij = 2 * η_eff .* ε_eff_averaged
 
     return τij, τII, η_eff
@@ -211,7 +211,7 @@ function compute_p_τij(
     P, τII = nphase(
         vi -> compute_p_τII(vi.CompositeRheology[1], εII, εvol, args), phases[1][1], v
     )  # note: assumes phases of all staggered points to be the same!
-    η_eff = 0.5 * τII / εII
+    η_eff = τII / (2 * εII)
     τij = 2 * η_eff .* ε_eff_averaged
 
     return P, τij, τII, η_eff
@@ -264,7 +264,7 @@ end
 
 # # Internal computation array
 function _compute_τij_2D(Exx, Eyy, Exy, P, Txx_o, Tyy_o, Txy_o, phase, MatParam, dt)
-    args = (; dt = dt, P = P, τII_old = 0.0)
+    args = (; dt = dt, P = P, τII_old = 0)
     εij = (Exx, Eyy, Exy)
     τij_o = (Txx_o, Tyy_o, Txy_o)
     Tij, Tii, η_vep = compute_τij(MatParam, εij, args, τij_o, phase)
@@ -318,7 +318,7 @@ end
 
 # Internal computation array
 function _compute_p_τij_2D(Exx, Eyy, Exy, P, Txx_o, Tyy_o, Txy_o, P_o, phase, MatParam, dt)
-    args = (; dt = dt, P = P, τII_old = 0.0)
+    args = (; dt = dt, P = P, τII_old = 0)
     εij = (Exx, Eyy, Exy)
     τij_o = (Txx_o, Tyy_o, Txy_o)
     P, Tij, Tii, η_vep = compute_p_τij(MatParam, εij, P_o, args, τij_o, phase)
@@ -384,7 +384,7 @@ end
 function _compute_τij_stagcenter(
         Exx, Eyy, Exyv, Pt, Txx_o, Tyy_o, Txyv_o, phase_center, phase_vertex, MatParam, dt, i, j
     )
-    args = (; dt = dt, P = Pt, τII_old = 0.0)
+    args = (; dt = dt, P = Pt, τII_old = 0)
     # gather strain rate
     εij_v = (Exyv[i, j], Exyv[i + 1, j], Exyv[i, j + 1], Exyv[i + 1, j + 1]) # gather vertices around ij center
     εij = (Exx, Eyy, εij_v)
@@ -479,7 +479,7 @@ function _compute_p_τij_stagcenter(
         i,
         j,
     )
-    args = (; dt = dt, P = P, τII_old = 0.0)
+    args = (; dt = dt, P = P, τII_old = 0)
     # gather strain rate
     εij_v = (Exyv[i, j], Exyv[i + 1, j], Exyv[i, j + 1], Exyv[i + 1, j + 1]) # gather vertices around ij center
     εij = (Exx, Eyy, εij_v)

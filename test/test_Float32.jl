@@ -336,6 +336,28 @@ end
         @test λ32 ≈ CR.lambda(1.0e6, p, 1.0e20, 1.0e19; K = 1.0e10, dt = 1.0e10, h = 1.0e5, τij = (1.0, 2.0, 3.0)) rtol = RTOL[Float32]
     end
 
+    @testset "stress tensor follows the strain-rate precision" begin
+        args = (; T = 1.0f3, P = 1.0f8, dt = 1.0f10)
+        ε = (1.0f-15, 2.0f-15, 3.0f-15)
+        τo = (1.0f5, 0.0f0, 0.0f0)
+        ve = CompositeRheology(LinearViscous(), ConstantElasticity())
+        for c in (ve, CompositeRheology(LinearViscous(), ConstantElasticity(), DruckerPrager()))
+            τij, τII = compute_τij(c, ε, args, τo)
+            @test τij isa NTuple{3, Float32}
+            @test τII isa Float32
+            P, τij, τII, η = compute_p_τij(c, ε, 0.0f0, args, τo)
+            @test (P, τij..., τII, η) isa NTuple{6, Float32}
+        end
+        # staggered grid: εxy given at the four surrounding vertices
+        τij, τII, η = compute_τij(ve, (ε[1], ε[2], ntuple(_ -> ε[3], 4)), args, (τo[1], τo[2], ntuple(_ -> τo[3], 4)))
+        @test (τij..., τII, η) isa NTuple{5, Float32}
+        mp = (SetMaterialParams(; Phase = 1, CompositeRheology = ve),)
+        τij, τII, η = compute_τij(mp, ε, args, τo, 1)
+        @test (τij..., τII, η) isa NTuple{5, Float32}
+        τII64 = compute_τij(ve, Float64.(ε), (; T = 1.0e3, P = 1.0e8, dt = 1.0e10), Float64.(τo))[2]
+        @test compute_τij(ve, ε, args, τo)[2] ≈ τII64 rtol = RTOL[Float32]
+    end
+
     @testset "arg-independent laws follow the precision of their arguments" begin
         CR = GeoParams.MaterialParameters.ConstitutiveRelationships
         args = (; T = 1.0f3, P = 1.0f8, dt = 1.0f10)

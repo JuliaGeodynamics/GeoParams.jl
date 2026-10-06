@@ -18,9 +18,11 @@ using GeoParams
     @test UnitValue(x_nd.Vp) ≈ 8.1e11
     @test UnitValue(x_nd.Vs) ≈ 4.5e11
 
-    @test UnitValue(compute_wave_velocity(x_nd, (; wave = :Vp))) ≈ 8.1e11
-    @test UnitValue(compute_wave_velocity(x_nd, (; wave = :Vs))) ≈ 4.5e11
-    @test UnitValue(compute_wave_velocity(x_nd, (; wave = :VpVs))) ≈ 1.8
+    @test compute_wave_velocity(x_nd, (; wave = :Vp)) ≈ 8.1e11
+    @test compute_wave_velocity(x_nd, (; wave = :Vs)) ≈ 4.5e11
+    @test compute_wave_velocity(x_nd, (; wave = :VpVs)) ≈ 1.8
+    @test compute_wave_velocity(x, (; T = 1.0f3, wave = :Vp)) === 8.1f3
+    @test_throws "`wave` must be :Vp, :Vs or :VpVs" compute_wave_velocity(x, (; wave = :Vq))
 
     # Check that it works if we give a phase array
     MatParam = Array{MaterialParams, 1}(undef, 2)
@@ -64,18 +66,6 @@ using GeoParams
     @test VpVs[1] ≈ 1.8
     @test VpVs[1, 1, end] ≈ 2.05
 
-    # NOTE: This will be made obsolete by melt_correction_Takei
-    #    Vp_cor, Vs_cor = melt_correction(
-    #        26.0, 94.5, 61.0, 2802.0, 3198.0, 7.4, 4.36, 0.01, 0.15
-    #    )
-    #    @test [Vp_cor, Vs_cor] ≈  [7.331657177397843, 4.314027804335563]
-
-    # NOTE: This will be made obsolete by melt_correction_Takei
-    #  Vs_cor = porosity_correction(
-    #       94.5, 61.0, 1000.0, 3198.0, 4.36, 0.25, 0.25
-    #  )
-    #  @test [Vs_cor] ≈ [2.226167083352012]
-
     Vs_anel = anelastic_correction(0, 4.36734, 5.0, 1250.0)
     @test Vs_anel ≈ 4.343623758644558
 
@@ -106,6 +96,14 @@ using GeoParams
     @test Vs_new[10] ≈ 2750.713407744307
     @test Vp_new[10] ≈ 5792.937134183798
 
+    # reference values from an independent implementation of the same inclusion model
+    # (solid: K = 79.44, G = 41.67, ρ = 3033, Vs = 3.71, Vp = 6.67; aspect ratio 0.5)
+    @test [melt_correction_Takei(12.96, 79.44, 41.67, 2220.0, 3033.0, 6.67, 3.71, 0.2, 0.5)...] ≈ [3.0326, 5.6144] atol = 1.0e-4
+    @test [melt_correction_Takei(12.96, 79.44, 41.67, 2220.0, 3033.0, 6.67, 3.71, 0.4, 0.5)...] ≈ [2.3215, 4.6277] atol = 1.0e-4
+    @test [melt_correction_Takei(2.49, 79.44, 41.67, 1000.0, 3033.0, 6.67, 3.71, 0.2, 0.5)...] ≈ [3.1819, 5.6347] atol = 1.0e-4
+    @test [melt_correction_Takei(12.96f0, 79.44f0, 41.67f0, 2220.0f0, 3033.0f0, 6.67f0, 3.71f0, 0.2f0, 0.5f0)...] ≈ [3.0326f0, 5.6144f0] atol = 1.0f-3
+    @test melt_correction_Takei(12.96f0, 79.44f0, 41.67f0, 2220.0f0, 3033.0f0, 6.67f0, 3.71f0, 0.2f0, 0.5f0) isa NTuple{2, Float32}
+
     # ConstantSeismicVelocity vararg constructor
     x_vararg = ConstantSeismicVelocity(8100m / s, 4500m / s)
     @test Value(x_vararg.Vp) ≈ 8100m / s
@@ -133,13 +131,19 @@ using GeoParams
     @test Vs_clamp == 0.0
     @test Vp_clamp == 0.0
 
-    # melt_correction (Takei 1998, restored): matches the published reference values
-    Vp_cor, Vs_cor = melt_correction(26.0, 94.5, 61.0, 2802.0, 3198.0, 7.4, 4.36, 0.01, 0.15)
-    @test [Vp_cor, Vs_cor] ≈ [7.331657177397843, 4.314027804335563]
+    # melt_correction (Takei 1998 framework moduli)
+    Vp_cor, Vs_cor = melt_correction(26.0, 94.5, 61.0, 2802.0, 3198.0, 7.4, 4.36, 0.01, 0.84)
+    @test [Vp_cor, Vs_cor] ≈ [7.2883533354949295, 4.265842133195837]
+    # with equal densities ΔVs/Vs = ΛG ϕ/2; ΛG = (1 - μ_framework/G)/ϕ ≈ 4.44 for contiguity 0.84
+    Vs_eqρ = melt_correction(26.0, 94.5, 61.0, 3000.0, 3000.0, 7.4, 4.36, 0.01, 0.84)[2]
+    @test (1 - Vs_eqρ / 4.36) / 0.005 ≈ 4.443 atol = 1.0e-3
+    @test melt_correction(26.0, 94.5, 61.0, 2802.0, 3198.0, 7.4, 4.36, 0.0, 0.84) == (7.4, 4.36)
 
-    # porosity_correction (restored): guarded against unphysical negative velocities
+    # porosity_correction: the shear part of the inclusion model of melt_correction_Takei
+    ϕ_pore = 0.474 / (1 + 0.25 * 0.071)^5.989
     Vs_poro = porosity_correction(94.5, 61.0, 1000.0, 3198.0, 4.36, 0.25, 0.25)
-    @test Vs_poro ≥ 0.0
+    @test Vs_poro ≈ melt_correction_Takei(2.49, 94.5, 61.0, 1000.0, 3198.0, 7.4, 4.36, ϕ_pore, 0.25)[1]
+    @test porosity_correction(94.5f0, 61.0f0, 1000.0f0, 3198.0f0, 4.36f0, 0.25f0, 0.25f0) isa Float32
 
     # anelastic_correction: invalid water mode throws a descriptive error
     @test_throws ArgumentError anelastic_correction(3, 4.36734, 5.0, 1250.0)
@@ -151,11 +155,44 @@ using GeoParams
     # correct_wavevelocities_phasediagrams: full pipeline on a real lookup table
     PD = PerpleX_LaMEM_Diagram(joinpath(@__DIR__, "test_data", "Peridotite_dry.in"))
 
-    # default options (anelasticity + Takei melt + guarded porosity)
+    Vs_solid = copy(PD.solid_Vs.coefs)
+    Vp_solid = copy(PD.solid_Vp.coefs)
+
+    # default options (porosity + melt)
     PD_def = correct_wavevelocities_phasediagrams(PD)
     @test PD_def isa GeoParams.MaterialParameters.PhaseDiagrams.PhaseDiagram_LookupTable
-    @test PD_def.Vp_uncorrected !== nothing
-    @test PD_def.Vs_uncorrected !== nothing
+    @test PD_def.Vp_uncorrected === PD.Vp
+    @test PD_def.Vs_uncorrected === PD.Vs
+    @test PD.solid_Vs.coefs == Vs_solid     # the input diagram is left untouched
+    @test PD.solid_Vp.coefs == Vp_solid
+
+    # melt only: P and S velocities are not swapped, and melt only reduces them
+    PD_melt = correct_wavevelocities_phasediagrams(PD; apply_porosity_correction = false)
+    @test all(PD_melt.Vp.coefs .> PD_melt.Vs.coefs)
+    @test all(PD_melt.Vs.coefs .<= Vs_solid)
+    @test all(PD_melt.Vp.coefs .<= Vp_solid)
+    molten = PD.meltFrac.coefs .> 0
+    @test PD_melt.Vs.coefs[.!molten] == Vs_solid[.!molten]
+    i = findfirst(molten)
+    @test (PD_melt.Vs.coefs[i], PD_melt.Vp.coefs[i]) == melt_correction_Takei(
+        PD.melt_bulkModulus.coefs[i], PD.solid_bulkModulus.coefs[i], PD.solid_shearModulus.coefs[i],
+        PD.meltRho.coefs[i], PD.rockRho.coefs[i], Vp_solid[i], Vs_solid[i], PD.meltFrac.coefs[i], 0.1
+    )
+
+    # weighted combination: porosity and melt corrections both start from the solid velocities
+    PD_w = correct_wavevelocities_phasediagrams(PD; combine = :weighted)
+    PD_poro = correct_wavevelocities_phasediagrams(PD; apply_melt_correction = false)
+    @test PD_w.Vs.coefs[.!molten] == PD_poro.Vs.coefs[.!molten]
+    @test PD_w.Vp.coefs[.!molten] == Vp_solid[.!molten]
+    @test PD_w.Vs.coefs[molten] != PD_def.Vs.coefs[molten]
+    @test_throws "`combine` must be :sequential or :weighted" correct_wavevelocities_phasediagrams(PD; combine = :sum)
+
+    # anelasticity reduces the S-wave velocity of the solid
+    PD_anel = correct_wavevelocities_phasediagrams(
+        PD; apply_porosity_correction = false, apply_melt_correction = false, apply_anelasticity_correction = true
+    )
+    @test all(PD_anel.Vs.coefs .<= Vs_solid)
+    @test PD_anel.Vs.coefs[end, end] < Vs_solid[end, end]
 
     # exercise the legacy (non-Takei) melt_correction branch as well
     PD_legacy = correct_wavevelocities_phasediagrams(

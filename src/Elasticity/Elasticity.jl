@@ -349,8 +349,12 @@ end
 ## EFFECTIVE STRAIN RATE (Eij_eff = Eij + Tij/(2 G dt) )
 
 # Single material phase
-@inline _elastic_ε(v::ConstantElasticity, τij_old, dt) = τij_old / (2 * v.G * dt)
-@inline _elastic_ε(v::Vararg{Any, N}) where {N} = 0.0
+@inline function _elastic_ε(v::ConstantElasticity, τij_old, dt)
+    _T = precision_of(τij_old)
+    @unpack_val _T G = v
+    return τij_old / (2 * G * dt)
+end
+@inline _elastic_ε(v, τij_old, dt) = zero(precision_of(τij_old))
 
 @inline effective_ε(εij, v, τij_old, dt) = εij + elastic_ε(v, τij_old, dt)
 

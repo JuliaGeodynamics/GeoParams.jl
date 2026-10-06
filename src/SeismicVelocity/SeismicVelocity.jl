@@ -55,10 +55,13 @@ function param_info(s::ConstantSeismicVelocity) # info about the struct
 end
 
 # Calculation routines
-function compute_wave_velocity(s::ConstantSeismicVelocity{_T}; wave, kwargs...) where {_T}
-    wave != :VpVs && return getfield(s, wave)
-    @unpack Vp, Vs = s
-    return Vp / Vs
+function compute_wave_velocity(s::ConstantSeismicVelocity; wave, kwargs...)
+    _T = precision_of(values(kwargs))
+    @unpack_val _T Vp, Vs = s
+    wave === :Vp && return Vp
+    wave === :Vs && return Vs
+    wave === :VpVs && return Vp / Vs
+    throw(ArgumentError("`wave` must be :Vp, :Vs or :VpVs, got $(repr(wave))"))
 end
 
 # Print info
@@ -134,12 +137,16 @@ Input:
 - `Vp0` : initial P-wave velocity of the solid phase
 - `Vs0` : initial S-wave velocity of the solid phase
 - `ϕ`   : melt volume fraction
-- `α`   : contiguity coefficient defining the geometry of the solid framework (contiguity)
-          0.0 (layered melt distributed) < 0.1 (grain boundary melt) < 1.0 (melt in separated bubble pockets)
+- `α`   : grain-boundary contiguity of the solid framework, from 0 (grains fully wetted by melt)
+          to 1 (no melt on grain boundaries). At textural equilibrium it decreases with melt fraction,
+          roughly as `1 - A√ϕ` with `A` ≈ 1 - 2.3, i.e. 0.7 - 0.9 for a few percent melt.
 
 Output:
 ====
 - `Vp_cor,Vs_cor` : corrected P-wave and S-wave velocities for melt fraction
+
+The velocity reduction is first order in `ϕ`. It loses accuracy when the product of `ϕ` and the
+slopes `Λ_K`, `Λ_G` of the framework moduli approaches one, which happens for small contiguities.
 
 The routine uses the reduction formulation of Clark & Lesher, (2017) and is based on the equilibrium geometry model for the solid skeleton of Takei et al., 1998.
 
@@ -154,6 +161,7 @@ References:
 function melt_correction(
         Kb_L::_T, Kb_S::_T, Ks_S::_T, ρL::_T, ρS::_T, Vp0::_T, Vs0::_T, ϕ::_T, α::_T
     ) where {_T <: Number}
+    iszero(ϕ) && return Vp0, Vs0
 
     # Takei 1998: Approximation Formulae for Bulk and Shear Moduli of Isotropic Solid Skeleton
     ν = 0.25                         # poisson ratio
@@ -204,11 +212,10 @@ function melt_correction(
     kb = (1.0 - ϕ) * ksk
     μ = (1.0 - ϕ) * μsk
 
-    # ratio of skeleton adiabatic bulk modulus over solid phase bulk modulus
-    ΛK = Kb_S / kb
-
-    # ratio of skeleton shear modulus over solid phase shear modulus
-    ΛG = Ks_S / μ
+    # slopes of the framework moduli with melt fraction, K_b/K_S = 1 - ΛK ϕ and μ/G = 1 - ΛG ϕ
+    # (Clark & Lesher, 2017, eqs. 3-4)
+    ΛK = (1 - kb / Kb_S) / ϕ
+    ΛG = (1 - μ / Ks_S) / ϕ
 
     # Seismic wave velocity melt correction Clark et al., 2017
     β = Kb_S / Kb_L
@@ -220,7 +227,7 @@ function melt_correction(
         (
             (((β - 1.0) * ΛK) / ((β - 1.0) + ΛK) + 4.0 / 3.0 * γ * ΛG) /
                 (1.0 + 4.0 / 3.0 * γ)
-        ) - (1.0 - ρL / ρL)
+        ) - (1.0 - ρL / ρS)
     ) * (ϕ * 0.5)
     ΔVs = (ΛG - (1.0 - ρL / ρS)) * (ϕ * 0.5)
 
@@ -234,7 +241,8 @@ end
 """
         Vs_cor = porosity_correction(Kb_S, Ks_S, ρf, ρS, Vs0, depth, α)
 
-Corrects S-wave velocity at shallow depth as function of empirical porosity-depth profile.
+Corrects S-wave velocity at shallow depth for fluid-filled porosity, with the porosity taken
+from an empirical porosity-depth profile.
 
 Input:
 ====
@@ -244,108 +252,43 @@ Input:
 - `ρS`  : density of the solid phase
 - `Vs0` : initial S-wave velocity of the solid phase
 - `depth`: in kilometers
-- `α`   : contiguity coefficient defining the geometry of the solid framework (contiguity)
-          0.0 (layered fluid distributed) < 0.1 (grain boundary melt) < 1.0 (fluid in separated bubble pockets)
+- `α`   : aspect ratio of the pores, modelled as oblate spheroids (0 < α < 1)
 
 Output:
 ====
-- `Vs_cor` : S-wave velocity corrected for water-filled porosity
+- `Vs_cor` : S-wave velocity corrected for fluid-filled porosity, clamped to be non-negative
 
-The routine is based on the equilibrium geometry model for the solid skeleton of Takei et al., 1998.
+The pores are treated like melt inclusions in [`melt_correction_Takei`](@ref): the shear-modulus
+reduction of the self-consistent oblate-spheroid model (Dean, 1983; Phani, 1996) enters the
+velocity reduction of Clark & Lesher (2017). For `α = 1` the inclusion model is undefined and `Vs0`
+is returned unchanged.
 
 References:
 ====
 
-- Takei (1998) Constitutive mechanical relations of solid-liquid composites in terms of grain-boundary contiguity, Journal of Geophysical Research: Solid Earth, Vol(103)(B8), 18183--18203
-- Chen et al. (2020) Empirical porosity-depth model for continental crust
+- Chen et al. (2020) Empirical porosity-depth model for continental crust, Hydrogeology Journal
+- Clark & Lesher (2017) Elastic properties of silicate melts: Implications for low velocity zones at the lithosphere-asthenosphere boundary. Science Advances, Vol 3 (12), e1701312
+- Dean (1983) Elastic moduli of porous sintered materials as modeled by a variable-aspect-ratio self-consistent oblate-spheroidal-inclusion theory, Journal of the American Ceramic Society, 66(12), 847--854
+- Phani (1996) Porosity-dependence of ultrasonic velocity in sintered materials - a model based on the self-consistent spheroidal inclusion theory, Journal of Materials Science, 31, 262--266
 
 """
 function porosity_correction(
         Kb_S::_T, Ks_S::_T, ρf::_T, ρS::_T, Vs0::_T, depth::_T, α::_T
     ) where {_T <: Number}
-    # Empirical porosity-depth model for continental crust after Chen et al., 2020 (hydrogeology journal)
-    m = 0.071
-    n = 5.989
-    ϕ0 = 0.474
+    ϕ = porosity_Chen2020(depth)
+    Λ = inclusion_Λ(Kb_S, Ks_S, ϕ, α)
+    isnothing(Λ) && return Vs0
+    ΛG = Λ[2]
+    ΔVs = (ΛG - (1 - ρf / ρS)) * ϕ / 2 * Vs0
+    return max(Vs0 - ΔVs, zero(Vs0))
+end
 
-    ϕ = ϕ0 / fastpow((1.0 + depth * m), n)
-
-    # Takei 1998: Approximation Formulae for Bulk and Shear Moduli of Isotropic Solid Skeleton
-    ν = 0.25 # poisson ratio
-
-    # Tuples are a better option than standard arrays for matrices/vectors of known size at compile time
-
-    #=
-    aij = (
-        0.318, 6.780, 57.560,  0.182,
-        0.164, 4.290, 26.658,  0.464,
-        1.549, 4.814, 8.777, -0.290,
-    )
-    bij = (
-        -0.3238, 0.2341,
-        -0.1819, 0.5103
-    )
-    =#
-
-    # Takei et al. 2002:
-    aij = (
-        1.8625, 0.52594, -4.8397, 0.0,
-        4.5001, -6.1551, -4.3634, 0.0,
-        -5.6512, 6.9159, 29.595, -58.96,
-    )
-    bij = (
-        1.6122, 0.13527, 0.0,
-        4.5869, 3.6086, 0.0,
-        -7.5395, -4.8676, -4.3182,
-    )
-
-    # Takei (2002):
-    a = ntuple(Val(3)) do i
-        idx = 4 * i - 3 # linear offset index
-        aij[idx] + aij[idx + 1] * ν^1 + aij[idx + 2] * ν^2 + aij[idx + 3] * ν^3
-    end
-
-    # FIXME: the shear coefficients `bij` above were switched to the Takei (2002)
-    # layout, but the `b`/`nμ` computation below still uses the old Takei (1998)
-    # 2x2 linear indexing. This yields an unphysically large `nμ` (~3.5) and hence
-    # a near-zero shear-modulus ratio, so `Vs_cor` can become negative. The result
-    # is clamped to >= 0 below as a guard. The correct Takei (2002) shear formula
-    # should replace this block.
-    b = ntuple(Val(2)) do i
-        idx = 2 * i - 1 # linear offset index
-        bij[idx] * ν + bij[idx + 1]
-    end
-
-    nk = a[1] * α + a[2] * (1.0 - α) + a[3] * α * (1.0 - α) * (0.5 - α)
-    nμ = b[1] * α + b[2] * (1.0 - α)
-
-    # computation of the bulk modulus ratio of the skeletal framework over the solid phase
-    ksk_k = fastpow(α, nk)
-    # computation of the shear modulus ratio of the skeletal framework over the solid phase
-    μsk_μ = fastpow(α, nμ)
-
-    # apply correction for the melt fraction to adiabatic bulk and shear modulii
-    ksk = ksk_k * Kb_S
-    μsk = μsk_μ * Ks_S
-
-    kb = (1.0 - ϕ) * ksk
-    μ = (1.0 - ϕ) * μsk
-
-    # ratio of skeleton adiabatic bulk modulus over solid phase bulk modulus
-    ΛK = Kb_S / kb
-
-    # ratio of skeleton shear modulus over solid phase shear modulus
-    ΛG = Ks_S / μ
-
-    ΔVs = (ΛG - (1.0 - ρf / ρS)) * (ϕ * 0.5)
-
-    # get the correction values
-    Vs_cor = Vs0 - Vs0 * ΔVs
-
-    # guard against unphysical negative velocities (see FIXME on the shear formula above)
-    Vs_cor = max(Vs_cor, zero(Vs_cor))
-
-    return Vs_cor
+# Empirical porosity-depth model for continental crust (Chen et al., 2020); depth in km
+@inline function porosity_Chen2020(depth::_T) where {_T}
+    m = _T(0.071)
+    n = _T(5.989)
+    ϕ0 = _T(0.474)
+    return ϕ0 / fastpow(1 + depth * m, n)
 end
 
 """
@@ -429,19 +372,23 @@ function anelastic_correction(water::Integer, Vs0, Pref, Tref)
 end
 
 """
-    PD_corrected = correct_wavevelocities_phasediagrams(PD::PhaseDiagram_LookupTable,
-                                apply_porosity_correction=true, ρf=1000.0, α_porosity=0.5,
-                                apply_melt_correction=true, α_melt = 0.1,
-                                apply_anelasticity_correction=true, water=2)
+    PD_corrected = correct_wavevelocities_phasediagrams(PD::PhaseDiagram_LookupTable;
+                                apply_porosity_correction=true, ρf=1000.0, α_porosity=0.1,
+                                apply_melt_correction=true, α_melt=nothing, melt_correction_takei=true,
+                                apply_anelasticity_correction=false, water=0,
+                                combine=:sequential)
 
-This applies various corrections to the seismic velocities specified in the phase diagram lookup table `PD`, and replaces the fields `Vp` and `Vs` in the diagram with the corrected ones.
-The original `Vp`,`Vs` is stored in `Vp_uncorrected`,`Vs_uncorrected`
+This applies various corrections to the seismic velocities specified in the phase diagram lookup table `PD`, and returns a new lookup table in which the fields `Vp`, `Vs` and `VpVs` hold the corrected values.
+The original `Vp`,`Vs` is stored in `Vp_uncorrected`,`Vs_uncorrected`; `PD` itself is not modified.
 
 The following corrections can be applied (together with potential options)
-- *apply_porosity_correction*: applies a correction for fluid-filled pores to vs velocity. Optional parameters are `ρf` (density fluid=[1000kg/m3]) and  `α_porosity` (contiguity coefficient defining the geometry of the solid framework, with 0.0 (layered fluid distributed) < 0.1 (grain boundary melt) < 1.0 (fluid in separated bubble pockets)
-- *apply_melt_correction*: applies a correction to the P/S-wave velocity for the presence of melt for a given pore contiguity described by `α_melt`: 0.0 (layered fluid distributed) < 0.1 (grain boundary melt) < 1.0 (fluid in separated bubble pockets)
-- *apply_anelasticity_correction*: applies an anelasticity correction to the S-wave velocity, with the optional parameter `water`: 0 = dry; 1 = dampened; 2 = water saturated
+- *apply_anelasticity_correction*: applies an anelasticity correction ([`anelastic_correction`](@ref)) to the S-wave velocity of the solid, with the optional parameter `water`: 0 = dry; 1 = dampened; 2 = water saturated
+- *apply_porosity_correction*: applies a correction for fluid-filled pores ([`porosity_correction`](@ref)) to the S-wave velocity. Optional parameters are `ρf` (fluid density, [kg/m3]) and `α_porosity` (pore aspect ratio)
+- *apply_melt_correction*: applies a correction to the P- and S-wave velocities for the melt fraction of the diagram. `melt_correction_takei=true` uses [`melt_correction_Takei`](@ref), where `α_melt` is the aspect ratio of the melt inclusions (default 0.1); `false` uses [`melt_correction`](@ref), where `α_melt` is the contiguity of the solid framework (default 0.84, textural equilibrium at about 1% melt)
 
+`combine` selects how the porosity and melt corrections act together:
+- `:sequential`: the melt correction is applied to the porosity-corrected velocities
+- `:weighted`: both corrections start from the velocities of the solid, and the results are averaged with the porosity and the melt fraction as weights
 """
 function correct_wavevelocities_phasediagrams(
         PD::PhaseDiagram_LookupTable;
@@ -449,94 +396,68 @@ function correct_wavevelocities_phasediagrams(
         ρf = 1000.0,
         α_porosity = 0.1,
         apply_melt_correction = true,
-        α_melt = 0.1,
+        α_melt = nothing,
         melt_correction_takei = true,
-        apply_anelasticity_correction = true,
+        apply_anelasticity_correction = false,
         water = 0,
+        combine = :sequential,
     )
+    α_melt = something(α_melt, melt_correction_takei ? 0.1 : 0.84)
+    combine in (:sequential, :weighted) ||
+        throw(ArgumentError("`combine` must be :sequential or :weighted, got $(repr(combine))"))
 
-    # extract required data
     # reconstruct the T,P knot vectors from the (regular) interpolation grid
     grid = PD.solid_Vs
-    T = range(grid.T0, grid.Tmax; length = grid.numT)   # T vector of diagram
-    P = range(grid.P0, grid.Pmax; length = grid.numP)   # P vector of diagram
+    T = range(grid.T0, grid.Tmax; length = grid.numT)
+    P = range(grid.P0, grid.Pmax; length = grid.numP)
 
-    # store original results correction
-    Vs_uncorrected = PD.Vs
-    Vp_uncorrected = PD.Vp
+    Vs_corrected = copy(PD.solid_Vs.coefs)
+    Vp_corrected = copy(PD.solid_Vp.coefs)
 
-    # Extract required data to apply corrections
-    Vs_corrected = PD.solid_Vs.coefs   # Vs velocity of solid rocks
-    Vp_corrected = PD.solid_Vp.coefs   # Vp velocity of solid rocks
-
-    # Apply anelasticity correction
-    if apply_anelasticity_correction == true
-        for i in CartesianIndices(Vs_corrected)
-            Vs_corrected[i] = anelastic_correction(water, Vs_corrected[i], P[i[2]], T[i[1]])
-        end
+    Kb_S = PD.solid_bulkModulus.coefs
+    Ks_S = PD.solid_shearModulus.coefs
+    ρS = PD.rockRho.coefs
+    ρ_av = mean(ρS)
+    if apply_melt_correction
+        Kb_L = PD.melt_bulkModulus.coefs
+        ρL = PD.meltRho.coefs
+        ϕ_melt = PD.meltFrac.coefs
     end
 
-    # Apply porosity correction
-    if apply_porosity_correction == true
-        Kb_S = PD.solid_bulkModulus.coefs    #  bulk modulus solid
-        Ks_S = PD.solid_shearModulus.coefs   #  shear modulus solid
-        ρS = PD.rockRho.coefs
-        ρ_av = mean(ρS)           # average solid density
-
-        for i in CartesianIndices(Vs_corrected)
-            depth = P[i[2]] / (9.81 * ρ_av * 1.0e3)         # approximate depth in km (assuming lithostatic P)
-            Vs_corrected[i] = porosity_correction(
-                Kb_S[i], Ks_S[i], ρf, ρS[i], Vs_corrected[i], depth, α_porosity
-            )
+    for I in CartesianIndices(Vs_corrected)
+        Vp0 = Vp_corrected[I]
+        Vs0 = Vs_corrected[I]
+        if apply_anelasticity_correction
+            Vs0 = anelastic_correction(water, Vs0, P[I[2]], T[I[1]])
         end
-    end
 
-    # Apply melt correction
-    if apply_melt_correction == true
-        Kb_L = PD.melt_bulkModulus.coefs    #  bulk modulus melt
-        Kb_S = PD.solid_bulkModulus.coefs   #  bulk modulus solid
-        Ks_S = PD.solid_shearModulus.coefs  #  shear modulus solid
-        ρS = PD.rockRho.coefs                 #  solid density
-        ρL = PD.meltRho.coefs                 #  melt density
-        ϕ = PD.meltFrac.coefs                #  melt fraction
+        # porosity correction (S-wave only)
+        ϕW, VsW = zero(Vs0), Vs0
+        if apply_porosity_correction
+            depth = P[I[2]] / (9.81 * ρ_av * 1.0e3)    # approximate depth in km (lithostatic P)
+            ϕW = porosity_Chen2020(depth)
+            VsW = porosity_correction(Kb_S[I], Ks_S[I], ρf, ρS[I], Vs0, depth, α_porosity)
+        end
 
-        for i in CartesianIndices(Vs_corrected)
-            if ϕ[i] > 0
-                if melt_correction_takei == true
-                    Vp_c, Vs_c = melt_correction_Takei(
-                        Kb_L[i],
-                        Kb_S[i],
-                        Ks_S[i],
-                        ρL[i],
-                        ρS[i],
-                        Vp_corrected[i],
-                        Vs_corrected[i],
-                        ϕ[i],
-                        α_melt,
-                    )
-                else
-                    Vp_c, Vs_c = melt_correction(
-                        Kb_L[i],
-                        Kb_S[i],
-                        Ks_S[i],
-                        ρL[i],
-                        ρS[i],
-                        Vp_corrected[i],
-                        Vs_corrected[i],
-                        ϕ[i],
-                        α_melt,
-                    )
-                end
-
-                if Vs_c < 0.0
-                    Vs_c = 0.0
-                end
-                if Vp_c < 0.0
-                    Vp_c = 0.0
-                end
-
-                Vp_corrected[i], Vs_corrected[i] = Vp_c, Vs_c
+        # melt correction, applied to the porosity-corrected or to the solid velocities
+        ϕM, VpM, VsM = zero(Vs0), Vp0, VsW
+        if apply_melt_correction && ϕ_melt[I] > 0
+            ϕM = ϕ_melt[I]
+            Vs_in = combine === :sequential ? VsW : Vs0
+            if melt_correction_takei
+                VsM, VpM = melt_correction_Takei(Kb_L[I], Kb_S[I], Ks_S[I], ρL[I], ρS[I], Vp0, Vs_in, ϕM, α_melt)
+            else
+                VpM, VsM = melt_correction(Kb_L[I], Kb_S[I], Ks_S[I], ρL[I], ρS[I], Vp0, Vs_in, ϕM, α_melt)
             end
+            VpM, VsM = max(VpM, zero(VpM)), max(VsM, zero(VsM))
+        end
+
+        if combine === :sequential || ϕM == 0
+            Vp_corrected[I], Vs_corrected[I] = VpM, VsM
+        else
+            ϕ_tot = ϕW + ϕM
+            Vp_corrected[I] = (ϕW * Vp0 + ϕM * VpM) / ϕ_tot
+            Vs_corrected[I] = (ϕW * VsW + ϕM * VsM) / ϕ_tot
         end
     end
 
@@ -577,10 +498,10 @@ function correct_wavevelocities_phasediagrams(
 
         # Store
         if field == :Vs_uncorrected
-            Struct_Fields[i] = Vs_uncorrected
+            Struct_Fields[i] = PD.Vs
         end
         if field == :Vp_uncorrected
-            Struct_Fields[i] = Vp_uncorrected
+            Struct_Fields[i] = PD.Vp
         end
     end
 
@@ -595,7 +516,10 @@ end
 """
     Vs,Vp = melt_correction_Takei(Kb_L, Kb_S, Ks_S, ρL, ρS, Vp0, Vs0, ϕ, α)
 
-This corrects the Vp/Vs velocities if melt is present, following Takei (2002)
+This corrects the Vp/Vs velocities if melt is present. The melt sits in oblate-spheroidal inclusions
+whose effect on the bulk and shear moduli follows the self-consistent model of Dean (1983) and
+Phani (1996); the resulting velocity reduction follows Clark & Lesher (2017). The same parameterization
+is used in Takei (2002) to relate Vp/Vs to pore geometry.
 
 Input arguments:
 - Kb_L: bulk modulus liquid
@@ -606,66 +530,49 @@ Input arguments:
 - Vp0: P-wave velocity of solid
 - Vs0: S-wave velocity of solid
 - ϕ: melt content
-- α: melt aspect ratio [0.001 - 1]
+- α: melt aspect ratio [0.001 - 1)
 
 Output arguments:
 - Vs: corrected S-wave velocity
 - Vp: corrected P-wave velocity
+
+The reduction is first order in `ϕ`; corrected velocities that would become negative are clamped to
+zero. For `α = 1` the inclusion model is undefined and `Vs0`, `Vp0` are returned unchanged.
 """
 function melt_correction_Takei(
         Kb_L::_T, Kb_S::_T, Ks_S::_T, ρL::_T, ρS::_T, Vp0::_T, Vs0::_T, ϕ::_T, α::_T
     ) where {_T <: Number}
+    Λ = inclusion_Λ(Kb_S, Ks_S, ϕ, α)
+    isnothing(Λ) && return Vs0, Vp0
+    ΛK, ΛG = Λ
 
-    # compute R
+    # Seismic wave velocity melt correction Clark & Lesher, 2017
+    β = Kb_S / Kb_L
+    γ = Ks_S / Kb_S
+    Δρ = 1 - ρL / ρS
+
+    # Formulation of the fraction reduction of P-wave and S-wave
+    ΔVp = ((((β - 1) * ΛK) / ((β - 1) + ΛK) + 4γ * ΛG / 3) / (1 + 4γ / 3) - Δρ) * ϕ / 2 * Vp0
+    ΔVs = (ΛG - Δρ) * ϕ / 2 * Vs0
+
+    return max(Vs0 - ΔVs, zero(Vs0)), max(Vp0 - ΔVp, zero(Vp0))
+end
+
+# Geometric factors (ΛK, ΛG) = (P0, Q0) of Clark & Lesher (2017) for inclusions of aspect ratio α
+# at volume fraction ϕ, from the self-consistent oblate-spheroid model; `nothing` where the model
+# is undefined (α = 1).
+function inclusion_Λ(Kb_S::_T, Ks_S::_T, ϕ::_T, α::_T) where {_T}
     f(x) = R_func(x, α, ϕ, Kb_S, Ks_S)
+    isnan(f(_T(0.5))) && return nothing
 
-    # Note: this bracketing algorithm sometimes fails, as there might be 2 roots
-    eps = 1.0e-3
-    if !isnan(f(0.5))
-        R = zero(Kb_L)
-        if (sign(f(eps)) != sign(f(1.0 - eps)))
-            R = find_zero(f, (eps, 1.0 - eps), Bisection())
-        else
-            # if bisection fails, try fzero
-            R = fzero(f, 0.5)
-        end
-
-        # compute Q0 and P0
-        ΛG = Q0_func(α, R)
-        ΛK = P0_func(α, R)
-
-        # Seismic wave velocity melt correction Clark et al., 2017
-        β = Kb_S / Kb_L
-        γ = Ks_S / Kb_S
-
-        # Formulation of the fraction reduction of P-wave and S-wave
-        ΔVp =
-            (
-            (
-                (((β - 1.0) * ΛK) / ((β - 1.0) + ΛK) + 4.0 / 3.0 * γ * ΛG) /
-                    (1.0 + 4.0 / 3.0 * γ)
-            ) - (1.0 - ρL / ρS)
-        ) * (ϕ * 0.5) * Vp0
-
-        ΔVs = (ΛG - (1.0 - ρL / ρS)) * (ϕ * 0.5) * Vs0
+    # The bracket can contain two roots, in which case the bisection is not applicable.
+    lo, hi = _T(1.0e-3), 1 - _T(1.0e-3)
+    R = if sign(f(lo)) != sign(f(hi))
+        find_zero(f, (lo, hi), Bisection())
     else
-        ΔVp = 0.0
-        ΔVs = 0.0
+        fzero(f, _T(0.5))
     end
-
-    Vs_new = Vs0 - ΔVs
-    Vp_new = Vp0 - ΔVp
-
-    # @show Vs_new, Vp_new, ΔVp, R
-    if Vs_new < 0
-        Vs_new = 0.0
-    end
-
-    if Vp_new < 0
-        Vp_new = 0.0
-    end
-
-    return Vs_new, Vp_new
+    return P0_func(α, R), Q0_func(α, R)
 end
 
 """
@@ -675,8 +582,9 @@ Variable-Aspect-Ratio Self-Consistent Oblate-Spheroidal-Inclusion Theory
 - Phani (1996), Porosity-dependence of ultrasonic velocity in sintered
 materials - a model based on the self-consistent spheroidal inclusion theory
 """
-function θ_func(α::_T) where {_T}
-    return α / ((1 - α^2)^(3 / 2)) * (acos(α) - α * (1 - α^2)^0.5)
+function θ_func(α)
+    s = sqrt(1 - α^2)
+    return α / s^3 * (acos(α) - α * s)
 end
 
 """
@@ -686,120 +594,37 @@ Variable-Aspect-Ratio Self-Consistent Oblate-Spheroidal-Inclusion Theory
 - Phani (1996), Porosity-dependence of ultrasonic velocity in sintered
 materials - a model based on the self-consistent spheroidal inclusion theory
 """
-function f_func(α::_T) where {_T}
+function f_func(α)
     θ = θ_func(α)
     return α^2 * (3 * θ - 2) / (1 - α^2)
 end
 
-function P0_func(α::_T, R::_T) where {_T}
+function P0_func(α, R)
     f = f_func(α)
     θ = θ_func(α)
-    F1 = 1.0 - 3.0 / 2.0 * (f + θ) + R * (3.0 / 2.0 * f + 5.0 / 2.0 * θ - 4.0 / 3.0)
-    F2 = R * (2.0 * θ - 2.0 * f - 3.0 * θ^2 + 2R * (f - θ + 2.0 * θ^2))
+    F1 = 1 - 3 * (f + θ) / 2 + R * (3 * f / 2 + 5 * θ / 2 - 4 // 3)
+    F2 = R * (2 * θ - 2 * f - 3 * θ^2 + 2R * (f - θ + 2 * θ^2))
     return F1 / F2
 end
 
-function Q0_func(α::_T, R::_T) where {_T}
+function Q0_func(α, R)
     f = f_func(α)
     θ = θ_func(α)
 
     F2 = R * (2 * θ - 2 * f - 3 * θ^2 + 2 * R * (f - θ + 2 * θ^2))
-    F3 = f + 3 / 2 * θ - R * (f + θ)
-    F4 = 1 - 1 / 4 * (f + 3 * θ - R * (f - θ))
-    F5 = f - R * (f + θ - 4 / 3)
+    F3 = f + 3 * θ / 2 - R * (f + θ)
+    F4 = 1 - (f + 3 * θ - R * (f - θ)) / 4
+    F5 = f - R * (f + θ - 4 // 3)
     F6 = -f + R * (f + θ)
-    F7 = 2 - 1 / 4 * (3 * f + 9 * θ - R * (3 * f + 5 * θ))
-    F8 = -1 + 1 / 2 * f + 3 / 2 * θ + R * (2 - 1 / 2 * f - 5 / 2 * θ)
+    F7 = 2 - (3 * f + 9 * θ - R * (3 * f + 5 * θ)) / 4
+    F8 = -1 + f / 2 + 3 * θ / 2 + R * (2 - f / 2 - 5 * θ / 2)
     F9 = f - R * (f - θ)
 
-    return 1 / 5 * (2 / F3 + 1 / F4 + F5 / F2 + (F6 * F7 - F8 * F9) / (F2 * F4))
+    return (2 / F3 + 1 / F4 + F5 / F2 + (F6 * F7 - F8 * F9) / (F2 * F4)) / 5
 end
 
-function P0_func_deriv(α::_T, R::_T) where {_T}
-    """
-    d/dR (P0(R)) : Evaluated through SymPy:
-
-    from sympy import symbols, diff, Rational
-    R, f, θ, α = symbols('R f θ α')
-    F1 = 1 - Rational(3,2)*(f+θ) + R*(Rational(3,2)*f + Rational(5,2)*θ - Rational(4,3))
-    F2 = R * ( 2*θ - 2*f - 3*θ^2 + 2*R*(f - θ + 2*θ^2) )
-    F3 = f + Rational(3, 2)*θ - R*(f + θ)
-    F4 = 1 - Rational(1, 4) * (f + 3*θ - R*(f - θ))
-    F5 = f - R*(f + θ - Rational(4, 3))
-    F6 = -f + R*(f + θ)
-    F7 = 2 - Rational(1, 4) * (3*f + 9*θ - R*(3*f + 5*θ))
-    F8 = -1 + Rational(1, 2)*f + Rational(3, 2)*θ + R*(2 - Rational(1, 2)*f -Rational(5, 2)*θ)
-    F9 = f - R*(f - θ)
-    P0 = F1/F2
-    derivative = diff(P0, R)
-    """
-    f = f_func(α)
-    θ = θ_func(α)
-    p1 = -2 * f - 4 * θ^2 + 2 * θ
-    p2 = R * (3 * f / 2 + 5 * θ / 2 - 4 / 3) - 3 * f / 2 - 3 * θ / 2 + 1
-    p3 = R * (2 * R * (f + 2 * θ^2 - θ) - 2 * f - 3 * θ^2 + 2 * θ)^2
-    p4 = 3 * f / 2 + 5 * θ / 2 - 4 / 3
-    p5 = R * (2 * R * (f + 2 * θ^2 - θ) - 2 * f - 3 * θ^2 + 2 * θ)
-    p6 = R * (3 * f / 2 + 5 * θ / 2 - 4 / 3) - 3 * f / 2 - 3 * θ / 2 + 1
-    p7 = R^2 * (2 * R * (f + 2 * θ^2 - θ) - 2 * f - 3 * θ^2 + 2 * θ)
-    return p1 * p2 / p3 + p4 / p5 - p6 / p7
-end
-
-function Q0_func_deriv(α::_T, R::_T) where {_T}
-    """
-    d/dR (Q0(R)) : Evaluated through SymPy
-    """
-    f = f_func(α)
-    θ = θ_func(α)
-    p1 = (-f / 4 + θ / 4) / (5 * (R * (f - θ) / 4 - f / 4 - 3 * θ / 4 + 1)^2)
-    p2 = 2 * (f + θ) / (5 * (-R * (f + θ) + f + 3 * θ / 2)^2)
-    p3 = -f / 4 + θ / 4
-    p4 = (-R * (f - θ) + f) * (R * (-f / 2 - 5 * θ / 2 + 2) + f / 2 + 3 * θ / 2 - 1)
-    p5 = (R * (f + θ) - f) * (R * (3 * f + 5 * θ) / 4 - 3 * f / 4 - 9 * θ / 4 + 2)
-    p6 =
-        5 *
-        R *
-        (R * (f - θ) / 4 - f / 4 - 3 * θ / 4 + 1)^2 *
-        (2 * R * (f + 2 * θ^2 - θ) - 2 * f - 3 * θ^2 + 2 * θ)
-    p7 = (-R * (f + θ - 4 / 3) + f) * (-2 * f - 4 * θ^2 + 2 * θ)
-    p8 = 5 * R * (2 * R * (f + 2 * θ^2 - θ) - 2 * f - 3 * θ^2 + 2 * θ)^2
-    p9 = (-R * (f - θ) + f) * (R * (-f / 2 - 5 * θ / 2 + 2) + f / 2 + 3 * θ / 2 - 1)
-    p10 = (R * (f + θ) - f) * (R * (3 * f + 5 * θ) / 4 - 3 * f / 4 - 9 * θ / 4 + 2)
-    p11 = -2 * f - 4 * θ^2 + 2 * θ
-    p12 =
-        5 *
-        R *
-        (R * (f - θ) / 4 - f / 4 - 3 * θ / 4 + 1) *
-        (2 * R * (f + 2 * θ^2 - θ) - 2 * f - 3 * θ^2 + 2 * θ)^2
-    p13 = (-f - θ + 4 / 3) / (5 * R * (2 * R * (f + 2 * θ^2 - θ) - 2 * f - 3 * θ^2 + 2 * θ))
-    p14 = (3 * f / 4 + 5 * θ / 4) * (R * (f + θ) - f)
-    p15 = (f - θ) * (R * (-f / 2 - 5 * θ / 2 + 2) + f / 2 + 3 * θ / 2 - 1)
-    p16 = (f + θ) * (R * (3 * f + 5 * θ) / 4 - 3 * f / 4 - 9 * θ / 4 + 2)
-    p17 = (R * (f - θ) - f) * (-f / 2 - 5 * θ / 2 + 2)
-    p18 =
-        5 *
-        R *
-        (R * (f - θ) / 4 - f / 4 - 3 * θ / 4 + 1) *
-        (2 * R * (f + 2 * θ^2 - θ) - 2 * f - 3 * θ^2 + 2 * θ)
-    p19 =
-        (-R * (f + θ - 4 / 3) + f) /
-        (5 * R^2 * (2 * R * (f + 2 * θ^2 - θ) - 2 * f - 3 * θ^2 + 2 * θ))
-    p20 = (-R * (f - θ) + f) * (R * (-f / 2 - 5 * θ / 2 + 2) + f / 2 + 3 * θ / 2 - 1)
-    p21 = (R * (f + θ) - f) * (R * (3 * f + 5 * θ) / 4 - 3 * f / 4 - 9 * θ / 4 + 2)
-    p22 =
-        5 *
-        R^2 *
-        (R * (f - θ) / 4 - f / 4 - 3 * θ / 4 + 1) *
-        (2 * R * (f + 2 * θ^2 - θ) - 2 * f - 3 * θ^2 + 2 * θ)
-    return p1 +
-        p2 +
-        p3 * (-p4 + p5) / p6 +
-        p7 / p8 +
-        (-p9 + p10) * p11 / p12 +
-        p13 +
-        (p14 + p15 + p16 + p17) / p18 - p19 - (-p20 + p21) / p22
-end
-
+# Self-consistency condition for R = 3G*/(3K* + 4G*), with K* = K_m(1 - Φ P0) and
+# G* = G_m(1 - Φ Q0) the moduli of the porous solid.
 function R_func(R::_T, α::_T, Φ::_T, K_m::_T, G_m::_T) where {_T}
     P0 = P0_func(α, R)
     Q0 = Q0_func(α, R)
@@ -807,38 +632,6 @@ function R_func(R::_T, α::_T, Φ::_T, K_m::_T, G_m::_T) where {_T}
     p2 = -3 * G_m
     p3 = -Φ * (R * (3 * K_m * P0 + 4 * G_m * Q0) - 3 * G_m * Q0)
     return p1 + p2 + p3
-end
-
-function R_func_deriv(R::_T, α::_T, Φ::_T, K_m::_T, G_m::_T) where {_T}
-    P0 = P0_func(α, R)
-    Q0 = Q0_func(α, R)
-    P0_deriv = P0_func_deriv(α, R)
-    Q0_deriv = Q0_func_deriv(α, R)
-    p1 = 3 * K_m + 4 * G_m
-    p2 = -3 * Φ * K_m * (P0 + R * P0_deriv)
-    p3 = -4 * Φ * G_m * (Q0 + R * Q0_deriv)
-    p4 = 3 * Φ * G_m * Q0_deriv
-    return p1 + p2 + p3 + p4
-end
-
-"""
-    simple Newton root finding algorithm as used to determine R
-"""
-function find_roots_R(R0::_T, α::_T, Φ::_T, K_m::_T, G_m::_T; tol = 1.0e-5) where {_T}
-    Rn = R0
-    for n in 1:500
-        f = R_func(Rn, α, Φ, K_m, G_m)
-        if abs(f) < tol
-            return Rn
-        end
-        df = R_func_deriv(Rn, α, Φ, K_m, G_m)
-
-        if df == 0
-            error("No solution found")
-        end
-        Rn = Rn - f / df
-    end
-    return
 end
 
 end
