@@ -116,7 +116,7 @@ Returns the effective visco-elastic viscosity that combines a viscous viscosity 
     @unpack_val Tc G = v
     return compute_elastoviscosity(G, η, dt)
 end
-@inline compute_elastoviscosity(G, η, dt) = η / (1 + η / (G * dt))
+@inline compute_elastoviscosity(G, η, dt) = inv(inv(η) + inv(G * dt))
 @inline compute_elastoviscosity(v::ConstantElasticity, η, args::NamedTuple) = compute_elastoviscosity(v, η, args.dt)
 @inline compute_elastoviscosity(G, η, args::NamedTuple) = compute_elastoviscosity(G, η, args.dt)
 

@@ -139,12 +139,12 @@ function compute_yieldfunction!(
         s::DruckerPrager;
         P::AbstractArray,
         τII::AbstractArray,
-        Pf = zero(P),
-        EII = zero(P),
+        Pf = zero(eltype(P)),
+        EII = zero(eltype(P)),
         kwargs...,
     )
-    for i in eachindex(F)
-        F[i] = compute_yieldfunction(s; P = P[i], τII = τII[i], Pf = Pf[i], EII = EII[i])
+    for i in each_argument_index(F, P, τII, Pf, EII)
+        F[i] = compute_yieldfunction(s; P = P[i], τII = τII[i], Pf = argument_at(Pf, i), EII = argument_at(EII, i))
     end
 
     return nothing

@@ -154,7 +154,8 @@ end
 @inline function dτII_dεII(
         a::ConstantElasticity, εII; τII_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
-    Tc = precision_of(dt)
+    Tc = precision_of(εII)
+    dt = convert_precision(Tc, dt)
     @unpack_val Tc G = a
     return 2 * G * dt
 end
@@ -275,7 +276,8 @@ the elasticity `a` over time step `dt`.
 @inline function dp_dεvol(
         a::ConstantElasticity, εvol; P_old = zero(precision(a)), dt = one(precision(a)), kwargs...
     )
-    Tc = precision_of(dt)
+    Tc = precision_of(εvol)
+    dt = convert_precision(Tc, dt)
     @unpack_val Tc Kb = a
     return -Kb * dt
 end

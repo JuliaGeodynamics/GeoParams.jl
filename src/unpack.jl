@@ -15,7 +15,8 @@ carry the result back into the caller's type. Parameters are only ever converted
 the plain float type, never into a tracked number, so constants stay off the AD tape.
 """
 @inline precision_of(x) = _precision_of(ustrip(x))
-@inline precision_of(x::Union{AbstractArray, Tuple}) = precision_of(zero(eltype(x)))
+@inline precision_of(x::AbstractArray) = precision_of(zero(eltype(x)))
+@inline precision_of(x::Tuple) = _promote_precision(Union{}, x...)
 
 """
     precision_of(args::NamedTuple)
@@ -53,9 +54,18 @@ pass through so that they keep promoting the result to their own type.
 @inline convert_precision(::Type{T}, x::AbstractFloat) where {T} = convert(T, x)
 @inline convert_precision(::Type{T}, x::Integer) where {T} = convert(T, x)
 @inline convert_precision(::Type{T}, x::Quantity) where {T} =
-    convert_precision(T, ustrip(x)) * unit(x)
+    convert_precision(_numtype(T), ustrip(x)) * unit(x)
 @inline convert_precision(::Type{T}, x::Tuple) where {T} =
     map(y -> convert_precision(T, y), x)
+
+# A unitful eltype, as of an in-place destination, selects its numeric type.
+@inline _numtype(::Type{<:Quantity{T}}) where {T} = T
+@inline _numtype(::Type{T}) where {T} = T
+
+# `convert_precision`, except that a dual number widens its value and partials too.
+@inline widen_precision(::Type{W}, x) where {W} = convert_precision(W, x)
+@inline widen_precision(::Type{W}, x::Dual{T, V, N}) where {W, T, V, N} =
+    convert(Dual{T, typeof(widen_precision(W, zero(V))), N}, x)
 
 # Element-wise conversion of a `GeoUnit` payload, which may be an array.
 @inline _val_precision(::Type{T}, v::Number) where {T} = convert(T, v)

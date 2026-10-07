@@ -92,7 +92,7 @@ nothing is ever retried there and the branch is free.
     W = _wider(precision_of(x))
     W === precision_of(x) && return y
     (isfinite(y) && (!iszero(y) || iszero(x))) && return y
-    return _narrow_like(y, f(convert_precision(W, x)))
+    return _narrow_like(y, f(Units.widen_precision(W, x)))
 end
 
 @inline _wider(::Type{Float16}) = Float32
@@ -157,6 +157,7 @@ end
 
 @generated function nphase_ratio(f::F, phase_ratio::Union{SVector{N}, NTuple{N}}, v::NTuple{N, AbstractMaterialParamsStruct}) where {N, F}
     Base.@_inline_meta
+    N == 0 && return :(throw(ArgumentError("nphase_ratio: no phases given")))
     return quote
         @inline
         # Seed the accumulator with the first term (not `0.0`) so the result type follows

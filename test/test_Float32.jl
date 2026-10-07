@@ -466,4 +466,30 @@ end
         GeoParams.@unpack_val Float32 x = nt32
         @test x === nt32.x.val                  # already Float32: not copied
     end
+
+    @testset "edge cases" begin
+        # Dual{Float32} on a law whose Float32 intermediates overflow
+        law = SetDislocationCreep(Dislocation.wet_quartzite_Lu_2019)
+        args = (; T = 900.0)
+        τ = compute_τII(law, 1.0e-15, args)
+        f(t) = compute_εII(law, t, args)
+        d32 = ForwardDiff.derivative(f, Float32(τ))
+        @test d32 isa Float32
+        @test d32 ≈ ForwardDiff.derivative(f, τ) rtol = 1.0e-3
+
+        hb = HerschelBulkley()
+        @test compute_εII(hb, 0.0f0; T = 1.0f0) === 0.0f0
+        @test isfinite(ForwardDiff.derivative(t -> compute_εII(hb, t; T = 1.0), 0.0))
+        @test isfinite(compute_viscosity_τII(hb, 0.0, (; T = 1.0)))
+
+        @test compute_elastoviscosity(ConstantElasticity(), Inf, 1.0) ≈ NumValue(ConstantElasticity().G)
+        @test precision_of((1.0f0, 2.0)) === Float64
+        @test precision_of((1.0f0, 2)) === Float32
+
+        ε = zeros(3) / s
+        compute_εII!(ε, LinearViscous(), [1.0, 2, 3] * MPa)
+        @test ε ≈ [1.0, 2, 3] * MPa / (2 * 1.0e20Pa * s)
+
+        @test_throws DimensionMismatch compute_yieldfunction!(zeros(3), DruckerPrager(); P = ones(2), τII = ones(3))
+    end
 end

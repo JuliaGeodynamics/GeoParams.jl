@@ -141,6 +141,8 @@ function to compute the viscosity if EpsII is given
     εr = τ0 / (2 * η0) # strain rate at which the Bingham yield stress is reached, this is defined as the reference strain rate
     # in x = εII / εr: the form τ0 / (2εII) has the derivative τ0 / (2εII²), which overflows Float32
     x = εII / εr
+    # x → 0 is the limit η → η0
+    ForwardDiff.value(x) == 0 && return η0 * one(x)
     η = @pow (-expm1(-x)) * (η0 / x + ηT * x^(inv(n) - 1))
     return η
 end
@@ -180,6 +182,8 @@ Strain rate for a given stress, by Newton iteration.
     # Solved for x = εII / εr, in which every term is O(1): in εII the Newton derivatives
     # reach 1e42 for laboratory parameters and overflow Float32. The ratios are unitless,
     # so ForwardDiff never sees Quantity{Dual} types.
+    # the Newton derivative is 0 * Inf at x = 0; below yield ε ≈ τII / 2η0, exact at zero
+    ForwardDiff.value(ustrip(τII)) == 0 && return τII / (2 * η0)
     τ̃ = ustrip(τII / τ0)
     ηratio = ustrip(ηT / η0)
 
@@ -205,7 +209,7 @@ Strain rate for a given stress, by Newton iteration.
             return (x - f / dfdx) * εr
         end
     end
-    return error("compute_hb_εII: iterations did not converge for τII=$τII after $it_max iterations, tolerance $tol")
+    return error("compute_hb_εII: iterations did not converge")
 end
 
 # print info
