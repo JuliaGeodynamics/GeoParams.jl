@@ -756,11 +756,7 @@ end
 @inline function (p::MeltingParam_Volatile)(; T, P = 0.0e0, mH2O = 0.0e0, mCO2 = 0.0e0, kwargs...)
     Tc = precision_of(T)
     P, mH2O, mCO2 = convert_precision(Tc, (P, mH2O, mCO2))
-    if T isa Quantity
-        @unpack_units Tc T0, Tref, Pref = p
-    else
-        @unpack_val Tc T0, Tref, Pref = p
-    end
+    @unpack_like T Tc T0, Tref, Pref = p
     x = 100 * mH2O            # wt%
     y = 100 * mCO2            # wt%
     z = P / Pref              # ∝ P in MPa
@@ -850,11 +846,7 @@ end
 @inline function (p::MeltingParam_MaficVolatile)(; T, P = 0.0e0, mH2O = 0.0e0, mCO2 = 0.0e0, kwargs...)
     Tc = precision_of(T)
     P, mH2O, mCO2 = convert_precision(Tc, (P, mH2O, mCO2))
-    if T isa Quantity
-        @unpack_units Tc T0, Tref, Pref = p
-    else
-        @unpack_val Tc T0, Tref, Pref = p
-    end
+    @unpack_like T Tc T0, Tref, Pref = p
     x = 100 * mH2O            # wt%
     y = 100 * mCO2            # wt%
     z = P / Pref              # ∝ P in MPa

@@ -139,11 +139,7 @@ end
 @inline function (ρ::PT_Density)(; P::Number = 0.0e0, T::Number = 0.0e0, kwargs...)
     Tc = precision_of(P)
     T = convert_precision(Tc, T)
-    if T isa Quantity
-        @unpack_units Tc ρ0, α, β, P0, T0 = ρ
-    else
-        @unpack_val Tc ρ0, α, β, P0, T0 = ρ
-    end
+    @unpack_like T Tc ρ0, α, β, P0, T0 = ρ
 
     return @muladd ρ0 * (1 - α * (T - T0) + β * (P - P0))
 end
@@ -184,11 +180,7 @@ end
 
 function (s::Compressible_Density)(; P = 0.0e0, kwargs...)
     Tc = precision_of(P)
-    if P isa Quantity
-        @unpack_units Tc ρ0, β, P0 = s
-    else
-        @unpack_val Tc ρ0, β, P0 = s
-    end
+    @unpack_like P Tc ρ0, β, P0 = s
 
     return ρ0 * exp(β * (P - P0))
 end
@@ -229,11 +221,7 @@ end
 
 function (s::T_Density)(; T = 0.0e0, kwargs...)
     Tc = precision_of(T)
-    if T isa Quantity
-        @unpack_units Tc ρ0, α, T0 = s
-    else
-        @unpack_val Tc ρ0, α, T0 = s
-    end
+    @unpack_like T Tc ρ0, α, T0 = s
 
     return @muladd ρ0 * (1 - α * (T - T0))
 end
@@ -359,11 +347,7 @@ end
     Tc = precision_of(P)
     ρmelt = compute_density(rho.ρmelt, kwargs)
     ρgas = compute_density(rho.ρgas, kwargs)
-    if P isa Quantity
-        @unpack_units Tc c0, a = rho
-    else
-        @unpack_val Tc c0, a = rho
-    end
+    @unpack_like P Tc c0, a = rho
 
     cutoff = c0^2 / a^2
 
@@ -522,11 +506,7 @@ end
     Tc = precision_of(P)
     T = convert_precision(Tc, T)
     a1, a2, a3 = convert_precision(Tc, rho.coeffs)
-    if P isa Quantity
-        @unpack_units Tc T0, Tref, Pref, ρref = rho
-    else
-        @unpack_val Tc T0, Tref, Pref, ρref = rho
-    end
+    @unpack_like P Tc T0, Tref, Pref, ρref = rho
     τ = (T - T0) / Tref            # ∝ T in °C
     ω = P / Pref                   # ∝ P in bar
     # τ^(-0.381)/ω^(-1.135) undefined otherwise. No physically sensible clamp
@@ -949,11 +929,7 @@ function get_α(rho::BubbleFlow_Density; P::T = 0.0, kwargs...) where {T}
     Tc = precision_of(P)
     αmelt = rho.ρmelt.α.val
     αgas = rho.ρgas.α.val
-    if P isa Quantity
-        @unpack_units Tc c0, a = rho
-    else
-        @unpack_val Tc c0, a = rho
-    end
+    @unpack_like P Tc c0, a = rho
 
     cutoff = c0^2 / a^2
 

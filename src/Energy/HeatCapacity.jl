@@ -98,11 +98,7 @@ end
 # Calculation routine
 @inline function compute_heatcapacity(a::T_HeatCapacity_Whittington; T, kwargs...)
     Tc = precision_of(T)
-    if T isa Quantity
-        @unpack_units Tc a0, a1, b0, b1, c0, c1, molmass, Tcutoff = a
-    else
-        @unpack_val Tc a0, a1, b0, b1, c0, c1, molmass, Tcutoff = a
-    end
+    @unpack_like T Tc a0, a1, b0, b1, c0, c1, molmass, Tcutoff = a
 
     if T ≤ Tcutoff
         return (a0 + b0 * T - c0 / T^2) / molmass

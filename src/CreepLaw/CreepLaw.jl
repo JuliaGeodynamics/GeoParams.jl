@@ -156,13 +156,7 @@ end
 # Calculation routines for linear viscous rheologies
 function compute_εII(a::LinearViscous, TauII; kwargs...)
     Tc = precision_of(TauII)
-    η = if TauII isa Quantity
-        @unpack_units Tc η = a
-        η
-    else
-        @unpack_val Tc η = a
-        η
-    end
+    @unpack_like TauII Tc η = a
 
     return TauII / η / 2
 end
@@ -183,13 +177,7 @@ end
 
 function dεII_dτII(a::LinearViscous, TauII; kwargs...)
     Tc = precision_of(TauII)
-    η = if TauII isa Quantity
-        @unpack_units Tc η = a
-        η
-    else
-        @unpack_val Tc η = a
-        η
-    end
+    @unpack_like TauII Tc η = a
 
     return inv(2 * η)
 end
@@ -201,13 +189,7 @@ Returns second invariant of the stress tensor given a 2nd invariant of strain ra
 """
 function compute_τII(a::LinearViscous, EpsII; kwargs...)
     Tc = precision_of(EpsII)
-    η = if EpsII isa Quantity
-        @unpack_units Tc η = a
-        η
-    else
-        @unpack_val Tc η = a
-        η
-    end
+    @unpack_like EpsII Tc η = a
 
     return 2 * (η * EpsII)
 end
@@ -224,13 +206,7 @@ end
 
 function dτII_dεII(a::LinearViscous, EpsII; kwargs...)
     Tc = precision_of(EpsII)
-    η = if EpsII isa Quantity
-        @unpack_units Tc η = a
-        η
-    else
-        @unpack_val Tc η = a
-        η
-    end
+    @unpack_like EpsII Tc η = a
 
     return 2 * η
 end

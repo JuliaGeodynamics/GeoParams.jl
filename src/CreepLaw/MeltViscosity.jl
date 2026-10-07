@@ -229,11 +229,7 @@ end
     ε = compute_εII(a.η, TauII, kwargs)
     η_melt = TauII / (2 * ε)
     # viscosity correction factor
-    if ε isa Quantity
-        @unpack_units Tc ε0 = a
-    else
-        @unpack_val Tc ε0 = a
-    end
+    @unpack_like ε Tc ε0 = a
     ηr = viscosity_correction(1 - ϕ, convert_precision(Tc, ε / ε0))
     η = ηr * η_melt
     return TauII / (2 * η)
@@ -478,11 +474,7 @@ end
 @inline function _giordano_η(a::GiordanoMeltViscosity, T; mH2O = a.oxd_wt[9] / 100)
     Tc = precision_of(T)
     mH2O = convert_precision(Tc, mH2O)
-    if T isa Quantity
-        @unpack_units Tc AT, BT, CT, η0 = a
-    else
-        @unpack_val Tc AT, BT, CT, η0 = a
-    end
+    @unpack_like T Tc AT, BT, CT, η0 = a
     if mH2O != convert_precision(Tc, a.oxd_wt[9] / 100)
         oxd_wt = oxd_wt = a.oxd_wt[1:8]..., 100 * mH2O
         bb, cc = T isa Quantity ? (unpack_units(a.bb), unpack_units(a.cc)) : (unpack_vals(a.bb), unpack_vals(a.cc))

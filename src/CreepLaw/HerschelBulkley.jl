@@ -128,13 +128,7 @@ function to compute the viscosity if EpsII is given
 @inline function compute_hb_viscosity_εII(v::HerschelBulkley, εII; T = 1.0, kwargs...)
     Tc = precision_of(εII)
     T = convert_precision(Tc, T)
-    η0, τ0, ηr, Q, Tr = if εII isa Quantity
-        @unpack_units Tc η0, τ0, ηr, Q, Tr = v
-        η0, τ0, ηr, Q, Tr
-    else
-        @unpack_val Tc η0, τ0, ηr, Q, Tr = v
-        η0, τ0, ηr, Q, Tr
-    end
+    @unpack_like εII Tc η0, τ0, ηr, Q, Tr = v
     n = convert_precision(Tc, v.n)
 
     ηT = ηr * exp(Q * (1 / T - 1 / Tr)) # temperature dependence

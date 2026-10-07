@@ -1,5 +1,5 @@
 using UnPack
-export @unpack_val, @unpack_units
+export @unpack_val, @unpack_units, @unpack_like
 export precision_of, convert_precision
 
 """
@@ -72,9 +72,10 @@ pass through so that they keep promoting the result to their own type.
 @inline _val_precision(::Type{T}, v) where {T} = T.(v)
 @inline _val_precision(::Type{T}, v::AbstractArray{T}) where {T} = v
 
-# Builds the body shared by all four macro forms. `withunits` multiplies the
-# value back by its unit; `T` is `nothing` for the untyped forms.
-function _unpack_geounit(args, withunits::Bool, T)
+# Builds the body shared by all the macro forms. `withunits` multiplies the
+# value back by its unit: `true`, `false`, or an expression whose value carries
+# units exactly when the result should. `T` is `nothing` for the untyped forms.
+function _unpack_geounit(args, withunits, T)
     args.head != :(=) && error("Expression needs to be of form `a, b = c`")
     items, suitecase = args.args
     items = isa(items, Symbol) ? [items] : items.args
@@ -83,7 +84,9 @@ function _unpack_geounit(args, withunits::Bool, T)
     kd = map(items) do key
         field = :($UnPack.unpack($suitecase_instance, Val{$(Expr(:quote, key))}()))
         val = T === nothing ? :($field.val) : :($_val_precision($T, $field.val))
-        rhs = withunits ? :($val .* $field.unit) : val
+        rhs = withunits === true ? :($val .* $field.unit) :
+            withunits === false ? val :
+            :($withunits isa $Quantity ? $val .* $field.unit : $val)
         return :($key = $rhs)
     end
 
@@ -168,4 +171,15 @@ end
 
 macro unpack_units(T, args)
     return esc(_unpack_geounit(args, true, T))
+end
+
+"""
+    @unpack_like x T ρ, α = r
+
+`@unpack_units T ρ, α = r` if `x` is a `Quantity`, otherwise `@unpack_val T ρ, α = r`:
+parameters follow the units, or lack of them, of the state `x` they are combined
+with. The choice depends only on the type of `x`, so it costs nothing at run time.
+"""
+macro unpack_like(x, T, args)
+    return esc(_unpack_geounit(args, x, T))
 end

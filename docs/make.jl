@@ -33,6 +33,7 @@ makedocs(;
         "User Guide" => Any[
             "GeoUnit" => "man/geounit.md",
             "Nondimensionalization" => "man/nondimensionalize.md",
+            "Precision" => "man/precision.md",
             "Material Parameters" => Any[
                 "Overview" => "man/materialparameters.md",
                 "Permeability" => "man/permeability.md",

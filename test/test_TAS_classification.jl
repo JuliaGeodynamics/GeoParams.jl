@@ -45,4 +45,8 @@ using GeoParams, LinearAlgebra
 
     # composition outside every TAS field -> classIndex = -1 (warning-print branch)
     @test computeTASclassification([5.0, 20.0]; ClassTASdata = ClassTASdata) == -1
+
+    alloc(pt, d) = @allocated computeTASclassification(pt; ClassTASdata = d)
+    alloc([52.0, 5.0], ClassTASdata)
+    @test alloc([52.0, 5.0], ClassTASdata) == 0
 end

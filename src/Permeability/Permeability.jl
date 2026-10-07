@@ -189,11 +189,7 @@ end
 
 function (s::PowerLawPermeability)(; ϕ = 1.0e-2, kwargs...)
     Tc = precision_of(ϕ)
-    if ϕ isa Quantity
-        @unpack_units Tc c, k0, n = s
-    else
-        @unpack_val Tc c, k0, n = s
-    end
+    @unpack_like ϕ Tc c, k0, n = s
 
     return c * k0 * fastpow(ϕ, n)
 end
@@ -247,11 +243,7 @@ end
 
 function (s::CarmanKozenyPermeability)(; ϕ = 1.0e-2, kwargs...)
     Tc = precision_of(ϕ)
-    if ϕ isa Quantity
-        @unpack_units Tc c, ϕ0, n = s
-    else
-        @unpack_val Tc c, ϕ0, n = s
-    end
+    @unpack_like ϕ Tc c, ϕ0, n = s
 
     return @pow c * (ϕ / ϕ0)^n
 end

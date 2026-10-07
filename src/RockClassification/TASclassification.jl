@@ -8,6 +8,7 @@ module TASclassification
 
 import Base.Threads
 using Parameters
+using StaticArrays: SMatrix
 
 export TASclassificationData, computeTASclassification, retrieveTASrockType
 
@@ -131,10 +132,7 @@ function computeTASclassification(
     # segment endpoints, in the float type of the composition being classified;
     # `testIntersection` requires both to share an element type
     Tv = float(_T)
-    p = zeros(Tv, 2, 2)
-    v = zeros(Tv, 2, 2)
-    p[2, 1] = point[1]
-    p[2, 2] = point[2]
+    p = SMatrix{2, 2, Tv}(0, point[1], 0, point[2])
 
     # set the classIndex to -1 to track for issue
     classIndex = -1
@@ -148,15 +146,8 @@ function computeTASclassification(
         n = 0
         for i in 1:n_ver[poly]
             # here we get the coordinates of the polygon edges to be test for intersection
-            v[1, 1] = ver[shift + i, 1]
-            v[1, 2] = ver[shift + i, 2]
-            if (i == n_ver[poly])
-                v[2, 1] = ver[shift + 1, 1]
-                v[2, 2] = ver[shift + 1, 2]
-            else
-                v[2, 1] = ver[shift + i + 1, 1]
-                v[2, 2] = ver[shift + i + 1, 2]
-            end
+            j = i == n_ver[poly] ? 1 : i + 1
+            v = SMatrix{2, 2, Tv}(ver[shift + i, 1], ver[shift + j, 1], ver[shift + i, 2], ver[shift + j, 2])
 
             n += testIntersection(v, p)
         end

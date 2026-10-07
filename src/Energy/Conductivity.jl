@@ -152,11 +152,7 @@ end
 # Calculation routine
 function (s::T_Conductivity_Whittington)(; T, kwargs...)
     Tc = precision_of(T)
-    if T isa Quantity
-        @unpack_units Tc a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
-    else
-        @unpack_val Tc a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
-    end
+    @unpack_like T Tc a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
 
     if T ≤ Tcutoff
         return (a0 + b0 * T - c0 / T^2) / molmass * (d / T - e) * rho
@@ -258,11 +254,7 @@ function (s::T_Conductivity_Whittington_parameterised)(;
         T = 0.0e0, kwargs...
     )
     Tc = precision_of(T)
-    if T isa Quantity
-        @unpack_units Tc a, b, c, d, Ts = s
-    else
-        @unpack_val Tc a, b, c, d, Ts = s
-    end
+    @unpack_like T Tc a, b, c, d, Ts = s
 
     T_C = T - Ts
     return a * T_C^3 + b * T_C^2 + c * T_C + d
@@ -433,11 +425,7 @@ TP_Conductivity_info = Dict(
 function (s::TP_Conductivity)(; P = 0.0e0, T = 0.0e0, kwargs...)
     Tc = precision_of(P)
     T = convert_precision(Tc, T)
-    if T isa Quantity
-        @unpack_units Tc a, b, c, d = s
-    else
-        @unpack_val Tc a, b, c, d = s
-    end
+    @unpack_like T Tc a, b, c, d = s
 
     if ustrip(d) == 0
         return a + b / (T + c)

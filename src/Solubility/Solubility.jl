@@ -109,11 +109,7 @@ X_co2)` and `compute_dissolved(s, args::NamedTuple)`.
 @inline function compute_dissolved(s::Liu2005_Solubility, P, T, X_co2)
     Tc = precision_of(P)
     b1, b2, b3, b4, b5, b6, c1, c2, c3, c4 = convert_precision(Tc, s.coeffs)
-    if P isa Quantity
-        @unpack_units Tc Pref, Tref = s
-    else
-        @unpack_val Tc Pref, Tref = s
-    end
+    @unpack_like P Tc Pref, Tref = s
     Pw = P * (1 - X_co2) / Pref     # ∝ H2O partial pressure in MPa
     Pc = P * X_co2 / Pref           # ∝ CO2 partial pressure in MPa
     Tr = Tref / T                   # ∝ 1/T [K]
@@ -182,11 +178,7 @@ end
 @inline function compute_dissolved(s::Mafic_Solubility, P, T, X_co2)
     Tc = precision_of(P)
     b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, c1, c2, c3, c4 = convert_precision(Tc, s.coeffs)
-    if P isa Quantity
-        @unpack_units Tc T0, Tref, Pref = s
-    else
-        @unpack_val Tc T0, Tref, Pref = s
-    end
+    @unpack_like P Tc T0, Tref, Pref = s
     Tn = (T - T0) / Tref            # ∝ T in °C
     Pm = P / Pref                   # ∝ P in MPa
     meq = @muladd b1 +
