@@ -112,7 +112,7 @@ end
 @generated function _phase_elastic_ε(v::NTuple{N, Any}, τij_old, dt) where {N}
     Base.@_inline_meta
     return quote
-        val = 0.0
+        val = zero(precision_of(τij_old))
         Base.Cartesian.@nexprs $N i -> @inbounds val += _elastic_ε(v[i], τij_old, dt)
         return val
     end

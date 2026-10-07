@@ -62,7 +62,9 @@ end
 function (s::DruckerPrager)(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...
     )
-    @unpack_val sinϕ, cosϕ, ϕ, C = s
+    Tc = precision_of(P)
+    τII, Pf, EII, perturbation_C = convert_precision(Tc, (τII, Pf, EII, perturbation_C))
+    @unpack_val Tc sinϕ, cosϕ, ϕ, C = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C = s.softening_C(EII, C)
     C *= perturbation_C
@@ -77,7 +79,9 @@ end
 function (s::DruckerPrager{_T, U, U1, NoSoftening, S2})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...
     ) where {_T, U, U1, S2 <: AbstractSoftening}
-    @unpack_val sinϕ, cosϕ, ϕ, C = s
+    Tc = precision_of(P)
+    τII, Pf, EII, perturbation_C = convert_precision(Tc, (τII, Pf, EII, perturbation_C))
+    @unpack_val Tc sinϕ, cosϕ, ϕ, C = s
     C = s.softening_C(EII, C)
     C *= perturbation_C
 
@@ -88,7 +92,9 @@ end
 function (s::DruckerPrager{_T, U, U1, S1, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0, kwargs...
     ) where {_T, U, U1, S1 <: AbstractSoftening}
-    @unpack_val sinϕ, cosϕ, ϕ, C = s
+    Tc = precision_of(P)
+    τII, Pf, EII, perturbation_C = convert_precision(Tc, (τII, Pf, EII, perturbation_C))
+    @unpack_val Tc sinϕ, cosϕ, ϕ, C = s
     ϕ = s.softening_ϕ(EII, ϕ)
     C *= perturbation_C
 
@@ -101,7 +107,9 @@ end
 function (s::DruckerPrager{_T, U, U1, NoSoftening, NoSoftening})(;
         P = 0.0, τII = 0.0, Pf = 0.0, perturbation_C = 1.0, kwargs...
     ) where {_T, U, U1}
-    @unpack_val sinϕ, cosϕ, ϕ, C = s
+    Tc = precision_of(P)
+    τII, Pf, perturbation_C = convert_precision(Tc, (τII, Pf, perturbation_C))
+    @unpack_val Tc sinϕ, cosϕ, ϕ, C = s
     C *= perturbation_C
 
     F = τII - cosϕ * C - sinϕ * (P - Pf)   # with fluid pressure (set to zero by default)
@@ -114,8 +122,8 @@ end
 Computes the plastic yield function `F` for a given second invariant of the deviatoric stress tensor `τII`,  `P` pressure, and `Pf` fluid pressure.
 """
 function compute_yieldfunction(
-        s::DruckerPrager{_T}; P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0
-    ) where {_T}
+        s::DruckerPrager; P = 0.0, τII = 0.0, Pf = 0.0, EII = 0.0, perturbation_C = 1.0
+    )
     return s(; P = P, τII = τII, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
 end
 
@@ -127,16 +135,16 @@ Required input arrays are pressure `P` and the second invariant of the deviatori
 You can optionally provide an array with fluid pressure `Pf` as well.
 """
 function compute_yieldfunction!(
-        F::AbstractArray{_T, N},
-        s::DruckerPrager{_T};
-        P::AbstractArray{_T, N},
-        τII::AbstractArray{_T, N},
-        Pf::AbstractArray{_T, N} = zero(P),
-        EII::AbstractArray{_T, N} = zero(P),
+        F::AbstractArray,
+        s::DruckerPrager;
+        P::AbstractArray,
+        τII::AbstractArray,
+        Pf = zero(eltype(P)),
+        EII = zero(eltype(P)),
         kwargs...,
-    ) where {N, _T}
-    @inbounds for i in eachindex(P)
-        F[i] = compute_yieldfunction(s; P = P[i], τII = τII[i], Pf = Pf[i], EII = EII[i])
+    )
+    for i in each_argument_index(F, P, τII, Pf, EII)
+        F[i] = compute_yieldfunction(s; P = P[i], τII = τII[i], Pf = argument_at(Pf, i), EII = argument_at(EII, i))
     end
 
     return nothing
@@ -145,11 +153,11 @@ end
 # Plastic Potential
 
 # Derivatives w.r.t pressure
-∂Q∂P(p::DruckerPrager, P = 0.0; τII = 0.0, kwargs...) = -NumValue(p.sinΨ)
+∂Q∂P(p::DruckerPrager, P = 0.0; τII = 0.0, kwargs...) = -convert_precision(precision_of(P), NumValue(p.sinΨ))
 
 # Derivatives of yield function
 ∂F∂τII(p::DruckerPrager, τII::_T; P = zero(_T), kwargs...) where {_T} = _T(1)
-∂F∂P(p::DruckerPrager, P::_T; τII = zero(_T), kwargs...) where {_T} = -NumValue(p.sinϕ)
+∂F∂P(p::DruckerPrager, P::_T; τII = zero(_T), kwargs...) where {_T} = -convert_precision(precision_of(P), NumValue(p.sinϕ))
 ∂F∂λ(p::DruckerPrager, τII::_T; P = zero(_T), kwargs...) where {_T} = _T(0)
 
 # Derivatives w.r.t stress tensor
@@ -158,20 +166,20 @@ end
 for t in (:NTuple, :SVector)
     @eval begin
         ## 3D derivatives
-        ∂Q∂τxx(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = 0.5 * τij[1] / second_invariant(τij)
-        ∂Q∂τyy(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = 0.5 * τij[2] / second_invariant(τij)
-        ∂Q∂τzz(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = 0.5 * τij[3] / second_invariant(τij)
+        ∂Q∂τxx(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = τij[1] / (2 * second_invariant(τij))
+        ∂Q∂τyy(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = τij[2] / (2 * second_invariant(τij))
+        ∂Q∂τzz(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = τij[3] / (2 * second_invariant(τij))
         ∂Q∂τyz(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = τij[4] / second_invariant(τij)
         ∂Q∂τxz(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = τij[5] / second_invariant(τij)
         ∂Q∂τxy(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = τij[6] / second_invariant(τij)
         ## 2D derivatives
-        ∂Q∂τxx(p::DruckerPrager, τij::$(t){3, T}; kwargs...) where {T} = 0.5 * τij[1] / second_invariant(τij)
-        ∂Q∂τyy(p::DruckerPrager, τij::$(t){3, T}; kwargs...) where {T} = 0.5 * τij[2] / second_invariant(τij)
+        ∂Q∂τxx(p::DruckerPrager, τij::$(t){3, T}; kwargs...) where {T} = τij[1] / (2 * second_invariant(τij))
+        ∂Q∂τyy(p::DruckerPrager, τij::$(t){3, T}; kwargs...) where {T} = τij[2] / (2 * second_invariant(τij))
         ∂Q∂τxy(p::DruckerPrager, τij::$(t){3, T}; kwargs...) where {T} = τij[3] / second_invariant(τij)
     end
 end
 
-∂Q∂τII(p::DruckerPrager, τII::_T; P = zero(_T), kwargs...) where {_T} = 0.5
+∂Q∂τII(p::DruckerPrager, τII::_T; P = zero(_T), kwargs...) where {_T} = one(_T) / 2
 
 """
     compute_εII(p::DruckerPrager{_T,U,U1}, λdot::_T, τII::_T,  P)
@@ -207,7 +215,9 @@ end
     Equations from Duretz et al. 2019 G3
 """
 @inline function lambda(F::T, p::DruckerPrager, ηve::T, ηvp::T; K = zero(T), dt = zero(T), h = zero(T), τij = (one(T), one(T), one(T))) where {T}
-    @unpack_val sinϕ, cosϕ, sinΨ = p
+    Tc = precision_of(F)
+    K, dt, h, τij = convert_precision(Tc, (K, dt, h, τij))
+    @unpack_val Tc sinϕ, cosϕ, sinΨ = p
     return F * inv(ηve + ηvp + K * dt * sinΨ * sinϕ + h * cosϕ * dt * plastic_strain(p, τij, one(T)))
 end
 #-------------------------------------------------------------------------

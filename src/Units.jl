@@ -3,6 +3,8 @@
 """
 module Units
 using Unitful
+using Adapt
+using ForwardDiff: Dual, value
 import Unitful: superscript
 using Parameters
 using Setfield # allows modifying fields in immutable struct
@@ -147,6 +149,8 @@ struct GeoUnit{T, U}
     isdimensional::Bool
 end
 
+Adapt.@adapt_structure GeoUnit
+
 # Affine temperatures (°C) are stored in K: the numeric compute routines treat stored
 # temperatures as absolute values.
 _absolute(val) = val
@@ -245,6 +249,8 @@ Returns a tuple of the dimensional values (numeric value times units) of the [`G
 """
 unpack_units(x::NTuple{N, GeoUnit}) where {N} = ntuple(i -> x[i].unit * x[i].val, Val(N))
 unpack_vals(x::NTuple{N, GeoUnit}) where {N} = ntuple(i -> x[i].val, Val(N))
+unpack_vals(::Type{T}, x::NTuple{N, GeoUnit}) where {T, N} =
+    ntuple(i -> convert_precision(T, x[i].val), Val(N))
 
 """
     UnitValue(v::GeoUnit)

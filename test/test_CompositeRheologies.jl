@@ -600,4 +600,17 @@ import GeoParams: compute_elastoviscosity
         p = Parallel(DislocationCreep(; n = 3.5NoUnits, A = 1.0e-16Pa^(-3.5) / s), LinearViscous(; η = 1.0e22Pas))
         @test_throws "local iterations did not converge" local_iterations_τII(p, 1.0e6, args; max_iter = 1)
     end
+
+    @testset "composites of only || elements" begin
+        args = (; T = 1273.0)
+        lin(η) = LinearViscous(; η = η * Pas)
+        # one || element: all of εII goes through it
+        c = CompositeRheology(Parallel(lin(1.0e22), lin(1.0e21)))
+        @test all(compute_τII(c, 1.0e-14, args) .≈ (2.2e8, 1.0e-14))
+        hb = Parallel(HerschelBulkley(), lin(1.0e21))
+        @test first(compute_τII(CompositeRheology(hb), 1.0e-14, args)) ≈ compute_τII(hb, 1.0e-14, args)
+        # two identical || elements in series share εII equally
+        c = CompositeRheology(Parallel(lin(1.0e22), lin(1.0e21)), Parallel(lin(1.0e22), lin(1.0e21)))
+        @test all(compute_τII(c, 1.0e-14, args) .≈ (1.1e8, 5.0e-15, 5.0e-15))
+    end
 end

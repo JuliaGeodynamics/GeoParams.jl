@@ -45,12 +45,13 @@ end
 
 # Calculation routine
 function (s::ConstantConductivity)(; kwargs...)
-    @unpack_val k = s
+    Tc = precision_of(values(kwargs))
+    @unpack_val Tc k = s
 
     return k
 end
 
-compute_conductivity(s::ConstantConductivity; kwargs...) = s()
+compute_conductivity(s::ConstantConductivity; kwargs...) = s(; kwargs...)
 
 function (s::ConstantConductivity)(I::Integer...)
     @unpack_val k = s
@@ -65,10 +66,9 @@ compute_conductivity(s::ConstantConductivity, I::Integer...) = s(I...)
 
 In-place routine to compute constant conductivity
 """
-function compute_conductivity!(
-        k_array::AbstractArray{_T, N}, s::ConstantConductivity; kwargs...
-    ) where {_T, N}
-    @unpack_val k = s
+function compute_conductivity!(k_array::AbstractArray, s::ConstantConductivity; kwargs...)
+    Tc = precision_of(k_array)
+    @unpack_val Tc k = s
     k_array .= k
     return nothing
 end
@@ -108,7 +108,7 @@ where ``Cp`` is the heat capacity [``J/mol/K``], and ``a,b,c`` are parameters th
 - b = 0.0323J/mol/K^2   if T> 846 K
 - c = 5e6J/mol*K        if T<= 846 K
 - c = 47.9e-6J/mol*K    if T> 846 K
-- d = 576.3m^2/s*K
+- d = 567.3m^2/s*K
 - e = 0.062m^2/s
 - f = 0.732m^2/s
 - g = 0.000135m^2/s/K
@@ -138,7 +138,7 @@ julia> T,k,plt = PlotConductivity(p)
     molmass::GeoUnit{T, U4} = 0.22178kg / mol               # average molar mass
     Tcutoff::GeoUnit{T, U5} = 846.0K                      # cutoff temperature
     rho::GeoUnit{T, U6} = 2700kg / m^3                  # Density they use for an average crust
-    d::GeoUnit{T, U7} = 576.3 * 1.0e-6m^2 / s * K           # diffusivity parameterization
+    d::GeoUnit{T, U7} = 567.3 * 1.0e-6m^2 / s * K           # diffusivity parameterization
     e::GeoUnit{T, U8} = 0.062 * 1.0e-6m^2 / s             # diffusivity parameterization
     f::GeoUnit{T, U8} = 0.732 * 1.0e-6m^2 / s             # diffusivity parameterization
     g::GeoUnit{T, U9} = 0.000135 * 1.0e-6m^2 / s / K        # diffusivity parameterization
@@ -150,12 +150,9 @@ function param_info(s::T_Conductivity_Whittington) # info about the structwhere 
 end
 
 # Calculation routine
-function (s::T_Conductivity_Whittington{_T})(; T = 0.0e0, kwargs...) where {_T}
-    if T isa Quantity
-        @unpack_units a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
-    else
-        @unpack_val a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
-    end
+function (s::T_Conductivity_Whittington)(; T, kwargs...)
+    Tc = precision_of(T)
+    @unpack_like T Tc a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
 
     if T ≤ Tcutoff
         return (a0 + b0 * T - c0 / T^2) / molmass * (d / T - e) * rho
@@ -164,15 +161,16 @@ function (s::T_Conductivity_Whittington{_T})(; T = 0.0e0, kwargs...) where {_T}
     end
 end
 
-function compute_conductivity(s::T_Conductivity_Whittington{_T}; T = 0.0e0) where {_T}
+function compute_conductivity(s::T_Conductivity_Whittington; T, kwargs...)
     return s(; T = T)
 end
 
 function (s::T_Conductivity_Whittington)(T::AbstractArray; kwargs...)
+    Tc = precision_of(T)
     if eltype(T) <: Quantity   # array of Quantities is not itself a Quantity
-        @unpack_units a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
+        @unpack_units Tc a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
     else
-        @unpack_val a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
+        @unpack_val Tc a0, a1, b0, b1, c0, c1, molmass, Tcutoff, rho, d, e, f, g = s
     end
 
     inv_molmass = 1 / molmass # multiplication is considerably faster than division
@@ -252,14 +250,11 @@ function param_info(s::T_Conductivity_Whittington_parameterised) # info about th
 end
 
 # Calculation routine
-function (s::T_Conductivity_Whittington_parameterised{_T})(;
+function (s::T_Conductivity_Whittington_parameterised)(;
         T = 0.0e0, kwargs...
-    ) where {_T}
-    if T isa Quantity
-        @unpack_units a, b, c, d, Ts = s
-    else
-        @unpack_val a, b, c, d, Ts = s
-    end
+    )
+    Tc = precision_of(T)
+    @unpack_like T Tc a, b, c, d, Ts = s
 
     T_C = T - Ts
     return a * T_C^3 + b * T_C^2 + c * T_C + d
@@ -427,12 +422,10 @@ TP_Conductivity_info = Dict(
 )
 
 # Calculation routine
-function (s::TP_Conductivity{_T})(; P = 0.0e0, T = 0.0e0, kwargs...) where {_T}
-    if T isa Quantity
-        @unpack_units a, b, c, d = s
-    else
-        @unpack_val a, b, c, d = s
-    end
+function (s::TP_Conductivity)(; P = 0.0e0, T = 0.0e0, kwargs...)
+    Tc = precision_of(P)
+    T = convert_precision(Tc, T)
+    @unpack_like T Tc a, b, c, d = s
 
     if ustrip(d) == 0
         return a + b / (T + c)
@@ -442,13 +435,14 @@ function (s::TP_Conductivity{_T})(; P = 0.0e0, T = 0.0e0, kwargs...) where {_T}
 end
 
 
-function (s::TP_Conductivity{_T})(
+function (s::TP_Conductivity)(
         P::AbstractArray, T::AbstractArray; kwargs...
-    ) where {_T}
+    )
+    Tc = precision_of(T)
     if eltype(T) <: Quantity   # array of Quantities is not itself a Quantity
-        @unpack_units a, b, c, d = s
+        @unpack_units Tc a, b, c, d = s
     else
-        @unpack_val a, b, c, d = s
+        @unpack_val Tc a, b, c, d = s
     end
 
     d_is_zero = ustrip(d) == 0
@@ -540,7 +534,7 @@ function compute_conductivity(s::AbstractMaterialParamsStruct, args)
     return s.Conductivity[1](args)
 end
 
-compute_conductivity(args::Vararg{Any, N}) where {N} = compute_param(compute_conductivity, args...)
+compute_conductivity(MatParam, arg, args::Vararg{Any, N}) where {N} = compute_param(compute_conductivity, MatParam, arg, args...)
 
 """
     compute_conductivity!(K::AbstractArray{<:AbstractFloat}, Phases::AbstractArray{<:Integer}, P::AbstractArray{<:AbstractFloat},Temp::AbstractArray{<:AbstractFloat}, MatParam::AbstractArray{<:AbstractMaterialParamsStruct})

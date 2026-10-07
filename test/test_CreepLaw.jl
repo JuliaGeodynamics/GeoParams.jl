@@ -1,5 +1,6 @@
 using Test, Statistics, ForwardDiff
 using GeoParams, LaTeXStrings
+import GeoParams: ntuple_idx
 
 @testset "CreepLaw" begin
 
@@ -228,7 +229,8 @@ using GeoParams, LaTeXStrings
     τ = [1.0e6; 2.0e6]
     args_ND1 = (; T = 1000 * ones(size(τ)), ϕ = 0.5 * ones(size(τ)))
     compute_εII!(ε, x1_D, τ, args_ND1)
-    @test ε ≈ [0.0011248074556411618; 0.0022496149112823235]    # vector input
+    @test ε ≈ [0.00010088115562020609; 0.00020524008339727987]  # vector input
+    @test ε ≈ [compute_εII(x1_D, τ[i], ntuple_idx(args_ND1, i)) for i in eachindex(τ)]
 
     # Given strainrate
     @test compute_τII(x1_D, 1.0e-13 / s, args_D) ≈ 643.9044043803415Pa      # dimensional input
@@ -458,6 +460,21 @@ using GeoParams, LaTeXStrings
     @test ε1_ND ≈ εt_ND rtol = 1.0e-6
 
 
+    # derivative at the yield stress: dεII/dτII = 1 / (2 η0 f'(x)), f the residual in x = εII/εr
+    let hb = HerschelBulkley(), τ0 = 1.0e8, η0 = 1.0e24, r = 1.0e-4
+        x = compute_εII(hb, τ0; T = 1273.0) * 2η0 / τ0
+        fx = exp(-x) * (1 + r * cbrt(x)) + (1 - exp(-x)) * r / (3 * cbrt(x)^2)
+        @test ForwardDiff.derivative(t -> compute_εII(hb, t; T = 1273.0), τ0) ≈ 1 / (2η0 * fx)
+        @test dεII_dτII(hb, τ0, (; T = 1273.0)) ≈ 1 / (2η0 * fx)
+        ε = compute_εII(hb, 2τ0; T = 1273.0)
+        @test dτII_dεII(hb, ε, (; T = 1273.0)) * dεII_dτII(hb, 2τ0, (; T = 1273.0)) ≈ 1
+
+        # the local iteration of a series composite needs dεII_dτII of each element
+        c = CompositeRheology(hb, LinearViscous(η = 1.0e21Pa * s))
+        τ = compute_τII(c, 1.0e-14, (; T = 1273.0))
+        @test compute_εII(hb, τ; T = 1273.0) + τ / 2.0e21 ≈ 1.0e-14
+    end
+
     # temperature dependence test
     x1_Q = HerschelBulkley(
         n = 3.0,
@@ -626,4 +643,26 @@ using GeoParams, LaTeXStrings
             @test remove_tensor_correction(v).R.val == 8.0
         end
     end
+end
+
+@testset "in-place laws honor per-element P, T, f" begin
+    a = SetDislocationCreep(GeoParams.Dislocation.dry_olivine_Hirth_2003)
+    τ = fill(1.0e6, 4)
+    P = [1.0e8, 2.0e8, 3.0e8, 4.0e8]
+    T = [800.0, 1000.0, 1200.0, 1400.0]
+    f = [1.0, 2.0, 3.0, 4.0]
+
+    ε = zeros(4)
+    compute_εII!(ε, a, τ; P = P, T = T, f = f)
+    @test ε == [compute_εII(a, τ[i]; P = P[i], T = T[i], f = f[i]) for i in eachindex(ε)]
+
+    # a scalar stands in for a uniform array
+    ε_mixed = zeros(4)
+    compute_εII!(ε_mixed, a, τ; P = P, T = T, f = 1.0)
+    @test ε_mixed == [compute_εII(a, τ[i]; P = P[i], T = T[i], f = 1.0) for i in eachindex(ε_mixed)]
+
+    # an array that does not match the destination is rejected, in either direction
+    @test_throws DimensionMismatch compute_εII!(ε, a, τ; T = ones(5))
+    @test_throws DimensionMismatch compute_εII!(ε, a, τ; T = ones(2))
+    @test_throws DimensionMismatch compute_εII!(ε, a, ones(5); T = 1.0e3)
 end

@@ -7,7 +7,7 @@ Supertype of plastic constitutive laws such as [`DruckerPrager`](@ref), which de
 function and a plastic flow potential.
 """
 abstract type AbstractPlasticity{T} <: AbstractConstitutiveLaw{T} end
-abstract type AbstractPlasticPotential{Float64} <: AbstractConstitutiveLaw{Float64} end
+abstract type AbstractPlasticPotential{T} <: AbstractConstitutiveLaw{T} end
 
 export AbstractPlasticity,
     isvolumetric,
@@ -125,20 +125,20 @@ end
 
 """
     plastic_strain(εvp::T, p::AbstractPlasticity{T}, τij, λ̇::T, dt::T)
-    
+
     Integrate the finite plastic strain. Equations from Duretz et al. 2019 G3
 """
 function plastic_strain(εvp::T, p::AbstractPlasticity{T}, τij, λ̇::T, dt::T; kwargs...) where {T}
     return εvp += plastic_strain(p, τij, λ̇; kwargs...) * dt
 end
 
-@inline function plastic_strain(p::AbstractPlasticity{T}, τij, λ̇::T; kwargs...) where {T}
+@inline function plastic_strain(p::AbstractPlasticity, τij, λ̇::Number; kwargs...)
     εvp_ij = plastic_strain_rate(p, τij, λ̇; kwargs...)
-    εvp = √((2.0 / 3.0) * dot(εvp_ij, εvp_ij))
+    εvp = √(2 * dot(εvp_ij, εvp_ij) / 3)
     return εvp
 end
 
-@inline plastic_strain_rate(p::AbstractPlasticity{T}, τij, λ̇::T; kwargs...) where {T} = ∂Q∂τ(p, τij; kwargs...) .* λ̇
+@inline plastic_strain_rate(p::AbstractPlasticity, τij, λ̇::Number; kwargs...) = ∂Q∂τ(p, τij; kwargs...) .* λ̇
 #-------------------------------------------------------------------------
 
 # Computational routines needed for computations with the MaterialParams structure
@@ -173,23 +173,30 @@ for myType in (:DruckerPrager, :DruckerPrager_regularised, :DruckerPragerCap)
     end
 end
 
-compute_yieldfunction(args...) = compute_param(compute_yieldfunction, args...)
+compute_yieldfunction(MatParam, arg, args...) = compute_param(compute_yieldfunction, MatParam, arg, args...)
 compute_yieldfunction!(args...) = compute_param!(compute_yieldfunction, args...)
-compute_plasticpotentialDerivative(args...) = compute_param(∂Q∂τ, args...)
+compute_plasticpotentialDerivative(MatParam, arg, args...) = compute_param(∂Q∂τ, MatParam, arg, args...)
 ∂Q∂τ(p::AbstractMaterialParamsStruct, args) = compute_plasticpotentialDerivative(p, args)
-∂Q∂τ(args...) = compute_param(∂Q∂τ, args...)
-∂Q∂τII(args...) = compute_param(∂Q∂τII, args...)
+∂Q∂τ(MatParam, arg, args...) = compute_param(∂Q∂τ, MatParam, arg, args...)
+∂Q∂τII(MatParam, arg, args...) = compute_param(∂Q∂τII, MatParam, arg, args...)
 
 function compute_plasticpotentialDerivative(p::AbstractMaterialParamsStruct, args)
     return ∂Q∂τ(p.Plasticity[1], args)
 end
 
-∂Q∂P(args...) = compute_param(∂Q∂P, args...)
+∂Q∂P(MatParam, arg, args...) = compute_param(∂Q∂P, MatParam, arg, args...)
 
 function ∂Q∂P(p::AbstractMaterialParamsStruct, args)
     return ∂Q∂P(p.Plasticity[1], args)
 end
 
-lambda(args...) = compute_param(lambda, args...)
-plastic_strain_rate(args...) = compute_param(plastic_strain_rate, args...)
-plastic_strain(args...) = compute_param(plastic_strain, args...)
+function ∂Q∂τII(p::AbstractMaterialParamsStruct, args)
+    return ∂Q∂τII(p.Plasticity[1], args)
+end
+
+plastic_strain_rate(MatParam, arg, args...) = compute_param(plastic_strain_rate, MatParam, arg, args...)
+plastic_strain(MatParam, arg, args...) = compute_param(plastic_strain, MatParam, arg, args...)
+
+# `compute_param` hands a single phase's struct to `fn`
+plastic_strain_rate(p::AbstractMaterialParamsStruct, τij, λ̇; kwargs...) = plastic_strain_rate(p.Plasticity[1], τij, λ̇; kwargs...)
+plastic_strain(p::AbstractMaterialParamsStruct, τij, λ̇; kwargs...) = plastic_strain(p.Plasticity[1], τij, λ̇; kwargs...)

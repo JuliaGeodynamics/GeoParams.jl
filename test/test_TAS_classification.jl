@@ -39,6 +39,14 @@ using GeoParams, LinearAlgebra
         @test retrieveTASrockType(index; ClassTASdata = ClassTASdata) == name[i]
     end
 
+    # an integer composition classifies in a float type
+    @test computeTASclassification([50, 4]; ClassTASdata = ClassTASdata) ==
+        computeTASclassification([50.0, 4.0]; ClassTASdata = ClassTASdata)
+
     # composition outside every TAS field -> classIndex = -1 (warning-print branch)
     @test computeTASclassification([5.0, 20.0]; ClassTASdata = ClassTASdata) == -1
+
+    alloc(pt, d) = @allocated computeTASclassification(pt; ClassTASdata = d)
+    alloc([52.0, 5.0], ClassTASdata)
+    @test alloc([52.0, 5.0], ClassTASdata) == 0
 end

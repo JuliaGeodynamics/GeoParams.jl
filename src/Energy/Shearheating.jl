@@ -64,7 +64,8 @@ end
 
 # Calculation routine
 @inline function compute_shearheating(s::ConstantShearheating, τ, ε, ε_el)
-    @unpack_val Χ = s
+    Tc = precision_of(τ)
+    @unpack_val Tc Χ = s
     H_s = Χ * _compute_shearheating(τ, ε, ε_el)
     return H_s
 end
@@ -179,7 +180,9 @@ function compute_shearheating(s::AbstractMaterialParamsStruct, args::Vararg{Any,
     end
 end
 
-compute_shearheating(args::Vararg{Any, N}) where {N} = compute_param(compute_shearheating, args...)
+# `τ` and `ε` are the least this can be called with: a shorter call would dispatch
+# back here through `compute_param`, since no `compute_shearheating(s, args)` exists.
+compute_shearheating(MatParam, τ, ε, args::Vararg{Any, N}) where {N} = compute_param(compute_shearheating, MatParam, τ, ε, args...)
 compute_shearheating!(args::Vararg{Any, N}) where {N} = compute_param!(compute_shearheating!, args...)
 
 end

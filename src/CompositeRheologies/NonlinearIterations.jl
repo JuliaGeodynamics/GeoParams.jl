@@ -40,7 +40,7 @@ function local_iterations_εII(
         τII_prev = τII
         @print(verbose, " iter $(iter) $ϵ")
     end
-    ϵ > tol && error("local iterations did not converge")
+    !(ϵ <= tol) && error("local iterations did not converge")
 
     @print(verbose, "final τII = $τII")
     @print(verbose, "---")
@@ -122,7 +122,7 @@ Performs local iterations versus stress for a given strain rate using AD. Throws
         τII_prev = τII
         # @print(verbose, " iter $(iter) $ϵ τII=$τII")
     end
-    ϵ > tol && error("local iterations did not converge")
+    !(ϵ <= tol) && error("local iterations did not converge")
     # @print(verbose, "final τII = $τII")
     # @print(verbose, "---")
 
@@ -206,7 +206,7 @@ Iterates until the relative change is below `tol`, and throws an error if that t
         # @print(verbose," iter $(iter) $ϵ")
 
     end
-    ϵ > tol && error("local iterations did not converge")
+    !(ϵ <= tol) && error("local iterations did not converge")
 
     # @print(verbose,"final εII = $εII")
     # @print(verbose,"---")
@@ -256,7 +256,7 @@ Performs local iterations versus pressure for a given total volumetric strain ra
 
         @print(verbose, " iter $(iter) $ϵ")
     end
-    ϵ > tol && error("local iterations did not converge")
+    !(ϵ <= tol) && error("local iterations did not converge")
 
     @print(verbose, "final p = $p")
     @print(verbose, "---")
@@ -293,7 +293,7 @@ Performs local iterations versus strain rate for a given stress. Throws an error
         εII_prev = εII
         # @print(verbose," iter $(iter) $ϵ")
     end
-    ϵ > tol && error("local iterations did not converge")
+    !(ϵ <= tol) && error("local iterations did not converge")
     # @print(verbose,"---")
 
     return εII
@@ -373,7 +373,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
     end
     @print(verbose, "---")
 
-    ϵ > tol && error("iterations did not converge")
+    !(ϵ <= tol) && error("iterations did not converge")
 
     return (x...,)
 end
@@ -453,7 +453,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         @print(verbose, " iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2])")
     end
     @print(verbose, "---")
-    ϵ > tol && error("iterations did not converge")
+    !(ϵ <= tol) && error("iterations did not converge")
 
 
     return (x...,)
@@ -477,7 +477,7 @@ end
     εII_p = x[j]
     r[1] -= εII_p
     τ_parallel, = compute_τII(elements, εII_p, args)
-    r[j] = (τ - τ_parallel) # residual (stress should be equal)
+    r[j] = τ_parallel - τ # equal stress: r = -F with F = τ - τ_parallel, whose derivatives fill J[j, 1] and J[j, j]
     J[j, j] = -dτII_dεII(elements, εII_p, args)
     J[j, 1] = 1.0
     J[1, j] = 1.0
@@ -699,7 +699,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         @print(verbose, " iter $(iter) $ϵ F=$(r[2]) τ=$(x[1]) λ=$(x[2]) P=$(x[3])")
     end
     @print(verbose, "---")
-    ϵ > tol && error("iterations did not converge")
+    !(ϵ <= tol) && error("iterations did not converge")
 
     return (x...,)
 end

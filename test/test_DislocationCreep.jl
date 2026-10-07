@@ -137,6 +137,14 @@ import GeoParams.Dislocation
         ε_test = compute_εII(p, τ, args)
         @test ε ≈ ε_test
 
+        # the same law in Float32: in SI units the prefactor reaches 1e-55 and
+        # τ^n reaches 1e39, neither of which Float32 holds, while the stresses
+        # and strain rates they relate do
+        τ32 = compute_τII(p, Float32(ε), args)
+        @test Float64(τ32) ≈ τ rtol = 1.0e-3
+        ε32 = compute_εII(p, Float32(τ), args)
+        @test Float64(ε32) ≈ ε rtol = 1.0e-3
+
         # test overriding the default values
         # a = SetDislocationCreep("Dry Anorthite | Rybacki et al. (2006)"; V=1e-6m^3 / mol)
         # @test Value(a.V) == 1e-6m^3 / mol

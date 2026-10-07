@@ -40,12 +40,13 @@ end
 
 # Calculation routine
 function (s::ConstantRadioactiveHeat)(; kwargs...)
-    @unpack_val H_r = s
+    Tc = precision_of(values(kwargs))
+    @unpack_val Tc H_r = s
 
     return H_r
 end
 
-compute_radioactive_heat(s::ConstantRadioactiveHeat; kwargs...) = s()
+compute_radioactive_heat(s::ConstantRadioactiveHeat; kwargs...) = s(; kwargs...)
 
 function (s::ConstantRadioactiveHeat)(I::Integer...)
     @unpack_val H_r = s
@@ -84,17 +85,16 @@ function param_info(s::ExpDepthDependentRadioactiveHeat) # info about the struct
 end
 
 # Calculation routines
-function (s::ExpDepthDependentRadioactiveHeat{_T})(; z::_T = zero(_T), kwargs...) where {_T}
-    @unpack_val H_0, z_0, h_r = s
+function (s::ExpDepthDependentRadioactiveHeat)(; z = 0, kwargs...)
+    Tc = precision_of(z)
+    @unpack_val Tc H_0, z_0, h_r = s
 
     H_r = H_0 * exp(-(z - z_0) / h_r)
 
     return H_r
 end
 
-function compute_radioactive_heat(
-        s::ExpDepthDependentRadioactiveHeat{_T}; z::_T = zero(_T)
-    ) where {_T}
+function compute_radioactive_heat(s::ExpDepthDependentRadioactiveHeat; z = 0)
     return s(; z = z)
 end
 
@@ -132,7 +132,7 @@ end
 # Computational routines needed for computations with the MaterialParams structure
 function compute_radioactive_heat(s::AbstractMaterialParamsStruct, args::Vararg{Any, N}) where {N}
     if isempty(s.RadioactiveHeat)
-        return 0.0  # return zero if not specified
+        return isempty(args) ? 0.0 : zero(precision_of(first(args)))  # return zero if not specified
     else
         return compute_radioactive_heat(s.RadioactiveHeat[1], args...)
     end
@@ -168,7 +168,7 @@ end
 
 Returns the radioactive heat production for the parameterization `s` (which may depend on depth `z`).
 """
-compute_radioactive_heat(args::Vararg{Any, N}) where {N} = compute_param(compute_radioactive_heat, args...)
+compute_radioactive_heat(MatParam, arg, args::Vararg{Any, N}) where {N} = compute_param(compute_radioactive_heat, MatParam, arg, args...)
 
 """
     compute_radioactive_heat!(H_r, s, args)

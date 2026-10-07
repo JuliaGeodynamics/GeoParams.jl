@@ -6,6 +6,14 @@ import GeoParams.Diffusion
 import GeoParams.Dislocation
 
 @testset "Elasticity.jl" begin
+    # every array argument is checked against the destination, the input included
+    let el = ConstantElasticity(), ε = zeros(4), τ_old = zeros(4)
+        @test_throws DimensionMismatch compute_εII!(ε, el, ones(5); τII_old = τ_old, dt = 1.0)
+        @test_throws DimensionMismatch compute_τII!(ε, el, ones(5); τII_old = τ_old, dt = 1.0)
+        @test_throws DimensionMismatch compute_εvol!(ε, el, ones(5); P_old = τ_old, dt = 1.0)
+        @test_throws DimensionMismatch compute_p!(ε, el, ones(5); P_old = τ_old, dt = 1.0)
+    end
+
 
     # This tests the MaterialParameters structure
     CharUnits_GEO = GEO_units(; viscosity = 1.0e19, length = 10km)

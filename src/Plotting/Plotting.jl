@@ -690,6 +690,7 @@ function PlotConductivity(
     li = scatterlines!(ax, ustrip.(T), ustrip.(Cond))
     if !isnothing(lbl)
         li.label = lbl
+        foreach(delete!, filter(x -> x isa Legend, fig.content))
         axislegend(ax)
     end
 
@@ -754,6 +755,7 @@ function PlotMeltFraction(
     if !isnothing(lbl)
         l1.label = lbl
         l2.label = lbl
+        foreach(delete!, filter(x -> x isa Legend, fig.content))
         axislegend(ax1)
     end
 

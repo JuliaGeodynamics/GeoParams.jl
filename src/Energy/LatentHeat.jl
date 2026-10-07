@@ -44,12 +44,13 @@ end
 
 # Calculation routine
 function (s::ConstantLatentHeat{_T})(; kwargs...) where {_T}
-    @unpack_val Q_L = s
+    Tc = precision_of(values(kwargs))
+    @unpack_val Tc Q_L = s
 
     return Q_L
 end
 
-compute_latent_heat(s::ConstantLatentHeat; kwargs...) = s()
+compute_latent_heat(s::ConstantLatentHeat; kwargs...) = s(; kwargs...)
 
 function (s::ConstantLatentHeat)(I::Integer...)
     @unpack_val Q_L = s
@@ -94,7 +95,7 @@ end
 
 Returns the latent heat for the parameterization `s`.
 """
-compute_latent_heat(args::Vararg{Any, N}) where {N} = compute_param(compute_latent_heat, args...)
+compute_latent_heat(MatParam, arg, args::Vararg{Any, N}) where {N} = compute_param(compute_latent_heat, MatParam, arg, args...)
 
 """
     compute_latent_heat!(Q_L, s, args)

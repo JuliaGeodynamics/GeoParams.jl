@@ -38,6 +38,19 @@ Indexes each array-valued field of the `NamedTuple` `args` at the indices `I`, r
     return (; zip(k, v)...)
 end
 
+# Element `i` of a keyword argument that may be given per-element or as a single
+# value shared by every element.
+@inline argument_at(x::Number, i) = x
+@inline argument_at(x, i) = x[i]
+
+# Index range for an in-place routine whose keyword arguments may each be a scalar
+# or an array. Scalars stand in for `dest`, so `eachindex` reports any array whose
+# axes do not match it.
+@inline _sized(dest, x::Number) = dest
+@inline _sized(dest, x) = x
+@inline each_argument_index(dest, args::Vararg{Any, N}) where {N} =
+    eachindex(dest, map(a -> _sized(dest, a), args)...)
+
 # fast exponential
 @inline fastpow(x::Number, n::Integer) = x^n
 
@@ -61,6 +74,32 @@ end
         fastpow(x, n)
     end
 end
+
+"""
+    retry_wider(f, y, x)
+
+`y`, unless it left the range of the type it was computed in — infinite from an
+intermediate that overflowed, or zero from one that underflowed — in which case
+`f(x)` recomputes it from a wider `x` and the result is narrowed back to `y`'s
+type.
+
+Creep laws in SI units assemble ordinary strain rates out of factors such as a
+prefactor of 1e-55 and a stress raised to `n`, which reaches 1e39: `Float32`
+holds the answer but not the way there. `Float64` is its own widening, so
+nothing is ever retried there and the branch is free.
+"""
+@inline function retry_wider(f::F, y, x) where {F}
+    W = _wider(precision_of(x))
+    W === precision_of(x) && return y
+    (isfinite(y) && (!iszero(y) || iszero(x))) && return y
+    return _narrow_like(y, f(Units.widen_precision(W, x)))
+end
+
+@inline _wider(::Type{Float16}) = Float32
+@inline _wider(::Type{Float32}) = Float64
+@inline _wider(::Type{T}) where {T} = T
+
+@inline _narrow_like(y, x) = oftype(y, x)
 
 macro pow(ex)
     substitute_walk(ex)
@@ -118,10 +157,13 @@ end
 
 @generated function nphase_ratio(f::F, phase_ratio::Union{SVector{N}, NTuple{N}}, v::NTuple{N, AbstractMaterialParamsStruct}) where {N, F}
     Base.@_inline_meta
+    N == 0 && return :(throw(ArgumentError("nphase_ratio: no phases given")))
     return quote
         @inline
-        val = 0.0
-        Base.Cartesian.@nexprs $N i -> val += @inbounds f(v[i]) * phase_ratio[i]
+        # Seed the accumulator with the first term (not `0.0`) so the result type follows
+        # the computation rather than being widened to Float64.
+        val = @inbounds f(v[1]) * phase_ratio[1]
+        Base.Cartesian.@nexprs $(N - 1) i -> val += @inbounds f(v[i + 1]) * phase_ratio[i + 1]
         return val
     end
 end

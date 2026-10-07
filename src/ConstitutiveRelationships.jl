@@ -3,11 +3,10 @@ module ConstitutiveRelationships
 # This implements constitutitive relationships (typically between stress & strainrate)
 #
 
-using Base: Float64
 using Parameters, LaTeXStrings, Unitful, MuladdMacro
 using ..Units
 using GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
-import GeoParams: param_info, fastpow, pow_check, nphase, phase_not_found, ntuple_idx, @print, @pow, ptr2string
+import GeoParams: param_info, fastpow, pow_check, retry_wider, nphase, phase_not_found, ntuple_idx, argument_at, each_argument_index, @print, @pow, ptr2string
 import GeoParams: second_invariant, second_invariant_staggered, value_and_partial, @extractors, add_extractor_functions
 using BibTeX
 using ..MaterialParameters: MaterialParamsInfo
@@ -68,7 +67,7 @@ for myType in (
         @inline compute_εvol(a::$(myType), P, args) = compute_εvol(a, P; args...)
 
         function compute_εII!(
-                ε::AbstractArray{_T, N}, s::$(myType){_T}, TauII::AbstractArray{_T, N}, args
+                ε::AbstractArray{_T, N}, s::$(myType), TauII::AbstractArray, args
             ) where {_T, N}
             return compute_εII!(ε, s, TauII; args...)
         end
@@ -82,7 +81,7 @@ for myType in (
         @inline compute_τII(a::$(myType), EpsII, args) = compute_τII(a, EpsII; args...)
         @inline compute_p(a::$(myType), EpsVol, args) = compute_p(a, EpsVol; args...)
         function compute_τII!(
-                τ::AbstractArray{_T, N}, s::$(myType){_T}, EpsII::AbstractArray{_T, N}, args
+                τ::AbstractArray{_T, N}, s::$(myType), EpsII::AbstractArray, args
             ) where {_T, N}
             return compute_τII!(τ, s, EpsII; args...)
         end

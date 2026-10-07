@@ -51,31 +51,32 @@ struct HerschelBulkley{T, U1, U2, U3} <: AbstractCreepLaw{T}
 end
 
 function compute_εII(a::HerschelBulkley, TauII; T = one(precision(a)), kwargs...)
-    η = compute_hb_viscosity_τII(a, TauII; T = T)
-    EpsII = 0.5 * TauII / η
-    return EpsII
+    return compute_hb_εII(a, TauII; T)
 end
 
 function compute_εII(a::HerschelBulkley, TauII::Quantity; T = 1K, kwargs...)
-    η = compute_hb_viscosity_τII(a, TauII; T = T)
-    EpsII = 0.5 * TauII / η
-    return EpsII
+    return compute_hb_εII(a, TauII; T)
 end
 
+dεII_dτII(a::HerschelBulkley, TauII; T = one(precision(a)), kwargs...) = value_and_partial(τ -> compute_εII(a, τ; T), TauII)[2]
+dτII_dεII(a::HerschelBulkley, EpsII; T = one(precision(a)), kwargs...) = value_and_partial(ε -> compute_τII(a, ε; T), EpsII)[2]
+
 """
-    compute_εII!(EpsII::AbstractArray{T, N}, a::HerschelBulkley, TauII::AbstractArray{T, N}; T = ones(size(TauII)), kwargs...)
+    compute_εII!(EpsII::AbstractArray{_T, N}, a::HerschelBulkley, TauII::AbstractArray; T = one(_T), kwargs...)
 
 In-place function for the second invariant of the strain rate for Herschel-Bulkley rheology.
+
+`T` may be a scalar, applied to every element, or an array indexed alongside `TauII`.
 """
 function compute_εII!(
         EpsII::AbstractArray{_T, N},
         a::HerschelBulkley,
-        TauII::AbstractArray{_T, N};
-        T = ones(size(TauII))::AbstractArray{_T, N},
+        TauII::AbstractArray;
+        T = one(_T),
         kwargs...,
     ) where {_T, N}
-    @inbounds for i in eachindex(EpsII)
-        EpsII[i] = compute_εII(a, TauII[i]; T = T[i])
+    for i in each_argument_index(EpsII, TauII, T)
+        EpsII[i] = compute_εII(a, convert_precision(_T, TauII[i]); T = argument_at(T, i))
     end
 
     return nothing
@@ -98,19 +99,21 @@ function compute_τII(a::HerschelBulkley, EpsII::Quantity; T = 1K, kwargs...)
 end
 
 """
-    compute_τII!(TauII::AbstractArray{T, N}, a::HerschelBulkley, EpsII::AbstractArray{T, N}; T = ones(size(EpsII)), kwargs...)
+    compute_τII!(TauII::AbstractArray{_T, N}, a::HerschelBulkley, EpsII::AbstractArray; T = one(_T), kwargs...)
 
 In-place function for the second invariant of the stress for Herschel-Bulkley rheology.
+
+`T` may be a scalar, applied to every element, or an array indexed alongside `EpsII`.
 """
 function compute_τII!(
         TauII::AbstractArray{_T, N},
         a::HerschelBulkley,
-        EpsII::AbstractArray{_T, N};
-        T = ones(size(EpsII)),
+        EpsII::AbstractArray;
+        T = one(_T),
         kwargs...,
     ) where {_T, N}
-    @inbounds for i in eachindex(TauII)
-        TauII[i] = compute_τII(a, EpsII[i]; T = T[i])
+    for i in each_argument_index(TauII, EpsII, T)
+        TauII[i] = compute_τII(a, convert_precision(_T, EpsII[i]); T = argument_at(T, i))
     end
 
     return nothing
@@ -123,89 +126,85 @@ end
 function to compute the viscosity if EpsII is given
 """
 @inline function compute_hb_viscosity_εII(v::HerschelBulkley, εII; T = 1.0, kwargs...)
-    η0, τ0, ηr, Q, Tr = if εII isa Quantity
-        @unpack_units η0, τ0, ηr, Q, Tr = v
-        η0, τ0, ηr, Q, Tr
-    else
-        @unpack_val η0, τ0, ηr, Q, Tr = v
-        η0, τ0, ηr, Q, Tr
-    end
-    (; n) = v
+    Tc = precision_of(εII)
+    T = convert_precision(Tc, T)
+    @unpack_like εII Tc η0, τ0, ηr, Q, Tr = v
+    n = convert_precision(Tc, v.n)
 
     ηT = ηr * exp(Q * (1 / T - 1 / Tr)) # temperature dependence
-    εr = 0.5 * τ0 / η0 # strain rate at which the Bingham yield stress is reached, this is defined as the reference strain rate
-    η = @pow (1.0 - exp(-2.0 * η0 * εII / τ0)) * (0.5 * τ0 / εII + ηT * (εII / εr)^(one(n) / n - 1))
+    εr = τ0 / (2 * η0) # strain rate at which the Bingham yield stress is reached, this is defined as the reference strain rate
+    # in x = εII / εr: the form τ0 / (2εII) has the derivative τ0 / (2εII²), which overflows Float32
+    x = εII / εr
+    # x → 0 is the limit η → η0
+    ForwardDiff.value(x) == 0 && return η0 * one(x)
+    η = @pow (-expm1(-x)) * (η0 / x + ηT * x^(inv(n) - 1))
     return η
 end
 
 
 """
-compute_hb_viscosity_τII(a::HerschelBulkley, EpsII; T = one(precision(a)), kwargs...)
+    compute_hb_viscosity_τII(a::HerschelBulkley, TauII; T = one(precision(a)), kwargs...)
 
 function to compute the viscosity if TauII is given
 """
-
 @inline function compute_hb_viscosity_τII(v::HerschelBulkley, τII; T = one(precision(v)), kwargs...)
+    return compute_hb_viscosity_εII(v, compute_hb_εII(v, τII; T); T)
+end
+
+"""
+    compute_hb_εII(a::HerschelBulkley, TauII; T = one(precision(a)), kwargs...)
+
+Strain rate for a given stress, by Newton iteration.
+"""
+@inline function compute_hb_εII(v::HerschelBulkley, τII; T = one(precision(v)), kwargs...)
+    Tc = precision_of(τII)
+    T = convert_precision(Tc, T)
 
     η0, τ0, ηr, Q, Tr = if τII isa Quantity
-        @unpack_units η0, τ0, ηr, Q, Tr = v
+        @unpack_units Tc η0, τ0, ηr, Q, Tr = v
         η0, τ0, ηr, Q, Tr
     else
-        @unpack_val η0, τ0, ηr, Q, Tr = v
+        @unpack_val Tc η0, τ0, ηr, Q, Tr = v
         T = ustrip(T)
         η0, τ0, ηr, Q, Tr
     end
-    (; n) = v
+    n = convert_precision(Tc, v.n)
 
     ηT = ηr * exp(Q * (1 / T - 1 / Tr))
-    εr = 0.5 * τ0 / η0
+    εr = τ0 / (2 * η0)
 
-    # initial guess
-    η = if τII < τ0
-        η0
-    elseif τII == τ0
-        (1 - exp(-one(η0))) * (η0 + ηT)
-    else
-        @pow (ηT / (1 - τ0 / τII))^n * (τII / (2 * εr))^(1 - n)
-    end
+    # Solved for x = εII / εr, in which every term is O(1): in εII the Newton derivatives
+    # reach 1e42 for laboratory parameters and overflow Float32. The ratios are unitless,
+    # so ForwardDiff never sees Quantity{Dual} types.
+    # the Newton derivative is 0 * Inf at x = 0; below yield ε ≈ τII / 2η0, exact at zero
+    ForwardDiff.value(ustrip(τII)) == 0 && return τII / (2 * η0)
+    τ̃ = ustrip(τII / τ0)
+    ηratio = ustrip(ηT / η0)
 
-    εII = 0.5 * τII / η
-    εII_unit = τII isa Quantity ? unit(εII) : one(εII)
+    # residual 2ηεII / τ0 - τII / τ0, with η = (1 - exp(-x)) (η0 / x + ηT x^(1/n - 1))
+    fres(x) = (-expm1(-x)) * (1 + ηratio * x^inv(n)) - τ̃
 
-    # strip ALL quantities to plain floats before Newton iteration
-    # so that ForwardDiff never sees Quantity{Dual} types
-    τII_s = ustrip(τII)
-    η0_s = ustrip(η0)
-    τ0_s = ustrip(τ0)
-    ηT_s = ustrip(ηT)
-    εr_s = ustrip(εr)
-    εII_s = ustrip(εII)
+    # initial guess: below yield η ≈ η0, above it the power-law branch 1 + ηratio x^(1/n) ≈ τ̃,
+    # offset by τ̃ so that the guess at the yield stress is not x = 0, where the residual is singular
+    x = τ̃ < 1 ? τ̃ * one(ηratio) : τ̃ + ((τ̃ - 1) / ηratio)^n
 
-    tol = 1.0e-10
+    # the residual cancels to the last bits of τ̃ near the root, so the step stalls a few
+    # eps above zero; √eps is the step whose quadratic convergence puts the answer at that level
+    tol = sqrt(eps(Tc))
     it_max = 100
-
     for _ in 1:it_max
-        f, dfdε = value_and_partial(
-            ε -> fres_hb(ε, τII_s, η0_s, τ0_s, ηT_s, n, εr_s),  # all plain floats
-            εII_s
-        )
-        Δε = f / dfdε
-        εII_s -= Δε
-        abs(Δε) / (abs(εII_s) + eps(typeof(εII_s))) < tol && break
+        f, dfdx = value_and_partial(fres, x)
+        Δx = f / dfdx
+        x -= Δx
+        if abs(Δx) < tol * abs(x)
+            # one more step: the derivatives carried by a Dual x converge one iteration
+            # behind its value
+            f, dfdx = value_and_partial(fres, x)
+            return (x - f / dfdx) * εr
+        end
     end
-
-    εII = εII_s * εII_unit
-    η = @pow (1.0 - exp(-2.0 * η0 * εII / τ0)) * (0.5 * τ0 / εII + ηT * (εII / εr)^(one(n) / n - 1))
-
-    return η
+    return error("compute_hb_εII: iterations did not converge")
 end
-
-# non-dimensional residual
-function fres_hb(εII::Number, τII::Number, η0::Number, τ0::Number, ηT::Number, n::Number, εr::Number)
-    η = @pow (1.0 - exp(-2.0 * η0 * εII / τ0)) * (0.5 * τ0 / εII + ηT * (εII / εr)^(one(n) / n - 1))
-    return 2.0 * η * εII - τII
-end
-
 
 # print info
 function show(io::IO, g::HerschelBulkley)

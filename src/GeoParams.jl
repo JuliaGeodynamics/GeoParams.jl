@@ -148,6 +148,7 @@ export second_invariant, second_invariant_staggered, rotate_elastic_stress
 include("Units.jl")
 using .Units
 export @unpack_units, @unpack_val
+export precision_of, convert_precision
 export compute_units, udim
 
 include("Interpolations.jl")

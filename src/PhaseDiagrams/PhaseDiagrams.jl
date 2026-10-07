@@ -251,7 +251,7 @@ end
 
 # Internal routine that creates an interpolation object from a column of the data
 function CreateInterpolationObject_PhaseDiagram(
-        data_vec::AbstractArray{Float64, 1}, T0, dT, numT, Tmax, P0, dP, numP, Pmax, siz::Tuple{Int64, Int64}, units, CharDim
+        data_vec::AbstractVector, T0, dT, numT, Tmax, P0, dP, numP, Pmax, siz::Tuple{Int64, Int64}, units, CharDim
     )
     data_units = reshape(data_vec, siz) * units      # Create 2D array
 
