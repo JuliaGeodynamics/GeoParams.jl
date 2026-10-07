@@ -414,21 +414,27 @@ Melt fraction parameterisation that takes the assimilation of crustal host rocks
 
 Here, the fraction of molten and assimilated host rocks ``\\phi`` depends on the solidus (``T_s``) and liquidus (``T_l``) temperatures of the rocks, as well as on a parameter ``a=0.005``
 ```math
-    X = \\frac{T - T_s}{T_l - T_s}
+    X = \\frac{T - T_s}{T_l - T_s}, \\qquad k = 2 \\ln\\left(1 + \\frac{1}{2a}\\right)
 ```
 ```math
-    \\phi = a \\cdot \\left( \\exp^{2ln(100)X} - 1.0 \\right) \\textrm{ if } X ≤ 0.5
+    \\phi = a \\left( e^{kX} - 1 \\right) \\textrm{ if } X ≤ 0.5
 ```
 ```math
-    \\phi = 1- a \\cdot \\exp^{2ln(100)(1-X)}  \\textrm{ if } X > 0.5
+    \\phi = 1 - a \\left( e^{k(1-X)} - 1 \\right) \\textrm{ if } X > 0.5
 ```
 ```math
-    \\phi = 1.0 \\textrm{ if } T>T_l
+    \\phi = 1 \\textrm{ if } T>T_l
 ```
 ```math
-    \\phi = 0.0 \\textrm{ if } T<T_s
+    \\phi = 0 \\textrm{ if } T<T_s
 ```
 Temperature `T` is in Kelvin.
+
+The exponent ``k`` is chosen such that both branches reach ``\\phi = 0.5`` at ``X = 0.5``, so ``\\phi`` is continuous for every ``a > 0``:
+``\\phi(T_s) = 0``, ``\\phi(T_l) = 1``, and at the midpoint both the value and the slope of the two branches agree.
+The two branches are point-symmetric about ``(X, \\phi) = (0.5, 0.5)``.
+The slope ``d\\phi/dT`` is ``a k / (T_l - T_s)`` just inside ``T_s`` and ``T_l`` and zero outside, so it is discontinuous there; wrap the law in [`SmoothMelting`](@ref) when a continuous ``d\\phi/dT`` is required (e.g. apparent heat capacity in nonlinear solvers).
+For ``a = 0.005``, ``k = 2 \\ln(101)``, and ``\\phi`` differs by at most 0.005 from the form ``\\phi = a(e^{2\\ln(100)X} - 1)``, ``\\phi = 1 - a e^{2\\ln(100)(1-X)}`` given by Tierney et al. (2016), which is discontinuous at ``X = 0.5`` and at ``T_l``.
 
 ![MeltingParam_Assimilation](./assets/img/MeltingParam_Assimilation.png)
 
@@ -462,17 +468,18 @@ function (p::MeltingParam_Assimilation)(; T, kwargs...)
     @unpack_val T_s, T_l, a = p
 
     X = (T - T_s) / (T_l - T_s)
+    k = 2 * log(1 + 1 / (2 * a))   # a * (exp(k / 2) - 1) == 1 / 2
 
     if X <= 0.5
-        ϕ = a * (exp(2 * log(100) * X) - 1.0)
+        ϕ = a * (exp(k * X) - 1)
     else
-        ϕ = 1.0 - a * exp(2 * log(100) * (1 - X))
+        ϕ = 1 - a * (exp(k * (1 - X)) - 1)
     end
     if p.apply_bounds
         if T > T_l
-            ϕ = 1.0
+            ϕ = one(ϕ)
         elseif T < T_s
-            ϕ = 0.0
+            ϕ = zero(ϕ)
         end
     end
     return ϕ
@@ -481,27 +488,18 @@ end
 function compute_dϕdT(p::MeltingParam_Assimilation; T, kwargs...)
     @unpack_val T_s, T_l, a = p
 
-    X = (T - T_s) / (T_l - T_s)
-    dϕdT =
-        (
-        9.210340371976184 *
-            a *
-            exp((9.210340371976184 * T - 9.210340371976184 * T_s) / (T_l - T_s))
-    ) / (T_l - T_s)
-    if X > 0.5
-        dϕdT =
-            (
-            9.210340371976184 *
-                a *
-                exp(
-                9.210340371976184 +
-                    (9.210340371976184 * T_s - 9.210340371976184 * T) / (T_l - T_s),
-            )
-        ) / (T_l - T_s)
+    ΔT = T_l - T_s
+    X = (T - T_s) / ΔT
+    k = 2 * log(1 + 1 / (2 * a))
+
+    if X <= 0.5
+        dϕdT = a * k * exp(k * X) / ΔT
+    else
+        dϕdT = a * k * exp(k * (1 - X)) / ΔT
     end
 
     if p.apply_bounds && (T > T_l || T < T_s)
-        dϕdT = 0.0
+        dϕdT = zero(dϕdT)
     end
     return dϕdT
 end

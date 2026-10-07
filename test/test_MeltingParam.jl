@@ -156,10 +156,52 @@ using LaTeXStrings
     @test param_info(p).Equation === L"$\phi = f(T_S,T_l,a) taking crustal assimilation into account.$"
     @test sprint(show, p) == "Quadratic melting assimilation parameterisation after Spera & Bohrson (2001)"
     compute_meltfraction!(phi_dim, p, args)
-    @test sum(phi_dim) ≈ 4.995
+    @test sum(phi_dim) ≈ 5.0    # ϕ(X) + ϕ(1 - X) = 1
     dϕdT_dim = zeros(size(T))
     compute_dϕdT!(dϕdT_dim, p, args)
-    @test sum(abs.(dϕdT_dim)) ≈ 0.004605170185988078
+    @test sum(abs.(dϕdT_dim)) ≈ 0.004638138717073775
+
+    @testset "MeltingParam_Assimilation continuity and derivative" begin
+        for a in (0.005, 0.05, 0.2)
+            pa = MeltingParam_Assimilation(; a = a * NoUnits)
+            T_s, T_l = 973.15, 1173.15
+            T_m = (T_s + T_l) / 2
+            ϕ(T) = compute_meltfraction(pa, (; T))
+            dϕ(T) = compute_dϕdT(pa, (; T))
+            δ = 1.0e-7
+            # continuous at the solidus, the midpoint and the liquidus
+            @test ϕ(T_s) == 0
+            @test ϕ(T_s + δ) ≈ 0 atol = 1.0e-8
+            @test ϕ(T_m) ≈ 0.5
+            @test ϕ(T_m - δ) ≈ ϕ(T_m + δ) atol = 1.0e-8
+            @test ϕ(T_l) ≈ 1
+            @test ϕ(T_l - δ) ≈ 1 atol = 1.0e-8
+            @test ϕ(T_l + δ) == 1
+            # slope matches across the midpoint
+            @test dϕ(T_m - δ) ≈ dϕ(T_m + δ) rtol = 1.0e-6
+            # monotonic and bounded
+            ϕv = ϕ.(range(T_s - 10, T_l + 10; length = 1001))
+            @test all(diff(ϕv) .>= 0)
+            @test all(0 .<= ϕv .<= 1)
+            # analytical derivative vs central finite difference, away from the kinks at T_s, T_m, T_l
+            h = 1.0e-4
+            for T in range(T_s + 1, T_l - 1; length = 401)
+                abs(T - T_m) < 2h && continue
+                @test dϕ(T) ≈ (ϕ(T + h) - ϕ(T - h)) / (2h) rtol = 1.0e-6
+            end
+            @test dϕ(T_s - 1) == 0
+            @test dϕ(T_l + 1) == 0
+        end
+
+        # Float32 parameters and temperature give Float32 results
+        p32 = MeltingParam_Assimilation(; T_s = 973.15f0K, T_l = 1173.15f0K, a = 0.005f0NoUnits)
+        for T in (900.0f0, 1000.0f0, 1073.15f0, 1100.0f0, 1200.0f0)
+            @test @inferred(compute_meltfraction(p32, (; T))) isa Float32
+            @test @inferred(compute_dϕdT(p32, (; T))) isa Float32
+            @test compute_meltfraction(p32, (; T)) ≈ compute_meltfraction(p, (; T = Float64(T))) rtol = 1.0e-5
+            @test compute_dϕdT(p32, (; T)) ≈ compute_dϕdT(p, (; T = Float64(T))) rtol = 1.0e-5 atol = 1.0e-10
+        end
+    end
     #------------------------------
 
     #------------------------------
