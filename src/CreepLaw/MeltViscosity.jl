@@ -206,8 +206,9 @@ end
 function viscosity_correction(c_vf, Strain_Rate)
     Tc = precision_of(Strain_Rate)
     c_vf = convert_precision(Tc, c_vf)
-    strain_rate = Strain_Rate + (Strain_Rate < eps(Tc)) * Tc(1.0e-6)
-    θ = log10(strain_rate)
+    # The tanh fits saturate long before floatmin; the floor keeps log10 finite
+    # at zero strain rate, so its derivative there is zero instead of NaN.
+    θ = log10(max(Strain_Rate, floatmin(Tc)))
     ϕ_max = Tc(0.066499) * tanh(Tc(0.913424) * θ + Tc(3.850623)) + Tc(0.591806)
     δ = Tc(-6.301095) * tanh(Tc(0.818496) * θ + Tc(2.86)) + Tc(7.462405)
     α = Tc(-0.000378) * tanh(Tc(1.148101) * θ + Tc(3.92)) + Tc(0.999572)
@@ -425,7 +426,7 @@ end
 function calculate_BT_CT(oxd_wt, MW, bb, cc)
     tmp = ntuple(i -> oxd_wt[i], Val(8))
     sum_oxd_wt = sum(tmp)
-    α = (100.0 - oxd_wt[9]) / sum_oxd_wt
+    α = (100 - oxd_wt[9]) / sum_oxd_wt
     oxd_wt_norm = (
         @.(tmp * α)...,
         oxd_wt[9],
@@ -443,7 +444,7 @@ function calculate_BT_CT(oxd_wt, MW, bb, cc)
     b4 = oxd_mol[5]
     b5 = oxd_mol[6]
     b6 = oxd_mol[7] + oxd_mol[9]
-    b7 = oxd_mol[9] + log(1.0 + oxd_mol[9])
+    b7 = oxd_mol[9] + log(1 + oxd_mol[9])
     b12 = siti * fmm
     b13 = (siti + oxd_mol[3]) * (nak + oxd_mol[9])
     b14 = oxd_mol[3] * nak
@@ -476,9 +477,9 @@ end
     mH2O = convert_precision(Tc, mH2O)
     @unpack_like T Tc AT, BT, CT, η0 = a
     if mH2O != convert_precision(Tc, a.oxd_wt[9] / 100)
-        oxd_wt = oxd_wt = a.oxd_wt[1:8]..., 100 * mH2O
-        bb, cc = T isa Quantity ? (unpack_units(a.bb), unpack_units(a.cc)) : (unpack_vals(a.bb), unpack_vals(a.cc))
-        BT, CT = calculate_BT_CT(oxd_wt, a.MW, bb, cc)
+        oxd_wt = convert_precision(Tc, (a.oxd_wt[1:8]..., 100 * mH2O))
+        bb, cc = T isa Quantity ? (unpack_units(a.bb), unpack_units(a.cc)) : (unpack_vals(Tc, a.bb), unpack_vals(Tc, a.cc))
+        BT, CT = calculate_BT_CT(oxd_wt, convert_precision(Tc, a.MW), bb, cc)
     end
     return η0 * exp10(max(-6, AT + BT / (T - CT)))
 end
