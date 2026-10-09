@@ -1,7 +1,7 @@
 name = "GeoParams"
 uuid = "e018b62d-d9de-4a26-8697-af89c310ae38"
 authors = ["Boris Kaus <kaus@uni-mainz.de>, Albert De Montserrat <albertdemontserratnavarro@erdw.ethz.ch>"]
-version = "0.9.0"
+version = "0.9.1"
 
 [deps]
 Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
@@ -28,11 +28,15 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [weakdeps]
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+Metal = "dde4c033-4e86-420c-a63e-0dd931031962"
 
 [extensions]
 GeoParamsMakieExt = "Makie"
+GeoParamsMetalExt = "Metal"
 
 [compat]
+AMDGPU = "1, 2"
+CUDA = "5, 6"
 Adapt = "4.4.0"
 Aqua = "0.8"
 BibTeX = "0.1"
@@ -47,6 +51,7 @@ LaTeXStrings = "1.2"
 LinearAlgebra = "1.0"
 Loess = "0.5, 0.6"
 Makie = "0.21 - 0.24"
+Metal = "1"
 MuladdMacro = "0.2.4"
 Parameters = "0.12, 0.13"
 ParallelTestRunner = "2.8"
@@ -65,6 +70,9 @@ Unitful = "1.0"
 julia = "1.10"
 
 [extras]
+AMDGPU = "21141c5a-9bdb-4563-92ae-f87d6854732e"
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+Metal = "dde4c033-4e86-420c-a63e-0dd931031962"
 DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
@@ -76,4 +84,4 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 ParallelTestRunner = "d3525ed8-44d0-4b2c-a655-542cee43accc"
 
 [targets]
-test = ["Aqua", "CairoMakie", "DifferentiationInterface", "JET", "ReverseDiff", "Statistics", "Test", "ParallelTestRunner"]
+test = ["AMDGPU", "Aqua", "CUDA", "Metal", "CairoMakie", "DifferentiationInterface", "JET", "ReverseDiff", "Statistics", "Test", "ParallelTestRunner"]

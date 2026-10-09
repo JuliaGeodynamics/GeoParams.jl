@@ -3,6 +3,7 @@ module MeltingParam
 # If you want to add a new method here, feel free to do so.
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
+using Adapt
 using Parameters, LaTeXStrings, Unitful, ForwardDiff, MuladdMacro
 using SpecialFunctions: erfc
 using ..Units
@@ -31,7 +32,6 @@ export compute_meltfraction,
     Vector_MeltingParam,
     SmoothMelting
 
-include("../Utils.jl")
 include("../Computations.jl")
 
 # Caricchi  -------------------------------------------------------
@@ -536,7 +536,9 @@ Stores a vector with melt fraction that can be retrieved by providing an `index`
 struct Vector_MeltingParam{_T, V <: AbstractVector} <: AbstractMeltingParam{_T}
     ϕ::V       # melt fraction
 end
-Vector_MeltingParam(; ϕ = Vector{Float64}()) = Vector_MeltingParam{eltype(ϕ), typeof(ϕ)}(ϕ)
+Adapt.@adapt_structure Vector_MeltingParam
+Vector_MeltingParam(ϕ::AbstractVector) = Vector_MeltingParam{eltype(ϕ), typeof(ϕ)}(ϕ)
+Vector_MeltingParam(; ϕ = Vector{Float64}()) = Vector_MeltingParam(ϕ)
 
 function param_info(s::Vector_MeltingParam) # info about the struct
     return MaterialParamsInfo(; Equation = L"\phi from a precomputed vector")

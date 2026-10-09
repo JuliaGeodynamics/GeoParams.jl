@@ -5,6 +5,7 @@ module HeatCapacity
 # If you want to add a new method here, feel free to do so.
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
+using Adapt
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using ..PhaseDiagrams
@@ -167,7 +168,9 @@ Stores a vector with heat capacity data that can be retrieved by providing an `i
 struct Vector_HeatCapacity{_T, V <: AbstractVector} <: AbstractHeatCapacity{_T}
     Cp::V       # Heat capacity
 end
-Vector_HeatCapacity(; Cp = Vector{Float64}()) = Vector_HeatCapacity{eltype(Cp), typeof(Cp)}(Cp)
+Adapt.@adapt_structure Vector_HeatCapacity
+Vector_HeatCapacity(Cp::AbstractVector) = Vector_HeatCapacity{eltype(Cp), typeof(Cp)}(Cp)
+Vector_HeatCapacity(; Cp = Vector{Float64}()) = Vector_HeatCapacity(Cp)
 
 function param_info(s::Vector_HeatCapacity) # info about the struct
     return MaterialParamsInfo(; Equation = L"Cp from a precomputed vector")

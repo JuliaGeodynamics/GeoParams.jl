@@ -34,6 +34,32 @@ an ordinary `Float32`. Such laws recompute in `Float64` when their `Float32` res
 overflows or underflows, and return the answer as `Float32`. Nondimensionalized laws
 (see [Nondimensionalization](@ref)) stay within range and never take this path.
 
+Devices without `Float64` support, such as Metal, cannot receive the stored `Float64`
+parameters at all. Convert the laws, or the phases' `MaterialParams`, once on the host
+before passing them to a kernel:
+
+```julia
+phases32 = convert_precision(Float32, phases)   # a tuple of MaterialParams
+```
+
+Loading Metal activates an extension that disables the `Float64` recomputation
+described above inside Metal kernels, so a `Float32` result that leaves the range is
+returned as `Inf` or `0` there, and prints a reminder of the workflow below.
+Nondimensionalize the laws before converting them: nondimensional parameters and
+intermediates stay within the `Float32` range, whereas SI creep-law prefactors such as
+`1e-55` do not.
+
+```julia
+phases32 = convert_precision(Float32, nondimensionalize(phases, GEO_units()))
+```
+
+The seismic-velocity corrections (`melt_correction`, `melt_correction_Takei`,
+`porosity_correction`, `anelastic_correction`) and `find_Xco2` run on the host only.
+
+`GEO_units` and `SI_units` choose the characteristic amount of substance so that the
+gas constant is 1. Activation energies then appear in units of `R` times the
+characteristic temperature, and molar masses stay within the `Float32` range.
+
 ```@docs
 precision_of
 convert_precision

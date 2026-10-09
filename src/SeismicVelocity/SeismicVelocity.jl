@@ -12,6 +12,7 @@ using ..MaterialParameters: MaterialParamsInfo
 using Statistics
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 using GeoParams: LinearInterpolator, interpolate
+using GeoParams: fastpow, pow_check, @pow
 
 using Roots
 import Base.show, GeoParams.param_info
@@ -28,7 +29,6 @@ export compute_wave_velocity, # calculation routines
     correct_wavevelocities_phasediagrams,
     melt_correction_Takei
 
-include("../Utils.jl")
 include("../Computations.jl")
 
 # Constant Velocity -------------------------------------------------------
@@ -61,7 +61,7 @@ function compute_wave_velocity(s::ConstantSeismicVelocity; wave, kwargs...)
     wave === :Vp && return Vp
     wave === :Vs && return Vs
     wave === :VpVs && return Vp / Vs
-    throw(ArgumentError("`wave` must be :Vp, :Vs or :VpVs, got $(repr(wave))"))
+    throw(ArgumentError("`wave` must be :Vp, :Vs or :VpVs"))  # static: interpolation does not compile in GPU kernels
 end
 
 # Print info
@@ -235,7 +235,8 @@ function melt_correction(
     Vp_cor = Vp0 - ΔVp * Vp0
     Vs_cor = Vs0 - Vs0 * ΔVs
 
-    return Vp_cor, Vs_cor
+    # ponytail: the Takei fits use Float64 literals throughout; host-only (phase-diagram post-processing), so narrow at the end rather than on every literal
+    return _T(Vp_cor), _T(Vs_cor)
 end
 
 """
