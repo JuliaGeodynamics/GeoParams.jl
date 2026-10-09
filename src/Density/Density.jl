@@ -5,6 +5,7 @@ module Density
 # If you want to add a new method here, feel free to do so.
 # Remember to also export the function name in GeoParams.jl (in addition to here)
 
+using Adapt
 using Parameters, Unitful, LaTeXStrings, MuladdMacro
 using ..Units
 using ..PhaseDiagrams
@@ -722,7 +723,7 @@ function compute_XMW_norm_MP(oxd_wt, MW)
 
     tmp = ntuple(i -> oxd_wt[i], Val(9))
     # Normalize original wt% values to 100% sum
-    norm_WP = tmp ./ sum(tmp) .* 100.0
+    norm_WP = tmp ./ sum(tmp) .* 100
 
     # Divide normalized wt% values by molecular weights
     part_MP = norm_WP ./ MW
@@ -791,7 +792,9 @@ Stores a vector with density data that can be retrieved by providing an `index`
 struct Vector_Density{_T, V <: AbstractVector} <: AbstractDensity{_T}
     rho::V       # Density
 end
-Vector_Density(; rho = Vector{Float64}()) = Vector_Density{eltype(rho), typeof(rho)}(rho)
+Adapt.@adapt_structure Vector_Density
+Vector_Density(rho::AbstractVector) = Vector_Density{eltype(rho), typeof(rho)}(rho)
+Vector_Density(; rho = Vector{Float64}()) = Vector_Density(rho)
 
 # This assumes that density always has a single parameter. If that is not the case, we will have to extend this (to be done)
 function param_info(s::Vector_Density) # info about the struct

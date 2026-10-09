@@ -25,6 +25,12 @@ end
 # Make LinearInterpolator adaptable for GPU arrays
 Adapt.@adapt_structure LinearInterpolator
 
+# Converted along with the material law that holds it (see `convert_precision`):
+# grid values and table become the target float type, knot counts stay integers.
+import ..Units: _field_precision
+_field_precision(::Type{T}, x::LinearInterpolator) where {T} =
+    LinearInterpolator(ntuple(i -> _field_precision(T, getfield(x, i)), Val(fieldcount(typeof(x))))...)
+
 
 """
     lerp(a, b, t)
