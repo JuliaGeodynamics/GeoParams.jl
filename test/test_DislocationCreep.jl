@@ -176,3 +176,18 @@ import GeoParams.Dislocation
     τ_dim = compute_τII(v_named, 1.0e-15 / s, (; T = 1273.15K, P = 1.0e9Pa))
     @test τ_dim isa Quantity
 end
+
+# Lusk et al. (2021), Table 2: ε = A σⁿ f^r exp(-(Q + PV)/RT) with σ, f, P in MPa;
+# GeoParams takes the second invariant, so σ and ε go through FT and FE.
+@testset "Lusk et al. (2021) parameters" begin
+    σ, T, P, fH2O = 100.0, 623.15, 300.0, 42.0
+    for (law, logA, n, r, Q, V) in (
+            (Dislocation.lowP_wet_quartzite_Lusk_2021, -9.30, 3.5, 0.49, 118.0e3, 2.59),
+            (Dislocation.wet_quartzite_Lusk_2021, -6.36, 2.1, 0.20, 94.0e3, 1.44),
+            (Dislocation.highP_wet_quartzite_Lusk_2021, -7.90, 2.0, 0.49, 77.0e3, 2.59),
+        )
+        p = SetDislocationCreep(law)
+        ε = compute_εII(p, σ * 1.0e6 / p.FT; T, P = P * 1.0e6, f = fH2O * 1.0e6) * p.FE
+        @test ε ≈ 10^logA * σ^n * fH2O^r * exp(-(Q + V * P) / (NumValue(p.R) * T)) rtol = 1.0e-6
+    end
+end
