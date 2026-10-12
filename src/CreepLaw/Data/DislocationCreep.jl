@@ -1148,8 +1148,8 @@ function lowP_wet_quartzite_Lusk_2021()
     #  Lusk et al. (2021), abstract, 1st law
     data = DislocationCreep(;
         Name = "low pressure wet Quartzite | Lusk et al. (2021)",
-        n = -3.99NoUnits,
-        A = (10^-9.3)MPa^(-7 // 2) / s,
+        n = 3.5NoUnits,
+        A = (10^-9.3)MPa^(-399 // 100) / s,
         E = 118.0kJ / mol,
         V = 2.59e-6m^3 / mol,
         r = 0.49NoUnits,
@@ -1178,7 +1178,7 @@ function wet_quartzite_Lusk_2021()
     data = DislocationCreep(;
         Name = "Wet Quartzite | Lusk et al. (2021)",
         n = 2.1NoUnits,
-        A = (10^-7.9)MPa^(-249 // 100) / s,
+        A = (10^-6.36)MPa^(-23 // 10) / s,
         E = 94.0kJ / mol,
         V = 1.44e-6m^3 / mol,
         r = 0.2NoUnits,
@@ -1208,7 +1208,7 @@ function highP_wet_quartzite_Lusk_2021()
     data = DislocationCreep(;
         Name = "high pressure wet Quartzite | Lusk et al. (2021)",
         n = 2.0NoUnits,
-        A = (10^-6.36)MPa^(-23 // 10) / s,
+        A = (10^-7.9)MPa^(-249 // 100) / s,
         E = 77.0kJ / mol,
         V = 2.59e-6m^3 / mol,
         r = 0.49NoUnits,

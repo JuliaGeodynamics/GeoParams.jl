@@ -103,6 +103,7 @@ using GeoParams
     @test [melt_correction_Takei(2.49, 79.44, 41.67, 1000.0, 3033.0, 6.67, 3.71, 0.2, 0.5)...] ≈ [3.1819, 5.6347] atol = 1.0e-4
     @test [melt_correction_Takei(12.96f0, 79.44f0, 41.67f0, 2220.0f0, 3033.0f0, 6.67f0, 3.71f0, 0.2f0, 0.5f0)...] ≈ [3.0326f0, 5.6144f0] atol = 1.0f-3
     @test melt_correction_Takei(12.96f0, 79.44f0, 41.67f0, 2220.0f0, 3033.0f0, 6.67f0, 3.71f0, 0.2f0, 0.5f0) isa NTuple{2, Float32}
+    @test melt_correction(12.96f0, 79.44f0, 41.67f0, 2220.0f0, 3033.0f0, 6.67f0, 3.71f0, 0.2f0, 0.5f0) isa NTuple{2, Float32}
 
     # ConstantSeismicVelocity vararg constructor
     x_vararg = ConstantSeismicVelocity(8100m / s, 4500m / s)

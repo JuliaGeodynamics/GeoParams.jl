@@ -532,6 +532,7 @@ function GEO_units(; length = 1000km, temperature = 1000C, stress = 10MPa, visco
     Le_SI = uconvert(m, Le)
     Sigma_SI = uconvert(Pa, Sigma)
     Time_SI = Eta / Sigma_SI
+    Amount_SI = upreferred(float(Sigma_SI) * float(Le_SI)^3 / (Unitful.R * T_SI))   # gas constant becomes 1
     t = uconvert(Myr, Time_SI)
 
     return GeoUnits{GEO}(;
@@ -544,6 +545,7 @@ function GEO_units(; length = 1000km, temperature = 1000C, stress = 10MPa, visco
         K = T_SI,
         Pa = Sigma_SI,
         s = Time_SI,
+        Amount = Amount_SI,
     )
 end
 
@@ -596,6 +598,7 @@ function SI_units(; length = 1000m, temperature = 1000K, stress = 10Pa, viscosit
     Le_SI = uconvert(m, Le)
     Sigma_SI = uconvert(Pa, Sigma)
     Time_SI = Eta / Sigma_SI
+    Amount_SI = upreferred(float(Sigma_SI) * float(Le_SI)^3 / (Unitful.R * T_SI))   # gas constant becomes 1
     t = uconvert(s, Time_SI)
 
     return GeoUnits{SI}(;
@@ -608,6 +611,7 @@ function SI_units(; length = 1000m, temperature = 1000K, stress = 10Pa, viscosit
         K = T_SI,
         Pa = Sigma_SI,
         s = Time_SI,
+        Amount = Amount_SI,
     )
 end
 
@@ -850,6 +854,56 @@ end
 
 @inline _nondimensionalize(z::NTuple{N, GeoUnit}, g::Union{GeoUnits, Nothing}) where {N} = ntuple(i -> nondimensionalize(z[i], g), Val(N))
 @inline _nondimensionalize(z, ::Any) = z
+
+"""
+    convert_precision(T, law::AbstractMaterialParam)
+    convert_precision(T, phase::AbstractMaterialParamsStruct)
+
+Copy of a material law, or of a phase's `MaterialParams`, with every stored float
+converted to `T`: plain fields, `GeoUnit` values and nested laws alike. Integers,
+flags and names are kept. Apply it once on the host before handing parameters to a
+device without `Float64` support, such as Metal; a tuple of phases converts
+element-wise.
+
+Throws an `ArgumentError` if a nonzero finite value would become zero, subnormal or
+infinite in `T`. Prefactors of creep laws in SI units, such as `1e-55`, lie outside
+the `Float32` range; nondimensionalize such laws before converting them. The error
+message names the law and field, prefixed by those of any enclosing law or phase.
+"""
+@generated function convert_precision(
+        ::Type{T}, p::P
+    ) where {T, P <: Union{AbstractMaterialParam, AbstractMaterialParamsStruct}}
+    N = fieldcount(P)
+    return quote
+        vals = Base.@ntuple $N i -> _converted_field(T, p, i)
+        strip_type_parameters(p)(vals...)
+    end
+end
+
+function _converted_field(::Type{T}, p, i) where {T}
+    return try
+        _field_precision(T, getfield(p, i))
+    catch e
+        e isa ArgumentError || rethrow()
+        throw(ArgumentError("$(nameof(typeof(p))).$(fieldname(typeof(p), i)): $(e.msg)"))
+    end
+end
+
+@inline _field_precision(::Type{T}, x::AbstractFloat) where {T} = _float_in_range(T, x)
+@inline _field_precision(::Type{T}, x::GeoUnit{<:Union{AbstractFloat, AbstractArray{<:AbstractFloat}}}) where {T} =
+    GeoUnit(_field_precision(T, x.val), x.unit, x.isdimensional)
+@inline _field_precision(::Type{T}, x::AbstractArray{<:AbstractFloat}) where {T} = _float_in_range.(T, x)
+@inline _field_precision(::Type{T}, x::Tuple) where {T} = map(y -> _field_precision(T, y), x)
+@inline _field_precision(::Type{T}, x::Union{AbstractMaterialParam, AbstractMaterialParamsStruct}) where {T} =
+    convert_precision(T, x)
+@inline _field_precision(::Type, x) = x
+
+function _float_in_range(::Type{T}, x) where {T}
+    y = convert(T, x)
+    (iszero(x) || !isfinite(x) || (isfinite(y) && !iszero(y) && !issubnormal(y))) ||
+        throw(ArgumentError("parameter value $x is outside the normal range of $T; nondimensionalize the law, or choose characteristic units that keep its parameters in range"))
+    return y
+end
 
 """
     nondimensionalize(phase_mat::MaterialParams, g::GeoUnits{TYPE})

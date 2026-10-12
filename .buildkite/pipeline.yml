@@ -1,0 +1,29 @@
+# GPU tests on the JuliaGPU Buildkite agents; the CPU suite runs on GitHub Actions.
+steps:
+  - label: "CUDA"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1"
+    command: julia --project=. -e 'using Pkg; Pkg.test(; test_args=["--backend=CUDA"])'
+    agents:
+      queue: "cuda"
+    timeout_in_minutes: 60
+
+  - label: "AMDGPU"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1"
+    command: julia --project=. -e 'using Pkg; Pkg.test(; test_args=["--backend=AMDGPU"])'
+    agents:
+      queue: "rocm"
+      rocmgpu: "*"
+    timeout_in_minutes: 60
+
+  - label: "Metal"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1"
+    command: julia --project=. -e 'using Pkg; Pkg.test(; test_args=["--backend=Metal"])'
+    agents:
+      queue: "metal"
+    timeout_in_minutes: 60

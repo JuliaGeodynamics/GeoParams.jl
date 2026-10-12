@@ -234,7 +234,7 @@ import GeoParams: ntuple_idx
 
     # Given strainrate
     @test compute_τII(x1_D, 1.0e-13 / s, args_D) ≈ 643.9044043803415Pa      # dimensional input
-    @test compute_τII(x1_ND, 1.0e-13, args_ND) ≈ 5.64401178083053e-17                  # non-dimensional
+    @test compute_τII(x1_ND, 1.0e-13, args_ND) ≈ 6.439046473382388e-17                  # non-dimensional
 
     ε = [0.0; 0.0]
     compute_τII!(ε, x1_ND, [1.0e0; 2.0], args_ND1)
@@ -248,7 +248,7 @@ import GeoParams: ntuple_idx
     @test  ustrip(η) ≈ 1.447704555523709e11
 
     @test dεII_dτII(x1_ND, 1.0e6, args_ND) ≈ 31884.63277076202
-    @test dτII_dεII(x1_ND, 1.0e-15, args_ND) ≈ 0.0005644011780830529
+    @test dτII_dεII(x1_ND, 1.0e-15, args_ND) ≈ 0.0006439046473382388
     # -----
 
     # ----

@@ -467,6 +467,54 @@ end
         @test x === nt32.x.val                  # already Float32: not copied
     end
 
+    # A device without Float64 (Metal) must receive parameters holding no Float64 at all.
+    @testset "convert_precision of material structs" begin
+        has64(x::Float64) = true
+        has64(x::AbstractArray) = eltype(x) === Float64 || any(has64, x)
+        has64(x) = any(i -> has64(getfield(x, i)), 1:nfields(x))
+
+        laws = Type[
+            t for t in (getfield(GeoParams, n) for n in names(GeoParams; all = true) if isdefined(GeoParams, n))
+                if t isa Type && !isabstracttype(t) && t <: GeoParams.AbstractMaterialParam && hasmethod(t, Tuple{})
+        ]
+        @testset "$(nameof(L))" for L in laws
+            l32 = convert_precision(Float32, L())
+            @test !has64(l32)
+            @test nameof(typeof(l32)) === nameof(L)
+        end
+
+        @test convert_precision(Float32, Vector_Density(rho = [1.0, 2.0])).rho == Float32[1, 2]
+
+        # SI prefactor 3.8e-55 is below the Float32 range; its nondimensional form is not
+        lu = SetDislocationCreep(Dislocation.wet_quartzite_Lu_2019)
+        @test_throws "outside the normal range of Float32" convert_precision(Float32, lu)
+        @test_throws "MaterialParams.CreepLaws: DislocationCreep.A: parameter value" convert_precision(
+            Float32, SetMaterialParams(; Phase = 1, CreepLaws = lu)
+        )
+
+        # phase diagrams hold their tables in interpolators, which convert with them
+        td = joinpath(@__DIR__, "test_data")
+        for pd in (PerpleX_LaMEM_Diagram(joinpath(td, "Peridotite_dry.in")), MAGEMin_Diagram(joinpath(td, "MAGEMin_Rhyolite.in")))
+            pd32 = convert_precision(Float32, pd)
+            @test !has64(pd32)
+            @test pd32.Rho(1500.0f0, 1.0f9) ≈ pd.Rho(1500.0, 1.0e9) rtol = RTOL[Float32]
+        end
+        @test !has64(convert_precision(Float32, nondimensionalize(lu, GEO_units())))
+
+        mp = SetMaterialParams(;
+            Phase = 3,
+            Density = PT_Density(),
+            CreepLaws = SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003),
+            CompositeRheology = CompositeRheology(LinearViscous(), ConstantElasticity()),
+            Plasticity = DruckerPrager(),
+        )
+        mp32 = convert_precision(Float32, (mp, mp))
+        @test !has64(mp32)
+        @test isbits(mp32)
+        @test mp32[1].Phase === 3
+        @test compute_density(mp32[1], (; T = 1.0f3, P = 1.0f8)) ≈ compute_density(mp, (; T = 1.0e3, P = 1.0e8)) rtol = RTOL[Float32]
+    end
+
     @testset "edge cases" begin
         # Dual{Float32} on a law whose Float32 intermediates overflow
         law = SetDislocationCreep(Dislocation.wet_quartzite_Lu_2019)
@@ -476,6 +524,17 @@ end
         d32 = ForwardDiff.derivative(f, Float32(τ))
         @test d32 isa Float32
         @test d32 ≈ ForwardDiff.derivative(f, τ) rtol = 1.0e-3
+
+        # the mH2O override recomputes BT and CT; it must follow the state's precision too
+        gm = GiordanoMeltViscosity()
+        εg = compute_εII(gm, 1.0f6; T = 1300.0f0, mH2O = 0.02f0)
+        @test εg isa Float32
+        @test εg ≈ compute_εII(gm, 1.0e6; T = 1300.0, mH2O = 0.02) rtol = RTOL[Float32]
+
+        # geological strain rates lie below eps(Float32); the crystal-fraction fit must not depend on it
+        cm = ViscosityPartialMelt_Costa_etal_2009()
+        cargs = (; T = 1000.0, ϕ = 0.1)
+        @test compute_τII(cm, 1.0f-15, cargs) ≈ compute_τII(cm, 1.0e-15, cargs) rtol = 1.0e-3
 
         hb = HerschelBulkley()
         @test compute_εII(hb, 0.0f0; T = 1.0f0) === 0.0f0

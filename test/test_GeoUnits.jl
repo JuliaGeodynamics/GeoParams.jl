@@ -121,8 +121,12 @@ using Unitful
         A = (1.58 * 10^(-25)) * Pa^(-4.2) * s^(-1)        # calcite
         @test nondimensionalize(A, CharUnits_GEO) ≈ 3.968780561785161e16
 
-        R = 8.314u"J/mol/K"
-        @test nondimensionalize(R, CharUnits_SI) ≈ 8.314e-7
+        # the characteristic amount of substance makes the gas constant 1
+        R = 8.31446261815324u"J/mol/K"
+        @test nondimensionalize(R, CharUnits_SI) ≈ 1
+        @test nondimensionalize(R, CharUnits_GEO) ≈ 1
+        E = 530u"kJ/mol"
+        @test dimensionalize(nondimensionalize(E, CharUnits_GEO), u"kJ/mol", CharUnits_GEO) ≈ E
 
         # test Dimensionalize in case we provide a number and units
         v_ND = nondimensionalize(3cm / yr, CharUnits_GEO)
