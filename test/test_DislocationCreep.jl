@@ -214,6 +214,7 @@ end
             (Dislocation.highP_wet_quartzite_Lusk_2021, 10^-7.9, 2.0, 0.49, 77.0e3, 2.59),
             (Dislocation.high_stress_wet_dunite_Chopra_1981, 10^3.98, 3.35, 0.0, 444.0e3, 0.0), # Chopra & Paterson 1981 Table IV
             (Dislocation.low_stress_wet_dunite_Chopra_1981, 10^3.88, 2.44, 0.0, 386.0e3, 0.0),
+            (Dislocation.dry_dunite_Chopra_1984, 10^4.46, 3.6, 0.0, 535.0e3, 0.0),              # Chopra & Paterson 1984 Table 3
             (Dislocation.diabase_Caristan_1982, 6.12e-2, 3.05, 0.0, 276.0e3, 0.0),              # Caristan 1982 p. 6789
             (Dislocation.dry_clinopyroxene_Bystricky_Mackwell_2001, 10^9.8, 4.7, 0.0, 760.0e3, 0.0), # eq. (2)
             (Dislocation.strong_diabase_Mackwell_1998, 8.0, 4.7, 0.0, 485.0e3, 0.0),            # Mackwell 1998 p. 980
@@ -228,6 +229,7 @@ end
         ε = compute_εII(p, σ * 1.0e6 / p.FT; T, P = P * 1.0e6, f = fH2O * 1.0e6) * p.FE
         @test ε ≈ A * σ^n * fH2O^r * exp(-(Q + V * P) / (NumValue(p.R) * T)) rtol = 1.0e-6
     end
+    @test Dislocation.dry_dunite_Chopra_1984 in dislocation_law_list()
 
     # `_refit` entries: the printed law with A refitted to the paper's own data,
     # i.e. the printed law times the ratio of the prefactors

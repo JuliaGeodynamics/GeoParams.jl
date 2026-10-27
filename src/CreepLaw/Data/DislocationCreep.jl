@@ -30,7 +30,7 @@ function dry_olivine_Hirth_2003()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "NOTE: the printed law is 2.5× too slow vs the paper's own data: -0.40 log10 units vs the Fig. 2a dislocation-creep fit line, -0.30 ± 0.19 vs the Mei & Kohlstedt (2000) dry data (N = 12, diffusion removed) and -0.34/-0.48 vs Karato & Jung (2003), Table 1; a data-consistent version is dry_olivine_Hirth_2003_refit. Hirth & Kohlstedt (2003), Table 1, row 'dry dislocation': A = 1.1e5 MPa^-n/s, n = 3.5, E = 530; V = 14 cm^3/mol from Table 2 (range 13.4-27).",
+        Comment = "NOTE: the printed law is 2.5× too slow vs the paper's own data: -0.40 log10 units vs the Fig. 2a dislocation-creep fit line, -0.30 ± 0.19 vs the primary data, Mei & Kohlstedt (2000b), Table 1, dry runs (N = 12, diffusion removed) and -0.34/-0.48 vs Karato & Jung (2003), Table 1; a data-consistent version is dry_olivine_Hirth_2003_refit. Hirth & Kohlstedt (2003), Table 1, row 'dry dislocation': A = 1.1e5 MPa^-n/s, n = 3.5, E = 530; V = 14 cm^3/mol from Table 2 (range 13.4-27).",
         BibTex_Reference = "
             @incollection{eiler_rheology_2003,
             address = {Washington, D. C.},
@@ -117,7 +117,7 @@ function wet_olivine1_Hirth_2003()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'wet dislocation (constant C_OH)': A = 90, n = 3.5, r = 1.2, E = 480, V = 11 (footnote e example: 2.5e-12 /s). Pass f = C_OH in H/10^6 Si. Reproduces the paper's data: log10 misfit +0.25 ± 0.19 (N = 34, Mei & Kohlstedt 2000 wet data, σ ≥ 120 MPa); -0.01 vs the Fig. 5b line.",
+        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'wet dislocation (constant C_OH)': A = 90, n = 3.5, r = 1.2, E = 480, V = 11 (footnote e example: 2.5e-12 /s). Pass f = C_OH in H/10^6 Si. Reproduces the paper's data: log10 misfit +0.25 ± 0.19 (N = 34; primary data: Mei & Kohlstedt 2000b, Table 1, wet runs at σ ≥ 120 MPa); -0.01 vs the Fig. 5b line.",
         BibTex_Reference = "
             @incollection{HirthKohlstedt_OlivineRheology_2003,
             address = {Washington, D. C.},
@@ -160,7 +160,7 @@ function quartz_diorite_HansenCarter_1982()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Hansen (1982, PhD thesis), table 18 (n = 2.25, A = 3.5e-2, Q = 212). Carter & Tsenn (1987), Table 4, list n = 2.4, log A = -1.5 for the same material. Kirby (1983) and Tirel et al. (2008) quote log A = -2.9, Q = 219 (30-55× slower); the experimental ranges of Carter & Tsenn (1987) weakly favour the stored values.",
+        Comment = "Hansen (1982, PhD thesis), table 18 (n = 2.25, A = 3.5e-2, Q = 212). Carter & Tsenn (1987), Table 4, list n = 2.4, log A = -1.5 for the same material. Kirby (1983) and Tirel et al. (2008) quote log A = -2.9, Q = 219 (30-55× slower); the experimental ranges of Carter & Tsenn (1987) weakly favour the stored values. Bremond d'Ars et al. (1999), p. 33, print the same values as Carter & Tsenn (1987): A = 3e-2 MPa^-n s^-1, n = 2.4, Q = 212 kJ/mol (citing Hansen & Carter 1982). Primary data: Hansen (1982, thesis) and Hansen & Carter (1982), not available; Carter et al. (1981) contain only a diorite of unknown locality that showed transient creep only (no steady-state data, no law), so the law could not be checked against data.",
         BibTex_Reference = "
             @inproceedings{hansen1982creep,
             title={Creep of selected crustal rocks at 1000 MPa},
@@ -199,7 +199,7 @@ function diabase_Caristan_1982()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Maryland diabase. Caristan (1982), p. 6789 (text beside Fig. 10): ε̇ = A σ^n exp(-Q/RT) with A = 6.12e-2 MPa^-n (s^-1), n = 3.05, Q = 276 kJ/mol, cited from Caristan's thesis; experiments in an argon gas-medium apparatus at 1000 °C, as-received samples, differential stress. Matches Carter & Tsenn (1987), Table 4 (n = 3.05, log A = -1.2 MPa^-n/s, Q = 276 kJ/mol, triaxial compression, 900-1000 °C; listed as dry), and Bremond d'Ars et al. (1999).",
+        Comment = "Maryland diabase. Caristan (1982), p. 6789 (text beside Fig. 10): ε̇ = A σ^n exp(-Q/RT) with A = 6.12e-2 MPa^-n (s^-1), n = 3.05, Q = 276 kJ/mol, cited from Caristan's thesis; experiments in an argon gas-medium apparatus at 1000 °C, as-received samples, differential stress. Matches Carter & Tsenn (1987), Table 4 (n = 3.05, log A = -1.2 MPa^-n/s, Q = 276 kJ/mol, triaxial compression, 900-1000 °C; listed as dry), and Bremond d'Ars et al. (1999). Primary data: Caristan (1982), Table 1 creep points at 1000 °C (log10 misfit -0.37, N = 6); the temperature dependence comes from Caristan (1980, thesis), not available.",
         BibTex_Reference = "
         @article{caristan1982transition,
         title={The transition from high temperature creep to fracture in Maryland diabase},
@@ -232,7 +232,7 @@ function serpentinite_Raleigh_1965()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Not a law from Raleigh & Paterson (1965): the paper reports constant strain-rate strength and ductility tests (up to 700 °C, 1-5 kbar) and dehydration embrittlement, but no power-law fit, activation energy or stress exponent. The values (n = 2.8, A = 6.3e-7 MPa^-n/s, E = 66 kJ/mol) are a later fit taken from Bremond d'Ars et al. (1999), p. 5, which was not available; their origin is unverified. The law agrees with the paper's strengths (at 7e-4 s^-1) only at about 400-475 °C.",
+        Comment = "Raleigh & Paterson (1965) print no creep law. The values n = 2.8, A = 6.3e-7 MPa^-n/s, E = 66 kJ/mol are from Bremond d'Ars et al. (1999), p. 33, who fitted them to the Tumut Pond serpentinite data of Raleigh & Paterson (1965), Table 1. Primary data: the Pc = 1 kbar (100 MPa) ultimate strengths at 454-735 °C (without the vented specimen at 650 °C), which are brittle (dehydration-embrittled) failure strengths at a single strain rate of 7e-4 s^-1: log10 misfit -0.04 ± 0.12 (N = 7); refitting that subset with n = 2.8 gives Q = 66 kJ/mol, A = 6.7e-7. With one strain rate, n is not constrained by the data (it must have been assumed). The law does not describe the 5 kbar ductile strengths at 400-605 °C (+0.74 ± 0.40, N = 4) or the runs below 400 °C, and it is not a creep law in the strict sense.",
         BibTex_Reference = "
             @article{raleigh1965experimental,
             title={Experimental deformation of serpentinite and its tectonic implications},
@@ -323,7 +323,7 @@ function wet_quartzite_Ueda_2008()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Ranalli (1995) wet quartzite (A = 3.2e-4 MPa^-n/s, n = 2.3, E = 154) as listed in Gerya-group tables; Ueda et al. (2008) Table 1 not seen.",
+        Comment = "Ueda et al. (2008), Table 1, 'Wet quartzite': A_D = 10^-3.5 MPa^-n s^-1, n = 2.3, E = 154 kJ/mol, from Ranalli (1995) (Gerya 2010, Table 17.1: 3.2e-4, 2.3, 154). Ranalli (1995) was not checked; the values equal the arithmetic mean of the three wet-quartzite rows of Kirby & Kronenberg (1987), Table 3 (log A in MPa^-n s^-1 = tabulated value - 6n): Koch et al. (1983 manuscript, published 1989) -4.0/2.4/160, Kronenberg & Tullis (1984, 0.4 wt% water added) -4.8/2.6/134 and Hansen & Carter (1982) -1.7/1.8/167, giving -3.50/2.27/153.7. It is an average of three materials, not a fit to one data set. Primary data: Koch et al. (1989), Table 3 (Simpson quartzite, water from talc, 750-900 °C, 0.9-1.3 GPa): log10 misfit +0.62 ± 0.27 (N = 39, 4× too fast); Kronenberg & Tullis (1984), Table 1, 0.4 wt% water added, Pc ≥ 1200 MPa: -0.35 ± 0.40 (N = 9; grain-size dependent, -0.96 at 1.2 μm to -0.03 at 211 μm; +2.20 vs the as-is samples); Hansen & Carter (1982) data not available.",
         BibTex_Reference = "
             @article{ueda2008subduction,
             title={Subduction initiation by thermal--chemical plumes: numerical studies},
@@ -354,7 +354,7 @@ function granite_Carter_1987()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Carter & Tsenn (1987), Table 4, 'Westerly granite, dry (Hansen & Carter, 1983)': log A = -5.7 MPa^-n/s, n = 3.3, Q = 186.5.",
+        Comment = "Carter & Tsenn (1987), Table 4, 'Westerly granite, dry (Hansen & Carter, 1983)': log A = -5.7 MPa^-n/s, n = 3.3, Q = 186.5. Primary data: Hansen & Carter (1983), not available. For comparison only (not its source data): vs the dry Westerly granite of Carter et al. (1981), Fig. 8b (same laboratory, Pc = 1 GPa, 570-765 °C, 0.6-1.2 GPa) the law gives log10 misfit -0.21 ± 0.42 (N = 9; -0.74 at 570 °C, +0.19 at 765 °C), because Q = 186.5 kJ/mol exceeds the 106 kJ/mol of those data.",
         BibTex_Reference = "
         @article{carter1987flow,
         title={Flow properties of continental lithosphere},
@@ -385,7 +385,7 @@ function plagioclase_An75_Ji_1993()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Ji & Zhao (1993), Table 2, row 3 'plagioclase (Ab25An75)', dry: A = 3.27e-4 MPa^-n/s, n = 3.2, Q = 238 kJ/mol, dislocation creep; cited there from Shelton & Tullis (1981) (EOS abstract, not seen). Ranalli (1995), Table 10.3, gives the same law. Rybacki & Dresen (2000, Fig. 6) refit the same Shelton data as wet, as-received material: log A = -3.7, n = 3.2, Q = 239; Ji & Zhao list 3.27e-4 as 'dry'.",
+        Comment = "Ji & Zhao (1993), Table 2, row 3 'plagioclase (Ab25An75)', dry: A = 3.27e-4 MPa^-n/s, n = 3.2, Q = 238 kJ/mol, dislocation creep; cited there from Shelton & Tullis (1981) (EOS abstract, not seen). Ranalli (1995), Table 10.3, gives the same law. Rybacki & Dresen (2000, Fig. 6) refit the same Shelton data as wet, as-received material: log A = -3.7, n = 3.2, Q = 239; Ji & Zhao list 3.27e-4 as 'dry'. Primary data: Shelton & Tullis (1981), not available.",
         BibTex_Reference = "
             @article{ji1993flow,
             title={Flow laws of multiphase rocks calculated from experimental data on the constituent phases},
@@ -414,7 +414,7 @@ function dry_anorthite_Rybacki_2006()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Rybacki et al. (2006), Table 5, 'Dislocation creep, dry': log A = 12.7 MPa^-n/s, n = 3, Q = 641, V = 24 cm^3/mol. Reproduces the paper's data: log10 misfit -0.06 ± 0.09 (N = 20, Rybacki & Dresen 2000 data, which Table 5 refits).",
+        Comment = "Rybacki et al. (2006), Table 5, 'Dislocation creep, dry': log A = 12.7 MPa^-n/s, n = 3, Q = 641, V = 24 cm^3/mol. Reproduces the paper's data: log10 misfit -0.06 ± 0.09 (N = 20; primary data: Rybacki & Dresen 2000, Table 1, which Table 5 refits).",
         BibTex_Reference = "
             @article{rybacki2006influence,
             title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates},
@@ -442,7 +442,7 @@ function wet_anorthite_Rybacki_2006()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Rybacki et al. (2006), Table 5, 'Dislocation creep, wet': log A = 0.2 MPa^-(n+r)/s, n = 3, r = 1, Q = 345, V = 38 cm^3/mol. Pass f = fH2O in Pa. Reproduces the paper's data: log10 misfit -0.04 to -0.08 ± 0.09 (N = 38, Rybacki & Dresen 2000 data, which Table 5 refits; fH2O ≈ 214-251 MPa).",
+        Comment = "Rybacki et al. (2006), Table 5, 'Dislocation creep, wet': log A = 0.2 MPa^-(n+r)/s, n = 3, r = 1, Q = 345, V = 38 cm^3/mol. Pass f = fH2O in Pa. Reproduces the paper's data: log10 misfit -0.04 to -0.08 ± 0.09 (N = 38; primary data: Rybacki & Dresen 2000, Table 1, which Table 5 refits; fH2O ≈ 214-251 MPa).",
         BibTex_Reference = "
             @article{rybacki2006influence,
             title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates},
@@ -470,7 +470,7 @@ function wet_olivine_Hirth_2003()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'wet dislocation': A = 1600 MPa^-(n+r)/s (fH2O in MPa), n = 3.5, r = 1.2, E = 520, V = 22. Pass f = fH2O in Pa. Reproduces the paper's data: log10 misfit +0.09 ± 0.19 (N = 34, Mei & Kohlstedt 2000 wet data, σ ≥ 120 MPa); -0.17 to -0.25 vs the Fig. 5a line.",
+        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'wet dislocation': A = 1600 MPa^-(n+r)/s (fH2O in MPa), n = 3.5, r = 1.2, E = 520, V = 22. Pass f = fH2O in Pa. Reproduces the paper's data: log10 misfit +0.09 ± 0.19 (N = 34; primary data: Mei & Kohlstedt 2000b, Table 1, wet runs at σ ≥ 120 MPa); -0.17 to -0.25 vs the Fig. 5a line.",
         BibTex_Reference = "
             @article{hirth2003rheology,
             title={Rheology of the upper mantle and the mantle wedge: A view from the experimentalists},
@@ -501,7 +501,7 @@ function wet_quartzite_Kirby_1983()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Kirby (1983), Table 2, row 'quartzite (wet), α-quartz, water from talc' (Koch et al. 1983): log10 A = 3.2 GPa^-n/s (column unit GPa^-n s^-1, differential stress), n = 2.4, E = 160 kJ/mol; A converted to 10^(3.2 - 3n) = 1.0e-4 MPa^-n/s. Same law in Kirby & Kronenberg (1987), Table 3. Reproduces the paper's data: log10 misfit +0.08 ± 0.25 (N = 35, Koch et al. 1989 data; indirect).",
+        Comment = "Kirby (1983), Table 2, row 'quartzite (wet), α-quartz, water from talc' (Koch et al. 1983): log10 A = 3.2 GPa^-n/s (column unit GPa^-n s^-1, differential stress), n = 2.4, E = 160 kJ/mol; A converted to 10^(3.2 - 3n) = 1.0e-4 MPa^-n/s. Same law in Kirby & Kronenberg (1987), Table 3. Primary data: Koch et al. (1989), Table 3 (Simpson quartzite, water from talc, 750-900 °C, 0.9-1.3 GPa): log10 misfit +0.10 ± 0.26 (N = 39). The published Koch et al. (1989) regression, Table 4a, is A = 1.20e-4 MPa^-n/s, n = 2.48, H = 168 kJ/mol (their abstract quotes the nonlinear fit of Table 4b: 5.05e-6, 2.61, 145).",
         BibTex_Reference = "
             @article{kirby1983rheology,
             title={Rheology of the lithosphere},
@@ -521,7 +521,7 @@ end
 function wet_olivine_Afonso_2004()
     #  Schmalholz, Kaus, Burg (2009), table 1
     #  referring to Afonso and Ranalli (2004), table 1, wet peridotite
-    #  referring to Chopra and Paterson papers, but values dont fit the Afonso and Ranalli (2004) ones
+    #  the values are the mean of the Chopra & Paterson (1981) Anita Bay and Aheim wet laws (see Comment)
     data = DislocationCreep(;
         Name = "Wet Upper Mantle Olivine | Afonso and Ranalli (2004)",
         n = 4.0NoUnits,
@@ -532,7 +532,7 @@ function wet_olivine_Afonso_2004()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Afonso & Ranalli (2004), Table 1, row 'Peridotite (wet)': A = 2.0e3 MPa^-n s^-1, n = 4.0, E = 471 kJ/mol, used with σ1 - σ3 (their eq. 2). A compilation; it cites Chopra & Paterson (1981, 1984). Chopra & Paterson (1981), Table IV, has no n = 4.0/Q = 471 law, so the values must come from Chopra & Paterson (1984) (not seen). Same values in Gerya (2010), Table 17.1.",
+        Comment = "Afonso & Ranalli (2004), Table 1, row 'Peridotite (wet)': A = 2.0e3 MPa^-n s^-1, n = 4.0, E = 471 kJ/mol, used with σ1 - σ3 (their eq. 2); same values in Gerya (2010), Table 17.1 (from Ranalli 1995; Ueda et al. 2008, Table 1: 10^3.3, 4, 470). Afonso & Ranalli cite Chopra & Paterson (1981, 1984), but neither paper prints this law: Chopra & Paterson (1984), Table 3, only repeats the two 1981 wet laws and adds a dry law. The values equal the arithmetic mean of the Chopra & Paterson (1981), Table IV, wet laws for Anita Bay (log A = 3.98, n = 3.35, Q = 444) and Åheim dunite (2.62, 4.48, 498), as rounded in Kirby & Kronenberg (1987), Table 1 (4.0/3.4/444 and 2.6/4.5/498 give 3.30/3.95/471); Ranalli (1995) not checked. Primary data: Chopra & Paterson (1981), Table II (Anita Bay): log10 misfit -0.19 ± 0.22 (N = 22); Table III (Åheim): +0.46 ± 0.18 (N = 20, 2.9× too fast); both together +0.12 ± 0.38 (N = 42). It fits neither rock alone; high_stress_wet_dunite_Chopra_1981 is the Anita Bay law.",
         BibTex_Reference = "
             @article{afonso2004crustal,
             title={Crustal and mantle strengths in continental lithosphere: is the jelly sandwich model obsolete?},
@@ -563,7 +563,7 @@ function granite_Tirel_2008()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Tirel et al. (2008), Table 1, 'granite (anomaly)': A = 1.25e-9 MPa^-n/s, n = 3.2, Ea = 123. These do not match the cited Kirby & Kronenberg (1987) Table 3.",
+        Comment = "Tirel et al. (2008), Table 1, 'granite (anomaly)': A = 1.25e-9 MPa^-n/s, n = 3.2, Ea = 123 kJ/mol (cites Kirby & Kronenberg 1987). A hybrid of two links: A is the Kirby & Kronenberg (1987), Table 3, Westerly granite row of Carter et al. (1981) (tabulated 8.5 - 6 × 2.9 = -8.9, i.e. 1.26e-9 MPa^-n/s; the Table 3 header 'MPa^-n s^-1' is a misprint, log A in MPa^-n s^-1 = tabulated value - 6n, confirmed by Carter et al. 1981, eq. 12), while n = 3.2 and E = 123 are the means of the two K&K87 Westerly granite rows (Carter et al. 1981: 2.9, 106; Hansen & Carter 1982: 3.4, 139), as in Ranalli (1995) (Gerya 2010, Table 17.1: 1.8e-9, 3.2, 123). Carter et al. (1981), eq. (12): ε̇ = 1.4e-9 exp(-25.3 kcal/mol / RT) σ^2.9, σ (differential) in MPa. Primary data: Carter et al. (1981), Fig. 8b (dry Westerly granite, Pc = 1 GPa, 570-765 °C, σ = 0.6-1.2 GPa; 9 steady-state points read from the figure): log10 misfit -0.16 ± 0.13 (N = 9; -0.31 at 570 °C), where eq. (12) gives -0.04 ± 0.08. Because n and E differ from eq. (12), the law is 3× slower than eq. (12) at 600 °C and 100 MPa and 12× slower at 400 °C and 10 MPa.",
         BibTex_Reference = "
             @article{tirel2008dynamics,
             title={Dynamics and structural development of metamorphic core complexes},
@@ -592,7 +592,7 @@ function dry_olivine_Gerya_2019()
         r = 0.0NoUnits,
     )
     info = MaterialParamsInfo(;
-        Comment = "Gerya, Exercise 6.1 (A = 2.5e-17 Pa^-n/s, n = 3.5, Ea = 532 kJ/mol, axial compression); checked in the 2010 edition. Valid for olivine under upper mantle conditions.",
+        Comment = "Gerya (2010), Exercise 6.1: A = 2.5e-17 Pa^-n/s, n = 3.5, Ea = 532 kJ/mol, Va = 0, 'representative for dry olivine', axial compression (2010 edition checked); the same law is in Gerya (2010), Table 17.1 (2.5e4 MPa^-n/s, 3.5, 532), 'from compilation by Ranalli, 1995'. Ranalli (1995) was not checked. The values are consistent with the arithmetic mean of the three dry-olivine rows of Kirby & Kronenberg (1987), Table 1: Karato et al. 1982 (log A = 3.9 MPa^-n/s, n = 3.5, H = 528 kJ/mol), Kirby 1983 (4.8, 3.5, 533) and Chopra & Paterson 1984 (4.46, 3.6, 535) give log A = 4.39 (2.44e4; Ueda et al. 2008, Table 1, print 10^4.4), n = 3.53 and H = 532.0. Primary data: Chopra & Paterson (1984), Table 2 (predried Anita Bay and Åheim dunite, 1200-1400 °C, 300 MPa): log10 misfit -0.23 ± 0.17 (N = 22, 1.7× too slow), while their own law (dry_dunite_Chopra_1984) fits at -0.02 ± 0.17. The Karato et al. (1982) and Kirby (1983) inputs were not checked against data. Valid for olivine under upper mantle conditions.",
         BibTex_Reference = "
             @book{Gerya_2019,
             title={Introduction to Numerical Geodynamic Modelling},
@@ -618,7 +618,7 @@ function rock_salt_Li_Urai_2016()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "NOTE: the shear modulus is not given by Wawersik & Zeuch (1986); A0 = 7.26e-6 implies μ = 10.5 GPa, while the lines of W&Z Fig. 2 imply 11-12 GPa (A0 ≈ 3.8e-6 MPa^-5/s). The law fits W&Z's Salado (WIPP7) data (0.00 log10 units, N = 5) but is 10× too fast vs their Asse (BGRC1) data at 60 °C (+1.03, N = 8). Li & Urai (2016), Table 1, 'Salt B: dislocation creep' (A0 = 7.26e-6 MPa^-5/s, Q = 53920 J/mol, n = 5). Origin: Wawersik & Zeuch (1986), Table 1, row 'Asse - BGR' (the published fit of Albrecht & Hunsche 1980): γ̇ = C exp(-Q/RT) (τ/μ)^n with C = 9.27e14 s^-1, n = 5.0, Q = 53.92 kJ/mol, τ = σ1 - σ3, γ = e1 - e3 (eq. 3). μ is not given in the paper; A0 = C/μ^5 implies μ ≈ 10.5 GPa (or 9.7 GPa if γ̇ was converted to axial strain rate, 2/3 γ̇), so A0 could not be reproduced exactly.",
+        Comment = "NOTE: the shear modulus is not given by Wawersik & Zeuch (1986); A0 = 7.26e-6 implies μ = 10.5 GPa, while the lines of W&Z Fig. 2 imply 11-12 GPa (A0 ≈ 3.8e-6 MPa^-5/s). The law fits W&Z's Salado (WIPP7) data (0.00 log10 units, N = 5) but is 10× too fast vs their Asse (BGRC1) data at 60 °C (+1.03, N = 8). Li & Urai (2016), Table 1, 'Salt B: dislocation creep' (A0 = 7.26e-6 MPa^-5/s, Q = 53920 J/mol, n = 5). Origin: Wawersik & Zeuch (1986), Table 1, row 'Asse - BGR' (the published fit of Albrecht & Hunsche 1980, whose primary data were not available): γ̇ = C exp(-Q/RT) (τ/μ)^n with C = 9.27e14 s^-1, n = 5.0, Q = 53.92 kJ/mol, τ = σ1 - σ3, γ = e1 - e3 (eq. 3). μ is not given in the paper; A0 = C/μ^5 implies μ ≈ 10.5 GPa (or 9.7 GPa if γ̇ was converted to axial strain rate, 2/3 γ̇), so A0 could not be reproduced exactly.",
         BibTex_Reference = "
         @article{li2016rheology,
         title={Rheology of rock salt for salt tectonics modeling},
@@ -1022,7 +1022,7 @@ function wet_quartzite_Hirth_2001()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Hirth et al. (2001), abstract: log A = -11.2 (fH2O in MPa), n = 4, m = 1, Q = 135. Pass f = fH2O in Pa.",
+        Comment = "Hirth et al. (2001), abstract and p. 85: log A = -11.2 ± 0.6 MPa^-(n+r)/s (fH2O in MPa), n = 4, m = 1, Q = 135 ± 15 kJ/mol. A was derived (their eq. 2) from the Luan & Paterson (1992) data at fH2O ≈ 300 MPa, with the Gleason & Tullis (1995) data normalised by assuming fH2O ≈ 2500 MPa in those experiments; Q from the natural Ruby Gap constraints. Primary data: Luan & Paterson (1992), Table 4 (silicic-acid aggregates, predried, Pc = 300 MPa, 1100-1300 K): log10 misfit -0.02 ± 0.29 (N = 47, f = 300 MPa; -0.03 with Pitzer-Sterner fH2O); Gleason & Tullis (1995), Tables 1-2: -0.03 ± 0.34 (N = 18) with Hirth's fH2O = 2500 MPa. With Pitzer-Sterner fH2O at the Gleason & Tullis conditions (Pc ≈ 1.5 GPa) the law runs 2× fast vs those data (+0.34 ± 0.38). Pass f = fH2O in Pa.",
         BibTex_Reference = "
         @article{hirth2001evaluation,
         title={An evaluation of quartzite flow laws based on comparisons between experimentally and naturally deformed rocks},
@@ -1166,7 +1166,7 @@ function wet_quartzite_Lu_2019()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "NOTE: the printed A is 6× too fast vs the paper's own data: +0.79 ± 0.34 log10 units vs the Gleason & Tullis (1995) and Luan & Paterson (1992) data it was fitted to (N = 65) and +0.69 vs the paper's Fig. 4; a data-consistent version is wet_quartzite_Lu_2019_refit. Lu & Jiang (2019), eq. (6): ε̇ = 6.0e-15 fw^2.7 exp(-(132000 + 35.3 P)/RT) σ^4, fw, P and σ (differential) in MPa; A = (6.0 ± 5.0)e-15 MPa^-(n+m)/s, V = 35.3 cm^3/mol. Pass f = fH2O in Pa.",
+        Comment = "NOTE: the printed A is 6× too fast vs the paper's own data: +0.82 ± 0.38 log10 units vs the Gleason & Tullis (1995, Tables 1-2) and Luan & Paterson (1992, Table 4) data it was fitted to (N = 65) and +0.69 vs the paper's Fig. 4; a data-consistent version is wet_quartzite_Lu_2019_refit. Lu & Jiang (2019), eq. (6): ε̇ = 6.0e-15 fw^2.7 exp(-(132000 + 35.3 P)/RT) σ^4, fw, P and σ (differential) in MPa; A = (6.0 ± 5.0)e-15 MPa^-(n+m)/s, V = 35.3 cm^3/mol. Pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{lu2019quartz,
             title={Quartz flow law revisited: the significance of pressure dependence of the activation enthalpy},
@@ -1196,7 +1196,7 @@ function wet_quartzite_Lu_2019_refit()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "NOTE: refit of wet_quartzite_Lu_2019 with A = 1.0e-15 MPa^-(n+m)/s (not a printed value) so that the law reproduces the data the paper fitted. The printed A = 6.0e-15 is +0.79 ± 0.34 log10 units (6× too fast) vs the Gleason & Tullis (1995) and Luan & Paterson (1992) data (N = 65; with Lu's own treatment: G&T stresses × 0.73, P = Pc + σ/3, Pitzer-Sterner fH2O) and +0.69 vs the reduced data of Lu & Jiang's Fig. 4. The best fit is 9.7e-16; 1.0e-15 lies within the paper's stated A = (6.0 ± 5.0)e-15. n = 4, r = 2.7, E = 132 and V = 35.3 cm^3/mol as in wet_quartzite_Lu_2019, which holds the printed law (eq. 6). Pass f = fH2O in Pa.",
+        Comment = "NOTE: refit of wet_quartzite_Lu_2019 with A = 1.0e-15 MPa^-(n+m)/s (not a printed value) so that the law reproduces the data the paper fitted. The printed A = 6.0e-15 is +0.82 ± 0.38 log10 units (6× too fast) vs the Gleason & Tullis (1995, Tables 1-2) and Luan & Paterson (1992, Table 4) data (N = 65; with Lu's own treatment: G&T stresses × 0.73, P = Pc + σ/3, Pitzer-Sterner fH2O) and +0.69 vs the reduced data of Lu & Jiang's Fig. 4. This refit gives +0.04 ± 0.38 (Gleason & Tullis +0.31, Luan & Paterson -0.06); the pooled best fit is 9.1e-16; 1.0e-15 lies within the paper's stated A = (6.0 ± 5.0)e-15. n = 4, r = 2.7, E = 132 and V = 35.3 cm^3/mol as in wet_quartzite_Lu_2019, which holds the printed law (eq. 6). Pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{lu2019quartz,
             title={Quartz flow law revisited: the significance of pressure dependence of the activation enthalpy},
@@ -1362,6 +1362,36 @@ function low_stress_wet_dunite_Chopra_1981()
             url = {https://www.sciencedirect.com/science/article/pii/004019518190024X},
             author = {P.N. Chopra and M.S. Paterson},
             abstract = {Deformation experiments have been carried out on two dunites (Anita Bay, of 100 μm grain size, and Åheim, of 900 μm grain size) at strain rates from 10−3 to 10−6 s−1 and temperatures from 1000°C to 1300°C in a gas-medium deformation apparatus at 300 MPa confining pressure. Most of the tests were under “wet” conditions defined by the presence of small amounts of water from hydrous minerals initially present. Constant strain rate and relaxation experiments, covering ranges of flow stress down to about 70 MPa and 7 MPa, respectively, show that there is a change in flow law in going below about 100 MPa differential stress, and that the coarser-grained rock is stronger than the finer-grained one. Power law parameters above the transition are n = 4.48 ± 0.31 and Q = 498 ± 38
+            }
+    ",
+    )
+    return data, info
+end
+
+
+function dry_dunite_Chopra_1984()
+    # Chopra & Paterson (1984), p. 7865 and Table 3, 'Both dunites, dry'
+    data = DislocationCreep(;
+        Name = "Dry Dunite | Chopra & Paterson (1984)",
+        n = 3.6NoUnits,
+        A = (10^4.46)MPa^(-18 // 5) / s,
+        E = 535.0kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Chopra & Paterson (1984), p. 7865 and Table 3, row 'Both dunites, dry': ε̇ = A σ^n exp(-Q/RT) with A = 10^(4.46 ± 0.18) s^-1 MPa^-n, n = 3.60 ± 0.22, Q = 535 ± 33 kJ/mol (± 2 standard deviations), σ = differential stress; one multilinear regression of the Table 2 data on Anita Bay (100 μm) and Åheim (900 μm) dunite, predried for > 60 h at 1200 °C, gas-medium apparatus, 300 MPa confining pressure, 1200-1400 °C, 1e-4 to 1e-6 s^-1. No separate law per rock and no activation volume (V = 0). Same values in Kirby & Kronenberg (1987), Table 1. Reproduces the paper's data: log10 misfit -0.02 ± 0.17 (N = 22, Table 2 predried runs without the two upper-limit rates of run 4580; Anita Bay +0.03 ± 0.20, N = 11; Åheim -0.07 ± 0.11, N = 11).",
+        BibTex_Reference = "
+            @article{chopra1984role,
+            title={The role of water in the deformation of dunite},
+            author={Chopra, P. N. and Paterson, M. S.},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={89},
+            number={B9},
+            pages={7861--7876},
+            year={1984},
+            doi={10.1029/JB089iB09p07861}
             }
     ",
     )

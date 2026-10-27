@@ -43,7 +43,7 @@ function dry_anorthite_Rybacki_2006()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Rybacki et al. (2006), Table 5, 'Diffusion creep, dry': log A = 12.1 MPa^-n μm^m/s, Q = 460 kJ/mol, V = 24 cm^3/mol, m = 3. Table 5 refits the Rybacki & Dresen (2000) data: log10 misfit -0.04 ± 0.09 (N = 19). Vs the 2006 paper's own dry runs it is about 4× too fast (+0.64 ± 0.26, N = 113); the paper's direct fit to those is log A = 12.4, Q = 482, V = 32.4 cm^3/mol.",
+        Comment = "Rybacki et al. (2006), Table 5, 'Diffusion creep, dry': log A = 12.1 MPa^-n μm^m/s, Q = 460 kJ/mol, V = 24 cm^3/mol, m = 3. Table 5 refits the Rybacki & Dresen (2000) data (primary data: Rybacki & Dresen 2000, Table 1): log10 misfit -0.04 ± 0.09 (N = 19). Vs the 2006 paper's own dry runs it is about 4× too fast (+0.64 ± 0.26, N = 113); the paper's direct fit to those is log A = 12.4, Q = 482, V = 32.4 cm^3/mol.",
         BibTex_Reference = "
             @article{Rybacki_Gottschalk_Wirth_Dresen_2006, 
             title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates}, 
@@ -100,7 +100,7 @@ function wet_olivine_Hirth_2003()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'wet diffusion' (constant fH2O): A = 2.5e7 for r = 1 (footnote d), E = 375, V = 0-20 (upper end used). A includes the fH2O unit (MPa^-(n+r)); pass f = fH2O in Pa. Reproduces the paper's data: log10 misfit -0.06 ± 0.19 (N = 28, Mei & Kohlstedt 2000 wet data, σ ≤ 60 MPa).",
+        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'wet diffusion' (constant fH2O): A = 2.5e7 for r = 1 (footnote d), E = 375, V = 0-20 (upper end used). A includes the fH2O unit (MPa^-(n+r)); pass f = fH2O in Pa. Reproduces the paper's data: log10 misfit -0.06 ± 0.19 (N = 28; primary data: Mei & Kohlstedt 2000b, Table 1, wet runs at σ ≤ 60 MPa).",
         BibTex_Reference = "
             @article{hirth2004rheology,
             title={Rheology of the Upper Mantle and the Mantle Wedge: A View from the Experimentalists},
@@ -131,7 +131,7 @@ function wet_olivine1_Hirth_2003()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'wet diffusion (constant C_OH)': A = 1.0e6, r = 1, E = 335, V = 4 (footnote c example: 7.8e-15 /s). Pass f = C_OH in H/10^6 Si. Reproduces the paper's data: log10 misfit +0.02 ± 0.18 (N = 28, Mei & Kohlstedt 2000 wet data, σ ≤ 60 MPa).",
+        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'wet diffusion (constant C_OH)': A = 1.0e6, r = 1, E = 335, V = 4 (footnote c example: 7.8e-15 /s). Pass f = C_OH in H/10^6 Si. Reproduces the paper's data: log10 misfit +0.02 ± 0.18 (N = 28; primary data: Mei & Kohlstedt 2000b, Table 1, wet runs at σ ≤ 60 MPa).",
         BibTex_Reference = "
             @incollection{HirthKohlstedt_OlivineRheology_2003,
             title = {Rheology of the upper mantle and the mantle wedge: {A} view from the experimentalists},
@@ -160,7 +160,7 @@ function dry_olivine_Hirth_2003()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'dry diffusion': A = 1.5e9 MPa^-1 μm^3/s, E = 375, V = 2-10 (upper end used). Reproduces the paper's data: log10 misfit +0.16 ± 0.21 (N = 8, Mei & Kohlstedt 2000 dry data, σ ≤ 60 MPa).",
+        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'dry diffusion': A = 1.5e9 MPa^-1 μm^3/s, E = 375, V = 2-10 (upper end used). Reproduces the paper's data: log10 misfit +0.16 ± 0.21 (N = 8; primary data: Mei & Kohlstedt 2000b, Table 1, dry runs at σ ≤ 60 MPa).",
         BibTex_Reference = "
             @article{hirth2004rheology,
             title={Rheology of the Upper Mantle and the Mantle Wedge: A View from the Experimentalists},
@@ -326,7 +326,7 @@ function wet_diopside_Dimanov_2005()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Bürgmann & Dresen (2008), Suppl. Table 1 (log A = 8.1, Q = 337, m = 3); Q is the mean of Dimanov & Dresen (2005), Table 3a, rows Di25W/Di35W/Di45W (345, 349, 318 kJ/mol). The paper folds d^m into A. A implies an effective grain size of about 13-15 μm, which the paper does not state (it gives only particle size classes).",
+        Comment = "Bürgmann & Dresen (2008), Suppl. Table 1 (log A = 8.1, Q = 337, m = 3); Q is the mean of Dimanov & Dresen (2005), Table 3a, rows Di25W/Di35W/Di45W (345, 349, 318 kJ/mol). The paper folds d^m into A. A implies an effective grain size of about 13-15 μm, which the paper does not state (it gives only particle size classes). Primary data: Dimanov & Dresen (2005), not refitted here.",
         BibTex_Reference = "
             @article{dimanov2005rheology,
             title={Rheology of synthetic anorthite-diopside aggregates: Implications for ductile shear zones},
@@ -412,7 +412,7 @@ function wet_anorthite_rybacki_2006()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Rybacki et al. (2006), Table 5, 'Diffusion creep, wet': log A = -0.7 MPa^-(n+r) μm^m/s, Q = 159 kJ/mol, V = 38 cm^3/mol, r = 1, m = 3. Pass f = fH2O in Pa. Table 5 refits the Rybacki & Dresen (2000) data (implied fH2O ≈ 250 MPa): log10 misfit -0.06 to -0.11 ± 0.15 (N = 47). Vs the 2006 paper's own wet runs it is about 0.4-0.6 log10 units too slow.",
+        Comment = "Rybacki et al. (2006), Table 5, 'Diffusion creep, wet': log A = -0.7 MPa^-(n+r) μm^m/s, Q = 159 kJ/mol, V = 38 cm^3/mol, r = 1, m = 3. Pass f = fH2O in Pa. Table 5 refits the Rybacki & Dresen (2000) data (primary data: Rybacki & Dresen 2000, Table 1) (implied fH2O ≈ 250 MPa): log10 misfit -0.06 to -0.11 ± 0.15 (N = 47). Vs the 2006 paper's own wet runs it is about 0.4-0.6 log10 units too slow.",
         BibTex_Reference = "
             @article{rybacki2006influence,
             title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates},

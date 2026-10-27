@@ -16,7 +16,7 @@ function dry_olivine_Goetze_1979()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Goetze & Evans (1979), eq. (1a), p. 469: ε̇ = 5.7e11 exp(-Q/RT (1 - σ/σP)^2), Q = 128 kcal/mol, σP = 8.5 GPa, σ = σ1 - σ3 (p = 1, q = 2). Reproduces the Goetze curve of Mei et al. (2010), Fig. 6, within 10 MPa (N = 8, 650-1350 K) and the paper's Fig. 4 Peierls curve up to about 1200 °C.",
+        Comment = "Goetze & Evans (1979), eq. (1a), p. 469: ε̇ = 5.7e11 exp(-Q/RT (1 - σ/σP)^2), Q = 128 kcal/mol, σP = 8.5 GPa, σ = σ1 - σ3 (p = 1, q = 2). Reproduces the Goetze curve of Mei et al. (2010), Fig. 6, within 10 MPa (N = 8, 650-1350 K) and the paper's Fig. 4 Peierls curve up to about 1200 °C. Primary data: Evans & Goetze (1979), microindentation hardness of olivine single crystals (not checked here).",
         BibTex_Reference = "
             @article{goetze1979stress,
             title={Stress and temperature in the bending lithosphere as constrained by experimental rock mechanics},
