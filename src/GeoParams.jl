@@ -632,7 +632,7 @@ function PlotFlowStressTemperature end
     fig = PlotWaterFugacity(; P, T, heatflow = (0.05, 0.1), ages = (10, 25, 50, 150), Tm = 1623.15, kwargs...)
 
 Water fugacity (Pitzer & Sterner 1994) with the Shinevar et al. (2015) approximation, and the water content of
-olivine at saturation, as functions of pressure `P` [Pa] and temperature `T` [K] (Becker & Faccenna, Fig. 5.7).
+olivine at saturation, as functions of pressure `P` [Pa] and temperature `T` in K (Becker & Faccenna, Fig. 5.7).
 Linear crustal geotherms for surface heat flows `heatflow` [W/m²] and half-space cooling geotherms for plate
 `ages` [Myr] are overlaid.
 """

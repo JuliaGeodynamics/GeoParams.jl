@@ -129,7 +129,7 @@ Half-space cooling geotherms (``T_m = 1400`` °C) for plate ages of 25, 50 and 1
 5.2 of the book, Hirth & Kohlstedt 2003), limited by Byerlee's law for extension with ``\lambda = 0`` (heavy
 blue line). The thin blue line is Byerlee's law for compression with ``\lambda = 0``. Pressure uses
 ``\rho = 2750`` kg/m³ above and ``\rho = 3300`` kg/m³ below 7 km depth. Temperatures are dotted (lower
-axis). The curves for a bending plate (Buffett & Becker 2012) of the printed figure are not reproduced.
+axis).
 
 ```@example rb
 fig, strength = PlotOceanicStrength()

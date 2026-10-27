@@ -35,7 +35,7 @@ k_B(n) = sqrt(3) * 2^((n + 1) / 2)
     rybacki = SetDislocationCreep(Dislocation.wet_anorthite_Rybacki_2006)
     fw = (3.0e8, 1.0e8, 1.0e9)                       # water fugacity [Pa]
     awk_gbs = (9.69898236e6, 1.51606444e10, 3.92359629e9)
-    awk_tokle = (4.08269944e5, 2.79939699e7, 6.22279510e6)
+    awk_tokle = (4.08269944e5, 2.79939699e7, 6.2227951e6)
     awk_rybacki = (6.11961603e4, 3.10978457e8, 3.03783155e7)
     for (i, (P, T, d, ε̇)) in enumerate(pts)
         gbs = T < 1523.15 ? gbs_cold : gbs_hot

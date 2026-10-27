@@ -3,6 +3,9 @@ using GeoParams
 using LaTeXStrings
 import GeoParams.GBS
 
+# measure inside a function: on Julia 1.10, @allocated at test scope counts boxing of the result
+allocs(f::F, args::Vararg{Any, N}) where {F, N} = (f(args...); @allocated f(args...))
+
 @testset "GrainBoundarySliding" begin
 
     # This tests the MaterialParameters structure
@@ -125,7 +128,7 @@ import GeoParams.GBS
     @test dεII_dτII(g, τ0, (; args..., d = 1.0e-4)) ≈ 100 * dεII_dτII(g, τ0, args)
     @test dτII_dεII(g, ε0, (; args..., d = 1.0e-4)) ≈ dτII_dεII(g, ε0, args) * 100^(-1 / 3.5)
 
-    # unit-ful methods
+    # Unitful methods
     uargs = (; T = 1600.0K, P = 1.0e9Pa)
     @test ustrip(compute_εII(g, τ0 * Pa, uargs)) ≈ ε_stored
     @test ustrip(compute_εII(g, τ0 * Pa; uargs..., d = 0.1mm)) ≈ 100 * ε_stored
@@ -147,8 +150,8 @@ import GeoParams.GBS
     f_rt(g, τ, T, d) = compute_εII(g, τ; T = T, d = d)
     f_stored(g, τ0, 1600.0)
     f_rt(g, τ0, 1600.0, 1.0e-3)
-    @test (@allocated f_stored(g, τ0, 1600.0)) == 0
-    @test (@allocated f_rt(g, τ0, 1600.0, 1.0e-3)) == 0
+    @test allocs(f_stored, g, τ0, 1600.0) == 0
+    @test allocs(f_rt, g, τ0, 1600.0, 1.0e-3) == 0
     @test (@inferred f_rt(g, τ0, 1600.0, 1.0e-3)) isa Float64
     @test f_rt(g, Float32(τ0), 1600.0f0, 1.0f-3) isa Float32
 

@@ -39,7 +39,7 @@ either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law paramet
 
 The grain size used in the computations is the stored field `d`, unless a grain size is passed at
 runtime as keyword (or in the `args` NamedTuple), e.g. `compute_εII(gbs, τII; T, P, d = 1e-4)`, in which case
-the runtime value (scalar or array) overrides the stored one. In the unit-ful methods `d` must be a length
+the runtime value (scalar or array) overrides the stored one. In the Unitful methods `d` must be a length
 (e.g. `d = 100μm`).
 
 # Example

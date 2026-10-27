@@ -117,7 +117,7 @@ end
 # Dispatch on `Nothing` resolves the choice at compile time.
 @inline _grain_size(::Type{T}, a, ::Nothing) where {T} = Units._val_precision(T, a.d.val)
 @inline _grain_size(::Type{T}, a, d) where {T} = convert_precision(T, d)
-# Unit-ful variant: a runtime `d` must be a length and is converted to m.
+# Unitful variant: a runtime `d` must be a length and is converted to m.
 @inline _grain_size_units(::Type{T}, a, ::Nothing) where {T} = Units._val_precision(T, a.d.val) * a.d.unit
 @inline _grain_size_units(::Type{T}, a, d) where {T} = convert_precision(T, uconvert(m, d))
 

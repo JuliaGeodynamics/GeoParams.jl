@@ -1,6 +1,9 @@
 using Test
 using GeoParams
 
+# measure inside a function: on Julia 1.10, @allocated at test scope counts boxing of the result
+allocs(f::F, args::Vararg{Any, N}) where {F, N} = (f(args...); @allocated f(args...))
+
 @testset "WaterFugacity" begin
 
     # Fugacity of H2O [MPa] from the online calculator of A. Withers
@@ -43,7 +46,7 @@ using GeoParams
     max_dev = maximum(abs.(fH ./ fH_Withers .- 1))
     @test max_dev < 5.0e-3   # the table is rounded to integers at high T; max. deviation is ~0.4%
 
-    # Float32 and unit-ful versions
+    # Float32 and Unitful versions
     f64 = compute_water_fugacity(1.0e9, 1073.15)
     f32 = compute_water_fugacity(1.0f9, 1073.15f0)
     @test f32 isa Float32
@@ -56,7 +59,7 @@ using GeoParams
 
     # no allocations
     compute_water_fugacity(1.0e9, 1073.15)
-    @test (@allocated compute_water_fugacity(1.0e9, 1073.15)) == 0
+    @test allocs(compute_water_fugacity, 1.0e9, 1073.15) == 0
 
     # approaches an ideal gas at low pressure and high temperature
     @test compute_water_fugacity(1.0e5, 2273.15) ≈ 1.0e5 rtol = 1.0e-3

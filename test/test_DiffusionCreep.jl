@@ -3,6 +3,9 @@ using GeoParams
 using LaTeXStrings
 import GeoParams.Diffusion
 
+# measure inside a function: on Julia 1.10, @allocated at test scope counts boxing of the result
+allocs(f::F, args::Vararg{Any, N}) where {F, N} = (f(args...); @allocated f(args...))
+
 @testset "DiffusionCreepLaws" begin
 
     # This tests the MaterialParameters structure
@@ -202,7 +205,7 @@ import GeoParams.Diffusion
     @test dεII_dτII(p, τ0, (; args..., d = 1.0e-3)) ≈ 125 * dεII_dτII(p, τ0, args)
     @test dτII_dεII(p, ε0, (; args..., d = 1.0e-3)) ≈ dτII_dεII(p, ε0, args) / 125
 
-    # unit-ful methods, d = 1mm
+    # Unitful methods, d = 1mm
     uargs = (; T = 1100.0K, P = 5.0e8Pa)
     @test ustrip(compute_εII(p, τ0 * Pa, uargs)) ≈ ε_stored
     @test ustrip(compute_εII(p, τ0 * Pa; uargs..., d = 1mm)) ≈ 125 * ε_stored
@@ -227,8 +230,8 @@ import GeoParams.Diffusion
     f_rt(p, τ, T, d) = compute_εII(p, τ; T = T, d = d)
     f_stored(p, τ0, 1100.0)
     f_rt(p, τ0, 1100.0, 1.0e-3)
-    @test (@allocated f_stored(p, τ0, 1100.0)) == 0
-    @test (@allocated f_rt(p, τ0, 1100.0, 1.0e-3)) == 0
+    @test allocs(f_stored, p, τ0, 1100.0) == 0
+    @test allocs(f_rt, p, τ0, 1100.0, 1.0e-3) == 0
     @test (@inferred f_rt(p, τ0, 1100.0, 1.0e-3)) isa Float64
     @test f_rt(p, Float32(τ0), 1100.0f0, 1.0f-3) isa Float32
 
