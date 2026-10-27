@@ -14,7 +14,7 @@ function cold_dry_olivine_Hirth_2003()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Checked values; not yet plots (NM)",
+        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'dry GBS, T < 1250 °C' (A in MPa^-3.5 μm^2/s, differential stress). V as for dry dislocation creep (footnote g; 18e-6 is the thermocouple-corrected value of Table 2).",
         BibTex_Reference = "
             @article{hirth2004rheology,
             title={Rheology of the Upper Mantle and the Mantle Wedge: A View from the Experimentalists},
@@ -41,7 +41,7 @@ function hot_dry_olivine_Hirth_2003()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Checked values; not yet plots (NM)",
+        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'dry GBS, T > 1250 °C' (A in MPa^-3.5 μm^2/s, differential stress). V as for dry dislocation creep (footnote g; 18e-6 is the thermocouple-corrected value of Table 2).",
         BibTex_Reference = "
             @article{hirth2004rheology,
             title={Rheology of the Upper Mantle and the Mantle Wedge: A View from the Experimentalists},

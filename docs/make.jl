@@ -46,6 +46,7 @@ makedocs(;
                 "Partial Melting" => "man/melting.md",
                 "Density" => "man/density.md",
                 "Solubility" => "man/solubility.md",
+                "Water fugacity" => "man/waterfugacity.md",
             ],
             "Constitutive Relationships" => Any[
                 "Creep laws" => "man/creeplaws.md",
@@ -66,6 +67,7 @@ makedocs(;
             "Phase Diagrams" => "man/phasediagrams.md",
             "Seismic Velocity" => "man/seismicvelocity.md",
             "1D Strength Envelope" => "man/strengthenvelope.md",
+            "Rheology figures (Becker & Faccenna)" => "man/rheology_becker_faccenna.md",
         ],
         "Plotting" => "man/plotting.md",
         "Parameter tables" => "man/tables.md",

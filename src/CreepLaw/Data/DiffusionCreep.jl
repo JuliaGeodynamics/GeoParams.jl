@@ -43,7 +43,7 @@ function dry_anorthite_Rybacki_2006()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Checked values; not yet plots (BK)",
+        Comment = "Rybacki et al. (2006), Table 5, 'Diffusion creep, dry': log A = 12.1 MPa^-n μm^m/s, Q = 460 kJ/mol, V = 24 cm^3/mol, m = 3.",
         BibTex_Reference = "
             @article{Rybacki_Gottschalk_Wirth_Dresen_2006, 
             title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates}, 
@@ -65,13 +65,13 @@ function wet_olivine_Mei_2000a()
         n = 1.0NoUnits,                         # power-law exponent
         r = 1.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^4.7)MPa^(-1) * μm^3 * s^(-1), # material specific rheological parameter
+        A = (10^4.7)MPa^(-2) * μm^3 * s^(-1), # material specific rheological parameter; MPa^-(n+r), fH2O in MPa
         E = 295.0kJ / mol,                      # activation energy
         V = 20.0e-6m^3 / mol,                     # activation Volume
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values are not exactly the same as in Mei & Kohlstedt (2000a) but are close to them (NM)",
+        Comment = "Mei & Kohlstedt (2000a): n, p and r = 1 paired with V = 20 cm^3/mol from the abstract; A and E (≈300 kJ/mol in later citations) not verified against the paper. A includes the fH2O unit (MPa^-(n+r)); pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{mei2000influence,
             title={Influence of water on plastic deformation of olivine aggregates: 1. Diffusion creep regime},
@@ -94,13 +94,13 @@ function wet_olivine_Hirth_2003()
         n = 1.0NoUnits,                         # power-law exponent
         r = 1.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^7.4)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
+        A = 2.5e7MPa^(-2) * μm^3 * s^(-1),      # material specific rheological parameter; MPa^-(n+r), fH2O in MPa
         E = 375.0kJ / mol,                        # activation energy
         V = 20.0e-6m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "The A value is not exactly the same as in Hirth & Kohlstedt (2003) but is approximated (NM)",
+        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'wet diffusion' (constant fH2O): A = 2.5e7 for r = 1 (footnote d), E = 375, V = 0-20 (upper end used). A includes the fH2O unit (MPa^-(n+r)); pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{hirth2004rheology,
             title={Rheology of the Upper Mantle and the Mantle Wedge: A View from the Experimentalists},
@@ -110,6 +110,39 @@ function wet_olivine_Hirth_2003()
             pages={83--105},
             year={2004},
             publisher={Wiley Online Library}
+            }
+    ",
+    )
+    return data, info
+end
+"""
+Diffusion creep data for wet olivine at constant water content after Hirth & Kohlstedt (2003), Table 1,
+row 'wet diffusion (constant C_OH)'. Here `f` is the water content C_OH in H/10^6 Si (dimensionless), not a fugacity.
+"""
+function wet_olivine1_Hirth_2003()
+    data = DiffusionCreep(;
+        Name = "Wet Olivine 1 | Hirth & Kohlstedt (2003)",
+        n = 1.0NoUnits,                         # power-law exponent
+        r = 1.0NoUnits,                         # exponent of water content C_OH
+        p = -3.0NoUnits,                        # grain size exponent
+        A = 1.0e6MPa^(-1) * μm^3 * s^(-1),      # material specific rheological parameter; (H/10^6 Si)^-r not included
+        E = 335.0kJ / mol,                        # activation energy
+        V = 4.0e-6m^3 / mol,                        # activation Volume
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'wet diffusion (constant C_OH)': A = 1.0e6, r = 1, E = 335, V = 4 (footnote c example: 7.8e-15 /s). Pass f = C_OH in H/10^6 Si.",
+        BibTex_Reference = "
+            @incollection{HirthKohlstedt_OlivineRheology_2003,
+            title = {Rheology of the upper mantle and the mantle wedge: {A} view from the experimentalists},
+            booktitle = {Inside the Subduction Factory, Geophysical Monograph Series},
+            volume = {138},
+            publisher = {American Geophysical Union},
+            author = {Hirth, Greg and Kohlstedt, David},
+            editor = {Eiler, John},
+            year = {2003},
+            doi = {10.1029/138GM06},
+            pages = {83--105},
             }
     ",
     )
@@ -121,13 +154,13 @@ function dry_olivine_Hirth_2003()
         n = 1.0NoUnits,                         # power-law exponent
         r = 0.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^9.2)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
+        A = 1.5e9MPa^(-1) * μm^3 * s^(-1),      # material specific rheological parameter
         E = 375.0kJ / mol,                        # activation energy
         V = 10.0e-6m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "The A value is not exactly the same as in Hirth & Kohlstedt (2003) but is approximated (NM)",
+        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'dry diffusion': A = 1.5e9 MPa^-1 μm^3/s, E = 375, V = 2-10 (upper end used).",
         BibTex_Reference = "
             @article{hirth2004rheology,
             title={Rheology of the Upper Mantle and the Mantle Wedge: A View from the Experimentalists},
@@ -142,28 +175,29 @@ function dry_olivine_Hirth_2003()
     )
     return data, info
 end
-function wet_olivine_Faul_2006()
+function dry_olivine_Faul_2007()
     data = DiffusionCreep(;
-        Name = "Dry Olivine | Faul & Jackson (2006)",
-        n = 1.4NoUnits,                         # power-law exponent
+        Name = "Dry Olivine | Faul & Jackson (2007)",
+        n = 1.37NoUnits,                        # power-law exponent
         r = 0.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^10.3)MPa^(-7 // 5) * μm^3 * s^(-1),    # material specific rheological parameter
+        A = 2.0e10MPa^(-137 // 100) * μm^3 * s^(-1),    # material specific rheological parameter
         E = 484.0kJ / mol,                        # activation energy
         V = 0.0m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Paper not found, taking values from Bürgmannn & Dresen (2008), Supplementary Material, Table 1 (NM)",
+        Comment = "Faul & Jackson (2007), eq. (2) and paragraph [32]: A = 2e10 MPa^-n μm^p/s, E = 484 kJ/mol, n = 1.37, p = 3; dry, melt-free sol-gel olivine, V not determined. Formerly wet_olivine_Faul_2006.",
         BibTex_Reference = "
-            @article{burgmann2008rheology,
-            title={Rheology of the lower crust and upper mantle: Evidence from rock mechanics, geodesy, and field observations},
-            author={B{\"u}rgmann, Roland and Dresen, Georg},
-            journal={Annu. Rev. Earth Planet. Sci.},
-            volume={36},
-            pages={531--567},
-            year={2008},
-            publisher={Annual Reviews}
+            @article{faul2007diffusion,
+            title={Diffusion creep of dry, melt-free olivine},
+            author={Faul, Ulrich H and Jackson, Ian},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={112},
+            number={B4},
+            pages={B04204},
+            year={2007},
+            doi={10.1029/2006JB004586}
             }
     ",
     )
@@ -181,7 +215,7 @@ function dry_clinopyroxene_HierMajumder_2005()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM), dividend at A is the shear modulus of diorite (see paper)",
+        Comment = "Hier-Majumder et al. (2005), abstract (n, E); A = 10^25.3 divided by the shear modulus of diopside (64.9e3 MPa). Unresolved: Bürgmann & Dresen (2008) divide by 64.9 (GPa) instead, giving A 10^3 larger; the paper was not available to settle this.",
         BibTex_Reference = "
             @article{hier2005water,
             title={Water weakening of clinopyroxenite in diffusion creep},
@@ -202,13 +236,13 @@ function wet_clinopyroxene_HierMajumder2005()
         n = 1.0NoUnits,                         # power-law exponent
         r = 1.4NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^7.9 / 64.9e3)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
+        A = (10^7.9 / 64.9e3)MPa^(-24 // 10) * μm^3 * s^(-1),    # material specific rheological parameter; MPa^-(n+r), fH2O in MPa
         E = 340.0kJ / mol,                        # activation energy
         V = 14.0e-6m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM), dividend at A is the shear modulus of diorite (see paper)",
+        Comment = "Hier-Majumder et al. (2005), abstract (n, E, r = 1.4, V = 14 cm^3/mol); A = 10^7.9 divided by the shear modulus of diopside (64.9e3 MPa). Unresolved: Bürgmann & Dresen (2008) divide by 64.9 (GPa) instead, giving A 10^3 larger. A includes the fH2O unit (MPa^-(n+r)); pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{hier2005water,
             title={Water weakening of clinopyroxenite in diffusion creep},
@@ -235,7 +269,7 @@ function dry_clinopyroxene_Bystricky_2001()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM)",
+        Comment = "Bürgmann & Dresen (2008), Suppl. Table 1 (log A = 15.1, Q = 560, m = 3); Bystricky & Mackwell (2001) only seen as abstract.",
         BibTex_Reference = "
             @article{bystricky2001creep,
             title={Creep of dry clinopyroxene aggregates},
@@ -264,7 +298,7 @@ function dry_diopside_Dimanov_2005()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values according to Bürgmann & Dresen (2008), Supplementary (NM), cant reproduce Dimanov & Dresen (2005) A value",
+        Comment = "Dimanov & Dresen (2005), Table 3b, row Di35D (n = 1, Q = 528); A = 10^14 from Bürgmann & Dresen (2008), Suppl. Table 1, since the paper folds d^m into A (m = 3 assumed).",
         BibTex_Reference = "
             @article{dimanov2005rheology,
             title={Rheology of synthetic anorthite-diopside aggregates: Implications for ductile shear zones},
@@ -287,12 +321,12 @@ function wet_diopside_Dimanov_2005()
         r = 0.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
         A = (10^8.1)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
-        E = 528.0kJ / mol,                        # activation energy
+        E = 337.0kJ / mol,                        # activation energy
         V = 0.0m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values according to Bürgmann & Dresen (2008), Supplementary (NM), cant reproduce/find corresponding Dimanov & Dresen (2005) values",
+        Comment = "Bürgmann & Dresen (2008), Suppl. Table 1 (log A = 8.1, Q = 337, m = 3); Q is the mean of Dimanov & Dresen (2005), Table 3a, rows Di25W/Di35W/Di45W (345, 349, 318 kJ/mol). The paper folds d^m into A.",
         BibTex_Reference = "
             @article{dimanov2005rheology,
             title={Rheology of synthetic anorthite-diopside aggregates: Implications for ductile shear zones},
@@ -303,33 +337,6 @@ function wet_diopside_Dimanov_2005()
             year={2005},
             publisher={Wiley Online Library}
             }
-    ",
-    )
-    return data, info
-end
-
-function wet_clinopyroxene_Chen_2006()
-    data = DiffusionCreep(;
-        Name = "Wet Clinopyroxene | Chen et al. (2006)",
-        n = 1.0NoUnits,                         # power-law exponent
-        r = 0.0NoUnits,                         # exponent of water-fugacity
-        p = -3.0NoUnits,                        # grain size exponent
-        A = (10^8.1)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
-        E = 528.0kJ / mol,                        # activation energy
-        V = 0.0m^3 / mol,                       # activation Volume
-        Apparatus = AxialCompression,
-    )
-    info = MaterialParamsInfo(;
-        BibTex_Reference = "
-        @article{dimanov2005rheology,
-        title={Rheology of synthetic anorthite-diopside aggregates: Implications for ductile shear zones},
-        author={Dimanov, Alexandre and Dresen, Georg},
-        journal={Journal of Geophysical Research: Solid Earth},
-        volume={110},
-        number={B7},
-        year={2005},
-        publisher={Wiley Online Library}
-        }
     ",
     )
     return data, info
@@ -347,7 +354,7 @@ function dry_anorthite_Rybacki_2000()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM)",
+        Comment = "Rybacki & Dresen (2000), Table 2, 'Diffusion creep, dry': log A = 12.1 MPa^-n μm^m/s, Q = 467 kJ/mol, m = 3.",
         BibTex_Reference = "
             @article{rybacki2000dislocation,
             title={Dislocation and diffusion creep of synthetic anorthite aggregates},
@@ -376,7 +383,7 @@ function wet_anorthite_rybacki_2000()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM)",
+        Comment = "Rybacki & Dresen (2000), Table 2, 'Diffusion creep, wet': log A = 1.7 MPa^-n μm^m/s, Q = 170 kJ/mol, m = 3.",
         BibTex_Reference = "
             @article{rybacki2000dislocation,
             title={Dislocation and diffusion creep of synthetic anorthite aggregates},
@@ -399,13 +406,13 @@ function wet_anorthite_rybacki_2006()
         n = 1.0NoUnits,                         # power-law exponent
         r = 1.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^-0.7)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
+        A = (10^-0.7)MPa^(-2) * μm^3 * s^(-1),    # material specific rheological parameter; MPa^-(n+r), fH2O in MPa
         E = 159.0kJ / mol,                        # activation energy
         V = 38.0e-6m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM)",
+        Comment = "Rybacki et al. (2006), Table 5, 'Diffusion creep, wet': log A = -0.7 MPa^-(n+r) μm^m/s, Q = 159 kJ/mol, V = 38 cm^3/mol, r = 1, m = 3. Pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{rybacki2006influence,
             title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates},
@@ -433,7 +440,7 @@ function wet_quartzite_Rutter_2004()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM)",
+        Comment = "Rutter & Brodie (2004b), abstract: ε̇ = 10^-0.4 σ d^-2 exp(-220 kJ/mol / RT), σ in MPa, d in μm; no fH2O term.",
         BibTex_Reference = "
             @article{rutter2004experimental,
             title={Experimental grain size-sensitive flow of hot-pressed Brazilian quartz aggregates},

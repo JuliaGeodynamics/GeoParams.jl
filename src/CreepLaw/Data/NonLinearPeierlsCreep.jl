@@ -7,15 +7,18 @@ function dry_olivine_Mei_2010()
     data = NonLinearPeierlsCreep(;
         Name = "Dry Olivine | Mei et al. (2010)",
         n = 2.0NoUnits,                         # power-law exponent
-        q = 1.0NoUnits,                         # exponent of water-fugacity
-        o = 0.5NoUnits,                        # grain size exponent
+        q = 1.0NoUnits,                         # outer exponent q in (1 - (σ/σP)^p)^q
+        o = 0.5NoUnits,                         # inner stress exponent p
         TauP = 5.9e9Pa,                         # Peierls stress
-        A = (1.4e-7) * (2.0^((1.0 + (3.0 / 2.0)) / 2.0))MPa^(-2) * s^(-1),    # material specific rheological parameter
+        # A_P of eq. (3) as published, for axial strain rate and differential stress. The former extra factor
+        # 2^((1+3/n)/2) belongs to the stress-scale convention B = 2^((1+3/n)/2) A^(-1/n) of other codes;
+        # the conversion to invariants is done here by Apparatus = AxialCompression.
+        A = 1.4e-7MPa^(-2) * s^(-1),            # material specific rheological parameter
         E = 320.0kJ / mol,                        # activation energy
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Checked values; not yet plots (NM)",
+        Comment = "Mei et al. (2010), eq. (3) and paragraph [23]: A_P = 1.4e-7 MPa^-2/s, σP = 5.9 GPa, E_k(0) = 320 kJ/mol, p = 1/2, q = 1 (axial strain rate, differential stress).",
         BibTex_Reference = "
             @article{mei2010experimental,
             title={Experimental constraints on the strength of the lithospheric mantle},
@@ -27,24 +30,6 @@ function dry_olivine_Mei_2010()
             publisher={Wiley Online Library}
             }
     ",
-    )
-    return data, info
-end
-
-function test_Peierls()
-    data = NonLinearPeierlsCreep(;
-        Name = "Test Peierls",
-        n = 2.0NoUnits,                         # power-law exponent
-        q = 1.0NoUnits,                         # exponent of water-fugacity
-        o = 0.5NoUnits,                        # grain size exponent
-        TauP = 5.9e9Pa,                         # Peierls stress
-        A = 4.55657940893437e-9MPa^(-2) * s^(-1),    # material specific rheological parameter
-        E = 320.0kJ / mol,                        # activation energy
-        Apparatus = AxialCompression,
-    )
-    info = MaterialParamsInfo(;
-        Comment = "Law to check Thorsten Beckers book rheology and its conversion of the A factor",
-        BibTex_Reference = "",
     )
     return data, info
 end

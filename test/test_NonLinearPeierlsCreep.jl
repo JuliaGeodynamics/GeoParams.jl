@@ -37,11 +37,11 @@ import GeoParams.NonLinearPeierls
     args = (; T = T)
     TauII = 1.0e9
     ε = compute_εII(p, TauII, args)
-    @test ε ≈ 5.638821307626487e-17
+    @test ε ≈ 2.3708323119196878e-17
 
     # same but with removing the tensor correction
     ε_notensor = compute_εII(remove_tensor_correction(p), TauII, args)
-    @test ε_notensor ≈ 5.491207069105064e-22
+    @test ε_notensor ≈ 2.3087681699131527e-22
 
     # test with arrays
     τII_array = ones(10) * 1.0e9
@@ -101,7 +101,7 @@ import GeoParams.NonLinearPeierls
     TauII = 1.0e9
     args = (; T = 273 + 200.0)
     depsdtau = dεII_dτII(p, TauII; args...)
-    @test depsdtau ≈ 1.339830415314779e-24
+    @test depsdtau ≈ 5.633292966430465e-25
 
     # param_info resolves the builder from the stored Name (find_creep_law)
     info_named = param_info(SetNonLinearPeierlsCreep(NonLinearPeierls.dry_olivine_Mei_2010))
@@ -112,4 +112,11 @@ import GeoParams.NonLinearPeierls
 
     # nondimensional unit transform path
     @test GeoParams.Transform_NonLinearPeierlsCreep(NonLinearPeierls.dry_olivine_Mei_2010, GEO_units()) isa AbstractCreepLaw
+
+    # Mei et al. (2010), eq. (3): ε̇ = A_P σ² exp(-E/RT (1 - √(σ/σP))), A_P = 1.4e-7 MPa⁻² s⁻¹, σ the
+    # differential stress in MPa (σ = √3 τII) and ε̇ the axial strain rate (ε̇II = ε̇ / (2/√3)).
+    σ, T = 1.0e3, 873.0
+    a = SetNonLinearPeierlsCreep(NonLinearPeierls.dry_olivine_Mei_2010)
+    @test compute_εII(a, σ * 1.0e6 / sqrt(3); T) ≈
+        1.4e-7 * σ^2 * exp(-320.0e3 / (NumValue(a.R) * T) * (1 - sqrt(σ / 5.9e3))) / (2 / sqrt(3)) rtol = 1.0e-6
 end

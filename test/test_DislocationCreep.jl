@@ -191,3 +191,47 @@ end
         @test ε ≈ 10^logA * σ^n * fH2O^r * exp(-(Q + V * P) / (NumValue(p.R) * T)) rtol = 1.0e-6
     end
 end
+
+# Corrected database entries, each against its flow law written in the paper's units:
+# ε = A σⁿ f^r exp(-(Q + PV)/RT) with σ (differential stress) and fH2O in MPa, V in cm³/mol, P in MPa.
+# GeoParams takes τII, P and fH2O in Pa; σ and ε go through FT and FE.
+@testset "Dislocation creep database vs. paper units" begin
+    σ, T, P, fH2O = 100.0, 1273.0, 300.0, 200.0
+    for (law, A, n, r, Q, V) in (
+            (Dislocation.wet_olivine_Hirth_2003, 1600.0, 3.5, 1.2, 520.0e3, 22.0),     # HK03 Table 1
+            (Dislocation.wet_anorthite_Rybacki_2006, 10^0.2, 3.0, 1.0, 345.0e3, 38.0), # Rybacki 2006 Table 5
+            (Dislocation.wet_clinopyroxene_Chen_2006, 10^6.7, 2.7, 3.0, 670.0e3, 0.0),
+            (Dislocation.wet_quartzite_Hirth_2001, 10^-11.2, 4.0, 1.0, 135.0e3, 0.0),
+            (Dislocation.wet_quartzite_Rutter_2004, 10^-4.93, 2.97, 1.0, 242.0e3, 0.0),
+            (Dislocation.wet_quartzite_Tokle_2019, 10^-11.959, 3.0, 1.2, 115.0e3, 0.0),
+            (Dislocation.lowstress_wet_quartzite_Tokle_2019, 1.75e-12, 4.0, 1.0, 125.0e3, 0.0),
+            (Dislocation.dry_quartzite_Jaoul_1984, 10^-5.415, 2.8, 0.0, 184.0e3, 0.0),
+            (Dislocation.wet_quartzite_Jaoul_1984, 10^-5.045, 2.8, 0.0, 163.0e3, 0.0),
+        )
+        p = SetDislocationCreep(law)
+        ε = compute_εII(p, σ * 1.0e6 / p.FT; T, P = P * 1.0e6, f = fH2O * 1.0e6) * p.FE
+        @test ε ≈ A * σ^n * fH2O^r * exp(-(Q + V * P) / (NumValue(p.R) * T)) rtol = 1.0e-6
+    end
+
+    # Kirby (1983): A = 10^3.2 GPa^-2.4 s^-1, σ in GPa
+    p = SetDislocationCreep(Dislocation.wet_quartzite_Kirby_1983)
+    ε = compute_εII(p, σ * 1.0e6 / p.FT; T) * p.FE
+    @test ε ≈ 10^3.2 * (σ / 1.0e3)^2.4 * exp(-160.0e3 / (NumValue(p.R) * T)) rtol = 1.0e-6
+
+    # Dimanov & Dresen (2005), Tables 3a/3b: A in Pa^-n s^-1, σ in Pa
+    for (law, A, n, Q) in (
+            (Dislocation.dry_diopside_Dimanov_2005, 3.01e-28, 5.47, 691.0e3),
+            (Dislocation.wet_diopside_Dimanov_2005, 5.16e-33, 5.52, 534.0e3),
+        )
+        p = SetDislocationCreep(law)
+        ε = compute_εII(p, σ * 1.0e6 / p.FT; T) * p.FE
+        @test ε ≈ A * (σ * 1.0e6)^n * exp(-Q / (NumValue(p.R) * T)) rtol = 1.0e-6
+    end
+
+    # HK03 Table 1, constant C_OH: f is C_OH in H/10^6 Si (dimensionless). Footnote e:
+    # 90 (0.3)^3.5 (1000)^1.2 exp(-(480000 + 1e9 * 11e-6)/(8.314 * 1673)) = 2.5e-12 s^-1
+    p = SetDislocationCreep(Dislocation.wet_olivine1_Hirth_2003)
+    ε = compute_εII(p, 0.3e6 / p.FT; T = 1673.0, P = 1.0e9, f = 1000.0) * p.FE
+    @test ε ≈ 90 * 0.3^3.5 * 1000^1.2 * exp(-(480.0e3 + 1.0e9 * 11.0e-6) / (NumValue(p.R) * 1673.0)) rtol = 1.0e-6
+    @test ε ≈ 2.5e-12 rtol = 2.0e-2
+end

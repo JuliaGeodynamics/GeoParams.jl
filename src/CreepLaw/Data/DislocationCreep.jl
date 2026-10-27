@@ -29,7 +29,7 @@ function dry_olivine_Hirth_2003()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
+        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'dry dislocation': A = 1.1e5 MPa^-n/s, n = 3.5, E = 530; V = 14 cm^3/mol from Table 2 (range 13.4-27).",
         BibTex_Reference = "
             @incollection{eiler_rheology_2003,
             address = {Washington, D. C.},
@@ -54,12 +54,14 @@ function dry_olivine_Hirth_2003()
 end
 
 """
-Dislocation creep data for wet olivine (1), constant water fugacity after Hirth, G. & Kohlstedt (2003)
+Dislocation creep data for wet olivine (1) at constant water content after Hirth, G. & Kohlstedt (2003), Table 1,
+row 'wet dislocation (constant C_OH)'. Here `f` is the water content C_OH in H/10^6 Si (dimensionless), not a
+fugacity; A is therefore stored in MPa^-n only.
 """
 function wet_olivine1_Hirth_2003()
     # After Hirth, G. & Kohlstedt (2003), D. Rheology of the upper mantle and the mantle wedge: A view from the experimentalists.
-    #   Inside the subduction Factory 83?105. Table 1, "wet dislocation" parameters
-    #  Note that this assumes C_OH=1000
+    #   Inside the subduction Factory 83?105. Table 1, "wet dislocation (constant C_OH)" parameters
+    #  f = C_OH in H/10^6 Si must be passed explicitly (HK03 use C_OH = 1000 in their example, footnote e)
 
     data = DislocationCreep(;
         Name = "Wet Olivine 1 | Hirth & Kohlstedt (2003)",
@@ -71,7 +73,7 @@ function wet_olivine1_Hirth_2003()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Still to be verified with the original publication (BK). Values checked, plots are not reproduced (DK).",
+        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'wet dislocation (constant C_OH)': A = 90, n = 3.5, r = 1.2, E = 480, V = 11 (footnote e example: 2.5e-12 /s). Pass f = C_OH in H/10^6 Si.",
         BibTex_Reference = "
             @incollection{HirthKohlstedt_OlivineRheology_2003,
             address = {Washington, D. C.},
@@ -96,55 +98,13 @@ function wet_olivine1_Hirth_2003()
 end
 
 """
-Dislocation creep data for wet olivine (2), 5th creep law in table 1 of Hirth & Kohlstedt (2003)
-"""
-function wet_olivine2_Hirth_2003()
-    # After Hirth, G. & Kohlstedt (2003), D. Rheology of the upper mantle and the mantle wedge: A view from the experimentalists.
-    #   Inside the subduction Factory 83?105. Table 1, "wet dislocation" parameters
-    #  Note that this assumes C_OH=1000
-
-    data = DislocationCreep(;
-        Name = "Wet Olivine 2 | Hirth & Kohlstedt (2003)",
-        n = 3.5NoUnits,
-        A = 1600MPa^(-3) / s,
-        E = 520.0kJ / mol,
-        V = 22.0e-6m^3 / mol,
-        r = 1.2NoUnits,
-        Apparatus = AxialCompression,
-    )
-    info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
-        BibTex_Reference = "
-        @incollection{eiler_rheology_2003,
-        address = {Washington, D. C.},
-        title = {Rheology of the upper mantle and the mantle wedge: {A} view from the experimentalists},
-        volume = {138},
-        isbn = {978-0-87590-997-4},
-        shorttitle = {Rheology of the upper mantle and the mantle wedge},
-        url = {http://www.agu.org/books/gm/v138/138GM06/138GM06.shtml},
-        language = {en},
-        urldate = {2019-10-09},
-        booktitle = {Geophysical {Monograph} {Series}},
-        publisher = {American Geophysical Union},
-        author = {Hirth, Greg and Kohlstedt, David},
-        editor = {Eiler, John},
-        year = {2003},
-        doi = {10.1029/138GM06},
-        pages = {83--105},
-        }
-    ",
-    )
-    return data, info
-end
-
-"""
 Dislocation creep data for Quartz Diorite after Hansen (1982), 'Semibrittle creep of selected crustal rocks at 1000 MPa.' and, Hansen & Carter (1982),  'Flow properties of continental lithosphere.'
 """
 function quartz_diorite_HansenCarter_1982()
     #  After Hansen (1982), 'Semibrittle creep of selected crustal rocks at 1000 MPa.' and, Hansen & Carter (1982),
     #  'Flow properties of continental lithosphere.'
     #  Hansen (1982), Fig. 53, page 184 in PDF viewer and table 18, page 224
-    #  Carter & Tsenn (1986), table 4, page 18 in PDF viewer
+    #  Carter & Tsenn (1987), table 4, page 18 in PDF viewer, list n = 2.4, log A = -1.5 (MPa^-n/s), Q = 212 instead
 
     data = DislocationCreep(;
         Name = "Quartz Diorite | Hansen & Carter (1982)",
@@ -156,17 +116,20 @@ function quartz_diorite_HansenCarter_1982()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Verified with the original publication Hansen(1982)(NM). Values checked, plots are not reproduced (NM).",
+        Comment = "Hansen (1982, PhD thesis), table 18 (n = 2.25, A = 3.5e-2, Q = 212). Carter & Tsenn (1987), Table 4, list n = 2.4, log A = -1.5 for the same material.",
         BibTex_Reference = "
-            @article{carter1982stress,
-            title={Stress magnitudes in natural rock salt},
-            author={Carter, Neville L and Hansen, Francis D and Senseny, Paul E},
-            journal={Journal of Geophysical Research: Solid Earth},
-            volume={87},
-            number={B11},
-            pages={9289--9300},
-            year={1982},
-            publisher={Wiley Online Library}
+            @inproceedings{hansen1982creep,
+            title={Creep of selected crustal rocks at 1000 MPa},
+            author={Hansen, Francis D and Carter, Neville L},
+            booktitle={Issues in Rock Mechanics, Proceedings of the 23rd U.S. Symposium on Rock Mechanics},
+            address={Berkeley, CA},
+            year={1982}
+            }
+            @phdthesis{hansen1982semibrittle,
+            title={Semibrittle creep of selected crustal rocks at 1000 MPa},
+            author={Hansen, Francis D},
+            school={Texas A\\&M University},
+            year={1982}
             }
     ",
     )
@@ -192,7 +155,7 @@ function diabase_Caristan_1982()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (Bremond (1999)), plots are not reproduced (NM).",
+        Comment = "Wet (as-received) Maryland diabase. Values from Bremond d'Ars et al. (1999), p. 5; not verified against Caristan (1982), whose tests were all at 1000 °C, so Q must come from the compilation.",
         BibTex_Reference = "
         @article{caristan1982transition,
         title={The transition from high temperature creep to fracture in Maryland diabase},
@@ -225,7 +188,7 @@ function serpentinite_Raleigh_1965()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (Bremond (1999)), plots are not reproduced (NM).",
+        Comment = "Fit by later authors, taken from Bremond d'Ars et al. (1999), p. 5; Raleigh & Paterson (1965) report strength tests, not a power-law fit. Not verified.",
         BibTex_Reference = "
             @article{raleigh1965experimental,
             title={Experimental deformation of serpentinite and its tectonic implications},
@@ -255,7 +218,7 @@ function strong_diabase_Mackwell_1998()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (Mackwell et al. (1998))(NM), plots are not reproduced (NM).",
+        Comment = "Mackwell et al. (1998), abstract (n = 4.7, Q = 485, dry Maryland diabase); A = 8 MPa^-n/s from secondary tables only.",
         BibTex_Reference = "
             @article{mackwell1998high,
             title={High-temperature deformation of dry diabase with application to tectonics on Venus},
@@ -287,7 +250,7 @@ function mafic_granulite_Wilks_1990()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (Wilks and Carter (1990))(NM), plots are not reproduced (NM).",
+        Comment = "Pikwitonei granulite via Ranalli (1995), Table 10.3, and Li, Gerya & Burg (2010), Table 2; not verified against Wilks & Carter (1990).",
         BibTex_Reference = "
             @article{wilks1990rheology,
             title={Rheology of some continental lower crustal rocks},
@@ -316,7 +279,7 @@ function wet_quartzite_Ueda_2008()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (Ueda et al. (2008))(NM), plots are not reproduced (NM).",
+        Comment = "Ranalli (1995) wet quartzite (A = 3.2e-4 MPa^-n/s, n = 2.3, E = 154) as listed in Gerya-group tables; Ueda et al. (2008) Table 1 not seen.",
         BibTex_Reference = "
             @article{ueda2008subduction,
             title={Subduction initiation by thermal--chemical plumes: numerical studies},
@@ -347,7 +310,7 @@ function granite_Carter_1987()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (Carter and Tsenn (1987))(NM), plots are not reproduced (NM).",
+        Comment = "Carter & Tsenn (1987), Table 4, 'Westerly granite, dry (Hansen & Carter, 1983)': log A = -5.7 MPa^-n/s, n = 3.3, Q = 186.5.",
         BibTex_Reference = "
         @article{carter1987flow,
         title={Flow properties of continental lithosphere},
@@ -378,7 +341,7 @@ function plagioclase_An75_Ji_1993()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (Ji and Zhao (1993))(NM), plots are not reproduced (NM).",
+        Comment = "Ranalli (1995), Table 10.3 (A = 3.3e-4 MPa^-n/s, n = 3.2, E = 238), via later tables; Ji & Zhao (1993) not verified.",
         BibTex_Reference = "
             @article{ji1993flow,
             title={Flow laws of multiphase rocks calculated from experimental data on the constituent phases},
@@ -407,7 +370,7 @@ function dry_anorthite_Rybacki_2006()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values taken from Bürgmann & Rybacki (2008) Supplementary table 1. (BK), plots are not reproduced (NM).",
+        Comment = "Rybacki et al. (2006), Table 5, 'Dislocation creep, dry': log A = 12.7 MPa^-n/s, n = 3, Q = 641, V = 24 cm^3/mol.",
         BibTex_Reference = "
             @article{rybacki2006influence,
             title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates},
@@ -428,14 +391,14 @@ function wet_anorthite_Rybacki_2006()
     data = DislocationCreep(;
         Name = "Wet Anorthite | Rybacki et al. (2006)",
         n = 3.0NoUnits,
-        A = (10^0.2)MPa^(-3) / s,
+        A = (10^0.2)MPa^(-4) / s,       # MPa^-(n+r), fH2O in MPa
         E = 345kJ / mol,
         V = 38.0e-6m^3 / mol,
         r = 1NoUnits,
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (Rybacki, Gottschalk, Wirth and Dresen (2006))(NM), plots are not reproduced (NM).",
+        Comment = "Rybacki et al. (2006), Table 5, 'Dislocation creep, wet': log A = 0.2 MPa^-(n+r)/s, n = 3, r = 1, Q = 345, V = 38 cm^3/mol. Pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{rybacki2006influence,
             title={Influence of water fugacity and activation volume on the flow properties of fine-grained anorthite aggregates},
@@ -452,22 +415,22 @@ function wet_anorthite_Rybacki_2006()
 end
 
 function wet_olivine_Hirth_2003()
-    #  Hirth and Kohlstedt (2003), table 1, no constant C_OH
+    #  Hirth and Kohlstedt (2003), table 1, "wet dislocation" (constant fH2O, not constant C_OH)
     data = DislocationCreep(;
         Name = "Wet Olivine | Hirth and Kohlstedt (2003)",
         n = 3.5NoUnits,
-        A = 1600.0MPa^(-7 // 2) / s,
+        A = 1600.0MPa^(-47 // 10) / s,  # MPa^-(n+r), fH2O in MPa
         E = 520kJ / mol,
         V = 22.0e-6m^3 / mol,
         r = 1.2NoUnits,
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (Hirth and Kohlstedt (2003))(NM), plots are not reproduced (NM).",
+        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'wet dislocation': A = 1600 MPa^-(n+r)/s (fH2O in MPa), n = 3.5, r = 1.2, E = 520, V = 22. Pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{hirth2003rheology,
             title={Rheology of the upper mantle and the mantle wedge: A view from the experimentalists},
-            author={Hirth, Greg and Kohlstedf, D},
+            author={Hirth, Greg and Kohlstedt, D},
             journal={Geophysical monograph-american geophysical union},
             volume={138},
             pages={83--106},
@@ -487,14 +450,14 @@ function wet_quartzite_Kirby_1983()
     data = DislocationCreep(;
         Name = "Wet Quarzite | Kirby (1983)",
         n = 2.4NoUnits,
-        A = 1.25e-2MPa^(-12 // 5) / s, #A is given in 10^(3.2)^ GPa^(2.4)^ in paper
+        A = 1.0e-4MPa^(-12 // 5) / s, # 10^3.2 GPa^-2.4/s in the source = 10^(3.2 - 7.2) MPa^-2.4/s
         E = 160.0e3J / mol,
         V = 0m^3 / mol,
         r = 0NoUnits,
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (Kirby (1983))(NM), plots are not reproduced (NM).",
+        Comment = "Koch wet quartzite after Kirby (1983), Table 2, and Kirby & Kronenberg (1987), Table 3 (n = 2.4, H = 160); A = 10^3.2 GPa^-n/s converted to MPa. Kirby (1983) itself not seen.",
         BibTex_Reference = "
             @article{kirby1983rheology,
             title={Rheology of the lithosphere},
@@ -525,7 +488,7 @@ function wet_olivine_Afonso_2004()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (Afonso and Ranalli (2004))(NM), plots are not reproduced (NM).",
+        Comment = "Ranalli (1995) wet olivine (A = 2.0e3 MPa^-n/s, n = 4, E = 471) via Gerya (2010), Table 17.1; Afonso & Ranalli (2004) not seen.",
         BibTex_Reference = "
             @article{afonso2004crustal,
             title={Crustal and mantle strengths in continental lithosphere: is the jelly sandwich model obsolete?},
@@ -556,7 +519,7 @@ function granite_Tirel_2008()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (Tirel et al. (2008))(NM), plots are not reproduced (NM).",
+        Comment = "Tirel et al. (2008), Table 1, 'granite (anomaly)': A = 1.25e-9 MPa^-n/s, n = 3.2, Ea = 123. These do not match the cited Kirby & Kronenberg (1987) Table 3.",
         BibTex_Reference = "
             @article{tirel2008dynamics,
             title={Dynamics and structural development of metamorphic core complexes},
@@ -585,7 +548,7 @@ function dry_olivine_Gerya_2019()
         r = 0.0NoUnits,
     )
     info = MaterialParamsInfo(;
-        Comment = "This is from Exercise 6.1, indicated to be valid for olivine under upper mantle conditions.",
+        Comment = "Gerya, Exercise 6.1 (A = 2.5e-17 Pa^-n/s, n = 3.5, Ea = 532 kJ/mol, axial compression); checked in the 2010 edition. Valid for olivine under upper mantle conditions.",
         BibTex_Reference = "
             @book{Gerya_2019,
             title={Introduction to Numerical Geodynamic Modelling},
@@ -611,35 +574,7 @@ function rock_salt_Li_Urai_2016()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked in (Li & Urai, (2016)) are different from given source (Wawersik & Zeuch, (1986))(NM), plots are not reproduced (NM).",
-        BibTex_Reference = "
-        @article{li2016rheology,
-        title={Rheology of rock salt for salt tectonics modeling},
-        author={Li, Shi-Yuan and Urai, Janos L},
-        journal={Petroleum science},
-        volume={13},
-        number={4},
-        pages={712--724},
-        year={2016},
-        publisher={Springer}
-        }
-    ",
-    )
-    return data, info
-end
-
-function salado_rock_salt_Li_2016()
-    data = DislocationCreep(;
-        Name = "Salado Rock salt | Li & Urai (2016)",
-        n = 5.0NoUnits,
-        A = 7.26e-6MPa^(-5) / s,
-        E = 53.92kJ / mol,
-        V = 0.0m^3 / mol,
-        r = 0.0NoUnits,
-        Apparatus = AxialCompression,
-    )
-    info = MaterialParamsInfo(;
-        Comment = "Values checked in (Li & Urai, (2016)) are different from given source (Wawersik & Zeuch, (1986))(NM), plots are not reproduced (NM).",
+        Comment = "Li & Urai (2016), Table 1, 'Salt B: dislocation creep' (A0 = 7.26e-6 MPa^-5/s, Q = 53920 J/mol, n = 5), after Wawersik & Zeuch (1986) as simplified by Li & Urai; the primary source was not verified.",
         BibTex_Reference = "
         @article{li2016rheology,
         title={Rheology of rock salt for salt tectonics modeling},
@@ -668,7 +603,7 @@ function wet_olivine_Mei_2000b()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "The A value is not exactly the same as in Mei & Kohlstedt (2000b) but is approximated (NM).",
+        Comment = "Mei & Kohlstedt (2000b), abstract: n ≈ 3, Q ≈ 470, r = 0.69-1.25 for V = 0-38 (r = 0.98 pairs with V = 20). A = 1500 MPa^-(n+r)/s and n = 3.02 not verified against the paper. Pass f = fH2O in Pa.",
         BibTex_Reference = "
         @article{mei2000influence,
         title={Influence of water on plastic deformation of olivine aggregates: 2. Dislocation creep regime},
@@ -686,7 +621,7 @@ function wet_olivine_Mei_2000b()
 end
 
 function dry_olivine_Karato_2003()
-    #  Mei & Kohlstedt (2000b), abstract
+    #  Karato & Jung (2003), abstract
     data = DislocationCreep(;
         Name = "Dry Olivine | Karato & Jung (2003)",
         n = 3.0NoUnits,
@@ -697,7 +632,7 @@ function dry_olivine_Karato_2003()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
+        Comment = "Karato & Jung (2003), abstract: A = 10^6.1 MPa^-n/s, n = 3.0, r = 0; E = 510, V = 14 from secondary citations of the full text.",
         BibTex_Reference = "
         @article{karato2003effects,
         title={Effects of pressure on high-temperature dislocation creep in olivine},
@@ -726,7 +661,7 @@ function wet_olivine_Karato_2003()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM, PA)",
+        Comment = "Karato & Jung (2003), abstract: A = 10^2.9 MPa^-(n+r)/s (fH2O in MPa), n = 3.0, r = 1.2; E = 470, V = 24 from secondary citations of the full text. Pass f = fH2O in Pa.",
         BibTex_Reference = "
         @article{karato2003effects,
         title={Effects of pressure on high-temperature dislocation creep in olivine},
@@ -744,18 +679,19 @@ function wet_olivine_Karato_2003()
 end
 
 function wet_clinopyroxene_Chen_2006()
-    #  Chen et al. (2006), section 4. Discussion, equation (3)
+    #  Chen et al. (2006), abstract (n, r, E, V); log A = 6.7 from Bürgmann & Dresen (2008), Suppl. Table 1
+    #  A stored in MPa^-(n+r) with fH2O in MPa, as is usual for Kohlstedt-group laws; the unit of A in the paper was not confirmed
     data = DislocationCreep(;
         Name = "Wet Clinopyroxene | Chen et al. (2006)",
         n = 2.7NoUnits,
-        A = (10^6.7)MPa^(-27 // 10) / s,
+        A = (10^6.7)MPa^(-57 // 10) / s,
         E = 670.0kJ / mol,
         V = 0.0m^3 / mol,
         r = 3.0NoUnits,
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
+        Comment = "Chen et al. (2006), abstract: n = 2.7, r = 3.0, Q = 670, V = 0; log A = 6.7 from Bürgmann & Dresen (2008). Unit of A (MPa^-(n+r)) not confirmed from the paper. Pass f = fH2O in Pa.",
         BibTex_Reference = "
         @article{chen2006water,
         title={Water weakening of clinopyroxene in the dislocation creep regime},
@@ -772,7 +708,8 @@ function wet_clinopyroxene_Chen_2006()
 end
 
 function dry_clinopyroxene_Bystricky_Mackwell_2001()
-    #  Bystricky & Mackwell (2001), section 4. Discussion, equation (3)
+    #  Bystricky & Mackwell (2001), abstract (n, E); log A = 9.8 from Bürgmann & Dresen (2008), Suppl. Table 1.
+    #  10^9.8 is the natural coarse-grained Sleaford Bay clinopyroxenite; hot-pressed fine-grained samples give 10^10.8
     data = DislocationCreep(;
         Name = "Dry Clinopyroxene | Bystricky & Mackwell (2001)",
         n = 4.7NoUnits,
@@ -783,7 +720,7 @@ function dry_clinopyroxene_Bystricky_Mackwell_2001()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
+        Comment = "Natural Sleaford Bay clinopyroxenite: n = 4.7, Q = 760 (Bystricky & Mackwell 2001, abstract), log A = 9.8 (Bürgmann & Dresen 2008, Suppl. Table 1).",
         BibTex_Reference = "
         @article{bystricky2001creep,
         title={Creep of dry clinopyroxene aggregates},
@@ -804,15 +741,15 @@ function dry_diopside_Dimanov_2005()
     #  Dimanov & Dresen (2005), table 3b
     data = DislocationCreep(;
         Name = "Dry Diopside | Dimanov & Dresen (2005)",
-        n = 5.5NoUnits,
-        A = uconvert(MPa^(-55 // 10) / s, 3.01e-28Pa^(-55 // 10) / s),
+        n = 5.47NoUnits,
+        A = uconvert(MPa^(-547 // 100) / s, 3.01e-28Pa^(-547 // 100) / s),
         E = 691.0kJ / mol,
         V = 0.0m^3 / mol,
         r = 0.0NoUnits,
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
+        Comment = "Dimanov & Dresen (2005), Table 3b, row DiD: A = 3.01e-28 Pa^-n/s, n = 5.47, Q = 691.",
         BibTex_Reference = "
         @article{dimanov2005rheology,
         title={Rheology of synthetic anorthite-diopside aggregates: Implications for ductile shear zones},
@@ -829,18 +766,18 @@ function dry_diopside_Dimanov_2005()
 end
 
 function wet_diopside_Dimanov_2005()
-    #  Dimanov & Dresen (2005), table 3b
+    #  Dimanov & Dresen (2005), table 3a
     data = DislocationCreep(;
         Name = "Wet Diopside | Dimanov & Dresen (2005)",
-        n = 5.5NoUnits,
-        A = uconvert(MPa^(-55 // 10) / s, 5.16e-33Pa^(-55 // 10) / s),
+        n = 5.52NoUnits,
+        A = uconvert(MPa^(-552 // 100) / s, 5.16e-33Pa^(-552 // 100) / s),
         E = 534.0kJ / mol,
         V = 0.0m^3 / mol,
         r = 0.0NoUnits,
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
+        Comment = "Dimanov & Dresen (2005), Table 3a, row DiW: A = 5.16e-33 Pa^-n/s, n = 5.52, Q = 534.",
         BibTex_Reference = "
         @article{dimanov2005rheology,
         title={Rheology of synthetic anorthite-diopside aggregates: Implications for ductile shear zones},
@@ -868,7 +805,7 @@ function wet_omphacite_Zhang_2006()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
+        Comment = "Bürgmann & Dresen (2008), Suppl. Table 1 (log A = -2, n = 3.5, Q = 310); Zhang et al. (2006) not seen.",
         BibTex_Reference = "
         @article{zhang2006rheology,
         title={Rheology of omphacite at high temperature and pressure and significance of its lattice preferred orientations},
@@ -897,7 +834,7 @@ function wet_jadeit_Orzol_2006()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
+        Comment = "Bürgmann & Dresen (2008), Suppl. Table 1 (log A = -3.3, n = 3.7, Q = 326); Orzol et al. (2006) not seen.",
         BibTex_Reference = "
         @article{orzol2006experimental,
         title={Experimental deformation of synthetic wet jadeite aggregates},
@@ -914,7 +851,7 @@ function wet_jadeit_Orzol_2006()
 end
 
 function dry_anorthite_Rybacki_2000()
-    #  Rybacki & Dresen (2000), table 5
+    #  Rybacki & Dresen (2000), table 2
     data = DislocationCreep(;
         Name = "Dry Anorthite | Rybacki & Dresen (2000)",
         n = 3.0NoUnits,
@@ -925,7 +862,7 @@ function dry_anorthite_Rybacki_2000()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
+        Comment = "Rybacki & Dresen (2000), Table 2, 'Dislocation creep, dry': log A = 12.7 MPa^-n/s, n = 3, Q = 648.",
         BibTex_Reference = "
         @article{rybacki2000dislocation,
         title={Dislocation and diffusion creep of synthetic anorthite aggregates},
@@ -943,7 +880,7 @@ function dry_anorthite_Rybacki_2000()
 end
 
 function wet_anorthite_Rybacki_2000()
-    #  Rybacki & Dresen (2000), table 5
+    #  Rybacki & Dresen (2000), table 2
     data = DislocationCreep(;
         Name = "Wet Anorthite | Rybacki & Dresen (2000)",
         n = 3.0NoUnits,
@@ -954,7 +891,7 @@ function wet_anorthite_Rybacki_2000()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
+        Comment = "Rybacki & Dresen (2000), Table 2, 'Dislocation creep, wet': log A = 2.6 MPa^-n/s, n = 3, Q = 356 (water content fixed, no fH2O term).",
         BibTex_Reference = "
         @article{rybacki2000dislocation,
         title={Dislocation and diffusion creep of synthetic anorthite aggregates},
@@ -976,14 +913,14 @@ function wet_quartzite_Rutter_2004()
     data = DislocationCreep(;
         Name = "Wet Quartzite | Rutter & Brodie (2004)",
         n = 2.97NoUnits,
-        A = (10^-4.93)MPa^(-297 // 100) / s,
+        A = (10^-4.93)MPa^(-397 // 100) / s,    # MPa^-(n+r), fH2O in MPa
         E = 242.0kJ / mol,
         V = 0.0m^3 / mol,
         r = 1.0NoUnits,
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
+        Comment = "Rutter & Brodie (2004a): n = 2.97, log A = -4.93 (fH2O in MPa), Q = 242, r = 1, from the paper's abstract text and Lusk et al. (2021), Table 1. Pass f = fH2O in Pa.",
         BibTex_Reference = "
         @article{rutter2004experimental,
         title={Experimental intracrystalline plastic flow in hot-pressed synthetic quartzite prepared from Brazilian quartz crystals},
@@ -1005,14 +942,14 @@ function wet_quartzite_Hirth_2001()
     data = DislocationCreep(;
         Name = "Wet Quartzite | Hirth et al. (2001)",
         n = 4.0NoUnits,
-        A = (10^-11.2)MPa^(-4) / s,
+        A = (10^-11.2)MPa^(-5) / s,     # MPa^-(n+r), fH2O in MPa
         E = 135.0kJ / mol,
         V = 0.0m^3 / mol,
         r = 1.0NoUnits,
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
+        Comment = "Hirth et al. (2001), abstract: log A = -11.2 (fH2O in MPa), n = 4, m = 1, Q = 135. Pass f = fH2O in Pa.",
         BibTex_Reference = "
         @article{hirth2001evaluation,
         title={An evaluation of quartzite flow laws based on comparisons between experimentally and naturally deformed rocks},
@@ -1034,14 +971,14 @@ function dry_quartzite_Jaoul_1984()
     data = DislocationCreep(;
         Name = "Dry Quartzite | Jaoul et al. (1984)",
         n = 2.8NoUnits,
-        A = (2.8899e-3)MPa^(-14 // 5) / s,
+        A = (10^-5.415)MPa^(-14 // 5) / s,
         E = 184.0kJ / mol,
         V = 0.0m^3 / mol,
         r = 0.0NoUnits,
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
+        Comment = "n = 2.8 (Kirby & Kronenberg 1987, Table 3), E = 184 (= 44 kcal/mol, Jaoul abstract), A = 10^-5.415 as in the previous GeoParams database and Becker's compilation. Jaoul Table 1 could not be read; the abstract gives n = 1.8-3.3, Q = 146-184 kJ/mol. The former A = 2.89e-3 had no documented source.",
         BibTex_Reference = "
             @article{jaoul1984effect,
             title={The effect of varying water contents on the creep behavior of Heavitree quartzite},
@@ -1062,15 +999,15 @@ function wet_quartzite_Jaoul_1984()
     #  Jaoul et al. (1984), table 1, second entry
     data = DislocationCreep(;
         Name = "Wet Quartzite | Jaoul et al. (1984)",
-        n = 1.4NoUnits,
-        A = (104.957e-3)MPa^(-14 // 5) / s,
-        E = 146.44kJ / mol,
+        n = 2.8NoUnits,
+        A = (10^-5.045)MPa^(-14 // 5) / s,
+        E = 163.0kJ / mol,
         V = 0.0m^3 / mol,
         r = 0.0NoUnits,
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
+        Comment = "n = 2.8, A = 10^-5.045, E = 163 as in the previous GeoParams database and Becker's compilation. The former set (n = 1.4, A = 0.105 MPa^-2.8, E = 146.44) was internally inconsistent. Jaoul Table 1 could not be read; the abstract gives n = 1.8-3.3, Q = 146-184 kJ/mol.",
         BibTex_Reference = "
             @article{jaoul1984effect,
             title={The effect of varying water contents on the creep behavior of Heavitree quartzite},
@@ -1092,14 +1029,42 @@ function wet_quartzite_Tokle_2019()
     data = DislocationCreep(;
         Name = "Wet Quartzite | Tokle et al. (2019)",
         n = 3.0NoUnits,
-        A = (10^-11.959)MPa^(-3) / s,
+        A = (10^-11.959)MPa^(-42 // 10) / s,    # MPa^-(n+r), fH2O in MPa
         E = 115.0kJ / mol,
         V = 0.0m^3 / mol,
         r = 1.2NoUnits,
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
+        Comment = "Tokle et al. (2019), extrapolated n = 3 (high-stress) fit: A = 1.1e-12 (fH2O in MPa), Q = 115, r = 1.2. Q and r via Tokle et al. (2021); A via Becker's compilation (Table 1 of the paper not seen). Pass f = fH2O in Pa.",
+        BibTex_Reference = "
+            @article{tokle2019flow,
+            title={Flow laws and fabric transitions in wet quartzite},
+            author={Tokle, Leif and Hirth, Greg and Behr, Whitney M},
+            journal={Earth and Planetary Science Letters},
+            volume={505},
+            pages={152--161},
+            year={2019},
+            publisher={Elsevier}
+            }
+    ",
+    )
+    return data, info
+end
+
+function lowstress_wet_quartzite_Tokle_2019()
+    #  Tokle et al. (2019), extrapolated n = 4 (low-stress, prism slip) fit
+    data = DislocationCreep(;
+        Name = "low stress wet Quartzite | Tokle et al. (2019)",
+        n = 4.0NoUnits,
+        A = 1.75e-12MPa^(-5) / s,       # 10^-11.757, MPa^-(n+r), fH2O in MPa
+        E = 125.0kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 1.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Tokle et al. (2019), extrapolated n = 4 (low-stress) fit: A = 1.75e-12 (fH2O in MPa), Q = 125, r = 1. From secondary sources (Tokle et al. 2021 for Q and r; EGU22-7175 table and Becker's compilation for A); Table 1 of the paper not seen. Pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{tokle2019flow,
             title={Flow laws and fabric transitions in wet quartzite},
@@ -1127,7 +1092,7 @@ function wet_quartzite_Lu_2019()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
+        Comment = "Lu & Jiang (2019): n = 4, m = 2.7, Q = 132, V = 35.3 cm^3/mol, A = 6.0e-15 MPa^-(n+m)/s (fH2O in MPa), from search extracts of the paper. Pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{lu2019quartz,
             title={Quartz flow law revisited: the significance of pressure dependence of the activation enthalpy},
@@ -1156,7 +1121,7 @@ function lowP_wet_quartzite_Lusk_2021()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
+        Comment = "Lusk et al. (2021), abstract, 'low-pressure' (< 560 MPa) law: log A = -9.30 MPa^-(n+r)/s, n = 3.5, r = 0.49, Q = 118, V = 2.59 cm^3/mol. Pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{lusk2021natural,
             title={Natural and Experimental Constraints on a Flow Law for Dislocation-Dominated Creep in Wet Quartz},
@@ -1185,7 +1150,7 @@ function wet_quartzite_Lusk_2021()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
+        Comment = "Lusk et al. (2021), Table 2, full data set: log A = -6.36 MPa^-(n+r)/s, n = 2.1, r = 0.2, Q = 94, V = 1.44 cm^3/mol (Table 2 not seen; matches Becker's compilation). Pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{lusk2021natural,
             title={Natural and Experimental Constraints on a Flow Law for Dislocation-Dominated Creep in Wet Quartz},
@@ -1215,7 +1180,7 @@ function highP_wet_quartzite_Lusk_2021()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (NM).",
+        Comment = "Lusk et al. (2021), abstract, 'high-pressure' (700-1600 MPa) law: log A = -7.90 MPa^-(n+r)/s, n = 2.0, r = 0.49, Q = 77, V = 2.59 cm^3/mol. Pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{lusk2021natural,
             title={Natural and Experimental Constraints on a Flow Law for Dislocation-Dominated Creep in Wet Quartz},
@@ -1244,7 +1209,7 @@ function high_stress_wet_dunite_Chopra_1981()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (PA).",
+        Comment = "Chopra & Paterson (1981), abstract (n = 3.35, Q = 444, Anita Bay dunite above ~100 MPa); log A = 3.98 agrees with Kirby & Kronenberg (1987), Table 1 (4.0 ± 0.2).",
         BibTex_Reference = "
             @article{CHOPRA1981453,
             title = {The experimental deformation of dunite},
@@ -1278,7 +1243,7 @@ function low_stress_wet_dunite_Chopra_1981()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Values checked (PA).",
+        Comment = "Chopra & Paterson (1981), abstract (n = 2.44, Q = 386, Anita Bay dunite below ~100 MPa); log A = 3.88 not verified (Table IV not seen).",
         BibTex_Reference = "
             @article{CHOPRA1981453,
             title = {The experimental deformation of dunite},
