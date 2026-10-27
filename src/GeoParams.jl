@@ -466,7 +466,7 @@ using .Peierls
 function creeplaw_list(m::Module)
     out = string.(names(m; all = true, imported = true))
     filter!(x -> !startswith(x, "#"), out)
-    return [getfield(m, Symbol(x)) for x in out if !isnothing(tryparse(Int, string(x[end]))) || endswith(x, "a") || endswith(x, "b")]
+    return [getfield(m, Symbol(x)) for x in out if !isnothing(tryparse(Int, string(x[end]))) || endswith(x, "a") || endswith(x, "b") || endswith(x, "_refit")]
 end
 
 "Returns the list of pre-defined diffusion creep laws (entries of the `Diffusion` submodule)."

@@ -229,6 +229,19 @@ end
         @test ε ≈ A * σ^n * fH2O^r * exp(-(Q + V * P) / (NumValue(p.R) * T)) rtol = 1.0e-6
     end
 
+    # `_refit` entries: the printed law with A refitted to the paper's own data,
+    # i.e. the printed law times the ratio of the prefactors
+    for (refit, printed, ratio) in (
+            (Dislocation.dry_olivine_Hirth_2003_refit, Dislocation.dry_olivine_Hirth_2003, 2.8e5 / 1.1e5),
+            (Dislocation.wet_olivine_Karato_2003_refit, Dislocation.wet_olivine_Karato_2003, 10^-0.2),
+            (Dislocation.wet_quartzite_Lu_2019_refit, Dislocation.wet_quartzite_Lu_2019, 1 / 6),
+        )
+        p, p0 = SetDislocationCreep(refit), SetDislocationCreep(printed)
+        args = (; T, P = P * 1.0e6, f = fH2O * 1.0e6)
+        @test compute_εII(p, σ * 1.0e6, args) ≈ ratio * compute_εII(p0, σ * 1.0e6, args) rtol = 1.0e-6
+        @test refit in dislocation_law_list()
+    end
+
     # Kirby (1983): A = 10^3.2 GPa^-2.4 s^-1, σ in GPa
     p = SetDislocationCreep(Dislocation.wet_quartzite_Kirby_1983)
     ε = compute_εII(p, σ * 1.0e6 / p.FT; T) * p.FE

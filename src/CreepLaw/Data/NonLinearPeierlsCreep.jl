@@ -18,7 +18,7 @@ function dry_olivine_Mei_2010()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Mei et al. (2010), eq. (3) and paragraph [23]: A_P = 1.4e-7 MPa^-2/s, σP = 5.9 GPa, E_k(0) = 320 kJ/mol, p = 1/2, q = 1 (axial strain rate, differential stress).",
+        Comment = "Mei et al. (2010), eq. (3) and paragraph [23]: A_P = 1.4e-7 MPa^-2/s, σP = 5.9 GPa, E_k(0) = 320 kJ/mol, p = 1/2, q = 1 (axial strain rate, differential stress). Reproduces the paper's data: log10 misfit -0.09 ± 0.18 (N = 11, Table 1).",
         BibTex_Reference = "
             @article{mei2010experimental,
             title={Experimental constraints on the strength of the lithospheric mantle},

@@ -14,7 +14,7 @@ function cold_dry_olivine_Hirth_2003()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'dry GBS, T < 1250 °C' (A in MPa^-3.5 μm^2/s, differential stress). V as for dry dislocation creep (footnote g; 18e-6 is the thermocouple-corrected value of Table 2).",
+        Comment = "Hirth & Kohlstedt (2003), Table 1, row 'dry GBS, T < 1250 °C' (A in MPa^-3.5 μm^2/s, differential stress). V as for dry dislocation creep (footnote g; 18e-6 is the thermocouple-corrected value of Table 2). HK03 Fig. 7a draws the GBS line with p ≈ 1.4 while Table 1 gives p = 2; the law reproduces the line near d ≈ 15 μm (log10 misfit +0.09, -0.01, -0.34 at d = 10, 15, 60 μm).",
         BibTex_Reference = "
             @article{hirth2004rheology,
             title={Rheology of the Upper Mantle and the Mantle Wedge: A View from the Experimentalists},
