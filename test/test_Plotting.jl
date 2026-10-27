@@ -145,7 +145,7 @@ CairoMakie.activate!()
         laws = [(label = :dry, law = SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003))]
         _, s = PlotOceanicStrength(; laws, ages = (25.5, 50), depth = collect(range(0, 100.0e3; length = 51)))
         @test s[(50, :dry)] > s[(25.5, :dry)] > 0
-        @test_throws ArgumentError Base.get_extension(GeoParams, :GeoParamsMakieExt)._byerlee(1.0e8; mode = :compresion)
+        @test_throws ArgumentError Base.get_extension(GeoParams, :GeoParamsMakieExt)._byerlee(1.0e8; mode = :compression)
         @test PlotContinentalStrength(; depth = range(0, 60.0e3; length = 31)) isa Figure
         # creep laws are keywords
         mechanisms = [(name = "dislocation", law = v_disl, color = :tan), (name = "diffusion", law = v_diff, color = :gray)]
