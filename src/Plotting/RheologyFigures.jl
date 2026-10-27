@@ -28,7 +28,9 @@ _lithostatic_p(z; z1 = 0.0, ρ1 = 2750.0, ρ2 = 3300.0) = _g * (ρ1 * min(z, z1)
 # Byerlee (1978) frictional strength |σd| [Pa] for pore pressure factor λ (eqs. 5.30-5.31)
 function _byerlee(p; λ = 0.0, mode = :compression)
     p′ = (1 - λ) * p
-    s = mode === :compression ? -1 : mode === :extension ? 1 : 0      # 0: strike-slip
+    s = mode === :compression ? -1 :
+        mode === :extension ? 1 :
+        throw(ArgumentError("mode must be :compression or :extension, got $mode"))
     σ(μ, C) = 2 * (μ * p′ + C) / (sqrt(1 + μ^2) + s * μ)
     return min(σ(0.85, 0.0), σ(0.6, 50.0e6))
 end
@@ -215,13 +217,14 @@ function PlotOceanicStrength(;
     hidespines!(axT)
     lines!(ax, σ_comp ./ 1.0e6, zkm; color = :navy, linewidth = 1)
     lines!(ax, σ_ext ./ 1.0e6, zkm; color = :navy, linewidth = 3)
-    strength = Dict{Tuple{Int, String}, Float64}()        # depth-integrated strength [TN/m]
+    strength = Dict()        # depth-integrated strength [TN/m]
     for (age, color) in zip(ages, colors)
         T = _halfspace_T.(depth, age; Tm)
         lines!(axT, T, zkm; color, linestyle = :dot)
         for (k, l) in enumerate(laws)
             σ_creep = [_σd(l.law, εII; T = T[i], P = p[i], f = _water(get(l, :f, 1.0), p[i], T[i])) for i in eachindex(depth)]
-            strength[(age, l.label)] = sum(min.(σ_creep, σ_ext)) * step(depth) / 1.0e12
+            σ_min = min.(σ_creep, σ_ext)       # trapezoidal rule, works for any depth vector
+            strength[(age, l.label)] = sum((σ_min[1:(end - 1)] .+ σ_min[2:end]) ./ 2 .* diff(depth)) / 1.0e12
             lines!(
                 ax, ifelse.(σ_creep .< σ_ext, σ_creep ./ 1.0e6, NaN), zkm; color, linestyle = get(l, :linestyle, :solid),
                 linewidth = 2, label = k == 1 ? "$age Myr" : nothing

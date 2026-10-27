@@ -66,6 +66,10 @@ allocs(f::F, args::Vararg{Any, N}) where {F, N} = (f(args...); @allocated f(args
     # stable (vapour) root below the saturation pressure, liquid above it (Psat(300 °C) ≈ 8.6 MPa)
     @test compute_water_fugacity(5.0e6, 573.15) / 5.0e6 > 0.85
     @test compute_water_fugacity(2.0e7, 573.15) < 1.0e7
+    # non-positive pressure (free surface of numerical models) gives the physical limit 0, NaN stays NaN
+    @test compute_water_fugacity(-1.0e6, 1000.0) == 0
+    @test compute_water_fugacity(0.0f0, 1000.0f0) === 0.0f0
+    @test isnan(compute_water_fugacity(NaN, 1000.0))
 
     # Shinevar et al. (2015) crustal approximation, within a factor 1.5 of PS94
     # for 0.2-1 GPa and 600-1000 K

@@ -153,6 +153,7 @@ c_visc_τII(l, a) = compute_viscosity_τII(l, a.τII, a)
     @testset "water fugacity" begin
         test_gpu((P, T) -> compute_water_fugacity(P, T), (1.0f9, 1073.0f0))
         test_gpu((P, T) -> compute_water_fugacity(P, T), (2.0f8, 573.0f0))     # liquid branch
+        test_gpu((P, T) -> compute_water_fugacity(P, T), (-1.0f6, 1000.0f0))   # P <= 0 gives 0
         test_gpu((P, T) -> compute_water_fugacity_Shinevar(P, T), (5.0f8, 873.0f0))
         test_gpu((f, P, T) -> compute_water_content_olivine(f, P, T), (1.0f9, 2.0f9, 1573.0f0))
     end

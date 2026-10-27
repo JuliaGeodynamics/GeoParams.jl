@@ -137,6 +137,8 @@ residual Helmholtz energy ``A_\\mathrm{res}``:
 ```
 The equation of state is calibrated for 0-10 GPa and 0-2000 °C. `P` and `T` can also be
 given as `Unitful` quantities, in which case the fugacity is returned in Pa.
+For non-positive pressure (e.g. near the free surface of a numerical model) the fugacity
+is zero, its physical limit; a wet creep law then gives zero strain rate.
 
 Reference: Pitzer, K.S. & Sterner, S.M. (1994), Equations of state valid continuously
 from zero to extreme pressures for H2O and CO2, J. Chem. Phys. 101, 3111-3116.
@@ -152,6 +154,7 @@ julia> round(MPa, compute_water_fugacity(1GPa, 800C), digits = 1)
 """
 function compute_water_fugacity(P::Real, T::Real)
     P, T = promote(float(P), float(T))
+    P <= 0 && return zero(P)        # physical limit f -> P as P -> 0; a NaN input still gives NaN
     c = _ps94_c(T)
     ρ = _ps94_density(P, T, c)
     return exp(_ps94_lnf(ρ, P, T, c))

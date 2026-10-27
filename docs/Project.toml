@@ -4,7 +4,6 @@ Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 DocumenterVitepress = "4710194d-e776-4893-9690-8d956a29c365"
 GeoParams = "e018b62d-d9de-4a26-8697-af89c310ae38"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
-SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 
 [sources]
 GeoParams = {path = ".."}
@@ -14,4 +13,3 @@ CairoMakie = "0.12 - 0.15"
 Documenter = "1"
 DocumenterVitepress = "0.3"
 Makie = "0.21 - 0.24"
-SpecialFunctions = "2"
