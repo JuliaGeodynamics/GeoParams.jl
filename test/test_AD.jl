@@ -103,11 +103,11 @@ for (name, backend) in zip(pkg, backends)
         # arguments
         args = (T = 900.0, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)
         εII, τII = 1.0e-12, 2.0e6
-        # test non-linear rheology
-        @test DI.derivative(x -> compute_τII(c1, εII, (; T = x, P = P, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)), backend, T) ≈ -0.4417520137461898
-        @test DI.derivative(x -> compute_τII(c1, εII, (; T = T, P = x, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)), backend, P) ≈ 1.594299818642621e-8
-        @test DI.derivative(x -> compute_εII(c1, τII, (; T = x, P = P, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)), backend, T) ≈ 2.6560571677070596e-22
-        @test DI.derivative(x -> compute_εII(c1, τII, (; T = T, P = x, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)), backend, P) ≈ -9.587013268449008e-30
+        # test non-linear rheology (the runtime grain size d = 100 μm overrides the stored 5 mm)
+        @test DI.derivative(x -> compute_τII(c1, εII, (; T = x, P = P, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)), backend, T) ≈ -1.0749336184002813
+        @test DI.derivative(x -> compute_τII(c1, εII, (; T = T, P = x, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)), backend, P) ≈ 4.734045671011316e-8
+        @test DI.derivative(x -> compute_εII(c1, τII, (; T = x, P = P, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)), backend, T) ≈ 1.1778076187565268e-20
+        @test DI.derivative(x -> compute_εII(c1, τII, (; T = T, P = x, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)), backend, P) ≈ -5.804533176053694e-28
         # test linear rheology
         @test iszero(DI.derivative(x -> compute_τII(c2, εII, (; T = x, P = P, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)), backend, T))
         @test iszero(DI.derivative(x -> compute_τII(c2, εII, (; T = T, P = x, d = 100.0e-6, τII_old = 1.0e6, dt = 1.0e8)), backend, P))

@@ -41,12 +41,14 @@ end
 # Element `i` of a keyword argument that may be given per-element or as a single
 # value shared by every element.
 @inline argument_at(x::Number, i) = x
+@inline argument_at(x::Nothing, i) = x
 @inline argument_at(x, i) = x[i]
 
 # Index range for an in-place routine whose keyword arguments may each be a scalar
 # or an array. Scalars stand in for `dest`, so `eachindex` reports any array whose
 # axes do not match it.
 @inline _sized(dest, x::Number) = dest
+@inline _sized(dest, x::Nothing) = dest
 @inline _sized(dest, x) = x
 @inline each_argument_index(dest, args::Vararg{Any, N}) where {N} =
     eachindex(dest, map(a -> _sized(dest, a), args)...)

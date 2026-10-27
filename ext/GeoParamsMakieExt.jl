@@ -14,5 +14,6 @@ end
 
 include("../src/Plotting/Plotting.jl")
 include("../src/Plotting/StrengthEnvelope.jl")
+include("../src/Plotting/RheologyFigures.jl")
 
 end # module

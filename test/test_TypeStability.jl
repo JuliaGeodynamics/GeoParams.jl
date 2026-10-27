@@ -16,15 +16,16 @@ import GeoParams.Peierls
 import GeoParams.NonLinearPeierls
 import GeoParams.GBS
 
-# JET tracks compiler internals and does not precompile on every Julia release.
-# The `@inferred` layer runs everywhere; the JET `@test_opt` layer runs only
-# where JET actually loads.
+# JET tracks compiler internals and does not precompile on every Julia release;
+# on some pre-releases it loads but refuses to analyse. The `@inferred` layer runs
+# everywhere; the JET `@test_opt` layer runs only where a trial analysis succeeds.
 const JET_LOADABLE = try
     # Suppress the precompile-failure backtrace JET emits where it is
     # unsupported; the `@info` below records the fallback instead.
     redirect_stderr(devnull) do
         @eval import JET
     end
+    @eval JET.report_opt(sin, (Float64,))
     true
 catch
     @info "JET unavailable on this Julia version; type-stability tests run @inferred only."

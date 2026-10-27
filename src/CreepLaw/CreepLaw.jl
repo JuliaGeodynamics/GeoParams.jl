@@ -112,6 +112,15 @@ function find_creep_law(mod::Module, name::AbstractString)
     return nothing
 end
 
+# Grain size used by grain-size sensitive creep laws: a runtime keyword `d` overrides the
+# grain size `a.d` stored in the law; `d = nothing` (the default) selects the stored value.
+# Dispatch on `Nothing` resolves the choice at compile time.
+@inline _grain_size(::Type{T}, a, ::Nothing) where {T} = Units._val_precision(T, a.d.val)
+@inline _grain_size(::Type{T}, a, d) where {T} = convert_precision(T, d)
+# Unitful variant: a runtime `d` must be a length and is converted to m.
+@inline _grain_size_units(::Type{T}, a, ::Nothing) where {T} = Units._val_precision(T, a.d.val) * a.d.unit
+@inline _grain_size_units(::Type{T}, a, d) where {T} = convert_precision(T, uconvert(m, d))
+
 include("DislocationCreep.jl")
 include("DiffusionCreep.jl")
 include("GrainBoundarySliding.jl")

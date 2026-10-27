@@ -17,15 +17,16 @@ R is the universal gas constant
 Apparatus defines the appartus type that shall be recreated (Axial Compression, Simple Shear, Invariant)
 =#
 """
-    GrainBoundarySliding(p = A = 1.5MPa/s, E = 476.0kJ/mol, V = 6e-6m^3/mol, apparatus = AxialCompression )
+    GrainBoundarySliding(; d = 1mm, n = 3.5, p = -2, A = 6.5e-30Pa^(-3.5) * m^2 / s, E = 400kJ/mol, V = 18e-6m^3/mol, Apparatus = AxialCompression)
 
-Defines the flow law parameter of a grain boundary sliding.
+Defines the flow law parameters of grain boundary sliding (GBS).
 
 The grain boundary sliding, as used by experimentalists, is given by
 ```math
-     \\dot{\\gamma} = A \\sigma_\\mathrm{d} d^{\\mathrm{p}} \\exp\\left(-\\frac{E+PV}{RT}\\right)
+     \\dot{\\gamma} = A \\sigma_\\mathrm{d}^n d^{\\mathrm{p}} \\exp\\left(-\\frac{E+PV}{RT}\\right)
 ```
 where
+- ``d`` is the grain size ``[\\mathrm{m}]`` (default 1 mm), stored in the law
 - ``p`` is the exponent of grain size
 - ``A`` is a pre-exponential factor ``[\\mathrm{MPa}^{-n}s^{-1}]`` (if manually defined, ``n`` must be either pre-defined or substituted)
 - ``E`` is the activation energy ``\\mathrm{[kJ/mol]}``
@@ -36,14 +37,20 @@ where
 The experimental parameters are converted into second invariants using the `Apparatus` variable that can be
 either `AxialCompression`, `SimpleShear` or `Invariant`. If the flow law parameters are already given as a function of second invariants, choose `Apparatus=Invariant`.
 
+The grain size used in the computations is the stored field `d`, unless a grain size is passed at
+runtime as keyword (or in the `args` NamedTuple), e.g. `compute_εII(gbs, τII; T, P, d = 1e-4)`, in which case
+the runtime value (scalar or array) overrides the stored one. In the Unitful methods `d` must be a length
+(e.g. `d = 100μm`).
+
 # Example
 ```jldoctest
 julia> x2 = GrainBoundarySliding(Name="test")
-GrainBoundarySliding: Name = test, n=3.5, p=-2.0, A=6.5e-30 m²·⁰ Pa⁻³·⁵ s⁻¹·⁰, E=400000.0 J mol⁻¹·⁰, V=1.8e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517
+GrainBoundarySliding: Name = test, d=0.001 m, n=3.5, p=-2.0, A=6.5e-30 m²·⁰ Pa⁻³·⁵ s⁻¹·⁰, E=400000.0 J mol⁻¹·⁰, V=1.8e-5 m³·⁰ mol⁻¹·⁰, FT=1.7320508075688772, FE=1.1547005383792517
 ```
 """
-struct GrainBoundarySliding{T, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
+struct GrainBoundarySliding{T, U0, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
     Name::Ptr{UInt8}
+    d::GeoUnit{T, U0} # grain size
     n::GeoUnit{T, U1} # powerlaw exponent
     p::GeoUnit{T, U1} # grain size exponent
     A::GeoUnit{T, U2} # material specific rheological parameter
@@ -56,6 +63,7 @@ struct GrainBoundarySliding{T, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
 
     function GrainBoundarySliding(;
             Name = "",
+            d = 1.0e-3m,
             n = (7 // 2)NoUnits,
             p = -2NoUnits,
             A = 6.5e-30Pa^(-n) * s^(-1.0) * m^(2),
@@ -68,6 +76,7 @@ struct GrainBoundarySliding{T, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
         # Corrections from lab experiments
         FT, FE = CorrectionFactor(Apparatus)
         # Convert to GeoUnits
+        dU = convert(GeoUnit, d)
         nU = convert(GeoUnit, rat2float(n))
         pU = convert(GeoUnit, p)
         AU = convert(GeoUnit, A)
@@ -76,6 +85,7 @@ struct GrainBoundarySliding{T, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
         RU = convert(GeoUnit, R)
         # Extract struct types
         T = typeof(nU).types[1]
+        U0 = typeof(dU).types[2]
         U1 = typeof(nU).types[2]
         U2 = typeof(AU).types[2]
         U3 = typeof(EU).types[2]
@@ -83,14 +93,14 @@ struct GrainBoundarySliding{T, U1, U2, U3, U4, U5} <: AbstractCreepLaw{T}
         U5 = typeof(RU).types[2]
         name = pointer(ptr2string(Name))
         # Create struct
-        return new{T, U1, U2, U3, U4, U5}(
-            name, nU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
+        return new{T, U0, U1, U2, U3, U4, U5}(
+            name, dU, nU, pU, AU, EU, VU, RU, Int8(Apparatus), FT, FE
         )
     end
 
-    function GrainBoundarySliding(Name, n, p, A, E, V, R, Apparatus, FT, FE)
+    function GrainBoundarySliding(Name, d, n, p, A, E, V, R, Apparatus, FT, FE)
         return GrainBoundarySliding(;
-            Name = Name, n = n, p = p, A = A, E = E, V = V, R = R, Apparatus = Apparatus
+            Name = Name, d = d, n = n, p = p, A = A, E = E, V = V, R = R, Apparatus = Apparatus
         )
     end
 end
@@ -104,7 +114,7 @@ with the curves of the original publications, as those publications usually do n
 function remove_tensor_correction(s::GrainBoundarySliding)
     name = ptr2string(s.Name)
     return GrainBoundarySliding(;
-        Name = name, n = s.n, p = s.p, A = s.A, E = s.E, V = s.V, Apparatus = Invariant
+        Name = name, d = s.d, n = s.n, p = s.p, A = s.A, E = s.E, V = s.V, Apparatus = Invariant
     )
 end
 
@@ -125,12 +135,13 @@ end
 
 # Calculation routines for linear viscous rheologies
 """
-    compute_εII(a::GrainBoundarySliding, TauII::_T; T::_T, P=one(_T), f=one(_T), d=one(_T), kwargs...)
+    compute_εII(a::GrainBoundarySliding, TauII; T, P = 0, d = a.d, kwargs...)
 
 Returns grain boundary sliding strainrate as a function of 2nd invariant of the stress tensor ``\\tau_{II}``
 ```math
     \\dot{ε}_{II} = A τ_{II}^n d^{p} \\exp \\left(- \\frac{E + PV}{RT} \\right)
 ```
+The grain size `d` defaults to the value stored in `a`; a runtime `d` (scalar) overrides it.
 
 """
 @inline function compute_εII(
@@ -138,12 +149,13 @@ Returns grain boundary sliding strainrate as a function of 2nd invariant of the 
         TauII;
         T = one(precision(a)),
         P = zero(precision(a)),
-        d = one(precision(a)),
+        d = nothing,
         args...,
     )
     Tc = precision_of(TauII)
-    T, P, d = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, d)
+    T, P = convert_precision(Tc, T), convert_precision(Tc, P)
     @unpack_val Tc n, p, A, E, V, R = a
+    d = _grain_size(Tc, a, d)
     FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     ε = @pow A * (TauII * FT)^n * d^p * exp(-(E + P * V) / (R * T)) / FE
@@ -152,11 +164,12 @@ Returns grain boundary sliding strainrate as a function of 2nd invariant of the 
 end
 
 @inline function compute_εII(
-        a::GrainBoundarySliding, TauII::Quantity; T = 1K, P = 0Pa, d = 1.0e-3m, args...
+        a::GrainBoundarySliding, TauII::Quantity; T = 1K, P = 0Pa, d = nothing, args...
     )
     Tc = precision_of(TauII)
-    T, P, d = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, d)
+    T, P = convert_precision(Tc, T), convert_precision(Tc, P)
     @unpack_units Tc n, p, A, E, V, R = a
+    d = _grain_size_units(Tc, a, d)
     FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     ε = @pow A * (TauII * FT)^n * d^p * exp(-(E + P * V) / (R * T)) / FE
@@ -175,7 +188,7 @@ function compute_εII!(
         TauII::AbstractArray;
         T = one(_T),
         P = zero(_T),
-        d = one(_T),
+        d = nothing,
         kwargs...,
     ) where {N, _T}
     for i in each_argument_index(EpsII, TauII, T, P, d)
@@ -196,12 +209,13 @@ end
         TauII;
         T = one(precision(a)),
         P = zero(precision(a)),
-        d = one(precision(a)),
+        d = nothing,
         args...,
     )
     Tc = precision_of(TauII)
-    T, P, d = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, d)
+    T, P = convert_precision(Tc, T), convert_precision(Tc, P)
     @unpack_val Tc n, p, A, E, V, R = a
+    d = _grain_size(Tc, a, d)
     FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     # computed symbolically
@@ -209,11 +223,12 @@ end
 end
 
 @inline function dεII_dτII(
-        a::GrainBoundarySliding, TauII::Quantity; T = 1K, P = 0Pa, d = 1.0e-3m, args...
+        a::GrainBoundarySliding, TauII::Quantity; T = 1K, P = 0Pa, d = nothing, args...
     )
     Tc = precision_of(TauII)
-    T, P, d = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, d)
+    T, P = convert_precision(Tc, T), convert_precision(Tc, P)
     @unpack_units Tc n, p, A, E, V, R = a
+    d = _grain_size_units(Tc, a, d)
     FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     #computed symbolically
@@ -221,21 +236,23 @@ end
 end
 
 """
-    computeCreepLaw_TauII(EpsII::_T, a::GrainBoundarySliding; T::_T, P=zero(_T), d=one(_T), kwargs...)
+    compute_τII(a::GrainBoundarySliding, EpsII; T, P = 0, d = a.d, kwargs...)
 
 Returns grain boundary sliding stress as a function of 2nd invariant of the strain rate
+The grain size `d` defaults to the value stored in `a`; a runtime `d` (scalar) overrides it.
 """
 @inline function compute_τII(
         a::GrainBoundarySliding,
         EpsII;
         T = one(precision(a)),
         P = zero(precision(a)),
-        d = one(precision(a)),
+        d = nothing,
         kwargs...,
     )
     Tc = precision_of(EpsII)
-    T, P, d = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, d)
+    T, P = convert_precision(Tc, T), convert_precision(Tc, P)
     @unpack_val Tc n, p, A, E, V, R = a
+    d = _grain_size(Tc, a, d)
     FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     n_inv = inv(n)
@@ -248,11 +265,12 @@ Returns grain boundary sliding stress as a function of 2nd invariant of the stra
 end
 
 @inline function compute_τII(
-        a::GrainBoundarySliding, EpsII::Quantity; T = 1K, P = 0Pa, d = 1m, kwargs...
+        a::GrainBoundarySliding, EpsII::Quantity; T = 1K, P = 0Pa, d = nothing, kwargs...
     )
     Tc = precision_of(EpsII)
-    T, P, d = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, d)
+    T, P = convert_precision(Tc, T), convert_precision(Tc, P)
     @unpack_units Tc n, p, A, E, V, R = a
+    d = _grain_size_units(Tc, a, d)
     FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     n_inv = inv(n)
@@ -270,7 +288,7 @@ function compute_τII!(
         EpsII::AbstractArray;
         T = one(_T),
         P = zero(_T),
-        d = one(_T),
+        d = nothing,
         kwargs...,
     ) where {N, _T}
     for i in each_argument_index(TauII, EpsII, T, P, d)
@@ -291,12 +309,13 @@ end
         EpsII;
         T = one(precision(a)),
         P = zero(precision(a)),
-        d = one(precision(a)),
+        d = nothing,
         args...,
     )
     Tc = precision_of(EpsII)
-    T, P, d = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, d)
+    T, P = convert_precision(Tc, T), convert_precision(Tc, P)
     @unpack_val Tc n, p, A, E, V, R = a
+    d = _grain_size(Tc, a, d)
     FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     n_inv = inv(n)
@@ -309,11 +328,12 @@ end
 end
 
 @inline function dτII_dεII(
-        a::GrainBoundarySliding, EpsII::Quantity; T = 1K, P = 0Pa, d = 1.0e-3m, args...
+        a::GrainBoundarySliding, EpsII::Quantity; T = 1K, P = 0Pa, d = nothing, args...
     )
     Tc = precision_of(EpsII)
-    T, P, d = convert_precision(Tc, T), convert_precision(Tc, P), convert_precision(Tc, d)
+    T, P = convert_precision(Tc, T), convert_precision(Tc, P)
     @unpack_units Tc n, p, A, E, V, R = a
+    d = _grain_size_units(Tc, a, d)
     FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
     n_inv = inv(n)
@@ -329,7 +349,7 @@ end
 function show(io::IO, g::GrainBoundarySliding)
     return print(
         io,
-        "GrainBoundarySliding: Name = $(unsafe_string(g.Name)), n=$(Value(g.n)), p=$(Value(g.p)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), FT=$(g.FT), FE=$(g.FE)",
+        "GrainBoundarySliding: Name = $(unsafe_string(g.Name)), d=$(Value(g.d)), n=$(Value(g.n)), p=$(Value(g.p)), A=$(Value(g.A)), E=$(Value(g.E)), V=$(Value(g.V)), FT=$(g.FT), FE=$(g.FE)",
     )
 end
 
@@ -346,26 +366,28 @@ This is a dictionary with pre-defined creep laws
 """
 function SetGrainBoundarySliding(
         name::F;
+        d = nothing,
         n = nothing,
         p = nothing,
         A = nothing,
         E = nothing,
         V = nothing,
     ) where {F}
-    kwargs = (; n, p, A, E, V)
+    kwargs = (; d, n, p, A, E, V)
     return Transform_GrainBoundarySliding(name, kwargs)
 end
 
 function SetGrainBoundarySliding(
         name::F,
         CharDim::GeoUnits{T};
+        d = nothing,
         n = nothing,
         p = nothing,
         A = nothing,
         E = nothing,
         V = nothing,
     ) where {F, T <: Union{GEO, SI}}
-    kwargs = (; n, p, A, E, V)
+    kwargs = (; d, n, p, A, E, V)
     return nondimensionalize(Transform_GrainBoundarySliding(name, kwargs), CharDim)
 end
 
@@ -388,6 +410,7 @@ function Transform_GrainBoundarySliding(pp::AbstractCreepLaw{T}) where {T}
     @inline f1(A::T) where {T} = typeof(A).parameters[2].parameters[1][2].power
     @inline f2(A::T) where {T} = typeof(A).parameters[2].parameters[1][1].power
 
+    d = uconvert(m, Value(pp.d))
     n = Value(pp.n)
     p = Value(pp.p)
     power_Pa = f1(pp.A)
@@ -396,7 +419,7 @@ function Transform_GrainBoundarySliding(pp::AbstractCreepLaw{T}) where {T}
     E_J = uconvert(J / mol, Value(pp.E))
     V_m3 = uconvert(m^3 / mol, Value(pp.V))
     Apparatus = pp.Apparatus
-    args = (Name = pp.Name, n = n, p = p, A = A_Pa, E = E_J, V = V_m3, Apparatus = Apparatus)
+    args = (Name = pp.Name, d = d, n = n, p = p, A = A_Pa, E = E_J, V = V_m3, Apparatus = Apparatus)
 
     return GrainBoundarySliding(; args...)
 end
@@ -405,8 +428,9 @@ function Transform_GrainBoundarySliding(pp::AbstractCreepLaw, kwargs::NamedTuple
     @inline f1(A::T) where {T} = typeof(A).parameters[2].parameters[1][2].power
     @inline f2(A::T) where {T} = typeof(A).parameters[2].parameters[1][1].power
 
-    (; n, p, A, E, V) = kwargs
+    (; d, n, p, A, E, V) = kwargs
 
+    d_new = uconvert(m, isnothing(d) ? Value(pp.d) : Value(GeoUnit(d)))
     n_new = isnothing(n) ? Value(pp.n) : Value(GeoUnit(n))
     p_new = isnothing(p) ? Value(pp.p) : Value(GeoUnit(p))
     A_new = isnothing(A) ? pp.A : GeoUnit(A)
@@ -419,7 +443,7 @@ function Transform_GrainBoundarySliding(pp::AbstractCreepLaw, kwargs::NamedTuple
     E_J = uconvert(J / mol, E_new)
     V_m3 = uconvert(m^3 / mol, V_new)
     Apparatus = pp.Apparatus
-    args = (Name = pp.Name, n = n_new, p = p_new, A = A_Pa, E = E_J, V = V_m3, Apparatus = Apparatus)
+    args = (Name = pp.Name, d = d_new, n = n_new, p = p_new, A = A_Pa, E = E_J, V = V_m3, Apparatus = Apparatus)
 
     return GrainBoundarySliding(; args...)
 end

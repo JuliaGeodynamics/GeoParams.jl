@@ -287,17 +287,6 @@ export dεII_dτII,
     local_iterations_εvol,
     compute_p_harmonic
 
-include("CreepLaw/Data_deprecated/DislocationCreep.jl")
-include("CreepLaw/Data_deprecated/DiffusionCreep.jl")
-include("CreepLaw/Data_deprecated/GrainBoundarySliding.jl")
-include("CreepLaw/Data_deprecated/NonLinearPeierlsCreep.jl")
-include("CreepLaw/Data_deprecated/PeierlsCreep.jl")
-export DislocationCreep_info,
-    DiffusionCreep_info,
-    GrainBoundarySliding_info,
-    PeierlsCreep_info,
-    NonLinearPeierlsCreep_info
-
 # Constitutive relationships laws
 include("StressComputations/StressComputations.jl")
 export compute_τij, compute_p_τij, compute_τij_stagcenter!, compute_p_τij_stagcenter!, compute_τij!, compute_p_τij!
@@ -434,6 +423,11 @@ export compute_dissolved,
     compute_gas_heatcapacity,
     effective_molar_mass
 
+# Water fugacity (Pitzer & Sterner 1994; Shinevar et al. 2015) and water content of olivine
+include("Fugacity/WaterFugacity.jl")
+using .WaterFugacity
+export compute_water_fugacity, compute_water_fugacity_Shinevar, compute_water_content_olivine
+
 include("Traits/rheology.jl")
 export RheologyTrait
 export islinear, LinearRheologyTrait, NonLinearRheologyTrait
@@ -461,7 +455,7 @@ using .Peierls
 function creeplaw_list(m::Module)
     out = string.(names(m; all = true, imported = true))
     filter!(x -> !startswith(x, "#"), out)
-    return [getfield(m, Symbol(x)) for x in out if !isnothing(tryparse(Int, string(x[end]))) || endswith(x, "a") || endswith(x, "b")]
+    return [getfield(m, Symbol(x)) for x in out if !isnothing(tryparse(Int, string(x[end]))) || endswith(x, "a") || endswith(x, "b") || endswith(x, "_refit")]
 end
 
 "Returns the list of pre-defined diffusion creep laws (entries of the `Diffusion` submodule)."
@@ -601,6 +595,89 @@ Arrhenius plot of the diffusion coefficient (`log(D)` versus `10⁴/T`) for one 
 """
 function PlotDiffusionCoefArrhenius end
 
+# Rheology figures of chapter 5 of Becker & Faccenna, Tectonic Geodynamics (draft, 2026).
+# Defaults are the book's choices; creep laws are keywords so that any law can be plotted instead.
+# Stresses are differential stresses σd = √3 τII; all inputs are in SI units.
+
+"""
+    fig = PlotFlowStressTemperature(; laws, P = 0.5e9, εII = (1e-15, 1e-13), T_C = 200:5:1200, f = compute_water_fugacity)
+
+Flow stress of dislocation creep versus temperature (Becker & Faccenna, Fig. 5.6). Each entry of `laws` is a
+named tuple `(label, law, color)` with optional fields `f` (water variable: a number or a function `(P, T) -> f`,
+default: the keyword `f`, i.e. water saturation) and `light_above` (°C above which the band is drawn light).
+Each band spans the strain rates `εII`. The defaults are the book's quartz, anorthite and olivine laws.
+
+# Example
+```julia
+using GeoParams, CairoMakie
+laws = [(label = "Tokle 2019", law = SetDislocationCreep(GeoParams.Dislocation.wet_quartzite_Tokle_2019), color = :red),
+        (label = "Lusk 2021", law = SetDislocationCreep(GeoParams.Dislocation.highP_wet_quartzite_Lusk_2021), color = :green)]
+PlotFlowStressTemperature(; laws, P = 1.0e9)
+```
+"""
+function PlotFlowStressTemperature end
+
+"""
+    fig = PlotWaterFugacity(; P, T, heatflow = (0.05, 0.1), ages = (10, 25, 50, 150), Tm = 1623.15, kwargs...)
+
+Water fugacity (Pitzer & Sterner 1994) with the Shinevar et al. (2015) approximation, and the water content of
+olivine at saturation, as functions of pressure `P` [Pa] and temperature `T` in K (Becker & Faccenna, Fig. 5.7).
+Linear crustal geotherms for surface heat flows `heatflow` [W/m²] and half-space cooling geotherms for plate
+`ages` [Myr] are overlaid.
+"""
+function PlotWaterFugacity end
+
+"""
+    fig = PlotDeformationMechanismMaps(; mechanisms, T = 1523.15, P = 1e9, d = 3e-3, age = 100, kwargs...)
+
+Maps of the dominant deformation mechanism for creep mechanisms acting in series (Becker & Faccenna,
+Fig. 5.10): a) stress versus grain size at `T`, `P`; b) stress versus temperature at `d`, `P`; c) stress versus
+depth along a half-space cooling geotherm of `age` Myr (plus `dTdz` [K/m]). Contours show the total strain rate.
+Each entry of `mechanisms` is a named tuple `(name, law, color)` with optional `Tmax` [K] above which the
+mechanism is switched off; `law` can also be a function `T -> law`. The defaults are the dry olivine laws of the
+book (Hirth & Kohlstedt 2003 diffusion, dislocation and GBS, Peierls creep of Mei et al. 2010). `yield_law`
+(default Goetze & Evans 1979, `nothing` to omit) draws the dashed yield stress in c).
+
+# Example
+```julia
+using GeoParams, CairoMakie
+mechanisms = [(name = "diffusion", law = SetDiffusionCreep(GeoParams.Diffusion.dry_olivine_Faul_2007), color = :gray),
+              (name = "dislocation", law = SetDislocationCreep(GeoParams.Dislocation.dry_olivine_Hirth_2003), color = :tan)]
+PlotDeformationMechanismMaps(; mechanisms, yield_law = nothing)
+```
+"""
+function PlotDeformationMechanismMaps end
+
+"""
+    fig, strength = PlotOceanicStrength(; laws, ages = (25, 50, 150), εII = 5e-15, Tm = 1673.15, λ = 0.0, kwargs...)
+
+Strength of oceanic lithosphere (Becker & Faccenna, Fig. 5.12): creep at strain rate `εII` along half-space
+cooling geotherms for plate `ages` [Myr], limited by Byerlee's law in extension (pore pressure factor `λ`). Each
+entry of `laws` is a named tuple `(label, law)` with optional `f` (water variable, number or `(P, T) -> f`) and
+`linestyle`. The defaults are wet and dry olivine of Table 5.2 of the book. `strength[(age, label)]` is the
+depth-integrated strength in TN/m.
+"""
+function PlotOceanicStrength end
+
+"""
+    fig = PlotContinentalStrength(; panels, mantle, heatflow = (0.045, 0.065, 0.085), εII = 1e-15, λ = 0.4, kwargs...)
+
+Strength of continental lithosphere under compression (Becker & Faccenna, Fig. 5.13) for linear geotherms with
+surface heat flows `heatflow` [W/m²]. Each entry of `panels` is a named tuple `(title, layers)`, where `layers`
+lists the crustal layers from top to bottom as `(bottom, law)` with optional `f`; below the last layer the
+`mantle` law applies. Crustal laws use the water fugacity `f` (default: saturation). The defaults are the book's
+wet anorthite crust (a) and wet quartz upper crust over anorthite (b), on a dry olivine mantle.
+
+# Example
+```julia
+using GeoParams, CairoMakie
+granite = SetDislocationCreep(GeoParams.Dislocation.granite_Tirel_2008)
+panels = [(title = "granite crust", layers = [(bottom = 35.0e3, law = granite)])]
+PlotContinentalStrength(; panels)
+```
+"""
+function PlotContinentalStrength end
+
 export PlotStrainrateStress,
     PlotStressStrainrate,
     PlotStrainrateViscosity,
@@ -615,7 +692,12 @@ export PlotStrainrateStress,
     PlotStressTime_0D,
     PlotPressureStressTime_0D,
     StrengthEnvelopePlot,
-    PlotDiffusionCoefArrhenius
+    PlotDiffusionCoefArrhenius,
+    PlotFlowStressTemperature,
+    PlotWaterFugacity,
+    PlotDeformationMechanismMaps,
+    PlotOceanicStrength,
+    PlotContinentalStrength
 
 #Set functions aliases using @use
 include("aliases.jl")

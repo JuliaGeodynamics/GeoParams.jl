@@ -35,3 +35,6 @@ JuliaLocalPreferences.toml
 
 node_modules
 *.cov
+
+# local-only reference material (textbook draft, awk scripts, audit notes)
+temp/

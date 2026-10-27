@@ -3,6 +3,9 @@ using GeoParams
 using LaTeXStrings
 import GeoParams.Diffusion
 
+# measure inside a function: on Julia 1.10, @allocated at test scope counts boxing of the result
+allocs(f::F, args::Vararg{Any, N}) where {F, N} = (f(args...); @allocated f(args...))
+
 @testset "DiffusionCreepLaws" begin
 
     # This tests the MaterialParameters structure
@@ -186,4 +189,93 @@ import GeoParams.Diffusion
     @test isempty(param_info(DiffusionCreep()).BibTex_Reference)               # empty-name early return
     @test isempty(param_info(DiffusionCreep(; Name = "nope_xyz")).BibTex_Reference)  # unknown -> fallback
 
+    # grain size: stored value by default, a runtime `d` overrides it
+    p = SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006)       # stored d = 5 mm, p = -3
+    p1 = SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006; d = 1mm)
+    @test Value(p1.d) ≈ 1.0e-3m                                       # stored in m
+    args = (; T = 1100.0, P = 5.0e8)
+    τ0, ε0 = 1.0e6, 1.0e-15
+    ε_stored = compute_εII(p, τ0, args)
+    @test ε_stored ≈ compute_εII(p, τ0, (; args..., d = 5.0e-3))       # omitting d == stored d
+    @test compute_εII(p, τ0, (; args..., d = 1.0e-3)) ≈ 125 * ε_stored  # runtime d overrides
+    @test compute_εII(p, τ0, (; args..., d = 1.0e-3)) ≈ ustrip(compute_εII(p1, τ0 * Pa; T = 1100.0K, P = 5.0e8Pa))
+    τ_stored = compute_τII(p, ε0, args)
+    @test τ_stored ≈ compute_τII(p, ε0, (; args..., d = 5.0e-3))
+    @test compute_τII(p, ε0, (; args..., d = 1.0e-3)) ≈ τ_stored / 125
+    @test dεII_dτII(p, τ0, (; args..., d = 1.0e-3)) ≈ 125 * dεII_dτII(p, τ0, args)
+    @test dτII_dεII(p, ε0, (; args..., d = 1.0e-3)) ≈ dτII_dεII(p, ε0, args) / 125
+
+    # Unitful methods, d = 1mm
+    uargs = (; T = 1100.0K, P = 5.0e8Pa)
+    @test ustrip(compute_εII(p, τ0 * Pa, uargs)) ≈ ε_stored
+    @test ustrip(compute_εII(p, τ0 * Pa; uargs..., d = 1mm)) ≈ 125 * ε_stored
+    @test ustrip(compute_εII(p, τ0 * Pa, (; uargs..., d = 1mm))) ≈ 125 * ε_stored
+    @test ustrip(Pa, compute_τII(p, ε0 / s; uargs..., d = 1mm)) ≈ τ_stored / 125
+    @test ustrip(dεII_dτII(p, τ0 * Pa; uargs..., d = 1mm)) ≈ 125 * dεII_dτII(p, τ0, args)
+    @test ustrip(dτII_dεII(p, ε0 / s; uargs..., d = 1mm)) ≈ dτII_dεII(p, ε0, args) / 125
+
+    # arrays: runtime d as array, scalar, or the stored value
+    τv = fill(τ0, 3)
+    εv = zeros(3)
+    compute_εII!(εv, p, τv, args)
+    @test all(εv .≈ ε_stored)
+    compute_εII!(εv, p, τv, (; args..., d = [5.0e-3, 1.0e-3, 5.0e-3]))
+    @test εv ≈ [1, 125, 1] .* ε_stored
+    τv2 = zeros(3)
+    compute_τII!(τv2, p, fill(ε0, 3); args..., d = 1.0e-3)
+    @test all(τv2 .≈ τ_stored / 125)
+
+    # allocation-free and type stable, with and without runtime d
+    f_stored(p, τ, T) = compute_εII(p, τ; T = T)
+    f_rt(p, τ, T, d) = compute_εII(p, τ; T = T, d = d)
+    f_stored(p, τ0, 1100.0)
+    f_rt(p, τ0, 1100.0, 1.0e-3)
+    @test allocs(f_stored, p, τ0, 1100.0) == 0
+    @test allocs(f_rt, p, τ0, 1100.0, 1.0e-3) == 0
+    @test (@inferred f_rt(p, τ0, 1100.0, 1.0e-3)) isa Float64
+    @test f_rt(p, Float32(τ0), 1100.0f0, 1.0f-3) isa Float32
+
+    # composite rheology forwards a runtime d
+    c = CompositeRheology(p)
+    @test compute_εII(c, τ0, (; args..., d = 1.0e-3)) ≈ 125 * compute_εII(c, τ0, args)
+end
+
+# Corrected database entries, each against its flow law written in the paper's units:
+# ε = A σⁿ d^p fH2O^r exp(-(Q + PV)/RT) with σ (differential stress) and fH2O in MPa, d in μm,
+# V in cm³/mol and P in MPa. GeoParams takes τII, P, fH2O and d in SI; σ and ε go through FT and FE.
+@testset "Diffusion creep database vs. paper units" begin
+    σ, T, P, fH2O, d = 10.0, 1473.0, 300.0, 200.0, 10.0
+    for (law, A, n, p, r, Q, V) in (
+            (Diffusion.dry_olivine_Hirth_2003, 1.5e9, 1.0, -3.0, 0.0, 375.0e3, 10.0),   # HK03 Table 1
+            (Diffusion.wet_olivine_Hirth_2003, 2.5e7, 1.0, -3.0, 1.0, 375.0e3, 20.0),
+            (Diffusion.wet_olivine_Mei_2000a, 4.8e4, 1.1, -3.0, 1.0, 295.0e3, 20.0),          # Mei & Kohlstedt 2000a eq. (4)
+            (Diffusion.wet_anorthite_rybacki_2006, 10^-0.7, 1.0, -3.0, 1.0, 159.0e3, 38.0), # Rybacki 2006 Table 5
+            (Diffusion.dry_clinopyroxene_Bystricky_2001, 10^15.1, 1.0, -3.0, 0.0, 560.0e3, 0.0), # Bystricky & Mackwell 2001 eq. (5)
+            (Diffusion.wet_quartzite_Rutter_2004, 10^-0.4, 1.0, -2.0, 0.0, 220.0e3, 0.0),        # Rutter & Brodie 2004b
+            (Diffusion.dry_olivine_Faul_2007, 2.0e10, 1.37, -3.0, 0.0, 484.0e3, 0.0),     # Faul & Jackson 2007
+            (Diffusion.wet_diopside_Dimanov_2005, 10^8.1, 1.0, -3.0, 0.0, 337.0e3, 0.0),
+        )
+        c = SetDiffusionCreep(law)
+        ε = compute_εII(c, σ * 1.0e6 / c.FT; T, P = P * 1.0e6, f = fH2O * 1.0e6, d = d * 1.0e-6) * c.FE
+        @test ε ≈ A * σ^n * d^p * fH2O^r * exp(-(Q + V * P) / (NumValue(c.R) * T)) rtol = 1.0e-6
+    end
+
+    # Hier-Majumder et al. (2005), eqs. (3)-(4) and Table 3: ε̇ = ε̇o (σ/G)^n (d/d_o)^p (fH2O/1 MPa)^r exp(-(Q + PV)/RT)
+    # with G = 64.9 GPa, d_o = 10 μm; d = 5 μm so that the d_o factor matters
+    G, d_o, d5 = 64.9e3, 10.0, 5.0
+    for (law, ε̇o, r, Q, V) in (
+            (Diffusion.dry_clinopyroxene_HierMajumder_2005, 10^25.3, 0.0, 760.0e3, 0.0),
+            (Diffusion.wet_clinopyroxene_HierMajumder2005, 10^7.9, 1.4, 340.0e3, 14.0),
+        )
+        c = SetDiffusionCreep(law)
+        ε = compute_εII(c, σ * 1.0e6 / c.FT; T, P = P * 1.0e6, f = fH2O * 1.0e6, d = d5 * 1.0e-6) * c.FE
+        @test ε ≈ ε̇o * (σ / G) * (d5 / d_o)^-3 * fH2O^r * exp(-(Q + V * P) / (NumValue(c.R) * T)) rtol = 1.0e-6
+    end
+
+    # HK03 Table 1, constant C_OH: f is C_OH in H/10^6 Si (dimensionless). Footnote c:
+    # 1.0e6 (0.3) (10000)^-3 (1000) exp(-(335000 + 1e9 * 4e-6)/(8.314 * 1673)) = 7.8e-15 s^-1
+    c = SetDiffusionCreep(Diffusion.wet_olivine1_Hirth_2003)
+    ε = compute_εII(c, 0.3e6 / c.FT; T = 1673.0, P = 1.0e9, f = 1000.0, d = 1.0e-2) * c.FE
+    @test ε ≈ 1.0e6 * 0.3 * 1.0e4^-3 * 1000 * exp(-(335.0e3 + 1.0e9 * 4.0e-6) / (NumValue(c.R) * 1673.0)) rtol = 1.0e-6
+    @test ε ≈ 7.8e-15 rtol = 1.0e-2
 end

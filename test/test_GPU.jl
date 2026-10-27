@@ -128,6 +128,36 @@ c_visc_τII(l, a) = compute_viscosity_τII(l, a.τII, a)
         end
     end
 
+    @testset "diffusion, GBS and Peierls databases" begin
+        dblaws(M) = [
+            getfield(M, n) for n in names(M; all = true)
+                if isdefined(M, n) && getfield(M, n) isa Function && !startswith(string(n), "#") &&
+                !(n in (:eval, :include)) && hasmethod(getfield(M, n), Tuple{})
+        ]
+        aT = merge(a, (; T = Float32(nd(1200.0K))))
+        for (M, set) in (
+                (GeoParams.Diffusion, SetDiffusionCreep), (GeoParams.GBS, SetGrainBoundarySliding),
+                (GeoParams.Peierls, SetPeierlsCreep), (GeoParams.NonLinearPeierls, SetNonLinearPeierlsCreep),
+            )
+            @testset "$(nameof(law))" for law in dblaws(M)
+                l = f32(nd(set(law)))
+                test_gpu(c_εII, (l, aT))
+                M === GeoParams.NonLinearPeierls || test_gpu(c_τII, (l, aT))   # no compute_τII method
+            end
+        end
+        # runtime grain size overrides the stored one
+        dif = f32(nd(SetDiffusionCreep(GeoParams.Diffusion.dry_olivine_Hirth_2003)))
+        test_gpu((l, a, d) -> compute_εII(l, a.τII; a.T, a.P, d), (dif, aT, Float32(nd(1.0e-4m))))
+    end
+
+    @testset "water fugacity" begin
+        test_gpu((P, T) -> compute_water_fugacity(P, T), (1.0f9, 1073.0f0))
+        test_gpu((P, T) -> compute_water_fugacity(P, T), (2.0f8, 573.0f0))     # liquid branch
+        test_gpu((P, T) -> compute_water_fugacity(P, T), (-1.0f6, 1000.0f0))   # P <= 0 gives 0
+        test_gpu((P, T) -> compute_water_fugacity_Shinevar(P, T), (5.0f8, 873.0f0))
+        test_gpu((f, P, T) -> compute_water_content_olivine(f, P, T), (1.0f9, 2.0f9, 1573.0f0))
+    end
+
     @testset "composite rheology and phases" begin
         vep = CompositeRheology(SetDislocationCreep(GeoParams.Dislocation.dry_olivine_Hirth_2003), ConstantElasticity(), DruckerPrager())
         test_gpu(c_visc_εII, (f32(nd(vep)), a))

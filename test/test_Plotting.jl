@@ -133,6 +133,27 @@ CairoMakie.activate!()
         @test StrengthEnvelopePlot(SE_MatParam, SE_thick; TempType = ConstTemp(), nz = 51) isa Figure
     end
 
+    @testset "rheology figures (Becker & Faccenna)" begin
+        @test PlotFlowStressTemperature(; T_C = range(200, 1200; length = 11)) isa Figure
+        @test PlotWaterFugacity(; P = range(0.1e9, 2.0e9; length = 8), T = range(375, 1775; length = 8)) isa Figure
+        coarse = (; log_σ = range(-1, 4; length = 11), log_d = range(-3, 2; length = 9), T_C = range(0, 1650; length = 9), depth = range(5.0e3, 600.0e3; length = 9))
+        @test PlotDeformationMechanismMaps(; coarse...) isa Figure
+        fig, strength = PlotOceanicStrength(; depth = range(0, 100.0e3; length = 51))
+        @test fig isa Figure
+        @test strength[(150, "dry")] > strength[(25, "dry")] > 0
+        # non-integer ages, Symbol labels and a depth vector instead of a range
+        laws = [(label = :dry, law = SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003))]
+        _, s = PlotOceanicStrength(; laws, ages = (25.5, 50), depth = collect(range(0, 100.0e3; length = 51)))
+        @test s[(50, :dry)] > s[(25.5, :dry)] > 0
+        @test_throws ArgumentError Base.get_extension(GeoParams, :GeoParamsMakieExt)._byerlee(1.0e8; mode = :strike_slip)
+        @test PlotContinentalStrength(; depth = range(0, 60.0e3; length = 31)) isa Figure
+        # creep laws are keywords
+        mechanisms = [(name = "dislocation", law = v_disl, color = :tan), (name = "diffusion", law = v_diff, color = :gray)]
+        @test PlotDeformationMechanismMaps(; mechanisms, yield_law = nothing, coarse...) isa Figure
+        panels = [(title = "x", layers = [(bottom = 30.0e3, law = SetDislocationCreep(Dislocation.granite_Tirel_2008), f = 1.0)])]
+        @test PlotContinentalStrength(; panels, depth = range(0, 60.0e3; length = 31)) isa Figure
+    end
+
     # every figure that used `filename` was actually written
     @test all(i -> isfile(joinpath(tmp, "fig_$(i).png")), 1:npng[])
 end

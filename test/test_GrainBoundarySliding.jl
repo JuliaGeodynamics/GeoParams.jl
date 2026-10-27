@@ -3,6 +3,9 @@ using GeoParams
 using LaTeXStrings
 import GeoParams.GBS
 
+# measure inside a function: on Julia 1.10, @allocated at test scope counts boxing of the result
+allocs(f::F, args::Vararg{Any, N}) where {F, N} = (f(args...); @allocated f(args...))
+
 @testset "GrainBoundarySliding" begin
 
     # This tests the MaterialParameters structure
@@ -17,6 +20,8 @@ import GeoParams.GBS
     @test Value(x1.n) == 3.5
     @test Value(x1.p) == -2.0
     @test Value(x1.A) == 6500.0MPa^(-3.5) * s^(-1) * µm^(2)
+    @test Value(x1.d) == 1.0e-3m
+    @test occursin("d=0.001 m", str)
     @test repr("text/plain", x1) isa String
 
     # perform a computation with the dislocation creep laws
@@ -41,11 +46,11 @@ import GeoParams.GBS
     args = (; T = T)
     TauII = 1.0e6
     ε = compute_εII(p, TauII, args)
-    @test ε ≈ 8.968730687982234e-31
+    @test ε ≈ 8.968730687982234e-25 # stored default grain size d = 1 mm
 
     # same but while removing the tensor correction
     ε_notensor = compute_εII(remove_tensor_correction(p), TauII, args)
-    @test ε_notensor ≈ 1.5143914737172087e-31
+    @test ε_notensor ≈ 1.5143914737172087e-25
 
     # test with arrays
     τII_array = ones(10) * 1.0e6
@@ -105,4 +110,53 @@ import GeoParams.GBS
     compute_τII!(τ, g, ε; T = fill(1000.0, 4), P = zeros(4), d = fill(1.0e-3, 4))
     @test τ[1] ≈ 1.2245742476954252e8 rtol = 1.0e-6
     @test GeoParams.Transform_GrainBoundarySliding(GBS.cold_dry_olivine_Hirth_2003, GEO_units()) isa AbstractCreepLaw
+
+    # grain size: stored value by default, a runtime `d` overrides it
+    g = SetGrainBoundarySliding(GBS.hot_dry_olivine_Hirth_2003)
+    @test Value(g.d) == 1.0e-3m
+    g2 = SetGrainBoundarySliding(GBS.hot_dry_olivine_Hirth_2003; d = 0.1mm)
+    @test Value(g2.d) ≈ 1.0e-4m # converted to m
+    args = (; T = 1600.0, P = 1.0e9)
+    τ0, ε0 = 1.0e7, 1.0e-15
+    ε_stored = compute_εII(g, τ0, args)
+    @test ε_stored ≈ compute_εII(g, τ0, (; args..., d = 1.0e-3))       # omitting d == stored d
+    @test compute_εII(g, τ0, (; args..., d = 1.0e-4)) ≈ 100 * ε_stored  # p = -2
+    @test compute_εII(g2, τ0, args) ≈ 100 * ε_stored
+    τ_stored = compute_τII(g, ε0, args)
+    @test τ_stored ≈ compute_τII(g, ε0, (; args..., d = 1.0e-3))
+    @test compute_τII(g, ε0, (; args..., d = 1.0e-4)) ≈ τ_stored * 100^(-1 / 3.5)
+    @test dεII_dτII(g, τ0, (; args..., d = 1.0e-4)) ≈ 100 * dεII_dτII(g, τ0, args)
+    @test dτII_dεII(g, ε0, (; args..., d = 1.0e-4)) ≈ dτII_dεII(g, ε0, args) * 100^(-1 / 3.5)
+
+    # Unitful methods
+    uargs = (; T = 1600.0K, P = 1.0e9Pa)
+    @test ustrip(compute_εII(g, τ0 * Pa, uargs)) ≈ ε_stored
+    @test ustrip(compute_εII(g, τ0 * Pa; uargs..., d = 0.1mm)) ≈ 100 * ε_stored
+    @test ustrip(Pa, compute_τII(g, ε0 / s; uargs..., d = 1mm)) ≈ τ_stored
+    @test ustrip(Pa, compute_τII(g, ε0 / s, uargs)) ≈ τ_stored
+    @test ustrip(dεII_dτII(g, τ0 * Pa; uargs..., d = 1mm)) ≈ dεII_dτII(g, τ0, args)
+    @test ustrip(dτII_dεII(g, ε0 / s; uargs..., d = 1mm)) ≈ dτII_dεII(g, ε0, args)
+
+    # arrays: runtime d as array, or the stored value
+    τv = fill(τ0, 3)
+    εv = zeros(3)
+    compute_εII!(εv, g, τv; args...)
+    @test all(εv .≈ ε_stored)
+    compute_εII!(εv, g, τv; args..., d = [1.0e-3, 1.0e-4, 1.0e-3])
+    @test εv ≈ [1, 100, 1] .* ε_stored
+
+    # allocation-free and type stable, with and without runtime d
+    f_stored(g, τ, T) = compute_εII(g, τ; T = T)
+    f_rt(g, τ, T, d) = compute_εII(g, τ; T = T, d = d)
+    f_stored(g, τ0, 1600.0)
+    f_rt(g, τ0, 1600.0, 1.0e-3)
+    @test allocs(f_stored, g, τ0, 1600.0) == 0
+    @test allocs(f_rt, g, τ0, 1600.0, 1.0e-3) == 0
+    @test (@inferred f_rt(g, τ0, 1600.0, 1.0e-3)) isa Float64
+    @test f_rt(g, Float32(τ0), 1600.0f0, 1.0f-3) isa Float32
+
+    # the stored grain size is nondimensionalized with the law
+    CharDim = GEO_units()
+    g_nd = SetGrainBoundarySliding(GBS.hot_dry_olivine_Hirth_2003, CharDim)
+    @test g_nd.d.val ≈ nondimensionalize(1.0e-3m, CharDim)
 end

@@ -34,11 +34,11 @@ import GeoParams.Peierls
     args = (; T = T)
     TauII = 1.0e9
     ε = compute_εII(p, TauII, args)
-    @test ε ≈ 9.127028135349583e-20
+    @test ε ≈ 2.3181145468270706e-9
 
     # same but while removing the tensor correction
     ε_notensor = compute_εII(remove_tensor_correction(p), TauII, args)
-    @test ε_notensor ≈ 1.3652144989670166e-20
+    @test ε_notensor ≈ 6.197048346429745e-14
 
     # test with arrays
     τII_array = ones(10) * 1.0e9
@@ -95,13 +95,25 @@ import GeoParams.Peierls
         a = SetPeierlsCreep(Peierls.dry_olivine_Goetze_1979)
         # dimensional (Quantity) compute_τII — regression value
         τq = compute_τII(a, 1.0e-15 / s; T = 1000K)
-        @test ustrip(uconvert(u"Pa", τq)) ≈ 1.0589825917692536e9 rtol = 1.0e-6
+        @test ustrip(uconvert(u"Pa", τq)) ≈ 1.1562073728905828e8 rtol = 1.0e-6
         # array compute_τII! matches the scalar result
         ε = fill(1.0e-15, 4)
         τ = similar(ε)
         compute_τII!(τ, a, ε; T = fill(1000.0, 4))
-        @test τ[1] ≈ 1.0589825917692536e9 rtol = 1.0e-6
+        @test τ[1] ≈ 1.1562073728905828e8 rtol = 1.0e-6
         # AD derivative — regression value
-        @test dτII_dεII(a, 1.0e-15; T = 1000.0) ≈ 1.763880374042669e23 rtol = 1.0e-6
+        @test dτII_dεII(a, 1.0e-15; T = 1000.0) ≈ 3.898110451060781e22 rtol = 1.0e-6
+    end
+
+    # Database laws against the papers: ε̇ = A exp(-E/RT (1 - (σ/σP)^p)^q), with σ the differential stress
+    # (σ = √3 τII) and ε̇ the axial strain rate (ε̇II = ε̇ / (2/√3)). σ = 1 GPa, T = 873 K.
+    σ, T = 1.0e9, 873.0
+    for (law, A, E, σP, pp, q) in (
+            (Peierls.dry_olivine_Goetze_1979, 5.7e11, 536.0e3, 8.5e9, 1.0, 2.0),     # Goetze & Evans (1979), eq. (1a)
+            (Peierls.dry_olivine_Demouchy_2013, 1.0e6, 450.0e3, 15.0e9, 0.5, 2.0),   # Demouchy et al. (2013), eq. (4)
+            (Peierls.dry_olivine_Idrissi_2016, 1.0e6, 566.0e3, 3.8e9, 0.5, 2.0),     # Idrissi et al. (2016), eq. (1)
+        )
+        a = SetPeierlsCreep(law)
+        @test compute_εII(a, σ / sqrt(3); T) ≈ A * exp(-E / (NumValue(a.R) * T) * (1 - (σ / σP)^pp)^q) / (2 / sqrt(3)) rtol = 1.0e-6
     end
 end

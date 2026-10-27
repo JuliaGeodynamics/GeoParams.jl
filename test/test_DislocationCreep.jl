@@ -191,3 +191,88 @@ end
         @test ε ≈ 10^logA * σ^n * fH2O^r * exp(-(Q + V * P) / (NumValue(p.R) * T)) rtol = 1.0e-6
     end
 end
+
+# Corrected database entries, each against its flow law written in the paper's units:
+# ε = A σⁿ f^r exp(-(Q + PV)/RT) with σ (differential stress) and fH2O in MPa, V in cm³/mol, P in MPa.
+# GeoParams takes τII, P and fH2O in Pa; σ and ε go through FT and FE.
+@testset "Dislocation creep database vs. paper units" begin
+    σ, T, P, fH2O = 100.0, 1273.0, 300.0, 200.0
+    for (law, A, n, r, Q, V) in (
+            (Dislocation.wet_olivine_Hirth_2003, 1600.0, 3.5, 1.2, 520.0e3, 22.0),     # HK03 Table 1
+            (Dislocation.wet_anorthite_Rybacki_2006, 10^0.2, 3.0, 1.0, 345.0e3, 38.0), # Rybacki 2006 Table 5
+            (Dislocation.wet_clinopyroxene_Chen_2006, 10^6.7, 2.7, 3.0, 670.0e3, 0.0),
+            (Dislocation.wet_quartzite_Hirth_2001, 10^-11.2, 4.0, 1.0, 135.0e3, 0.0),
+            (Dislocation.wet_quartzite_Rutter_2004, 10^-4.93, 2.97, 1.0, 242.0e3, 0.0),
+            (Dislocation.wet_quartzite_Tokle_2019, 1.1e-12, 3.0, 1.2, 115.0e3, 0.0),           # Tokle 2019 Table 1
+            (Dislocation.lowstress_wet_quartzite_Tokle_2019, 1.75e-12, 4.0, 1.0, 125.0e3, 0.0),
+            (Dislocation.wet_olivine_Mei_2000b, 1.5e3, 3.0, 0.98, 470.0e3, 20.0),               # Mei & Kohlstedt 2000b eq. (2)
+            (Dislocation.dry_olivine_Karato_2003, 10^6.1, 3.0, 0.0, 510.0e3, 14.0),             # Karato & Jung 2003 Table 3
+            (Dislocation.wet_olivine_Karato_2003, 10^2.9, 3.0, 1.2, 470.0e3, 24.0),
+            (Dislocation.wet_quartzite_Lu_2019, 6.0e-15, 4.0, 2.7, 132.0e3, 35.3),              # Lu & Jiang 2019 eq. (6)
+            (Dislocation.wet_quartzite_Lusk_2021, 10^-6.36, 2.1, 0.2, 94.0e3, 1.44),            # Lusk 2021 Table 2
+            (Dislocation.lowP_wet_quartzite_Lusk_2021, 10^-9.3, 3.5, 0.49, 118.0e3, 2.59),
+            (Dislocation.highP_wet_quartzite_Lusk_2021, 10^-7.9, 2.0, 0.49, 77.0e3, 2.59),
+            (Dislocation.high_stress_wet_dunite_Chopra_1981, 10^3.98, 3.35, 0.0, 444.0e3, 0.0), # Chopra & Paterson 1981 Table IV
+            (Dislocation.low_stress_wet_dunite_Chopra_1981, 10^3.88, 2.44, 0.0, 386.0e3, 0.0),
+            (Dislocation.dry_dunite_Chopra_1984, 10^4.46, 3.6, 0.0, 535.0e3, 0.0),              # Chopra & Paterson 1984 Table 3
+            (Dislocation.diabase_Caristan_1982, 6.12e-2, 3.05, 0.0, 276.0e3, 0.0),              # Caristan 1982 p. 6789
+            (Dislocation.dry_clinopyroxene_Bystricky_Mackwell_2001, 10^9.8, 4.7, 0.0, 760.0e3, 0.0), # eq. (2)
+            (Dislocation.strong_diabase_Mackwell_1998, 8.0, 4.7, 0.0, 485.0e3, 0.0),            # Mackwell 1998 p. 980
+            (Dislocation.mafic_granulite_Wilks_1990, 1.4e4, 4.2, 0.0, 445.0e3, 0.0),            # Wilks & Carter 1990 Fig. 6B
+            (Dislocation.plagioclase_An75_Ji_1993, 3.27e-4, 3.2, 0.0, 238.0e3, 0.0),            # Ji & Zhao 1993 Table 2
+            (Dislocation.wet_omphacite_Zhang_2006, 10^-2.0, 3.5, 0.0, 310.0e3, 0.0),            # Zhang 2006 eq. (4)
+            (Dislocation.wet_jadeit_Orzol_2006, exp(-3.3), 3.7, 0.0, 326.0e3, 0.0),             # Orzol 2006: ln A = -3.3
+            (Dislocation.wet_olivine_Afonso_2004, 2.0e3, 4.0, 0.0, 471.0e3, 0.0),               # Afonso & Ranalli 2004 Table 1
+            (Dislocation.rock_salt_Li_Urai_2016, 7.26e-6, 5.0, 0.0, 53.92e3, 0.0),              # Li & Urai 2016 Table 1
+        )
+        p = SetDislocationCreep(law)
+        ε = compute_εII(p, σ * 1.0e6 / p.FT; T, P = P * 1.0e6, f = fH2O * 1.0e6) * p.FE
+        @test ε ≈ A * σ^n * fH2O^r * exp(-(Q + V * P) / (NumValue(p.R) * T)) rtol = 1.0e-6
+    end
+    @test Dislocation.dry_dunite_Chopra_1984 in dislocation_law_list()
+
+    # `_refit` entries: the printed law with A refitted to the paper's own data,
+    # i.e. the printed law times the ratio of the prefactors
+    for (refit, printed, ratio) in (
+            (Dislocation.dry_olivine_Hirth_2003_refit, Dislocation.dry_olivine_Hirth_2003, 2.8e5 / 1.1e5),
+            (Dislocation.wet_olivine_Karato_2003_refit, Dislocation.wet_olivine_Karato_2003, 10^-0.2),
+            (Dislocation.wet_quartzite_Lu_2019_refit, Dislocation.wet_quartzite_Lu_2019, 1 / 6),
+        )
+        p, p0 = SetDislocationCreep(refit), SetDislocationCreep(printed)
+        args = (; T, P = P * 1.0e6, f = fH2O * 1.0e6)
+        @test compute_εII(p, σ * 1.0e6, args) ≈ ratio * compute_εII(p0, σ * 1.0e6, args) rtol = 1.0e-6
+        @test refit in dislocation_law_list()
+    end
+
+    # Kirby (1983): A = 10^3.2 GPa^-2.4 s^-1, σ in GPa
+    p = SetDislocationCreep(Dislocation.wet_quartzite_Kirby_1983)
+    ε = compute_εII(p, σ * 1.0e6 / p.FT; T) * p.FE
+    @test ε ≈ 10^3.2 * (σ / 1.0e3)^2.4 * exp(-160.0e3 / (NumValue(p.R) * T)) rtol = 1.0e-6
+
+    # Jaoul et al. (1984), Table 1, rows 1 and 2: A in s^-1 kbar^-n, σ in kbar, E in kcal/mol
+    for (law, A, n, E) in (
+            (Dislocation.dry_quartzite_Jaoul_1984, 1.37, 2.8, 44.0),
+            (Dislocation.wet_quartzite_Jaoul_1984, 0.63, 2.4, 39.0),
+        )
+        p = SetDislocationCreep(law)
+        ε = compute_εII(p, σ * 1.0e6 / p.FT; T) * p.FE
+        @test ε ≈ A * (σ / 100)^n * exp(-E * 4184 / (NumValue(p.R) * T)) rtol = 1.0e-6
+    end
+
+    # Dimanov & Dresen (2005), Tables 3a/3b: A in Pa^-n s^-1, σ in Pa
+    for (law, A, n, Q) in (
+            (Dislocation.dry_diopside_Dimanov_2005, 3.01e-28, 5.47, 691.0e3),
+            (Dislocation.wet_diopside_Dimanov_2005, 5.16e-33, 5.52, 534.0e3),
+        )
+        p = SetDislocationCreep(law)
+        ε = compute_εII(p, σ * 1.0e6 / p.FT; T) * p.FE
+        @test ε ≈ A * (σ * 1.0e6)^n * exp(-Q / (NumValue(p.R) * T)) rtol = 1.0e-6
+    end
+
+    # HK03 Table 1, constant C_OH: f is C_OH in H/10^6 Si (dimensionless). Footnote e:
+    # 90 (0.3)^3.5 (1000)^1.2 exp(-(480000 + 1e9 * 11e-6)/(8.314 * 1673)) = 2.5e-12 s^-1
+    p = SetDislocationCreep(Dislocation.wet_olivine1_Hirth_2003)
+    ε = compute_εII(p, 0.3e6 / p.FT; T = 1673.0, P = 1.0e9, f = 1000.0) * p.FE
+    @test ε ≈ 90 * 0.3^3.5 * 1000^1.2 * exp(-(480.0e3 + 1.0e9 * 11.0e-6) / (NumValue(p.R) * 1673.0)) rtol = 1.0e-6
+    @test ε ≈ 2.5e-12 rtol = 2.0e-2
+end
