@@ -287,17 +287,6 @@ export dεII_dτII,
     local_iterations_εvol,
     compute_p_harmonic
 
-include("CreepLaw/Data_deprecated/DislocationCreep.jl")
-include("CreepLaw/Data_deprecated/DiffusionCreep.jl")
-include("CreepLaw/Data_deprecated/GrainBoundarySliding.jl")
-include("CreepLaw/Data_deprecated/NonLinearPeierlsCreep.jl")
-include("CreepLaw/Data_deprecated/PeierlsCreep.jl")
-export DislocationCreep_info,
-    DiffusionCreep_info,
-    GrainBoundarySliding_info,
-    PeierlsCreep_info,
-    NonLinearPeierlsCreep_info
-
 # Constitutive relationships laws
 include("StressComputations/StressComputations.jl")
 export compute_τij, compute_p_τij, compute_τij_stagcenter!, compute_p_τij_stagcenter!, compute_τij!, compute_p_τij!
