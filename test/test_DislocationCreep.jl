@@ -203,10 +203,26 @@ end
             (Dislocation.wet_clinopyroxene_Chen_2006, 10^6.7, 2.7, 3.0, 670.0e3, 0.0),
             (Dislocation.wet_quartzite_Hirth_2001, 10^-11.2, 4.0, 1.0, 135.0e3, 0.0),
             (Dislocation.wet_quartzite_Rutter_2004, 10^-4.93, 2.97, 1.0, 242.0e3, 0.0),
-            (Dislocation.wet_quartzite_Tokle_2019, 10^-11.959, 3.0, 1.2, 115.0e3, 0.0),
+            (Dislocation.wet_quartzite_Tokle_2019, 1.1e-12, 3.0, 1.2, 115.0e3, 0.0),           # Tokle 2019 Table 1
             (Dislocation.lowstress_wet_quartzite_Tokle_2019, 1.75e-12, 4.0, 1.0, 125.0e3, 0.0),
-            (Dislocation.dry_quartzite_Jaoul_1984, 10^-5.415, 2.8, 0.0, 184.0e3, 0.0),
-            (Dislocation.wet_quartzite_Jaoul_1984, 10^-5.045, 2.8, 0.0, 163.0e3, 0.0),
+            (Dislocation.wet_olivine_Mei_2000b, 1.5e3, 3.0, 0.98, 470.0e3, 20.0),               # Mei & Kohlstedt 2000b eq. (2)
+            (Dislocation.dry_olivine_Karato_2003, 10^6.1, 3.0, 0.0, 510.0e3, 14.0),             # Karato & Jung 2003 Table 3
+            (Dislocation.wet_olivine_Karato_2003, 10^2.9, 3.0, 1.2, 470.0e3, 24.0),
+            (Dislocation.wet_quartzite_Lu_2019, 6.0e-15, 4.0, 2.7, 132.0e3, 35.3),              # Lu & Jiang 2019 eq. (6)
+            (Dislocation.wet_quartzite_Lusk_2021, 10^-6.36, 2.1, 0.2, 94.0e3, 1.44),            # Lusk 2021 Table 2
+            (Dislocation.lowP_wet_quartzite_Lusk_2021, 10^-9.3, 3.5, 0.49, 118.0e3, 2.59),
+            (Dislocation.highP_wet_quartzite_Lusk_2021, 10^-7.9, 2.0, 0.49, 77.0e3, 2.59),
+            (Dislocation.high_stress_wet_dunite_Chopra_1981, 10^3.98, 3.35, 0.0, 444.0e3, 0.0), # Chopra & Paterson 1981 Table IV
+            (Dislocation.low_stress_wet_dunite_Chopra_1981, 10^3.88, 2.44, 0.0, 386.0e3, 0.0),
+            (Dislocation.diabase_Caristan_1982, 6.12e-2, 3.05, 0.0, 276.0e3, 0.0),              # Caristan 1982 p. 6789
+            (Dislocation.dry_clinopyroxene_Bystricky_Mackwell_2001, 10^9.8, 4.7, 0.0, 760.0e3, 0.0), # eq. (2)
+            (Dislocation.strong_diabase_Mackwell_1998, 8.0, 4.7, 0.0, 485.0e3, 0.0),            # Mackwell 1998 p. 980
+            (Dislocation.mafic_granulite_Wilks_1990, 1.4e4, 4.2, 0.0, 445.0e3, 0.0),            # Wilks & Carter 1990 Fig. 6B
+            (Dislocation.plagioclase_An75_Ji_1993, 3.27e-4, 3.2, 0.0, 238.0e3, 0.0),            # Ji & Zhao 1993 Table 2
+            (Dislocation.wet_omphacite_Zhang_2006, 10^-2.0, 3.5, 0.0, 310.0e3, 0.0),            # Zhang 2006 eq. (4)
+            (Dislocation.wet_jadeit_Orzol_2006, exp(-3.3), 3.7, 0.0, 326.0e3, 0.0),             # Orzol 2006: ln A = -3.3
+            (Dislocation.wet_olivine_Afonso_2004, 2.0e3, 4.0, 0.0, 471.0e3, 0.0),               # Afonso & Ranalli 2004 Table 1
+            (Dislocation.rock_salt_Li_Urai_2016, 7.26e-6, 5.0, 0.0, 53.92e3, 0.0),              # Li & Urai 2016 Table 1
         )
         p = SetDislocationCreep(law)
         ε = compute_εII(p, σ * 1.0e6 / p.FT; T, P = P * 1.0e6, f = fH2O * 1.0e6) * p.FE
@@ -217,6 +233,16 @@ end
     p = SetDislocationCreep(Dislocation.wet_quartzite_Kirby_1983)
     ε = compute_εII(p, σ * 1.0e6 / p.FT; T) * p.FE
     @test ε ≈ 10^3.2 * (σ / 1.0e3)^2.4 * exp(-160.0e3 / (NumValue(p.R) * T)) rtol = 1.0e-6
+
+    # Jaoul et al. (1984), Table 1, rows 1 and 2: A in s^-1 kbar^-n, σ in kbar, E in kcal/mol
+    for (law, A, n, E) in (
+            (Dislocation.dry_quartzite_Jaoul_1984, 1.37, 2.8, 44.0),
+            (Dislocation.wet_quartzite_Jaoul_1984, 0.63, 2.4, 39.0),
+        )
+        p = SetDislocationCreep(law)
+        ε = compute_εII(p, σ * 1.0e6 / p.FT; T) * p.FE
+        @test ε ≈ A * (σ / 100)^n * exp(-E * 4184 / (NumValue(p.R) * T)) rtol = 1.0e-6
+    end
 
     # Dimanov & Dresen (2005), Tables 3a/3b: A in Pa^-n s^-1, σ in Pa
     for (law, A, n, Q) in (

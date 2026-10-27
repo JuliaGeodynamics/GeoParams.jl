@@ -155,7 +155,7 @@ function diabase_Caristan_1982()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Wet (as-received) Maryland diabase. Values from Bremond d'Ars et al. (1999), p. 5; not verified against Caristan (1982), whose tests were all at 1000 °C, so Q must come from the compilation.",
+        Comment = "Maryland diabase. Caristan (1982), p. 6789 (text beside Fig. 10): ε̇ = A σ^n exp(-Q/RT) with A = 6.12e-2 MPa^-n (s^-1), n = 3.05, Q = 276 kJ/mol, cited from Caristan's thesis; experiments in an argon gas-medium apparatus at 1000 °C, as-received samples, differential stress. Matches Carter & Tsenn (1987), Table 4 (n = 3.05, log A = -1.2 MPa^-n/s, Q = 276 kJ/mol, triaxial compression, 900-1000 °C; listed as dry), and Bremond d'Ars et al. (1999).",
         BibTex_Reference = "
         @article{caristan1982transition,
         title={The transition from high temperature creep to fracture in Maryland diabase},
@@ -188,7 +188,7 @@ function serpentinite_Raleigh_1965()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Fit by later authors, taken from Bremond d'Ars et al. (1999), p. 5; Raleigh & Paterson (1965) report strength tests, not a power-law fit. Not verified.",
+        Comment = "Not a law from Raleigh & Paterson (1965): the paper reports constant strain-rate strength and ductility tests (up to 700 °C, 1-5 kbar) and dehydration embrittlement, but no power-law fit, activation energy or stress exponent. The values (n = 2.8, A = 6.3e-7 MPa^-n/s, E = 66 kJ/mol) are a later fit taken from Bremond d'Ars et al. (1999), p. 5, which was not available; their origin is unverified.",
         BibTex_Reference = "
             @article{raleigh1965experimental,
             title={Experimental deformation of serpentinite and its tectonic implications},
@@ -207,7 +207,7 @@ end
 
 function strong_diabase_Mackwell_1998()
     #  After Mackwell et al. (1998), 'High-temperature deformation of dry diabase with application to tectonics on Venus'
-    #  Mackwell et al. (1998), page 980, equation in text
+    #  Mackwell et al. (1998), page 980, flow law for Maryland diabase in the text
     data = DislocationCreep(;
         Name = "Maryland strong diabase | Mackwell et al. (1998)",
         n = 4.7NoUnits,
@@ -218,7 +218,7 @@ function strong_diabase_Mackwell_1998()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Mackwell et al. (1998), abstract (n = 4.7, Q = 485, dry Maryland diabase); A = 8 MPa^-n/s from secondary tables only.",
+        Comment = "Mackwell et al. (1998), p. 980, flow law for Maryland diabase: ε̇ = (8 ± 4) σ^(4.7 ± 0.6) exp(-(485 ± 30 kJ/mol)/RT), σ (differential) in MPa, A in MPa^-4.7 s^-1; dry, gas-medium creep tests. The weaker Columbia diabase (same page): A = 190 ± 110 MPa^-4.7 s^-1, same n and Q.",
         BibTex_Reference = "
             @article{mackwell1998high,
             title={High-temperature deformation of dry diabase with application to tectonics on Venus},
@@ -250,7 +250,7 @@ function mafic_granulite_Wilks_1990()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Pikwitonei granulite via Ranalli (1995), Table 10.3, and Li, Gerya & Burg (2010), Table 2; not verified against Wilks & Carter (1990).",
+        Comment = "Wilks & Carter (1990), Fig. 6B, Pikwitonei transitional (mafic) granulite: ε̇ = 1.4e4 exp(-445/RT) σ^4.2, A in MPa^-n s^-1 (section 'Steady-state flow'), σ = σ1 - σ3 in MPa, Q in kJ/mol; Griggs-Blacic solid-medium apparatus, 0.8-1.0 GPa. The authors call it preliminary (strain softening above ~800 °C). Same values in Ranalli (1995), Table 10.3, and Afonso & Ranalli (2004), Table 1.",
         BibTex_Reference = "
             @article{wilks1990rheology,
             title={Rheology of some continental lower crustal rocks},
@@ -341,7 +341,7 @@ function plagioclase_An75_Ji_1993()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Ranalli (1995), Table 10.3 (A = 3.3e-4 MPa^-n/s, n = 3.2, E = 238), via later tables; Ji & Zhao (1993) not verified.",
+        Comment = "Ji & Zhao (1993), Table 2, row 3 'plagioclase (Ab25An75)', dry: A = 3.27e-4 MPa^-n/s, n = 3.2, Q = 238 kJ/mol, dislocation creep; cited there from Shelton & Tullis (1981) (EOS abstract, not seen). Ranalli (1995), Table 10.3, gives the same law.",
         BibTex_Reference = "
             @article{ji1993flow,
             title={Flow laws of multiphase rocks calculated from experimental data on the constituent phases},
@@ -457,7 +457,7 @@ function wet_quartzite_Kirby_1983()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Koch wet quartzite after Kirby (1983), Table 2, and Kirby & Kronenberg (1987), Table 3 (n = 2.4, H = 160); A = 10^3.2 GPa^-n/s converted to MPa. Kirby (1983) itself not seen.",
+        Comment = "Kirby (1983), Table 2, row 'quartzite (wet), α-quartz, water from talc' (Koch et al. 1983): log10 A = 3.2 GPa^-n/s (column unit GPa^-n s^-1, differential stress), n = 2.4, E = 160 kJ/mol; A converted to 10^(3.2 - 3n) = 1.0e-4 MPa^-n/s. Same law in Kirby & Kronenberg (1987), Table 3.",
         BibTex_Reference = "
             @article{kirby1983rheology,
             title={Rheology of the lithosphere},
@@ -488,7 +488,7 @@ function wet_olivine_Afonso_2004()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Ranalli (1995) wet olivine (A = 2.0e3 MPa^-n/s, n = 4, E = 471) via Gerya (2010), Table 17.1; Afonso & Ranalli (2004) not seen.",
+        Comment = "Afonso & Ranalli (2004), Table 1, row 'Peridotite (wet)': A = 2.0e3 MPa^-n s^-1, n = 4.0, E = 471 kJ/mol, used with σ1 - σ3 (their eq. 2). A compilation; it cites Chopra & Paterson (1981, 1984). Chopra & Paterson (1981), Table IV, has no n = 4.0/Q = 471 law, so the values must come from Chopra & Paterson (1984) (not seen). Same values in Gerya (2010), Table 17.1.",
         BibTex_Reference = "
             @article{afonso2004crustal,
             title={Crustal and mantle strengths in continental lithosphere: is the jelly sandwich model obsolete?},
@@ -574,7 +574,7 @@ function rock_salt_Li_Urai_2016()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Li & Urai (2016), Table 1, 'Salt B: dislocation creep' (A0 = 7.26e-6 MPa^-5/s, Q = 53920 J/mol, n = 5), after Wawersik & Zeuch (1986) as simplified by Li & Urai; the primary source was not verified.",
+        Comment = "Li & Urai (2016), Table 1, 'Salt B: dislocation creep' (A0 = 7.26e-6 MPa^-5/s, Q = 53920 J/mol, n = 5). Origin: Wawersik & Zeuch (1986), Table 1, row 'Asse - BGR' (the published fit of Albrecht & Hunsche 1980): γ̇ = C exp(-Q/RT) (τ/μ)^n with C = 9.27e14 s^-1, n = 5.0, Q = 53.92 kJ/mol, τ = σ1 - σ3, γ = e1 - e3 (eq. 3). μ is not given in the paper; A0 = C/μ^5 implies μ ≈ 10.5 GPa (or 9.7 GPa if γ̇ was converted to axial strain rate, 2/3 γ̇), so A0 could not be reproduced exactly.",
         BibTex_Reference = "
         @article{li2016rheology,
         title={Rheology of rock salt for salt tectonics modeling},
@@ -592,18 +592,18 @@ function rock_salt_Li_Urai_2016()
 end
 
 function wet_olivine_Mei_2000b()
-    #  Mei & Kohlstedt (2000b), table 1
+    #  Mei & Kohlstedt (2000b), eq. (2), V = 20 cm^3/mol variant
     data = DislocationCreep(;
         Name = "Wet Olivine | Mei & Kohlstedt (2000b)",
-        n = 3.02NoUnits,
-        A = (1.5e3)MPa^(-4) / s,
+        n = 3.0NoUnits,
+        A = (1.5e3)MPa^(-199 // 50) / s,     # MPa^-(n+r), fH2O in MPa
         E = 470.0kJ / mol,
         V = 20.0e-6m^3 / mol,
         r = 0.98NoUnits,
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Mei & Kohlstedt (2000b), abstract: n ≈ 3, Q ≈ 470, r = 0.69-1.25 for V = 0-38 (r = 0.98 pairs with V = 20). A = 1500 MPa^-(n+r)/s and n = 3.02 not verified against the paper. Pass f = fH2O in Pa.",
+        Comment = "Mei & Kohlstedt (2000b), eq. (2), section 4.1: ε̇ = A σ^3.0 fH2O^r exp(-(470 kJ/mol + PV)/RT), σ (differential), P, fH2O in MPa; the V = 20 cm^3/mol fit, r = 0.98, A = 1.5e3 MPa^-(n+r)/s (printed as 'μm^3 MPa^-4 s^-1'; the μm^3 is a misprint, there is no grain-size term). The other fits are V = 0: r = 0.69, A = 4.6e3; V = 38: r = 1.25, A = 5.0e2. Triaxial compression, gas medium. Pass f = fH2O in Pa.",
         BibTex_Reference = "
         @article{mei2000influence,
         title={Influence of water on plastic deformation of olivine aggregates: 2. Dislocation creep regime},
@@ -621,7 +621,7 @@ function wet_olivine_Mei_2000b()
 end
 
 function dry_olivine_Karato_2003()
-    #  Karato & Jung (2003), abstract
+    #  Karato & Jung (2003), Table 3
     data = DislocationCreep(;
         Name = "Dry Olivine | Karato & Jung (2003)",
         n = 3.0NoUnits,
@@ -632,7 +632,7 @@ function dry_olivine_Karato_2003()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Karato & Jung (2003), abstract: A = 10^6.1 MPa^-n/s, n = 3.0, r = 0; E = 510, V = 14 from secondary citations of the full text.",
+        Comment = "Karato & Jung (2003), Table 3 (open system) and abstract: A_d = 10^6.1 s^-1 MPa^-n, n = 3.0, r = 0, E*_d = 510 kJ/mol (taken there from Mei & Kohlstedt 2000), V*_d = 14 cm^3/mol. σ is differential stress (dislocation-density piezometer; Griggs simple-shear runs converted assuming isotropic plasticity).",
         BibTex_Reference = "
         @article{karato2003effects,
         title={Effects of pressure on high-temperature dislocation creep in olivine},
@@ -650,7 +650,7 @@ function dry_olivine_Karato_2003()
 end
 
 function wet_olivine_Karato_2003()
-    #  Karato & Jung (2003), abstract
+    #  Karato & Jung (2003), Table 3
     data = DislocationCreep(;
         Name = "Wet Olivine | Karato & Jung (2003)",
         n = 3.0NoUnits,
@@ -661,7 +661,7 @@ function wet_olivine_Karato_2003()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Karato & Jung (2003), abstract: A = 10^2.9 MPa^-(n+r)/s (fH2O in MPa), n = 3.0, r = 1.2; E = 470, V = 24 from secondary citations of the full text. Pass f = fH2O in Pa.",
+        Comment = "Karato & Jung (2003), Table 3 (open system, constant fH2O) and abstract: A_w = 10^2.9 s^-1 MPa^-(n+r) (fH2O in MPa), n = 3.0, r = 1.2, E*_w = 470 kJ/mol (from Mei & Kohlstedt 2000), V*_w = 24 cm^3/mol. Table 4 gives the closed-system (C_OH) variant: 10^0.56, E = 410, V = 11. Differential stress. Pass f = fH2O in Pa.",
         BibTex_Reference = "
         @article{karato2003effects,
         title={Effects of pressure on high-temperature dislocation creep in olivine},
@@ -679,8 +679,7 @@ function wet_olivine_Karato_2003()
 end
 
 function wet_clinopyroxene_Chen_2006()
-    #  Chen et al. (2006), abstract (n, r, E, V); log A = 6.7 from Bürgmann & Dresen (2008), Suppl. Table 1
-    #  A stored in MPa^-(n+r) with fH2O in MPa, as is usual for Kohlstedt-group laws; the unit of A in the paper was not confirmed
+    #  Chen et al. (2006), eq. (3): σ and fH2O in MPa, so A is in MPa^-(n+r) s^-1
     data = DislocationCreep(;
         Name = "Wet Clinopyroxene | Chen et al. (2006)",
         n = 2.7NoUnits,
@@ -691,7 +690,7 @@ function wet_clinopyroxene_Chen_2006()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Chen et al. (2006), abstract: n = 2.7, r = 3.0, Q = 670, V = 0; log A = 6.7 from Bürgmann & Dresen (2008). Unit of A (MPa^-(n+r)) not confirmed from the paper. Pass f = fH2O in Pa.",
+        Comment = "Chen et al. (2006), eq. (3), paragraph [26]: ε̇ = 10^6.7 σ^2.7 fH2O^3.0 exp(-670 kJ/mol / RT), ε̇ in s^-1, σ (differential) and fH2O in MPa, so A = 10^6.7 MPa^-(n+r)/s; V = 0 (paragraph [25]). Triaxial compression, gas medium. Pass f = fH2O in Pa.",
         BibTex_Reference = "
         @article{chen2006water,
         title={Water weakening of clinopyroxene in the dislocation creep regime},
@@ -708,8 +707,8 @@ function wet_clinopyroxene_Chen_2006()
 end
 
 function dry_clinopyroxene_Bystricky_Mackwell_2001()
-    #  Bystricky & Mackwell (2001), abstract (n, E); log A = 9.8 from Bürgmann & Dresen (2008), Suppl. Table 1.
-    #  10^9.8 is the natural coarse-grained Sleaford Bay clinopyroxenite; hot-pressed fine-grained samples give 10^10.8
+    #  Bystricky & Mackwell (2001), eq. (2): natural coarse-grained Sleaford Bay clinopyroxenite.
+    #  The hot-pressed fine-grained samples give 10^10.8 (dislocation term of eq. (5), n and Q fixed)
     data = DislocationCreep(;
         Name = "Dry Clinopyroxene | Bystricky & Mackwell (2001)",
         n = 4.7NoUnits,
@@ -720,7 +719,7 @@ function dry_clinopyroxene_Bystricky_Mackwell_2001()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Natural Sleaford Bay clinopyroxenite: n = 4.7, Q = 760 (Bystricky & Mackwell 2001, abstract), log A = 9.8 (Bürgmann & Dresen 2008, Suppl. Table 1).",
+        Comment = "Bystricky & Mackwell (2001), eq. (2), natural Sleaford Bay clinopyroxenite: ε̇ = 10^9.8 σ^4.7 exp(-760 kJ/mol / RT), ε̇ in s^-1, σ = σ1 - σ3 in MPa. Same values in Bürgmann & Dresen (2008), Suppl. Table 1.",
         BibTex_Reference = "
         @article{bystricky2001creep,
         title={Creep of dry clinopyroxene aggregates},
@@ -805,7 +804,7 @@ function wet_omphacite_Zhang_2006()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Bürgmann & Dresen (2008), Suppl. Table 1 (log A = -2, n = 3.5, Q = 310); Zhang et al. (2006) not seen.",
+        Comment = "Zhang, Green & Bozhilov (2006), eq. (4): ε̇ = 10^-2.0 σ^3.5 exp(-310000/RT), polycrystalline omphacite (Di58Jd42), Griggs apparatus at 3 GPa, 1300-1500 K. Units of σ are not printed with eq. (4); MPa follows from Fig. 4 (log stress in MPa), with which the law agrees. Same values in Bürgmann & Dresen (2008), Suppl. Table 1.",
         BibTex_Reference = "
         @article{zhang2006rheology,
         title={Rheology of omphacite at high temperature and pressure and significance of its lattice preferred orientations},
@@ -823,18 +822,18 @@ function wet_omphacite_Zhang_2006()
 end
 
 function wet_jadeit_Orzol_2006()
-    #  Orzol et al. (2006), page 11
+    #  Orzol et al. (2006), paragraph [36] and abstract: ln A = -3.3 (natural log)
     data = DislocationCreep(;
         Name = "Wet Jadeit | Orzol et al. (2006)",
         n = 3.7NoUnits,
-        A = (10^-3.3)MPa^(-37 // 10) / s,
+        A = exp(-3.3)MPa^(-37 // 10) / s,
         E = 326.0kJ / mol,
         V = 0.0m^3 / mol,
         r = 0.0NoUnits,
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Bürgmann & Dresen (2008), Suppl. Table 1 (log A = -3.3, n = 3.7, Q = 326); Orzol et al. (2006) not seen.",
+        Comment = "Orzol et al. (2006), eq. (1) and paragraph [36] (also abstract): ε̇ = A Δσ^n exp(-Q/RT), A in MPa^-n s^-1, ln A = -3.3 ± 2.0, n = 3.7 ± 0.4, Q = 326 ± 27 kJ/mol; synthetic wet jadeitite, Griggs-type apparatus (molten salt), 2.5 GPa. A = exp(-3.3) = 3.7e-2 MPa^-n/s; the former 10^-3.3 (Bürgmann & Dresen 2008, Suppl. Table 1) read ln A as log10 A (factor 74).",
         BibTex_Reference = "
         @article{orzol2006experimental,
         title={Experimental deformation of synthetic wet jadeite aggregates},
@@ -909,7 +908,7 @@ function wet_anorthite_Rybacki_2000()
 end
 
 function wet_quartzite_Rutter_2004()
-    #  Rutter & Brodie (2004), table 5
+    #  Rutter & Brodie (2004a), abstract and section 4.1
     data = DislocationCreep(;
         Name = "Wet Quartzite | Rutter & Brodie (2004)",
         n = 2.97NoUnits,
@@ -920,7 +919,7 @@ function wet_quartzite_Rutter_2004()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Rutter & Brodie (2004a): n = 2.97, log A = -4.93 (fH2O in MPa), Q = 242, r = 1, from the paper's abstract text and Lusk et al. (2021), Table 1. Pass f = fH2O in Pa.",
+        Comment = "Rutter & Brodie (2004a), abstract and section 4.1: ε̇ = 10^-4.93 σ^2.97 fH2O exp(-242 kJ/mol / RT), σ (differential) and fH2O in MPa, so A in MPa^-(n+r)/s with r = 1 (taken from Hirth et al. 2001; fH2O assumed 300 MPa in the fit). Argon gas-medium apparatus, 300 MPa, 1273-1473 K. Pass f = fH2O in Pa.",
         BibTex_Reference = "
         @article{rutter2004experimental,
         title={Experimental intracrystalline plastic flow in hot-pressed synthetic quartzite prepared from Brazilian quartz crystals},
@@ -967,18 +966,18 @@ function wet_quartzite_Hirth_2001()
 end
 
 function dry_quartzite_Jaoul_1984()
-    #  Jaoul et al. (1984), table 1, first entry
+    #  Jaoul et al. (1984), table 1, first entry (W-292)
     data = DislocationCreep(;
         Name = "Dry Quartzite | Jaoul et al. (1984)",
         n = 2.8NoUnits,
-        A = (10^-5.415)MPa^(-14 // 5) / s,
-        E = 184.0kJ / mol,
+        A = (1.37 * 100^-2.8)MPa^(-14 // 5) / s,   # 1.37 s^-1 kbar^-n in the source; 1 kbar = 100 MPa
+        E = 184.096kJ / mol,                       # 44.0 kcal/mol
         V = 0.0m^3 / mol,
         r = 0.0NoUnits,
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "n = 2.8 (Kirby & Kronenberg 1987, Table 3), E = 184 (= 44 kcal/mol, Jaoul abstract), A = 10^-5.415 as in the previous GeoParams database and Becker's compilation. Jaoul Table 1 could not be read; the abstract gives n = 1.8-3.3, Q = 146-184 kJ/mol. The former A = 2.89e-3 had no documented source.",
+        Comment = "Jaoul et al. (1984), Table 1, row 1 (W-292, creep in CaCO3 assembly, vacuum heated at 685 °C for 4 days, 700-1050 °C, 1.5 GPa): A = 1.37 s^-1 kbar^-n, n = 2.8 ± 0.2, E = 44.0 ± 1.5 kcal/mol; σ = σ1 - σ3 in kbar (Griggs apparatus). A converted to 1.37 × 100^-2.8 = 3.44e-6 MPa^-n/s (previously 10^-5.415, of unknown origin).",
         BibTex_Reference = "
             @article{jaoul1984effect,
             title={The effect of varying water contents on the creep behavior of Heavitree quartzite},
@@ -996,18 +995,18 @@ function dry_quartzite_Jaoul_1984()
 end
 
 function wet_quartzite_Jaoul_1984()
-    #  Jaoul et al. (1984), table 1, second entry
+    #  Jaoul et al. (1984), table 1, second entry (W-291, "as is")
     data = DislocationCreep(;
         Name = "Wet Quartzite | Jaoul et al. (1984)",
-        n = 2.8NoUnits,
-        A = (10^-5.045)MPa^(-14 // 5) / s,
-        E = 163.0kJ / mol,
+        n = 2.4NoUnits,
+        A = (0.63 * 100^-2.4)MPa^(-12 // 5) / s,   # 0.63 s^-1 kbar^-n in the source; 1 kbar = 100 MPa
+        E = 163.176kJ / mol,                       # 39.0 kcal/mol
         V = 0.0m^3 / mol,
         r = 0.0NoUnits,
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "n = 2.8, A = 10^-5.045, E = 163 as in the previous GeoParams database and Becker's compilation. The former set (n = 1.4, A = 0.105 MPa^-2.8, E = 146.44) was internally inconsistent. Jaoul Table 1 could not be read; the abstract gives n = 1.8-3.3, Q = 146-184 kJ/mol.",
+        Comment = "Jaoul et al. (1984), Table 1, row 2 (W-291, creep in CaCO3 assembly, 'as is' = not dried, no water added, 850-1050 °C, 1.5 GPa): A = 0.63 s^-1 kbar^-n, n = 2.4 ± 0.4, E = 39.0 ± 3.0 kcal/mol; σ = σ1 - σ3 in kbar (Griggs apparatus). A converted to 0.63 × 100^-2.4 = 9.98e-6 MPa^-n/s. Previously n = 2.8, A = 10^-5.045 (E matched, n was the dry value). Water-added row W-294: A = 3.32 kbar^-n/s, n = 1.4, E = 35 kcal/mol.",
         BibTex_Reference = "
             @article{jaoul1984effect,
             title={The effect of varying water contents on the creep behavior of Heavitree quartzite},
@@ -1029,14 +1028,14 @@ function wet_quartzite_Tokle_2019()
     data = DislocationCreep(;
         Name = "Wet Quartzite | Tokle et al. (2019)",
         n = 3.0NoUnits,
-        A = (10^-11.959)MPa^(-42 // 10) / s,    # MPa^-(n+r), fH2O in MPa
+        A = 1.1e-12MPa^(-42 // 10) / s,    # MPa^-(n+r), fH2O in MPa
         E = 115.0kJ / mol,
         V = 0.0m^3 / mol,
         r = 1.2NoUnits,
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Tokle et al. (2019), extrapolated n = 3 (high-stress) fit: A = 1.1e-12 (fH2O in MPa), Q = 115, r = 1.2. Q and r via Tokle et al. (2021); A via Becker's compilation (Table 1 of the paper not seen). Pass f = fH2O in Pa.",
+        Comment = "Tokle et al. (2019), Table 1, 'Extrapolated fit', row n = 3 (low temperature/high stress, basal <a> fabrics): A = 1.1e-12, n = 3, r = 1.2, Q = 115 kJ/mol. The header gives A in MPa^-n/s, but fH2O is in MPa throughout the paper, so A is in MPa^-(n+r)/s. σ is differential (von Mises equivalent) stress. Other rows: laboratory fits n = 4 (8.0e-12, r = 1, Q = 140) and n = 2.7 (5.4e-12, r = 1.1, Q = 105). Pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{tokle2019flow,
             title={Flow laws and fabric transitions in wet quartzite},
@@ -1053,7 +1052,8 @@ function wet_quartzite_Tokle_2019()
 end
 
 function lowstress_wet_quartzite_Tokle_2019()
-    #  Tokle et al. (2019), extrapolated n = 4 (low-stress, prism slip) fit
+    #  Tokle et al. (2019), table 1, extrapolated n = 4 (high-T/low-stress) fit. The authors interpret it as
+    #  dislocation creep rate-limited by easy prism <a> slip, i.e. dislocation-accommodated GBS (section 4, conclusions)
     data = DislocationCreep(;
         Name = "low stress wet Quartzite | Tokle et al. (2019)",
         n = 4.0NoUnits,
@@ -1064,7 +1064,7 @@ function lowstress_wet_quartzite_Tokle_2019()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Tokle et al. (2019), extrapolated n = 4 (low-stress) fit: A = 1.75e-12 (fH2O in MPa), Q = 125, r = 1. From secondary sources (Tokle et al. 2021 for Q and r; EGU22-7175 table and Becker's compilation for A); Table 1 of the paper not seen. Pass f = fH2O in Pa.",
+        Comment = "Tokle et al. (2019), Table 1, 'Extrapolated fit', row n = 4 (high temperature/low stress, prism <a> / Y-max fabrics): A = 1.75e-12, n = 4, r = 1, Q = 125 kJ/mol; A in MPa^-(n+r)/s with fH2O in MPa (header: MPa^-n/s). Listed as a dislocation-creep law; the authors propose that it reflects disGBS rate-limited by easy prism <a> slip. Pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{tokle2019flow,
             title={Flow laws and fabric transitions in wet quartzite},
@@ -1092,7 +1092,7 @@ function wet_quartzite_Lu_2019()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Lu & Jiang (2019): n = 4, m = 2.7, Q = 132, V = 35.3 cm^3/mol, A = 6.0e-15 MPa^-(n+m)/s (fH2O in MPa), from search extracts of the paper. Pass f = fH2O in Pa.",
+        Comment = "Lu & Jiang (2019), eq. (6): ε̇ = 6.0e-15 fw^2.7 exp(-(132000 + 35.3 P)/RT) σ^4, fw, P and σ (differential) in MPa; A = (6.0 ± 5.0)e-15 MPa^-(n+m)/s, V = 35.3 cm^3/mol. Pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{lu2019quartz,
             title={Quartz flow law revisited: the significance of pressure dependence of the activation enthalpy},
@@ -1121,7 +1121,7 @@ function lowP_wet_quartzite_Lusk_2021()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Lusk et al. (2021), abstract, 'low-pressure' (< 560 MPa) law: log A = -9.30 MPa^-(n+r)/s, n = 3.5, r = 0.49, Q = 118, V = 2.59 cm^3/mol. Pass f = fH2O in Pa.",
+        Comment = "Lusk et al. (2021), Table 2, row 'Low pressure' (< 560 MPa), and abstract: log A = -9.30 MPa^-(n+r)/s, n = 3.5, r = 0.49, Q = 118, V = 2.59 cm^3/mol (r and V from the 'representative reduced' fit). σ is von Mises equivalent stress = differential stress for axial tests. Pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{lusk2021natural,
             title={Natural and Experimental Constraints on a Flow Law for Dislocation-Dominated Creep in Wet Quartz},
@@ -1150,7 +1150,7 @@ function wet_quartzite_Lusk_2021()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Lusk et al. (2021), Table 2, full data set: log A = -6.36 MPa^-(n+r)/s, n = 2.1, r = 0.2, Q = 94, V = 1.44 cm^3/mol (Table 2 not seen; matches Becker's compilation). Pass f = fH2O in Pa.",
+        Comment = "Lusk et al. (2021), Table 2, row 'Full': log A = -6.36 (+0.25/-0.69) MPa^-(n+r)/s, n = 2.1, r = 0.20, Q = 94, V = 1.44 cm^3/mol. σ is von Mises equivalent stress = differential stress for axial tests. Pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{lusk2021natural,
             title={Natural and Experimental Constraints on a Flow Law for Dislocation-Dominated Creep in Wet Quartz},
@@ -1180,7 +1180,7 @@ function highP_wet_quartzite_Lusk_2021()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Lusk et al. (2021), abstract, 'high-pressure' (700-1600 MPa) law: log A = -7.90 MPa^-(n+r)/s, n = 2.0, r = 0.49, Q = 77, V = 2.59 cm^3/mol. Pass f = fH2O in Pa.",
+        Comment = "Lusk et al. (2021), Table 2, row 'High pressure' (700-1600 MPa), and abstract: log A = -7.90 MPa^-(n+r)/s, n = 2.0, r = 0.49, Q = 77, V = 2.59 cm^3/mol (r and V from the 'representative reduced' fit). σ is von Mises equivalent stress = differential stress for axial tests. Pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{lusk2021natural,
             title={Natural and Experimental Constraints on a Flow Law for Dislocation-Dominated Creep in Wet Quartz},
@@ -1209,7 +1209,7 @@ function high_stress_wet_dunite_Chopra_1981()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Chopra & Paterson (1981), abstract (n = 3.35, Q = 444, Anita Bay dunite above ~100 MPa); log A = 3.98 agrees with Kirby & Kronenberg (1987), Table 1 (4.0 ± 0.2).",
+        Comment = "Chopra & Paterson (1981), Table IV, row 'Anita Bay dunite, constant ε̇ (σ > ~100 MPa)': log A = 3.98 ± 0.17 s^-1 MPa^-n, n = 3.35, Q = 444 kJ/mol; eq. (1) with differential stress, gas-medium apparatus, 300 MPa confining pressure, 'wet' (water from hydrous minerals). Matches Carter & Tsenn (1987), Table 4, and Kirby & Kronenberg (1987), Table 1.",
         BibTex_Reference = "
             @article{CHOPRA1981453,
             title = {The experimental deformation of dunite},
@@ -1243,7 +1243,7 @@ function low_stress_wet_dunite_Chopra_1981()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Chopra & Paterson (1981), abstract (n = 2.44, Q = 386, Anita Bay dunite below ~100 MPa); log A = 3.88 not verified (Table IV not seen).",
+        Comment = "Chopra & Paterson (1981), Table IV, row 'Anita Bay dunite, relaxation (σ < ~100 MPa)': log A = 3.88 ± 0.43 s^-1 MPa^-n, n = 2.44, Q = 386 kJ/mol; eq. (1) with differential stress, from stress-relaxation tests, gas-medium apparatus, 300 MPa confining pressure, 'wet'. The authors note Q may be overestimated.",
         BibTex_Reference = "
             @article{CHOPRA1981453,
             title = {The experimental deformation of dunite},

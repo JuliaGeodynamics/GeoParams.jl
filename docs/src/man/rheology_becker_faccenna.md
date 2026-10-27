@@ -52,10 +52,11 @@ places. Where the book uses its own choice, the default arguments of the plottin
 | Dry olivine, diffusion | ``V = 6\cdot10^{-6}`` m³/mol | ``V = 10\cdot10^{-6}`` m³/mol (range 2–10) | ``V = 6\cdot10^{-6}`` |
 | Dry olivine, dislocation (Figs. 5.10, 5.13) | ``V = 18\cdot10^{-6}`` m³/mol | ``V = 14\cdot10^{-6}`` m³/mol (Table 5.2: 14) | ``V = 18\cdot10^{-6}`` |
 | Quartz, Rutter & Brodie (2004) | ``n = 3``, ``\log_{10}A = -4.9`` | ``n = 2.97``, ``\log_{10}A = -4.93`` | database (stresses in Fig. 5.6 differ by −1 to +17 %) |
-| Quartz, Tokle et al. (2019); quartz, Jaoul et al. (1984) | ``\log_{10}A = -11.9586``; ``A = 9.0\cdot10^{-6}`` | ``-11.959``; ``10^{-5.045}`` | database (< 0.1 %) |
+| Quartz, Tokle et al. (2019) | ``A = 1.1\cdot10^{-12}`` (``\log_{10}A = -11.9586``) | ``1.1\cdot10^{-12}`` (Table 1 of the paper) | identical |
+| Quartz, Jaoul et al. (1984), "wet" | ``n = 2.8``, ``A = 9.0\cdot10^{-6}``, ``E = 163`` kJ/mol | ``n = 2.4``, ``A = 0.63`` s⁻¹ kbar⁻ⁿ ``= 9.98\cdot10^{-6}`` MPa⁻ⁿ s⁻¹, ``E = 39`` kcal/mol ``= 163.2`` kJ/mol (Jaoul et al. 1984, Table 1, "as is" sample W-291) | database (at ``10^{-15}``–``10^{-13}`` s⁻¹ the quartz stresses in Fig. 5.6 are higher below 580–770 °C (up to 2.5 times at 300 °C) and lower above (down to 0.54 times at 1200 °C)) |
 | Quartz, Lu & Jiang (2019) (not used here) | ``n = 3`` | ``n = 4`` (Lu & Jiang 2019) | – |
 
-## Figure 5.6: flow stresses of crustal and mantle rocks
+## Flow stresses of crustal and mantle rocks
 
 Dislocation creep of water-saturated quartz, feldspar (anorthite) and olivine at ``p = 0.5`` GPa, with the
 water fugacity of Pitzer & Sterner (1994). Each band spans strain rates from ``10^{-15}`` (low stress) to
@@ -79,7 +80,7 @@ quartz = [
 PlotFlowStressTemperature(; laws = quartz, P = 1.0e9)
 ```
 
-## Figure 5.7: water fugacity and water content of olivine
+## Water fugacity and water content of olivine
 
 Left: water fugacity from the equation of state of Pitzer & Sterner (1994) (colors) and from the crustal
 approximation of Shinevar et al. (2015), eq. (5.7) (contours every 250 MPa), with two linear geotherms
@@ -93,7 +94,7 @@ between 10 and 40 km, but the printed lines start at about 20 km, as here.
 PlotWaterFugacity()
 ```
 
-## Figure 5.10: deformation mechanism maps of dry olivine
+## Deformation mechanism maps of dry olivine
 
 Four dashpots in series (eq. 5.29): diffusion creep, dislocation creep and grain-boundary sliding of
 Hirth & Kohlstedt (2003) and the Peierls law of Mei et al. (2010). For a prescribed differential stress, the
@@ -122,7 +123,7 @@ mechanisms = [
 PlotDeformationMechanismMaps(; mechanisms, yield_law = nothing)
 ```
 
-## Figure 5.12: strength of oceanic lithosphere
+## Strength of oceanic lithosphere
 
 Half-space cooling geotherms (``T_m = 1400`` °C) for plate ages of 25, 50 and 150 Myr, creep at
 ``\dot\varepsilon = 5\cdot10^{-15}`` s⁻¹ of "wet" (solid) and "dry" (dashed) olivine in dislocation creep (Table
@@ -144,7 +145,7 @@ in the book for the wet (dry) cases at 25 and 150 Myr. The values here are 5–8
 as in the book raises them to 7.6 (10.4) and 42.0 (58.2) TN/m; the remaining few percent are probably due to
 the integration in the book (its depth range or resolution is not stated).
 
-## Figure 5.13: strength of continental lithosphere
+## Strength of continental lithosphere
 
 Compression with ``\lambda = 0.4`` and ``\dot\varepsilon = 10^{-15}`` s⁻¹, linear geotherms for surface heat
 flows of 45, 65 and 85 mW/m² (``k = 3`` W/m/K, ``T \le 1350`` °C), a 35 km thick crust (``\rho = 2750``

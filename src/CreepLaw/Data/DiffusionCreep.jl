@@ -62,16 +62,16 @@ end
 function wet_olivine_Mei_2000a()
     data = DiffusionCreep(;
         Name = "Wet Olivine | Mei & Kohlstedt (2000a)",
-        n = 1.0NoUnits,                         # power-law exponent
+        n = 1.1NoUnits,                         # power-law exponent
         r = 1.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^4.7)MPa^(-2) * μm^3 * s^(-1), # material specific rheological parameter; MPa^-(n+r), fH2O in MPa
+        A = 4.8e4MPa^(-21 // 10) * μm^3 * s^(-1), # material specific rheological parameter; MPa^-(n+r), fH2O in MPa
         E = 295.0kJ / mol,                      # activation energy
         V = 20.0e-6m^3 / mol,                     # activation Volume
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Mei & Kohlstedt (2000a): n, p and r = 1 paired with V = 20 cm^3/mol from the abstract; A and E (≈300 kJ/mol in later citations) not verified against the paper. A includes the fH2O unit (MPa^-(n+r)); pass f = fH2O in Pa.",
+        Comment = "Mei & Kohlstedt (2000a), eq. (4), section 4.1: ε̇ = A σ^1.1 d^-3 fH2O^r exp(-(295 kJ/mol + PV)/RT), σ (differential), P, fH2O in MPa, d in μm; the V = 20 cm^3/mol fit: r = 1.0, A = 4.8e4 μm^3 MPa^-2.1 s^-1 (V = 0: r = 0.7, A = 1.3e5 μm^3 MPa^-1.8 s^-1). Triaxial compression, gas medium. Pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{mei2000influence,
             title={Influence of water on plastic deformation of olivine aggregates: 1. Diffusion creep regime},
@@ -209,13 +209,13 @@ function dry_clinopyroxene_HierMajumder_2005()
         n = 1.0NoUnits,                         # power-law exponent
         r = 0.0NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = ((10^25.3) / 64.9e3)MPa^(-1) * μm^3 * s^(-1),    # material specific rheological parameter
+        A = (10^25.3 * 10^3 / 64.9e3)MPa^(-1) * μm^3 * s^(-1),    # ε̇o d_o^3 / G with d_o = 10 μm, G = 64.9e3 MPa
         E = 760.0kJ / mol,                        # activation energy
         V = 0.0m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Hier-Majumder et al. (2005), abstract (n, E); A = 10^25.3 divided by the shear modulus of diopside (64.9e3 MPa). Unresolved: Bürgmann & Dresen (2008) divide by 64.9 (GPa) instead, giving A 10^3 larger; the paper was not available to settle this.",
+        Comment = "Hier-Majumder et al. (2005), eq. (3) and Table 3, row 'Anhydrous': ε̇ = ε̇o (σ/G)^n (d/do)^p exp(-Q/RT) with ε̇o = 10^25.3 s^-1, n = 1, p = -3, Q = 760 kJ/mol, G = 64.9 GPa, do = 10 μm, σ differential stress. In MPa and μm: A = ε̇o do^3 / G = 10^25.3 × 10^3 / 64.9e3 = 3.07e23 MPa^-1 μm^3/s (equal to Bürgmann & Dresen 2008, 10^25.3/64.9; the former 10^25.3/64.9e3 lacked the do^3 factor).",
         BibTex_Reference = "
             @article{hier2005water,
             title={Water weakening of clinopyroxenite in diffusion creep},
@@ -236,13 +236,13 @@ function wet_clinopyroxene_HierMajumder2005()
         n = 1.0NoUnits,                         # power-law exponent
         r = 1.4NoUnits,                         # exponent of water-fugacity
         p = -3.0NoUnits,                        # grain size exponent
-        A = (10^7.9 / 64.9e3)MPa^(-24 // 10) * μm^3 * s^(-1),    # material specific rheological parameter; MPa^-(n+r), fH2O in MPa
+        A = (10^7.9 * 10^3 / 64.9e3)MPa^(-24 // 10) * μm^3 * s^(-1),    # ε̇o d_o^3 / (G fH2O°^r), d_o = 10 μm, G = 64.9e3 MPa, fH2O° = 1 MPa
         E = 340.0kJ / mol,                        # activation energy
         V = 14.0e-6m^3 / mol,                       # activation Volume
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Hier-Majumder et al. (2005), abstract (n, E, r = 1.4, V = 14 cm^3/mol); A = 10^7.9 divided by the shear modulus of diopside (64.9e3 MPa). Unresolved: Bürgmann & Dresen (2008) divide by 64.9 (GPa) instead, giving A 10^3 larger. A includes the fH2O unit (MPa^-(n+r)); pass f = fH2O in Pa.",
+        Comment = "Hier-Majumder et al. (2005), eq. (4) and Table 3, row 'Water-saturated': ε̇ = ε̇o (σ/G)^n (d/do)^p (fH2O/fH2O°)^r exp(-(Q + PV)/RT) with ε̇o = 10^7.9 s^-1, n = 1, p = -3, r = 1.4, Q = 340 kJ/mol, V = 14 cm^3/mol, G = 64.9 GPa, do = 10 μm, fH2O° = 1 MPa, σ differential stress. In MPa and μm: A = 10^7.9 × 10^3 / 64.9e3 = 1.22e6 MPa^-(n+r) μm^3/s (equal to Bürgmann & Dresen 2008; the former value lacked the do^3 factor). Pass f = fH2O in Pa.",
         BibTex_Reference = "
             @article{hier2005water,
             title={Water weakening of clinopyroxenite in diffusion creep},
@@ -269,7 +269,7 @@ function dry_clinopyroxene_Bystricky_2001()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Bürgmann & Dresen (2008), Suppl. Table 1 (log A = 15.1, Q = 560, m = 3); Bystricky & Mackwell (2001) only seen as abstract.",
+        Comment = "Bystricky & Mackwell (2001), eq. (5), diffusion term (dry hot-pressed clinopyroxenite, Ni/NiO buffer): ε̇ = 10^15.1 σ d^-3 exp(-560 kJ/mol / RT), ε̇ in s^-1, σ = σ1 - σ3 in MPa; d in μm (unit not printed, implied by the 8 μm normalisation and the strain rates). Same values in Bürgmann & Dresen (2008), Suppl. Table 1.",
         BibTex_Reference = "
             @article{bystricky2001creep,
             title={Creep of dry clinopyroxene aggregates},
@@ -440,7 +440,7 @@ function wet_quartzite_Rutter_2004()
         Apparatus = AxialCompression,
     )
     info = MaterialParamsInfo(;
-        Comment = "Rutter & Brodie (2004b), abstract: ε̇ = 10^-0.4 σ d^-2 exp(-220 kJ/mol / RT), σ in MPa, d in μm; no fH2O term.",
+        Comment = "Rutter & Brodie (2004b), section 4.1 and abstract: ε̇ = A σ^n exp(-H/RT) / d^m with log A = -0.4 ± 2.1, n = 1 and m = 2 (fixed), H = 220 kJ/mol; σ (differential) in MPa, d in μm, no fH2O term (water fugacity about 20-100 MPa, not in the law). Gas-medium apparatus, 300 MPa confining pressure.",
         BibTex_Reference = "
             @article{rutter2004experimental,
             title={Experimental grain size-sensitive flow of hot-pressed Brazilian quartz aggregates},

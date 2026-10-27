@@ -248,15 +248,28 @@ end
     for (law, A, n, p, r, Q, V) in (
             (Diffusion.dry_olivine_Hirth_2003, 1.5e9, 1.0, -3.0, 0.0, 375.0e3, 10.0),   # HK03 Table 1
             (Diffusion.wet_olivine_Hirth_2003, 2.5e7, 1.0, -3.0, 1.0, 375.0e3, 20.0),
-            (Diffusion.wet_olivine_Mei_2000a, 10^4.7, 1.0, -3.0, 1.0, 295.0e3, 20.0),
+            (Diffusion.wet_olivine_Mei_2000a, 4.8e4, 1.1, -3.0, 1.0, 295.0e3, 20.0),          # Mei & Kohlstedt 2000a eq. (4)
             (Diffusion.wet_anorthite_rybacki_2006, 10^-0.7, 1.0, -3.0, 1.0, 159.0e3, 38.0), # Rybacki 2006 Table 5
-            (Diffusion.wet_clinopyroxene_HierMajumder2005, 10^7.9 / 64.9e3, 1.0, -3.0, 1.4, 340.0e3, 14.0),
+            (Diffusion.dry_clinopyroxene_Bystricky_2001, 10^15.1, 1.0, -3.0, 0.0, 560.0e3, 0.0), # Bystricky & Mackwell 2001 eq. (5)
+            (Diffusion.wet_quartzite_Rutter_2004, 10^-0.4, 1.0, -2.0, 0.0, 220.0e3, 0.0),        # Rutter & Brodie 2004b
             (Diffusion.dry_olivine_Faul_2007, 2.0e10, 1.37, -3.0, 0.0, 484.0e3, 0.0),     # Faul & Jackson 2007
             (Diffusion.wet_diopside_Dimanov_2005, 10^8.1, 1.0, -3.0, 0.0, 337.0e3, 0.0),
         )
         c = SetDiffusionCreep(law)
         ε = compute_εII(c, σ * 1.0e6 / c.FT; T, P = P * 1.0e6, f = fH2O * 1.0e6, d = d * 1.0e-6) * c.FE
         @test ε ≈ A * σ^n * d^p * fH2O^r * exp(-(Q + V * P) / (NumValue(c.R) * T)) rtol = 1.0e-6
+    end
+
+    # Hier-Majumder et al. (2005), eqs. (3)-(4) and Table 3: ε̇ = ε̇o (σ/G)^n (d/d_o)^p (fH2O/1 MPa)^r exp(-(Q + PV)/RT)
+    # with G = 64.9 GPa, d_o = 10 μm; d = 5 μm so that the d_o factor matters
+    G, d_o, d5 = 64.9e3, 10.0, 5.0
+    for (law, ε̇o, r, Q, V) in (
+            (Diffusion.dry_clinopyroxene_HierMajumder_2005, 10^25.3, 0.0, 760.0e3, 0.0),
+            (Diffusion.wet_clinopyroxene_HierMajumder2005, 10^7.9, 1.4, 340.0e3, 14.0),
+        )
+        c = SetDiffusionCreep(law)
+        ε = compute_εII(c, σ * 1.0e6 / c.FT; T, P = P * 1.0e6, f = fH2O * 1.0e6, d = d5 * 1.0e-6) * c.FE
+        @test ε ≈ ε̇o * (σ / G) * (d5 / d_o)^-3 * fH2O^r * exp(-(Q + V * P) / (NumValue(c.R) * T)) rtol = 1.0e-6
     end
 
     # HK03 Table 1, constant C_OH: f is C_OH in H/10^6 Si (dimensionless). Footnote c:
