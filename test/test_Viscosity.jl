@@ -181,6 +181,11 @@ import ForwardDiff as FD
         par = CompositeRheology(Parallel(LinearViscous(; η = 2.0), LinearViscous(; η = 3.0)))
         @test compute_viscosity_εII(par, 1.0, a) == 5.0
         @test compute_viscosity_τII(par, 1.0, a) == 5.0
+
+        # A CompositeRheology nested in Parallel: its series viscosity adds to the other branch
+        nested = CompositeRheology(Parallel(CompositeRheology(LinearViscous(; η = 2.0), LinearViscous(; η = 2.0)), LinearViscous(; η = 3.0)))
+        @test compute_viscosity_εII(nested, 1.0, a) == 4.0
+        @test compute_viscosity_τII(nested, 1.0, a) == 4.0
     end
 
     # Multi-phase εII / τII with integer phase and phase ratios

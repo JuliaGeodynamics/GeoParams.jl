@@ -93,7 +93,7 @@ end
 @inline compute_viscosity_τII(v::Parallel, τII, args) = compute_viscosity_II_parallel(elements(v), compute_viscosity_τII, τII, args)
 
 # compute effective "creep" for a composite rheology where elements are in parallel
-@generated function compute_viscosity_II_parallel(v::NTuple{N, AbstractConstitutiveLaw}, fn::F, II, args) where {F, N}
+@generated function compute_viscosity_II_parallel(v::NTuple{N, Union{AbstractConstitutiveLaw, AbstractComposite}}, fn::F, II, args) where {F, N}
     return quote
         Base.@_inline_meta
         η = false
