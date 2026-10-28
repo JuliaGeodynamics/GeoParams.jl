@@ -54,13 +54,13 @@ end
 
     @testset "nondimensionalization" begin
         CharDim = GEO_units()
-        pn = SetVolumeBoundaryDiffusionCreep(VolumeBoundaryDiffusion.ice_Goldsby_2001, CharDim)
-        @test all(k -> isfinite(NumValue(getfield(pn, k))), (:d, :D0v, :Qv, :D0b, :Qb, :δ, :Vm, :R))
+        p_nd = SetVolumeBoundaryDiffusionCreep(VolumeBoundaryDiffusion.ice_Goldsby_2001, CharDim)
+        @test all(k -> isfinite(NumValue(getfield(p_nd, k))), (:d, :D0v, :Qv, :D0b, :Qb, :δ, :Vm, :R))
         τn = nondimensionalize(1.0e5Pa, CharDim)
         Tn = nondimensionalize(T * K, CharDim)
-        εn = compute_εII(pn, τn; T = Tn)
+        εn = compute_εII(p_nd, τn; T = Tn)
         @test ustrip(dimensionalize(εn, s^-1, CharDim)) ≈ compute_εII(p, 1.0e5; T) rtol = 1.0e-10
-        @test compute_τII(pn, εn; T = Tn) ≈ τn
+        @test compute_τII(p_nd, εn; T = Tn) ≈ τn
     end
 
     @testset "Float32" begin
