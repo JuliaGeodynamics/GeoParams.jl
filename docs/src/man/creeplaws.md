@@ -12,11 +12,13 @@ GeoParams.MaterialParameters.ConstitutiveRelationships.DiffusionCreep
 GeoParams.MaterialParameters.ConstitutiveRelationships.SetDiffusionCreep
 GeoParams.MaterialParameters.ConstitutiveRelationships.GrainBoundarySliding
 GeoParams.MaterialParameters.ConstitutiveRelationships.SetGrainBoundarySliding
+GeoParams.MaterialParameters.ConstitutiveRelationships.VolumeBoundaryDiffusionCreep
+GeoParams.MaterialParameters.ConstitutiveRelationships.SetVolumeBoundaryDiffusionCreep
 ```
 
 ## Computational routines for creep laws
 
-Grain-size sensitive laws (`DiffusionCreep`, `GrainBoundarySliding`) store a grain size `d` (5 mm and 1 mm by default; change it with e.g. `SetDiffusionCreep(law; d = 100μm)`). It is used unless a grain size is passed at runtime, e.g. `compute_εII(law, τII; T, P, d = 1.0e-4)` or `compute_εII(law, τII, (; T, P, d))`, in which case the runtime value (a scalar, or an array in the in-place `!` routines) overrides the stored one.
+Grain-size sensitive laws (`DiffusionCreep`, `GrainBoundarySliding`, `VolumeBoundaryDiffusionCreep`) store a grain size `d` (by default 5 mm for `DiffusionCreep` and 1 mm for the others; change it with e.g. `SetDiffusionCreep(law; d = 100μm)`). It is used unless a grain size is passed at runtime, e.g. `compute_εII(law, τII; T, P, d = 1.0e-4)` or `compute_εII(law, τII, (; T, P, d))`, in which case the runtime value (a scalar, or an array in the in-place `!` routines) overrides the stored one.
 
 Once a creep rheology is defined, we can use the following routines to perform computations within the solvers
 ```@docs

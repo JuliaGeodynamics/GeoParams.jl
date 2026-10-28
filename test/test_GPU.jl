@@ -152,6 +152,7 @@ c_visc_τII(l, a) = compute_viscosity_τII(l, a.τII, a)
         aT = merge(a, (; T = Float32(nd(1200.0K))))
         for (M, set) in (
                 (GeoParams.Diffusion, SetDiffusionCreep), (GeoParams.GBS, SetGrainBoundarySliding),
+                (GeoParams.VolumeBoundaryDiffusion, SetVolumeBoundaryDiffusionCreep),
                 (GeoParams.Peierls, SetPeierlsCreep), (GeoParams.NonLinearPeierls, SetNonLinearPeierlsCreep),
             )
             @testset "$(nameof(law))" for law in dblaws(M)
