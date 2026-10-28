@@ -75,6 +75,7 @@ import GeoParams.NonLinearPeierls
     for fun in creeplaw_list
         p = SetNonLinearPeierlsCreep(fun)                # original creep law
         p_nd = nondimensionalize(p, CharDim)                # non-dimensionalized
+        @test isfinite(NumValue(p_nd.A))         # extreme n can over- or underflow the scaling
         @test p_nd == SetNonLinearPeierlsCreep(fun, CharDim) # check that the non-dimensionalized version is the same as the original
         p_dim = dimensionalize(p, CharDim)                   # dimensionalized
 
@@ -90,14 +91,14 @@ import GeoParams.NonLinearPeierls
         # Perform computations with the rheology
         args = (T = 273 + 200.0, d = 100.0e-6, τII_old = 1.0e6)
         ε = 1.0e-15
-        τ_ini = 1.75e9                                      # initial guess for stress iterations
+        τ_ini = 0.3 * NumValue(p.TauP) / p.FT               # initial guess for stress iterations, below the Peierls stress
         τ = Peierls_stress_iterations(p, τ_ini, ε, args)
         ε_test = compute_εII(p, τ; args...)
         @test ε ≈ ε_test
     end
 
     # check that derivative calculation is correct
-    # p        = SetNonLinearPeierlsCreep("Dry Olivine | Mei et al. (2010)")
+    p = SetNonLinearPeierlsCreep(NonLinearPeierls.dry_olivine_Mei_2010)
     TauII = 1.0e9
     args = (; T = 273 + 200.0)
     depsdtau = dεII_dτII(p, TauII; args...)
@@ -119,4 +120,32 @@ import GeoParams.NonLinearPeierls
     a = SetNonLinearPeierlsCreep(NonLinearPeierls.dry_olivine_Mei_2010)
     @test compute_εII(a, σ * 1.0e6 / sqrt(3); T) ≈
         1.4e-7 * σ^2 * exp(-320.0e3 / (NumValue(a.R) * T) * (1 - sqrt(σ / 5.9e3))) / (2 / sqrt(3)) rtol = 1.0e-6
+end
+
+# The (σ/μ)² laws are stored as NonLinearPeierlsCreep with n = 2 and A/μ² (σ in MPa)
+@testset "NonLinearPeierls database vs. printed laws" begin
+    σ, T = 1000.0, 700.0
+    # Burdette & Hirth (2022): differential stress, μ = 35 GPa
+    p = SetNonLinearPeierlsCreep(NonLinearPeierls.antigorite_Burdette_2022)
+    ε = compute_εII(p, σ * 1.0e6 / p.FT; T) * p.FE
+    @test ε ≈ exp(-0.624) * (σ / 35.0e3)^2 * exp(-86.3e3 / (NumValue(p.R) * T) * (1 - σ / 2420)^1.18) rtol = 1.0e-6
+
+    # Hufford et al. (2026): σ = 2τ, ε̇ = γ̇/√3, μ = 60.6 GPa
+    p = SetNonLinearPeierlsCreep(NonLinearPeierls.glaucophane_glide_Hufford_2026)
+    @test p.Apparatus == SimpleShear
+    ε = compute_εII(p, σ * 1.0e6 / 2; T) * 2 / sqrt(3)
+    @test ε ≈ 10^38.0181 * (σ / 60.6e3)^2 * exp(-800.0e3 / (NumValue(p.R) * T) * (1 - σ / 22.0e3)^2) rtol = 1.0e-6
+
+    # Above the Peierls stress the barrier vanishes (non-integer q = 1.18 must not throw)
+    p = SetNonLinearPeierlsCreep(NonLinearPeierls.antigorite_Burdette_2022)
+    σ_high = 3000.0
+    @test compute_εII(p, σ_high * 1.0e6 / p.FT; T) * p.FE ≈ exp(-0.624) * (σ_high / 35.0e3)^2 rtol = 1.0e-6
+
+    # Nondimensional Float32: the prefactor (≈ 5e43) exceeds floatmax(Float32); the rate is recomputed in Float64
+    CharDim = GEO_units()
+    p = SetNonLinearPeierlsCreep(NonLinearPeierls.glaucophane_glide_Hufford_2026, CharDim)
+    τn, Tn = nondimensionalize(1.0e9Pa, CharDim), nondimensionalize(950.0K, CharDim)
+    ε32 = compute_εII(p, Float32(τn); T = Float32(Tn))
+    @test ε32 isa Float32
+    @test ε32 ≈ compute_εII(p, τn; T = Tn) rtol = 1.0e-4
 end
