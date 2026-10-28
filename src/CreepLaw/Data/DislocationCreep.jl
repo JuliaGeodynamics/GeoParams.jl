@@ -1402,6 +1402,841 @@ function dry_dunite_Chopra_1984()
 end
 
 
+function dry_dunite_fO2_Keefner_2011()
+    # The fugacity term is oxygen fugacity: pass f = fO2 in Pa, not fH2O.
+    data = DislocationCreep(;
+        Name = "Dry Dunite (fO2-dependent) | Keefner et al. (2011)",
+        n = 3.6NoUnits,                                     # power-law exponent
+        r = 0.2NoUnits,                                     # exponent of oxygen fugacity
+        A = 10^3.8 * MPa^(-19 // 5) * s^(-1),               # 10^2.6 MPa^-3.6 Pa^-0.2 = 10^3.8 MPa^-(n+r)
+        E = 449.0kJ / mol,                                  # activation energy
+        V = 0.0m^3 / mol,                                   # activation volume (not given)
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Keefner et al. (2011), Table 3 (p. 7): A = 10^2.6 MPa^-3.6 Pa^-0.2 s^-1 (stored as 10^3.8 MPa^-3.8 s^-1), n = 3.6 (3.59), r = 0.2 with f = fO2 in Pa (not fH2O), E = 449 kJ/mol; Åheim dunite, d ≈ 0.9 mm, gas-medium apparatus, 300 MPa, 1150-1277 °C, IW to NNO buffers, differential stress. Reproduces the paper's data: log10 misfit 0.02 ± 0.13 (N = 55, Table 2, 1250 °C runs where fO2 is given), and the Fig. 6a,c lines within 0.1 dex.",
+        BibTex_Reference = "
+            @article{keefner2011dependence,
+            title={Dependence of dislocation creep of dunite on oxygen fugacity: Implications for viscosity variations in Earth's mantle},
+            author={Keefner, J. W. and Mackwell, S. J. and Kohlstedt, D. L. and Heidelbach, F.},
+            journal={Journal of Geophysical Research},
+            volume={116},
+            number={B5},
+            year={2011},
+            doi={10.1029/2010JB007748}
+            }
+    ",
+    )
+    return data, info
+end
+
+function wet_quartzite_Gleason_1995()
+    data = DislocationCreep(;
+        Name = "Wet Quartzite | Gleason & Tullis (1995)",
+        n = 4.0NoUnits,
+        A = 1.1e-4MPa^(-4) / s,
+        E = 223.0kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Gleason & Tullis (1995), Table 3 (p. 13): A = 1.1e-4 MPa^-4 s^-1, n = 4.0 ± 0.9, Q = 223 ± 56 kJ/mol. Melt-free Black Hills quartzite, molten-salt-cell Griggs apparatus, P ≈ 1.5 GPa, differential stress (uncorrected; see wet_quartzite_Gleason_1995_Holyoke_2010). Reproduces the paper's data: log10 misfit -0.04 ± 0.27 (N = 10, Tables 1-2, stress at ~3% strain), and the Fig. 8b line.",
+        BibTex_Reference = "
+            @article{gleason1995flow,
+            title={A flow law for dislocation creep of quartz aggregates determined with the molten salt cell},
+            author={Gleason, Gayle C. and Tullis, Jan},
+            journal={Tectonophysics},
+            volume={247},
+            number={1-4},
+            pages={1--23},
+            year={1995},
+            doi={10.1016/0040-1951(95)00011-B}
+            }
+    ",
+    )
+    return data, info
+end
+
+function melt_quartzite_Gleason_1995()
+    data = DislocationCreep(;
+        Name = "Quartzite with 1-2% melt | Gleason & Tullis (1995)",
+        n = 4.0NoUnits,
+        A = 1.8e-8MPa^(-4) / s,
+        E = 137.0kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Gleason & Tullis (1995), Table 3 (p. 13) and Fig. 8a: A = 1.8e-8 MPa^-4 s^-1, n = 4, Q = 137 ± 34 kJ/mol. Black Hills quartzite with 1-2% melt, molten-salt-cell Griggs apparatus, differential stress (uncorrected). Reproduces the paper's data: log10 misfit -0.02 ± 0.02 (N = 3, BA-93), +0.17 ± 0.21 over all six melt-bearing runs (BA-95 at 1100 °C lies +0.36 off).",
+        BibTex_Reference = "
+            @article{gleason1995flow,
+            title={A flow law for dislocation creep of quartz aggregates determined with the molten salt cell},
+            author={Gleason, Gayle C. and Tullis, Jan},
+            journal={Tectonophysics},
+            volume={247},
+            number={1-4},
+            pages={1--23},
+            year={1995},
+            doi={10.1016/0040-1951(95)00011-B}
+            }
+    ",
+    )
+    return data, info
+end
+
+function wet_quartzite_Gleason_1995_Holyoke_2010()
+    data = DislocationCreep(;
+        Name = "Wet Quartzite (stress-corrected) | Gleason & Tullis (1995), Holyoke & Kronenberg (2010)",
+        n = 4.0NoUnits,
+        A = 5.1e-4MPa^(-4) / s,
+        E = 223.0kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Holyoke & Kronenberg (2010), p. 29: Gleason & Tullis (1995) law with σ_true = 0.73 σ_MSC: A = 5.1e-4 MPa^-4 s^-1, n = 4, Q = 223 kJ/mol; melt-free Black Hills quartzite, differential stress. The exact 0.73 rescaling of 1.1e-4 would give A = 3.9e-4 (-0.12 dex); the published value is kept. Reproduces the paper's data: log10 misfit +0.08 ± 0.27 (N = 10, Gleason & Tullis 1995 Tables 1-2 with stresses × 0.73).",
+        BibTex_Reference = "
+            @article{holyoke2010accurate,
+            title={Accurate differential stress measurement using the molten salt cell and solid salt assemblies in the Griggs apparatus with applications to strength, piezometers and rheology},
+            author={Holyoke, Caleb W. and Kronenberg, Andreas K.},
+            journal={Tectonophysics},
+            volume={494},
+            number={1-2},
+            pages={17--31},
+            year={2010},
+            doi={10.1016/j.tecto.2010.08.001}
+            }
+    ",
+    )
+    return data, info
+end
+
+function wet_quartzite_Paterson_1990()
+    data = DislocationCreep(;
+        Name = "Wet Quartzite | Paterson & Luan (1990)",
+        n = 3.1NoUnits,
+        A = 6.5e-8MPa^(-31 // 10) / s,
+        E = 135.0kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "NOTE: line (1) is the paper's upper-bound extrapolation, not a fit, and is -0.34 (silicic acid) to -0.95 (gel) log10 units slower than its specimens. Paterson & Luan (1990), line (1), p. 305: A = 6.5e-8 MPa^-3.1 s^-1, n = 3.1, Q = 135 kJ/mol; stress difference, gas apparatus, wet quartzite (P_H2O ≈ 300 MPa). Line (1) is an upper-bound extrapolation anchored at σ0 = 285 MPa (10^-5 s^-1, 1300 K), not a fit; the law reproduces that anchor (285 MPa) and Fig. 2 (≈ 2 MPa at 900 K, 10^-14 s^-1).",
+        BibTex_Reference = "
+            @article{paterson1990quartzite,
+            title={Quartzite rheology under geological conditions},
+            author={Paterson, M. S. and Luan, F. C.},
+            journal={Geological Society, London, Special Publications},
+            volume={54},
+            number={1},
+            pages={299--307},
+            year={1990},
+            doi={10.1144/GSL.SP.1990.054.01.26}
+            }
+    ",
+    )
+    return data, info
+end
+
+function dry_quartzite_Brace_1980()
+    data = DislocationCreep(;
+        Name = "Dry Quartzite | Brace & Kohlstedt (1980)",
+        n = 3.0NoUnits,
+        A = 5.0e-6MPa^(-3) / s,
+        E = 190.0kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "NOTE: the law is -0.25 log10 units slower than the paper's Fig. 6, which implies A ≈ 9e-6. Brace & Kohlstedt (1980), Eq. 5 (p. 6250): A = 5e-6 MPa^-3 s^-1 (printed as 5 × 10^6, a misprint; 5e6 puts the 100 MPa depth at < 1 km), n = 3, Q = 190 kJ/mol; dry quartzite (data of Christie et al. 1979 and Heard & Carter 1968), σ1-σ3 < 1000 MPa, differential stress. Reproduces the paper's Fig. 6 100 MPa depths within 1 km; no data table.",
+        BibTex_Reference = "
+            @article{brace1980limits,
+            title={Limits on lithospheric stress imposed by laboratory experiments},
+            author={Brace, W. F. and Kohlstedt, D. L.},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={85},
+            number={B11},
+            pages={6248--6252},
+            year={1980},
+            doi={10.1029/JB085iB11p06248}
+            }
+    ",
+    )
+    return data, info
+end
+
+function felsic_granulite_Wilks_1990()
+    data = DislocationCreep(;
+        Name = "Felsic Granulite | Wilks and Carter (1990)",
+        n = 3.1NoUnits,
+        A = 8.0e-3MPa^(-31 // 10) / s,
+        E = 243.0kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Wilks and Carter (1990), abstract (p. 57) and Fig. 6A (p. 70): A = 8.0e-3 MPa^-3.1 s^-1, n = 3.1, E = 243 kJ/mol; Adirondack felsic granulite, 700-900 °C, 1 GPa, differential stress. Reproduces the paper's data: log10 misfit -0.04 ± 0.42 (N = 16 steady-state runs, Table 2), and the Fig. 6A isotherms within 0.05 in log σ.",
+        BibTex_Reference = "
+            @article{wilks1990rheology,
+            title={Rheology of some continental lower crustal rocks},
+            author={Wilks, Kenneth R. and Carter, Neville L.},
+            journal={Tectonophysics},
+            volume={182},
+            number={1-2},
+            pages={57--77},
+            year={1990},
+            doi={10.1016/0040-1951(90)90342-6}
+            }
+    ",
+    )
+    return data, info
+end
+
+function felsic_granulite_Wen_2021()
+    data = DislocationCreep(;
+        Name = "Felsic Granulite | Wen et al. (2021)",
+        n = 4.2NoUnits,
+        A = 10^(-4.4) * MPa^(-21 // 5) / s,
+        E = 260.0kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "NOTE: the printed law is 2× too fast vs the paper's own data: +0.31 ± 0.06 log10 units vs Table 1 (N = 10) and +0.25 vs the 927 °C line of Fig. 2b; a data-consistent version is `felsic_granulite_Wen_2021_refit`. Wen et al. (2021), flow law p. 5: A = 10^(-4.4 ± 0.2) MPa^-4.2 s^-1, n = 4.2, E = 260 kJ/mol; synthetic felsic granulite (65 Pl, 15 Qz, 9 Cpx, 6 Opx, 5 Amp), 827-927 °C, 1 GPa, Griggs apparatus; the paper says flow stress, taken as differential stress.",
+        BibTex_Reference = "
+            @article{wen2021rheology,
+            title={Rheology of Felsic Granulite at High Temperature and High Pressure},
+            author={Wen, D.-P. and Wang, Y.-F. and Zhang, J.-F. and Li, P.-X. and Jin, Z.-M.},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={126},
+            number={2},
+            year={2021},
+            doi={10.1029/2020JB020966}
+            }
+    ",
+    )
+    return data, info
+end
+
+"""
+NOTE: refit of `felsic_granulite_Wen_2021` (A = 10^-4.7 instead of the printed 10^-4.4 MPa^-n/s) so that
+the law reproduces the paper's own Table 1 and Fig. 2b.
+"""
+function felsic_granulite_Wen_2021_refit()
+    data = DislocationCreep(;
+        Name = "Felsic Granulite (refit to data) | Wen et al. (2021)",
+        n = 4.2NoUnits,
+        A = 10^(-4.7) * MPa^(-21 // 5) / s,
+        E = 260.0kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "NOTE: refit of felsic_granulite_Wen_2021 with A = 10^-4.7 MPa^-4.2 s^-1 (best fit at the printed n = 4.2 and E = 260 kJ/mol: 10^-4.71; a free fit gives n = 4.14, E = 265). Reproduces the paper's data: log10 misfit 0.01 ± 0.06 (N = 10, Table 1), and the 927 °C line of Fig. 2b.",
+        BibTex_Reference = "
+            @article{wen2021rheology,
+            title={Rheology of Felsic Granulite at High Temperature and High Pressure},
+            author={Wen, D.-P. and Wang, Y.-F. and Zhang, J.-F. and Li, P.-X. and Jin, Z.-M.},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={126},
+            number={2},
+            year={2021},
+            doi={10.1029/2020JB020966}
+            }
+    ",
+    )
+    return data, info
+end
+
+function weak_diabase_Mackwell_1998()
+    data = DislocationCreep(;
+        Name = "Columbia weak diabase | Mackwell et al. (1998)",
+        n = 4.7NoUnits,
+        A = 190MPa^(-47 // 10) / s,
+        E = 485kJ / mol,
+        V = 0m^3 / mol,
+        r = 0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Mackwell et al. (1998), flow law p. 980 and Table 2 (p. 978): A = 190 ± 110 MPa^-4.7 s^-1, n = 4.7, E = 485 kJ/mol; dry Columbia diabase, 940-1040 °C, 400-450 MPa confining pressure, gas-medium apparatus, differential stress. Reproduces the paper's data: log10 misfit 0.03 ± 0.25 (N = 65, Table 2).",
+        BibTex_Reference = "
+            @article{mackwell1998high,
+            title={High-temperature deformation of dry diabase with application to tectonics on Venus},
+            author={Mackwell, SJ and Zimmerman, ME and Kohlstedt, DL},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={103},
+            number={B1},
+            pages={975--984},
+            year={1998},
+            doi={10.1029/97JB02671}
+            }
+    ",
+    )
+    return data, info
+end
+
+function wet_plagioclase_An60_Rybacki_2004()
+    data = DislocationCreep(;
+        Name = "Wet Plagioclase An60 | Rybacki & Dresen (2004)",
+        n = 3.0NoUnits,
+        A = 10^(-1.5) * MPa^(-3) / s,
+        E = 235.0kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Rybacki & Dresen (2004), Table 1 (p. 175): A = 10^(-1.5 ± 0.5) MPa^-3 s^-1, n = 3, Q = 235 kJ/mol; synthetic An60 aggregates with 0.3 wt% H2O, data of Dimanov et al. (unpublished); differential stress, axial strain rate. No data table; reproduces the An60 dislocation-creep curves of Fig. 2 (p. 177) within 0.03 dex.",
+        BibTex_Reference = "
+            @article{rybacki2004deformation,
+            title={Deformation mechanism maps for feldspar rocks},
+            author={Rybacki, Erik and Dresen, Georg},
+            journal={Tectonophysics},
+            volume={382},
+            number={3-4},
+            pages={173--187},
+            year={2004},
+            doi={10.1016/j.tecto.2004.01.006}
+            }
+    ",
+    )
+    return data, info
+end
+
+function amphibolite_Hacker_1990()
+    data = DislocationCreep(;
+        Name = "Amphibolite | Hacker & Christie (1990)",
+        n = 3.7NoUnits,
+        A = 1.1e-4MPa^(-37 // 10) / s,
+        E = 244.0kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Hacker & Christie (1990), p. 139: A = (1.1 ± 0.3)e-4 MPa^-3.7 s^-1, n = 3.7, Q = 244 kJ/mol; synthetic amphibolite, 650-850 °C, 1 GPa confining pressure, differential stress. Reproduces the paper's data: log10 misfit -0.12 ± 0.22 (N = 14, Table 3, faulted runs excluded as in the paper), and the Fig. 16 lines within 0.15 dex. The 950 °C runs follow a separate law (p. 140) not covered here.",
+        BibTex_Reference = "
+            @incollection{hacker1990brittle,
+            title={Brittle/ductile and plastic/cataclastic transitions in experimentally deformed and metamorphosed amphibolite},
+            author={Hacker, Bradley R. and Christie, John M.},
+            booktitle={The Brittle-Ductile Transition in Rocks},
+            series={Geophysical Monograph},
+            volume={56},
+            pages={127--147},
+            publisher={American Geophysical Union},
+            year={1990},
+            doi={10.1029/GM056p0127}
+            }
+    ",
+    )
+    return data, info
+end
+
+function dry_eclogite_Zhang_2007()
+    data = DislocationCreep(;
+        Name = "Dry Eclogite | Zhang & Green (2007)",
+        n = 3.5NoUnits,
+        A = 10^3.3 * MPa^(-7 // 2) / s,
+        E = 403.0kJ / mol,
+        V = 27.2e-6m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Zhang & Green (2007), Table 2 and text p. 104: A = 10^3.3 MPa^-3.5 s^-1, n = 3.5, E = 403 kJ/mol, V = 27.2 cm³/mol (ΔH = 485 kJ/mol at 3 GPa); differential stress, Griggs axial compression; 50 Grt, 40 Omp, 10 Qz, 2.5-3.5 GPa, 1027-1327 °C. Reproduces the paper's data: log10 misfit -0.10 ± 0.21 (N = 16, Table 2), and the Fig. 4a-c fitted lines within 0.25 dex.",
+        BibTex_Reference = "
+            @article{zhang2007experimental,
+            title={Experimental Investigation of Eclogite Rheology and Its Fabrics at High Temperature and Pressure},
+            author={Zhang, J. and Green, H. W.},
+            journal={Journal of Metamorphic Geology},
+            volume={25},
+            number={2},
+            pages={97--115},
+            year={2007},
+            doi={10.1111/j.1525-1314.2006.00684.x}
+            }
+    ",
+    )
+    return data, info
+end
+
+function glaucophane_Hufford_2026()
+    data = DislocationCreep(;
+        Name = "Glaucophane | Hufford et al. (2026)",
+        n = 3.0NoUnits,
+        # The paper fits σ = 2τ against ε̇ = γ̇/√3; SimpleShear uses ε̇ = γ̇, hence the factor √3.
+        A = sqrt(3) * 2.32e10MPa^(-3) / s,
+        E = 450.0kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = SimpleShear,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Hufford et al. (2026), abstract (p. 1) and flow law (p. 11): A = 2.32e10 MPa^-3 s^-1 for σ_equiv = 2τ and ε̇_equiv = γ̇/√3, stored as SimpleShear with A = √3 × 2.32e10; n = 3 (imposed), Q = 450 kJ/mol. Glaucophane aggregates < 63 μm, 1 GPa, 600-700 °C, Griggs general shear. Reproduces the paper's data: log10 misfit 0.00 ± 0.18 (N = 21 creep steps, Table 1), and the Fig. 8 lines within 0.02 dex.",
+        BibTex_Reference = "
+            @article{hufford2026blueschist,
+            title={Blueschist Dislocation Creep and Glide in Subduction Systems: Constraints From Glaucophane Experiments},
+            author={Hufford, Lonnie J. and Tokle, Leif and Behr, Whitney M. and Morales, Luiz F. G. and Madonna, Claudio},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={131},
+            number={3},
+            year={2026},
+            doi={10.1029/2025JB033622}
+            }
+    ",
+    )
+    return data, info
+end
+
+function calcite_coarse_dislocation_Gilgannon_2025()
+    data = DislocationCreep(;
+        Name = "Calcite (coarse-grained, dislocation, X_MgCO3 = 0.001) | Gilgannon & Herwegh (2025)",
+        n = 7.0NoUnits,
+        A = 2.16e-8 * 0.001^(-0.6) * MPa^(-7) / s,       # X_MgCO3^u folded into A
+        E = 200.0kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Gilgannon & Herwegh (2025, preprint), Eq. 7 and Table 5 (pp. 17-18): A = 2.16e-8 s^-1 × X_MgCO3^-0.6 with σ_ref = 1 MPa, n = 7; X_MgCO3 = 0.001 (the paper's pure-calcite limit, p. 21) is folded into A. Q = 200 kJ/mol is assumed. Stress is equivalent stress. Reproduces the paper's data: log10 misfit +0.12 ± 0.61 (N = 18, digitized from Fig. 4b), and the Fig. 10c-d curves within 0.05 dex in stress. The Fig. 6d curves lie about 1 dex slower than Table 5 and are inconsistent with Figs. 4b and 10.",
+        BibTex_Reference = "
+            @article{gilgannon2025unifying,
+            title={On unifying carbonate rheology},
+            author={Gilgannon, James and Herwegh, Marco},
+            journal={EGUsphere (preprint)},
+            year={2025},
+            doi={10.5194/egusphere-2025-1718}
+            }
+    ",
+    )
+    return data, info
+end
+
+function rock_salt_Carter_1993()
+    data = DislocationCreep(;
+        Name = "Rock salt (Avery Island, high stress) | Carter et al. (1993)",
+        n = 5.3NoUnits,
+        A = 1.6e-4MPa^(-53 // 10) / s,
+        E = 68.1kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Carter et al. (1993), Eq. 13 and Table 3 (pp. 1263-1264): A = 1.6e-4 MPa^-5.3 s^-1 (Table 3: 1.57e-4, n = 5.34), n = 5.3, Q = 68.1 kJ/mol (Q/R = 8191 K). Avery Island domal salt, 50-200 °C, high-stress regime, σ1-σ3, triaxial compression. Reproduces the paper's data: log10 misfit -0.17 ± 0.21 (N = 28, Table 2), and the Fig. 7 lines within 0.02 in log σ.",
+        BibTex_Reference = "
+            @article{carter1993rheology,
+            title={Rheology of rocksalt},
+            author={Carter, N. L. and Horseman, S. T. and Russell, J. E. and Handin, J.},
+            journal={Journal of Structural Geology},
+            volume={15},
+            pages={1257--1271},
+            year={1993},
+            doi={10.1016/0191-8141(93)90168-A}
+            }
+    ",
+    )
+    return data, info
+end
+
+function lowstress_rock_salt_Carter_1993()
+    data = DislocationCreep(;
+        Name = "Rock salt (Avery Island, low stress) | Carter et al. (1993)",
+        n = 3.4NoUnits,
+        A = 8.1e-5MPa^(-17 // 5) / s,
+        E = 51.6kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Carter et al. (1993), Eq. 12 (p. 1264): A = 8.1e-5 MPa^-3.4 s^-1, n = 3.4, Q = 51.6 kJ/mol. Avery Island domal salt, low-stress regime, σ1-σ3, triaxial compression. Reproduces the paper's data: log10 misfit 0.00 ± 0.09 (N = 10, Table 2), and the Fig. 7 low-stress branch within 0.015 in log σ.",
+        BibTex_Reference = "
+            @article{carter1993rheology,
+            title={Rheology of rocksalt},
+            author={Carter, N. L. and Horseman, S. T. and Russell, J. E. and Handin, J.},
+            journal={Journal of Structural Geology},
+            volume={15},
+            pages={1257--1271},
+            year={1993},
+            doi={10.1016/0191-8141(93)90168-A}
+            }
+    ",
+    )
+    return data, info
+end
+
+function anhydrite_Dorner_2014()
+    data = DislocationCreep(;
+        Name = "Anhydrite | Dorner et al. (2014)",
+        n = 3.9NoUnits,
+        A = 4.8e-19Pa^(-39 // 10) / s,
+        E = 338.0kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Dorner et al. (2014), Eq. 4 (p. 810), indentation creep converted to uniaxial reference stress and strain rate (Eqs. 1-2; c1 = 0.296, c2 = 0.755), 708-920 °C, 1 atm: A = 4.8e-19 Pa^-3.9 s^-1, n = 3.9, Q = 338 kJ/mol (the 388 kJ/mol in the Conclusions is a typo). Reproduces the paper's data: log10 misfit -0.01 ± 0.13 (N = 17, Table 1), and the Fig. 8 flow-law curves within about 0.1 dex.",
+        BibTex_Reference = "
+            @article{dorner2014high,
+            title={High temperature indentation creep tests on anhydrite - a promising first look},
+            author={Dorner, D. and R{\\\"o}ller, K. and St{\\\"o}ckhert, B.},
+            journal={Solid Earth},
+            volume={5},
+            number={2},
+            pages={805--819},
+            year={2014},
+            doi={10.5194/se-5-805-2014}
+            }
+    ",
+    )
+    return data, info
+end
+
+function ice_dislocation_Goldsby_2001()
+    data = DislocationCreep(;
+        Name = "Ice Ih dislocation, T > 258 K | Goldsby & Kohlstedt (2001)",
+        n = 4.0NoUnits,
+        A = 6.0e28MPa^(-4) / s,
+        E = 181.0kJ / mol,
+        V = -13.0e-6m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Goldsby & Kohlstedt (2001), Table 5 (p. 11,024): A = 6.0e28 MPa^-4 s^-1, n = 4, Q = 181 kJ/mol, V = -13 cm³/mol (the paper's pressure normalization, p. 11,020); polycrystalline ice Ih, T > 258 K, differential stress. Lies on the 181 kJ/mol line of Fig. 6; log10 misfit -0.16 (N = 1, the 268 K point of Fig. 6).",
+        BibTex_Reference = "
+            @article{goldsby2001superplastic,
+            title={Superplastic deformation of ice: Experimental observations},
+            author={Goldsby, D. L. and Kohlstedt, D. L.},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={106},
+            number={B6},
+            pages={11017--11030},
+            year={2001},
+            doi={10.1029/2000JB900336}
+            }
+    ",
+    )
+    return data, info
+end
+
+function ice_dislocation_cold_Goldsby_2001()
+    data = DislocationCreep(;
+        Name = "Ice Ih dislocation, T < 258 K | Goldsby & Kohlstedt (2001)",
+        n = 4.0NoUnits,
+        A = 4.0e5MPa^(-4) / s,
+        E = 60.0kJ / mol,
+        V = -13.0e-6m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "NOTE: the printed law is 7× too fast vs the paper's own data: +0.87 log10 units vs the T < 258 K points of Fig. 6 (N = 3), and +0.19 ± 0.26 (up to +0.78) in the composite law of Fig. 2a (N = 25); a data-consistent version is `ice_dislocation_cold_Goldsby_2001_refit`. Goldsby & Kohlstedt (2001), Table 5 (p. 11,024): A = 4.0e5 MPa^-4 s^-1, n = 4, Q = 60 kJ/mol, V = -13 cm³/mol; ice Ih, T < 258 K, differential stress.",
+        BibTex_Reference = "
+            @article{goldsby2001superplastic,
+            title={Superplastic deformation of ice: Experimental observations},
+            author={Goldsby, D. L. and Kohlstedt, D. L.},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={106},
+            number={B6},
+            pages={11017--11030},
+            year={2001},
+            doi={10.1029/2000JB900336}
+            }
+    ",
+    )
+    return data, info
+end
+
+"""
+NOTE: refit of `ice_dislocation_cold_Goldsby_2001` (A = 5.4e4 instead of the printed 4.0e5 MPa^-n/s) so that
+the law reproduces the paper's own Fig. 6 and the factor 5.8 stated in its text.
+"""
+function ice_dislocation_cold_Goldsby_2001_refit()
+    data = DislocationCreep(;
+        Name = "Ice Ih dislocation, T < 258 K (refit to data) | Goldsby & Kohlstedt (2001)",
+        n = 4.0NoUnits,
+        A = 5.4e4MPa^(-4) / s,
+        E = 60.0kJ / mol,
+        V = -13.0e-6m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "NOTE: refit of ice_dislocation_cold_Goldsby_2001 with A = 5.4e4 MPa^-4 s^-1 (log10 A = 4.73 ± 0.03 at the printed n = 4, Q = 60 kJ/mol). Reproduces the paper's data: the T < 258 K points of Fig. 6 (N = 3), -0.01 ± 0.11 in the composite law of Fig. 2a (N = 25), and the text's statement (p. 11,024) that the low-T law underpredicts the 268 K rate by 5.8× (10^-2.95 vs 10^-3.00 measured).",
+        BibTex_Reference = "
+            @article{goldsby2001superplastic,
+            title={Superplastic deformation of ice: Experimental observations},
+            author={Goldsby, D. L. and Kohlstedt, D. L.},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={106},
+            number={B6},
+            pages={11017--11030},
+            year={2001},
+            doi={10.1029/2000JB900336}
+            }
+    ",
+    )
+    return data, info
+end
+
+function ice_basal_slip_Goldsby_2001()
+    data = DislocationCreep(;
+        Name = "Ice Ih basal slip | Goldsby & Kohlstedt (2001)",
+        n = 2.4NoUnits,
+        A = 5.5e7 * MPa^(-12 // 5) / s,
+        E = 60.0kJ / mol,
+        V = -13.0e-6m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "NOTE: the printed law is 2× too fast vs the paper's own data: +0.31 ± 0.17 log10 units (N = 15, Fig. 2b, d = 3-5 μm), +0.17 at 208 K and +0.47 at 193 K, which suggests an apparent Q near 75 kJ/mol; the text quotes 55-62 kJ/mol. Goldsby & Kohlstedt (2001), Table 5 (p. 11,024), basal-slip-accommodated GBS: A = 5.5e7 MPa^-2.4 s^-1, n = 2.4, Q = 60 kJ/mol, V = -13 cm³/mol; fine-grained ice Ih, differential stress.",
+        BibTex_Reference = "
+            @article{goldsby2001superplastic,
+            title={Superplastic deformation of ice: Experimental observations},
+            author={Goldsby, D. L. and Kohlstedt, D. L.},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={106},
+            number={B6},
+            pages={11017--11030},
+            year={2001},
+            doi={10.1029/2000JB900336}
+            }
+    ",
+    )
+    return data, info
+end
+
+function ice_regime_A_Durham_2001()
+    data = DislocationCreep(;
+        Name = "Ice Ih regime A (258-240 K) | Durham & Stern (2001)",
+        n = 4.0NoUnits,
+        A = 10^11.8 * MPa^(-4) / s,
+        E = 91.0kJ / mol,
+        V = -13.0e-6m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Durham & Stern (2001), Table 1 (p. 305), after Durham et al. (1992, JGR 97): log10 A = 11.8, n = 4.0, E = 91 kJ/mol, V = -13 cm³/mol (estimated); ice Ih, 240-258 K, axisymmetric flow. Reproduces the Fig. 4 viscosity map within 0.02 dex (the map does not distinguish V = -13 from V = 0).",
+        BibTex_Reference = "
+            @article{durham2001rheological,
+            title={Rheological Properties of Water Ice: Applications to Satellites of the Outer Planets},
+            author={Durham, W. B. and Stern, L. A.},
+            journal={Annual Review of Earth and Planetary Sciences},
+            volume={29},
+            pages={295--330},
+            year={2001},
+            doi={10.1146/annurev.earth.29.1.295}
+            }
+    ",
+    )
+    return data, info
+end
+
+function ice_regime_B_Durham_2001()
+    data = DislocationCreep(;
+        Name = "Ice Ih regime B (< 240 K) | Durham & Stern (2001)",
+        n = 4.0NoUnits,
+        A = 10^5.1 * MPa^(-4) / s,
+        E = 61.0kJ / mol,
+        V = -13.0e-6m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Durham & Stern (2001), Table 1 (p. 305), after Durham et al. (1992, JGR 97): log10 A = 5.1, n = 4.0, E = 61 kJ/mol, V = -13 cm³/mol; ice Ih, < 240 K (the B/C boundary depends on T and strain rate), axisymmetric flow. Reproduces the Fig. 4 viscosity map within 0.01 dex.",
+        BibTex_Reference = "
+            @article{durham2001rheological,
+            title={Rheological Properties of Water Ice: Applications to Satellites of the Outer Planets},
+            author={Durham, W. B. and Stern, L. A.},
+            journal={Annual Review of Earth and Planetary Sciences},
+            volume={29},
+            pages={295--330},
+            year={2001},
+            doi={10.1146/annurev.earth.29.1.295}
+            }
+    ",
+    )
+    return data, info
+end
+
+function ice_II_cold_Durham_2001()
+    data = DislocationCreep(;
+        Name = "Ice II (< 220 K) | Durham & Stern (2001)",
+        n = 5.3NoUnits,
+        A = 10^1.84 * MPa^(-53 // 10) / s,
+        E = 55.0kJ / mol,
+        V = 7.0e-6m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Durham & Stern (2001), Table 1 (p. 305), after Durham et al. (1988, JGR 93): log10 A = 1.84, n = 5.3, E = 55 kJ/mol, V = 7 cm³/mol; ice II, < 220 K. Reproduces the Fig. 4 viscosity map within 0.01 dex.",
+        BibTex_Reference = "
+            @article{durham2001rheological,
+            title={Rheological Properties of Water Ice: Applications to Satellites of the Outer Planets},
+            author={Durham, W. B. and Stern, L. A.},
+            journal={Annual Review of Earth and Planetary Sciences},
+            volume={29},
+            pages={295--330},
+            year={2001},
+            doi={10.1146/annurev.earth.29.1.295}
+            }
+    ",
+    )
+    return data, info
+end
+
+function ice_II_warm_Durham_2001()
+    data = DislocationCreep(;
+        Name = "Ice II (>= 220 K) | Durham & Stern (2001)",
+        n = 5.2NoUnits,
+        A = 10^11.7 * MPa^(-26 // 5) / s,
+        E = 98.0kJ / mol,
+        V = 4.0e-6m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Durham & Stern (2001), Table 1 (p. 305), after Durham et al. (1988, JGR 93): log10 A = 11.7, n = 5.2, E = 98 kJ/mol, V = 4 cm³/mol; ice II, >= 220 K. Reproduces the Fig. 4 viscosity map within 0.02 dex.",
+        BibTex_Reference = "
+            @article{durham2001rheological,
+            title={Rheological Properties of Water Ice: Applications to Satellites of the Outer Planets},
+            author={Durham, W. B. and Stern, L. A.},
+            journal={Annual Review of Earth and Planetary Sciences},
+            volume={29},
+            pages={295--330},
+            year={2001},
+            doi={10.1146/annurev.earth.29.1.295}
+            }
+    ",
+    )
+    return data, info
+end
+
+function ice_III_warm_Durham_2001()
+    data = DislocationCreep(;
+        Name = "Ice III (>= 230 K) | Durham & Stern (2001)",
+        n = 4.3NoUnits,
+        A = 10^26.4 * MPa^(-43 // 10) / s,
+        E = 151.0kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Durham & Stern (2001), Table 1 (p. 305), after Durham et al. (1988, JGR 93): log10 A = 26.4, n = 4.3, E = 151 kJ/mol, V = 0 (estimated); ice III, >= 230 K. Reproduces the Fig. 4 viscosity map within 0.01 dex.",
+        BibTex_Reference = "
+            @article{durham2001rheological,
+            title={Rheological Properties of Water Ice: Applications to Satellites of the Outer Planets},
+            author={Durham, W. B. and Stern, L. A.},
+            journal={Annual Review of Earth and Planetary Sciences},
+            volume={29},
+            pages={295--330},
+            year={2001},
+            doi={10.1146/annurev.earth.29.1.295}
+            }
+    ",
+    )
+    return data, info
+end
+
+function ice_V_Durham_2001()
+    data = DislocationCreep(;
+        Name = "Ice V | Durham & Stern (2001)",
+        n = 6.0NoUnits,
+        A = 10^23.0 * MPa^(-6) / s,
+        E = 136.0kJ / mol,
+        V = 29.0e-6m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Durham & Stern (2001), Table 1 (p. 305), after Durham et al. (1996, JGR 101): log10 A = 23, n = 6, E = 136 kJ/mol, V = 29 cm³/mol; ice V (the Durham row; Table 1 also lists a different Sotin & Poirier 1987 law). Reproduces the Fig. 4 viscosity map within 0.12 dex.",
+        BibTex_Reference = "
+            @article{durham2001rheological,
+            title={Rheological Properties of Water Ice: Applications to Satellites of the Outer Planets},
+            author={Durham, W. B. and Stern, L. A.},
+            journal={Annual Review of Earth and Planetary Sciences},
+            volume={29},
+            pages={295--330},
+            year={2001},
+            doi={10.1146/annurev.earth.29.1.295}
+            }
+    ",
+    )
+    return data, info
+end
+
+function ice_VI_Durham_2001()
+    data = DislocationCreep(;
+        Name = "Ice VI (< 250 K) | Durham & Stern (2001)",
+        n = 4.5NoUnits,
+        A = 10^6.7 * MPa^(-9 // 2) / s,
+        E = 66.0kJ / mol,
+        V = 11.0e-6m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Durham & Stern (2001), Table 1 (p. 305), after Durham et al. (1996, JGR 101): log10 A = 6.7, n = 4.5, E = 66 kJ/mol, V = 11 cm³/mol; ice VI, < 250 K. Reproduces the Fig. 4 viscosity map within 0.14 dex.",
+        BibTex_Reference = "
+            @article{durham2001rheological,
+            title={Rheological Properties of Water Ice: Applications to Satellites of the Outer Planets},
+            author={Durham, W. B. and Stern, L. A.},
+            journal={Annual Review of Earth and Planetary Sciences},
+            volume={29},
+            pages={295--330},
+            year={2001},
+            doi={10.1146/annurev.earth.29.1.295}
+            }
+    ",
+    )
+    return data, info
+end
+
+function co2_ice_Durham_1999()
+    data = DislocationCreep(;
+        Name = "CO2 ice | Durham et al. (1999)",
+        n = 5.6NoUnits,
+        A = 10^3.86 * MPa^(-28 // 5) / s,
+        E = 33.0kJ / mol,
+        V = 0.0m^3 / mol,
+        r = 0.0NoUnits,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Durham et al. (1999), Eq. 1 and text (p. 3494): A = 10^3.86 MPa^-5.6 s^-1, n = 5.6, Q = 33 kJ/mol; polycrystalline CO2 ice, 150-190 K, 5-40 MPa confining pressure (no first-order pressure effect), differential stress. Reproduces the paper's data: log10 misfit -0.10 ± 0.40 (N = 26, Table 1; the paper notes six points outside their error bars).",
+        BibTex_Reference = "
+            @article{durham1999steady,
+            title={Steady-state flow of solid CO2: Preliminary results},
+            author={Durham, William B. and Kirby, Stephen H. and Stern, Laura A.},
+            journal={Geophysical Research Letters},
+            volume={26},
+            number={23},
+            pages={3493--3496},
+            year={1999},
+            doi={10.1029/1999GL008373}
+            }
+    ",
+    )
+    return data, info
+end
+
 @inline dislocation_database(f::F) where {F} = first(f())
 @inline dislocation_database_info(f::F) where {F} = last(f())
 

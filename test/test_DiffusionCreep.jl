@@ -162,6 +162,7 @@ allocs(f::F, args::Vararg{Any, N}) where {F, N} = (f(args...); @allocated f(args
     for fun in creeplaw_list
         p = SetDiffusionCreep(fun)                    # original creep law
         p_nd = nondimensionalize(p, CharDim)          # non-dimensionalized
+        @test isfinite(NumValue(p_nd.A))         # extreme n can over- or underflow the scaling
         @test p_nd == SetDiffusionCreep(fun, CharDim) # check that the non-dimensionalized version is the same as the original
         p_dim = dimensionalize(p, CharDim)            # dimensionalized
 
@@ -278,4 +279,29 @@ end
     ε = compute_εII(c, 0.3e6 / c.FT; T = 1673.0, P = 1.0e9, f = 1000.0, d = 1.0e-2) * c.FE
     @test ε ≈ 1.0e6 * 0.3 * 1.0e4^-3 * 1000 * exp(-(335.0e3 + 1.0e9 * 4.0e-6) / (NumValue(c.R) * 1673.0)) rtol = 1.0e-6
     @test ε ≈ 7.8e-15 rtol = 1.0e-2
+end
+
+# Each entry evaluated through GeoParams reproduces the printed law of its paper (σ in MPa,
+# differential stress; fH2O in MPa in the printed laws, passed to GeoParams in Pa).
+@testset "Diffusion creep database vs. printed laws" begin
+    σ, T, P, d, fH2O = 100.0, 1200.0, 1.0e9, 100.0e-6, 500.0
+    for (law, A, n, dfac, m, r, Q, V) in (
+            (Diffusion.olivine_disGBS_Ohuchi_2015, 10^-4.89, 3.0, d, 1.0, 1.25, 423.0e3, 17.6e-6),   # d in m
+            (Diffusion.wet_enstatite_Zhang_2017, 32.0, 1.0, d * 1.0e6, 3.0, 0.7, 200.0e3, 14.0e-6),
+            (Diffusion.wet_quartz_Fukuda_2018, 10^-2.97, 1.7, d * 1.0e6, 0.51, 1.0, 183.0e3, 0.0),
+            (Diffusion.wet_plagioclase_An60_diffusion_Rybacki_2004, 10^1.1, 1.0, d * 1.0e6, 3.0, 0.0, 153.0e3, 0.0),
+            (Diffusion.calcite_diffusion_Gilgannon_2025, 3.40e7 * 0.001^0.8, 1.0, d * 1.0e6, 3.0, 0.0, 200.0e3, 0.0),
+            (Diffusion.calcite_fine_dislocation_Gilgannon_2025, 4.0e-8 * 0.001^-2.7, 7.0, d * 1.0e6, 3.0, 0.0, 200.0e3, 0.0),
+        )
+        p = SetDiffusionCreep(law)
+        @test p.Apparatus == AxialCompression
+        ε = compute_εII(p, σ * 1.0e6 / p.FT; T, P, d, f = fH2O * 1.0e6) * p.FE
+        @test ε ≈ A * σ^n * dfac^-m * fH2O^r * exp(-(Q + P * V) / (NumValue(p.R) * T)) rtol = 1.0e-6
+    end
+
+    # Tokle et al. (2023): σ = 2τ, ε̇ = γ̇/√3, d = microboudin neck length in μm
+    p = SetDiffusionCreep(Diffusion.blueschist_Tokle_2023)
+    @test p.Apparatus == SimpleShear
+    ε = compute_εII(p, σ * 1.0e6 / 2; T, d) * 2 / sqrt(3)
+    @test ε ≈ 2.43e11 * σ^2 * (d * 1.0e6)^-1 * exp(-384.0e3 / (NumValue(p.R) * T)) rtol = 1.0e-6
 end

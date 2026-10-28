@@ -73,6 +73,89 @@ function test_GBS()
     return data, info
 end
 
+function dry_olivine_disGBS_Hansen_2011()
+    data = GrainBoundarySliding(;
+        Name = "Dry Olivine disGBS | Hansen et al. (2011)",
+        n = 2.9NoUnits,                                     # power-law exponent
+        p = -0.7NoUnits,                                    # grain size exponent
+        A = 10^4.8 * MPa^(-29 // 10) * μm^(7 // 10) * s^(-1), # material specific rheological parameter
+        E = 445.0kJ / mol,                                  # activation energy
+        V = 0.0m^3 / mol,                                   # activation volume (not given)
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Hansen et al. (2011), Eq. 6 (p. 9) and Table A2: A = 10^4.8 MPa^-2.9 μm^0.7 s^-1, n = 2.9, p = -0.7 (d = linear intercept × 1.5), E = 445 kJ/mol; dry San Carlos olivine aggregates, gas-medium apparatus, 300 MPa, 1373-1523 K, differential stress. Reproduces the paper's data: log10 misfit 0.01 ± 0.19 (N = 71, Table 1), and the Fig. 5 lines within 0.1 dex.",
+        BibTex_Reference = "
+            @article{hansen2011grain,
+            title={Grain boundary sliding in San Carlos olivine: Flow law parameters and crystallographic-preferred orientation},
+            author={Hansen, L. N. and Zimmerman, M. E. and Kohlstedt, D. L.},
+            journal={Journal of Geophysical Research},
+            volume={116},
+            number={B8},
+            year={2011},
+            doi={10.1029/2011JB008220}
+            }
+    ",
+    )
+    return data, info
+end
+
+function ice_GBS_warm_Goldsby_2001()
+    data = GrainBoundarySliding(;
+        Name = "Ice Ih GBS, T > 255 K | Goldsby & Kohlstedt (2001)",
+        n = 1.8NoUnits,
+        p = -1.4NoUnits,
+        A = 3.0e26 * MPa^(-9 // 5) * m^(7 // 5) * s^(-1),
+        E = 192.0kJ / mol,
+        V = -13.0e-6m^3 / mol,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "NOTE: the printed law is about 2× too slow vs the paper's own data: -0.28 ± 0.12 log10 units (N = 3, Fig. 4, d = 73 μm), about 0.25 below the drawn 190 kJ/mol line; A ≈ 5.6e26 would fit, but three points do not justify a refit. At 255 K it lies 0.41 log10 units off ice_GBS_cold_Goldsby_2001. Goldsby & Kohlstedt (2001), Table 5 (p. 11,024): A = 3.0e26 MPa^-1.8 m^1.4 s^-1 (d in m), n = 1.8, p = 1.4, Q = 192 kJ/mol, V = -13 cm³/mol; ice Ih, T > 255 K, differential stress. In the paper, GBS acts in series with basal slip, which GeoParams cannot express.",
+        BibTex_Reference = "
+            @article{goldsby2001superplastic,
+            title={Superplastic deformation of ice: Experimental observations},
+            author={Goldsby, D. L. and Kohlstedt, D. L.},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={106},
+            number={B6},
+            pages={11017--11030},
+            year={2001},
+            doi={10.1029/2000JB900336}
+            }
+    ",
+    )
+    return data, info
+end
+
+function ice_GBS_cold_Goldsby_2001()
+    data = GrainBoundarySliding(;
+        Name = "Ice Ih GBS, T < 255 K | Goldsby & Kohlstedt (2001)",
+        n = 1.8NoUnits,
+        p = -1.4NoUnits,
+        A = 3.9e-3 * MPa^(-9 // 5) * m^(7 // 5) * s^(-1),
+        E = 49.0kJ / mol,
+        V = -13.0e-6m^3 / mol,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Goldsby & Kohlstedt (2001), Table 5 (p. 11,024): A = 3.9e-3 MPa^-1.8 m^1.4 s^-1 (d in m), n = 1.8, p = 1.4, Q = 49 kJ/mol, V = -13 cm³/mol; ice Ih, T < 255 K, differential stress. Reproduces the paper's data: log10 misfit 0.07 ± 0.09 (N = 10, Fig. 4) and -0.07 ± 0.10 (N = 19, n = 1.8 regime of Fig. 2a), and the drawn lines of Figs. 2a and 4.",
+        BibTex_Reference = "
+            @article{goldsby2001superplastic,
+            title={Superplastic deformation of ice: Experimental observations},
+            author={Goldsby, D. L. and Kohlstedt, D. L.},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={106},
+            number={B6},
+            pages={11017--11030},
+            year={2001},
+            doi={10.1029/2000JB900336}
+            }
+    ",
+    )
+    return data, info
+end
+
 @inbounds GrainBoundarySliding_database(f::F) where {F} = first(f())
 @inbounds GrainBoundarySliding_database_info(f::F) where {F} = last(f())
 

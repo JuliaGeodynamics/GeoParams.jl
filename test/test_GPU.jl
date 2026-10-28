@@ -121,10 +121,25 @@ c_visc_τII(l, a) = compute_viscosity_τII(l, a.τII, a)
         # normal Float32 range, which Metal flushes to zero; their strain rates there
         # (~1e-29 /s) are physically zero anyway.
         aT = merge(a, (; T = Float32(nd(1200.0K))))
+        # With GEO_units the prefactors of these ice laws exceed floatmax(Float32), which
+        # f32 refuses; ice-scale characteristic units keep them in range.
+        ice_scale = (:ice_dislocation_Goldsby_2001, :ice_III_warm_Durham_2001, :ice_V_Durham_2001)
+        CD_ice = GEO_units(; length = 10km, stress = 1MPa, viscosity = 1.0e14Pas)
+        a_ice = map(
+            x -> Float32(nondimensionalize(x, CD_ice)),
+            (; T = 260.0K, P = 1.0e8Pa, τII = 1.0e6Pa, εII = 1.0e-12 / s),
+        )
         @testset "$(nameof(law))" for law in laws
-            l = f32(nd(SetDislocationCreep(law)))
-            test_gpu(c_εII, (l, aT))
-            test_gpu(c_τII, (l, aT))
+            if nameof(law) in ice_scale
+                @test_throws ArgumentError f32(nd(SetDislocationCreep(law)))
+                l = f32(nondimensionalize(SetDislocationCreep(law), CD_ice))
+                test_gpu(c_εII, (l, a_ice))
+                test_gpu(c_τII, (l, a_ice))
+            else
+                l = f32(nd(SetDislocationCreep(law)))
+                test_gpu(c_εII, (l, aT))
+                test_gpu(c_τII, (l, aT))
+            end
         end
     end
 
@@ -140,6 +155,12 @@ c_visc_τII(l, a) = compute_viscosity_τII(l, a.τII, a)
                 (GeoParams.Peierls, SetPeierlsCreep), (GeoParams.NonLinearPeierls, SetNonLinearPeierlsCreep),
             )
             @testset "$(nameof(law))" for law in dblaws(M)
+                # A ≈ 1e43 after nondimensionalization; no geodynamic characteristic units
+                # bring it into Float32 range, so this law is Float64-only.
+                if law === GeoParams.NonLinearPeierls.glaucophane_glide_Hufford_2026
+                    @test_throws ArgumentError f32(nd(set(law)))
+                    continue
+                end
                 l = f32(nd(set(law)))
                 test_gpu(c_εII, (l, aT))
                 M === GeoParams.NonLinearPeierls || test_gpu(c_τII, (l, aT))   # no compute_τII method
