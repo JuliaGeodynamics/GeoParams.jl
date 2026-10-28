@@ -602,7 +602,7 @@ function calcite_diffusion_Gilgannon_2025()
         n = 1.0NoUnits,
         r = 0.0NoUnits,
         p = -3.0NoUnits,
-        A = 3.40e7 * 0.001^0.8 * MPa^(-1) * μm^3 * s^(-1),   # X_MgCO3^u folded into A
+        A = 3.4e7 * 0.001^0.8 * MPa^(-1) * μm^3 * s^(-1),   # X_MgCO3^u folded into A
         E = 200.0kJ / mol,
         V = 0.0m^3 / mol,
         Apparatus = AxialCompression,
@@ -629,7 +629,7 @@ function calcite_fine_dislocation_Gilgannon_2025()
         n = 7.0NoUnits,
         r = 0.0NoUnits,
         p = -3.0NoUnits,
-        A = 4.00e-8 * 0.001^(-2.7) * MPa^(-7) * μm^3 * s^(-1), # X_MgCO3^u folded into A
+        A = 4.0e-8 * 0.001^(-2.7) * MPa^(-7) * μm^3 * s^(-1), # X_MgCO3^u folded into A
         E = 200.0kJ / mol,
         V = 0.0m^3 / mol,
         Apparatus = AxialCompression,

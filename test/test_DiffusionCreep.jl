@@ -290,7 +290,7 @@ end
             (Diffusion.wet_enstatite_Zhang_2017, 32.0, 1.0, d * 1.0e6, 3.0, 0.7, 200.0e3, 14.0e-6),
             (Diffusion.wet_quartz_Fukuda_2018, 10^-2.97, 1.7, d * 1.0e6, 0.51, 1.0, 183.0e3, 0.0),
             (Diffusion.wet_plagioclase_An60_diffusion_Rybacki_2004, 10^1.1, 1.0, d * 1.0e6, 3.0, 0.0, 153.0e3, 0.0),
-            (Diffusion.calcite_diffusion_Gilgannon_2025, 3.40e7 * 0.001^0.8, 1.0, d * 1.0e6, 3.0, 0.0, 200.0e3, 0.0),
+            (Diffusion.calcite_diffusion_Gilgannon_2025, 3.4e7 * 0.001^0.8, 1.0, d * 1.0e6, 3.0, 0.0, 200.0e3, 0.0),
             (Diffusion.calcite_fine_dislocation_Gilgannon_2025, 4.0e-8 * 0.001^-2.7, 7.0, d * 1.0e6, 3.0, 0.0, 200.0e3, 0.0),
         )
         p = SetDiffusionCreep(law)
