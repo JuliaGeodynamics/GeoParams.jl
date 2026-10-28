@@ -61,6 +61,7 @@ end
         εn = compute_εII(p_nd, τn; T = Tn)
         @test ustrip(dimensionalize(εn, s^-1, CharDim)) ≈ compute_εII(p, 1.0e5; T) rtol = 1.0e-10
         @test compute_τII(p_nd, εn; T = Tn) ≈ τn
+        @test Transform_VolumeBoundaryDiffusionCreep(VolumeBoundaryDiffusion.ice_Goldsby_2001, CharDim) == p_nd
     end
 
     @testset "Float32" begin
@@ -71,6 +72,12 @@ end
             @test ε ≈ compute_εII(p, 1.0e5; T = Float64(Tk)) rtol = 1.0e-5
             @test compute_τII(law, ε; T = Tk) ≈ 1.0f5 rtol = 1.0e-5
         end
+        # At 50 K the Float32 coefficient underflows to zero; every routine recomputes in Float64
+        args = (; T = 50.0f0)
+        @test compute_εII(p, 1.0f30, args) ≈ Float32(compute_εII(p, 1.0e30; T = 50.0))
+        @test dεII_dτII(p, 1.0f8, args) == Float32(dεII_dτII(p, 1.0e8; T = 50.0))
+        @test compute_τII(p, 1.0f-30, args) == Float32(compute_τII(p, 1.0e-30; T = 50.0))
+        @test dτII_dεII(p, 1.0f-30, args) == Float32(dτII_dεII(p, 1.0e-30; T = 50.0))
     end
 
     @testset "CompositeRheology" begin
