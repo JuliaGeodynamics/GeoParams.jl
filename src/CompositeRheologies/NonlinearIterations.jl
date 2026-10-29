@@ -311,14 +311,15 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
             N,
             Npar, is_par,
             0, is_plastic,
-            0, is_vol,
-        },
+            Nvol, is_vol,
+            false,
+        },              # volumetric elements (e.g. compressible elasticity) do not enter the deviatoric iterations
         εII_total::_T,
         args;
         tol = 1.0e-6,
         verbose = false,
         τ_initial = nothing, ε_init = nothing
-    ) where {T, N, Npar, is_par, _T, is_plastic, is_vol}
+    ) where {T, N, Npar, is_par, _T, is_plastic, Nvol, is_vol}
 
     # Compute residual
     n = Npar + 1              # total size of unknowns
@@ -387,10 +388,11 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
 @inline function local_iterations_εII(
         c::CompositeRheology{
             T, N,
-            Npar, is_par,            # no ||
+            Npar, is_par,
             Nplast, is_plastic,     # with plasticity
-            0, is_vol,
-        },              # no volumetric
+            Nvol, is_vol,
+            false,
+        },              # no volumetric plasticity
         εII_total::_T,
         args;
         tol = 1.0e-6,
@@ -398,7 +400,7 @@ This performs nonlinear Newton iterations for `τII` with given `εII_total` for
         τ_initial = nothing,
         ε_init = nothing,
         max_iter = 1000
-    ) where {T, N, Npar, is_par, _T, Nplast, is_plastic, is_vol}
+    ) where {T, N, Npar, is_par, _T, Nplast, is_plastic, Nvol, is_vol}
 
     # Compute residual
     n = 1 + Nplast + Npar              # total size of unknowns

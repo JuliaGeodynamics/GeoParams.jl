@@ -1,7 +1,7 @@
 using Test
 using GeoParams
 using Unidecode
-import GeoParams: Dislocation, Diffusion, GBS, Peierls, NonLinearPeierls
+import GeoParams: Dislocation, Diffusion, GBS, VolumeBoundaryDiffusion, Peierls, NonLinearPeierls
 import GeoParams.Tables: detachFloatfromExponent, extract_parameters_from_phases, Dict2LatexTable, extract_parameters_from_phases_md, Dict2MarkdownTable, ParameterTable, create_latex_symbol, get_material_reference_info
 import GeoParams.Tables: get_rheology_info, format_number, format_markdown_number
 import GeoParams.Tables as Tbl
@@ -199,6 +199,9 @@ import GeoParams.Tables as Tbl
     v_peierls = SetPeierlsCreep(Peierls.dry_olivine_Demouchy_2013)
     @test get_material_reference_info(v_peierls) isa MaterialParamsInfo
 
+    v_vbd = SetVolumeBoundaryDiffusionCreep(VolumeBoundaryDiffusion.ice_Goldsby_2001)
+    @test get_material_reference_info(v_vbd) isa MaterialParamsInfo
+
     v_nlp = SetNonLinearPeierlsCreep(NonLinearPeierls.dry_olivine_Mei_2010)
     @test get_material_reference_info(v_nlp) isa MaterialParamsInfo
 
@@ -211,6 +214,7 @@ import GeoParams.Tables as Tbl
     @test get_rheology_info(LinearViscous()) == ("LinVisc", "LinVisc")
     @test get_rheology_info(PowerlawViscous()) == ("PowerVisc", "PowerVisc")
     @test get_rheology_info(v_gbs) == ("GBS", "GBS")
+    @test get_rheology_info(v_vbd) == ("VBDiffCreep", "VBDiffCreep")
     @test get_rheology_info(v_peierls) == ("PeierlsCreep", "PeierlsCreep")
     @test get_rheology_info(v_nlp) == ("NonLinPeierls", "NonLinPeierls")
     @test get_rheology_info(LinearMeltViscosity()) == ("MeltVisc", "MeltVisc")

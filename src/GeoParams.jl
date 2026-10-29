@@ -227,6 +227,8 @@ export dεII_dτII,
     SetDiffusionCreep,
     GrainBoundarySliding,
     SetGrainBoundarySliding,
+    VolumeBoundaryDiffusionCreep,
+    SetVolumeBoundaryDiffusionCreep,
     PeierlsCreep,
     SetPeierlsCreep,
     NonLinearPeierlsCreep,
@@ -234,6 +236,7 @@ export dεII_dτII,
     Transform_DislocationCreep,
     Transform_DiffusionCreep,
     Transform_GrainBoundarySliding,
+    Transform_VolumeBoundaryDiffusionCreep,
     Transform_PeierlsCreep,
     Transform_NonLinearPeierlsCreep,
     Peierls_stress_iterations,
@@ -446,6 +449,9 @@ using .Diffusion
 include("CreepLaw/Data/GrainBoundarySliding.jl")
 using .GBS
 
+include("CreepLaw/Data/VolumeBoundaryDiffusionCreep.jl")
+using .VolumeBoundaryDiffusion
+
 include("CreepLaw/Data/NonLinearPeierlsCreep.jl")
 using .NonLinearPeierls
 
@@ -464,6 +470,8 @@ diffusion_law_list() = creeplaw_list(Diffusion)
 dislocation_law_list() = creeplaw_list(Dislocation)
 "Returns the list of pre-defined grain-boundary-sliding creep laws (entries of the `GBS` submodule)."
 grainboundarysliding_law_list() = creeplaw_list(GBS)
+"Returns the list of pre-defined volume and grain-boundary diffusion creep laws (entries of the `VolumeBoundaryDiffusion` submodule)."
+volumeboundarydiffusion_law_list() = creeplaw_list(VolumeBoundaryDiffusion)
 "Returns the list of pre-defined non-linear Peierls creep laws (entries of the `NonLinearPeierls` submodule)."
 nonlinearpeierls_law_list() = creeplaw_list(NonLinearPeierls)
 "Returns the list of pre-defined Peierls creep laws (entries of the `Peierls` submodule)."
@@ -472,6 +480,7 @@ peierls_law_list() = creeplaw_list(Peierls)
 export diffusion_law_list,
     dislocation_law_list,
     grainboundarysliding_law_list,
+    volumeboundarydiffusion_law_list,
     nonlinearpeierls_law_list,
     peierls_law_list
 

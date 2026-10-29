@@ -12,6 +12,7 @@ function invariant_laws()
     return (
         SetDislocationCreep(Dislocation.dry_olivine_Hirth_2003),
         SetDiffusionCreep(Diffusion.dry_anorthite_Rybacki_2006),
+        SetVolumeBoundaryDiffusionCreep(GeoParams.VolumeBoundaryDiffusion.ice_Goldsby_2001),
         LinearViscous(η = 1.0e20Pa * s),
         ArrheniusType(),
     )

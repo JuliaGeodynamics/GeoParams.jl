@@ -1,16 +1,7 @@
 module Diffusion
 
 using GeoParams
-export diffusion_database, diffusion_database_info, diffusion_law_list
-
-function diffusion_law_list()
-    m = @__MODULE__
-    out = string.(names(m; all = true, imported = true))
-    wet = Symbol.(filter(x -> startswith(x, "wet"), out))
-    dry = Symbol.(filter(x -> startswith(x, "dry"), out))
-    all_names = vcat(wet, dry)
-    return [getfield(m, fun) for fun in all_names]
-end
+export diffusion_database, diffusion_database_info
 
 function TestDiff()
     data = DiffusionCreep(;
@@ -451,6 +442,207 @@ function wet_quartzite_Rutter_2004()
             pages={2011--2023},
             year={2004},
             publisher={Elsevier}
+            }
+    ",
+    )
+    return data, info
+end
+
+function olivine_disGBS_Ohuchi_2015()
+    # disGBS law with a grain-size and a water-fugacity term; DiffusionCreep is the existing form with both.
+    data = DiffusionCreep(;
+        Name = "Olivine disGBS | Ohuchi et al. (2015)",
+        n = 3.0NoUnits,                                     # power-law exponent
+        r = 1.25NoUnits,                                    # exponent of water-fugacity
+        p = -1.0NoUnits,                                    # grain size exponent
+        A = 10^(-4.89) * MPa^(-17 // 4) * m * s^(-1),       # MPa^-(n+r), grain size in m
+        E = 423.0kJ / mol,                                  # activation energy
+        V = 17.6e-6m^3 / mol,                               # activation volume
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Ohuchi et al. (2015), Eq. 2 (p. 5): A = 10^-4.89 MPa^-4.25 m s^-1 (grain size in m), n = 3.0, p = -1 (fixed; best fit 1.1 ± 0.3), r = 1.25 (A includes the fH2O unit; pass f = fH2O in Pa), E = 423 kJ/mol, V = 17.6 cm³/mol; Fo90 olivine aggregates, D-DIA, 1.5-6.4 GPa, 1323-1473 K, axial differential stress. Reproduces the paper's data: log10 misfit -0.02 ± 0.31 (N = 6, digitized from Fig. 3D; tabulated data are in Supplementary Tables S1-S2).",
+        BibTex_Reference = "
+            @article{ohuchi2015dislocation,
+            title={Dislocation-accommodated grain boundary sliding as the major deformation mechanism of olivine in the Earth's upper mantle},
+            author={Ohuchi, Tomohiro and Kawazoe, Takaaki and Higo, Yuji and Funakoshi, Ken-ichi and Suzuki, Akio and Kikegawa, Takumi and Irifune, Tetsuo},
+            journal={Science Advances},
+            volume={1},
+            number={9},
+            pages={e1500360},
+            year={2015},
+            doi={10.1126/sciadv.1500360}
+            }
+    ",
+    )
+    return data, info
+end
+
+function wet_enstatite_Zhang_2017()
+    data = DiffusionCreep(;
+        Name = "Wet Enstatite | Zhang et al. (2017)",
+        n = 1.0NoUnits,                                     # power-law exponent
+        r = 0.7NoUnits,                                     # exponent of water-fugacity
+        p = -3.0NoUnits,                                    # grain size exponent
+        A = 32.0MPa^(-17 // 10) * μm^3 * s^(-1),            # MPa^-(n+r), fH2O in MPa
+        E = 200.0kJ / mol,                                  # activation energy
+        V = 14.0e-6m^3 / mol,                               # activation volume
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Zhang et al. (2017), Eq. 2 (p. 7722): A = 32 MPa^-1.7 μm³ s^-1 (A includes the fH2O unit; pass f = fH2O in Pa), n = 1 and m = 3 (fixed), r = 0.7, E = 200 kJ/mol, V = 14 cm³/mol; enstatite aggregates, D-DIA, 3.8-6.3 GPa, 1323-1573 K, differential stress. Reproduces the paper's data: log10 misfit +0.10 ± 0.01 (N = 6, Table 1, fH2O converted from GPa) with d = 6 μm; per-run grain sizes are not given (~6 μm), and d = 6.5 μm removes the offset.",
+        BibTex_Reference = "
+            @article{zhang2017diffusion,
+            title={Diffusion Creep of Enstatite at High Pressures Under Hydrous Conditions},
+            author={Zhang, Guinan and Mei, Shenghua and Song, Maoshuang and Kohlstedt, David L.},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={122},
+            number={10},
+            pages={7718--7728},
+            year={2017},
+            doi={10.1002/2017JB014400}
+            }
+    ",
+    )
+    return data, info
+end
+
+function wet_quartz_Fukuda_2018()
+    # Mixed diffusion/dislocation law with grain-size and water-fugacity terms.
+    data = DiffusionCreep(;
+        Name = "Wet fine-grained Quartz | Fukuda et al. (2018)",
+        n = 1.7NoUnits,                                     # power-law exponent
+        r = 1.0NoUnits,                                     # exponent of water-fugacity
+        p = -0.51NoUnits,                                   # grain size exponent
+        A = 10^(-2.97) * MPa^(-27 // 10) * μm^(51 // 100) * s^(-1), # MPa^-(n+r), fH2O in MPa
+        E = 183.0kJ / mol,                                  # activation energy
+        V = 0.0m^3 / mol,                                   # activation volume
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Fukuda et al. (2018), Eq. 8 (p. 4691): A = 10^-2.97 MPa^-2.7 μm^0.51 s^-1 (A includes the fH2O unit; pass f = fH2O in Pa), n = 1.7, p = -0.51, r = 1.0, E = 183 kJ/mol; wet fine-grained quartz, 800-950 °C, 1.5 GPa, Griggs apparatus, differential stress. Reproduces the paper's data: log10 misfit 0.17 ± 0.29 (N = 45, Table 3, grain sizes from Table 2). The low-T fit (Q = 129 kJ/mol) has no published A.",
+        BibTex_Reference = "
+            @article{fukuda2018deformation,
+            title={Deformation of Fine-Grained Quartz Aggregates by Mixed Diffusion and Dislocation Creep},
+            author={Fukuda, Jun-ichi and Holyoke, Caleb W. and Kronenberg, Andreas K.},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={123},
+            number={6},
+            pages={4676--4696},
+            year={2018},
+            doi={10.1029/2017JB015133}
+            }
+    ",
+    )
+    return data, info
+end
+
+function wet_plagioclase_An60_diffusion_Rybacki_2004()
+    data = DiffusionCreep(;
+        Name = "Wet Plagioclase An60 | Rybacki & Dresen (2004)",
+        n = 1.0NoUnits,                                     # power-law exponent
+        r = 0.0NoUnits,                                     # exponent of water-fugacity
+        p = -3.0NoUnits,                                    # grain size exponent
+        A = 10^1.1 * MPa^(-1) * μm^3 * s^(-1),              # material specific rheological parameter
+        E = 153.0kJ / mol,                                  # activation energy
+        V = 0.0m^3 / mol,                                   # activation volume
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Rybacki & Dresen (2004), Table 1 (p. 175): A = 10^(1.1 ± 0.6) MPa^-1 μm^3 s^-1, n = 1, p = -3, Q = 153 kJ/mol; synthetic An60 aggregates with 0.3 wt% H2O, data of Dimanov et al. (unpublished); differential stress. No data table; reproduces the diffusion-creep lines of Fig. 2 (p. 177) within about 0.1 dex.",
+        BibTex_Reference = "
+            @article{rybacki2004deformation,
+            title={Deformation mechanism maps for feldspar rocks},
+            author={Rybacki, Erik and Dresen, Georg},
+            journal={Tectonophysics},
+            volume={382},
+            number={3-4},
+            pages={173--187},
+            year={2004},
+            doi={10.1016/j.tecto.2004.01.006}
+            }
+    ",
+    )
+    return data, info
+end
+
+function blueschist_Tokle_2023()
+    # Grain size d is the boudin size (microboudinage-limited diffusion creep).
+    data = DiffusionCreep(;
+        Name = "Blueschist | Tokle et al. (2023)",
+        n = 2.0NoUnits,                                     # power-law exponent
+        r = 0.0NoUnits,                                     # exponent of water-fugacity
+        p = -1.0NoUnits,                                    # boudin size exponent
+        # The paper fits σ = 2τ against ε̇ = γ̇/√3; SimpleShear uses ε̇ = γ̇, hence the factor √3.
+        A = sqrt(3) * 2.43e11MPa^(-2) * μm * s^(-1),
+        E = 384.0kJ / mol,                                  # activation energy
+        V = 0.0m^3 / mol,                                   # activation volume
+        Apparatus = SimpleShear,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Tokle et al. (2023), Eq. 5 (p. 10) and p. 12: A = 2.43e11 MPa^-2 μm s^-1 for σ_eqv = 2τ and ε̇_eqv = γ̇/√3, stored as SimpleShear with A = √3 × 2.43e11; n = 2, p = -1 with d = arithmetic-mean microboudin neck length, Q = 384 kJ/mol. Na-amphibole blueschist, ~1 GPa, 650-700 °C, Griggs general shear. Reproduces the paper's data: log10 misfit 0.02 ± 0.07 (N = 20, Table 1), and the Fig. 3b lines within 0.03 dex.",
+        BibTex_Reference = "
+            @article{tokle2023diffusion,
+            title={Diffusion Creep of Sodic Amphibole-Bearing Blueschist Limited by Microboudinage},
+            author={Tokle, Leif and Hufford, Lonnie J. and Behr, Whitney M. and Morales, Luiz F. G. and Madonna, Claudio},
+            journal={Journal of Geophysical Research: Solid Earth},
+            volume={128},
+            number={9},
+            year={2023},
+            doi={10.1029/2023JB026848}
+            }
+    ",
+    )
+    return data, info
+end
+
+function calcite_diffusion_Gilgannon_2025()
+    data = DiffusionCreep(;
+        Name = "Calcite (fine-grained, diffusion, X_MgCO3 = 0.001) | Gilgannon & Herwegh (2025)",
+        n = 1.0NoUnits,
+        r = 0.0NoUnits,
+        p = -3.0NoUnits,
+        A = 3.4e7 * 0.001^0.8 * MPa^(-1) * μm^3 * s^(-1),   # X_MgCO3^u folded into A
+        E = 200.0kJ / mol,
+        V = 0.0m^3 / mol,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Gilgannon & Herwegh (2025, preprint), Eq. 5 and Table 5 (pp. 17-18): A = 3.40e7 s^-1 × X_MgCO3^0.8 with σ_ref = 1 MPa, d_ref = 1 μm; X_MgCO3 = 0.001 (the paper's pure-calcite limit, p. 21) is folded into A. This extrapolates below the fine-grained calibration range X_MgCO3 = 0.07-0.17. Q = 200 kJ/mol is assumed, not fitted. Stress is equivalent stress (torsion data converted with σ = √3 τ). Reproduces the Fig. 6a lines at σ = 1 MPa within 0.01 dex; with calcite_fine_dislocation_Gilgannon_2025 at each sample's X_MgCO3, log10 misfit -0.20 ± 0.17 (N = 72, digitized from Fig. 6a).",
+        BibTex_Reference = "
+            @article{gilgannon2025unifying,
+            title={On unifying carbonate rheology},
+            author={Gilgannon, James and Herwegh, Marco},
+            journal={EGUsphere (preprint)},
+            year={2025},
+            doi={10.5194/egusphere-2025-1718}
+            }
+    ",
+    )
+    return data, info
+end
+
+function calcite_fine_dislocation_Gilgannon_2025()
+    # Dislocation creep with a grain-size term; DiffusionCreep is the existing form with one.
+    data = DiffusionCreep(;
+        Name = "Calcite (fine-grained, dislocation, X_MgCO3 = 0.001) | Gilgannon & Herwegh (2025)",
+        n = 7.0NoUnits,
+        r = 0.0NoUnits,
+        p = -3.0NoUnits,
+        A = 4.0e-8 * 0.001^(-2.7) * MPa^(-7) * μm^3 * s^(-1), # X_MgCO3^u folded into A
+        E = 200.0kJ / mol,
+        V = 0.0m^3 / mol,
+        Apparatus = AxialCompression,
+    )
+    info = MaterialParamsInfo(;
+        Comment = "Gilgannon & Herwegh (2025, preprint), Eq. 6 and Table 5 (pp. 17-18): A = 4.00e-8 s^-1 × X_MgCO3^-2.7 with σ_ref = 1 MPa, d_ref = 1 μm, n = 7, d^-3; X_MgCO3 = 0.001 (the paper's pure-calcite limit, p. 21) is folded into A. This extrapolates below the calibration range X_MgCO3 = 0.07-0.17. Q = 200 kJ/mol is assumed. Stress is equivalent stress. With calcite_diffusion_Gilgannon_2025 at each sample's X_MgCO3, reproduces the paper's data: log10 misfit -0.20 ± 0.17 (N = 72, digitized from Fig. 6a). The n = 7 guide line of Fig. 4a implies A ≈ 9.1e-8 instead (0.36 dex faster); the Table 5 value is kept.",
+        BibTex_Reference = "
+            @article{gilgannon2025unifying,
+            title={On unifying carbonate rheology},
+            author={Gilgannon, James and Herwegh, Marco},
+            journal={EGUsphere (preprint)},
+            year={2025},
+            doi={10.5194/egusphere-2025-1718}
             }
     ",
     )

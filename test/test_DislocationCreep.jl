@@ -119,6 +119,7 @@ import GeoParams.Dislocation
         # @show key
         p = SetDislocationCreep(fun)        # original creep law
         p_nd = nondimensionalize(p, CharDim)    # non-dimensionalized
+        @test isfinite(NumValue(p_nd.A))         # extreme n can over- or underflow the scaling
         p_dim = dimensionalize(p, CharDim)       # dimensionalized
 
         # Check that values are the same after non-dimensionalisation & dimensionalisation
@@ -275,4 +276,66 @@ end
     ε = compute_εII(p, 0.3e6 / p.FT; T = 1673.0, P = 1.0e9, f = 1000.0) * p.FE
     @test ε ≈ 90 * 0.3^3.5 * 1000^1.2 * exp(-(480.0e3 + 1.0e9 * 11.0e-6) / (NumValue(p.R) * 1673.0)) rtol = 1.0e-6
     @test ε ≈ 2.5e-12 rtol = 2.0e-2
+end
+
+# Each entry evaluated through GeoParams reproduces the printed law of its paper:
+# σ (MPa) is the differential stress for AxialCompression; for SimpleShear the papers use
+# σ = 2τ and ε̇ = γ̇/√3, so the GeoParams shear strain rate is divided by √3.
+@testset "Dislocation creep database vs. printed laws (crust, evaporites, ice)" begin
+    σ, T, P = 100.0, 1000.0, 1.0e8
+    for (law, A, n, Q, V) in (
+            (Dislocation.wet_quartzite_Gleason_1995, 1.1e-4, 4.0, 223.0e3, 0.0),
+            (Dislocation.melt_quartzite_Gleason_1995, 1.8e-8, 4.0, 137.0e3, 0.0),
+            (Dislocation.wet_quartzite_Gleason_1995_Holyoke_2010, 5.1e-4, 4.0, 223.0e3, 0.0),
+            (Dislocation.wet_quartzite_Paterson_1990, 6.5e-8, 3.1, 135.0e3, 0.0),
+            (Dislocation.dry_quartzite_Brace_1980, 5.0e-6, 3.0, 190.0e3, 0.0),
+            (Dislocation.felsic_granulite_Wilks_1990, 8.0e-3, 3.1, 243.0e3, 0.0),
+            (Dislocation.felsic_granulite_Wen_2021, 10^-4.4, 4.2, 260.0e3, 0.0),
+            (Dislocation.weak_diabase_Mackwell_1998, 190.0, 4.7, 485.0e3, 0.0),
+            (Dislocation.wet_plagioclase_An60_Rybacki_2004, 10^-1.5, 3.0, 235.0e3, 0.0),
+            (Dislocation.amphibolite_Hacker_1990, 1.1e-4, 3.7, 244.0e3, 0.0),
+            (Dislocation.dry_eclogite_Zhang_2007, 10^3.3, 3.5, 403.0e3, 27.2e-6),
+            (Dislocation.calcite_coarse_dislocation_Gilgannon_2025, 2.16e-8 * 0.001^-0.6, 7.0, 200.0e3, 0.0),
+            (Dislocation.rock_salt_Carter_1993, 1.6e-4, 5.3, 68.1e3, 0.0),
+            (Dislocation.lowstress_rock_salt_Carter_1993, 8.1e-5, 3.4, 51.6e3, 0.0),
+            (Dislocation.anhydrite_Dorner_2014, 4.8e-19 * 1.0e6^3.9, 3.9, 338.0e3, 0.0),
+            (Dislocation.ice_dislocation_Goldsby_2001, 6.0e28, 4.0, 181.0e3, -13.0e-6),
+            (Dislocation.ice_dislocation_cold_Goldsby_2001, 4.0e5, 4.0, 60.0e3, -13.0e-6),
+            (Dislocation.ice_basal_slip_Goldsby_2001, 5.5e7, 2.4, 60.0e3, -13.0e-6),
+            (Dislocation.ice_regime_A_Durham_2001, 10^11.8, 4.0, 91.0e3, -13.0e-6),
+            (Dislocation.ice_regime_B_Durham_2001, 10^5.1, 4.0, 61.0e3, -13.0e-6),
+            (Dislocation.ice_II_cold_Durham_2001, 10^1.84, 5.3, 55.0e3, 7.0e-6),
+            (Dislocation.ice_II_warm_Durham_2001, 10^11.7, 5.2, 98.0e3, 4.0e-6),
+            (Dislocation.ice_III_warm_Durham_2001, 10^26.4, 4.3, 151.0e3, 0.0),
+            (Dislocation.ice_V_Durham_2001, 10^23.0, 6.0, 136.0e3, 29.0e-6),
+            (Dislocation.ice_VI_Durham_2001, 10^6.7, 4.5, 66.0e3, 11.0e-6),
+            (Dislocation.co2_ice_Durham_1999, 10^3.86, 5.6, 33.0e3, 0.0),
+        )
+        p = SetDislocationCreep(law)
+        @test p.Apparatus == AxialCompression
+        ε = compute_εII(p, σ * 1.0e6 / p.FT; T, P) * p.FE
+        @test ε ≈ A * σ^n * exp(-(Q + P * V) / (NumValue(p.R) * T)) rtol = 1.0e-6
+    end
+
+    # Keefner et al. (2011): oxygen-fugacity term, f = fO2 in Pa
+    p = SetDislocationCreep(Dislocation.dry_dunite_fO2_Keefner_2011)
+    fO2 = 1.0e-3
+    ε = compute_εII(p, σ * 1.0e6 / p.FT; T, P, f = fO2) * p.FE
+    @test ε ≈ 10^2.6 * σ^3.6 * fO2^0.2 * exp(-449.0e3 / (NumValue(p.R) * T)) rtol = 1.0e-6
+
+    # Hufford et al. (2026): σ = 2τ, ε̇ = γ̇/√3
+    p = SetDislocationCreep(Dislocation.glaucophane_Hufford_2026)
+    @test p.Apparatus == SimpleShear
+    ε = compute_εII(p, σ * 1.0e6 / 2; T) * 2 / sqrt(3)
+    @test ε ≈ 2.32e10 * σ^3 * exp(-450.0e3 / (NumValue(p.R) * T)) rtol = 1.0e-6
+
+    # `_refit` entries are the printed law times the ratio of the prefactors
+    for (refit, printed, ratio) in (
+            (Dislocation.felsic_granulite_Wen_2021_refit, Dislocation.felsic_granulite_Wen_2021, 10^-0.3),
+            (Dislocation.ice_dislocation_cold_Goldsby_2001_refit, Dislocation.ice_dislocation_cold_Goldsby_2001, 5.4e4 / 4.0e5),
+        )
+        args = (; T, P)
+        @test compute_εII(SetDislocationCreep(refit), 1.0e7, args) ≈ ratio * compute_εII(SetDislocationCreep(printed), 1.0e7, args) rtol = 1.0e-6
+        @test refit in dislocation_law_list()
+    end
 end

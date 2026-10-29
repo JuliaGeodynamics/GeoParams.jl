@@ -4,6 +4,8 @@ Wirth = "Wirth"
 Commun = "Commun"
 siz = "siz" # common name of sizes
 nd = "nd" # suffix for non-dimensionalized data
+BA = "BA" # sample IDs (Gleason & Tullis 1995)
+Fo = "Fo" # forsterite content, e.g. Fo90
 
 [default.extend-identifiers]
 # group of words that shall be ignored

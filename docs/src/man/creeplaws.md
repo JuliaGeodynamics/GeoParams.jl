@@ -12,11 +12,13 @@ GeoParams.MaterialParameters.ConstitutiveRelationships.DiffusionCreep
 GeoParams.MaterialParameters.ConstitutiveRelationships.SetDiffusionCreep
 GeoParams.MaterialParameters.ConstitutiveRelationships.GrainBoundarySliding
 GeoParams.MaterialParameters.ConstitutiveRelationships.SetGrainBoundarySliding
+GeoParams.MaterialParameters.ConstitutiveRelationships.VolumeBoundaryDiffusionCreep
+GeoParams.MaterialParameters.ConstitutiveRelationships.SetVolumeBoundaryDiffusionCreep
 ```
 
 ## Computational routines for creep laws
 
-Grain-size sensitive laws (`DiffusionCreep`, `GrainBoundarySliding`) store a grain size `d` (5 mm and 1 mm by default; change it with e.g. `SetDiffusionCreep(law; d = 100μm)`). It is used unless a grain size is passed at runtime, e.g. `compute_εII(law, τII; T, P, d = 1.0e-4)` or `compute_εII(law, τII, (; T, P, d))`, in which case the runtime value (a scalar, or an array in the in-place `!` routines) overrides the stored one.
+Grain-size sensitive laws (`DiffusionCreep`, `GrainBoundarySliding`, `VolumeBoundaryDiffusionCreep`) store a grain size `d` (by default 5 mm for `DiffusionCreep` and 1 mm for the others; change it with e.g. `SetDiffusionCreep(law; d = 100μm)`). It is used unless a grain size is passed at runtime, e.g. `compute_εII(law, τII; T, P, d = 1.0e-4)` or `compute_εII(law, τII, (; T, P, d))`, in which case the runtime value (a scalar, or an array in the in-place `!` routines) overrides the stored one.
 
 Once a creep rheology is defined, we can use the following routines to perform computations within the solvers
 ```@docs
@@ -42,5 +44,7 @@ Database entries whose name ends in `_refit` hold a prefactor `A` refitted so th
 data where the printed equation does not; the printed law is kept under the original name, and both comments give the
 evidence. At present these are `Dislocation.dry_olivine_Hirth_2003_refit` (A = 2.8e5 instead of 1.1e5
 ``\mathrm{MPa}^{-3.5}\,\mathrm{s}^{-1}``), `Dislocation.wet_olivine_Karato_2003_refit` (10^2.7 instead of 10^2.9
-``\mathrm{MPa}^{-4.2}\,\mathrm{s}^{-1}``) and `Dislocation.wet_quartzite_Lu_2019_refit` (1.0e-15 instead of 6.0e-15
-``\mathrm{MPa}^{-6.7}\,\mathrm{s}^{-1}``).
+``\mathrm{MPa}^{-4.2}\,\mathrm{s}^{-1}``), `Dislocation.wet_quartzite_Lu_2019_refit` (1.0e-15 instead of 6.0e-15
+``\mathrm{MPa}^{-6.7}\,\mathrm{s}^{-1}``), `Dislocation.felsic_granulite_Wen_2021_refit` (10^-4.7 instead of 10^-4.4
+``\mathrm{MPa}^{-4.2}\,\mathrm{s}^{-1}``) and `Dislocation.ice_dislocation_cold_Goldsby_2001_refit` (5.4e4 instead of
+4.0e5 ``\mathrm{MPa}^{-4}\,\mathrm{s}^{-1}``).

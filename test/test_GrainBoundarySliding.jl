@@ -76,6 +76,7 @@ allocs(f::F, args::Vararg{Any, N}) where {F, N} = (f(args...); @allocated f(args
     for fun in creeplaw_list
         p = SetGrainBoundarySliding(fun)                # original creep law
         p_nd = nondimensionalize(p, CharDim)                # non-dimensionalized
+        @test isfinite(NumValue(p_nd.A))         # extreme n can over- or underflow the scaling
         @test p_nd == SetGrainBoundarySliding(fun, CharDim) # check that the non-dimensionalized version is the same as the original
         p_dim = dimensionalize(p, CharDim)                   # dimensionalized
 
@@ -159,4 +160,18 @@ allocs(f::F, args::Vararg{Any, N}) where {F, N} = (f(args...); @allocated f(args
     CharDim = GEO_units()
     g_nd = SetGrainBoundarySliding(GBS.hot_dry_olivine_Hirth_2003, CharDim)
     @test g_nd.d.val ≈ nondimensionalize(1.0e-3m, CharDim)
+end
+
+# Each entry evaluated through GeoParams reproduces the printed law of its paper (σ in MPa, differential stress)
+@testset "GBS database vs. printed laws" begin
+    σ, T, P, d = 10.0, 250.0, 1.0e8, 100.0e-6
+    for (law, A, n, dfac, m, Q, V) in (
+            (GBS.dry_olivine_disGBS_Hansen_2011, 10^4.8, 2.9, d * 1.0e6, 0.7, 445.0e3, 0.0),     # d in μm
+            (GBS.ice_GBS_warm_Goldsby_2001, 3.0e26, 1.8, d, 1.4, 192.0e3, -13.0e-6),             # d in m
+            (GBS.ice_GBS_cold_Goldsby_2001, 3.9e-3, 1.8, d, 1.4, 49.0e3, -13.0e-6),
+        )
+        p = SetGrainBoundarySliding(law)
+        ε = compute_εII(p, σ * 1.0e6 / p.FT, (; T, P, d)) * p.FE
+        @test ε ≈ A * σ^n * dfac^-m * exp(-(Q + P * V) / (NumValue(p.R) * T)) rtol = 1.0e-6
+    end
 end

@@ -34,6 +34,7 @@ end
         (Dislocation, DislocationCreep, SetDislocationCreep, true),
         (Diffusion, DiffusionCreep, SetDiffusionCreep, true),
         (GBS, GrainBoundarySliding, SetGrainBoundarySliding, true),
+        (GeoParams.VolumeBoundaryDiffusion, VolumeBoundaryDiffusionCreep, SetVolumeBoundaryDiffusionCreep, true),
         (Peierls, PeierlsCreep, SetPeierlsCreep, false),  # inverse compute_τII is domain-limited; covered in test_PeierlsCreep
         (NonLinearPeierls, NonLinearPeierlsCreep, SetNonLinearPeierlsCreep, false), # no closed-form compute_τII
     )
@@ -78,6 +79,7 @@ end
             (diffusion_law_list, Transform_DiffusionCreep, SetDiffusionCreep),
             (dislocation_law_list, Transform_DislocationCreep, SetDislocationCreep),
             (grainboundarysliding_law_list, Transform_GrainBoundarySliding, SetGrainBoundarySliding),
+            (volumeboundarydiffusion_law_list, Transform_VolumeBoundaryDiffusionCreep, SetVolumeBoundaryDiffusionCreep),
             (nonlinearpeierls_law_list, Transform_NonLinearPeierlsCreep, SetNonLinearPeierlsCreep),
             (peierls_law_list, Transform_PeierlsCreep, SetPeierlsCreep),
         )

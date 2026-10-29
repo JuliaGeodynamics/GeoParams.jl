@@ -109,6 +109,18 @@ end
         @test_stable compute_τII(p, εII, args)
     end
 
+    @testset "Volume and grain-boundary diffusion creep" begin
+        p = SetVolumeBoundaryDiffusionCreep(GeoParams.VolumeBoundaryDiffusion.ice_Goldsby_2001)
+        args = (; T = 250.0, d = 1.0e-3)
+        for τII in (1.0e5, 1.0f5)
+            @test_stable compute_εII(p, τII, args)
+            @test_stable dεII_dτII(p, τII, args)
+            εII = compute_εII(p, τII, args)
+            @test_stable compute_τII(p, εII, args)
+            @test_stable dτII_dεII(p, εII, args)
+        end
+    end
+
     @testset "Elasticity" begin
         a = ConstantElasticity()
         argsτ = (; τII_old = 15.0e6, dt = 1.0e6)

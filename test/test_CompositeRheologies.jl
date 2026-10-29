@@ -613,4 +613,19 @@ import GeoParams: compute_elastoviscosity
         c = CompositeRheology(Parallel(lin(1.0e22), lin(1.0e21)), Parallel(lin(1.0e22), lin(1.0e21)))
         @test all(compute_τII(c, 1.0e-14, args) .≈ (1.1e8, 5.0e-15, 5.0e-15))
     end
+
+    @testset "compressible elasticity with || and plastic elements" begin
+        # the bulk modulus does not enter the deviatoric stress
+        args = (; T = 900.0, P = 1.0e8, τII_old = 0.0, dt = 1.0e9)
+        lin(η) = LinearViscous(; η = η * Pas)
+        el_vol = ConstantElasticity(; G = 5.0e10Pa, ν = 0.3)
+        el_inc = ConstantElasticity(; G = 5.0e10Pa, Kb = Inf * Pa)
+        for rest in (
+                (lin(1.0e20), Parallel(lin(1.0e20), lin(1.0e21))),
+                (lin(1.0e20), DruckerPrager(; C = 1.0e6Pa, ϕ = 30)),
+                (lin(1.0e20), Parallel(DruckerPrager(; C = 1.0e6Pa, ϕ = 30), lin(1.0e19))),
+            )
+            @test compute_τII(CompositeRheology(el_vol, rest...), 1.0e-14, args) == compute_τII(CompositeRheology(el_inc, rest...), 1.0e-14, args)
+        end
+    end
 end

@@ -126,10 +126,12 @@ end
     @unpack_val Tc n, q, o, TauP, A, E, R = a
     FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
-    ε = @pow A * (TauII * FT)^n * exp(-(E / (R * T)) * (1 - ((TauII * FT) / TauP)^o)^q) /
-        FE
-
-    return ε
+    # The barrier vanishes above the Peierls stress; clamping also keeps ^q real for non-integer q.
+    barrier = max(1 - ((TauII * FT) / TauP)^o, 0)
+    ε = @pow A * (TauII * FT)^n * exp(-(E / (R * T)) * barrier^q) / FE
+    return retry_wider(ε, TauII) do τ
+        compute_εII(a, τ; T, args...)
+    end
 end
 
 @inline function compute_εII(a::NonLinearPeierlsCreep, TauII::Quantity; T = 1K, args...)
@@ -138,8 +140,8 @@ end
     @unpack_units Tc n, q, o, TauP, A, E, R = a
     FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
-    ε = @pow A * (TauII * FT)^n * exp(-(E / (R * T)) * (1 - ((TauII * FT) / TauP)^o)^q) /
-        FE
+    barrier = max(1 - ((TauII * FT) / TauP)^o, 0)
+    ε = @pow A * (TauII * FT)^n * exp(-(E / (R * T)) * barrier^q) / FE
 
     return ε
 end

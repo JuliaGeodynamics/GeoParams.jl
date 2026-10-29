@@ -2,18 +2,26 @@ module Tables
 
 using Unidecode
 using GeoParams: AbstractMaterialParam, param_info, LinearViscous, PowerlawViscous, DislocationCreep, DiffusionCreep, CompositeRheology, Parallel, make_tuple
-using GeoParams: GrainBoundarySliding, PeierlsCreep, NonLinearPeierlsCreep, LinearMeltViscosity, ViscosityPartialMelt_Costa_etal_2009, GiordanoMeltViscosity
+using GeoParams: GrainBoundarySliding, VolumeBoundaryDiffusionCreep, PeierlsCreep, NonLinearPeierlsCreep, LinearMeltViscosity, ViscosityPartialMelt_Costa_etal_2009, GiordanoMeltViscosity
 using ..Units
 using ..MaterialParameters: MaterialParamsInfo
-import GeoParams: Dislocation, Diffusion, GBS, Peierls, NonLinearPeierls
+import GeoParams: Dislocation, Diffusion, GBS, VolumeBoundaryDiffusion, Peierls, NonLinearPeierls
 import GeoParams.Dislocation: dislocation_database_info
 import GeoParams.Diffusion: diffusion_database_info
 import GeoParams.GBS: GrainBoundarySliding_database_info
+import GeoParams.VolumeBoundaryDiffusion: volume_boundary_diffusion_database_info
 import GeoParams.Peierls: peierls_database_info
 import GeoParams.NonLinearPeierls: nonlinear_peierls_database_info
 import GeoParams.MaterialParameters.ConstitutiveRelationships: find_creep_law
 
 export detachFloatfromExponent, extract_parameters_from_phases, Dict2LatexTable, extract_parameters_from_phases_md, Dict2MarkdownTable, ParameterTable
+
+# Rheology laws, as opposed to basic material properties
+const RheologyLaw = Union{
+    DislocationCreep, DiffusionCreep, LinearViscous, PowerlawViscous,
+    GrainBoundarySliding, VolumeBoundaryDiffusionCreep, PeierlsCreep, NonLinearPeierlsCreep,
+    LinearMeltViscosity, ViscosityPartialMelt_Costa_etal_2009, GiordanoMeltViscosity,
+}
 
 # Internal types for better organization
 struct ParameterEntry
@@ -104,6 +112,8 @@ function get_rheology_info(param::AbstractMaterialParam)
         return "PowerVisc", "PowerVisc"
     elseif param isa GrainBoundarySliding
         return "GBS", "GBS"
+    elseif param isa VolumeBoundaryDiffusionCreep
+        return "VBDiffCreep", "VBDiffCreep"
     elseif param isa PeierlsCreep
         return "PeierlsCreep", "PeierlsCreep"
     elseif param isa NonLinearPeierlsCreep
@@ -158,12 +168,7 @@ Extract parameters from a single material parameter object recursively.
 function extract_parameters_from_material(material::AbstractMaterialParam, phase_idx::Int, counters::Dict, params::Dict, refs::Dict, prefix::String = "")
     rheo_type, rheo_subtype = get_rheology_info(material)
 
-    # Only treat actual rheology laws as rheology types, not basic material properties
-    is_rheology = material isa Union{
-        DislocationCreep, DiffusionCreep, LinearViscous, PowerlawViscous,
-        GrainBoundarySliding, PeierlsCreep, NonLinearPeierlsCreep,
-        LinearMeltViscosity, ViscosityPartialMelt_Costa_etal_2009, GiordanoMeltViscosity,
-    }
+    is_rheology = material isa RheologyLaw
 
     # Update counters if this is a rheology law
     if is_rheology
@@ -308,12 +313,7 @@ Extract parameters from a single material parameter object with composite rheolo
 function extract_parameters_from_material_with_composite(material::AbstractMaterialParam, phase_idx::Int, counters::Dict, params::Dict, refs::Dict, prefix::String, composite_summary::String)
     rheo_type, rheo_subtype = get_rheology_info(material)
 
-    # Only treat actual rheology laws as rheology types, not basic material properties
-    is_rheology = material isa Union{
-        DislocationCreep, DiffusionCreep, LinearViscous, PowerlawViscous,
-        GrainBoundarySliding, PeierlsCreep, NonLinearPeierlsCreep,
-        LinearMeltViscosity, ViscosityPartialMelt_Costa_etal_2009, GiordanoMeltViscosity,
-    }
+    is_rheology = material isa RheologyLaw
 
     # Update counters if this is a rheology law
     if is_rheology
@@ -395,6 +395,7 @@ function get_rheology_full_name(rheo_type::String)
         "LinVisc" => "Linear Viscous",
         "PowerVisc" => "Power-law Viscous",
         "GBS" => "Grain Boundary Sliding",
+        "VBDiffCreep" => "Volume and Grain-Boundary Diffusion Creep",
         "PeierlsCreep" => "Peierls Creep",
         "NonLinPeierls" => "Nonlinear Peierls Creep",
         "MeltVisc" => "Melt Viscosity",
@@ -477,6 +478,7 @@ Dispatch to the appropriate database_info function based on material type.
 get_database_info(material::DislocationCreep, func::Function) = dislocation_database_info(func)
 get_database_info(material::DiffusionCreep, func::Function) = diffusion_database_info(func)
 get_database_info(material::GrainBoundarySliding, func::Function) = GrainBoundarySliding_database_info(func)
+get_database_info(material::VolumeBoundaryDiffusionCreep, func::Function) = volume_boundary_diffusion_database_info(func)
 get_database_info(material::PeierlsCreep, func::Function) = peierls_database_info(func)
 get_database_info(material::NonLinearPeierlsCreep, func::Function) = nonlinear_peierls_database_info(func)
 # Fallback for any other types
@@ -492,6 +494,8 @@ function find_creep_law_function(material::AbstractMaterialParam, name_str::Stri
         Dislocation
     elseif material isa DiffusionCreep
         Diffusion
+    elseif material isa VolumeBoundaryDiffusionCreep
+        VolumeBoundaryDiffusion
     elseif material isa GrainBoundarySliding
         GBS
     elseif material isa PeierlsCreep
@@ -1091,12 +1095,7 @@ Extract parameters from a single material parameter for Markdown format (preserv
 function extract_parameters_from_material_md(material::AbstractMaterialParam, phase_idx::Int, counters::Dict, params::Dict, prefix::String = "")
     rheo_type, rheo_subtype = get_rheology_info(material)
 
-    # Only treat actual rheology laws as rheology types, not basic material properties
-    is_rheology = material isa Union{
-        DislocationCreep, DiffusionCreep, LinearViscous, PowerlawViscous,
-        GrainBoundarySliding, PeierlsCreep, NonLinearPeierlsCreep,
-        LinearMeltViscosity, ViscosityPartialMelt_Costa_etal_2009, GiordanoMeltViscosity,
-    }
+    is_rheology = material isa RheologyLaw
 
     # Update counters if this is a rheology law
     if is_rheology
@@ -1159,12 +1158,7 @@ Extract parameters from a single material parameter for Markdown format with com
 function extract_parameters_from_material_md_with_composite(material::AbstractMaterialParam, phase_idx::Int, counters::Dict, params::Dict, prefix::String, composite_summary::String)
     rheo_type, rheo_subtype = get_rheology_info(material)
 
-    # Only treat actual rheology laws as rheology types, not basic material properties
-    is_rheology = material isa Union{
-        DislocationCreep, DiffusionCreep, LinearViscous, PowerlawViscous,
-        GrainBoundarySliding, PeierlsCreep, NonLinearPeierlsCreep,
-        LinearMeltViscosity, ViscosityPartialMelt_Costa_etal_2009, GiordanoMeltViscosity,
-    }
+    is_rheology = material isa RheologyLaw
 
     # Update counters if this is a rheology law
     if is_rheology
