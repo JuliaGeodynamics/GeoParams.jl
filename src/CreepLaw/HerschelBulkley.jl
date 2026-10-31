@@ -50,16 +50,16 @@ struct HerschelBulkley{T, U1, U2, U3} <: AbstractCreepLaw{T}
     end
 end
 
-function compute_εII(a::HerschelBulkley, TauII; T = one(precision(a)), kwargs...)
+@inline function compute_εII(a::HerschelBulkley, TauII; T = one(precision(a)), kwargs...)
     return compute_hb_εII(a, TauII; T)
 end
 
-function compute_εII(a::HerschelBulkley, TauII::Quantity; T = 1K, kwargs...)
+@inline function compute_εII(a::HerschelBulkley, TauII::Quantity; T = 1K, kwargs...)
     return compute_hb_εII(a, TauII; T)
 end
 
-dεII_dτII(a::HerschelBulkley, TauII; T = one(precision(a)), kwargs...) = value_and_partial(τ -> compute_εII(a, τ; T), TauII)[2]
-dτII_dεII(a::HerschelBulkley, EpsII; T = one(precision(a)), kwargs...) = value_and_partial(ε -> compute_τII(a, ε; T), EpsII)[2]
+@inline dεII_dτII(a::HerschelBulkley, TauII; T = one(precision(a)), kwargs...) = value_and_partial(τ -> compute_εII(a, τ; T), TauII)[2]
+@inline dτII_dεII(a::HerschelBulkley, EpsII; T = one(precision(a)), kwargs...) = value_and_partial(ε -> compute_τII(a, ε; T), EpsII)[2]
 
 """
     compute_εII!(EpsII::AbstractArray{_T, N}, a::HerschelBulkley, TauII::AbstractArray; T = one(_T), kwargs...)
@@ -86,13 +86,13 @@ end
     compute_τII(a::HerschelBulkley, EpsII; T = one(precision(a)), kwargs...)
 
 """
-function compute_τII(a::HerschelBulkley, EpsII; T = one(precision(a)), kwargs...)
+@inline function compute_τII(a::HerschelBulkley, EpsII; T = one(precision(a)), kwargs...)
     η = compute_hb_viscosity_εII(a, EpsII; T = T)
     TauII = 2 * EpsII * η
     return TauII
 end
 
-function compute_τII(a::HerschelBulkley, EpsII::Quantity; T = 1K, kwargs...)
+@inline function compute_τII(a::HerschelBulkley, EpsII::Quantity; T = 1K, kwargs...)
     η = compute_hb_viscosity_εII(a, EpsII; T = T)
     TauII = 2 * EpsII * η
     return TauII

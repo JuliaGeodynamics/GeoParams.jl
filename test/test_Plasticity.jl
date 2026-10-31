@@ -640,3 +640,30 @@ using LaTeXStrings
     end
 
 end
+
+@testset "Drucker-Prager shared stress invariant" begin
+    CR = GeoParams.MaterialParameters.ConstitutiveRelationships
+    for law in (DruckerPrager(), DruckerPrager_regularised()), T in (Float32, Float64), N in (3, 6)
+        stress = ntuple(i -> T(i * (-1)^i), N)
+        τII = second_invariant(stress)
+        diagonal = N == 3 ? 2 : 3
+        expected = ntuple(i -> stress[i] / (i <= diagonal ? 2τII : τII), N)
+        components = N == 3 ? (CR.∂Q∂τxx, CR.∂Q∂τyy, CR.∂Q∂τxy) :
+            (CR.∂Q∂τxx, CR.∂Q∂τyy, CR.∂Q∂τzz, CR.∂Q∂τyz, CR.∂Q∂τxz, CR.∂Q∂τxy)
+        for τij in (stress, SVector(stress))
+            result = @inferred ∂Q∂τ(law, τij)
+            @test result isa typeof(τij)
+            @test all(isapprox.(result, expected))
+            @test all(isapprox.(∂Q∂τ(law, τij; τII, P = T(10)), result))
+            @test all(isapprox.(∂Q∂τ(law, τij, (; τII, P = T(10))), result))
+            # Deliberately different supplied invariant proves it is used, rather than recomputed.
+            @test all(isapprox.(∂Q∂τ(law, τij; τII = 2τII), result ./ 2))
+            for (i, component) in enumerate(components)
+                @test component(law, τij; τII) ≈ expected[i]
+                @test component(law, τij; τII = 2τII) ≈ expected[i] / 2
+            end
+        end
+        # The undefined direction at zero stress retains its existing NaN behavior.
+        @test all(isnan, ∂Q∂τ(law, ntuple(_ -> zero(T), N)))
+    end
+end

@@ -198,6 +198,10 @@ c_visc_τII(l, a) = compute_viscosity_τII(l, a.τII, a)
     @testset "plastic flow" begin
         τ3, τ6 = (1.0f0, 2.0f0, 3.0f0), ntuple(Float32, 6)
         for p in (DruckerPrager(), DruckerPrager_regularised())
+            for τ in (τ3, τ6)
+                test_gpu((p, τ) -> ∂Q∂τ(p, τ), (f32(nd(p)), τ))
+                test_gpu((p, τ, τII) -> ∂Q∂τ(p, τ; τII), (f32(nd(p)), τ, second_invariant(τ)))
+            end
             test_gpu((p, τ) -> CR.∂Q∂τxx(p, τ), (f32(nd(p)), τ3))
             test_gpu((p, τ) -> CR.∂Q∂τyz(p, τ), (f32(nd(p)), τ6))
             test_gpu((p, P) -> CR.∂F∂P(p, P), (f32(nd(p)), a.P))
@@ -214,6 +218,28 @@ c_visc_τII(l, a) = compute_viscosity_τII(l, a.τII, a)
         test_gpu((l, a) -> dεII_dτII(l, a.τII, a), (hirth, a))
         costa = f32(nd(ViscosityPartialMelt_Costa_etal_2009()))
         test_gpu((l, a) -> dεII_dτII(l, a.τII, a), (costa, a))
+    end
+
+    if backend == "CUDA"
+        @testset "constitutive keyword calls inline" begin
+            τij = ntuple(Float32, 6)
+            τII = second_invariant(τij)
+            flow(p, τ, τII) = ∂Q∂τ(p, τ; τII)
+            probes = (
+                (flow, (f32(nd(DruckerPrager())), τij, τII)),
+                (flow, (f32(nd(DruckerPrager_regularised())), τij, τII)),
+                (c_visc_τII, (f32(nd(PowerlawViscous())), a)),
+            )
+            out = CUDA.zeros(Float32, 8)
+            for (f, args) in probes
+                test_gpu(f, args)
+                types = Tuple{typeof(CUDA.cudaconvert(out)), typeof(f), typeof(CUDA.cudaconvert(args))}
+                ptx = sprint(io -> CUDA.code_ptx(io, kernel!, types; kernel = true))
+                # Bounds-error paths may remain; constitutive arithmetic should be in the kernel.
+                calls = filter(line -> occursin(r"\bcall\b", line) && occursin("julia_", line), split(ptx, '\n'))
+                @test all(line -> occursin("throw_boundserror", line), calls)
+            end
+        end
     end
 
     @testset "solubility and seismic velocity" begin

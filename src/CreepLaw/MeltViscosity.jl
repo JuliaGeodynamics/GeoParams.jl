@@ -485,12 +485,12 @@ end
 end
 
 #calculation routine
-function compute_εII(a::GiordanoMeltViscosity, TauII; T = one(precision(a)), mH2O = a.oxd_wt[9] / 100, kwargs...)
+@inline function compute_εII(a::GiordanoMeltViscosity, TauII; T = one(precision(a)), mH2O = a.oxd_wt[9] / 100, kwargs...)
     η = _giordano_η(a, T; mH2O)
     return TauII / η / 2
 end
 
-function compute_εII(a::GiordanoMeltViscosity, TauII::Quantity; T = 1K, mH2O = a.oxd_wt[9] / 100, kwargs...)
+@inline function compute_εII(a::GiordanoMeltViscosity, TauII::Quantity; T = 1K, mH2O = a.oxd_wt[9] / 100, kwargs...)
     η = _giordano_η(a, T; mH2O)
     return TauII / η / 2
 end
