@@ -421,7 +421,7 @@ function compute_flowpotential!(
 end
 
 # ∂Q∂P: actual derivative ∂Q/∂P = -Ap
-function ∂Q∂P(
+@inline function ∂Q∂P(
         s::DruckerPragerCap,
         P::_T;
         τII = zero(_T),
@@ -446,7 +446,7 @@ function ∂Q∂P(
 end
 
 
-function ∂Q∂τII(
+@inline function ∂Q∂τII(
         s::DruckerPragerCap,
         τII::_T;
         P = zero(_T),
@@ -469,7 +469,7 @@ function ∂Q∂τII(
     return Aτ
 end
 
-function ∂F∂τII(
+@inline function ∂F∂τII(
         s::DruckerPragerCap,
         τII::_T;
         P = zero(_T),
@@ -496,7 +496,7 @@ function ∂F∂τII(
     end
 end
 
-function ∂F∂P(
+@inline function ∂F∂P(
         s::DruckerPragerCap,
         P::_T;
         τII = zero(_T),
@@ -524,7 +524,7 @@ function ∂F∂P(
     end
 end
 
-∂F∂λ(s::DruckerPragerCap, τII::_T; P = zero(_T), kwargs...) where {_T} = zero(_T)
+@inline ∂F∂λ(s::DruckerPragerCap, τII::_T; P = zero(_T), kwargs...) where {_T} = zero(_T)
 
 # Component gradient functions for DruckerPragerCap
 #
@@ -543,33 +543,33 @@ for t in (:NTuple, :SVector)
     @eval begin
         # --- 3D (6-component Voigt) ---
         # diagonal components: ∂Q/∂τij = Aτ * τij / τII
-        function ∂Q∂τxx(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
+        @inline function ∂Q∂τxx(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
             Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
             return iszero(τII) ? zero(T) : Aτ * τij[1] / τII
         end
-        function ∂Q∂τyy(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
+        @inline function ∂Q∂τyy(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
             Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
             return iszero(τII) ? zero(T) : Aτ * τij[2] / τII
         end
-        function ∂Q∂τzz(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
+        @inline function ∂Q∂τzz(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
             Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
             return iszero(τII) ? zero(T) : Aτ * τij[3] / τII
         end
         # shear components: ∂Q/∂τij = 2Aτ * τij / τII
-        function ∂Q∂τyz(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
+        @inline function ∂Q∂τyz(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
             Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
             return iszero(τII) ? zero(T) : 2 * Aτ * τij[4] / τII
         end
-        function ∂Q∂τxz(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
+        @inline function ∂Q∂τxz(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
             Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
             return iszero(τII) ? zero(T) : 2 * Aτ * τij[5] / τII
         end
-        function ∂Q∂τxy(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
+        @inline function ∂Q∂τxy(p::DruckerPragerCap, τij::$(t){6, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
             Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
             return iszero(τII) ? zero(T) : 2 * Aτ * τij[6] / τII
@@ -577,18 +577,18 @@ for t in (:NTuple, :SVector)
 
         # --- 2D (3-component Voigt) ---
         # diagonal components of the physical tensor flow direction
-        function ∂Q∂τxx(p::DruckerPragerCap, τij::$(t){3, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
+        @inline function ∂Q∂τxx(p::DruckerPragerCap, τij::$(t){3, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
             Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
             return iszero(τII) ? zero(T) : Aτ * τij[1] / τII
         end
-        function ∂Q∂τyy(p::DruckerPragerCap, τij::$(t){3, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
+        @inline function ∂Q∂τyy(p::DruckerPragerCap, τij::$(t){3, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
             Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
             return iszero(τII) ? zero(T) : Aτ * τij[2] / τII
         end
         # shear component: ∂Q/∂τij = 2Aτ * τij / τII
-        function ∂Q∂τxy(p::DruckerPragerCap, τij::$(t){3, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
+        @inline function ∂Q∂τxy(p::DruckerPragerCap, τij::$(t){3, T}; P = zero(T), Pf = zero(T), EII = zero(T), perturbation_C = one(T), kwargs...) where {T}
             τII = second_invariant(τij)
             Aτ = ∂Q∂τII(p, τII; P = P, Pf = Pf, EII = EII, perturbation_C = perturbation_C)
             return iszero(τII) ? zero(T) : 2 * Aτ * τij[3] / τII

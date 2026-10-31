@@ -153,12 +153,12 @@ end
 # Plastic Potential
 
 # Derivatives w.r.t pressure
-∂Q∂P(p::DruckerPrager, P = 0.0; τII = 0.0, kwargs...) = -convert_precision(precision_of(P), NumValue(p.sinΨ))
+@inline ∂Q∂P(p::DruckerPrager, P = 0.0; τII = 0.0, kwargs...) = -convert_precision(precision_of(P), NumValue(p.sinΨ))
 
 # Derivatives of yield function
-∂F∂τII(p::DruckerPrager, τII::_T; P = zero(_T), kwargs...) where {_T} = _T(1)
-∂F∂P(p::DruckerPrager, P::_T; τII = zero(_T), kwargs...) where {_T} = -convert_precision(precision_of(P), NumValue(p.sinϕ))
-∂F∂λ(p::DruckerPrager, τII::_T; P = zero(_T), kwargs...) where {_T} = _T(0)
+@inline ∂F∂τII(p::DruckerPrager, τII::_T; P = zero(_T), kwargs...) where {_T} = _T(1)
+@inline ∂F∂P(p::DruckerPrager, P::_T; τII = zero(_T), kwargs...) where {_T} = -convert_precision(precision_of(P), NumValue(p.sinϕ))
+@inline ∂F∂λ(p::DruckerPrager, τII::_T; P = zero(_T), kwargs...) where {_T} = _T(0)
 
 # Derivatives w.r.t stress tensor
 
@@ -166,20 +166,20 @@ end
 for t in (:NTuple, :SVector)
     @eval begin
         ## 3D derivatives
-        ∂Q∂τxx(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = τij[1] / (2 * second_invariant(τij))
-        ∂Q∂τyy(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = τij[2] / (2 * second_invariant(τij))
-        ∂Q∂τzz(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = τij[3] / (2 * second_invariant(τij))
-        ∂Q∂τyz(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = τij[4] / second_invariant(τij)
-        ∂Q∂τxz(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = τij[5] / second_invariant(τij)
-        ∂Q∂τxy(p::DruckerPrager, τij::$(t){6, T}; kwargs...) where {T} = τij[6] / second_invariant(τij)
+        @inline ∂Q∂τxx(p::DruckerPrager, τij::$(t){6, T}; τII = second_invariant(τij), kwargs...) where {T} = τij[1] / (2 * τII)
+        @inline ∂Q∂τyy(p::DruckerPrager, τij::$(t){6, T}; τII = second_invariant(τij), kwargs...) where {T} = τij[2] / (2 * τII)
+        @inline ∂Q∂τzz(p::DruckerPrager, τij::$(t){6, T}; τII = second_invariant(τij), kwargs...) where {T} = τij[3] / (2 * τII)
+        @inline ∂Q∂τyz(p::DruckerPrager, τij::$(t){6, T}; τII = second_invariant(τij), kwargs...) where {T} = τij[4] / τII
+        @inline ∂Q∂τxz(p::DruckerPrager, τij::$(t){6, T}; τII = second_invariant(τij), kwargs...) where {T} = τij[5] / τII
+        @inline ∂Q∂τxy(p::DruckerPrager, τij::$(t){6, T}; τII = second_invariant(τij), kwargs...) where {T} = τij[6] / τII
         ## 2D derivatives
-        ∂Q∂τxx(p::DruckerPrager, τij::$(t){3, T}; kwargs...) where {T} = τij[1] / (2 * second_invariant(τij))
-        ∂Q∂τyy(p::DruckerPrager, τij::$(t){3, T}; kwargs...) where {T} = τij[2] / (2 * second_invariant(τij))
-        ∂Q∂τxy(p::DruckerPrager, τij::$(t){3, T}; kwargs...) where {T} = τij[3] / second_invariant(τij)
+        @inline ∂Q∂τxx(p::DruckerPrager, τij::$(t){3, T}; τII = second_invariant(τij), kwargs...) where {T} = τij[1] / (2 * τII)
+        @inline ∂Q∂τyy(p::DruckerPrager, τij::$(t){3, T}; τII = second_invariant(τij), kwargs...) where {T} = τij[2] / (2 * τII)
+        @inline ∂Q∂τxy(p::DruckerPrager, τij::$(t){3, T}; τII = second_invariant(τij), kwargs...) where {T} = τij[3] / τII
     end
 end
 
-∂Q∂τII(p::DruckerPrager, τII::_T; P = zero(_T), kwargs...) where {_T} = one(_T) / 2
+@inline ∂Q∂τII(p::DruckerPrager, τII::_T; P = zero(_T), kwargs...) where {_T} = one(_T) / 2
 
 """
     compute_εII(p::DruckerPrager{_T,U,U1}, λdot::_T, τII::_T,  P)

@@ -29,6 +29,8 @@ Returns the gradient of the plastic flow potential `Q` with respect to the devia
 `τij` (given as a 3- or 6-component `NTuple`/`SVector`), i.e. the direction of plastic flow
 ``\\partial Q/\\partial \\tau_{ij}``. Also accessible as [`compute_plasticpotentialDerivative`](@ref).
 
+For Drucker-Prager laws, an optional keyword `τII` reuses a previously computed second invariant of `τij`.
+
 Keyword arguments (e.g. `P`, `Pf`, `EII`, `perturbation_C`) are forwarded to the component functions
 and define the state at which the gradient is evaluated.
 """
@@ -87,33 +89,62 @@ function compute_plasticpotentialDerivative end
 
 # Thin convenience wrappers
 # 3D
-function ∂Q∂τ(p::AbstractPlasticity, τij::SVector{6}; kwargs...)
+@inline function ∂Q∂τ(p::AbstractPlasticity, τij::SVector{6}; kwargs...)
     return @SVector [∂Q∂τxx(p, τij; kwargs...), ∂Q∂τyy(p, τij; kwargs...), ∂Q∂τzz(p, τij; kwargs...), ∂Q∂τyz(p, τij; kwargs...), ∂Q∂τxz(p, τij; kwargs...), ∂Q∂τxy(p, τij; kwargs...)]
 end
 
-function ∂Q∂τ(p::AbstractPlasticity, τij::NTuple{6}; kwargs...)
+@inline function ∂Q∂τ(p::AbstractPlasticity, τij::NTuple{6}; kwargs...)
     return ∂Q∂τxx(p, τij; kwargs...), ∂Q∂τyy(p, τij; kwargs...), ∂Q∂τzz(p, τij; kwargs...), ∂Q∂τyz(p, τij; kwargs...), ∂Q∂τxz(p, τij; kwargs...), ∂Q∂τxy(p, τij; kwargs...)
 end
 
 # 2D
-function ∂Q∂τ(p::AbstractPlasticity, τij::SVector{3}; kwargs...)
+@inline function ∂Q∂τ(p::AbstractPlasticity, τij::SVector{3}; kwargs...)
     return @SVector [∂Q∂τxx(p, τij; kwargs...), ∂Q∂τyy(p, τij; kwargs...), ∂Q∂τxy(p, τij; kwargs...)]
 end
 
-function ∂Q∂τ(p::AbstractPlasticity, τij::NTuple{3}; kwargs...)
+@inline function ∂Q∂τ(p::AbstractPlasticity, τij::NTuple{3}; kwargs...)
     return ∂Q∂τxx(p, τij; kwargs...), ∂Q∂τyy(p, τij; kwargs...), ∂Q∂τxy(p, τij; kwargs...)
 end
 
+# Drucker-Prager flow directions share one invariant and reciprocal across components.
+# A supplied τII is the invariant of τij, e.g. one already computed by a stress kernel.
+for t in (:NTuple, :SVector)
+    @eval begin
+        @inline function ∂Q∂τ(
+                p::Union{DruckerPrager, DruckerPrager_regularised}, τij::$(t){6};
+                τII = second_invariant(τij), kwargs...
+            )
+            invτII = inv(τII)
+            half_invτII = invτII / 2
+            result = (
+                τij[1] * half_invτII, τij[2] * half_invτII, τij[3] * half_invτII,
+                τij[4] * invτII, τij[5] * invτII, τij[6] * invτII,
+            )
+            return $(t === :NTuple ? :Tuple : :SVector)(result)
+        end
+
+        @inline function ∂Q∂τ(
+                p::Union{DruckerPrager, DruckerPrager_regularised}, τij::$(t){3};
+                τII = second_invariant(τij), kwargs...
+            )
+            invτII = inv(τII)
+            half_invτII = invτII / 2
+            result = (τij[1] * half_invτII, τij[2] * half_invτII, τij[3] * invτII)
+            return $(t === :NTuple ? :Tuple : :SVector)(result)
+        end
+    end
+end
+
 # Compute partial derivatives of a generic user-defined Q using AD
-∂Q∂τ(Q::F, args::SVector; kwargs...) where {F <: Function} = ForwardDiff.gradient(Q, args)
-∂Q∂τ(Q::F, args::Vector; kwargs...) where {F <: Function} = ForwardDiff.gradient(Q, args)
-function ∂Q∂τ(Q::F, args::NTuple{N}; kwargs...) where {N, F <: Function}
+@inline ∂Q∂τ(Q::F, args::SVector; kwargs...) where {F <: Function} = ForwardDiff.gradient(Q, args)
+@inline ∂Q∂τ(Q::F, args::Vector; kwargs...) where {F <: Function} = ForwardDiff.gradient(Q, args)
+@inline function ∂Q∂τ(Q::F, args::NTuple{N}; kwargs...) where {N, F <: Function}
     tmp = ∂Q∂τ(Q, SVector{N}(args...))
     return ntuple(i -> tmp[i], Val(N))
 end
 
 # Wrapper for arbitrary args in the form of a NamedTuple
-function ∂Q∂τ(p::AbstractPlasticity, args::NamedTuple; kwargs...)
+@inline function ∂Q∂τ(p::AbstractPlasticity, args::NamedTuple; kwargs...)
     return ∂Q∂τ(p, args.τij; kwargs...)
 end
 #-------------------------------------------------------------------------
@@ -154,13 +185,13 @@ end
 for myType in (:DruckerPrager, :DruckerPrager_regularised, :DruckerPragerCap)
     @eval begin
         (p::$(myType))(args) = p(; args...)
-        ∂Q∂τ(p::$(myType), args, kwargs) = ∂Q∂τ(p, args; kwargs...)
-        ∂Q∂P(p::$(myType), args, kwargs) = ∂Q∂P(p, args; kwargs...)
-        ∂Q∂τII(p::$(myType), args, kwargs) = ∂Q∂τII(p, args; kwargs...)
+        @inline ∂Q∂τ(p::$(myType), args, kwargs) = ∂Q∂τ(p, args; kwargs...)
+        @inline ∂Q∂P(p::$(myType), args, kwargs) = ∂Q∂P(p, args; kwargs...)
+        @inline ∂Q∂τII(p::$(myType), args, kwargs) = ∂Q∂τII(p, args; kwargs...)
 
-        ∂F∂P(p::$(myType), args, kwargs) = ∂F∂P(p, args; kwargs...)
-        ∂F∂λ(p::$(myType), args, kwargs) = ∂F∂λ(p, args; kwargs...)
-        ∂F∂τII(p::$(myType), args, kwargs) = ∂F∂τII(p, args; kwargs...)
+        @inline ∂F∂P(p::$(myType), args, kwargs) = ∂F∂P(p, args; kwargs...)
+        @inline ∂F∂λ(p::$(myType), args, kwargs) = ∂F∂λ(p, args; kwargs...)
+        @inline ∂F∂τII(p::$(myType), args, kwargs) = ∂F∂τII(p, args; kwargs...)
 
         compute_yieldfunction(p::$(myType), args) = p(args)
         compute_εII(p::$(myType), args) = compute_εII(p, args.λ, args.τII, args)
@@ -176,21 +207,21 @@ end
 compute_yieldfunction(MatParam, arg, args...) = compute_param(compute_yieldfunction, MatParam, arg, args...)
 compute_yieldfunction!(args...) = compute_param!(compute_yieldfunction, args...)
 compute_plasticpotentialDerivative(MatParam, arg, args...) = compute_param(∂Q∂τ, MatParam, arg, args...)
-∂Q∂τ(p::AbstractMaterialParamsStruct, args) = compute_plasticpotentialDerivative(p, args)
-∂Q∂τ(MatParam, arg, args...) = compute_param(∂Q∂τ, MatParam, arg, args...)
-∂Q∂τII(MatParam, arg, args...) = compute_param(∂Q∂τII, MatParam, arg, args...)
+@inline ∂Q∂τ(p::AbstractMaterialParamsStruct, args) = compute_plasticpotentialDerivative(p, args)
+@inline ∂Q∂τ(MatParam, arg, args...) = compute_param(∂Q∂τ, MatParam, arg, args...)
+@inline ∂Q∂τII(MatParam, arg, args...) = compute_param(∂Q∂τII, MatParam, arg, args...)
 
 function compute_plasticpotentialDerivative(p::AbstractMaterialParamsStruct, args)
     return ∂Q∂τ(p.Plasticity[1], args)
 end
 
-∂Q∂P(MatParam, arg, args...) = compute_param(∂Q∂P, MatParam, arg, args...)
+@inline ∂Q∂P(MatParam, arg, args...) = compute_param(∂Q∂P, MatParam, arg, args...)
 
-function ∂Q∂P(p::AbstractMaterialParamsStruct, args)
+@inline function ∂Q∂P(p::AbstractMaterialParamsStruct, args)
     return ∂Q∂P(p.Plasticity[1], args)
 end
 
-function ∂Q∂τII(p::AbstractMaterialParamsStruct, args)
+@inline function ∂Q∂τII(p::AbstractMaterialParamsStruct, args)
     return ∂Q∂τII(p.Plasticity[1], args)
 end
 

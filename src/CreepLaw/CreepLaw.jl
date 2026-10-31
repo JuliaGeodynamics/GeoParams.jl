@@ -164,7 +164,7 @@ function param_info(a::LinearViscous) # info about the struct
 end
 
 # Calculation routines for linear viscous rheologies
-function compute_εII(a::LinearViscous, TauII; kwargs...)
+@inline function compute_εII(a::LinearViscous, TauII; kwargs...)
     Tc = precision_of(TauII)
     @unpack_like TauII Tc η = a
 
@@ -185,7 +185,7 @@ function compute_εII!(
     return nothing
 end
 
-function dεII_dτII(a::LinearViscous, TauII; kwargs...)
+@inline function dεII_dτII(a::LinearViscous, TauII; kwargs...)
     Tc = precision_of(TauII)
     @unpack_like TauII Tc η = a
 
@@ -197,7 +197,7 @@ end
 
 Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor
 """
-function compute_τII(a::LinearViscous, EpsII; kwargs...)
+@inline function compute_τII(a::LinearViscous, EpsII; kwargs...)
     Tc = precision_of(EpsII)
     @unpack_like EpsII Tc η = a
 
@@ -214,7 +214,7 @@ function compute_τII!(
     return nothing
 end
 
-function dτII_dεII(a::LinearViscous, EpsII; kwargs...)
+@inline function dτII_dεII(a::LinearViscous, EpsII; kwargs...)
     Tc = precision_of(EpsII)
     @unpack_like EpsII Tc η = a
 
@@ -261,7 +261,7 @@ function param_info(a::ArrheniusType) # info about the struct
 end
 
 # Calculation routines for linear viscous rheologies
-function compute_εII(a::ArrheniusType, TauII; T = one(precision(a)), kwargs...)
+@inline function compute_εII(a::ArrheniusType, TauII; T = one(precision(a)), kwargs...)
     Tc = precision_of(TauII)
     T = convert_precision(Tc, T)
     @unpack_val Tc η0, E_η, T_O, T_η = a
@@ -287,7 +287,7 @@ function compute_εII!(
     return nothing
 end
 
-function dεII_dτII(a::ArrheniusType, TauII; T = one(precision(a)), kwargs...)
+@inline function dεII_dτII(a::ArrheniusType, TauII; T = one(precision(a)), kwargs...)
     Tc = precision_of(TauII)
     T = convert_precision(Tc, T)
     @unpack_val Tc η0, E_η, T_O, T_η = a
@@ -300,7 +300,7 @@ end
 
 Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor
 """
-function compute_τII(a::ArrheniusType, EpsII; T = one(precision(a)), kwargs...)
+@inline function compute_τII(a::ArrheniusType, EpsII; T = one(precision(a)), kwargs...)
     Tc = precision_of(EpsII)
     T = convert_precision(Tc, T)
     @unpack_val Tc η0, E_η, T_O, T_η = a
@@ -324,7 +324,7 @@ function compute_τII!(
     return nothing
 end
 
-function dτII_dεII(a::ArrheniusType, EpsII; T = one(precision(a)), kwargs...)
+@inline function dτII_dεII(a::ArrheniusType, EpsII; T = one(precision(a)), kwargs...)
     Tc = precision_of(EpsII)
     T = convert_precision(Tc, T)
     @unpack_val Tc η0, E_η, T_O, T_η = a
@@ -365,7 +365,7 @@ function show(io::IO, g::PowerlawViscous)
 end
 
 # Calculation routines for linear viscous rheologies
-function compute_εII(a::PowerlawViscous, TauII; kwargs...)
+@inline function compute_εII(a::PowerlawViscous, TauII; kwargs...)
     Tc = precision_of(TauII)
     @unpack_val Tc η0, n, ε0 = a
 
@@ -374,7 +374,7 @@ function compute_εII(a::PowerlawViscous, TauII; kwargs...)
     return EpsII
 end
 
-function dεII_dτII(a::PowerlawViscous, TauII; kwargs...)
+@inline function dεII_dτII(a::PowerlawViscous, TauII; kwargs...)
     Tc = precision_of(TauII)
     @unpack_val Tc η0, n, ε0 = a
 
@@ -386,7 +386,7 @@ end
 
 Returns second invariant of the stress tensor given a 2nd invariant of strain rate tensor
 """
-function compute_τII(a::PowerlawViscous, EpsII; kwargs...)
+@inline function compute_τII(a::PowerlawViscous, EpsII; kwargs...)
     Tc = precision_of(EpsII)
     @unpack_val Tc η0, n, ε0 = a
 
@@ -395,7 +395,7 @@ function compute_τII(a::PowerlawViscous, EpsII; kwargs...)
     return τII
 end
 
-function dτII_dεII(a::PowerlawViscous, EpsII; kwargs...)
+@inline function dτII_dεII(a::PowerlawViscous, EpsII; kwargs...)
     Tc = precision_of(EpsII)
     @unpack_val Tc η0, n, ε0 = a
 
