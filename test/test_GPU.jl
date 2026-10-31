@@ -224,11 +224,12 @@ c_visc_τII(l, a) = compute_viscosity_τII(l, a.τII, a)
         @testset "constitutive keyword calls inline" begin
             τij = ntuple(Float32, 6)
             τII = second_invariant(τij)
-            flow(p, τ, τII) = ∂Q∂τ(p, τ; τII)
+            @inline flow(p, τ, τII) = ∂Q∂τ(p, τ; τII)
+            @inline viscosity(p, a) = compute_viscosity_τII(p, a.τII, a)
             probes = (
                 (flow, (f32(nd(DruckerPrager())), τij, τII)),
                 (flow, (f32(nd(DruckerPrager_regularised())), τij, τII)),
-                (c_visc_τII, (f32(nd(PowerlawViscous())), a)),
+                (viscosity, (f32(nd(PowerlawViscous())), a)),
             )
             out = CUDA.zeros(Float32, 8)
             for (f, args) in probes
