@@ -122,8 +122,9 @@ end
     @unpack_val Tc n, r, A, E, V, R = a
     FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
-    ε = @pow A * (TauII * FT)^n * f^r * exp(-(E + P * V) / (R * T)) / FE
-    return retry_wider(ε, TauII) do τ
+    arrhenius = exp(-(E + P * V) / (R * T))
+    ε = @pow A * (TauII * FT)^n * f^r * arrhenius / FE
+    return retry_wider(ε, TauII, arrhenius) do τ
         compute_εII(a, τ; T, P, f)
     end
 end
@@ -176,14 +177,15 @@ end
     @unpack_val Tc n, r, A, E, V, R = a
     FT, FE = convert_precision(Tc, a.FT), convert_precision(Tc, a.FE)
 
+    arrhenius = exp(-(E + P * V) / (R * T))
     dε = @pow (FT * TauII)^(n - 1) *
         f^r *
         A *
         FT *
         n *
-        exp(-(E + P * V) / (R * T)) *
+        arrhenius *
         inv(FE)
-    return retry_wider(dε, TauII) do τ
+    return retry_wider(dε, TauII, arrhenius) do τ
         dεII_dτII(a, τ; T, P, f)
     end
 end

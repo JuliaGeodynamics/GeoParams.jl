@@ -2,6 +2,11 @@ using Test
 using GeoParams
 import GeoParams.VolumeBoundaryDiffusion
 
+function volume_allocations(f::F, law, x, args) where {F}
+    f(law, x, args)
+    return @allocated f(law, x, args)
+end
+
 # Goldsby & Kohlstedt (2001), eq. (4): axial strain rate for differential stress σ.
 function gk2001_eq4(σ, T, d; D0v = 9.1e-4, Qv = 59.4e3, D0b = 6.0e-4, Qb = 49.0e3, δ = 9.04e-10, Vm = 1.97e-5, R = 8.3145)
     Dv = D0v * exp(-Qv / (R * T))
@@ -78,6 +83,20 @@ end
         @test dεII_dτII(p, 1.0f8, args) == Float32(dεII_dτII(p, 1.0e8; T = 50.0))
         @test compute_τII(p, 1.0f-30, args) == Float32(compute_τII(p, 1.0e-30; T = 50.0))
         @test dτII_dεII(p, 1.0f-30, args) == Float32(dτII_dεII(p, 1.0e-30; T = 50.0))
+    end
+
+    @testset "Float32 hot paths do not allocate retry closures" begin
+        for law in (p, convert_precision(Float32, p)), temperature in (100.0f0, 250.0f0)
+            args = (; T = temperature)
+            stress = 1.0f5
+            rate = compute_εII(law, stress, args)
+            for (operation, value) in (
+                    (compute_εII, stress), (dεII_dτII, stress),
+                    (compute_τII, rate), (dτII_dεII, rate),
+                )
+                @test volume_allocations(operation, law, value, args) == 0
+            end
+        end
     end
 
     @testset "CompositeRheology" begin

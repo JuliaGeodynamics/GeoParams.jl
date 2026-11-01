@@ -7,7 +7,7 @@ using StaticArrays
 using Parameters, LaTeXStrings, Unitful, MuladdMacro
 using ..Units
 using GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
-import GeoParams: param_info, ptr2string
+import GeoParams: param_info, ptr2string, argument_at
 using ..MaterialParameters: MaterialParamsInfo
 import Base.show
 
@@ -385,22 +385,22 @@ end
 
 
 """
-    compute_D!(D, data::AbstractChemicalDiffusion; T=ones(size(D))K, P=ones(size(D))Pa, fO2 = ones(size(D)), X = zeros(size(D)), kwargs...)
+    compute_D!(D, data::AbstractChemicalDiffusion; T=1.0K, P=1.0GPa, fO2 = 1.0, X = 0.0, kwargs...)
 
-In-place version of `compute_D(data::AbstractChemicalDiffusion; T=1K, P=1GPa, fO2=0NoUnits, kwargs...)`. `D` should be an array of the same size as T, P and fO2.
+In-place version of `compute_D(data::AbstractChemicalDiffusion; T=1K, P=1GPa, fO2=0NoUnits, kwargs...)`. `T`, `P`, `fO2` and `X` can be scalars or arrays of the same size as `D`.
 """
 function compute_D!(
         D::AbstractArray,
         data::AbstractChemicalDiffusion;
-        T = ones(size(D))K,
-        P = ones(size(D))GPa,
-        fO2 = ones(size(D)),
-        X = zeros(size(D)),
+        T = 1.0K,
+        P = 1.0GPa,
+        fO2 = 1.0,
+        X = 0.0,
         kwargs...
     )
 
     return @inbounds for i in eachindex(D)
-        D[i] = compute_D(data; T = T[i], P = P[i], fO2 = fO2[i], X = X[i], kwargs...)
+        D[i] = compute_D(data; T = argument_at(T, i), P = argument_at(P, i), fO2 = argument_at(fO2, i), X = argument_at(X, i), kwargs...)
     end
 end
 
@@ -432,19 +432,19 @@ The output is a static matrix of size `n-1` x `n-1` where `n` is the number of c
 end
 
 """
-    compute_λ!(λ::AbstractArray, data::MeltMulticompDiffusionData; T = ones(size(λ))K, kwargs...)
+    compute_λ!(λ::AbstractArray, data::MeltMulticompDiffusionData; T = 1.0K, kwargs...)
 
-In-place version of `compute_λ(data::AbstractChemicalDiffusion; T=1K, kwargs...)`. `λ` should be an array of the same size as T.
+In-place version of `compute_λ(data::AbstractChemicalDiffusion; T=1K, kwargs...)`. `T` can be a scalar or an array of the same size as `λ`.
 """
 function compute_λ!(
         λ::AbstractArray,
         data::MeltMulticompDiffusionData;
-        T = ones(size(λ))K,
+        T = 1.0K,
         kwargs...
     )
 
     return @inbounds for i in eachindex(λ)
-        λ[i] = compute_λ(data; T = T[i], kwargs...)
+        λ[i] = compute_λ(data; T = argument_at(T, i), kwargs...)
     end
 end
 

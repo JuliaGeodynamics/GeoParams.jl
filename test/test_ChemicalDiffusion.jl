@@ -3,6 +3,11 @@ using GeoParams
 using StaticArrays
 import GeoParams: diffusion_database, diffusion_database_info
 
+function inplace_allocations(f!::F, out, data; kwargs...) where {F}
+    f!(out, data; kwargs...)
+    return @allocated f!(out, data; kwargs...)
+end
+
 @testset "ChemicalDiffusion" begin
 
     # test the diffusion data structure
@@ -71,6 +76,12 @@ import GeoParams: diffusion_database, diffusion_database_info
     T = ones(10) * 1273.15
     compute_D!(D, Hf_Rt_para; T = T, P = zeros(size(T)))
     @test D[1] ≈ 1.06039e-21 atol = 1.0e-24
+
+    # scalar arguments apply to every element; omitted ones allocate no arrays
+    D_scalar = zeros(10)
+    compute_D!(D_scalar, Hf_Rt_para; T = 1273.15, P = 0.0)
+    @test D_scalar == D
+    @test inplace_allocations(compute_D!, D, Hf_Rt_para; T = T, P = zeros(size(T))) == 0
 
     # test SetMaterialParams
     phase = SetMaterialParams(
@@ -787,6 +798,12 @@ import GeoParams: diffusion_database, diffusion_database_info
 
     compute_λ!(λ, melt_multicomponent; T = T)
     @test (ustrip(λ[1][1, 1]) * 1.0e12) ≈ λ1_paper atol = 1.0e-15
+
+    # unused P, fO2 and X defaults no longer allocate per-call arrays
+    λ_plain = [SMatrix{7, 7}(zeros(7, 7)) for _ in 1:10]
+    @test inplace_allocations(compute_D!, λ_plain, melt_multicomponent; T = fill(1800.0, 10)) == 0
+    @test inplace_allocations(compute_λ!, λ_plain, melt_multicomponent; T = 1800.0) == 0
+    @test λ_plain[1] == compute_λ(melt_multicomponent; T = 1800.0)
 
     # unitless (plain-number) path of compute_D / compute_λ for multicomponent data
     D_unitless = compute_D(melt_multicomponent; T = 1773.15)

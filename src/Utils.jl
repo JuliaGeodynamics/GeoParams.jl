@@ -42,7 +42,7 @@ end
 # value shared by every element.
 @inline argument_at(x::Number, i) = x
 @inline argument_at(x::Nothing, i) = x
-@inline argument_at(x, i) = x[i]
+Base.@propagate_inbounds argument_at(x, i) = x[i]
 
 # Index range for an in-place routine whose keyword arguments may each be a scalar
 # or an array. Scalars stand in for `dest`, so `eachindex` reports any array whose
@@ -77,24 +77,39 @@ end
     end
 end
 
-"""
-    retry_wider(f, y, x)
+# The plain value of `x`, without dual-number partials.
+@inline _plain(x) = x
+@inline _plain(x::ForwardDiff.Dual) = _plain(ForwardDiff.value(x))
 
-`y`, unless it left the range of the type it was computed in — infinite from an
-intermediate that overflowed, or zero from one that underflowed — in which case
-`f(x)` recomputes it from a wider `x` and the result is narrowed back to `y`'s
-type.
+# Nonzero, finite and not subnormal.
+@inline _isnormal(x) = (v = abs(_plain(x)); floatmin(v) <= v <= floatmax(v))
+
+@inline function _needs_wider(y, x, factors::Vararg{Any, N}) where {N}
+    _wider(precision_of(x)) === precision_of(x) && return false
+    (isfinite(y) && (!iszero(y) || iszero(x))) || return true
+    # Gradual underflow keeps a value finite and nonzero but drops significant bits.
+    return issubnormal(_plain(y)) || issubnormal(_plain(x)) || !all(_isnormal, factors)
+end
+
+"""
+    retry_wider(f, y, x, factors...)
+
+`y`, unless it left the normal range of the type it was computed in — infinite
+from an intermediate that overflowed, zero from one that underflowed, or
+subnormal — in which case `f(x)` recomputes it from a wider `x` and the result
+is narrowed back to `y`'s type. A subnormal `x`, or any of `factors` outside the
+normal range, also triggers the retry: `factors` are intermediates, such as an
+Arrhenius term, whose underflow can leave `y` in range but inaccurate.
 
 Creep laws in SI units assemble ordinary strain rates out of factors such as a
-prefactor of 1e-55 and a stress raised to `n`, which reaches 1e39: `Float32`
-holds the answer but not the way there. `Float64` is its own widening, so
-nothing is ever retried there and the branch is free.
+prefactor of 1e-55 and a stress raised to `n`, which reaches 1e39, and at low
+temperature `exp(-Q/RT)` drops below `floatmin(Float32)`: `Float32` holds the
+answer but not the way there. `Float64` is its own widening, so nothing is ever
+retried there and the branch is free.
 """
-@inline function retry_wider(f::F, y, x) where {F}
-    W = _wider(precision_of(x))
-    W === precision_of(x) && return y
-    (isfinite(y) && (!iszero(y) || iszero(x))) && return y
-    return _narrow_like(y, f(Units.widen_precision(W, x)))
+@inline function retry_wider(f::F, y, x, factors::Vararg{Any, N}) where {F, N}
+    _needs_wider(y, x, factors...) || return y
+    return _narrow_like(y, f(Units.widen_precision(_wider(precision_of(x)), x)))
 end
 
 @inline _wider(::Type{Float16}) = Float32
