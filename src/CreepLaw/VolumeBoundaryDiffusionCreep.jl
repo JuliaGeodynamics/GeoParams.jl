@@ -114,6 +114,8 @@ see [`VolumeBoundaryDiffusionCreep`](@ref).
 """
 @inline function compute_εII(a::VolumeBoundaryDiffusionCreep, TauII; T = one(precision(a)), d = nothing, kwargs...)
     ε = _volume_boundary_diffusion_coefficient(a, precision_of(TauII), T, d) * TauII
+    # Construct the recursive retry closure only on the cold path, avoiding boxed calls.
+    _needs_wider(ε, TauII) || return ε
     return retry_wider(ε, TauII) do τ
         compute_εII(a, τ; T, d)
     end
@@ -125,6 +127,7 @@ end
 
 @inline function dεII_dτII(a::VolumeBoundaryDiffusionCreep, TauII; T = one(precision(a)), d = nothing, kwargs...)
     C = _volume_boundary_diffusion_coefficient(a, precision_of(TauII), T, d)
+    _needs_wider(C, one(TauII)) || return C
     return retry_wider(C, one(TauII)) do τ
         dεII_dτII(a, τ; T, d)
     end
@@ -141,6 +144,7 @@ Returns the second invariant of the deviatoric stress of volume and grain-bounda
 """
 @inline function compute_τII(a::VolumeBoundaryDiffusionCreep, EpsII; T = one(precision(a)), d = nothing, kwargs...)
     τ = EpsII / _volume_boundary_diffusion_coefficient(a, precision_of(EpsII), T, d)
+    _needs_wider(τ, EpsII) || return τ
     return retry_wider(τ, EpsII) do ε
         compute_τII(a, ε; T, d)
     end
@@ -152,6 +156,7 @@ end
 
 @inline function dτII_dεII(a::VolumeBoundaryDiffusionCreep, EpsII; T = one(precision(a)), d = nothing, kwargs...)
     dτ = inv(_volume_boundary_diffusion_coefficient(a, precision_of(EpsII), T, d))
+    _needs_wider(dτ, one(EpsII)) || return dτ
     return retry_wider(dτ, one(EpsII)) do ε
         dτII_dεII(a, ε; T, d)
     end

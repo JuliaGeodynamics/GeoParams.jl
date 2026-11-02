@@ -77,7 +77,7 @@ end
 
 Evaluate the interpolation at point (x, y) using bilinear interpolation.
 """
-function (itp::LinearInterpolator{T, I})(x::Real, y::Real) where {T, I}
+@inline function (itp::LinearInterpolator{T, I})(x::Real, y::Real) where {T, I}
     # Promote input types to the interpolator's element type
     x_promoted = _to_grid_type(T, x)
     y_promoted = _to_grid_type(T, y)
@@ -136,7 +136,7 @@ Bilinearly interpolates a field stored on a regular temperature-pressure grid at
 `(T, P)`. The grid is described by its origin (`T0`, `P0`), spacing (`dT`, `dP`), number of nodes
 (`numT`, `numP`), and extent (`Tmax`, `Pmax`); `coefs` holds the gridded field values.
 """
-function interpolate_field(
+@inline function interpolate_field(
         T0::T,
         dT::T,
         numT::I,

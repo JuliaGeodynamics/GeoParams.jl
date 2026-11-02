@@ -81,6 +81,19 @@ end
         Phases::AbstractArray{Int64},
         args,
     ) where {F <: Function, N}
+    # A homogeneous tuple supports type-stable dynamic indexing. Check the
+    # phase numbering once per array call, preserving the general lookup for
+    # sparse, reordered, or duplicate IDs and heterogeneous material types.
+    if N >= 8 && isconcretetype(eltype(MatParam)) && all(i -> MatParam[i].Phase == i, 1:N)
+        return @inbounds for I in eachindex(Phases)
+            phase = Phases[I]
+            1 <= phase <= N || phase_not_found()
+            k = keys(args)
+            v = getindex.(values(args), I)
+            argsi = (; zip(k, v)...)
+            rho[I] = fn(MatParam[phase], argsi)
+        end
+    end
     return @inbounds for I in eachindex(Phases)
         k = keys(args)
         v = getindex.(values(args), I)      # works for scalars & arrays thanks to overload (above)

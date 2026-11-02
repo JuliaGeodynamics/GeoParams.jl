@@ -212,12 +212,21 @@ c_visc_τII(l, a) = compute_viscosity_τII(l, a.τII, a)
         test_gpu((m, τ, λ) -> CR.plastic_strain_rate(m, τ, λ), (mp, τ3, a.εII))
     end
 
+    @testset "elastic stress rotation" begin
+        rotate(ω, τ, dt) = Tuple(rotate_elastic_stress(ω, τ, dt))   # 3D returns an SVector
+        test_gpu(rotate, (0.5f0, (1.0f0, -0.5f0, 0.3f0), 0.1f0))
+        test_gpu(rotate, ((0.25f0, 0.5f0, 0.75f0), (1.0f0, -0.3f0, -0.7f0, 0.2f0, 0.4f0, 0.3f0), 0.1f0))
+    end
     @testset "derivatives inside kernels" begin
         hirth = f32(nd(SetDislocationCreep(GeoParams.Dislocation.dry_olivine_Hirth_2003)))
         test_gpu((l, a) -> ForwardDiff.derivative(t -> compute_εII(l, t, a), a.τII), (hirth, a))
         test_gpu((l, a) -> dεII_dτII(l, a.τII, a), (hirth, a))
         costa = f32(nd(ViscosityPartialMelt_Costa_etal_2009()))
         test_gpu((l, a) -> dεII_dτII(l, a.τII, a), (costa, a))
+        ice = f32(nd(SetVolumeBoundaryDiffusionCreep(GeoParams.VolumeBoundaryDiffusion.ice_Goldsby_2001)))
+        a_ice = merge(a, (; T = Float32(nd(250.0K))))
+        test_gpu((l, a) -> dεII_dτII(l, a.τII, a), (ice, a_ice))
+        test_gpu((l, a) -> dτII_dεII(l, a.εII, a), (ice, a_ice))
     end
 
     if backend == "CUDA"
