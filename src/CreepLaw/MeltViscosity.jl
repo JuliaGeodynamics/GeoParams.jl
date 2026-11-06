@@ -41,8 +41,6 @@ Typical parameters for rhyolite are: `A = -8.1590`, `B = 2.4050e+04K`, `T_0 = -4
 end
 LinearMeltViscosity(args...) = promote_construct(LinearMeltViscosity, args...)
 
-isDimensional(g::LinearMeltViscosity) = isDimensional(g.η0)
-
 function param_info(a::LinearMeltViscosity) # info about the struct
     return MaterialParamsInfo(;
         Equation = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}; \eta=10^{A + \frac{B}{T-T_0}}",
@@ -194,8 +192,6 @@ end
 function ViscosityPartialMelt_Costa_etal_2009(melt_viscosity::AbstractCreepLaw, args...)
     return ViscosityPartialMelt_Costa_etal_2009(melt_viscosity, convert.(GeoUnit, args)...)
 end
-isDimensional(g::ViscosityPartialMelt_Costa_etal_2009) = isDimensional(g.ε0)
-
 function param_info(a::ViscosityPartialMelt_Costa_etal_2009) # info about the struct
     return MaterialParamsInfo(;
         Equation = L"Costa et al. (2009) effective viscosity parameterisation"
@@ -415,8 +411,6 @@ struct GiordanoMeltViscosity{T, T1, T2, U, U1, U2} <: AbstractCreepLaw{T}
     end
 
 end
-
-isDimensional(g::GiordanoMeltViscosity) = isDimensional(g.η0)
 
 function param_info(a::GiordanoMeltViscosity) # info about the struct
     return MaterialParamsInfo(; Equation = L"\tau_{ij} = 2 \eta  \dot{\varepsilon}_{ij}; \eta=10^{(AT + BT \over (T - CT))}")
