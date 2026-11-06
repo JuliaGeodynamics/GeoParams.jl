@@ -219,6 +219,8 @@ end
             (:meltfraction, :Vector_MeltingParam) => "reads ϕ from a user vector; needs an `index`",
             (:dϕdT, :Vector_MeltingParam) => "precision is that of the user vector",
             (:creep_τII, :NonLinearPeierlsCreep) => "no compute_τII method",
+            (:creep_εII, :MeltWeakening) => "wraps a law; Float32 is tested in test_MeltWeakening.jl",
+            (:creep_τII, :MeltWeakening) => "wraps a law; Float32 is tested in test_MeltWeakening.jl",
         )
         # Scanning GeoParams' own bindings keeps the sweep to this package's laws;
         # `subtypes` would also pick up laws defined by any other loaded package.
@@ -470,7 +472,7 @@ end
 
     # A device without Float64 (Metal) must receive parameters holding no Float64 at all.
     @testset "convert_precision of material structs" begin
-        has64(x::Float64) = true
+        has64(::Float64) = true
         has64(x::AbstractArray) = eltype(x) === Float64 || any(has64, x)
         has64(x) = any(i -> has64(getfield(x, i)), 1:nfields(x))
 
