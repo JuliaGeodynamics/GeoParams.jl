@@ -69,6 +69,7 @@ makedocs(;
             "1D Strength Envelope" => "man/strengthenvelope.md",
             "Rheology figures (Becker & Faccenna)" => "man/rheology_becker_faccenna.md",
         ],
+        "Publications" => "man/publications.md",
         "Plotting" => "man/plotting.md",
         "Parameter tables" => "man/tables.md",
         "List of functions" => "man/listfunctions.md",
