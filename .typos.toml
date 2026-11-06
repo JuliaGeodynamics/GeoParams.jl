@@ -6,9 +6,11 @@ siz = "siz" # common name of sizes
 nd = "nd" # suffix for non-dimensionalized data
 BA = "BA" # sample IDs (Gleason & Tullis 1995)
 Fo = "Fo" # forsterite content, e.g. Fo90
+iz = "iz" # "-ise" → "-ize" in _pubbot/src/util.jl
 Monserrat = "Monserrat" # misspelling corrected by _pubbot (author_fixes)
 
 [default.extend-identifiers]
+DEDLoc = "DEDLoc" # model name (Spang et al., 2026)
 # group of words that shall be ignored
 x_nd = "x_nd"
 FeOt = "FeOt"
