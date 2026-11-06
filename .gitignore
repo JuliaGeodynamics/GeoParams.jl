@@ -38,3 +38,6 @@ node_modules
 
 # local-only reference material (textbook draft, awk scripts, audit notes)
 temp/
+
+# Publication bot
+_pubbot/.cache
