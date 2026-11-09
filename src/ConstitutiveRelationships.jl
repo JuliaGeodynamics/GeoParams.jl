@@ -5,6 +5,7 @@ module ConstitutiveRelationships
 
 using Parameters, LaTeXStrings, Unitful, MuladdMacro
 using ..Units
+import ..Units: isDimensional
 using GeoParams: AbstractMaterialParam, AbstractConstitutiveLaw, AbstractComposite
 import GeoParams: param_info, fastpow, pow_check, retry_wider, _needs_wider, nphase, phase_not_found, ntuple_idx, argument_at, each_argument_index, @print, @pow, ptr2string
 import GeoParams: second_invariant, second_invariant_staggered, value_and_partial, @extractors, add_extractor_functions
@@ -60,7 +61,7 @@ export param_info,
 for myType in (
         :LinearViscous, :LinearMeltViscosity, :ViscosityPartialMelt_Costa_etal_2009, :GiordanoMeltViscosity,
         :DiffusionCreep, :DislocationCreep, :ConstantElasticity, :DruckerPrager, :ArrheniusType,
-        :GrainBoundarySliding, :VolumeBoundaryDiffusionCreep, :PeierlsCreep, :NonLinearPeierlsCreep, :PowerlawViscous, :HerschelBulkley,
+        :GrainBoundarySliding, :VolumeBoundaryDiffusionCreep, :PeierlsCreep, :NonLinearPeierlsCreep, :PowerlawViscous, :HerschelBulkley, :MeltWeakening,
     )
     @eval begin
         @inline compute_εII(a::$(myType), TauII, args) = compute_εII(a, TauII; args...)
