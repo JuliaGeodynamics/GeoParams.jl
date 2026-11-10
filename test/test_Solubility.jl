@@ -147,6 +147,14 @@ const No_MaterialParam = GeoParams.MaterialParameters.No_MaterialParam
     @test @inferred(compute_dissolved(sy32, 2.0f8, 1173.15f0, 0.3f0)) isa Tuple{Float32, Float32}
     @test all(isapprox.(compute_dissolved(sy32, 2.0f8, 1173.15f0, 0.3f0), sy_ref; rtol = 1.0e-5))
 
+    # equilibrium gas fraction of crystal-free rhyolite with an H2O gas of Halbach & Chatterjee (1982)
+    let ρ = ThreePhase_Density(; ρgas = HalbachChatterjee_Density()), m_eq = compute_dissolved(sy, 2.0e8, 1173.15, 0.0)[1]
+        x_g = 0.02 / (1 - m_eq)
+        Vg = x_g / HalbachChatterjee_Density()(; P = 2.0e8, T = 1173.15)
+        Vm = (1 - x_g) / 2300
+        @test compute_gas_fraction(sy, ρ, (; P = 2.0e8, T = 1173.15, ϕ = 1.0, m_h2o_total = m_eq + 0.02)) ≈ Vg / (Vg + Vm)
+    end
+
     @test_throws "oxd_wt must hold 9 oxide wt%" SunYao2026_Solubility(; oxd_wt = (77.0, 0.1, 12.8))
     @test_throws "oxide wt% must be non-negative" SunYao2026_Solubility(; oxd_wt = (77.0, 0.1, 12.8, 0.8, 0.1, 0.6, -4.0, 4.6, 0.0))
     @test_throws "oxide wt% must not all be zero" SunYao2026_Solubility(; oxd_wt = ntuple(_ -> 0.0, 9))
@@ -251,6 +259,62 @@ const No_MaterialParam = GeoParams.MaterialParameters.No_MaterialParam
     g_nd = nondimensionalize(g, CharDim)
     @test isdimensional(g_nd) === false
     @test compute_gas_heatcapacity(g_nd, 0.0) == 0.0
+
+    # Exsolved gas fraction -----------------------------------------------
+    # default mixture: constant 2300 kg/m^3 melt, 2600 kg/m^3 crystals, ideal-gas H2O
+    ρ3 = ThreePhase_Density()
+    m_eq = compute_dissolved(s, 2.0e8, 1200.0, 0.0)[1]
+    argsg = (; P = 2.0e8, T = 1200.0, ϕ = 0.6, m_h2o_total = m_eq + 0.02)
+    ϕg = compute_gas_fraction(s, ρ3, argsg)
+    # volumes per unit mass of melt + gas; crystals fill 0.4/0.6 of the melt volume
+    let x_g = 0.02 / (1 - m_eq), Vg = x_g / (2.0e8 / (461.5 * 1200.0)), Vm = (1 - x_g) / 2300
+        @test ϕg ≈ Vg / (Vg + Vm + Vm * 0.4 / 0.6)
+        @test compute_gas_fraction(s, ρ3, (; argsg..., ϕ = 1.0)) ≈ Vg / (Vg + Vm)   # no crystals
+    end
+    # with the H2O gas density of Halbach & Chatterjee (1982)
+    ρ3_hc = ThreePhase_Density(; ρgas = HalbachChatterjee_Density())
+    let x_g = 0.02 / (1 - m_eq), Vg = x_g / HalbachChatterjee_Density()(; P = 2.0e8, T = 1200.0), Vm = (1 - x_g) / 2300
+        @test compute_gas_fraction(s, ρ3_hc, (; argsg..., ϕ = 1.0)) ≈ Vg / (Vg + Vm)
+    end
+    @test compute_gas_fraction(s, ρ3; argsg...) == ϕg
+    @test compute_gas_fraction(s, ρ3, (; argsg..., ϕ = 0.0)) == 0.0                # fully crystalline
+
+    # undersaturated: no gas, and the gas law is not evaluated (Redlich-Kwong is NaN below 273.15 K)
+    @test compute_gas_fraction(s, ρ3, (; argsg..., m_h2o_total = m_eq - 0.01)) === 0.0
+    ρ3_rk = ThreePhase_Density(; ρgas = RedlichKwong_Density())
+    @test compute_gas_fraction(s, ρ3_rk, (; argsg..., T = 250.0, m_h2o_total = 0.05)) === 0.0
+
+    # out-of-range inputs give NaN
+    @test isnan(compute_gas_fraction(s, ρ3, (; argsg..., m_h2o_total = 1.0)))
+    @test isnan(compute_gas_fraction(s, ρ3, (; argsg..., m_h2o_total = -0.01)))
+    @test isnan(compute_gas_fraction(s, ρ3, (; argsg..., ϕ = 1.1)))
+
+    # with ϕ_x = (1 - ϕ_gas)(1 - ϕ), the three-phase mixture holds m_h2o_total of water per mass of melt + gas
+    ϕg_rk = compute_gas_fraction(m, ρ3_rk, argsg)
+    let ϕ_x = (1 - ϕg_rk) * (1 - argsg.ϕ), ρg = compute_density(ρ3_rk.ρgas, argsg)
+        ρmix = compute_density(ρ3_rk, (; argsg..., ϕ_gas = ϕg_rk, ϕ_x))
+        water = ϕg_rk * ρg + compute_dissolved(m, 2.0e8, 1200.0, 0.0)[1] * (1 - ϕ_x - ϕg_rk) * 2300
+        @test water / (ρmix - ϕ_x * 2600) ≈ argsg.m_h2o_total
+    end
+
+    # dimensionless: nondimensionalized laws and inputs give the same fraction
+    args_nd = (;
+        argsg...,
+        P = nondimensionalize(2.0e8Pa, CharDim), T = nondimensionalize(1200.0K, CharDim),
+    )
+    @test compute_gas_fraction(m_nd, nondimensionalize(ρ3_rk, CharDim), args_nd) ≈ ϕg_rk
+
+    # Float32 in, Float32 out (`m` and `g` are bound to laws above, hence GeoParams.m)
+    ρ3_32 = ThreePhase_Density(;
+        ρmelt = ConstantDensity(ρ = 2300.0f0kg / GeoParams.m^3),
+        ρsolid = ConstantDensity(ρ = 2600.0f0kg / GeoParams.m^3),
+        ρgas = IdealGas_Density(; Rs = 461.5f0J / kg / K),
+        ρ = 2400.0f0kg / GeoParams.m^3,
+    )
+    args32 = (; P = 2.0f8, T = 1200.0f0, ϕ = 0.6f0, m_h2o_total = Float32(m_eq + 0.02))
+    @test @inferred(compute_gas_fraction(s32, ρ3_32, args32)) isa Float32
+    @test compute_gas_fraction(s32, ρ3_32, args32) ≈ ϕg rtol = 1.0e-4
+    @test @inferred(compute_gas_fraction(s, ρ3, argsg)) isa Float64
 end
 
 @testset "SunYao2026_Solubility pinned values" begin

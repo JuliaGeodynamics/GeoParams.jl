@@ -77,10 +77,33 @@ scatter!(ax2, P_sy ./ 1.0e6, P_liu ./ 1.0e6; color = :black)
 colsize!(fig.layout, 2, Relative(0.35))
 fig
 ```
+The equilibrium volume fraction of exsolved H2O gas, given the total water content, follows in closed form from a solubility law and the melt and gas densities of a [`ThreePhase_Density`](@ref):
+```@docs
+GeoParams.MaterialParameters.Solubility.compute_gas_fraction
+```
+The figure shows the gas fraction of crystal-free rhyolite (`ϕ = 1`) at 850 °C for the
+[`SunYao2026_Solubility`](@ref) law and a [`HalbachChatterjee_Density`](@ref) gas. Gas exsolves below the
+saturation pressure of each water content. The dashed line is the default critical gas fraction of [`CriticalPorosityFragmentation`](@ref).
+
+```@example gas_fraction
+using GeoParams, CairoMakie
+ρ = ThreePhase_Density(; ρgas = HalbachChatterjee_Density())
+solubility = SunYao2026_Solubility()
+P = exp10.(range(5, log10(4.0e8), 200))
+fig = Figure(size = (800, 500))
+ax = Axis(fig[1, 1]; xscale = log10, xlabel = "pressure P (MPa)", ylabel = "gas volume fraction ϕ_gas (–)")
+for m_h2o_total in (0.03, 0.05, 0.07)
+    ϕ_gas = [compute_gas_fraction(solubility, ρ, (; P = p, T = 1123.15, ϕ = 1.0, m_h2o_total)) for p in P]
+    lines!(ax, P ./ 1.0e6, ϕ_gas; label = "total H₂O = $(round(Int, 100 * m_h2o_total)) wt%")
+end
+hlines!(ax, 0.75; color = :black, linestyle = :dash, label = "ϕ_crit = 0.75")
+axislegend(ax; position = :rc)
+fig
+```
 Gas-mixture helpers for the energy equation:
 ```@docs
 GeoParams.MaterialParameters.Solubility.compute_gas_heatcapacity
 GeoParams.MaterialParameters.Solubility.effective_molar_mass
 ```
 
-Note that `ε_g` (exsolved-gas volume fraction) and `X_co2` (CO2 mole fraction of the gas) are typically ODE state variables owned by the solver, not closed algebraically at a point — the closures above are the *entries* to that mass-balance, not a replacement for it.
+Only for pure H2O gas in equilibrium does the exsolved-gas volume fraction `ε_g` close algebraically at a point, through `compute_gas_fraction`. With CO2, `ε_g` and `X_co2` (CO2 mole fraction of the gas) are typically ODE state variables owned by the solver; the closures above are the *entries* to that mass balance, not a replacement for it.

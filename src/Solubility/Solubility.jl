@@ -12,6 +12,7 @@ using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct
 using GeoParams: fastpow, pow_check, @pow
 import ..Units: isdimensional
 using ..MaterialParameters: No_MaterialParam, MaterialParamsInfo
+using ..Density: ThreePhase_Density, compute_density
 import Base.show, GeoParams.param_info
 
 include("../Computations.jl")
@@ -44,7 +45,8 @@ export compute_dissolved, # (m_h2o, m_co2) mass fractions
     SunYao2026_Solubility, # any melt composition, from oxide wt%
     GasMixture, # H2O-CO2 gas-mixture properties
     compute_gas_heatcapacity, # mass-weighted specific heat c_g(X_co2)
-    effective_molar_mass            # m_g(X_co2)
+    effective_molar_mass, # m_g(X_co2)
+    compute_gas_fraction            # equilibrium exsolved H2O gas volume fraction
 
 # Empty routine when no solubility is defined
 compute_dissolved(::No_MaterialParam{_T}; kwargs...) where {_T} = (zero(_T), zero(_T))
@@ -391,6 +393,61 @@ Mass-weighted specific heat of the H2O–CO2 gas mixture; zero at `X_co2 == 0`
     m_g = M_h2o * (1 - X_co2) + M_co2 * X_co2
     return (M_h2o * Cp_h2o * (1 - X_co2) + M_co2 * Cp_co2 * X_co2) * inv(m_g)
 end
+
+# Exsolved gas fraction ------------------------------------------------------
+"""
+    compute_gas_fraction(s::AbstractSolubility, ρ::ThreePhase_Density, args)
+
+Equilibrium volume fraction of exsolved H2O gas in a melt + crystal + gas magma, the
+`ϕ_gas` input of [`ThreePhase_Density`](@ref), [`Suspension`](@ref GeoParams.MaterialParameters.ConstitutiveRelationships.Suspension) and
+[`CriticalPorosityFragmentation`](@ref GeoParams.Fragmentation.CriticalPorosityFragmentation). `args` holds the pressure `P`, the temperature
+`T`, the melt fraction `ϕ` of the condensed (melt + crystal) phases as returned by a
+melting law, and the total water mass fraction `m_h2o_total` of the melt + gas, i.e.
+on a crystal-free basis; crystals hold no water. `args` is also passed to the `ρmelt`
+and `ρgas` laws of `ρ`. Also callable as `compute_gas_fraction(s, ρ; args...)`.
+
+The gas is pure H2O, so the dissolved water mass fraction of the melt is
+``m_{eq} = `` `compute_dissolved(s, P, T, 0)[1]`. The water mass balance of
+Degruyter & Huber (2014, eq. 18) gives the gas mass fraction of the melt + gas,
+```math
+    x_g = \\max\\left(0, \\frac{m_{h2o,total} - m_{eq}}{1 - m_{eq}}\\right),
+```
+and with the crystal volume fraction ``\\phi_x = (1 - \\phi_{gas})(1 - \\phi)`` of
+their melting curve (eq. A.4) the gas volume fraction of the whole magma is
+```math
+    \\phi_{gas} = \\frac{\\phi\\, x_g \\rho_m}{\\phi\\, x_g \\rho_m + (1 - x_g)\\rho_g}.
+```
+Pass `ϕ_gas` together with `ϕ_x = (1 - ϕ_gas) * (1 - ϕ)` to `ThreePhase_Density` and
+`Suspension`.
+
+Undersaturated magma (``m_{h2o,total} \\le m_{eq}``) gives zero without evaluating
+`ρgas`. For the H2O gas density use [`HalbachChatterjee_Density`](@ref GeoParams.MaterialParameters.Density.HalbachChatterjee_Density),
+which is within 0.8 % of IAPWS-95 for 0.1–400 MPa and 600–1200 °C. The result is `NaN` for
+`m_h2o_total` outside ``[0, 1)`` or `ϕ` outside ``[0, 1]``. It is dimensionless and the
+same for dimensional and nondimensionalized laws and inputs.
+
+# Example
+```julia
+ρ = ThreePhase_Density(; ρgas = HalbachChatterjee_Density())
+args = (; P = 1.0e8, T = 1100.0, ϕ = 0.6, m_h2o_total = 0.05)
+ϕ_gas = compute_gas_fraction(SunYao2026_Solubility(), ρ, args)
+ρ_magma = compute_density(ρ, (; args..., ϕ_gas, ϕ_x = (1 - ϕ_gas) * (1 - args.ϕ)))
+```
+
+# References
+- Degruyter, W., Huber, C. (2014), A model for the eruption frequency of upper crustal silicic magma chambers, EPSL 403, 117-130, https://doi.org/10.1016/j.epsl.2014.06.047
+"""
+@inline function compute_gas_fraction(s::AbstractSolubility, ρ::ThreePhase_Density; ϕ, m_h2o_total, P, T, kwargs...)
+    m_eq = compute_dissolved(s, P, T, zero(precision_of(P)))[1]
+    0 <= m_h2o_total < 1 && 0 <= ϕ <= 1 || return oftype(m_eq, NaN)
+    x_g = max((m_h2o_total - m_eq) / (1 - m_eq), zero(m_eq))
+    # A zero gas fraction must not depend on ρgas, which may be NaN where it is undefined.
+    iszero(x_g) && return x_g
+    args = (; P, T, kwargs...)
+    scaled_gas_volume = ϕ * x_g * compute_density(ρ.ρmelt, args)
+    return scaled_gas_volume / (scaled_gas_volume + (1 - x_g) * compute_density(ρ.ρgas, args))
+end
+@inline compute_gas_fraction(s::AbstractSolubility, ρ::ThreePhase_Density, args::NamedTuple) = compute_gas_fraction(s, ρ; args...)
 
 # Shared keyword / NamedTuple entry points -----------------------------------
 @inline function compute_dissolved(s::AbstractSolubility; P = 0.0e0, T = 0.0e0, X_co2 = zero(precision_of(P)), kwargs...)

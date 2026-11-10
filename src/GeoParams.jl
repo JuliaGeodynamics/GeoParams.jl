@@ -435,7 +435,8 @@ export compute_dissolved,
     SunYao2026_Solubility,
     GasMixture,
     compute_gas_heatcapacity,
-    effective_molar_mass
+    effective_molar_mass,
+    compute_gas_fraction
 
 # Water fugacity (Pitzer & Sterner 1994; Shinevar et al. 2015) and water content of olivine
 include("Fugacity/WaterFugacity.jl")
