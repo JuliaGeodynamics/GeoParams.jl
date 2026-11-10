@@ -438,6 +438,11 @@ include("Fugacity/WaterFugacity.jl")
 using .WaterFugacity
 export compute_water_fugacity, compute_water_fugacity_Shinevar, compute_water_content_olivine
 
+# Magma fragmentation criteria (Sparks 1978; Papale 1999)
+include("Fragmentation/Fragmentation.jl")
+using .Fragmentation
+export AbstractFragmentation, CriticalPorosityFragmentation, StrainRateFragmentation, compute_fragmentation
+
 include("Traits/rheology.jl")
 export RheologyTrait
 export islinear, LinearRheologyTrait, NonLinearRheologyTrait

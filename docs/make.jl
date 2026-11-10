@@ -47,6 +47,7 @@ makedocs(;
                 "Density" => "man/density.md",
                 "Solubility" => "man/solubility.md",
                 "Water fugacity" => "man/waterfugacity.md",
+                "Fragmentation" => "man/fragmentation.md",
             ],
             "Constitutive Relationships" => Any[
                 "Creep laws" => "man/creeplaws.md",
