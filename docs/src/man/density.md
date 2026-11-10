@@ -13,6 +13,7 @@ GeoParams.MaterialParameters.Density.GasPyroclast_Density
 GeoParams.MaterialParameters.Density.Melt_DensityX
 GeoParams.MaterialParameters.Density.RedlichKwong_Density
 GeoParams.MaterialParameters.Density.IdealGas_Density
+GeoParams.MaterialParameters.Density.HalbachChatterjee_Density
 GeoParams.MaterialParameters.Density.ThreePhase_Density
 ```
 ## Computational routines

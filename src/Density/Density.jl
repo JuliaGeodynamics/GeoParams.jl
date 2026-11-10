@@ -48,6 +48,7 @@ export compute_density, # calculation routines
     GasPyroclast_Density, # Gas-Pyroclast mixture density
     RedlichKwong_Density, # Modified Redlich-Kwong gas EOS (Huber et al. 2010)
     IdealGas_Density, # Ideal-gas EOS
+    HalbachChatterjee_Density, # H2O gas, empirical Redlich-Kwong EOS (Halbach & Chatterjee 1982)
     ThreePhase_Density, # melt + crystal + gas mixture density
     Melt_DensityX,
     get_α
@@ -449,9 +450,9 @@ end
 """
     RedlichKwong_Density(; coeffs=(-112.528, 127.811, 112.04), T0=273.15K, Tref=1K, Pref=1e5Pa, ρref=1e3kg/m^3)
 
-Modified Redlich–Kwong gas density of Huber et al. (2010), as used by Degruyter
-& Huber (2014). Fitted for H2O gas over roughly ``873 < T < 1173`` K and
-``30 < P < 400`` MPa:
+H2O gas density from the fit of Huber et al. (2010, eq. 7, Fig. 4) to the modified Redlich–Kwong equation of
+Halbach & Chatterjee (1982), as used by Degruyter & Huber (2014); the fit avoids solving the cubic equation and is
+stated for 600–900 °C and 30–400 MPa:
 ```math
     \\rho_g = \\rho_{ref}\\left(a_1\\,\\tau^{-0.381} + a_2\\,\\varpi^{-1.135}
              + a_3\\,\\tau^{-0.411}\\varpi^{0.033}\\right),
@@ -465,6 +466,12 @@ dimensionally homogeneous and nondimensionalizes cleanly: only the reference
 `GeoUnit`s scale, the fitted dimensionless `coeffs` do not. The parameterisation
 ignores gas composition (pseudo-pure H2O), matching the reference.
 
+Against IAPWS-95 (Wagner & Pruß 2002) the fit is within 10 % only above about 120 MPa. At the lower end of its
+stated range, 30 MPa, it is off by +36 % at 600 °C and −35 % at 850 °C; outside that range it is off by −80 % at
+30 MPa and 1000 °C, negative at 1200 °C, and grows without bound as ``P \\to 0``.
+[`HalbachChatterjee_Density`](@ref) evaluates the equation that the fit approximates, in closed form, and is
+within 0.8 % for 0.1–400 MPa and 600–1200 °C.
+
 Returns `NaN` for `T ≤ 273.15K` or `P ≤ 0` (`τ ≤ 0` or `ω ≤ 0`), since
 `τ^(-0.381)`/`τ^(-0.411)` and `ω^(-1.135)` require a positive base: raising to
 those exponents would otherwise throw an opaque low-level `DomainError` about
@@ -473,6 +480,7 @@ complex exponentiation.
 # References
 - Huber C., Bachmann O. , Manga M., Two Competing Effects of Volatiles on Heat Transfer in Crystal-rich Magmas: Thermal Insulation vs Defrosting, Journal of Petrology, 847–867, https://doi.org/10.1093/petrology/egq003
 - Degruyter, W., Huber, C. (2014), A model for the eruption frequency of upper crustal silicic magma chambers, EPSL 403, 117-130, https://doi.org/10.1016/j.epsl.2014.06.047
+- Wagner W., Pruß A. (2002), The IAPWS formulation 1995 for the thermodynamic properties of ordinary water substance for general and scientific use, J. Phys. Chem. Ref. Data 31, 387-535, https://doi.org/10.1063/1.1461829
 """
 struct RedlichKwong_Density{T, U1, U2, U3} <: AbstractDensity{T}
     coeffs::NTuple{3, T}      # dimensionless fit coefficients (Huber et al. 2010)
@@ -562,9 +570,89 @@ function show(io::IO, g::IdealGas_Density)
     return print(io, "Ideal-gas density: ρgas = P/(Rs*T); Rs=$(UnitValue(g.Rs))")
 end
 
+"""
+    HalbachChatterjee_Density()
+
+H2O gas density from the empirical Redlich–Kwong equation of state of Halbach &
+Chatterjee (1982, eq. 3),
+```math
+    P = \\frac{R T}{V - b(P)} - \\frac{a(T)}{\\sqrt{T}\\, V (V + b(P))},
+```
+with ``a(T) = 1.616 \\times 10^8 - 4.989 \\times 10^4\\, T - 7.358 \\times 10^9 / T``
+(eqs. 8, 14) and ``b(P) = (1 + 3.4505 \\times 10^{-4} P + 3.8980 \\times 10^{-9} P^2 - 2.7756 \\times 10^{-15} P^3)
+/ (6.3944 \\times 10^{-2} + 2.3776 \\times 10^{-5} P + 4.5717 \\times 10^{-10} P^2)`` (eqs. 9, 15),
+where ``T`` is in K, ``P`` in bar, ``V`` in cm³/mol and ``R = 83.143`` cm³ bar/(mol K).
+The equation is solved in closed form as the cubic
+``Z^3 - Z^2 + (A - B - B^2) Z - A B = 0`` for the compressibility ``Z = PV/(RT)``,
+with ``A = aP/(R^2 T^{2.5})`` and ``B = bP/(RT)``, and returns ``\\rho = M P/(Z R T)``
+with ``M = 18.0153`` g/mol. The largest root is taken; below the critical
+temperature (647 K) it is the vapor branch even where liquid water is stable.
+
+Against IAPWS-95 (Wagner & Pruß 2002) the density is within 0.8 % for
+0.1–400 MPa and 600–1200 °C (fitted to data at 100–1000 °C and 0.002–5 GPa), and it
+tends to the ideal-gas density as ``P \\to 0``. Below the critical temperature it deviates
+up to ~10 % from IAPWS-95 (e.g. 370 °C and 15 MPa). Invalid inputs (``P \\le 0`` or
+``T \\le 0``) give `NaN`.
+
+The fit's units enter through the reference quantities `Tref = 1K`, `Pref = 1e5Pa`
+(1 bar) and `ρref = 1e3kg/m^3` (1 g/cm³), so the law nondimensionalizes like
+[`RedlichKwong_Density`](@ref); they are not material parameters.
+
+# References
+- Halbach H., Chatterjee N.D. (1982), An empirical Redlich-Kwong-type equation of state for water to 1,000 °C and 200 kbar, Contributions to Mineralogy and Petrology 79, 337-345, https://doi.org/10.1007/BF00371526
+- Wagner W., Pruß A. (2002), The IAPWS formulation 1995 for the thermodynamic properties of ordinary water substance for general and scientific use, J. Phys. Chem. Ref. Data 31, 387-535, https://doi.org/10.1063/1.1461829
+"""
+@with_kw_noshow struct HalbachChatterjee_Density{_T, U1, U2, U3} <: AbstractDensity{_T}
+    Tref::GeoUnit{_T, U1} = 1.0K                # temperature unit of the fit
+    Pref::GeoUnit{_T, U2} = 1.0e5Pa             # pressure unit of the fit (1 bar)
+    ρref::GeoUnit{_T, U3} = 1.0e3kg / m^3       # density unit of M/V (1 g/cm³)
+end
+HalbachChatterjee_Density(args...) = promote_construct(HalbachChatterjee_Density, args...)
+isdimensional(s::HalbachChatterjee_Density) = isdimensional(s.ρref)
+
+function param_info(s::HalbachChatterjee_Density)
+    return MaterialParamsInfo(; Equation = L"P = RT/(V - b(P)) - a(T)/(\sqrt{T} V (V + b(P))),\ \rho = M/V")
+end
+
+@inline function (rho::HalbachChatterjee_Density)(; P = 0.0e0, T = 0.0e0, kwargs...)
+    Tc = precision_of(P)
+    T = convert_precision(Tc, T)
+    @unpack_like P Tc Tref, Pref, ρref = rho
+    θ = NoUnits(T / Tref)          # T in K
+    p = NoUnits(P / Pref)          # P in bar
+    θ > 0 && p > 0 || return ρref * oftype(ustrip(ρref), NaN)
+    R, M = Tc(83.143), Tc(18.0153)
+    a = Tc(1.616e8) - Tc(4.989e4) * θ - Tc(7.358e9) / θ
+    b = (1 + p * (Tc(3.4505e-4) + p * (Tc(3.898e-9) - Tc(2.7756e-15) * p))) /
+        (Tc(6.3944e-2) + p * (Tc(2.3776e-5) + Tc(4.5717e-10) * p))
+    A = a * p / (R^2 * θ^2 * sqrt(θ))
+    B = b * p / (R * θ)
+    # Largest root of Z³ - Z² + c Z - AB = 0, written as t³ + s t + q = 0 with Z = t + 1/3
+    c = A - B - B^2
+    s = c - Tc(1 / 3)
+    q = c / 3 - A * B - Tc(2 / 27)
+    Δ = (q / 2)^2 + (s / 3)^3
+    t = if Δ > 0
+        # Cardano; u is the larger-magnitude cube root, so u - s/(3u) does not cancel
+        u = cbrt(-q / 2 + copysign(sqrt(Δ), -q / 2))
+        u - s / (3u)
+    else
+        r = sqrt(-s / 3)
+        2r * cos(acos(clamp(-q / (2r^3), -1, 1)) / 3)
+    end
+    Z = t + Tc(1 / 3)
+    return ρref * (M * p / (Z * R * θ))
+end
+@inline (s::HalbachChatterjee_Density)(args) = s(; args...)
+@inline compute_density(s::HalbachChatterjee_Density, args) = s(args)
+
+function show(io::IO, g::HalbachChatterjee_Density)
+    return print(io, "H2O gas density, empirical Redlich-Kwong EOS (Halbach & Chatterjee 1982)")
+end
+
 # Three-phase (melt + crystal + gas) mixture density ----------------------
 """
-    ThreePhase_Density(; ρmelt=ConstantDensity(ρ=2300kg/m^3), ρsolid=ConstantDensity(ρ=2600kg/m^3), ρgas=RedlichKwong_Density(), ρ=2400kg/m^3)
+    ThreePhase_Density(; ρmelt=ConstantDensity(ρ=2300kg/m^3), ρsolid=ConstantDensity(ρ=2600kg/m^3), ρgas=IdealGas_Density(), ρ=2400kg/m^3)
 
 Volume-fraction mixture density of a melt + crystal + gas magma (Degruyter &
 Huber 2014):
@@ -578,14 +666,13 @@ same `args` (e.g. `P`, `T`) so an equation-of-state gas density is evaluated in
 place. `ρ` is a dimensional-tracking sentinel.
 
 `ρgas` is only evaluated when `ϕ_gas != 0`: a cell with no exsolved gas never
-depends on the gas closure at all, so a strict EOS like
-[`RedlichKwong_Density`](@ref) (which returns `NaN` outside its calibration
-window) cannot poison a `ϕ_gas=0` cell regardless of `P`, `T`.
+depends on the gas closure at all, so a gas law that returns `NaN` for invalid
+inputs (e.g. `P ≤ 0`) cannot poison a `ϕ_gas=0` cell.
 
 # Arguments
 - `ρmelt`: melt-phase density
 - `ρsolid`: crystal-phase density
-- `ρgas`: gas-phase density (e.g. [`RedlichKwong_Density`](@ref))
+- `ρgas`: gas-phase density (e.g. [`HalbachChatterjee_Density`](@ref) for H2O)
 
 # References
 - Degruyter, W., Huber, C. (2014), A model for the eruption frequency of upper crustal silicic magma chambers, EPSL 403, 117-130, https://doi.org/10.1016/j.epsl.2014.06.047
@@ -607,8 +694,8 @@ end
     ρmelt = compute_density(rho.ρmelt, kwargs)
     ρsolid = compute_density(rho.ρsolid, kwargs)
     # Skip the gas EOS entirely when no gas is present: a zero-weighted term
-    # must not depend on ρgas's domain restrictions (e.g. RedlichKwong_Density
-    # returns NaN outside its calibration window regardless of ϕ_gas).
+    # must not depend on ρgas's domain restrictions (gas laws return NaN for
+    # P ≤ 0).
     ρgas = iszero(ϕ_gas) ? zero(ρmelt) : compute_density(rho.ρgas, kwargs)
     ϕ_m = 1 - ϕ_x - ϕ_gas
     return @muladd ϕ_m * ρmelt + ϕ_gas * ρgas + ϕ_x * ρsolid
@@ -914,7 +1001,7 @@ Returns the phase-fraction-weighted average density at a point, summing each pha
 @inline compute_density_ratio(args::Vararg{Any, N}) where {N} = compute_param_times_frac(compute_density, args...)
 
 # extractor methods
-for type in (ConstantDensity, PT_Density, Compressible_Density, T_Density, MeltDependent_Density, Vector_Density, BubbleFlow_Density, GasPyroclast_Density, RedlichKwong_Density, IdealGas_Density, ThreePhase_Density, Melt_DensityX)
+for type in (ConstantDensity, PT_Density, Compressible_Density, T_Density, MeltDependent_Density, Vector_Density, BubbleFlow_Density, GasPyroclast_Density, RedlichKwong_Density, IdealGas_Density, HalbachChatterjee_Density, ThreePhase_Density, Melt_DensityX)
     @extractors(type, :Density)
 end
 

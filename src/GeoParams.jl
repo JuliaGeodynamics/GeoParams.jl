@@ -182,6 +182,7 @@ export compute_density, # computational routines
     GasPyroclast_Density,
     RedlichKwong_Density,
     IdealGas_Density,
+    HalbachChatterjee_Density,
     ThreePhase_Density,
     Melt_DensityX,
     compute_density_ratio

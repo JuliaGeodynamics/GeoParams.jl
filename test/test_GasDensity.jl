@@ -79,6 +79,52 @@ using ForwardDiff: derivative
     )
     @test ustrip(dimensionalize(ρig_nd, kg / m^3, CharDim)) ≈ ig(; P = 1.0e8, T = 1000.0)
 
+    # Halbach & Chatterjee (1982) H2O gas density --------------------------
+    hc = HalbachChatterjee_Density()
+    @test isbits(hc)
+    @test isdimensional(hc) === true
+    @test param_info(hc).Equation isa LaTeXString
+    @test occursin("Halbach & Chatterjee", sprint(show, hc))
+
+    # (T in K, P in Pa, ρ in kg/m³) from IAPWS-95 (Wagner & Pruß 2002) via the
+    # `iapws` Python package; the largest deviation on 0.1–400 MPa, 600–1200 °C is 0.8 %
+    for (T, P, ρ) in (
+            (873.15, 0.1e6, 0.248269), (873.15, 10.0e6, 26.0566), (873.15, 30.0e6, 87.3767),
+            (873.15, 100.0e6, 374.208), (873.15, 400.0e6, 758.529), (1123.15, 30.0e6, 60.3768),
+            (1123.15, 100.0e6, 212.861), (1273.15, 10.0e6, 17.1261), (1273.15, 400.0e6, 532.797),
+            (1473.15, 100.0e6, 145.496),
+            (573.15, 1.0e6, 3.87615),   # subcritical vapor: three real roots
+        )
+        @test hc(; P, T) ≈ ρ rtol = 0.01
+    end
+    # Halbach & Chatterjee (1982, Appendix A): V = 488.633 cm³/mol at 673.15 K and 100 bar
+    @test hc(; P = 1.0e7, T = 673.15) ≈ 36.869 rtol = 1.0e-4
+    @test compute_density(hc, (; P = 1.0e8, T = 1123.15)) == hc(; P = 1.0e8, T = 1123.15)
+    allocs(f::F, args::Vararg{Any, N}) where {F, N} = (f(args...); @allocated f(args...))
+    @test allocs(compute_density, hc, (; P = 1.0e8, T = 1123.15)) == 0
+
+    # ideal gas as P → 0, with the fit's R = 83.143 cm³ bar/(mol K) and M = 18.0153 g/mol
+    @test hc(; P = 1.0, T = 1000.0) ≈ 1.0 / (8.3143 / 0.0180153 * 1000.0) rtol = 1.0e-7
+
+    @test isnan(hc(; P = 0.0, T = 1000.0))
+    @test isnan(hc(; P = -1.0e5, T = 1000.0))
+    @test isnan(hc(; P = 1.0e8, T = 0.0))
+    @test isnan(hc(; P = 0.0Pa, T = 1000.0K))
+    @test ustrip(kg / m^3, hc(; P = 100.0MPa, T = 1123.15K)) ≈ hc(; P = 1.0e8, T = 1123.15)
+    @test hc(; P = 1.0f8, T = 1123.15f0) isa Float32
+    @test hc(; P = 1.0f8, T = 1123.15f0) ≈ hc(; P = 1.0e8, T = 1123.15) rtol = 1.0e-5
+    @test hc(; P = 1.0f5, T = 873.15f0) ≈ hc(; P = 1.0e5, T = 873.15) rtol = 1.0e-5
+
+    hc_nd = nondimensionalize(hc, CharDim)
+    @test isdimensional(hc_nd) === false
+    ρhc_nd = hc_nd(; P = nondimensionalize(1.0e8Pa, CharDim), T = nondimensionalize(1123.15K, CharDim))
+    @test ustrip(dimensionalize(ρhc_nd, kg / m^3, CharDim)) ≈ hc(; P = 1.0e8, T = 1123.15)
+
+    # as the gas of a three-phase mixture
+    tp_hc = ThreePhase_Density(; ρgas = hc)
+    @test tp_hc(; P = 1.0e8, T = 1123.15, ϕ_gas = 0.2, ϕ_x = 0.3) ≈
+        0.5 * 2300 + 0.2 * hc(; P = 1.0e8, T = 1123.15) + 0.3 * 2600
+
     # Three-phase density --------------------------------------------------
     tp = ThreePhase_Density(;
         ρmelt = ConstantDensity(ρ = 2300kg / m^3),
