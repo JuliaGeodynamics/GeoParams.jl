@@ -130,6 +130,7 @@ include("NonLinearPeierlsCreep.jl")
 include("CustomRheology.jl")
 include("MeltViscosity.jl")
 include("HerschelBulkley.jl")
+include("Suspension.jl")
 
 # Linear viscous rheology ------------------------------------------------
 """

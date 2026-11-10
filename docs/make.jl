@@ -50,6 +50,7 @@ makedocs(;
             ],
             "Constitutive Relationships" => Any[
                 "Creep laws" => "man/creeplaws.md",
+                "Magma suspensions" => "man/suspensions.md",
                 "Custom rheology" => "man/customrheology.md",
                 "Viscosity" => "man/viscosity.md",
                 "Elasticity" => "man/elasticity.md",

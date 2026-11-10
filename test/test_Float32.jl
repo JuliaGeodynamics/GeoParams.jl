@@ -219,6 +219,8 @@ end
             (:meltfraction, :Vector_MeltingParam) => "reads ϕ from a user vector; needs an `index`",
             (:dϕdT, :Vector_MeltingParam) => "precision is that of the user vector",
             (:creep_τII, :NonLinearPeierlsCreep) => "no compute_τII method",
+            (:creep_εII, :Suspension) => "wraps a law; Float32 is tested in test_Suspension.jl",
+            (:creep_τII, :Suspension) => "wraps a law; Float32 is tested in test_Suspension.jl",
         )
         # Scanning GeoParams' own bindings keeps the sweep to this package's laws;
         # `subtypes` would also pick up laws defined by any other loaded package.
