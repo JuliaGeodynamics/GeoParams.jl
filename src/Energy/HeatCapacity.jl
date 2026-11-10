@@ -9,6 +9,7 @@ using Adapt
 using Parameters, LaTeXStrings, Unitful
 using ..Units
 using ..PhaseDiagrams
+using ..Density: ThreePhase_Density, compute_density
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, @extractors, add_extractor_functions, AbstractPhaseDiagramsStruct
 import Base.show, GeoParams.param_info
 import ..Units: isdimensional
@@ -20,6 +21,9 @@ export compute_heatcapacity, # calculation routines
     compute_heatcapacity!, # in-place routine
     ConstantHeatCapacity, # constant
     T_HeatCapacity_Whittington, # T-dependent heat capacity
+    T_HeatCapacity_Moitra, # T-dependent glass/melt heat capacity
+    T_HeatCapacity_Moitra_smoothed, # same, smooth across the glass transition
+    ThreePhase_HeatCapacity, # melt + crystal + gas mixture
     Latent_HeatCapacity, # Implement latent heat by modifying heat capacity
     Vector_HeatCapacity, # Vector
     param_info
@@ -46,9 +50,10 @@ function param_info(s::ConstantHeatCapacity) # info about the struct
 end
 
 # Calculation routine
-@inline function compute_heatcapacity(a::ConstantHeatCapacity; kwargs...)
-    Tc = precision_of(values(kwargs))
-    @unpack_val Tc Cp = a
+# Carries units when `P` or `T` does, as ConstantDensity.
+@inline function compute_heatcapacity(a::ConstantHeatCapacity; P = 0, T = 0, kwargs...)
+    Tc = precision_of((; P, T, kwargs...))
+    @unpack_like (P isa Quantity ? P : T) Tc Cp = a
     return Cp
 end
 
@@ -106,6 +111,152 @@ end
     else
         return (a1 + b1 * T - c1 / T^2) / molmass
     end
+end
+
+# Temperature-dependent heat capacity of glass and melt (Moitra et al. 2018) ----
+"""
+    T_HeatCapacity_Moitra()
+
+Temperature-dependent heat capacity of a basanite glass (``T < T_g``) and melt (``T \\ge T_g``) after
+Moitra et al. (2018), eqs. 3 and 4:
+```math
+    c_p = a_0 + b_0 T + c_0/T^2 + d_0/\\sqrt{T} \\quad (T < T_g), \\qquad
+    c_p = a_1 + b_1 T \\quad (T \\ge T_g)
+```
+with ``T`` in K and
+- a0 = 2020 J/kg/K, b0 = -0.133 J/kg/K², c0 = 4.54e6 J K/kg, d0 = -21100 J/kg/K^(1/2)
+- a1 = 2150 J/kg/K, b1 = -0.5 J/kg/K²
+- Tg = 1000 K
+
+The fit is calibrated on laser-flash data between 298 and 1273 K (their Table 3) and jumps at ``T_g``; above
+1273 K the melt branch is extrapolated. ``c_p`` decreases above ``T_g`` because the sample crystallizes during the
+measurement (Moitra et al. 2018, p. 3627). [`T_HeatCapacity_Moitra_smoothed`](@ref GeoParams.MaterialParameters.HeatCapacity.T_HeatCapacity_Moitra_smoothed) replaces the jump by a smooth
+transition.
+
+# References
+- Moitra, P., Sonder, I., Valentine, G. A. (2018), Effects of size and temperature-dependent thermal conductivity on the cooling of pyroclasts in air, G-cubed 19, 3623-3636, https://doi.org/10.1029/2018GC007510
+"""
+@with_kw_noshow struct T_HeatCapacity_Moitra{T, U1, U2, U3, U4, U5} <: AbstractHeatCapacity{T}
+    a0::GeoUnit{T, U1} = 2020.0J / kg / K               # glass (T < Tg)
+    b0::GeoUnit{T, U2} = -0.133J / kg / K^2
+    c0::GeoUnit{T, U3} = 4.54e6J * K / kg
+    d0::GeoUnit{T, U4} = -21100.0J / kg / K^(1 // 2)
+    a1::GeoUnit{T, U1} = 2150.0J / kg / K               # melt (T ≥ Tg)
+    b1::GeoUnit{T, U2} = -0.5J / kg / K^2
+    Tg::GeoUnit{T, U5} = 1000.0K                        # glass transition temperature
+end
+T_HeatCapacity_Moitra(args...) = promote_construct(T_HeatCapacity_Moitra, args...)
+
+function param_info(s::T_HeatCapacity_Moitra)
+    return MaterialParamsInfo(; Equation = L"c_p = a_0 + b_0 T + c_0/T^2 + d_0/\sqrt{T}\ (T < T_g);\ c_p = a_1 + b_1 T")
+end
+
+@inline function compute_heatcapacity(a::T_HeatCapacity_Moitra; T, kwargs...)
+    Tc = precision_of(T)
+    @unpack_like T Tc a0, b0, c0, d0, a1, b1, Tg = a
+    return T < Tg ? a0 + b0 * T + c0 / T^2 + d0 / sqrt(T) : a1 + b1 * T
+end
+
+function show(io::IO, g::T_HeatCapacity_Moitra)
+    return print(io, "T-dependent glass/melt heat capacity following Moitra et al. (2018), Tg=$(UnitValue(g.Tg))")
+end
+
+"""
+    T_HeatCapacity_Moitra_smoothed()
+
+[`T_HeatCapacity_Moitra`](@ref GeoParams.MaterialParameters.HeatCapacity.T_HeatCapacity_Moitra) with the jump at ``T_g`` replaced by a smooth transition of width ``\\Delta T_g``:
+```math
+    c_p = (1 - H)\\, c_{p,glass} + H\\, c_{p,melt}, \\qquad
+    H = \\frac{1}{1 + \\exp\\left(-4 (T - T_g)/\\Delta T_g\\right)}
+```
+where ``c_{p,glass}`` and ``c_{p,melt}`` are the glass and melt branches of `T_HeatCapacity_Moitra` evaluated at
+``T``. ``H`` is the smoothed Heaviside step of [`SmoothMelting`](@ref GeoParams.MeltingParam.SmoothMelting) with ``k = 2/\\Delta T_g``, centered at
+``T_g``; it rises from 0.018 at ``T_g - \\Delta T_g`` to 0.982 at ``T_g + \\Delta T_g``, i.e. from 5 % to 95 %
+over about ``1.5 \\Delta T_g``. The default ``\\Delta T_g = 20`` K keeps both branches within about 15 K of ``T_g``.
+"""
+@with_kw_noshow struct T_HeatCapacity_Moitra_smoothed{T, U1, U2, U3, U4, U5} <: AbstractHeatCapacity{T}
+    a0::GeoUnit{T, U1} = 2020.0J / kg / K               # glass
+    b0::GeoUnit{T, U2} = -0.133J / kg / K^2
+    c0::GeoUnit{T, U3} = 4.54e6J * K / kg
+    d0::GeoUnit{T, U4} = -21100.0J / kg / K^(1 // 2)
+    a1::GeoUnit{T, U1} = 2150.0J / kg / K               # melt
+    b1::GeoUnit{T, U2} = -0.5J / kg / K^2
+    Tg::GeoUnit{T, U5} = 1000.0K                        # glass transition temperature
+    ΔTg::GeoUnit{T, U5} = 20.0K                         # width of the transition
+end
+T_HeatCapacity_Moitra_smoothed(args...) = promote_construct(T_HeatCapacity_Moitra_smoothed, args...)
+
+function param_info(s::T_HeatCapacity_Moitra_smoothed)
+    return MaterialParamsInfo(; Equation = L"c_p = (1 - H) c_{p,glass} + H c_{p,melt};\ H = 1/(1 + \exp(-4 (T - T_g)/\Delta T_g))")
+end
+
+@inline function compute_heatcapacity(a::T_HeatCapacity_Moitra_smoothed; T, kwargs...)
+    Tc = precision_of(T)
+    @unpack_like T Tc a0, b0, c0, d0, a1, b1, Tg, ΔTg = a
+    H = inv(1 + exp(-4 * (T - Tg) / ΔTg))
+    return (1 - H) * (a0 + b0 * T + c0 / T^2 + d0 / sqrt(T)) + H * (a1 + b1 * T)
+end
+
+function show(io::IO, g::T_HeatCapacity_Moitra_smoothed)
+    return print(io, "T-dependent glass/melt heat capacity following Moitra et al. (2018), smoothed: Tg=$(UnitValue(g.Tg)), ΔTg=$(UnitValue(g.ΔTg))")
+end
+
+# Mass-weighted heat capacity of a melt + crystal + gas magma ---------------
+"""
+    ThreePhase_HeatCapacity(; ρ=ThreePhase_Density(), Cpmelt=T_HeatCapacity_Moitra(), Cpsolid=T_HeatCapacity_Whittington(), Cpgas=ConstantHeatCapacity(Cp=3880J/kg/K))
+
+Specific heat capacity of a melt + crystal + gas magma, the mass-weighted mean of the phase heat capacities
+(Heap et al. 2020, eq. 3, extended from two to three phases):
+```math
+    c_p = \\frac{\\phi_m \\rho_m c_{p,m} + \\phi_x \\rho_x c_{p,x} + \\phi_{gas} \\rho_{gas} c_{p,gas}}
+               {\\phi_m \\rho_m + \\phi_x \\rho_x + \\phi_{gas} \\rho_{gas}},
+    \\qquad \\phi_m = 1 - \\phi_x - \\phi_{gas}
+```
+so that ``\\rho c_p``, with ``\\rho`` from [`ThreePhase_Density`](@ref GeoParams.MaterialParameters.Density.ThreePhase_Density),
+is the volume-weighted sum of the phase values ``\\rho_i c_{p,i}``.
+
+The phase densities come from the sub-laws of `ρ`, so the same `ThreePhase_Density` describes the magma in the
+momentum and energy equations. The gas and crystal volume fractions `ϕ_gas`, `ϕ_x` are passed at runtime, as for
+`ThreePhase_Density`; all sub-laws receive the remaining arguments (e.g. `P`, `T`). The gas laws are only evaluated
+when `ϕ_gas != 0`. The result is `NaN` unless ``\\phi_x \\ge 0``, ``\\phi_{gas} \\ge 0`` and ``\\phi_x + \\phi_{gas} \\le 1``.
+
+The default gas heat capacity is that of H2O used by Degruyter & Huber (2014).
+
+# References
+- Heap, M. J., et al. (2020), The thermal properties of porous andesite, JVGR 398, 106901, https://doi.org/10.1016/j.jvolgeores.2020.106901
+- Degruyter, W., Huber, C. (2014), A model for the eruption frequency of upper crustal silicic magma chambers, EPSL 403, 117-130, https://doi.org/10.1016/j.epsl.2014.06.047
+"""
+struct ThreePhase_HeatCapacity{T, D <: ThreePhase_Density{T}, S1 <: AbstractHeatCapacity, S2 <: AbstractHeatCapacity, S3 <: AbstractHeatCapacity} <: AbstractHeatCapacity{T}
+    ρ::D            # phase densities
+    Cpmelt::S1
+    Cpsolid::S2
+    Cpgas::S3
+end
+function ThreePhase_HeatCapacity(;
+        ρ = ThreePhase_Density(), Cpmelt = T_HeatCapacity_Moitra(), Cpsolid = T_HeatCapacity_Whittington(),
+        Cpgas = ConstantHeatCapacity(Cp = 3880.0J / kg / K)
+    )
+    return ThreePhase_HeatCapacity(ρ, Cpmelt, Cpsolid, Cpgas)
+end
+
+function param_info(s::ThreePhase_HeatCapacity)
+    return MaterialParamsInfo(; Equation = L"c_p = \sum_i \phi_i \rho_i c_{p,i} / \sum_i \phi_i \rho_i")
+end
+
+@inline function compute_heatcapacity(a::ThreePhase_HeatCapacity; ϕ_gas = 0, ϕ_x = 0, kwargs...)
+    ρm, ρx = compute_density(a.ρ.ρmelt, kwargs), compute_density(a.ρ.ρsolid, kwargs)
+    cpm, cpx = compute_heatcapacity(a.Cpmelt, kwargs), compute_heatcapacity(a.Cpsolid, kwargs)
+    ϕ_m = 1 - ϕ_x - ϕ_gas
+    (ϕ_x >= 0 && ϕ_gas >= 0 && ϕ_m >= 0) || return cpm * precision_of(cpm)(NaN)
+    ρcp = ϕ_m * ρm * cpm + ϕ_x * ρx * cpx
+    ρ = ϕ_m * ρm + ϕ_x * ρx
+    iszero(ϕ_gas) && return ρcp / ρ
+    ρg = compute_density(a.ρ.ρgas, kwargs)
+    return (ρcp + ϕ_gas * ρg * compute_heatcapacity(a.Cpgas, kwargs)) / (ρ + ϕ_gas * ρg)
+end
+
+function show(io::IO, g::ThreePhase_HeatCapacity)
+    return print(io, "Three-phase mass-weighted heat capacity: Cpmelt=$(g.Cpmelt); Cpsolid=$(g.Cpsolid); Cpgas=$(g.Cpgas)")
 end
 
 # LatentHeat by modifying heat capacity  ---------------------------------
@@ -202,7 +353,7 @@ Computes T-dependent heat capacity in-place
 # function compute_heatcapacity!(Cp_array::AbstractArray{_T, N},s::T_HeatCapacity_Whittington{_T}; T::AbstractArray{_T, N}, kwargs...) where {_T,N} end
 
 # add methods programmatically
-for myType in (:ConstantHeatCapacity, :T_HeatCapacity_Whittington, :Latent_HeatCapacity, :Vector_HeatCapacity)
+for myType in (:ConstantHeatCapacity, :T_HeatCapacity_Whittington, :T_HeatCapacity_Moitra, :T_HeatCapacity_Moitra_smoothed, :ThreePhase_HeatCapacity, :Latent_HeatCapacity, :Vector_HeatCapacity)
     @eval begin
         #(s::$(myType))(args) = s(; args...)
         compute_heatcapacity(s::$(myType), args) = compute_heatcapacity(s; args...)
@@ -239,6 +390,9 @@ Returns the heat capacity `Cp` at any temperature `T` and pressure `P` using any
 Currently available:
 - ConstantHeatCapacity
 - T\\_HeatCapacity_Whittington
+- T\\_HeatCapacity_Moitra
+- T\\_HeatCapacity_Moitra\\_smoothed
+- ThreePhase\\_HeatCapacity
 - Latent_HeatCapacity
 
 # Example
@@ -305,7 +459,7 @@ compute_heatcapacity(MatParam, arg, args::Vararg{Any, N}) where {N} = compute_pa
 compute_heatcapacity!(args::Vararg{Any, N}) where {N} = compute_param!(compute_heatcapacity, args...)
 
 # extractor methods
-for type in (ConstantHeatCapacity, T_HeatCapacity_Whittington, Latent_HeatCapacity, Vector_HeatCapacity)
+for type in (ConstantHeatCapacity, T_HeatCapacity_Whittington, T_HeatCapacity_Moitra, T_HeatCapacity_Moitra_smoothed, ThreePhase_HeatCapacity, Latent_HeatCapacity, Vector_HeatCapacity)
     @extractors(type, :HeatCapacity)
 end
 

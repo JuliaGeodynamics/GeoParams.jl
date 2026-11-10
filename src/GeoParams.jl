@@ -343,7 +343,7 @@ export Rutile,
 # Energy parameters: Heat Capacity, Thermal conductivity, latent heat, radioactive heat
 using .MaterialParameters.HeatCapacity
 export compute_heatcapacity,
-    compute_heatcapacity!, ConstantHeatCapacity, T_HeatCapacity_Whittington, Latent_HeatCapacity, Vector_HeatCapacity
+    compute_heatcapacity!, ConstantHeatCapacity, T_HeatCapacity_Whittington, T_HeatCapacity_Moitra, T_HeatCapacity_Moitra_smoothed, ThreePhase_HeatCapacity, Latent_HeatCapacity, Vector_HeatCapacity
 
 using .MaterialParameters.Conductivity
 export compute_conductivity,
@@ -352,6 +352,11 @@ export compute_conductivity,
     T_Conductivity_Whittington,
     T_Conductivity_Whittington_parameterised,
     TP_Conductivity,
+    T_Conductivity_Moitra,
+    T_Conductivity_Moitra_smoothed,
+    IAPWS_H2O_Conductivity,
+    GasMixture_Conductivity,
+    Maxwell_Conductivity,
     Set_TP_Conductivity
 
 using .MaterialParameters.LatentHeat

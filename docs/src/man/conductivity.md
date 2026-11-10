@@ -8,6 +8,11 @@ GeoParams.MaterialParameters.Conductivity.T_Conductivity_Whittington
 GeoParams.MaterialParameters.Conductivity.T_Conductivity_Whittington_parameterised
 GeoParams.MaterialParameters.Conductivity.TP_Conductivity
 GeoParams.MaterialParameters.Conductivity.Set_TP_Conductivity
+GeoParams.MaterialParameters.Conductivity.T_Conductivity_Moitra
+GeoParams.MaterialParameters.Conductivity.T_Conductivity_Moitra_smoothed
+GeoParams.MaterialParameters.Conductivity.IAPWS_H2O_Conductivity
+GeoParams.MaterialParameters.Conductivity.GasMixture_Conductivity
+GeoParams.MaterialParameters.Conductivity.Maxwell_Conductivity
 ```
 ## Computational routines
 To compute, use this:
