@@ -220,13 +220,13 @@ end
     return xx, yy, xy
 end
 
+# from Anton's talk
 """
     rotate_elastic_stress3D(ω, τ::T, dt) where T
 
 Tri-dimensional rotation of the elastic stress where τ is in the Voig notation and
 ω = [duz/dy - duy/dz, dux/dz - duz/dx, duy/dx - dux/dy]
 """
-# from Anton's talk
 @inline Base.@propagate_inbounds function rotate_elastic_stress3D(ωi, τ, dt)
     # vorticity
     ω = √(sum(x^2 for x in ωi))
