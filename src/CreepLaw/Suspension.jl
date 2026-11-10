@@ -92,7 +92,11 @@ struct IshiiZuber1979_Bubbles <: AbstractRelativeViscosity end
     return inv(1 - ϕ)
 end
 
-@inline compute_relative_viscosity(::Nothing, ϕ) = one(float(ϕ))
+@inline function compute_relative_viscosity(::Nothing, ϕ)
+    ϕ = float(ϕ)
+    0 <= ϕ <= 1 || return oftype(ϕ, NaN)
+    return one(ϕ)
+end
 
 """
     AbstractRateDependentViscosity
@@ -189,7 +193,8 @@ Equivalently, the suspension is a power-law fluid,
 ``a = 0.06`` to Stromboli and Etna basalts with ``0.07 \\le \\phi_x \\le 0.27``, mean aspect ratios 5.6–7.3 and
 shear rates 0.02–2.2 s⁻¹ in a concentric-cylinder viscometer. That shear rate of simple shear is
 ``\\dot{\\gamma} = 2\\dot{\\varepsilon}_{II}``; in [`Suspension`](@ref) it is the shear rate of the whole suspension.
-The default aspect ratio is the representative value of their Fig. 10b. ``\\eta_r`` is `NaN` outside
+The default aspect ratio is the representative value of their Fig. 10b. ``\\eta_r`` depends on ``|\\dot{\\gamma}|`` and is
+held at its value at ``|\\dot{\\gamma}| = 10^{-30}\\,\\dot{\\gamma}_0`` below that rate, so it is finite at ``\\dot{\\gamma} = 0``. It is `NaN` outside
 ``0 \\le \\phi_x \\le \\phi_m``.
 
 # Example
@@ -224,9 +229,11 @@ Vona2011_Crystals(; aspect_ratio = 6.5, a = 0.06) = Vona2011_Crystals(Mueller201
     ϕ_max, a = convert(Tc, f.ϕ_max), convert(Tc, f.a)
     0 <= ϕ <= ϕ_max || return Tc(NaN), Tc(NaN)
     x = 1 - ϕ / ϕ_max
-    # the floor keeps η_r finite at γ̇ = 0, so that η_r γ̇ vanishes there
-    ηr = x^(-2 * (1 - a * log10(max(γ̇ / γ̇0, floatmin(Tc)))))
-    return ηr, 2 * a * log(x) / log(Tc(10))
+    # η_r depends on |γ̇|, so τ(γ̇) is odd. Below |γ̇| / γ̇0 = 1e-30, far below geological rates, η_r is
+    # constant: it stays finite at γ̇ = 0, so that η_r γ̇ vanishes there, with the same value in every precision.
+    y = abs(γ̇) / γ̇0
+    y > Tc(1.0e-30) || return x^(-2 * (1 - a * log10(Tc(1.0e-30)))), zero(Tc)
+    return x^(-2 * (1 - a * log10(y))), 2 * a * log(x) / log(Tc(10))
 end
 
 """
@@ -269,7 +276,8 @@ Truby et al. (2015, eq. 3.2), the crystals are suspended in the bubbly melt:
     \\qquad \\phi_b = \\frac{\\phi_\\mathrm{gas}}{1 - \\phi_x},
 ```
 where ``\\phi_b`` is the gas fraction of the bubbly melt (eqs 3.4, 3.5 and 3.7), so a Newtonian melt viscosity
-``\\eta_\\mathrm{melt}`` becomes ``\\eta = \\eta_\\mathrm{melt}\\,\\eta_{r,x}\\,\\eta_{r,g}``. Truby et al. validate this
+``\\eta_\\mathrm{melt}`` becomes ``\\eta = \\eta_\\mathrm{melt}\\,\\eta_{r,x}\\,\\eta_{r,g}``. A melt law with stress exponent
+``n`` is evaluated at ``\\eta_{r,x}\\eta_{r,g}\\,\\dot{\\varepsilon}_{II}``, so its viscosity grows by ``(\\eta_{r,x}\\eta_{r,g})^{1/n}``. Truby et al. validate this
 for spherical particles in the Maron–Pierce law and undeformed bubbles ([`IshiiZuber1979_Bubbles`](@ref)) up to
 ``\\phi_x \\approx 0.5`` and ``\\phi_b \\approx 0.3``. `crystals` and `bubbles` are relative viscosities such as
 [`Roscoe1952_Crystals`](@ref), [`Mueller2010_Crystals`](@ref) and [`IshiiZuber1979_Bubbles`](@ref); `nothing` means no effect.
@@ -311,6 +319,8 @@ struct Suspension{T, L <: AbstractCreepLaw{T}, X, G} <: AbstractCreepLaw{T}
         end
         crystals isa AbstractCapillaryViscosity &&
             throw(ArgumentError("Suspension: crystals cannot depend on the capillary number, got $crystals"))
+        bubbles isa AbstractRateDependentViscosity && !(bubbles isa AbstractCapillaryViscosity) &&
+            throw(ArgumentError("Suspension: rate-dependent bubbles must depend on the capillary number, got $bubbles"))
         return new{T, typeof(law), typeof(crystals), typeof(bubbles)}(law, crystals, bubbles)
     end
 end

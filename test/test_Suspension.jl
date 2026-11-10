@@ -235,7 +235,7 @@ using GeoParams
         a = (; T = 1400.0, ϕ_x = 0.2, ϕ_gas = 0.1)
         @test isbits(law)
         @test_throws "depends on the strain rate" rv(law; a...)
-        @test_throws "depends on the strain rate" compute_τII(Suspension(melt; bubbles = V), 1.0; a...)
+        @test_throws "rate-dependent bubbles must depend on the capillary number" Suspension(melt; bubbles = V)
         for ε in (1.0e-6, 1.0e-2, 1.0)
             # η_r,x is evaluated at the shear rate 2ε̇ of the suspension
             τ_ε = compute_τII(law, ε; a...)
@@ -275,6 +275,22 @@ using GeoParams
         sus = Suspension(LinearViscous(η = 1.0e5Pa * s); crystals = Vona2011_Crystals(), bubbles = Mader2013_Bubbles())
         a = (; ϕ_x = 0.2, ϕ_gas = 0.3)
         @test compute_εII(sus, -1.0e4; a...) ≈ -compute_εII(sus, 1.0e4; a...) rtol = 1.0e-12
+        # τ(ε̇) is odd, so compute_τII and compute_εII stay inverses for negative strain rates
+        for ε in (1.0e-3, 1.0)
+            @test compute_τII(sus, -ε; a...) ≈ -compute_τII(sus, ε; a...) rtol = 1.0e-12
+            @test compute_εII(sus, compute_τII(sus, -ε; a...); a...) ≈ -ε rtol = 1.0e-10
+        end
+    end
+
+    @testset "Vona et al. (2011) at zero shear rate" begin
+        V = Vona2011_Crystals()
+        rv = compute_relative_viscosity
+        # η_r is held below |γ̇| = 1e-30 γ̇0, with the same value in Float32 and Float64
+        @test rv(V, 0.2, 0.0) == rv(V, 0.2, 1.0e-40) == rv(V, 0.2, 1.0e-30)
+        @test rv(V, 0.2f0, 0.0f0) ≈ rv(V, 0.2, 0.0) rtol = 1.0e-5
+        sus = Suspension(LinearViscous(η = 1.0e5Pa * s); crystals = V)
+        a = (; ϕ_x = 0.2, ϕ_gas = 0.0)
+        @test dτII_dεII(sus, 0.0; a...) ≈ 2 * 1.0e5 * rv(V, 0.2, 0.0) rtol = 1.0e-12
     end
 
     @testset "invalid parameters" begin
@@ -286,6 +302,9 @@ using GeoParams
         @test_throws "n must be positive" Roscoe1952_Crystals(n = 0)
         @test_throws "must be relative viscosities or nothing" Suspension(melt; crystals = 0.6)
         @test_throws "crystals cannot depend on the capillary number" Suspension(melt; crystals = Mader2013_Bubbles())
+        # fractions are checked even without crystals or bubbles
+        @test isnan(compute_relative_viscosity(Suspension(melt; crystals = Roscoe1952_Crystals()); ϕ_x = 0.5, ϕ_gas = 0.9))
+        @test isnan(compute_relative_viscosity(Suspension(melt; bubbles = IshiiZuber1979_Bubbles()); ϕ_x = -0.1, ϕ_gas = 0.1))
         @test_throws "bubble radius r must be positive" Mader2013_Bubbles(r = 0m)
         @test_throws "surface tension Γ must be positive" Mader2013_Bubbles(Γ = -1J / m^2)
     end
