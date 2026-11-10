@@ -57,6 +57,10 @@ pass through so that they keep promoting the result to their own type.
     convert_precision(_numtype(T), ustrip(x)) * unit(x)
 @inline convert_precision(::Type{T}, x::Tuple) where {T} =
     map(y -> convert_precision(T, y), x)
+# A separate method for flat tuples keeps nested tuples (coefficient tables) inferable:
+# Julia 1.10 widens the self-recursive `Tuple` method above to `Any` and allocates.
+@inline convert_precision(::Type{T}, x::Tuple{Vararg{Union{AbstractFloat, Integer}}}) where {T} =
+    map(y -> convert(T, y), x)
 
 # A unitful eltype, as of an in-place destination, selects its numeric type.
 @inline _numtype(::Type{<:Quantity{T}}) where {T} = T
