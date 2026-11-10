@@ -96,6 +96,84 @@ const No_MaterialParam = GeoParams.MaterialParameters.No_MaterialParam
     # zero rather than handed back as an unphysical mass fraction
     @test compute_dissolved(m, 3.0e7, 1000.0, 0.9)[1] == 0.0
 
+    # Sun & Yao (2026) -----------------------------------------------------
+    sy = SunYao2026_Solubility()
+    @test isbits(sy)
+    @test isdimensional(sy) === true
+    @test param_info(sy).Equation isa LaTeXString
+    @test occursin("Sun & Yao", sprint(show, sy))
+    @test sum(sy.X) ≈ 1
+
+    # eq. 7 by hand: X_Na2O = 0.04, X_Al2O3 = 0.087, 2000 bar, 1100 K, pure H2O gas
+    # gives 4.0 wt% molecular H2O + 2.0 wt% hydroxyl
+    sy_hand = SunYao2026_Solubility((0, 0, 0.087, 0, 0, 0, 0.04, 0, 0), sy.a, sy.b, 1.0e5Pa, 1.0K)
+    @test compute_dissolved(sy_hand, 2.0e8, 1100.0, 0.0)[1] ≈ 0.06 rtol = 0.01
+
+    # rhyolite values reported by Sun & Yao (2026) for a similar rhyolite:
+    # ~16-17 wt% H2O at 10 kbar and 900 °C (Fig. 5a), reduced by up to ~20 % at 1200 °C (sect. 4.1)
+    mh_900 = compute_dissolved(sy, 1.0e9, 1173.15, 0.0)[1]
+    @test 0.15 < mh_900 < 0.18
+    @test 0.8 < compute_dissolved(sy, 1.0e9, 1473.15, 0.0)[1] / mh_900 < 1
+    # pure CO2 gas: < 10 ppm at 10 bar, ~0.4 wt% at 10 kbar (sect. 4.1, Fig. 5c)
+    @test compute_dissolved(sy, 1.0e6, 1173.15, 1.0)[2] < 1.0e-5
+    @test 0.003 < compute_dissolved(sy, 1.0e9, 1173.15, 1.0)[2] < 0.006
+    # 4 wt% H2O + 0.1 wt% CO2 saturates at ~3 kbar with a CO2-rich gas (sect. 4.2)
+    let X = find_Xco2(sy, 3.0e8, 1173.15, 0.04)
+        @test 0.5 < X < 0.7
+        @test compute_dissolved(sy, 3.0e8, 1173.15, X)[2] ≈ 0.001 rtol = 0.2
+    end
+
+    # pure H2O gas dissolves no CO2, pure CO2 gas no H2O
+    @test compute_dissolved(sy, 2.0e8, 1173.15, 0.0)[2] == 0.0
+    @test compute_dissolved(sy, 2.0e8, 1173.15, 1.0)[1] == 0.0
+    # and their P and T derivatives are finite, with exact zeros for the absent species
+    for ∂ in (∂dissolved_∂P, ∂dissolved_∂T)
+        let d0 = ∂(sy, 2.0e8, 1173.15, 0.0), d1 = ∂(sy, 2.0e8, 1173.15, 1.0)
+            @test isfinite(d0[1]) && d0[2] == 0.0
+            @test d1[1] == 0.0
+            @test d1[2] ≈ ∂(sy, 2.0e8, 1173.15, prevfloat(1.0))[2] rtol = 1.0e-6
+        end
+    end
+    # negative partial pressures are outside the domain
+    @test_throws DomainError compute_dissolved(sy, 2.0e8, 1173.15, 1.1)
+    @test_throws DomainError compute_dissolved(sy, 2.0e8, 1173.15, -0.1)
+
+    sy_ref = compute_dissolved(sy, 2.0e8, 1173.15, 0.3)
+    @test all(ustrip.(compute_dissolved(sy, 200.0MPa, 1173.15K, 0.3)) .≈ sy_ref)
+    sy_nd = nondimensionalize(sy, CharDim)
+    @test isdimensional(sy_nd) === false
+    @test all(compute_dissolved(sy_nd, nondimensionalize(2.0e8Pa, CharDim), nondimensionalize(1173.15K, CharDim), 0.3) .≈ sy_ref)
+    sy32 = convert_precision(Float32, sy)
+    @test @inferred(compute_dissolved(sy32, 2.0f8, 1173.15f0, 0.3f0)) isa Tuple{Float32, Float32}
+    @test all(isapprox.(compute_dissolved(sy32, 2.0f8, 1173.15f0, 0.3f0), sy_ref; rtol = 1.0e-5))
+
+    @test_throws "oxd_wt must hold 9 oxide wt%" SunYao2026_Solubility(; oxd_wt = (77.0, 0.1, 12.8))
+    @test_throws "oxide wt% must be non-negative" SunYao2026_Solubility(; oxd_wt = (77.0, 0.1, 12.8, 0.8, 0.1, 0.6, -4.0, 4.6, 0.0))
+    @test_throws "oxide wt% must not all be zero" SunYao2026_Solubility(; oxd_wt = ntuple(_ -> 0.0, 9))
+
+    # Saturation pressure: inverse of compute_dissolved in (P, X_co2) -----
+    for law in (s, m, sy), P in (1.0e8, 2.5e8, 4.0e8), X in (0.0, 0.3, 0.6, 0.9), T in (1123.15, 1373.15)
+        Pi, Xi = compute_saturation_pressure(law, compute_dissolved(law, P, T, X)..., T)
+        @test Pi ≈ P rtol = 1.0e-8
+        @test Xi ≈ X atol = 1.0e-8
+    end
+    # pure CO2 gas (Mafic_Solubility dissolves H2O even then, so it has no m_h2o = 0 inverse)
+    for law in (s, sy)
+        @test all(compute_saturation_pressure(law, 0.0, compute_dissolved(law, 2.0e8, 1173.15, 1.0)[2], 1173.15) .≈ (2.0e8, 1.0))
+    end
+    # 4 wt% H2O + 0.1 wt% CO2 saturates at ~3 kbar with a CO2-rich gas (Sun & Yao 2026, sect. 4.2)
+    let (P, X) = compute_saturation_pressure(sy, 0.04, 0.001, 1173.15)
+        @test 2.6e8 < P < 2.9e8
+        @test 0.5 < X < 0.6
+    end
+    @test all(compute_saturation_pressure(sy_nd, compute_dissolved(sy, 2.0e8, 1173.15, 0.3)..., nondimensionalize(1173.15K, CharDim)) .≈ (nondimensionalize(2.0e8Pa, CharDim), 0.3))
+    @test @inferred(compute_saturation_pressure(sy32, compute_dissolved(sy32, 2.0f8, 1173.15f0, 0.3f0)..., 1173.15f0)) isa Tuple{Float32, Float32}
+    @test all(isapprox.(compute_saturation_pressure(sy32, compute_dissolved(sy32, 2.0f8, 1173.15f0, 0.3f0)..., 1173.15f0), (2.0e8, 0.3); rtol = 1.0e-4))
+    @test_throws DomainError compute_saturation_pressure(sy, -0.01, 0.001, 1173.15)
+    @test_throws DomainError compute_saturation_pressure(sy, 0.0, 0.0, 1173.15)
+    # the mafic H2O polynomial exceeds 1 wt% at any pressure at 1100 °C
+    @test_throws "no convergence" compute_saturation_pressure(m, 0.005, 0.0, 1373.15)
+
     # empty-parameter fallback
     @test compute_dissolved(No_MaterialParam()) === (0.0, 0.0)
 
@@ -173,4 +251,17 @@ const No_MaterialParam = GeoParams.MaterialParameters.No_MaterialParam
     g_nd = nondimensionalize(g, CharDim)
     @test isdimensional(g_nd) === false
     @test compute_gas_heatcapacity(g_nd, 0.0) == 0.0
+end
+
+@testset "SunYao2026_Solubility pinned values" begin
+    # independent recomputation of Sun & Yao (2026) eqs. 7–8 and Table 1 (default rhyolite, 900 °C)
+    s, T = SunYao2026_Solubility(), 1173.15
+    @test compute_dissolved(s, 1.0e9, T, 0.0)[1] ≈ 0.16884 rtol = 1.0e-4
+    @test compute_dissolved(s, 1.0e9, T, 1.0)[2] ≈ 4.5693e-3 rtol = 1.0e-4
+    m = compute_dissolved(s, 2.0e8, T, 0.3)
+    @test m[1] ≈ 0.044631 rtol = 1.0e-4
+    @test m[2] ≈ 4.8731e-4 rtol = 1.0e-4
+    P, X = compute_saturation_pressure(s, 0.04, 0.001, T)
+    @test P ≈ 2.765e8 rtol = 1.0e-4
+    @test X ≈ 0.54339 rtol = 1.0e-4
 end
