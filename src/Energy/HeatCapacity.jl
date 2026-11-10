@@ -220,7 +220,9 @@ momentum and energy equations. The gas and crystal volume fractions `ϕ_gas`, `�
 `ThreePhase_Density`; all sub-laws receive the remaining arguments (e.g. `P`, `T`). The gas laws are only evaluated
 when `ϕ_gas != 0`. The result is `NaN` unless ``\\phi_x \\ge 0``, ``\\phi_{gas} \\ge 0`` and ``\\phi_x + \\phi_{gas} \\le 1``.
 
-The default gas heat capacity is that of H2O used by Degruyter & Huber (2014).
+The default gas heat capacity is that of pure H2O used by Degruyter & Huber (2014); it ignores the `X_co2` that
+[`GasMixture_Conductivity`](@ref GeoParams.MaterialParameters.Conductivity.GasMixture_Conductivity) takes. The default
+`Cpmelt` decreases above ``T_g`` because the sample of Moitra et al. (2018) crystallizes (see [`T_HeatCapacity_Moitra`](@ref)).
 
 # References
 - Heap, M. J., et al. (2020), The thermal properties of porous andesite, JVGR 398, 106901, https://doi.org/10.1016/j.jvolgeores.2020.106901

@@ -486,7 +486,10 @@ The density `ρ` and heat capacity `Cp` are laws evaluated with the same argumen
 the model while keeping the measured diffusivity. The defaults are the sample density and heat capacity of Moitra et
 al. (2018), with which ``k`` reproduces their Table 3 (298-1273 K). ``k`` jumps at ``T_g``;
 [`T_Conductivity_Moitra_smoothed`](@ref GeoParams.MaterialParameters.Conductivity.T_Conductivity_Moitra_smoothed)
-replaces the jump by a smooth transition. Above 1273 K the melt branches are extrapolated.
+replaces the jump by a smooth transition. Above 1273 K the melt branches are extrapolated. Moitra et al. (2018,
+p. 3627) attribute the rise of ``\\alpha`` above ``T_g`` to crystallization of the sample, so the melt branch is not
+that of a crystal-free melt: at 1473 K it gives ``k \\approx 2.6`` W/m/K, about twice the 1-1.5 W/m/K typical of
+basaltic melt.
 
 # References
 - Moitra, P., Sonder, I., Valentine, G. A. (2018), Effects of size and temperature-dependent thermal conductivity on the cooling of pyroclasts in air, G-cubed 19, 3623-3636, https://doi.org/10.1029/2018GC007510
@@ -607,9 +610,9 @@ function param_info(s::IAPWS_H2O_Conductivity)
     return MaterialParamsInfo(; Equation = L"\lambda = \lambda^* \bar\lambda_0(\bar T) \bar\lambda_1(\bar T, \bar\rho)")
 end
 
-function (s::IAPWS_H2O_Conductivity)(; P = 0.0e0, T = 0.0e0, kwargs...)
-    Tc = precision_of(P)
-    T = convert_precision(Tc, T)
+function (s::IAPWS_H2O_Conductivity)(; P = 0, T = 0, kwargs...)
+    Tc = precision_of((; P, T))
+    P, T = convert_precision(Tc, P), convert_precision(Tc, T)
     @unpack_like P Tc Tref, ρref, kref = s
     t = NoUnits(T / Tref)
     d = NoUnits(compute_density(s.ρ, (; P, T, kwargs...)) / ρref)
@@ -680,6 +683,11 @@ where ``k_0`` is the conductivity of the bubble-free magma (`kmatrix`: melt, inc
 that of the gas (`kgas`). The second form, used here, stays finite at ``m = 1``. The gas volume fraction of the
 whole magma `ϕ_gas` is passed at runtime; both sub-laws receive the remaining arguments (e.g. `P`, `T`, `X_co2`; the default `kgas` needs `P`
 and `T`). `kgas` is only evaluated when `ϕ_gas != 0`. The result is `NaN` outside ``0 \\le \\phi_{gas} \\le 1``.
+
+The Maxwell equation assumes dilute, non-interacting bubbles. For ``k_{gas} < k_0`` it is the Hashin–Shtrikman
+upper bound, so it overestimates ``k`` of foams with connected or deformed bubbles; Heap et al. (2020) test it up to
+``\\phi_{gas} \\approx 0.6``. The default `kmatrix` inherits the melt-branch limitation of
+[`T_Conductivity_Moitra`](@ref GeoParams.MaterialParameters.Conductivity.T_Conductivity_Moitra) above ``T_g``.
 
 # References
 - Heap, M. J., et al. (2020), The thermal properties of porous andesite, JVGR 398, 106901, https://doi.org/10.1016/j.jvolgeores.2020.106901

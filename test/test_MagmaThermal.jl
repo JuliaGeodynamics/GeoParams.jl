@@ -47,6 +47,8 @@ using GeoParams
         for (T, P, k_ref) in data
             @test compute_conductivity(k, (; P, T)) ≈ k_ref rtol = 0.016
         end
+        # the precision follows both P and T
+        @test compute_conductivity(k, (; P = 1.0f8, T = 1123.15)) === compute_conductivity(k, (; P = 1.0e8, T = 1123.15))
         # Dilute-gas limit λ*·λ̄0 (Table 4, 873.15 K)
         @test compute_conductivity(k, (; P = 1.0, T = 873.15)) ≈ 0.0791034659 rtol = 1.0e-6
 
@@ -93,6 +95,11 @@ using GeoParams
         args = (; T = 1200.0, P = 1.0e8, ϕ_gas = 0.3, X_co2 = 0.2)
         k_dim = compute_conductivity(k, args)
         @test k_dim < compute_conductivity(k.kmatrix, args)
+        # Heap et al. (2020), eq. 1, with β = 3(1 - m)/(2 + m)
+        k0, kg = compute_conductivity(k.kmatrix, args), compute_conductivity(k.kgas, args)
+        mr = kg / k0
+        β = 3 * (1 - mr) / (2 + mr)
+        @test k_dim ≈ k0 * (0.7 * (1 - mr) + mr * β * 0.3) / (0.7 * (1 - mr) + β * 0.3) rtol = 1.0e-12
         kn = nondimensionalize(k, CharDim)
         args_nd = (; T = nondimensionalize(1200.0K, CharDim), P = nondimensionalize(1.0e8Pa, CharDim), ϕ_gas = 0.3, X_co2 = 0.2)
         @test ustrip(dimensionalize(compute_conductivity(kn, args_nd), Watt / m / K, CharDim)) ≈ k_dim
