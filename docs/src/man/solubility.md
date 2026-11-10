@@ -8,7 +8,7 @@ GeoParams.MaterialParameters.Solubility.Mafic_Solubility
 GeoParams.MaterialParameters.Solubility.SunYao2026_Solubility
 GeoParams.MaterialParameters.Solubility.GasMixture
 ```
-[`SunYao2026_Solubility`](@ref) is the recommended law: it takes the melt composition, covers H2O and CO2 and is calibrated from 1 bar to 6 GPa. [`Liu2005_Solubility`](@ref) applies to rhyolite only and is useful to reproduce Degruyter & Huber (2014)-type models. [`Mafic_Solubility`](@ref) is a polynomial fit for mafic melts; its dissolved H2O does not vanish as the pressure goes to zero (2.7 wt% at 850 °C in the figure), so it is meaningful only at chamber pressures.
+[`SunYao2026_Solubility`](@ref) is the recommended law: it takes the melt composition, covers H2O and CO2 and is calibrated up to 2 GPa for H2O and 1 GPa for mixed H2O–CO2 fluids; above ~2 GPa its dissolved contents exceed 100 wt%. [`Liu2005_Solubility`](@ref) applies to rhyolite only and is useful to reproduce Degruyter & Huber (2014)-type models. [`Mafic_Solubility`](@ref) is a polynomial fit for mafic melts; its dissolved H2O does not vanish as the pressure goes to zero (2.7 wt% at 850 °C in the figure), so it is meaningful only at chamber pressures.
 
 The figure compares the dissolved H2O in equilibrium with pure H2O gas at 850 °C.
 ```@example solubility_laws

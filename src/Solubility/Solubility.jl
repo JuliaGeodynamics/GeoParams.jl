@@ -256,9 +256,11 @@ split is not returned. Pressure and temperature enter through the reference
 
 Pure gases give exact zeros: no H2O at `X_co2 = 1` and no CO2 at `X_co2 = 0`, with zero
 derivatives in `P` and `T`. The slopes in `X_co2` are infinite at these endpoints
-(``a_0, a_5, b_0 < 1``), so [`∂dissolved_∂Xco2`](@ref) is not finite there. Above ~2 GPa
-the term ``Q\\, S_{H_2O}`` makes the dissolved CO2 of silicic melts exceed a mass fraction
-of 1; this is the paper's formula outside its validity.
+(``a_0, a_5, b_0 < 1``), so [`∂dissolved_∂Xco2`](@ref) is not finite there. The H2O data
+reach 2 GPa and the mixed-fluid data 1 GPa; only the pure-CO2 data reach 6 GPa. Above ~2 GPa
+the formula fails: the term ``a_2 P^2/T`` makes the dissolved H2O exceed a mass fraction of 1
+(rhyolite at 900 °C from ~2.5 GPa), and ``Q\\, S_{H_2O}`` does the same to the dissolved CO2 of
+H2O-bearing fluids (`X_co2 = 0.5`: rhyolite at 900 °C from ~2 GPa, basalt at 1200 °C below 2.5 GPa).
 
 # References
 - Sun, C., Yao, L. (2026), A unified H2O–CO2 solubility–speciation model for magmatic liquids: Constraints on magma storage architecture in continental rifts, EPSL 689, 120115, https://doi.org/10.1016/j.epsl.2026.120115
@@ -423,7 +425,8 @@ Pass `ϕ_gas` together with `ϕ_x = (1 - ϕ_gas) * (1 - ϕ)` to `ThreePhase_Dens
 Undersaturated magma (``m_{h2o,total} \\le m_{eq}``) gives zero without evaluating
 `ρgas`. For the H2O gas density use [`HalbachChatterjee_Density`](@ref GeoParams.MaterialParameters.Density.HalbachChatterjee_Density),
 which is within 0.8 % of IAPWS-95 for 0.1–400 MPa and 600–1200 °C. The result is `NaN` for
-`m_h2o_total` outside ``[0, 1)`` or `ϕ` outside ``[0, 1]``. It is dimensionless and the
+`m_h2o_total` outside ``[0, 1)``, `ϕ` outside ``[0, 1]``, or ``m_{eq} \\ge 1``, which
+[`SunYao2026_Solubility`](@ref) returns above ~2.5 GPa. It is dimensionless and the
 same for dimensional and nondimensionalized laws and inputs.
 
 # Example
@@ -439,7 +442,7 @@ args = (; P = 1.0e8, T = 1100.0, ϕ = 0.6, m_h2o_total = 0.05)
 """
 @inline function compute_gas_fraction(s::AbstractSolubility, ρ::ThreePhase_Density; ϕ, m_h2o_total, P, T, kwargs...)
     m_eq = compute_dissolved(s, P, T, zero(precision_of(P)))[1]
-    0 <= m_h2o_total < 1 && 0 <= ϕ <= 1 || return oftype(m_eq, NaN)
+    0 <= m_h2o_total < 1 && 0 <= ϕ <= 1 && m_eq < 1 || return oftype(m_eq, NaN)
     x_g = max((m_h2o_total - m_eq) / (1 - m_eq), zero(m_eq))
     # A zero gas fraction must not depend on ρgas, which may be NaN where it is undefined.
     iszero(x_g) && return x_g

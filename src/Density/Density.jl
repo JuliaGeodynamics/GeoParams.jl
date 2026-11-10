@@ -591,7 +591,10 @@ temperature (647 K) it is the vapor branch even where liquid water is stable.
 Against IAPWS-95 (Wagner & Pruß 2002) the density is within 0.8 % for
 0.1–400 MPa and 600–1200 °C (fitted to data at 100–1000 °C and 0.002–5 GPa), and it
 tends to the ideal-gas density as ``P \\to 0``. Below the critical temperature it deviates
-up to ~10 % from IAPWS-95 (e.g. 370 °C and 15 MPa). Invalid inputs (``P \\le 0`` or
+up to ~10 % from IAPWS-95 (e.g. 370 °C and 15 MPa). The cubic has three real roots up to
+~690 K: between 647 and 690 K at ~13–31 MPa the largest root is up to 60 % below IAPWS-95
+(650 K, 24 MPa), and the density jumps where the vapor-like root vanishes (at 673 K from
+205 to 480 kg/m³ between 27.7 and 27.8 MPa). Invalid inputs (``P \\le 0`` or
 ``T \\le 0``) give `NaN`.
 
 The fit's units enter through the reference quantities `Tref = 1K`, `Pref = 1e5Pa`

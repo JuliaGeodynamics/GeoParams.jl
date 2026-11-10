@@ -153,6 +153,9 @@ const No_MaterialParam = GeoParams.MaterialParameters.No_MaterialParam
         Vg = x_g / HalbachChatterjee_Density()(; P = 2.0e8, T = 1173.15)
         Vm = (1 - x_g) / 2300
         @test compute_gas_fraction(sy, ρ, (; P = 2.0e8, T = 1173.15, ϕ = 1.0, m_h2o_total = m_eq + 0.02)) ≈ Vg / (Vg + Vm)
+        # above ~2.5 GPa the dissolved H2O exceeds a mass fraction of 1, which has no gas fraction
+        @test compute_dissolved(sy, 3.0e9, 1173.15, 0.0)[1] > 1
+        @test isnan(compute_gas_fraction(sy, ρ, (; P = 3.0e9, T = 1173.15, ϕ = 1.0, m_h2o_total = 0.05)))
     end
 
     @test_throws "oxd_wt must hold 9 oxide wt%" SunYao2026_Solubility(; oxd_wt = (77.0, 0.1, 12.8))
