@@ -202,7 +202,7 @@ using GeoParams
         @test f.n == 2
         # ϕ_m that Vona et al. (2011, Table 1) compute with eq. 5.1
         @test f.ϕ_max ≈ 0.3741 rtol = 1.0e-3
-        @test Mueller2010_Crystals(aspect_ratio = 5.57).ϕ_max ≈ 0.4160 rtol = 1.0e-3
+        @test Mueller2010_Crystals(aspect_ratio = 5.57).ϕ_max ≈ 0.416 rtol = 1.0e-3
         # Maron–Pierce fits of Mueller et al. (2010, Table 3), to which eq. 5.1 is a regression
         for (rp, ϕm) in ((1, 0.633), (1.75, 0.539), (4.69, 0.433), (9.17, 0.339))
             @test Mueller2010_Crystals(aspect_ratio = rp).ϕ_max ≈ ϕm rtol = 0.06
