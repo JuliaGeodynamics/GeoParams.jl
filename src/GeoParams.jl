@@ -182,6 +182,7 @@ export compute_density, # computational routines
     GasPyroclast_Density,
     RedlichKwong_Density,
     IdealGas_Density,
+    HalbachChatterjee_Density,
     ThreePhase_Density,
     Melt_DensityX,
     compute_density_ratio
@@ -427,12 +428,15 @@ export compute_dissolved,
     ∂dissolved_∂T,
     ∂dissolved_∂Xco2,
     find_Xco2,
+    compute_saturation_pressure,
     AbstractSolubility,
     Liu2005_Solubility,
     Mafic_Solubility,
+    SunYao2026_Solubility,
     GasMixture,
     compute_gas_heatcapacity,
-    effective_molar_mass
+    effective_molar_mass,
+    compute_gas_fraction
 
 # Water fugacity (Pitzer & Sterner 1994; Shinevar et al. 2015) and water content of olivine
 include("Fugacity/WaterFugacity.jl")
