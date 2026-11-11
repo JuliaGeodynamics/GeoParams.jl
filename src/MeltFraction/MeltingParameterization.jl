@@ -909,12 +909,12 @@ end
 
 compute_dϕdT(p::AbstractPhaseDiagramsStruct, args) = compute_dϕdT(p; args...)
 
-"""
-    compute_dϕdT!(dϕdT::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T:AbstractArray{<:AbstractFloat}, p::AbstractPhaseDiagramsStruct)
+# """
+#     compute_dϕdT!(dϕdT::AbstractArray{<:AbstractFloat}, P::AbstractArray{<:AbstractFloat},T:AbstractArray{<:AbstractFloat}, p::AbstractPhaseDiagramsStruct)
 
-In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
-The derivative is computed by finite differencing.
-"""
+# In-place computation of melt fraction in case we use a phase diagram lookup table. The table should have the column `:meltFrac` specified.
+# The derivative is computed by finite differencing.
+# """
 # function compute_dϕdT!(
 #     dϕdT::AbstractArray{_T},
 #     p::AbstractPhaseDiagramsStruct;

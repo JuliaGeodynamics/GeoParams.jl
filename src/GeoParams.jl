@@ -221,6 +221,13 @@ export dεII_dτII,
     PowerlawViscous,
     ArrheniusType,
     HerschelBulkley,
+    Suspension,
+    Roscoe1952_Crystals,
+    Mueller2010_Crystals,
+    IshiiZuber1979_Bubbles,
+    Mader2013_Bubbles,
+    Vona2011_Crystals,
+    compute_relative_viscosity,
     CustomRheology,
     DislocationCreep,
     SetDislocationCreep,
@@ -431,6 +438,11 @@ export compute_dissolved,
 include("Fugacity/WaterFugacity.jl")
 using .WaterFugacity
 export compute_water_fugacity, compute_water_fugacity_Shinevar, compute_water_content_olivine
+
+# Magma fragmentation criteria (Sparks 1978; Papale 1999)
+include("Fragmentation/Fragmentation.jl")
+using .Fragmentation
+export AbstractFragmentation, CriticalPorosityFragmentation, StrainRateFragmentation, compute_fragmentation
 
 include("Traits/rheology.jl")
 export RheologyTrait

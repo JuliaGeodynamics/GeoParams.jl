@@ -131,6 +131,7 @@ include("CustomRheology.jl")
 include("MeltViscosity.jl")
 include("HerschelBulkley.jl")
 include("MeltWeakening.jl")
+include("Suspension.jl")
 
 # Linear viscous rheology ------------------------------------------------
 """
