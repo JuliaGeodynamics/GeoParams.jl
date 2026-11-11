@@ -7,6 +7,8 @@ module Conductivity
 
 using Parameters, LaTeXStrings, Unitful
 using ..Units
+using ..Density: AbstractDensity, ConstantDensity, HalbachChatterjee_Density, compute_density
+using ..HeatCapacity: AbstractHeatCapacity, T_HeatCapacity_Moitra, T_HeatCapacity_Moitra_smoothed, compute_heatcapacity
 using GeoParams: AbstractMaterialParam, AbstractMaterialParamsStruct, @extractors, add_extractor_functions
 using ..MaterialParameters: MaterialParamsInfo
 import Base.show, GeoParams.param_info
@@ -20,6 +22,11 @@ export compute_conductivity, # calculation routines
     T_Conductivity_Whittington, # T-dependent heat capacity
     T_Conductivity_Whittington_parameterised, # parameterised T-dependent heat capacity
     TP_Conductivity, # TP dependent conductivity
+    T_Conductivity_Moitra, # from T-dependent glass/melt diffusivity
+    T_Conductivity_Moitra_smoothed, # same, smooth across the glass transition
+    IAPWS_H2O_Conductivity, # H2O, IAPWS 2011
+    GasMixture_Conductivity, # H2O-CO2 gas mixture
+    Maxwell_Conductivity, # matrix with gas bubbles
     Set_TP_Conductivity                         # Routine to set pre-defined parameters
 
 include("../Computations.jl")
@@ -43,10 +50,10 @@ function param_info(s::ConstantConductivity) # info about the struct
     return MaterialParamsInfo(; Equation = L"k = cst")
 end
 
-# Calculation routine
-function (s::ConstantConductivity)(; kwargs...)
-    Tc = precision_of(values(kwargs))
-    @unpack_val Tc k = s
+# Calculation routine; carries units when `P` or `T` does, as ConstantDensity.
+function (s::ConstantConductivity)(; P = 0, T = 0, kwargs...)
+    Tc = precision_of((; P, T, kwargs...))
+    @unpack_like (P isa Quantity ? P : T) Tc k = s
 
     return k
 end
@@ -461,12 +468,264 @@ end
 #(s::TP_Conductivity)(P::AbstractArray, T::AbstractArray) = s(P, T)
 compute_conductivity(s::TP_Conductivity, P::AbstractArray, T::AbstractArray) = s(P, T)
 
+# Conductivity from the thermal diffusivity of glass and melt (Moitra et al. 2018) ----
+"""
+    T_Conductivity_Moitra(; ρ=ConstantDensity(ρ=3000kg/m^3), Cp=T_HeatCapacity_Moitra())
+
+Thermal conductivity ``k = \\rho c_p \\alpha`` (Moitra et al. 2018, eq. 2) from the temperature-dependent thermal
+diffusivity of a basanite glass (``T < T_g``) and melt (``T \\ge T_g``), their eqs. 5 and 6:
+```math
+    \\alpha = a_0 T^{-0.41} + b_0 T \\quad (T < T_g), \\qquad \\alpha = a_1 + b_1 T \\quad (T \\ge T_g)
+```
+with ``T`` in K and
+- a0 = 5.98 mm²/s K^0.41, b0 = 9.23e-5 mm²/s/K
+- a1 = -0.06 mm²/s, b1 = 4.57e-4 mm²/s/K
+- Tg = 1000 K
+
+The density `ρ` and heat capacity `Cp` are laws evaluated with the same arguments, so ``k`` follows the material of
+the model while keeping the measured diffusivity. The defaults are the sample density and heat capacity of Moitra et
+al. (2018), with which ``k`` reproduces their Table 3 (298-1273 K). ``k`` jumps at ``T_g``;
+[`T_Conductivity_Moitra_smoothed`](@ref GeoParams.MaterialParameters.Conductivity.T_Conductivity_Moitra_smoothed)
+replaces the jump by a smooth transition. Above 1273 K the melt branches are extrapolated. Moitra et al. (2018,
+p. 3627) attribute the rise of ``\\alpha`` above ``T_g`` to crystallization of the sample, so the melt branch is not
+that of a crystal-free melt: at 1473 K it gives ``k \\approx 2.6`` W/m/K, about twice the 1-1.5 W/m/K typical of
+basaltic melt.
+
+# References
+- Moitra, P., Sonder, I., Valentine, G. A. (2018), Effects of size and temperature-dependent thermal conductivity on the cooling of pyroclasts in air, G-cubed 19, 3623-3636, https://doi.org/10.1029/2018GC007510
+"""
+@with_kw_noshow struct T_Conductivity_Moitra{T, U1, U2, U3, U4, S1 <: AbstractDensity, S2 <: AbstractHeatCapacity} <: AbstractConductivity{T}
+    ρ::S1 = ConstantDensity(ρ = 3000.0kg / m^3)
+    Cp::S2 = T_HeatCapacity_Moitra()
+    a0::GeoUnit{T, U1} = 5.98e-6m^2 / s * K^(41 // 100)   # glass (T < Tg)
+    b0::GeoUnit{T, U2} = 9.23e-11m^2 / s / K
+    a1::GeoUnit{T, U3} = -6.0e-8m^2 / s                    # melt (T ≥ Tg)
+    b1::GeoUnit{T, U2} = 4.57e-10m^2 / s / K
+    Tg::GeoUnit{T, U4} = 1000.0K                           # glass transition temperature
+end
+T_Conductivity_Moitra(args...) = promote_construct(T_Conductivity_Moitra, args...)
+
+function param_info(s::T_Conductivity_Moitra)
+    return MaterialParamsInfo(; Equation = L"k = \rho c_p \alpha;\ \alpha = a_0 T^{-0.41} + b_0 T\ (T < T_g);\ \alpha = a_1 + b_1 T")
+end
+
+function (s::T_Conductivity_Moitra)(; T, kwargs...)
+    Tc = precision_of(T)
+    @unpack_like T Tc a0, b0, a1, b1, Tg = s
+    α = T < Tg ? a0 * T^(-41 // 100) + b0 * T : a1 + b1 * T
+    return compute_density(s.ρ, (; T, kwargs...)) * compute_heatcapacity(s.Cp, (; T, kwargs...)) * α
+end
+
+function show(io::IO, g::T_Conductivity_Moitra)
+    return print(io, "Conductivity from the glass/melt diffusivity of Moitra et al. (2018): ρ=$(g.ρ); Cp=$(g.Cp)")
+end
+
+"""
+    T_Conductivity_Moitra_smoothed(; ρ=ConstantDensity(ρ=3000kg/m^3), Cp=T_HeatCapacity_Moitra_smoothed())
+
+[`T_Conductivity_Moitra`](@ref GeoParams.MaterialParameters.Conductivity.T_Conductivity_Moitra) with the jump of the
+diffusivity at ``T_g`` replaced by a smooth transition of width ``\\Delta T_g``:
+```math
+    k = \\rho c_p \\alpha, \\qquad \\alpha = (1 - H)\\, \\alpha_{glass} + H\\, \\alpha_{melt}, \\qquad
+    H = \\frac{1}{1 + \\exp\\left(-4 (T - T_g)/\\Delta T_g\\right)}
+```
+with the glass and melt diffusivities of `T_Conductivity_Moitra` and the same ``H`` as
+[`T_HeatCapacity_Moitra_smoothed`](@ref GeoParams.MaterialParameters.HeatCapacity.T_HeatCapacity_Moitra_smoothed),
+the default `Cp`. The default ``\\Delta T_g`` is 20 K.
+"""
+@with_kw_noshow struct T_Conductivity_Moitra_smoothed{T, U1, U2, U3, U4, S1 <: AbstractDensity, S2 <: AbstractHeatCapacity} <: AbstractConductivity{T}
+    ρ::S1 = ConstantDensity(ρ = 3000.0kg / m^3)
+    Cp::S2 = T_HeatCapacity_Moitra_smoothed()
+    a0::GeoUnit{T, U1} = 5.98e-6m^2 / s * K^(41 // 100)   # glass
+    b0::GeoUnit{T, U2} = 9.23e-11m^2 / s / K
+    a1::GeoUnit{T, U3} = -6.0e-8m^2 / s                    # melt
+    b1::GeoUnit{T, U2} = 4.57e-10m^2 / s / K
+    Tg::GeoUnit{T, U4} = 1000.0K                           # glass transition temperature
+    ΔTg::GeoUnit{T, U4} = 20.0K                            # width of the transition
+end
+T_Conductivity_Moitra_smoothed(args...) = promote_construct(T_Conductivity_Moitra_smoothed, args...)
+
+function param_info(s::T_Conductivity_Moitra_smoothed)
+    return MaterialParamsInfo(; Equation = L"k = \rho c_p \alpha;\ \alpha = (1 - H) \alpha_{glass} + H \alpha_{melt};\ H = 1/(1 + \exp(-4 (T - T_g)/\Delta T_g))")
+end
+
+function (s::T_Conductivity_Moitra_smoothed)(; T, kwargs...)
+    Tc = precision_of(T)
+    @unpack_like T Tc a0, b0, a1, b1, Tg, ΔTg = s
+    H = inv(1 + exp(-4 * (T - Tg) / ΔTg))
+    α = (1 - H) * (a0 * T^(-41 // 100) + b0 * T) + H * (a1 + b1 * T)
+    return compute_density(s.ρ, (; T, kwargs...)) * compute_heatcapacity(s.Cp, (; T, kwargs...)) * α
+end
+
+function show(io::IO, g::T_Conductivity_Moitra_smoothed)
+    return print(io, "Conductivity from the glass/melt diffusivity of Moitra et al. (2018), smoothed: ΔTg=$(UnitValue(g.ΔTg)); ρ=$(g.ρ); Cp=$(g.Cp)")
+end
+
+# Conductivity of H2O, IAPWS 2011 (Huber et al. 2012) without critical enhancement ----
+"""
+    IAPWS_H2O_Conductivity(; ρ=HalbachChatterjee_Density(), L0, L1)
+
+Thermal conductivity of H2O from the IAPWS 2011 formulation (Huber et al. 2012; IAPWS R15-11, eqs. 15-17) without
+the critical-enhancement term ``\\bar\\lambda_2``:
+```math
+    \\lambda = \\lambda^* \\bar\\lambda_0(\\bar T)\\, \\bar\\lambda_1(\\bar T, \\bar\\rho), \\qquad
+    \\bar\\lambda_0 = \\frac{\\sqrt{\\bar T}}{\\sum_{k=0}^{4} L_k / \\bar T^k}, \\qquad
+    \\bar\\lambda_1 = \\exp\\left[\\bar\\rho \\sum_{i=0}^{4} \\left(\\frac{1}{\\bar T} - 1\\right)^i
+        \\sum_{j=0}^{5} L_{ij} (\\bar\\rho - 1)^j\\right]
+```
+with ``\\bar T = T/T^*``, ``\\bar\\rho = \\rho/\\rho^*``, ``T^* = 647.096`` K, ``\\rho^* = 322`` kg/m³ and
+``\\lambda^* = 10^{-3}`` W/m/K (eqs. 1, 3, 4). The dimensionless coefficients `L0` (``L_k``, Table 1) and `L1`
+(``L_{ij}``, Table 2, row ``i``, column ``j``) default to the values of IAPWS R15-11.
+The density is the law `ρ` evaluated with the same arguments (`P`, `T`).
+
+IAPWS R15-11 validates the formulation (its eq. 14) up to 1173.15 K for ``P \\le`` 100 MPa, up to 874 K for
+100-250 MPa, and up to 573 K above 250 MPa; most of the range 600-1200 °C, 0.1-400 MPa is therefore an extrapolation
+of the standard. Within that range, omitting ``\\bar\\lambda_2`` changes ``\\lambda`` by at most 1.99 % (600 °C,
+80 MPa) and not at all above about 697 °C, and with the default density ``\\lambda`` is within 1.5 % of the full
+(extrapolated) IAPWS formulation. The law is not valid near the critical point (374 °C, 22 MPa), where
+``\\bar\\lambda_2`` diverges. The reference quantities `Tref`, `ρref` and `kref`
+are ``T^*``, ``\\rho^*`` and ``\\lambda^*``; they are not material parameters.
+
+# References
+- Huber, M. L., Perkins, R. A., Friend, D. G., et al. (2012), New International Formulation for the Thermal Conductivity of H2O, J. Phys. Chem. Ref. Data 41, 033102, https://doi.org/10.1063/1.4738955
+- IAPWS R15-11 (2011), Release on the IAPWS Formulation 2011 for the Thermal Conductivity of Ordinary Water Substance, https://iapws.org/technical-guidance/release/ThCond
+"""
+@with_kw_noshow struct IAPWS_H2O_Conductivity{T, U1, U2, U3, S <: AbstractDensity} <: AbstractConductivity{T}
+    ρ::S = HalbachChatterjee_Density()
+    Tref::GeoUnit{T, U1} = 647.096K
+    ρref::GeoUnit{T, U2} = 322.0kg / m^3
+    kref::GeoUnit{T, U3} = 1.0e-3Watt / m / K
+    L0::NTuple{5, T} = (2.443221e-3, 1.323095e-2, 6.770357e-3, -3.454586e-3, 4.096266e-4)
+    L1::NTuple{5, NTuple{6, T}} = (
+        (1.60397357, -0.646013523, 0.111443906, 0.102997357, -0.0504123634, 0.00609859258),
+        (2.33771842, -2.78843778, 1.53616167, -0.463045512, 0.0832827019, -0.00719201245),
+        (2.19650529, -4.54580785, 3.55777244, -1.40944978, 0.275418278, -0.0205938816),
+        (-1.21051378, 1.60812989, -0.621178141, 0.0716373224, 0.0, 0.0),
+        (-2.720337, 4.57586331, -3.18369245, 1.1168348, -0.19268305, 0.012913842),
+    )
+end
+IAPWS_H2O_Conductivity(args...) = promote_construct(IAPWS_H2O_Conductivity, args...)
+
+function param_info(s::IAPWS_H2O_Conductivity)
+    return MaterialParamsInfo(; Equation = L"\lambda = \lambda^* \bar\lambda_0(\bar T) \bar\lambda_1(\bar T, \bar\rho)")
+end
+
+function (s::IAPWS_H2O_Conductivity)(; P = 0, T = 0, kwargs...)
+    Tc = precision_of((; P, T))
+    P, T = convert_precision(Tc, P), convert_precision(Tc, T)
+    @unpack_like P Tc Tref, ρref, kref = s
+    t = NoUnits(T / Tref)
+    d = NoUnits(compute_density(s.ρ, (; P, T, kwargs...)) / ρref)
+    λ0 = sqrt(t) / evalpoly(1 / t, convert_precision(Tc, s.L0))
+    λ1 = exp(d * evalpoly(1 / t - 1, map(L -> evalpoly(d - 1, L), convert_precision(Tc, s.L1))))
+    return kref * λ0 * λ1
+end
+
+function show(io::IO, g::IAPWS_H2O_Conductivity)
+    return print(io, "H2O conductivity, IAPWS 2011 without critical enhancement: ρ=$(g.ρ)")
+end
+
+# Conductivity of an H2O-CO2 gas mixture (Udoetok 2013) ----------------------
+"""
+    GasMixture_Conductivity(; kh2o=IAPWS_H2O_Conductivity(), kco2=ConstantConductivity(k=0.071W/m/K))
+
+Thermal conductivity of a binary H2O-CO2 gas mixture after Udoetok (2013), eq. 16, the mean of the parallel (eq. 14)
+and series (eq. 9) arrangements of the two gases:
+```math
+    k = \\frac{1}{2}\\left(X_{H_2O} k_{H_2O} + X_{CO_2} k_{CO_2}
+        + \\frac{k_{H_2O} k_{CO_2}}{X_{H_2O} k_{CO_2} + X_{CO_2} k_{H_2O}}\\right),
+    \\qquad X_{H_2O} = 1 - X_{CO_2}
+```
+The CO2 mole fraction of the gas `X_co2` is passed at runtime, as for the H2O-CO2 solubility laws; `kh2o` and
+`kco2` are conductivity laws evaluated with the remaining arguments (e.g. `T`). The result is `NaN` outside
+``0 \\le X_{CO_2} \\le 1``. The default `kh2o` depends on `P` and `T`; the default `kco2` = 0.071 W/m/K is the
+conductivity of CO2 at 1000 K and low pressure. Over 600-1200 °C and 0.1-400 MPa the conductivity of CO2 ranges from
+0.06 to 0.15 W/m/K, so the default underestimates it by up to a factor of about 2 at high pressure.
+
+# References
+- Udoetok, E. S. (2013), Thermal conductivity of binary mixtures of gases, Frontiers in Heat and Mass Transfer 4, 023008, https://doi.org/10.5098/hmt.v4.2.3008
+"""
+struct GasMixture_Conductivity{T, S1 <: AbstractConductivity{T}, S2 <: AbstractConductivity} <: AbstractConductivity{T}
+    kh2o::S1
+    kco2::S2
+end
+function GasMixture_Conductivity(; kh2o = IAPWS_H2O_Conductivity(), kco2 = ConstantConductivity(k = 0.071Watt / m / K))
+    return GasMixture_Conductivity(kh2o, kco2)
+end
+
+function param_info(s::GasMixture_Conductivity)
+    return MaterialParamsInfo(; Equation = L"k = (X_w k_w + X_c k_c + k_w k_c/(X_w k_c + X_c k_w))/2")
+end
+
+function (s::GasMixture_Conductivity)(; X_co2 = 0, kwargs...)
+    kw, kc = compute_conductivity(s.kh2o, kwargs), compute_conductivity(s.kco2, kwargs)
+    0 <= X_co2 <= 1 || return kw * precision_of(kw)(NaN)
+    Xw = 1 - X_co2
+    return (Xw * kw + X_co2 * kc + kw * kc / (Xw * kc + X_co2 * kw)) / 2
+end
+
+function show(io::IO, g::GasMixture_Conductivity)
+    return print(io, "H2O-CO2 gas-mixture conductivity following Udoetok (2013): kh2o=$(g.kh2o); kco2=$(g.kco2)")
+end
+
+# Conductivity of a magma with spherical gas bubbles (Maxwell; Heap et al. 2020) ----
+"""
+    Maxwell_Conductivity(; kmatrix=T_Conductivity_Moitra(), kgas=GasMixture_Conductivity())
+
+Effective thermal conductivity of a matrix containing non-interacting spherical gas bubbles, the Maxwell equation
+used by Heap et al. (2020), eq. 1, with ``\\beta = 3(1-m)/(2+m)`` for spherical pores:
+```math
+    \\frac{k}{k_0} = \\frac{(1-\\phi_{gas})(1-m) + m\\beta\\phi_{gas}}{(1-\\phi_{gas})(1-m) + \\beta\\phi_{gas}}
+                 = \\frac{(1-\\phi_{gas})(2k_0 + k_{gas}) + 3\\phi_{gas} k_{gas}}{(1-\\phi_{gas})(2k_0 + k_{gas}) + 3\\phi_{gas} k_0},
+    \\qquad m = \\frac{k_{gas}}{k_0}
+```
+where ``k_0`` is the conductivity of the bubble-free magma (`kmatrix`: melt, including any crystals) and ``k_{gas}``
+that of the gas (`kgas`). The second form, used here, stays finite at ``m = 1``. The gas volume fraction of the
+whole magma `ϕ_gas` is passed at runtime; both sub-laws receive the remaining arguments (e.g. `P`, `T`, `X_co2`; the default `kgas` needs `P`
+and `T`). `kgas` is only evaluated when `ϕ_gas != 0`. The result is `NaN` outside ``0 \\le \\phi_{gas} \\le 1``.
+
+The Maxwell equation assumes dilute, non-interacting bubbles. For ``k_{gas} < k_0`` it is the Hashin–Shtrikman
+upper bound, so it overestimates ``k`` of foams with connected or deformed bubbles; Heap et al. (2020) test it up to
+``\\phi_{gas} \\approx 0.6``. The default `kmatrix` inherits the melt-branch limitation of
+[`T_Conductivity_Moitra`](@ref GeoParams.MaterialParameters.Conductivity.T_Conductivity_Moitra) above ``T_g``.
+
+# References
+- Heap, M. J., et al. (2020), The thermal properties of porous andesite, JVGR 398, 106901, https://doi.org/10.1016/j.jvolgeores.2020.106901
+"""
+struct Maxwell_Conductivity{T, S1 <: AbstractConductivity{T}, S2 <: AbstractConductivity} <: AbstractConductivity{T}
+    kmatrix::S1
+    kgas::S2
+end
+Maxwell_Conductivity(; kmatrix = T_Conductivity_Moitra(), kgas = GasMixture_Conductivity()) = Maxwell_Conductivity(kmatrix, kgas)
+
+function param_info(s::Maxwell_Conductivity)
+    return MaterialParamsInfo(; Equation = L"k = k_0 \frac{(1-\phi)(2k_0 + k_g) + 3\phi k_g}{(1-\phi)(2k_0 + k_g) + 3\phi k_0}")
+end
+
+function (s::Maxwell_Conductivity)(; ϕ_gas = 0, kwargs...)
+    k0 = compute_conductivity(s.kmatrix, kwargs)
+    0 <= ϕ_gas <= 1 || return k0 * precision_of(k0)(NaN)
+    iszero(ϕ_gas) && return k0
+    kg = compute_conductivity(s.kgas, kwargs)
+    a = (1 - ϕ_gas) * (2 * k0 + kg)
+    return k0 * (a + 3 * ϕ_gas * kg) / (a + 3 * ϕ_gas * k0)
+end
+
+function show(io::IO, g::Maxwell_Conductivity)
+    return print(io, "Maxwell conductivity of a bubbly magma: kmatrix=$(g.kmatrix); kgas=$(g.kgas)")
+end
+
 # add methods programmatically
 for myType in (
         :T_Conductivity_Whittington_parameterised,
         :T_Conductivity_Whittington,
         :ConstantConductivity,
         :TP_Conductivity,
+        :T_Conductivity_Moitra,
+        :T_Conductivity_Moitra_smoothed,
+        :IAPWS_H2O_Conductivity,
+        :GasMixture_Conductivity,
+        :Maxwell_Conductivity,
     )
     @eval begin
         (s::$(myType))(args) = s(; args...)
@@ -502,6 +761,11 @@ Currently available:
 - ConstantConductivity
 - T\\_Conductivity_Whittington
 - TP\\_Conductivity
+- T\\_Conductivity_Moitra
+- T\\_Conductivity_Moitra\\_smoothed
+- IAPWS\\_H2O_Conductivity
+- GasMixture\\_Conductivity
+- Maxwell\\_Conductivity
 
 # Example
 ```jldoctest
@@ -552,7 +816,7 @@ This assumes that the `PhaseRatio` of every point is specified as an Integer in 
 compute_conductivity!(args::Vararg{Any, N}) where {N} = compute_param!(compute_conductivity, args...)
 
 # extractor methods
-for type in (ConstantConductivity, T_Conductivity_Whittington, T_Conductivity_Whittington_parameterised, TP_Conductivity)
+for type in (ConstantConductivity, T_Conductivity_Whittington, T_Conductivity_Whittington_parameterised, TP_Conductivity, T_Conductivity_Moitra, T_Conductivity_Moitra_smoothed, IAPWS_H2O_Conductivity, GasMixture_Conductivity, Maxwell_Conductivity)
     @extractors(type, :Conductivity)
 end
 
