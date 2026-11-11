@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Custom rheology · GeoParams.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="GeoParams.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">GeoParams.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">User Guide</span><ul><li><a class="tocitem" href="../geounit/">GeoUnit</a></li><li><a class="tocitem" href="../nondimensionalize/">Nondimensionalization</a></li><li><a class="tocitem" href="../materialparameters/">Material Parameters</a></li><li><a class="tocitem" href="../density/">Density</a></li><li><a class="tocitem" href="../creeplaws/">Creep laws</a></li><li class="is-active"><a class="tocitem" href>Custom rheology</a><ul class="internal"><li><a class="tocitem" href="#Example:-Arrhenious-type-rheology"><span>Example: Arrhenious-type rheology</span></a></li></ul></li><li><a class="tocitem" href="../viscosity/">Viscosity</a></li><li><a class="tocitem" href="../elasticity/">Elasticity</a></li><li><a class="tocitem" href="../plasticity/">Plasticity</a></li><li><a class="tocitem" href="../heatcapacity/">Heat Capacity</a></li><li><a class="tocitem" href="../conductivity/">Conductivity</a></li><li><a class="tocitem" href="../latentheat/">Latent heat</a></li><li><a class="tocitem" href="../radioactiveheating/">Radioactive heat</a></li><li><a class="tocitem" href="../shearheating/">Shear heating</a></li><li><a class="tocitem" href="../gravity/">Gravity</a></li><li><a class="tocitem" href="../melting/">Partial Melting</a></li><li><a class="tocitem" href="../TASclassification/">TAS classification</a></li><li><a class="tocitem" href="../zirconages/">Zircon Ages</a></li><li><a class="tocitem" href="../phasediagrams/">Phase Diagrams</a></li><li><a class="tocitem" href="../seismicvelocity/">Seismic Velocity</a></li><li><a class="tocitem" href="../strengthenvelope/">1D Strength Envelope</a></li></ul></li><li><a class="tocitem" href="../plotting/">Plotting</a></li><li><a class="tocitem" href="../listfunctions/">List of functions</a></li><li><a class="tocitem" href="../contributing/">Contributing</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">User Guide</a></li><li class="is-active"><a href>Custom rheology</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Custom rheology</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaGeodynamics/GeoParams.jl/blob/main/docs/src/man/customrheology.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="User-defined-rheology"><a class="docs-heading-anchor" href="#User-defined-rheology"><code>User-defined rheology</code></a><a id="User-defined-rheology-1"></a><a class="docs-heading-anchor-permalink" href="#User-defined-rheology" title="Permalink"></a></h1><p><code>CustomRheology</code> allows the user to interface with <code>GeoParams.jl</code> API for rheology calculations: </p><pre><code class="language-julia hljs">struct CustomRheology{F1, F2, T} &lt;: AbstractCreepLaw
+    strain::F1
+    stress::F2
+    args::T
+end</code></pre><p>where <code>strain</code> and <code>stress</code> are functions that compute the strain rate and deviatoric stress tensors, respectively, and <code>args</code> is a <code>NamedTuple</code> containing any constant (i.e. <strong>immutable</strong>) physical parameters needed by our <code>CustomRheology</code>. </p><h2 id="Example:-Arrhenious-type-rheology"><a class="docs-heading-anchor" href="#Example:-Arrhenious-type-rheology">Example: Arrhenious-type rheology</a><a id="Example:-Arrhenious-type-rheology-1"></a><a class="docs-heading-anchor-permalink" href="#Example:-Arrhenious-type-rheology" title="Permalink"></a></h2><p>The deviatoric stress <span>$\tau_{ij}$</span> and strain rate tensors <span>$\dot{\varepsilon}_{ij}$</span> are simply     <span>$\tau_{ij} = 2 \eta \dot{\varepsilon}_{ij} \qquad \dot{\varepsilon}_{ij}  = {\tau_{ij}  \over 2 \eta}$</span></p><p>and the viscosity <span>$\eta$</span> is temperature-dependant     <span>$\eta = \eta_{0} * \exp\left(\frac{E}{T+T_{o}}-\frac{E}{T_{\eta}+T_{o}}\right)$</span></p><p>where <span>$\eta_0$</span> and <span>$T_{\eta}$</span> are the respective reference viscosity and temperature, <span>$T_o$</span> is the offset temperature, <span>$T$</span> is the local temperature, and <span>$E$</span> is activation energy. </p><p>Before defining the functions to compute <span>$\tau$</span> and <span>$\dot{\varepsilon}$</span>, it is convenient to define a helper function to compute the viscosity:</p><pre><code class="language-julia hljs">@inline function custom_viscosity(
+    a::CustomRheology; T = 0.0, kwargs...
+)
+    (; η0, E, To, Tη) = a.args
+    η = η0 * exp(E / (T + To) - E / (Tη + To))
+    return  η
+end</code></pre><p>Then we just need to define two simple functions to compue the second invariants of <span>$\tau_{ij}$</span> and <span>$\dot{\varepsilon}_{ij}$</span>:</p><pre><code class="language-julia hljs"># function to compute deviatoric stress
+@inline function custom_τII(
+    a::CustomRheology, EpsII; kwargs...
+)
+    η = custom_viscosity(a; kwargs...)
+    return 2.0 * (η * EpsII)
+end
+
+# function to compute strain rate
+@inline function custom_εII(
+    a::CustomRheology, TauII; kwargs...
+)
+    η = custom_viscosity(a; kwargs...)
+    return (TauII / η) * 0.5
+end</code></pre><p>Note that the key word argument <code>kwargs...</code> is needed in all the above functions for compatibility with <code>GeoParams.jl</code>. </p><p>Finally, we need a <code>NamedTuple</code> containing the physical parameters needed by <code>custom_τII</code> and <code>custom_εII</code>:</p><pre><code class="language-julia hljs"># constant parameters, these are typically wrapped into a struct (compulsory)
+parameters = (;
+    η0 = 1.0,
+    E = 23.03,
+    To = 1.0,
+    Tη = 1.0,
+)</code></pre><p>Then the <code>CustomRheology</code> object is created</p><pre><code class="language-julia hljs">a = CustomRheology(custom_εII, custom_τII, parameters)</code></pre><p>Now we can use our new rheology object with <code>GeoParams.jl</code> methods:</p><pre><code class="language-julia-repl hljs">julia&gt; args = (; T=0.5)
+(T = 0.5,)
+
+julia&gt; τII, εII = 1.5,  0.5
+(1.5, 0.5)
+
+julia&gt; ε = compute_εII(v, τII, args)
+0.016147090412110487
+
+julia&gt; τ = compute_τII(v, εII, args)
+46.44799656521971
+
+julia&gt; dεdτ = dεII_dτII(v, τII, args)
+0.010764726941406991
+
+julia&gt; dτdε = dτII_dεII(v, εII, args)
+92.89599313043942</code></pre><p>And also works for composite rheologies:</p><pre><code class="language-julia-repl hljs">julia&gt; el = ConstantElasticity(; G=1.0)
+Linear elasticity with shear modulus: G = 1.0, Poisson&#39;s ratio: ν = 0.5, bulk modulus: Kb = Inf and Young&#39;s module: E=NaN
+
+julia&gt; c = CompositeRheology(v, el)
+--?????----/\/\/--
+
+julia&gt; args = (; dt=Inf, T=0.5)
+(dt = Inf, T = 0.5)
+
+julia&gt; ε = compute_εII(c, τII, args)
+0.016147090412110487
+
+julia&gt; τ = compute_τII(c, εII, args)
+46.44799656521971</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../creeplaws/">« Creep laws</a><a class="docs-footer-nextpage" href="../viscosity/">Viscosity »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Monday 11 December 2023 13:29">Monday 11 December 2023</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
